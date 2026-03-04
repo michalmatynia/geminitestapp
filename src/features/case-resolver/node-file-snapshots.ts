@@ -50,12 +50,17 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
     'edgeMeta',
     'nodeFileMeta',
   ]);
-  const unexpectedKeys = Object.keys(record).filter((key: string): boolean => !allowedKeys.has(key));
+  const unexpectedKeys = Object.keys(record).filter(
+    (key: string): boolean => !allowedKeys.has(key)
+  );
   if (unexpectedKeys.length > 0) {
-    throw validationError('Legacy Case Resolver node-file snapshot fields are no longer supported.', {
-      source: 'case_resolver.node_file_snapshot',
-      unexpectedKeys,
-    });
+    throw validationError(
+      'Legacy Case Resolver node-file snapshot fields are no longer supported.',
+      {
+        source: 'case_resolver.node_file_snapshot',
+        unexpectedKeys,
+      }
+    );
   }
 
   const { source: _source, ...snapshotRecord } = record;

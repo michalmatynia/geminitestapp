@@ -96,8 +96,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   }, [mounted]);
 
   const handleTabChange = (value: string): void => {
-    const nextTab =
-      value === 'docs' ? 'docs' : value === 'library' ? 'library' : 'workspace';
+    const nextTab = value === 'docs' ? 'docs' : value === 'library' ? 'library' : 'workspace';
     setActiveTab(nextTab);
     window.localStorage.setItem(PROMPT_EXPLODER_ACTIVE_TAB_KEY, nextTab);
   };
@@ -159,7 +158,10 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value='workspace' className='flex-1 min-h-0 overflow-y-auto space-y-4 pb-4'>
+              <TabsContent
+                value='workspace'
+                className='flex-1 min-h-0 overflow-y-auto space-y-4 pb-4'
+              >
                 <div className='grid grid-cols-1 gap-4 xl:grid-cols-[minmax(380px,0.85fr)_minmax(640px,1.15fr)]'>
                   <div className='space-y-4'>
                     <SourcePromptPanel />
@@ -179,7 +181,10 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                 <BenchmarkReportPanel />
               </TabsContent>
 
-              <TabsContent value='library' className='flex-1 min-h-0 overflow-y-auto space-y-4 pb-4'>
+              <TabsContent
+                value='library'
+                className='flex-1 min-h-0 overflow-y-auto space-y-4 pb-4'
+              >
                 <PromptExploderLibraryTab />
               </TabsContent>
 

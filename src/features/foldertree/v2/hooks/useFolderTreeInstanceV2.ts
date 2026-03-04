@@ -14,17 +14,11 @@ import { defaultFolderTreeProfilesV2 } from '@/shared/utils/folder-tree-profiles
 import { validateMasterTreeNodes } from '@/shared/utils/master-folder-tree-engine';
 import { validationError } from '@/shared/errors/app-error';
 
-import {
-  buildRootsV2,
-  normalizeNodesV2,
-} from '../core/engine';
+import { buildRootsV2, normalizeNodesV2 } from '../core/engine';
 import { useMasterFolderTreeRuntime } from '../runtime/MasterFolderTreeRuntimeProvider';
 import { createFolderTreeStore, type FolderTreeStore } from '../store/createFolderTreeStore';
 import { useFolderTreeStoreSelector } from '../store/useFolderTreeStoreSelector';
-import type {
-  FolderTreeState,
-  FolderTreeTransaction,
-} from '../types';
+import type { FolderTreeState, FolderTreeTransaction } from '../types';
 
 import {
   createInitialState,
@@ -56,7 +50,9 @@ export function useFolderTreeInstanceV2(
   const adapter = useMemo((): MasterFolderTreeAdapterV3 | undefined => {
     const candidate = options.adapter;
     if (!candidate) return undefined;
-    const record = candidate as Partial<Record<'prepare' | 'apply' | 'commit' | 'rollback', unknown>>;
+    const record = candidate as Partial<
+      Record<'prepare' | 'apply' | 'commit' | 'rollback', unknown>
+    >;
     const missingMethods = (['prepare', 'apply', 'commit', 'rollback'] as const).filter(
       (method): boolean => typeof record[method] !== 'function'
     );
@@ -87,10 +83,11 @@ export function useFolderTreeInstanceV2(
   const roots = useMemo(() => buildRootsV2(state.nodes), [state.nodes]);
   const validationIssues = useMemo(() => validateMasterTreeNodes(state.nodes), [state.nodes]);
 
-  const {
-    applyPersistedOperation,
-    executeAdapterTransaction,
-  } = useFolderTreeTransaction(store, adapter, maxUndoEntries);
+  const { applyPersistedOperation, executeAdapterTransaction } = useFolderTreeTransaction(
+    store,
+    adapter,
+    maxUndoEntries
+  );
 
   const {
     selectNode,
@@ -108,11 +105,7 @@ export function useFolderTreeInstanceV2(
     setSelectedNodeIds,
   } = useFolderTreeNavigationActions(store);
 
-  const {
-    startDrag,
-    updateDragTarget,
-    clearDrag,
-  } = useFolderTreeDragActions(store);
+  const { startDrag, updateDragTarget, clearDrag } = useFolderTreeDragActions(store);
 
   const {
     canDropNode,
@@ -280,10 +273,7 @@ export function useFolderTreeInstanceV2(
   );
 
   const expandedNodeSet = useMemo(() => new Set(state.expandedNodeIds), [state.expandedNodeIds]);
-  const selectedNodeIdsSet = useMemo(
-    () => new Set(state.selectedNodeIds),
-    [state.selectedNodeIds]
-  );
+  const selectedNodeIdsSet = useMemo(() => new Set(state.selectedNodeIds), [state.selectedNodeIds]);
   const selectedNode = useMemo(
     () => state.nodes.find((node) => node.id === state.selectedNodeId) ?? null,
     [state.nodes, state.selectedNodeId]

@@ -25,7 +25,8 @@ export function ComponentTreeNodeRenderer({
   isExpanded,
   toggleExpand,
 }: ComponentTreeNodeRendererProps): React.JSX.Element | null {
-  const { rootSectionsByZone, sectionById, sectionIndexById } = useComponentTreeNodeRuntimeContext();
+  const { rootSectionsByZone, sectionById, sectionIndexById } =
+    useComponentTreeNodeRuntimeContext();
 
   const zoneFromNode = fromCmsZoneNodeId(node.id);
   if (zoneFromNode) {

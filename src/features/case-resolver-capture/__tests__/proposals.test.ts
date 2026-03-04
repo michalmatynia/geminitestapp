@@ -878,9 +878,7 @@ describe('case-resolver-capture proposals', () => {
       },
       addressee: {
         ...createAddresseeCandidate(),
-        rawText: ['To:', 'Inspektorat ZUS w Gryficach', 'Dąbskiego 5', '72-300 Gryfice'].join(
-          '\n'
-        ),
+        rawText: ['To:', 'Inspektorat ZUS w Gryficach', 'Dąbskiego 5', '72-300 Gryfice'].join('\n'),
       },
     };
 

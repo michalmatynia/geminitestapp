@@ -99,9 +99,7 @@ describe('ai-brain contract runtime', () => {
             current: 1,
             previous: 0,
           },
-          recentEvents: [
-            { id: 'job-1', status: 'failed', timestamp: '2026-03-01T00:00:00.000Z' },
-          ],
+          recentEvents: [{ id: 'job-1', status: 'failed', timestamp: '2026-03-01T00:00:00.000Z' }],
           links: [{ label: 'Chat', href: '/admin/chatbot' }],
         },
         agent_runtime: {

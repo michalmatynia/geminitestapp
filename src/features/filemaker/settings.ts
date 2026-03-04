@@ -11,8 +11,8 @@ export * from './settings/party-getters';
 export * from './settings/upsert-logic';
 export * from './settings/removal-logic';
 
-export { 
-  normalizeFilemakerDatabase, 
+export {
+  normalizeFilemakerDatabase,
   createDefaultFilemakerDatabase,
   toPersistedFilemakerDatabase,
 } from './filemaker-settings.database';

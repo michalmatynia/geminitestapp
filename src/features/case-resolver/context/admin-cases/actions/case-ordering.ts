@@ -1,26 +1,17 @@
 import type * as React from 'react';
- 
- 
- 
- 
- 
- 
 
-import { 
-  CaseResolverWorkspace, 
-  CaseResolverFile 
-} from '@/shared/contracts/case-resolver';
-import { 
-  createCaseResolverWorkspaceMutationId, 
-  stampCaseResolverWorkspaceMutation, 
-  getCaseResolverWorkspaceRevision, 
-  persistCaseResolverWorkspaceSnapshot 
+import { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
+import {
+  createCaseResolverWorkspaceMutationId,
+  stampCaseResolverWorkspaceMutation,
+  getCaseResolverWorkspaceRevision,
+  persistCaseResolverWorkspaceSnapshot,
 } from '../../../workspace-persistence';
-import { 
-  normalizeCaseParentId, 
-  getSortedSiblingIds, 
-  assignSiblingCaseOrder, 
-  isDescendantCaseId 
+import {
+  normalizeCaseParentId,
+  getSortedSiblingIds,
+  assignSiblingCaseOrder,
+  isDescendantCaseId,
 } from '../utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -33,7 +24,15 @@ export const handleMoveCaseImpl = async (args: {
   lastPersistedWorkspaceValueRef: React.MutableRefObject<string>;
   lastPersistedWorkspaceRevisionRef: React.MutableRefObject<number>;
 }): Promise<void> => {
-  const { caseId, targetParentCaseId, targetIndex, workspace, setWorkspace, lastPersistedWorkspaceValueRef, lastPersistedWorkspaceRevisionRef } = args;
+  const {
+    caseId,
+    targetParentCaseId,
+    targetIndex,
+    workspace,
+    setWorkspace,
+    lastPersistedWorkspaceValueRef,
+    lastPersistedWorkspaceRevisionRef,
+  } = args;
 
   try {
     const caseFilesById = new Map<string, CaseResolverFile>(
@@ -151,7 +150,15 @@ export const handleReorderCaseImpl = async (args: {
   lastPersistedWorkspaceValueRef: React.MutableRefObject<string>;
   lastPersistedWorkspaceRevisionRef: React.MutableRefObject<number>;
 }): Promise<void> => {
-  const { caseId, targetCaseId, position, workspace, setWorkspace, lastPersistedWorkspaceValueRef, lastPersistedWorkspaceRevisionRef } = args;
+  const {
+    caseId,
+    targetCaseId,
+    position,
+    workspace,
+    setWorkspace,
+    lastPersistedWorkspaceValueRef,
+    lastPersistedWorkspaceRevisionRef,
+  } = args;
 
   try {
     if (caseId === targetCaseId) return;

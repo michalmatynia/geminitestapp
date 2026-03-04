@@ -15,12 +15,8 @@ import {
   type CaseResolverFolderRecord,
   type CaseResolverFolderTimestamp,
 } from './file';
-import {
-  caseResolverEdgeMetaSchema,
-} from './graph';
-import {
-  type CaseResolverRelationGraph,
-} from './relations';
+import { caseResolverEdgeMetaSchema } from './graph';
+import { type CaseResolverRelationGraph } from './relations';
 
 /**
  * Case Resolver Workspace & Folders

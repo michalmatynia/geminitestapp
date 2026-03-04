@@ -2,35 +2,31 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-call */
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { useCallback, useState } from 'react';
-import { 
-  Integration, 
-  IntegrationConnection, 
-  TestLogEntry 
-} from '@/shared/contracts/integrations';
-import { 
-  IntegrationDefinition, 
-  SaveConnectionOptions, 
-  StepWithResult 
+import { Integration, IntegrationConnection, TestLogEntry } from '@/shared/contracts/integrations';
+import {
+  IntegrationDefinition,
+  SaveConnectionOptions,
+  StepWithResult,
 } from '../integrations-context-types';
-import { 
-  useCreateIntegration, 
-  useUpsertConnection, 
-  useDeleteConnection, 
-  useDisconnectAllegro, 
-  useTestConnection, 
-  useBaseApiRequest, 
-  useAllegroApiRequest 
+import {
+  useCreateIntegration,
+  useUpsertConnection,
+  useDeleteConnection,
+  useDisconnectAllegro,
+  useTestConnection,
+  useBaseApiRequest,
+  useAllegroApiRequest,
 } from '@/features/integrations/hooks/useIntegrationMutations';
 import { useToast } from '@/shared/ui';
-import { 
-  isTraderaApiIntegrationSlug, 
-  isTraderaIntegrationSlug 
+import {
+  isTraderaApiIntegrationSlug,
+  isTraderaIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import { normalizeSteps } from '@/features/integrations/utils/connections';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -161,27 +157,27 @@ export function useIntegrationsActionsImpl(args: {
       ...(formData.password.trim() ? { password: formData.password.trim() } : {}),
       ...(isTraderaIntegration
         ? {
-          traderaDefaultTemplateId: formData.traderaDefaultTemplateId.trim() || null,
-          traderaDefaultDurationHours: Math.max(
-            1,
-            Math.min(720, Math.floor(formData.traderaDefaultDurationHours))
-          ),
-          traderaAutoRelistEnabled: formData.traderaAutoRelistEnabled,
-          traderaAutoRelistLeadMinutes: Math.max(
-            0,
-            Math.min(10080, Math.floor(formData.traderaAutoRelistLeadMinutes))
-          ),
-        }
+            traderaDefaultTemplateId: formData.traderaDefaultTemplateId.trim() || null,
+            traderaDefaultDurationHours: Math.max(
+              1,
+              Math.min(720, Math.floor(formData.traderaDefaultDurationHours))
+            ),
+            traderaAutoRelistEnabled: formData.traderaAutoRelistEnabled,
+            traderaAutoRelistLeadMinutes: Math.max(
+              0,
+              Math.min(10080, Math.floor(formData.traderaAutoRelistLeadMinutes))
+            ),
+          }
         : {}),
       ...(isTraderaApiIntegration
         ? {
-          traderaApiAppId: Number.parseInt(formData.traderaApiAppId, 10),
-          traderaApiAppKey: formData.traderaApiAppKey.trim(),
-          traderaApiPublicKey: formData.traderaApiPublicKey.trim() || null,
-          traderaApiUserId: Number.parseInt(formData.traderaApiUserId, 10),
-          traderaApiToken: formData.traderaApiToken.trim(),
-          traderaApiSandbox: formData.traderaApiSandbox,
-        }
+            traderaApiAppId: Number.parseInt(formData.traderaApiAppId, 10),
+            traderaApiAppKey: formData.traderaApiAppKey.trim(),
+            traderaApiPublicKey: formData.traderaApiPublicKey.trim() || null,
+            traderaApiUserId: Number.parseInt(formData.traderaApiUserId, 10),
+            traderaApiToken: formData.traderaApiToken.trim(),
+            traderaApiSandbox: formData.traderaApiSandbox,
+          }
         : {}),
     };
     try {
@@ -200,9 +196,12 @@ export function useIntegrationsActionsImpl(args: {
     }
   };
 
-  const handleDeleteConnection = useCallback((connection: IntegrationConnection): void => {
-    args.setConnectionToDelete(connection);
-  }, [args]);
+  const handleDeleteConnection = useCallback(
+    (connection: IntegrationConnection): void => {
+      args.setConnectionToDelete(connection);
+    },
+    [args]
+  );
 
   const handleConfirmDeleteConnection = async (userPassword: string): Promise<boolean> => {
     if (!args.connectionToDelete) return false;
@@ -285,9 +284,7 @@ export function useIntegrationsActionsImpl(args: {
       } catch (error: unknown) {
         const durationMs = Math.round(performance.now() - startedAt);
         const message = (error as Error)?.message ?? 'Unknown error';
-        const data = (error as any)['data'] as
-          | Record<string, unknown>
-          | undefined;
+        const data = (error as any)['data'] as Record<string, unknown> | undefined;
 
         let errorMessage = `${title} failed.\nURL: ${requestUrl}\nDuration: ${durationMs}ms\nError: ${message}`;
 
@@ -300,16 +297,16 @@ export function useIntegrationsActionsImpl(args: {
 
           const steps = normalizedSteps.length
             ? normalizedSteps.map((s: TestLogEntry) =>
-              s.status === 'failed' && !s.detail ? { ...s, detail: errorMessage } : s
-            )
+                s.status === 'failed' && !s.detail ? { ...s, detail: errorMessage } : s
+              )
             : [
-              {
-                step: `${title} failed`,
-                status: 'failed' as const,
-                timestamp: new Date().toISOString(),
-                detail: errorMessage,
-              },
-            ];
+                {
+                  step: `${title} failed`,
+                  status: 'failed' as const,
+                  timestamp: new Date().toISOString(),
+                  detail: errorMessage,
+                },
+              ];
 
           args.setTestLog(steps);
           args.setTestErrorMeta({
@@ -465,7 +462,8 @@ export function useIntegrationsActionsImpl(args: {
     }
     let params: Record<string, unknown> = {};
     try {
-      if (args.baseApiParams.trim()) params = JSON.parse(args.baseApiParams) as Record<string, unknown>;
+      if (args.baseApiParams.trim())
+        params = JSON.parse(args.baseApiParams) as Record<string, unknown>;
     } catch {
       toast('Parameters must be valid JSON.', { variant: 'error' });
       return;

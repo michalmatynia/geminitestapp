@@ -23,7 +23,10 @@ import {
   resolveIdentifierSearchLabel,
 } from '../../CaseResolverNodeFileUtils';
 import { CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF, formatCaseTimestamp } from '../case-list-utils';
-import { CaseListSearchActionsProvider, useCaseListSearchActionsContext } from './CaseListSearchActionsContext';
+import {
+  CaseListSearchActionsProvider,
+  useCaseListSearchActionsContext,
+} from './CaseListSearchActionsContext';
 
 type CaseListSearchMatchedFile = {
   file: CaseResolverFile;
@@ -118,7 +121,10 @@ const buildCaseListSearchEntries = ({
 
   const searchNodes: MasterTreeNode[] = [];
   caseFiles.forEach((caseFile: CaseResolverFile): void => {
-    const signatureLabel = resolveIdentifierSearchLabel(caseFile.caseIdentifierId, identifierLabelById);
+    const signatureLabel = resolveIdentifierSearchLabel(
+      caseFile.caseIdentifierId,
+      identifierLabelById
+    );
     const searchable = normalizeSearchText(`${caseFile.name} ${signatureLabel}`);
     const caseNodeId = toCaseNodeId(caseFile.id);
     searchNodes.push({
@@ -261,11 +267,7 @@ function resolveFileIcon(fileType: CaseResolverFile['fileType']): React.JSX.Elem
   return <FileText className='size-3.5 shrink-0 text-sky-400/70' />;
 }
 
-function FileSubRow({
-  matched,
-}: {
-  matched: CaseListSearchMatchedFile;
-}): React.JSX.Element {
+function FileSubRow({ matched }: { matched: CaseListSearchMatchedFile }): React.JSX.Element {
   const { onPrefetchFile, onOpenFile } = useCaseListSearchActionsContext();
   const { file, folderPath } = matched;
   const dateLabel = formatCaseTimestamp(file.updatedAt ?? file.createdAt);
@@ -293,7 +295,9 @@ function FileSubRow({
       </Button>
       {file.isLocked === true ? <Lock className='size-3 shrink-0 text-amber-300' /> : null}
       {folderPath ? (
-        <span className='max-w-[160px] shrink-0 truncate text-[10px] text-gray-500'>{folderPath}</span>
+        <span className='max-w-[160px] shrink-0 truncate text-[10px] text-gray-500'>
+          {folderPath}
+        </span>
       ) : null}
       <span className='shrink-0 text-[10px] text-gray-500'>{dateLabel}</span>
     </div>
@@ -328,7 +332,11 @@ function CaseAccordionRow({
           }}
           aria-label={isExpanded ? 'Collapse case' : 'Expand case'}
         >
-          {isExpanded ? <ChevronDown className='size-3.5' /> : <ChevronRight className='size-3.5' />}
+          {isExpanded ? (
+            <ChevronDown className='size-3.5' />
+          ) : (
+            <ChevronRight className='size-3.5' />
+          )}
         </Button>
 
         {isExpanded ? (
@@ -359,7 +367,10 @@ function CaseAccordionRow({
         <StatusBadge status={caseStatus} size='sm' className='h-5 font-bold uppercase' />
 
         {hasFiles ? (
-          <Badge variant='outline' className='bg-sky-500/5 text-sky-300 border-sky-500/20 text-[10px] h-5 px-1.5'>
+          <Badge
+            variant='outline'
+            className='bg-sky-500/5 text-sky-300 border-sky-500/20 text-[10px] h-5 px-1.5'
+          >
             {matchedFiles.length} {matchedFiles.length === 1 ? 'file' : 'files'}
           </Badge>
         ) : null}
@@ -389,10 +400,7 @@ function CaseAccordionRow({
       {isExpanded && hasFiles ? (
         <div className='mt-0.5 space-y-0.5'>
           {matchedFiles.map((matched: CaseListSearchMatchedFile) => (
-            <FileSubRow
-              key={matched.file.id}
-              matched={matched}
-            />
+            <FileSubRow key={matched.file.id} matched={matched} />
           ))}
         </div>
       ) : null}

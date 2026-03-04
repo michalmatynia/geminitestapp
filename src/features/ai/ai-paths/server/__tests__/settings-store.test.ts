@@ -116,9 +116,7 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
 
     expect(seeded.affectedCount).toBeGreaterThan(0);
     expect(
-      seeded.nextRecords.some(
-        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_syr8f4`
-      )
+      seeded.nextRecords.some((record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_syr8f4`)
     ).toBe(true);
     expect(
       seeded.nextRecords.some(
@@ -186,7 +184,8 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     );
     if (!configRecord) throw new Error('Expected path_syr8f4 config record');
     const parsed = JSON.parse(configRecord.value) as Record<string, unknown>;
-    const starterExtension = (parsed['extensions'] as Record<string, unknown>)?.['aiPathsStarter'] ?? null;
+    const starterExtension =
+      (parsed['extensions'] as Record<string, unknown>)?.['aiPathsStarter'] ?? null;
     expect(starterExtension).toBeNull();
   });
 });

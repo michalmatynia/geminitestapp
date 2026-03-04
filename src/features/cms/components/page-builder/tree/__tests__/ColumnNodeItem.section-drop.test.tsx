@@ -141,8 +141,12 @@ describe('ColumnNodeItem section payload drop', () => {
     fireEvent.dragOver(dropTarget as Element, { dataTransfer });
     fireEvent.drop(dropTarget as Element, { dataTransfer });
 
-    expect(dropToColumnMock).toHaveBeenCalledWith('source-section', 'target-section', 'column-1', 0);
+    expect(dropToColumnMock).toHaveBeenCalledWith(
+      'source-section',
+      'target-section',
+      'column-1',
+      0
+    );
     expect(endSectionDragMock).toHaveBeenCalledTimes(1);
   });
 });
-

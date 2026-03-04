@@ -115,7 +115,7 @@ export function useCreatePage(): CreateMutation<Page, { name: string; slugIds: s
 export function useUpdatePage(): UpdateMutation<
   Page,
   { id: string; input: Page & { slugIds?: string[] } }
-  > {
+> {
   return createUpdateMutationV2({
     mutationFn: ({ id, input }: { id: string; input: Page & { slugIds?: string[] } }) =>
       updatePage(id, input).then(({ ok, payload }) => {
@@ -258,7 +258,7 @@ export function useCreateSlug(): CreateMutation<Slug, { slug: string; domainId?:
 export function useUpdateSlug(): UpdateMutation<
   Slug,
   { id: string; input: Partial<Slug>; domainId?: string | null }
-  > {
+> {
   return createUpdateMutationV2({
     mutationFn: ({
       id,
@@ -292,7 +292,7 @@ export function useUpdateSlug(): UpdateMutation<
 export function useUpdateSlugDomains(): UpdateMutation<
   { domainIds: string[] },
   { id: string; domainIds: string[] }
-  > {
+> {
   return createUpdateMutationV2({
     mutationFn: ({ id, domainIds }: { id: string; domainIds: string[] }) =>
       updateSlugDomains(id, domainIds),
@@ -401,7 +401,7 @@ export function useDeleteCmsDomain(): UpdateMutation<string, string> {
 export function useUpdateCmsDomain(): UpdateMutation<
   CmsDomain,
   { id: string; input: { aliasOf?: string | null } }
-  > {
+> {
   return createUpdateMutationV2({
     mutationFn: ({ id, input }: { id: string; input: { aliasOf?: string | null } }) =>
       updateDomain(id, input).then(({ ok, payload }) => {
@@ -486,7 +486,7 @@ export function useCreateTheme(): CreateMutation<CmsTheme, CmsThemeCreateInput> 
 export function useUpdateTheme(): UpdateMutation<
   CmsTheme,
   { id: string; input: CmsThemeUpdateInput }
-  > {
+> {
   return createUpdateMutationV2({
     mutationFn: ({ id, input }: { id: string; input: CmsThemeUpdateInput }) =>
       updateTheme(id, input).then(({ ok, payload }) => {
@@ -534,7 +534,7 @@ export function useDeleteTheme(): UpdateMutation<string, string> {
 export function useUploadCmsMedia(): CreateMutation<
   ImageFileRecord,
   { file: File; onProgress?: (loaded: number, total?: number) => void }
-  > {
+> {
   return createMutationV2({
     mutationFn: async ({
       file,

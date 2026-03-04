@@ -299,8 +299,7 @@ function resolvePrismaError(
       suggestedActions: [
         {
           label: 'Check Input',
-          description:
-            'Please review the request payload and ensure all fields use valid values.',
+          description: 'Please review the request payload and ensure all fields use valid values.',
           actionType: 'VERIFY_INPUT_DATA',
         },
       ],

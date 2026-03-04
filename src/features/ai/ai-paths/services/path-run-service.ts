@@ -1,4 +1,3 @@
- 
 import 'server-only';
 
 import {
@@ -306,9 +305,9 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       nodePolicy:
         policyReport.disabledNodeTypes.length > 0
           ? {
-            disabledNodeTypes: policyReport.disabledNodeTypes,
-            blockedCount: policyReport.violations.length,
-          }
+              disabledNodeTypes: policyReport.disabledNodeTypes,
+              blockedCount: policyReport.violations.length,
+            }
           : undefined,
       graphCompile: {
         errors: runPreflight.compileReport.errors,
@@ -321,10 +320,10 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         validation: runPreflight.validationReport,
         dependency: runPreflight.dependencyReport
           ? {
-            errors: runPreflight.dependencyReport.errors,
-            warnings: runPreflight.dependencyReport.warnings,
-            strictReady: runPreflight.dependencyReport.strictReady,
-          }
+              errors: runPreflight.dependencyReport.errors,
+              warnings: runPreflight.dependencyReport.warnings,
+              strictReady: runPreflight.dependencyReport.strictReady,
+            }
           : null,
         dataContract: {
           errors: runPreflight.dataContractReport.errors,
@@ -588,12 +587,15 @@ export const resumePathRun = async (
           },
         });
       } catch (eventError) {
-        void ErrorSystem.logWarning(`Non-critical resume dispatch failure logging error for ${runId}`, {
-          service: 'ai-paths-service',
-          action: 'resumeDispatchFailureEvent',
-          runId,
-          error: eventError,
-        });
+        void ErrorSystem.logWarning(
+          `Non-critical resume dispatch failure logging error for ${runId}`,
+          {
+            service: 'ai-paths-service',
+            action: 'resumeDispatchFailureEvent',
+            runId,
+            error: eventError,
+          }
+        );
       }
 
       throw new Error(`Run dispatch failed: ${dispatchMessage}`, { cause: dispatchError });
@@ -722,13 +724,16 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
           },
         });
       } catch (eventError) {
-        void ErrorSystem.logWarning(`Non-critical retry dispatch failure logging error for ${runId}`, {
-          service: 'ai-paths-service',
-          action: 'retryDispatchFailureEvent',
-          runId,
-          nodeId,
-          error: eventError,
-        });
+        void ErrorSystem.logWarning(
+          `Non-critical retry dispatch failure logging error for ${runId}`,
+          {
+            service: 'ai-paths-service',
+            action: 'retryDispatchFailureEvent',
+            runId,
+            nodeId,
+            error: eventError,
+          }
+        );
       }
 
       throw new Error(`Run dispatch failed: ${dispatchMessage}`, { cause: dispatchError });

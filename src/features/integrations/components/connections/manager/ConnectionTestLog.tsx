@@ -6,13 +6,8 @@ import { TestLogEntry } from '@/shared/contracts/integrations';
 import { StatusBadge, FormSection, SimpleSettingsList } from '@/shared/ui';
 
 export function ConnectionTestLog(): React.JSX.Element | null {
-  const {
-    activeIntegration,
-    isTesting,
-    testLog,
-    setSelectedStep,
-    setShowTestLogModal,
-  } = useIntegrationsContext();
+  const { activeIntegration, isTesting, testLog, setSelectedStep, setShowTestLogModal } =
+    useIntegrationsContext();
 
   if (!activeIntegration) return null;
 

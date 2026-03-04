@@ -1,8 +1,4 @@
-import { 
-  apiPost, 
-  apiFetch,
-  ApiResponse 
-} from './base';
+import { apiPost, apiFetch, ApiResponse } from './base';
 
 export type AgentEnqueuePayload = {
   prompt: string;
@@ -72,7 +68,9 @@ export type PlaywrightNodeRunSnapshot = {
   completedAt?: string | null;
 };
 
-export async function enqueueAgentRun(payload: AgentEnqueuePayload): Promise<ApiResponse<{ runId: string }>> {
+export async function enqueueAgentRun(
+  payload: AgentEnqueuePayload
+): Promise<ApiResponse<{ runId: string }>> {
   return apiPost<{ runId: string }>('/api/ai/agent-runtime/enqueue', payload);
 }
 

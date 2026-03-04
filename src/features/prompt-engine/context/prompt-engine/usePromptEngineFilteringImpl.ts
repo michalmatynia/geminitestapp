@@ -1,28 +1,15 @@
 'use client';
 
- 
- 
- 
- 
- 
- 
-
 import { useState, useMemo } from 'react';
-import { 
-  SeverityFilter, 
-  ScopeFilter 
-} from './PromptEngineFiltersContext';
-import { 
-  RuleDraft, 
-  isImageStudioRule, 
-  isCaseResolverPromptExploderRule, 
-  isPromptExploderRule, 
-  ruleSearchText 
+import { SeverityFilter, ScopeFilter } from './PromptEngineFiltersContext';
+import {
+  RuleDraft,
+  isImageStudioRule,
+  isCaseResolverPromptExploderRule,
+  isPromptExploderRule,
+  ruleSearchText,
 } from '../prompt-engine-context-utils';
-import { 
-  PatternCollectionTab, 
-  ExploderPatternSubTab 
-} from './PromptEngineConfigContext';
+import { PatternCollectionTab, ExploderPatternSubTab } from './PromptEngineConfigContext';
 import { DEFAULT_PROMPT_VALIDATION_SCOPES } from '../../settings';
 
 export function usePromptEngineFilteringImpl(args: {
@@ -87,25 +74,31 @@ export function usePromptEngineFilteringImpl(args: {
     });
   };
 
-  const filteredDrafts = useMemo(() => filterRules(sortedDrafts), [
-    activeExploderSubTab,
-    activePatternTab,
-    includeDisabled,
-    query,
-    activeScope,
-    severity,
-    sortedDrafts,
-  ]);
+  const filteredDrafts = useMemo(
+    () => filterRules(sortedDrafts),
+    [
+      activeExploderSubTab,
+      activePatternTab,
+      includeDisabled,
+      query,
+      activeScope,
+      severity,
+      sortedDrafts,
+    ]
+  );
 
-  const filteredLearnedDrafts = useMemo(() => filterRules(learnedDrafts), [
-    activeExploderSubTab,
-    activePatternTab,
-    includeDisabled,
-    learnedDrafts,
-    query,
-    activeScope,
-    severity,
-  ]);
+  const filteredLearnedDrafts = useMemo(
+    () => filterRules(learnedDrafts),
+    [
+      activeExploderSubTab,
+      activePatternTab,
+      includeDisabled,
+      learnedDrafts,
+      query,
+      activeScope,
+      severity,
+    ]
+  );
 
   return {
     query,

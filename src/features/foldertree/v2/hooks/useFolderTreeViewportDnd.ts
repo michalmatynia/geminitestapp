@@ -1,21 +1,14 @@
 'use client';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
- 
- 
- 
- 
- 
 
 import React, { useCallback, useRef, useState } from 'react';
-import { 
-  MasterFolderTreeController, 
+import {
+  MasterFolderTreeController,
   MasterTreeId,
   MasterTreeDropPositionDto,
 } from '@/shared/contracts/master-folder-tree';
-import { 
-  getMasterTreeDragNodeData, 
-} from '../operations/drag-data';
+import { getMasterTreeDragNodeData } from '../operations/drag-data';
 import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
 import { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
 
@@ -24,12 +17,16 @@ export function useFolderTreeViewportDnd(args: {
   enableDnd: boolean;
   canDrop?: (input: any, controller: MasterFolderTreeController) => boolean;
   onNodeDrop?: (input: any, controller: MasterFolderTreeController) => Promise<void> | void;
-  resolveDropPosition?: (event: any, input: any, controller: MasterFolderTreeController) => MasterTreeDropPositionDto;
+  resolveDropPosition?: (
+    event: any,
+    input: any,
+    controller: MasterFolderTreeController
+  ) => MasterTreeDropPositionDto;
   resolveDraggedNodeId?: (event: React.DragEvent<HTMLElement>) => MasterTreeId | null;
 }) {
   const { controller, canDrop, resolveDropPosition, resolveDraggedNodeId } = args;
   const [rootDropHoverZone, setRootDropHoverZone] = useState<'top' | 'bottom' | null>(null);
-  
+
   const autoExpandTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoExpandTargetRef = useRef<MasterTreeId | null>(null);
 
@@ -43,86 +40,99 @@ export function useFolderTreeViewportDnd(args: {
     autoExpandTargetRef.current = null;
   }, [controller]);
 
-  const resolveDraggedNode = useCallback((event: React.DragEvent<HTMLElement>): MasterTreeId | null => {
-    if (controller.dragState?.draggedNodeId) {
-      return controller.dragState.draggedNodeId;
-    }
-    const payloadNodeId = getMasterTreeDragNodeData(event.dataTransfer);
-    if (payloadNodeId) return payloadNodeId;
-    return resolveDraggedNodeId?.(event) ?? null;
-  }, [controller.dragState?.draggedNodeId, resolveDraggedNodeId]);
+  const resolveDraggedNode = useCallback(
+    (event: React.DragEvent<HTMLElement>): MasterTreeId | null => {
+      if (controller.dragState?.draggedNodeId) {
+        return controller.dragState.draggedNodeId;
+      }
+      const payloadNodeId = getMasterTreeDragNodeData(event.dataTransfer);
+      if (payloadNodeId) return payloadNodeId;
+      return resolveDraggedNodeId?.(event) ?? null;
+    },
+    [controller.dragState?.draggedNodeId, resolveDraggedNodeId]
+  );
 
-  const resolveDropAllowance = useCallback((
-    draggedNodeId: MasterTreeId,
-    targetId: MasterTreeId | null,
-    position: MasterTreeDropPositionDto
-  ): boolean => {
-    const defaultCheck = controller.canDropNode(draggedNodeId, targetId, position);
-    if (defaultCheck.ok) {
-      if (!canDrop) return true;
+  const resolveDropAllowance = useCallback(
+    (
+      draggedNodeId: MasterTreeId,
+      targetId: MasterTreeId | null,
+      position: MasterTreeDropPositionDto
+    ): boolean => {
+      const defaultCheck = controller.canDropNode(draggedNodeId, targetId, position);
+      if (defaultCheck.ok) {
+        if (!canDrop) return true;
+        return canDrop(
+          {
+            draggedNodeId,
+            targetId,
+            position,
+            defaultAllowed: true,
+          },
+          controller
+        );
+      }
+      if (!canDrop) return false;
       return canDrop(
         {
           draggedNodeId,
           targetId,
           position,
-          defaultAllowed: true,
+          defaultAllowed: false,
         },
         controller
       );
-    }
-    if (!canDrop) return false;
-    return canDrop(
-      {
+    },
+    [canDrop, controller]
+  );
+
+  const resolveNodeDropPosition = useCallback(
+    (
+      event: React.DragEvent<HTMLDivElement>,
+      draggedNodeId: MasterTreeId,
+      targetNode: MasterTreeViewNode
+    ): MasterTreeDropPositionDto | null => {
+      const targetRect = event.currentTarget.getBoundingClientRect();
+      const edgePosition = resolveVerticalDropPosition(event.clientY, targetRect, {
+        thresholdRatio: 0.34,
+      });
+      const requestedPosition =
+        resolveDropPosition?.(
+          event,
+          {
+            draggedNodeId,
+            targetId: targetNode.id,
+          },
+          controller
+        ) ??
+        edgePosition ??
+        'inside';
+
+      const insideAllowed = resolveDropAllowance(draggedNodeId, targetNode.id, 'inside');
+      const requestedAllowed = resolveDropAllowance(
         draggedNodeId,
-        targetId,
-        position,
-        defaultAllowed: false,
-      },
-      controller
-    );
-  }, [canDrop, controller]);
+        targetNode.id,
+        requestedPosition
+      );
 
-  const resolveNodeDropPosition = useCallback((
-    event: React.DragEvent<HTMLDivElement>,
-    draggedNodeId: MasterTreeId,
-    targetNode: MasterTreeViewNode
-  ): MasterTreeDropPositionDto | null => {
-    const targetRect = event.currentTarget.getBoundingClientRect();
-    const edgePosition = resolveVerticalDropPosition(event.clientY, targetRect, {
-      thresholdRatio: 0.34,
-    });
-    const requestedPosition =
-      resolveDropPosition?.(
-        event,
-        {
-          draggedNodeId,
-          targetId: targetNode.id,
-        },
-        controller
-      ) ??
-      edgePosition ??
-      'inside';
-
-    const insideAllowed = resolveDropAllowance(draggedNodeId, targetNode.id, 'inside');
-    const requestedAllowed = resolveDropAllowance(draggedNodeId, targetNode.id, requestedPosition);
-
-    if (
-      !resolveDropPosition &&
-      requestedPosition !== 'inside' &&
-      targetNode.type === 'folder' &&
-      insideAllowed
-    ) {
-      const draggedNode =
-        controller.nodes.find((candidate) => candidate.id === draggedNodeId) ?? null;
-      if (!draggedNode || draggedNode.type === 'file') {
-        return 'inside';
+      if (
+        !resolveDropPosition &&
+        requestedPosition !== 'inside' &&
+        targetNode.type === 'folder' &&
+        insideAllowed
+      ) {
+        const draggedNode =
+          controller.nodes.find((candidate) => candidate.id === draggedNodeId) ?? null;
+        if (!draggedNode || draggedNode.type === 'file') {
+          return 'inside';
+        }
       }
-    }
 
-    if (requestedAllowed) return requestedPosition;
-    if (requestedPosition !== 'inside' && insideAllowed) return 'inside';
-    return null;
-  }, [controller, resolveDropAllowance, resolveDropPosition]);
+      if (requestedAllowed) return requestedPosition;
+      if (requestedPosition !== 'inside' && insideAllowed) return 'inside';
+      return null;
+    },
+    [controller, resolveDropAllowance, resolveDropPosition]
+  );
 
   return {
     rootDropHoverZone,

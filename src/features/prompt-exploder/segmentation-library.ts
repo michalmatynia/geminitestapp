@@ -21,11 +21,7 @@ export const PROMPT_EXPLODER_SEGMENTATION_LIBRARY_VERSION = 1;
 export const PROMPT_EXPLODER_SEGMENTATION_LIBRARY_MAX_RECORDS = 200;
 
 export const promptExploderSegmentationLibraryStateSchema = z.object({
-  version: z
-    .number()
-    .int()
-    .positive()
-    .default(PROMPT_EXPLODER_SEGMENTATION_LIBRARY_VERSION),
+  version: z.number().int().positive().default(PROMPT_EXPLODER_SEGMENTATION_LIBRARY_VERSION),
   records: z.array(promptExploderSegmentationRecordSchema).default([]),
 });
 export type PromptExploderSegmentationLibraryState = z.infer<

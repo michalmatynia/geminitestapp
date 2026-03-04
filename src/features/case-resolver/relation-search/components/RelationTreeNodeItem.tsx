@@ -105,7 +105,9 @@ export function RelationTreeNodeItem({
             )}
           </Button>
         ) : (
-          <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
+          <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>
+            •
+          </span>
         )}
         {isExpanded ? (
           <FolderOpen className='size-4 shrink-0 text-amber-300/70' />
@@ -150,7 +152,10 @@ export function RelationTreeNodeItem({
         />
       ) : (
         <Tooltip
-          content={getCaseResolverDocTooltipWithFallback('dragToCanvas', 'Drag from handle to canvas')}
+          content={getCaseResolverDocTooltipWithFallback(
+            'dragToCanvas',
+            'Drag from handle to canvas'
+          )}
           side='top'
         >
           <button

@@ -149,8 +149,8 @@ export const normalizeLabeledPartySegments = (
 
     const flushCurrent = (): void => {
       if (!currentRole) return;
-      const hasMeaningfulContent = currentBlockLines.some((candidateLine: string): boolean =>
-        normalizeText(candidateLine).length > 0
+      const hasMeaningfulContent = currentBlockLines.some(
+        (candidateLine: string): boolean => normalizeText(candidateLine).length > 0
       );
       if (!hasMeaningfulContent) return;
       labeledBlocks.push({
@@ -162,8 +162,8 @@ export const normalizeLabeledPartySegments = (
     lines.forEach((line: string): void => {
       const role = resolveLabeledSegmentRole(line);
       if (role) {
-        const hasCurrentContent = currentBlockLines.some((candidateLine: string): boolean =>
-          normalizeText(candidateLine).length > 0
+        const hasCurrentContent = currentBlockLines.some(
+          (candidateLine: string): boolean => normalizeText(candidateLine).length > 0
         );
         if (!sawLabel && hasCurrentContent) {
           sawMeaningfulPrefix = true;

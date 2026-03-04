@@ -86,12 +86,12 @@ const mapPriceGroupResponse = <
     currency?: { code: string } | null;
   },
 >(
-    group: T
-  ): T & { currencyCode: string; groupType: 'standard' | 'dependent' } => ({
-    ...group,
-    currencyCode: group.currency?.code ?? group.currencyId,
-    groupType: resolveGroupType(group.type, group.sourceGroupId),
-  });
+  group: T
+): T & { currencyCode: string; groupType: 'standard' | 'dependent' } => ({
+  ...group,
+  currencyCode: group.currency?.code ?? group.currencyId,
+  groupType: resolveGroupType(group.type, group.sourceGroupId),
+});
 
 const mapMongoPriceGroupResponse = (
   group: MongoPriceGroupDoc,
@@ -236,12 +236,14 @@ export async function GET_products_metadata_handler(
             .filter((value: string): value is string => value.trim().length > 0)
         )
       );
-      const currencyDocs = (currencyIds.length
-        ? await mongo
-          .collection<MongoCurrencyDoc>('currencies')
-          .find({ id: { $in: currencyIds } })
-          .toArray()
-        : []) as MongoCurrencyDoc[];
+      const currencyDocs = (
+        currencyIds.length
+          ? await mongo
+              .collection<MongoCurrencyDoc>('currencies')
+              .find({ id: { $in: currencyIds } })
+              .toArray()
+          : []
+      ) as MongoCurrencyDoc[];
       const currencyById = new Map(
         currencyDocs.map((currency: MongoCurrencyDoc) => [String(currency.id ?? ''), currency])
       );
@@ -337,7 +339,9 @@ export async function POST_products_metadata_handler(
         ...created,
       } as unknown as MongoPriceGroupDoc);
 
-      const currencyById = new Map([[String(currencyDoc.id ?? currencyDoc.code ?? ''), currencyDoc]]);
+      const currencyById = new Map([
+        [String(currencyDoc.id ?? currencyDoc.code ?? ''), currencyDoc],
+      ]);
       return NextResponse.json(mapMongoPriceGroupResponse(created, currencyById));
     }
 

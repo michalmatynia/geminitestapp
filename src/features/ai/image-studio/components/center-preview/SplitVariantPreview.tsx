@@ -139,17 +139,17 @@ export function SplitVariantPreview({
 
     const buildWheelHandler =
       (pane: Pane) =>
-        (event: WheelEvent): void => {
-          event.preventDefault();
-          event.stopPropagation();
-          const normalizedDelta = normalizeWheelDelta(event);
-          const zoomDelta = Math.max(
-            -SPLIT_WHEEL_MAX_DELTA,
-            Math.min(SPLIT_WHEEL_MAX_DELTA, -normalizedDelta * SPLIT_WHEEL_ZOOM_SENSITIVITY)
-          );
-          if (Math.abs(zoomDelta) < SPLIT_WHEEL_MIN_DELTA) return;
-          onAdjustSplitZoom(pane, zoomDelta);
-        };
+      (event: WheelEvent): void => {
+        event.preventDefault();
+        event.stopPropagation();
+        const normalizedDelta = normalizeWheelDelta(event);
+        const zoomDelta = Math.max(
+          -SPLIT_WHEEL_MAX_DELTA,
+          Math.min(SPLIT_WHEEL_MAX_DELTA, -normalizedDelta * SPLIT_WHEEL_ZOOM_SENSITIVITY)
+        );
+        if (Math.abs(zoomDelta) < SPLIT_WHEEL_MIN_DELTA) return;
+        onAdjustSplitZoom(pane, zoomDelta);
+      };
 
     const handleLeftWheel = buildWheelHandler('left');
     const handleRightWheel = buildWheelHandler('right');

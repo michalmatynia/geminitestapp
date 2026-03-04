@@ -1,8 +1,8 @@
 import { AiNode, Edge } from '@/shared/contracts/ai-paths';
-import { 
-  resolveEdgeFromNodeId, 
-  resolveEdgeToNodeId, 
-  isSimulationCapableFetcher 
+import {
+  resolveEdgeFromNodeId,
+  resolveEdgeToNodeId,
+  isSimulationCapableFetcher,
 } from './engine-utils';
 
 export function resolveScopedNodeIds(args: {
@@ -13,12 +13,13 @@ export function resolveScopedNodeIds(args: {
   incomingEdgesByNode: Map<string, Edge[]>;
   seedHashes: Record<string, string>;
 }): Set<string> {
-  const { nodes, triggerNodeId, nodeById, outgoingEdgesByNode, incomingEdgesByNode, seedHashes } = args;
-  
+  const { nodes, triggerNodeId, nodeById, outgoingEdgesByNode, incomingEdgesByNode, seedHashes } =
+    args;
+
   if (!triggerNodeId || !nodeById.has(triggerNodeId)) {
     return new Set(nodes.map((node) => node.id));
   }
-  
+
   const reachable = new Set<string>();
   const stack = [triggerNodeId];
 

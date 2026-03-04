@@ -1,11 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 
-import {
-  saveProposal,
-  getProposal,
-  updateProposal,
-  __testOnly,
-} from '../proposal-store';
+import { saveProposal, getProposal, updateProposal, __testOnly } from '../proposal-store';
 
 const BASE_PROPOSAL = {
   workflow: 'data_analysis' as const,
@@ -27,9 +22,7 @@ describe('proposal-store', () => {
   describe('saveProposal', () => {
     it('generates a UUID id', () => {
       const proposal = saveProposal(BASE_PROPOSAL);
-      expect(proposal.id).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
-      );
+      expect(proposal.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
     });
 
     it('sets createdAt to an ISO datetime string', () => {

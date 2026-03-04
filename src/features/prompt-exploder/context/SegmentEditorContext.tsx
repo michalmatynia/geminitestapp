@@ -105,12 +105,8 @@ export function SegmentEditorProvider({
   const { setSessionLearnedRules, setSessionLearnedTemplates, updateSetting, updateSettingsBulk } =
     useSettingsActions();
   const { documentState, selectedSegment, promptText } = useDocumentState();
-  const {
-    replaceSegments,
-    setDocumentState,
-    setManualBindings,
-    setSelectedSegmentId,
-  } = useDocumentActions();
+  const { replaceSegments, setDocumentState, setManualBindings, setSelectedSegmentId } =
+    useDocumentActions();
 
   const [approvalDraft, setApprovalDraft] = useState(
     promptExploderCreateApprovalDraftFromSegment(null)

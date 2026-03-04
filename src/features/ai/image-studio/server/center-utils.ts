@@ -270,11 +270,13 @@ export async function centerAndScaleObjectByLayout(
       background: { r: 255, g: 255, b: 255, alpha: 1 },
     },
   })
-    .composite([{ 
-      input: extracted, 
-      left: Math.round(targetObjectBounds.left), 
-      top: Math.round(targetObjectBounds.top) 
-    }])
+    .composite([
+      {
+        input: extracted,
+        left: Math.round(targetObjectBounds.left),
+        top: Math.round(targetObjectBounds.top),
+      },
+    ])
     .png()
     .toBuffer();
 

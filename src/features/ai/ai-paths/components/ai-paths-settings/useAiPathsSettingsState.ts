@@ -507,7 +507,11 @@ export function useAiPathsSettingsState({
     persistPathSettings: persistPathSettingsVoid,
     reportAiPathsError,
     pruneRuntimeInputs: (_state, removed, remaining) => {
-      return pruneRuntimeInputsState(_state, removed as unknown as Edge[], remaining as unknown as Edge[]);
+      return pruneRuntimeInputsState(
+        _state,
+        removed as unknown as Edge[],
+        remaining as unknown as Edge[]
+      );
     },
   });
 

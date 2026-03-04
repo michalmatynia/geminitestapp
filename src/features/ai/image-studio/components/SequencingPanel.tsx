@@ -113,8 +113,7 @@ export function SequencingPanel(): React.JSX.Element {
     () => runtimeSequenceSteps.filter((step) => step.enabled),
     [runtimeSequenceSteps]
   );
-  const activeGenerationModel =
-    brainGenerationModel.effectiveModelId.trim() || 'Not configured';
+  const activeGenerationModel = brainGenerationModel.effectiveModelId.trim() || 'Not configured';
   const workingSlotImageWidth = useMemo((): number | null => {
     const width = workingSlot?.imageFile?.width ?? null;
     return typeof width === 'number' && Number.isFinite(width) && width > 0 ? width : null;
@@ -609,10 +608,10 @@ export function SequencingPanel(): React.JSX.Element {
         mask:
           polygons.length > 0
             ? {
-              polygons,
-              invert: maskInvert,
-              feather: maskFeather,
-            }
+                polygons,
+                invert: maskInvert,
+                feather: maskFeather,
+              }
             : null,
         studioSettings: studioSettings as unknown as Record<string, unknown>,
         steps: resolvedSteps,

@@ -259,121 +259,127 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
   );
   const [logsPromptSystem, setLogsPromptSystem] = useState(DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT);
 
-  const hydrateFromSettingsMap = useCallback((map: Map<string, string>): void => {
-    const rawBrainSettings = map.get(AI_BRAIN_SETTINGS_KEY) ?? null;
-    let parsedBrain = defaultBrainSettings;
-    try {
-      parsedBrain = parseBrainSettings(rawBrainSettings);
-    } catch (error: unknown) {
-      logClientError(error, {
-        context: {
-          source: 'BrainContext',
-          action: 'hydrateSettings',
-          settingKey: AI_BRAIN_SETTINGS_KEY,
-        },
-      });
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'AI Brain settings are invalid and could not be loaded.',
-        { variant: 'error' }
+  const hydrateFromSettingsMap = useCallback(
+    (map: Map<string, string>): void => {
+      const rawBrainSettings = map.get(AI_BRAIN_SETTINGS_KEY) ?? null;
+      let parsedBrain = defaultBrainSettings;
+      try {
+        parsedBrain = parseBrainSettings(rawBrainSettings);
+      } catch (error: unknown) {
+        logClientError(error, {
+          context: {
+            source: 'BrainContext',
+            action: 'hydrateSettings',
+            settingKey: AI_BRAIN_SETTINGS_KEY,
+          },
+        });
+        toast(
+          error instanceof Error
+            ? error.message
+            : 'AI Brain settings are invalid and could not be loaded.',
+          { variant: 'error' }
+        );
+        if (rawBrainSettings?.trim()) return;
+      }
+      const rawProviderCatalog = map.get(AI_BRAIN_PROVIDER_CATALOG_KEY) ?? null;
+      let parsedCatalog = defaultBrainProviderCatalog;
+      try {
+        parsedCatalog = parseBrainProviderCatalog(rawProviderCatalog);
+      } catch (error: unknown) {
+        logClientError(error, {
+          context: {
+            source: 'BrainContext',
+            action: 'hydrateProviderCatalog',
+            settingKey: AI_BRAIN_PROVIDER_CATALOG_KEY,
+          },
+        });
+        toast(
+          error instanceof Error
+            ? error.message
+            : 'AI Brain provider catalog is invalid and could not be loaded.',
+          { variant: 'error' }
+        );
+        if (rawProviderCatalog?.trim()) return;
+      }
+      const playwrightPersonaIds = parsePlaywrightPersonaIds(
+        map.get(PLAYWRIGHT_PERSONA_SETTINGS_KEY)
       );
-      if (rawBrainSettings?.trim()) return;
-    }
-    const rawProviderCatalog = map.get(AI_BRAIN_PROVIDER_CATALOG_KEY) ?? null;
-    let parsedCatalog = defaultBrainProviderCatalog;
-    try {
-      parsedCatalog = parseBrainProviderCatalog(rawProviderCatalog);
-    } catch (error: unknown) {
-      logClientError(error, {
-        context: {
-          source: 'BrainContext',
-          action: 'hydrateProviderCatalog',
-          settingKey: AI_BRAIN_PROVIDER_CATALOG_KEY,
-        },
+      const parsedEntries = catalogToEntries(parsedCatalog);
+      const mergedEntries =
+        !hasCatalogPoolEntries(parsedEntries, 'playwrightPersonas') &&
+        playwrightPersonaIds.length > 0
+          ? appendCatalogPoolValues(parsedEntries, 'playwrightPersonas', playwrightPersonaIds)
+          : parsedEntries;
+      const mergedCatalog = sanitizeBrainProviderCatalog({
+        ...parsedCatalog,
+        entries: mergedEntries,
       });
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'AI Brain provider catalog is invalid and could not be loaded.',
-        { variant: 'error' }
+
+      setSettings(parsedBrain);
+      setProviderCatalog(mergedCatalog);
+      setOverridesEnabled({
+        cms_builder: Boolean(parsedBrain.assignments.cms_builder),
+        image_studio: Boolean(parsedBrain.assignments.image_studio),
+        prompt_engine: Boolean(parsedBrain.assignments.prompt_engine),
+        ai_paths: Boolean(parsedBrain.assignments.ai_paths),
+        chatbot: Boolean(parsedBrain.assignments.chatbot),
+        products: Boolean(parsedBrain.assignments.products),
+        case_resolver: Boolean(parsedBrain.assignments.case_resolver),
+        agent_runtime: Boolean(parsedBrain.assignments.agent_runtime),
+        agent_teaching: Boolean(parsedBrain.assignments.agent_teaching),
+        analytics: true,
+        runtime_analytics: true,
+        system_logs: true,
+        error_logs: true,
+      });
+
+      setOpenaiApiKey(map.get('openai_api_key') ?? '');
+      setAnthropicApiKey(map.get('anthropic_api_key') ?? '');
+      setGeminiApiKey(map.get('gemini_api_key') ?? '');
+
+      setAnalyticsScheduleEnabled((prev: boolean) =>
+        parseBooleanSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled), prev)
       );
-      if (rawProviderCatalog?.trim()) return;
-    }
-    const playwrightPersonaIds = parsePlaywrightPersonaIds(
-      map.get(PLAYWRIGHT_PERSONA_SETTINGS_KEY)
-    );
-    const parsedEntries = catalogToEntries(parsedCatalog);
-    const mergedEntries =
-      !hasCatalogPoolEntries(parsedEntries, 'playwrightPersonas') &&
-      playwrightPersonaIds.length > 0
-        ? appendCatalogPoolValues(parsedEntries, 'playwrightPersonas', playwrightPersonaIds)
-        : parsedEntries;
-    const mergedCatalog = sanitizeBrainProviderCatalog({
-      ...parsedCatalog,
-      entries: mergedEntries,
-    });
+      setAnalyticsScheduleMinutes((prev: number) =>
+        parseNumberSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleMinutes), prev, 5)
+      );
+      setRuntimeAnalyticsScheduleEnabled((prev: boolean) =>
+        parseBooleanSetting(
+          map.get(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled),
+          prev
+        )
+      );
+      setRuntimeAnalyticsScheduleMinutes((prev: number) =>
+        parseNumberSetting(
+          map.get(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleMinutes),
+          prev,
+          5
+        )
+      );
+      setLogsScheduleEnabled((prev: boolean) =>
+        parseBooleanSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled), prev)
+      );
+      setLogsScheduleMinutes((prev: number) =>
+        parseNumberSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleMinutes), prev, 5)
+      );
+      setLogsAutoOnError((prev: boolean) =>
+        parseBooleanSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.logsAutoOnError), prev)
+      );
 
-    setSettings(parsedBrain);
-    setProviderCatalog(mergedCatalog);
-    setOverridesEnabled({
-      cms_builder: Boolean(parsedBrain.assignments.cms_builder),
-      image_studio: Boolean(parsedBrain.assignments.image_studio),
-      prompt_engine: Boolean(parsedBrain.assignments.prompt_engine),
-      ai_paths: Boolean(parsedBrain.assignments.ai_paths),
-      chatbot: Boolean(parsedBrain.assignments.chatbot),
-      products: Boolean(parsedBrain.assignments.products),
-      case_resolver: Boolean(parsedBrain.assignments.case_resolver),
-      agent_runtime: Boolean(parsedBrain.assignments.agent_runtime),
-      agent_teaching: Boolean(parsedBrain.assignments.agent_teaching),
-      analytics: true,
-      runtime_analytics: true,
-      system_logs: true,
-      error_logs: true,
-    });
-
-    setOpenaiApiKey(map.get('openai_api_key') ?? '');
-    setAnthropicApiKey(map.get('anthropic_api_key') ?? '');
-    setGeminiApiKey(map.get('gemini_api_key') ?? '');
-
-    setAnalyticsScheduleEnabled((prev: boolean) =>
-      parseBooleanSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled), prev)
-    );
-    setAnalyticsScheduleMinutes((prev: number) =>
-      parseNumberSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleMinutes), prev, 5)
-    );
-    setRuntimeAnalyticsScheduleEnabled((prev: boolean) =>
-      parseBooleanSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled), prev)
-    );
-    setRuntimeAnalyticsScheduleMinutes((prev: number) =>
-      parseNumberSetting(
-        map.get(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleMinutes),
-        prev,
-        5
-      )
-    );
-    setLogsScheduleEnabled((prev: boolean) =>
-      parseBooleanSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled), prev)
-    );
-    setLogsScheduleMinutes((prev: number) =>
-      parseNumberSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleMinutes), prev, 5)
-    );
-    setLogsAutoOnError((prev: boolean) =>
-      parseBooleanSetting(map.get(AI_INSIGHTS_SETTINGS_KEYS.logsAutoOnError), prev)
-    );
-
-    setAnalyticsPromptSystem(
-      map.get(AI_INSIGHTS_SETTINGS_KEYS.analyticsPromptSystem) ??
-        DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT
-    );
-    setRuntimeAnalyticsPromptSystem(
-      map.get(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsPromptSystem) ??
-        DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT
-    );
-    setLogsPromptSystem(
-      map.get(AI_INSIGHTS_SETTINGS_KEYS.logsPromptSystem) ?? DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT
-    );
-  }, [toast]);
+      setAnalyticsPromptSystem(
+        map.get(AI_INSIGHTS_SETTINGS_KEYS.analyticsPromptSystem) ??
+          DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT
+      );
+      setRuntimeAnalyticsPromptSystem(
+        map.get(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsPromptSystem) ??
+          DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT
+      );
+      setLogsPromptSystem(
+        map.get(AI_INSIGHTS_SETTINGS_KEYS.logsPromptSystem) ?? DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT
+      );
+    },
+    [toast]
+  );
 
   useEffect(() => {
     if (!settingsQuery.data) return;
@@ -539,7 +545,9 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
       setSettings((prev: AiBrainSettings) => {
         const definition = getBrainCapabilityDefinition(capability);
         const allowedProviders =
-          definition.policy === 'agent-or-model' ? (['model', 'agent'] as const) : (['model'] as const);
+          definition.policy === 'agent-or-model'
+            ? (['model', 'agent'] as const)
+            : (['model'] as const);
         const baseAssignment =
           prev.capabilities[capability] ?? resolveBrainCapabilityAssignment(prev, capability);
         const nextAssignment = sanitizeBrainAssignmentForProviders(
@@ -660,11 +668,11 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
           const assignment = settings.capabilities[key];
           acc[key] = assignment
             ? sanitizeBrainAssignmentForProviders(
-              assignment,
-              getBrainCapabilityDefinition(key).policy === 'agent-or-model'
-                ? ['model', 'agent']
-                : ['model']
-            )
+                assignment,
+                getBrainCapabilityDefinition(key).policy === 'agent-or-model'
+                  ? ['model', 'agent']
+                  : ['model']
+              )
             : undefined;
           return acc;
         },

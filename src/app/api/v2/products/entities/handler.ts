@@ -37,9 +37,7 @@ export async function PUT_products_entity_handler(
   if (type === 'catalogs') {
     const provider = await getProductDataProvider();
     const repo = await getCatalogRepository(provider);
-    return NextResponse.json(
-      await repo.updateCatalog(id, data as unknown as CatalogUpdateInput)
-    );
+    return NextResponse.json(await repo.updateCatalog(id, data as unknown as CatalogUpdateInput));
   }
 
   throw badRequestError(`Invalid products entity type for PUT: ${type}`);

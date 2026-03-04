@@ -1,22 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-call */
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
-import { 
-  ParamSpec, 
-  ParamLeaf 
-} from '@/shared/contracts/prompt-engine';
-import { 
-  flattenParams, 
-  looksLikeConstraintHint, 
-  parseNumericConstraintsFromHint, 
-  inferNumberStep, 
-  parseEnumOptionsFromHint, 
-  isRgbArray, 
-  isTuple2NumberArray 
+import { ParamSpec, ParamLeaf } from '@/shared/contracts/prompt-engine';
+import {
+  flattenParams,
+  looksLikeConstraintHint,
+  parseNumericConstraintsFromHint,
+  inferNumberStep,
+  parseEnumOptionsFromHint,
+  isRgbArray,
+  isTuple2NumberArray,
 } from './utils';
 import { splitLineCodeAndLineComment } from './scanner';
 
@@ -64,7 +61,7 @@ export function extractConstraintHintsByPath(rawObjectText: string): Record<stri
     }
 
     const afterColon = (codeTrim as any).slice((keyMatch.index ?? 0) + keyMatch[0].length).trim();
-    if ((afterColon).startsWith('{')) {
+    if (afterColon.startsWith('{')) {
       stack.push(key);
     }
   });

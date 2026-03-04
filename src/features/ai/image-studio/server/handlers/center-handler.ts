@@ -17,11 +17,7 @@ import {
   validateCenterSourceDimensions,
 } from '@/features/ai/image-studio/server/center-utils';
 import { badRequestError } from '@/shared/errors/app-error';
-import {
-  createImageRecord,
-  parseDataUrl,
-  resolveCenterOutputFormat,
-} from '../run-executor-utils';
+import { createImageRecord, parseDataUrl, resolveCenterOutputFormat } from '../run-executor-utils';
 
 export async function executeCenterOperation(params: {
   request: ImageStudioRunRequest;

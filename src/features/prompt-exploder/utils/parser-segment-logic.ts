@@ -53,7 +53,9 @@ export const mergeCaseResolverLabeledPartySegments = (
 ${nextRaw}`.trim(),
       text: `${currentRaw}
 ${nextRaw}`.trim(),
-      matchedPatternIds: [...new Set([...(current.matchedPatternIds ?? []), ...next.matchedPatternIds])],
+      matchedPatternIds: [
+        ...new Set([...(current.matchedPatternIds ?? []), ...next.matchedPatternIds]),
+      ],
       matchedPatternLabels: [
         ...new Set([...(current.matchedPatternLabels ?? []), ...(next.matchedPatternLabels ?? [])]),
       ],

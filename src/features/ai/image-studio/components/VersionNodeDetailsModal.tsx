@@ -191,8 +191,8 @@ export function VersionNodeDetailsModal({
 
     const sourceSlotIds = Array.isArray(metadata.sourceSlotIds)
       ? metadata.sourceSlotIds.filter(
-        (value): value is string => typeof value === 'string' && value.trim().length > 0
-      )
+          (value): value is string => typeof value === 'string' && value.trim().length > 0
+        )
       : [];
     const operationTimestamp =
       operationSummary.timestamp ??

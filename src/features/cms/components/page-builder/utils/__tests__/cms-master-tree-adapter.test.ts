@@ -266,12 +266,7 @@ describe('createCmsMasterTreeAdapter', () => {
     );
 
     expect(applySectionMoveInTree).toHaveBeenCalledTimes(1);
-    expect(applySectionMoveInTree).toHaveBeenCalledWith(
-      'template-1',
-      'header',
-      'header-parent',
-      0
-    );
+    expect(applySectionMoveInTree).toHaveBeenCalledWith('template-1', 'header', 'header-parent', 0);
   });
 
   it('maps reorder within nested section siblings', async () => {
@@ -303,11 +298,6 @@ describe('createCmsMasterTreeAdapter', () => {
     );
 
     expect(applySectionMoveInTree).toHaveBeenCalledTimes(1);
-    expect(applySectionMoveInTree).toHaveBeenCalledWith(
-      'child-b',
-      'header',
-      'header-parent',
-      0
-    );
+    expect(applySectionMoveInTree).toHaveBeenCalledWith('child-b', 'header', 'header-parent', 0);
   });
 });

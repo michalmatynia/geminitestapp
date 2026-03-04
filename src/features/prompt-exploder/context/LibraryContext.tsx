@@ -50,9 +50,7 @@ export interface LibraryState {
   segmentationLibraryState: PromptExploderSegmentationLibraryState;
 }
 
-import { 
-  type PromptExploderSegmentationLibraryState 
-} from '@/shared/contracts/prompt-exploder';
+import { type PromptExploderSegmentationLibraryState } from '@/shared/contracts/prompt-exploder';
 
 export interface LibraryActions {
   setSelectedLibraryItemId: React.Dispatch<React.SetStateAction<string | null>>;
@@ -116,8 +114,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
     [rawSegmentationLibrary]
   );
   const segmentationRecords = useMemo(
-    () =>
-      sortPromptExploderSegmentationRecordsByCapturedAt(parsedSegmentationLibraryState.records),
+    () => sortPromptExploderSegmentationRecordsByCapturedAt(parsedSegmentationLibraryState.records),
     [parsedSegmentationLibraryState.records]
   );
   const segmentationLibraryState = useMemo<PromptExploderSegmentationLibraryState>(
@@ -324,8 +321,8 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
     [persistPromptLibraryItems, promptLibraryState.items, selectedLibraryItemId, toast]
   );
 
-  const captureSegmentationRecordOnApply = useCallback(
-    async (): Promise<CaptureSegmentationRecordResult> => {
+  const captureSegmentationRecordOnApply =
+    useCallback(async (): Promise<CaptureSegmentationRecordResult> => {
       if (!promptText.trim()) {
         return {
           ok: false,
@@ -374,9 +371,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
           captured: true,
           persisted,
           reason: 'manual_save' as const,
-          ...(persisted
-            ? { recordId: nextRecord.id }
-            : {}),
+          ...(persisted ? { recordId: nextRecord.id } : {}),
         };
       } catch (error) {
         toast(
@@ -393,8 +388,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
           recordId: nextRecord.id,
         };
       }
-    },
-    [
+    }, [
       activeValidationRuleStackId,
       activeValidationScope,
       documentState,
@@ -403,8 +397,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
       returnTarget,
       parsedSegmentationLibraryState.records,
       toast,
-    ]
-  );
+    ]);
 
   const handleLoadSegmentationRecordIntoWorkspace = useCallback(
     (recordId: string): void => {
@@ -439,7 +432,9 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
 
   const handleDeleteSegmentationRecord = useCallback(
     async (recordId: string): Promise<void> => {
-      const target = parsedSegmentationLibraryState.records.find((record) => record.id === recordId);
+      const target = parsedSegmentationLibraryState.records.find(
+        (record) => record.id === recordId
+      );
       if (!target) {
         toast('Segmentation context record no longer exists.', { variant: 'info' });
         return;
@@ -460,9 +455,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
         toast('Deleted segmentation context record.', { variant: 'success' });
       } catch (error) {
         toast(
-          error instanceof Error
-            ? error.message
-            : 'Failed to delete segmentation context record.',
+          error instanceof Error ? error.message : 'Failed to delete segmentation context record.',
           { variant: 'error' }
         );
       }

@@ -1,8 +1,4 @@
-import { 
-  findMatchingBrace, 
-  stripJsComments, 
-  removeTrailingCommas 
-} from './scanner';
+import { findMatchingBrace, stripJsComments, removeTrailingCommas } from './scanner';
 import { normalizeParamsObject } from './normalization';
 import { isObjectRecord } from '../object-utils';
 import { ExtractParamsResult } from '@/shared/contracts/prompt-engine';

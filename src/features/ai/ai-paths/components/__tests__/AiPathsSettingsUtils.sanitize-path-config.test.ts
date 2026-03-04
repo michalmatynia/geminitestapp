@@ -10,28 +10,27 @@ import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { resolveNodeTypeId } from '@/shared/lib/ai-paths/core/utils/node-identity';
 
-const buildNode = (patch: Partial<AiNode>): AiNode =>
-  {
-    const baseNode = createDefaultPathConfig('path-node-fixture').nodes[0] as AiNode;
-    const nextId = typeof patch.id === 'string' ? patch.id : baseNode.id;
-    return {
-      ...baseNode,
-      ...patch,
-      id: nextId,
-      instanceId: typeof patch.instanceId === 'string' ? patch.instanceId : nextId,
-      nodeTypeId:
-        typeof patch.nodeTypeId === 'string'
-          ? patch.nodeTypeId
-          : resolveNodeTypeId(
-              {
-                ...baseNode,
-                ...patch,
-                id: nextId,
-              } as AiNode,
-              palette
-            ),
-    } as AiNode;
-  };
+const buildNode = (patch: Partial<AiNode>): AiNode => {
+  const baseNode = createDefaultPathConfig('path-node-fixture').nodes[0] as AiNode;
+  const nextId = typeof patch.id === 'string' ? patch.id : baseNode.id;
+  return {
+    ...baseNode,
+    ...patch,
+    id: nextId,
+    instanceId: typeof patch.instanceId === 'string' ? patch.instanceId : nextId,
+    nodeTypeId:
+      typeof patch.nodeTypeId === 'string'
+        ? patch.nodeTypeId
+        : resolveNodeTypeId(
+            {
+              ...baseNode,
+              ...patch,
+              id: nextId,
+            } as AiNode,
+            palette
+          ),
+  } as AiNode;
+};
 
 const buildConfig = (edges: Edge[]): PathConfig => {
   const config = createDefaultPathConfig('path-1');
@@ -70,9 +69,7 @@ describe('sanitizePathConfig', () => {
       },
     ];
 
-    expect(() => sanitizePathConfig(config)).toThrowError(
-      /invalid or non-canonical edges/i
-    );
+    expect(() => sanitizePathConfig(config)).toThrowError(/invalid or non-canonical edges/i);
   });
 
   it('keeps already canonical edges unchanged', () => {
@@ -141,46 +138,46 @@ describe('sanitizePathConfig', () => {
 
   it('rejects deprecated database schemaSnapshot in path configs', () => {
     const config = createDefaultPathConfig('path-db-schema-snapshot');
-    config.nodes = config.nodes.map((node: AiNode): AiNode =>
-      node.type === 'database'
-        ? {
-            ...node,
-            config: {
-              ...(node.config ?? {}),
-              database: {
-                operation: 'query',
-                schemaSnapshot: {
-                  collections: [],
-                  sources: {},
+    config.nodes = config.nodes.map(
+      (node: AiNode): AiNode =>
+        node.type === 'database'
+          ? {
+              ...node,
+              config: {
+                ...(node.config ?? {}),
+                database: {
+                  operation: 'query',
+                  schemaSnapshot: {
+                    collections: [],
+                    sources: {},
+                  },
                 },
               },
-            },
-          }
-        : node
+            }
+          : node
     );
 
-    expect(() => sanitizePathConfig(config)).toThrowError(
-      /deprecated database schemaSnapshot/i
-    );
+    expect(() => sanitizePathConfig(config)).toThrowError(/deprecated database schemaSnapshot/i);
   });
 
   it('rejects deprecated database query provider \"all\" in path configs', () => {
     const config = createDefaultPathConfig('path-db-provider-all');
-    config.nodes = config.nodes.map((node: AiNode): AiNode =>
-      node.type === 'database'
-        ? {
-            ...node,
-            config: {
-              ...(node.config ?? {}),
-              database: {
-                operation: 'query',
-                query: {
-                  provider: 'all',
+    config.nodes = config.nodes.map(
+      (node: AiNode): AiNode =>
+        node.type === 'database'
+          ? {
+              ...node,
+              config: {
+                ...(node.config ?? {}),
+                database: {
+                  operation: 'query',
+                  query: {
+                    provider: 'all',
+                  },
                 },
               },
-            },
-          }
-        : node
+            }
+          : node
     );
 
     expect(() => sanitizePathConfig(config)).toThrowError(
@@ -190,13 +187,14 @@ describe('sanitizePathConfig', () => {
 
   it('rejects legacy node identity repair candidates instead of backfilling them', () => {
     const config = createDefaultPathConfig('path-legacy-node-identities');
-    config.nodes = config.nodes.map((node: AiNode, index: number): AiNode =>
-      index === 0
-        ? {
-            ...node,
-            instanceId: undefined,
-          }
-        : node
+    config.nodes = config.nodes.map(
+      (node: AiNode, index: number): AiNode =>
+        index === 0
+          ? {
+              ...node,
+              instanceId: undefined,
+            }
+          : node
     );
 
     expect(() => sanitizePathConfig(config)).toThrowError(/legacy node identities/i);
@@ -359,7 +357,9 @@ describe('sanitizePathConfig', () => {
       }),
     } as PathConfig;
 
-    expect(() => sanitizePathConfig(config)).toThrowError(/Invalid AI Paths runtime state payload\./i);
+    expect(() => sanitizePathConfig(config)).toThrowError(
+      /Invalid AI Paths runtime state payload\./i
+    );
   });
 
   it('rejects legacy "cancelled" status spelling in runtime events', () => {

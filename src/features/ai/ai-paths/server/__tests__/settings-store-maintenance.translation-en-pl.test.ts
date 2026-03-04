@@ -100,16 +100,13 @@ describe('AI Paths maintenance forward-only action ids', () => {
 
   it('ignores deprecated and unknown maintenance action ids in requested input', () => {
     const report = buildAiPathsMaintenanceReport(buildSettingsRecords());
-    const resolved = resolveRequestedMaintenanceActionIds(
-      report,
-      [
-        'upgrade_translation_en_pl',
-        'ensure_parameter_inference_defaults',
-        'unknown',
-        'upgrade_server_execution_mode',
-        'upgrade_runtime_input_contracts',
-      ] as unknown as AiPathsMaintenanceActionId[]
-    );
+    const resolved = resolveRequestedMaintenanceActionIds(report, [
+      'upgrade_translation_en_pl',
+      'ensure_parameter_inference_defaults',
+      'unknown',
+      'upgrade_server_execution_mode',
+      'upgrade_runtime_input_contracts',
+    ] as unknown as AiPathsMaintenanceActionId[]);
     expect(resolved).toEqual(['upgrade_server_execution_mode']);
   });
 });

@@ -94,22 +94,19 @@ export const folderTreeSettingsMetaByInstance: Record<
   },
   case_resolver_document_relations: {
     title: 'Case Resolver Document Relations',
-    description:
-      'Controls relation tree behavior in the Document editor relation browser.',
+    description: 'Controls relation tree behavior in the Document editor relation browser.',
     fileHint: 'Example: relation_file',
     folderHint: 'Example: relation_case, relation_folder',
   },
   case_resolver_nodefile_relations: {
     title: 'Case Resolver Nodefile Relations',
-    description:
-      'Controls relation tree behavior in the Nodefile document-to-canvas browser.',
+    description: 'Controls relation tree behavior in the Nodefile document-to-canvas browser.',
     fileHint: 'Example: relation_file',
     folderHint: 'Example: relation_case, relation_folder',
   },
   case_resolver_scanfile_relations: {
     title: 'Case Resolver Scanfile Relations',
-    description:
-      'Controls relation tree behavior in the Scanfile editor relation browser.',
+    description: 'Controls relation tree behavior in the Scanfile editor relation browser.',
     fileHint: 'Example: relation_file',
     folderHint: 'Example: relation_case, relation_folder',
   },
@@ -121,7 +118,8 @@ export const folderTreeSettingsMetaByInstance: Record<
   },
   validator_pattern_tree: {
     title: 'Validator Patterns',
-    description: 'Controls pattern-to-group nesting and placeholder behavior in validator settings.',
+    description:
+      'Controls pattern-to-group nesting and placeholder behavior in validator settings.',
     fileHint: 'Example: pattern',
     folderHint: 'Example: sequence-group',
   },

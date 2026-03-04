@@ -1,15 +1,13 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const {
-  getAiPathsSettingMock,
-  requireAiPathsAccessMock,
-  upsertAiPathsSettingMock,
-} = vi.hoisted(() => ({
-  getAiPathsSettingMock: vi.fn(),
-  requireAiPathsAccessMock: vi.fn(),
-  upsertAiPathsSettingMock: vi.fn(),
-}));
+const { getAiPathsSettingMock, requireAiPathsAccessMock, upsertAiPathsSettingMock } = vi.hoisted(
+  () => ({
+    getAiPathsSettingMock: vi.fn(),
+    requireAiPathsAccessMock: vi.fn(),
+    upsertAiPathsSettingMock: vi.fn(),
+  })
+);
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
   getAiPathsSetting: getAiPathsSettingMock,
@@ -19,9 +17,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
 
 import { POST_handler } from './handler';
 
-const createStoredButton = (
-  overrides: Record<string, unknown> = {}
-): Record<string, unknown> => ({
+const createStoredButton = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
   id: 'btn-1',
   name: 'Run Path',
   iconId: null,

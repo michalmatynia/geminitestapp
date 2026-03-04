@@ -14,9 +14,7 @@ import type {
 } from '@/shared/contracts/integrations';
 import type { ProductRepository, ProductRecord } from '@/shared/contracts/products';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-import {
-  BASE_INTEGRATION_SLUGS,
-} from '@/features/integrations/constants/slugs';
+import { BASE_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -169,7 +167,7 @@ export const syncBaseImagesForListing = async (
       throw badRequestError('No image URLs found in Base.com product data.');
     }
 
-    const existingLinks = Array.isArray(product.imageLinks) ? (product.imageLinks) : [];
+    const existingLinks = Array.isArray(product.imageLinks) ? product.imageLinks : [];
     const nextLinks = mergeImageLinks(existingLinks, urls);
     await productRepo.updateProduct(productId, { imageLinks: nextLinks });
 

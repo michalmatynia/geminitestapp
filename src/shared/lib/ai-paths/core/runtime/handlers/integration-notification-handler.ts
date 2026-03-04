@@ -93,7 +93,6 @@ export const handleNotification: NodeHandler = ({
     coerceInput(nodeInputs['entityId']) ??
     coerceInput(nodeInputs['entityType']);
 
-
   if (messageSource === undefined) {
     return prevOutputs;
   }

@@ -340,10 +340,9 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
           key: CHATBOT_SETTINGS_KEY,
         },
       });
-      toast(
-        error instanceof Error ? error.message : 'Invalid chatbot settings payload.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Invalid chatbot settings payload.', {
+        variant: 'error',
+      });
     }
   }, [
     toast,

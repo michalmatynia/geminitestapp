@@ -1,7 +1,6 @@
 import type { ContextNode } from '@/shared/contracts/ai-context-registry';
 
-const SOURCE_REF =
-  'src/features/ai/ai-context-registry/registry/definitions/collections.ts';
+const SOURCE_REF = 'src/features/ai/ai-context-registry/registry/definitions/collections.ts';
 
 export const collectionNodes: ContextNode[] = [
   {
@@ -12,9 +11,7 @@ export const collectionNodes: ContextNode[] = [
       'MongoDB collection storing product records. Each product has a SKU, ' +
       'name, description, price, status, images, and taxonomy tags.',
     tags: ['products', 'mongo', 'database', 'catalog'],
-    relationships: [
-      { type: 'related_to', targetId: 'collection:orders' },
-    ],
+    relationships: [{ type: 'related_to', targetId: 'collection:orders' }],
     jsonSchema2020: {
       $schema: 'https://json-schema.org/draft/2020-12/schema',
       type: 'object',
@@ -46,9 +43,7 @@ export const collectionNodes: ContextNode[] = [
       'Collection of customer orders. Contains line items, shipping details, ' +
       'payment status, and fulfillment timestamps.',
     tags: ['orders', 'commerce', 'database'],
-    relationships: [
-      { type: 'related_to', targetId: 'collection:products' },
-    ],
+    relationships: [{ type: 'related_to', targetId: 'collection:products' }],
     jsonSchema2020: {
       $schema: 'https://json-schema.org/draft/2020-12/schema',
       type: 'object',
@@ -81,9 +76,7 @@ export const collectionNodes: ContextNode[] = [
       'Stores historical AI path execution records including status, node-level outputs, ' +
       'events, and runtime state snapshots.',
     tags: ['ai', 'paths', 'runs', 'database', 'automation'],
-    relationships: [
-      { type: 'related_to', targetId: 'action:run-ai-path' },
-    ],
+    relationships: [{ type: 'related_to', targetId: 'action:run-ai-path' }],
     permissions: {
       readScopes: ['ctx:read'],
       riskTier: 'low',

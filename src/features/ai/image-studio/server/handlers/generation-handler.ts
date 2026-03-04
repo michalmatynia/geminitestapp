@@ -320,11 +320,11 @@ export async function executeGenerationOperation(params: {
       response =
         requestMode === 'edit'
           ? ((await client.images.edit(
-            payload as OpenAI.Images.ImageEditParamsNonStreaming
-          )) as OpenAI.ImagesResponse)
+              payload as OpenAI.Images.ImageEditParamsNonStreaming
+            )) as OpenAI.ImagesResponse)
           : ((await client.images.generate(
-            payload as OpenAI.Images.ImageGenerateParamsNonStreaming
-          )) as OpenAI.ImagesResponse);
+              payload as OpenAI.Images.ImageGenerateParamsNonStreaming
+            )) as OpenAI.ImagesResponse);
       break;
     } catch (error) {
       const message = extractErrorMessage(error);

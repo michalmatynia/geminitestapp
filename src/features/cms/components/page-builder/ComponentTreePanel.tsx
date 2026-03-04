@@ -51,23 +51,20 @@ export function ComponentTreePanel(): React.ReactNode {
   useDragState();
 
   const hierarchy = useMemo(() => buildHierarchyIndexes(state.sections), [state.sections]);
-  const rootSectionsByZone = useMemo(
-    () => {
-      const grouped: Record<PageZone, SectionInstance[]> = {
-        header: [],
-        template: [],
-        footer: [],
-      };
-      const rootIds = hierarchy.childrenByParent.get(null) ?? [];
-      rootIds.forEach((sectionId: string) => {
-        const section = hierarchy.nodeById.get(sectionId);
-        if (!section) return;
-        grouped[section.zone].push(section);
-      });
-      return grouped;
-    },
-    [hierarchy.childrenByParent, hierarchy.nodeById]
-  );
+  const rootSectionsByZone = useMemo(() => {
+    const grouped: Record<PageZone, SectionInstance[]> = {
+      header: [],
+      template: [],
+      footer: [],
+    };
+    const rootIds = hierarchy.childrenByParent.get(null) ?? [];
+    rootIds.forEach((sectionId: string) => {
+      const section = hierarchy.nodeById.get(sectionId);
+      if (!section) return;
+      grouped[section.zone].push(section);
+    });
+    return grouped;
+  }, [hierarchy.childrenByParent, hierarchy.nodeById]);
 
   const sectionById = useMemo(() => {
     const next = new Map<string, SectionInstance>();
@@ -176,7 +173,11 @@ export function ComponentTreePanel(): React.ReactNode {
       const targetParentNodeId = toParentSectionId
         ? toCmsSectionNodeId(toParentSectionId)
         : toCmsZoneNodeId(zone);
-      const result = await moveMasterNode(toCmsSectionNodeId(sectionId), targetParentNodeId, toIndex);
+      const result = await moveMasterNode(
+        toCmsSectionNodeId(sectionId),
+        targetParentNodeId,
+        toIndex
+      );
       if (result.ok && toParentSectionId) {
         structureController.expandNode(targetParentNodeId);
       }

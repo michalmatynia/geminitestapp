@@ -129,9 +129,7 @@ describe('PromptExploderLibraryTab', () => {
 
     render(<PromptExploderLibraryTab />);
 
-    expect(
-      screen.getByText('No segmentation context records captured yet.')
-    ).toBeInTheDocument();
+    expect(screen.getByText('No segmentation context records captured yet.')).toBeInTheDocument();
     expect(screen.getByText('No segmentation context selected')).toBeInTheDocument();
   });
 

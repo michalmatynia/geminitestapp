@@ -3,9 +3,7 @@
 import React from 'react';
 import { AlignJustify, List, ListPlus, SlidersHorizontal } from 'lucide-react';
 import { SelectSimple, Tooltip, SegmentedControl, Chip } from '@/shared/ui';
-import {
-  useDocumentRelationSearchContext,
-} from '../../context/DocumentRelationSearchContext';
+import { useDocumentRelationSearchContext } from '../../context/DocumentRelationSearchContext';
 import {
   type DocumentRelationFileTypeFilter,
   type DocumentRelationSortMode,

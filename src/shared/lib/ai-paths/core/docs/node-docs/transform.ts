@@ -38,13 +38,13 @@ export const contextDocs: NodeConfigDocField[] = [
   {
     path: 'context.includePaths',
     description:
-      'List of JSON paths to keep when scopeMode is include (example: [\'title\',\'images\']).',
+      "List of JSON paths to keep when scopeMode is include (example: ['title','images']).",
     defaultValue: '[]',
   },
   {
     path: 'context.excludePaths',
     description:
-      'List of JSON paths to remove when scopeMode is exclude (example: [\'internal.notes\']).',
+      "List of JSON paths to remove when scopeMode is exclude (example: ['internal.notes']).",
     defaultValue: '[]',
   },
   ...COMMON_RUNTIME_FIELDS,
@@ -176,7 +176,7 @@ export const mapperDocs: NodeConfigDocField[] = [
 export const mutatorDocs: NodeConfigDocField[] = [
   {
     path: 'mutator.path',
-    description: 'JSON path to write to (example: \'meta.flags.needsReview\').',
+    description: "JSON path to write to (example: 'meta.flags.needsReview').",
   },
   {
     path: 'mutator.valueTemplate',

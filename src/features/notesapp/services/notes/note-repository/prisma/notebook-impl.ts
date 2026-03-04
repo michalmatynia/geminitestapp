@@ -23,8 +23,8 @@ export const getOrCreateDefaultNotebook = async (): Promise<NotebookRecord> => {
   const notebook = existing
     ? existing
     : await prisma.notebook.create({
-      data: { name: 'Default', color: '#3b82f6' },
-    });
+        data: { name: 'Default', color: '#3b82f6' },
+      });
 
   const result: NotebookRecord = {
     ...notebook,
@@ -52,10 +52,10 @@ export const getNotebookById = async (id: string): Promise<NotebookRecord | null
   const notebook = await prisma.notebook.findUnique({ where: { id } });
   return notebook
     ? {
-      ...notebook,
-      createdAt: notebook.createdAt.toISOString(),
-      updatedAt: notebook.updatedAt.toISOString(),
-    }
+        ...notebook,
+        createdAt: notebook.createdAt.toISOString(),
+        updatedAt: notebook.updatedAt.toISOString(),
+      }
     : null;
 };
 

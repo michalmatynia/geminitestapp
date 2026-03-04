@@ -139,7 +139,9 @@ export function RoutingTab(): React.JSX.Element {
 
                     <AssignmentEditor
                       assignment={featureAssignment}
-                      onChange={(next: AiBrainAssignment) => handleOverrideChange(feature.key, next)}
+                      onChange={(next: AiBrainAssignment) =>
+                        handleOverrideChange(feature.key, next)
+                      }
                       readOnly={!featureOverrideEnabled}
                       allowedProviders={
                         feature.allowsAgentFallback ? ['model', 'agent'] : ['model']

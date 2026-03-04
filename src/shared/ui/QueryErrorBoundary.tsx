@@ -17,10 +17,7 @@ export function QueryErrorBoundary({ children }: QueryErrorBoundaryProps) {
   const { reset } = useQueryErrorResetBoundary();
 
   return (
-    <AppErrorBoundary
-      source='QueryErrorBoundary'
-      onReset={reset}
-    >
+    <AppErrorBoundary source='QueryErrorBoundary' onReset={reset}>
       {children}
     </AppErrorBoundary>
   );

@@ -16,10 +16,8 @@ const SENSITIVE_KEY_PATTERNS: RegExp[] = [
   /bearer/i,
 ];
 
-const EMAIL_PATTERN =
-  /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
-const PHONE_PATTERN =
-  /\b(?:\+?\d{1,3}[-.\s()]*)?(?:\d[-.\s()]*){7,14}\b/g;
+const EMAIL_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
+const PHONE_PATTERN = /\b(?:\+?\d{1,3}[-.\s()]*)?(?:\d[-.\s()]*){7,14}\b/g;
 
 export const isSensitiveKey = (key: string): boolean =>
   SENSITIVE_KEY_PATTERNS.some((pattern) => pattern.test(key));

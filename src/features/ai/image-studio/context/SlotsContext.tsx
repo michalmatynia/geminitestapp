@@ -1,14 +1,7 @@
 'use client';
 
 import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 
 import {
   useCreateStudioSlots,
@@ -30,10 +23,7 @@ import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { serializeSetting } from '@/shared/utils/settings-json';
-import {
-  isTreePathWithin,
-  normalizeTreePath,
-} from '@/shared/utils/tree-operations';
+import { isTreePathWithin, normalizeTreePath } from '@/shared/utils/tree-operations';
 
 import { useProjectsState } from './ProjectsContext';
 import {
@@ -73,7 +63,7 @@ export type SlotsContextType = {
   slotSelectionLocked: boolean;
   captureRef: React.MutableRefObject<(() => string | null) | null>;
   temporaryObjectUpload: ImageStudioUploadedAsset | null;
-  
+
   // UI State
   slotCreateOpen: boolean;
   driveImportOpen: boolean;
@@ -104,7 +94,7 @@ export type SlotsContextType = {
   setTemporaryObjectUpload: (asset: ImageStudioUploadedAsset | null) => void;
   setCompositeAssetIds: (ids: string[]) => void;
   setSelectedFolder: (folder: string) => void;
-  
+
   setSlotCreateOpen: (open: boolean) => void;
   setDriveImportOpen: (open: boolean) => void;
   setDriveImportMode: (mode: StudioUploadMode) => void;
@@ -121,7 +111,7 @@ export type SlotsContextType = {
   updateSlot: (id: string, data: Partial<ImageStudioSlotRecord>) => Promise<ImageStudioSlotRecord>;
   deleteSlot: (id: string) => Promise<void>;
   moveSlot: (input: { slot: ImageStudioSlotRecord; targetFolder: string }) => Promise<void>;
-  
+
   handleMoveFolder: (source: string, target: string) => Promise<void>;
   handleRenameFolder: (source: string, nextName: string) => Promise<void>;
   handleDeleteFolder: (source: string) => Promise<void>;
@@ -134,7 +124,7 @@ export type SlotsContextType = {
     selection: ImageFileSelection,
     options?: { folder?: string; slotId?: string }
   ) => Promise<StudioAssetImportResult>;
-  
+
   // Mutations
   createFolderMutation: StudioFolderMutation;
   updateSlotMutation: StudioUpdateSlotMutation;
@@ -198,7 +188,8 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   const [previewMode, setPreviewMode] = useState<StudioPreviewMode>('image');
   const [slotSelectionLocked, setSlotSelectionLocked] = useState(false);
   const captureRef = useRef<(() => string | null) | null>(null);
-  const [temporaryObjectUpload, setTemporaryObjectUpload] = useState<ImageStudioUploadedAsset | null>(null);
+  const [temporaryObjectUpload, setTemporaryObjectUpload] =
+    useState<ImageStudioUploadedAsset | null>(null);
   const [compositeAssetIds, setCompositeAssetIds] = useState<string[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<string>('Root');
 
@@ -225,13 +216,11 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   const settingsQueryOptions = settingsKey
     ? { scope: 'heavy' as const, enabled: true }
     : { enabled: false };
-  const { data: settingsMap, isLoading: loadingSettings } = useSettingsMap(
-    settingsQueryOptions
-  );
+  const { data: settingsMap, isLoading: loadingSettings } = useSettingsMap(settingsQueryOptions);
   const updateSetting = useUpdateSetting();
 
   const session = useMemo(() => {
-    const raw = settingsKey ? settingsMap?.get(settingsKey) ?? null : null;
+    const raw = settingsKey ? (settingsMap?.get(settingsKey) ?? null) : null;
     return resolveImageStudioProjectSession(raw, projectId ?? '');
   }, [settingsKey, settingsMap, projectId]);
 
@@ -269,12 +258,18 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
 
   // ── Selection Helpers ──
   const selectedSlot = useMemo(
-    () => (selectedSlotId ? slots.find((s: ImageStudioSlotRecord) => s.id === selectedSlotId) ?? null : null),
+    () =>
+      selectedSlotId
+        ? (slots.find((s: ImageStudioSlotRecord) => s.id === selectedSlotId) ?? null)
+        : null,
     [slots, selectedSlotId]
   );
 
   const workingSlot = useMemo(
-    () => (workingSlotId ? slots.find((s: ImageStudioSlotRecord) => s.id === workingSlotId) ?? null : null),
+    () =>
+      workingSlotId
+        ? (slots.find((s: ImageStudioSlotRecord) => s.id === workingSlotId) ?? null)
+        : null,
     [slots, workingSlotId]
   );
 
@@ -358,9 +353,12 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     // Implementation omitted
   }, []);
 
-  const handleRenameFolder = useCallback(async (_source: string, _nextName: string): Promise<void> => {
-    // Implementation omitted
-  }, []);
+  const handleRenameFolder = useCallback(
+    async (_source: string, _nextName: string): Promise<void> => {
+      // Implementation omitted
+    },
+    []
+  );
 
   const handleDeleteFolder = useCallback(
     async (source: string): Promise<void> => {
@@ -426,7 +424,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       isLoading: slotsQuery.isLoading || loadingSettings,
       isFetching: slotsQuery.isFetching,
       slotsQuery,
-      error: (slotsQuery.error) || null,
+      error: slotsQuery.error || null,
       selectedSlotId,
       setSelectedSlotId,
       workingSlotId,
@@ -437,8 +435,9 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       setSlotSelectionLocked,
       captureRef,
       temporaryObjectUpload,
-      setTemporaryObjectUpload: (asset: ImageStudioUploadedAsset | null) => setTemporaryObjectUpload(asset),
-      
+      setTemporaryObjectUpload: (asset: ImageStudioUploadedAsset | null) =>
+        setTemporaryObjectUpload(asset),
+
       slotCreateOpen,
       setSlotCreateOpen,
       driveImportOpen,
@@ -474,7 +473,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
         updateSlotMutation.mutateAsync({ id, data }),
       deleteSlot: (id: string) => deleteSlotMutation.mutateAsync(id),
       moveSlot,
-      
+
       handleMoveFolder,
       handleRenameFolder,
       handleDeleteFolder,
@@ -497,7 +496,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
           files: [selection],
           folder: options?.folder || 'Root',
         }),
-      
+
       createFolderMutation,
       updateSlotMutation,
       deleteSlotMutation,

@@ -13,10 +13,7 @@ import type { ProductImageSlot } from '@/shared/contracts/products';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
 
-import {
-  isEditingProductHydrated,
-  markEditingProductHydrated,
-} from './editingProductHydration';
+import { isEditingProductHydrated, markEditingProductHydrated } from './editingProductHydration';
 import { useCreateProductMutation, useUpdateProductMutation } from './useProductData';
 
 import type { BaseSyntheticEvent } from 'react';
@@ -135,15 +132,15 @@ function buildFormData(
           typeof entry.valuesByLanguage === 'object' &&
           !Array.isArray(entry.valuesByLanguage)
             ? Object.entries(entry.valuesByLanguage).reduce(
-              (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
-                const normalizedLang = lang.trim().toLowerCase();
-                const normalizedValue = typeof value === 'string' ? value.trim() : '';
-                if (!normalizedLang || !normalizedValue) return acc;
-                acc[normalizedLang] = normalizedValue;
-                return acc;
-              },
-              {}
-            )
+                (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
+                  const normalizedLang = lang.trim().toLowerCase();
+                  const normalizedValue = typeof value === 'string' ? value.trim() : '';
+                  if (!normalizedLang || !normalizedValue) return acc;
+                  acc[normalizedLang] = normalizedValue;
+                  return acc;
+                },
+                {}
+              )
             : {};
         const directValue = typeof entry.value === 'string' ? entry.value.trim() : '';
         const fallbackLocalizedValue =
@@ -319,7 +316,21 @@ export function useProductFormSubmit({
 
       await performSubmit();
     },
-    [product, imageSlots, imageLinks, imageBase64s, selectedCatalogIds, selectedCategoryId, selectedTagIds, selectedProducerIds, selectedNoteIds, parameterValues, studioProjectId, toast, confirm]
+    [
+      product,
+      imageSlots,
+      imageLinks,
+      imageBase64s,
+      selectedCatalogIds,
+      selectedCategoryId,
+      selectedTagIds,
+      selectedProducerIds,
+      selectedNoteIds,
+      parameterValues,
+      studioProjectId,
+      toast,
+      confirm,
+    ]
   );
 
   const submitHandler = useCallback(

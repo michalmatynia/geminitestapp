@@ -15,18 +15,14 @@ import {
   safeParseJson,
 } from './utils/workspace-persistence-utils';
 
-import {
-  logCaseResolverWorkspaceEvent,
-} from './workspace-observability';
+import { logCaseResolverWorkspaceEvent } from './workspace-observability';
 
 import {
   CASE_RESOLVER_WORKSPACE_KEY,
   type SettingsRecordLike,
 } from './utils/workspace-settings-persistence-helpers';
 
-import {
-  readCaseResolverNodeFileSnapshotStorageMode,
-} from './node-file-persistence';
+import { readCaseResolverNodeFileSnapshotStorageMode } from './node-file-persistence';
 
 import {
   getCaseResolverWorkspaceMaxPayloadBytes,
@@ -43,7 +39,9 @@ export type PersistWorkspaceInput = {
   source: string;
 };
 
-const summarizeWorkspacePersistPayload = (workspace: CaseResolverWorkspace): {
+const summarizeWorkspacePersistPayload = (
+  workspace: CaseResolverWorkspace
+): {
   fileBytes: number;
   assetBytes: number;
   nodeFileInlineBytes: number;
@@ -131,7 +129,9 @@ export const compactCaseResolverWorkspaceForPersist = (
             delete rest['documentContentPlainText'];
           } else {
             const htmlValue =
-              typeof rest['documentContentHtml'] === 'string' ? rest['documentContentHtml'] : '';
+                  typeof rest['documentContentHtml'] === 'string'
+                    ? rest['documentContentHtml']
+                    : '';
             if (htmlValue.trim().length > 0) {
               delete rest['documentContent'];
             }
@@ -162,8 +162,8 @@ export const compactCaseResolverWorkspaceForPersist = (
       } = file;
       if (
         typeof file.documentContentHtml === 'string' &&
-        file.documentContentHtml.trim().length > 0 &&
-        'documentContent' in fileRest
+          file.documentContentHtml.trim().length > 0 &&
+          'documentContent' in fileRest
       ) {
         delete (fileRest as Record<string, unknown>)['documentContent'];
       }
@@ -236,9 +236,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
     workspaceForPersist = compactCaseResolverWorkspaceForPersist(workspaceForPersistPipeline);
   } catch (error: unknown) {
     const message =
-      error instanceof Error
-        ? error.message
-        : 'Invalid Case Resolver workspace payload.';
+      error instanceof Error ? error.message : 'Invalid Case Resolver workspace payload.';
     logCaseResolverWorkspaceEvent({
       source: input.source,
       action: 'persist_rejected_invalid_payload',

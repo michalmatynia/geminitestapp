@@ -79,16 +79,10 @@ export function SearchableList<T>({
         <Card
           variant='glass'
           padding='none'
-          className={cn(
-            'overflow-y-auto p-2 divide-y divide-white/5',
-            maxHeight,
-            listClassName
-          )}
+          className={cn('overflow-y-auto p-2 divide-y divide-white/5', maxHeight, listClassName)}
         >
           {filteredItems.length === 0 ? (
-            <div className='py-8 text-center text-xs text-gray-600 italic'>
-              {emptyMessage}
-            </div>
+            <div className='py-8 text-center text-xs text-gray-600 italic'>{emptyMessage}</div>
           ) : (
             filteredItems.map((item) => {
               const id = getId(item);
@@ -98,10 +92,7 @@ export function SearchableList<T>({
                   key={id}
                   className='flex items-center gap-3 p-2 hover:bg-white/5 cursor-pointer transition-colors group'
                 >
-                  <Checkbox
-                    checked={checked}
-                    onCheckedChange={() => onToggle(id)}
-                  />
+                  <Checkbox checked={checked} onCheckedChange={() => onToggle(id)} />
                   <div className='flex flex-1 items-center justify-between'>
                     {renderItem ? (
                       renderItem(item)

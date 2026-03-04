@@ -1,17 +1,8 @@
- 
- 
- 
- 
- 
- 
-
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { 
-  ProductValidationPattern, 
-} from '@/shared/contracts/products';
-import { 
-  CreateValidationPatternPayload, 
-  UpdateValidationPatternPayload 
+import type { ProductValidationPattern } from '@/shared/contracts/products';
+import {
+  CreateValidationPatternPayload,
+  UpdateValidationPatternPayload,
 } from '@/features/products/api/settings';
 import {
   buildLatestFieldRecipe,
@@ -19,10 +10,7 @@ import {
   getPatternSequence,
   isLatestFieldMirrorPattern,
 } from '../helpers';
-import type { 
-  CreatePatternMutation, 
-  UpdatePatternMutation 
-} from './types';
+import type { CreatePatternMutation, UpdatePatternMutation } from './types';
 
 export const handleCreateLatestPriceStockSequence = async (args: {
   patterns: ProductValidationPattern[];
@@ -32,7 +20,8 @@ export const handleCreateLatestPriceStockSequence = async (args: {
   notifySuccess: (message: string) => void;
   notifyError: (message: string) => void;
 }): Promise<void> => {
-  const { patterns, orderedPatterns, createPattern, updatePattern, notifySuccess, notifyError } = args;
+  const { patterns, orderedPatterns, createPattern, updatePattern, notifySuccess, notifyError } =
+    args;
 
   const existingLabels = new Set(
     patterns

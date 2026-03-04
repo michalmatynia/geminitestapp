@@ -103,8 +103,8 @@ const stripUsedIds = (
   const nodeChildren = node.children;
   const children = nodeChildren
     ? nodeChildren
-      .map((child: AdminMenuCustomNode) => stripUsedIds(child, usedIds))
-      .filter((child: AdminMenuCustomNode | null): child is AdminMenuCustomNode => Boolean(child))
+        .map((child: AdminMenuCustomNode) => stripUsedIds(child, usedIds))
+        .filter((child: AdminMenuCustomNode | null): child is AdminMenuCustomNode => Boolean(child))
     : undefined;
   return {
     ...node,
@@ -227,10 +227,7 @@ const removeNodeById = (
   return walk(items);
 };
 
-const findNodeById = (
-  items: AdminMenuCustomNode[],
-  nodeId: string
-): AdminMenuCustomNode | null => {
+const findNodeById = (items: AdminMenuCustomNode[], nodeId: string): AdminMenuCustomNode | null => {
   for (const node of items) {
     if (node.id === nodeId) return node;
     if (Array.isArray(node.children) && node.children.length > 0) {

@@ -1,12 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Card,
-  Hint,
-  MetadataItem,
-  StatusBadge,
-} from '@/shared/ui';
+import { Card, Hint, MetadataItem, StatusBadge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { type ContextDocumentDisplay } from '../types';
 import { getStatusVariant } from '../utils/logHelpers';
@@ -40,12 +35,19 @@ export function ContextDocumentCard({
       </div>
       <div className='space-y-1'>
         <p className='text-sm font-semibold text-gray-100'>{document.title}</p>
-        {document.summary ? <p className='text-[11px] text-gray-300/90'>{document.summary}</p> : null}
+        {document.summary ? (
+          <p className='text-[11px] text-gray-300/90'>{document.summary}</p>
+        ) : null}
       </div>
       {document.facts.length ? (
         <div className='grid grid-cols-2 gap-2'>
           {document.facts.map((fact) => (
-            <MetadataItem key={`${document.id}-${fact.label}`} label={fact.label} value={fact.value} mono />
+            <MetadataItem
+              key={`${document.id}-${fact.label}`}
+              label={fact.label}
+              value={fact.value}
+              mono
+            />
           ))}
         </div>
       ) : null}
@@ -54,7 +56,9 @@ export function ContextDocumentCard({
           <Hint uppercase variant='muted' className='mb-2 text-[10px] font-semibold'>
             {section.title}
           </Hint>
-          {section.summary ? <p className='mb-2 text-[11px] text-gray-300/80'>{section.summary}</p> : null}
+          {section.summary ? (
+            <p className='mb-2 text-[11px] text-gray-300/80'>{section.summary}</p>
+          ) : null}
           {section.text ? (
             <p className='mb-2 rounded border border-white/5 bg-black/20 px-3 py-2 text-[11px] text-gray-200/90'>
               {section.text}

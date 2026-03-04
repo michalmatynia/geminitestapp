@@ -274,8 +274,10 @@ export function JobQueueProvider({
       if (hasActiveRuns) {
         return ACTIVE_RUN_REFRESH_INTERVAL_MS + Math.floor(Math.random() * POLLING_JITTER_MS);
       }
-      return Math.max(IDLE_RUN_REFRESH_MIN_MS, autoRefreshInterval) +
-        Math.floor(Math.random() * POLLING_JITTER_MS);
+      return (
+        Math.max(IDLE_RUN_REFRESH_MIN_MS, autoRefreshInterval) +
+        Math.floor(Math.random() * POLLING_JITTER_MS)
+      );
     },
     [autoRefreshInterval, effectiveAutoRefreshEnabled, isBurstRefreshActive]
   );
@@ -334,7 +336,9 @@ export function JobQueueProvider({
   });
 
   const queueStatusQuery = createListQueryV2<{ status: QueueStatus }, { status: QueueStatus }>({
-    queryKey: QUERY_KEYS.ai.aiPaths.queueStatus({ visibility: normalizedVisibility as AiPathRunVisibility }),
+    queryKey: QUERY_KEYS.ai.aiPaths.queueStatus({
+      visibility: normalizedVisibility as AiPathRunVisibility,
+    }),
     queryFn: async () => {
       const fresh = forceFreshQueueStatusRef.current;
       forceFreshQueueStatusRef.current = false;
@@ -353,7 +357,9 @@ export function JobQueueProvider({
       source: 'ai-paths.job-queue',
       operation: 'polling',
       resource: 'ai-path-runs-queue-status',
-      queryKey: QUERY_KEYS.ai.aiPaths.queueStatus({ visibility: normalizedVisibility as AiPathRunVisibility }),
+      queryKey: QUERY_KEYS.ai.aiPaths.queueStatus({
+        visibility: normalizedVisibility as AiPathRunVisibility,
+      }),
       domain: 'global',
       criticality: 'normal',
     },

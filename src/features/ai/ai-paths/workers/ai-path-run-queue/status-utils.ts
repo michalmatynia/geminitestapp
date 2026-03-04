@@ -1,14 +1,10 @@
-import {
-  getRuntimeAnalyticsSummary,
-} from '@/features/ai/ai-paths/services/runtime-analytics-service';
+import { getRuntimeAnalyticsSummary } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import type { AiPathRunVisibility } from '@/shared/contracts/ai-paths';
 import {
   type AiPathRunQueueBaseStatus,
   type AiPathRunQueueStatus,
 } from '@/shared/contracts/ai-paths-runtime';
-import {
-  computeAiPathRunQueueSlo,
-} from '../ai-path-run-queue-slo';
+import { computeAiPathRunQueueSlo } from '../ai-path-run-queue-slo';
 import { GetAiPathRunQueueStatusOptions } from './status';
 import { AiInsightsQueueStatus } from './types';
 
@@ -57,12 +53,12 @@ export const finalizeAiPathRunQueueStatus = (
 ): AiPathRunQueueStatus => {
   const brainAnalytics24h = runtimeAnalyticsSummary
     ? {
-      analyticsReports: runtimeAnalyticsSummary.brain.analyticsReports,
-      logReports: runtimeAnalyticsSummary.brain.logReports,
-      totalReports: runtimeAnalyticsSummary.brain.totalReports,
-      warningReports: runtimeAnalyticsSummary.brain.warningReports,
-      errorReports: runtimeAnalyticsSummary.brain.errorReports,
-    }
+        analyticsReports: runtimeAnalyticsSummary.brain.analyticsReports,
+        logReports: runtimeAnalyticsSummary.brain.logReports,
+        totalReports: runtimeAnalyticsSummary.brain.totalReports,
+        warningReports: runtimeAnalyticsSummary.brain.warningReports,
+        errorReports: runtimeAnalyticsSummary.brain.errorReports,
+      }
     : EMPTY_BRAIN_ANALYTICS_24H;
   const terminalRuns24h = runtimeAnalyticsSummary
     ? runtimeAnalyticsSummary.runs.completed +

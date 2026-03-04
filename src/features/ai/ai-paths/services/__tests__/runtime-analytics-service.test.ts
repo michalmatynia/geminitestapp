@@ -1,14 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const {
-  getBrainAssignmentForCapabilityMock,
-  getRedisConnectionMock,
-  getPathRunRepositoryMock,
-} = vi.hoisted(() => ({
-  getBrainAssignmentForCapabilityMock: vi.fn(),
-  getRedisConnectionMock: vi.fn(),
-  getPathRunRepositoryMock: vi.fn(),
-}));
+const { getBrainAssignmentForCapabilityMock, getRedisConnectionMock, getPathRunRepositoryMock } =
+  vi.hoisted(() => ({
+    getBrainAssignmentForCapabilityMock: vi.fn(),
+    getRedisConnectionMock: vi.fn(),
+    getPathRunRepositoryMock: vi.fn(),
+  }));
 
 vi.mock('@/shared/lib/ai-brain/server', () => ({
   getBrainAssignmentForCapability: getBrainAssignmentForCapabilityMock,

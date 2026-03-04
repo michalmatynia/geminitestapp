@@ -3,14 +3,7 @@
 import React from 'react';
 
 import { useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
-import {
-  Card,
-  FormSection,
-  Hint,
-  LoadingState,
-  MetadataItem,
-  StatusBadge,
-} from '@/shared/ui';
+import { Card, FormSection, Hint, LoadingState, MetadataItem, StatusBadge } from '@/shared/ui';
 import { formatTimestamp } from '../utils/formatTimestamp';
 
 export function LogMetrics(): React.JSX.Element {
@@ -146,7 +139,9 @@ export function LogMetrics(): React.JSX.Element {
                     />
                   ))}
                   {topServices.length === 0 && (
-                    <div className='text-[11px] text-gray-600'>No service data for this filter.</div>
+                    <div className='text-[11px] text-gray-600'>
+                      No service data for this filter.
+                    </div>
                   )}
                 </div>
               </div>

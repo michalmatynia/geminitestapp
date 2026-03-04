@@ -1,40 +1,26 @@
- 
- 
- 
- 
- 
-
-import { 
-  type QueryClient, 
-  type QueryKey,
-  type QueryFunctionContext
-} from '@tanstack/react-query';
+import { type QueryClient, type QueryKey, type QueryFunctionContext } from '@tanstack/react-query';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { telemetryErrorStage } from '@/shared/lib/observability/tanstack-telemetry';
-import { 
-  EnsureQueryDataV2Config, 
-  ManualQueryExecutorInput, 
-  QueryFactoryFn 
-} from './types';
+import { EnsureQueryDataV2Config, ManualQueryExecutorInput, QueryFactoryFn } from './types';
 import { emitFactoryTelemetry, withQueryKeyMeta } from './telemetry';
 
 export const invokeQueryFactoryFn = <TQueryFnData, TQueryKey extends QueryKey>(
   queryFn: QueryFactoryFn<TQueryFnData, TQueryKey>,
   context: QueryFunctionContext<TQueryKey>
 ): Promise<TQueryFnData> =>
-    (queryFn as (ctx: QueryFunctionContext<TQueryKey>) => Promise<TQueryFnData>)(context);
+  (queryFn as (ctx: QueryFunctionContext<TQueryKey>) => Promise<TQueryFnData>)(context);
 
 export const createManualQueryExecutor = <
-    TQueryFnData,
-    TError,
-    TResult,
-    TQueryKey extends QueryKey = QueryKey,
-  >(
-    queryClient: QueryClient,
-    config: EnsureQueryDataV2Config<TQueryFnData, TError, TQueryKey>,
-    executor: (input: ManualQueryExecutorInput<TQueryFnData, TQueryKey>) => Promise<TResult>,
-    options?: { swallowErrors?: boolean }
-  ): (() => Promise<TResult | undefined>) => {
+  TQueryFnData,
+  TError,
+  TResult,
+  TQueryKey extends QueryKey = QueryKey,
+>(
+  queryClient: QueryClient,
+  config: EnsureQueryDataV2Config<TQueryFnData, TError, TQueryKey>,
+  executor: (input: ManualQueryExecutorInput<TQueryFnData, TQueryKey>) => Promise<TResult>,
+  options?: { swallowErrors?: boolean }
+): (() => Promise<TResult | undefined>) => {
   const { queryKey, queryFn, meta, telemetryContext, transformError, staleTime } = config;
   const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
   const telemetryMeta = withQueryKeyMeta(meta, normalizedQueryKey);

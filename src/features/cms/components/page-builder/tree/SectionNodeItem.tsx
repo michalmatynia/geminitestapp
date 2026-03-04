@@ -31,8 +31,12 @@ export function SectionNodeItem({
   isTreeExpanded = false,
   toggleTreeExpand,
 }: SectionNodeItemProps): React.JSX.Element {
-  const { startSectionMasterDrag, endSectionMasterDrag, draggedMasterSectionId, moveSectionByMaster } =
-    useComponentTreePanelContext();
+  const {
+    startSectionMasterDrag,
+    endSectionMasterDrag,
+    draggedMasterSectionId,
+    moveSectionByMaster,
+  } = useComponentTreePanelContext();
   const { state: pbState } = usePageBuilder();
   const allSections = pbState.sections ?? [];
   const [isInsideDropOver, setIsInsideDropOver] = React.useState(false);
@@ -74,7 +78,14 @@ export function SectionNodeItem({
       if (dragSection?.parentSectionId === section.id) return null;
       return dragSectionId;
     },
-    [allSections, drag.section.index, drag.section.type, drag.section.zone, draggedSectionId, section.id]
+    [
+      allSections,
+      drag.section.index,
+      drag.section.type,
+      drag.section.zone,
+      draggedSectionId,
+      section.id,
+    ]
   );
 
   const SectionIcon: LucideIcon = Box;
@@ -101,8 +112,7 @@ export function SectionNodeItem({
         target?.closest(
           'button,a,input,textarea,select,[role="button"],[data-no-section-drag="true"]'
         ) !== null;
-      const isDragHandle =
-        target?.closest('[data-cms-section-drag-handle="true"]') !== null;
+      const isDragHandle = target?.closest('[data-cms-section-drag-handle="true"]') !== null;
       if (isInteractiveTarget && !isDragHandle) {
         event.preventDefault();
         event.stopPropagation();
@@ -161,9 +171,7 @@ export function SectionNodeItem({
           draggable
           className={cn(
             'flex items-center gap-2 rounded-md border py-1.5 pl-1 pr-2 transition',
-            isInsideDropOver
-              ? 'border-emerald-500/60 bg-emerald-500/10'
-              : '',
+            isInsideDropOver ? 'border-emerald-500/60 bg-emerald-500/10' : '',
             isSelected
               ? 'border-blue-500/50 bg-blue-500/10'
               : 'border-border/40 bg-card/20 hover:border-border/80 hover:bg-card/40'
@@ -194,12 +202,22 @@ export function SectionNodeItem({
           </div>
 
           <div className='flex min-w-0 flex-1 items-center gap-2'>
-            <SectionIcon className={cn('size-4 shrink-0', isHidden ? 'text-gray-600' : 'text-sky-400/80')} />
-            <span className={cn('truncate text-sm font-medium', isHidden ? 'text-gray-500 line-through' : 'text-gray-200')}>
+            <SectionIcon
+              className={cn('size-4 shrink-0', isHidden ? 'text-gray-600' : 'text-sky-400/80')}
+            />
+            <span
+              className={cn(
+                'truncate text-sm font-medium',
+                isHidden ? 'text-gray-500 line-through' : 'text-gray-200'
+              )}
+            >
               {section.type}
             </span>
             {isHidden && (
-              <Badge variant='neutral' className='bg-gray-800/50 text-[9px] uppercase tracking-wider text-gray-500 h-4 px-1'>
+              <Badge
+                variant='neutral'
+                className='bg-gray-800/50 text-[9px] uppercase tracking-wider text-gray-500 h-4 px-1'
+              >
                 Hidden
               </Badge>
             )}
@@ -270,11 +288,14 @@ export function SectionNodeItem({
               const dragSectionId = resolveInsideDropSectionId(event.dataTransfer);
               if (!dragSectionId) return;
 
-              void moveSectionByMaster(dragSectionId, section.zone, childSectionCount, section.id).finally(
-                () => {
-                  endSectionDrag();
-                }
-              );
+              void moveSectionByMaster(
+                dragSectionId,
+                section.zone,
+                childSectionCount,
+                section.id
+              ).finally(() => {
+                endSectionDrag();
+              });
             }}
             className={cn(
               'mt-1 rounded border border-dashed px-2 py-1 text-[10px] font-medium uppercase tracking-wide transition',

@@ -1,6 +1,5 @@
 'use client';
 
-
 import { useState, useMemo, useCallback } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -53,18 +52,11 @@ export function useAdmin3DAssetsState() {
   const categories = categoriesQuery.data ?? [];
   const allTags = tagsQuery.data ?? [];
 
-  const handleUpload = useCallback(
-    (_asset: Asset3DRecord) => {
-      setShowUploader(false);
-    },
-    []
-  );
+  const handleUpload = useCallback((_asset: Asset3DRecord) => {
+    setShowUploader(false);
+  }, []);
 
-  const handleEdit = useCallback(
-    (_updated: Asset3DRecord) => {
-    },
-    []
-  );
+  const handleEdit = useCallback((_updated: Asset3DRecord) => {}, []);
 
   const handleDelete = useCallback(
     async (asset: Asset3DRecord) => {

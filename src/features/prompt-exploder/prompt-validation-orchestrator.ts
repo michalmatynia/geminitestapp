@@ -428,9 +428,9 @@ export const resolvePromptValidationRuntime = (
     );
     const runtimeLearnedTemplates = args.learningEnabled
       ? filterTemplatesForRuntime(effectiveLearnedTemplates, {
-        minApprovalsForMatching: args.minApprovalsForMatching,
-        maxTemplates: args.maxTemplates,
-      })
+          minApprovalsForMatching: args.minApprovalsForMatching,
+          maxTemplates: args.maxTemplates,
+        })
       : [];
     trackRuntimeVersionAndInvalidate({
       scope: stackResolution.scope ?? 'global',

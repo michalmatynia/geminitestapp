@@ -1,4 +1,3 @@
- 
 import { useCallback } from 'react';
 import type { AiNode, RuntimeState, RuntimePortValues } from '@/shared/lib/ai-paths';
 import { TRIGGER_EVENTS, evaluateRunPreflight, stableStringify } from '@/shared/lib/ai-paths';
@@ -22,9 +21,7 @@ import {
 export function useLocalExecutionTriggers(
   args: LocalExecutionArgs,
   loop: {
-    runLocalLoop: (
-      mode: 'run' | 'step'
-    ) => Promise<{
+    runLocalLoop: (mode: 'run' | 'step') => Promise<{
       status: 'completed' | 'paused' | 'canceled' | 'error';
       error?: unknown;
       state: RuntimeState;
@@ -485,9 +482,9 @@ export function useLocalExecutionTriggers(
             },
             dependency: dependencyReport
               ? {
-                errors: dependencyReport.errors,
-                warnings: dependencyReport.warnings,
-              }
+                  errors: dependencyReport.errors,
+                  warnings: dependencyReport.warnings,
+                }
               : undefined,
             dataContract: {
               errors: dataContractReport.errors,

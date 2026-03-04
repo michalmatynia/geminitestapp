@@ -4,7 +4,11 @@ import {
 } from '@/features/ai/agentcreator/constants/personas';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
 import { validationError } from '@/shared/errors/app-error';
-import { type AgentPersona, type AgentPersonaSettings } from '@/shared/contracts/agents';
+import {
+  agentPersonaSettingsSchema,
+  type AgentPersona,
+  type AgentPersonaSettings,
+} from '@/shared/contracts/agents';
 
 export const createAgentPersonaId = (): string => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -62,14 +66,16 @@ const toCanonicalAgentPersonaSettings = (value: unknown): AgentPersonaSettings =
     });
   }
 
-  const next: Partial<AgentPersonaSettings> = {};
-  if (typeof raw['personaId'] === 'string') {
-    next.personaId = raw['personaId'];
+  const parsedSettings = agentPersonaSettingsSchema.safeParse(raw);
+  if (!parsedSettings.success) {
+    throw validationError('Invalid agent persona settings payload.', {
+      source: 'agent_personas',
+      reason: 'invalid_settings_shape',
+      issues: parsedSettings.error.flatten(),
+    });
   }
-  if (typeof raw['customInstructions'] === 'string') {
-    next.customInstructions = raw['customInstructions'];
-  }
-  return buildAgentPersonaSettings(next);
+
+  return buildAgentPersonaSettings(parsedSettings.data);
 };
 
 export const normalizeAgentPersonas = (value: unknown): AgentPersona[] => {
@@ -80,55 +86,54 @@ export const normalizeAgentPersonas = (value: unknown): AgentPersona[] => {
     });
   }
 
-  return value
-    .map((item: unknown, index: number): AgentPersona => {
-      if (!item || typeof item !== 'object' || Array.isArray(item)) {
-        throw validationError('Invalid agent persona payload.', {
-          source: 'agent_personas',
-          reason: 'persona_not_object',
-          index,
-        });
-      }
+  return value.map((item: unknown, index: number): AgentPersona => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      throw validationError('Invalid agent persona payload.', {
+        source: 'agent_personas',
+        reason: 'persona_not_object',
+        index,
+      });
+    }
 
-      const raw = item as Record<string, unknown>;
-      const deprecatedTopLevelKeys = DEPRECATED_AGENT_PERSONA_TOP_LEVEL_KEYS.filter(
-        (key: string): boolean => Object.prototype.hasOwnProperty.call(raw, key)
-      );
-      if (deprecatedTopLevelKeys.length > 0) {
-        throw validationError('Agent persona contains deprecated AI snapshot keys.', {
-          source: 'agent_personas',
-          reason: 'deprecated_snapshot_keys',
-          index,
-          keys: deprecatedTopLevelKeys,
-        });
-      }
+    const raw = item as Record<string, unknown>;
+    const deprecatedTopLevelKeys = DEPRECATED_AGENT_PERSONA_TOP_LEVEL_KEYS.filter(
+      (key: string): boolean => Object.prototype.hasOwnProperty.call(raw, key)
+    );
+    if (deprecatedTopLevelKeys.length > 0) {
+      throw validationError('Agent persona contains deprecated AI snapshot keys.', {
+        source: 'agent_personas',
+        reason: 'deprecated_snapshot_keys',
+        index,
+        keys: deprecatedTopLevelKeys,
+      });
+    }
 
-      const name = typeof raw['name'] === 'string' ? raw['name'].trim() : '';
-      if (!name) {
-        throw validationError('Agent persona name is required.', {
-          source: 'agent_personas',
-          reason: 'missing_name',
-          index,
-        });
-      }
+    const name = typeof raw['name'] === 'string' ? raw['name'].trim() : '';
+    if (!name) {
+      throw validationError('Agent persona name is required.', {
+        source: 'agent_personas',
+        reason: 'missing_name',
+        index,
+      });
+    }
 
-      const id =
-        typeof raw['id'] === 'string' && raw['id'].trim() ? raw['id'] : createAgentPersonaId();
-      const createdAt =
-        typeof raw['createdAt'] === 'string' ? raw['createdAt'] : new Date().toISOString();
-      const updatedAt = typeof raw['updatedAt'] === 'string' ? raw['updatedAt'] : createdAt;
-      const settings = toCanonicalAgentPersonaSettings(raw['settings']);
-      const description = typeof raw['description'] === 'string' ? raw['description'] : null;
+    const id =
+      typeof raw['id'] === 'string' && raw['id'].trim() ? raw['id'] : createAgentPersonaId();
+    const createdAt =
+      typeof raw['createdAt'] === 'string' ? raw['createdAt'] : new Date().toISOString();
+    const updatedAt = typeof raw['updatedAt'] === 'string' ? raw['updatedAt'] : createdAt;
+    const settings = toCanonicalAgentPersonaSettings(raw['settings']);
+    const description = typeof raw['description'] === 'string' ? raw['description'] : null;
 
-      return {
-        id,
-        name,
-        description,
-        settings,
-        createdAt,
-        updatedAt,
-      } as AgentPersona;
-    });
+    return {
+      id,
+      name,
+      description,
+      settings,
+      createdAt,
+      updatedAt,
+    } as AgentPersona;
+  });
 };
 
 const parseStoredAgentPersonas = (rawValue: string | undefined): unknown[] => {

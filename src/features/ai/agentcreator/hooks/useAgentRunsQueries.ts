@@ -1,4 +1,3 @@
-
 import { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { AgentSnapshot, AgentBrowserLog, AgentAuditLog } from '@/shared/contracts/chatbot';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
@@ -88,7 +87,7 @@ export function useAgentAudits(
 export function useDeleteAgentRunMutation(): MutationResult<
   void,
   { runId: string; force?: boolean }
-  > {
+> {
   const mutationKey = agentRunsKeys.lists();
   return createDeleteMutationV2<void, { runId: string; force?: boolean }>({
     mutationFn: ({ runId, force }: { runId: string; force?: boolean }) =>

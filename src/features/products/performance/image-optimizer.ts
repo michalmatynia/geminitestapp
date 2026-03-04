@@ -10,13 +10,7 @@ import type {
   OptimizedImageResult,
 } from '@/shared/contracts/files';
 
-export type {
-  ImageFormat,
-  ImageSize,
-  ImageSizeConfig,
-  OptimizationOptions,
-  OptimizedImageResult,
-};
+export type { ImageFormat, ImageSize, ImageSizeConfig, OptimizationOptions, OptimizedImageResult };
 
 const DEFAULT_IMAGE_SIZES: Record<ImageSize, ImageSizeConfig> = {
   thumbnail: { width: 150, height: 150, quality: 80 },

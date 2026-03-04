@@ -72,7 +72,11 @@ export function BaselinkerSettings(): React.JSX.Element {
               </div>
               <MetadataItem label='Last verified' value={baseTokenUpdatedAt} variant='minimal' />
               {activeConnection.baseLastInventoryId && (
-                <MetadataItem label='Last inventory' value={activeConnection.baseLastInventoryId} variant='minimal' />
+                <MetadataItem
+                  label='Last inventory'
+                  value={activeConnection.baseLastInventoryId}
+                  variant='minimal'
+                />
               )}
               <div className='pt-2'>
                 <Button
@@ -91,10 +95,7 @@ export function BaselinkerSettings(): React.JSX.Element {
             </Card>
 
             <div className='space-y-4'>
-              <FormField
-                label='Sync Interval'
-                description='How often to check for status updates.'
-              >
+              <FormField label='Sync Interval' description='How often to check for status updates.'>
                 <div className='flex items-center gap-2'>
                   <Input
                     type='number'

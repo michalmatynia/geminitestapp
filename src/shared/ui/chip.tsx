@@ -37,7 +37,11 @@ export function Chip({
 
   // Map Chip variants to Badge variants
   const badgeVariant: VariantProps<typeof badgeVariants>['variant'] = active
-    ? (variant === 'default' ? 'secondary' : variant === 'emerald' ? 'success' : variant)
+    ? variant === 'default'
+      ? 'secondary'
+      : variant === 'emerald'
+        ? 'success'
+        : variant
     : 'outline';
 
   return (
@@ -54,7 +58,8 @@ export function Chip({
         className={cn(
           'flex items-center gap-1.5 transition-all duration-200 border cursor-pointer',
           sizeStyles[size],
-          !active && 'bg-transparent text-gray-400 border-border/50 hover:border-gray-400 hover:text-gray-200',
+          !active &&
+            'bg-transparent text-gray-400 border-border/50 hover:border-gray-400 hover:text-gray-200',
           active ? activeClassName : className
         )}
       >

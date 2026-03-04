@@ -23,7 +23,7 @@ const buildRagSystemPrompt = (params: {
   lines.push(
     'You have access to a Knowledge Base (embedded text chunks).',
     'Use it when it is relevant and cite sources by documentId in square brackets, e.g. [doc:abc123].',
-    'If the answer is not present in the provided sources, say you don\'t know (do not invent).'
+    "If the answer is not present in the provided sources, say you don't know (do not invent)."
   );
   if (params.sources.length > 0) {
     lines.push('', 'Knowledge Base Sources:');

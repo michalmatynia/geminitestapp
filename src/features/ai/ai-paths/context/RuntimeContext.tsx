@@ -28,12 +28,7 @@ import type {
   RuntimeNodeConfigHandlers,
 } from '@/shared/contracts/ai-paths';
 
-export type {
-  LastErrorInfo,
-  RuntimeRunStatus,
-  RuntimeControlHandlers,
-  RuntimeNodeConfigHandlers,
-};
+export type { LastErrorInfo, RuntimeRunStatus, RuntimeControlHandlers, RuntimeNodeConfigHandlers };
 
 // ---------------------------------------------------------------------------
 // Context Value

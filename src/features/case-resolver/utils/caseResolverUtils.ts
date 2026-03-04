@@ -1,10 +1,3 @@
- 
- 
- 
- 
- 
- 
-
 import {
   deriveDocumentContentSync,
   ensureHtmlForPreview,
@@ -35,10 +28,7 @@ export {
   createUniqueFolderPath,
 } from './case-resolver/folders';
 
-export {
-  toNormalizedSearchValue,
-  buildFilemakerAddressLabel,
-} from './case-resolver/parties';
+export { toNormalizedSearchValue, buildFilemakerAddressLabel } from './case-resolver/parties';
 
 export {
   stripHtmlToComparablePlainText,
@@ -95,7 +85,12 @@ const normalizePartyReference = (
 };
 
 const normalizeDocumentDateDraft = (
-  value: CaseResolverFile['documentDate'] | CaseResolverFileEditDraft['documentDate'] | string | null | undefined
+  value:
+    | CaseResolverFile['documentDate']
+    | CaseResolverFileEditDraft['documentDate']
+    | string
+    | null
+    | undefined
 ): CaseResolverFileEditDraft['documentDate'] => {
   if (!value) return null;
   if (typeof value === 'string') {
@@ -122,7 +117,10 @@ const buildCanonicalDocumentForDraft = (
       if (typeof file.documentContentMarkdown === 'string' && file.documentContentMarkdown.trim()) {
         return file.documentContentMarkdown;
       }
-      if (typeof file.documentContentPlainText === 'string' && file.documentContentPlainText.trim()) {
+      if (
+        typeof file.documentContentPlainText === 'string' &&
+        file.documentContentPlainText.trim()
+      ) {
         return file.documentContentPlainText;
       }
       if (typeof file.documentContent === 'string' && file.documentContent.trim()) {
@@ -244,18 +242,22 @@ export const createCaseResolverHistorySnapshotEntry = (input: {
   const normalizedEditorType = normalizeHistoryEditorType(input.editorType);
   const canonical = normalizeSemanticallyEmptyCanonicalContent(
     deriveDocumentContentSync({
-      mode: normalizedEditorType === 'markdown' || normalizedEditorType === 'code' ? 'markdown' : 'wysiwyg',
+      mode:
+        normalizedEditorType === 'markdown' || normalizedEditorType === 'code'
+          ? 'markdown'
+          : 'wysiwyg',
       value:
         normalizedEditorType === 'markdown' || normalizedEditorType === 'code'
-          ? input.documentContentMarkdown ??
+          ? (input.documentContentMarkdown ??
             input.documentContentPlainText ??
             (hasHtmlMarkup(input.documentContent ?? '')
               ? stripHtmlToPlainText(input.documentContent ?? '')
-              : (input.documentContent ?? ''))
-          : input.documentContentHtml ??
-            (typeof input.documentContentMarkdown === 'string' && input.documentContentMarkdown.trim()
+              : (input.documentContent ?? '')))
+          : (input.documentContentHtml ??
+            (typeof input.documentContentMarkdown === 'string' &&
+            input.documentContentMarkdown.trim()
               ? ensureHtmlForPreview(input.documentContentMarkdown, 'markdown')
-              : ensureSafeDocumentHtml(input.documentContent ?? '')),
+              : ensureSafeDocumentHtml(input.documentContent ?? ''))),
       previousMarkdown: input.documentContentMarkdown ?? '',
       previousHtml: input.documentContentHtml ?? '',
     })
@@ -356,7 +358,10 @@ export const resolveCaseResolverHistoryEntryPreview = (
   entry: CaseResolverDocumentHistoryEntry,
   maxChars: number = 240
 ): string => {
-  const candidates: Array<{ value: string | undefined; type: 'plainText' | 'markdown' | 'html' | 'content' }> = [
+  const candidates: Array<{
+    value: string | undefined;
+    type: 'plainText' | 'markdown' | 'html' | 'content';
+  }> = [
     { value: entry.documentContentPlainText, type: 'plainText' },
     { value: entry.documentContentMarkdown, type: 'markdown' },
     { value: entry.documentContentHtml, type: 'html' },
@@ -502,21 +507,25 @@ export const resolveActiveVersion = (
 ): CaseResolverResolvedVersionContent | null => {
   const baseContent =
     activeDocumentVersion === 'exploded'
-      ? file.explodedDocumentContent ?? file.documentContent
-      : file.originalDocumentContent ?? file.documentContent;
+      ? (file.explodedDocumentContent ?? file.documentContent)
+      : (file.originalDocumentContent ?? file.documentContent);
   return {
     contentMarkdown:
       activeDocumentVersion === 'exploded'
-        ? file.explodedDocumentContent ?? file.documentContentMarkdown ?? baseContent
-        : file.originalDocumentContent ?? file.documentContentMarkdown ?? baseContent,
+        ? (file.explodedDocumentContent ?? file.documentContentMarkdown ?? baseContent)
+        : (file.originalDocumentContent ?? file.documentContentMarkdown ?? baseContent),
     contentPlainText:
       activeDocumentVersion === 'exploded'
-        ? file.explodedDocumentContent ?? file.documentContentPlainText ?? baseContent
-        : file.originalDocumentContent ?? file.documentContentPlainText ?? baseContent,
+        ? (file.explodedDocumentContent ?? file.documentContentPlainText ?? baseContent)
+        : (file.originalDocumentContent ?? file.documentContentPlainText ?? baseContent),
     contentHtml:
       activeDocumentVersion === 'exploded'
-        ? ensureSafeDocumentHtml(file.explodedDocumentContent ?? file.documentContentHtml ?? baseContent)
-        : ensureSafeDocumentHtml(file.originalDocumentContent ?? file.documentContentHtml ?? baseContent),
+        ? ensureSafeDocumentHtml(
+          file.explodedDocumentContent ?? file.documentContentHtml ?? baseContent
+        )
+        : ensureSafeDocumentHtml(
+          file.originalDocumentContent ?? file.documentContentHtml ?? baseContent
+        ),
   };
 };
 

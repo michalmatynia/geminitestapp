@@ -27,4 +27,3 @@ export const getActiveOtelContextAttributes = (): OtelContextAttributes => {
     return {};
   }
 };
-

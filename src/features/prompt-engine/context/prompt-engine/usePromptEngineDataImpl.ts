@@ -3,28 +3,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
- 
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { useState, useEffect, useMemo } from 'react';
-import { 
-  parsePromptEngineSettings, 
+import {
+  parsePromptEngineSettings,
   defaultPromptEngineSettings,
-  PromptValidationRule
+  PromptValidationRule,
 } from '../../settings';
-import { 
-  RuleDraft, 
-  createRuleDraft, 
-  sortRuleDraftsBySequence 
+import {
+  RuleDraft,
+  createRuleDraft,
+  sortRuleDraftsBySequence,
 } from '../prompt-engine-context-utils';
 
-export function usePromptEngineDataImpl(args: {
-  settingsQuery: any;
-  rawSettings: any;
-}) {
+export function usePromptEngineDataImpl(args: { settingsQuery: any; rawSettings: any }) {
   const { settingsQuery, rawSettings } = args;
-  
+
   const [drafts, setDrafts] = useState<RuleDraft[]>([]);
   const [initializedAt, setInitializedAt] = useState<number | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);

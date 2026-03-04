@@ -4,10 +4,7 @@ import {
   updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type {
-  AiPathLocalRunStatus,
-  AiPathLocalRunRecord,
-} from '@/shared/contracts/ai-paths';
+import type { AiPathLocalRunStatus, AiPathLocalRunRecord } from '@/shared/contracts/ai-paths';
 
 import { AI_PATHS_LOCAL_RUNS_KEY } from './core/constants';
 
@@ -50,7 +47,7 @@ const normalizeRecord = (value: unknown): AiPathLocalRunRecord | null => {
           Object.entries(rawNodeDurations as Record<string, unknown>).filter(
             ([, v]) => typeof v === 'number' && Number.isFinite(v)
           ) as [string, number][]
-      )
+        )
       : null;
 
   return {

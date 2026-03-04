@@ -47,7 +47,10 @@ const RANGE_OPTIONS: Array<{ value: BrainOperationsRange; label: string; descrip
   { value: '24h', label: 'Last 24h', description: 'Daily baseline' },
 ];
 
-const TREND_ICON: Record<BrainOperationsTrend['direction'], ComponentType<{ className?: string }>> = {
+const TREND_ICON: Record<
+  BrainOperationsTrend['direction'],
+  ComponentType<{ className?: string }>
+> = {
   up: TrendingUp,
   down: TrendingDown,
   flat: Minus,
@@ -111,7 +114,9 @@ export function OperationsTab(): React.JSX.Element {
             <SelectSimple
               size='sm'
               value={operationsRange}
-              onValueChange={(value: string): void => setOperationsRange(value as BrainOperationsRange)}
+              onValueChange={(value: string): void =>
+                setOperationsRange(value as BrainOperationsRange)
+              }
               options={RANGE_OPTIONS}
               ariaLabel='Operations range'
             />
@@ -140,8 +145,8 @@ export function OperationsTab(): React.JSX.Element {
       {data ? (
         <div className='space-y-4'>
           <div className='text-[11px] text-gray-500'>
-            Snapshot: {formatUpdatedAt(data.generatedAt)} ({formatFreshness(data.generatedAt)}) · Range:{' '}
-            {selectedRangeLabel}
+            Snapshot: {formatUpdatedAt(data.generatedAt)} ({formatFreshness(data.generatedAt)}) ·
+            Range: {selectedRangeLabel}
           </div>
 
           <div className='grid gap-4 lg:grid-cols-2'>
@@ -198,7 +203,9 @@ export function OperationsTab(): React.JSX.Element {
                         className='rounded-md border border-border/60 bg-background/40 px-2 py-1.5'
                       >
                         <div className='text-[10px] uppercase text-gray-500'>{metric.label}</div>
-                        <div className='text-xs text-gray-200'>{formatMetricValue(metric.value)}</div>
+                        <div className='text-xs text-gray-200'>
+                          {formatMetricValue(metric.value)}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -220,15 +227,23 @@ export function OperationsTab(): React.JSX.Element {
                       onClick={(): void => setExpandedDomain(isExpanded ? null : key)}
                     >
                       Details
-                      {isExpanded ? <ChevronUp className='size-3' /> : <ChevronDown className='size-3' />}
+                      {isExpanded ? (
+                        <ChevronUp className='size-3' />
+                      ) : (
+                        <ChevronDown className='size-3' />
+                      )}
                     </button>
                   </div>
 
                   {isExpanded ? (
                     <div className='space-y-2 rounded-md border border-border/60 bg-background/30 p-2'>
-                      <div className='text-[10px] uppercase text-gray-500'>Recent events ({selectedRangeLabel})</div>
+                      <div className='text-[10px] uppercase text-gray-500'>
+                        Recent events ({selectedRangeLabel})
+                      </div>
                       {domain.recentEvents.length === 0 ? (
-                        <div className='text-xs text-gray-400'>No recent events in sampled records.</div>
+                        <div className='text-xs text-gray-400'>
+                          No recent events in sampled records.
+                        </div>
                       ) : (
                         <div className='space-y-1'>
                           {domain.recentEvents.map((event) => (
@@ -237,7 +252,9 @@ export function OperationsTab(): React.JSX.Element {
                               className='flex items-center justify-between rounded border border-border/50 bg-background/40 px-2 py-1 text-[11px]'
                             >
                               <span className='font-medium text-gray-200'>{event.status}</span>
-                              <span className='text-gray-400'>{formatUpdatedAt(event.timestamp)}</span>
+                              <span className='text-gray-400'>
+                                {formatUpdatedAt(event.timestamp)}
+                              </span>
                             </div>
                           ))}
                         </div>

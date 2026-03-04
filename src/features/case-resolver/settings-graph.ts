@@ -255,19 +255,13 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
   const validNodeIds = new Set<string>(
     rawNodes.map((node: AiNode) => (typeof node?.id === 'string' ? node.id : '')).filter(Boolean)
   );
-  const parsedEdges: Edge[] = [];
-  rawEdges.forEach((edge: unknown, index: number): void => {
-    try {
-      parsedEdges.push(parseCanonicalCaseResolverEdge(edge, `case_resolver.graph.edges[${index}]`));
-    } catch {
-      // Strip incompatible legacy/invalid edges so normalization remains non-blocking.
-    }
-  });
-  const edgesByNodeId = parsedEdges
-    .filter(
-      (edge: Edge): boolean =>
-        validNodeIds.has(edge.source?.trim() ?? '') && validNodeIds.has(edge.target?.trim() ?? '')
-    );
+  const parsedEdges: Edge[] = rawEdges.map((edge: unknown, index: number): Edge =>
+    parseCanonicalCaseResolverEdge(edge, `case_resolver.graph.edges[${index}]`)
+  );
+  const edgesByNodeId = parsedEdges.filter(
+    (edge: Edge): boolean =>
+      validNodeIds.has(edge.source?.trim() ?? '') && validNodeIds.has(edge.target?.trim() ?? '')
+  );
 
   const presetRaw = graphRecord['pdfExtractionPresetId'];
   const pdfExtractionPresetId: CaseResolverPdfExtractionPresetId =

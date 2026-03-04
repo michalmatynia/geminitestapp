@@ -2,7 +2,11 @@
 import { UseQueryResult } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useDraft, useCreateDraft, useUpdateDraft } from '@/features/drafter/hooks/useDraftQueries';
+import {
+  useDraft,
+  useCreateDraftMutation,
+  useUpdateDraftMutation,
+} from '@/features/drafter/hooks/useDraftQueries';
 import { draftSubmitSchema } from '@/features/drafter/validations/draft-form';
 import { IconSelector } from '@/shared/lib/icons';
 import type {
@@ -22,7 +26,16 @@ import { type ProductDraftOpenFormTab } from '@/shared/contracts/products';
 import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { AppModal, Tabs, TabsContent, TabsList, TabsTrigger, useToast, LoadingState, Card } from '@/shared/ui';
+import {
+  AppModal,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  useToast,
+  LoadingState,
+  Card,
+} from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
@@ -78,8 +91,8 @@ export function DraftCreator({
   const { data: catalogs = [] } = useCatalogs();
   const { data: producers = [], isLoading: producersLoading } = useProducers();
   const draftQuery = useDraft(draftId);
-  const createDraftMutation = useCreateDraft();
-  const updateDraftMutation = useUpdateDraft();
+  const createDraftMutation = useCreateDraftMutation();
+  const updateDraftMutation = useUpdateDraftMutation();
 
   // Form fields
   const [name, setName] = useState<string>('');
@@ -189,10 +202,7 @@ export function DraftCreator({
     (): ProductCategory[] => readQueryData(categoryQueryResults),
     [categoryQueryResults]
   );
-  const tags = useMemo(
-    (): ProductTag[] => readQueryData(tagQueryResults),
-    [tagQueryResults]
-  );
+  const tags = useMemo((): ProductTag[] => readQueryData(tagQueryResults), [tagQueryResults]);
   const parameters = useMemo(
     (): ProductParameter[] => readQueryData(parameterQueryResults),
     [parameterQueryResults]
@@ -667,7 +677,11 @@ export function DraftCreator({
 
   if (draftQuery.isLoading) {
     return (
-      <Card variant='subtle' padding='lg' className='flex items-center justify-center min-h-[400px]'>
+      <Card
+        variant='subtle'
+        padding='lg'
+        className='flex items-center justify-center min-h-[400px]'
+      >
         <LoadingState message='Loading draft configuration...' />
       </Card>
     );

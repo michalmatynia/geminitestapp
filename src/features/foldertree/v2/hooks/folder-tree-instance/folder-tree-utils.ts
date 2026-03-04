@@ -42,7 +42,9 @@ export const areNodesEqual = (
 export const cloneNodes = (nodes: FolderTreeState['nodes']): FolderTreeState['nodes'] =>
   nodes.map((node) => ({ ...node }));
 
-export const cloneUndoStack = (entries: FolderTreeState['undoStack']): FolderTreeState['undoStack'] =>
+export const cloneUndoStack = (
+  entries: FolderTreeState['undoStack']
+): FolderTreeState['undoStack'] =>
   entries.map((entry) => ({
     ...entry,
     nodes: cloneNodes(entry.nodes),

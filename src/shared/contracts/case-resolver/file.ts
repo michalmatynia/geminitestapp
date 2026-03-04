@@ -12,14 +12,8 @@ import {
   type CaseResolverDocumentFormatVersion,
 } from './base';
 import { caseResolverScanSlotSchema, type CaseResolverScanSlot } from './ocr';
-import {
-  caseResolverGraphSchema,
-  type CaseResolverGraph,
-} from './graph';
-import {
-  caseResolverPartyReferenceSchema,
-  type CaseResolverPartyReference,
-} from './relations';
+import { caseResolverGraphSchema, type CaseResolverGraph } from './graph';
+import { caseResolverPartyReferenceSchema, type CaseResolverPartyReference } from './relations';
 import {
   caseResolverDocumentHistoryEntrySchema,
   type CaseResolverDocumentHistoryEntry,

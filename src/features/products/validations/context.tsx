@@ -72,7 +72,7 @@ export function useValidationContext(): ValidationContextState & {
   clearFieldValidation: (field: string) => void;
   setValidating: (isValidating: boolean) => void;
   reset: () => void;
-  } {
+} {
   const context = useContext(ValidationContext);
   if (!context) {
     throw internalError('useValidationContext must be used within ValidationProvider');

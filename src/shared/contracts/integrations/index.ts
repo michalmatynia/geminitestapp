@@ -24,11 +24,7 @@ import {
   type CreateProductListing,
   type ProductListingWithDetails,
 } from './listings';
-import {
-  type Integration,
-  type ImageExportLogger,
-  type CapturedLog,
-} from './base';
+import { type Integration, type ImageExportLogger, type CapturedLog } from './base';
 import {
   type IntegrationConnection,
   type ConnectionDeleteOptions,
@@ -409,7 +405,6 @@ export type TraderaCategoryRecord = z.infer<typeof traderaCategoryRecordSchema>;
  * Base.com Listing processing
  */
 
-
 export type IntegrationRecord = Omit<Integration, 'createdAt' | 'updatedAt'> & {
   createdAt: string | Date;
   updatedAt: string | Date | null;
@@ -513,10 +508,7 @@ export const integrationDefinitions = [
  * Base Import processing
  */
 
-import type {
-  Product as ProductRecord,
-  CreateProduct as ProductCreateInput,
-} from '../products';
+import type { Product as ProductRecord, CreateProduct as ProductCreateInput } from '../products';
 
 export type ImportDecision =
   | { type: 'create' }

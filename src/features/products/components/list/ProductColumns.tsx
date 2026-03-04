@@ -1,6 +1,5 @@
 'use client';
 
-
 import { ArrowUpDown, Download } from 'lucide-react';
 
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';

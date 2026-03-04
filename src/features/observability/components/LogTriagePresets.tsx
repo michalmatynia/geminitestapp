@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  AlertTriangle,
-  Monitor,
-  Server,
-  Shield,
-} from 'lucide-react';
+import { AlertTriangle, Monitor, Server, Shield } from 'lucide-react';
 import React from 'react';
 
 import { useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
@@ -17,11 +12,7 @@ import {
   type LogTriagePreset,
   type SystemLogFilterFormValues,
 } from '@/shared/lib/observability/log-triage-presets';
-import {
-  Button,
-  FormSection,
-  StatusBadge,
-} from '@/shared/ui';
+import { Button, FormSection, StatusBadge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 const triagePresetIcons: Record<

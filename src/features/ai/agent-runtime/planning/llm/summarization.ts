@@ -78,7 +78,7 @@ export async function buildCheckpointBriefWithLLM({
     };
     if (!parsed.summary) return null;
     return {
-      summary: (parsed.summary).trim(),
+      summary: parsed.summary.trim(),
       nextActions: Array.isArray(parsed.nextActions) ? parsed.nextActions : [],
       risks: Array.isArray(parsed.risks) ? parsed.risks : [],
     };

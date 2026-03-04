@@ -69,9 +69,11 @@ export function ConfirmModal({
     }
   };
 
-  const isConfirmDisabled = loading || (onConfirmPasswordChange !== undefined && !confirmPassword?.trim());
+  const isConfirmDisabled =
+    loading || (onConfirmPasswordChange !== undefined && !confirmPassword?.trim());
   const resolvedDescription =
-    subtitle ?? (typeof message === 'string' && message.trim().length > 0 ? message : 'Confirm this action.');
+    subtitle ??
+    (typeof message === 'string' && message.trim().length > 0 ? message : 'Confirm this action.');
 
   const sizeClasses = {
     sm: 'sm:max-w-[425px]',
@@ -99,9 +101,7 @@ export function ConfirmModal({
 
           {onConfirmPasswordChange && (
             <div className='space-y-2'>
-              <Label className='text-xs font-medium text-gray-300'>
-                {confirmPasswordLabel}
-              </Label>
+              <Label className='text-xs font-medium text-gray-300'>{confirmPasswordLabel}</Label>
               <Input
                 type='password'
                 value={confirmPassword}

@@ -1,18 +1,15 @@
-import { 
-  IntegrationConnectionRecord, 
-  ProductListing 
-} from '@/shared/contracts/integrations';
+import { IntegrationConnectionRecord, ProductListing } from '@/shared/contracts/integrations';
 import { decryptSecret } from '@/features/integrations/server';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
-import { 
+import {
   DEFAULT_TRADERA_API_CATEGORY_ID,
   DEFAULT_TRADERA_API_PAYMENT_CONDITION,
-  DEFAULT_TRADERA_API_SHIPPING_CONDITION
+  DEFAULT_TRADERA_API_SHIPPING_CONDITION,
 } from './config';
 import { toPositiveInt, toRecord } from './utils';
-import { 
-  addTraderaShopItem, 
-  TraderaApiCredentials 
+import {
+  addTraderaShopItem,
+  TraderaApiCredentials,
 } from '@/features/integrations/services/tradera-api-client';
 import { getProductRepository } from '@/features/products/server';
 
@@ -73,7 +70,11 @@ export const runTraderaApiListing = async ({
 }: {
   listing: ProductListing;
   connection: IntegrationConnectionRecord;
-}): Promise<{ externalListingId: string; listingUrl?: string; metadata?: Record<string, unknown> }> => {
+}): Promise<{
+  externalListingId: string;
+  listingUrl?: string;
+  metadata?: Record<string, unknown>;
+}> => {
   const productRepository = await getProductRepository();
   const product = await productRepository.getProductById(listing.productId);
   if (!product) {

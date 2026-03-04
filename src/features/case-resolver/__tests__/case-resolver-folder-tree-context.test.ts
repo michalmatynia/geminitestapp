@@ -7,7 +7,10 @@ import {
   createEmptyCaseResolverRelationGraph,
   parseCaseResolverWorkspace,
 } from '@/features/case-resolver/settings';
-import { toCaseResolverCaseNodeId, toCaseResolverFileNodeId } from '@/features/case-resolver/master-tree';
+import {
+  toCaseResolverCaseNodeId,
+  toCaseResolverFileNodeId,
+} from '@/features/case-resolver/master-tree';
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
 describe('case resolver folder tree root nodes', () => {

@@ -28,10 +28,7 @@ import { useAdminCaseResolverEditorUiState } from './useAdminCaseResolverEditorU
 import { useAdminCaseResolverDocumentActions } from './useAdminCaseResolverDocumentActions';
 import { useAdminCaseResolverRelationActions } from './useAdminCaseResolverRelationActions';
 import { useAdminCaseResolverMetadataActions } from './useAdminCaseResolverMetadataActions';
-import {
-  buildCaseMetadataDraft,
-  buildCaseMetadataPatch,
-} from '../case-overview-draft';
+import { buildCaseMetadataDraft, buildCaseMetadataPatch } from '../case-overview-draft';
 
 export function useAdminCaseResolverPageState() {
   const state: CaseResolverStateValue = useCaseResolverState();
@@ -221,24 +218,27 @@ export function useAdminCaseResolverPageState() {
 
   const isActiveCaseMetadataDirty = activeCaseMetadataPatch !== null;
 
-  const updateActiveCaseMetadataDraft = useCallback((patch: {
-    name?: string;
-    parentCaseId?: string;
-    caseStatus?: 'pending' | 'completed';
-    happeningDate?: string;
-    referenceCaseIds?: string[];
-    tagId?: string;
-    caseIdentifierId?: string;
-    categoryId?: string;
-  }): void => {
-    setActiveCaseMetadataDraft((current) => {
-      if (!current) return current;
-      return {
-        ...current,
-        ...patch,
-      };
-    });
-  }, []);
+  const updateActiveCaseMetadataDraft = useCallback(
+    (patch: {
+      name?: string;
+      parentCaseId?: string;
+      caseStatus?: 'pending' | 'completed';
+      happeningDate?: string;
+      referenceCaseIds?: string[];
+      tagId?: string;
+      caseIdentifierId?: string;
+      categoryId?: string;
+    }): void => {
+      setActiveCaseMetadataDraft((current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          ...patch,
+        };
+      });
+    },
+    []
+  );
 
   const handleSaveActiveCaseMetadata = useCallback((): void => {
     if (!activeCaseFile || activeCaseFile.isLocked || !activeCaseMetadataPatch) return;

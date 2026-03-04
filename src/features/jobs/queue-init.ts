@@ -178,9 +178,8 @@ export const initializeQueues = (): void => {
 
     // AI Insights queue is started separately after the generic startup pass so Brain gating
     // can decide whether the worker should run at all.
-    const startAiInsightsQueue = (
-      await import('@/features/ai/insights/workers/aiInsightsQueue')
-    ).startAiInsightsQueue as (() => void) | undefined;
+    const startAiInsightsQueue = (await import('@/features/ai/insights/workers/aiInsightsQueue'))
+      .startAiInsightsQueue as (() => void) | undefined;
     startAiInsightsQueue?.();
   })();
 };

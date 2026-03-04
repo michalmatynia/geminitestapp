@@ -129,14 +129,14 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
         actions={
           collection
             ? [
-              {
-                key: 'model',
-                label: `Model: ${collection.embeddingModel}`,
-                variant: 'secondary',
-                onClick: () => {},
-                disabled: true,
-              },
-            ]
+                {
+                  key: 'model',
+                  label: `Model: ${collection.embeddingModel}`,
+                  variant: 'secondary',
+                  onClick: () => {},
+                  disabled: true,
+                },
+              ]
             : []
         }
       />

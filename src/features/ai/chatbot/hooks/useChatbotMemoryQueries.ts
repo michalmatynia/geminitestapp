@@ -1,6 +1,5 @@
 'use client';
 
-
 import type { ChatbotMemoryItem } from '@/shared/contracts/chatbot';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';

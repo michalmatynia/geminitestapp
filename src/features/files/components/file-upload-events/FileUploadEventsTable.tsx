@@ -2,12 +2,7 @@
 
 import React, { useMemo } from 'react';
 
-import { 
-  StandardDataTablePanel, 
-  PanelPagination, 
-  RefreshButton,
-  FilterPanel
-} from '@/shared/ui';
+import { StandardDataTablePanel, PanelPagination, RefreshButton, FilterPanel } from '@/shared/ui';
 import type { FilterField } from '@/shared/ui/templates/panels';
 
 import { useFileUploadEventsTableProps } from '../../hooks/useFileUploadEventsTableProps';

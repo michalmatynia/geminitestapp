@@ -169,7 +169,9 @@ describe('ProductModals edit hydration guard', () => {
     render(<ProductModals />);
 
     expect(screen.getByTestId('loading-form-modal')).toBeInTheDocument();
-    expect(screen.getByText('Please wait while complete product data is loaded.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Please wait while complete product data is loaded.')
+    ).toBeInTheDocument();
     expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
     // Form provider and its content must not be rendered during loading
     expect(screen.queryByTestId('product-form-provider')).not.toBeInTheDocument();

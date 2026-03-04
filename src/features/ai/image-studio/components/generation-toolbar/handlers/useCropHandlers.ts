@@ -1,9 +1,7 @@
 import { useCallback } from 'react';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
-import {
-  type ImageStudioSlotRecord,
-} from '@/shared/contracts/image-studio';
+import { type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { CROP_REQUEST_TIMEOUT_MS } from '../GenerationToolbar.utils';
 import {
   polygonsFromShapes,

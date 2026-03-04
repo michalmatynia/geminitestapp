@@ -1,9 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
- 
- 
- 
- 
 
 import { Prisma } from '@prisma/client';
 import prisma from '@/shared/lib/db/prisma';
@@ -167,41 +163,41 @@ export const prismaCategoryMappingImpl = {
       ...mapToRecord(record),
       externalCategory: record.externalCategory
         ? {
-          ...record.externalCategory,
-          fetchedAt: record.externalCategory.fetchedAt.toISOString(),
-          createdAt: record.externalCategory.createdAt.toISOString(),
-          updatedAt: record.externalCategory.updatedAt.toISOString(),
-        }
+            ...record.externalCategory,
+            fetchedAt: record.externalCategory.fetchedAt.toISOString(),
+            createdAt: record.externalCategory.createdAt.toISOString(),
+            updatedAt: record.externalCategory.updatedAt.toISOString(),
+          }
         : ({
-          id: record.externalCategoryId,
-          connectionId: record.connectionId,
-          externalId: record.externalCategoryId,
-          name: `[Missing external category: ${record.externalCategoryId}]`,
-          parentExternalId: null,
-          path: null,
-          depth: 0,
-          isLeaf: true,
-          metadata: null,
-          fetchedAt: record.updatedAt.toISOString(),
-          createdAt: record.createdAt.toISOString(),
-          updatedAt: record.updatedAt.toISOString(),
-        } as any),
+            id: record.externalCategoryId,
+            connectionId: record.connectionId,
+            externalId: record.externalCategoryId,
+            name: `[Missing external category: ${record.externalCategoryId}]`,
+            parentExternalId: null,
+            path: null,
+            depth: 0,
+            isLeaf: true,
+            metadata: null,
+            fetchedAt: record.updatedAt.toISOString(),
+            createdAt: record.createdAt.toISOString(),
+            updatedAt: record.updatedAt.toISOString(),
+          } as any),
       internalCategory: record.internalCategory
         ? {
-          ...record.internalCategory,
-          createdAt: record.internalCategory.createdAt.toISOString(),
-          updatedAt: record.internalCategory.updatedAt.toISOString(),
-        }
+            ...record.internalCategory,
+            createdAt: record.internalCategory.createdAt.toISOString(),
+            updatedAt: record.internalCategory.updatedAt.toISOString(),
+          }
         : ({
-          id: record.internalCategoryId,
-          name: `[Missing internal category: ${record.internalCategoryId}]`,
-          description: null,
-          color: null,
-          parentId: null,
-          catalogId: record.catalogId,
-          createdAt: record.createdAt.toISOString(),
-          updatedAt: record.updatedAt.toISOString(),
-        } as any),
+            id: record.internalCategoryId,
+            name: `[Missing internal category: ${record.internalCategoryId}]`,
+            description: null,
+            color: null,
+            parentId: null,
+            catalogId: record.catalogId,
+            createdAt: record.createdAt.toISOString(),
+            updatedAt: record.updatedAt.toISOString(),
+          } as any),
     }));
   },
 

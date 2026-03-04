@@ -1,7 +1,5 @@
 'use client';
 
- 
-
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { PathConfig, PathMeta, AiPathsValidationConfig } from '@/shared/lib/ai-paths';
@@ -162,19 +160,21 @@ export function useAiPathsPersistence(
         const loadedPaths = normalizeLoadedPathMetas(rawPaths);
         setPaths(loadedPaths);
         if (pathIndexItem?.key === LEGACY_PATH_INDEX_KEY && pathIndexItem.value.trim().length > 0) {
-          void updateAiPathsSettingsBulk([{ key: PATH_INDEX_KEY, value: pathIndexItem.value }]).catch(
-            (error: unknown) => {
-              logClientError(error, {
-                context: {
-                  source: 'useAiPathsPersistence',
-                  action: 'migrateLegacyPathIndexKey',
-                },
-              });
-            }
-          );
+          void updateAiPathsSettingsBulk([
+            { key: PATH_INDEX_KEY, value: pathIndexItem.value },
+          ]).catch((error: unknown) => {
+            logClientError(error, {
+              context: {
+                source: 'useAiPathsPersistence',
+                action: 'migrateLegacyPathIndexKey',
+              },
+            });
+          });
         }
 
-        const historyPassesItem = baseSettings.find((s) => s.key === AI_PATHS_HISTORY_RETENTION_KEY);
+        const historyPassesItem = baseSettings.find(
+          (s) => s.key === AI_PATHS_HISTORY_RETENTION_KEY
+        );
         setHistoryRetentionPasses(normalizeHistoryRetentionPasses(historyPassesItem?.value));
 
         const historyMaxItem = baseSettings.find(
@@ -302,8 +302,7 @@ export function useAiPathsPersistence(
         }
         setUiStateLoaded(true);
       } catch (error) {
-        const errorDetail =
-          error instanceof Error && error.message ? `: ${error.message}` : '';
+        const errorDetail = error instanceof Error && error.message ? `: ${error.message}` : '';
         reportAiPathsError(
           error,
           { action: 'loadConfig' },

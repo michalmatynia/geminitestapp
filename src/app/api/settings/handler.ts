@@ -47,10 +47,7 @@ import { isLiteSettingsKey } from '@/shared/lib/settings-lite-keys';
 import { clearLiteSettingsServerCache } from '@/shared/lib/settings-lite-server-cache';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-import {
-  decodeSettingValue,
-  encodeSettingValue,
-} from '@/shared/lib/settings/settings-compression';
+import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';
 import {
   AI_PATHS_CONFIG_PREFIX,
   AI_PATHS_KEY_PREFIX,
@@ -88,9 +85,8 @@ const TRADERA_RELIST_SCHEDULER_SETTING_KEYS = new Set<string>([
 const syncTraderaRelistSchedulerWorker = async (key: string): Promise<void> => {
   if (!TRADERA_RELIST_SCHEDULER_SETTING_KEYS.has(key)) return;
   try {
-    const { startTraderaRelistSchedulerQueue } = await import(
-      '@/features/integrations/workers/traderaRelistSchedulerQueue'
-    );
+    const { startTraderaRelistSchedulerQueue } =
+      await import('@/features/integrations/workers/traderaRelistSchedulerQueue');
     startTraderaRelistSchedulerQueue();
   } catch (error) {
     await ErrorSystem.logWarning('[settings] Failed to sync Tradera relist scheduler worker.', {
@@ -438,8 +434,7 @@ export async function GET_handler(
     // Conditional fetch: if client provides its current revision, return upToDate signal instead
     // of the full value when the stored revision has not advanced beyond what the client has.
     const ifRevisionGtParam = req.nextUrl.searchParams.get('ifRevisionGt');
-    const ifRevisionGt =
-      ifRevisionGtParam !== null ? Number.parseInt(ifRevisionGtParam, 10) : null;
+    const ifRevisionGt = ifRevisionGtParam !== null ? Number.parseInt(ifRevisionGtParam, 10) : null;
     if (
       requestedKey === CASE_RESOLVER_WORKSPACE_KEY &&
       ifRevisionGt !== null &&
@@ -489,9 +484,9 @@ export async function GET_handler(
     const fallbackFromAll =
       scope === 'heavy'
         ? (() => {
-          const allKnown = getLastKnownSettings('all');
-          return allKnown ? applyScopeFilter(allKnown, 'heavy') : null;
-        })()
+            const allKnown = getLastKnownSettings('all');
+            return allKnown ? applyScopeFilter(allKnown, 'heavy') : null;
+          })()
         : null;
     const fallbackFromLight = scope === 'all' ? getLastKnownSettings('light') : null;
     let fallbackData = stale ?? lastKnown ?? fallbackFromAll ?? fallbackFromLight ?? [];

@@ -30,7 +30,10 @@ export const classifyTraderaFailure = (message: string): TraderaFailureCategory 
   return 'UNKNOWN';
 };
 
-export const toUserFacingTraderaFailure = (category: TraderaFailureCategory, message: string): string => {
+export const toUserFacingTraderaFailure = (
+  category: TraderaFailureCategory,
+  message: string
+): string => {
   if (category === 'AUTH') {
     return 'Tradera login requires manual verification. Open login window and retry.';
   }

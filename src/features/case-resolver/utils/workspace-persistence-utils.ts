@@ -1,6 +1,4 @@
-import {
-  type CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import { type CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import { normalizeCaseResolverWorkspace } from '../settings.workspace';
 
 export const readPositiveIntegerEnv = (key: string, fallback: number): number => {

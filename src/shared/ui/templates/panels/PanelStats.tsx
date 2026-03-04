@@ -21,21 +21,26 @@ export const PanelStats: React.FC<PanelStatsProps> = ({ stats, isLoading, classN
 
   const getStatVariant = (color?: PanelStat['color']) => {
     switch (color) {
-      case 'success': return 'success';
-      case 'warning': return 'warning';
-      case 'error': return 'danger';
-      case 'info': return 'info';
-      default: return 'glass';
+      case 'success':
+        return 'success';
+      case 'warning':
+        return 'warning';
+      case 'error':
+        return 'danger';
+      case 'info':
+        return 'info';
+      default:
+        return 'glass';
     }
   };
 
   return (
     <div className={cn('grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-5', className)}>
       {stats.map((stat) => (
-        <Card 
-          key={stat.key} 
-          variant={getStatVariant(stat.color)} 
-          padding='sm' 
+        <Card
+          key={stat.key}
+          variant={getStatVariant(stat.color)}
+          padding='sm'
           className='flex flex-col gap-1 border-border/40'
           title={stat.tooltip}
         >

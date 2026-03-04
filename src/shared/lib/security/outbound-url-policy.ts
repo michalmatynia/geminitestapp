@@ -44,9 +44,7 @@ const PRIVATE_METADATA_IPS = new Set<string>(['169.254.169.254', '100.100.100.20
  * Evaluated on every call (no module-level cache) so that tests can override env vars.
  */
 const resolveAppSelfOriginHosts = (): Set<string> => {
-  const envCandidates: (string | null | undefined)[] = [
-    process.env['AI_PATHS_ASSET_BASE_URL'],
-  ];
+  const envCandidates: (string | null | undefined)[] = [process.env['AI_PATHS_ASSET_BASE_URL']];
   const hosts = new Set<string>();
   for (const candidate of envCandidates) {
     if (typeof candidate !== 'string' || !candidate.trim()) continue;

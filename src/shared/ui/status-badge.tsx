@@ -77,7 +77,8 @@ export function StatusBadge({
   title,
   onClick,
 }: StatusBadgeProps): React.JSX.Element {
-  const resolvedVariant: VariantProps<typeof badgeVariants>['variant'] = variant || statusToVariant(status);
+  const resolvedVariant: VariantProps<typeof badgeVariants>['variant'] =
+    variant || statusToVariant(status);
   const displayLabel = (label || status).trim();
 
   return (

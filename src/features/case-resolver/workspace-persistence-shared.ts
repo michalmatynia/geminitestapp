@@ -1,18 +1,10 @@
-import {
-  type CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import { type CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
-import {
-  parseCaseResolverWorkspace,
-} from './settings';
+import { parseCaseResolverWorkspace } from './settings';
 
-import {
-  readPositiveIntegerEnv,
-} from './utils/workspace-persistence-utils';
+import { readPositiveIntegerEnv } from './utils/workspace-persistence-utils';
 
-import {
-  type SettingsRecordLike,
-} from './utils/workspace-settings-persistence-helpers';
+import { type SettingsRecordLike } from './utils/workspace-settings-persistence-helpers';
 
 export const CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS_DEFAULT = 8_000;
 export const CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES_DEFAULT = 1_500_000;

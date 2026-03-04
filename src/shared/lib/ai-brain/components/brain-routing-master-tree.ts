@@ -162,9 +162,7 @@ export function buildBrainRoutingMasterNodes(): MasterTreeNode[] {
 }
 
 export const createBrainRoutingFeatureNodeMap = (): Map<string, BrainRoutingCapabilityGroup> =>
-  new Map(
-    ROUTING_GROUPS.map((group) => [toBrainRoutingFeatureNodeId(group.key), group] as const)
-  );
+  new Map(ROUTING_GROUPS.map((group) => [toBrainRoutingFeatureNodeId(group.key), group] as const));
 
 export const createBrainRoutingCapabilityNodeMap = (): Map<string, AiBrainCapabilityKey> =>
   new Map(

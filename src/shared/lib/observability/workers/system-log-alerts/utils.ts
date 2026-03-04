@@ -1,9 +1,6 @@
 import type { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 import { queueState } from './state';
-import { 
-  SYSTEM_LOG_ALERT_COOLDOWN_SECONDS, 
-  SYSTEM_LOG_SILENCE_COOLDOWN_SECONDS 
-} from './config';
+import { SYSTEM_LOG_ALERT_COOLDOWN_SECONDS, SYSTEM_LOG_SILENCE_COOLDOWN_SECONDS } from './config';
 
 export const isInCooldown = (now: number): boolean => {
   if (queueState.lastAlertAt === 0) return false;

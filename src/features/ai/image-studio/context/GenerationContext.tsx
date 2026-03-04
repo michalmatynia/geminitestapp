@@ -11,9 +11,7 @@ import React, {
   useState,
 } from 'react';
 
-import {
-  useRunStudio,
-} from '@/features/ai/image-studio/hooks/useImageStudioMutations';
+import { useRunStudio } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import type {
   ImageStudioRunRecord,
   ImageStudioRunStatus,
@@ -248,8 +246,7 @@ const toGenerationRecordFromRun = (runRecord: ImageStudioRunRecord): GenerationR
     maskFeather,
     outputs: toImageFileRecords(outputs),
     slotId: runRecord.request?.asset?.id ?? '',
-    slotName:
-      runRecord.request?.asset?.id ?? runRecord.request?.asset?.filepath ?? runRecord.id,
+    slotName: runRecord.request?.asset?.id ?? runRecord.request?.asset?.filepath ?? runRecord.id,
   };
 };
 
@@ -594,7 +591,9 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
           return;
         }
 
-        setRunOutputs(Array.isArray(latestRun.outputs) ? toImageFileRecords(latestRun.outputs) : []);
+        setRunOutputs(
+          Array.isArray(latestRun.outputs) ? toImageFileRecords(latestRun.outputs) : []
+        );
         setLandingSlots(buildLandingSlotsFromRun(latestRun));
         setActiveRunId(latestRun.id);
         setActiveRunSourceSlotId(latestRun.request?.asset?.id?.trim() || null);

@@ -114,7 +114,11 @@ export function decimalsOf(value: number | undefined): number {
   return idx === -1 ? 0 : asString.length - idx - 1;
 }
 
-export function inferNumberStep(value: number, constraint: NumericConstraint, integer: boolean): number {
+export function inferNumberStep(
+  value: number,
+  constraint: NumericConstraint,
+  integer: boolean
+): number {
   if (integer) return 1;
   const decimals = Math.max(
     decimalsOf(value),

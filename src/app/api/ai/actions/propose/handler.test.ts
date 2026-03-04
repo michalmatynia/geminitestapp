@@ -123,7 +123,11 @@ describe('POST /api/ai/actions/propose handler', () => {
     saveProposalMock.mockReturnValue({ ...MOCK_PROPOSAL, approvalsNeeded: true });
 
     const res = await POST_handler(
-      makeRequest({ workflow: 'admin_automation', intent: 'Run AI path', rootIds: ['action:run-ai-path'] }),
+      makeRequest({
+        workflow: 'admin_automation',
+        intent: 'Run AI path',
+        rootIds: ['action:run-ai-path'],
+      }),
       {} as Parameters<typeof POST_handler>[1]
     );
     const body = (await res.json()) as { approvalsNeeded: boolean };
@@ -142,8 +146,8 @@ describe('POST /api/ai/actions/propose handler', () => {
       headers: { 'content-type': 'application/json' },
       body: '{bad-json',
     });
-    await expect(
-      POST_handler(req, {} as Parameters<typeof POST_handler>[1])
-    ).rejects.toThrow('Invalid JSON body.');
+    await expect(POST_handler(req, {} as Parameters<typeof POST_handler>[1])).rejects.toThrow(
+      'Invalid JSON body.'
+    );
   });
 });

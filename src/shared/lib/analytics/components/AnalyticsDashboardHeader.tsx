@@ -1,7 +1,5 @@
 'use client';
 
- 
-
 import type { AnalyticsScope } from '@/shared/contracts';
 import { Button, SectionHeader, SelectSimple } from '@/shared/ui';
 

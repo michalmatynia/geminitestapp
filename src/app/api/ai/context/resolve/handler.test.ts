@@ -115,8 +115,8 @@ describe('POST /api/ai/context/resolve handler', () => {
       body: '{bad json',
     });
 
-    await expect(
-      POST_handler(req, {} as Parameters<typeof POST_handler>[1])
-    ).rejects.toThrow('Invalid JSON body.');
+    await expect(POST_handler(req, {} as Parameters<typeof POST_handler>[1])).rejects.toThrow(
+      'Invalid JSON body.'
+    );
   });
 });

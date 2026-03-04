@@ -5,11 +5,8 @@ import { FolderTreeSearchBar } from '@/features/foldertree/v2/search';
 import { useDocumentRelationSearchContext } from '../../context/DocumentRelationSearchContext';
 
 export function SearchBar(): React.JSX.Element {
-  const {
-    documentSearchQuery,
-    setDocumentSearchQuery,
-    currentDocRows,
-  } = useDocumentRelationSearchContext();
+  const { documentSearchQuery, setDocumentSearchQuery, currentDocRows } =
+    useDocumentRelationSearchContext();
 
   return (
     <div className='flex items-center gap-2 border-b border-border/40 bg-card/10 px-3 py-1.5'>

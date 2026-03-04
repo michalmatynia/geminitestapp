@@ -214,9 +214,7 @@ const resolveSourceOutputValue = (
   if (fallback === 'wysiwygContent') {
     return sourceOutputs.wysiwygContent;
   }
-  return fallback === 'wysiwygText'
-    ? sourceOutputs.wysiwygText
-    : sourceOutputs.plaintextContent;
+  return fallback === 'wysiwygText' ? sourceOutputs.wysiwygText : sourceOutputs.plaintextContent;
 };
 
 const isWysiwygTextInputPort = (port: string | null | undefined): boolean =>
@@ -516,5 +514,4 @@ export const compileCaseResolverPrompt = (
       warnings: [(error as Error).message || 'Unknown error'],
     };
   }
-
 };

@@ -14,12 +14,7 @@ export function InsightCard({ insight }: { insight: AiInsightRecord }): React.JS
       className='text-xs text-gray-300'
     >
       <div className='text-sm text-white'>{insight.summary}</div>
-      <DocumentationList
-        title='Warnings'
-        items={warnings}
-        variant='warning'
-        size='sm'
-      />
+      <DocumentationList title='Warnings' items={warnings} variant='warning' size='sm' />
       <DocumentationList
         title='Recommendations'
         items={recommendations}

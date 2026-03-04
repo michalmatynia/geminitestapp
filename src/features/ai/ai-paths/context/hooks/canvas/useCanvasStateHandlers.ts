@@ -14,7 +14,10 @@ export interface UseCanvasStateHandlersValue {
     clientX: number,
     clientY: number
   ) => { x: number; y: number } | null;
-  updateLastPointerCanvasPosFromClient: (clientX: number, clientY: number) => { x: number; y: number } | null;
+  updateLastPointerCanvasPosFromClient: (
+    clientX: number,
+    clientY: number
+  ) => { x: number; y: number } | null;
   pruneRuntimeInputsInternal: (
     state: RuntimeState,
     removedEdges: Edge[],
@@ -227,12 +230,7 @@ export function useCanvasStateHandlers(args: {
       startPan(clientX, clientY);
       setIsPanning(true);
     },
-    [
-      args.viewportRef,
-      setIsPanning,
-      startPan,
-      updateLastPointerCanvasPosFromClient,
-    ]
+    [args.viewportRef, setIsPanning, startPan, updateLastPointerCanvasPosFromClient]
   );
 
   const handlePanMove = useCallback(

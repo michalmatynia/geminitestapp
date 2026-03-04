@@ -4,10 +4,7 @@ import { Zap } from 'lucide-react';
 import React from 'react';
 
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
-import type {
-  AnimationPreset,
-  AnimationTrigger,
-} from '@/shared/contracts/gsap';
+import type { AnimationPreset, AnimationTrigger } from '@/shared/contracts/gsap';
 import { ANIMATION_PRESETS, ANIMATION_EASINGS } from '@/shared/contracts/gsap';
 import {
   Input,

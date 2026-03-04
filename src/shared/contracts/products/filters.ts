@@ -38,9 +38,7 @@ export type ProductAdvancedFilterOperator = z.infer<typeof productAdvancedFilter
 
 export const productAdvancedFilterCombinatorSchema = z.enum(['and', 'or']);
 
-export type ProductAdvancedFilterCombinator = z.infer<
-  typeof productAdvancedFilterCombinatorSchema
->;
+export type ProductAdvancedFilterCombinator = z.infer<typeof productAdvancedFilterCombinatorSchema>;
 
 export const PRODUCT_ADVANCED_FILTER_MAX_DEPTH = 5;
 export const PRODUCT_ADVANCED_FILTER_MAX_RULES = 40;
@@ -89,9 +87,7 @@ export const productAdvancedFilterConditionSchema = z.object({
   valueTo: productAdvancedFilterValueSchema.optional(),
 });
 
-export type ProductAdvancedFilterCondition = z.infer<
-  typeof productAdvancedFilterConditionSchema
->;
+export type ProductAdvancedFilterCondition = z.infer<typeof productAdvancedFilterConditionSchema>;
 
 export interface ProductAdvancedFilterGroup {
   type: 'group';
@@ -116,9 +112,7 @@ const productAdvancedFilterGroupBaseSchema: z.ZodType<ProductAdvancedFilterGroup
     .min(1),
 });
 
-export type ProductAdvancedFilterRule =
-  | ProductAdvancedFilterCondition
-  | ProductAdvancedFilterGroup;
+export type ProductAdvancedFilterRule = ProductAdvancedFilterCondition | ProductAdvancedFilterGroup;
 
 const PRODUCT_ADVANCED_STRING_FIELDS = new Set<ProductAdvancedFilterField>([
   'id',
@@ -344,10 +338,7 @@ export const productAdvancedFilterGroupSchema: z.ZodType<ProductAdvancedFilterGr
       });
     }
 
-    const walk = (
-      nestedGroup: ProductAdvancedFilterGroup,
-      path: Array<string | number>
-    ): void => {
+    const walk = (nestedGroup: ProductAdvancedFilterGroup, path: Array<string | number>): void => {
       nestedGroup.rules.forEach((rule: ProductAdvancedFilterRule, index: number) => {
         const nextPath = [...path, 'rules', index];
         if (rule.type === 'condition') {

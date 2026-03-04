@@ -6,10 +6,7 @@ import {
 } from '@/features/integrations/server';
 import { getProductRepository } from '@/features/products/server';
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
-import {
-  BASE_EXPORT_RUN_PATH_ID,
-  BASE_EXPORT_RUN_PATH_NAME,
-} from '../helpers';
+import { BASE_EXPORT_RUN_PATH_ID, BASE_EXPORT_RUN_PATH_NAME } from '../helpers';
 
 export async function loadExportResources(productId: string, connectionId: string) {
   const [productRepo, integrationRepo, primaryListingRepo] = await Promise.all([

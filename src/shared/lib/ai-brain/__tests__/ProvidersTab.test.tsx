@@ -30,7 +30,11 @@ vi.mock('@/shared/lib/ai-brain/components/BrainCatalogTree', () => ({
       <button type='button' onClick={() => onEdit(entries[0]!)} aria-label='mock-edit-first'>
         Edit First
       </button>
-      <button type='button' onClick={() => onChange([...entries].reverse())} aria-label='mock-reorder'>
+      <button
+        type='button'
+        onClick={() => onChange([...entries].reverse())}
+        aria-label='mock-reorder'
+      >
         Reorder
       </button>
     </div>

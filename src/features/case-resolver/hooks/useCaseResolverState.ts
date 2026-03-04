@@ -217,10 +217,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
       defaultDocumentFormat,
     };
   }, [rawCaseResolverDefaultDocumentFormat, rawCaseResolverSettings]);
-  const filemakerDatabase = useMemo(
-    () => parseFilemakerDatabase(null),
-    []
-  );
+  const filemakerDatabase = useMemo(() => parseFilemakerDatabase(null), []);
   const caseResolverCaptureSettings = useMemo(
     (): CaseResolverCaptureSettingsType =>
       parseCaseResolverCaptureSettings(rawCaseResolverCaptureSettings),

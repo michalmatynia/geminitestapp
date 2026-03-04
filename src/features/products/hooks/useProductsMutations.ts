@@ -1,6 +1,5 @@
 'use client';
 
-
 import { useQueryClient } from '@tanstack/react-query';
 import { createProduct, updateProduct, deleteProduct } from '@/features/products/api/products';
 import type { ProductWithImages } from '@/shared/contracts/products';
@@ -207,7 +206,7 @@ export function useUpdateProductField(): UpdateMutation<
     field: keyof ProductWithImages;
     value: ProductWithImages[keyof ProductWithImages];
   }
-  > {
+> {
   const queryClient = useQueryClient();
 
   return createUpdateMutationV2<
@@ -238,9 +237,8 @@ export function useUpdateProductField(): UpdateMutation<
       const previousDetail = queryClient.getQueryData<ProductWithImages>(detailKey);
 
       // Optimistically update lists
-      queryClient.setQueriesData(
-        { queryKey: listKey },
-        (old: ProductListCacheValue) => patchProductListCacheValue(old, id, field, value)
+      queryClient.setQueriesData({ queryKey: listKey }, (old: ProductListCacheValue) =>
+        patchProductListCacheValue(old, id, field, value)
       );
 
       // Optimistically update detail
@@ -253,7 +251,10 @@ export function useUpdateProductField(): UpdateMutation<
     onError: (_err, { id }, context) => {
       // Rollback on error
       if (context?.previousLists) {
-        queryClient.setQueriesData({ queryKey: QUERY_KEYS.products.lists() }, context.previousLists);
+        queryClient.setQueriesData(
+          { queryKey: QUERY_KEYS.products.lists() },
+          context.previousLists
+        );
       }
       if (context?.previousDetail) {
         queryClient.setQueryData(getProductDetailQueryKey(id), context.previousDetail);

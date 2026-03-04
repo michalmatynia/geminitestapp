@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { FolderTreeNodeView } from '../../types';
-import {
-  getSelectionBoundary,
-  isNodeInSelection,
-  resolveNextSelectedNodeIds,
-} from '../selection';
+import { getSelectionBoundary, isNodeInSelection, resolveNextSelectedNodeIds } from '../selection';
 
 const row = (nodeId: string): FolderTreeNodeView => ({
   nodeId,

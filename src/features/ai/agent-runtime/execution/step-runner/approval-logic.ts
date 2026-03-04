@@ -1,18 +1,11 @@
- 
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
-import { 
-  evaluateApprovalGateWithLLM, 
-  requiresHumanApproval as requiresHumanApprovalHeuristic 
+import {
+  evaluateApprovalGateWithLLM,
+  requiresHumanApproval as requiresHumanApprovalHeuristic,
 } from '@/features/ai/agent-runtime/audit/gate';
 import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
-import { 
-  buildCheckpointState 
-} from '@/features/ai/agent-runtime/memory/checkpoint';
-import { 
-  AgentExecutionContext, 
-  PlanStep, 
-  PlannerMeta 
-} from '@/shared/contracts/agent-runtime';
+import { buildCheckpointState } from '@/features/ai/agent-runtime/memory/checkpoint';
+import { AgentExecutionContext, PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 import prisma from '@/shared/lib/db/prisma';
 
 export async function evaluateApproval(args: {
@@ -25,26 +18,26 @@ export async function evaluateApproval(args: {
   taskType: PlannerMeta['taskType'] | null;
   approvalRequestedStepId: string | null;
   summaryCheckpoint: number;
-}): Promise<{ 
-  requiresApproval: boolean; 
-  requiresHuman: boolean; 
-  approvalSource: string; 
-  approvalReason: string | null; 
+}): Promise<{
+  requiresApproval: boolean;
+  requiresHuman: boolean;
+  approvalSource: string;
+  approvalReason: string | null;
   approvalRisk: string | null;
   updatedApprovalRequestedStepId: string | null;
 }> {
-  const { 
-    step, 
-    context, 
-    runId, 
-    approvalGrantedStepId, 
-    planSteps, 
-    lastError, 
-    taskType, 
-    approvalRequestedStepId, 
-    summaryCheckpoint 
+  const {
+    step,
+    context,
+    runId,
+    approvalGrantedStepId,
+    planSteps,
+    lastError,
+    taskType,
+    approvalRequestedStepId,
+    summaryCheckpoint,
   } = args;
-  
+
   const { preferences, approvalGateModel, run, settings } = context;
 
   let requiresApproval = false;

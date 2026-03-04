@@ -1,18 +1,7 @@
- 
- 
- 
- 
- 
- 
-
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
-import type { 
-  ProductValidationPattern, 
-} from '@/shared/contracts/products';
-import { 
-  CreateValidationPatternPayload, 
-} from '@/features/products/api/settings';
+import type { ProductValidationPattern } from '@/shared/contracts/products';
+import { CreateValidationPatternPayload } from '@/features/products/api/settings';
 import { api } from '@/shared/lib/api-client';
 import { invalidateValidatorConfig } from '@/shared/lib/query-invalidation';
 import type { QueryClient } from '@tanstack/react-query';
@@ -34,7 +23,16 @@ export const createNameSecondSegmentDimensionPattern = async (args: {
   updatePattern: UpdatePatternMutation;
   createPattern: CreatePatternMutation;
 }): Promise<void> => {
-  const { target, labelBase, message, replacementField, sequence, patterns, updatePattern, createPattern } = args;
+  const {
+    target,
+    labelBase,
+    message,
+    replacementField,
+    sequence,
+    patterns,
+    updatePattern,
+    createPattern,
+  } = args;
   const existingLabels = new Set(
     patterns
       .map((item: ProductValidationPattern) => item.label.trim().toLowerCase())
@@ -95,8 +93,7 @@ export const createNameSecondSegmentDimensionPattern = async (args: {
     launchSourceMode: 'form_field',
     launchSourceField: 'name_en',
     launchOperator: 'regex',
-    launchValue:
-      '^\\s*[^|]+\\s*\\|\\s*[^|]+\\s*\\|\\s*[^|]+\\s*\\|\\s*[^|]+\\s*\\|\\s*[^|]+\\s*$',
+    launchValue: '^\\s*[^|]+\\s*\\|\\s*[^|]+\\s*\\|\\s*[^|]+\\s*\\|\\s*[^|]+\\s*\\|\\s*[^|]+\\s*$',
     launchFlags: null,
     appliesToScopes: ['draft_template', 'product_create', 'product_edit'],
   };
@@ -127,7 +124,16 @@ export const handleCreateNameLengthMirrorPattern = async (args: {
   updatePattern: UpdatePatternMutation;
   createPattern: CreatePatternMutation;
 }): Promise<void> => {
-  const { patterns, orderedPatterns, queryClient, notifySuccess, notifyError, notifyInfo, updatePattern, createPattern } = args;
+  const {
+    patterns,
+    orderedPatterns,
+    queryClient,
+    notifySuccess,
+    notifyError,
+    notifyInfo,
+    updatePattern,
+    createPattern,
+  } = args;
   try {
     const templateResult = await api.post<{
       outcomes?: Array<{
@@ -161,8 +167,7 @@ export const handleCreateNameLengthMirrorPattern = async (args: {
       await createNameSecondSegmentDimensionPattern({
         target: 'size_length',
         labelBase: 'Name Segment #2 -> Length',
-        message:
-          'Propose Length (sizeLength) from Name segment #2 (between first and second "|").',
+        message: 'Propose Length (sizeLength) from Name segment #2 (between first and second "|").',
         replacementField: 'sizeLength',
         sequence: maxSequence + 10,
         patterns,
@@ -211,11 +216,7 @@ export const handleCreateNameCategoryMirrorPattern = async (args: {
         action?: string;
         target?: string;
       }>;
-    }>(
-      '/api/products/validator-patterns/templates/name-segment-category',
-      {},
-      { logError: false }
-    );
+    }>('/api/products/validator-patterns/templates/name-segment-category', {}, { logError: false });
     void invalidateValidatorConfig(queryClient);
     const createdCount = (templateResult.outcomes ?? []).filter(
       (item) => item.action === 'created'
@@ -428,8 +429,6 @@ export const handleCreateNameMirrorPolishSequence = async (args: {
         action: 'createNameMirrorPolishSequence',
       },
     });
-    notifyError(
-      error instanceof Error ? error.message : 'Failed to create name mirror sequence.'
-    );
+    notifyError(error instanceof Error ? error.message : 'Failed to create name mirror sequence.');
   }
 };

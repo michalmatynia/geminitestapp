@@ -153,8 +153,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 
   const hasPreferenceOverrides =
-    body.ignoreRobotsTxt !== undefined ||
-    body.requireHumanApproval !== undefined;
+    body.ignoreRobotsTxt !== undefined || body.requireHumanApproval !== undefined;
   const shouldAttachPlanState = Boolean(planSettings || hasPreferenceOverrides);
 
   const run = await prisma.chatbotAgentRun.create({
@@ -168,14 +167,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       logLines: [`[${new Date().toISOString()}] Run queued.`],
       ...(shouldAttachPlanState
         ? {
-          planState: {
-            ...(planSettings ? { settings: planSettings } : {}),
-            preferences: {
-              ignoreRobotsTxt: Boolean(body.ignoreRobotsTxt),
-              requireHumanApproval: Boolean(body.requireHumanApproval),
+            planState: {
+              ...(planSettings ? { settings: planSettings } : {}),
+              preferences: {
+                ignoreRobotsTxt: Boolean(body.ignoreRobotsTxt),
+                requireHumanApproval: Boolean(body.requireHumanApproval),
+              },
             },
-          },
-        }
+          }
         : {}),
     },
   });

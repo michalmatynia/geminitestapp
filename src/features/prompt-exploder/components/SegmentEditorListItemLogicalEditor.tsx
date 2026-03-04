@@ -34,12 +34,12 @@ function normalizeLogicalConditionList(
   const baseConditions = sourceConditions.length
     ? sourceConditions
     : [
-      createLogicalCondition({
-        id: `${item.id}_condition_1`,
-        comparator: fallbackComparator,
-        value: null,
-      }),
-    ];
+        createLogicalCondition({
+          id: `${item.id}_condition_1`,
+          comparator: fallbackComparator,
+          value: null,
+        }),
+      ];
 
   return baseConditions.map((condition, index) => {
     const comparator = condition.comparator ?? fallbackComparator;
@@ -306,58 +306,58 @@ export function SegmentEditorListItemLogicalEditor(args: {
                       />
                     ) : selectedParamEntry?.spec?.kind === 'enum' &&
                       selectedParamEntry.spec.enumOptions ? (
-                        <SelectSimple
-                          size='sm'
-                          value={String(
-                            condition.value ?? selectedParamEntry.spec.enumOptions[0] ?? ''
-                          )}
-                          onValueChange={(next: string) => {
-                            updateCondition(conditionIndex, {
-                              value: next,
-                            });
-                          }}
-                          options={selectedParamEntry.spec.enumOptions.map((value) => ({
-                            value,
-                            label: value,
-                          }))}
-                        />
-                      ) : selectedParamEntry?.spec?.kind === 'number' ? (
-                        <Input
-                          type='number'
-                          value={String(condition.value ?? '')}
-                          onChange={(event) => {
-                            const next = Number(event.target.value);
-                            if (!Number.isFinite(next)) return;
-                            updateCondition(conditionIndex, {
-                              value: next,
-                            });
-                          }}
-                        />
-                      ) : (
-                        <Input
-                          value={
-                            typeof condition.value === 'string'
-                              ? condition.value
-                              : promptExploderSafeJsonStringify(condition.value ?? '')
-                          }
-                          onChange={(event) => {
-                            const rawValue = event.target.value;
-                            if (
-                              selectedParamEntry?.spec?.kind === 'rgb' ||
+                      <SelectSimple
+                        size='sm'
+                        value={String(
+                          condition.value ?? selectedParamEntry.spec.enumOptions[0] ?? ''
+                        )}
+                        onValueChange={(next: string) => {
+                          updateCondition(conditionIndex, {
+                            value: next,
+                          });
+                        }}
+                        options={selectedParamEntry.spec.enumOptions.map((value) => ({
+                          value,
+                          label: value,
+                        }))}
+                      />
+                    ) : selectedParamEntry?.spec?.kind === 'number' ? (
+                      <Input
+                        type='number'
+                        value={String(condition.value ?? '')}
+                        onChange={(event) => {
+                          const next = Number(event.target.value);
+                          if (!Number.isFinite(next)) return;
+                          updateCondition(conditionIndex, {
+                            value: next,
+                          });
+                        }}
+                      />
+                    ) : (
+                      <Input
+                        value={
+                          typeof condition.value === 'string'
+                            ? condition.value
+                            : promptExploderSafeJsonStringify(condition.value ?? '')
+                        }
+                        onChange={(event) => {
+                          const rawValue = event.target.value;
+                          if (
+                            selectedParamEntry?.spec?.kind === 'rgb' ||
                             selectedParamEntry?.spec?.kind === 'tuple2' ||
                             selectedParamEntry?.spec?.kind === 'json'
-                            ) {
-                              updateCondition(conditionIndex, {
-                                value: sanitizeParamJsonValue(rawValue, condition.value),
-                              });
-                              return;
-                            }
+                          ) {
                             updateCondition(conditionIndex, {
-                              value: rawValue,
+                              value: sanitizeParamJsonValue(rawValue, condition.value),
                             });
-                          }}
-                        />
-                      )
+                            return;
+                          }
+                          updateCondition(conditionIndex, {
+                            value: rawValue,
+                          });
+                        }}
+                      />
+                    )
                   ) : (
                     <Card
                       variant='subtle-compact'

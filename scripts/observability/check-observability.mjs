@@ -8,6 +8,12 @@ const DEFAULTS = {
   srcDir: 'src',
   apiDir: path.join('src', 'app', 'api'),
   allowPartial: false,
+  logsDir: 'logs',
+  checkLogFile: path.join('logs', 'observability-check.log'),
+  errorLogFile: path.join('logs', 'observability-check.error.log'),
+  maxRuntimeErrorFindings: 100,
+  scanRuntimeLogs: true,
+  emitCiAnnotations: true,
 };
 
 const parseArgs = (argv) => {
@@ -23,6 +29,20 @@ const parseArgs = (argv) => {
       options.apiDir = arg.slice('--api-dir='.length).trim() || DEFAULTS.apiDir;
     } else if (arg === '--allow-partial') {
       options.allowPartial = true;
+    } else if (arg.startsWith('--logs-dir=')) {
+      options.logsDir = arg.slice('--logs-dir='.length).trim() || DEFAULTS.logsDir;
+    } else if (arg.startsWith('--check-log-file=')) {
+      options.checkLogFile = arg.slice('--check-log-file='.length).trim() || DEFAULTS.checkLogFile;
+    } else if (arg.startsWith('--error-log-file=')) {
+      options.errorLogFile = arg.slice('--error-log-file='.length).trim() || DEFAULTS.errorLogFile;
+    } else if (arg.startsWith('--max-runtime-error-findings=')) {
+      const parsed = Number.parseInt(arg.slice('--max-runtime-error-findings='.length), 10);
+      options.maxRuntimeErrorFindings =
+        Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULTS.maxRuntimeErrorFindings;
+    } else if (arg === '--no-runtime-log-scan') {
+      options.scanRuntimeLogs = false;
+    } else if (arg === '--no-ci-annotations') {
+      options.emitCiAnnotations = false;
     }
   }
   return options;
@@ -294,18 +314,288 @@ const collectCoreContractViolations = (root, allowPartial) => {
   return violations;
 };
 
+const resolveFromRoot = (root, value) => (path.isAbsolute(value) ? value : path.join(root, value));
+
+const toReportPath = (root, file) => {
+  const relative = toRelative(root, file);
+  return relative.startsWith('..') ? file : relative;
+};
+
+const LOG_FILE_PATTERN = /\.(log|txt|json|jsonl|ndjson)$/i;
+const ERROR_WORD_PATTERN = /\b(error|exception|fatal|uncaught|unhandled)\b/i;
+const NON_ERROR_WORD_PATTERN = /\b(?:no errors?|0 errors?)\b/i;
+const ERROR_LEVELS = new Set(['error', 'fatal', 'critical']);
+
+const truncatePreview = (value, max = 220) => {
+  if (value.length <= max) return value;
+  return `${value.slice(0, Math.max(0, max - 3))}...`;
+};
+
+const readStringFromRecord = (record, keys) => {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim().length > 0) {
+      return value.trim();
+    }
+  }
+  return null;
+};
+
+const parseRuntimeLogLine = (rawLine) => {
+  const line = rawLine.trim();
+  if (!line) return null;
+
+  const hasExplicitErrorTag = /\[(ERROR|FATAL|CRITICAL)\]/i.test(line);
+  if (!hasExplicitErrorTag && NON_ERROR_WORD_PATTERN.test(line)) {
+    return null;
+  }
+
+  if (line.startsWith('{') && line.endsWith('}')) {
+    try {
+      const parsed = JSON.parse(line);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        const record = parsed;
+        const level = readStringFromRecord(record, [
+          'level',
+          'severity',
+          'logLevel',
+          'status',
+        ])?.toLowerCase();
+        const message =
+          readStringFromRecord(record, ['message', 'msg', 'detail', 'reason']) ??
+          (typeof record['error'] === 'string' ? record['error'] : null) ??
+          (record['error'] &&
+          typeof record['error'] === 'object' &&
+          typeof record['error']['message'] === 'string'
+            ? String(record['error']['message']).trim()
+            : null);
+
+        if (level && ERROR_LEVELS.has(level)) {
+          return {
+            level,
+            snippet: truncatePreview(message ?? line),
+          };
+        }
+
+        if (
+          message &&
+          ERROR_WORD_PATTERN.test(message) &&
+          !NON_ERROR_WORD_PATTERN.test(message)
+        ) {
+          return {
+            level: level ?? 'error',
+            snippet: truncatePreview(message),
+          };
+        }
+      }
+    } catch {
+      // Ignore malformed JSON lines and use plain-text detection below.
+    }
+  }
+
+  if (hasExplicitErrorTag || ERROR_WORD_PATTERN.test(line)) {
+    return {
+      level: 'error',
+      snippet: truncatePreview(line),
+    };
+  }
+
+  return null;
+};
+
+const collectRuntimeLogErrors = (root, logsDir, { excludedFiles, maxFindings }) => {
+  const logsRoot = resolveFromRoot(root, logsDir);
+  const errorEntries = [];
+  const readFailures = [];
+
+  if (!fs.existsSync(logsRoot)) {
+    return {
+      logsDir,
+      filesScanned: 0,
+      totalErrors: 0,
+      truncated: false,
+      readFailures,
+      errors: errorEntries,
+    };
+  }
+
+  const files = listFiles(logsRoot, (file) => LOG_FILE_PATTERN.test(file));
+  let filesScanned = 0;
+  let totalErrors = 0;
+
+  for (const file of files) {
+    const resolved = path.resolve(file);
+    if (excludedFiles.has(resolved)) continue;
+
+    filesScanned += 1;
+    let text = '';
+    try {
+      text = fs.readFileSync(file, 'utf8');
+    } catch (error) {
+      readFailures.push({
+        file: toRelative(root, file),
+        reason: error instanceof Error ? error.message : 'Failed to read file',
+      });
+      continue;
+    }
+
+    const lines = text.split(/\r?\n/);
+    for (let i = 0; i < lines.length; i += 1) {
+      const parsed = parseRuntimeLogLine(lines[i]);
+      if (!parsed) continue;
+
+      totalErrors += 1;
+      if (errorEntries.length < maxFindings) {
+        errorEntries.push({
+          file: toRelative(root, file),
+          line: i + 1,
+          level: parsed.level,
+          snippet: parsed.snippet,
+        });
+      }
+    }
+  }
+
+  return {
+    logsDir,
+    filesScanned,
+    totalErrors,
+    truncated: totalErrors > errorEntries.length,
+    readFailures,
+    errors: errorEntries,
+  };
+};
+
+const buildSummaryLine = (report) =>
+  `[observability:${report.status}] routes=${report.routeCoverage.totalRoutes} wrapped=${report.routeCoverage.wrappedRoutes} delegated=${report.routeCoverage.delegatedRoutes} uncovered=${report.routeCoverage.uncoveredRoutes} loggerViolations=${report.logger.totalViolations} coreViolations=${report.core.totalViolations} runtimeErrors=${report.runtimeLogs.totalErrors}`;
+
+const buildErrorComment = (report, errorLogFile) => {
+  if (report.runtimeLogs.totalErrors > 0) {
+    const suffix = report.runtimeLogs.totalErrors === 1 ? 'entry' : 'entries';
+    return `Error discovered in runtime logs: ${report.runtimeLogs.totalErrors} ${suffix}. See ${errorLogFile}.`;
+  }
+  if (report.logger.totalViolations > 0 || report.core.totalViolations > 0) {
+    return `Error discovered in observability contracts: logger violations=${report.logger.totalViolations}, core violations=${report.core.totalViolations}. See ${errorLogFile}.`;
+  }
+  return null;
+};
+
+const persistReportLogs = (report, { checkLogPath, errorLogPath }) => {
+  const writeErrors = [];
+
+  try {
+    fs.mkdirSync(path.dirname(checkLogPath), { recursive: true });
+    fs.appendFileSync(
+      checkLogPath,
+      `${report.generatedAt} ${buildSummaryLine(report)}${report.comment ? ` comment="${report.comment}"` : ''}\n`,
+      'utf8'
+    );
+  } catch (error) {
+    writeErrors.push(
+      `Failed to append check log (${checkLogPath}): ${error instanceof Error ? error.message : 'unknown error'}`
+    );
+  }
+
+  if (report.status !== 'passed') {
+    try {
+      fs.mkdirSync(path.dirname(errorLogPath), { recursive: true });
+      fs.appendFileSync(
+        errorLogPath,
+        `${report.generatedAt} ${report.comment ?? 'Observability check failed'}\n${JSON.stringify(report, null, 2)}\n\n`,
+        'utf8'
+      );
+    } catch (error) {
+      writeErrors.push(
+        `Failed to append error log (${errorLogPath}): ${error instanceof Error ? error.message : 'unknown error'}`
+      );
+    }
+  }
+
+  return writeErrors;
+};
+
+const escapeGithubAnnotation = (value) =>
+  String(value).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+
+const escapeGithubProperty = (value) =>
+  escapeGithubAnnotation(value).replace(/:/g, '%3A').replace(/,/g, '%2C');
+
+const emitGithubError = ({ message, file, line }) => {
+  const escapedMessage = escapeGithubAnnotation(message);
+  if (file && line) {
+    const escapedFile = escapeGithubProperty(file);
+    console.log(`::error file=${escapedFile},line=${line}::${escapedMessage}`);
+    return;
+  }
+  console.log(`::error::${escapedMessage}`);
+};
+
+const emitCiAnnotations = (report) => {
+  if (!process.env['GITHUB_ACTIONS']) return;
+
+  for (const violation of report.logger.violations.slice(0, 50)) {
+    emitGithubError({
+      file: violation.file,
+      line: violation.line,
+      message: `[observability.check] logger service context missing: ${violation.call}`,
+    });
+  }
+
+  for (const violation of report.core.violations.slice(0, 50)) {
+    emitGithubError({
+      message: `[observability.check] core contract violation: ${violation.message}`,
+    });
+  }
+
+  for (const errorEntry of report.runtimeLogs.errors.slice(0, 50)) {
+    emitGithubError({
+      file: errorEntry.file,
+      line: errorEntry.line,
+      message: `[observability.check] runtime log error detected: ${errorEntry.snippet}`,
+    });
+  }
+
+  if (report.comment) {
+    console.log(`::notice::${escapeGithubAnnotation(`[observability.comment] ${report.comment}`)}`);
+  }
+};
+
 export const runObservabilityCheck = ({
   mode = DEFAULTS.mode,
   root = DEFAULTS.root,
   srcDir = DEFAULTS.srcDir,
   apiDir = DEFAULTS.apiDir,
   allowPartial = DEFAULTS.allowPartial,
+  logsDir = DEFAULTS.logsDir,
+  checkLogFile = DEFAULTS.checkLogFile,
+  errorLogFile = DEFAULTS.errorLogFile,
+  maxRuntimeErrorFindings = DEFAULTS.maxRuntimeErrorFindings,
+  scanRuntimeLogs = DEFAULTS.scanRuntimeLogs,
 } = {}) => {
+  const checkLogPath = resolveFromRoot(root, checkLogFile);
+  const errorLogPath = resolveFromRoot(root, errorLogFile);
+  const excludedFiles = new Set([path.resolve(checkLogPath), path.resolve(errorLogPath)]);
+
   const routeCoverage = collectRouteCoverage(root, apiDir);
   const loggerViolations = collectLoggerServiceViolations(root, srcDir);
   const coreViolations = collectCoreContractViolations(root, allowPartial);
+  const runtimeLogs = scanRuntimeLogs
+    ? collectRuntimeLogErrors(root, logsDir, {
+        excludedFiles,
+        maxFindings: maxRuntimeErrorFindings,
+      })
+    : {
+        logsDir,
+        filesScanned: 0,
+        totalErrors: 0,
+        truncated: false,
+        readFailures: [],
+        errors: [],
+        disabled: true,
+      };
 
-  const hasBlockingViolations = loggerViolations.length > 0 || coreViolations.length > 0;
+  const hasBlockingViolations =
+    loggerViolations.length > 0 || coreViolations.length > 0 || runtimeLogs.totalErrors > 0;
   const report = {
     generatedAt: new Date().toISOString(),
     mode,
@@ -318,8 +608,33 @@ export const runObservabilityCheck = ({
       totalViolations: coreViolations.length,
       violations: coreViolations,
     },
+    runtimeLogs,
+    logArtifacts: {
+      checkLogFile: toReportPath(root, checkLogPath),
+      errorLogFile: toReportPath(root, errorLogPath),
+      writeErrors: [],
+    },
     status: hasBlockingViolations ? 'failed' : 'passed',
   };
+
+  report.comment = buildErrorComment(report, report.logArtifacts.errorLogFile);
+  report.logArtifacts.writeErrors = persistReportLogs(report, {
+    checkLogPath,
+    errorLogPath,
+  });
+  if (report.logArtifacts.writeErrors.length > 0) {
+    report.core.totalViolations += report.logArtifacts.writeErrors.length;
+    report.core.violations.push(
+      ...report.logArtifacts.writeErrors.map((message) => ({
+        type: 'log_write_error',
+        message,
+      }))
+    );
+    report.status = 'failed';
+    report.comment =
+      report.comment ??
+      `Error discovered while writing observability logs. See ${report.logArtifacts.errorLogFile}.`;
+  }
 
   return report;
 };
@@ -327,9 +642,15 @@ export const runObservabilityCheck = ({
 const main = () => {
   const options = parseArgs(process.argv.slice(2));
   const report = runObservabilityCheck(options);
-  const summaryLine = `[observability:${report.status}] routes=${report.routeCoverage.totalRoutes} wrapped=${report.routeCoverage.wrappedRoutes} delegated=${report.routeCoverage.delegatedRoutes} uncovered=${report.routeCoverage.uncoveredRoutes} loggerViolations=${report.logger.totalViolations} coreViolations=${report.core.totalViolations}`;
+  const summaryLine = buildSummaryLine(report);
 
   console.log(summaryLine);
+  if (report.comment) {
+    console.log(`[observability:comment] ${report.comment}`);
+  }
+  if (options.emitCiAnnotations) {
+    emitCiAnnotations(report);
+  }
   console.log(JSON.stringify(report, null, 2));
 
   if (options.mode === 'check' && report.status !== 'passed') {

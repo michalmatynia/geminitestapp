@@ -52,7 +52,11 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
   const handleMaxExecutionMsChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
     const raw = event.target.value.trim();
     const next =
-      raw.length === 0 ? undefined : Number.isFinite(Number(raw)) ? Number(raw) : functionConfig.maxExecutionMs;
+      raw.length === 0
+        ? undefined
+        : Number.isFinite(Number(raw))
+          ? Number(raw)
+          : functionConfig.maxExecutionMs;
     updateSelectedNodeConfig({
       function: {
         ...functionConfig,
@@ -64,7 +68,11 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
   const handleMaxOutputBytesChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
     const raw = event.target.value.trim();
     const next =
-      raw.length === 0 ? undefined : Number.isFinite(Number(raw)) ? Number(raw) : functionConfig.maxOutputBytes;
+      raw.length === 0
+        ? undefined
+        : Number.isFinite(Number(raw))
+          ? Number(raw)
+          : functionConfig.maxOutputBytes;
     updateSelectedNodeConfig({
       function: {
         ...functionConfig,
@@ -102,10 +110,10 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
           onChange={handleScriptChange}
         />
         <p className='mt-2 text-[11px] text-gray-500'>
-          The script runs as{' '}
-          <span className='font-mono text-gray-300'>fn(inputs, context)</span>. Return either a
-          single value (mapped to <span className='font-mono text-gray-300'>value</span>) or an
-          object whose keys are mapped to output ports.
+          The script runs as <span className='font-mono text-gray-300'>fn(inputs, context)</span>.
+          Return either a single value (mapped to{' '}
+          <span className='font-mono text-gray-300'>value</span>) or an object whose keys are mapped
+          to output ports.
         </p>
         <p className='mt-1 text-[11px] text-gray-500'>
           Helpers are available on <span className='font-mono text-gray-300'>context.utils</span>:{' '}
@@ -168,9 +176,10 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
           variant='subtle'
         />
         <p className='mt-1 text-[11px] text-gray-500'>
-          When set, the runtime validates the{' '}
-          <span className='font-mono text-gray-300'>value</span> output and fails with{' '}
-          <span className='font-mono text-gray-300'>FUNCTION_OUTPUT_TYPE_MISMATCH</span> on mismatch.
+          When set, the runtime validates the <span className='font-mono text-gray-300'>value</span>{' '}
+          output and fails with{' '}
+          <span className='font-mono text-gray-300'>FUNCTION_OUTPUT_TYPE_MISMATCH</span> on
+          mismatch.
         </p>
       </div>
       <div className='grid gap-4 md:grid-cols-2'>

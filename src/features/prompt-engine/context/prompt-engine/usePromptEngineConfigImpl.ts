@@ -1,10 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  PatternCollectionTab, 
-  ExploderPatternSubTab 
-} from './PromptEngineConfigContext';
+import { PatternCollectionTab, ExploderPatternSubTab } from './PromptEngineConfigContext';
 import { ScopeFilter } from './PromptEngineFiltersContext';
 
 export type PromptEngineConfigImplProps = {

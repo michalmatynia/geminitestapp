@@ -101,8 +101,7 @@ const isNonRetryableRunError = (error: unknown): boolean => {
     }
 
     const httpStatus =
-      (error as { status?: unknown }).status ??
-      (error as { httpStatus?: unknown }).httpStatus;
+      (error as { status?: unknown }).status ?? (error as { httpStatus?: unknown }).httpStatus;
     if (typeof httpStatus === 'number' && httpStatus === 400) {
       return true;
     }

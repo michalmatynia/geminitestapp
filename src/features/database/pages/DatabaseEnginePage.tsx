@@ -1,14 +1,12 @@
 'use client';
 
-import {
-  SaveIcon,
-  SlidersHorizontalIcon,
-  ArchiveIcon,
-  ClipboardListIcon,
-} from 'lucide-react';
+import { SaveIcon, SlidersHorizontalIcon, ArchiveIcon, ClipboardListIcon } from 'lucide-react';
 import React, { useMemo, Suspense } from 'react';
 
-import type { DatabaseEngineOperationJob, DatabaseEngineWorkspaceView } from '@/shared/contracts/database';
+import type {
+  DatabaseEngineOperationJob,
+  DatabaseEngineWorkspaceView,
+} from '@/shared/contracts/database';
 import {
   Button,
   FormSection,

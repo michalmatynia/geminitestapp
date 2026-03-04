@@ -122,7 +122,12 @@ export async function processOfflineMutationQueue(queryClient: QueryClient): Pro
   await mutationQueue.processQueue(queryClient);
 }
 
-export function useOfflineMutation<TData, TError extends Error = Error, TVariables = void, TContext = unknown>(
+export function useOfflineMutation<
+  TData,
+  TError extends Error = Error,
+  TVariables = void,
+  TContext = unknown,
+>(
   mutationFn: (variables: TVariables, context: { queryClient: QueryClient }) => Promise<TData>,
   options: {
     queryKey: readonly unknown[];
@@ -236,7 +241,7 @@ export function useOfflineMutation<TData, TError extends Error = Error, TVariabl
 export function useOfflineSync(): {
   processQueue: () => Promise<void>;
   clearQueue: () => void;
-  } {
+} {
   const queryClient = useQueryClient();
 
   const processQueue = useCallback(async () => {

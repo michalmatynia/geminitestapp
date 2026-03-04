@@ -49,7 +49,10 @@ export function DocumentPreviewDialog(): React.JSX.Element {
                 <FileTypeIcon fileType={file.fileType} className='size-4' />
                 <span className='min-w-0 truncate'>{file.name}</span>
                 {file.isLocked && (
-                  <Badge variant='warning' className='ml-auto h-5 px-1.5 text-[10px] font-bold uppercase'>
+                  <Badge
+                    variant='warning'
+                    className='ml-auto h-5 px-1.5 text-[10px] font-bold uppercase'
+                  >
                     LOCKED
                   </Badge>
                 )}
@@ -99,12 +102,7 @@ export function DocumentPreviewDialog(): React.JSX.Element {
             </div>
 
             <DialogFooter>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={onClose}
-                className='h-8 px-3 text-xs'
-              >
+              <Button variant='outline' size='sm' onClick={onClose} className='h-8 px-3 text-xs'>
                 Cancel
               </Button>
               <Button

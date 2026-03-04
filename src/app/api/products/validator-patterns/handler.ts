@@ -149,20 +149,20 @@ export async function getValidatorPatternsHandler(
   const mirrorWindow =
     mirrorEntries.length > 1
       ? {
-        min: Math.min(
-          ...mirrorEntries.map(({ pattern, index }) => getPatternSequence(pattern, index))
-        ),
-        max: Math.max(
-          ...mirrorEntries.map(({ pattern, index }) => getPatternSequence(pattern, index))
-        ),
-      }
+          min: Math.min(
+            ...mirrorEntries.map(({ pattern, index }) => getPatternSequence(pattern, index))
+          ),
+          max: Math.max(
+            ...mirrorEntries.map(({ pattern, index }) => getPatternSequence(pattern, index))
+          ),
+        }
       : null;
 
   const interleavedDimensionEntries = mirrorWindow
     ? dimensionEntries.filter(({ pattern, index }) => {
-      const sequence = getPatternSequence(pattern, index);
-      return sequence > mirrorWindow.min && sequence < mirrorWindow.max;
-    })
+        const sequence = getPatternSequence(pattern, index);
+        return sequence > mirrorWindow.min && sequence < mirrorWindow.max;
+      })
     : [];
 
   if (staleDimensionEntries.length === 0 && interleavedDimensionEntries.length === 0) {

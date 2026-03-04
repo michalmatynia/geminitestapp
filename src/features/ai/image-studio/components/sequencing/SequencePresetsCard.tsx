@@ -94,8 +94,8 @@ export function SequencePresetsCard(): React.JSX.Element {
         byIdIndex >= 0
           ? -1
           : existingPresets.findIndex(
-            (preset) => preset.name.trim().toLowerCase() === normalizedName.toLowerCase()
-          );
+              (preset) => preset.name.trim().toLowerCase() === normalizedName.toLowerCase()
+            );
       const targetIndex = byIdIndex >= 0 ? byIdIndex : byNameIndex;
       const existingIds = new Set(existingPresets.map((preset) => preset.id));
       nextPresetId =

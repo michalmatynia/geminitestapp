@@ -1,15 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-return */
- 
 
 import 'server-only';
 
-import {
-  ProductDocument,
-} from '../mongo-product-repository-mappers';
+import { ProductDocument } from '../mongo-product-repository-mappers';
 import {
   ProductFilters,
   ProductWithImages,
@@ -125,7 +122,12 @@ export const mongoProductRepository: ProductRepository = {
   },
 
   async duplicateProduct(id: string, sku: string): Promise<ProductRecord | null> {
-    return mongoProductWriteImpl.duplicateProduct(id, sku, (pid: string) => this.getProductById(pid), (d: any) => this.createProduct(d));
+    return mongoProductWriteImpl.duplicateProduct(
+      id,
+      sku,
+      (pid: string) => this.getProductById(pid),
+      (d: any) => this.createProduct(d)
+    );
   },
 
   async getProductImages(productId: string): Promise<ProductImageRecord[]> {
@@ -133,27 +135,50 @@ export const mongoProductRepository: ProductRepository = {
   },
 
   async addProductImages(productId: string, imageFileIds: string[]): Promise<void> {
-    return mongoProductAssociationsImpl.addProductImages(productId, imageFileIds, getProductCollection);
+    return mongoProductAssociationsImpl.addProductImages(
+      productId,
+      imageFileIds,
+      getProductCollection
+    );
   },
 
   async replaceProductImages(productId: string, imageFileIds: string[]): Promise<void> {
-    return mongoProductAssociationsImpl.replaceProductImages(productId, imageFileIds, getProductCollection);
+    return mongoProductAssociationsImpl.replaceProductImages(
+      productId,
+      imageFileIds,
+      getProductCollection
+    );
   },
 
   async removeProductImage(productId: string, imageFileId: string): Promise<void> {
-    return mongoProductAssociationsImpl.removeProductImage(productId, imageFileId, getProductCollection);
+    return mongoProductAssociationsImpl.removeProductImage(
+      productId,
+      imageFileId,
+      getProductCollection
+    );
   },
 
   async countProductsByImageFileId(imageFileId: string): Promise<number> {
-    return mongoProductAssociationsImpl.countProductsByImageFileId(imageFileId, getProductCollection);
+    return mongoProductAssociationsImpl.countProductsByImageFileId(
+      imageFileId,
+      getProductCollection
+    );
   },
 
   async replaceProductCatalogs(productId: string, catalogIds: string[]): Promise<void> {
-    return mongoProductAssociationsImpl.replaceProductCatalogs(productId, catalogIds, getProductCollection);
+    return mongoProductAssociationsImpl.replaceProductCatalogs(
+      productId,
+      catalogIds,
+      getProductCollection
+    );
   },
 
   async replaceProductCategory(productId: string, categoryId: string | null): Promise<void> {
-    return mongoProductAssociationsImpl.replaceProductCategory(productId, categoryId, getProductCollection);
+    return mongoProductAssociationsImpl.replaceProductCategory(
+      productId,
+      categoryId,
+      getProductCollection
+    );
   },
 
   async replaceProductTags(productId: string, tagIds: string[]): Promise<void> {
@@ -161,28 +186,46 @@ export const mongoProductRepository: ProductRepository = {
   },
 
   async replaceProductProducers(productId: string, producerIds: string[]): Promise<void> {
-    return mongoProductAssociationsImpl.replaceProductProducers(productId, producerIds, getProductCollection);
+    return mongoProductAssociationsImpl.replaceProductProducers(
+      productId,
+      producerIds,
+      getProductCollection
+    );
   },
 
   async replaceProductNotes(productId: string, noteIds: string[]): Promise<void> {
-    return mongoProductAssociationsImpl.replaceProductNotes(productId, noteIds, getProductCollection);
+    return mongoProductAssociationsImpl.replaceProductNotes(
+      productId,
+      noteIds,
+      getProductCollection
+    );
   },
 
   async bulkReplaceProductCatalogs(productIds: string[], catalogIds: string[]): Promise<void> {
-    return mongoProductAssociationsImpl.bulkReplaceProductCatalogs(productIds, catalogIds, getProductCollection);
+    return mongoProductAssociationsImpl.bulkReplaceProductCatalogs(
+      productIds,
+      catalogIds,
+      getProductCollection
+    );
   },
 
   async bulkAddProductCatalogs(productIds: string[], catalogIds: string[]): Promise<void> {
-    return mongoProductAssociationsImpl.bulkAddProductCatalogs(productIds, catalogIds, getProductCollection);
+    return mongoProductAssociationsImpl.bulkAddProductCatalogs(
+      productIds,
+      catalogIds,
+      getProductCollection
+    );
   },
 
   async bulkRemoveProductCatalogs(productIds: string[], catalogIds: string[]): Promise<void> {
-    return mongoProductAssociationsImpl.bulkRemoveProductCatalogs(productIds, catalogIds, getProductCollection);
+    return mongoProductAssociationsImpl.bulkRemoveProductCatalogs(
+      productIds,
+      catalogIds,
+      getProductCollection
+    );
   },
 
-  async createProductInTransaction<T>(
-    callback: (tx: any) => Promise<T>
-  ): Promise<T> {
+  async createProductInTransaction<T>(callback: (tx: any) => Promise<T>): Promise<T> {
     return callback(this);
   },
 };

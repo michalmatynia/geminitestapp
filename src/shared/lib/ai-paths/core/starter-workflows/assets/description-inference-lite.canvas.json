@@ -41,19 +41,10 @@
         "prompt",
         "bundle"
       ],
-      "outputs": [
-        "bundle"
-      ],
+      "outputs": ["bundle"],
       "config": {
         "bundle": {
-          "includePorts": [
-            "bundle",
-            "result",
-            "value",
-            "meta",
-            "entityId",
-            "entityType"
-          ]
+          "includePorts": ["bundle", "result", "value", "meta", "entityId", "entityType"]
         }
       },
       "connections": {
@@ -121,14 +112,8 @@
         "x": 2780,
         "y": 500
       },
-      "inputs": [
-        "value"
-      ],
-      "outputs": [
-        "value",
-        "valid",
-        "errors"
-      ],
+      "inputs": ["value"],
+      "outputs": ["value", "valid", "errors"],
       "config": {
         "compare": {
           "operator": "gte",
@@ -175,9 +160,7 @@
         "y": 350
       },
       "inputs": [],
-      "outputs": [
-        "value"
-      ],
+      "outputs": ["value"],
       "config": {
         "constant": {
           "valueType": "json",
@@ -206,19 +189,8 @@
         "x": 220,
         "y": 520
       },
-      "inputs": [
-        "trigger",
-        "context",
-        "meta",
-        "entityId",
-        "entityType"
-      ],
-      "outputs": [
-        "context",
-        "meta",
-        "entityId",
-        "entityType"
-      ],
+      "inputs": ["trigger", "context", "meta", "entityId", "entityType"],
+      "outputs": ["context", "meta", "entityId", "entityType"],
       "config": {
         "fetcher": {
           "sourceMode": "live_context",
@@ -319,24 +291,11 @@
         "x": 2410,
         "y": 500
       },
-      "inputs": [
-        "context",
-        "result",
-        "bundle",
-        "value"
-      ],
-      "outputs": [
-        "result",
-        "value",
-        "bundle"
-      ],
+      "inputs": ["context", "result", "bundle", "value"],
+      "outputs": ["result", "value", "bundle"],
       "config": {
         "mapper": {
-          "outputs": [
-            "result",
-            "value",
-            "bundle"
-          ],
+          "outputs": ["result", "value", "bundle"],
           "mappings": {
             "result": "value.selectedDescription",
             "value": "value.qualityScore",
@@ -402,19 +361,8 @@
         "x": 430,
         "y": 180
       },
-      "inputs": [
-        "context",
-        "bundle",
-        "prompt",
-        "result",
-        "value",
-        "entityId",
-        "entityType"
-      ],
-      "outputs": [
-        "value",
-        "bundle"
-      ],
+      "inputs": ["context", "bundle", "prompt", "result", "value", "entityId", "entityType"],
+      "outputs": ["value", "bundle"],
       "config": {
         "http": {
           "url": "/api/products/ai-paths/description-context?catalogId={{bundle.catalogId}}&categoryId={{bundle.categoryId}}",
@@ -458,15 +406,8 @@
         "x": 1660,
         "y": 500
       },
-      "inputs": [
-        "prompt",
-        "images",
-        "context"
-      ],
-      "outputs": [
-        "result",
-        "jobId"
-      ],
+      "inputs": ["prompt", "images", "context"],
+      "outputs": ["result", "jobId"],
       "config": {
         "model": {
           "temperature": 0.1,
@@ -512,16 +453,8 @@
         "x": 430,
         "y": 520
       },
-      "inputs": [
-        "entityJson",
-        "context"
-      ],
-      "outputs": [
-        "bundle",
-        "images",
-        "title",
-        "entityId"
-      ],
+      "inputs": ["entityJson", "context"],
+      "outputs": ["bundle", "images", "title", "entityId"],
       "config": {
         "parser": {
           "mappings": {
@@ -593,17 +526,8 @@
         "x": 1250,
         "y": 330
       },
-      "inputs": [
-        "bundle",
-        "title",
-        "images",
-        "result",
-        "entityId"
-      ],
-      "outputs": [
-        "prompt",
-        "images"
-      ],
+      "inputs": ["bundle", "title", "images", "result", "entityId"],
+      "outputs": ["prompt", "images"],
       "config": {
         "prompt": {
           "template": "You are an ecommerce description generator.\\nOutput language: English only.\\nUse only evidence from product data, metadata, and images.\\n\\nProduct JSON:\\n{{bundle.bundle}}\\n\\nMetadata JSON:\\n{{bundle.result}}\\n\\nControls JSON:\\n{{bundle.value}}\\n\\nReturn ONLY valid JSON object with this exact schema:\\n{\"facts\":[{\"text\":\"\",\"source\":\"title|existing_field|metadata|image\",\"confidence\":0.0}],\"finalDescription\":\"\",\"fallbackDescription\":\"\",\"qualityScore\":0.0,\"unsupportedClaims\":[],\"selectedDescription\":\"\"}\\n\\nRules:\\n1. No markdown, no commentary, JSON only.\\n2. No unsupported brand/franchise/character/material/dimension claims.\\n3. selectedDescription MUST be deterministic:\\n   if qualityScore >= {{bundle.value.minQualityScore}} use finalDescription, else fallbackDescription.\\n4. Keep finalDescription concise and shopper-friendly (~{{bundle.value.targetWordCount}} words, hard max {{bundle.value.maxWordCount}})."
@@ -667,17 +591,8 @@
         "x": 2030,
         "y": 500
       },
-      "inputs": [
-        "value",
-        "prompt",
-        "regexCallback"
-      ],
-      "outputs": [
-        "grouped",
-        "matches",
-        "value",
-        "aiPrompt"
-      ],
+      "inputs": ["value", "prompt", "regexCallback"],
+      "outputs": ["grouped", "matches", "value", "aiPrompt"],
       "config": {
         "regex": {
           "pattern": "\\{[\\s\\S]*\\}",
@@ -735,10 +650,7 @@
         "y": 520
       },
       "inputs": [],
-      "outputs": [
-        "trigger",
-        "triggerName"
-      ],
+      "outputs": ["trigger", "triggerName"],
       "config": {
         "trigger": {
           "event": "4c07d35b-ea92-4d1f-b86b-c586359f68de"
@@ -780,12 +692,7 @@
         "schema",
         "aiQuery"
       ],
-      "outputs": [
-        "result",
-        "bundle",
-        "content_en",
-        "aiPrompt"
-      ],
+      "outputs": ["result", "bundle", "content_en", "aiPrompt"],
       "config": {
         "database": {
           "operation": "update",

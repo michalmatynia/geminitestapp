@@ -1,8 +1,3 @@
- 
- 
- 
- 
-
 import OpenAI from 'openai';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 
@@ -37,7 +32,8 @@ export const getClient = (
 export const isAnthropicModel = (modelName: string): boolean =>
   modelName.toLowerCase().startsWith('claude');
 
-export const isGeminiModel = (modelName: string): boolean => modelName.toLowerCase().startsWith('gemini');
+export const isGeminiModel = (modelName: string): boolean =>
+  modelName.toLowerCase().startsWith('gemini');
 
 export const runAnthropicChat = async (params: {
   model: string;

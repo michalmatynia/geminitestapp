@@ -149,9 +149,9 @@ export const hexToRgb = (hex: string): { r: number; g: number; b: number } | nul
   const expanded =
     normalized.length === 3
       ? normalized
-        .split('')
-        .map((c: string) => c + c)
-        .join('')
+          .split('')
+          .map((c: string) => c + c)
+          .join('')
       : normalized;
   const int = Number.parseInt(expanded, 16);
   if (Number.isNaN(int)) return null;

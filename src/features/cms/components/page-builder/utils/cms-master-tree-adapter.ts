@@ -87,7 +87,7 @@ const resolveZoneForParentNode = (
 
   const parentNode = nodes.find((entry: MasterTreeNode): boolean => entry.id === parentNodeId);
   if (!parentNode) return null;
-  const metadataZone = extractPageZone((parentNode.metadata)?.['zone']);
+  const metadataZone = extractPageZone(parentNode.metadata?.['zone']);
   if (metadataZone) return metadataZone;
 
   const pathRoot = parentNode.path.split('/')[0] ?? '';

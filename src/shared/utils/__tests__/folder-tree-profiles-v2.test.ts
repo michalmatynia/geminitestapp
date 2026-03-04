@@ -227,8 +227,23 @@ describe('folder-tree-profiles-v2', () => {
       JSON.stringify({
         notes: {
           version: 2,
-          placeholders: { preset: 'sublime', style: 'ghost', emphasis: 'subtle', rootDropLabel: 'Drop to Root', inlineDropLabel: 'Drop here' },
-          icons: { slots: { folderClosed: 'Folder', folderOpen: 'FolderOpen', file: 'FileText', root: 'Folder', dragHandle: 'GripVertical' }, byKind: {} },
+          placeholders: {
+            preset: 'sublime',
+            style: 'ghost',
+            emphasis: 'subtle',
+            rootDropLabel: 'Drop to Root',
+            inlineDropLabel: 'Drop here',
+          },
+          icons: {
+            slots: {
+              folderClosed: 'Folder',
+              folderOpen: 'FolderOpen',
+              file: 'FileText',
+              root: 'Folder',
+              dragHandle: 'GripVertical',
+            },
+            byKind: {},
+          },
           nesting: { defaultAllow: false, blockedTargetKinds: [], rules: [] },
           interactions: { selectionBehavior: 'click_away' },
         },
@@ -247,13 +262,34 @@ describe('folder-tree-profiles-v2', () => {
       JSON.stringify({
         notes: {
           version: 2,
-          placeholders: { preset: 'sublime', style: 'ghost', emphasis: 'subtle', rootDropLabel: 'Drop to Root', inlineDropLabel: 'Drop here' },
-          icons: { slots: { folderClosed: 'Folder', folderOpen: 'FolderOpen', file: 'FileText', root: 'Folder', dragHandle: 'GripVertical' }, byKind: {} },
+          placeholders: {
+            preset: 'sublime',
+            style: 'ghost',
+            emphasis: 'subtle',
+            rootDropLabel: 'Drop to Root',
+            inlineDropLabel: 'Drop here',
+          },
+          icons: {
+            slots: {
+              folderClosed: 'Folder',
+              folderOpen: 'FolderOpen',
+              file: 'FileText',
+              root: 'Folder',
+              dragHandle: 'GripVertical',
+            },
+            byKind: {},
+          },
           nesting: { defaultAllow: false, blockedTargetKinds: [], rules: [] },
           interactions: { selectionBehavior: 'click_away' },
           keyboard: { enabled: true, arrowNavigation: true, enterToRename: false, deleteKey: true },
           multiSelect: { enabled: true, ctrlClick: true, shiftClick: false, selectAll: true },
-          search: { enabled: true, debounceMs: 150, filterMode: 'filter_tree', matchFields: ['name', 'path'], minQueryLength: 2 },
+          search: {
+            enabled: true,
+            debounceMs: 150,
+            filterMode: 'filter_tree',
+            matchFields: ['name', 'path'],
+            minQueryLength: 2,
+          },
           statusIcons: { loading: 'Loader', error: 'AlertCircle', success: 'CheckCircle' },
           badges: { field: 'children_count', position: 'trailing', style: 'count' },
         },
@@ -432,6 +468,8 @@ describe('folder-tree-profiles-v2', () => {
     // Only known status keys survive
     expect(parsed.notes.statusIcons?.loading).toBe('Loader2');
     // Unknown keys are stripped by Zod schema
-    expect((parsed.notes.statusIcons as Record<string, unknown>)?.['invalid_status']).toBeUndefined();
+    expect(
+      (parsed.notes.statusIcons as Record<string, unknown>)?.['invalid_status']
+    ).toBeUndefined();
   });
 });

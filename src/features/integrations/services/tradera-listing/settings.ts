@@ -1,7 +1,4 @@
-import { 
-  IntegrationConnectionRecord, 
-  ProductListing 
-} from '@/shared/contracts/integrations';
+import { IntegrationConnectionRecord, ProductListing } from '@/shared/contracts/integrations';
 import { TraderaSystemSettings } from '@/features/integrations/constants/tradera';
 
 export const resolveConnectionListingSettings = (

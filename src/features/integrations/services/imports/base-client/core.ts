@@ -1,11 +1,11 @@
 import { withTransientRecovery } from '@/shared/lib/observability/transient-recovery/with-recovery';
 import { externalServiceError } from '@/shared/errors/app-error';
-import { 
-  BASE_API_TIMEOUT_MS, 
-  BASE_API_PRODUCT_WRITE_TIMEOUT_MS, 
-  BASE_API_IMAGE_TIMEOUT_MS, 
+import {
+  BASE_API_TIMEOUT_MS,
+  BASE_API_PRODUCT_WRITE_TIMEOUT_MS,
+  BASE_API_IMAGE_TIMEOUT_MS,
   BASE_API_LARGE_PAYLOAD_BYTES,
-  buildBaseApiUrl
+  buildBaseApiUrl,
 } from './config';
 import type { BaseApiResponse } from '@/shared/contracts/integrations';
 

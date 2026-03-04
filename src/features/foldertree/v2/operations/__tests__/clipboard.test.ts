@@ -4,9 +4,7 @@ import type { MasterFolderTreeController } from '@/shared/contracts/master-folde
 
 import { applyMasterTreePaste, captureMasterTreeClipboard } from '../clipboard';
 
-const makeController = (
-  moveNodeResult = { ok: true, success: true }
-): MasterFolderTreeController =>
+const makeController = (moveNodeResult = { ok: true, success: true }): MasterFolderTreeController =>
   ({
     moveNode: vi.fn(async () => moveNodeResult),
     nodes: [],
@@ -34,7 +32,12 @@ describe('applyMasterTreePaste', () => {
   it('moves each node in clipboard to target parent', async () => {
     const controller = makeController();
     const clipboard = captureMasterTreeClipboard(['a', 'b'], 'cut', 'notes');
-    const result = await applyMasterTreePaste({ clipboard, targetParentId: 'folder-x', controller, instanceId: 'notes' });
+    const result = await applyMasterTreePaste({
+      clipboard,
+      targetParentId: 'folder-x',
+      controller,
+      instanceId: 'notes',
+    });
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.appliedMoves).toHaveLength(2);
@@ -46,7 +49,12 @@ describe('applyMasterTreePaste', () => {
   it('blocks cross-instance paste when allowCrossInstance is false', async () => {
     const controller = makeController();
     const clipboard = captureMasterTreeClipboard(['a'], 'cut', 'image_studio');
-    const result = await applyMasterTreePaste({ clipboard, targetParentId: null, controller, instanceId: 'notes' });
+    const result = await applyMasterTreePaste({
+      clipboard,
+      targetParentId: null,
+      controller,
+      instanceId: 'notes',
+    });
     expect(result.ok).toBe(false);
     expect(controller.moveNode).not.toHaveBeenCalled();
   });
@@ -54,7 +62,13 @@ describe('applyMasterTreePaste', () => {
   it('allows cross-instance paste when allowCrossInstance is true', async () => {
     const controller = makeController();
     const clipboard = captureMasterTreeClipboard(['a'], 'cut', 'image_studio');
-    const result = await applyMasterTreePaste({ clipboard, targetParentId: null, controller, instanceId: 'notes', allowCrossInstance: true });
+    const result = await applyMasterTreePaste({
+      clipboard,
+      targetParentId: null,
+      controller,
+      instanceId: 'notes',
+      allowCrossInstance: true,
+    });
     expect(result.ok).toBe(true);
     expect(controller.moveNode).toHaveBeenCalledTimes(1);
   });
@@ -62,7 +76,12 @@ describe('applyMasterTreePaste', () => {
   it('returns failure when copy operation requested', async () => {
     const controller = makeController();
     const clipboard = captureMasterTreeClipboard(['a'], 'copy', 'notes');
-    const result = await applyMasterTreePaste({ clipboard, targetParentId: null, controller, instanceId: 'notes' });
+    const result = await applyMasterTreePaste({
+      clipboard,
+      targetParentId: null,
+      controller,
+      instanceId: 'notes',
+    });
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.reason.toLowerCase()).toContain('copy');
@@ -71,9 +90,18 @@ describe('applyMasterTreePaste', () => {
   });
 
   it('returns failure when a single move fails', async () => {
-    const controller = makeController({ ok: false, success: false, error: { message: 'blocked', code: 'BLOCKED' } });
+    const controller = makeController({
+      ok: false,
+      success: false,
+      error: { message: 'blocked', code: 'BLOCKED' },
+    });
     const clipboard = captureMasterTreeClipboard(['a', 'b'], 'cut', 'notes');
-    const result = await applyMasterTreePaste({ clipboard, targetParentId: null, controller, instanceId: 'notes' });
+    const result = await applyMasterTreePaste({
+      clipboard,
+      targetParentId: null,
+      controller,
+      instanceId: 'notes',
+    });
     expect(result.ok).toBe(false);
   });
 });

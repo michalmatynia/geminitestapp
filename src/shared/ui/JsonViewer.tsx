@@ -45,12 +45,21 @@ export function JsonViewer({
   }, [data]);
 
   return (
-    <div className={cn('relative flex flex-col gap-2 rounded-lg border border-border/60 bg-card/40 p-3', className)}>
+    <div
+      className={cn(
+        'relative flex flex-col gap-2 rounded-lg border border-border/60 bg-card/40 p-3',
+        className
+      )}
+    >
       {(title || showCopy) && (
         <div className='flex items-center justify-between gap-2 mb-1'>
           {title ? (
-            <h4 className='text-xs font-semibold text-gray-300 uppercase tracking-wider'>{title}</h4>
-          ) : <div />}
+            <h4 className='text-xs font-semibold text-gray-300 uppercase tracking-wider'>
+              {title}
+            </h4>
+          ) : (
+            <div />
+          )}
           {showCopy && (
             <CopyButton
               value={formattedJson}

@@ -148,12 +148,12 @@ export async function GET_handler(
         connectionId,
         ...(mapped
           ? {
-            code: mapped.code,
-            httpStatus: mapped.httpStatus,
-            expected: mapped.expected,
-            critical: mapped.critical,
-            retryable: mapped.retryable,
-          }
+              code: mapped.code,
+              httpStatus: mapped.httpStatus,
+              expected: mapped.expected,
+              critical: mapped.critical,
+              retryable: mapped.retryable,
+            }
           : {}),
       },
     });

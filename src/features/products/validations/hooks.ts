@@ -39,12 +39,12 @@ export function useProductCreateValidation(_options: UseValidationOptions = {}):
       fieldErrors: result.success
         ? {}
         : result.errors.reduce(
-          (acc: Record<string, string>, error: ValidationError) => ({
-            ...acc,
-            [error.field]: error.message,
-          }),
-          {}
-        ),
+            (acc: Record<string, string>, error: ValidationError) => ({
+              ...acc,
+              [error.field]: error.message,
+            }),
+            {}
+          ),
       isValidating: false,
     };
 
@@ -103,12 +103,12 @@ export function useProductUpdateValidation(_options: UseValidationOptions = {}):
       fieldErrors: result.success
         ? {}
         : result.errors.reduce(
-          (acc: Record<string, string>, error: ValidationError) => ({
-            ...acc,
-            [error.field]: error.message,
-          }),
-          {}
-        ),
+            (acc: Record<string, string>, error: ValidationError) => ({
+              ...acc,
+              [error.field]: error.message,
+            }),
+            {}
+          ),
       isValidating: false,
     };
 

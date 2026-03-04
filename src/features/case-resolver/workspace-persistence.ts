@@ -1,6 +1,4 @@
-import {
-  type CaseResolverWorkspaceDebugEvent,
-} from '@/shared/contracts/case-resolver';
+import { type CaseResolverWorkspaceDebugEvent } from '@/shared/contracts/case-resolver';
 
 import {
   computeCaseResolverConflictRetryDelayMs,

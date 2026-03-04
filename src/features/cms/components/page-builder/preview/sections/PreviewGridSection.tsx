@@ -100,16 +100,16 @@ export function PreviewGridSection() {
       ? rowBlocks.map((row: BlockInstance) => ({ row, virtual: false }))
       : directColumns.length > 0
         ? [
-          {
-            row: {
-              id: `row-virtual-${section.id}`,
-              type: 'Row',
-              settings: {},
-              blocks: directColumns,
+            {
+              row: {
+                id: `row-virtual-${section.id}`,
+                type: 'Row',
+                settings: {},
+                blocks: directColumns,
+              },
+              virtual: true,
             },
-            virtual: true,
-          },
-        ]
+          ]
         : [];
 
   const hasZeroSpacing = [
@@ -363,23 +363,23 @@ export function PreviewGridSection() {
                                     title: 'Meta',
                                     entries: inspectorSettings.showIdentifiers
                                       ? [
-                                        { label: 'Type', value: 'Column' },
-                                        { label: 'ID', value: column.id },
-                                      ]
+                                          { label: 'Type', value: 'Column' },
+                                          { label: 'ID', value: column.id },
+                                        ]
                                       : [{ label: 'Type', value: 'Column' }],
                                   },
                                   ...(inspectorSettings.showStructureInfo
                                     ? [
-                                      {
-                                        title: 'Structure',
-                                        entries: [
-                                          { label: 'Section', value: section.type },
-                                          { label: 'Zone', value: section.zone },
-                                          { label: 'Row', value: String(rowIndex + 1) },
-                                          { label: 'Column', value: String(colIndex + 1) },
-                                        ],
-                                      },
-                                    ]
+                                        {
+                                          title: 'Structure',
+                                          entries: [
+                                            { label: 'Section', value: section.type },
+                                            { label: 'Zone', value: section.zone },
+                                            { label: 'Row', value: String(rowIndex + 1) },
+                                            { label: 'Column', value: String(colIndex + 1) },
+                                          ],
+                                        },
+                                      ]
                                     : []),
                                   // Simplified connection and style info for refactor phase
                                 ]}

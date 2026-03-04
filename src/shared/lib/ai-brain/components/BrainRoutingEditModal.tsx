@@ -65,7 +65,9 @@ export function BrainRoutingEditModal({
       : 'Global defaults';
 
   const allowedProviders =
-    capabilityDefinition.policy === 'agent-or-model' ? (['model', 'agent'] as const) : (['model'] as const);
+    capabilityDefinition.policy === 'agent-or-model'
+      ? (['model', 'agent'] as const)
+      : (['model'] as const);
 
   const handleSave = (): void => {
     if (state.overrideEnabled) {

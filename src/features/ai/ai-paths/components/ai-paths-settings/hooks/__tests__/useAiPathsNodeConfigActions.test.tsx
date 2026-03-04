@@ -17,7 +17,9 @@ describe('useAiPathsNodeConfigActions', () => {
         outputs: [],
         position: { x: 0, y: 0 },
         data: {},
-        config: { model: { modelId: 'model-old', temperature: 0.7, maxTokens: 800, vision: false } },
+        config: {
+          model: { modelId: 'model-old', temperature: 0.7, maxTokens: 800, vision: false },
+        },
         createdAt: '2026-03-02T00:00:00.000Z',
         updatedAt: null,
       },

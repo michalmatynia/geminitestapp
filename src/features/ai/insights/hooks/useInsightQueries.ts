@@ -1,6 +1,5 @@
 'use client';
 
-
 import type { AiInsightRecord } from '@/shared/contracts';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';

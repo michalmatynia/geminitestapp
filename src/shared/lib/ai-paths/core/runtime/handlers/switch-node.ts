@@ -12,7 +12,7 @@ export const handleSwitchNode: NodeHandler = ({
   if (node.type !== 'switch') return prevOutputs;
 
   const config = node.config?.['switch'];
-  const inputPort = (config?.inputPort?.trim()) || 'value';
+  const inputPort = config?.inputPort?.trim() || 'value';
   const cases = config?.cases ?? [];
 
   const rawValue = nodeInputs[inputPort];
@@ -37,4 +37,3 @@ export const handleSwitchNode: NodeHandler = ({
     matched: selectedCaseId !== null,
   };
 };
-

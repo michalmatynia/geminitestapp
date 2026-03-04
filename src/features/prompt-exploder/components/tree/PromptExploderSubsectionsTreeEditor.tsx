@@ -13,7 +13,10 @@ import { Button, Card, FormField, Input, SectionHeader, Textarea } from '@/share
 import { SegmentEditorListItemLogicalEditor } from '../SegmentEditorListItemLogicalEditor';
 import { PromptExploderTreeNode } from './PromptExploderTreeNode';
 import { PromptExploderTreeNodeRuntimeProvider } from './PromptExploderTreeNodeRuntimeContext';
-import { buildPromptExploderTreeRevision, usePromptExploderHandleOnlyDrag } from '../../tree/shared';
+import {
+  buildPromptExploderTreeRevision,
+  usePromptExploderHandleOnlyDrag,
+} from '../../tree/shared';
 import {
   buildPromptExploderSubsectionMasterNodes,
   rebuildPromptExploderSubsectionsFromMasterNodes,
@@ -40,7 +43,10 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
   const { selectedSegment } = useDocumentState();
   const { updateSegment } = useDocumentActions();
 
-  if (!selectedSegment || (selectedSegment.type !== 'sequence' && selectedSegment.type !== 'qa_matrix')) {
+  if (
+    !selectedSegment ||
+    (selectedSegment.type !== 'sequence' && selectedSegment.type !== 'qa_matrix')
+  ) {
     return null;
   }
 
@@ -105,13 +111,13 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
 
   const selectedMetadata = controller.selectedNodeId
     ? readPromptExploderTreeMetadata(
-      masterNodes.find((node) => node.id === controller.selectedNodeId) ?? { metadata: undefined }
-    )
+        masterNodes.find((node) => node.id === controller.selectedNodeId) ?? { metadata: undefined }
+      )
     : null;
 
   const selectedSubsection =
     selectedMetadata?.kind === 'subsection'
-      ? subsections.find((subsection) => subsection.id === selectedMetadata.entityId) ?? null
+      ? (subsections.find((subsection) => subsection.id === selectedMetadata.entityId) ?? null)
       : null;
 
   const findItemById = React.useCallback(
@@ -128,9 +134,9 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
 
   const selectedItem =
     selectedMetadata?.kind === 'subsection_item'
-      ? subsections
-        .map((subsection) => findItemById(subsection.items ?? [], selectedMetadata.entityId))
-        .find(Boolean) ?? null
+      ? (subsections
+          .map((subsection) => findItemById(subsection.items ?? [], selectedMetadata.entityId))
+          .find(Boolean) ?? null)
       : null;
 
   const appendSubsection = (): void => {
@@ -145,10 +151,14 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
     if (selectedMetadata.kind === 'subsection') {
       updateSegment(selectedSegment.id, (current: PromptExploderSegment) => ({
         ...current,
-        subsections: updatePromptExploderSubsectionById(current.subsections, selectedMetadata.entityId, (subsection) => ({
-          ...subsection,
-          items: [...(subsection.items ?? []), createChildListItem()],
-        })),
+        subsections: updatePromptExploderSubsectionById(
+          current.subsections,
+          selectedMetadata.entityId,
+          (subsection) => ({
+            ...subsection,
+            items: [...(subsection.items ?? []), createChildListItem()],
+          })
+        ),
       }));
       controller.expandNode(toPromptExploderTreeNodeId('subsection', selectedMetadata.entityId));
       return;
@@ -156,12 +166,18 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
     if (selectedMetadata.kind === 'subsection_item') {
       updateSegment(selectedSegment.id, (current: PromptExploderSegment) => ({
         ...current,
-        subsections: updatePromptExploderSubsectionItemById(current.subsections, selectedMetadata.entityId, (item) => ({
-          ...item,
-          children: [...item.children, createChildListItem()],
-        })),
+        subsections: updatePromptExploderSubsectionItemById(
+          current.subsections,
+          selectedMetadata.entityId,
+          (item) => ({
+            ...item,
+            children: [...item.children, createChildListItem()],
+          })
+        ),
       }));
-      controller.expandNode(toPromptExploderTreeNodeId('subsection_item', selectedMetadata.entityId));
+      controller.expandNode(
+        toPromptExploderTreeNodeId('subsection_item', selectedMetadata.entityId)
+      );
     }
   };
 
@@ -210,7 +226,11 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
         }
       />
       <div className='grid gap-3 lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]'>
-        <Card variant='subtle-compact' padding='sm' className='space-y-2 border-border/60 bg-card/20'>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='space-y-2 border-border/60 bg-card/20'
+        >
           <PromptExploderTreeNodeRuntimeProvider value={treeNodeRuntimeContextValue}>
             <div className='max-h-[320px] overflow-y-auto rounded border border-border/60 bg-card/30 p-2'>
               <FolderTreeViewportV2
@@ -230,8 +250,10 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
                     targetId === null
                       ? null
                       : readPromptExploderTreeMetadata(
-                        masterNodes.find((node) => node.id === targetId) ?? { metadata: undefined }
-                      );
+                          masterNodes.find((node) => node.id === targetId) ?? {
+                            metadata: undefined,
+                          }
+                        );
                   if (!dragged) return false;
                   if (targetId === null) {
                     return dragged.kind === 'subsection';
@@ -252,7 +274,11 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
             </div>
           </PromptExploderTreeNodeRuntimeProvider>
         </Card>
-        <Card variant='subtle-compact' padding='md' className='space-y-3 border-border/60 bg-card/20'>
+        <Card
+          variant='subtle-compact'
+          padding='md'
+          className='space-y-3 border-border/60 bg-card/20'
+        >
           {selectedSubsection ? (
             <>
               <FormField label='Subsection Title'>
@@ -261,10 +287,14 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
                   onChange={(event) => {
                     updateSegment(selectedSegment.id, (current: PromptExploderSegment) => ({
                       ...current,
-                      subsections: updatePromptExploderSubsectionById(current.subsections, selectedSubsection.id, (subsection) => ({
-                        ...subsection,
-                        title: event.target.value,
-                      })),
+                      subsections: updatePromptExploderSubsectionById(
+                        current.subsections,
+                        selectedSubsection.id,
+                        (subsection) => ({
+                          ...subsection,
+                          title: event.target.value,
+                        })
+                      ),
                     }));
                   }}
                 />
@@ -276,10 +306,14 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
                     onChange={(event) => {
                       updateSegment(selectedSegment.id, (current: PromptExploderSegment) => ({
                         ...current,
-                        subsections: updatePromptExploderSubsectionById(current.subsections, selectedSubsection.id, (subsection) => ({
-                          ...subsection,
-                          code: event.target.value.trim().toUpperCase() || null,
-                        })),
+                        subsections: updatePromptExploderSubsectionById(
+                          current.subsections,
+                          selectedSubsection.id,
+                          (subsection) => ({
+                            ...subsection,
+                            code: event.target.value.trim().toUpperCase() || null,
+                          })
+                        ),
                       }));
                     }}
                   />
@@ -290,10 +324,14 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
                     onChange={(event) => {
                       updateSegment(selectedSegment.id, (current: PromptExploderSegment) => ({
                         ...current,
-                        subsections: updatePromptExploderSubsectionById(current.subsections, selectedSubsection.id, (subsection) => ({
-                          ...subsection,
-                          condition: event.target.value.trim() || null,
-                        })),
+                        subsections: updatePromptExploderSubsectionById(
+                          current.subsections,
+                          selectedSubsection.id,
+                          (subsection) => ({
+                            ...subsection,
+                            condition: event.target.value.trim() || null,
+                          })
+                        ),
                       }));
                     }}
                   />
@@ -306,10 +344,14 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
                   onChange={(event) => {
                     updateSegment(selectedSegment.id, (current: PromptExploderSegment) => ({
                       ...current,
-                      subsections: updatePromptExploderSubsectionById(current.subsections, selectedSubsection.id, (subsection) => ({
-                        ...subsection,
-                        guidance: event.target.value || null,
-                      })),
+                      subsections: updatePromptExploderSubsectionById(
+                        current.subsections,
+                        selectedSubsection.id,
+                        (subsection) => ({
+                          ...subsection,
+                          guidance: event.target.value || null,
+                        })
+                      ),
                     }));
                   }}
                 />
@@ -323,10 +365,14 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
                   onChange={(event) => {
                     updateSegment(selectedSegment.id, (current: PromptExploderSegment) => ({
                       ...current,
-                      subsections: updatePromptExploderSubsectionItemById(current.subsections, selectedItem.id, (item) => ({
-                        ...item,
-                        text: event.target.value,
-                      })),
+                      subsections: updatePromptExploderSubsectionItemById(
+                        current.subsections,
+                        selectedItem.id,
+                        (item) => ({
+                          ...item,
+                          text: event.target.value,
+                        })
+                      ),
                     }));
                   }}
                 />
@@ -336,13 +382,19 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
                 onChange={(updater) => {
                   updateSegment(selectedSegment.id, (current: PromptExploderSegment) => ({
                     ...current,
-                    subsections: updatePromptExploderSubsectionItemById(current.subsections, selectedItem.id, updater),
+                    subsections: updatePromptExploderSubsectionItemById(
+                      current.subsections,
+                      selectedItem.id,
+                      updater
+                    ),
                   }));
                 }}
               />
             </>
           ) : (
-            <div className='text-sm text-gray-500'>Select a subsection or subsection item to edit.</div>
+            <div className='text-sm text-gray-500'>
+              Select a subsection or subsection item to edit.
+            </div>
           )}
         </Card>
       </div>

@@ -26,10 +26,7 @@ vi.mock('@/shared/lib/ai-brain/components/BrainRoutingTree', () => ({
     <div>
       <div>Prompt Engine</div>
       <div>Prompt Exploder AI</div>
-      <button
-        type='button'
-        onClick={() => onToggleEnabled('prompt_engine.prompt_exploder', false)}
-      >
+      <button type='button' onClick={() => onToggleEnabled('prompt_engine.prompt_exploder', false)}>
         Quick Toggle Route
       </button>
       <button type='button' onClick={() => onEdit('prompt_engine.prompt_exploder')}>
@@ -120,9 +117,7 @@ vi.mock('@/shared/ui', () => ({
     ) : null,
 }));
 
-const buildUseBrainMock = (overrides?: {
-  capabilityOverride?: boolean;
-}) => {
+const buildUseBrainMock = (overrides?: { capabilityOverride?: boolean }) => {
   const effectiveAssignments = Object.fromEntries(
     BRAIN_FEATURE_KEYS.map((feature) => [feature, { ...defaultBrainAssignment }])
   );

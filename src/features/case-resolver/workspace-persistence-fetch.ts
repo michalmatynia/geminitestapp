@@ -6,13 +6,9 @@ import {
   type CaseResolverWorkspaceFetchIfStaleResult as FetchIfStaleResult,
 } from '@/shared/contracts/case-resolver';
 
-import {
-  getCaseResolverWorkspaceRevision,
-} from './utils/workspace-persistence-utils';
+import { getCaseResolverWorkspaceRevision } from './utils/workspace-persistence-utils';
 
-import {
-  logCaseResolverWorkspaceEvent,
-} from './workspace-observability';
+import { logCaseResolverWorkspaceEvent } from './workspace-observability';
 
 import {
   CASE_RESOLVER_WORKSPACE_KEY,
@@ -23,9 +19,7 @@ import {
   type WorkspaceMetadataLike,
 } from './utils/workspace-settings-persistence-helpers';
 
-import {
-  fetchSettingsPayloadWithTimeout,
-} from './node-file-persistence';
+import { fetchSettingsPayloadWithTimeout } from './node-file-persistence';
 
 import {
   CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
@@ -40,19 +34,19 @@ export type WorkspaceRecordFetchAttempt = {
 
 export type WorkspaceRecordAttemptResult =
   | {
-    status: 'resolved';
-    workspace: CaseResolverWorkspace;
-    attemptKey: string;
-    scope: 'light' | 'heavy';
-  }
+      status: 'resolved';
+      workspace: CaseResolverWorkspace;
+      attemptKey: string;
+      scope: 'light' | 'heavy';
+    }
   | {
-    status: 'incomplete';
-    lastFailureMessage: string;
-    sawMissingRequiredFile: boolean;
-    lastMissingRequiredAttemptKey: string | null;
-    sawTransportFailure: boolean;
-    budgetExhausted: boolean;
-  };
+      status: 'incomplete';
+      lastFailureMessage: string;
+      sawMissingRequiredFile: boolean;
+      lastMissingRequiredAttemptKey: string | null;
+      sawTransportFailure: boolean;
+      budgetExhausted: boolean;
+    };
 
 const fetchWorkspaceRecordByKeyAttempts = async ({
   source,
@@ -272,7 +266,9 @@ export const fetchCaseResolverWorkspaceRecordDetailed = async (
       ? Math.max(1, Math.floor(options.attemptTimeoutMs))
       : CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS;
   const defaultMaxTotalMs =
-    attemptProfile === 'context_fast' ? Math.max(1_000, attemptTimeoutMs * 3) : attemptTimeoutMs * attempts.length;
+    attemptProfile === 'context_fast'
+      ? Math.max(1_000, attemptTimeoutMs * 3)
+      : attemptTimeoutMs * attempts.length;
   const maxTotalMs =
     typeof options?.maxTotalMs === 'number' && Number.isFinite(options.maxTotalMs)
       ? Math.max(1, Math.floor(options.maxTotalMs))
@@ -327,7 +323,11 @@ export const fetchCaseResolverWorkspaceRecordDetailed = async (
   }
 
   const unavailableReason: 'no_workspace_record' | 'transport_error' | 'budget_exhausted' =
-    budgetExhausted ? 'budget_exhausted' : sawTransportFailure ? 'transport_error' : 'no_workspace_record';
+    budgetExhausted
+      ? 'budget_exhausted'
+      : sawTransportFailure
+        ? 'transport_error'
+        : 'no_workspace_record';
 
   logCaseResolverWorkspaceEvent({
     source,
@@ -382,7 +382,8 @@ export const fetchCaseResolverWorkspaceIfStale = async (
     ) {
       const serverRevisionRaw = (payload as Record<string, unknown>)['revision'];
       const revision =
-        typeof serverRevisionRaw === 'number' && Number.isFinite(serverRevisionRaw) &&
+        typeof serverRevisionRaw === 'number' &&
+        Number.isFinite(serverRevisionRaw) &&
         serverRevisionRaw > 0
           ? Math.floor(serverRevisionRaw)
           : normalizedRevision;

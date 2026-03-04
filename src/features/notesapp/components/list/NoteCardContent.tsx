@@ -3,10 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 
-import type {
-  NoteWithRelations,
-  NoteFileRecord,
-} from '@/shared/contracts/notes';
+import type { NoteWithRelations, NoteFileRecord } from '@/shared/contracts/notes';
 import { Tag } from '@/shared/ui';
 import { sanitizeHtml } from '@/shared/utils';
 import { renderMarkdownToHtml } from '../../utils';

@@ -77,57 +77,55 @@ describe('case resolver nodefile persistence', () => {
   });
 
   it('rejects legacy keyed nodefile snapshots with legacy edge keys', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        toJsonResponse(200, {
-          key: buildCaseResolverNodeFileSnapshotKey('asset-legacy'),
-          value: JSON.stringify({
-            kind: 'case_resolver_node_file_snapshot_v1',
-            source: 'manual',
-            nodes: [
-              {
-                id: 'node-a',
-                type: 'prompt',
-                title: 'Node A',
-                description: '',
-                inputs: ['wysiwygText'],
-                outputs: ['wysiwygText'],
-                position: { x: 0, y: 0 },
-                config: { prompt: { template: '' } },
-                data: {},
-                createdAt: '2026-01-01T00:00:00.000Z',
-                updatedAt: '2026-01-01T00:00:00.000Z',
-              },
-              {
-                id: 'node-b',
-                type: 'prompt',
-                title: 'Node B',
-                description: '',
-                inputs: ['plaintextContent'],
-                outputs: ['plaintextContent'],
-                position: { x: 32, y: 0 },
-                config: { prompt: { template: '' } },
-                data: {},
-                createdAt: '2026-01-01T00:00:00.000Z',
-                updatedAt: '2026-01-01T00:00:00.000Z',
-              },
-            ],
-            edges: [
-              {
-                id: 'edge-legacy',
-                from: 'node-a',
-                to: 'node-b',
-                fromPort: 'textfield',
-                toPort: 'content',
-              },
-            ],
-            nodeMeta: {},
-            edgeMeta: {},
-            nodeFileMeta: {},
-          }),
-        })
-      );
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      toJsonResponse(200, {
+        key: buildCaseResolverNodeFileSnapshotKey('asset-legacy'),
+        value: JSON.stringify({
+          kind: 'case_resolver_node_file_snapshot_v1',
+          source: 'manual',
+          nodes: [
+            {
+              id: 'node-a',
+              type: 'prompt',
+              title: 'Node A',
+              description: '',
+              inputs: ['wysiwygText'],
+              outputs: ['wysiwygText'],
+              position: { x: 0, y: 0 },
+              config: { prompt: { template: '' } },
+              data: {},
+              createdAt: '2026-01-01T00:00:00.000Z',
+              updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+            {
+              id: 'node-b',
+              type: 'prompt',
+              title: 'Node B',
+              description: '',
+              inputs: ['plaintextContent'],
+              outputs: ['plaintextContent'],
+              position: { x: 32, y: 0 },
+              config: { prompt: { template: '' } },
+              data: {},
+              createdAt: '2026-01-01T00:00:00.000Z',
+              updatedAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+          edges: [
+            {
+              id: 'edge-legacy',
+              from: 'node-a',
+              to: 'node-b',
+              fromPort: 'textfield',
+              toPort: 'content',
+            },
+          ],
+          nodeMeta: {},
+          edgeMeta: {},
+          nodeFileMeta: {},
+        }),
+      })
+    );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     await expect(fetchCaseResolverNodeFileSnapshot('asset-legacy', 8_000, 'test')).rejects.toThrow(
@@ -170,7 +168,7 @@ describe('case resolver nodefile persistence', () => {
     });
   });
 
-  it('rejects inline nodefile snapshots during workspace persist', async () => {
+  it('fails workspace persist when inline nodefile snapshots are present', async () => {
     const inlineSnapshot = JSON.stringify({
       kind: 'case_resolver_node_file_snapshot_v1',
       source: 'manual',
@@ -222,12 +220,10 @@ describe('case resolver nodefile persistence', () => {
       source: 'test',
     });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      const persistedAsset = result.workspace.assets.find((asset) => asset.id === 'asset-1');
-      expect(persistedAsset?.kind).toBe('node_file');
-      expect(persistedAsset?.textContent ?? '').toBe('');
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toMatch(/Inline Case Resolver node-file snapshots are no longer supported/i);
     }
-    expect(fetchMock).toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

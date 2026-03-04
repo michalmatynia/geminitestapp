@@ -4,10 +4,13 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getSystemAlerts } from '@/shared/lib/observability/system-alerts-repository';
-import type { SystemLogRecordDto as SystemLogRecord, Alert } from '@/shared/contracts/observability';
+import type {
+  SystemLogRecordDto as SystemLogRecord,
+  Alert,
+} from '@/shared/contracts/observability';
 
-import { 
-  SYSTEM_LOG_ALERT_WINDOW_SECONDS, 
+import {
+  SYSTEM_LOG_ALERT_WINDOW_SECONDS,
   SYSTEM_LOG_ALERT_MIN_ERRORS,
   SYSTEM_LOG_ALERT_PER_SOURCE_MIN_ERRORS,
   SYSTEM_LOG_ALERT_COOLDOWN_SECONDS,
@@ -24,7 +27,13 @@ import {
 import { queueState, shouldCheckAlerts } from './state';
 import { buildAlertEvidenceContext, readTrimmedString } from './evidence';
 import { listAlertEvidenceLogs } from './repository';
-import { isInCooldown, isInSilenceCooldown, isPerSourceInCooldown, isScopedCooldown, readDurationMs } from './utils';
+import {
+  isInCooldown,
+  isInSilenceCooldown,
+  isPerSourceInCooldown,
+  isScopedCooldown,
+  readDurationMs,
+} from './utils';
 
 export const readService = (log: SystemLogRecord): string | null => {
   const fromTopLevel = readTrimmedString(log.service);
@@ -33,7 +42,11 @@ export const readService = (log: SystemLogRecord): string | null => {
   return readTrimmedString(context?.['service']);
 };
 
-export const isAlertInCooldown = (alertId: string, now: number, cooldownSeconds: number): boolean => {
+export const isAlertInCooldown = (
+  alertId: string,
+  now: number,
+  cooldownSeconds: number
+): boolean => {
   const last = queueState.perAlertLastFiredAt[alertId] ?? 0;
   if (!last) return false;
   const elapsedSeconds = (now - last) / 1000;
@@ -221,12 +234,16 @@ export const evaluatePerServiceErrorSpikes = async (): Promise<void> => {
   const windowStart = new Date(now.getTime() - SYSTEM_LOG_ALERT_WINDOW_SECONDS * 1000);
   const provider = await getAppDbProvider();
   const nowMs = Date.now();
-  const logs = await listAlertEvidenceLogs(provider, {
-    level: 'error',
-    from: windowStart,
-    to: now,
-    limit: ALERT_GROUP_SCAN_LIMIT,
-  }, ALERT_GROUP_SCAN_LIMIT);
+  const logs = await listAlertEvidenceLogs(
+    provider,
+    {
+      level: 'error',
+      from: windowStart,
+      to: now,
+      limit: ALERT_GROUP_SCAN_LIMIT,
+    },
+    ALERT_GROUP_SCAN_LIMIT
+  );
 
   const groupedCounts = new Map<string, number>();
   for (const log of logs) {
@@ -286,11 +303,15 @@ export const evaluateSlowRequestSpikes = async (): Promise<void> => {
   const windowStart = new Date(now.getTime() - SYSTEM_LOG_SLOW_REQUEST_WINDOW_SECONDS * 1000);
   const provider = await getAppDbProvider();
   const nowMs = Date.now();
-  const logs = await listAlertEvidenceLogs(provider, {
-    from: windowStart,
-    to: now,
-    limit: ALERT_GROUP_SCAN_LIMIT,
-  }, ALERT_GROUP_SCAN_LIMIT);
+  const logs = await listAlertEvidenceLogs(
+    provider,
+    {
+      from: windowStart,
+      to: now,
+      limit: ALERT_GROUP_SCAN_LIMIT,
+    },
+    ALERT_GROUP_SCAN_LIMIT
+  );
 
   const groupedCounts = new Map<string, { service: string; path: string; count: number }>();
 

@@ -181,11 +181,11 @@ const resolveRegexSelection = (match: RegExpExecArray, selector: string | undefi
       : null;
   const groups = rawGroups
     ? (Object.fromEntries(
-      Object.entries(rawGroups).map(([name, value]: [string, string | undefined]) => [
-        name,
-        value ?? '',
-      ])
-    ) as Record<string, string>)
+        Object.entries(rawGroups).map(([name, value]: [string, string | undefined]) => [
+          name,
+          value ?? '',
+        ])
+      ) as Record<string, string>)
     : null;
   if (key === 'groups') {
     return groups;
@@ -262,11 +262,11 @@ export const buildRegexPreview = (
       const groups =
         match.groups && typeof match.groups === 'object'
           ? (Object.fromEntries(
-            Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [
-              k,
-              v ?? '',
-            ])
-          ) as Record<string, string>)
+              Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [
+                k,
+                v ?? '',
+              ])
+            ) as Record<string, string>)
           : null;
       const extracted = shouldParse
         ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy), jsonIntegrityPolicy)
@@ -311,11 +311,11 @@ export const buildRegexPreview = (
           const groups =
             match.groups && typeof match.groups === 'object'
               ? (Object.fromEntries(
-                Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [
-                  k,
-                  v ?? '',
-                ])
-              ) as Record<string, string>)
+                  Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [
+                    k,
+                    v ?? '',
+                  ])
+                ) as Record<string, string>)
               : null;
           const extracted = shouldParse
             ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy), jsonIntegrityPolicy)
@@ -374,11 +374,11 @@ export const buildRegexPreview = (
       const groups =
         match.groups && typeof match.groups === 'object'
           ? (Object.fromEntries(
-            Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [
-              k,
-              v ?? '',
-            ])
-          ) as Record<string, string>)
+              Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [
+                k,
+                v ?? '',
+              ])
+            ) as Record<string, string>)
           : null;
       const extracted = shouldParse
         ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy), jsonIntegrityPolicy)
@@ -401,9 +401,9 @@ export const buildRegexPreview = (
   const grouped =
     regexConfig.outputMode === 'array'
       ? Object.entries(groupedObject).map(([key, items]: [string, RegexPreviewRecord[]]) => ({
-        key,
-        items,
-      }))
+          key,
+          items,
+        }))
       : groupedObject;
   const extractedValues = matches
     .filter((record: RegexPreviewRecord): boolean => record.match !== null)

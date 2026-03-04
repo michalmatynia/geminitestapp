@@ -122,4 +122,3 @@ export function SwitchNodeConfigSection(): React.JSX.Element | null {
     </div>
   );
 }
-

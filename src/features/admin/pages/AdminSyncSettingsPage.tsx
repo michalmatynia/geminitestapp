@@ -200,7 +200,11 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
               value={syncStatus.lastSync ? syncStatus.lastSync.toLocaleTimeString() : 'Never'}
               variant='minimal'
             />
-            <MetadataItem label='Active interval' value={`${syncStatus.intervalSeconds}s`} variant='minimal' />
+            <MetadataItem
+              label='Active interval'
+              value={`${syncStatus.intervalSeconds}s`}
+              variant='minimal'
+            />
           </Card>
         </FormSection>
 

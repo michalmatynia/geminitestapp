@@ -463,8 +463,7 @@ export const emitTanstackTelemetry = (input: EmitTanstackTelemetryInput): boolea
   }
 
   // Centrally log error if stage is 'error', logError is enabled and not already logged by API client
-  const alreadyLogged =
-    isSerializableRecord(input.error) && input.error['__logged'] === true;
+  const alreadyLogged = isSerializableRecord(input.error) && input.error['__logged'] === true;
   if (input.stage === 'error' && resolvedMeta.logError && input.error && !alreadyLogged) {
     logClientError(input.error, {
       context: {

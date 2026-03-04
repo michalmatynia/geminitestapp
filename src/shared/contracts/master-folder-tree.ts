@@ -507,7 +507,9 @@ export interface MasterFolderTreeController {
   /** Toggle a single node in/out of the multi-selection. */
   toggleSelectNode?: ((nodeId: MasterTreeId) => void) | undefined;
   /** Select a contiguous range of visible nodes from anchorId to nodeId. */
-  selectNodeRange?: ((anchorId: MasterTreeId, nodeId: MasterTreeId, visibleNodeIds: MasterTreeId[]) => void) | undefined;
+  selectNodeRange?:
+    | ((anchorId: MasterTreeId, nodeId: MasterTreeId, visibleNodeIds: MasterTreeId[]) => void)
+    | undefined;
   /** Select all nodes in the tree. */
   selectAllNodes?: (() => void) | undefined;
   /** Clear the multi-selection (does not affect selectedNodeId). */

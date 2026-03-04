@@ -13,10 +13,7 @@ const DEFAULT_KEYBOARD: ResolvedFolderTreeKeyboardConfig = {
   deleteKey: false,
 };
 
-const makeRow = (
-  nodeId: string,
-  opts: Partial<FolderTreeNodeView> = {}
-): FolderTreeNodeView => ({
+const makeRow = (nodeId: string, opts: Partial<FolderTreeNodeView> = {}): FolderTreeNodeView => ({
   nodeId,
   depth: 0,
   parentId: null,
@@ -37,7 +34,14 @@ const makeController = (
   }) as unknown as MasterFolderTreeController;
 
 const makeEvent = (key: string, opts: Partial<KeyboardEvent> = {}): KeyboardEvent =>
-  ({ key, metaKey: false, ctrlKey: false, altKey: false, shiftKey: false, ...opts }) as KeyboardEvent;
+  ({
+    key,
+    metaKey: false,
+    ctrlKey: false,
+    altKey: false,
+    shiftKey: false,
+    ...opts,
+  }) as KeyboardEvent;
 
 const resolve = ({
   event,
@@ -212,8 +216,12 @@ describe('resolveKeyboardAction', () => {
     expect(
       resolve({ event: makeEvent('ArrowUp'), controller, visibleRows: rows, keyboard })
     ).toBeNull();
-    expect(resolve({ event: makeEvent('Home'), controller, visibleRows: rows, keyboard })).toBeNull();
-    expect(resolve({ event: makeEvent('End'), controller, visibleRows: rows, keyboard })).toBeNull();
+    expect(
+      resolve({ event: makeEvent('Home'), controller, visibleRows: rows, keyboard })
+    ).toBeNull();
+    expect(
+      resolve({ event: makeEvent('End'), controller, visibleRows: rows, keyboard })
+    ).toBeNull();
 
     expect(
       resolve({
@@ -228,9 +236,10 @@ describe('resolveKeyboardAction', () => {
   it('gates rename action by enterToRename flag', () => {
     const controller = makeController({ selectedNodeId: 'a' });
 
-    expect(
-      resolve({ event: makeEvent('Enter'), controller, visibleRows: rows })
-    ).toEqual({ type: 'start_rename', nodeId: 'a' });
+    expect(resolve({ event: makeEvent('Enter'), controller, visibleRows: rows })).toEqual({
+      type: 'start_rename',
+      nodeId: 'a',
+    });
 
     expect(
       resolve({

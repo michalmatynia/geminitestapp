@@ -107,15 +107,15 @@ export function VersionGraphInspector(): React.JSX.Element {
           </div>
           {selectedNode.type === 'composite'
             ? (() => {
-              const layerCount = meta.compositeConfig?.layers?.length ?? 0;
-              return layerCount > 0 ? (
-                <div className='text-[10px] text-teal-400'>
-                  <Layers className='mr-0.5 inline size-2.5' />
-                  {layerCount} layers
-                  {compositeLoading ? ' · Loading...' : ''}
-                </div>
-              ) : null;
-            })()
+                const layerCount = meta.compositeConfig?.layers?.length ?? 0;
+                return layerCount > 0 ? (
+                  <div className='text-[10px] text-teal-400'>
+                    <Layers className='mr-0.5 inline size-2.5' />
+                    {layerCount} layers
+                    {compositeLoading ? ' · Loading...' : ''}
+                  </div>
+                ) : null;
+              })()
             : null}
           {selectedNode.parentIds.length > 0 ? (
             <div className='text-[10px] text-gray-500'>

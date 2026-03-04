@@ -15,9 +15,7 @@ import { useProductFormCore } from '../ProductFormCoreContext';
 import { useProductFormImages } from '../ProductFormImageContext';
 import { useProductFormStudio } from '../ProductFormStudioContext';
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
-import {
-  useStudioProjects,
-} from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import {
   useSendToStudioMutation,
   useAcceptVariantMutation,
@@ -110,12 +108,7 @@ export type ProductStudioAuditEntry = {
   errorMessage: string | null;
 };
 
-export type ProductStudioRunStatus =
-  | 'queued'
-  | 'running'
-  | 'completed'
-  | 'failed'
-  | 'cancelled';
+export type ProductStudioRunStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
 
 export type ProductImageSlotPreview = {
   index: number;
@@ -539,7 +532,7 @@ export function ProductStudioProvider({
     accepting: acceptVariantMutation.isPending,
     openingInImageStudio,
     rotatingDirection: rotateImageSlotMutation.isPending
-      ? rotateImageSlotMutation.variables?.direction ?? null
+      ? (rotateImageSlotMutation.variables?.direction ?? null)
       : null,
     deletingVariantId,
     studioActionError,

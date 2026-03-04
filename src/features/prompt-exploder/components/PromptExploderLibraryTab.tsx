@@ -22,9 +22,7 @@ import {
 
 import { useLibraryActions, useLibraryState } from '../context/hooks/useLibrary';
 import { promptExploderFormatTimestamp } from '../helpers/formatting';
-import {
-  buildPromptExploderSegmentationOutline,
-} from '../segmentation-library';
+import { buildPromptExploderSegmentationOutline } from '../segmentation-library';
 import type { PromptExploderSegmentationRecord } from '@/shared/contracts/prompt-exploder';
 
 type SegmentationListItem = {
@@ -231,7 +229,9 @@ export function PromptExploderLibraryTab(): React.JSX.Element {
             </div>
 
             <div className='space-y-1'>
-              <Label className='text-[11px] text-gray-400'>Post-Segmentation Reassembled Output</Label>
+              <Label className='text-[11px] text-gray-400'>
+                Post-Segmentation Reassembled Output
+              </Label>
               <Textarea
                 className='min-h-[180px] font-mono text-[11px]'
                 value={selectedSegmentationRecord.reassembledPrompt}
@@ -273,11 +273,11 @@ export function PromptExploderLibraryTab(): React.JSX.Element {
                       <TableCell>
                         {segment.subsections.length > 0
                           ? segment.subsections
-                            .map((subsection) => {
-                              const codePrefix = subsection.code ? `${subsection.code} ` : '';
-                              return `${codePrefix}${subsection.title}`;
-                            })
-                            .join(' | ')
+                              .map((subsection) => {
+                                const codePrefix = subsection.code ? `${subsection.code} ` : '';
+                                return `${codePrefix}${subsection.title}`;
+                              })
+                              .join(' | ')
                           : '—'}
                       </TableCell>
                     </TableRow>
@@ -291,4 +291,3 @@ export function PromptExploderLibraryTab(): React.JSX.Element {
     </FormSection>
   );
 }
-

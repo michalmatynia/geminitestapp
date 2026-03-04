@@ -116,15 +116,15 @@ export function InternationalizationSettings(): React.JSX.Element {
               <div className='flex flex-wrap gap-1.5'>
                 {item.original.currencies?.length
                   ? item.original.currencies.map(
-                    (entry: { currencyId: string; currency: { code: string } }) => (
-                      <StatusBadge
-                        key={entry.currencyId}
-                        status={entry.currency.code}
-                        variant='neutral'
-                        size='sm'
-                      />
+                      (entry: { currencyId: string; currency: { code: string } }) => (
+                        <StatusBadge
+                          key={entry.currencyId}
+                          status={entry.currency.code}
+                          variant='neutral'
+                          size='sm'
+                        />
+                      )
                     )
-                  )
                   : null}
               </div>
             )}

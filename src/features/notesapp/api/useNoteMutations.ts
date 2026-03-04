@@ -47,7 +47,7 @@ export function useCreateNote(): CreateMutation<NoteWithRelations, NoteCreateInp
 export function useUpdateNote(): UpdateMutation<
   NoteWithRelations,
   NoteUpdateInput & { id: string }
-  > {
+> {
   const mutationKey = QUERY_KEYS.notes.all;
   return createUpdateMutationV2({
     mutationFn: ({ id, ...data }: NoteUpdateInput & { id: string }) =>
@@ -106,7 +106,7 @@ export function useCreateNoteFolder(): CreateMutation<CategoryRecord, CategoryCr
 export function useUpdateNoteFolder(): UpdateMutation<
   CategoryRecord,
   CategoryUpdateInput & { id: string }
-  > {
+> {
   const mutationKey = QUERY_KEYS.notes.all;
   return createUpdateMutationV2({
     mutationFn: ({ id, ...data }: CategoryUpdateInput & { id: string }) =>
@@ -163,7 +163,7 @@ export function useCreateNotebook(): CreateMutation<NotebookRecord, NotebookCrea
 export function useUpdateNotebook(): UpdateMutation<
   NotebookRecord,
   NotebookUpdateInput & { id: string }
-  > {
+> {
   const mutationKey = QUERY_KEYS.notes.notebooks();
   return createUpdateMutationV2({
     mutationFn: ({ id, ...payload }: NotebookUpdateInput & { id: string }) =>
@@ -279,7 +279,7 @@ export function useCreateNoteTheme(): CreateMutation<ThemeRecord, ThemeCreateInp
 export function useUpdateNoteTheme(): UpdateMutation<
   ThemeRecord,
   ThemeUpdateInput & { id: string }
-  > {
+> {
   const mutationKey = QUERY_KEYS.notes.themes();
   return createUpdateMutationV2({
     mutationFn: ({ id, ...data }: ThemeUpdateInput & { id: string }) =>

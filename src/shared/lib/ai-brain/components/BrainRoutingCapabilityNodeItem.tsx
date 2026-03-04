@@ -22,10 +22,7 @@ export interface BrainRoutingCapabilityNodeItemProps {
   isPending: boolean;
 }
 
-const sourceBadgeClassName: Record<
-  BrainRoutingCapabilityNodeItemProps['sourceLabel'],
-  string
-> = {
+const sourceBadgeClassName: Record<BrainRoutingCapabilityNodeItemProps['sourceLabel'], string> = {
   'Capability override': 'border-emerald-400/40 text-emerald-300',
   'Feature fallback': 'border-sky-400/40 text-sky-300',
   'Global defaults': 'border-gray-500/40 text-gray-400',

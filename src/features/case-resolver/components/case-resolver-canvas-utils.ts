@@ -1,4 +1,3 @@
- 
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,

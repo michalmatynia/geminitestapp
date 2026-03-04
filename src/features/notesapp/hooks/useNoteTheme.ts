@@ -3,11 +3,7 @@ import { useMemo, useCallback } from 'react';
 import { findFolderById } from '@/features/foldertree/utils/tree';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { UseNoteThemeProps } from '@/shared/contracts/notes';
-import type {
-  NoteWithRelations,
-  NotebookRecord,
-  ThemeRecord,
-} from '@/shared/contracts/notes';
+import type { NoteWithRelations, NotebookRecord, ThemeRecord } from '@/shared/contracts/notes';
 
 export function useNoteTheme({
   themes,
@@ -53,9 +49,9 @@ export function useNoteTheme({
 
   const selectedFolderThemeId: string = selectedFolderId
     ? ((): string => {
-      const folder = findFolderById(folderTree, selectedFolderId);
-      return folder?.themeId ? String(folder.themeId) : '';
-    })()
+        const folder = findFolderById(folderTree, selectedFolderId);
+        return folder?.themeId ? String(folder.themeId) : '';
+      })()
     : notebook?.defaultThemeId
       ? String(notebook.defaultThemeId)
       : '';

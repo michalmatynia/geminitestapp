@@ -35,7 +35,10 @@ const nodeA = buildNode({
 });
 const nodeB = buildNode({
   id: 'page:b',
-  relationships: [{ type: 'uses', targetId: 'page:c' }, { type: 'uses', targetId: 'page:d' }],
+  relationships: [
+    { type: 'uses', targetId: 'page:c' },
+    { type: 'uses', targetId: 'page:d' },
+  ],
 });
 const nodeC = buildNode({ id: 'page:c' });
 const nodeD = buildNode({ id: 'page:d' });

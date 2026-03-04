@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
- 
- 
 
 import type { AdvancedApiConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
@@ -14,10 +12,7 @@ import {
   OutboundUrlPolicyError,
 } from '../security/outbound-url-policy';
 
-import { 
-  DEFAULT_ADVANCED_API_CONFIG, 
-  JsonRecord 
-} from './advanced-api/config';
+import { DEFAULT_ADVANCED_API_CONFIG, JsonRecord } from './advanced-api/config';
 import {
   toStringRecord,
   applyPathParams,
@@ -25,13 +20,13 @@ import {
   sleep,
   resolveRetryDelay,
   buildMappedOutputs,
-  createSignalControl
+  createSignalControl,
 } from './advanced-api/utils';
 import {
   parseErrorRoutes,
   evaluateErrorRoute,
   resolveRetryStatuses,
-  parseOutputMappings
+  parseOutputMappings,
 } from './advanced-api/routing';
 import { resolveAuthHeaders } from './advanced-api/auth';
 
@@ -326,7 +321,11 @@ export const handleAdvancedApi: NodeHandler = async ({
           page,
           cursor,
           route: route?.id ?? (timedOut ? 'timeout' : 'network_error'),
-          error: timedOut ? 'Request timed out' : error instanceof Error ? error.message : 'Network error',
+          error: timedOut
+            ? 'Request timed out'
+            : error instanceof Error
+              ? error.message
+              : 'Network error',
           timedOut,
           networkError: !timedOut,
         },
@@ -426,13 +425,10 @@ export const handleAdvancedApi: NodeHandler = async ({
   };
 
   const outputs = buildMappedOutputs(outputMappings, finalEnvelope);
-  const envelopeStatus =
-    typeof finalEnvelope['status'] === 'number' ? finalEnvelope['status'] : 0;
+  const envelopeStatus = typeof finalEnvelope['status'] === 'number' ? finalEnvelope['status'] : 0;
   const envelopeOk = finalEnvelope['ok'] === true;
-  const envelopeError =
-    typeof finalEnvelope['error'] === 'string' ? finalEnvelope['error'] : null;
-  const envelopeRoute =
-    typeof finalEnvelope['route'] === 'string' ? finalEnvelope['route'] : null;
+  const envelopeError = typeof finalEnvelope['error'] === 'string' ? finalEnvelope['error'] : null;
+  const envelopeRoute = typeof finalEnvelope['route'] === 'string' ? finalEnvelope['route'] : null;
 
   return {
     ...outputs,

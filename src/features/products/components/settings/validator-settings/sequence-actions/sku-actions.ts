@@ -1,33 +1,22 @@
- 
- 
- 
- 
- 
- 
-
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
-import type { 
-  ProductValidationPattern, 
-  SequenceGroupDraft 
-} from '@/shared/contracts/products';
-import {
-  buildUniqueLabel,
-  createSequenceGroupId,
-  getPatternSequence,
-} from '../helpers';
+import type { ProductValidationPattern, SequenceGroupDraft } from '@/shared/contracts/products';
+import { buildUniqueLabel, createSequenceGroupId, getPatternSequence } from '../helpers';
 import type { CreatePatternMutation } from './types';
 
 export const handleCreateSkuAutoIncrementSequence = async (args: {
   patterns: ProductValidationPattern[];
   orderedPatterns: ProductValidationPattern[];
-  setGroupDrafts: (updater: (prev: Record<string, SequenceGroupDraft>) => Record<string, SequenceGroupDraft>) => void;
+  setGroupDrafts: (
+    updater: (prev: Record<string, SequenceGroupDraft>) => Record<string, SequenceGroupDraft>
+  ) => void;
   createPattern: CreatePatternMutation;
   notifySuccess: (message: string) => void;
   notifyError: (message: string) => void;
 }): Promise<void> => {
-  const { patterns, orderedPatterns, setGroupDrafts, createPattern, notifySuccess, notifyError } = args;
-  
+  const { patterns, orderedPatterns, setGroupDrafts, createPattern, notifySuccess, notifyError } =
+    args;
+
   const existingLabels = new Set(
     patterns
       .map((item: ProductValidationPattern) => item.label.trim().toLowerCase())

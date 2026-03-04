@@ -13,12 +13,7 @@ import {
 } from '@/features/cms/hooks/useCmsQueries';
 import { cmsSlugDomainsUpdateSchema, cmsSlugUpdateSchema } from '@/features/cms/validations/api';
 import type { Slug } from '@/shared/contracts/cms';
-import {
-  SectionHeader,
-  useToast,
-  LoadingState,
-  Alert,
-} from '@/shared/ui';
+import { SectionHeader, useToast, LoadingState, Alert } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 import { SlugForm, type SlugFormSubmitData } from '@/features/cms/components/SlugForm';
 
@@ -55,7 +50,10 @@ function EditSlugForm({
   const [error, setError] = useState<string | null>(null);
 
   const domains = useMemo(() => domainsQuery.data ?? [], [domainsQuery.data]);
-  const initialDomainIds = useMemo(() => slugDomainsQuery.data?.domainIds ?? [], [slugDomainsQuery.data]);
+  const initialDomainIds = useMemo(
+    () => slugDomainsQuery.data?.domainIds ?? [],
+    [slugDomainsQuery.data]
+  );
 
   const handleSubmit = async (data: SlugFormSubmitData): Promise<void> => {
     setError(null);

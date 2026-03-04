@@ -160,9 +160,9 @@ export async function POST_handler(
       : {}),
     ...(typeof data.traderaApiToken === 'string'
       ? {
-        traderaApiToken: encryptSecret(data.traderaApiToken),
-        traderaApiTokenUpdatedAt: new Date(),
-      }
+          traderaApiToken: encryptSecret(data.traderaApiToken),
+          traderaApiTokenUpdatedAt: new Date(),
+        }
       : {}),
     ...(typeof data.traderaApiSandbox === 'boolean'
       ? { traderaApiSandbox: data.traderaApiSandbox }

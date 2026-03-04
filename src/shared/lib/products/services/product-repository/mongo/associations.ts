@@ -5,16 +5,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
-import { 
-  buildProductIdFilter, 
-  normalizeLookupId, 
+import {
+  buildProductIdFilter,
+  normalizeLookupId,
   normalizeImageFileIds,
   buildLookupFilterForIds,
   resolveLookupDocumentId,
 } from '../mongo-product-repository.helpers';
-import { 
-  ProductImageRecord, 
-} from '@/shared/contracts/products';
+import { ProductImageRecord } from '@/shared/contracts/products';
 import { mongoImageFileRepository } from '@/shared/lib/files/services/image-file-service';
 import { mongoCatalogRepository } from '@/shared/lib/products/services/catalog-repository/mongo-catalog-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -72,7 +70,11 @@ export const mongoProductAssociationsImpl = {
     return parsedEntries.filter((e: ProductImageRecord) => !!e.imageFile);
   },
 
-  async addProductImages(productId: string, imageFileIds: string[], getCollection: () => Promise<any>) {
+  async addProductImages(
+    productId: string,
+    imageFileIds: string[],
+    getCollection: () => Promise<any>
+  ) {
     const collection = await getCollection();
     const normalizedIds = normalizeImageFileIds(imageFileIds);
     if (normalizedIds.length === 0) return;
@@ -96,7 +98,11 @@ export const mongoProductAssociationsImpl = {
     });
   },
 
-  async replaceProductImages(productId: string, imageFileIds: string[], getCollection: () => Promise<any>) {
+  async replaceProductImages(
+    productId: string,
+    imageFileIds: string[],
+    getCollection: () => Promise<any>
+  ) {
     const collection = await getCollection();
     const normalizedIds = normalizeImageFileIds(imageFileIds);
     const imageFiles = await mongoImageFileRepository.findImageFilesByIds(normalizedIds);
@@ -120,7 +126,11 @@ export const mongoProductAssociationsImpl = {
     });
   },
 
-  async removeProductImage(productId: string, imageFileId: string, getCollection: () => Promise<any>) {
+  async removeProductImage(
+    productId: string,
+    imageFileId: string,
+    getCollection: () => Promise<any>
+  ) {
     const collection = await getCollection();
     await collection.updateOne(buildProductIdFilter(productId), {
       $pull: { images: { imageFileId } } as any,
@@ -133,7 +143,11 @@ export const mongoProductAssociationsImpl = {
     return collection.countDocuments({ 'images.imageFileId': imageFileId });
   },
 
-  async replaceProductCatalogs(productId: string, catalogIds: string[], getCollection: () => Promise<any>) {
+  async replaceProductCatalogs(
+    productId: string,
+    catalogIds: string[],
+    getCollection: () => Promise<any>
+  ) {
     const collection = await getCollection();
     const catalogs = await mongoCatalogRepository.getCatalogsByIds(catalogIds);
     const now = new Date().toISOString();
@@ -153,7 +167,11 @@ export const mongoProductAssociationsImpl = {
     });
   },
 
-  async replaceProductCategory(productId: string, categoryId: string | null, getCollection: () => Promise<any>) {
+  async replaceProductCategory(
+    productId: string,
+    categoryId: string | null,
+    getCollection: () => Promise<any>
+  ) {
     const collection = await getCollection();
     await collection.updateOne(buildProductIdFilter(productId), {
       $set: {
@@ -186,7 +204,11 @@ export const mongoProductAssociationsImpl = {
     });
   },
 
-  async replaceProductProducers(productId: string, producerIds: string[], getCollection: () => Promise<any>) {
+  async replaceProductProducers(
+    productId: string,
+    producerIds: string[],
+    getCollection: () => Promise<any>
+  ) {
     const collection = await getCollection();
     const db = await getMongoDb();
     const producers = await db
@@ -209,7 +231,11 @@ export const mongoProductAssociationsImpl = {
     });
   },
 
-  async replaceProductNotes(productId: string, noteIds: string[], getCollection: () => Promise<any>) {
+  async replaceProductNotes(
+    productId: string,
+    noteIds: string[],
+    getCollection: () => Promise<any>
+  ) {
     const collection = await getCollection();
     await collection.updateOne(buildProductIdFilter(productId), {
       $set: {
@@ -219,7 +245,11 @@ export const mongoProductAssociationsImpl = {
     });
   },
 
-  async bulkReplaceProductCatalogs(productIds: string[], catalogIds: string[], getCollection: () => Promise<any>) {
+  async bulkReplaceProductCatalogs(
+    productIds: string[],
+    catalogIds: string[],
+    getCollection: () => Promise<any>
+  ) {
     const collection = await getCollection();
     const catalogs = await mongoCatalogRepository.getCatalogsByIds(catalogIds);
     const now = new Date().toISOString();
@@ -246,7 +276,11 @@ export const mongoProductAssociationsImpl = {
     }
   },
 
-  async bulkAddProductCatalogs(productIds: string[], catalogIds: string[], getCollection: () => Promise<any>) {
+  async bulkAddProductCatalogs(
+    productIds: string[],
+    catalogIds: string[],
+    getCollection: () => Promise<any>
+  ) {
     const collection = await getCollection();
     const catalogs = await mongoCatalogRepository.getCatalogsByIds(catalogIds);
     const now = new Date().toISOString();
@@ -275,7 +309,11 @@ export const mongoProductAssociationsImpl = {
     }
   },
 
-  async bulkRemoveProductCatalogs(productIds: string[], catalogIds: string[], getCollection: () => Promise<any>) {
+  async bulkRemoveProductCatalogs(
+    productIds: string[],
+    catalogIds: string[],
+    getCollection: () => Promise<any>
+  ) {
     const collection = await getCollection();
     const bulkOps = productIds.map((pid) => ({
       updateOne: {

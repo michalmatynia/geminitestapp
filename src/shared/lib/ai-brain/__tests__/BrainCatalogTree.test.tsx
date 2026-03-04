@@ -73,7 +73,12 @@ describe('BrainCatalogTree', () => {
 
     render(
       <ToastProvider>
-        <BrainCatalogTree entries={entries} onChange={vi.fn()} onEdit={vi.fn()} onRemove={vi.fn()} />
+        <BrainCatalogTree
+          entries={entries}
+          onChange={vi.fn()}
+          onEdit={vi.fn()}
+          onRemove={vi.fn()}
+        />
       </ToastProvider>
     );
 
@@ -142,18 +147,19 @@ describe('BrainCatalogTree', () => {
 
     render(
       <ToastProvider>
-        <BrainCatalogTree entries={entries} onChange={onChange} onEdit={vi.fn()} onRemove={vi.fn()} />
+        <BrainCatalogTree
+          entries={entries}
+          onChange={onChange}
+          onEdit={vi.fn()}
+          onRemove={vi.fn()}
+        />
       </ToastProvider>
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Simulate Reorder' }));
 
     await waitFor(() =>
-      expect(onChange).toHaveBeenCalledWith([
-        entries[2],
-        entries[1],
-        entries[0],
-      ])
+      expect(onChange).toHaveBeenCalledWith([entries[2], entries[1], entries[0]])
     );
   });
 });

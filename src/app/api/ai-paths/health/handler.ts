@@ -82,10 +82,10 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       const all = await repo.listRuns({ limit: 1, offset: 0 });
       const latest = all.runs[0]
         ? {
-          id: String((all.runs[0] as Record<string, unknown>)['id']),
-          status: (all.runs[0] as Record<string, unknown>)['status'] as AiPathRunStatus,
-          createdAt: toIso((all.runs[0] as Record<string, unknown>)['createdAt'] as string),
-        }
+            id: String((all.runs[0] as Record<string, unknown>)['id']),
+            status: (all.runs[0] as Record<string, unknown>)['status'] as AiPathRunStatus,
+            createdAt: toIso((all.runs[0] as Record<string, unknown>)['createdAt'] as string),
+          }
         : null;
       return {
         provider: aiPathsProvider,
@@ -142,13 +142,13 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
           byStatus: Object.fromEntries(totals) as Record<ProductAiJobStatus, number>,
           latest: latest
             ? {
-              id:
+                id:
                   (latest as unknown as { id?: string; _id?: string }).id ?? String(latest['_id']),
-              status: latest['status'] as ProductAiJobStatus,
-              createdAt: toIso(latest['createdAt'] as Date | string | null),
-              productId: latest['productId'] as string | null,
-              type: latest['type'] as string | null,
-            }
+                status: latest['status'] as ProductAiJobStatus,
+                createdAt: toIso(latest['createdAt'] as Date | string | null),
+                productId: latest['productId'] as string | null,
+                type: latest['type'] as string | null,
+              }
             : null,
         };
       }
@@ -182,12 +182,12 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
           byStatus: Object.fromEntries(totals) as Record<ProductAiJobStatus, number>,
           latest: latest
             ? {
-              id: latest.id,
-              status: latest.status as ProductAiJobStatus,
-              createdAt: toIso(latest.createdAt),
-              productId: latest.productId ?? null,
-              type: latest.type ?? null,
-            }
+                id: latest.id,
+                status: latest.status as ProductAiJobStatus,
+                createdAt: toIso(latest.createdAt),
+                productId: latest.productId ?? null,
+                type: latest.type ?? null,
+              }
             : null,
         };
       }
@@ -262,8 +262,8 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     : Object.keys(errors).length > 0
       ? errors
       : {
-        slo: `Critical AI Paths SLO breach detected for ${Math.round(criticalForMs / 1000)}s.`,
-      };
+          slo: `Critical AI Paths SLO breach detected for ${Math.round(criticalForMs / 1000)}s.`,
+        };
   return NextResponse.json(
     {
       ok,

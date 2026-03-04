@@ -229,10 +229,9 @@ export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
           key: CHATBOT_SETTINGS_KEY,
         },
       });
-      toast(
-        error instanceof Error ? error.message : 'Invalid chatbot settings payload.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Invalid chatbot settings payload.', {
+        variant: 'error',
+      });
     }
   }, [
     settingsQuery.data,

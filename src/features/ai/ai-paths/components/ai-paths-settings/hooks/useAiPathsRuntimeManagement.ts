@@ -9,9 +9,7 @@ export function useAiPathsRuntimeManagement(args: {
 
   const pruneRuntimeInputs = useCallback(
     (removedEdges: Edge[], remainingEdges: Edge[]): void => {
-      setRuntimeState((prev) =>
-        pruneRuntimeInputsState(prev, removedEdges, remainingEdges)
-      );
+      setRuntimeState((prev) => pruneRuntimeInputsState(prev, removedEdges, remainingEdges));
     },
     [setRuntimeState]
   );

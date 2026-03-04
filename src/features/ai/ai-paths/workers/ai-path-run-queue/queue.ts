@@ -1,16 +1,15 @@
- 
 import { createManagedQueue } from '@/shared/lib/queue';
-import { 
-  AI_PATH_RUN_QUEUE_NAME, 
-  DEFAULT_CONCURRENCY, 
+import {
+  AI_PATH_RUN_QUEUE_NAME,
+  DEFAULT_CONCURRENCY,
   JOB_EXECUTION_TIMEOUT_MS,
-  LOG_SOURCE
+  LOG_SOURCE,
 } from './config';
 import { type AiPathRunJobData } from './types';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import { 
-  processRun, 
-  processStaleRunRecovery 
+import {
+  processRun,
+  processStaleRunRecovery,
 } from '@/features/ai/ai-paths/workers/ai-path-run-processor';
 import { recordRuntimeRunStarted } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { createDebugQueueLogger } from '../ai-path-run-queue-utils';

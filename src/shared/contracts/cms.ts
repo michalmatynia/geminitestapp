@@ -91,7 +91,9 @@ export const cmsPageBuilderComponentContentSchema = z
   })
   .passthrough();
 
-export type CmsPageBuilderComponentContentDto = z.infer<typeof cmsPageBuilderComponentContentSchema>;
+export type CmsPageBuilderComponentContentDto = z.infer<
+  typeof cmsPageBuilderComponentContentSchema
+>;
 
 export const cmsPageComponentSchema = dtoBaseSchema.extend({
   type: z.string(),

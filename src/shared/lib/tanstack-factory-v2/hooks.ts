@@ -1,12 +1,12 @@
 'use client';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import { 
+import {
   type QueryKey,
   type QueryFunctionContext,
   useQuery,
@@ -17,23 +17,28 @@ import {
 } from '@tanstack/react-query';
 import { useRef } from 'react';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
-import { 
+import {
   attachTanstackFactoryMeta,
   resolveTanstackFactoryMeta,
-  telemetryErrorStage 
+  telemetryErrorStage,
 } from '@/shared/lib/observability/tanstack-telemetry';
 import { TanstackFactoryMeta } from '../tanstack-factory-v2.types';
-import { 
-  BaseQueryFactoryV2Config, 
-  QueryDescriptorV2, 
-  QueryOptionsWithoutCore, 
-  SuspenseQueryDescriptorV2 
+import {
+  BaseQueryFactoryV2Config,
+  QueryDescriptorV2,
+  QueryOptionsWithoutCore,
+  SuspenseQueryDescriptorV2,
 } from './types';
 import { emitFactoryTelemetry, withQueryKeyMeta } from './telemetry';
 import { applyQueryRuntimeGuards } from './guards';
 import { invokeQueryFactoryFn } from './executors';
 
-export function useTelemetrizedQueryFn<TQueryFnData, TError, TQueryKey extends QueryKey, TPageParam = never>(
+export function useTelemetrizedQueryFn<
+  TQueryFnData,
+  TError,
+  TQueryKey extends QueryKey,
+  TPageParam = never,
+>(
   config: {
     meta: TanstackFactoryMeta;
     queryFn: (context: QueryFunctionContext<TQueryKey, TPageParam>) => Promise<TQueryFnData>;

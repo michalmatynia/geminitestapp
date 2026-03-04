@@ -32,7 +32,8 @@ export function useBaselinkerSettingsState() {
   }, [defaultExportConnectionQuery.data]);
 
   const [syncIntervalMinutes, setSyncIntervalMinutes] = useState(storedSyncInterval);
-  const [defaultOneClickConnectionId, setDefaultOneClickConnectionId] = useState(storedDefaultConnectionId);
+  const [defaultOneClickConnectionId, setDefaultOneClickConnectionId] =
+    useState(storedDefaultConnectionId);
   const [isSaving, setIsSaving] = useState(false);
   const hasInitialized = useRef(false);
 
@@ -57,9 +58,16 @@ export function useBaselinkerSettingsState() {
   }, [connections, storedDefaultConnectionId, defaultOneClickConnectionId]);
 
   const isDirty = useMemo(() => {
-    return syncIntervalMinutes !== storedSyncInterval || 
-           defaultOneClickConnectionId !== storedDefaultConnectionId;
-  }, [syncIntervalMinutes, storedSyncInterval, defaultOneClickConnectionId, storedDefaultConnectionId]);
+    return (
+      syncIntervalMinutes !== storedSyncInterval ||
+      defaultOneClickConnectionId !== storedDefaultConnectionId
+    );
+  }, [
+    syncIntervalMinutes,
+    storedSyncInterval,
+    defaultOneClickConnectionId,
+    storedDefaultConnectionId,
+  ]);
 
   const handleSaveAll = useCallback(async (): Promise<void> => {
     const intervalParsed = Number(syncIntervalMinutes);
@@ -70,7 +78,7 @@ export function useBaselinkerSettingsState() {
     setIsSaving(true);
     try {
       const updates = [];
-      
+
       if (syncIntervalMinutes !== storedSyncInterval) {
         updates.push({
           key: 'base_sync_poll_interval_minutes',
@@ -90,7 +98,14 @@ export function useBaselinkerSettingsState() {
     } finally {
       setIsSaving(false);
     }
-  }, [syncIntervalMinutes, storedSyncInterval, defaultOneClickConnectionId, storedDefaultConnectionId, updateSettingsBulkMutation, updateDefaultConnectionMutation]);
+  }, [
+    syncIntervalMinutes,
+    storedSyncInterval,
+    defaultOneClickConnectionId,
+    storedDefaultConnectionId,
+    updateSettingsBulkMutation,
+    updateDefaultConnectionMutation,
+  ]);
 
   return {
     connections,

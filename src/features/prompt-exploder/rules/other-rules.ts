@@ -162,7 +162,8 @@ export const OTHER_RULES: PromptValidationRule[] = [
     id: 'segment.infer.parameter_block.params_heading',
     title: 'Infer Parameter Block',
     description: 'Recognizes parameter heading variants tied to params object.',
-    pattern: '^\\\\s*(PARAMS|PARAMETERS|CONFIG)\\\\b[\\\\s\\\\S]{0,220}\\\\bparams\\\\s*=\\\\s*\\\\{',
+    pattern:
+      '^\\\\s*(PARAMS|PARAMETERS|CONFIG)\\\\b[\\\\s\\\\S]{0,220}\\\\bparams\\\\s*=\\\\s*\\\\{',
     flags: 'mi',
     message: 'Likely parameter block segment.',
     sequence: 130,

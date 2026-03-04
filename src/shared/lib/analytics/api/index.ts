@@ -5,11 +5,7 @@ import type {
 } from '@/shared/contracts/analytics';
 import { api } from '@/shared/lib/api-client';
 
-export type {
-  AnalyticsRange,
-  AnalyticsScope,
-  AnalyticsSummary,
-};
+export type { AnalyticsRange, AnalyticsScope, AnalyticsSummary };
 
 export async function fetchAnalyticsSummary(input?: {
   range?: AnalyticsRange;

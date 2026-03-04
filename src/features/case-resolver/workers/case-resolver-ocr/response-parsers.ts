@@ -1,8 +1,8 @@
-import type { 
-  OllamaChatPayload, 
-  OpenAiChatCompletionPayload, 
-  AnthropicMessageResponse, 
-  GeminiResponse 
+import type {
+  OllamaChatPayload,
+  OpenAiChatCompletionPayload,
+  AnthropicMessageResponse,
+  GeminiResponse,
 } from './types';
 
 export const parseOllamaResponseText = (payload: OllamaChatPayload): string => {

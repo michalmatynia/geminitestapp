@@ -29,17 +29,13 @@ export const isEditingProductHydrated = (
  * the edit provider. Call from guards only — not from render paths.
  */
 export const warnNonHydratedEditProduct = (product: ProductWithImages): void => {
-  logClientError(
-    new Error('[ProductForm] Non-hydrated product passed to edit provider'),
-    {
-      context: {
-        service: 'products',
-        category: 'hydration-guard',
-        productId: product.id,
-        catalogId: typeof product.catalogId === 'string' ? product.catalogId : '',
-        catalogsLength: Array.isArray(product.catalogs) ? product.catalogs.length : -1,
-      },
-    }
-  );
+  logClientError(new Error('[ProductForm] Non-hydrated product passed to edit provider'), {
+    context: {
+      service: 'products',
+      category: 'hydration-guard',
+      productId: product.id,
+      catalogId: typeof product.catalogId === 'string' ? product.catalogId : '',
+      catalogsLength: Array.isArray(product.catalogs) ? product.catalogs.length : -1,
+    },
+  });
 };
-

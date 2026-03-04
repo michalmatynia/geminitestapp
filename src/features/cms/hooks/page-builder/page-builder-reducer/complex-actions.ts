@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
- 
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import {
@@ -13,7 +12,11 @@ import {
   removeColumnFromRows,
   updateSectionNestedBlocks,
 } from '../block-helpers';
-import { buildHierarchyIndexes, cloneSectionSubtree, moveSectionSubtree } from '../section-hierarchy';
+import {
+  buildHierarchyIndexes,
+  cloneSectionSubtree,
+  moveSectionSubtree,
+} from '../section-hierarchy';
 import type {
   PageBuilderState,
   PageBuilderAction,
@@ -27,7 +30,9 @@ export function reduceComplexActions(
 ): PageBuilderState | null {
   switch (action.type) {
     case 'DUPLICATE_SECTION': {
-      const section = state.sections.find((s: SectionInstance) => s.id === (action as any).sectionId);
+      const section = state.sections.find(
+        (s: SectionInstance) => s.id === (action as any).sectionId
+      );
       if (!section) return state;
       const duplicates = cloneSectionSubtree(state.sections, section.id, uid);
       if (duplicates.length === 0) return state;
@@ -36,11 +41,11 @@ export function reduceComplexActions(
 
       const hierarchy = buildHierarchyIndexes(state.sections);
       const siblings = section.parentSectionId
-        ? hierarchy.childrenByParent.get(section.parentSectionId) ?? []
+        ? (hierarchy.childrenByParent.get(section.parentSectionId) ?? [])
         : (hierarchy.childrenByParent.get(null) ?? []).filter((id: string) => {
-          const node = hierarchy.nodeById.get(id);
-          return node?.zone === section.zone;
-        });
+            const node = hierarchy.nodeById.get(id);
+            return node?.zone === section.zone;
+          });
       const sourceIndex = siblings.indexOf(section.id);
       const targetIndex = sourceIndex >= 0 ? sourceIndex + 1 : siblings.length;
 

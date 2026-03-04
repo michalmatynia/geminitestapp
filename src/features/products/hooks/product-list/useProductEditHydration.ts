@@ -14,7 +14,11 @@ import {
 import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { ApiError, api } from '@/shared/lib/api-client';
-import { createSingleQueryV2, prefetchQueryV2, fetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import {
+  createSingleQueryV2,
+  prefetchQueryV2,
+  fetchQueryV2,
+} from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
@@ -264,7 +268,13 @@ export function useProductEditHydration({
     setIsEditHydrating(false);
     toast('This product was deleted or is unavailable.', { variant: 'warning' });
     setRefreshTrigger((prev: number) => prev + 1);
-  }, [editingProduct?.id, editingProductDetailQuery.error, setEditingProduct, setRefreshTrigger, toast]);
+  }, [
+    editingProduct?.id,
+    editingProductDetailQuery.error,
+    setEditingProduct,
+    setRefreshTrigger,
+    toast,
+  ]);
 
   return {
     isEditHydrating,

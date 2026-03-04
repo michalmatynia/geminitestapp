@@ -27,10 +27,7 @@ const buildInvalidCaseResolverEdgeError = (
     ...(meta ?? {}),
   });
 
-export const parseCanonicalCaseResolverEdge = (
-  input: unknown,
-  context: string
-): Edge => {
+export const parseCanonicalCaseResolverEdge = (input: unknown, context: string): Edge => {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw buildInvalidCaseResolverEdgeError('Invalid Case Resolver edge payload.', context, {
       reason: 'edge_not_object',

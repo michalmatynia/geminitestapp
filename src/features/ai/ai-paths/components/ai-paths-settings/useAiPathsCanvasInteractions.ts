@@ -8,9 +8,7 @@ import {
   useSelectionState,
 } from '@/features/ai/ai-paths/context/SelectionContext';
 import type { AiNode, Edge, NodeDefinition } from '@/shared/lib/ai-paths';
-import {
-  sanitizeEdges,
-} from '@/shared/lib/ai-paths';
+import { sanitizeEdges } from '@/shared/lib/ai-paths';
 import { type ConfirmConfig, useConfirm } from '@/shared/hooks/ui/useConfirm';
 
 import { useCanvasView } from './hooks/useCanvasView';
@@ -104,7 +102,9 @@ export interface AiPathsCanvasInteractions {
   ConfirmationModal: React.ComponentType;
 }
 
-export function useAiPathsCanvasInteractions(args: UseAiPathsCanvasInteractionsArgs): AiPathsCanvasInteractions {
+export function useAiPathsCanvasInteractions(
+  args: UseAiPathsCanvasInteractionsArgs
+): AiPathsCanvasInteractions {
   const {
     nodes,
     setNodes,
@@ -175,7 +175,7 @@ export function useAiPathsCanvasInteractions(args: UseAiPathsCanvasInteractionsA
     toast,
     setSelectedNodeId,
     ensureNodeVisible,
-    setLastDrop
+    setLastDrop,
   });
 
   const {
@@ -201,7 +201,7 @@ export function useAiPathsCanvasInteractions(args: UseAiPathsCanvasInteractionsA
     selectedEdgeId,
     selectEdge,
     clearRuntimeInputsForEdges,
-    toast
+    toast,
   });
 
   useEffect((): void | (() => void) => {
@@ -266,7 +266,9 @@ export function useAiPathsCanvasInteractions(args: UseAiPathsCanvasInteractionsA
     const targetNode = isSingleNode
       ? nodes.find((node: AiNode): boolean => node.id === nodeIdsToDelete[0])
       : null;
-    const label = isSingleNode ? (targetNode?.title ?? 'this node') : `${nodeIdsToDelete.length} nodes`;
+    const label = isSingleNode
+      ? (targetNode?.title ?? 'this node')
+      : `${nodeIdsToDelete.length} nodes`;
 
     confirm({
       title: 'Remove Node?',
@@ -319,7 +321,7 @@ export function useAiPathsCanvasInteractions(args: UseAiPathsCanvasInteractionsA
     clearRuntimeInputsForEdges,
     selectNode,
     setSelectedNodeId,
-    selectEdge
+    selectEdge,
   ]);
 
   useEffect((): (() => void) => {

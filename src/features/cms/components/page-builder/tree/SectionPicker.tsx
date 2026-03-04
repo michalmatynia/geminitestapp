@@ -32,10 +32,6 @@ export function SectionPicker(props: TreeSectionPickerProps): React.ReactNode {
   }
 
   return (
-    <BaseSectionPicker
-      disabled={props.disabled}
-      zone={props.zone}
-      onSelect={props.onSelect}
-    />
+    <BaseSectionPicker disabled={props.disabled} zone={props.zone} onSelect={props.onSelect} />
   );
 }

@@ -96,9 +96,7 @@ export function AgentPersonasPage(): React.JSX.Element {
         settings: buildAgentPersonaSettings(),
       })}
       renderItemTags={() => ['Routing: AI Brain']}
-      renderExtraFields={() => (
-        <AgentPersonaSettingsForm />
-      )}
+      renderExtraFields={() => <AgentPersonaSettingsForm />}
     />
   );
 }

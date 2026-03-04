@@ -1,20 +1,10 @@
 import 'server-only';
 
- 
- 
- 
- 
- 
- 
-
-import { 
-  AiPathRuntimeAnalyticsRange, 
-  AiPathRuntimeAnalyticsSummary 
+import {
+  AiPathRuntimeAnalyticsRange,
+  AiPathRuntimeAnalyticsSummary,
 } from '@/shared/contracts/ai-paths';
-import { 
-  SUMMARY_CACHE_TTL_MS, 
-  SUMMARY_RANGE_BUCKET_MS 
-} from './config';
+import { SUMMARY_CACHE_TTL_MS, SUMMARY_RANGE_BUCKET_MS } from './config';
 
 type SummaryCacheEntry = {
   value: AiPathRuntimeAnalyticsSummary;
@@ -44,7 +34,10 @@ export const pruneSummaryCache = (now: number): void => {
   });
 };
 
-export const readCachedSummary = (cacheKey: string, now: number): AiPathRuntimeAnalyticsSummary | null => {
+export const readCachedSummary = (
+  cacheKey: string,
+  now: number
+): AiPathRuntimeAnalyticsSummary | null => {
   const cached = summaryCache.get(cacheKey);
   if (!cached) return null;
   if (cached.expiresAt <= now) {

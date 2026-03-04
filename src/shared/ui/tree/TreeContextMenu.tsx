@@ -101,47 +101,47 @@ export function TreeContextMenu({
   const menu =
     open && mounted
       ? createPortal(
-        <div
-          ref={menuRef}
-          className='z-50 min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover/90 p-1 text-popover-foreground shadow-md backdrop-blur-md'
-          style={{ position: 'fixed', top: position.y, left: position.x }}
-          role='menu'
-        >
-          {items.map((item) => {
-            if (item.separator) {
-              return <div key={item.id} className='-mx-1 my-1 h-px bg-foreground/10' />;
-            }
-            return (
-              <button
-                key={item.id}
-                type='button'
-                onClick={() => {
-                  if (item.disabled) return;
-                  item.onSelect?.();
-                  setOpen(false);
-                }}
-                className={cn(
-                  'relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors',
-                  item.disabled
-                    ? 'pointer-events-none opacity-50'
-                    : 'hover:bg-foreground/10 focus:bg-foreground/10 focus:text-foreground',
-                  item.tone === 'danger' && 'text-red-300 hover:text-red-200'
-                )}
-                role='menuitem'
-                disabled={item.disabled}
-              >
-                {item.icon ? (
-                  <span className='mr-2 inline-flex size-4 items-center justify-center'>
-                    {item.icon}
-                  </span>
-                ) : null}
-                {item.label}
-              </button>
-            );
-          })}
-        </div>,
-        document.body
-      )
+          <div
+            ref={menuRef}
+            className='z-50 min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover/90 p-1 text-popover-foreground shadow-md backdrop-blur-md'
+            style={{ position: 'fixed', top: position.y, left: position.x }}
+            role='menu'
+          >
+            {items.map((item) => {
+              if (item.separator) {
+                return <div key={item.id} className='-mx-1 my-1 h-px bg-foreground/10' />;
+              }
+              return (
+                <button
+                  key={item.id}
+                  type='button'
+                  onClick={() => {
+                    if (item.disabled) return;
+                    item.onSelect?.();
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    'relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors',
+                    item.disabled
+                      ? 'pointer-events-none opacity-50'
+                      : 'hover:bg-foreground/10 focus:bg-foreground/10 focus:text-foreground',
+                    item.tone === 'danger' && 'text-red-300 hover:text-red-200'
+                  )}
+                  role='menuitem'
+                  disabled={item.disabled}
+                >
+                  {item.icon ? (
+                    <span className='mr-2 inline-flex size-4 items-center justify-center'>
+                      {item.icon}
+                    </span>
+                  ) : null}
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>,
+          document.body
+        )
       : null;
 
   return (

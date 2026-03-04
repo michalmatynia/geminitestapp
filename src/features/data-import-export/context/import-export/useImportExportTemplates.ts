@@ -113,13 +113,13 @@ export function useImportExportTemplates({
           mappings: cleanMappings,
           ...(isImport
             ? {
-              parameterImport: normalizeBaseImportParameterImportSettings(
-                sourceTemplate.parameterImport
-              ),
-            }
+                parameterImport: normalizeBaseImportParameterImportSettings(
+                  sourceTemplate.parameterImport
+                ),
+              }
             : {
-              exportImagesAsBase64: sourceTemplate.exportImagesAsBase64 ?? false,
-            }),
+                exportImagesAsBase64: sourceTemplate.exportImagesAsBase64 ?? false,
+              }),
         },
       })) as Template;
       applyTemplate(duplicated, isImport ? 'import' : 'export');
@@ -215,10 +215,10 @@ export function useImportExportTemplates({
           mappings: cleanedMappings,
           ...(isImport
             ? {
-              parameterImport: normalizeBaseImportParameterImportSettings(
-                importTemplateParameterImport
-              ),
-            }
+                parameterImport: normalizeBaseImportParameterImportSettings(
+                  importTemplateParameterImport
+                ),
+              }
             : { exportImagesAsBase64 }),
         },
       })) as Template;

@@ -66,7 +66,9 @@ export const readSettingsRecordsFromPayload = (payload: unknown): SettingsRecord
   return [];
 };
 
-export const resolveWorkspaceRecordFromSettingsPayload = (payload: unknown): SettingsRecordLike | null => {
+export const resolveWorkspaceRecordFromSettingsPayload = (
+  payload: unknown
+): SettingsRecordLike | null => {
   const records = readSettingsRecordsFromPayload(payload);
   return (
     records.find(
@@ -98,7 +100,11 @@ export const buildSettingRecordFetchAttempts = ({
   fresh: boolean;
 }): Array<{ scope: 'light' | 'heavy'; key: string; url: string }> => {
   const attemptScopes: Array<'light' | 'heavy'> =
-    strategy === 'heavy_only' ? ['heavy'] : strategy === 'light_only' ? ['light'] : ['light', 'heavy'];
+    strategy === 'heavy_only'
+      ? ['heavy']
+      : strategy === 'light_only'
+        ? ['light']
+        : ['light', 'heavy'];
   const attempts: Array<{ scope: 'light' | 'heavy'; key: string; url: string }> = [];
   attemptScopes.forEach((scope): void => {
     if (fresh) {
@@ -127,7 +133,11 @@ export const buildWorkspaceRecordFetchAttempts = ({
   attemptProfile: CaseResolverWorkspaceFetchAttemptProfile;
 }): Array<{ key: string; url: string; scope: 'light' | 'heavy' }> => {
   const attemptScopes: Array<'light' | 'heavy'> =
-    strategy === 'heavy_only' ? ['heavy'] : strategy === 'light_only' ? ['light'] : ['light', 'heavy'];
+    strategy === 'heavy_only'
+      ? ['heavy']
+      : strategy === 'light_only'
+        ? ['light']
+        : ['light', 'heavy'];
   if (!fresh) {
     return attemptScopes.map((scope) => ({
       key: `${scope}_cached_key`,

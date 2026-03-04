@@ -100,12 +100,9 @@ describe('apiHandler observability propagation', () => {
 
   it('generates trace id fallback and skips fast success logs by default', async () => {
     const { apiHandler, mockedLogSystemEvent } = await loadApiHandler();
-    const handler = apiHandler(
-      async () => NextResponse.json({ ok: true }, { status: 200 }),
-      {
-        source: 'fallback.trace.GET',
-      }
-    );
+    const handler = apiHandler(async () => NextResponse.json({ ok: true }, { status: 200 }), {
+      source: 'fallback.trace.GET',
+    });
 
     const response = await handler(
       new NextRequest('/api/test', {

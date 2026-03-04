@@ -339,10 +339,10 @@ export function apiHandler(
           const durationMs = context.getElapsedMs();
           const successPolicy = resolveSuccessLoggingPolicy(options);
           const slowSuccessThresholdMs =
-          options.slowSuccessThresholdMs ?? DEFAULT_SLOW_SUCCESS_THRESHOLD_MS;
+            options.slowSuccessThresholdMs ?? DEFAULT_SLOW_SUCCESS_THRESHOLD_MS;
           const shouldLogSuccess =
-          successPolicy === 'all' ||
-          (successPolicy === 'slow' && durationMs >= slowSuccessThresholdMs);
+            successPolicy === 'all' ||
+            (successPolicy === 'slow' && durationMs >= slowSuccessThresholdMs);
 
           if (shouldLogSuccess) {
             const otelContext = getActiveOtelContextAttributes();

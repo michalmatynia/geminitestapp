@@ -61,7 +61,8 @@ export const categoryMappingRepository: CategoryMappingRepository = {
     catalogId?: string
   ): Promise<CategoryMappingWithDetails[]> {
     const provider = await getAppDbProvider();
-    if (provider === 'mongodb') return mongoCategoryMappingImpl.listByConnection(connectionId, catalogId);
+    if (provider === 'mongodb')
+      return mongoCategoryMappingImpl.listByConnection(connectionId, catalogId);
     return prismaCategoryMappingImpl.listByConnection(connectionId, catalogId);
   },
 
@@ -90,7 +91,8 @@ export const categoryMappingRepository: CategoryMappingRepository = {
     mappings: { externalCategoryId: string; internalCategoryId: string | null }[]
   ): Promise<number> {
     const provider = await getAppDbProvider();
-    if (provider === 'mongodb') return mongoCategoryMappingImpl.bulkUpsert(connectionId, catalogId, mappings);
+    if (provider === 'mongodb')
+      return mongoCategoryMappingImpl.bulkUpsert(connectionId, catalogId, mappings);
     return prismaCategoryMappingImpl.bulkUpsert(connectionId, catalogId, mappings);
   },
 
@@ -101,4 +103,5 @@ export const categoryMappingRepository: CategoryMappingRepository = {
   },
 };
 
-export const getCategoryMappingRepository = (): CategoryMappingRepository => categoryMappingRepository;
+export const getCategoryMappingRepository = (): CategoryMappingRepository =>
+  categoryMappingRepository;

@@ -110,9 +110,7 @@ const toLogLevel = (stage: string): 'info' | 'warn' | 'error' => {
   return 'info';
 };
 
-const sanitizeKeyPreview = (
-  key: string
-): { keyPreview: string; keyPreviewTruncated: boolean } => {
+const sanitizeKeyPreview = (key: string): { keyPreview: string; keyPreviewTruncated: boolean } => {
   const safe = redactSensitiveText(key);
   const truncated = safe.length > MAX_KEY_PREVIEW_LENGTH;
   return {
@@ -172,11 +170,11 @@ const sanitizeContext = (
       value,
       ...(hadStringTruncation
         ? {
-          truncation: {
-            reason: 'string_value_truncation',
-            maxLength: MAX_STRING_LENGTH,
-          },
-        }
+            truncation: {
+              reason: 'string_value_truncation',
+              maxLength: MAX_STRING_LENGTH,
+            },
+          }
         : {}),
     };
   } catch {

@@ -51,26 +51,26 @@ export default function ClientErrorReporter(): null {
       device:
         typeof navigator !== 'undefined'
           ? {
-            platform: navigator.platform,
-            deviceMemory:
+              platform: navigator.platform,
+              deviceMemory:
                 (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? null,
-            hardwareConcurrency: navigator.hardwareConcurrency ?? null,
-          }
+              hardwareConcurrency: navigator.hardwareConcurrency ?? null,
+            }
           : null,
       network:
         typeof navigator !== 'undefined'
           ? {
-            online: navigator.onLine,
-            effectiveType:
+              online: navigator.onLine,
+              effectiveType:
                 (navigator as Navigator & { connection?: { effectiveType?: string } }).connection
                   ?.effectiveType ?? null,
-            downlink:
+              downlink:
                 (navigator as Navigator & { connection?: { downlink?: number } }).connection
                   ?.downlink ?? null,
-            rtt:
+              rtt:
                 (navigator as Navigator & { connection?: { rtt?: number } }).connection?.rtt ??
                 null,
-          }
+            }
           : null,
       viewport:
         typeof window !== 'undefined'
@@ -79,7 +79,7 @@ export default function ClientErrorReporter(): null {
       featureFlags:
         typeof window !== 'undefined'
           ? ((window as Window & { __FEATURE_FLAGS__?: Record<string, unknown> })
-            .__FEATURE_FLAGS__ ??
+              .__FEATURE_FLAGS__ ??
             ((): Record<string, unknown> | null => {
               try {
                 const raw = window.localStorage.getItem('featureFlags');
@@ -92,7 +92,7 @@ export default function ClientErrorReporter(): null {
       tags:
         typeof window !== 'undefined'
           ? ((window as Window & { __CLIENT_LOG_TAGS__?: Record<string, unknown> })
-            .__CLIENT_LOG_TAGS__ ??
+              .__CLIENT_LOG_TAGS__ ??
             ((): Record<string, unknown> | null => {
               try {
                 const raw = window.localStorage.getItem('clientLogTags');
@@ -104,10 +104,10 @@ export default function ClientErrorReporter(): null {
           : null,
       user: session?.user
         ? {
-          id: session.user.id ?? null,
-          email: session.user.email ?? null,
-          role: session.user.role ?? null,
-        }
+            id: session.user.id ?? null,
+            email: session.user.email ?? null,
+            role: session.user.role ?? null,
+          }
         : null,
     };
     setClientErrorBaseContext(context);

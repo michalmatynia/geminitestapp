@@ -4,10 +4,7 @@ import { X } from 'lucide-react';
 import React from 'react';
 
 import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
-import type {
-  TagRecord,
-  NoteWithRelations,
-} from '@/shared/contracts/notes';
+import type { TagRecord, NoteWithRelations } from '@/shared/contracts/notes';
 import {
   Button,
   Input,
@@ -182,16 +179,16 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
                   !filteredTags.find(
                     (t: TagRecord) => (t.name || '').toLowerCase() === tagInput.toLowerCase()
                   ) && (
-                  <Button
-                    variant='ghost'
-                    onClick={(): void => {
-                      void handleCreateTag();
-                    }}
-                    className='w-full justify-start rounded-none px-4 py-2.5 text-sm text-blue-400 hover:bg-white/5 transition-colors font-normal'
-                  >
+                    <Button
+                      variant='ghost'
+                      onClick={(): void => {
+                        void handleCreateTag();
+                      }}
+                      className='w-full justify-start rounded-none px-4 py-2.5 text-sm text-blue-400 hover:bg-white/5 transition-colors font-normal'
+                    >
                       Create &quot;{tagInput}&quot;
-                  </Button>
-                )}
+                    </Button>
+                  )}
               </div>
             </Card>
           )}
@@ -269,7 +266,9 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
                 className='absolute z-10 mt-1 w-full border bg-card shadow-lg max-h-60 overflow-hidden'
               >
                 <div className='overflow-y-auto max-h-60 divide-y divide-white/5'>
-                  {isRelatedLoading && <div className='px-4 py-2.5 text-sm text-gray-500'>Searching...</div>}
+                  {isRelatedLoading && (
+                    <div className='px-4 py-2.5 text-sm text-gray-500'>Searching...</div>
+                  )}
                   {relatedNoteResults
                     .filter((candidate: NoteWithRelations) =>
                       noteId ? candidate.id !== noteId : true
@@ -320,7 +319,9 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
                         !selectedRelatedNotes.some(
                           (selected: { id: string }) => selected.id === candidate.id
                         )
-                    ).length === 0 && <div className='px-4 py-2.5 text-sm text-gray-500'>No matches</div>}
+                    ).length === 0 && (
+                      <div className='px-4 py-2.5 text-sm text-gray-500'>No matches</div>
+                    )}
                 </div>
               </Card>
             )}

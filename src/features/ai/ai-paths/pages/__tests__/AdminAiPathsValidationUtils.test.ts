@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  LEGACY_PATH_INDEX_KEY,
-  PATH_CONFIG_PREFIX,
-  PATH_INDEX_KEY,
-} from '@/shared/lib/ai-paths/core/constants';
+import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 
 import { parseAiPathsSettings } from '../AdminAiPathsValidationUtils';
@@ -47,7 +43,7 @@ describe('AdminAiPathsValidationUtils', () => {
     expect(result.pathConfigs[config.id]?.id).toBe(config.id);
   });
 
-  it('falls back to legacy path index storage key', () => {
+  it('ignores legacy path index storage key', () => {
     const config = toCanonicalPathConfig('path_legacy_index');
     const result = parseAiPathsSettings([
       {
@@ -55,11 +51,11 @@ describe('AdminAiPathsValidationUtils', () => {
         value: JSON.stringify(config),
       },
       {
-        key: LEGACY_PATH_INDEX_KEY,
+        key: 'ai_path_index',
         value: JSON.stringify([
           {
             id: config.id,
-            name: config.name,
+            name: 'Legacy Path Name',
             createdAt: config.updatedAt,
             updatedAt: config.updatedAt,
           },
@@ -69,6 +65,7 @@ describe('AdminAiPathsValidationUtils', () => {
 
     expect(result.pathMetas).toHaveLength(1);
     expect(result.pathMetas[0]?.id).toBe(config.id);
+    expect(result.pathMetas[0]?.name).toBe(config.name);
     expect(result.pathConfigs[config.id]?.id).toBe(config.id);
   });
 

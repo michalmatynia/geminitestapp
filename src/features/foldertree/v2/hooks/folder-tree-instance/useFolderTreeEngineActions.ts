@@ -7,17 +7,8 @@ import {
 } from '@/shared/contracts/master-folder-tree';
 import { FolderTreeStore } from '../../store/createFolderTreeStore';
 import type { FolderTreeState } from '../../types';
-import {
-  canDropNodeV2,
-  moveNodeV2,
-  reorderNodeV2,
-  dropNodeToRootV2,
-} from '../../core/engine';
-import {
-  createErrorAction,
-  toActionOk,
-  createTxId,
-} from './folder-tree-utils';
+import { canDropNodeV2, moveNodeV2, reorderNodeV2, dropNodeToRootV2 } from '../../core/engine';
+import { createErrorAction, toActionOk, createTxId } from './folder-tree-utils';
 
 export type ApplyPersistedOperationArgs = {
   operation: MasterFolderTreePersistOperation;
@@ -34,7 +25,9 @@ export type ApplyPersistedOperationArgs = {
 export function useFolderTreeEngineActions(
   store: FolderTreeStore,
   profile: FolderTreeProfileV2,
-  applyPersistedOperation: (args: ApplyPersistedOperationArgs) => Promise<MasterFolderTreeActionResult>,
+  applyPersistedOperation: (
+    args: ApplyPersistedOperationArgs
+  ) => Promise<MasterFolderTreeActionResult>,
   txVersionRef: React.MutableRefObject<number>,
   instanceId?: string
 ) {
@@ -205,9 +198,9 @@ export function useFolderTreeEngineActions(
       const optimisticNodes = current.nodes.map((node) =>
         node.id === nodeId
           ? {
-            ...node,
-            name: rawName,
-          }
+              ...node,
+              name: rawName,
+            }
           : node
       );
 

@@ -49,18 +49,13 @@ describe('POST /api/ai/context/search handler', () => {
     const body = (await res.json()) as { nodes: unknown[]; total: number; registryVersion: string };
     expect(body.total).toBe(1);
     expect(body.registryVersion).toBe('codefirst:11');
-    expect(searchMock).toHaveBeenCalledWith(
-      expect.objectContaining({ query: 'home' })
-    );
+    expect(searchMock).toHaveBeenCalledWith(expect.objectContaining({ query: 'home' }));
   });
 
   it('accepts empty body and calls search with default limit', async () => {
     searchMock.mockReturnValue([]);
 
-    const res = await POST_handler(
-      makeRequest({}),
-      {} as Parameters<typeof POST_handler>[1]
-    );
+    const res = await POST_handler(makeRequest({}), {} as Parameters<typeof POST_handler>[1]);
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as { nodes: unknown[]; total: number; registryVersion: string };
@@ -99,8 +94,8 @@ describe('POST /api/ai/context/search handler', () => {
       body: 'not-json{',
     });
 
-    await expect(
-      POST_handler(req, {} as Parameters<typeof POST_handler>[1])
-    ).rejects.toThrow('Invalid JSON body.');
+    await expect(POST_handler(req, {} as Parameters<typeof POST_handler>[1])).rejects.toThrow(
+      'Invalid JSON body.'
+    );
   });
 });

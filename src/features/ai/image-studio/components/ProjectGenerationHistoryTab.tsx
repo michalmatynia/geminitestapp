@@ -229,16 +229,12 @@ const resolveExecutionSummary = (
   const record = asRecord(executionMeta);
   const operationRaw = record?.['operation'];
   const operation =
-    operationRaw === 'center_object' || operationRaw === 'generate'
-      ? (operationRaw)
-      : 'generate';
+    operationRaw === 'center_object' || operationRaw === 'generate' ? operationRaw : 'generate';
   const operationLabel = operation === 'center_object' ? 'Center object' : 'Generation';
 
   const modelUsedRaw = record?.['modelUsed'];
   const model =
-    typeof modelUsedRaw === 'string' && modelUsedRaw.trim().length > 0
-      ? modelUsedRaw.trim()
-      : null;
+    typeof modelUsedRaw === 'string' && modelUsedRaw.trim().length > 0 ? modelUsedRaw.trim() : null;
 
   const generationCosts = asRecord(record?.['generationCosts']);
   let costPerOutputUsd: number | null = null;
@@ -329,9 +325,18 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
       typeof value === 'number' && Number.isFinite(value) ? Math.max(0, value) : fallback;
     // When filters are applied, show the count of filtered runs on the current page.
     return filteredRuns.length > 0 || (statusFilter === 'all' && !searchTerm && !showSlowOnly)
-      ? (statusFilter === 'all' && !searchTerm && !showSlowOnly ? baseTotal : filteredRuns.length)
+      ? statusFilter === 'all' && !searchTerm && !showSlowOnly
+        ? baseTotal
+        : filteredRuns.length
       : baseTotal;
-  }, [runs.length, runsQuery.data?.total, filteredRuns.length, statusFilter, searchTerm, showSlowOnly]);
+  }, [
+    runs.length,
+    runsQuery.data?.total,
+    filteredRuns.length,
+    statusFilter,
+    searchTerm,
+    showSlowOnly,
+  ]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const pageStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const pageEnd = Math.min(total, page * PAGE_SIZE);
@@ -411,7 +416,10 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
                 checked={showSlowOnly}
                 onCheckedChange={(checked) => setShowSlowOnly(Boolean(checked))}
               />
-              <label htmlFor='show-slow' className='text-[11px] text-muted-foreground cursor-pointer'>
+              <label
+                htmlFor='show-slow'
+                className='text-[11px] text-muted-foreground cursor-pointer'
+              >
                 Slow only
               </label>
             </div>
@@ -646,11 +654,7 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
                               variant='outline'
                               className='h-6 px-2 text-[11px]'
                             >
-                              <a
-                                href={output.filepath}
-                                target='_blank'
-                                rel='noopener noreferrer'
-                              >
+                              <a href={output.filepath} target='_blank' rel='noopener noreferrer'>
                                 Open
                               </a>
                             </Button>

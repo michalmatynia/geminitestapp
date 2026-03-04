@@ -1,10 +1,3 @@
- 
- 
- 
- 
- 
- 
-
 import { buildPromptExploderBindings } from './parser-bindings';
 import { collectReferencedParamsFromItems, parseListLines } from './parser-list-items';
 import {
@@ -14,14 +7,8 @@ import {
 } from './parser-runtime-patterns';
 import { renderPromptExploderSegment } from './parser-segment-factory';
 import { inferTypeFromLearnedTemplates } from './parser-type-inference';
-import {
-  parseSegmentsLoop,
-  parseSegmentsRuleDriven,
-} from './utils/parser-loops';
-import {
-  normalizePromptSource,
-  trimTrailingBlankLines,
-} from './utils/parser-utils';
+import { parseSegmentsLoop, parseSegmentsRuleDriven } from './utils/parser-loops';
+import { normalizePromptSource, trimTrailingBlankLines } from './utils/parser-utils';
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import type {
   PromptExploderLearnedTemplate,
@@ -141,7 +128,9 @@ const mergeCaseResolverLabeledPartySegments = (
       title: '',
       raw: `${currentRaw}\n${nextRaw}`.trim(),
       text: `${currentRaw}\n${nextRaw}`.trim(),
-      matchedPatternIds: [...new Set([...(current.matchedPatternIds ?? []), ...next.matchedPatternIds])],
+      matchedPatternIds: [
+        ...new Set([...(current.matchedPatternIds ?? []), ...next.matchedPatternIds]),
+      ],
       matchedPatternLabels: [
         ...new Set([...(current.matchedPatternLabels ?? []), ...(next.matchedPatternLabels ?? [])]),
       ],
@@ -235,19 +224,19 @@ const applyLearnedTemplateTypes = (
     }
     const nextPatternLabels = inferred.matchedTemplateId
       ? [
-        ...new Set([
-          ...(segment.matchedPatternLabels ?? []),
-          `Learned Template: ${inferred.type.replaceAll('_', ' ')}`,
-        ]),
-      ]
+          ...new Set([
+            ...(segment.matchedPatternLabels ?? []),
+            `Learned Template: ${inferred.type.replaceAll('_', ' ')}`,
+          ]),
+        ]
       : (segment.matchedPatternLabels ?? []);
     const nextPatternIds = inferred.matchedTemplateId
       ? [
-        ...new Set([
-          ...segment.matchedPatternIds,
-          `segment.learned.${inferred.type}.${inferred.matchedTemplateId}`,
-        ]),
-      ]
+          ...new Set([
+            ...segment.matchedPatternIds,
+            `segment.learned.${inferred.type}.${inferred.matchedTemplateId}`,
+          ]),
+        ]
       : segment.matchedPatternIds;
     return {
       ...segment,

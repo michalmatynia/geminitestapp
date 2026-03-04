@@ -9,11 +9,7 @@ import type {
 } from '@/shared/contracts/ai-paths';
 import { pathConfigSchema } from '@/shared/contracts/ai-paths';
 import { validationError } from '@/shared/errors/app-error';
-import {
-  LEGACY_PATH_INDEX_KEY,
-  PATH_CONFIG_PREFIX,
-  PATH_INDEX_KEY,
-} from '@/shared/lib/ai-paths/core/constants';
+import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
 
 export type SettingsRecord = { key: string; value: string };
@@ -210,9 +206,7 @@ export const parseAiPathsSettings = (records: SettingsRecord[]): ParsedAiPathsSe
     parsedConfigById.set(pathId, config);
   });
 
-  const indexMetas = parsePathIndex(
-    settingsMap.get(PATH_INDEX_KEY) ?? settingsMap.get(LEGACY_PATH_INDEX_KEY)
-  );
+  const indexMetas = parsePathIndex(settingsMap.get(PATH_INDEX_KEY));
   const metasFromIndex: PathMeta[] = indexMetas
     .filter((meta: PathMeta): boolean => parsedConfigById.has(meta.id))
     .map((meta: PathMeta): PathMeta => {

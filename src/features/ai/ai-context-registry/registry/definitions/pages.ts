@@ -1,7 +1,6 @@
 import type { ContextNode } from '@/shared/contracts/ai-context-registry';
 
-const SOURCE_REF =
-  'src/features/ai/ai-context-registry/registry/definitions/pages.ts';
+const SOURCE_REF = 'src/features/ai/ai-context-registry/registry/definitions/pages.ts';
 
 export const pageNodes: ContextNode[] = [
   {

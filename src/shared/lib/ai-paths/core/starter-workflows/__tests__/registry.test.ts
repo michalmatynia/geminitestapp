@@ -6,7 +6,10 @@ import {
   materializeStarterWorkflowPathConfig,
   upgradeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
-import { buildPathConfigFromTemplate, PATH_TEMPLATES } from '@/shared/lib/ai-paths/core/utils/path-templates';
+import {
+  buildPathConfigFromTemplate,
+  PATH_TEMPLATES,
+} from '@/shared/lib/ai-paths/core/utils/path-templates';
 
 const buildLegacyTranslationPathConfig = (args?: {
   includeParamsRegex?: boolean;
@@ -112,7 +115,9 @@ const buildLegacyTranslationPathConfig = (args?: {
 
 describe('starter workflow registry', () => {
   it('materializes template configs from the shared registry', () => {
-    const template = PATH_TEMPLATES.find((entry) => entry.templateId === 'starter_parameter_inference');
+    const template = PATH_TEMPLATES.find(
+      (entry) => entry.templateId === 'starter_parameter_inference'
+    );
     if (!template) throw new Error('Missing starter_parameter_inference template');
 
     const config = buildPathConfigFromTemplate('path_created_from_template', template);
@@ -159,19 +164,17 @@ describe('starter workflow registry', () => {
       includeParamsRegex: true,
       paramsEdgeToPort: 'value',
     });
-    const upgraded = upgradeStarterWorkflowPathConfig(
-      ({
-        ...legacy,
-        extensions: {
-          aiPathsStarter: {
-            starterKey: 'translation_en_pl',
-            templateId: 'starter_translation_en_pl',
-            templateVersion: 1,
-            seededDefault: false,
-          },
+    const upgraded = upgradeStarterWorkflowPathConfig({
+      ...legacy,
+      extensions: {
+        aiPathsStarter: {
+          starterKey: 'translation_en_pl',
+          templateId: 'starter_translation_en_pl',
+          templateVersion: 1,
+          seededDefault: false,
         },
-      }) as PathConfig
-    );
+      },
+    } as PathConfig);
 
     expect(upgraded.changed).toBe(false);
     expect(upgraded.resolution?.matchedBy).toBe('provenance');

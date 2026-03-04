@@ -1,11 +1,6 @@
 import { type QueryKey } from '@tanstack/react-query';
-import {
-  emitTanstackTelemetry,
-} from '@/shared/lib/observability/tanstack-telemetry';
-import {
-  TanstackFactoryMeta,
-  TanstackLifecycleStage,
-} from '../tanstack-factory-v2.types';
+import { emitTanstackTelemetry } from '@/shared/lib/observability/tanstack-telemetry';
+import { TanstackFactoryMeta, TanstackLifecycleStage } from '../tanstack-factory-v2.types';
 
 type EmitFactoryTelemetryInput = {
   entity: 'query' | 'mutation' | 'query-batch';
@@ -44,9 +39,9 @@ export const withQueryKeyMeta = <TQueryKey extends QueryKey>(
   meta: TanstackFactoryMeta,
   queryKey: TQueryKey
 ): TanstackFactoryMeta => ({
-    ...meta,
-    queryKey,
-  });
+  ...meta,
+  queryKey,
+});
 
 export const withMutationKeyMeta = (
   meta: TanstackFactoryMeta,

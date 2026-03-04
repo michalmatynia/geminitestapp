@@ -1,30 +1,27 @@
 import { chromium, devices, type BrowserContextOptions, type Page } from 'playwright';
-import { 
-  IntegrationConnectionRecord, 
-  ProductListing 
-} from '@/shared/contracts/integrations';
+import { IntegrationConnectionRecord, ProductListing } from '@/shared/contracts/integrations';
 import { TraderaSystemSettings } from '@/features/integrations/constants/tradera';
 import { decryptSecret } from '@/features/integrations/server';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
-import { 
-  LOGIN_SUCCESS_SELECTOR, 
-  LOGIN_FORM_SELECTOR, 
-  USERNAME_SELECTORS, 
-  PASSWORD_SELECTORS, 
+import {
+  LOGIN_SUCCESS_SELECTOR,
+  LOGIN_FORM_SELECTOR,
+  USERNAME_SELECTORS,
+  PASSWORD_SELECTORS,
   LOGIN_BUTTON_SELECTORS,
   TITLE_SELECTORS,
   DESCRIPTION_SELECTORS,
   PRICE_SELECTORS,
-  SUBMIT_SELECTORS
+  SUBMIT_SELECTORS,
 } from './config';
-import { 
-  findVisibleLocator, 
-  extractExternalListingId, 
-  captureTraderaListingDebugArtifacts 
+import {
+  findVisibleLocator,
+  extractExternalListingId,
+  captureTraderaListingDebugArtifacts,
 } from './utils';
-import { 
-  parsePersistedStorageState, 
-  resolveConnectionPlaywrightSettings 
+import {
+  parsePersistedStorageState,
+  resolveConnectionPlaywrightSettings,
 } from '@/features/integrations/services/tradera-playwright-settings';
 import { getProductRepository } from '@/features/products/server';
 
@@ -114,16 +111,16 @@ export const runTraderaBrowserListing = async ({
     slowMo: playwrightSettings.slowMo,
     ...(playwrightSettings.proxyEnabled && playwrightSettings.proxyServer
       ? {
-        proxy: {
-          server: playwrightSettings.proxyServer,
-          ...(playwrightSettings.proxyUsername
-            ? { username: playwrightSettings.proxyUsername }
-            : {}),
-          ...(playwrightSettings.proxyPassword
-            ? { password: playwrightSettings.proxyPassword }
-            : {}),
-        },
-      }
+          proxy: {
+            server: playwrightSettings.proxyServer,
+            ...(playwrightSettings.proxyUsername
+              ? { username: playwrightSettings.proxyUsername }
+              : {}),
+            ...(playwrightSettings.proxyPassword
+              ? { password: playwrightSettings.proxyPassword }
+              : {}),
+          },
+        }
       : {}),
   });
 

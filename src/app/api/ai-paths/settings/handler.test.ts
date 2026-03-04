@@ -1,13 +1,17 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { listAiPathsSettingsMock, upsertAiPathsSettingMock, upsertAiPathsSettingsBulkMock, deleteAiPathsSettingsMock } =
-  vi.hoisted(() => ({
-    listAiPathsSettingsMock: vi.fn(),
-    upsertAiPathsSettingMock: vi.fn(),
-    upsertAiPathsSettingsBulkMock: vi.fn(),
-    deleteAiPathsSettingsMock: vi.fn(),
-  }));
+const {
+  listAiPathsSettingsMock,
+  upsertAiPathsSettingMock,
+  upsertAiPathsSettingsBulkMock,
+  deleteAiPathsSettingsMock,
+} = vi.hoisted(() => ({
+  listAiPathsSettingsMock: vi.fn(),
+  upsertAiPathsSettingMock: vi.fn(),
+  upsertAiPathsSettingsBulkMock: vi.fn(),
+  deleteAiPathsSettingsMock: vi.fn(),
+}));
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
   listAiPathsSettings: listAiPathsSettingsMock,
@@ -29,7 +33,9 @@ describe('ai-paths settings handler', () => {
   it('returns full settings list when no keys are requested', async () => {
     listAiPathsSettingsMock.mockResolvedValue([{ key: 'ai_paths_index', value: '[]' }]);
     const response = await GET_handler(
-      new NextRequest('http://localhost/api/ai-paths/settings') as Parameters<typeof GET_handler>[0],
+      new NextRequest('http://localhost/api/ai-paths/settings') as Parameters<
+        typeof GET_handler
+      >[0],
       {} as Parameters<typeof GET_handler>[1]
     );
 
@@ -48,10 +54,7 @@ describe('ai-paths settings handler', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(listAiPathsSettingsMock).toHaveBeenCalledWith([
-      'ai_paths_index',
-      'ai_paths_ui_state',
-    ]);
+    expect(listAiPathsSettingsMock).toHaveBeenCalledWith(['ai_paths_index', 'ai_paths_ui_state']);
     await expect(response.json()).resolves.toEqual([{ key: 'ai_paths_index', value: '[]' }]);
   });
 

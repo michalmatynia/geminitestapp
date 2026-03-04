@@ -1,6 +1,4 @@
-import {
-  type CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import { type CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
 const CASE_RESOLVER_WORKSPACE_NAVIGATION_CACHE_KEY = '__caseResolverWorkspaceNavigationCache';
 const CASE_RESOLVER_WORKSPACE_NAVIGATION_CACHE_TTL_MS = 2 * 60 * 1000;

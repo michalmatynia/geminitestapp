@@ -25,9 +25,7 @@ const toCategoryRecord = (doc: CategoryDocument): CategoryRecord => ({
   sortIndex: doc.sortIndex ?? null,
   createdAt: typeof doc.createdAt === 'string' ? doc.createdAt : doc.createdAt.toISOString(),
   updatedAt:
-    typeof doc.updatedAt === 'string'
-      ? doc.updatedAt
-      : doc.updatedAt?.toISOString() ?? null,
+    typeof doc.updatedAt === 'string' ? doc.updatedAt : (doc.updatedAt?.toISOString() ?? null),
 });
 
 const buildCategoryTree = (categories: CategoryRecord[]): CategoryWithChildren[] => {
@@ -127,10 +125,12 @@ export const mongoCategoryImpl: MongoCategoryImpl = {
     if (!result) throw notFoundError('Category not found');
 
     const category = toCategoryRecord(result);
-    await db.collection<NoteDocument>(noteCollectionName).updateMany(
-      { 'categories.categoryId': category.id } as Filter<NoteDocument>,
-      { $set: { 'categories.$.category': category } } as UpdateFilter<NoteDocument>
-    );
+    await db
+      .collection<NoteDocument>(noteCollectionName)
+      .updateMany(
+        { 'categories.categoryId': category.id } as Filter<NoteDocument>,
+        { $set: { 'categories.$.category': category } } as UpdateFilter<NoteDocument>
+      );
 
     return category;
   },
@@ -150,9 +150,11 @@ export const mongoCategoryImpl: MongoCategoryImpl = {
     );
 
     // Remove from notes
-    await db.collection<NoteDocument>(noteCollectionName).updateMany(
-      {} as Filter<NoteDocument>,
-      { $pull: { categories: { categoryId: id } } } as UpdateFilter<NoteDocument>
-    );
+    await db
+      .collection<NoteDocument>(noteCollectionName)
+      .updateMany(
+        {} as Filter<NoteDocument>,
+        { $pull: { categories: { categoryId: id } } } as UpdateFilter<NoteDocument>
+      );
   },
 };

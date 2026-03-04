@@ -357,8 +357,20 @@ describe('cross-profile nesting rules', () => {
       it('allows relation files inside relation folders', () => {
         const nodes: MasterTreeNode[] = [
           node({ id: 'case-1', type: 'folder', kind: 'relation_case', name: 'SIG/1' }),
-          node({ id: 'folder-1', type: 'folder', kind: 'relation_folder', name: 'Inbound', parentId: 'case-1' }),
-          node({ id: 'file-1', type: 'file', kind: 'relation_file', name: 'Doc 1', parentId: 'case-1' }),
+          node({
+            id: 'folder-1',
+            type: 'folder',
+            kind: 'relation_folder',
+            name: 'Inbound',
+            parentId: 'case-1',
+          }),
+          node({
+            id: 'file-1',
+            type: 'file',
+            kind: 'relation_file',
+            name: 'Doc 1',
+            parentId: 'case-1',
+          }),
         ];
         const result = canDropMasterTreeNode({
           nodes,
@@ -373,7 +385,13 @@ describe('cross-profile nesting rules', () => {
       it('blocks relation files from dropping to root', () => {
         const nodes: MasterTreeNode[] = [
           node({ id: 'case-1', type: 'folder', kind: 'relation_case', name: 'SIG/1' }),
-          node({ id: 'file-1', type: 'file', kind: 'relation_file', name: 'Doc 1', parentId: 'case-1' }),
+          node({
+            id: 'file-1',
+            type: 'file',
+            kind: 'relation_file',
+            name: 'Doc 1',
+            parentId: 'case-1',
+          }),
         ];
         const result = canDropMasterTreeNode({
           nodes,

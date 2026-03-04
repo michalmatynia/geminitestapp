@@ -28,14 +28,18 @@ describe('useFolderTreeInstanceV2 external sync replace', () => {
         useFolderTreeInstanceV2({
           initialNodes,
           adapter: {
-            prepare: vi.fn(async (tx: FolderTreeTransaction): Promise<FolderTreePreparedTransaction> => ({
-              tx,
-              preparedAt: Date.now(),
-            })),
-            apply: vi.fn(async (tx: FolderTreeTransaction): Promise<FolderTreeAppliedTransaction> => ({
-              tx,
-              appliedAt: Date.now(),
-            })),
+            prepare: vi.fn(
+              async (tx: FolderTreeTransaction): Promise<FolderTreePreparedTransaction> => ({
+                tx,
+                preparedAt: Date.now(),
+              })
+            ),
+            apply: vi.fn(
+              async (tx: FolderTreeTransaction): Promise<FolderTreeAppliedTransaction> => ({
+                tx,
+                appliedAt: Date.now(),
+              })
+            ),
             commit: vi.fn(async () => undefined),
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } as any,

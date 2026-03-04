@@ -15,10 +15,7 @@ import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2
 import { Button, Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import {
-  readPromptExploderTreeMetadata,
-  type PromptExploderTreeNodeKind,
-} from '../../tree/types';
+import { readPromptExploderTreeMetadata, type PromptExploderTreeNodeKind } from '../../tree/types';
 import { usePromptExploderTreeNodeRuntimeContext } from './PromptExploderTreeNodeRuntimeContext';
 
 type PromptExploderTreeNodeProps = FolderTreeViewportRenderNodeInput;
@@ -68,7 +65,7 @@ export function PromptExploderTreeNode({
 
   const badgeLabel =
     metadata?.kind === 'segment'
-      ? metadata.segmentType?.replaceAll('_', ' ') ?? 'segment'
+      ? (metadata.segmentType?.replaceAll('_', ' ') ?? 'segment')
       : metadata?.kind === 'subsection'
         ? metadata.code?.trim() || 'subsection'
         : metadata?.kind === 'subsection_item'

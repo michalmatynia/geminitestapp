@@ -7,7 +7,10 @@ import type {
   IntegrationWithConnections,
   IntegrationConnectionBasic,
 } from '@/shared/contracts/integrations';
-import type { BaseInventory, IntegrationTemplate as Template } from '@/shared/contracts/integrations';
+import type {
+  BaseInventory,
+  IntegrationTemplate as Template,
+} from '@/shared/contracts/integrations';
 import { internalError } from '@/shared/errors/app-error';
 
 import { useBaseComSettings } from '../components/listings/hooks/useBaseComSettings';

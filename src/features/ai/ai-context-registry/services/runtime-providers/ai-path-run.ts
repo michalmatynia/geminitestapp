@@ -45,7 +45,10 @@ const truncate = (value: string, maxLength: number): string => {
   return `${value.slice(0, maxLength - 3)}...`;
 };
 
-const readTrimmedString = (value: unknown, maxLength: number = MAX_SAMPLE_LENGTH): string | null => {
+const readTrimmedString = (
+  value: unknown,
+  maxLength: number = MAX_SAMPLE_LENGTH
+): string | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   if (!trimmed) return null;
@@ -137,7 +140,8 @@ const buildSummaryFacts = (
     failedNodes: nodes.filter((node) => FAILED_NODE_STATUSES.has(node.status)).length,
     warningNodes: nodes.filter((node) => WARNING_NODE_STATUSES.has(node.status)).length,
     totalEvents: events.length,
-    errorEvents: events.filter((event) => event.level === 'error' || event.level === 'fatal').length,
+    errorEvents: events.filter((event) => event.level === 'error' || event.level === 'fatal')
+      .length,
     warnEvents: events.filter((event) => event.level === 'warn').length,
   };
 };
@@ -260,8 +264,8 @@ const buildAiPathRunRuntimeSummary = (
     entityType && entityId ? `on ${entityType} ${entityId}` : null,
     failedNodes || errorEvents
       ? `with ${failedNodes} failed node${failedNodes === 1 ? '' : 's'} and ${errorEvents} error event${
-        errorEvents === 1 ? '' : 's'
-      }`
+          errorEvents === 1 ? '' : 's'
+        }`
       : null,
   ].filter((part): part is string => Boolean(part));
 
@@ -326,12 +330,14 @@ export const buildAiPathRunRuntimeDocument = async (
     title: readTrimmedString(run.pathName, 160) ?? `AI Path Run ${run.id}`,
     summary: buildAiPathRunRuntimeSummary(run, facts),
     status: run.status,
-    tags: ([
+    tags: [
       'ai-paths',
       'runtime',
       readTrimmedString(run.status, 60),
       readTrimmedString(run.entityType, 60),
-    ].filter((tag): tag is string => typeof tag === 'string')).slice(0, 6),
+    ]
+      .filter((tag): tag is string => typeof tag === 'string')
+      .slice(0, 6),
     relatedNodeIds: [...AI_PATH_RUN_CONTEXT_ROOT_IDS],
     timestamps: {
       createdAt: run.createdAt || '',

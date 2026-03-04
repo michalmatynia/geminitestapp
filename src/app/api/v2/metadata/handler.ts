@@ -11,7 +11,10 @@ import { badRequestError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { type CountryCode } from '@prisma/client';
-import type { MongoCountryDoc, MongoLanguageDoc } from '@/shared/lib/db/services/database-sync-types';
+import type {
+  MongoCountryDoc,
+  MongoLanguageDoc,
+} from '@/shared/lib/db/services/database-sync-types';
 
 const unwrapPayload = (value: unknown): Record<string, unknown> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
@@ -84,7 +87,13 @@ const mapMongoLanguage = (
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
-  countries: Array<{ id: string; code: string; name: string; isActive: boolean; countryId: string }>;
+  countries: Array<{
+    id: string;
+    code: string;
+    name: string;
+    isActive: boolean;
+    countryId: string;
+  }>;
 } => {
   const id = String(doc.id ?? doc.code ?? '');
   const code = String(doc.code ?? doc.id ?? '').toUpperCase();
@@ -131,14 +140,14 @@ export async function GET_intl_handler(
   if (type === 'currencies') {
     const repo = await getCurrencyRepository(provider);
     let currencies = await repo.listCurrencies();
-    
+
     if (currencies.length === 0 && provider === 'prisma') {
       await prisma.$transaction(async (tx) => {
         await ensureInternationalizationDefaults(tx);
       });
       currencies = await repo.listCurrencies();
     }
-    
+
     return NextResponse.json(currencies);
   }
 
@@ -174,11 +183,7 @@ export async function GET_intl_handler(
       const mongo = await getMongoDb();
       const [countryDocs, languageDocs] = (await Promise.all([
         mongo.collection<MongoCountryDoc>('countries').find({}).toArray(),
-        mongo
-          .collection<MongoLanguageDoc>('languages')
-          .find({})
-          .sort({ code: 1 })
-          .toArray(),
+        mongo.collection<MongoLanguageDoc>('languages').find({}).sort({ code: 1 }).toArray(),
       ])) as [MongoCountryDoc[], MongoLanguageDoc[]];
       const countriesById = new Map(
         countryDocs.map((country: MongoCountryDoc) => {
@@ -276,8 +281,8 @@ export async function POST_intl_handler(
         currencies:
           currencyIds.length > 0
             ? {
-              create: currencyIds.map((currencyId: string) => ({ currencyId })),
-            }
+                create: currencyIds.map((currencyId: string) => ({ currencyId })),
+              }
             : undefined,
       },
       include: { currencies: true },
@@ -330,8 +335,8 @@ export async function POST_intl_handler(
         countries:
           countryIds.length > 0
             ? {
-              create: countryIds.map((countryId: string) => ({ countryId })),
-            }
+                create: countryIds.map((countryId: string) => ({ countryId })),
+              }
             : undefined,
       },
       include: { countries: { include: { country: true } } },

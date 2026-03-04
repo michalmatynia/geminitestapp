@@ -3,8 +3,7 @@ import 'server-only';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
- 
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 /**
@@ -35,21 +34,16 @@ import {
   toTruthyBoolean,
 } from '@/features/integrations/services/tradera-system-settings';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import type {
-  TraderaListingJobInput,
-} from '@/shared/contracts/integrations';
+import type { TraderaListingJobInput } from '@/shared/contracts/integrations';
 export type { TraderaListingJobInput };
 
-import { 
-  classifyTraderaFailure, 
-  toUserFacingTraderaFailure, 
-  resolveExpiry, 
-  resolveNextRelistAt 
+import {
+  classifyTraderaFailure,
+  toUserFacingTraderaFailure,
+  resolveExpiry,
+  resolveNextRelistAt,
 } from './tradera-listing/utils';
-import { 
-  resolveEffectiveListingSettings, 
-  buildRelistPolicy 
-} from './tradera-listing/settings';
+import { resolveEffectiveListingSettings, buildRelistPolicy } from './tradera-listing/settings';
 import { runTraderaBrowserListing } from './tradera-listing/browser';
 import { runTraderaApiListing } from './tradera-listing/api';
 

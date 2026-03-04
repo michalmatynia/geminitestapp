@@ -11,10 +11,7 @@ import {
   FOLDER_TREE_PROFILE_V2_KEY_PREFIX,
 } from '@/shared/contracts/master-folder-tree';
 
-export {
-  FOLDER_TREE_UI_STATE_V2_KEY_PREFIX,
-  FOLDER_TREE_PROFILE_V2_KEY_PREFIX,
-};
+export { FOLDER_TREE_UI_STATE_V2_KEY_PREFIX, FOLDER_TREE_PROFILE_V2_KEY_PREFIX };
 
 export const getFolderTreeUiStateV2Key = (instance: FolderTreeInstance): string =>
   `${FOLDER_TREE_UI_STATE_V2_KEY_PREFIX}${instance}`;
@@ -67,12 +64,12 @@ export const parseFolderTreeUiStateV2Entry = (
   }
   const expandedNodeIds = Array.isArray(rawExpandedNodeIds)
     ? Array.from(
-      new Set(
-        rawExpandedNodeIds
-          .map((value: unknown): string => (typeof value === 'string' ? value.trim() : ''))
-          .filter(Boolean)
+        new Set(
+          rawExpandedNodeIds
+            .map((value: unknown): string => (typeof value === 'string' ? value.trim() : ''))
+            .filter(Boolean)
+        )
       )
-    )
     : [];
   const panelCollapsed = record['panelCollapsed'];
   if (panelCollapsed !== undefined && typeof panelCollapsed !== 'boolean') {

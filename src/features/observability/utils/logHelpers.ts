@@ -1,14 +1,12 @@
-import { 
-  SystemLogRecordDto as SystemLogRecord 
-} from '@/shared/contracts/observability';
+import { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 import { type StatusVariant } from '@/shared/ui';
-import { 
-  type ContextRegistryDisplay, 
-  type ContextDocumentDisplay, 
+import {
+  type ContextRegistryDisplay,
+  type ContextDocumentDisplay,
   type ContextDocumentSectionDisplay,
-  type ContextRegistryNodeDisplay, 
-  type AlertEvidenceDisplay, 
-  type AlertEvidenceSampleDisplay 
+  type ContextRegistryNodeDisplay,
+  type AlertEvidenceDisplay,
+  type AlertEvidenceSampleDisplay,
 } from '../types';
 
 export const readContextString = (log: SystemLogRecord, key: string): string | null => {
@@ -17,7 +15,9 @@ export const readContextString = (log: SystemLogRecord, key: string): string | n
 };
 
 export const asRecord = (value: unknown): Record<string, unknown> | null =>
-  value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
 
 export const readRecordString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
@@ -33,7 +33,9 @@ export const toDisplayValue = (value: unknown): string | null => {
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
   if (typeof value === 'boolean') return value ? 'true' : 'false';
   if (Array.isArray(value)) {
-    const formatted = value.map((item) => toDisplayValue(item)).filter((item): item is string => Boolean(item));
+    const formatted = value
+      .map((item) => toDisplayValue(item))
+      .filter((item): item is string => Boolean(item));
     return formatted.length > 0 ? formatted.join(', ') : null;
   }
   if (value && typeof value === 'object') {
@@ -74,17 +76,17 @@ export const readContextDocument = (value: unknown): ContextDocumentDisplay | nu
     status: readRecordString(record?.['status']),
     tags: Array.isArray(record?.['tags'])
       ? record['tags']
-        .map((tag) => readRecordString(tag))
-        .filter((tag): tag is string => Boolean(tag))
-        .slice(0, 6)
+          .map((tag) => readRecordString(tag))
+          .filter((tag): tag is string => Boolean(tag))
+          .slice(0, 6)
       : [],
     facts: factsRecord
       ? Object.entries(factsRecord)
-        .map(([key, rawValue]) => {
-          const val = toDisplayValue(rawValue);
-          return val ? { label: key, value: val } : null;
-        })
-        .filter((entry): entry is { label: string; value: string } => Boolean(entry))
+          .map(([key, rawValue]) => {
+            const val = toDisplayValue(rawValue);
+            return val ? { label: key, value: val } : null;
+          })
+          .filter((entry): entry is { label: string; value: string } => Boolean(entry))
       : [],
     sections: sections
       .map((section): ContextDocumentSectionDisplay | null => {
@@ -178,7 +180,9 @@ export const readAlertEvidence = (log: SystemLogRecord): AlertEvidenceDisplay | 
   const alertEvidence = asRecord(context?.['alertEvidence']);
   if (!alertEvidence) return null;
 
-  const samples = Array.isArray(alertEvidence['samples']) ? (alertEvidence['samples'] as unknown[]) : [];
+  const samples = Array.isArray(alertEvidence['samples'])
+    ? (alertEvidence['samples'] as unknown[])
+    : [];
 
   return {
     matchedCount: readRecordNumber(alertEvidence['matchedCount']),

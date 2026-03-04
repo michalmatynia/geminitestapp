@@ -14,11 +14,13 @@ const createListItemId = (): string =>
 const cloneLogicalConditions = (conditions: PromptExploderListItem['logicalConditions']) =>
   Array.isArray(conditions)
     ? conditions.map((condition) => ({
-      ...condition,
-    }))
+        ...condition,
+      }))
     : [];
 
-const buildFallbackItemMap = (subsections: PromptExploderSubsection[]): Map<string, PromptExploderListItem> => {
+const buildFallbackItemMap = (
+  subsections: PromptExploderSubsection[]
+): Map<string, PromptExploderListItem> => {
   const byId = new Map<string, PromptExploderListItem>();
   const walk = (items: PromptExploderListItem[]): void => {
     items.forEach((item) => {

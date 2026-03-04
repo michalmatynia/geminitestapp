@@ -21,4 +21,3 @@ export const handleSubgraphNode: NodeHandler = ({
     subgraphConfig: config ?? null,
   };
 };
-

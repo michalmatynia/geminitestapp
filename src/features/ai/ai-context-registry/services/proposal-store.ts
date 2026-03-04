@@ -11,9 +11,7 @@ const proposals = new Map<string, ContextProposal>();
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
-export function saveProposal(
-  data: Omit<ContextProposal, 'id' | 'createdAt'>
-): ContextProposal {
+export function saveProposal(data: Omit<ContextProposal, 'id' | 'createdAt'>): ContextProposal {
   const proposal: ContextProposal = {
     ...data,
     id: randomUUID(),

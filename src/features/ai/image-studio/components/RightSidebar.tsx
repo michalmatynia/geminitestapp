@@ -28,9 +28,7 @@ import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState } from '../context/UiContext';
 import { supportsImageSequenceGeneration } from '@/features/ai/image-studio/utils/image-models';
 import { buildRunRequestPreview } from '@/features/ai/image-studio/utils/run-request-preview';
-import {
-  resolveImageStudioSequenceActiveSteps,
-} from '@/features/ai/image-studio/utils/studio-settings';
+import { resolveImageStudioSequenceActiveSteps } from '@/features/ai/image-studio/utils/studio-settings';
 import {
   formatCanvasSizeLabel,
   CANVAS_SIZE_PRESET_OPTIONS,
@@ -135,7 +133,7 @@ export function RightSidebar(): React.JSX.Element {
       paramsState
         ? (
             flattenParams(paramsState) as Array<{ path: string; value: unknown; kind: string }>
-        ).filter((leaf) => Boolean(leaf.path))
+          ).filter((leaf) => Boolean(leaf.path))
         : [],
     [paramsState]
   );
@@ -212,9 +210,9 @@ export function RightSidebar(): React.JSX.Element {
       return CANVAS_SIZE_PRESET_OPTIONS.map((option) =>
         option.value === currentCanvasSizeValue
           ? {
-            ...option,
-            label: `${option.label} (Current)`,
-          }
+              ...option,
+              label: `${option.label} (Current)`,
+            }
           : option
       );
     }

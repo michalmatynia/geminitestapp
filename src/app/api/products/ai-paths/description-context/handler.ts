@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getCategoryRepository, getParameterRepository } from '@/features/products/server';
-import type {
-  ProductCategory,
-  ProductParameter,
-} from '@/shared/contracts/products';
+import type { ProductCategory, ProductParameter } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import type { DescriptionContextQuery } from '@/shared/validations/product-metadata-api-schemas';
 
@@ -120,10 +117,10 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
     parameterRepository.listParameters({ catalogId }),
     shouldFetchCategories
       ? (async (): Promise<DescriptionContextCategory[]> => {
-        const categoryRepository = await getCategoryRepository();
-        const categoryList = await categoryRepository.listCategories({ catalogId });
-        return categoryList.map(toDescriptionContextCategory);
-      })()
+          const categoryRepository = await getCategoryRepository();
+          const categoryList = await categoryRepository.listCategories({ catalogId });
+          return categoryList.map(toDescriptionContextCategory);
+        })()
       : Promise.resolve<DescriptionContextCategory[]>([]),
   ]);
 

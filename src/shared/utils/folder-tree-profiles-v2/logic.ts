@@ -1,7 +1,5 @@
 import { validationError } from '@/shared/errors/app-error';
-import {
-  normalizeMasterTreeKind,
-} from '../master-folder-tree-contract';
+import { normalizeMasterTreeKind } from '../master-folder-tree-contract';
 import {
   FolderTreeProfileV2,
   FolderTreeKeyboardConfig,
@@ -15,9 +13,7 @@ import {
   FolderTreeIconSlot,
   CanNestTreeNodeV2Input,
 } from './types';
-import {
-  folderTreeInstanceValues,
-} from './types';
+import { folderTreeInstanceValues } from './types';
 import { profileV2Schema } from './schema';
 
 export type ResolvedFolderTreeKeyboardConfig = FolderTreeKeyboardConfig;
@@ -122,7 +118,10 @@ export function getFolderTreePlaceholderClasses(
   };
 }
 
-export const normalizeKindList = (values: string[] | null | undefined, fallback: string[]): string[] => {
+export const normalizeKindList = (
+  values: string[] | null | undefined,
+  fallback: string[]
+): string[] => {
   if (!Array.isArray(values) || values.length === 0) return [...fallback];
   const normalized = new Set<string>();
   values.forEach((entry: string) => {
@@ -312,9 +311,17 @@ export const stripUnknownProfileV2CandidateKeys = (candidate: unknown): unknown 
         .map((rule: unknown): Record<string, unknown> | null => {
           const ruleRecord = toRecord(rule);
           if (!ruleRecord) return null;
-          return pickKeys(ruleRecord, ['childType', 'childKinds', 'targetType', 'targetKinds', 'allow']);
+          return pickKeys(ruleRecord, [
+            'childType',
+            'childKinds',
+            'targetType',
+            'targetKinds',
+            'allow',
+          ]);
         })
-        .filter((rule: Record<string, unknown> | null): rule is Record<string, unknown> => Boolean(rule));
+        .filter((rule: Record<string, unknown> | null): rule is Record<string, unknown> =>
+          Boolean(rule)
+        );
     }
     next['nesting'] = nestingNext;
   }
@@ -331,22 +338,44 @@ export const stripUnknownProfileV2CandidateKeys = (candidate: unknown): unknown 
 
   const keyboard = toRecord(root['keyboard']);
   if (keyboard) {
-    next['keyboard'] = pickKeys(keyboard, ['enabled', 'arrowNavigation', 'enterToRename', 'deleteKey']);
+    next['keyboard'] = pickKeys(keyboard, [
+      'enabled',
+      'arrowNavigation',
+      'enterToRename',
+      'deleteKey',
+    ]);
   }
 
   const multiSelect = toRecord(root['multiSelect']);
   if (multiSelect) {
-    next['multiSelect'] = pickKeys(multiSelect, ['enabled', 'ctrlClick', 'shiftClick', 'selectAll']);
+    next['multiSelect'] = pickKeys(multiSelect, [
+      'enabled',
+      'ctrlClick',
+      'shiftClick',
+      'selectAll',
+    ]);
   }
 
   const search = toRecord(root['search']);
   if (search) {
-    next['search'] = pickKeys(search, ['enabled', 'debounceMs', 'filterMode', 'matchFields', 'minQueryLength']);
+    next['search'] = pickKeys(search, [
+      'enabled',
+      'debounceMs',
+      'filterMode',
+      'matchFields',
+      'minQueryLength',
+    ]);
   }
 
   const statusIcons = toRecord(root['statusIcons']);
   if (statusIcons) {
-    next['statusIcons'] = pickKeys(statusIcons, ['loading', 'error', 'locked', 'warning', 'success']);
+    next['statusIcons'] = pickKeys(statusIcons, [
+      'loading',
+      'error',
+      'locked',
+      'warning',
+      'success',
+    ]);
   }
 
   return next;

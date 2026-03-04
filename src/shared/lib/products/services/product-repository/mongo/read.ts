@@ -6,17 +6,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { Document } from 'mongodb';
-import {
-  toProductResponse,
-} from '../mongo-product-repository-mappers';
-import {
-  ProductFilters,
-  ProductWithImages,
-} from '@/shared/contracts/products';
-import {
-  buildProductIdFilter,
-  isEmptyFilter,
-} from '../mongo-product-repository.helpers';
+import { toProductResponse } from '../mongo-product-repository-mappers';
+import { ProductFilters, ProductWithImages } from '@/shared/contracts/products';
+import { buildProductIdFilter, isEmptyFilter } from '../mongo-product-repository.helpers';
 import { buildMongoWhere } from '../mongo-product-repository.filters';
 
 export const buildListProjectStage = (filters: ProductFilters): Document | null => {
@@ -92,9 +84,7 @@ export const mongoProductReadImpl = {
       const aggregateOptions = isEmptyFilter(searchFilter)
         ? { hint: { createdAt: -1 } }
         : undefined;
-      const docs = await collection
-        .aggregate(pipeline, aggregateOptions)
-        .toArray();
+      const docs = await collection.aggregate(pipeline, aggregateOptions).toArray();
 
       return docs.map((doc: any) => toProductResponse(doc));
     }
@@ -140,9 +130,7 @@ export const mongoProductReadImpl = {
               { $limit: pageSize },
               { $project: projectStage },
             ];
-            return await collection
-              .aggregate(pipeline, { hint: { createdAt: -1 } })
-              .toArray();
+            return await collection.aggregate(pipeline, { hint: { createdAt: -1 } }).toArray();
           }
 
           return await collection
@@ -183,8 +171,8 @@ export const mongoProductReadImpl = {
       ])
       .toArray();
 
-    const docs = (result)?.products ?? [];
-    const total = (result)?.meta?.[0]?.total ?? 0;
+    const docs = result?.products ?? [];
+    const total = result?.meta?.[0]?.total ?? 0;
 
     return {
       products: docs.map((doc: any) => toProductResponse(doc)),
@@ -192,7 +180,10 @@ export const mongoProductReadImpl = {
     };
   },
 
-  async getProductById(id: string, getCollection: () => Promise<any>): Promise<ProductWithImages | null> {
+  async getProductById(
+    id: string,
+    getCollection: () => Promise<any>
+  ): Promise<ProductWithImages | null> {
     const collection = await getCollection();
     const doc = await collection.findOne(buildProductIdFilter(id));
     if (!doc) return null;

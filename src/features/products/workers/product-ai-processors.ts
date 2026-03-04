@@ -150,8 +150,8 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
   let brainApplied: Record<string, unknown> | undefined;
   const imageUrls = Array.isArray(payload.imageUrls)
     ? payload.imageUrls.filter(
-      (url: unknown): url is string => typeof url === 'string' && url.trim() !== ''
-    )
+        (url: unknown): url is string => typeof url === 'string' && url.trim() !== ''
+      )
     : [];
   const attachImages = Boolean(payload.vision) && imageUrls.length > 0;
   if (source === 'ai_paths') {

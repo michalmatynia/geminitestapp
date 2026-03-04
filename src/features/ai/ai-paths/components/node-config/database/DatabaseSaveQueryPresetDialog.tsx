@@ -22,13 +22,7 @@ export function DatabaseSaveQueryPresetDialog(): React.JSX.Element {
       title='Save Query Preset'
       subtitle='Name this query to reuse it in other database nodes.'
       size='sm'
-      footer={
-        <FormActions
-          onSave={onSave}
-          onCancel={onCancel}
-          saveText='Save preset'
-        />
-      }
+      footer={<FormActions onSave={onSave} onCancel={onCancel} saveText='Save preset' />}
     >
       <div className='space-y-4'>
         <FormField label='Preset name' id='preset-name'>

@@ -25,13 +25,8 @@
         "x": 1460,
         "y": 400
       },
-      "inputs": [
-        "value",
-        "context"
-      ],
-      "outputs": [
-        "value"
-      ],
+      "inputs": ["value", "context"],
+      "outputs": ["value"],
       "config": {
         "boundsNormalizer": {
           "inputFormat": "pixels_tlwh",
@@ -86,19 +81,8 @@
         "x": 440,
         "y": 400
       },
-      "inputs": [
-        "trigger",
-        "context",
-        "meta",
-        "entityId",
-        "entityType"
-      ],
-      "outputs": [
-        "context",
-        "meta",
-        "entityId",
-        "entityType"
-      ],
+      "inputs": ["trigger", "context", "meta", "entityId", "entityType"],
+      "outputs": ["context", "meta", "entityId", "entityType"],
       "config": {
         "fetcher": {
           "sourceMode": "live_context"
@@ -143,13 +127,8 @@
         "x": 780,
         "y": 400
       },
-      "inputs": [
-        "context"
-      ],
-      "outputs": [
-        "value",
-        "bundle"
-      ],
+      "inputs": ["context"],
+      "outputs": ["value", "bundle"],
       "config": {
         "apiAdvanced": {
           "url": "http://localhost:11434/api/generate",
@@ -202,10 +181,7 @@
         "y": 400
       },
       "inputs": [],
-      "outputs": [
-        "context",
-        "trigger"
-      ],
+      "outputs": ["context", "trigger"],
       "config": {
         "trigger": {
           "event": "image_studio_object_analysis",
@@ -250,14 +226,8 @@
         "x": 2140,
         "y": 400
       },
-      "inputs": [
-        "value",
-        "confidence",
-        "label"
-      ],
-      "outputs": [
-        "value"
-      ],
+      "inputs": ["value", "confidence", "label"],
+      "outputs": ["value"],
       "config": {
         "canvasOutput": {
           "outputKey": "image_studio_bounds",
@@ -296,12 +266,8 @@
         "x": 1120,
         "y": 400
       },
-      "inputs": [
-        "value"
-      ],
-      "outputs": [
-        "result"
-      ],
+      "inputs": ["value"],
+      "outputs": ["result"],
       "config": {
         "regex": {
           "pattern": "",
@@ -349,22 +315,11 @@
         "x": 1800,
         "y": 400
       },
-      "inputs": [
-        "context"
-      ],
-      "outputs": [
-        "context",
-        "valid",
-        "errors"
-      ],
+      "inputs": ["context"],
+      "outputs": ["context", "valid", "errors"],
       "config": {
         "validator": {
-          "requiredPaths": [
-            "left",
-            "top",
-            "width",
-            "height"
-          ],
+          "requiredPaths": ["left", "top", "width", "height"],
           "mode": "all"
         }
       },
@@ -521,9 +476,7 @@
         "enabled": true,
         "severity": "error",
         "module": "simulation",
-        "appliesToNodeTypes": [
-          "simulation"
-        ],
+        "appliesToNodeTypes": ["simulation"],
         "sequence": 20,
         "conditionMode": "all",
         "conditions": [
@@ -551,9 +504,7 @@
         "enabled": true,
         "severity": "error",
         "module": "database",
-        "appliesToNodeTypes": [
-          "database"
-        ],
+        "appliesToNodeTypes": ["database"],
         "sequence": 30,
         "conditionMode": "all",
         "conditions": [
@@ -581,9 +532,7 @@
         "enabled": true,
         "severity": "error",
         "module": "database",
-        "appliesToNodeTypes": [
-          "database"
-        ],
+        "appliesToNodeTypes": ["database"],
         "sequence": 40,
         "conditionMode": "any",
         "conditions": [
@@ -591,10 +540,7 @@
             "id": "database-op-is-not-write",
             "operator": "in",
             "field": "config.database.operation",
-            "list": [
-              "update",
-              "delete"
-            ],
+            "list": ["update", "delete"],
             "negate": true
           },
           {

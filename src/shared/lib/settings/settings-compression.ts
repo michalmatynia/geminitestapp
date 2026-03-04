@@ -6,7 +6,8 @@ export const COMPRESSED_SETTING_PREFIX = '__gz_b64__:';
 const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v2';
 const COMPRESSIBLE_SETTING_KEYS = new Set<string>([CASE_RESOLVER_WORKSPACE_KEY]);
 
-export const shouldCompressSettingValue = (key: string): boolean => COMPRESSIBLE_SETTING_KEYS.has(key);
+export const shouldCompressSettingValue = (key: string): boolean =>
+  COMPRESSIBLE_SETTING_KEYS.has(key);
 
 export const decodeSettingValue = (key: string, value: string): string => {
   if (!value.startsWith(COMPRESSED_SETTING_PREFIX)) return value;

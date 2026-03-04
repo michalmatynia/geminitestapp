@@ -1,4 +1,7 @@
-import type { PageZone, SectionInstance as PageBuilderSectionInstance } from '../../types/page-builder';
+import type {
+  PageZone,
+  SectionInstance as PageBuilderSectionInstance,
+} from '../../types/page-builder';
 
 type SectionInstance = PageBuilderSectionInstance & {
   parentSectionId?: string | null;
@@ -48,7 +51,11 @@ const listFor = (map: Map<string | null, string[]>, key: string | null): string[
   return next;
 };
 
-const pushChild = (map: Map<string | null, string[]>, parentId: string | null, childId: string): void => {
+const pushChild = (
+  map: Map<string | null, string[]>,
+  parentId: string | null,
+  childId: string
+): void => {
   const list = listFor(map, parentId);
   list.push(childId);
 };
@@ -173,10 +180,7 @@ const getSubtreeHeight = (
   const children = childrenByParent.get(sectionId) ?? [];
   if (children.length === 0) return 1;
   return (
-    1 +
-    Math.max(
-      ...children.map((childId: string) => getSubtreeHeight(childId, childrenByParent))
-    )
+    1 + Math.max(...children.map((childId: string) => getSubtreeHeight(childId, childrenByParent)))
   );
 };
 
@@ -188,9 +192,7 @@ const cloneBlockTree = (
     ...block,
     id: uidFactory(),
     settings: block.settings ? { ...block.settings } : {},
-    ...(Array.isArray(block.blocks)
-      ? { blocks: cloneBlockTree(block.blocks, uidFactory) }
-      : {}),
+    ...(Array.isArray(block.blocks) ? { blocks: cloneBlockTree(block.blocks, uidFactory) } : {}),
   }));
 
 const flattenWithStructure = (
@@ -263,7 +265,9 @@ export const sanitizeSectionHierarchy = (
     if (!node) return;
     const oldParent = node.parentSectionId ?? null;
     if (oldParent) {
-      const oldSiblings = listFor(childrenByParent, oldParent).filter((id: string) => id !== nodeId);
+      const oldSiblings = listFor(childrenByParent, oldParent).filter(
+        (id: string) => id !== nodeId
+      );
       childrenByParent.set(oldParent, oldSiblings);
     }
     node.parentSectionId = null;
@@ -310,13 +314,7 @@ export const isDescendant = (
 
 export const moveSectionSubtree = (
   sections: SectionInstance[],
-  {
-    sectionId,
-    toZone,
-    toParentSectionId = null,
-    toIndex,
-    maxDepth = 5,
-  }: MoveSectionSubtreeInput
+  { sectionId, toZone, toParentSectionId = null, toIndex, maxDepth = 5 }: MoveSectionSubtreeInput
 ): MoveSectionSubtreeResult => {
   const sanitized = sanitizeSectionHierarchy(sections, maxDepth);
   const { nodeById, childrenByParent, depthById } = buildHierarchyIndexes(sanitized);

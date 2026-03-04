@@ -66,13 +66,13 @@ export const resolveCaseResolverOcrModelCandidates = (
 
   const uniqueCandidates = new Set<string>();
   const resolvedCandidates: CaseResolverResolvedOcrModel[] = [];
-  
+
   for (const entry of candidateValues) {
     const normalizedEntry = entry.toLowerCase();
     if (uniqueCandidates.has(normalizedEntry)) continue;
     uniqueCandidates.add(normalizedEntry);
     resolvedCandidates.push(resolveCaseResolverOcrModel(entry));
   }
-  
+
   return resolvedCandidates;
 };

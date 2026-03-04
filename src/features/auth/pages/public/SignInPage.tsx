@@ -155,10 +155,7 @@ function SignInPageLoader(): React.JSX.Element {
               </Link>
             </p>
           )}
-          <Link
-            href='/'
-            className='text-xs text-gray-500 hover:text-gray-300 transition-colors'
-          >
+          <Link href='/' className='text-xs text-gray-500 hover:text-gray-300 transition-colors'>
             &larr; Back to storefront
           </Link>
         </CardFooter>

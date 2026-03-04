@@ -1,12 +1,12 @@
-import { 
-  FilemakerDatabase, 
+import {
+  FilemakerDatabase,
   FilemakerEvent,
   FilemakerPhoneNumber,
   FilemakerPerson,
   FilemakerPhoneNumberLink,
   FilemakerEmail,
   FilemakerEmailLink,
-  FilemakerEventOrganizationLink
+  FilemakerEventOrganizationLink,
 } from '../types';
 import { normalizeString } from '../filemaker-settings.helpers';
 import { normalizeFilemakerDatabase } from '../filemaker-settings.database';
@@ -34,10 +34,12 @@ export const removeFilemakerPhoneNumber = (
 
   const nextPersons =
     nextLinks.length === 0
-      ? database.persons.map((person: FilemakerPerson): FilemakerPerson => ({
-        ...person,
-        phoneNumbers: [],
-      }))
+      ? database.persons.map(
+          (person: FilemakerPerson): FilemakerPerson => ({
+            ...person,
+            phoneNumbers: [],
+          })
+        )
       : database.persons;
 
   return normalizeFilemakerDatabase({
@@ -64,10 +66,12 @@ export const removeFilemakerPartyPhoneNumberLinks = (
 
   const nextPersons =
     nextLinks.length === 0
-      ? database.persons.map((person: FilemakerPerson): FilemakerPerson => ({
-        ...person,
-        phoneNumbers: [],
-      }))
+      ? database.persons.map(
+          (person: FilemakerPerson): FilemakerPerson => ({
+            ...person,
+            phoneNumbers: [],
+          })
+        )
       : database.persons;
 
   return normalizeFilemakerDatabase({
@@ -84,7 +88,9 @@ export const removeFilemakerEmail = (
   const normalizedEmailId = normalizeString(emailId);
   if (!normalizedEmailId) return database;
 
-  const nextEmails = database.emails.filter((email: FilemakerEmail) => email.id !== normalizedEmailId);
+  const nextEmails = database.emails.filter(
+    (email: FilemakerEmail) => email.id !== normalizedEmailId
+  );
   const nextLinks = database.emailLinks.filter(
     (link: FilemakerEmailLink) => link.emailId !== normalizedEmailId
   );
@@ -112,7 +118,8 @@ export const removeFilemakerPartyEmailLinks = (
   if (!normalizedPartyId) return database;
 
   const nextLinks = database.emailLinks.filter(
-    (link: FilemakerEmailLink) => !(link.partyKind === partyKind && link.partyId === normalizedPartyId)
+    (link: FilemakerEmailLink) =>
+      !(link.partyKind === partyKind && link.partyId === normalizedPartyId)
   );
   if (nextLinks.length === database.emailLinks.length) return database;
 

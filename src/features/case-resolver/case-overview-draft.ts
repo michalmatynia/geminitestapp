@@ -3,9 +3,7 @@ export type { CaseMetadataDraft };
 
 const NONE_OPTION_VALUE = '__none__';
 
-export const buildCaseMetadataDraft = (
-  caseFile: CaseResolverFile | null
-): CaseMetadataDraft => ({
+export const buildCaseMetadataDraft = (caseFile: CaseResolverFile | null): CaseMetadataDraft => ({
   name: caseFile?.name ?? '',
   parentCaseId: caseFile?.parentCaseId ?? NONE_OPTION_VALUE,
   caseStatus: caseFile?.caseStatus === 'completed' ? 'completed' : 'pending',
@@ -37,21 +35,19 @@ const areStringArraysEqual = (left: string[], right: string[]): boolean =>
 export const buildCaseMetadataPatch = (
   activeCaseFile: CaseResolverFile | null,
   draft: CaseMetadataDraft | null
-):
-  | Partial<
-      Pick<
-        CaseResolverFile,
-        | 'name'
-        | 'parentCaseId'
-        | 'referenceCaseIds'
-        | 'tagId'
-        | 'caseIdentifierId'
-        | 'categoryId'
-        | 'caseStatus'
-        | 'happeningDate'
-      >
-    >
-  | null => {
+): Partial<
+  Pick<
+    CaseResolverFile,
+    | 'name'
+    | 'parentCaseId'
+    | 'referenceCaseIds'
+    | 'tagId'
+    | 'caseIdentifierId'
+    | 'categoryId'
+    | 'caseStatus'
+    | 'happeningDate'
+  >
+> | null => {
   if (!activeCaseFile || !draft) return null;
 
   const normalizedDraft = {
@@ -108,9 +104,7 @@ export const buildCaseMetadataPatch = (
   if (normalizedDraft.tagId !== (activeCaseFile.tagId?.trim() || null)) {
     patch.tagId = normalizedDraft.tagId;
   }
-  if (
-    normalizedDraft.caseIdentifierId !== (activeCaseFile.caseIdentifierId?.trim() || null)
-  ) {
+  if (normalizedDraft.caseIdentifierId !== (activeCaseFile.caseIdentifierId?.trim() || null)) {
     patch.caseIdentifierId = normalizedDraft.caseIdentifierId;
   }
   if (normalizedDraft.categoryId !== (activeCaseFile.categoryId?.trim() || null)) {

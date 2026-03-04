@@ -49,6 +49,20 @@ describe('normalizeAgentPersonas', () => {
     expect(() => normalizeAgentPersonas({})).toThrowError(/invalid agent personas payload/i);
   });
 
+  it('rejects unsupported agent persona settings keys', () => {
+    expect(() =>
+      normalizeAgentPersonas([
+        {
+          id: 'persona-unsupported-settings',
+          name: 'Unsupported Settings Persona',
+          settings: {
+            unknownField: 'value',
+          },
+        },
+      ])
+    ).toThrowError(/invalid agent persona settings payload/i);
+  });
+
   it('keeps canonical persona settings fields only', () => {
     const normalized = normalizeAgentPersonas([
       {

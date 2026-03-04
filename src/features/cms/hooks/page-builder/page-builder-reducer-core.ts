@@ -1,10 +1,3 @@
- 
- 
- 
- 
- 
- 
-
 import { reducePageBuilderMoveActions } from './page-builder-reducer-move-actions';
 import { reducePageActions } from './page-builder-reducer/page-actions';
 import { reduceSectionActions } from './page-builder-reducer/section-actions';
@@ -18,7 +11,11 @@ import {
   findBlock,
   insertBlockIntoColumnBlocks,
 } from './block-helpers';
-import { buildHierarchyIndexes, cloneSectionSubtree, moveSectionSubtree } from './section-hierarchy';
+import {
+  buildHierarchyIndexes,
+  cloneSectionSubtree,
+  moveSectionSubtree,
+} from './section-hierarchy';
 
 import type {
   PageBuilderState,
@@ -134,7 +131,7 @@ export function reducePageBuilderStateCore(
       let sourceRootId: string | null = null;
       if (state.clipboard?.type === 'section_hierarchy') {
         sourceSections = state.clipboard.data.sections;
-        sourceRootId = (state.clipboard.data.rootSectionId) ?? null;
+        sourceRootId = state.clipboard.data.rootSectionId ?? null;
       } else if (state.clipboard?.type === 'section') {
         const source = state.clipboard.data;
         sourceSections = [source];

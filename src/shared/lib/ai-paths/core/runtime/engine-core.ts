@@ -1,7 +1,4 @@
-import {
-  AiNode,
-  Edge,
-} from '@/shared/contracts/ai-paths';
+import { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import {
   RuntimeState,
   RuntimeHistoryEntry,
@@ -10,17 +7,14 @@ import {
 } from '@/shared/contracts/ai-paths-runtime';
 import { ToastOptions } from '@/shared/contracts/ui';
 
-import {
-  cloneValue,
-  sanitizeEdges,
-} from '../utils';
+import { cloneValue, sanitizeEdges } from '../utils';
 import { isObjectRecord } from '@/shared/utils/object-utils';
-import { 
-  nowMs, 
-  resolveNodeTimeoutMs, 
-  withTimeout, 
-  withRetries, 
-  DEFAULT_RETRY_BACKOFF_MS 
+import {
+  nowMs,
+  resolveNodeTimeoutMs,
+  withTimeout,
+  withRetries,
+  DEFAULT_RETRY_BACKOFF_MS,
 } from './execution-helpers';
 
 // Modular imports
@@ -132,7 +126,7 @@ export async function evaluateGraphInternal(
     incomingEdgesByNode,
     seedHashes,
   });
-  
+
   const state = new EngineStateManager(nodes, scopedNodeIds.size, options);
 
   Object.keys(state.outputs).forEach((nodeId) => {
@@ -177,10 +171,12 @@ export async function evaluateGraphInternal(
   const triggerSource = options.triggerNodeId ? nodeById.get(options.triggerNodeId) : null;
   const resolvedOnHalt =
     options.onHalt ??
-    (((options as Record<string, unknown>)['control'] as
-      | { onHalt?: EvaluateGraphOptions['onHalt'] }
-      | undefined)?.onHalt ??
-      undefined);
+    (
+      (options as Record<string, unknown>)['control'] as
+        | { onHalt?: EvaluateGraphOptions['onHalt'] }
+        | undefined
+    )?.onHalt ??
+    undefined;
 
   const emitHalt = async (
     reason: 'blocked' | 'max_iterations' | 'completed' | 'failed'
@@ -202,10 +198,7 @@ export async function evaluateGraphInternal(
     }
   };
 
-  const buildNodeHash = (
-    node: AiNode,
-    nodeInputs: RuntimePortValues
-  ): string | null => {
+  const buildNodeHash = (node: AiNode, nodeInputs: RuntimePortValues): string | null => {
     const cacheScope = resolveNodeCacheScope(node);
     let cacheScopeFingerprint: Record<string, unknown> | undefined;
 
@@ -213,8 +206,7 @@ export async function evaluateGraphInternal(
       cacheScopeFingerprint = { runId: resolvedRunId };
     } else if (cacheScope === 'session' || cacheScope === 'activation') {
       const entityId =
-        pickString(triggerContext?.['entityId']) ??
-        pickString(triggerContext?.['productId']);
+        pickString(triggerContext?.['entityId']) ?? pickString(triggerContext?.['productId']);
       if (entityId) {
         cacheScopeFingerprint = { entityId };
       }
@@ -233,11 +225,14 @@ export async function evaluateGraphInternal(
     const simulationNodesInScope = Array.from(scopedNodeIds)
       .map((id) => nodeById.get(id))
       .filter((n) => n && (n.type === 'simulation' || isSimulationCapableFetcher(n)));
-    const finishedSimulationNodes = simulationNodesInScope.filter((n) => state.finishedNodes.has(n!.id));
-    const simulationOutputs = finishedSimulationNodes.map((n) => state.outputs[n!.id]).filter(Boolean);
+    const finishedSimulationNodes = simulationNodesInScope.filter((n) =>
+      state.finishedNodes.has(n!.id)
+    );
+    const simulationOutputs = finishedSimulationNodes
+      .map((n) => state.outputs[n!.id])
+      .filter(Boolean);
 
-    const hasLiveProvenance =
-      triggerContext && checkContextMatchesSimulation(triggerContext);
+    const hasLiveProvenance = triggerContext && checkContextMatchesSimulation(triggerContext);
     const hasSimNodeProvenance = simulationOutputs.some(
       (out) =>
         out && hasValuableSimulationContext((out['context'] as Record<string, unknown>) ?? {})
@@ -328,10 +323,11 @@ export async function evaluateGraphInternal(
       if (!readiness.ready) {
         if (!state.blockedNodes.has(node.id)) {
           state.blockedNodes.add(node.id);
-          let message = readiness.waitingOnPorts.length > 0 
-            ? `Upstream waiting diagnostics: Waiting on ports: ${readiness.waitingOnPorts.join(', ')}`
-            : 'Upstream waiting diagnostics: Blocked by upstream nodes';
-            
+          let message =
+            readiness.waitingOnPorts.length > 0
+              ? `Upstream waiting diagnostics: Waiting on ports: ${readiness.waitingOnPorts.join(', ')}`
+              : 'Upstream waiting diagnostics: Blocked by upstream nodes';
+
           if (readiness.waitingOnDetails && readiness.waitingOnDetails.length > 0) {
             const detailsMsg = readiness.waitingOnDetails
               .map((d) => {
@@ -436,9 +432,9 @@ export async function evaluateGraphInternal(
           const isImplicitTriggerNode = node.type === 'trigger' && !options.triggerNodeId;
           const cacheMode = node.config?.runtime?.cache?.mode ?? 'auto';
           const isCacheDisabled = cacheMode === 'disabled';
-          
+
           let validCacheHit = false;
-          let cacheSource: typeof state.outputs[string] | null = null;
+          let cacheSource: (typeof state.outputs)[string] | null = null;
 
           if (!isEntryNode && !isImplicitTriggerNode && !isCacheDisabled) {
             if (isSeedMatch) {
@@ -450,7 +446,9 @@ export async function evaluateGraphInternal(
             }
 
             if (validCacheHit && cacheSource) {
-              const hasData = Object.keys(cacheSource).some(k => k !== 'status' && k !== 'context');
+              const hasData = Object.keys(cacheSource).some(
+                (k) => k !== 'status' && k !== 'context'
+              );
               const expectsData = (node.outputs ?? []).length > 0;
               if (!hasData && expectsData) {
                 validCacheHit = false;
@@ -636,14 +634,14 @@ export async function evaluateGraphInternal(
               },
               simulationEntityType:
                 typeof triggerContext?.['entityType'] === 'string'
-                  ? (triggerContext['entityType'])
+                  ? triggerContext['entityType']
                   : null,
               simulationEntityId:
                 (typeof triggerContext?.['entityId'] === 'string'
-                  ? (triggerContext['entityId'])
+                  ? triggerContext['entityId']
                   : null) ??
                 (typeof triggerContext?.['productId'] === 'string'
-                  ? (triggerContext['productId'])
+                  ? triggerContext['productId']
                   : null),
               resolvedEntity: null,
               fallbackEntityId: null,
@@ -655,7 +653,6 @@ export async function evaluateGraphInternal(
 
             const retryPolicy = readRuntimeRetryPolicy(node);
 
-             
             const nodeResult = await withRetries(
               () =>
                 withTimeout(
@@ -742,7 +739,11 @@ export async function evaluateGraphInternal(
             outgoing.forEach((edge) => {
               const toNodeId = resolveEdgeToNodeId(edge);
               if (toNodeId) {
-                state.inputs[toNodeId] = collectNodeInputs(toNodeId, state.outputs, incomingEdgesByNode);
+                state.inputs[toNodeId] = collectNodeInputs(
+                  toNodeId,
+                  state.outputs,
+                  incomingEdgesByNode
+                );
                 if (state.finishedNodes.has(toNodeId)) {
                   const targetNode = nodeById.get(toNodeId);
                   if (targetNode) {

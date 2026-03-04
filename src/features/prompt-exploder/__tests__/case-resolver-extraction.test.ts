@@ -423,9 +423,7 @@ describe('case resolver extraction bridge payload', () => {
     expect(payload.parties?.addresser?.city).toBe('Szczecin');
     expect(payload.parties?.addresser?.country).toBe('Poland');
     expect(payload.parties?.addressee?.displayName).toBe('Komisariat Policji Szczecin–Dąbie');
-    expect(payload.parties?.addressee?.organizationName).toBe(
-      'Komisariat Policji Szczecin–Dąbie'
-    );
+    expect(payload.parties?.addressee?.organizationName).toBe('Komisariat Policji Szczecin–Dąbie');
     expect(payload.parties?.addressee?.street).toBe('Pomorska');
     expect(payload.parties?.addressee?.streetNumber).toBe('15');
     expect(payload.parties?.addressee?.postalCode).toBe('70-812');

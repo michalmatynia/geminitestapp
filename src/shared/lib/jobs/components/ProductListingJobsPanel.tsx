@@ -9,14 +9,14 @@ import {
   SectionHeader,
   StatusBadge,
   Pagination,
-  DynamicFilters,
   RefreshButton,
-  type FilterField,
   FormSection,
   Alert,
   MetadataItem,
   Hint,
 } from '@/shared/ui';
+import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
+import type { FilterField } from '@/shared/ui/templates/panels';
 
 import {
   ProductListingJobsPanelViewProvider,
@@ -82,12 +82,17 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
 
   const filters =
     !isLoading && !error ? (
-      <DynamicFilters
-        fields={filterFields}
+      <FilterPanel
+        filters={filterFields}
         values={{ query }}
-        onChange={(_, value) => setQuery(Array.isArray(value) ? (value[0] ?? '') : value)}
+        onFilterChange={(key, value) => {
+          if (key === 'query') setQuery(value as string);
+        }}
+        search={query}
+        onSearchChange={setQuery}
         onReset={() => setQuery('')}
-        hasActiveFilters={Boolean(query)}
+        showHeader={false}
+        compact
       />
     ) : null;
 

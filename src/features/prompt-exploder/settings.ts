@@ -1,8 +1,6 @@
 import { promptExploderSettingsSchema } from '@/shared/contracts/prompt-exploder';
 
-import {
-  DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
-} from './validation-stack';
+import { DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK } from './validation-stack';
 
 import type { PromptExploderSettings } from './types';
 
@@ -157,10 +155,7 @@ export function parsePromptExploderSettings(
   return parsed.settings;
 }
 
-function getNestedObject(
-  record: Record<string, unknown>,
-  key: string
-): Record<string, unknown> {
+function getNestedObject(record: Record<string, unknown>, key: string): Record<string, unknown> {
   const val = record[key];
   return val && typeof val === 'object' && !Array.isArray(val)
     ? (val as Record<string, unknown>)

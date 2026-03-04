@@ -1,7 +1,6 @@
 export const JOB_QUEUE_AUTO_REFRESH_INTERVAL_OPTIONS = [5000, 10000, 30000, 60000] as const;
 
-export const DEFAULT_JOB_QUEUE_AUTO_REFRESH_INTERVAL =
-  JOB_QUEUE_AUTO_REFRESH_INTERVAL_OPTIONS[1];
+export const DEFAULT_JOB_QUEUE_AUTO_REFRESH_INTERVAL = JOB_QUEUE_AUTO_REFRESH_INTERVAL_OPTIONS[1];
 
 export const normalizeJobQueueAutoRefreshInterval = (value: unknown): number => {
   const parsed =

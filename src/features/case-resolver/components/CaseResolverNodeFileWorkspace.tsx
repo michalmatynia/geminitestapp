@@ -15,9 +15,7 @@ import {
 import { Button, EmptyState, Card, Chip, Tooltip, useToast, Badge } from '@/shared/ui';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
-import {
-  createEmptyNodeFileSnapshot,
-} from '../settings';
+import { createEmptyNodeFileSnapshot } from '../settings';
 import { buildNode, createNodeId } from './case-resolver-canvas-utils';
 import { CaseResolverNodeInspectorModal } from './CaseResolverNodeInspectorModal';
 import { NodeFileWorkspaceProvider, useNodeFileWorkspaceContext } from './NodeFileWorkspaceContext';
@@ -175,10 +173,13 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
     setConfigOpen(false);
   }, [configOpen, setConfigOpen, setIsNodeInspectorOpen]);
 
-  const handleCopyNodeId = useCallback((id: string) => {
-    void navigator.clipboard.writeText(id);
-    toast('Node ID copied.', { variant: 'success' });
-  }, [toast]);
+  const handleCopyNodeId = useCallback(
+    (id: string) => {
+      void navigator.clipboard.writeText(id);
+      toast('Node ID copied.', { variant: 'success' });
+    },
+    [toast]
+  );
 
   return (
     <div className='flex h-full min-h-0 w-full gap-4'>
@@ -216,7 +217,10 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
                 Unsaved changes
               </Badge>
             ) : (
-              <Badge variant='outline' className='h-5 px-1.5 text-[10px] uppercase font-bold text-gray-500'>
+              <Badge
+                variant='outline'
+                className='h-5 px-1.5 text-[10px] uppercase font-bold text-gray-500'
+              >
                 All changes saved
               </Badge>
             )}
@@ -284,10 +288,7 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
                       className='pr-1'
                     />
                     <Tooltip
-                      content={getCaseResolverDocTooltipWithFallback(
-                        'copyNodeId',
-                        'Copy Node ID'
-                      )}
+                      content={getCaseResolverDocTooltipWithFallback('copyNodeId', 'Copy Node ID')}
                       side='top'
                     >
                       <Button
@@ -397,9 +398,7 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
           snapshot: createEmptyNodeFileSnapshot(),
           source: 'empty_default',
           validationErrorMessage:
-            error instanceof Error
-              ? error.message
-              : 'Invalid node-file snapshot payload.',
+            error instanceof Error ? error.message : 'Invalid node-file snapshot payload.',
         });
       }
     })();

@@ -3,10 +3,7 @@ import React, { useMemo } from 'react';
 
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
-import type {
-  NoteWithRelations,
-  ThemeRecord,
-} from '@/shared/contracts/notes';
+import type { NoteWithRelations, ThemeRecord } from '@/shared/contracts/notes';
 import type { PickerGroup, PickerOption } from '@/shared/contracts/ui';
 import { Button, EmptyState, Pagination, DocumentSearchPage } from '@/shared/ui';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
@@ -116,8 +113,8 @@ export function NoteListView(): React.JSX.Element {
               <span className='text-xs'>
                 {selectedFolderThemeId
                   ? themeGroups
-                    .flatMap((g) => g.options)
-                    .find((o) => o.key === selectedFolderThemeId)?.label
+                      .flatMap((g) => g.options)
+                      .find((o) => o.key === selectedFolderThemeId)?.label
                   : 'Select theme'}
               </span>
             }

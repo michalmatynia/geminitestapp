@@ -19,7 +19,6 @@ export const PUT = apiHandlerWithParams<{ id: string }>(
 );
 
 export const DELETE = apiHandlerWithParams<{ id: string }>(
-  (req, ctx, params) =>
-    DELETE_metadata_id_handler(req, ctx, { type: 'countries', id: params.id }),
+  (req, ctx, params) => DELETE_metadata_id_handler(req, ctx, { type: 'countries', id: params.id }),
   { source: 'countries.[id].DELETE' }
 );

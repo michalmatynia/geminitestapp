@@ -3,10 +3,7 @@
 import React from 'react';
 
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
-import type {
-  ThemeRecord,
-  NoteWithRelations,
-} from '@/shared/contracts/notes';
+import type { ThemeRecord, NoteWithRelations } from '@/shared/contracts/notes';
 import { cn, setNoteDragData } from '@/shared/utils';
 
 import { NoteCardHeader } from './list/NoteCardHeader';
@@ -89,20 +86,20 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
       onDragStart={
         enableDrag
           ? (e: React.DragEvent): void => {
-            setNoteDragData(e.dataTransfer, note.id);
-            const target = e.currentTarget as HTMLElement;
-            target.style.opacity = '0.5';
-            onDragStart(note.id);
-          }
+              setNoteDragData(e.dataTransfer, note.id);
+              const target = e.currentTarget as HTMLElement;
+              target.style.opacity = '0.5';
+              onDragStart(note.id);
+            }
           : undefined
       }
       onDragEnd={
         enableDrag
           ? (e: React.DragEvent): void => {
-            const target = e.currentTarget as HTMLElement;
-            target.style.opacity = '1';
-            onDragEnd();
-          }
+              const target = e.currentTarget as HTMLElement;
+              target.style.opacity = '1';
+              onDragEnd();
+            }
           : undefined
       }
       onClick={(): void => onSelectNote(note)}

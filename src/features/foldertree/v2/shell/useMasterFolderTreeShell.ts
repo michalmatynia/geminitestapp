@@ -19,13 +19,13 @@ import {
   type FolderTreePlaceholderClassSet,
 } from '@/shared/utils/folder-tree-profiles-v2';
 
-import { useFolderTreeInstanceV2, type UseFolderTreeInstanceV2Options } from '../hooks/useFolderTreeInstanceV2';
+import {
+  useFolderTreeInstanceV2,
+  type UseFolderTreeInstanceV2Options,
+} from '../hooks/useFolderTreeInstanceV2';
 import { useFolderTreeKeyboardNav } from '../hooks/useFolderTreeKeyboardNav';
 import { useFolderTreeProfileConfig } from './useFolderTreeProfileConfig';
-import {
-  useFolderTreeUiState,
-  type FolderTreePanelState,
-} from './useFolderTreeUiState';
+import { useFolderTreeUiState, type FolderTreePanelState } from './useFolderTreeUiState';
 import type { ResolveFolderTreeIconInput } from './useFolderTreeAppearance';
 
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
@@ -79,18 +79,9 @@ export function useMasterFolderTreeShell({
 }: UseMasterFolderTreeShellOptions): MasterFolderTreeShell {
   const { toast } = useToast();
   const { profile, appearance } = useFolderTreeProfileConfig(instance);
-  const keyboardConfig = useMemo(
-    () => resolveFolderTreeKeyboardConfig(profile),
-    [profile]
-  );
-  const multiSelectConfig = useMemo(
-    () => resolveFolderTreeMultiSelectConfig(profile),
-    [profile]
-  );
-  const searchConfig = useMemo(
-    () => resolveFolderTreeSearchConfig(profile),
-    [profile]
-  );
+  const keyboardConfig = useMemo(() => resolveFolderTreeKeyboardConfig(profile), [profile]);
+  const multiSelectConfig = useMemo(() => resolveFolderTreeMultiSelectConfig(profile), [profile]);
+  const searchConfig = useMemo(() => resolveFolderTreeSearchConfig(profile), [profile]);
   const uiState = useFolderTreeUiState(instance, expandedNodeIds, initiallyExpandedNodeIds);
 
   const controller = useFolderTreeInstanceV2({

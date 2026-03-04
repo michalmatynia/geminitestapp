@@ -3,21 +3,15 @@ import {
   type CaseResolverNodeFileSnapshot,
 } from '@/shared/contracts/case-resolver';
 import { validationError } from '@/shared/errors/app-error';
-import {
-  parseNodeFileSnapshot,
-  serializeNodeFileSnapshot,
-} from './settings';
-import {
-  logCaseResolverWorkspaceEvent,
-} from './workspace-observability';
+import { parseNodeFileSnapshot, serializeNodeFileSnapshot } from './settings';
+import { logCaseResolverWorkspaceEvent } from './workspace-observability';
 import {
   buildSettingRecordFetchAttempts,
   resolveSettingRecordFromSettingsPayload,
 } from './utils/workspace-settings-persistence-helpers';
 
 const CASE_RESOLVER_NODE_FILE_SNAPSHOT_KEY_PREFIX = 'case_resolver_node_file_snapshot::';
-export const CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY =
-  'nodeFileSnapshotStorage';
+export const CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY = 'nodeFileSnapshotStorage';
 
 export const buildCaseResolverNodeFileSnapshotKey = (assetId: string): string =>
   `${CASE_RESOLVER_NODE_FILE_SNAPSHOT_KEY_PREFIX}${assetId.trim()}`;
@@ -29,9 +23,7 @@ export const readCaseResolverNodeFileSnapshotStorageMode = (
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
     return null;
   }
-  const candidate = metadata[
-    CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY
-  ];
+  const candidate = metadata[CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY];
   return typeof candidate === 'string' && candidate.trim().length > 0 ? candidate.trim() : null;
 };
 

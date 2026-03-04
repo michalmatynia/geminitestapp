@@ -67,7 +67,9 @@ export const readPromptExploderTreeMetadata = (
     kind,
     entityId,
     parentEntityId:
-      typeof candidate.parentEntityId === 'string' ? candidate.parentEntityId : candidate.parentEntityId ?? null,
+      typeof candidate.parentEntityId === 'string'
+        ? candidate.parentEntityId
+        : (candidate.parentEntityId ?? null),
     segmentType: typeof candidate.segmentType === 'string' ? candidate.segmentType : null,
     code: typeof candidate.code === 'string' ? candidate.code : null,
     condition: typeof candidate.condition === 'string' ? candidate.condition : null,

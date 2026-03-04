@@ -1,15 +1,13 @@
-import { 
-  FilemakerDatabase, 
-  FilemakerPerson, 
-  FilemakerOrganization, 
+import {
+  FilemakerDatabase,
+  FilemakerPerson,
+  FilemakerOrganization,
   FilemakerPartyReference,
   FilemakerPartyOption,
   FilemakerPartyKind,
 } from '../types';
 import { normalizeString } from '../filemaker-settings.helpers';
-import { 
-  FILEMAKER_REFERENCE_NONE 
-} from '../settings-constants';
+import { FILEMAKER_REFERENCE_NONE } from '../settings-constants';
 
 export const getFilemakerPersonById = (
   database: FilemakerDatabase,
@@ -17,7 +15,9 @@ export const getFilemakerPersonById = (
 ): FilemakerPerson | null => {
   const normalizedPersonId = normalizeString(personId);
   if (!normalizedPersonId) return null;
-  return database.persons.find((person: FilemakerPerson) => person.id === normalizedPersonId) ?? null;
+  return (
+    database.persons.find((person: FilemakerPerson) => person.id === normalizedPersonId) ?? null
+  );
 };
 
 export const getFilemakerOrganizationById = (
@@ -69,8 +69,10 @@ export const encodeFilemakerPartyReference = (
   const reference =
     referenceOrKind && typeof referenceOrKind === 'object'
       ? referenceOrKind
-      : ({ kind: referenceOrKind, id: idArg } as
-          | { kind: FilemakerPartyKind | null | undefined; id: string | null | undefined });
+      : ({ kind: referenceOrKind, id: idArg } as {
+          kind: FilemakerPartyKind | null | undefined;
+          id: string | null | undefined;
+        });
   const kind = reference?.kind;
   const id = reference?.id;
   const normalizedKind = normalizeString(kind);

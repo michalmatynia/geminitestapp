@@ -14,9 +14,7 @@ describe('normalizeJobQueueAutoRefreshInterval', () => {
   });
 
   it('falls back to the default interval for unsupported persisted values', () => {
-    expect(normalizeJobQueueAutoRefreshInterval('')).toBe(
-      DEFAULT_JOB_QUEUE_AUTO_REFRESH_INTERVAL
-    );
+    expect(normalizeJobQueueAutoRefreshInterval('')).toBe(DEFAULT_JOB_QUEUE_AUTO_REFRESH_INTERVAL);
     expect(normalizeJobQueueAutoRefreshInterval('15000')).toBe(
       DEFAULT_JOB_QUEUE_AUTO_REFRESH_INTERVAL
     );

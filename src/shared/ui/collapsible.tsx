@@ -28,7 +28,7 @@ interface CollapsibleSectionProps {
 }
 
 /**
- * CollapsibleSection - A higher-level component that combines a SectionHeader 
+ * CollapsibleSection - A higher-level component that combines a SectionHeader
  * with a collapsible content area.
  */
 function CollapsibleSection({

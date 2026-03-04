@@ -25,10 +25,7 @@ export async function getProducts(
   return api.get<ProductWithImages[]>('/api/products', options);
 }
 
-export async function countProducts(
-  filters: ProductFilter,
-  signal?: AbortSignal
-): Promise<number> {
+export async function countProducts(filters: ProductFilter, signal?: AbortSignal): Promise<number> {
   try {
     const options: ApiClientOptions = {
       params: {

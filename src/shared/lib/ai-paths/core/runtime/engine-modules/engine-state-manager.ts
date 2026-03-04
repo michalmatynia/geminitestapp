@@ -1,24 +1,11 @@
- 
- 
- 
- 
- 
- 
-
-import { 
-  AiNode, 
-  NodeCacheScope 
-} from '@/shared/contracts/ai-paths';
-import { 
-  RuntimeHistoryEntry, 
-  RuntimePortValues, 
-  RuntimeState 
+import { AiNode, NodeCacheScope } from '@/shared/contracts/ai-paths';
+import {
+  RuntimeHistoryEntry,
+  RuntimePortValues,
+  RuntimeState,
 } from '@/shared/contracts/ai-paths-runtime';
 import { cloneValue } from '../utils';
-import { 
-  RuntimeProfileNodeStats, 
-  EvaluateGraphOptions 
-} from './engine-types';
+import { RuntimeProfileNodeStats, EvaluateGraphOptions } from './engine-types';
 
 const DEFAULT_NODE_CACHE_SCOPE: NodeCacheScope = 'run';
 
@@ -53,7 +40,7 @@ export class EngineStateManager {
   ) {
     this.outputs = options.seedOutputs ? cloneValue(options.seedOutputs) : {};
     this.skippedNodes = new Set(options.skipNodeIds ?? []);
-    
+
     // Auto-create an in-run cache Map when any node has cache mode enabled and no external cache
     // was provided.
     this.effectiveCache =
@@ -122,7 +109,9 @@ export class EngineStateManager {
       inputs: cloneValue(inputsSnapshot),
       outputs: outputsSnapshot,
       hashes: Object.fromEntries(this.nodeHashes),
-      nodeDurations: this.nodeDurationsMap.size ? Object.fromEntries(this.nodeDurationsMap) : undefined,
+      nodeDurations: this.nodeDurationsMap.size
+        ? Object.fromEntries(this.nodeDurationsMap)
+        : undefined,
       history: this.history.size
         ? (cloneValue(Object.fromEntries(this.history)) as Record<string, RuntimeHistoryEntry[]>)
         : undefined,

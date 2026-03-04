@@ -11,13 +11,18 @@ import {
   buildRelationFolderPath,
   RELATION_TREE_UNASSIGNED_CASE_KEY,
 } from './relation-master-tree.helpers';
-import type { RelationCaseBucket, RelationMasterTreeBuildInput } from './relation-master-tree.types';
+import type {
+  RelationCaseBucket,
+  RelationMasterTreeBuildInput,
+} from './relation-master-tree.types';
 
 const resolveCaseBucketKey = (caseId: string | null): string =>
   caseId?.trim() || RELATION_TREE_UNASSIGNED_CASE_KEY;
 
 const resolveCaseLabel = (rows: NodeFileDocumentSearchRow[], caseId: string | null): string => {
-  const firstSignature = rows.find((row) => row.signatureLabel.trim().length > 0)?.signatureLabel.trim();
+  const firstSignature = rows
+    .find((row) => row.signatureLabel.trim().length > 0)
+    ?.signatureLabel.trim();
   if (firstSignature) return firstSignature;
   if (caseId?.trim()) return caseId.trim();
   return 'Unassigned';

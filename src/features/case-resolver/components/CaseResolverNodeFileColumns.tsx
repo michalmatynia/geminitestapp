@@ -140,7 +140,10 @@ export const getNodeFileCaseColumns = ({
     accessorKey: 'docCount',
     header: 'Docs',
     cell: ({ row }): React.JSX.Element => (
-      <Badge variant='outline' className='bg-blue-500/5 text-blue-300 border-blue-500/20 text-[10px] h-5 px-1.5'>
+      <Badge
+        variant='outline'
+        className='bg-blue-500/5 text-blue-300 border-blue-500/20 text-[10px] h-5 px-1.5'
+      >
         {row.original.docCount}
       </Badge>
     ),

@@ -119,11 +119,9 @@ export function buildHeuristicControls(
   const next: Record<string, ParamUiControl> = {};
   const leaves = flattenParams(params).filter((leaf) => Boolean(leaf.path));
   leaves.forEach((leaf) => {
-     
     const spec = specs?.[leaf.path];
     const recommendation = recommendParamUiControl(leaf.value, spec);
     next[leaf.path] = recommendation.recommended;
-     
   });
 
   return next;

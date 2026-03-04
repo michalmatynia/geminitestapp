@@ -86,18 +86,20 @@ describe('buildRelationMasterTree', () => {
 
     const result = buildRelationMasterTree({ rows });
 
-    expect(result.nodes.some((node) => node.kind === 'relation_case' && node.name === 'SIG/99')).toBe(
-      true
-    );
-    expect(result.nodes.some((node) => node.kind === 'relation_folder' && node.name === 'Deep')).toBe(
-      true
-    );
+    expect(
+      result.nodes.some((node) => node.kind === 'relation_case' && node.name === 'SIG/99')
+    ).toBe(true);
+    expect(
+      result.nodes.some((node) => node.kind === 'relation_folder' && node.name === 'Deep')
+    ).toBe(true);
     expect(
       result.nodes.some((node) => node.kind === 'relation_folder' && node.name === 'Nested')
     ).toBe(true);
     expect(
       result.nodes.some(
-        (node) => node.kind === 'relation_file' && result.lookup.fileRowByNodeId.get(node.id)?.file.id === 'f-target'
+        (node) =>
+          node.kind === 'relation_file' &&
+          result.lookup.fileRowByNodeId.get(node.id)?.file.id === 'f-target'
       )
     ).toBe(true);
   });

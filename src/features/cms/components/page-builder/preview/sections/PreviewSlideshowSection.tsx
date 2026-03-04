@@ -195,14 +195,14 @@ export function PreviewSlideshowSection() {
                   style={
                     slideshowTransition === 'fade'
                       ? {
-                        opacity: isActiveFrame ? 1 : 0,
-                        pointerEvents: isActiveFrame ? 'auto' : 'none',
-                        transitionDuration: `${slideshowTransitionDuration}ms`,
-                      }
+                          opacity: isActiveFrame ? 1 : 0,
+                          pointerEvents: isActiveFrame ? 'auto' : 'none',
+                          transitionDuration: `${slideshowTransitionDuration}ms`,
+                        }
                       : {
-                        transform: `translateX(${(idx - currentSlideshowIndex) * 100}%)`,
-                        transitionDuration: `${slideshowTransitionDuration}ms`,
-                      }
+                          transform: `translateX(${(idx - currentSlideshowIndex) * 100}%)`,
+                          transitionDuration: `${slideshowTransitionDuration}ms`,
+                        }
                   }
                 >
                   <div className='flex h-full w-full flex-col' style={frameStyle}>
@@ -212,18 +212,18 @@ export function PreviewSlideshowSection() {
                         const animationStyle: React.CSSProperties =
                           isActiveFrame && resolvedAnimationType !== 'none'
                             ? {
-                              animation: `cms-anim-${resolvedAnimationType} ${animationDuration}ms ${animationEasing} ${blockDelay}ms both`,
-                            }
+                                animation: `cms-anim-${resolvedAnimationType} ${animationDuration}ms ${animationEasing} ${blockDelay}ms both`,
+                              }
                             : {};
                         const shouldFillBlock =
                           fillContent && (child.type === 'Image' || child.type === 'ImageElement');
                         const wrapperStyle: React.CSSProperties = shouldFillBlock
                           ? {
-                            ...animationStyle,
-                            width: '100%',
-                            height: '100%',
-                            alignSelf: 'stretch',
-                          }
+                              ...animationStyle,
+                              width: '100%',
+                              height: '100%',
+                              alignSelf: 'stretch',
+                            }
                           : animationStyle;
 
                         return (

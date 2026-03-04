@@ -151,9 +151,9 @@ export function EventEffectsWrapper({
   const nextProps: Record<string, unknown> = isFragment
     ? {}
     : {
-      className: mergedClassName,
-      style: mergedStyle,
-    };
+        className: mergedClassName,
+        style: mergedStyle,
+      };
 
   if (clickEnabled && !isFragment) {
     const existingOnClick = (children.props as { onClick?: (event: React.MouseEvent) => void })

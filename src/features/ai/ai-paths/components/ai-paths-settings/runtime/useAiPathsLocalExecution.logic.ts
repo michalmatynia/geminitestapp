@@ -11,7 +11,6 @@ export function useAiPathsLocalExecutionLogic(args: LocalExecutionArgs) {
 
   return useMemo(
     () => ({
-
       ...outcome,
       ...loop,
       ...triggers,

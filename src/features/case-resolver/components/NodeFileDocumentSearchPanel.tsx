@@ -108,9 +108,7 @@ export function NodeFileDocumentSearchPanel({
         <SelectSimple
           size='sm'
           value={newNodeType}
-          onValueChange={(val) =>
-            setNewNodeType(val as 'prompt' | 'model' | 'database' | 'viewer')
-          }
+          onValueChange={(val) => setNewNodeType(val as 'prompt' | 'model' | 'database' | 'viewer')}
           options={[
             { value: 'prompt', label: 'Prompt Node' },
             { value: 'model', label: 'Model Node' },

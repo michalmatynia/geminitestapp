@@ -1,11 +1,5 @@
-import {
-  type CaseResolverNodeMeta,
-  type CaseResolverEdgeMeta,
-} from './graph';
-import {
-  type CaseResolverRelationNodeMeta,
-  type CaseResolverRelationEdgeMeta,
-} from './relations';
+import { type CaseResolverNodeMeta, type CaseResolverEdgeMeta } from './graph';
+import { type CaseResolverRelationNodeMeta, type CaseResolverRelationEdgeMeta } from './relations';
 import {
   type CaseResolverNodeRole,
   type CaseResolverQuoteMode,

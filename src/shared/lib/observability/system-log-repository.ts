@@ -537,7 +537,9 @@ export async function createSystemLog(input: CreateSystemLogInput): Promise<Syst
         ...(payload.correlationId !== null && payload.correlationId !== undefined
           ? { correlationId: payload.correlationId }
           : {}),
-        ...(payload.spanId !== null && payload.spanId !== undefined ? { spanId: payload.spanId } : {}),
+        ...(payload.spanId !== null && payload.spanId !== undefined
+          ? { spanId: payload.spanId }
+          : {}),
         ...(payload.parentSpanId !== null && payload.parentSpanId !== undefined
           ? { parentSpanId: payload.parentSpanId }
           : {}),
@@ -703,15 +705,13 @@ export async function getSystemLogById(id: string): Promise<SystemLogRecord | nu
       service:
         typeof row.service === 'string' && row.service.trim().length > 0
           ? row.service
-          : (((row.context as Record<string, unknown> | null)?.['service'] as
-              | string
-              | undefined) ?? null),
+          : (((row.context as Record<string, unknown> | null)?.['service'] as string | undefined) ??
+            null),
       traceId:
         typeof row.traceId === 'string' && row.traceId.trim().length > 0
           ? row.traceId
-          : (((row.context as Record<string, unknown> | null)?.['traceId'] as
-              | string
-              | undefined) ?? null),
+          : (((row.context as Record<string, unknown> | null)?.['traceId'] as string | undefined) ??
+            null),
       correlationId:
         typeof row.correlationId === 'string' && row.correlationId.trim().length > 0
           ? row.correlationId
@@ -721,9 +721,8 @@ export async function getSystemLogById(id: string): Promise<SystemLogRecord | nu
       spanId:
         typeof row.spanId === 'string' && row.spanId.trim().length > 0
           ? row.spanId
-          : (((row.context as Record<string, unknown> | null)?.['spanId'] as
-              | string
-              | undefined) ?? null),
+          : (((row.context as Record<string, unknown> | null)?.['spanId'] as string | undefined) ??
+            null),
       parentSpanId:
         typeof row.parentSpanId === 'string' && row.parentSpanId.trim().length > 0
           ? row.parentSpanId

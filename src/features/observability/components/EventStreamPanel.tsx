@@ -1,21 +1,12 @@
 'use client';
 
-import {
-  AlertTriangle,
-  Monitor,
-  SearchIcon,
-  Eye,
-} from 'lucide-react';
+import { AlertTriangle, Monitor, SearchIcon, Eye } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
-import {
-  useSystemLogsContext,
-} from '@/features/observability/context/SystemLogsContext';
+import { useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
-import {
-  SystemLogRecordDto as SystemLogRecord,
-} from '@/shared/contracts/observability';
+import { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 import {
   Button,
   StandardDataTablePanel,
@@ -30,13 +21,13 @@ import {
 } from '@/shared/ui';
 import type { ColumnDef } from '@tanstack/react-table';
 import { formatTimestamp } from '../utils/formatTimestamp';
-import { 
-  readLogContextRegistry, 
-  getPrimaryContextDocument, 
-  readAlertEvidence, 
+import {
+  readLogContextRegistry,
+  getPrimaryContextDocument,
+  readAlertEvidence,
   getStatusVariant,
   getLogCategory,
-  readContextString
+  readContextString,
 } from '../utils/logHelpers';
 import { ContextDocumentCard } from './ContextDocumentCard';
 import { ContextRegistryNodesCard } from './ContextRegistryNodesCard';
@@ -128,7 +119,9 @@ export function EventStreamPanel(): React.JSX.Element {
                   {primaryContextDocument ? (
                     <>
                       <StatusBadge status='Context' variant='info' size='sm' className='h-4' />
-                      <span className='text-[10px] text-sky-200/80'>{primaryContextDocument.title}</span>
+                      <span className='text-[10px] text-sky-200/80'>
+                        {primaryContextDocument.title}
+                      </span>
                       {primaryContextDocument.status ? (
                         <StatusBadge
                           status={primaryContextDocument.status}
@@ -141,7 +134,8 @@ export function EventStreamPanel(): React.JSX.Element {
                   ) : null}
                   {alertEvidence ? (
                     <span className='text-[10px] text-amber-200/80'>
-                      Alert evidence: {alertEvidence.sampleSize ?? alertEvidence.samples.length} sample
+                      Alert evidence: {alertEvidence.sampleSize ?? alertEvidence.samples.length}{' '}
+                      sample
                       {(alertEvidence.sampleSize ?? alertEvidence.samples.length) === 1 ? '' : 's'}
                     </span>
                   ) : null}
@@ -260,7 +254,12 @@ export function EventStreamPanel(): React.JSX.Element {
                     <MetadataItem label='Fingerprint' value={fingerprint} mono />
                     <MetadataItem label='Alert Type' value={alertType} />
                   </div>
-                  {(log.requestId || log.traceId || log.correlationId || log.service || log.userId || fingerprint) && (
+                  {(log.requestId ||
+                    log.traceId ||
+                    log.correlationId ||
+                    log.service ||
+                    log.userId ||
+                    fingerprint) && (
                     <div className='mt-3 flex flex-wrap gap-2 text-[11px]'>
                       {log.requestId && (
                         <Button
@@ -292,7 +291,9 @@ export function EventStreamPanel(): React.JSX.Element {
                           variant='outline'
                           size='xs'
                           className='h-6 px-2'
-                          onClick={() => handleFilterChange('correlationId', log.correlationId ?? '')}
+                          onClick={() =>
+                            handleFilterChange('correlationId', log.correlationId ?? '')
+                          }
                         >
                           <SearchIcon className='mr-1 size-3' />
                           View correlation
@@ -390,20 +391,36 @@ export function EventStreamPanel(): React.JSX.Element {
                     </Hint>
                     <Card variant='glass' padding='md' className='space-y-4 bg-amber-950/15'>
                       <div className='grid grid-cols-2 gap-2'>
-                        <MetadataItem label='Matched Count' value={alertEvidence.matchedCount} mono />
+                        <MetadataItem
+                          label='Matched Count'
+                          value={alertEvidence.matchedCount}
+                          mono
+                        />
                         <MetadataItem label='Sample Size' value={alertEvidence.sampleSize} mono />
                         <MetadataItem
                           label='Window Start'
-                          value={alertEvidence.windowStart ? formatTimestamp(alertEvidence.windowStart) : null}
+                          value={
+                            alertEvidence.windowStart
+                              ? formatTimestamp(alertEvidence.windowStart)
+                              : null
+                          }
                         />
                         <MetadataItem
                           label='Window End'
-                          value={alertEvidence.windowEnd ? formatTimestamp(alertEvidence.windowEnd) : null}
+                          value={
+                            alertEvidence.windowEnd
+                              ? formatTimestamp(alertEvidence.windowEnd)
+                              : null
+                          }
                         />
                       </div>
                       {alertEvidence.lastObservedLog ? (
                         <div>
-                          <Hint uppercase variant='muted' className='mb-2 text-[10px] font-semibold'>
+                          <Hint
+                            uppercase
+                            variant='muted'
+                            className='mb-2 text-[10px] font-semibold'
+                          >
                             Last Observed Log
                           </Hint>
                           <div className='rounded border border-white/5 bg-black/20 px-3 py-2'>
@@ -434,7 +451,11 @@ export function EventStreamPanel(): React.JSX.Element {
                       ) : null}
                       {alertEvidence.samples.length ? (
                         <div>
-                          <Hint uppercase variant='muted' className='mb-2 text-[10px] font-semibold'>
+                          <Hint
+                            uppercase
+                            variant='muted'
+                            className='mb-2 text-[10px] font-semibold'
+                          >
                             Sampled Logs
                           </Hint>
                           <div className='space-y-2'>
@@ -466,7 +487,9 @@ export function EventStreamPanel(): React.JSX.Element {
                                   ) : null}
                                 </div>
                                 {sample.message ? (
-                                  <p className='mt-2 text-[11px] text-gray-200/90'>{sample.message}</p>
+                                  <p className='mt-2 text-[11px] text-gray-200/90'>
+                                    {sample.message}
+                                  </p>
                                 ) : null}
                                 {sample.fingerprint ? (
                                   <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-400'>

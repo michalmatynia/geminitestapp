@@ -20,7 +20,7 @@ interface ImportFolderResponse {
 export function useImportFolderMutation(): CreateMutation<
   ImportFolderResponse,
   ImportFolderPayload
-  > {
+> {
   const mutationKey = QUERY_KEYS.notes.all;
 
   return createCreateMutationV2({

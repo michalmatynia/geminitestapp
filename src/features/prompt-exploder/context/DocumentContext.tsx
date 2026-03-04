@@ -305,7 +305,10 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
         0.95
       );
       const learnedTemplateSignature = runtimeSelection.runtimeLearnedTemplates
-        .map((template: PromptExploderLearnedTemplate) => `${template.id}:${template.state}:${template.updatedAt}`)
+        .map(
+          (template: PromptExploderLearnedTemplate) =>
+            `${template.id}:${template.state}:${template.updatedAt}`
+        )
         .join('|');
       const runtimeSignature = [
         trimmed,
@@ -340,19 +343,19 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
       );
       const nextDocument = orchestratorEnabled
         ? explodePromptWithValidationRuntime({
-          prompt: trimmed,
-          runtime: runtimeSelection,
-          similarityThreshold,
-        })
+            prompt: trimmed,
+            runtime: runtimeSelection,
+            similarityThreshold,
+          })
         : explodePromptText({
-          prompt: trimmed,
-          validationRules: runtimeSelection.runtimeValidationRules,
-          learnedTemplates: runtimeSelection.runtimeLearnedTemplates,
-          similarityThreshold,
-          validationScope: runtimeSelection.identity.scope,
-          runtimeCacheKey: runtimeSelection.identity.cacheKey,
-          correlationId: runtimeSelection.correlationId,
-        });
+            prompt: trimmed,
+            validationRules: runtimeSelection.runtimeValidationRules,
+            learnedTemplates: runtimeSelection.runtimeLearnedTemplates,
+            similarityThreshold,
+            validationScope: runtimeSelection.identity.scope,
+            runtimeCacheKey: runtimeSelection.identity.cacheKey,
+            correlationId: runtimeSelection.correlationId,
+          });
       lastExplosionRef.current = {
         signature: runtimeSignature,
         document: nextDocument,
@@ -511,13 +514,13 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
           fileName: incomingCaseResolverContext?.fileName?.trim() || resolvedContextFileId,
           ...(resolvedContextSessionId
             ? {
-              sessionId: resolvedContextSessionId,
-            }
+                sessionId: resolvedContextSessionId,
+              }
             : {}),
           ...(typeof incomingCaseResolverContext?.documentVersionAtStart === 'number'
             ? {
-              documentVersionAtStart: incomingCaseResolverContext.documentVersionAtStart,
-            }
+                documentVersionAtStart: incomingCaseResolverContext.documentVersionAtStart,
+              }
             : {}),
         };
         savePromptExploderApplyPromptForCaseResolver(
@@ -658,13 +661,13 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     const promptFromPayload = isConsumableDraftPayload ? (payload?.prompt ?? null) : null;
     const payloadKey = payload
       ? [
-        payload.createdAt,
-        payload.source ?? '',
-        payload.target ?? '',
-        payload.caseResolverContext?.fileId ?? '',
-        payload.caseResolverContext?.sessionId ?? '',
-        String(payload.prompt.length),
-      ].join('|')
+          payload.createdAt,
+          payload.source ?? '',
+          payload.target ?? '',
+          payload.caseResolverContext?.fileId ?? '',
+          payload.caseResolverContext?.sessionId ?? '',
+          String(payload.prompt.length),
+        ].join('|')
       : null;
     if (promptFromPayload && payloadKey && lastHydratedDraftPayloadKeyRef.current !== payloadKey) {
       lastHydratedDraftPayloadKeyRef.current = payloadKey;

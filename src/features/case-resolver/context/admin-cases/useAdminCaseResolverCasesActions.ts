@@ -2,10 +2,6 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
- 
- 
- 
- 
 
 import { useCallback, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 import type { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
@@ -19,16 +15,13 @@ import {
 } from '../../workspace-persistence';
 
 import { waitForCaseAvailability } from './actions/case-availability';
-import { 
-  handleCreateCaseImpl, 
-  handleUpdateCaseImpl, 
-  handleSaveCaseDraftImpl, 
-  handleDeleteCaseImpl 
+import {
+  handleCreateCaseImpl,
+  handleUpdateCaseImpl,
+  handleSaveCaseDraftImpl,
+  handleDeleteCaseImpl,
 } from './actions/case-crud';
-import { 
-  handleMoveCaseImpl, 
-  handleReorderCaseImpl 
-} from './actions/case-ordering';
+import { handleMoveCaseImpl, handleReorderCaseImpl } from './actions/case-ordering';
 
 export type ToastFn = (message: string, options?: { variant?: string }) => void;
 
@@ -59,8 +52,7 @@ export function useAdminCaseResolverCasesActions(args: UseAdminCaseResolverCases
   const { toast, setConfirmation } = args;
 
   const handleWaitForCaseAvailability = useCallback(
-    async (caseId: string, options?: any) =>
-      waitForCaseAvailability(caseId, { ...args, options }),
+    async (caseId: string, options?: any) => waitForCaseAvailability(caseId, { ...args, options }),
     [args]
   );
 
@@ -125,10 +117,11 @@ export function useAdminCaseResolverCasesActions(args: UseAdminCaseResolverCases
         const now = new Date().toISOString();
         const nextWorkspace: CaseResolverWorkspace = {
           ...args.workspace,
-          files: args.workspace.files.map((file: CaseResolverFile): CaseResolverFile =>
-            file.id === normalizedCaseId && file.fileType === 'case'
-              ? { ...file, name: normalizedName, updatedAt: now }
-              : file
+          files: args.workspace.files.map(
+            (file: CaseResolverFile): CaseResolverFile =>
+              file.id === normalizedCaseId && file.fileType === 'case'
+                ? { ...file, name: normalizedName, updatedAt: now }
+                : file
           ),
         };
         stampCaseResolverWorkspaceMutation(nextWorkspace, {
@@ -176,10 +169,11 @@ export function useAdminCaseResolverCasesActions(args: UseAdminCaseResolverCases
         const now = new Date().toISOString();
         const nextWorkspace: CaseResolverWorkspace = {
           ...args.workspace,
-          files: args.workspace.files.map((file: CaseResolverFile): CaseResolverFile =>
-            file.id === normalizedCaseId && file.fileType === 'case'
-              ? { ...file, caseStatus: nextStatus, updatedAt: now }
-              : file
+          files: args.workspace.files.map(
+            (file: CaseResolverFile): CaseResolverFile =>
+              file.id === normalizedCaseId && file.fileType === 'case'
+                ? { ...file, caseStatus: nextStatus, updatedAt: now }
+                : file
           ),
         };
         stampCaseResolverWorkspaceMutation(nextWorkspace, {

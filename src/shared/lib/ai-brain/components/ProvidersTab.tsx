@@ -149,11 +149,7 @@ export function ProvidersTab(): React.JSX.Element {
     };
 
     const duplicate = catalogEntries.some((entry) => {
-      if (
-        editorMode === 'edit' &&
-        editingOriginal &&
-        isSameCatalogEntry(entry, editingOriginal)
-      ) {
+      if (editorMode === 'edit' && editingOriginal && isSameCatalogEntry(entry, editingOriginal)) {
         return false;
       }
       return isSameCatalogEntry(entry, candidate);
@@ -341,4 +337,3 @@ export function ProvidersTab(): React.JSX.Element {
     </div>
   );
 }
-

@@ -6,10 +6,7 @@ import {
 } from '@/shared/lib/observability/log-redaction';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
-import {
-  clientErrorPayloadSchema,
-  type ErrorContext,
-} from '@/shared/contracts/observability';
+import { clientErrorPayloadSchema, type ErrorContext } from '@/shared/contracts/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 

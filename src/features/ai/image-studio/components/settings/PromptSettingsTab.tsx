@@ -69,9 +69,7 @@ export function PromptSettingsTab(): React.JSX.Element {
               description='Brain-managed via Image Studio Prompt Extract capability.'
             >
               <Input
-                value={
-                  promptExtractModel.effectiveModelId.trim() || 'Not configured in AI Brain'
-                }
+                value={promptExtractModel.effectiveModelId.trim() || 'Not configured in AI Brain'}
                 readOnly
                 disabled
                 className='cursor-not-allowed'
@@ -142,9 +140,7 @@ export function PromptSettingsTab(): React.JSX.Element {
                 description='Brain-managed via Image Studio UI Extractor capability.'
               >
                 <Input
-                  value={
-                    uiExtractorModel.effectiveModelId.trim() || 'Not configured in AI Brain'
-                  }
+                  value={uiExtractorModel.effectiveModelId.trim() || 'Not configured in AI Brain'}
                   readOnly
                   disabled
                   className='cursor-not-allowed'

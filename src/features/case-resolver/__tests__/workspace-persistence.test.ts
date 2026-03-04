@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  CASE_RESOLVER_LEGACY_WORKSPACE_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
   createCaseResolverAssetFile,
   createCaseResolverFile,
@@ -137,7 +136,8 @@ describe('case-resolver workspace persistence', () => {
           id: 'node-file-inline',
           name: 'Inline Snapshot Asset',
           kind: 'node_file',
-          textContent: '{"kind":"case_resolver_node_file_snapshot_v1","nodes":[{"id":"node-inline"}]}',
+          textContent:
+            '{"kind":"case_resolver_node_file_snapshot_v1","nodes":[{"id":"node-inline"}]}',
         }),
       ],
     };
@@ -249,41 +249,19 @@ describe('case-resolver workspace persistence', () => {
     );
   });
 
-  it('falls back to legacy workspace key when v2 workspace key is missing', async () => {
-    const legacyWorkspace = {
-      ...createDefaultCaseResolverWorkspace(),
-      files: [
-        createCaseResolverFile({
-          id: 'case-legacy-1',
-          fileType: 'case',
-          name: 'Legacy Case',
-        }),
-      ],
-    };
+  it('does not read legacy workspace key when v2 workspace key is missing', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(toJsonResponse(200, []))
       .mockResolvedValueOnce(toJsonResponse(200, []))
       .mockResolvedValueOnce(toJsonResponse(200, []))
-      .mockResolvedValueOnce(toJsonResponse(200, []))
-      .mockResolvedValueOnce(
-        toJsonResponse(200, [
-          {
-            key: CASE_RESOLVER_LEGACY_WORKSPACE_KEY,
-            value: JSON.stringify(legacyWorkspace),
-          },
-        ])
-      );
+      .mockResolvedValueOnce(toJsonResponse(200, []));
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const result = await fetchCaseResolverWorkspaceSnapshot('test_source');
 
-    expect(result).not.toBeNull();
-    expect(result?.files.some((file) => file.id === 'case-legacy-1')).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(5);
-    expect(fetchMock.mock.calls[4]?.[0]).toBe(
-      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_LEGACY_WORKSPACE_KEY)}`
-    );
+    expect(result).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
   it('supports cached-only heavy fallback when fresh mode is disabled', async () => {
@@ -414,9 +392,7 @@ describe('case-resolver workspace persistence', () => {
           key: CASE_RESOLVER_WORKSPACE_KEY,
           value: JSON.stringify(workspaceWithoutRequired),
         })
-      )
-      .mockResolvedValueOnce(toJsonResponse(200, []))
-      .mockResolvedValueOnce(toJsonResponse(200, []));
+      );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
@@ -424,20 +400,12 @@ describe('case-resolver workspace persistence', () => {
     });
 
     expect(result.status).toBe('missing_required_file');
-    expect(fetchMock).toHaveBeenCalledTimes(6);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
-  it('resolves required file from legacy workspace key when v2 misses it', async () => {
+  it('does not resolve required file from legacy workspace key when v2 misses it', async () => {
     const workspaceWithoutRequired = createDefaultCaseResolverWorkspace();
-    const requiredFile = createCaseResolverFile({
-      id: 'case-required-legacy',
-      fileType: 'case',
-      name: 'Legacy Required Case',
-    });
-    const legacyWorkspace = {
-      ...createDefaultCaseResolverWorkspace(),
-      files: [requiredFile],
-    };
+    const requiredFileId = 'case-required-legacy';
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
@@ -463,11 +431,48 @@ describe('case-resolver workspace persistence', () => {
           key: CASE_RESOLVER_WORKSPACE_KEY,
           value: JSON.stringify(workspaceWithoutRequired),
         })
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
+      requiredFileId,
+    });
+
+    expect(result.status).toBe('missing_required_file');
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it('returns null when required file is unavailable in canonical v2 workspace reads', async () => {
+    const workspaceWithoutRequired = createDefaultCaseResolverWorkspace();
+    const requiredFile = createCaseResolverFile({
+      id: 'case-required-v2-only',
+      fileType: 'case',
+      name: 'Required Case',
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_KEY,
+          value: JSON.stringify(workspaceWithoutRequired),
+        })
       )
       .mockResolvedValueOnce(
         toJsonResponse(200, {
-          key: CASE_RESOLVER_LEGACY_WORKSPACE_KEY,
-          value: JSON.stringify(legacyWorkspace),
+          key: CASE_RESOLVER_WORKSPACE_KEY,
+          value: JSON.stringify(workspaceWithoutRequired),
+        })
+      )
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_KEY,
+          value: JSON.stringify(workspaceWithoutRequired),
+        })
+      )
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_KEY,
+          value: JSON.stringify(workspaceWithoutRequired),
         })
       );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
@@ -476,9 +481,8 @@ describe('case-resolver workspace persistence', () => {
       requiredFileId: requiredFile.id,
     });
 
-    expect(result).not.toBeNull();
-    expect(result?.files.some((file) => file.id === requiredFile.id)).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(5);
+    expect(result).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
   it('returns unavailable with budget_exhausted when fetch chain exceeds context budget', async () => {
@@ -526,15 +530,13 @@ describe('case-resolver workspace persistence', () => {
       .mockResolvedValueOnce(toJsonResponse(500, { error: 'fresh key failed' }))
       .mockResolvedValueOnce(toJsonResponse(500, { error: 'cached key failed' }))
       .mockResolvedValueOnce(toJsonResponse(500, { error: 'heavy fresh key failed' }))
-      .mockResolvedValueOnce(toJsonResponse(500, { error: 'heavy cached key failed' }))
-      .mockResolvedValueOnce(toJsonResponse(500, { error: 'legacy fresh key failed' }))
-      .mockResolvedValueOnce(toJsonResponse(500, { error: 'legacy cached key failed' }));
+      .mockResolvedValueOnce(toJsonResponse(500, { error: 'heavy cached key failed' }));
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const result = await fetchCaseResolverWorkspaceSnapshot('test_source');
 
     expect(result).toBeNull();
-    expect(fetchMock).toHaveBeenCalledTimes(6);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
       `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
     );
@@ -546,12 +548,6 @@ describe('case-resolver workspace persistence', () => {
     );
     expect(fetchMock.mock.calls[3]?.[0]).toBe(
       `/api/settings?scope=heavy&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
-    );
-    expect(fetchMock.mock.calls[4]?.[0]).toBe(
-      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_LEGACY_WORKSPACE_KEY)}`
-    );
-    expect(fetchMock.mock.calls[5]?.[0]).toBe(
-      `/api/settings?scope=light&key=${encodeURIComponent(CASE_RESOLVER_LEGACY_WORKSPACE_KEY)}`
     );
   });
 
@@ -706,9 +702,9 @@ describe('case-resolver workspace persistence', () => {
     expect(docHistory?.['documentContentHtml']).toBe('<p>History</p>');
 
     expect(compactedMigratedNodeAsset && 'textContent' in compactedMigratedNodeAsset).toBe(false);
-    expect(compactedMigratedNodeAsset?.metadata?.[
-      CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY
-    ]).toBe('keyed');
+    expect(
+      compactedMigratedNodeAsset?.metadata?.[CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY]
+    ).toBe('keyed');
   });
 
   it('rejects inline node-file snapshot text during workspace compaction', () => {
@@ -720,7 +716,8 @@ describe('case-resolver workspace persistence', () => {
           name: 'Legacy Node File',
           folder: '',
           kind: 'node_file',
-          textContent: '{"kind":"case_resolver_node_file_snapshot_v1","nodes":[{"id":"legacy-node"}]}',
+          textContent:
+            '{"kind":"case_resolver_node_file_snapshot_v1","nodes":[{"id":"legacy-node"}]}',
         }),
       ],
     };

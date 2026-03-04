@@ -7,7 +7,12 @@ export type ScanState = {
   escaped: boolean;
 };
 
-export type SegmentKind = 'code' | 'comment' | 'single_string' | 'double_string' | 'template_string';
+export type SegmentKind =
+  | 'code'
+  | 'comment'
+  | 'single_string'
+  | 'double_string'
+  | 'template_string';
 
 export type Segment = { kind: SegmentKind; text: string };
 
@@ -340,7 +345,10 @@ export function removeTrailingCommas(input: string): string {
   return out.join('');
 }
 
-export function splitLineCodeAndLineComment(line: string): { code: string; comment: string | null } {
+export function splitLineCodeAndLineComment(line: string): {
+  code: string;
+  comment: string | null;
+} {
   const state = createScanState();
 
   for (let index = 0; index < line.length; index += 1) {

@@ -6,9 +6,7 @@ import {
   type ImageStudioUpscaleSmoothingQuality,
   type ImageStudioUpscaleRequest,
 } from '@/features/ai/image-studio/contracts/upscale';
-import {
-  getImageStudioSlotLinkBySourceAndRelation,
-} from '@/features/ai/image-studio/server/slot-link-repository';
+import { getImageStudioSlotLinkBySourceAndRelation } from '@/features/ai/image-studio/server/slot-link-repository';
 import {
   buildUpscaleFingerprint,
   buildUpscaleFingerprintRelationType,
@@ -137,9 +135,10 @@ export async function resolveIdempotentUpscaleSlot(args: {
     mode: payload.mode,
     strategy,
     scale: strategy === 'scale' ? (typeof payload.scale === 'number' ? payload.scale : 2) : null,
-    targetWidth: strategy === 'target_resolution' ? payload.targetWidth ?? null : null,
-    targetHeight: strategy === 'target_resolution' ? payload.targetHeight ?? null : null,
-    smoothingQuality: payload.mode === 'client_data_url' ? payload.smoothingQuality ?? null : null,
+    targetWidth: strategy === 'target_resolution' ? (payload.targetWidth ?? null) : null,
+    targetHeight: strategy === 'target_resolution' ? (payload.targetHeight ?? null) : null,
+    smoothingQuality:
+      payload.mode === 'client_data_url' ? (payload.smoothingQuality ?? null) : null,
     clientPayloadSignature: payload.mode === 'client_data_url' ? clientPayloadSignature : null,
   });
   const relationType = buildUpscaleFingerprintRelationType(fingerprint);

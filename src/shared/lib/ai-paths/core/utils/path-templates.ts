@@ -7,7 +7,10 @@ import {
   materializeStarterWorkflowPathConfig,
 } from '../starter-workflows';
 
-export type AiPathTemplate = Pick<AiPathTemplateRegistryEntry, 'templateId' | 'name' | 'description'>;
+export type AiPathTemplate = Pick<
+  AiPathTemplateRegistryEntry,
+  'templateId' | 'name' | 'description'
+>;
 
 export const PATH_TEMPLATES: AiPathTemplate[] = getStarterWorkflowRegistry().map((entry) => ({
   templateId: entry.templateId,

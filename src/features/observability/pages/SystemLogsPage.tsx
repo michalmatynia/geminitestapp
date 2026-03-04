@@ -1,28 +1,15 @@
 'use client';
 
-import {
-  Copy,
-  Link2,
-  SearchIcon,
-  Trash2,
-} from 'lucide-react';
+import { Copy, Link2, SearchIcon, Trash2 } from 'lucide-react';
 import React, { Suspense } from 'react';
 
 import {
   SystemLogsProvider,
   useSystemLogsContext,
 } from '@/features/observability/context/SystemLogsContext';
-import {
-  type SystemLogFilterFormValues,
-} from '@/shared/lib/observability/log-triage-presets';
-import {
-  Button,
-  DynamicFilters,
-  PageLayout,
-  CopyButton,
-  Card,
-  LoadingState,
-} from '@/shared/ui';
+import { type SystemLogFilterFormValues } from '@/shared/lib/observability/log-triage-presets';
+import { Button, PageLayout, CopyButton, Card, LoadingState } from '@/shared/ui';
+import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 
 import { LogDiagnostics } from '../components/LogDiagnostics';
 import { LogMetrics } from '../components/LogMetrics';
@@ -57,10 +44,6 @@ function SystemLogsContent(): React.JSX.Element {
     handleClearLogs,
     clearLogsMutation,
   } = useSystemLogsContext();
-
-  const handleDynamicFilterChange = (key: string, value: string | string[]): void => {
-    handleFilterChange(key, Array.isArray(value) ? (value[0] ?? '') : value);
-  };
 
   const currentFilterValues: SystemLogFilterFormValues = {
     level,
@@ -151,28 +134,15 @@ function SystemLogsContent(): React.JSX.Element {
             <SearchIcon className='size-3.5' />
             Log Filters
           </div>
-          <DynamicFilters
-            fields={filterFields}
+          <FilterPanel
+            filters={filterFields}
             values={currentFilterValues}
-            onChange={handleDynamicFilterChange}
+            onFilterChange={(key, value) => handleFilterChange(key, value as string)}
+            onSearchChange={(val) => handleFilterChange('query', val)}
+            search={query}
             onReset={handleResetFilters}
-            hasActiveFilters={Boolean(
-              level !== 'all' ||
-              query ||
-              source ||
-              service ||
-              method ||
-              statusCode ||
-              requestId ||
-              traceId ||
-              correlationId ||
-              userId ||
-              fingerprint ||
-              category ||
-              fromDate ||
-              toDate
-            )}
-            gridClassName='md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6'
+            showHeader={false}
+            compact
           />
         </Card>
 

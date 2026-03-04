@@ -85,22 +85,26 @@ export type CreateMutation<
   TInput = Omit<T, 'id' | 'createdAt' | 'updatedAt'>,
   TError = Error,
 > = UseMutationResult<T, TError, TInput>;
-export type UpdateMutation<T, TInput = { id: string; data: Partial<T> }, TError = Error> = UseMutationResult<
+export type UpdateMutation<
   T,
-  TError,
-  TInput
->;
+  TInput = { id: string; data: Partial<T> },
+  TError = Error,
+> = UseMutationResult<T, TError, TInput>;
 export type DeleteMutation<TResponse = void, TInput = string, TError = Error> = UseMutationResult<
   TResponse,
   TError,
   TInput
 >;
-export type SaveMutation<T, TInput = { id?: string; data: Partial<T> }, TError = Error> = UseMutationResult<
+export type SaveMutation<
   T,
+  TInput = { id?: string; data: Partial<T> },
+  TError = Error,
+> = UseMutationResult<T, TError, TInput>;
+export type MutationResult<TResponse, TInput, TError = Error> = UseMutationResult<
+  TResponse,
   TError,
   TInput
 >;
-export type MutationResult<TResponse, TInput, TError = Error> = UseMutationResult<TResponse, TError, TInput>;
 export type VoidMutation<TInput, TError = Error> = UseMutationResult<void, TError, TInput>;
 
 /**
@@ -171,7 +175,15 @@ export interface ParseJsonOptions {
 export interface FilterField {
   key: string;
   label: string;
-  type: 'text' | 'search' | 'select' | 'multi-select' | 'date' | 'dateRange' | 'checkbox' | 'number';
+  type:
+    | 'text'
+    | 'search'
+    | 'select'
+    | 'multi-select'
+    | 'date'
+    | 'dateRange'
+    | 'checkbox'
+    | 'number';
   placeholder?: string;
   options?: Array<{ label: string; value: string }>;
   multi?: boolean;

@@ -88,7 +88,9 @@ export const invalidatePriceGroups = async (queryClient: QueryClient): Promise<v
   ]);
 };
 
-export const invalidateProductSettingsCatalogs = async (queryClient: QueryClient): Promise<void> => {
+export const invalidateProductSettingsCatalogs = async (
+  queryClient: QueryClient
+): Promise<void> => {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.catalogs() }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.catalogs() }),

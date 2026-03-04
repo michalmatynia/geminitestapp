@@ -13,10 +13,7 @@ type ApiErrorLike = {
 
 const ERROR_PATTERNS = [
   [/connection|network|timeout|refused|reset|fetch/i, ERROR_CATEGORY.NETWORK],
-  [
-    /auth|login|permission|access|unauthorized|forbidden|jwt|session/i,
-    ERROR_CATEGORY.AUTH,
-  ],
+  [/auth|login|permission|access|unauthorized|forbidden|jwt|session/i, ERROR_CATEGORY.AUTH],
   [/not found/i, ERROR_CATEGORY.VALIDATION],
   [/validation|invalid|missing|required|wrong format|bad request/i, ERROR_CATEGORY.VALIDATION],
   [/database|prisma|mongo|sql|query failed|migration|foreign key/i, ERROR_CATEGORY.DATABASE],

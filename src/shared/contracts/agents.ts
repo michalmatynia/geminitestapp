@@ -17,10 +17,12 @@ export const agentPersonaSchema = namedDtoSchema.extend({
 
 export type AgentPersona = z.infer<typeof agentPersonaSchema>;
 
-export const agentPersonaSettingsSchema = z.object({
-  personaId: z.string().optional(),
-  customInstructions: z.string().optional(),
-}).strict();
+export const agentPersonaSettingsSchema = z
+  .object({
+    personaId: z.string().optional(),
+    customInstructions: z.string().optional(),
+  })
+  .strict();
 
 export type AgentPersonaSettings = z.infer<typeof agentPersonaSettingsSchema>;
 

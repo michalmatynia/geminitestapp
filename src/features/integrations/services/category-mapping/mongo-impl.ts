@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { randomUUID } from 'crypto';
@@ -15,10 +15,10 @@ import {
   CategoryMappingUpdateInput,
 } from '@/shared/contracts/integrations';
 import { notFoundError } from '@/shared/errors/app-error';
-import { 
-  MongoCategoryMappingDoc, 
-  CATEGORY_MAPPING_COLLECTION, 
-  EXTERNAL_CATEGORY_COLLECTION, 
+import {
+  MongoCategoryMappingDoc,
+  CATEGORY_MAPPING_COLLECTION,
+  EXTERNAL_CATEGORY_COLLECTION,
   PRODUCT_CATEGORY_COLLECTION,
   buildMongoIdFilter,
   mapMongoCategoryMappingToRecord,
@@ -27,7 +27,7 @@ import {
   MongoExternalCategoryDoc,
   MongoProductCategoryDoc,
   normalizeInternalCategoryId,
-  UniqueInternalCategoryScope
+  UniqueInternalCategoryScope,
 } from './types';
 
 let mongoCategoryMappingIndexesReady: Promise<void> | null = null;
@@ -75,7 +75,9 @@ const buildMongoUniquenessFilter = (
   const notConditions: Filter<MongoCategoryMappingDoc>[] = [];
   const excludeExternalCategoryId = scope.excludeExternalCategoryId?.trim();
   if (excludeExternalCategoryId) {
-    notConditions.push({ externalCategoryId: excludeExternalCategoryId } as Filter<MongoCategoryMappingDoc>);
+    notConditions.push({
+      externalCategoryId: excludeExternalCategoryId,
+    } as Filter<MongoCategoryMappingDoc>);
   }
   const excludeId = scope.excludeId?.trim();
   if (excludeId) {
@@ -201,7 +203,13 @@ export const mongoCategoryMappingImpl = {
         .find({
           connectionId,
           $or: [
-            { _id: { $in: externalCategoryIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id)) } },
+            {
+              _id: {
+                $in: externalCategoryIds
+                  .filter((id) => ObjectId.isValid(id))
+                  .map((id) => new ObjectId(id)),
+              },
+            },
             { externalId: { $in: externalCategoryIds } },
           ],
         } as any)
@@ -209,13 +217,20 @@ export const mongoCategoryMappingImpl = {
       db
         .collection<MongoProductCategoryDoc>(PRODUCT_CATEGORY_COLLECTION)
         .find({
-          _id: { $in: internalCategoryIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id)) },
+          _id: {
+            $in: internalCategoryIds
+              .filter((id) => ObjectId.isValid(id))
+              .map((id) => new ObjectId(id)),
+          },
         } as any)
         .toArray(),
     ]);
 
     const externalMap = new Map(
-      externalCategories.map((c) => [c.externalId || (c._id as any).toString(), mapMongoExternalCategory(c)])
+      externalCategories.map((c) => [
+        c.externalId || (c._id as any).toString(),
+        mapMongoExternalCategory(c),
+      ])
     );
     const internalMap = new Map(
       internalCategories.map((c) => [(c._id as any).toString(), mapMongoInternalCategory(c)])

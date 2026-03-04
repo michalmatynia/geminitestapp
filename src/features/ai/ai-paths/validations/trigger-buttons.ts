@@ -28,8 +28,7 @@ export type {
   AiTriggerButtonReorderPayload,
 } from '@/shared/contracts/ai-trigger-buttons';
 
-export type AiTriggerButtonParseReportReason =
-  | 'ok';
+export type AiTriggerButtonParseReportReason = 'ok';
 
 export type AiTriggerButtonsRawParseReport = {
   records: AiTriggerButtonRecord[];
@@ -95,7 +94,9 @@ const toCanonicalAiTriggerButtonRecord = (
   };
 };
 
-export const parseAiTriggerButtonsRawWithReport = (raw: string | null): AiTriggerButtonsRawParseReport => {
+export const parseAiTriggerButtonsRawWithReport = (
+  raw: string | null
+): AiTriggerButtonsRawParseReport => {
   if (!raw) {
     return {
       records: [],

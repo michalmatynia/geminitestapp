@@ -1,9 +1,9 @@
-import { 
-  type FolderTreeInstance, 
-  folderTreeInstanceValues, 
+import {
+  type FolderTreeInstance,
+  folderTreeInstanceValues,
   folderTreeSettingsMetaByInstance,
   type FolderTreeProfileV2,
-  type FolderTreeNestingRuleV2
+  type FolderTreeNestingRuleV2,
 } from '@/shared/utils/folder-tree-profiles-v2';
 import { ICON_LIBRARY, type IconLibraryItem } from '@/shared/lib/icons';
 
@@ -18,7 +18,11 @@ export const INSTANCE_META: Array<{
   ...folderTreeSettingsMetaByInstance[id],
 }));
 
-export type NestingRuleKey = 'folder_to_folder' | 'file_to_folder' | 'folder_to_root' | 'file_to_root';
+export type NestingRuleKey =
+  | 'folder_to_folder'
+  | 'file_to_folder'
+  | 'folder_to_root'
+  | 'file_to_root';
 
 export const NESTING_RULE_CONFIG: Record<
   NestingRuleKey,
@@ -90,7 +94,10 @@ export const toKindList = (value: string): string[] =>
 
 export const listToValue = (values: string[]): string => values.join(', ');
 
-export const normalizeKindList = (values: string[] | null | undefined, fallback: string[]): string[] => {
+export const normalizeKindList = (
+  values: string[] | null | undefined,
+  fallback: string[]
+): string[] => {
   if (!Array.isArray(values) || values.length === 0) return [...fallback];
   const normalized = new Set<string>();
   values.forEach((entry: string) => {
@@ -101,7 +108,8 @@ export const normalizeKindList = (values: string[] | null | undefined, fallback:
   return normalized.size > 0 ? Array.from(normalized) : [...fallback];
 };
 
-export const toTitleLabel = (value: string): string => `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+export const toTitleLabel = (value: string): string =>
+  `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
 
 export const findRuleIndex = (profile: FolderTreeProfileV2, key: NestingRuleKey): number => {
   const config = NESTING_RULE_CONFIG[key];

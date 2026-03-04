@@ -216,7 +216,8 @@ describe('GenerationToolbar analysis integration section UX', () => {
     const onOpenSharedDetectionSettings = vi.fn();
 
     renderAutoScaler({
-      analysisConfigMismatchMessage: 'Current controls differ from analysis plan: padding, detection.',
+      analysisConfigMismatchMessage:
+        'Current controls differ from analysis plan: padding, detection.',
       onOpenSharedDetectionSettings,
     });
 

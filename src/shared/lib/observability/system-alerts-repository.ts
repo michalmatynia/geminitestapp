@@ -58,4 +58,3 @@ export const getSystemAlerts = async (): Promise<Alert[]> => {
     return [];
   }
 };
-

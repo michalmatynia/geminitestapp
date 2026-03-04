@@ -3,7 +3,10 @@ import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { useCaseResolverStateViewState } from '@/features/case-resolver/hooks/useCaseResolverState.view-state';
-import { createCaseResolverFile, parseCaseResolverWorkspace } from '@/features/case-resolver/settings';
+import {
+  createCaseResolverFile,
+  parseCaseResolverWorkspace,
+} from '@/features/case-resolver/settings';
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
 describe('useCaseResolverStateViewState', () => {

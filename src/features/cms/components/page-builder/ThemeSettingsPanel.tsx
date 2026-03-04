@@ -168,7 +168,7 @@ function ThemeSettingsPanelContent({
         }
       }
     },
-  [theme, themePresetOptions, update]
+    [theme, themePresetOptions, update]
   );
 
   return (

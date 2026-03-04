@@ -123,14 +123,14 @@ export const validateExtractionWithLLM = async (
       missingCount,
       evidence: Array.isArray(parsed?.['evidence'])
         ? (parsed?.['evidence'] as unknown[]).filter(
-          (item: unknown): item is { item: string; snippet: string } =>
-            typeof item === 'object' &&
+            (item: unknown): item is { item: string; snippet: string } =>
+              typeof item === 'object' &&
               item !== null &&
               'item' in item &&
               typeof (item as Record<string, unknown>)['item'] === 'string' &&
               'snippet' in item &&
               typeof (item as Record<string, unknown>)['snippet'] === 'string'
-        )
+          )
         : [],
     };
   } catch (error) {
@@ -164,7 +164,7 @@ export const normalizeExtractionItemsWithLLM = async (
       model: normalizationModel,
       temperature: 0.1,
       systemPrompt:
-        'You clean extracted outputs. Return only JSON with key \'items\' as an array of cleaned strings. Remove hashes, IDs, boilerplate, and duplicates. Keep original ordering where possible. For emails, return lowercase valid emails only.',
+        "You clean extracted outputs. Return only JSON with key 'items' as an array of cleaned strings. Remove hashes, IDs, boilerplate, and duplicates. Keep original ordering where possible. For emails, return lowercase valid emails only.",
       userContent: JSON.stringify({
         prompt,
         extractionType,
@@ -196,7 +196,7 @@ export const inferSelectorsFromLLM = async (
       model: resolvedModel,
       temperature: 0.2,
       systemPrompt:
-        'You are a DOM selector expert. Return only JSON with a \'selectors\' array. Use concise, robust CSS selectors.',
+        "You are a DOM selector expert. Return only JSON with a 'selectors' array. Use concise, robust CSS selectors.",
       userContent: JSON.stringify({
         task,
         domTextSample,
@@ -205,8 +205,8 @@ export const inferSelectorsFromLLM = async (
     });
     const selectors = Array.isArray(parsed?.['selectors'])
       ? (parsed?.['selectors'] as unknown[]).filter(
-        (selector: unknown) => typeof selector === 'string'
-      )
+          (selector: unknown) => typeof selector === 'string'
+        )
       : [];
     if (log) {
       await log('info', 'LLM selector inference completed.', {
@@ -276,13 +276,13 @@ export const buildExtractionPlan = async (
     });
     const primarySelectors = Array.isArray(parsed?.['primarySelectors'])
       ? (parsed?.['primarySelectors'] as unknown[]).filter(
-        (selector: unknown) => typeof selector === 'string'
-      )
+          (selector: unknown) => typeof selector === 'string'
+        )
       : [];
     const fallbackSelectors = Array.isArray(parsed?.['fallbackSelectors'])
       ? (parsed?.['fallbackSelectors'] as unknown[]).filter(
-        (selector: unknown) => typeof selector === 'string'
-      )
+          (selector: unknown) => typeof selector === 'string'
+        )
       : [];
     const plan = {
       target: typeof parsed?.['target'] === 'string' ? parsed?.['target'] : null,
@@ -367,8 +367,8 @@ export const buildFailureRecoveryPlan = async (
     });
     const selectors = Array.isArray(parsed?.['selectors'])
       ? (parsed?.['selectors'] as unknown[]).filter(
-        (selector: unknown) => typeof selector === 'string'
-      )
+          (selector: unknown) => typeof selector === 'string'
+        )
       : [];
     const listingUrls = Array.isArray(parsed?.['listingUrls'])
       ? (parsed?.['listingUrls'] as unknown[]).filter((item: unknown) => typeof item === 'string')

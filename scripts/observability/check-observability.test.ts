@@ -70,4 +70,70 @@ describe('runObservabilityCheck logger enforcement', () => {
     expect(report.status).toBe('passed');
     expect(report.logger.totalViolations).toBe(0);
   });
+
+  it('fails and provides an error comment when runtime logs contain errors', () => {
+    const root = createTempRoot();
+    writeSource(
+      root,
+      'src/good-log.ts',
+      "import { logger } from '@/shared/utils/logger';\nlogger.info('[observability.check] startup complete');\n"
+    );
+    writeSource(
+      root,
+      'logs/app.log',
+      '[2026-03-04T01:00:00.000Z] [INFO] Service booted\n[2026-03-04T01:00:10.000Z] [ERROR] Database connection failed\n'
+    );
+
+    const report = runObservabilityCheck({
+      mode: 'check',
+      root,
+      srcDir: 'src',
+      apiDir: 'src/app/api',
+      logsDir: 'logs',
+      checkLogFile: 'logs/quality-check.log',
+      errorLogFile: 'logs/quality-check.error.log',
+      allowPartial: true,
+    });
+
+    expect(report.status).toBe('failed');
+    expect(report.runtimeLogs.totalErrors).toBe(1);
+    expect(report.runtimeLogs.errors[0]).toMatchObject({
+      file: 'logs/app.log',
+      line: 2,
+    });
+    expect(report.comment).toContain('Error discovered in runtime logs');
+    expect(report.logArtifacts.checkLogFile).toBe('logs/quality-check.log');
+    expect(report.logArtifacts.errorLogFile).toBe('logs/quality-check.error.log');
+    expect(fs.existsSync(path.join(root, 'logs/quality-check.log'))).toBe(true);
+    expect(fs.existsSync(path.join(root, 'logs/quality-check.error.log'))).toBe(true);
+    const errorLogContents = fs.readFileSync(path.join(root, 'logs/quality-check.error.log'), 'utf8');
+    expect(errorLogContents).toContain('Database connection failed');
+  });
+
+  it('keeps status passed when runtime logs are clean and still appends check log', () => {
+    const root = createTempRoot();
+    writeSource(
+      root,
+      'src/good-log.ts',
+      "import { logger } from '@/shared/utils/logger';\nlogger.info('[observability.check] startup complete');\n"
+    );
+    writeSource(root, 'logs/app.log', '[2026-03-04T01:00:00.000Z] [INFO] Service booted\n');
+
+    const report = runObservabilityCheck({
+      mode: 'check',
+      root,
+      srcDir: 'src',
+      apiDir: 'src/app/api',
+      logsDir: 'logs',
+      checkLogFile: 'logs/quality-check.log',
+      errorLogFile: 'logs/quality-check.error.log',
+      allowPartial: true,
+    });
+
+    expect(report.status).toBe('passed');
+    expect(report.runtimeLogs.totalErrors).toBe(0);
+    expect(report.comment).toBeNull();
+    expect(fs.existsSync(path.join(root, 'logs/quality-check.log'))).toBe(true);
+    expect(fs.existsSync(path.join(root, 'logs/quality-check.error.log'))).toBe(false);
+  });
 });

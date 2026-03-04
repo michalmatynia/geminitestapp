@@ -2,7 +2,10 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useCaseResolverPromptExploder } from '@/features/case-resolver/hooks/useCaseResolverState.prompt-exploder-actions';
-import { createCaseResolverFile, createDefaultCaseResolverWorkspace } from '@/features/case-resolver/settings';
+import {
+  createCaseResolverFile,
+  createDefaultCaseResolverWorkspace,
+} from '@/features/case-resolver/settings';
 import type { CaseResolverPromptExploderPayloadReadState } from '@/features/case-resolver/hooks/useCaseResolverState.prompt-exploder-sync';
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
@@ -19,11 +22,12 @@ const applyPayloadMock = vi.fn();
 vi.mock('@/features/case-resolver/hooks/useCaseResolverState.prompt-exploder-sync', () => ({
   discardPendingCaseResolverPromptExploderPayload: vi.fn(() => null),
   readCaseResolverPromptExploderPayloadState: vi.fn(() => readPayloadStateRef.current),
-  resolvePromptExploderPendingPayloadIdentity: vi.fn((payload: { transferId?: string | null; createdAt?: string | null }) =>
-    `${payload.transferId ?? 'no-transfer'}|${payload.createdAt ?? 'no-created-at'}`
+  resolvePromptExploderPendingPayloadIdentity: vi.fn(
+    (payload: { transferId?: string | null; createdAt?: string | null }) =>
+      `${payload.transferId ?? 'no-transfer'}|${payload.createdAt ?? 'no-created-at'}`
   ),
-  applyPendingPromptExploderPayloadToCaseResolver: vi.fn(
-    (...args: unknown[]) => applyPayloadMock(...args)
+  applyPendingPromptExploderPayloadToCaseResolver: vi.fn((...args: unknown[]) =>
+    applyPayloadMock(...args)
   ),
 }));
 
@@ -39,13 +43,7 @@ const createWorkspaceWithDocument = (documentId: string): CaseResolverWorkspace 
   };
 };
 
-const createPendingPayload = ({
-  fileId,
-  sessionId,
-}: {
-  fileId: string;
-  sessionId: string;
-}) =>
+const createPendingPayload = ({ fileId, sessionId }: { fileId: string; sessionId: string }) =>
   ({
     target: 'case-resolver',
     prompt: 'Segmented text',

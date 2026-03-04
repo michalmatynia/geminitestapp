@@ -1,40 +1,30 @@
- 
- 
- 
- 
- 
- 
-
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { ImageExportLogger } from '../base-exporter-images';
-import { 
-  toStringValue, 
-  toTrimmedString, 
+import {
+  toStringValue,
+  toTrimmedString,
   parseParameterSourceKey,
-  IMAGE_TARGET_FIELDS
+  IMAGE_TARGET_FIELDS,
 } from './template-helpers';
-import { 
-  getProductParameterValue, 
-  getProductCategoryId, 
-  getProductProducerValues, 
-  getProductTagValues 
+import {
+  getProductParameterValue,
+  getProductCategoryId,
+  getProductProducerValues,
+  getProductTagValues,
 } from './product-resolvers';
-import { 
-  ProducerNameLookup, 
-  ProducerExternalIdLookup, 
-  TagNameLookup, 
+import {
+  ProducerNameLookup,
+  ProducerExternalIdLookup,
+  TagNameLookup,
   TagExternalIdLookup,
   getProducerNameFromLookup,
   getProducerExternalIdFromLookup,
   getTagNameFromLookup,
   getTagExternalIdFromLookup,
   buildProducerNameToExternalIdLookup,
-  buildTagNameToExternalIdLookup
+  buildTagNameToExternalIdLookup,
 } from './lookup-resolvers';
-import { 
-  getAllImageUrls, 
-  getImageSlotUrl 
-} from '../base-exporter-images';
+import { getAllImageUrls, getImageSlotUrl } from '../base-exporter-images';
 
 export const getProductValue = (
   product: ProductWithImages,
@@ -83,7 +73,18 @@ export const getProductValue = (
     return producerIds.length > 0 ? producerIds : producerNames;
   }
 
-  if (normalized === 'tagids' || normalized === 'tag_ids' || normalized === 'tagid' || normalized === 'tag_id' || normalized === 'tags' || normalized === 'tag' || normalized === 'tagnames' || normalized === 'tag_names' || normalized === 'tagname' || normalized === 'tag_name') {
+  if (
+    normalized === 'tagids' ||
+    normalized === 'tag_ids' ||
+    normalized === 'tagid' ||
+    normalized === 'tag_id' ||
+    normalized === 'tags' ||
+    normalized === 'tag' ||
+    normalized === 'tagnames' ||
+    normalized === 'tag_names' ||
+    normalized === 'tagname' ||
+    normalized === 'tag_name'
+  ) {
     const { tagIds, tagNames } = getProductTagValues(
       product,
       tagNameById,

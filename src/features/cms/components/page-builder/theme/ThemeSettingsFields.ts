@@ -20,46 +20,46 @@ export const getFieldsForSection = (
         { key: 'enableAnimations', label: 'Enable animations', type: 'checkbox' },
         ...(theme.enableAnimations
           ? ([
-            {
-              key: 'animationDuration',
-              label: 'Duration',
-              type: 'range',
-              min: 100,
-              max: 1000,
-              suffix: 'ms',
-            },
-            {
-              key: 'animationEasing',
-              label: 'Easing',
-              type: 'select',
-              options: [
-                { label: 'Ease out', value: 'ease-out' },
-                { label: 'Ease in-out', value: 'ease-in-out' },
-                { label: 'Ease in', value: 'ease-in' },
-                { label: 'Linear', value: 'linear' },
-                { label: 'Spring', value: 'cubic-bezier(.68,-0.55,.27,1.55)' },
-              ],
-            },
-            { key: 'scrollReveal', label: 'Reveal sections on scroll', type: 'checkbox' },
-            {
-              key: 'hoverEffect',
-              label: 'Hover effect',
-              type: 'select',
-              options: [
-                { label: 'Vertical lift', value: 'vertical-lift' },
-                { label: '3D lift', value: 'lift-3d' },
-              ],
-            },
-            {
-              key: 'hoverScale',
-              label: 'Hover scale',
-              type: 'range',
-              min: 1,
-              max: 1.2,
-              step: 0.01,
-              suffix: 'x',
-            },
-          ] as SettingsField<ThemeSettings>[])
+              {
+                key: 'animationDuration',
+                label: 'Duration',
+                type: 'range',
+                min: 100,
+                max: 1000,
+                suffix: 'ms',
+              },
+              {
+                key: 'animationEasing',
+                label: 'Easing',
+                type: 'select',
+                options: [
+                  { label: 'Ease out', value: 'ease-out' },
+                  { label: 'Ease in-out', value: 'ease-in-out' },
+                  { label: 'Ease in', value: 'ease-in' },
+                  { label: 'Linear', value: 'linear' },
+                  { label: 'Spring', value: 'cubic-bezier(.68,-0.55,.27,1.55)' },
+                ],
+              },
+              { key: 'scrollReveal', label: 'Reveal sections on scroll', type: 'checkbox' },
+              {
+                key: 'hoverEffect',
+                label: 'Hover effect',
+                type: 'select',
+                options: [
+                  { label: 'Vertical lift', value: 'vertical-lift' },
+                  { label: '3D lift', value: 'lift-3d' },
+                ],
+              },
+              {
+                key: 'hoverScale',
+                label: 'Hover scale',
+                type: 'range',
+                min: 1,
+                max: 1.2,
+                step: 0.01,
+                suffix: 'x',
+              },
+            ] as SettingsField<ThemeSettings>[])
           : []),
       ];
 
@@ -619,9 +619,9 @@ export const getFieldsForSection = (
         { key: 'searchShowSuggestions', label: 'Enable search suggestions', type: 'checkbox' },
         ...(theme.searchShowSuggestions
           ? ([
-            { key: 'searchShowVendor', label: 'Show product vendor', type: 'checkbox' },
-            { key: 'searchShowPrice', label: 'Show product price', type: 'checkbox' },
-          ] as SettingsField<ThemeSettings>[])
+              { key: 'searchShowVendor', label: 'Show product vendor', type: 'checkbox' },
+              { key: 'searchShowPrice', label: 'Show product price', type: 'checkbox' },
+            ] as SettingsField<ThemeSettings>[])
           : []),
         { key: 'searchMaxResults', label: 'Max results', type: 'number', min: 3, max: 20 },
       ];
@@ -685,21 +685,21 @@ export const getFieldsForSection = (
         { key: 'cartEmptyText', label: 'Empty cart text', type: 'text' },
         ...(theme.cartStyle === 'drawer'
           ? ([
-            {
-              key: 'cartDrawerShowWhenEmpty',
-              label: 'Visible when cart drawer is empty',
-              type: 'checkbox',
-            },
-            {
-              key: 'cartDrawerColorScheme',
-              label: 'Color scheme',
-              type: 'select',
-              options: theme.colorSchemes.map((scheme: ColorScheme) => ({
-                label: scheme.name,
-                value: scheme.id,
-              })),
-            },
-          ] as SettingsField<ThemeSettings>[])
+              {
+                key: 'cartDrawerShowWhenEmpty',
+                label: 'Visible when cart drawer is empty',
+                type: 'checkbox',
+              },
+              {
+                key: 'cartDrawerColorScheme',
+                label: 'Color scheme',
+                type: 'select',
+                options: theme.colorSchemes.map((scheme: ColorScheme) => ({
+                  label: scheme.name,
+                  value: scheme.id,
+                })),
+              },
+            ] as SettingsField<ThemeSettings>[])
           : []),
       ];
 

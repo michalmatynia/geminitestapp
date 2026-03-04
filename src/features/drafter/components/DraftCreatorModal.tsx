@@ -18,8 +18,7 @@ export function DraftCreatorModal(): React.JSX.Element | null {
   } = useDrafterContext();
 
   const { data: drafts = [] } = useDraftQueries();
-  const editingDraft =
-    drafts.find((d: ProductDraft) => d.id === editingDraftId) ?? null;
+  const editingDraft = drafts.find((d: ProductDraft) => d.id === editingDraftId) ?? null;
 
   const [isDraftActive, setIsDraftActive] = useState<boolean>(true);
 

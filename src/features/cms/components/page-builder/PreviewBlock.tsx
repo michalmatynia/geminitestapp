@@ -8,11 +8,7 @@ import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
 import type { GsapAnimationConfig } from '@/features/gsap';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
-import type {
-  SectionInstance,
-  BlockInstance,
-  PreviewBlockItemProps,
-} from '@/shared/contracts/cms';
+import type { SectionInstance, BlockInstance, PreviewBlockItemProps } from '@/shared/contracts/cms';
 import { Button, Card } from '@/shared/ui';
 
 import { SectionRenderer as FrontendSectionRenderer } from '../frontend/CmsPageRenderer';

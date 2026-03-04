@@ -1,7 +1,4 @@
-import {
-  type ParsedPathMeta,
-  type ParsedPathConfig,
-} from './settings-store.constants';
+import { type ParsedPathMeta, type ParsedPathConfig } from './settings-store.constants';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { parseAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
 
@@ -119,8 +116,6 @@ export const preservePathConfigFlagsOnSeed = (
   }
 };
 
-export const parseTriggerButtons = (
-  raw: string | undefined
-): AiTriggerButtonRecord[] => {
+export const parseTriggerButtons = (raw: string | undefined): AiTriggerButtonRecord[] => {
   return parseAiTriggerButtonsRaw(raw ?? null);
 };

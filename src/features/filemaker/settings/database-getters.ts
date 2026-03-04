@@ -1,8 +1,8 @@
 import { validationError } from '@/shared/errors/app-error';
-import { 
-  FilemakerDatabase, 
-  FilemakerAddress, 
-  FilemakerAddressOwnerKind, 
+import {
+  FilemakerDatabase,
+  FilemakerAddress,
+  FilemakerAddressOwnerKind,
   FilemakerAddressLink,
   FilemakerPhoneNumber,
   FilemakerPhoneNumberLink,
@@ -11,12 +11,14 @@ import {
   FilemakerEvent,
   FilemakerEventOrganizationLink,
   FilemakerOrganization,
-  FilemakerPerson
+  FilemakerPerson,
 } from '../types';
 import { normalizeString } from '../filemaker-settings.helpers';
 import { normalizeFilemakerDatabase } from '../filemaker-settings.database';
 
-const parseFilemakerDatabasePayload = (raw: string | null | undefined): FilemakerDatabase | null => {
+const parseFilemakerDatabasePayload = (
+  raw: string | null | undefined
+): FilemakerDatabase | null => {
   if (typeof raw !== 'string') return null;
   const trimmedRaw = raw.trim();
   if (!trimmedRaw) return null;

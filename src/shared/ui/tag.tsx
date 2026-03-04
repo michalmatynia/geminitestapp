@@ -38,7 +38,9 @@ export function Tag({
         className
       )}
       style={color ? { backgroundColor: color } : undefined}
-      icon={dot ? <span className='size-1.5 rounded-full bg-current' aria-hidden='true' /> : undefined}
+      icon={
+        dot ? <span className='size-1.5 rounded-full bg-current' aria-hidden='true' /> : undefined
+      }
     >
       {label}
     </Badge>

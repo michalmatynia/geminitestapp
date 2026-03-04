@@ -1,4 +1,3 @@
- 
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { type Edge as AiEdge, type AiNode, type NodeDefinition } from '@/shared/contracts/ai-paths';
 import {

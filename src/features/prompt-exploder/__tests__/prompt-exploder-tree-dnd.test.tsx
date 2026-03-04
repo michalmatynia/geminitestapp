@@ -132,7 +132,9 @@ const createSubsection = (
 });
 
 const getLatestViewportProps = (): FolderTreeViewportV2Props => {
-  const latestCall = viewportPropsMock.mock.calls.at(-1)?.[0] as FolderTreeViewportV2Props | undefined;
+  const latestCall = viewportPropsMock.mock.calls.at(-1)?.[0] as
+    | FolderTreeViewportV2Props
+    | undefined;
   if (!latestCall) {
     throw new Error('Expected FolderTreeViewportV2 to be rendered.');
   }

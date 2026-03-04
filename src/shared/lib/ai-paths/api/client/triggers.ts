@@ -1,14 +1,8 @@
-import { 
-  apiPost, 
-  apiPatch,
-  apiDelete,
-  apiFetch,
-  ApiResponse 
-} from './base';
-import type { 
+import { apiPost, apiPatch, apiDelete, apiFetch, ApiResponse } from './base';
+import type {
   AiTriggerButtonRecord,
   AiTriggerButtonCreatePayload,
-  AiTriggerButtonUpdatePayload
+  AiTriggerButtonUpdatePayload,
 } from '@/shared/contracts/ai-trigger-buttons';
 
 export async function fetchTriggerButtons(args?: {
@@ -24,11 +18,16 @@ export async function fetchTriggerButtons(args?: {
   );
 }
 
-export async function createTriggerButton(payload: AiTriggerButtonCreatePayload): Promise<ApiResponse<AiTriggerButtonRecord>> {
+export async function createTriggerButton(
+  payload: AiTriggerButtonCreatePayload
+): Promise<ApiResponse<AiTriggerButtonRecord>> {
   return apiPost<AiTriggerButtonRecord>('/api/ai-paths/trigger-buttons', payload);
 }
 
-export async function updateTriggerButton(id: string, payload: AiTriggerButtonUpdatePayload): Promise<ApiResponse<AiTriggerButtonRecord>> {
+export async function updateTriggerButton(
+  id: string,
+  payload: AiTriggerButtonUpdatePayload
+): Promise<ApiResponse<AiTriggerButtonRecord>> {
   return apiPatch<AiTriggerButtonRecord>(`/api/ai-paths/trigger-buttons/${id}`, payload);
 }
 

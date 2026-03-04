@@ -5,12 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAiPathsSettingsQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
-import {
-  LEGACY_PATH_INDEX_KEY,
-  PATH_CONFIG_PREFIX,
-  PATH_INDEX_KEY,
-  triggerButtonsApi,
-} from '@/shared/lib/ai-paths';
+import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, triggerButtonsApi } from '@/shared/lib/ai-paths';
 import {
   aiTriggerButtonCreateSchema,
   type AiTriggerButtonCreatePayload,
@@ -104,7 +99,7 @@ const extractTriggerButtonPathUsageMap = (
   const map = new Map<string, string>(settings.map((item) => [item.key, item.value]));
   const usageByButtonId = new Map<string, TriggerButtonPathUsage[]>();
   const indexNameById = new Map<string, string>();
-  const indexRaw = map.get(PATH_INDEX_KEY) ?? map.get(LEGACY_PATH_INDEX_KEY);
+  const indexRaw = map.get(PATH_INDEX_KEY);
   if (indexRaw) {
     try {
       const parsedIndex = JSON.parse(indexRaw) as unknown;
@@ -233,9 +228,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     AiTriggerButtonCreatePayload
   >({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.create'),
-    mutationFn: async (
-      payload: AiTriggerButtonCreatePayload
-    ): Promise<AiTriggerButtonRecord> => {
+    mutationFn: async (payload: AiTriggerButtonCreatePayload): Promise<AiTriggerButtonRecord> => {
       const result = await triggerButtonsApi.create(payload);
       if (!result.ok) throw new Error(result.error);
       return result.data;
@@ -670,7 +663,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
               name: entry.name,
             })
           ),
-        } as AiTriggerButtonRecord)
+        }) as AiTriggerButtonRecord
     );
   }, [triggerButtonsQuery.data, triggerButtonPathUsageMap]);
 

@@ -9,15 +9,8 @@ import { Pagination, Alert } from '@/shared/ui';
 const PAGE_SIZES = [10, 25, 50];
 
 export function JobQueueList(): React.JSX.Element {
-  const {
-    runs,
-    total,
-    page,
-    setPage,
-    pageSize,
-    setPageSize,
-    runsQueryError,
-  } = useJobQueueContext();
+  const { runs, total, page, setPage, pageSize, setPageSize, runsQueryError } =
+    useJobQueueContext();
 
   const parentRef = useRef<HTMLDivElement>(null);
 

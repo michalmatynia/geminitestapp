@@ -10,7 +10,9 @@ const isAiPathsEnabled = async (): Promise<boolean> => {
   return brain.enabled;
 };
 
-export const getAiPathsEnabledCached = async (options?: { bypassCache?: boolean }): Promise<boolean> => {
+export const getAiPathsEnabledCached = async (options?: {
+  bypassCache?: boolean;
+}): Promise<boolean> => {
   const now = Date.now();
   const bypassCache = options?.bypassCache === true;
   if (!bypassCache && aiPathsEnabledCache && aiPathsEnabledCache.expiresAt > now) {

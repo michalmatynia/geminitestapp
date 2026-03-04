@@ -8,9 +8,7 @@ import {
   startProductAiJobQueue,
 } from '@/features/jobs/server';
 import { ActivityTypes } from '@/shared/constants/observability';
-import {
-  databaseSyncRequestSchema as syncSchema,
-} from '@/shared/contracts/database';
+import { databaseSyncRequestSchema as syncSchema } from '@/shared/contracts/database';
 import type { ProductAiJobTypeDto as ProductAiJobType } from '@/shared/contracts/jobs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, forbiddenError } from '@/shared/errors/app-error';

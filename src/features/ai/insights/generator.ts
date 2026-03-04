@@ -2,10 +2,6 @@ import 'server-only';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
- 
- 
- 
- 
 
 import {
   getRuntimeAnalyticsSummary,
@@ -33,23 +29,20 @@ import {
   DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
 } from './settings';
 
-import { 
-  readInsightSettingValue, 
-  parseBooleanSetting, 
+import {
+  readInsightSettingValue,
+  parseBooleanSetting,
   parseNumberSetting,
-  readSettingWithFallback 
+  readSettingWithFallback,
 } from './generator/settings-service';
-import { 
-  getClient, 
-  isAnthropicModel, 
-  isGeminiModel, 
-  runAnthropicChat, 
-  runGeminiChat 
+import {
+  getClient,
+  isAnthropicModel,
+  isGeminiModel,
+  runAnthropicChat,
+  runGeminiChat,
 } from './generator/llm-client';
-import { 
-  sanitizeEvents, 
-  stripCodeFence, 
-} from './generator/utils';
+import { sanitizeEvents, stripCodeFence } from './generator/utils';
 
 const AI_INSIGHTS_MODEL_MAX_RETRIES = Math.max(
   0,
@@ -224,11 +217,11 @@ export async function generateAiInsightByType(
 
   if (type === 'analytics') {
     const summary = await getAnalyticsSummary({ from: oneDayAgo, to: now });
-    const eventsResult = await listAnalyticsEvents({ 
-      from: oneDayAgo, 
-      to: now, 
-      limit: 50, 
-      skip: 0 
+    const eventsResult = await listAnalyticsEvents({
+      from: oneDayAgo,
+      to: now,
+      limit: 50,
+      skip: 0,
     });
     const events = eventsResult.events;
     systemPrompt =

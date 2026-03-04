@@ -10,7 +10,7 @@ export async function verifySkuUniqueness(args: {
   inventoryId: string;
 }) {
   const { allowDuplicateSku, listingExternalId, sku, token, inventoryId } = args;
-  
+
   if (!allowDuplicateSku && !listingExternalId && sku) {
     await ErrorSystem.logInfo('[export-to-base] Checking if SKU exists in Base.com', {
       sku,

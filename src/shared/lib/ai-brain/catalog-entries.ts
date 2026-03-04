@@ -1,7 +1,4 @@
-import type {
-  AiBrainCatalogEntry,
-  AiBrainCatalogPool,
-} from '@/shared/contracts/ai-brain';
+import type { AiBrainCatalogEntry, AiBrainCatalogPool } from '@/shared/contracts/ai-brain';
 
 export const BRAIN_CATALOG_POOL_VALUES: readonly AiBrainCatalogPool[] = [
   'modelPresets',
@@ -64,7 +61,9 @@ const createEmptyCatalogArrays = (): BrainCatalogArrays => ({
   playwrightPersonas: [],
 });
 
-export const entriesToCatalogArrays = (entries: ReadonlyArray<AiBrainCatalogEntry>): BrainCatalogArrays => {
+export const entriesToCatalogArrays = (
+  entries: ReadonlyArray<AiBrainCatalogEntry>
+): BrainCatalogArrays => {
   const arrays = createEmptyCatalogArrays();
   sanitizeCatalogEntries(entries).forEach((entry) => {
     arrays[entry.pool].push(entry.value);
@@ -72,11 +71,9 @@ export const entriesToCatalogArrays = (entries: ReadonlyArray<AiBrainCatalogEntr
   return arrays;
 };
 
-export const catalogToEntries = (
-  catalog: {
-    entries?: ReadonlyArray<AiBrainCatalogEntry> | null | undefined;
-  }
-): AiBrainCatalogEntry[] => {
+export const catalogToEntries = (catalog: {
+  entries?: ReadonlyArray<AiBrainCatalogEntry> | null | undefined;
+}): AiBrainCatalogEntry[] => {
   return sanitizeCatalogEntries(Array.isArray(catalog.entries) ? catalog.entries : []);
 };
 

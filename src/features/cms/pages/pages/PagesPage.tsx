@@ -28,7 +28,10 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-import { normalizePageSlugLinks, type NormalizedPageSlugLink } from '@/features/cms/utils/slug-utils';
+import {
+  normalizePageSlugLinks,
+  type NormalizedPageSlugLink,
+} from '@/features/cms/utils/slug-utils';
 
 type StatusFilter = PageStatus | 'all';
 type StatusFilterOption = { label: string; value: StatusFilter };
@@ -69,9 +72,7 @@ export default function PagesPage(): React.ReactNode {
     }
     if (search.trim()) {
       const q = search.toLowerCase().trim();
-      result = result.filter((page: PageSummary) => 
-        page.name.toLowerCase().includes(q)
-      );
+      result = result.filter((page: PageSummary) => page.name.toLowerCase().includes(q));
     }
     return result;
   }, [pages, statusFilter, search]);

@@ -141,9 +141,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
       )}
 
       {settingsValidationErrors.length > 0 && (
-        <Alert variant='error'>
-          {settingsValidationErrors[0]}
-        </Alert>
+        <Alert variant='error'>{settingsValidationErrors[0]}</Alert>
       )}
     </>
   );
@@ -208,9 +206,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
           description={`Applies to ${selectedDatabase.label} only.`}
           checked={activeTargetEnabledDraft}
           disabled={
-            isBackupScheduleSaving ||
-            !schedulerEnabledDraft ||
-            settingsValidationErrors.length > 0
+            isBackupScheduleSaving || !schedulerEnabledDraft || settingsValidationErrors.length > 0
           }
           onCheckedChange={handleActiveTargetEnabledDraftChange}
           className='border-border/60 bg-card/20'

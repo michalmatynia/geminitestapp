@@ -1,23 +1,9 @@
 'use client';
 
- 
- 
- 
- 
- 
- 
-
 import React, { useCallback, useRef, useEffect } from 'react';
-import { 
-  MasterFolderTreeController, 
-  MasterTreeId 
-} from '@/shared/contracts/master-folder-tree';
-import { 
-  ResolvedFolderTreeMultiSelectConfig 
-} from '@/shared/utils/folder-tree-profiles-v2';
-import { 
-  resolveNextSelectedNodeIds 
-} from '../operations/selection';
+import { MasterFolderTreeController, MasterTreeId } from '@/shared/contracts/master-folder-tree';
+import { ResolvedFolderTreeMultiSelectConfig } from '@/shared/utils/folder-tree-profiles-v2';
+import { resolveNextSelectedNodeIds } from '../operations/selection';
 import { FolderTreeNodeView } from '../types';
 
 export function useFolderTreeViewportSelection(args: {
@@ -46,35 +32,34 @@ export function useFolderTreeViewportSelection(args: {
       }
 
       const isToggleGesture =
-        (event?.metaKey === true || event?.ctrlKey === true) &&
-        resolvedMultiSelectConfig.ctrlClick;
+        (event?.metaKey === true || event?.ctrlKey === true) && resolvedMultiSelectConfig.ctrlClick;
       const isRangeGesture = event?.shiftKey === true && resolvedMultiSelectConfig.shiftClick;
 
       const nextSelectedIds = isRangeGesture
         ? resolveNextSelectedNodeIds({
-          mode: 'range',
-          nodeId,
-          anchorId:
+            mode: 'range',
+            nodeId,
+            anchorId:
               selectionAnchorRef.current ??
               controller.selectedNodeId ??
               currentSelectedIds[0] ??
               nodeId,
-          currentSelectedIds,
-          visibleRows: rows,
-        })
-        : isToggleGesture
-          ? resolveNextSelectedNodeIds({
-            mode: 'toggle',
-            nodeId,
             currentSelectedIds,
             visibleRows: rows,
           })
+        : isToggleGesture
+          ? resolveNextSelectedNodeIds({
+              mode: 'toggle',
+              nodeId,
+              currentSelectedIds,
+              visibleRows: rows,
+            })
           : resolveNextSelectedNodeIds({
-            mode: 'single',
-            nodeId,
-            currentSelectedIds,
-            visibleRows: rows,
-          });
+              mode: 'single',
+              nodeId,
+              currentSelectedIds,
+              visibleRows: rows,
+            });
 
       setSelectedNodeIds(nextSelectedIds);
       selectionAnchorRef.current = nodeId;

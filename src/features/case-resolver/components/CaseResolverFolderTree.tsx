@@ -107,13 +107,9 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
     adapter,
   });
 
-  const searchState = useMasterFolderTreeSearch(
-    masterNodes,
-    treeSearchQuery,
-    {
-      config: capabilities.search,
-    }
-  );
+  const searchState = useMasterFolderTreeSearch(masterNodes, treeSearchQuery, {
+    config: capabilities.search,
+  });
 
   const canStartTreeDrag = React.useCallback(
     ({

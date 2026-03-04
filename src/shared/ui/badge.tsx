@@ -36,8 +36,7 @@ const badgeVariants = cva(
 );
 
 export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {
   icon?: React.ReactNode;
   onRemove?: () => void;
   removeLabel?: string;
@@ -47,7 +46,16 @@ export interface BadgeProps
  * Badge - A unified badge component used as a base for Tags, StatusBadges, and Chips.
  * Supports icons, semantic variants, and integrated removal functionality.
  */
-function Badge({ className, variant, icon, onRemove, removeLabel, children, onClick, ...props }: BadgeProps) {
+function Badge({
+  className,
+  variant,
+  icon,
+  onRemove,
+  removeLabel,
+  children,
+  onClick,
+  ...props
+}: BadgeProps) {
   const isClickable = !!onClick;
 
   return (

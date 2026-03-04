@@ -79,11 +79,7 @@ const safeDecode = (value: string): string => {
 
 const normalizeRequestedProductIds = (productIds: readonly string[]): string[] =>
   Array.from(
-    new Set(
-      productIds
-        .map((value) => safeDecode(value).trim())
-        .filter((value) => value.length > 0)
-    )
+    new Set(productIds.map((value) => safeDecode(value).trim()).filter((value) => value.length > 0))
   );
 
 const parseRequestedProductIds = (req: NextRequest): string[] => {

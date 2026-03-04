@@ -419,17 +419,17 @@ const mongoRepository: ProductListingRepository = {
     const integrations =
       integrationLookup.length > 0
         ? await db
-          .collection('integrations')
-          .find({ _id: { $in: integrationLookup } } as unknown as Filter<Document>)
-          .toArray()
+            .collection('integrations')
+            .find({ _id: { $in: integrationLookup } } as unknown as Filter<Document>)
+            .toArray()
         : [];
 
     const connections =
       connectionLookup.length > 0
         ? await db
-          .collection('integration_connections')
-          .find({ _id: { $in: connectionLookup } } as unknown as Filter<Document>)
-          .toArray()
+            .collection('integration_connections')
+            .find({ _id: { $in: connectionLookup } } as unknown as Filter<Document>)
+            .toArray()
         : [];
     const integrationMap = new Map(integrations.map((i) => [i._id.toString(), i]));
     const connectionMap = new Map(connections.map((c) => [c._id.toString(), c]));
@@ -601,13 +601,17 @@ const mongoRepository: ProductListingRepository = {
   getListingsByProductIds: async (productIds: string[]): Promise<ProductListing[]> => {
     if (productIds.length === 0) return [];
     const collection = await getListingCollection();
-    const listings = await collection.find(buildLookupFilterForIds('productId', productIds)).toArray();
+    const listings = await collection
+      .find(buildLookupFilterForIds('productId', productIds))
+      .toArray();
     return listings.map(toListingRecord);
   },
 
   getListingsByConnection: async (connectionId: string): Promise<ProductListing[]> => {
     const collection = await getListingCollection();
-    const listings = await collection.find(buildLookupFilter('connectionId', connectionId)).toArray();
+    const listings = await collection
+      .find(buildLookupFilter('connectionId', connectionId))
+      .toArray();
     return listings.map(toListingRecord);
   },
 
@@ -751,7 +755,7 @@ export async function listProductListingsByProductIdsAcrossProviders(
 
 export async function listAllProductListingsAcrossProviders(): Promise<
   Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
-  > {
+> {
   const [prismaListings, mongoListings] = await Promise.all([
     prismaRepository.listAllListings(),
     mongoRepository.listAllListings(),

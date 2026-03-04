@@ -1,7 +1,5 @@
 'use client';
 
- 
-
 import React, { useMemo, useState } from 'react';
 import {
   AI_PATHS_NODE_DOCS,
@@ -255,10 +253,7 @@ export function DocsTabPanel(): React.JSX.Element {
       </Card>
 
       {showHowItWorks ? (
-        <DocumentationList
-          title='How AI Paths Works'
-          items={overviewLines}
-        />
+        <DocumentationList title='How AI Paths Works' items={overviewLines} />
       ) : null}
 
       {showSystemOverview ? (

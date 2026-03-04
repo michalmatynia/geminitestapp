@@ -1,7 +1,11 @@
 import { toTrimmedString } from './template-helpers';
 
 export type ProducerNameLookup = Record<string, string> | Map<string, string> | null | undefined;
-export type ProducerExternalIdLookup = Record<string, string> | Map<string, string> | null | undefined;
+export type ProducerExternalIdLookup =
+  | Record<string, string>
+  | Map<string, string>
+  | null
+  | undefined;
 export type ProducerLookup = ProducerNameLookup | ProducerExternalIdLookup;
 export type TagNameLookup = Record<string, string> | Map<string, string> | null | undefined;
 export type TagExternalIdLookup = Record<string, string> | Map<string, string> | null | undefined;

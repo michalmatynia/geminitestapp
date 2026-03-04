@@ -175,7 +175,7 @@ export function useProducers(): ListQuery<Producer> {
 export function useSaveProducerMutation(): SaveMutation<
   Producer,
   { id: string | undefined; data: { name: string; website: string | null } }
-  > {
+> {
   const mutationKey = productMetadataKeys.producers();
   return createMutationV2({
     mutationFn: ({ id, data }) =>
@@ -351,9 +351,7 @@ export function useProductMetadataPrefetch(catalogId?: string): () => void {
     void prefetchQueryV2(queryClient, {
       queryKey: normalizeQueryKey(productMetadataKeys.tags(catalogId)),
       queryFn: () =>
-        api.get<ProductTag[]>(
-          `/api/products/tags?catalogId=${encodeURIComponent(catalogId)}`
-        ),
+        api.get<ProductTag[]>(`/api/products/tags?catalogId=${encodeURIComponent(catalogId)}`),
       meta: {
         source: 'products.hooks.useProductMetadataPrefetch.tags',
         operation: 'list',

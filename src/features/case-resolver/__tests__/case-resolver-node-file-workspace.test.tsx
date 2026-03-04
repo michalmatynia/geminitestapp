@@ -64,11 +64,7 @@ vi.mock('@/features/case-resolver/hooks/useNodeFileWorkspaceState', () => ({
 }));
 
 vi.mock('@/features/case-resolver/components/NodeFileDocumentSearchPanel', () => ({
-  NodeFileDocumentSearchPanel: ({
-    onNodeInspectorClick,
-  }: {
-    onNodeInspectorClick: () => void;
-  }) => (
+  NodeFileDocumentSearchPanel: ({ onNodeInspectorClick }: { onNodeInspectorClick: () => void }) => (
     <div data-testid='node-file-document-search-panel'>
       <button type='button' onClick={onNodeInspectorClick}>
         Node Inspector
@@ -92,33 +88,21 @@ vi.mock('@/shared/ui', () => ({
   }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children: React.ReactNode }) => (
     <button {...props}>{children}</button>
   ),
-  Card: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => <div className={className}>{children}</div>,
-  EmptyState: ({
-    title,
-    description,
-  }: {
-    title: string;
-    description?: string;
-  }) => (
+  Card: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
+  EmptyState: ({ title, description }: { title: string; description?: string }) => (
     <div>
       <div>{title}</div>
       {description ? <div>{description}</div> : null}
     </div>
   ),
   Badge: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Chip: ({
-    label,
-    onClick,
-  }: {
-    label: React.ReactNode;
-    onClick?: () => void;
-  }) => <button type='button' onClick={onClick}>{label}</button>,
+  Chip: ({ label, onClick }: { label: React.ReactNode; onClick?: () => void }) => (
+    <button type='button' onClick={onClick}>
+      {label}
+    </button>
+  ),
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useToast: () => ({ toast: vi.fn() }),
 }));

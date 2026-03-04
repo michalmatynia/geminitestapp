@@ -10,10 +10,7 @@ import {
   getContextPackById,
 } from '@/features/ai/ai-context-registry/server';
 
-export async function POST_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const rawBody = await req.text();
   let body: unknown = {};
 

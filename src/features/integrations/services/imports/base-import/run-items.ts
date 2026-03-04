@@ -1,7 +1,4 @@
-import { 
-  normalizeSelectedIds, 
-  shouldFilterToUniqueOnly 
-} from '../base-import-service-shared';
+import { normalizeSelectedIds, shouldFilterToUniqueOnly } from '../base-import-service-shared';
 import { fetchBaseProductIds } from '@/features/integrations/services/imports/base-client';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import type { ProductWithImages } from '@/shared/contracts/products';

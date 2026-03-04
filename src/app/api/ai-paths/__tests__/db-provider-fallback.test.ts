@@ -82,7 +82,10 @@ describe('AI Paths DB provider fallback', () => {
         const data = text ? JSON.parse(text) : {};
         return { ok: true, data };
       } catch {
-        return { ok: false, response: new Response(JSON.stringify({ error: 'Invalid JSON body.' }), { status: 400 }) };
+        return {
+          ok: false,
+          response: new Response(JSON.stringify({ error: 'Invalid JSON body.' }), { status: 400 }),
+        };
       }
     });
   });

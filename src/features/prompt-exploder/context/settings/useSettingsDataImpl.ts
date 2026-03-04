@@ -3,57 +3,40 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { 
-  useSearchParams 
-} from 'next/navigation';
-import { 
-  useToast 
-} from '@/shared/ui';
-import { 
-  parsePromptEngineSettings, 
-  parsePromptValidationRules 
+import { useSearchParams } from 'next/navigation';
+import { useToast } from '@/shared/ui';
+import {
+  parsePromptEngineSettings,
+  parsePromptValidationRules,
 } from '@/shared/lib/prompt-engine/settings';
-import { 
-  PROMPT_ENGINE_SETTINGS_KEY,
-  PromptValidationRule
-} from '@/shared/contracts/prompt-engine';
-import { 
-  PROMPT_EXPLODER_SETTINGS_KEY, 
-  parsePromptExploderSettingsResult,
-} from '../../settings';
-import { 
-  VALIDATOR_PATTERN_LISTS_KEY, 
-  parseValidatorPatternLists 
+import { PROMPT_ENGINE_SETTINGS_KEY, PromptValidationRule } from '@/shared/contracts/prompt-engine';
+import { PROMPT_EXPLODER_SETTINGS_KEY, parsePromptExploderSettingsResult } from '../../settings';
+import {
+  VALIDATOR_PATTERN_LISTS_KEY,
+  parseValidatorPatternLists,
 } from '@/shared/contracts/validator';
-import { 
+import {
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
   normalizePromptExploderValidationRuleStack,
-  promptExploderValidationStackFromBridgeSource
+  promptExploderValidationStackFromBridgeSource,
 } from '../../validation-stack';
-import { 
-  readPromptExploderDraftPayload,
-  PROMPT_EXPLODER_DRAFT_PROMPT_KEY 
-} from '../../bridge';
+import { readPromptExploderDraftPayload, PROMPT_EXPLODER_DRAFT_PROMPT_KEY } from '../../bridge';
 import { isPromptValidationStrictStackMode } from '../../feature-flags';
-import { 
-  resolvePromptValidationRuntime,
-} from '../../prompt-validation-orchestrator';
+import { resolvePromptValidationRuntime } from '../../prompt-validation-orchestrator';
 import { getPromptExploderRuntimeGuardrailIssue } from '../../runtime-guardrails';
-import { 
+import {
   PromptExploderParserTuningRuleDraft,
   PromptExploderLearnedTemplate,
   PromptExploderPatternSnapshot,
-  PromptExploderRuntimeValidationScope
+  PromptExploderRuntimeValidationScope,
 } from '@/shared/contracts/prompt-exploder';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { 
-  LearningDraft 
-} from './SettingsDraftsContext';
+import { LearningDraft } from './SettingsDraftsContext';
 import { buildPromptExploderParserTuningDrafts } from '../../parser-tuning';
 
 export function useSettingsDataImpl(args: {
@@ -141,7 +124,8 @@ export function useSettingsDataImpl(args: {
   }, [promptExploderSettingsResult.error, rawExploderSettings, toast]);
 
   const validatorPatternListsHydrationSignature = useMemo(
-    () => validatorPatternLists.map((list) => `${list.id}:${list.scope}:${list.updatedAt}`).join('|'),
+    () =>
+      validatorPatternLists.map((list) => `${list.id}:${list.scope}:${list.updatedAt}`).join('|'),
     [validatorPatternLists]
   );
 

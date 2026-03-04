@@ -114,4 +114,3 @@ describe('ZoneFooterNode section drops', () => {
     expect(moveSectionByMasterMock).toHaveBeenCalledWith('section-master', 'footer', 1);
   });
 });
-

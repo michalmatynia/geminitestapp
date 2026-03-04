@@ -6,21 +6,14 @@ import {
   detectLoopPattern,
 } from '@/features/ai/agent-runtime/execution/loop-guard';
 import { addAgentMemory } from '@/features/ai/agent-runtime/memory';
-import {
-  persistCheckpoint,
-} from '@/features/ai/agent-runtime/memory/checkpoint';
+import { persistCheckpoint } from '@/features/ai/agent-runtime/memory/checkpoint';
 import {
   buildAdaptivePlanReview,
   guardRepetitionWithLLM,
   summarizePlannerMemoryWithLLM,
 } from '@/features/ai/agent-runtime/planning/llm';
-import {
-  buildBranchStepsFromAlternatives,
-} from '@/features/ai/agent-runtime/planning/utils';
-import type {
-  PlanStep,
-  PlannerMeta,
-} from '@/shared/contracts/agent-runtime';
+import { buildBranchStepsFromAlternatives } from '@/features/ai/agent-runtime/planning/utils';
+import type { PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 
 import { StepLoopInput, StepLoopResult } from './step-runner/types';
 import { maybeUpdateCheckpointBrief, CheckpointContext } from './step-runner/checkpoint-logic';
@@ -29,14 +22,8 @@ import { executeTool } from './step-runner/tool-logic';
 
 export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopResult> {
   const { context, sharedBrowser, sharedContext } = input;
-  const {
-    run,
-    settings,
-    preferences,
-    memorySummarizationModel,
-    plannerModel,
-    loopGuardModel,
-  } = context;
+  const { run, settings, preferences, memorySummarizationModel, plannerModel, loopGuardModel } =
+    context;
   let { planSteps, stepIndex, taskType, summaryCheckpoint } = input;
   let { memoryContext } = context;
 
@@ -110,7 +97,7 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
     });
 
     approvalRequestedStepId = approvalResult.updatedApprovalRequestedStepId;
-    
+
     if (approvalResult.requiresHuman) {
       return {
         planSteps,
@@ -164,21 +151,23 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
       void (async () => {
         const tasks: Promise<unknown>[] = [];
 
-        tasks.push((async () => {
-          checkpointContext = await maybeUpdateCheckpointBrief({
-            activeStepIdForBrief: currentStepId,
-            checkpointContext,
-            lastError,
-            context,
-            runId: run.id,
-            memoryContext,
-            planSteps,
-            summaryCheckpoint,
-            taskType,
-            approvalRequestedStepId,
-            approvalGrantedStepId,
-          });
-        })());
+        tasks.push(
+          (async () => {
+            checkpointContext = await maybeUpdateCheckpointBrief({
+              activeStepIdForBrief: currentStepId,
+              checkpointContext,
+              lastError,
+              context,
+              runId: run.id,
+              memoryContext,
+              planSteps,
+              summaryCheckpoint,
+              taskType,
+              approvalRequestedStepId,
+              approvalGrantedStepId,
+            });
+          })()
+        );
 
         if (
           completedCount >= summaryInterval &&
@@ -254,11 +243,11 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
     planSteps = planSteps.map((item: PlanStep) =>
       item.id === step.id
         ? {
-          ...item,
-          status: toolResult.ok ? 'completed' : 'failed',
-          snapshotId: toolResult.output?.snapshotId ?? null,
-          logCount: toolResult.output?.logCount ?? null,
-        }
+            ...item,
+            status: toolResult.ok ? 'completed' : 'failed',
+            snapshotId: toolResult.output?.snapshotId ?? null,
+            logCount: toolResult.output?.logCount ?? null,
+          }
         : item
     );
     if (toolResult.output?.snapshotId) {
@@ -294,21 +283,23 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
         (checkpointContext.checkpointBriefStepId !== activeStepIdForBrief ||
           checkpointContext.checkpointBriefError !== (lastError ?? null))
       ) {
-        tasks.push((async () => {
-          checkpointContext = await maybeUpdateCheckpointBrief({
-            activeStepIdForBrief,
-            checkpointContext,
-            lastError,
-            context,
-            runId: run.id,
-            memoryContext,
-            planSteps,
-            summaryCheckpoint,
-            taskType,
-            approvalRequestedStepId,
-            approvalGrantedStepId,
-          });
-        })());
+        tasks.push(
+          (async () => {
+            checkpointContext = await maybeUpdateCheckpointBrief({
+              activeStepIdForBrief,
+              checkpointContext,
+              lastError,
+              context,
+              runId: run.id,
+              memoryContext,
+              planSteps,
+              summaryCheckpoint,
+              taskType,
+              approvalRequestedStepId,
+              approvalGrantedStepId,
+            });
+          })()
+        );
       }
 
       if (

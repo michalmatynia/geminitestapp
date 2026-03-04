@@ -2,10 +2,7 @@ import { randomUUID } from 'crypto';
 import type { Filter } from 'mongodb';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { NoteFileDocument } from '@/features/notesapp/services/notes/types/mongo-note-types';
-import type {
-  NoteFileRecord,
-  NoteFileCreateInput,
-} from '@/shared/contracts/notes';
+import type { NoteFileRecord, NoteFileCreateInput } from '@/shared/contracts/notes';
 import { noteFileCollectionName } from './common';
 
 const toNoteFileRecord = (doc: NoteFileDocument): NoteFileRecord => ({
@@ -22,8 +19,8 @@ const toNoteFileRecord = (doc: NoteFileDocument): NoteFileRecord => ({
   updatedAt:
     typeof doc.updatedAt === 'string'
       ? doc.updatedAt
-      : doc.updatedAt?.toISOString() ??
-        (typeof doc.createdAt === 'string' ? doc.createdAt : doc.createdAt.toISOString()),
+      : (doc.updatedAt?.toISOString() ??
+        (typeof doc.createdAt === 'string' ? doc.createdAt : doc.createdAt.toISOString())),
 });
 
 export const mongoFileImpl = {

@@ -568,17 +568,17 @@ export function RunTimeline({
                     const tooltipContent =
                       bucket.min || bucket.max
                         ? [
-                          bucket.min
-                            ? `Fastest: ${bucket.min.label} · ${formatDurationMs(
-                              bucket.min.durationMs
-                            )}`
-                            : 'Fastest: —',
-                          bucket.max
-                            ? `Slowest: ${bucket.max.label} · ${formatDurationMs(
-                              bucket.max.durationMs
-                            )}`
-                            : 'Slowest: —',
-                        ].join('\n')
+                            bucket.min
+                              ? `Fastest: ${bucket.min.label} · ${formatDurationMs(
+                                  bucket.min.durationMs
+                                )}`
+                              : 'Fastest: —',
+                            bucket.max
+                              ? `Slowest: ${bucket.max.label} · ${formatDurationMs(
+                                  bucket.max.durationMs
+                                )}`
+                              : 'Slowest: —',
+                          ].join('\n')
                         : null;
                     const chip = (
                       <div

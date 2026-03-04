@@ -25,19 +25,8 @@
         "x": 280,
         "y": 520
       },
-      "inputs": [
-        "trigger",
-        "context",
-        "meta",
-        "entityId",
-        "entityType"
-      ],
-      "outputs": [
-        "context",
-        "meta",
-        "entityId",
-        "entityType"
-      ],
+      "inputs": ["trigger", "context", "meta", "entityId", "entityType"],
+      "outputs": ["context", "meta", "entityId", "entityType"],
       "config": {
         "fetcher": {
           "sourceMode": "live_context",
@@ -146,17 +135,8 @@
         "x": 2100,
         "y": 40
       },
-      "inputs": [
-        "value",
-        "result",
-        "context",
-        "bundle"
-      ],
-      "outputs": [
-        "value",
-        "valid",
-        "errors"
-      ],
+      "inputs": ["value", "result", "context", "bundle"],
+      "outputs": ["value", "valid", "errors"],
       "config": {
         "logicalCondition": {
           "combinator": "and",
@@ -210,15 +190,8 @@
         "x": 1540,
         "y": 560
       },
-      "inputs": [
-        "prompt",
-        "images",
-        "context"
-      ],
-      "outputs": [
-        "result",
-        "jobId"
-      ],
+      "inputs": ["prompt", "images", "context"],
+      "outputs": ["result", "jobId"],
       "config": {
         "model": {
           "temperature": 0.2,
@@ -272,15 +245,8 @@
         "x": 1460,
         "y": 40
       },
-      "inputs": [
-        "prompt",
-        "context",
-        "images"
-      ],
-      "outputs": [
-        "result",
-        "jobId"
-      ],
+      "inputs": ["prompt", "context", "images"],
+      "outputs": ["result", "jobId"],
       "config": {
         "model": {
           "temperature": 0,
@@ -327,14 +293,8 @@
         "x": 540,
         "y": 520
       },
-      "inputs": [
-        "entityJson",
-        "context"
-      ],
-      "outputs": [
-        "bundle",
-        "images"
-      ],
+      "inputs": ["entityJson", "context"],
+      "outputs": ["bundle", "images"],
       "config": {
         "parser": {
           "mappings": {
@@ -396,17 +356,8 @@
         "x": 1080,
         "y": 320
       },
-      "inputs": [
-        "bundle",
-        "title",
-        "images",
-        "result",
-        "entityId"
-      ],
-      "outputs": [
-        "prompt",
-        "images"
-      ],
+      "inputs": ["bundle", "title", "images", "result", "entityId"],
+      "outputs": ["prompt", "images"],
       "config": {
         "prompt": {
           "template": "Infer product PARAMETERS in ENGLISH from the product data below.\nProduct name: \"{{title}}\"\nProduct description: \"{{content_en}}\"\nAvailable parameters JSON (objects with id/label/selectorType/options): {{result}}\n\nRules:\n1. Return ONLY valid JSON array.\n2. Output schema per item: {\"parameterId\":\"<id>\",\"value\":\"<english value>\"}.\n3. parameterId MUST exactly match an \"id\" from Available parameters JSON.\n4. Never invent semantic IDs like \"size\", \"material\", \"color\".\n5. Skip parameters you cannot infer confidently.\n6. No markdown, no explanations, no code fences.\n7. If nothing can be inferred, return [].\n8. For any multi-value parameter, return ONE string joined with \"|\" and no spaces around \"|\", e.g. \"Black|Red|Blue\".\n9. Capitalize value tokens in Title Case (e.g. \"Black\", \"Stainless Steel\")."
@@ -464,12 +415,8 @@
         "x": 1040,
         "y": 40
       },
-      "inputs": [
-        "result"
-      ],
-      "outputs": [
-        "prompt"
-      ],
+      "inputs": ["result"],
+      "outputs": ["prompt"],
       "config": {
         "prompt": {
           "template": "You create PRODUCT parameter template rows from parameter definitions JSON.\nParameter definitions JSON (array): {{result}}\n\nRules:\n1. Return ONLY valid JSON array.\n2. Output one item per definition with id.\n3. Item schema: {\"parameterId\":\"<id>\",\"value\":\"\"}.\n4. parameterId must exactly match definition id.\n5. Skip definitions with missing/empty id.\n6. Do not include extra keys.\n7. No markdown, no explanations, no code fences.\n8. If input has no valid definitions, return []."
@@ -527,12 +474,7 @@
         "schema",
         "aiQuery"
       ],
-      "outputs": [
-        "result",
-        "bundle",
-        "aiPrompt",
-        "content_en"
-      ],
+      "outputs": ["result", "bundle", "aiPrompt", "content_en"],
       "config": {
         "database": {
           "operation": "query",
@@ -632,17 +574,8 @@
         "x": 2000,
         "y": 560
       },
-      "inputs": [
-        "value",
-        "prompt",
-        "regexCallback"
-      ],
-      "outputs": [
-        "grouped",
-        "matches",
-        "value",
-        "aiPrompt"
-      ],
+      "inputs": ["value", "prompt", "regexCallback"],
+      "outputs": ["grouped", "matches", "value", "aiPrompt"],
       "config": {
         "regex": {
           "pattern": "\\[[\\s\\S]*\\]",
@@ -702,24 +635,8 @@
         "x": 2260,
         "y": 40
       },
-      "inputs": [
-        "context",
-        "bundle",
-        "prompt",
-        "result",
-        "value",
-        "valid",
-        "errors"
-      ],
-      "outputs": [
-        "context",
-        "bundle",
-        "prompt",
-        "result",
-        "value",
-        "valid",
-        "errors"
-      ],
+      "inputs": ["context", "bundle", "prompt", "result", "value", "valid", "errors"],
+      "outputs": ["context", "bundle", "prompt", "result", "value", "valid", "errors"],
       "config": {
         "router": {
           "mode": "valid",
@@ -789,12 +706,7 @@
         "schema",
         "aiQuery"
       ],
-      "outputs": [
-        "result",
-        "bundle",
-        "content_en",
-        "aiPrompt"
-      ],
+      "outputs": ["result", "bundle", "content_en", "aiPrompt"],
       "config": {
         "database": {
           "operation": "update",
@@ -887,10 +799,7 @@
         "y": 520
       },
       "inputs": [],
-      "outputs": [
-        "trigger",
-        "triggerName"
-      ],
+      "outputs": ["trigger", "triggerName"],
       "config": {
         "trigger": {
           "event": "0ef40981-7ac6-416e-9205-7200289f851c",
@@ -941,12 +850,7 @@
         "schema",
         "aiQuery"
       ],
-      "outputs": [
-        "result",
-        "bundle",
-        "content_en",
-        "aiPrompt"
-      ],
+      "outputs": ["result", "bundle", "content_en", "aiPrompt"],
       "config": {
         "database": {
           "operation": "update",
@@ -1060,20 +964,8 @@
         "x": 1880,
         "y": 40
       },
-      "inputs": [
-        "value",
-        "prompt",
-        "result",
-        "context"
-      ],
-      "outputs": [
-        "value",
-        "result",
-        "context",
-        "valid",
-        "errors",
-        "bundle"
-      ],
+      "inputs": ["value", "prompt", "result", "context"],
+      "outputs": ["value", "result", "context", "valid", "errors", "bundle"],
       "config": {
         "validationPattern": {
           "source": "path_local",

@@ -117,14 +117,14 @@ export function useListProductForm(productId: string): UseListProductFormResult 
           connectionId: selectedConnectionId,
           ...(isTraderaIntegration
             ? {
-              durationHours: selectedTraderaDurationHours,
-              autoRelistEnabled: selectedTraderaAutoRelistEnabled,
-              autoRelistLeadMinutes: selectedTraderaAutoRelistLeadMinutes,
-              templateId:
+                durationHours: selectedTraderaDurationHours,
+                autoRelistEnabled: selectedTraderaAutoRelistEnabled,
+                autoRelistLeadMinutes: selectedTraderaAutoRelistLeadMinutes,
+                templateId:
                   selectedTraderaTemplateId && selectedTraderaTemplateId !== 'none'
                     ? selectedTraderaTemplateId
                     : null,
-            }
+              }
             : {}),
         });
         if (isTraderaIntegration) {

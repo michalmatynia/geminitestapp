@@ -1,4 +1,7 @@
-import type { AiTriggerButtonDisplay, AiTriggerButtonLocation } from '@/shared/contracts/ai-trigger-buttons';
+import type {
+  AiTriggerButtonDisplay,
+  AiTriggerButtonLocation,
+} from '@/shared/contracts/ai-trigger-buttons';
 import type { PathConfig } from '@/shared/contracts/ai-paths';
 import type { DatabaseOperation } from '@/shared/contracts/ai-paths-core';
 import type { CanvasSemanticDocument } from '@/shared/contracts/ai-paths-semantic-grammar';
@@ -137,32 +140,29 @@ const buildCanonicalEdgeShape = (edge: Record<string, unknown>): CanonicalEdgeSh
   toPort: normalizeText(edge['toPort'] ?? edge['targetHandle']),
 });
 
-export const computeStarterWorkflowGraphHash = (config: Pick<PathConfig, 'nodes' | 'edges'>): string => {
+export const computeStarterWorkflowGraphHash = (
+  config: Pick<PathConfig, 'nodes' | 'edges'>
+): string => {
   const nodes = Array.isArray(config.nodes)
     ? config.nodes
-      .map((node) => buildCanonicalNodeShape(node as unknown as Record<string, unknown>))
-      .sort((left, right) => String(left.id).localeCompare(String(right.id)))
+        .map((node) => buildCanonicalNodeShape(node as unknown as Record<string, unknown>))
+        .sort((left, right) => String(left.id).localeCompare(String(right.id)))
     : [];
   const edges = Array.isArray(config.edges)
     ? config.edges
-      .map((edge) => buildCanonicalEdgeShape(edge as unknown as Record<string, unknown>))
-      .sort((left, right) =>
-        [
-          String(left.from),
-          String(left.to),
-          String(left.fromPort),
-          String(left.toPort),
-        ]
-          .join('|')
-          .localeCompare(
-            [
-              String(right.from),
-              String(right.to),
-              String(right.fromPort),
-              String(right.toPort),
-            ].join('|')
-          )
-      )
+        .map((edge) => buildCanonicalEdgeShape(edge as unknown as Record<string, unknown>))
+        .sort((left, right) =>
+          [String(left.from), String(left.to), String(left.fromPort), String(left.toPort)]
+            .join('|')
+            .localeCompare(
+              [
+                String(right.from),
+                String(right.to),
+                String(right.fromPort),
+                String(right.toPort),
+              ].join('|')
+            )
+        )
     : [];
   return hashString(JSON.stringify(sortObjectDeep({ nodes, edges })));
 };
@@ -234,10 +234,7 @@ const materializeSemanticAsset = (
   };
 };
 
-const hasCanonicalGraphHash = (
-  entry: AiPathTemplateRegistryEntry,
-  graphHash: string
-): boolean => {
+const hasCanonicalGraphHash = (entry: AiPathTemplateRegistryEntry, graphHash: string): boolean => {
   const normalizedHash = normalizeTextLower(graphHash);
   if (!normalizedHash) return false;
   return entry.starterLineage.canonicalGraphHashes.some(
@@ -473,7 +470,8 @@ const deriveCustomUpdateTemplateFromMappings = (value: unknown): string | null =
 
   if (Object.keys(assignments).length === 0) return null;
   const lines = Object.entries(assignments).map(
-    ([targetPath, token]) => `    "${targetPath}": ${token.startsWith('{{') ? token : JSON.stringify(token)}`
+    ([targetPath, token]) =>
+      `    "${targetPath}": ${token.startsWith('{{') ? token : JSON.stringify(token)}`
   );
   return `{\n  "$set": {\n${lines.join(',\n')}\n  }\n}`;
 };
@@ -492,18 +490,18 @@ const buildIncomingPortMap = (config: PathConfig): Map<string, Set<string>> => {
 };
 
 const buildStarterAssetOverlay = (current: PathConfig, latest: PathConfig): PathConfig => {
-  const latestNodesById = new Map(
-    (latest.nodes ?? []).map((node) => [node.id, node] as const)
-  );
-  const latestEdgesById = new Map(
-    (latest.edges ?? []).map((edge) => [edge.id, edge] as const)
-  );
+  const latestNodesById = new Map((latest.nodes ?? []).map((node) => [node.id, node] as const));
+  const latestEdgesById = new Map((latest.edges ?? []).map((edge) => [edge.id, edge] as const));
   const latestEdgesBySignature = new Map(
-    (latest.edges ?? []).map((edge) => [edgeSignature(edge as unknown as Record<string, unknown>), edge] as const)
+    (latest.edges ?? []).map(
+      (edge) => [edgeSignature(edge as unknown as Record<string, unknown>), edge] as const
+    )
   );
   const currentIncomingPorts = buildIncomingPortMap(current);
   const promotedIncomingPorts = new Map(
-    Array.from(currentIncomingPorts.entries()).map(([nodeId, ports]) => [nodeId, new Set(ports)] as const)
+    Array.from(currentIncomingPorts.entries()).map(
+      ([nodeId, ports]) => [nodeId, new Set(ports)] as const
+    )
   );
   (current.edges ?? []).forEach((edge) => {
     const latestEdge =
@@ -536,23 +534,22 @@ const buildStarterAssetOverlay = (current: PathConfig, latest: PathConfig): Path
         ? (latestDatabaseConfig['mappings'] as Array<Record<string, unknown>>)
         : null;
       const adaptedMappings =
-        latestMappings?.reduce<Array<{ targetPath: string; sourcePort: string; sourcePath?: string }>>(
-          (acc, mapping) => {
-            const targetPath = normalizeText(mapping['targetPath']);
-            const sourcePort = normalizeText(mapping['sourcePort']);
-            if (!targetPath || !sourcePort) return acc;
-            const nextSourcePort =
-              sourcePort === 'result' && downgradeResultPort ? 'value' : sourcePort;
-            const sourcePath = normalizeText(mapping['sourcePath']);
-            acc.push({
-              targetPath,
-              sourcePort: nextSourcePort,
-              ...(sourcePath ? { sourcePath } : {}),
-            });
-            return acc;
-          },
-          []
-        ) ?? undefined;
+        latestMappings?.reduce<
+          Array<{ targetPath: string; sourcePort: string; sourcePath?: string }>
+        >((acc, mapping) => {
+          const targetPath = normalizeText(mapping['targetPath']);
+          const sourcePort = normalizeText(mapping['sourcePort']);
+          if (!targetPath || !sourcePort) return acc;
+          const nextSourcePort =
+            sourcePort === 'result' && downgradeResultPort ? 'value' : sourcePort;
+          const sourcePath = normalizeText(mapping['sourcePath']);
+          acc.push({
+            targetPath,
+            sourcePort: nextSourcePort,
+            ...(sourcePath ? { sourcePath } : {}),
+          });
+          return acc;
+        }, []) ?? undefined;
       const mappingsChanged =
         latestMappings !== null &&
         JSON.stringify(adaptedMappings) !== JSON.stringify(latestDatabaseConfig['mappings']);
@@ -563,15 +560,15 @@ const buildStarterAssetOverlay = (current: PathConfig, latest: PathConfig): Path
           : 'update',
         ...(downgradeResultPort
           ? {
-            updateTemplate: latestTemplate.replaceAll('{{result.', '{{value.'),
-          }
+              updateTemplate: latestTemplate.replaceAll('{{result.', '{{value.'),
+            }
           : {}),
         ...(latestMappings !== null ? { mappings: adaptedMappings } : {}),
       };
       const derivedTemplate =
         !incomingPorts.has('result') || needsResultPort === false
-          ? (needsResultPort ? latestTemplate.replaceAll('{{result.', '{{value.') : null) ??
-            deriveCustomUpdateTemplateFromMappings(currentDatabaseConfig['mappings'])
+          ? ((needsResultPort ? latestTemplate.replaceAll('{{result.', '{{value.') : null) ??
+            deriveCustomUpdateTemplateFromMappings(currentDatabaseConfig['mappings']))
           : null;
       if (
         normalizeText(currentDatabaseConfig['updatePayloadMode']).toLowerCase() === 'mapping' &&
@@ -646,11 +643,11 @@ const buildStarterAssetOverlay = (current: PathConfig, latest: PathConfig): Path
     edges: nextEdges,
     ...(currentExtensions || latestExtensions
       ? {
-        extensions: {
-          ...(currentExtensions ?? {}),
-          ...(latestExtensions ?? {}),
-        },
-      }
+          extensions: {
+            ...(currentExtensions ?? {}),
+            ...(latestExtensions ?? {}),
+          },
+        }
       : {}),
   } as PathConfig;
 
@@ -688,7 +685,9 @@ export const resolveStarterWorkflowForPathConfig = (
   return null;
 };
 
-export const upgradeStarterWorkflowPathConfig = (config: PathConfig): StarterWorkflowUpgradeResult => {
+export const upgradeStarterWorkflowPathConfig = (
+  config: PathConfig
+): StarterWorkflowUpgradeResult => {
   const resolution = resolveStarterWorkflowForPathConfig(config);
   if (!resolution) return { config, changed: false, resolution: null };
   const currentGraphHash = computeStarterWorkflowGraphHash(config);
@@ -700,7 +699,8 @@ export const upgradeStarterWorkflowPathConfig = (config: PathConfig): StarterWor
     isActive: config.isActive,
     isLocked: config.isLocked,
     seededDefault:
-      config.id === resolution.entry.seedPolicy?.defaultPathId && resolution.entry.seedPolicy?.autoSeed === true,
+      config.id === resolution.entry.seedPolicy?.defaultPathId &&
+      resolution.entry.seedPolicy?.autoSeed === true,
   });
 
   const safeToOverlay = hasCanonicalGraphHash(resolution.entry, currentGraphHash);

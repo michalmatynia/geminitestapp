@@ -4,8 +4,7 @@ const RELATION_TREE_FILE_PREFIX = 'relation_file::';
 
 export const RELATION_TREE_UNASSIGNED_CASE_KEY = '__unassigned_case__';
 
-const normalizeToken = (value: string): string =>
-  encodeURIComponent(value.trim().toLowerCase());
+const normalizeToken = (value: string): string => encodeURIComponent(value.trim().toLowerCase());
 
 export const buildRelationCaseNodeId = (caseId: string | null): string => {
   const normalizedCaseId = caseId?.trim() || RELATION_TREE_UNASSIGNED_CASE_KEY;
@@ -37,4 +36,3 @@ export const buildRelationFolderPath = (input: {
   const folderPath = input.folderPath.trim();
   return folderPath ? `${casePath}/${folderPath}` : casePath;
 };
-

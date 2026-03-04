@@ -64,13 +64,9 @@ export function FolderTreeContextMenu({
     onSelect: item.onSelect
       ? (): void => {
           item.onSelect!(node, controller);
-      }
+        }
       : undefined,
   }));
 
-  return (
-    <TreeContextMenu items={menuItems}>
-      {children}
-    </TreeContextMenu>
-  );
+  return <TreeContextMenu items={menuItems}>{children}</TreeContextMenu>;
 }

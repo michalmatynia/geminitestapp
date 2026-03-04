@@ -1,19 +1,15 @@
- 
- 
- 
-
-import { 
-  StartBaseImportRunInput, 
-  BaseConnectionContext, 
-  nowIso, 
-  normalizeSelectedIds 
+import {
+  StartBaseImportRunInput,
+  BaseConnectionContext,
+  nowIso,
+  normalizeSelectedIds,
 } from '../base-import-service-shared';
 import { resolvePriceGroupContext } from '../base-import-service-context';
 import { getCatalogRepository } from '@/shared/lib/products/services/catalog-repository';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
-import type { 
-  BaseImportPreflight, 
-  BaseImportPreflightIssue 
+import type {
+  BaseImportPreflight,
+  BaseImportPreflightIssue,
 } from '@/shared/contracts/integrations';
 
 export const buildPreflight = async (

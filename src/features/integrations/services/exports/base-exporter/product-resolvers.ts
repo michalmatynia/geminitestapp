@@ -1,18 +1,14 @@
 import type { ProductWithImages } from '@/shared/contracts/products';
-import { 
-  toTrimmedString, 
-  ProducerEntry, 
-  TagEntry 
-} from './template-helpers';
-import { 
-  getProducerNameFromLookup, 
-  getProducerExternalIdFromLookup, 
-  getTagNameFromLookup, 
+import { toTrimmedString, ProducerEntry, TagEntry } from './template-helpers';
+import {
+  getProducerNameFromLookup,
+  getProducerExternalIdFromLookup,
+  getTagNameFromLookup,
   getTagExternalIdFromLookup,
   ProducerNameLookup,
   ProducerExternalIdLookup,
   TagNameLookup,
-  TagExternalIdLookup
+  TagExternalIdLookup,
 } from './lookup-resolvers';
 
 export const getLocalizedParameterValue = (

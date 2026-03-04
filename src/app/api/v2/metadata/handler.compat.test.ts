@@ -72,11 +72,9 @@ describe('v2 metadata handler compatibility', () => {
       }),
     });
 
-    await POST_intl_handler(
-      request,
-      {} as Parameters<typeof POST_intl_handler>[1],
-      { type: 'currencies' }
-    );
+    await POST_intl_handler(request, {} as Parameters<typeof POST_intl_handler>[1], {
+      type: 'currencies',
+    });
 
     expect(currencyRepoMock.createCurrency).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -112,11 +110,9 @@ describe('v2 metadata handler compatibility', () => {
       }),
     });
 
-    await POST_intl_handler(
-      request,
-      {} as Parameters<typeof POST_intl_handler>[1],
-      { type: 'languages' }
-    );
+    await POST_intl_handler(request, {} as Parameters<typeof POST_intl_handler>[1], {
+      type: 'languages',
+    });
 
     expect(languageCreateMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -135,9 +131,9 @@ describe('v2 metadata handler compatibility', () => {
   it('reads languages from mongo provider with mapped country objects', async () => {
     getInternationalizationProviderMock.mockResolvedValue('mongodb');
 
-    const countriesToArrayMock = vi.fn().mockResolvedValue([
-      { id: 'PL', code: 'PL', name: 'Poland' },
-    ]);
+    const countriesToArrayMock = vi
+      .fn()
+      .mockResolvedValue([{ id: 'PL', code: 'PL', name: 'Poland' }]);
     const languagesToArrayMock = vi.fn().mockResolvedValue([
       {
         id: 'PL',

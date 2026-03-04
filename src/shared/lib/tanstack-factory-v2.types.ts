@@ -13,7 +13,12 @@ export type TanstackRequestOperation =
   | 'action'
   | 'upload';
 
-export type TanstackEntityKind = 'query' | 'mutation' | 'query-cache' | 'mutation-cache' | 'query-batch';
+export type TanstackEntityKind =
+  | 'query'
+  | 'mutation'
+  | 'query-cache'
+  | 'mutation-cache'
+  | 'query-batch';
 
 export type TanstackLifecycleStage = 'start' | 'success' | 'error' | 'retry' | 'cancel';
 

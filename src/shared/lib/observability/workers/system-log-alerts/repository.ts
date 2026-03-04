@@ -4,11 +4,13 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { type AlertEvidenceQuery, type MongoSystemLogDoc } from './types';
 
-export const escapeRegex = (value: string): string => value.replace(new RegExp('[.*+?^${}()|[\\]\\\\]', 'g'), '\\$&');
+export const escapeRegex = (value: string): string =>
+  value.replace(new RegExp('[.*+?^${}()|[\\]\\\\]', 'g'), '\\$&');
 
 export const toSystemLogRecord = (doc: MongoSystemLogDoc): SystemLogRecord => ({
   id: String(doc.id ?? doc._id ?? ''),
-  level: doc.level === 'warn' || doc.level === 'info' || doc.level === 'error' ? doc.level : 'error',
+  level:
+    doc.level === 'warn' || doc.level === 'info' || doc.level === 'error' ? doc.level : 'error',
   message: doc.message ?? '',
   category: doc.category ?? null,
   source: doc.source ?? null,
@@ -138,9 +140,8 @@ export const listAlertEvidenceLogs = async (
 
   return rows.map((row) => ({
     id: row.id,
-    level: (row.level === 'warn' || row.level === 'info' || row.level === 'error'
-      ? row.level
-      : 'error'),
+    level:
+      row.level === 'warn' || row.level === 'info' || row.level === 'error' ? row.level : 'error',
     message: row.message,
     category: row.category ?? null,
     source: row.source ?? null,

@@ -207,7 +207,8 @@ export function DocumentRelationSearchProvider({
 
   const allVisibleSelected =
     currentDocRows.length > 0 && currentDocRows.every((r) => selectedFileIds.has(r.file.id));
-  const someVisibleSelected = !allVisibleSelected && currentDocRows.some((r) => selectedFileIds.has(r.file.id));
+  const someVisibleSelected =
+    !allVisibleSelected && currentDocRows.some((r) => selectedFileIds.has(r.file.id));
 
   const handleLinkAll = useCallback(async () => {
     if (selectedFileIds.size === 0) return;
@@ -224,7 +225,8 @@ export function DocumentRelationSearchProvider({
   }, [selectedFileIds, onLinkFile, clearSelection]);
 
   const previewRow = useMemo(
-    () => (previewFileId ? (currentDocRows.find((r) => r.file.id === previewFileId) ?? null) : null),
+    () =>
+      previewFileId ? (currentDocRows.find((r) => r.file.id === previewFileId) ?? null) : null,
     [currentDocRows, previewFileId]
   );
   const previewFile = previewRow?.file ?? null;

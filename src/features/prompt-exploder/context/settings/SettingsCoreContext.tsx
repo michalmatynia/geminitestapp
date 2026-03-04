@@ -8,10 +8,10 @@ import {
   type PromptExploderSettingsValidationError,
 } from '../../settings';
 
-import type { 
-  PromptExploderRuntimeValidationScope, 
+import type {
+  PromptExploderRuntimeValidationScope,
   PromptExploderValidationRuleStack,
-  PromptExploderSegmentationLibraryState 
+  PromptExploderSegmentationLibraryState,
 } from '@/shared/contracts/prompt-exploder';
 
 export interface SettingsCoreState {

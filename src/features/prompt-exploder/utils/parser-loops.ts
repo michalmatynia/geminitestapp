@@ -1,44 +1,33 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
- 
- 
- 
 
 import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
-import { 
-  matchesBoundaryHeading, 
-  resolveBoundaryRegex, 
-  testPattern, 
-  type PatternRuntime, 
+import {
+  matchesBoundaryHeading,
+  resolveBoundaryRegex,
+  testPattern,
+  type PatternRuntime,
   type RuntimeRegexRule,
-  collectMatchedRules
+  collectMatchedRules,
 } from '../parser-runtime-patterns';
-import { 
-  consumeBlockUntilBoundary, 
-  consumeParagraphBlock, 
-  consumeParamsBlock, 
-  consumeQaBlock, 
-  isLikelyHeading, 
-  parseQaSubsections, 
-  parseSequenceSubsections, 
-  type ParseCursor 
+import {
+  consumeBlockUntilBoundary,
+  consumeParagraphBlock,
+  consumeParamsBlock,
+  consumeQaBlock,
+  isLikelyHeading,
+  parseQaSubsections,
+  parseSequenceSubsections,
+  type ParseCursor,
 } from '../parser-section-parsing';
-import { 
-  normalizeHeadingLabel, 
-  parseCodeFromLine, 
-  toLine 
-} from '../parser-text-utils';
-import { 
-  shouldKeepEmptyTitleForCaseResolver, 
-  inferTypeFromRuleSequence 
+import { normalizeHeadingLabel, parseCodeFromLine, toLine } from '../parser-text-utils';
+import {
+  shouldKeepEmptyTitleForCaseResolver,
+  inferTypeFromRuleSequence,
 } from '../parser-type-inference';
-import { 
-  trimTrailingBlankLines 
-} from './parser-utils';
-import { 
-  createPromptExploderSegment 
-} from '../parser-segment-factory';
+import { trimTrailingBlankLines } from './parser-utils';
+import { createPromptExploderSegment } from '../parser-segment-factory';
 import { PromptExploderSegment } from '../types';
 
 export type LoopParserArgs = {
@@ -84,16 +73,22 @@ export function createRuleDrivenSegment(args: {
   parseListLinesWithRuntimeIds: (lines: string[]) => any[];
   FINAL_QA_BOUNDARY_FALLBACK_RE: RegExp;
 }): PromptExploderSegment {
-  const { runtime, blockLines, headingLine, headingRule, segmentId, subsectionId, parseListLinesWithRuntimeIds, FINAL_QA_BOUNDARY_FALLBACK_RE } = args;
-  
+  const {
+    runtime,
+    blockLines,
+    headingLine,
+    headingRule,
+    segmentId,
+    subsectionId,
+    parseListLinesWithRuntimeIds,
+    FINAL_QA_BOUNDARY_FALLBACK_RE,
+  } = args;
+
   const raw = trimTrailingBlankLines(blockLines.join('\n'));
   const headingTitle = normalizeHeadingLabel(headingLine ?? '');
   const parsedTitle = parseCodeFromLine(headingTitle || (headingLine ?? '').trim());
   const title =
-    parsedTitle.title ||
-    headingTitle ||
-    normalizeHeadingLabel(blockLines[0] ?? '') ||
-    'Section';
+    parsedTitle.title || headingTitle || normalizeHeadingLabel(blockLines[0] ?? '') || 'Section';
   const matchedRules = collectMatchedRules(runtime, raw);
   const matchedRuleIds = matchedRules.map((rule) => rule.id);
   const keepEmptyTitle = shouldKeepEmptyTitleForCaseResolver(
@@ -106,7 +101,8 @@ export function createRuleDrivenSegment(args: {
   const contentRaw = trimTrailingBlankLines(contentLines.join('\n'));
   const hasBodyContent = contentRaw.trim().length > 0;
 
-  const createSegment = (opts: any): PromptExploderSegment => createPromptExploderSegment({ ...opts, createSegmentId: segmentId });
+  const createSegment = (opts: any): PromptExploderSegment =>
+    createPromptExploderSegment({ ...opts, createSegmentId: segmentId });
 
   if (type === 'metadata') {
     return createSegment({
@@ -195,7 +191,8 @@ export function parseSegmentsRuleDriven(
   runtime: PatternRuntime,
   args: LoopParserArgs
 ): PromptExploderSegment[] {
-  const { segmentId, subsectionId, parseListLinesWithRuntimeIds, FINAL_QA_BOUNDARY_FALLBACK_RE } = args;
+  const { segmentId, subsectionId, parseListLinesWithRuntimeIds, FINAL_QA_BOUNDARY_FALLBACK_RE } =
+    args;
   const lines = prompt.replace(/\r\n/g, '\n').split('\n');
   const headingRuleByIndex = new Map<number, RuntimeRegexRule>();
 
@@ -274,7 +271,8 @@ export function parseSegmentsRuleDriven(
           subsectionId,
           parseListLinesWithRuntimeIds,
           FINAL_QA_BOUNDARY_FALLBACK_RE,
-        })      );
+        })
+      );
     }
   }
 
@@ -286,15 +284,15 @@ export function parseSegmentsLoop(
   runtime: PatternRuntime,
   args: LoopParserArgs
 ): PromptExploderSegment[] {
-  const { 
-    segmentId, 
-    subsectionId, 
-    parseListLinesWithRuntimeIds, 
+  const {
+    segmentId,
+    subsectionId,
+    parseListLinesWithRuntimeIds,
     BRACKET_SECTION_HEADING_RE,
     STUDIO_RELIGHTING_BOUNDARY_FALLBACK_RE,
     REQUIREMENTS_BOUNDARY_FALLBACK_RE,
     PIPELINE_BOUNDARY_FALLBACK_RE,
-    FINAL_QA_BOUNDARY_FALLBACK_RE
+    FINAL_QA_BOUNDARY_FALLBACK_RE,
   } = args;
 
   const lines = prompt.replace(/\r\n/g, '\n').split('\n');
@@ -319,7 +317,8 @@ export function parseSegmentsLoop(
     FINAL_QA_BOUNDARY_FALLBACK_RE
   );
 
-  const createSegment = (opts: any): PromptExploderSegment => createPromptExploderSegment({ ...opts, createSegmentId: segmentId });
+  const createSegment = (opts: any): PromptExploderSegment =>
+    createPromptExploderSegment({ ...opts, createSegmentId: segmentId });
 
   while (cursor.index < lines.length) {
     const line = toLine(lines[cursor.index]);
@@ -482,15 +481,15 @@ export function parseSegmentsLoop(
     ) {
       const blockLines = isRequirementsHeading
         ? consumeBlockUntilBoundary(cursor, [
-          studioRelightingBoundary,
-          pipelineBoundary,
-          finalQaBoundary,
-        ])
+            studioRelightingBoundary,
+            pipelineBoundary,
+            finalQaBoundary,
+          ])
         : consumeParagraphBlock(
-          cursor,
-          [studioRelightingBoundary, pipelineBoundary, finalQaBoundary],
-          runtime
-        );
+            cursor,
+            [studioRelightingBoundary, pipelineBoundary, finalQaBoundary],
+            runtime
+          );
       const body = blockLines.slice(1);
       const subsections = parseSequenceSubsections({
         lines: body,

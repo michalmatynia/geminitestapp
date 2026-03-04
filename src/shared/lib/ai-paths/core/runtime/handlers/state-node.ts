@@ -72,10 +72,7 @@ export const handleStateNode: NodeHandler = ({
   if (mode === 'read') {
     let next = current;
     if (next === undefined) {
-      const initial =
-        config?.initialJson?.trim()
-          ? parseJsonSafe(config.initialJson)
-          : undefined;
+      const initial = config?.initialJson?.trim() ? parseJsonSafe(config.initialJson) : undefined;
       if (initial !== undefined) {
         if (!matchesExpectedType(initial)) {
           return buildTypeError(initial);
@@ -153,4 +150,3 @@ export const handleStateNode: NodeHandler = ({
 
   return prevOutputs;
 };
-

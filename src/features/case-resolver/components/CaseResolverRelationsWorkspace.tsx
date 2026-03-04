@@ -158,7 +158,10 @@ const toRuntimeNodes = (nodes: CaseResolverRelationGraph['nodes']): AiNode[] =>
 const toStrictEdges = (inputEdges: Edge[]): CaseResolverRelationGraph['edges'] => {
   return inputEdges
     .map((edge: Edge): CaseResolverRelationGraph['edges'][number] => {
-      const canonicalEdge = parseCanonicalCaseResolverEdge(edge, 'case_resolver.relations_workspace');
+      const canonicalEdge = parseCanonicalCaseResolverEdge(
+        edge,
+        'case_resolver.relations_workspace'
+      );
       return {
         id: canonicalEdge.id,
         source: canonicalEdge.source ?? '',
@@ -206,7 +209,9 @@ const isCaseRelationNode = (
   return nodeId.startsWith('case:');
 };
 
-const readEdgeEndpoints = (edge: unknown): { id: string; source: string; target: string } | null => {
+const readEdgeEndpoints = (
+  edge: unknown
+): { id: string; source: string; target: string } | null => {
   if (!isObjectRecord(edge)) return null;
   const id = typeof edge['id'] === 'string' ? edge['id'].trim() : '';
   const source = typeof edge['source'] === 'string' ? edge['source'].trim() : '';

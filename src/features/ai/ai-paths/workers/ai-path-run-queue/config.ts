@@ -15,7 +15,11 @@ export const REQUIRE_DURABLE_QUEUE =
   (process.env.NODE_ENV === 'production' &&
     process.env['AI_PATHS_ALLOW_LOCAL_QUEUE_FALLBACK'] !== 'true');
 
-export const QUEUE_STATUS_CACHE_TTL_MS = parseEnvNumber('AI_PATHS_QUEUE_STATUS_CACHE_TTL_MS', 2_000, 250);
+export const QUEUE_STATUS_CACHE_TTL_MS = parseEnvNumber(
+  'AI_PATHS_QUEUE_STATUS_CACHE_TTL_MS',
+  2_000,
+  250
+);
 export const QUEUE_HOT_STATUS_CACHE_TTL_MS = parseEnvNumber(
   'AI_PATHS_QUEUE_HOT_STATUS_CACHE_TTL_MS',
   1_000,

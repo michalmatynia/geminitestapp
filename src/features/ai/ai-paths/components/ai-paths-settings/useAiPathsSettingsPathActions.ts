@@ -1,4 +1,3 @@
- 
 import React, { useCallback } from 'react';
 
 import type {
@@ -602,16 +601,20 @@ export function useAiPathsSettingsPathActions({
 
           config = sanitizePathConfigWithRuntimeFallback(config, value);
 
-          setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
-            ...prev,
-            [value]: config,
-          }));
+          setPathConfigs(
+            (prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
+              ...prev,
+              [value]: config,
+            })
+          );
           applyIfLatest(config);
         } catch (error) {
           try {
             const allSettings = await fetchAiPathsSettingsCached();
             if (switchRequestSeqRef.current !== nextRequestSeq) return;
-            const configItem = allSettings.find((item) => item.key === `${PATH_CONFIG_PREFIX}${value}`);
+            const configItem = allSettings.find(
+              (item) => item.key === `${PATH_CONFIG_PREFIX}${value}`
+            );
             if (configItem?.value) {
               let recoveredConfig = createDefaultPathConfig(value);
               try {
@@ -624,10 +627,12 @@ export function useAiPathsSettingsPathActions({
                 );
               }
               recoveredConfig = sanitizePathConfigWithRuntimeFallback(recoveredConfig, value);
-              setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
-                ...prev,
-                [value]: recoveredConfig,
-              }));
+              setPathConfigs(
+                (prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
+                  ...prev,
+                  [value]: recoveredConfig,
+                })
+              );
               applyIfLatest(recoveredConfig);
               return;
             }

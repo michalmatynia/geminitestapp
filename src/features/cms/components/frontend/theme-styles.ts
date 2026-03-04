@@ -89,9 +89,9 @@ const withOpacity = (hex: unknown, opacityPercent: unknown): string => {
   const expanded =
     normalized.length === 3
       ? normalized
-        .split('')
-        .map((c: string) => c + c)
-        .join('')
+          .split('')
+          .map((c: string) => c + c)
+          .join('')
       : normalized;
   if (expanded.length !== 6 || Number.isNaN(Number.parseInt(expanded, 16))) {
     return safeHex;

@@ -69,7 +69,9 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const requestedKeys = parseRequestedKeys(req);
   const startedAt = Date.now();
   const settings =
-    requestedKeys.length > 0 ? await listAiPathsSettings(requestedKeys) : await listAiPathsSettings();
+    requestedKeys.length > 0
+      ? await listAiPathsSettings(requestedKeys)
+      : await listAiPathsSettings();
   const durationMs = Date.now() - startedAt;
   const payloadBytes = settings.reduce((sum, item) => sum + item.key.length + item.value.length, 0);
 

@@ -128,7 +128,7 @@ export const executePathRun = async (
   let runtimeProfileSummary: RuntimeProfileSummary | null = null;
 
   const nodes = normalizeNodes(run.graph?.nodes ?? []);
-   
+
   const edges = sanitizeEdges(nodes, run.graph?.edges ?? []);
   const triggerNodeId =
     resolveTriggerNodeId(nodes, edges, run.triggerEvent, run.triggerNodeId) ?? null;
@@ -356,22 +356,22 @@ export const executePathRun = async (
             throttledSaveIntermediateState().catch(() => {}),
             ...(LOG_NODE_START_EVENTS
               ? [
-                repo
-                  .createRunEvent({
-                    runId: run.id,
-                    level: 'info',
-                    message: `Node ${node.title ?? node.id} started.`,
-                    metadata: {
-                      traceId,
-                      spanId: nodeSpanId,
-                      nodeId: node.id,
-                      nodeType: node.type,
-                      iteration,
-                      attempt: nextAttempt,
-                    },
-                  })
-                  .catch(() => {}),
-              ]
+                  repo
+                    .createRunEvent({
+                      runId: run.id,
+                      level: 'info',
+                      message: `Node ${node.title ?? node.id} started.`,
+                      metadata: {
+                        traceId,
+                        spanId: nodeSpanId,
+                        nodeId: node.id,
+                        nodeType: node.type,
+                        iteration,
+                        attempt: nextAttempt,
+                      },
+                    })
+                    .catch(() => {}),
+                ]
               : []),
           ]);
         } catch (error) {

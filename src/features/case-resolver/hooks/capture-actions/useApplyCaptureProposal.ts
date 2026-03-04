@@ -2,24 +2,17 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
- 
- 
- 
- 
 
 import { useState, useRef, useCallback } from 'react';
 import { flushSync } from 'react-dom';
-import type { 
+import type {
   CaseResolverCaptureProposalState,
-  CaseResolverCaptureProposal
+  CaseResolverCaptureProposal,
 } from '@/features/case-resolver-capture/proposals';
 import { stripAcceptedCaptureContentFromTextWithReport } from '@/features/case-resolver-capture/proposals';
 import { deriveDocumentContentSync, toStorageDocumentValue } from '@/features/document-editor';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
-import {
-  FILEMAKER_DATABASE_KEY,
-  normalizeFilemakerDatabase,
-} from '@/features/filemaker/settings';
+import { FILEMAKER_DATABASE_KEY, normalizeFilemakerDatabase } from '@/features/filemaker/settings';
 import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import { useToast } from '@/shared/ui';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -743,11 +736,7 @@ export function useApplyCaptureProposal(args: {
         captureApplyInFlightRef.current = false;
       }
     })();
-  }, [
-    args,
-    toast,
-    updateSetting,
-  ]);
+  }, [args, toast, updateSetting]);
 
   return {
     captureApplyDiagnostics,

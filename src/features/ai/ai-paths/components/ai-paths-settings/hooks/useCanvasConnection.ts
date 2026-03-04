@@ -1,13 +1,13 @@
 'use client';
 
 import { useCallback, useState, useMemo } from 'react';
-import { 
-  AiNode, 
-  Edge, 
-  NODE_WIDTH, 
-  getPortOffsetY, 
+import {
+  AiNode,
+  Edge,
+  NODE_WIDTH,
+  getPortOffsetY,
   validateConnection,
-  getNodeInputPortCardinality
+  getNodeInputPortCardinality,
 } from '@/shared/lib/ai-paths';
 
 type ConnectingState = {
@@ -36,18 +36,18 @@ export function useCanvasConnection(args: {
     }
   ) => void;
 }) {
-  const { 
-    nodes, 
-    edges, 
-    setEdges, 
-    view, 
-    viewportRef, 
-    isPathLocked, 
-    notifyLocked, 
-    selectedEdgeId, 
-    selectEdge, 
+  const {
+    nodes,
+    edges,
+    setEdges,
+    view,
+    viewportRef,
+    isPathLocked,
+    notifyLocked,
+    selectedEdgeId,
+    selectEdge,
     clearRuntimeInputsForEdges,
-    toast
+    toast,
   } = args;
 
   const [connecting, setConnecting] = useState<ConnectingState | null>(null);
@@ -214,9 +214,9 @@ export function useCanvasConnection(args: {
       const viewport = viewportRef.current?.getBoundingClientRect();
       const nextPos = viewport
         ? {
-          x: (event.clientX - viewport.left - view.x) / view.scale,
-          y: (event.clientY - viewport.top - view.y) / view.scale,
-        }
+            x: (event.clientX - viewport.left - view.x) / view.scale,
+            y: (event.clientY - viewport.top - view.y) / view.scale,
+          }
         : start;
       setEdges((prev: Edge[]): Edge[] => {
         const remaining = prev.filter((edge: Edge): boolean => edge.id !== edgeToMove.id);
@@ -241,7 +241,7 @@ export function useCanvasConnection(args: {
       setEdges,
       view,
       selectEdge,
-      viewportRef
+      viewportRef,
     ]
   );
 
@@ -336,6 +336,6 @@ export function useCanvasConnection(args: {
     handleReconnectInput,
     edgePaths,
     connectingFromNode,
-    getPortPosition
+    getPortPosition,
   };
 }

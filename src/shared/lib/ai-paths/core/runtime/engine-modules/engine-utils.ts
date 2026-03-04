@@ -1,6 +1,4 @@
- 
-import type {
-  AiNode, Edge, RuntimeHistoryLink } from '@/shared/contracts/ai-paths';
+import type { AiNode, Edge, RuntimeHistoryLink } from '@/shared/contracts/ai-paths';
 import type { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 import { getNodeInputPortContract, coerceInput, normalizePortName } from '../../utils';
 
@@ -41,22 +39,18 @@ export const readEntityTypeFromContext = (context: Record<string, unknown>): str
 export const readEntityIdFromContext = (context: Record<string, unknown>): string | null =>
   pickString(context['productId']) ?? pickString(context['entityId']) ?? null;
 
-export const resolveEdgeFromNodeId = (edge: Edge): string | null =>
-  resolveEdgeNodeId(edge.from);
+export const resolveEdgeFromNodeId = (edge: Edge): string | null => resolveEdgeNodeId(edge.from);
 
-export const resolveEdgeToNodeId = (edge: Edge): string | null =>
-  resolveEdgeNodeId(edge.to);
+export const resolveEdgeToNodeId = (edge: Edge): string | null => resolveEdgeNodeId(edge.to);
 
 const resolveEdgePort = (value: string | null | undefined): string | null => {
   const normalized = typeof value === 'string' ? normalizePortName(value) : '';
   return normalized.length > 0 ? normalized : null;
 };
 
-export const resolveEdgeFromPort = (edge: Edge): string | null =>
-  resolveEdgePort(edge.fromPort);
+export const resolveEdgeFromPort = (edge: Edge): string | null => resolveEdgePort(edge.fromPort);
 
-export const resolveEdgeToPort = (edge: Edge): string | null =>
-  resolveEdgePort(edge.toPort);
+export const resolveEdgeToPort = (edge: Edge): string | null => resolveEdgePort(edge.toPort);
 
 export const checkContextMatchesSimulation = (context: Record<string, unknown>): boolean => {
   const contextSource = context['contextSource'];
@@ -262,11 +256,11 @@ export const buildWaitingOnDetails = (
         : {}),
       ...(Array.isArray(rawWaitingOnPorts)
         ? {
-          waitingOnPorts: rawWaitingOnPorts
-            .filter((p: unknown): p is string => typeof p === 'string')
-            .map((p: string): string => p.trim())
-            .filter((p: string): boolean => p.length > 0),
-        }
+            waitingOnPorts: rawWaitingOnPorts
+              .filter((p: unknown): p is string => typeof p === 'string')
+              .map((p: string): string => p.trim())
+              .filter((p: string): boolean => p.length > 0),
+          }
         : {}),
     });
   });

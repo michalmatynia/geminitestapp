@@ -1,7 +1,5 @@
 'use client';
 
- 
-
 import React, { createContext, useContext, useMemo } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -66,7 +64,7 @@ export function PromptEngineProvider({
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
   const pageContext = useOptionalPromptEngineValidationPageContext();
-  
+
   const config = usePromptEngineConfigImpl({
     resolvedLockedPatternTab: lockedPatternTab ?? pageContext?.lockedPatternTab,
     resolvedInitialPatternTab: initialPatternTab ?? pageContext?.initialPatternTab,
@@ -105,10 +103,7 @@ export function PromptEngineProvider({
     activeExploderSubTab: config.activeExploderSubTab,
   });
 
-  const promptEngineSettings = useMemo(
-    () => parsePromptEngineSettings(rawSettings),
-    [rawSettings]
-  );
+  const promptEngineSettings = useMemo(() => parsePromptEngineSettings(rawSettings), [rawSettings]);
 
   const isUsingDefaults = !rawSettings;
 
@@ -188,7 +183,9 @@ export function PromptEngineProvider({
           await navigator.clipboard.writeText(value);
           toast(`${label} copied to clipboard`, { variant: 'success' });
         } catch (error) {
-          logClientError(error, { context: { source: 'PromptEngineContext', action: 'handleCopy' } });
+          logClientError(error, {
+            context: { source: 'PromptEngineContext', action: 'handleCopy' },
+          });
           toast('Failed to copy to clipboard', { variant: 'error' });
         }
       },

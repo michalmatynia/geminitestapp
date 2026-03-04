@@ -34,7 +34,7 @@ export function BaseProducerMapper(): React.JSX.Element {
       internalColumnHeader: 'Local Producer',
       externalColumnHeader: 'Marketplace Producer',
       internalItems: producersQuery.data ?? [],
-      externalItems: (externalProducersQuery.data ?? []),
+      externalItems: externalProducersQuery.data ?? [],
       currentMappings: mappingsQuery.data ?? [],
       getInternalId: (item) => item.id,
       getInternalLabel: (item) => item.name,

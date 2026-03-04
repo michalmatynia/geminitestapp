@@ -20,13 +20,9 @@ const draftKeys = QUERY_KEYS.drafter;
 
 export {
   draftKeys,
-  useDrafts as useDraftQueries,
-  useCreateDraftMutation as useCreateDraft,
-  useUpdateDraftMutation as useUpdateDraft,
-  useDeleteDraftMutation as useDeleteDraft,
 };
 
-export function useDrafts(notebookId?: string): ListQuery<ProductDraft> {
+export function useDraftQueries(notebookId?: string): ListQuery<ProductDraft> {
   const queryKey = draftKeys.list(notebookId ?? 'all');
   return createListQueryV2<ProductDraft>({
     queryKey,
@@ -35,7 +31,7 @@ export function useDrafts(notebookId?: string): ListQuery<ProductDraft> {
         params: notebookId ? { notebookId } : undefined,
       }),
     meta: {
-      source: 'drafter.hooks.useDrafts',
+      source: 'drafter.hooks.useDraftQueries',
       operation: 'list',
       resource: 'drafts',
       domain: 'drafter',
@@ -80,7 +76,7 @@ export function useCreateDraftMutation(): MutationResult<ProductDraft, CreatePro
 export function useUpdateDraftMutation(): MutationResult<
   ProductDraft,
   { id: string; data: UpdateProductDraftInput }
-  > {
+> {
   return createUpdateMutationV2<ProductDraft, { id: string; data: UpdateProductDraftInput }>({
     mutationFn: ({ id, data }) => api.put<ProductDraft>(`/api/drafts/${id}`, data),
     meta: {

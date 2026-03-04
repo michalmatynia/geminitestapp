@@ -53,4 +53,3 @@ describe('master tree drag payload helpers', () => {
     expect(getMasterTreeDragNodeData(dataTransfer as unknown as DataTransfer)).toBe('section:hero');
   });
 });
-

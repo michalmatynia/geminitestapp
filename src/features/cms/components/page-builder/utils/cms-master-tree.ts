@@ -89,10 +89,12 @@ export const buildCmsMasterNodes = (sections: SectionInstance[]): MasterTreeNode
   CMS_ZONE_ORDER.forEach((zone: PageZone, zoneIndex: number) => {
     const zoneNodeId = toCmsZoneNodeId(zone);
     const zoneLabel = CMS_ZONE_LABELS[zone];
-    const rootSectionIds = (hierarchy.childrenByParent.get(null) ?? []).filter((sectionId: string) => {
-      const section = hierarchy.nodeById.get(sectionId);
-      return section?.zone === zone;
-    });
+    const rootSectionIds = (hierarchy.childrenByParent.get(null) ?? []).filter(
+      (sectionId: string) => {
+        const section = hierarchy.nodeById.get(sectionId);
+        return section?.zone === zone;
+      }
+    );
 
     nodes.push({
       id: zoneNodeId,

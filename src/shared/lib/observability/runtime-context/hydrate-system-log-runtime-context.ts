@@ -28,8 +28,12 @@ const toContextRegistryRef = (value: unknown): ContextRegistryRef | null => {
   return {
     id,
     kind,
-    ...(readTrimmedString(record['providerId']) ? { providerId: readTrimmedString(record['providerId'])! } : {}),
-    ...(readTrimmedString(record['entityType']) ? { entityType: readTrimmedString(record['entityType'])! } : {}),
+    ...(readTrimmedString(record['providerId'])
+      ? { providerId: readTrimmedString(record['providerId'])! }
+      : {}),
+    ...(readTrimmedString(record['entityType'])
+      ? { entityType: readTrimmedString(record['entityType'])! }
+      : {}),
   };
 };
 
@@ -60,9 +64,7 @@ const readLegacyAiPathRunRunId = (record: Record<string, unknown> | null): strin
   return readTrimmedString(aiPathRun?.['runId']);
 };
 
-const normalizeContextForInference = (
-  record: Record<string, unknown>
-): Record<string, unknown> => {
+const normalizeContextForInference = (record: Record<string, unknown>): Record<string, unknown> => {
   if (readTrimmedString(record['runId'])) return record;
 
   const legacyRunId = readLegacyAiPathRunRunId(record);
@@ -74,9 +76,7 @@ const normalizeContextForInference = (
   };
 };
 
-const stripLegacyAiPathRunSnapshot = (
-  record: Record<string, unknown>
-): Record<string, unknown> => {
+const stripLegacyAiPathRunSnapshot = (record: Record<string, unknown>): Record<string, unknown> => {
   const staticContext = asRecord(record['staticContext']);
   if (!staticContext || !('aiPathRun' in staticContext)) return record;
 
@@ -100,7 +100,9 @@ const attachContextRegistryEnvelope = async (
   const existingEnvelope = readContextRegistryEnvelope(value['contextRegistry']);
   const existingRefs = readContextRegistryRefs(existingEnvelope?.['refs']);
   const refs =
-    existingRefs.length > 0 ? existingRefs : contextRegistryEngine.inferRefs(normalizedForInference);
+    existingRefs.length > 0
+      ? existingRefs
+      : contextRegistryEngine.inferRefs(normalizedForInference);
 
   const baseRecord = options.stripLegacySnapshots ? stripLegacyAiPathRunSnapshot(value) : value;
   if (refs.length === 0) {
@@ -188,8 +190,8 @@ const hydrateAlertEvidenceRuntimeContext = async (
     ...context,
     alertEvidence: {
       ...alertEvidence,
-      samples: hydratedSamples.filter(
-        (sample): sample is Record<string, unknown> => Boolean(sample)
+      samples: hydratedSamples.filter((sample): sample is Record<string, unknown> =>
+        Boolean(sample)
       ),
       ...(alertEvidence['lastObservedLog'] !== undefined
         ? { lastObservedLog: hydratedLastObservedLog }

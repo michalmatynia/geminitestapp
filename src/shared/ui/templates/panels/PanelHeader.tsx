@@ -104,11 +104,11 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
 
           {/* Refresh Button */}
           {refreshable && onRefresh && (
-            <RefreshButton 
-              onRefresh={() => void handleRefresh()} 
-              isRefreshing={isRefreshing} 
-              label='' 
-              size='icon' 
+            <RefreshButton
+              onRefresh={() => void handleRefresh()}
+              isRefreshing={isRefreshing}
+              label=''
+              size='icon'
               className='h-8 w-8'
             />
           )}

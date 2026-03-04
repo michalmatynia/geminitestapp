@@ -128,11 +128,11 @@ export async function evaluatePlanWithLLM({
       : (parsed.revisedSteps ?? []);
     const revisedSteps = revisedSpecs.length
       ? buildPlanStepsFromSpecs(
-        normalizePlanStepSpecs(revisedSpecs),
-        meta,
-        true,
-        maxStepAttempts
-      ).slice(0, maxSteps)
+          normalizePlanStepSpecs(revisedSpecs),
+          meta,
+          true,
+          maxStepAttempts
+        ).slice(0, maxSteps)
       : [];
     if ('agentAuditLog' in prisma && runId) {
       await prisma.agentAuditLog.create({
@@ -193,7 +193,7 @@ export async function verifyPlanWithLLM({
     const content = await runPlanningEvaluationTask({
       model,
       systemPrompt:
-        'You verify task completion. Return only JSON with keys: verdict (\'pass\'|\'partial\'|\'fail\'), evidence[], missing[], followUp. Evidence must reference observable facts from the context.',
+        "You verify task completion. Return only JSON with keys: verdict ('pass'|'partial'|'fail'), evidence[], missing[], followUp. Evidence must reference observable facts from the context.",
       userContent: JSON.stringify({
         prompt,
         memory,

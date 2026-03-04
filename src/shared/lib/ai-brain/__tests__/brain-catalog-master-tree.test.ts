@@ -20,7 +20,9 @@ describe('brain catalog master tree mapping', () => {
     expect(nodes).toHaveLength(3);
     expect(nodes.every((node) => node.type === 'file')).toBe(true);
     expect(nodes.every((node) => node.parentId === null)).toBe(true);
-    expect(nodes.map((node) => node.id)).toEqual(entries.map((entry) => toBrainCatalogNodeId(entry)));
+    expect(nodes.map((node) => node.id)).toEqual(
+      entries.map((entry) => toBrainCatalogNodeId(entry))
+    );
   });
 
   it('reconstructs reordered entry list from node order', () => {
@@ -40,4 +42,3 @@ describe('brain catalog master tree mapping', () => {
     ]);
   });
 });
-

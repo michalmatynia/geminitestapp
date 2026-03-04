@@ -1,9 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { 
-  IntegrationsData 
-} from '@/shared/contracts/integrations';
+import type { IntegrationsData } from '@/shared/contracts/integrations';
 
 export const IntegrationsDataContext = createContext<IntegrationsData | null>(null);
 

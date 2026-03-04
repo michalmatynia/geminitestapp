@@ -14,4 +14,3 @@ export type RelationFolderKey = {
   caseId: string | null;
   folderPath: string;
 };
-

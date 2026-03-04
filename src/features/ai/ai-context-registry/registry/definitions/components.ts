@@ -1,7 +1,6 @@
 import type { ContextNode } from '@/shared/contracts/ai-context-registry';
 
-const SOURCE_REF =
-  'src/features/ai/ai-context-registry/registry/definitions/components.ts';
+const SOURCE_REF = 'src/features/ai/ai-context-registry/registry/definitions/components.ts';
 
 export const componentNodes: ContextNode[] = [
   {
@@ -37,9 +36,7 @@ export const componentNodes: ContextNode[] = [
       'Reusable full-page search template for document-oriented entities. ' +
       'Includes search bar, result list, pagination, and empty state.',
     tags: ['search', 'template', 'documents', 'reusable'],
-    relationships: [
-      { type: 'uses', targetId: 'page:products' },
-    ],
+    relationships: [{ type: 'uses', targetId: 'page:products' }],
     permissions: {
       readScopes: ['ctx:read'],
       riskTier: 'none',

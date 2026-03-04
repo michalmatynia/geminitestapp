@@ -48,20 +48,22 @@ export const aiTriggerButtonDisplaySchema = z.object({
 
 export type AiTriggerButtonDisplay = z.infer<typeof aiTriggerButtonDisplaySchema>;
 
-export const aiTriggerButtonSchema = dtoBaseSchema.extend({
-  name: z.string(),
-  iconId: z.string().nullable().optional(),
-  locations: z.array(aiTriggerButtonLocationSchema).optional(),
-  mode: aiTriggerButtonModeSchema,
-  display: aiTriggerButtonDisplaySchema,
-  pathId: z.string().nullable().optional(),
-  urlTemplate: z.string().nullable().optional(),
-  textTemplate: z.string().nullable().optional(),
-  contextTemplate: z.record(z.string(), z.unknown()).nullable().optional(),
-  condition: z.string().nullable().optional(),
-  enabled: z.boolean().optional(),
-  sortIndex: z.number(),
-}).strict();
+export const aiTriggerButtonSchema = dtoBaseSchema
+  .extend({
+    name: z.string(),
+    iconId: z.string().nullable().optional(),
+    locations: z.array(aiTriggerButtonLocationSchema).optional(),
+    mode: aiTriggerButtonModeSchema,
+    display: aiTriggerButtonDisplaySchema,
+    pathId: z.string().nullable().optional(),
+    urlTemplate: z.string().nullable().optional(),
+    textTemplate: z.string().nullable().optional(),
+    contextTemplate: z.record(z.string(), z.unknown()).nullable().optional(),
+    condition: z.string().nullable().optional(),
+    enabled: z.boolean().optional(),
+    sortIndex: z.number(),
+  })
+  .strict();
 
 export type AiTriggerButtonRecord = z.infer<typeof aiTriggerButtonSchema>;
 
@@ -93,29 +95,33 @@ const normalizeModeForRead = (value: unknown): AiTriggerButtonMode | undefined =
   return parsed.success ? parsed.data : undefined;
 };
 
-export const aiTriggerButtonRecordValidatorSchema = z.object({
-  id: z.string().trim().min(1),
-  name: z.string().trim().min(1),
-  iconId: z.string().trim().min(1).nullable().optional(),
-  pathId: z.preprocess(normalizePathId, z.string().trim().min(1).nullable().optional()),
-  enabled: z.boolean(),
-  locations: z.array(aiTriggerButtonLocationSchema).min(1),
-  mode: z.preprocess(normalizeModeForRead, aiTriggerButtonModeSchema),
-  display: aiTriggerButtonDisplayModeSchema,
-  createdAt: z.string().trim().min(1),
-  updatedAt: z.string().trim().min(1),
-  sortIndex: z.number().int(),
-}).strict();
+export const aiTriggerButtonRecordValidatorSchema = z
+  .object({
+    id: z.string().trim().min(1),
+    name: z.string().trim().min(1),
+    iconId: z.string().trim().min(1).nullable().optional(),
+    pathId: z.preprocess(normalizePathId, z.string().trim().min(1).nullable().optional()),
+    enabled: z.boolean(),
+    locations: z.array(aiTriggerButtonLocationSchema).min(1),
+    mode: z.preprocess(normalizeModeForRead, aiTriggerButtonModeSchema),
+    display: aiTriggerButtonDisplayModeSchema,
+    createdAt: z.string().trim().min(1),
+    updatedAt: z.string().trim().min(1),
+    sortIndex: z.number().int(),
+  })
+  .strict();
 
-export const aiTriggerButtonCreatePayloadSchema = z.object({
-  name: z.string().trim().min(1),
-  iconId: z.string().trim().min(1).nullable().optional().default(null),
-  pathId: z.preprocess(normalizePathId, z.string().trim().min(1).nullable().optional()),
-  enabled: z.boolean().optional().default(true),
-  locations: z.array(aiTriggerButtonLocationSchema).min(1),
-  mode: aiTriggerButtonModeSchema.optional().default('click'),
-  display: aiTriggerButtonDisplayModeSchema.optional().default('icon_label'),
-}).strict();
+export const aiTriggerButtonCreatePayloadSchema = z
+  .object({
+    name: z.string().trim().min(1),
+    iconId: z.string().trim().min(1).nullable().optional().default(null),
+    pathId: z.preprocess(normalizePathId, z.string().trim().min(1).nullable().optional()),
+    enabled: z.boolean().optional().default(true),
+    locations: z.array(aiTriggerButtonLocationSchema).min(1),
+    mode: aiTriggerButtonModeSchema.optional().default('click'),
+    display: aiTriggerButtonDisplayModeSchema.optional().default('icon_label'),
+  })
+  .strict();
 
 export const aiTriggerButtonUpdatePayloadSchema = z
   .object({
@@ -132,9 +138,11 @@ export const aiTriggerButtonUpdatePayloadSchema = z
     message: 'No updates provided',
   });
 
-export const aiTriggerButtonReorderPayloadSchema = z.object({
-  orderedIds: z.array(z.string().trim().min(1)),
-}).strict();
+export const aiTriggerButtonReorderPayloadSchema = z
+  .object({
+    orderedIds: z.array(z.string().trim().min(1)),
+  })
+  .strict();
 
 export type AiTriggerButtonCreatePayload = z.infer<typeof aiTriggerButtonCreatePayloadSchema>;
 export type AiTriggerButtonUpdatePayload = z.infer<typeof aiTriggerButtonUpdatePayloadSchema>;

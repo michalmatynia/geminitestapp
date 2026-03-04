@@ -106,11 +106,11 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
       let requiresHuman = false;
       const checkpointForStepLoop = checkpoint
         ? {
-          approvalRequestedStepId: checkpoint.approvalRequestedStepId ?? null,
-          approvalGrantedStepId: checkpoint.approvalGrantedStepId ?? null,
-          checkpointStepId: checkpoint.checkpointStepId ?? null,
-          lastError: checkpoint.lastError ?? null,
-        }
+            approvalRequestedStepId: checkpoint.approvalRequestedStepId ?? null,
+            approvalGrantedStepId: checkpoint.approvalGrantedStepId ?? null,
+            checkpointStepId: checkpoint.checkpointStepId ?? null,
+            lastError: checkpoint.lastError ?? null,
+          }
         : null;
       const stepRunResult = await runPlanStepLoop({
         context,

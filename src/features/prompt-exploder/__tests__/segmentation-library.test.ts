@@ -14,7 +14,10 @@ import {
   type PromptExploderSegment,
 } from '@/shared/contracts/prompt-exploder';
 
-const buildSegment = (id: string, patch: Partial<PromptExploderSegment> = {}): PromptExploderSegment => ({
+const buildSegment = (
+  id: string,
+  patch: Partial<PromptExploderSegment> = {}
+): PromptExploderSegment => ({
   id,
   type: 'assigned_text',
   title: `Segment ${id}`,

@@ -81,11 +81,11 @@ const buildUserPreferencesResponse = (
   cmsSlideshowPauseOnHoverInEditor: preferences?.cmsSlideshowPauseOnHoverInEditor ?? false,
   ...(includeAdminMenu
     ? {
-      adminMenuFavorites: preferences?.adminMenuFavorites ?? [],
-      adminMenuSectionColors: preferences?.adminMenuSectionColors ?? {},
-      adminMenuCustomEnabled: preferences?.adminMenuCustomEnabled ?? false,
-      adminMenuCustomNav: preferences?.adminMenuCustomNav ?? [],
-    }
+        adminMenuFavorites: preferences?.adminMenuFavorites ?? [],
+        adminMenuSectionColors: preferences?.adminMenuSectionColors ?? {},
+        adminMenuCustomEnabled: preferences?.adminMenuCustomEnabled ?? false,
+        adminMenuCustomNav: preferences?.adminMenuCustomNav ?? [],
+      }
     : {}),
 });
 

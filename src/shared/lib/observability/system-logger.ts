@@ -3,7 +3,12 @@ import type {
   SystemLogRecordDto as SystemLogRecord,
 } from '@/shared/contracts/observability';
 
-import { isSensitiveKey, REDACTED_VALUE, redactSensitiveText, truncateString } from './log-redaction';
+import {
+  isSensitiveKey,
+  REDACTED_VALUE,
+  redactSensitiveText,
+  truncateString,
+} from './log-redaction';
 import { emitOtelLogRecord } from './otel-log-bridge';
 import { getActiveOtelContextAttributes } from './otel-context';
 
@@ -50,7 +55,7 @@ const forwardToCentralizedLogging = async (payload: CentralLogPayload): Promise<
     });
   } catch (error) {
     // Last‑chance fallback: avoid throwing from logger
-     
+
     console.error('[system-logger] Failed to forward log to centralized sink', error);
   }
 };
@@ -514,7 +519,8 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
       activeOtelContext.otelTraceId ??
       null;
     const otelSpanId =
-      (typeof input.context?.['otelSpanId'] === 'string' && input.context['otelSpanId'].trim().length > 0
+      (typeof input.context?.['otelSpanId'] === 'string' &&
+      input.context['otelSpanId'].trim().length > 0
         ? input.context['otelSpanId'].trim()
         : null) ??
       activeOtelContext.otelSpanId ??
@@ -530,12 +536,12 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
     const fingerprint =
       input.level === 'error' || input.level === 'warn' || errorInfo
         ? buildErrorFingerprint({
-          message: input.message,
-          source: input.source ?? null,
-          path: input.request?.url ? (requestInfo.path ?? null) : null,
-          statusCode: input.statusCode ?? null,
-          errorInfo,
-        })
+            message: input.message,
+            source: input.source ?? null,
+            path: input.request?.url ? (requestInfo.path ?? null) : null,
+            statusCode: input.statusCode ?? null,
+            errorInfo,
+          })
         : null;
     const context = {
       ...(input.context ?? {}),
@@ -581,9 +587,8 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
       try {
         let hydratedContext = context;
         try {
-          const { hydrateLogRuntimeContext } = await import(
-            './runtime-context/hydrate-system-log-runtime-context'
-          );
+          const { hydrateLogRuntimeContext } =
+            await import('./runtime-context/hydrate-system-log-runtime-context');
           hydratedContext = (await hydrateLogRuntimeContext(context)) ?? context;
         } catch (enrichmentError) {
           console.error(
@@ -600,7 +605,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
           category: category ?? null,
           context: hydratedContext,
           stack: errorInfo?.stack ?? null,
-          path: input.request?.url ? requestInfo.path ?? null : null,
+          path: input.request?.url ? (requestInfo.path ?? null) : null,
           method: requestInfo.method ?? null,
           statusCode: input.statusCode ?? null,
           requestId: input.requestId ?? requestInfo.requestId ?? null,
@@ -619,7 +624,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
           category: category ?? null,
           context: hydratedContext,
           stack: errorInfo?.stack ?? null,
-          path: input.request?.url ? requestInfo.path ?? null : null,
+          path: input.request?.url ? (requestInfo.path ?? null) : null,
           method: requestInfo.method ?? null,
           statusCode: input.statusCode ?? null,
           requestId: input.requestId ?? requestInfo.requestId ?? null,

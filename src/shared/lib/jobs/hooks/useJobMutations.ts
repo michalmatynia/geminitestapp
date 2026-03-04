@@ -17,7 +17,7 @@ import { jobKeys } from './useJobQueries';
 export function useProductAiJobMutation(): UpdateMutation<
   unknown,
   { jobId: string; action: 'retry' | 'cancel' }
-  > {
+> {
   return createCreateMutationV2({
     mutationFn: ({ jobId, action }) => performProductAiJobAction(jobId, action),
     mutationKey: jobKeys.all,
@@ -42,7 +42,9 @@ export function useDeleteProductAiJobMutation(): VoidMutation<string> {
     mutationFn: (jobId) => deleteProductAiJob(jobId).then(() => {}),
     mutationKey: jobKeys.all,
     transformError: (error: unknown): Error =>
-      error instanceof Error ? error : new Error('Failed to delete product AI job. Please try again.'),
+      error instanceof Error
+        ? error
+        : new Error('Failed to delete product AI job. Please try again.'),
     meta: {
       source: 'jobs.hooks.useDeleteProductAiJobMutation',
       operation: 'delete',
@@ -60,7 +62,9 @@ export function useClearProductAiJobsMutation(): VoidMutation<{ scope: string }>
     mutationFn: ({ scope }) => clearProductAiJobs(scope).then(() => {}),
     mutationKey: jobKeys.all,
     transformError: (error: unknown): Error =>
-      error instanceof Error ? error : new Error('Failed to clear product AI jobs. Please try again.'),
+      error instanceof Error
+        ? error
+        : new Error('Failed to clear product AI jobs. Please try again.'),
     meta: {
       source: 'jobs.hooks.useClearProductAiJobsMutation',
       operation: 'delete',
@@ -76,7 +80,7 @@ export function useClearProductAiJobsMutation(): VoidMutation<{ scope: string }>
 export function useChatbotJobMutation(): UpdateMutation<
   unknown,
   { jobId: string; action: 'retry' | 'cancel' }
-  > {
+> {
   return createCreateMutationV2({
     mutationFn: ({ jobId, action }) => updateChatbotJob(jobId, action),
     mutationKey: jobKeys.all,

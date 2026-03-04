@@ -1,8 +1,5 @@
 import { PromptValidationRule } from '@/shared/contracts/prompt-engine';
-import { 
-  createRegexRule, 
-  CASE_RESOLVER_PROMPT_EXPLODER_SCOPE 
-} from './base';
+import { createRegexRule, CASE_RESOLVER_PROMPT_EXPLODER_SCOPE } from './base';
 import {
   CASE_RESOLVER_ADDRESSER_LABEL_PATTERN,
   CASE_RESOLVER_ADDRESSEE_LABEL_PATTERN,
@@ -274,7 +271,8 @@ export const CASE_RESOLVER_RULES: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.extract.addresser.inline_first_name',
     title: 'Case Resolver Extract: Addresser Inline First Name',
-    description: 'Extracts sender first name from inline labeled lines such as "From: Michał Matynia".',
+    description:
+      'Extracts sender first name from inline labeled lines such as "From: Michał Matynia".',
     pattern: CASE_RESOLVER_INLINE_ADDRESSER_LABEL_PATTERN.replace(
       '(.+?)',
       '([\\\\p{Lu}][\\\\p{L}\x27\u2019.-]+)(?:\\\\s+([\\\\p{Lu}][\\\\p{L}\x27\u2019.-]+(?:\\\\s+[\\\\p{Lu}][\\\\p{L}\x27\u2019.-]+){0,2}))?\\\\s+([\\\\p{Lu}][\\\\p{L}\x27\u2019.-]+)'
@@ -297,8 +295,7 @@ export const CASE_RESOLVER_RULES: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.extract.addresser.inline_middle_name',
     title: 'Case Resolver Extract: Addresser Inline Middle Name',
-    description:
-      'Extracts sender middle name from inline labeled lines when present.',
+    description: 'Extracts sender middle name from inline labeled lines when present.',
     pattern: CASE_RESOLVER_INLINE_ADDRESSER_LABEL_PATTERN.replace(
       '(.+?)',
       '([\\\\p{Lu}][\\\\p{L}\x27\u2019.-]+)(?:\\\\s+([\\\\p{Lu}][\\\\p{L}\x27\u2019.-]+(?:\\\\s+[\\\\p{Lu}][\\\\p{L}\x27\u2019.-]+){0,2}))?\\\\s+([\\\\p{Lu}][\\\\p{L}\x27\u2019.-]+)'
@@ -508,7 +505,8 @@ export const CASE_RESOLVER_RULES: PromptValidationRule[] = [
     id: 'segment.case_resolver.extract.address.postal_code',
     title: 'Case Resolver Extract: Address Postal Code',
     description: 'Extracts postal code from postal-code and city lines.',
-    pattern: '^\\\\s*(?:PL-)?(\\\\d{2}-\\\\d{3})\\\\s+([\\\\p{L}][\\\\p{L}\\\\s\x27\u2019.-]+)\\\\s*$',
+    pattern:
+      '^\\\\s*(?:PL-)?(\\\\d{2}-\\\\d{3})\\\\s+([\\\\p{L}][\\\\p{L}\\\\s\x27\u2019.-]+)\\\\s*$',
     flags: 'imu',
     message: 'Case Resolver address postal code captured.',
     sequence: 48,
@@ -528,7 +526,8 @@ export const CASE_RESOLVER_RULES: PromptValidationRule[] = [
     id: 'segment.case_resolver.extract.address.city',
     title: 'Case Resolver Extract: Address City',
     description: 'Extracts city from postal-code and city lines.',
-    pattern: '^\\\\s*(?:PL-)?(\\\\d{2}-\\\\d{3})\\\\s+([\\\\p{L}][\\\\p{L}\\\\s\x27\u2019.-]+)\\\\s*$',
+    pattern:
+      '^\\\\s*(?:PL-)?(\\\\d{2}-\\\\d{3})\\\\s+([\\\\p{L}][\\\\p{L}\\\\s\x27\u2019.-]+)\\\\s*$',
     flags: 'imu',
     message: 'Case Resolver address city captured.',
     sequence: 49,
@@ -658,8 +657,7 @@ export const CASE_RESOLVER_RULES: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.extract.addressee.middle_name',
     title: 'Case Resolver Extract: Addressee Middle Name',
-    description:
-      'Extracts addressee middle name from a capitalized person name line when present.',
+    description: 'Extracts addressee middle name from a capitalized person name line when present.',
     pattern: CASE_RESOLVER_PERSON_NAME_CAPTURE_PATTERN,
     flags: 'imu',
     message: 'Case Resolver addressee middle name captured.',

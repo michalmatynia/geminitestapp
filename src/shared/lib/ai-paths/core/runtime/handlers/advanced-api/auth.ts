@@ -1,7 +1,3 @@
- 
- 
- 
-
 import { AdvancedApiConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import { renderTemplate } from '../../utils';
 import { fetchWithOutboundUrlPolicy } from '../../security/outbound-url-policy';

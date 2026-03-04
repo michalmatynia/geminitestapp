@@ -621,17 +621,17 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
             const bounds =
               effectiveMode === 'threshold'
                 ? getThresholdMaskBounds(
-                  imageData.data,
-                  sampledWidth,
-                  sampledHeight,
-                  maskThresholdSensitivity
-                )
+                    imageData.data,
+                    sampledWidth,
+                    sampledHeight,
+                    maskThresholdSensitivity
+                  )
                 : getEdgeMaskBounds(
-                  imageData.data,
-                  sampledWidth,
-                  sampledHeight,
-                  maskEdgeSensitivity
-                );
+                    imageData.data,
+                    sampledWidth,
+                    sampledHeight,
+                    maskEdgeSensitivity
+                  );
             if (!bounds) {
               toast('No clear mask area detected for this mode.', { variant: 'warning' });
               return;

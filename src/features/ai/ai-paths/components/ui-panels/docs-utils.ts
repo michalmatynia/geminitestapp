@@ -71,7 +71,7 @@ const buildNodeDocClipboardSection = (
       lines.push(`- ${note}`);
     });
   }
-   
+
   lines.push('', '### JSON Snippet', '```json', nodeJsonSnippetByType[doc.type] ?? '{}', '```');
 
   return lines.join('\\n');

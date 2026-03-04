@@ -9,9 +9,7 @@ import {
   useDeleteNoteMutation,
   useUpdateCategoryMutation,
 } from '@/features/notesapp/hooks/useNoteData';
-import {
-  useNoteFilters,
-} from '@/features/notesapp/hooks/useNoteFilters';
+import { useNoteFilters } from '@/features/notesapp/hooks/useNoteFilters';
 import { useNoteOperations } from '@/features/notesapp/hooks/useNoteOperations';
 import { useNoteTheme } from '@/features/notesapp/hooks/useNoteTheme';
 import type { UndoAction } from '@/shared/contracts/notes';
@@ -61,7 +59,7 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
     onConfirm: () => void | Promise<void>;
     confirmText?: string;
     isDangerous?: boolean;
-      } | null>(null);
+  } | null>(null);
   const [prompt, setPrompt] = useState<{
     title: string;
     message?: string;
@@ -70,7 +68,7 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
     placeholder?: string;
     onConfirm: (value: string) => void | Promise<void>;
     required?: boolean;
-      } | null>(null);
+  } | null>(null);
 
   const confirmAction = useCallback(
     (config: {

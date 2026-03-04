@@ -109,12 +109,12 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
               ? 'text-sky-400/80'
               : 'text-sky-400/55'
           : `transition-all duration-150 ${
-            isSelected
-              ? 'text-sky-300'
-              : isActivePath || isFlowing
-                ? 'text-sky-400/80 group-hover:text-sky-300/90'
-                : 'text-sky-400/55 group-hover:text-sky-300/80'
-          }`;
+              isSelected
+                ? 'text-sky-300'
+                : isActivePath || isFlowing
+                  ? 'text-sky-400/80 group-hover:text-sky-300/90'
+                  : 'text-sky-400/55 group-hover:text-sky-300/80'
+            }`;
         const arrowSize = isSelected ? 9 : 8;
         const arrowWidth = isSelected ? 6 : 5;
         const arrowPath = `M 0 0 L -${arrowSize} ${arrowWidth / 2} L -${arrowSize} -${arrowWidth / 2} Z`;

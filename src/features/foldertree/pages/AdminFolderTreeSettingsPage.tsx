@@ -8,12 +8,7 @@ import {
 } from '@/features/foldertree/v2/settings';
 import { useFolderTreeProfiles } from '@/shared/hooks/use-folder-tree-profile';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import {
-  Button,
-  SectionHeader,
-  useToast,
-  FormActions,
-} from '@/shared/ui';
+import { Button, SectionHeader, useToast, FormActions } from '@/shared/ui';
 import {
   createDefaultFolderTreeProfilesV2,
   type FolderTreeInstance,

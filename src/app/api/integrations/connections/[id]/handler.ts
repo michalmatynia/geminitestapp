@@ -143,8 +143,8 @@ export async function PUT_handler(
       : {}),
     ...(typeof data.playwrightProxyPassword === 'string' && data.playwrightProxyPassword.trim()
       ? {
-        playwrightProxyPassword: encryptSecret(data.playwrightProxyPassword.trim()),
-      }
+          playwrightProxyPassword: encryptSecret(data.playwrightProxyPassword.trim()),
+        }
       : {}),
     ...(typeof data.playwrightEmulateDevice === 'boolean'
       ? { playwrightEmulateDevice: data.playwrightEmulateDevice }
@@ -173,8 +173,8 @@ export async function PUT_handler(
     ...(typeof data.traderaApiAppId === 'number' ? { traderaApiAppId: data.traderaApiAppId } : {}),
     ...(typeof data.traderaApiAppKey === 'string' && data.traderaApiAppKey.trim()
       ? {
-        traderaApiAppKey: encryptSecret(data.traderaApiAppKey.trim()),
-      }
+          traderaApiAppKey: encryptSecret(data.traderaApiAppKey.trim()),
+        }
       : {}),
     ...(typeof data.traderaApiPublicKey === 'string' || data.traderaApiPublicKey === null
       ? { traderaApiPublicKey: data.traderaApiPublicKey ?? null }
@@ -184,9 +184,9 @@ export async function PUT_handler(
       : {}),
     ...(typeof data.traderaApiToken === 'string' && data.traderaApiToken.trim()
       ? {
-        traderaApiToken: encryptSecret(data.traderaApiToken.trim()),
-        traderaApiTokenUpdatedAt: new Date(),
-      }
+          traderaApiToken: encryptSecret(data.traderaApiToken.trim()),
+          traderaApiTokenUpdatedAt: new Date(),
+        }
       : {}),
     ...(typeof data.traderaApiSandbox === 'boolean'
       ? { traderaApiSandbox: data.traderaApiSandbox }

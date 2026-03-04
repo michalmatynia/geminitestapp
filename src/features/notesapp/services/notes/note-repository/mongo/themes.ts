@@ -24,9 +24,7 @@ const toThemeRecord = (doc: ThemeDocument): ThemeRecord => ({
   themeData: doc.themeData ?? {},
   createdAt: typeof doc.createdAt === 'string' ? doc.createdAt : doc.createdAt.toISOString(),
   updatedAt:
-    typeof doc.updatedAt === 'string'
-      ? doc.updatedAt
-      : doc.updatedAt?.toISOString() ?? null,
+    typeof doc.updatedAt === 'string' ? doc.updatedAt : (doc.updatedAt?.toISOString() ?? null),
 });
 
 export const mongoThemeImpl = {

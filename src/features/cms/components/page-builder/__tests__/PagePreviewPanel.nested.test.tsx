@@ -5,11 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PagePreviewPanel } from '@/features/cms/components/page-builder/PagePreviewPanel';
 import type { PageBuilderState, SectionInstance } from '@/shared/contracts/cms';
 
-const {
-  pageBuilderStateRef,
-  dispatchMock,
-  toastMock,
-} = vi.hoisted(() => ({
+const { pageBuilderStateRef, dispatchMock, toastMock } = vi.hoisted(() => ({
   pageBuilderStateRef: {
     current: null as PageBuilderState | null,
   },
@@ -169,7 +165,12 @@ describe('PagePreviewPanel nested section rendering', () => {
   it('renders nested preview sections inside a subtle wrapper', () => {
     pageBuilderStateRef.current = createState([
       createSection({ id: 'root', zone: 'template' }),
-      createSection({ id: 'child', zone: 'template', parentSectionId: 'root', type: 'TextElement' }),
+      createSection({
+        id: 'child',
+        zone: 'template',
+        parentSectionId: 'root',
+        type: 'TextElement',
+      }),
     ]);
 
     render(<PagePreviewPanel />);
@@ -185,7 +186,12 @@ describe('PagePreviewPanel nested section rendering', () => {
   it('suppresses nested preview sections when the parent is hidden', () => {
     pageBuilderStateRef.current = createState([
       createSection({ id: 'root', zone: 'template', settings: { isHidden: true } }),
-      createSection({ id: 'child', zone: 'template', parentSectionId: 'root', type: 'TextElement' }),
+      createSection({
+        id: 'child',
+        zone: 'template',
+        parentSectionId: 'root',
+        type: 'TextElement',
+      }),
     ]);
 
     render(<PagePreviewPanel />);

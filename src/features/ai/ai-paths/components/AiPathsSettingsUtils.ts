@@ -1,4 +1,3 @@
- 
 import type {
   DbQueryConfig,
   DatabaseConfig,
@@ -85,11 +84,10 @@ export const safeJsonStringify = (value: unknown): string => sharedSafeJsonStrin
 
 export const parseRuntimeState = (value: unknown): RuntimeState => {
   if (!value) return EMPTY_RUNTIME_STATE;
-  const assertNoLegacyRunIdentity = (
-    record: Record<string, unknown>,
-    location: string
-  ): void => {
-    const deprecatedKeys = ['runId', 'runStartedAt'].filter((key: string): boolean => key in record);
+  const assertNoLegacyRunIdentity = (record: Record<string, unknown>, location: string): void => {
+    const deprecatedKeys = ['runId', 'runStartedAt'].filter(
+      (key: string): boolean => key in record
+    );
     if (deprecatedKeys.length === 0) return;
     throw validationError('Legacy AI Paths runtime identity fields are no longer supported.', {
       reason: 'deprecated_runtime_identity_fields',
@@ -115,7 +113,10 @@ export const parseRuntimeState = (value: unknown): RuntimeState => {
         if (!Array.isArray(entries)) return;
         entries.forEach((entry: unknown, index: number): void => {
           if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
-          assertNoLegacyRunIdentity(entry as Record<string, unknown>, `history.${nodeId}[${index}]`);
+          assertNoLegacyRunIdentity(
+            entry as Record<string, unknown>,
+            `history.${nodeId}[${index}]`
+          );
         });
       }
     );
@@ -251,29 +252,27 @@ export const buildPersistedRuntimeState = (state: RuntimeState, graphNodes: AiNo
     const entries = Array.isArray(value) ? value : [];
     const trimmed = entries.slice(-historyLimit);
     if (trimmed.length > 0) {
-      history[key] = trimmed.map(
-        (entry: RuntimeHistoryEntry): RuntimeHistoryEntry => {
-          return {
-            ...entry,
-            inputs: entry.inputs ? trimRuntimePorts(entry.inputs) : entry.inputs,
-            outputs: entry.outputs ? trimRuntimePorts(entry.outputs) : entry.outputs,
-          } as RuntimeHistoryEntry;
-        }
-      );
+      history[key] = trimmed.map((entry: RuntimeHistoryEntry): RuntimeHistoryEntry => {
+        return {
+          ...entry,
+          inputs: entry.inputs ? trimRuntimePorts(entry.inputs) : entry.inputs,
+          outputs: entry.outputs ? trimRuntimePorts(entry.outputs) : entry.outputs,
+        } as RuntimeHistoryEntry;
+      });
     }
   });
   const currentRun =
     state.currentRun && typeof state.currentRun.id === 'string'
       ? {
-        id: state.currentRun.id,
-        status: state.currentRun.status,
-        startedAt: state.currentRun.startedAt ?? null,
-        finishedAt: state.currentRun.finishedAt ?? null,
-        pathId: state.currentRun.pathId ?? null,
-        pathName: state.currentRun.pathName ?? null,
-        createdAt: state.currentRun.createdAt,
-        updatedAt: state.currentRun.updatedAt ?? null,
-      }
+          id: state.currentRun.id,
+          status: state.currentRun.status,
+          startedAt: state.currentRun.startedAt ?? null,
+          finishedAt: state.currentRun.finishedAt ?? null,
+          pathId: state.currentRun.pathId ?? null,
+          pathName: state.currentRun.pathName ?? null,
+          createdAt: state.currentRun.createdAt,
+          updatedAt: state.currentRun.updatedAt ?? null,
+        }
       : null;
   const payload: Record<string, unknown> = {
     inputs,
@@ -302,18 +301,21 @@ const resolveEdgeSourceNodeId = (edge: Record<string, unknown>): string => {
 const resolveEdgeSourcePort = (edge: Record<string, unknown>): string => {
   const fromPort = typeof edge['fromPort'] === 'string' ? edge['fromPort'].trim() : '';
   if (fromPort) return fromPort;
-  const sourceHandle =
-    typeof edge['sourceHandle'] === 'string' ? edge['sourceHandle'].trim() : '';
+  const sourceHandle = typeof edge['sourceHandle'] === 'string' ? edge['sourceHandle'].trim() : '';
   return sourceHandle;
 };
 
 const assertNoLegacyTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void => {
-  const nodeById = new Map<string, AiNode>(nodes.map((node: AiNode): [string, AiNode] => [node.id, node]));
+  const nodeById = new Map<string, AiNode>(
+    nodes.map((node: AiNode): [string, AiNode] => [node.id, node])
+  );
 
   nodes.forEach((node: AiNode): void => {
     if (node.type !== 'trigger') return;
     const outputs = Array.isArray(node.outputs) ? node.outputs : [];
-    const legacyPorts = outputs.filter((port: string): boolean => LEGACY_TRIGGER_DATA_PORTS.has(port));
+    const legacyPorts = outputs.filter((port: string): boolean =>
+      LEGACY_TRIGGER_DATA_PORTS.has(port)
+    );
     if (legacyPorts.length === 0) return;
     throw validationError('Legacy AI Paths trigger data outputs are no longer supported.', {
       source: 'ai_paths.path_config',
@@ -380,31 +382,29 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
       ...(databaseConfig as Partial<DatabaseConfig>),
       operation: isDatabaseOperation(operation) ? operation : 'query',
       writeOutcomePolicy: {
-        onZeroAffected: databaseRecord['writeOutcomePolicy'] &&
+        onZeroAffected:
+          databaseRecord['writeOutcomePolicy'] &&
           typeof databaseRecord['writeOutcomePolicy'] === 'object' &&
           !Array.isArray(databaseRecord['writeOutcomePolicy']) &&
           ((databaseRecord['writeOutcomePolicy'] as Record<string, unknown>)['onZeroAffected'] ===
             'warn' ||
             (databaseRecord['writeOutcomePolicy'] as Record<string, unknown>)['onZeroAffected'] ===
               'ignore')
-          ? ((databaseRecord['writeOutcomePolicy'] as Record<string, unknown>)[
-            'onZeroAffected'
-          ] as 'warn' | 'ignore')
-          : 'fail',
+            ? ((databaseRecord['writeOutcomePolicy'] as Record<string, unknown>)[
+                'onZeroAffected'
+              ] as 'warn' | 'ignore')
+            : 'fail',
       },
     } as DatabaseConfig;
     if (queryConfig) {
       const provider = queryConfig['provider'];
       if (provider === 'all') {
-        throw validationError(
-          'AI Path config contains deprecated database query provider "all".',
-          {
-            source: 'ai_paths.path_config',
-            reason: 'deprecated_database_query_provider',
-            nodeId: node.id,
-            provider,
-          }
-        );
+        throw validationError('AI Path config contains deprecated database query provider "all".', {
+          source: 'ai_paths.path_config',
+          reason: 'deprecated_database_query_provider',
+          nodeId: node.id,
+          provider,
+        });
       }
       if (
         provider !== undefined &&

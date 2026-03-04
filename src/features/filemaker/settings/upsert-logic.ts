@@ -1,23 +1,29 @@
-import { 
-  FilemakerDatabase, 
+import {
+  FilemakerDatabase,
   FilemakerPhoneNumber,
   FilemakerPerson,
   FilemakerOrganization,
   FilemakerEmail,
-  FilemakerEmailStatus
+  FilemakerEmailStatus,
 } from '../types';
-import { 
+import {
   FilemakerPhoneValidationRule,
   UpsertFilemakerPartyPhoneNumbersResult,
   UpsertFilemakerPartyEmailsResult,
   FilemakerEmailParserRule,
-  FilemakerEmailExtractionResult
+  FilemakerEmailExtractionResult,
 } from '@/shared/contracts/filemaker';
 import { normalizeFilemakerDatabase } from '../filemaker-settings.database';
 import { normalizeString, toIdToken, ensureUniqueId } from '../filemaker-settings.helpers';
-import { validateFilemakerPhoneNumber, extractFilemakerEmailsFromText } from '../filemaker-settings.validation';
+import {
+  validateFilemakerPhoneNumber,
+  extractFilemakerEmailsFromText,
+} from '../filemaker-settings.validation';
 import { createFilemakerPhoneNumber, createFilemakerEmail } from '../filemaker-settings.entities';
-import { linkFilemakerPhoneNumberToParty, linkFilemakerEmailToParty } from '../filemaker-settings.links';
+import {
+  linkFilemakerPhoneNumberToParty,
+  linkFilemakerEmailToParty,
+} from '../filemaker-settings.links';
 
 export const upsertFilemakerPhoneNumbersForParty = (
   database: FilemakerDatabase,
@@ -45,11 +51,11 @@ export const upsertFilemakerPhoneNumbersForParty = (
   const partyFound =
     input.partyKind === 'person'
       ? normalizedDatabase.persons.some(
-        (person: FilemakerPerson): boolean => person.id === normalizedPartyId
-      )
+          (person: FilemakerPerson): boolean => person.id === normalizedPartyId
+        )
       : normalizedDatabase.organizations.some(
-        (organization: FilemakerOrganization): boolean => organization.id === normalizedPartyId
-      );
+          (organization: FilemakerOrganization): boolean => organization.id === normalizedPartyId
+        );
   if (!partyFound) {
     return {
       database: normalizedDatabase,
@@ -184,11 +190,11 @@ export const upsertFilemakerEmailsForParty = (
   const partyFound =
     input.partyKind === 'person'
       ? normalizedDatabase.persons.some(
-        (person: FilemakerPerson): boolean => person.id === normalizedPartyId
-      )
+          (person: FilemakerPerson): boolean => person.id === normalizedPartyId
+        )
       : normalizedDatabase.organizations.some(
-        (organization: FilemakerOrganization): boolean => organization.id === normalizedPartyId
-      );
+          (organization: FilemakerOrganization): boolean => organization.id === normalizedPartyId
+        );
   if (!partyFound) {
     return {
       database: normalizedDatabase,

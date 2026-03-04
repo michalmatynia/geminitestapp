@@ -53,9 +53,7 @@ vi.mock('@/shared/lib/files/services/image-file-service', () => ({
 
 import { productService } from './productService';
 
-const createProductRecord = (
-  overrides: Partial<ProductWithImages> = {}
-): ProductWithImages =>
+const createProductRecord = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
   ({
     id: 'product-1',
     sku: 'SKU-1',
@@ -162,9 +160,7 @@ describe('productService parameter normalization', () => {
     await productService.createProduct({ sku: 'SKU-NEW' });
 
     expect(repositoryMock.createProduct).toHaveBeenCalledTimes(1);
-    const [createPayload] = repositoryMock.createProduct.mock.calls[0] as [
-      Record<string, unknown>,
-    ];
+    const [createPayload] = repositoryMock.createProduct.mock.calls[0] as [Record<string, unknown>];
 
     expect(createPayload).toEqual(expect.objectContaining({ sku: 'SKU-NEW', parameters: [] }));
   });

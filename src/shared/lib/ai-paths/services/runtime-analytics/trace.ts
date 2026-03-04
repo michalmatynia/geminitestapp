@@ -1,30 +1,18 @@
 import 'server-only';
 
- 
- 
- 
- 
- 
- 
-
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import { 
-  AiPathRunRecord, 
+import {
+  AiPathRunRecord,
   AiPathRuntimeTraceAnalytics,
   AiPathRuntimeAnalyticsRange,
-  AiPathRuntimeAnalyticsSummary
+  AiPathRuntimeAnalyticsSummary,
 } from '@/shared/contracts/ai-paths';
-import { 
-  asRecord, 
-  toNonEmptyString, 
-  toFiniteDurationMs,
-  withTimeout 
-} from './utils';
-import { 
-  TRACE_NODE_HIGHLIGHT_LIMIT, 
-  TRACE_RUN_SAMPLE_LIMIT, 
-  SUMMARY_QUERY_TIMEOUT_MS 
+import { asRecord, toNonEmptyString, toFiniteDurationMs, withTimeout } from './utils';
+import {
+  TRACE_NODE_HIGHLIGHT_LIMIT,
+  TRACE_RUN_SAMPLE_LIMIT,
+  SUMMARY_QUERY_TIMEOUT_MS,
 } from './config';
 
 export const extractRuntimeTraceNodeSpans = (run: AiPathRunRecord): unknown[] => {
@@ -133,14 +121,14 @@ export const summarizeRuntimeTraceAnalytics = (input: {
   const avgDurationMs =
     durations.length > 0
       ? Math.round(
-        durations.reduce((sum: number, value: number) => sum + value, 0) / durations.length
-      )
+          durations.reduce((sum: number, value: number) => sum + value, 0) / durations.length
+        )
       : null;
   const p95DurationMs =
     durations.length > 0
       ? durations[
-        Math.min(durations.length - 1, Math.max(0, Math.ceil(durations.length * 0.95) - 1))
-      ]!
+          Math.min(durations.length - 1, Math.max(0, Math.ceil(durations.length * 0.95) - 1))
+        ]!
       : null;
   const topSlowNodes = Array.from(nodeAggregates.values())
     .filter((aggregate) => aggregate.durationCount > 0)

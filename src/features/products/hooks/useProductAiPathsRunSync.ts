@@ -20,8 +20,7 @@ const AI_PATH_RUN_BADGE_TTL_MS = 30_000;
 export function useProductAiPathsRunSync(): void {
   useEffect(() => {
     const handler = (event: Event): void => {
-      const { productId } =
-        (event as CustomEvent<{ productId?: string }>).detail ?? {};
+      const { productId } = (event as CustomEvent<{ productId?: string }>).detail ?? {};
       if (!productId) return;
       addQueuedProductId(productId);
       setTimeout(() => {

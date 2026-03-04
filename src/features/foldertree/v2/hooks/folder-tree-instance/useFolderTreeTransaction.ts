@@ -6,11 +6,7 @@ import {
 } from '@/shared/contracts/master-folder-tree';
 import { useMasterFolderTreeRuntime } from '../../runtime/MasterFolderTreeRuntimeProvider';
 import { FolderTreeStore } from '../../store/createFolderTreeStore';
-import {
-  FolderTreeAppliedTransaction,
-  FolderTreeState,
-  FolderTreeTransaction,
-} from '../../types';
+import { FolderTreeAppliedTransaction, FolderTreeState, FolderTreeTransaction } from '../../types';
 import {
   createAppliedTx,
   createErrorAction,

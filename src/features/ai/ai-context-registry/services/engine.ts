@@ -83,9 +83,7 @@ export class ContextRegistryEngine {
   }): Promise<ContextRegistryResolutionBundle> {
     const refs = dedupeRefs(input.refs);
     const runtimeRefs = refs.filter((ref) => ref.kind === 'runtime_document');
-    const staticNodeIds = refs
-      .filter((ref) => ref.kind === 'static_node')
-      .map((ref) => ref.id);
+    const staticNodeIds = refs.filter((ref) => ref.kind === 'static_node').map((ref) => ref.id);
 
     const documents = dedupeDocuments(
       (

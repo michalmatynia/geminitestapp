@@ -6,22 +6,18 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { randomUUID } from 'crypto';
-import { 
-  ProductDocument, 
-  toProductResponse 
-} from '../mongo-product-repository-mappers';
-import { 
-  ProductCreateInput, 
-  ProductUpdateInput, 
-  ProductRecord 
-} from '@/shared/contracts/products';
-import { 
-  buildProductIdFilter, 
-  normalizeProductParameterValues 
+import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
+import { ProductCreateInput, ProductUpdateInput, ProductRecord } from '@/shared/contracts/products';
+import {
+  buildProductIdFilter,
+  normalizeProductParameterValues,
 } from '../mongo-product-repository.helpers';
 
 export const mongoProductWriteImpl = {
-  async createProduct(data: ProductCreateInput, getCollection: () => Promise<any>): Promise<ProductRecord> {
+  async createProduct(
+    data: ProductCreateInput,
+    getCollection: () => Promise<any>
+  ): Promise<ProductRecord> {
     const collection = await getCollection();
     const id = data.id || randomUUID();
     const now = new Date();
@@ -152,7 +148,10 @@ export const mongoProductWriteImpl = {
     return toProductResponse(result);
   },
 
-  async deleteProduct(id: string, getCollection: () => Promise<any>): Promise<ProductRecord | null> {
+  async deleteProduct(
+    id: string,
+    getCollection: () => Promise<any>
+  ): Promise<ProductRecord | null> {
     const collection = await getCollection();
     const filter = buildProductIdFilter(id);
     const doc = await collection.findOne(filter);
@@ -162,7 +161,10 @@ export const mongoProductWriteImpl = {
     return toProductResponse(doc);
   },
 
-  async bulkCreateProducts(data: ProductCreateInput[], createProduct: (d: any) => Promise<any>): Promise<number> {
+  async bulkCreateProducts(
+    data: ProductCreateInput[],
+    createProduct: (d: any) => Promise<any>
+  ): Promise<number> {
     if (data.length === 0) return 0;
     let count = 0;
     for (const item of data) {
@@ -172,7 +174,12 @@ export const mongoProductWriteImpl = {
     return count;
   },
 
-  async duplicateProduct(id: string, newSku: string, getProductById: (id: string) => Promise<any>, createProduct: (d: any) => Promise<any>): Promise<ProductRecord | null> {
+  async duplicateProduct(
+    id: string,
+    newSku: string,
+    getProductById: (id: string) => Promise<any>,
+    createProduct: (d: any) => Promise<any>
+  ): Promise<ProductRecord | null> {
     const product = await getProductById(id);
     if (!product) return null;
 

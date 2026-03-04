@@ -20,9 +20,13 @@ const readTrimmedString = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const readNumber = (value: unknown): number => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
+const readNumber = (value: unknown): number =>
+  typeof value === 'number' && Number.isFinite(value) ? value : 0;
 
-const getSectionItems = (document: ContextRuntimeDocument, sectionId: string): Array<Record<string, unknown>> => {
+const getSectionItems = (
+  document: ContextRuntimeDocument,
+  sectionId: string
+): Array<Record<string, unknown>> => {
   const section = (document.sections ?? []).find((entry) => entry.id === sectionId);
   return Array.isArray(section?.items) ? section.items : [];
 };
@@ -160,7 +164,8 @@ export const buildAiPathRunStaticContext = async (
     triggerNodeId: readTrimmedString(facts['triggerNodeId']),
     runtimeFingerprint: readTrimmedString(facts['runtimeFingerprint']),
     timestamps: {
-      createdAt: readTrimmedString(runtimeDocument.timestamps?.createdAt) ?? new Date(0).toISOString(),
+      createdAt:
+        readTrimmedString(runtimeDocument.timestamps?.createdAt) ?? new Date(0).toISOString(),
       startedAt: readTrimmedString(runtimeDocument.timestamps?.startedAt),
       finishedAt: readTrimmedString(runtimeDocument.timestamps?.finishedAt),
       deadLetteredAt: readTrimmedString(runtimeDocument.timestamps?.deadLetteredAt),
@@ -202,24 +207,48 @@ export const buildAiPathRunStaticContext = async (
       nodeTitle: readTrimmedString(item['nodeTitle']),
     })),
     preflight: {
-      compileErrorCount: readNumber(preflightItems.find((item) => item['label'] === 'compileErrorCount')?.['value']),
-      compileWarningCount: readNumber(preflightItems.find((item) => item['label'] === 'compileWarningCount')?.['value']),
-      compileFindingCount: readNumber(preflightItems.find((item) => item['label'] === 'compileFindingCount')?.['value']),
-      validationErrorCount: readNumber(preflightItems.find((item) => item['label'] === 'validationErrorCount')?.['value']),
-      validationWarningCount: readNumber(preflightItems.find((item) => item['label'] === 'validationWarningCount')?.['value']),
-      dependencyErrorCount: readNumber(preflightItems.find((item) => item['label'] === 'dependencyErrorCount')?.['value']),
-      dependencyWarningCount: readNumber(preflightItems.find((item) => item['label'] === 'dependencyWarningCount')?.['value']),
+      compileErrorCount: readNumber(
+        preflightItems.find((item) => item['label'] === 'compileErrorCount')?.['value']
+      ),
+      compileWarningCount: readNumber(
+        preflightItems.find((item) => item['label'] === 'compileWarningCount')?.['value']
+      ),
+      compileFindingCount: readNumber(
+        preflightItems.find((item) => item['label'] === 'compileFindingCount')?.['value']
+      ),
+      validationErrorCount: readNumber(
+        preflightItems.find((item) => item['label'] === 'validationErrorCount')?.['value']
+      ),
+      validationWarningCount: readNumber(
+        preflightItems.find((item) => item['label'] === 'validationWarningCount')?.['value']
+      ),
+      dependencyErrorCount: readNumber(
+        preflightItems.find((item) => item['label'] === 'dependencyErrorCount')?.['value']
+      ),
+      dependencyWarningCount: readNumber(
+        preflightItems.find((item) => item['label'] === 'dependencyWarningCount')?.['value']
+      ),
       dependencyStrictReady:
-        typeof preflightItems.find((item) => item['label'] === 'dependencyStrictReady')?.['value'] === 'boolean'
-          ? (preflightItems.find((item) => item['label'] === 'dependencyStrictReady')?.['value'] as boolean)
+        typeof preflightItems.find((item) => item['label'] === 'dependencyStrictReady')?.[
+          'value'
+        ] === 'boolean'
+          ? (preflightItems.find((item) => item['label'] === 'dependencyStrictReady')?.[
+              'value'
+            ] as boolean)
           : null,
-      dataContractErrorCount: readNumber(preflightItems.find((item) => item['label'] === 'dataContractErrorCount')?.['value']),
-      dataContractWarningCount: readNumber(preflightItems.find((item) => item['label'] === 'dataContractWarningCount')?.['value']),
-      runWarningCount: readNumber(preflightItems.find((item) => item['label'] === 'runWarningCount')?.['value']),
+      dataContractErrorCount: readNumber(
+        preflightItems.find((item) => item['label'] === 'dataContractErrorCount')?.['value']
+      ),
+      dataContractWarningCount: readNumber(
+        preflightItems.find((item) => item['label'] === 'dataContractWarningCount')?.['value']
+      ),
+      runWarningCount: readNumber(
+        preflightItems.find((item) => item['label'] === 'runWarningCount')?.['value']
+      ),
       samples: Array.isArray(preflightItems.find((item) => item['label'] === 'samples')?.['value'])
         ? (preflightItems.find((item) => item['label'] === 'samples')?.['value'] as unknown[])
-          .map((value) => readTrimmedString(value))
-          .filter((value): value is string => Boolean(value))
+            .map((value) => readTrimmedString(value))
+            .filter((value): value is string => Boolean(value))
         : [],
     },
     registry: {

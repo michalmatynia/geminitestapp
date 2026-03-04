@@ -47,7 +47,10 @@ const resolvePrismaSchemaPath = (candidate: string): string => {
     return candidate;
   }
 
-  const normalized = candidate.trim().replace(/\\/g, '/').replace(/^\.\/+/, '');
+  const normalized = candidate
+    .trim()
+    .replace(/\\/g, '/')
+    .replace(/^\.\/+/, '');
   if (!normalized) {
     return PRISMA_SCHEMA_DEFAULT_PATH;
   }

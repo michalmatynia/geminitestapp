@@ -103,9 +103,9 @@ const buildScrollTrigger = (
   const pin = scrollMode === 'pin' || scrollMode === 'story' ? true : (config.scrollPin ?? false);
   const snap = config.scrollSnap
     ? {
-      snapTo: Math.max(1, targetCount - 1) ? 1 / Math.max(1, targetCount - 1) : 1,
-      duration: config.scrollSnapDuration ?? DEFAULT_ANIMATION_CONFIG.scrollSnapDuration ?? 0.3,
-    }
+        snapTo: Math.max(1, targetCount - 1) ? 1 / Math.max(1, targetCount - 1) : 1,
+        duration: config.scrollSnapDuration ?? DEFAULT_ANIMATION_CONFIG.scrollSnapDuration ?? 0.3,
+      }
     : undefined;
   return {
     trigger: root,

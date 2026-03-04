@@ -8,33 +8,27 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { useCallback } from 'react';
-import { 
-  useToast 
-} from '@/shared/ui';
+import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
-import { 
-  PROMPT_ENGINE_SETTINGS_KEY
-} from '@/shared/contracts/prompt-engine';
+import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
 import { PROMPT_EXPLODER_SETTINGS_KEY } from '../../settings';
-import { 
+import {
   PromptExploderParserTuningRuleDraft,
   PromptExploderLearnedTemplate,
-  PromptExploderSettings
+  PromptExploderSettings,
 } from '@/shared/contracts/prompt-exploder';
-import { 
-  ensurePromptExploderPatternPack 
-} from '../../pattern-pack';
-import { 
+import { ensurePromptExploderPatternPack } from '../../pattern-pack';
+import {
   validatePromptExploderParserTuningDrafts,
   applyPromptExploderParserTuningDrafts,
-  buildPromptExploderParserTuningDrafts
+  buildPromptExploderParserTuningDrafts,
 } from '../../parser-tuning';
-import { 
+import {
   buildPatternSnapshot,
   prependPatternSnapshot,
   mergeRestoredPromptExploderRules,
-  removePatternSnapshotById
+  removePatternSnapshotById,
 } from '../../pattern-snapshots';
 import { LearningDraft } from './SettingsDraftsContext';
 
@@ -230,7 +224,9 @@ export function useSettingsActionsImpl(args: {
         key: PROMPT_ENGINE_SETTINGS_KEY,
         value: serializeSetting(nextSettings),
       });
-      toast('Restored rules from snapshot "${args.selectedSnapshot.name}".', { variant: 'success' });
+      toast('Restored rules from snapshot "${args.selectedSnapshot.name}".', {
+        variant: 'success',
+      });
     } catch (error) {
       logClientError(error, {
         context: {

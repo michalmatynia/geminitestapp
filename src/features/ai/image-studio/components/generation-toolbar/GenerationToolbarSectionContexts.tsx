@@ -2,9 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 
-import {
-  type ImageStudioAnalysisSummaryChipData,
-} from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
+import { type ImageStudioAnalysisSummaryChipData } from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
 import { internalError } from '@/shared/errors/app-error';
 
 export type SelectOption = {
@@ -189,19 +187,15 @@ export const [
   'useGenerationToolbarDefaultsSectionRuntime'
 );
 
-export const [
-  GenerationToolbarMaskSectionRuntimeProvider,
-  useGenerationToolbarMaskSectionRuntime,
-] = createSectionRuntimeContext<GenerationToolbarMaskSectionRuntimeValue>(
-  'useGenerationToolbarMaskSectionRuntime'
-);
+export const [GenerationToolbarMaskSectionRuntimeProvider, useGenerationToolbarMaskSectionRuntime] =
+  createSectionRuntimeContext<GenerationToolbarMaskSectionRuntimeValue>(
+    'useGenerationToolbarMaskSectionRuntime'
+  );
 
-export const [
-  GenerationToolbarCropSectionRuntimeProvider,
-  useGenerationToolbarCropSectionRuntime,
-] = createSectionRuntimeContext<GenerationToolbarCropSectionRuntimeValue>(
-  'useGenerationToolbarCropSectionRuntime'
-);
+export const [GenerationToolbarCropSectionRuntimeProvider, useGenerationToolbarCropSectionRuntime] =
+  createSectionRuntimeContext<GenerationToolbarCropSectionRuntimeValue>(
+    'useGenerationToolbarCropSectionRuntime'
+  );
 
 export const [
   GenerationToolbarUpscaleSectionRuntimeProvider,

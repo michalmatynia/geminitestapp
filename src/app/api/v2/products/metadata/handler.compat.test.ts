@@ -38,10 +38,7 @@ vi.mock('@/shared/lib/db/prisma', () => ({
   default: prismaMock,
 }));
 
-import {
-  GET_products_metadata_handler,
-  POST_products_metadata_handler,
-} from './handler';
+import { GET_products_metadata_handler, POST_products_metadata_handler } from './handler';
 
 describe('v2 products metadata handler compatibility', () => {
   beforeEach(() => {
@@ -85,9 +82,7 @@ describe('v2 products metadata handler compatibility', () => {
   });
 
   it('creates price-group from wrapped legacy payload', async () => {
-    const currencyFindUniqueMock = vi
-      .fn()
-      .mockResolvedValueOnce({ id: 'PLN' });
+    const currencyFindUniqueMock = vi.fn().mockResolvedValueOnce({ id: 'PLN' });
     const priceGroupFindUniqueMock = vi.fn().mockResolvedValue(null);
     const priceGroupCreateMock = vi.fn().mockResolvedValue({
       id: 'pg-1',

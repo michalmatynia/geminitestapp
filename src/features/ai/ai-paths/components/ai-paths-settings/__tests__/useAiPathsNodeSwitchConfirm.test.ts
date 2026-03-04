@@ -33,13 +33,9 @@ describe('useAiPathsNodeSwitchConfirm', () => {
     const toast = vi.fn();
     const setNodeConfigDirty = vi.fn();
 
-    confirm.mockImplementation(
-      (input: {
-        onConfirm: () => void;
-      }) => {
-        input.onConfirm();
-      }
-    );
+    confirm.mockImplementation((input: { onConfirm: () => void }) => {
+      input.onConfirm();
+    });
 
     const { result } = renderHook(() =>
       useAiPathsNodeSwitchConfirm({

@@ -21,34 +21,24 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';
 
 import { LOG_SOURCE } from './case-resolver-ocr/config';
-import { 
-  type CaseResolverOcrQueueJobData, 
+import {
+  type CaseResolverOcrQueueJobData,
   type CaseResolverResolvedOcrModel,
-  type PreparedCaseResolverOcrInput
+  type PreparedCaseResolverOcrInput,
 } from './case-resolver-ocr/types';
-import { 
+import {
   inferCaseResolverOcrProviderFromModel,
   resolveCaseResolverOcrModel,
   resolveCaseResolverOcrModelCandidates,
 } from './case-resolver-ocr/model-resolution';
-import { 
-  runOpenAiOcrRequest 
-} from './case-resolver-ocr/processors/openai';
-import { 
-  runAnthropicOcrRequest 
-} from './case-resolver-ocr/processors/anthropic';
-import { 
-  runGeminiOcrRequest 
-} from './case-resolver-ocr/processors/gemini';
-import { 
-  runOllamaOcrRequest 
-} from './case-resolver-ocr/processors/ollama';
-import { 
-  extractPdfTextForOcr 
-} from './case-resolver-ocr/pdf-utils';
-import { 
+import { runOpenAiOcrRequest } from './case-resolver-ocr/processors/openai';
+import { runAnthropicOcrRequest } from './case-resolver-ocr/processors/anthropic';
+import { runGeminiOcrRequest } from './case-resolver-ocr/processors/gemini';
+import { runOllamaOcrRequest } from './case-resolver-ocr/processors/ollama';
+import { extractPdfTextForOcr } from './case-resolver-ocr/pdf-utils';
+import {
   classifyCaseResolverOcrError,
-  isRetryableCaseResolverOcrError 
+  isRetryableCaseResolverOcrError,
 } from './case-resolver-ocr/error-classification';
 
 const resolveImageMimeType = (filepath: string): string => {

@@ -8,9 +8,7 @@ import {
   type ImageStudioRunExecutionMeta,
   type ImageStudioRunExecutionResult,
 } from '@/shared/contracts/image-studio';
-import {
-  badRequestError,
-} from '@/shared/errors/app-error';
+import { badRequestError } from '@/shared/errors/app-error';
 import {
   ensureWithinProject,
   isProjectScopedAssetPath,

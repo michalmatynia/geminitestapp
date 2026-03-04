@@ -63,9 +63,7 @@ export const badgeSpecSchema: z.ZodType<FolderTreeBadgeSpec> = z
     field: z.enum(['children_count', 'custom']).optional().default('children_count'),
     position: z.enum(['inline_after_name', 'trailing']).optional().default('trailing'),
     style: z.enum(['count', 'dot', 'status_icon']).optional().default('count'),
-    statusMap: z
-      .record(z.string(), z.enum(['info', 'warning', 'error', 'success']))
-      .optional(),
+    statusMap: z.record(z.string(), z.enum(['info', 'warning', 'error', 'success'])).optional(),
   })
   .strict();
 
@@ -92,9 +90,7 @@ export const searchConfigSchema: z.ZodType<Partial<FolderTreeSearchConfig>> = z
     enabled: z.boolean().optional(),
     debounceMs: z.number().optional(),
     filterMode: z.enum(['highlight', 'filter_tree']).optional(),
-    matchFields: z
-      .array(z.enum(['name', 'path', 'metadata']))
-      .optional(),
+    matchFields: z.array(z.enum(['name', 'path', 'metadata'])).optional(),
     minQueryLength: z.number().optional(),
   })
   .strict();

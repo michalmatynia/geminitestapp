@@ -57,10 +57,8 @@ export const resolveNextSelectedNodeIds = ({
 };
 
 /** Returns true when a node ID is part of the current multi-selection. */
-export const isNodeInSelection = (
-  selectedIds: MasterTreeId[],
-  nodeId: MasterTreeId
-): boolean => selectedIds.includes(nodeId);
+export const isNodeInSelection = (selectedIds: MasterTreeId[], nodeId: MasterTreeId): boolean =>
+  selectedIds.includes(nodeId);
 
 /**
  * Returns the first and last visible node IDs within the current selection.

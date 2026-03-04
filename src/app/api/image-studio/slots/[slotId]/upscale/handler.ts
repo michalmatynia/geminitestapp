@@ -28,22 +28,22 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { isAppError, notFoundError } from '@/shared/errors/app-error';
 
-import { 
-  upscaleBadRequest, 
-  parseUpscaleRequestPayload, 
-  resolveUpscaleRequest 
+import {
+  upscaleBadRequest,
+  parseUpscaleRequestPayload,
+  resolveUpscaleRequest,
 } from '@/features/ai/image-studio/server/upscale/upscale-request-parser';
-import { 
-  readIdempotencyKey, 
+import {
+  readIdempotencyKey,
   readUpscaleMetadataFromSlot,
-  buildClientPayloadSignature
+  buildClientPayloadSignature,
 } from '@/features/ai/image-studio/server/upscale/upscale-idempotency';
 import { processUpscalePayload } from '@/features/ai/image-studio/server/upscale/upscale-processor';
-import { 
-  formatScaleLabel, 
-  guessExtension, 
-  sanitizeFilename, 
-  sanitizeSegment 
+import {
+  formatScaleLabel,
+  guessExtension,
+  sanitizeFilename,
+  sanitizeSegment,
 } from '@/features/ai/image-studio/server/upscale/upscale-utils';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'upscale');
@@ -112,7 +112,7 @@ export async function postUpscaleSlotHandler(
   ].join('|');
 
   const clientPayloadSignature = buildClientPayloadSignature(payload, uploadedClientImage);
-  
+
   const fingerprint = buildUpscaleFingerprint({
     sourceSignature,
     mode: payload.mode,

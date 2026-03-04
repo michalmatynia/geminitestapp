@@ -25,7 +25,12 @@ const buildNode = (patch: Partial<ContextNode> & Pick<ContextNode, 'id'>): Conte
   ...patch,
 });
 
-const nodePage = buildNode({ id: 'page:home', kind: 'page', name: 'Home Page', tags: ['home', 'ui'] });
+const nodePage = buildNode({
+  id: 'page:home',
+  kind: 'page',
+  name: 'Home Page',
+  tags: ['home', 'ui'],
+});
 const nodeCollection = buildNode({
   id: 'collection:products',
   kind: 'collection',
@@ -84,7 +89,12 @@ describe('CodeFirstRegistryBackend', () => {
 
   describe('listAll', () => {
     it('returns all nodes', () => {
-      const backend = new CodeFirstRegistryBackend([nodePage, nodeCollection, nodeAction, nodePolicy]);
+      const backend = new CodeFirstRegistryBackend([
+        nodePage,
+        nodeCollection,
+        nodeAction,
+        nodePolicy,
+      ]);
       expect(backend.listAll()).toHaveLength(4);
     });
   });
@@ -96,13 +106,23 @@ describe('CodeFirstRegistryBackend', () => {
     });
 
     it('reflects actual node count', () => {
-      const backend = new CodeFirstRegistryBackend([nodePage, nodeCollection, nodeAction, nodePolicy]);
+      const backend = new CodeFirstRegistryBackend([
+        nodePage,
+        nodeCollection,
+        nodeAction,
+        nodePolicy,
+      ]);
       expect(backend.getVersion()).toBe('codefirst:4');
     });
   });
 
   describe('search — no query', () => {
-    const backend = new CodeFirstRegistryBackend([nodePage, nodeCollection, nodeAction, nodePolicy]);
+    const backend = new CodeFirstRegistryBackend([
+      nodePage,
+      nodeCollection,
+      nodeAction,
+      nodePolicy,
+    ]);
 
     it('returns all nodes when no filters applied', () => {
       expect(backend.search({ limit: 100 })).toHaveLength(4);
@@ -138,7 +158,12 @@ describe('CodeFirstRegistryBackend', () => {
   });
 
   describe('search — with query', () => {
-    const backend = new CodeFirstRegistryBackend([nodePage, nodeCollection, nodeAction, nodePolicy]);
+    const backend = new CodeFirstRegistryBackend([
+      nodePage,
+      nodeCollection,
+      nodeAction,
+      nodePolicy,
+    ]);
 
     it('finds nodes by name (case-insensitive)', () => {
       const results = backend.search({ query: 'EXPORT', limit: 10 });

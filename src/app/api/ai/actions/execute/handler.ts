@@ -4,15 +4,9 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { executeActionRequestSchema } from '@/shared/contracts/ai-context-registry';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import {
-  getProposal,
-  updateProposal,
-} from '@/features/ai/ai-context-registry/server';
+import { getProposal, updateProposal } from '@/features/ai/ai-context-registry/server';
 
-export async function POST_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const rawBody = await req.text();
   let body: unknown = {};
 
@@ -37,10 +31,10 @@ export async function POST_handler(
   }
 
   if (proposal.status !== 'pending') {
-    throw badRequestError(
-      `Proposal is not pending (status: ${proposal.status}).`,
-      { proposalId, status: proposal.status }
-    );
+    throw badRequestError(`Proposal is not pending (status: ${proposal.status}).`, {
+      proposalId,
+      status: proposal.status,
+    });
   }
 
   const updated = updateProposal(proposalId, {
@@ -64,7 +58,6 @@ export async function POST_handler(
     ok: true,
     proposalId,
     status: updated?.status ?? 'executed',
-    message:
-      'Proposal marked as executed. Actual execution logic is out of scope.',
+    message: 'Proposal marked as executed. Actual execution logic is out of scope.',
   });
 }

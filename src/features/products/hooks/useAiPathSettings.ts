@@ -92,15 +92,12 @@ const sanitizeLoadedDatabaseNode = (node: AiNode): AiNode => {
   if (queryConfig) {
     const provider = queryConfig['provider'];
     if (provider === 'all') {
-      throw validationError(
-        'AI Path config contains deprecated database query provider "all".',
-        {
-          source: 'ai_paths.path_settings',
-          reason: 'deprecated_database_query_provider',
-          nodeId: node.id,
-          provider,
-        }
-      );
+      throw validationError('AI Path config contains deprecated database query provider "all".', {
+        source: 'ai_paths.path_settings',
+        reason: 'deprecated_database_query_provider',
+        nodeId: node.id,
+        provider,
+      });
     }
     if (
       provider !== undefined &&
@@ -176,8 +173,7 @@ const resolveEdgeSourceNodeId = (edge: Record<string, unknown>): string => {
 const resolveEdgeSourcePort = (edge: Record<string, unknown>): string => {
   const fromPort = typeof edge['fromPort'] === 'string' ? edge['fromPort'].trim() : '';
   if (fromPort) return fromPort;
-  const sourceHandle =
-    typeof edge['sourceHandle'] === 'string' ? edge['sourceHandle'].trim() : '';
+  const sourceHandle = typeof edge['sourceHandle'] === 'string' ? edge['sourceHandle'].trim() : '';
   return sourceHandle;
 };
 
@@ -189,7 +185,9 @@ const assertNoLegacyTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void
   nodes.forEach((node: AiNode): void => {
     if (node.type !== 'trigger') return;
     const outputs = Array.isArray(node.outputs) ? node.outputs : [];
-    const legacyPorts = outputs.filter((port: string): boolean => LEGACY_TRIGGER_DATA_PORTS.has(port));
+    const legacyPorts = outputs.filter((port: string): boolean =>
+      LEGACY_TRIGGER_DATA_PORTS.has(port)
+    );
     if (legacyPorts.length === 0) return;
     throw validationError('Legacy AI Paths trigger data outputs are no longer supported.', {
       source: 'ai_paths.path_settings',
@@ -249,7 +247,9 @@ export const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => {
     });
   }
   const normalized = normalizeNodes(sanitizedDatabaseNodes);
-  const rawEdges = Array.isArray(contractBackfilledConfig.edges) ? contractBackfilledConfig.edges : [];
+  const rawEdges = Array.isArray(contractBackfilledConfig.edges)
+    ? contractBackfilledConfig.edges
+    : [];
   assertNoLegacyTriggerDataGraph(normalized, rawEdges);
   const graphNodes = normalizeNodes(normalized);
   const graphEdges = sanitizeEdges(graphNodes, rawEdges);
@@ -407,8 +407,8 @@ export async function fetchPathSettings(
   const configsList: PathConfig[] = Object.values(configs);
   const orderedConfigs: PathConfig[] = settingsPathOrder.length
     ? settingsPathOrder
-      .map((id: string) => configs[id])
-      .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
+        .map((id: string) => configs[id])
+        .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
     : configsList;
 
   const totalDurationMs = Date.now() - startedAt;
@@ -471,10 +471,10 @@ export function findTriggerPath(
   const triggerCandidates: PathConfig[] = orderedConfigs.filter((config: PathConfig) =>
     Array.isArray(config?.nodes)
       ? config.nodes.some(
-        (node: AiNode) =>
-          node.type === 'trigger' &&
+          (node: AiNode) =>
+            node.type === 'trigger' &&
             (node.config?.trigger?.event ?? fallbackTriggerEventId) === triggerEvent
-      )
+        )
       : false
   );
   const serverTriggerCandidates = triggerCandidates.filter(

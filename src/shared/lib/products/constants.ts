@@ -27,9 +27,7 @@ export const normalizeProductPageSize = (
   fallback: number = PRODUCT_PAGE_SIZE_OPTIONS[0]
 ): number => {
   const fallbackValue =
-    Number.isFinite(fallback) && fallback > 0
-      ? Math.floor(fallback)
-      : PRODUCT_PAGE_SIZE_OPTIONS[0];
+    Number.isFinite(fallback) && fallback > 0 ? Math.floor(fallback) : PRODUCT_PAGE_SIZE_OPTIONS[0];
 
   const parsed =
     typeof value === 'number'

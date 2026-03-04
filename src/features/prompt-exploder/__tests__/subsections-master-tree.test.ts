@@ -5,7 +5,10 @@ import {
   rebuildPromptExploderSubsectionsFromMasterNodes,
 } from '@/features/prompt-exploder/tree/subsections-master-tree';
 import { toPromptExploderTreeNodeId } from '@/features/prompt-exploder/tree/types';
-import type { PromptExploderListItem, PromptExploderSubsection } from '@/features/prompt-exploder/types';
+import type {
+  PromptExploderListItem,
+  PromptExploderSubsection,
+} from '@/features/prompt-exploder/types';
 
 const createItem = (
   id: string,
@@ -37,10 +40,7 @@ const createSubsection = (
 
 describe('subsections-master-tree', () => {
   it('rebuilds reordered subsections from master nodes', () => {
-    const subsections = [
-      createSubsection('sub-a', 'A'),
-      createSubsection('sub-b', 'B'),
-    ];
+    const subsections = [createSubsection('sub-a', 'A'), createSubsection('sub-b', 'B')];
     const nodes = buildPromptExploderSubsectionMasterNodes(subsections);
     const reorderedNodes = [nodes[1]!, nodes[0]!].map((node, index) => ({
       ...node,

@@ -3,9 +3,7 @@
 import { createContext, useContext } from 'react';
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import { useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import type {
-  PromptExploderParserTuningRuleDraft,
-} from '@/shared/contracts/prompt-exploder';
+import type { PromptExploderParserTuningRuleDraft } from '@/shared/contracts/prompt-exploder';
 import type { PromptExploderLearnedTemplate } from '../../types';
 import type { LearningDraft } from './SettingsDraftsContext';
 

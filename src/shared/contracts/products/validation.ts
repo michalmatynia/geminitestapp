@@ -30,9 +30,7 @@ export const productValidationInstanceScopeSchema = z.enum([
   'product_create',
   'product_edit',
 ]);
-export type ProductValidationInstanceScope = z.infer<
-  typeof productValidationInstanceScopeSchema
->;
+export type ProductValidationInstanceScope = z.infer<typeof productValidationInstanceScopeSchema>;
 
 export type ProductValidationDenyIssueInput = {
   fieldName: string;
@@ -273,9 +271,7 @@ export const dynamicReplacementMathOperationSchema = z.enum([
   'multiply',
   'divide',
 ]);
-export type DynamicReplacementMathOperation = z.infer<
-  typeof dynamicReplacementMathOperationSchema
->;
+export type DynamicReplacementMathOperation = z.infer<typeof dynamicReplacementMathOperationSchema>;
 
 export const dynamicReplacementRoundModeSchema = z.enum(['none', 'round', 'floor', 'ceil']);
 export type DynamicReplacementRoundMode = z.infer<typeof dynamicReplacementRoundModeSchema>;
@@ -309,9 +305,7 @@ export const dynamicReplacementLogicOperatorSchema = z.enum([
   'is_empty',
   'is_not_empty',
 ]);
-export type DynamicReplacementLogicOperator = z.infer<
-  typeof dynamicReplacementLogicOperatorSchema
->;
+export type DynamicReplacementLogicOperator = z.infer<typeof dynamicReplacementLogicOperatorSchema>;
 
 export const dynamicReplacementLogicActionSchema = z.enum(['keep', 'set_value', 'clear', 'abort']);
 export type DynamicReplacementLogicAction = z.infer<typeof dynamicReplacementLogicActionSchema>;

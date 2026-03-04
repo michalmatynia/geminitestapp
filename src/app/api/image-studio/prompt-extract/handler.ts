@@ -19,7 +19,10 @@ import {
   parsePromptEngineSettings,
   PROMPT_ENGINE_SETTINGS_KEY,
 } from '@/shared/lib/prompt-engine/settings';
-import type { PromptValidationIssue, PromptValidationSettings } from '@/shared/contracts/prompt-engine';
+import type {
+  PromptValidationIssue,
+  PromptValidationSettings,
+} from '@/shared/contracts/prompt-engine';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -112,15 +115,15 @@ function runProgrammaticAttempt(
 
   const formatted = applyAutofix
     ? formatProgrammaticPrompt(
-      prompt,
-      promptValidationSettings,
-      {
-        scope: 'image_studio_extraction',
-      },
-      {
-        precomputedIssuesBefore: validationBefore,
-      }
-    )
+        prompt,
+        promptValidationSettings,
+        {
+          scope: 'image_studio_extraction',
+        },
+        {
+          precomputedIssuesBefore: validationBefore,
+        }
+      )
     : { prompt, changed: false };
   const candidatePrompt = formatted.prompt;
   const direct = extractParamsFromPrompt(candidatePrompt);

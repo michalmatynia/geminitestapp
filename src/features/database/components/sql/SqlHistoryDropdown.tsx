@@ -31,7 +31,9 @@ export function SqlHistoryDropdown({
       >
         <ClockIcon className='size-3' />
         History ({history.length})
-        <ChevronDownIcon className={cn('size-3 transition-transform', showHistory && 'rotate-180')} />
+        <ChevronDownIcon
+          className={cn('size-3 transition-transform', showHistory && 'rotate-180')}
+        />
       </Button>
       {showHistory && history.length > 0 && (
         <Card
@@ -40,7 +42,9 @@ export function SqlHistoryDropdown({
           className='absolute right-0 top-full z-50 mt-1 w-96 max-h-64 overflow-hidden border-border bg-card/95 shadow-xl backdrop-blur-md'
         >
           <div className='flex items-center justify-between border-b border-white/5 px-3 py-2 bg-white/5'>
-            <span className='text-[10px] uppercase font-bold text-gray-500 tracking-wider'>Recent queries</span>
+            <span className='text-[10px] uppercase font-bold text-gray-500 tracking-wider'>
+              Recent queries
+            </span>
             <Button
               variant='ghost'
               size='xs'

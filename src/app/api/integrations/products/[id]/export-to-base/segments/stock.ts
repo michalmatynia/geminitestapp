@@ -111,7 +111,11 @@ export const resolveWarehouseAndStockMappings = async ({
 
     if (warehouseId) {
       const requestedWarehouseId = warehouseId;
-      warehouseId = resolveWarehouseCandidate(warehouseId, validWarehouseIds, stockWarehouseAliases);
+      warehouseId = resolveWarehouseCandidate(
+        warehouseId,
+        validWarehouseIds,
+        stockWarehouseAliases
+      );
       if (!warehouseId) {
         logWarehouseWarning(
           '[export-to-base] Requested warehouse is not available in target inventory; clearing warehouse.',

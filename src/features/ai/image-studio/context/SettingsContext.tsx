@@ -217,14 +217,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       }
       return result;
     },
-    [
-      heavySettings,
-      projectSettingsKey,
-      settingsStore,
-      studioSettings,
-      toast,
-      updateSetting,
-    ]
+    [heavySettings, projectSettingsKey, settingsStore, studioSettings, toast, updateSetting]
   );
 
   const resetStudioSettings = useCallback(() => {

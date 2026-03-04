@@ -120,7 +120,12 @@ export function NotesAppTreeNode({
         <div className='ml-auto hidden items-center gap-1 group-hover:flex'>
           {folderId ? (
             <>
-              <Tooltip content={getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.notesapp, 'notesapp_add_note') ?? 'Add note'}>
+              <Tooltip
+                content={
+                  getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.notesapp, 'notesapp_add_note') ??
+                  'Add note'
+                }
+              >
                 <Button
                   variant='ghost'
                   size='sm'
@@ -135,7 +140,14 @@ export function NotesAppTreeNode({
                   <FilePlus className='size-3' />
                 </Button>
               </Tooltip>
-              <Tooltip content={getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.notesapp, 'notesapp_add_subfolder') ?? 'Add subfolder'}>
+              <Tooltip
+                content={
+                  getDocumentationTooltip(
+                    DOCUMENTATION_MODULE_IDS.notesapp,
+                    'notesapp_add_subfolder'
+                  ) ?? 'Add subfolder'
+                }
+              >
                 <Button
                   variant='ghost'
                   size='sm'
@@ -151,7 +163,14 @@ export function NotesAppTreeNode({
             </>
           ) : null}
           {noteId ? (
-            <Tooltip content={getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.notesapp, 'notesapp_duplicate_note') ?? 'Duplicate note'}>
+            <Tooltip
+              content={
+                getDocumentationTooltip(
+                  DOCUMENTATION_MODULE_IDS.notesapp,
+                  'notesapp_duplicate_note'
+                ) ?? 'Duplicate note'
+              }
+            >
               <Button
                 variant='ghost'
                 size='sm'
@@ -165,7 +184,12 @@ export function NotesAppTreeNode({
               </Button>
             </Tooltip>
           ) : null}
-          <Tooltip content={getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.notesapp, 'notesapp_rename') ?? 'Rename'}>
+          <Tooltip
+            content={
+              getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.notesapp, 'notesapp_rename') ??
+              'Rename'
+            }
+          >
             <Button
               variant='ghost'
               size='sm'
@@ -178,7 +202,12 @@ export function NotesAppTreeNode({
               <Edit2 className='size-3' />
             </Button>
           </Tooltip>
-          <Tooltip content={getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.notesapp, 'notesapp_delete') ?? 'Delete'}>
+          <Tooltip
+            content={
+              getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.notesapp, 'notesapp_delete') ??
+              'Delete'
+            }
+          >
             <Button
               variant='ghost'
               size='sm'

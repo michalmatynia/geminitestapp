@@ -1,12 +1,5 @@
-import { 
-  ParamSpec, 
-  ParamIssue 
-} from '@/shared/contracts/prompt-engine';
-import { 
-  getDeepValue, 
-  isRgbArray, 
-  isTuple2NumberArray 
-} from './utils';
+import { ParamSpec, ParamIssue } from '@/shared/contracts/prompt-engine';
+import { getDeepValue, isRgbArray, isTuple2NumberArray } from './utils';
 
 export function validateParamsAgainstSpecs(
   params: Record<string, unknown>,
@@ -89,7 +82,7 @@ export function validateParamsAgainstSpecs(
           message: 'Must be an integer.',
         });
       }
-      if (spec.min !== undefined && (value) < spec.min) {
+      if (spec.min !== undefined && value < spec.min) {
         issues.push({
           path: spec.path,
           severity: 'error',
@@ -97,7 +90,7 @@ export function validateParamsAgainstSpecs(
           message: `Must be >= ${spec.min}.`,
         });
       }
-      if (spec.max !== undefined && (value) > spec.max) {
+      if (spec.max !== undefined && value > spec.max) {
         issues.push({
           path: spec.path,
           severity: 'error',

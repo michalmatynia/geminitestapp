@@ -123,8 +123,9 @@ export const hasCaseResolverWorkspaceFilesArray = (raw: string | null | undefine
   return Array.isArray(record['files']);
 };
 
-export const parseCaseResolverWorkspace = (raw: string | null | undefined): CaseResolverWorkspace =>
-{
+export const parseCaseResolverWorkspace = (
+  raw: string | null | undefined
+): CaseResolverWorkspace => {
   if (!raw || raw.trim().length === 0) {
     return createDefaultCaseResolverWorkspace();
   }

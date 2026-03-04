@@ -47,14 +47,10 @@ type SimulationArgs = {
 };
 
 const resolveEdgeFromNodeId = (edge: Edge): string | null =>
-  typeof edge.from === 'string' && edge.from.trim().length > 0
-    ? edge.from.trim()
-    : null;
+  typeof edge.from === 'string' && edge.from.trim().length > 0 ? edge.from.trim() : null;
 
 const resolveEdgeToNodeId = (edge: Edge): string | null =>
-  typeof edge.to === 'string' && edge.to.trim().length > 0
-    ? edge.to.trim()
-    : null;
+  typeof edge.to === 'string' && edge.to.trim().length > 0 ? edge.to.trim() : null;
 
 const resolveEdgeFromPort = (edge: Edge): string | null =>
   typeof edge.fromPort === 'string' && edge.fromPort.trim().length > 0
@@ -62,9 +58,7 @@ const resolveEdgeFromPort = (edge: Edge): string | null =>
     : null;
 
 const resolveEdgeToPort = (edge: Edge): string | null =>
-  typeof edge.toPort === 'string' && edge.toPort.trim().length > 0
-    ? edge.toPort.trim()
-    : null;
+  typeof edge.toPort === 'string' && edge.toPort.trim().length > 0 ? edge.toPort.trim() : null;
 
 export const applySimulationPreviewToRuntimeState = (args: {
   runtimeState: RuntimeState;
@@ -287,13 +281,13 @@ export function useAiPathsSimulation(args: SimulationArgs) {
           const triggerNode =
             triggerCandidates.length === 1
               ? triggerCandidates[0]
-              : triggerCandidates.find((n: AiNode) =>
-                args.sanitizedEdges.some(
-                  (e: Edge) =>
-                    (e.from === n.id || e.source === n.id) &&
+              : (triggerCandidates.find((n: AiNode) =>
+                  args.sanitizedEdges.some(
+                    (e: Edge) =>
+                      (e.from === n.id || e.source === n.id) &&
                       (e.to === simulationNode.id || e.target === simulationNode.id)
-                )
-              ) ?? triggerCandidates[0];
+                  )
+                ) ?? triggerCandidates[0]);
           if (!triggerNode) {
             args.toast('Connect a Trigger node to run the simulation.', { variant: 'error' });
             return;
@@ -320,13 +314,9 @@ export function useAiPathsSimulation(args: SimulationArgs) {
         const adjacency = new Map<string, Set<string>>();
         args.sanitizedEdges.forEach((edge: Edge) => {
           const fromNodeId =
-            typeof edge.from === 'string' && edge.from.trim().length > 0
-              ? edge.from
-              : null;
+            typeof edge.from === 'string' && edge.from.trim().length > 0 ? edge.from : null;
           const toNodeId =
-            typeof edge.to === 'string' && edge.to.trim().length > 0
-              ? edge.to
-              : null;
+            typeof edge.to === 'string' && edge.to.trim().length > 0 ? edge.to : null;
           if (!fromNodeId || !toNodeId) return;
           const fromSet = adjacency.get(fromNodeId) ?? new Set<string>();
           fromSet.add(toNodeId);

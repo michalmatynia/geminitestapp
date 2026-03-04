@@ -132,9 +132,7 @@ export function StudioSettingsContent(): React.JSX.Element {
             <div className='space-y-1'>
               <div className='text-[11px] text-gray-500'>Model</div>
               <Input
-                value={
-                  promptExtractModel.effectiveModelId.trim() || 'Not configured in AI Brain'
-                }
+                value={promptExtractModel.effectiveModelId.trim() || 'Not configured in AI Brain'}
                 readOnly
                 disabled
                 size='sm'
@@ -226,9 +224,7 @@ export function StudioSettingsContent(): React.JSX.Element {
             <div className='space-y-1'>
               <div className='text-[11px] text-gray-500'>Model</div>
               <Input
-                value={
-                  uiExtractorModel.effectiveModelId.trim() || 'Not configured in AI Brain'
-                }
+                value={uiExtractorModel.effectiveModelId.trim() || 'Not configured in AI Brain'}
                 readOnly
                 disabled
                 size='sm'
@@ -269,9 +265,7 @@ export function StudioSettingsContent(): React.JSX.Element {
             <div className='space-y-1'>
               <div className='text-[11px] text-gray-500'>Model</div>
               <Input
-                value={
-                  generationModel.effectiveModelId.trim() || 'Not configured in AI Brain'
-                }
+                value={generationModel.effectiveModelId.trim() || 'Not configured in AI Brain'}
                 readOnly
                 disabled
                 size='sm'

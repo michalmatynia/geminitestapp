@@ -276,9 +276,7 @@ export const normalizeFilemakerDatabase = (
   }
 
   if (rejectLegacyInlinePayloads && rawPersons.some(hasInlineEmailFields)) {
-    throw validationError(
-      'Legacy Filemaker inline person email payloads are no longer supported.'
-    );
+    throw validationError('Legacy Filemaker inline person email payloads are no longer supported.');
   }
 
   if (rejectLegacyInlinePayloads && rawOrganizations.some(hasInlineEmailFields)) {
@@ -353,7 +351,9 @@ export const normalizeFilemakerDatabase = (
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       });
     })
-    .filter((entry: FilemakerOrganization | null): entry is FilemakerOrganization => Boolean(entry));
+    .filter((entry: FilemakerOrganization | null): entry is FilemakerOrganization =>
+      Boolean(entry)
+    );
 
   const eventIds = new Set<string>();
   const events: FilemakerEvent[] = rawEvents
@@ -381,17 +381,15 @@ export const normalizeFilemakerDatabase = (
   const addressRelationKeys = new Set<string>();
   const groupedAddressLinks = new Map<string, FilemakerAddressLink[]>();
 
-  const pushAddressLink = (
-    input: {
-      id?: unknown;
-      ownerKind: unknown;
-      ownerId: unknown;
-      addressId: unknown;
-      isDefault?: unknown;
-      createdAt?: string | null | undefined;
-      updatedAt?: string | null | undefined;
-    }
-  ): void => {
+  const pushAddressLink = (input: {
+    id?: unknown;
+    ownerKind: unknown;
+    ownerId: unknown;
+    addressId: unknown;
+    isDefault?: unknown;
+    createdAt?: string | null | undefined;
+    updatedAt?: string | null | undefined;
+  }): void => {
     const ownerKindRaw = normalizeString(input.ownerKind).toLowerCase();
     if (ownerKindRaw !== 'person' && ownerKindRaw !== 'organization' && ownerKindRaw !== 'event') {
       return;
@@ -586,16 +584,14 @@ export const normalizeFilemakerDatabase = (
   const phoneNumberRelationKeys = new Set<string>();
   const phoneNumberLinks: FilemakerPhoneNumberLink[] = [];
 
-  const pushPhoneNumberLink = (
-    input: {
-      phoneNumberId: unknown;
-      partyKind: unknown;
-      partyId: unknown;
-      id?: unknown;
-      createdAt?: string | null | undefined;
-      updatedAt?: string | null | undefined;
-    }
-  ): void => {
+  const pushPhoneNumberLink = (input: {
+    phoneNumberId: unknown;
+    partyKind: unknown;
+    partyId: unknown;
+    id?: unknown;
+    createdAt?: string | null | undefined;
+    updatedAt?: string | null | undefined;
+  }): void => {
     const phoneNumberId = normalizeString(input.phoneNumberId);
     if (!phoneNumberId || !phoneNumberIds.has(phoneNumberId)) return;
 
@@ -694,16 +690,14 @@ export const normalizeFilemakerDatabase = (
   const emailRelationKeys = new Set<string>();
   const emailLinks: FilemakerEmailLink[] = [];
 
-  const pushEmailLink = (
-    input: {
-      emailId: unknown;
-      partyKind: unknown;
-      partyId: unknown;
-      id?: unknown;
-      createdAt?: string | null | undefined;
-      updatedAt?: string | null | undefined;
-    }
-  ): void => {
+  const pushEmailLink = (input: {
+    emailId: unknown;
+    partyKind: unknown;
+    partyId: unknown;
+    id?: unknown;
+    createdAt?: string | null | undefined;
+    updatedAt?: string | null | undefined;
+  }): void => {
     const emailId = normalizeString(input.emailId);
     if (!emailId || !emailIds.has(emailId)) return;
 
@@ -781,43 +775,43 @@ export const normalizeFilemakerDatabase = (
   const addresses: FilemakerAddress[] = Array.from(addressesById.values());
   const outputPersons = stripCompatibilityFields
     ? syncedPersons.map(
-      (person: FilemakerPerson): FilemakerPerson => ({
-        ...person,
-        street: '',
-        streetNumber: '',
-        city: '',
-        postalCode: '',
-        country: '',
-        countryId: '',
-        phoneNumbers: [],
-      })
-    )
+        (person: FilemakerPerson): FilemakerPerson => ({
+          ...person,
+          street: '',
+          streetNumber: '',
+          city: '',
+          postalCode: '',
+          country: '',
+          countryId: '',
+          phoneNumbers: [],
+        })
+      )
     : syncedPersons;
   const outputOrganizations = stripCompatibilityFields
     ? resolvedOrganizations.map(
-      (organization: FilemakerOrganization): FilemakerOrganization => ({
-        ...organization,
-        street: '',
-        streetNumber: '',
-        city: '',
-        postalCode: '',
-        country: '',
-        countryId: '',
-      })
-    )
+        (organization: FilemakerOrganization): FilemakerOrganization => ({
+          ...organization,
+          street: '',
+          streetNumber: '',
+          city: '',
+          postalCode: '',
+          country: '',
+          countryId: '',
+        })
+      )
     : resolvedOrganizations;
   const outputEvents = stripCompatibilityFields
     ? resolvedEvents.map(
-      (event: FilemakerEvent): FilemakerEvent => ({
-        ...event,
-        street: '',
-        streetNumber: '',
-        city: '',
-        postalCode: '',
-        country: '',
-        countryId: '',
-      })
-    )
+        (event: FilemakerEvent): FilemakerEvent => ({
+          ...event,
+          street: '',
+          streetNumber: '',
+          city: '',
+          postalCode: '',
+          country: '',
+          countryId: '',
+        })
+      )
     : resolvedEvents;
 
   return {

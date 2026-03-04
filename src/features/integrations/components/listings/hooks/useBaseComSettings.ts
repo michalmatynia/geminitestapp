@@ -10,7 +10,10 @@ import {
   useDefaultExportInventory,
   useBaseInventories,
 } from '@/features/integrations/hooks/useIntegrationQueries';
-import type { IntegrationTemplate as Template, BaseInventory } from '@/shared/contracts/integrations';
+import type {
+  IntegrationTemplate as Template,
+  BaseInventory,
+} from '@/shared/contracts/integrations';
 
 // Why: Base.com has complex, interconnected setup:
 // - Templates define field mapping

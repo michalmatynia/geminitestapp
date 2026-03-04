@@ -1,4 +1,3 @@
- 
 import type { AiNode, Edge, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import {
   AI_PATHS_HISTORY_RETENTION_DEFAULT,
@@ -62,8 +61,8 @@ export const mergeNodeOverride = (baseNodes: AiNode[], nodeOverride?: AiNode): A
   }
   // Node override is an in-place edit path (node config dialog), not node creation.
   // Never append unknown ids here; that can create phantom duplicates and break save linting.
-  return baseNodes.map((node: AiNode): AiNode =>
-    node.id === nodeOverride.id ? nodeOverride : node
+  return baseNodes.map(
+    (node: AiNode): AiNode => (node.id === nodeOverride.id ? nodeOverride : node)
   );
 };
 

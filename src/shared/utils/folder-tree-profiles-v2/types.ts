@@ -28,10 +28,7 @@ export type {
   MasterTreeNodeStatus,
 };
 
-import {
-  type MasterTreeNodeType,
-  type MasterTreeTargetType,
-} from '../master-folder-tree-contract';
+import { type MasterTreeNodeType, type MasterTreeTargetType } from '../master-folder-tree-contract';
 
 export const folderTreeInstanceValues = [
   'notes',

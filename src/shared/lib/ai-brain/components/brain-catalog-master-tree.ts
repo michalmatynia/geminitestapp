@@ -67,4 +67,3 @@ export const resolveBrainCatalogOrderFromNodes = (
       const entry = entryByNodeId.get(node.id);
       return entry ? [entry] : [];
     });
-

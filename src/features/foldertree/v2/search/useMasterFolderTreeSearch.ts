@@ -69,7 +69,9 @@ export function useMasterFolderTreeSearch(
   }, [query, resolvedConfig.debounceMs]);
 
   return useMemo((): MasterFolderTreeSearchState => {
-    const nodesById = new Map(nodes.map((node: MasterTreeNode): [MasterTreeId, MasterTreeNode] => [node.id, node]));
+    const nodesById = new Map(
+      nodes.map((node: MasterTreeNode): [MasterTreeId, MasterTreeNode] => [node.id, node])
+    );
     const effectiveQuery = debouncedQuery.trim();
     const isActive =
       resolvedConfig.enabled &&

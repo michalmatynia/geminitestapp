@@ -30,7 +30,7 @@ import {
 } from '@/shared/lib/observability/tanstack-telemetry';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 
-import { 
+import {
   type BaseQueryFactoryV2Config,
   type QueryDescriptorV2,
   type SuspenseQueryDescriptorV2,
@@ -48,33 +48,30 @@ import {
   type SaveMutationFactoryV2Config,
 } from './tanstack-factory-v2/types';
 
-import { 
+import {
   applyInfiniteQueryRuntimeGuards,
   guardRefetchInterval,
   isRefetchEnabledForQuery,
-  sanitizeRefetchIntervalValue
+  sanitizeRefetchIntervalValue,
 } from './tanstack-factory-v2/guards';
 
-import { 
-  emitFactoryTelemetry, 
-  withMutationKeyMeta 
-} from './tanstack-factory-v2/telemetry';
+import { emitFactoryTelemetry, withMutationKeyMeta } from './tanstack-factory-v2/telemetry';
 
-import { 
+import {
   ensureQueryDataV2 as ensureQueryDataLogic,
   prefetchQueryV2 as prefetchQueryLogic,
-  fetchQueryV2 as fetchQueryLogic
+  fetchQueryV2 as fetchQueryLogic,
 } from './tanstack-factory-v2/executors';
 
-import { 
+import {
   useTelemetrizedQueryFn,
-  useTelemetrizedMultiQueryOptionsV2, 
-  useTelemetrizedSuspenseMultiQueryOptionsV2, 
+  useTelemetrizedMultiQueryOptionsV2,
+  useTelemetrizedSuspenseMultiQueryOptionsV2,
   useQueryFactoryV2,
-  useSuspenseQueryFactoryV2
+  useSuspenseQueryFactoryV2,
 } from './tanstack-factory-v2/hooks';
 
-export type { 
+export type {
   BaseQueryFactoryV2Config,
   QueryDescriptorV2,
   SuspenseQueryDescriptorV2,
@@ -134,10 +131,7 @@ export function createSingleQueryV2<
   }) as SingleQuery<TTransformedData>;
 }
 
-export function createPaginatedListQueryV2<
-  TItem,
-  TQueryKey extends QueryKey = QueryKey,
->(
+export function createPaginatedListQueryV2<TItem, TQueryKey extends QueryKey = QueryKey>(
   config: SingleQueryConfigV2<PaginatedResult<TItem>, PaginatedResult<TItem>, TQueryKey>
 ): SingleQuery<PaginatedResult<TItem>> {
   const { placeholderData, meta, ...rest } = config;
@@ -194,9 +188,8 @@ export function createMultiQueryV2<
     queries: queryOptions as any,
     ...(combine
       ? {
-        combine: (results: any): TCombine =>
-          combine(results as MultiQueryResultsV2<TQueries>),
-      }
+          combine: (results: any): TCombine => combine(results as MultiQueryResultsV2<TQueries>),
+        }
       : {}),
   });
 }
@@ -257,9 +250,9 @@ export function createSuspenseMultiQueryV2<
     queries: queryOptions as any,
     ...(combine
       ? {
-        combine: (results: any): TCombine =>
-          combine(results as SuspenseMultiQueryResultsV2<TQueries>),
-      }
+          combine: (results: any): TCombine =>
+            combine(results as SuspenseMultiQueryResultsV2<TQueries>),
+        }
       : {}),
   });
 }
@@ -269,7 +262,9 @@ export function createSaveMutationV2<
   TVariables extends { id?: string | null },
   TContext = unknown,
   TError = Error,
->(config: SaveMutationFactoryV2Config<TData, TVariables, TError, TContext>): MutationResult<TData, TVariables, TError> {
+>(
+  config: SaveMutationFactoryV2Config<TData, TVariables, TError, TContext>
+): MutationResult<TData, TVariables, TError> {
   const { createFn, updateFn, ...rest } = config;
 
   return createMutationV2<TData, TVariables, TContext, TError>({

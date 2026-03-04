@@ -59,12 +59,12 @@ export const compactRuntimeStateField = (runtimeStateRaw: unknown): string | nul
   const parsedRuntimeState =
     typeof runtimeStateRaw === 'string'
       ? (() => {
-        try {
-          return JSON.parse(runtimeStateRaw) as Record<string, unknown>;
-        } catch {
-          return null;
-        }
-      })()
+          try {
+            return JSON.parse(runtimeStateRaw) as Record<string, unknown>;
+          } catch {
+            return null;
+          }
+        })()
       : runtimeStateRaw && typeof runtimeStateRaw === 'object'
         ? (runtimeStateRaw as Record<string, unknown>)
         : null;
@@ -83,16 +83,13 @@ export const compactRuntimeStateField = (runtimeStateRaw: unknown): string | nul
       compacted['currentRun'] = {
         id: currentRun['id'],
         status: currentRun['status'],
-        startedAt:
-          typeof currentRun['startedAt'] === 'string' ? currentRun['startedAt'] : null,
-        finishedAt:
-          typeof currentRun['finishedAt'] === 'string' ? currentRun['finishedAt'] : null,
+        startedAt: typeof currentRun['startedAt'] === 'string' ? currentRun['startedAt'] : null,
+        finishedAt: typeof currentRun['finishedAt'] === 'string' ? currentRun['finishedAt'] : null,
         pathId: typeof currentRun['pathId'] === 'string' ? currentRun['pathId'] : null,
         pathName: typeof currentRun['pathName'] === 'string' ? currentRun['pathName'] : null,
         createdAt:
           typeof currentRun['createdAt'] === 'string' ? currentRun['createdAt'] : undefined,
-        updatedAt:
-          typeof currentRun['updatedAt'] === 'string' ? currentRun['updatedAt'] : null,
+        updatedAt: typeof currentRun['updatedAt'] === 'string' ? currentRun['updatedAt'] : null,
       };
     }
   }

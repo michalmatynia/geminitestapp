@@ -1,7 +1,6 @@
 import type { ContextNode } from '@/shared/contracts/ai-context-registry';
 
-const SOURCE_REF =
-  'src/features/ai/ai-context-registry/registry/definitions/actions.ts';
+const SOURCE_REF = 'src/features/ai/ai-context-registry/registry/definitions/actions.ts';
 
 export const actionNodes: ContextNode[] = [
   {
@@ -59,9 +58,7 @@ export const actionNodes: ContextNode[] = [
       'Executes a read-only query against a registered database provider. ' +
       'Supports MongoDB aggregations and SQL SELECT statements.',
     tags: ['database', 'query', 'admin', 'developer'],
-    relationships: [
-      { type: 'uses', targetId: 'page:database-engine' },
-    ],
+    relationships: [{ type: 'uses', targetId: 'page:database-engine' }],
     permissions: {
       readScopes: ['ctx:read'],
       proposeScopes: ['ctx:propose'],

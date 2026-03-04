@@ -488,10 +488,12 @@ export function useStateBridgeRuntime({
   useEffect(() => {
     actions.setRunControlHandlers({
       ...(handleFireTrigger !== undefined && {
-        fireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => handleFireTrigger(node, event),
+        fireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) =>
+          handleFireTrigger(node, event),
       }),
       ...(handleFireTriggerPersistent !== undefined && {
-        fireTriggerPersistent: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => handleFireTriggerPersistent(node, event),
+        fireTriggerPersistent: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) =>
+          handleFireTriggerPersistent(node, event),
       }),
       ...(handlePauseActiveRun !== undefined && { pauseActiveRun: handlePauseActiveRun }),
       ...(handleResumeActiveRun !== undefined && { resumeActiveRun: handleResumeActiveRun }),
@@ -517,11 +519,16 @@ export function useStateBridgeRuntime({
           handleFetchParserSample(nodeId, entityType, entityId),
       }),
       ...(handleFetchUpdaterSample !== undefined && {
-        fetchUpdaterSample: (nodeId: string, entityType: string, entityId: string, options?: { notify?: boolean }) =>
-          handleFetchUpdaterSample(nodeId, entityType, entityId, options),
+        fetchUpdaterSample: (
+          nodeId: string,
+          entityType: string,
+          entityId: string,
+          options?: { notify?: boolean }
+        ) => handleFetchUpdaterSample(nodeId, entityType, entityId, options),
       }),
       ...(handleRunSimulation !== undefined && {
-        runSimulation: (node: AiNode, triggerEvent?: string) => handleRunSimulation(node, triggerEvent),
+        runSimulation: (node: AiNode, triggerEvent?: string) =>
+          handleRunSimulation(node, triggerEvent),
       }),
       ...(handleSendToAi !== undefined && {
         sendToAi: (nodeId: string, prompt: string) => handleSendToAi(nodeId, prompt),

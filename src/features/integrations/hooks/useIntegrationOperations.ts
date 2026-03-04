@@ -20,9 +20,7 @@ const toMarketplaceEntry = (value: unknown): MarketplaceBadgeEntry =>
 const normalizeProductIds = (productIds: readonly string[]): string[] =>
   Array.from(
     new Set(
-      productIds
-        .map((productId) => productId.trim())
-        .filter((productId) => productId.length > 0)
+      productIds.map((productId) => productId.trim()).filter((productId) => productId.length > 0)
     )
   ).sort();
 
@@ -43,7 +41,7 @@ export function useIntegrationOperations(productIds: readonly string[] = []): {
   setExportSettingsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
   refreshListingBadges: () => Promise<void>;
   handleListProductSuccess: () => void;
-  } {
+} {
   const queryClient = useQueryClient();
 
   // Integrations state
@@ -60,8 +58,7 @@ export function useIntegrationOperations(productIds: readonly string[] = []): {
   );
   const scopedProductIds = useMemo(() => normalizeProductIds(productIds), [productIds]);
   const scopedListingBadgesQueryKey = useMemo(
-    () =>
-      [...listingBadgesQueryKey, { productIds: scopedProductIds }] as const,
+    () => [...listingBadgesQueryKey, { productIds: scopedProductIds }] as const,
     [scopedProductIds]
   );
 

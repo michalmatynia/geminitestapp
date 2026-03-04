@@ -87,8 +87,7 @@ export function useFolderTreeUiState(
 
   const hasPersistedState = rawUiStateV2 !== undefined;
   const isExpandedNodeIdsControlled = controlledExpandedNodeIds !== undefined;
-  const persistedExpandedNodeIds =
-    rawUiStateV2 !== undefined ? uiEntry.expandedNodeIds : undefined;
+  const persistedExpandedNodeIds = rawUiStateV2 !== undefined ? uiEntry.expandedNodeIds : undefined;
   const resolvedExpandedNodeIds = persistedExpandedNodeIds ?? controlledExpandedNodeIds;
   const resolvedInitialExpandedNodeIds =
     persistedExpandedNodeIds !== undefined

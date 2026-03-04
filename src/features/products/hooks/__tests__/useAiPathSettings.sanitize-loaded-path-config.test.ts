@@ -119,9 +119,7 @@ describe('sanitizeLoadedPathConfig', () => {
       []
     );
 
-    expect(() => sanitizeLoadedPathConfig(config)).toThrowError(
-      /deprecated collection aliases/i
-    );
+    expect(() => sanitizeLoadedPathConfig(config)).toThrowError(/deprecated collection aliases/i);
   });
 
   it('rejects legacy node identities', () => {
@@ -216,9 +214,7 @@ describe('sanitizeLoadedPathConfig', () => {
       ]
     );
 
-    expect(() => sanitizeLoadedPathConfig(config)).toThrowError(
-      /invalid or non-canonical edges/i
-    );
+    expect(() => sanitizeLoadedPathConfig(config)).toThrowError(/invalid or non-canonical edges/i);
   });
 
   it('keeps canonical path configs loadable', () => {

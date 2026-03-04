@@ -278,7 +278,7 @@ function MenuBuilderSection(): React.JSX.Element {
   });
 
   const selectedNodeId = controller.selectedNodeId;
-  const selectedNode = selectedNodeId ? layoutNodeStateById.get(selectedNodeId) ?? null : null;
+  const selectedNode = selectedNodeId ? (layoutNodeStateById.get(selectedNodeId) ?? null) : null;
   const selectedNodeSemantic = selectedNode?.semantic ?? 'group';
 
   const handleAddRoot = useCallback(

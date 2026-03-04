@@ -85,7 +85,12 @@ export function Pagination({
       )}
 
       {/* Controls Section */}
-      <div className={cn('flex flex-wrap items-center gap-4', !showInfo && !isPanel && 'w-full justify-between')}>
+      <div
+        className={cn(
+          'flex flex-wrap items-center gap-4',
+          !showInfo && !isPanel && 'w-full justify-between'
+        )}
+      >
         {/* Page Size Selector */}
         {(showPageSize || isPanel) && onPageSizeChange && pageSize !== undefined && (
           <div className='flex items-center gap-2'>
@@ -123,7 +128,9 @@ export function Pagination({
 
           <div className='text-xs font-medium text-gray-400 min-w-[80px] text-center'>
             {isCompact ? (
-              <span>{page} / {totalPages}</span>
+              <span>
+                {page} / {totalPages}
+              </span>
             ) : (
               <>
                 Page <span className='font-bold text-white'>{page}</span> of{' '}

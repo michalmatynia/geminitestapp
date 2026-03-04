@@ -1,15 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
- 
- 
- 
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { 
-  ProductValidationPattern, 
-  SequenceGroupDraft 
-} from '@/shared/contracts/products';
+import type { ProductValidationPattern, SequenceGroupDraft } from '@/shared/contracts/products';
 import {
   createSequenceGroupId,
   getPatternSequence,

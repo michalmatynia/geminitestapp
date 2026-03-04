@@ -670,9 +670,7 @@ Z poważaniem,`;
     expect(recipientSegment?.raw).not.toContain('Michał Matynia');
     expect(senderSegment?.title).toBe('');
     expect(recipientSegment?.title).toBe('');
-    expect(senderSegment?.matchedPatternLabels).toContain(
-      'Case Resolver Heading: Addresser Label'
-    );
+    expect(senderSegment?.matchedPatternLabels).toContain('Case Resolver Heading: Addresser Label');
     expect(recipientSegment?.matchedPatternLabels).toContain(
       'Case Resolver Heading: Addressee Label'
     );

@@ -23,7 +23,7 @@ import { useProductCategories } from '@/features/products/hooks/useCategoryQueri
 import { useCatalogs } from '@/features/products/hooks/useProductMetadataQueries';
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations';
 import type { CatalogRecord, ProductCategory } from '@/shared/contracts/products';
-import type { 
+import type {
   InternalCategoryOption,
   CategoryMapperData,
   CategoryMapperActions,
@@ -96,9 +96,7 @@ const normalizeParentExternalId = (value: string | null | undefined): string | n
   return candidate;
 };
 
-const buildInternalCategoryOptions = (
-  categories: ProductCategory[]
-): InternalCategoryOption[] => {
+const buildInternalCategoryOptions = (categories: ProductCategory[]): InternalCategoryOption[] => {
   if (categories.length === 0) return [];
 
   const byId = new Map<string, ProductCategory>(
@@ -125,9 +123,7 @@ const buildInternalCategoryOptions = (
   }
 
   for (const [, children] of childrenByParentId) {
-    children.sort((a: ProductCategory, b: ProductCategory): number =>
-      a.name.localeCompare(b.name)
-    );
+    children.sort((a: ProductCategory, b: ProductCategory): number => a.name.localeCompare(b.name));
   }
 
   const visited = new Set<string>();

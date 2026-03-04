@@ -34,13 +34,10 @@ describe('getMasterTreeNodeStatus', () => {
     expect(getMasterTreeNodeStatus(node({ _status: true }))).toBeNull();
   });
 
-  it.each([
-    ['loading'],
-    ['error'],
-    ['locked'],
-    ['warning'],
-    ['success'],
-  ] as const)('returns %s when _status is "%s"', (status) => {
-    expect(getMasterTreeNodeStatus(node({ _status: status }))).toBe(status);
-  });
+  it.each([['loading'], ['error'], ['locked'], ['warning'], ['success']] as const)(
+    'returns %s when _status is "%s"',
+    (status) => {
+      expect(getMasterTreeNodeStatus(node({ _status: status }))).toBe(status);
+    }
+  );
 });

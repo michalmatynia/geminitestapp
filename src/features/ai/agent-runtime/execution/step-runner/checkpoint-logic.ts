@@ -1,17 +1,8 @@
- 
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
-import { 
-  buildCheckpointBriefWithLLM 
-} from '@/features/ai/agent-runtime/planning/llm';
-import { 
-  persistCheckpoint 
-} from '@/features/ai/agent-runtime/memory/checkpoint';
-import { 
-  AgentExecutionContext, 
-  PlanStep, 
-  PlannerMeta 
-} from '@/shared/contracts/agent-runtime';
+import { buildCheckpointBriefWithLLM } from '@/features/ai/agent-runtime/planning/llm';
+import { persistCheckpoint } from '@/features/ai/agent-runtime/memory/checkpoint';
+import { AgentExecutionContext, PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 
 export type CheckpointContext = {
   checkpointBriefStepId: string | null;
@@ -31,18 +22,18 @@ export async function maybeUpdateCheckpointBrief(args: {
   approvalRequestedStepId: string | null;
   approvalGrantedStepId: string | null;
 }): Promise<CheckpointContext> {
-  const { 
-    activeStepIdForBrief, 
-    checkpointContext, 
-    lastError, 
-    context, 
-    runId, 
-    memoryContext, 
-    planSteps, 
-    summaryCheckpoint, 
-    taskType, 
-    approvalRequestedStepId, 
-    approvalGrantedStepId 
+  const {
+    activeStepIdForBrief,
+    checkpointContext,
+    lastError,
+    context,
+    runId,
+    memoryContext,
+    planSteps,
+    summaryCheckpoint,
+    taskType,
+    approvalRequestedStepId,
+    approvalGrantedStepId,
   } = args;
 
   if (!activeStepIdForBrief) return checkpointContext;
@@ -52,7 +43,7 @@ export async function maybeUpdateCheckpointBrief(args: {
   ) {
     return checkpointContext;
   }
-  
+
   const briefContext = await getBrowserContextSummary(runId);
   const brief = await buildCheckpointBriefWithLLM({
     prompt: context.run.prompt,
@@ -64,7 +55,7 @@ export async function maybeUpdateCheckpointBrief(args: {
     browserContext: briefContext,
     runId,
   });
-  
+
   if (!brief) return checkpointContext;
 
   const nextContext = {

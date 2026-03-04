@@ -129,10 +129,10 @@ export function useRightSidebarSequence({
     const mask =
       sequencePolygons.length > 0
         ? {
-          polygons: sequencePolygons,
-          invert: maskInvert,
-          feather: maskFeather,
-        }
+            polygons: sequencePolygons,
+            invert: maskInvert,
+            feather: maskFeather,
+          }
         : null;
 
     const images = buildReferencePreviewImages(slots, compositeAssetIds);
@@ -201,12 +201,12 @@ export function useRightSidebarSequence({
       sequenceRequestPreview.payload
         ? JSON.stringify(sequenceRequestPreview.payload, null, 2)
         : JSON.stringify(
-          {
-            errors: sequenceRequestPreview.errors,
-          },
-          null,
-          2
-        ),
+            {
+              errors: sequenceRequestPreview.errors,
+            },
+            null,
+            2
+          ),
     [sequenceRequestPreview]
   );
 
@@ -277,10 +277,10 @@ export function useRightSidebarSequence({
         mask:
           polygons.length > 0
             ? {
-              polygons,
-              invert: maskInvert,
-              feather: maskFeather,
-            }
+                polygons,
+                invert: maskInvert,
+                feather: maskFeather,
+              }
             : null,
         studioSettings: studioSettings as unknown as Record<string, unknown>,
         steps: resolvedSteps,

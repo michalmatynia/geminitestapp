@@ -362,10 +362,10 @@ export function useProductMetadata({
 
     const filteredLanguages = languageIdSet.size
       ? languages.filter((language: Language) => {
-        const idKey = String(language.id).trim().toUpperCase();
-        const codeKey = String(language.code).trim().toUpperCase();
-        return normalizedLanguageSet.has(idKey) || normalizedLanguageSet.has(codeKey);
-      })
+          const idKey = String(language.id).trim().toUpperCase();
+          const codeKey = String(language.code).trim().toUpperCase();
+          return normalizedLanguageSet.has(idKey) || normalizedLanguageSet.has(codeKey);
+        })
       : languages;
 
     const priceGroupIdSet = new Set(
@@ -385,20 +385,17 @@ export function useProductMetadata({
     if (!catalogsQuery.isSuccess || !languagesQuery.isSuccess) return;
     if (selectedCatalogIds.length === 0) return;
     if (filteredLanguages.length > 0) return;
-    logClientError(
-      new Error('[ProductForm] filteredLanguages empty after queries resolved'),
-      {
-        context: {
-          service: 'products',
-          category: 'form-guard',
-          productId: product.id,
-          isHydrated: isEditingProductHydrated(product),
-          selectedCatalogIds,
-          catalogsCount: catalogsQuery.data?.length ?? 0,
-          languagesCount: languagesQuery.data?.length ?? 0,
-        },
-      }
-    );
+    logClientError(new Error('[ProductForm] filteredLanguages empty after queries resolved'), {
+      context: {
+        service: 'products',
+        category: 'form-guard',
+        productId: product.id,
+        isHydrated: isEditingProductHydrated(product),
+        selectedCatalogIds,
+        catalogsCount: catalogsQuery.data?.length ?? 0,
+        languagesCount: languagesQuery.data?.length ?? 0,
+      },
+    });
   }, [
     product,
     catalogsQuery.isSuccess,

@@ -86,8 +86,7 @@ export function AdminCaseResolverCasesProvider({
 }): React.JSX.Element {
   const pathname = usePathname();
   const isCasesRoute =
-    pathname === '/admin/case-resolver/cases' ||
-    pathname.startsWith('/admin/case-resolver/cases/');
+    pathname === '/admin/case-resolver/cases' || pathname.startsWith('/admin/case-resolver/cases/');
   const preferencesQuery = useUserPreferences();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSettingsBulk();
@@ -426,13 +425,7 @@ export function AdminCaseResolverCasesProvider({
       isCancelled = true;
       setIsRouteWorkspaceSyncing(false);
     };
-  }, [
-    isCasesRoute,
-    lastPersistedWorkspaceRevisionRef,
-    parsedWorkspace,
-    setWorkspace,
-    workspace,
-  ]);
+  }, [isCasesRoute, lastPersistedWorkspaceRevisionRef, parsedWorkspace, setWorkspace, workspace]);
 
   useEffect(() => {
     if (!isCasesRoute) return;

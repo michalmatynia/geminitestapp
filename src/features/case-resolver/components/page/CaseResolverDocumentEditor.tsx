@@ -518,8 +518,12 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                                 file.fileType === 'scanfile' && 'text-amber-400/70'
                               )}
                             />
-                            {dateLabel && <MetadataItem variant='subtle' label='Date' value={dateLabel} />}
-                            {file.folder && <MetadataItem variant='subtle' label='Folder' value={file.folder} />}
+                            {dateLabel && (
+                              <MetadataItem variant='subtle' label='Date' value={dateLabel} />
+                            )}
+                            {file.folder && (
+                              <MetadataItem variant='subtle' label='Folder' value={file.folder} />
+                            )}
                           </div>
                         </div>
 

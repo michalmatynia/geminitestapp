@@ -68,11 +68,7 @@ export function ExportLogViewer({
           />
         </div>
 
-        <LogList
-          logs={logEntries}
-          maxHeight='400px'
-          className='pr-2 custom-scrollbar'
-        />
+        <LogList logs={logEntries} maxHeight='400px' className='pr-2 custom-scrollbar' />
       </div>
     </CollapsibleSection>
   );

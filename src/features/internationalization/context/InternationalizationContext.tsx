@@ -121,7 +121,7 @@ export function InternationalizationProvider({
     onConfirm: () => void | Promise<void>;
     confirmText?: string;
     isDangerous?: boolean;
-      } | null>(null);
+  } | null>(null);
 
   const confirmAction = (config: {
     title: string;

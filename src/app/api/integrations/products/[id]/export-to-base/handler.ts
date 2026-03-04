@@ -11,10 +11,7 @@ import { parseJsonBody } from '@/features/products/server';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import type { ProductListingExportEvent } from '@/shared/contracts/integrations/listings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import {
-  badRequestError,
-  externalServiceError,
-} from '@/shared/errors/app-error';
+import { badRequestError, externalServiceError } from '@/shared/errors/app-error';
 
 import {
   BASE_EXPORT_SOURCE,
@@ -115,7 +112,8 @@ export async function postExportToBaseHandler(
       requestLockKey = lockKey;
     }
 
-    const { product, connection, integrations, session, primaryListingRepo } = await loadExportResources(productId, data.connectionId);
+    const { product, connection, integrations, session, primaryListingRepo } =
+      await loadExportResources(productId, data.connectionId);
 
     if (!product) {
       throw externalServiceError('Product not found', { productId });
@@ -149,18 +147,23 @@ export async function postExportToBaseHandler(
       categoryId: product.categoryId ?? null,
     };
 
-    const preparedExportContext =
-      await prepareBaseExportMappingsAndProduct<ProductWithImages>({
-        data,
-        imagesOnly,
-        productId,
-        resolvedInventoryId,
-        product: preparedProduct,
-      });
+    const preparedExportContext = await prepareBaseExportMappingsAndProduct<ProductWithImages>({
+      data,
+      imagesOnly,
+      productId,
+      resolvedInventoryId,
+      product: preparedProduct,
+    });
 
-    const { mappings, resolvedTemplateId, requestedTemplateId, exportProduct } = preparedExportContext;
+    const { mappings, resolvedTemplateId, requestedTemplateId, exportProduct } =
+      preparedExportContext;
     let { exportImagesAsBase64, imageBase64Mode, imageTransform } = preparedExportContext;
-    const { producerNameById, producerExternalIdByInternalId, tagNameById, tagExternalIdByInternalId } = preparedExportContext;
+    const {
+      producerNameById,
+      producerExternalIdByInternalId,
+      tagNameById,
+      tagExternalIdByInternalId,
+    } = preparedExportContext;
 
     const baseIntegration = integrations.find((integration) =>
       ['baselinker', 'base-com', 'base'].includes(integration.slug)
@@ -176,16 +179,17 @@ export async function postExportToBaseHandler(
     }
     const token = tokenResolution.token;
 
-    const { listingRepo, listingId, listingExternalId, listingInventoryId } = await resolveListingForExport({
-      productId,
-      connectionId: data.connectionId,
-      inventoryId: resolvedInventoryId,
-      imagesOnly,
-      externalListingId: data.externalListingId ?? null,
-      listingIdFromData: data.listingId ?? null,
-      baseIntegrationId,
-      primaryListingRepo,
-    });
+    const { listingRepo, listingId, listingExternalId, listingInventoryId } =
+      await resolveListingForExport({
+        productId,
+        connectionId: data.connectionId,
+        inventoryId: resolvedInventoryId,
+        imagesOnly,
+        externalListingId: data.externalListingId ?? null,
+        listingIdFromData: data.listingId ?? null,
+        baseIntegrationId,
+        primaryListingRepo,
+      });
 
     if (requestId && listingId) {
       const existingListing = await listingRepo.getListingById(listingId);
@@ -196,17 +200,28 @@ export async function postExportToBaseHandler(
       );
       if (prior) {
         if (runId) {
-          await runRepository.createRunEvent({
-            runId,
-            level: 'info',
-            message: 'Export already completed (idempotent).',
-            metadata: { productId, listingId, externalListingId: prior.externalListingId ?? existingListing?.externalListingId ?? null, requestId, idempotent: true },
-          }).catch(() => undefined);
-          await runRepository.updateRun(runId, {
-            status: 'completed',
-            finishedAt: new Date().toISOString(),
-            meta: { ...runMeta, idempotent: true, completedAt: new Date().toISOString() },
-          }).catch(() => undefined);
+          await runRepository
+            .createRunEvent({
+              runId,
+              level: 'info',
+              message: 'Export already completed (idempotent).',
+              metadata: {
+                productId,
+                listingId,
+                externalListingId:
+                  prior.externalListingId ?? existingListing?.externalListingId ?? null,
+                requestId,
+                idempotent: true,
+              },
+            })
+            .catch(() => undefined);
+          await runRepository
+            .updateRun(runId, {
+              status: 'completed',
+              finishedAt: new Date().toISOString(),
+              meta: { ...runMeta, idempotent: true, completedAt: new Date().toISOString() },
+            })
+            .catch(() => undefined);
         }
         logCapture.stop();
         return NextResponse.json({
@@ -228,7 +243,8 @@ export async function postExportToBaseHandler(
       inventoryId: resolvedInventoryId,
     });
 
-    const targetInventoryId = imagesOnly && listingInventoryId ? listingInventoryId : resolvedInventoryId;
+    const targetInventoryId =
+      imagesOnly && listingInventoryId ? listingInventoryId : resolvedInventoryId;
     const canRetryWrite = imagesOnly || Boolean(listingExternalId);
 
     let warehouseId = imagesOnly ? null : await getExportWarehouseId(targetInventoryId);
@@ -241,9 +257,16 @@ export async function postExportToBaseHandler(
       productId,
     });
     warehouseId = warehouseResolution.warehouseId;
-    
+
     const baseImageDiagnostics = exportImagesAsBase64
-      ? buildImageDiagnosticsLogger({ productId, connectionId: data.connectionId, inventoryId: targetInventoryId, exportImagesAsBase64, imageBase64Mode, imageTransform })
+      ? buildImageDiagnosticsLogger({
+          productId,
+          connectionId: data.connectionId,
+          inventoryId: targetInventoryId,
+          exportImagesAsBase64,
+          imageBase64Mode,
+          imageTransform,
+        })
       : undefined;
 
     const exportExec = await executeBaseExport({
@@ -279,15 +302,28 @@ export async function postExportToBaseHandler(
         includeBase64: exportImagesAsBase64,
         base64Mode: imageBase64Mode,
         transform: imageTransform,
-        context: { productId, connectionId: data.connectionId, inventoryId: targetInventoryId, exportImagesAsBase64, imageBase64Mode },
+        context: {
+          productId,
+          connectionId: data.connectionId,
+          inventoryId: targetInventoryId,
+          exportImagesAsBase64,
+          imageBase64Mode,
+        },
       });
 
       if (!exportImagesAsBase64 || !imageTransform) {
         const retryImagesAsBase64 = true;
         const retryImageBase64Mode = 'base-only';
         const retryImageTransform = { forceJpeg: true, maxDimension: 1600, jpegQuality: 85 };
-        const imageDiagnostics = buildImageDiagnosticsLogger({ productId, connectionId: data.connectionId, inventoryId: targetInventoryId, exportImagesAsBase64: retryImagesAsBase64, imageBase64Mode: retryImageBase64Mode, imageTransform: retryImageTransform });
-        
+        const imageDiagnostics = buildImageDiagnosticsLogger({
+          productId,
+          connectionId: data.connectionId,
+          inventoryId: targetInventoryId,
+          exportImagesAsBase64: retryImagesAsBase64,
+          imageBase64Mode: retryImageBase64Mode,
+          imageTransform: retryImageTransform,
+        });
+
         const retryExec = await executeBaseExport({
           imagesOnly,
           token,
@@ -335,7 +371,10 @@ export async function postExportToBaseHandler(
           requestId: requestId ?? null,
         });
       }
-      throw externalServiceError(result.error || 'Failed to export product', { productId, inventoryId: targetInventoryId });
+      throw externalServiceError(result.error || 'Failed to export product', {
+        productId,
+        inventoryId: targetInventoryId,
+      });
     }
 
     if (listingId) {
@@ -356,25 +395,65 @@ export async function postExportToBaseHandler(
     logCapture.stop();
     const logs = logCapture.getLogs();
     if (runId) {
-      await runRepository.createRunEvent({
-        runId, level: 'info', message: 'Export to Base.com completed.',
-        metadata: { productId, inventoryId: targetInventoryId, listingId, externalProductId: result.productId ?? null, imagesOnly },
-      }).catch(() => undefined);
-      await runRepository.updateRun(runId, {
-        status: 'completed', finishedAt: new Date().toISOString(),
-        meta: { ...runMeta, listingId, inventoryId: targetInventoryId, externalProductId: result.productId ?? null, completedAt: new Date().toISOString() },
-      }).catch(() => undefined);
+      await runRepository
+        .createRunEvent({
+          runId,
+          level: 'info',
+          message: 'Export to Base.com completed.',
+          metadata: {
+            productId,
+            inventoryId: targetInventoryId,
+            listingId,
+            externalProductId: result.productId ?? null,
+            imagesOnly,
+          },
+        })
+        .catch(() => undefined);
+      await runRepository
+        .updateRun(runId, {
+          status: 'completed',
+          finishedAt: new Date().toISOString(),
+          meta: {
+            ...runMeta,
+            listingId,
+            inventoryId: targetInventoryId,
+            externalProductId: result.productId ?? null,
+            completedAt: new Date().toISOString(),
+          },
+        })
+        .catch(() => undefined);
     }
 
-    return NextResponse.json({ success: true, message: 'Product successfully exported to Base.com', externalProductId: result.productId, runId, logs });
+    return NextResponse.json({
+      success: true,
+      message: 'Product successfully exported to Base.com',
+      externalProductId: result.productId,
+      runId,
+      logs,
+    });
   } catch (error) {
     logCapture.stop();
     const logs = logCapture.getLogs();
-    const errorMessage = error instanceof Error ? error.message : 'Failed to export product to Base.com.';
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to export product to Base.com.';
     if (runId) {
       const runRepository = await getPathRunRepository();
-      await runRepository.createRunEvent({ runId, level: 'error', message: `Export failed: ${errorMessage}`, metadata: { logsCount: logs.length } }).catch(() => undefined);
-      await runRepository.updateRun(runId, { status: 'failed', finishedAt: new Date().toISOString(), errorMessage, meta: { ...runMeta, failedAt: new Date().toISOString(), logsCount: logs.length } }).catch(() => undefined);
+      await runRepository
+        .createRunEvent({
+          runId,
+          level: 'error',
+          message: `Export failed: ${errorMessage}`,
+          metadata: { logsCount: logs.length },
+        })
+        .catch(() => undefined);
+      await runRepository
+        .updateRun(runId, {
+          status: 'failed',
+          finishedAt: new Date().toISOString(),
+          errorMessage,
+          meta: { ...runMeta, failedAt: new Date().toISOString(), logsCount: logs.length },
+        })
+        .catch(() => undefined);
     }
     if (error instanceof Error && 'meta' in error) {
       const errorWithMeta = error as Error & { meta?: Record<string, unknown> };

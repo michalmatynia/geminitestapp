@@ -147,13 +147,14 @@ export function useCaseResolverStateViewState({
         setSelectedFolderPath(null);
         setSelectedAssetId(null);
         if (preservedCaseId) {
-          setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace =>
-            current.activeFileId === preservedCaseId
-              ? current
-              : {
-                ...current,
-                activeFileId: preservedCaseId,
-              }
+          setWorkspace(
+            (current: CaseResolverWorkspace): CaseResolverWorkspace =>
+              current.activeFileId === preservedCaseId
+                ? current
+                : {
+                  ...current,
+                  activeFileId: preservedCaseId,
+                }
           );
         }
         return;
@@ -170,13 +171,14 @@ export function useCaseResolverStateViewState({
       setSelectedAssetId(null);
       const nextActiveCaseId = nextFolderCaseContainerId ?? activeCaseId;
       if (nextActiveCaseId) {
-        setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace =>
-          current.activeFileId === nextActiveCaseId
-            ? current
-            : {
-              ...current,
-              activeFileId: nextActiveCaseId,
-            }
+        setWorkspace(
+          (current: CaseResolverWorkspace): CaseResolverWorkspace =>
+            current.activeFileId === nextActiveCaseId
+              ? current
+              : {
+                ...current,
+                activeFileId: nextActiveCaseId,
+              }
         );
       }
     },

@@ -1,15 +1,11 @@
 import { callBaseApi } from './core';
-import { 
-  extractProducerList, 
-  dedupeProducers, 
-  extractTagList, 
-  dedupeTags 
+import {
+  extractProducerList,
+  dedupeProducers,
+  extractTagList,
+  dedupeTags,
 } from '../base-client-parsers';
-import { 
-  BaseProducer, 
-  BaseInventory, 
-  BaseTag 
-} from '@/shared/contracts/integrations';
+import { BaseProducer, BaseInventory, BaseTag } from '@/shared/contracts/integrations';
 import { fetchBaseInventories } from './inventory';
 
 export type FetchBaseProducersOptions = {

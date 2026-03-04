@@ -2,7 +2,7 @@
 import { PlusIcon, Edit2Icon } from 'lucide-react';
 import { useState } from 'react';
 
-import { useDraftQueries, useDeleteDraft } from '@/features/drafter/hooks/useDraftQueries';
+import { useDraftQueries, useDeleteDraftMutation } from '@/features/drafter/hooks/useDraftQueries';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ProductDraft } from '@/shared/contracts/products';
@@ -36,7 +36,7 @@ const resolveDraftIconColor = (draft: ProductDraft): string | undefined => {
 export function DraftList(): React.JSX.Element {
   const { openCreator } = useDrafterContext();
   const { data: drafts = [], isLoading: loading } = useDraftQueries();
-  const deleteDraftMutation = useDeleteDraft();
+  const deleteDraftMutation = useDeleteDraftMutation();
   const [deleting, setDeleting] = useState<string | null>(null);
   const [draftToDelete, setDraftToDelete] = useState<string | null>(null);
   const { toast } = useToast();
@@ -79,38 +79,40 @@ export function DraftList(): React.JSX.Element {
         loading={!!deleting}
       />
       <SimpleSettingsList<DraftListItem>
-        items={drafts.map((draft: ProductDraft): DraftListItem => ({
-          id: draft.id,
-          title: (
-            <div className='flex items-center gap-3'>
-              <h3 className='text-lg font-medium text-white'>{draft.name}</h3>
-              {draft.active !== undefined && (
-                <StatusBadge
-                  status={draft.active ? 'Active' : 'Inactive'}
-                  variant={draft.active ? 'active' : 'neutral'}
-                  size='sm'
-                  className='font-bold'
-                />
-              )}
-            </div>
-          ),
-          description: draft.description,
-          icon:
-            draft.icon &&
-            ((): React.JSX.Element | null => {
-              const IconComponent = ICON_LIBRARY_MAP[draft.icon];
-              const iconColor = resolveDraftIconColor(draft);
-              return IconComponent ? (
-                <div className='flex h-8 w-8 items-center justify-center rounded-md border bg-gray-800 text-gray-400'>
-                  <IconComponent
-                    className='h-4 w-4'
-                    style={iconColor ? { color: iconColor } : undefined}
+        items={drafts.map(
+          (draft: ProductDraft): DraftListItem => ({
+            id: draft.id,
+            title: (
+              <div className='flex items-center gap-3'>
+                <h3 className='text-lg font-medium text-white'>{draft.name}</h3>
+                {draft.active !== undefined && (
+                  <StatusBadge
+                    status={draft.active ? 'Active' : 'Inactive'}
+                    variant={draft.active ? 'active' : 'neutral'}
+                    size='sm'
+                    className='font-bold'
                   />
-                </div>
-              ) : null;
-            })(),
-          original: draft,
-        }))}
+                )}
+              </div>
+            ),
+            description: draft.description,
+            icon:
+              draft.icon &&
+              ((): React.JSX.Element | null => {
+                const IconComponent = ICON_LIBRARY_MAP[draft.icon];
+                const iconColor = resolveDraftIconColor(draft);
+                return IconComponent ? (
+                  <div className='flex h-8 w-8 items-center justify-center rounded-md border bg-gray-800 text-gray-400'>
+                    <IconComponent
+                      className='h-4 w-4'
+                      style={iconColor ? { color: iconColor } : undefined}
+                    />
+                  </div>
+                ) : null;
+              })(),
+            original: draft,
+          })
+        )}
         isLoading={loading}
         emptyMessage='No drafts yet. Create your first product template to speed up product creation.'
         renderActions={(item: DraftListItem) => (

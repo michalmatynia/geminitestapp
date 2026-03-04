@@ -72,12 +72,7 @@ function DatabaseOperationsContent(): React.JSX.Element {
         </TabsContent>
 
         <TabsContent value='crud'>
-          {previewLoading && (
-            <LoadingState
-              message='Loading table metadata...'
-              className='py-12'
-            />
-          )}
+          {previewLoading && <LoadingState message='Loading table metadata...' className='py-12' />}
           {!previewLoading && tableDetails.length === 0 && (
             <EmptyState
               title='No tables found'

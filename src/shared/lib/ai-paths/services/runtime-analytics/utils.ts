@@ -23,8 +23,11 @@ export const normalizeNodeStatus = (value: unknown): string | null => {
 export const buildEventMember = (type: string, id: string, timestampMs: number): string =>
   `${type}|${id}|${timestampMs}|${randomUUID()}`;
 
-export const buildDurationMember = (runId: string, durationMs: number, timestampMs: number): string =>
-  `${timestampMs}|${Math.max(0, Math.round(durationMs))}|${runId}|${randomUUID()}`;
+export const buildDurationMember = (
+  runId: string,
+  durationMs: number,
+  timestampMs: number
+): string => `${timestampMs}|${Math.max(0, Math.round(durationMs))}|${runId}|${randomUUID()}`;
 
 export const pruneBefore = (timestampMs: number): number => Math.max(0, timestampMs - RETENTION_MS);
 

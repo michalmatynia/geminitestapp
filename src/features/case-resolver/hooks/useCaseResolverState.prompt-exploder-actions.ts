@@ -666,7 +666,9 @@ export function useCaseResolverPromptExploder({
     const requestedContextFileId = requestedFileId?.trim() ?? '';
     const requestedSessionId = requestedPromptExploderSessionId.trim();
     if (!requestedContextFileId || !requestedSessionId) return;
-    if (!workspace.files.some((file: CaseResolverFile): boolean => file.id === requestedContextFileId)) {
+    if (
+      !workspace.files.some((file: CaseResolverFile): boolean => file.id === requestedContextFileId)
+    ) {
       return;
     }
 
@@ -681,7 +683,10 @@ export function useCaseResolverPromptExploder({
     if (autoApplyPromptTransferKeysRef.current.has(autoApplyKey)) return;
     if (autoApplyPromptTransferInFlightKeyRef.current === autoApplyKey) return;
 
-    if (payloadContextFileId !== requestedContextFileId || payloadSessionId !== requestedSessionId) {
+    if (
+      payloadContextFileId !== requestedContextFileId ||
+      payloadSessionId !== requestedSessionId
+    ) {
       autoApplyPromptTransferKeysRef.current.add(autoApplyKey);
       logCaseResolverWorkspaceEvent({
         source: 'prompt_exploder_apply_auto',

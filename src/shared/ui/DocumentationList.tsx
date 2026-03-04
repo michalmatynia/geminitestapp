@@ -47,15 +47,15 @@ export function DocumentationList({
   const filteredItems = useMemo(() => {
     if (!searchable || !query.trim()) return items;
     const term = query.toLowerCase().trim();
-    
-    return items.filter(item => {
+
+    return items.filter((item) => {
       if (typeof item === 'string') return item.toLowerCase().includes(term);
       if (React.isValidElement(item)) return true; // Can't easily search elements
-      
+
       const obj = item as DocumentationListItem;
       const labelText = typeof obj.label === 'string' ? obj.label : '';
       const descText = typeof obj.description === 'string' ? obj.description : '';
-      
+
       return labelText.toLowerCase().includes(term) || descText.toLowerCase().includes(term);
     });
   }, [items, searchable, query]);

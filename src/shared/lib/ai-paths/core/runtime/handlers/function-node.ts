@@ -20,11 +20,7 @@ const getAtPath = (value: unknown, path: string): unknown => {
   return current;
 };
 
-const setAtPath = (
-  target: unknown,
-  path: string,
-  nextValue: unknown
-): Record<string, unknown> => {
+const setAtPath = (target: unknown, path: string, nextValue: unknown): Record<string, unknown> => {
   const base: Record<string, unknown> =
     target && typeof target === 'object' && !Array.isArray(target)
       ? (target as Record<string, unknown>)
@@ -65,7 +61,9 @@ const ensureNumber = (value: unknown, fallback: number = 0): number => {
   return Number.isFinite(numeric) ? numeric : fallback;
 };
 
-const resolveTypeTag = (value: unknown): 'string' | 'number' | 'boolean' | 'object' | 'array' | 'null' => {
+const resolveTypeTag = (
+  value: unknown
+): 'string' | 'number' | 'boolean' | 'object' | 'array' | 'null' => {
   if (value === null) return 'null';
   if (Array.isArray(value)) return 'array';
   const t = typeof value;
@@ -152,12 +150,10 @@ export const handleFunctionNode: NodeHandler = ({
 
   let fn: (inputs: RuntimePortValues, context: Record<string, unknown>) => unknown;
   try {
-     
-    fn = new Function(
-      'inputs',
-      'context',
-      `"use strict";\n${script}`
-    ) as (inputs: RuntimePortValues, context: Record<string, unknown>) => unknown;
+    fn = new Function('inputs', 'context', `"use strict";\n${script}`) as (
+      inputs: RuntimePortValues,
+      context: Record<string, unknown>
+    ) => unknown;
   } catch (error) {
     return {
       ...prevOutputs,
@@ -190,8 +186,7 @@ export const handleFunctionNode: NodeHandler = ({
         ? (result as RuntimePortValues)
         : { value: result };
 
-    const primaryValue =
-      (outputs['value']) !== undefined ? (outputs['value']) : (result);
+    const primaryValue = outputs['value'] !== undefined ? outputs['value'] : result;
 
     if (config?.expectedType) {
       const actualTag = resolveTypeTag(primaryValue);
@@ -245,13 +240,12 @@ export const handleFunctionNode: NodeHandler = ({
       errorRaw:
         error instanceof Error
           ? {
-            name: error.name,
-            message: error.message,
-            stack: error.stack,
-            logs: logs.length > 0 ? logs : undefined,
-          }
+              name: error.name,
+              message: error.message,
+              stack: error.stack,
+              logs: logs.length > 0 ? logs : undefined,
+            }
           : undefined,
     };
   }
 };
-

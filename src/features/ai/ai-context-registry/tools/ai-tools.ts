@@ -24,8 +24,7 @@ export function buildContextRegistryTools(
           properties: {
             query: {
               type: 'string',
-              description:
-                'Free-text search query matched against name, description, and tags.',
+              description: 'Free-text search query matched against name, description, and tags.',
             },
             kinds: {
               type: 'array',
@@ -119,8 +118,7 @@ export function buildContextRegistryTools(
           properties: {
             entity: {
               type: 'string',
-              description:
-                'Entity name, e.g. "products", "orders". Case-insensitive.',
+              description: 'Entity name, e.g. "products", "orders". Case-insensitive.',
             },
           },
           additionalProperties: false,

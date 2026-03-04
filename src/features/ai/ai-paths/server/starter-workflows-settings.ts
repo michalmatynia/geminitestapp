@@ -33,11 +33,10 @@ const toTriggerButtonRecord = (
   enabled: preset.enabled ?? true,
   locations: preset.locations,
   mode: preset.mode ?? 'click',
-  display:
-    preset.display ?? {
-      label: preset.name,
-      showLabel: true,
-    },
+  display: preset.display ?? {
+    label: preset.name,
+    showLabel: true,
+  },
   createdAt: timestamp,
   updatedAt: timestamp,
   sortIndex: preset.sortIndex ?? 0,
@@ -84,16 +83,21 @@ export const ensureStarterWorkflowDefaults = (
     return created;
   };
 
-  const indexEntry = ensureRecord(AI_PATHS_INDEX_KEY, JSON.stringify(parsePathMetas(
-    nextRecords.find((record) => record.key === AI_PATHS_INDEX_KEY)?.value
-  )));
+  const indexEntry = ensureRecord(
+    AI_PATHS_INDEX_KEY,
+    JSON.stringify(
+      parsePathMetas(nextRecords.find((record) => record.key === AI_PATHS_INDEX_KEY)?.value)
+    )
+  );
   const nextMetas = parsePathMetas(indexEntry.value);
 
   const triggerButtonsEntry = ensureRecord(
     AI_PATHS_TRIGGER_BUTTONS_KEY,
-    serializeAiTriggerButtonsRaw(parseTriggerButtons(
-      nextRecords.find((record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY)?.value
-    ))
+    serializeAiTriggerButtonsRaw(
+      parseTriggerButtons(
+        nextRecords.find((record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY)?.value
+      )
+    )
   );
   const nextButtons = parseTriggerButtons(triggerButtonsEntry.value);
 

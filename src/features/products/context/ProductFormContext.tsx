@@ -87,15 +87,15 @@ const normalizeComparableParameterValues = (
         typeof entry.valuesByLanguage === 'object' &&
         !Array.isArray(entry.valuesByLanguage)
           ? Object.entries(entry.valuesByLanguage).reduce(
-            (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
-              const normalizedLang = normalizeComparableString(lang).toLowerCase();
-              const normalizedValue = normalizeComparableString(value);
-              if (!normalizedLang || !normalizedValue) return acc;
-              acc[normalizedLang] = normalizedValue;
-              return acc;
-            },
+              (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
+                const normalizedLang = normalizeComparableString(lang).toLowerCase();
+                const normalizedValue = normalizeComparableString(value);
+                if (!normalizedLang || !normalizedValue) return acc;
+                acc[normalizedLang] = normalizedValue;
+                return acc;
+              },
               {} as Record<string, string>
-          )
+            )
           : {};
       const directValue = normalizeComparableString(entry.value);
       const fallbackLocalizedValue =
@@ -216,11 +216,7 @@ export const useProductFormContext = (): ProductFormContextType => {
   );
 };
 
-function ProductFormSubmitController({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function ProductFormSubmitController({ children }: { children: React.ReactNode }) {
   const { onSuccess, onEditSave, nonFormDirtyTrackingLockedRef, requireHydratedEditProduct } =
     useProductFormProviderConfigContext();
   const {
@@ -420,11 +416,7 @@ export function ProductFormProvider({
   );
 }
 
-function ProductFormSubProviders({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function ProductFormSubProviders({ children }: { children: React.ReactNode }) {
   const { product, requireHydratedEditProduct, nonFormDirtyTrackingLockedRef } =
     useProductFormProviderConfigContext();
   const markNonFormInteraction = (): void => {
@@ -451,11 +443,7 @@ function ProductFormSubProviders({
   );
 }
 
-function ProductFormSubProvidersInner({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function ProductFormSubProvidersInner({ children }: { children: React.ReactNode }) {
   const { product, draft, initialCatalogId } = useProductFormProviderConfigContext();
   const onInteraction = useProductFormInteraction() || (() => {});
   const { uploading, uploadError, uploadSuccess } = useProductFormCore();
@@ -467,9 +455,7 @@ function ProductFormSubProvidersInner({
       initialCatalogId={initialCatalogId}
       onInteraction={onInteraction}
     >
-      <ProductFormParameterProviderWrapper
-        onInteraction={onInteraction}
-      >
+      <ProductFormParameterProviderWrapper onInteraction={onInteraction}>
         <ProductFormStudioProvider product={product}>
           <ProductFormImageProvider
             product={product}
@@ -479,9 +465,7 @@ function ProductFormSubProvidersInner({
             uploadSuccess={uploadSuccess}
             onInteraction={onInteraction}
           >
-            <ProductFormSubmitController>
-              {children}
-            </ProductFormSubmitController>
+            <ProductFormSubmitController>{children}</ProductFormSubmitController>
           </ProductFormImageProvider>
         </ProductFormStudioProvider>
       </ProductFormParameterProviderWrapper>

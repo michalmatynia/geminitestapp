@@ -14,7 +14,8 @@ import { EntityCollectionMapPanel } from '../components/validation/EntityCollect
 import { ValidationRulesEditor } from '../components/validation/ValidationRulesEditor';
 
 function AdminAiPathsValidationPageInner(): React.JSX.Element {
-  const { settingsQuery, settingsParseError, selectedPathConfig } = useAdminAiPathsValidationContext();
+  const { settingsQuery, settingsParseError, selectedPathConfig } =
+    useAdminAiPathsValidationContext();
 
   if (settingsQuery.isLoading) {
     return <LoadingState message='Loading AI-Paths validator...' className='py-12' />;

@@ -22,7 +22,7 @@ const NativeSelectContext = React.createContext<NativeSelectContextValue | null>
 export const shouldUseNativeSelectMode = (pathname: string | null | undefined): boolean =>
   Boolean(
     pathname &&
-      (pathname.startsWith('/admin/image-studio') || pathname.startsWith('/admin/ai-paths/queue'))
+    (pathname.startsWith('/admin/image-studio') || pathname.startsWith('/admin/ai-paths/queue'))
   );
 
 const useNativeSelectMode = (): boolean => {

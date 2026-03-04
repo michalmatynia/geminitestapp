@@ -1,16 +1,6 @@
-import { 
-  callBaseApi, 
-  callBaseApiRaw, 
-  BaseApiRawResult 
-} from './core';
-import { 
-  dedupeCategories, 
-  fetchBaseCategoriesFromPayload 
-} from '../base-client-parsers';
-import { 
-  BaseCategory, 
-  BaseInventory 
-} from '@/shared/contracts/integrations';
+import { callBaseApi, callBaseApiRaw, BaseApiRawResult } from './core';
+import { dedupeCategories, fetchBaseCategoriesFromPayload } from '../base-client-parsers';
+import { BaseCategory, BaseInventory } from '@/shared/contracts/integrations';
 import { fetchBaseInventories } from './inventory';
 
 export type FetchBaseCategoriesOptions = {
@@ -20,7 +10,9 @@ export type FetchBaseCategoriesOptions = {
 export const hasCategoryHierarchy = (categories: BaseCategory[]): boolean =>
   categories.some((category: BaseCategory): boolean => Boolean(category.parentId));
 
-export const scoreCategories = (categories: BaseCategory[]): { total: number; withParent: number } => {
+export const scoreCategories = (
+  categories: BaseCategory[]
+): { total: number; withParent: number } => {
   const withParent = categories.reduce(
     (count: number, category: BaseCategory): number => count + (category.parentId ? 1 : 0),
     0

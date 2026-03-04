@@ -18,9 +18,12 @@ vi.mock('@/shared/lib/ai-paths/hooks/useAiPathQueries', () => ({
   useAiPathRuntimeAnalytics: useAiPathRuntimeAnalyticsMock,
 }));
 
-vi.mock('@/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsOrchestratorContext', () => ({
-  useAiPathsSettingsOrchestrator: useAiPathsSettingsOrchestratorMock,
-}));
+vi.mock(
+  '@/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsOrchestratorContext',
+  () => ({
+    useAiPathsSettingsOrchestrator: useAiPathsSettingsOrchestratorMock,
+  })
+);
 
 vi.mock('@/shared/lib/ai-brain/hooks/useBrainAssignment', () => ({
   useBrainAssignment: useBrainAssignmentMock,
@@ -65,9 +68,7 @@ describe('AiPathsRuntimeAnalysis', () => {
     render(<AiPathsRuntimeAnalysis />);
 
     expect(useAiPathRuntimeAnalyticsMock).toHaveBeenCalledWith('24h', false);
-    expect(
-      screen.getByText(/Runtime analytics is disabled in AI Brain/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Runtime analytics is disabled in AI Brain/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Disabled' })).toBeDisabled();
   });
 });

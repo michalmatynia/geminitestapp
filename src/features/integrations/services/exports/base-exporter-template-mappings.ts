@@ -3,9 +3,7 @@ import 'server-only';
 import type { ImportExportTemplateMappingDto as ExportTemplateMapping } from '@/shared/contracts/data-import-export';
 import type { ProductWithImages } from '@/shared/contracts/products';
 
-import {
-  ImageExportLogger,
-} from './base-exporter-images';
+import { ImageExportLogger } from './base-exporter-images';
 
 import {
   toStringValue,

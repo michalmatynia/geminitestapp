@@ -1,6 +1,4 @@
-import type {
-  PromptExploderSegment,
-} from '@/shared/contracts/prompt-exploder';
+import type { PromptExploderSegment } from '@/shared/contracts/prompt-exploder';
 
 // --- Constants & Regex ---
 
@@ -112,15 +110,13 @@ export const normalizeSegmentLabels = (labels: string[] | undefined): string[] =
 
 export const CASE_RESOLVER_LABEL_ROLE_CONFIG = {
   addresser: {
-    pattern:
-      /^(?:from|od|nadawca|sender|addresser|wnioskodawca)\s*:\s*(.*)$/iu,
+    pattern: /^(?:from|od|nadawca|sender|addresser|wnioskodawca)\s*:\s*(.*)$/iu,
     headingPatternId: 'segment.case_resolver.heading.addresser_label',
     headingPatternLabel: 'Case Resolver Heading: Addresser Label',
     virtualSplitLabel: 'Case Resolver Virtual Split: Addresser',
   },
   addressee: {
-    pattern:
-      /^(?:to|do|adresat|recipient|addressee|odbiorca|organ)\s*:\s*(.*)$/iu,
+    pattern: /^(?:to|do|adresat|recipient|addressee|odbiorca|organ)\s*:\s*(.*)$/iu,
     headingPatternId: 'segment.case_resolver.heading.addressee_label',
     headingPatternLabel: 'Case Resolver Heading: Addressee Label',
     virtualSplitLabel: 'Case Resolver Virtual Split: Addressee',

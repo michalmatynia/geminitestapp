@@ -2,9 +2,15 @@
 
 import React, { useState } from 'react';
 
-import type { MasterFolderTreeController, FolderTreeProfileV2 } from '@/shared/contracts/master-folder-tree';
+import type {
+  MasterFolderTreeController,
+  FolderTreeProfileV2,
+} from '@/shared/contracts/master-folder-tree';
 
-import { FolderTreeViewportV2, type FolderTreeViewportV2Props } from '../components/FolderTreeViewportV2';
+import {
+  FolderTreeViewportV2,
+  type FolderTreeViewportV2Props,
+} from '../components/FolderTreeViewportV2';
 import { FolderTreeSearchBar } from './FolderTreeSearchBar';
 import { useMasterFolderTreeSearch } from './useMasterFolderTreeSearch';
 
@@ -41,11 +47,7 @@ export function FolderTreeSearchViewport({
   return (
     <div className='flex flex-col gap-1'>
       {searchEnabled && (
-        <FolderTreeSearchBar
-          value={query}
-          onChange={setQuery}
-          placeholder={searchPlaceholder}
-        />
+        <FolderTreeSearchBar value={query} onChange={setQuery} placeholder={searchPlaceholder} />
       )}
 
       <FolderTreeViewportV2

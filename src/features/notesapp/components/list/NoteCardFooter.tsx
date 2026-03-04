@@ -3,11 +3,7 @@
 import React from 'react';
 
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
-import type {
-  NoteWithRelations,
-  RelatedNote,
-  NoteRelationRecord,
-} from '@/shared/contracts/notes';
+import type { NoteWithRelations, RelatedNote, NoteRelationRecord } from '@/shared/contracts/notes';
 import { Breadcrumbs } from '@/shared/ui';
 import { buildBreadcrumbPath, darkenColor } from '../../utils';
 

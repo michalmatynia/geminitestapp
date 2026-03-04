@@ -6,9 +6,7 @@ import type {
   PromptValidationScope,
 } from '@/shared/contracts/prompt-engine';
 
-import type {
-  PromptExploderRuntimeValidationScope,
-} from '@/shared/contracts/prompt-exploder';
+import type { PromptExploderRuntimeValidationScope } from '@/shared/contracts/prompt-exploder';
 
 export const PROMPT_EXPLODER_SCOPE = ['prompt_exploder'] as const;
 export const CASE_RESOLVER_PROMPT_EXPLODER_SCOPE = ['case_resolver_prompt_exploder'] as const;
@@ -67,8 +65,7 @@ export const remapExploderScopesForTarget = (
   return deduped;
 };
 
-const normalizeRegexPattern = (pattern: string): string =>
-  pattern.replace(/\\\\/g, '\\');
+const normalizeRegexPattern = (pattern: string): string => pattern.replace(/\\\\/g, '\\');
 
 export const createRegexRule = (rule: {
   id: string;

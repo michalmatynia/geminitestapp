@@ -41,9 +41,7 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
     {
       name: 'Price',
       value:
-        product.price !== null && product.price !== undefined
-          ? `${product.price.toFixed(2)}`
-          : '—',
+        product.price !== null && product.price !== undefined ? `${product.price.toFixed(2)}` : '—',
       hasValue: product.price !== null && product.price !== undefined,
       syncDirection: 'to_base' as SyncDirection,
     },
@@ -90,7 +88,10 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
         <h4 className='text-xs font-bold uppercase tracking-wider text-gray-400'>
           Sync Configuration
         </h4>
-        <Badge variant='outline' className='bg-blue-500/5 text-blue-300 border-blue-500/20 text-[10px]'>
+        <Badge
+          variant='outline'
+          className='bg-blue-500/5 text-blue-300 border-blue-500/20 text-[10px]'
+        >
           One-way export
         </Badge>
       </div>
@@ -112,12 +113,20 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
                   <X className='size-3.5 text-gray-600' />
                 )}
               </div>
-              <span className={cn('text-xs font-medium truncate', field.hasValue ? 'text-gray-200' : 'text-gray-500')}>
+              <span
+                className={cn(
+                  'text-xs font-medium truncate',
+                  field.hasValue ? 'text-gray-200' : 'text-gray-500'
+                )}
+              >
                 {field.name}
               </span>
             </div>
             <div className='flex items-center gap-4 shrink-0'>
-              <span className='text-[11px] font-mono text-gray-400 max-w-[140px] truncate' title={field.value}>
+              <span
+                className='text-[11px] font-mono text-gray-400 max-w-[140px] truncate'
+                title={field.value}
+              >
                 {field.value}
               </span>
               <div className='shrink-0'>
@@ -148,12 +157,17 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
         <div className='flex items-center justify-between'>
           <h5 className='text-xs font-bold uppercase tracking-wider text-gray-300'>Images</h5>
           <div className='flex gap-2'>
-            <Badge variant='outline' className='text-[9px]'>Links: {imageLinkCount}</Badge>
-            <Badge variant='outline' className='text-[9px]'>Files: {uploadCount}</Badge>
+            <Badge variant='outline' className='text-[9px]'>
+              Links: {imageLinkCount}
+            </Badge>
+            <Badge variant='outline' className='text-[9px]'>
+              Files: {uploadCount}
+            </Badge>
           </div>
         </div>
         <p className='text-[11px] text-gray-400 leading-relaxed'>
-          Sync Base.com image URLs into product links to keep backups even if local uploads go missing.
+          Sync Base.com image URLs into product links to keep backups even if local uploads go
+          missing.
         </p>
         <Button
           type='button'

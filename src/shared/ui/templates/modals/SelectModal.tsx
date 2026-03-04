@@ -51,8 +51,7 @@ export function SelectModal<T>({
     const term = search.toLowerCase();
     return options.filter(
       (opt) =>
-        opt.label.toLowerCase().includes(term) ||
-        opt.description?.toLowerCase().includes(term)
+        opt.label.toLowerCase().includes(term) || opt.description?.toLowerCase().includes(term)
     );
   }, [options, search, searchable]);
 

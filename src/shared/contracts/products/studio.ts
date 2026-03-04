@@ -89,9 +89,7 @@ export const productStudioSequenceReadinessSchema = z.object({
   message: z.string().nullable(),
 });
 
-export type ProductStudioSequenceReadiness = z.infer<
-  typeof productStudioSequenceReadinessSchema
->;
+export type ProductStudioSequenceReadiness = z.infer<typeof productStudioSequenceReadinessSchema>;
 
 export const DEFAULT_PRODUCT_STUDIO_SEQUENCE_READINESS: ProductStudioSequenceReadiness = {
   ready: false,

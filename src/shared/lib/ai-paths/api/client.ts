@@ -18,7 +18,7 @@ import {
   apiDelete,
   ApiResponse,
   resolveApiUrl,
-  withCsrfHeadersCompat
+  withCsrfHeadersCompat,
 } from './client/base';
 
 import {
@@ -31,13 +31,10 @@ import {
   databaseUpdate,
   entityUpdate,
   fetchSchema,
-  browseDatabase
+  browseDatabase,
 } from './client/database';
 
-import {
-  fetchSettings,
-  updateSetting
-} from './client/settings';
+import { fetchSettings, updateSetting } from './client/settings';
 
 import {
   AgentEnqueuePayload,
@@ -45,7 +42,7 @@ import {
   PlaywrightNodeRunSnapshot,
   enqueueAgentRun,
   enqueuePlaywrightRun,
-  fetchPlaywrightRun
+  fetchPlaywrightRun,
 } from './client/agent';
 
 import {
@@ -53,20 +50,14 @@ import {
   createTriggerButton,
   updateTriggerButton,
   deleteTriggerButton,
-  reorderTriggerButtons
+  reorderTriggerButtons,
 } from './client/triggers';
 
-import {
-  fetchRuntimeAnalyticsSummary
-} from './client/analytics';
+import { fetchRuntimeAnalyticsSummary } from './client/analytics';
 
-import type { 
-  SchemaResponse 
-} from '@/shared/contracts/database';
+import type { SchemaResponse } from '@/shared/contracts/database';
 export type { SchemaResponse };
-import type { 
-  AiPathRuntimeAnalyticsSummary 
-} from '@/shared/contracts/ai-paths';
+import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
 
 export type {
   ApiResponse,
@@ -91,28 +82,23 @@ export {
   apiPatch,
   apiDelete,
   withCsrfHeadersCompat,
-
   databaseAction,
   databaseQuery,
   databaseUpdate,
   entityUpdate,
   fetchSchema,
   browseDatabase,
-
   fetchSettings,
   updateSetting,
-
   enqueueAgentRun,
   enqueuePlaywrightRun,
   fetchPlaywrightRun,
-
   fetchTriggerButtons,
   createTriggerButton,
   updateTriggerButton,
   deleteTriggerButton,
   reorderTriggerButtons,
-
-  fetchRuntimeAnalyticsSummary
+  fetchRuntimeAnalyticsSummary,
 };
 
 // ============================================================================
@@ -127,7 +113,9 @@ export async function fetchAgentTeachingChat(args: {
   agentId: string;
   source: AgentTeachingChatSource;
 }): Promise<ApiResponse<ChatMessage[]>> {
-  return apiFetch<ChatMessage[]>(`/api/ai/agent-creator/teaching/chat?agentId=${args.agentId}&source=${args.source}`);
+  return apiFetch<ChatMessage[]>(
+    `/api/ai/agent-creator/teaching/chat?agentId=${args.agentId}&source=${args.source}`
+  );
 }
 
 export async function enqueueAiPathRun(
@@ -227,7 +215,9 @@ export async function getAiPathQueueStatus(options?: {
   if (options?.visibility) params.set('visibility', options.visibility);
   if (options?.fresh) params.set('fresh', '1');
   const query = params.toString();
-  const url = query ? `/api/ai-paths/runs/queue-status?${query}` : '/api/ai-paths/runs/queue-status';
+  const url = query
+    ? `/api/ai-paths/runs/queue-status?${query}`
+    : '/api/ai-paths/runs/queue-status';
   return apiFetch<{ status: unknown }>(url);
 }
 
@@ -260,10 +250,9 @@ export async function retryAiPathRunNode(
   runId: string,
   nodeId: string
 ): Promise<ApiResponse<{ run: unknown }>> {
-  return apiPost<{ run: unknown }>(
-    `/api/ai-paths/runs/${encodeURIComponent(runId)}/retry-node`,
-    { nodeId }
-  );
+  return apiPost<{ run: unknown }>(`/api/ai-paths/runs/${encodeURIComponent(runId)}/retry-node`, {
+    nodeId,
+  });
 }
 
 export async function cancelAiPathRun(runId: string): Promise<ApiResponse<{ run: unknown }>> {
@@ -340,7 +329,7 @@ export const entityApi = {
 
 export const settingsApi = {
   list: fetchSettings,
-  update: updateSetting
+  update: updateSetting,
 };
 
 export const triggerButtonsApi = {
@@ -353,9 +342,9 @@ export const triggerButtonsApi = {
     payload:
       | string[]
       | {
-        orderedIds?: string[];
-        buttonIds?: string[];
-      }
+          orderedIds?: string[];
+          buttonIds?: string[];
+        }
   ) => {
     if (Array.isArray(payload)) {
       return reorderTriggerButtons({ orderedIds: payload });
@@ -364,13 +353,16 @@ export const triggerButtonsApi = {
       return reorderTriggerButtons({ orderedIds: payload.orderedIds });
     }
     return reorderTriggerButtons({ orderedIds: payload.buttonIds ?? [] });
-  }
+  },
 };
 
 export const aiJobsApi = {
   enqueue: async (payload: unknown) => apiPost<{ jobId: string }>('/api/ai/jobs/enqueue', payload),
-  poll: async (jobId: string, options?: { signal?: AbortSignal }) => 
-    apiFetch<{ status: string; result?: unknown; error?: string }>(`/api/ai/jobs/${jobId}/poll`, options),
+  poll: async (jobId: string, options?: { signal?: AbortSignal }) =>
+    apiFetch<{ status: string; result?: unknown; error?: string }>(
+      `/api/ai/jobs/${jobId}/poll`,
+      options
+    ),
   get: async (jobId: string) => apiFetch<{ job: unknown }>(`/api/ai/jobs/${jobId}`),
   list: async () => apiFetch<{ jobs: unknown[] }>('/api/ai/jobs'),
 };
@@ -384,7 +376,9 @@ export const agentApi = {
 };
 
 export const learnerAgentsApi = {
-  list: async () => { return { ok: true, data: { agents: [] } }; },
+  list: async () => {
+    return { ok: true, data: { agents: [] } };
+  },
   chat: async (payload: unknown) => apiPost<unknown>('/api/ai/learner-agents/chat', payload),
 };
 
@@ -393,8 +387,10 @@ export const aiPathsApi = {
 };
 
 export const aiGenerationApi = {
-  async generate() { return { ok: true, data: { result: '' } }; },
-  updateProductDescription: async (productId: string, description: string) => 
+  async generate() {
+    return { ok: true, data: { result: '' } };
+  },
+  updateProductDescription: async (productId: string, description: string) =>
     apiPatch<unknown>(`/api/products/${productId}`, { description }),
 };
 

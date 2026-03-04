@@ -3,11 +3,7 @@ import { fireEvent, render, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { useStateBridgeGraph } from '@/features/ai/ai-paths/context/hooks/useStateBridge';
-import {
-  AiPathsProvider,
-  useGraphActions,
-  useGraphState,
-} from '@/features/ai/ai-paths/context';
+import { AiPathsProvider, useGraphActions, useGraphState } from '@/features/ai/ai-paths/context';
 import type { AiNode, Edge } from '@/shared/lib/ai-paths';
 
 const buildNode = (id: string, x: number, y: number): AiNode =>
@@ -35,9 +31,7 @@ const serializeEdges = (edges: Edge[]): string =>
     .join('|');
 
 function GraphBridgeOwnershipHarness(): React.JSX.Element {
-  const [sourceNodes, setSourceNodes] = React.useState<AiNode[]>([
-    buildNode('node-1', 120, 140),
-  ]);
+  const [sourceNodes, setSourceNodes] = React.useState<AiNode[]>([buildNode('node-1', 120, 140)]);
   const [sourceEdges, setSourceEdges] = React.useState<Edge[]>([]);
   const [legacyRerenderTick, setLegacyRerenderTick] = React.useState(0);
   const { nodes: contextNodes, edges: contextEdges } = useGraphState();
@@ -68,13 +62,14 @@ function GraphBridgeOwnershipHarness(): React.JSX.Element {
         type='button'
         onClick={() => {
           setNodes((prev: AiNode[]) =>
-            prev.map((node: AiNode): AiNode =>
-              node.id === 'node-1'
-                ? {
-                    ...node,
-                    position: { x: 640, y: 500 },
-                  }
-                : node
+            prev.map(
+              (node: AiNode): AiNode =>
+                node.id === 'node-1'
+                  ? {
+                      ...node,
+                      position: { x: 640, y: 500 },
+                    }
+                  : node
             )
           );
         }}
@@ -130,9 +125,7 @@ describe('AI Paths state bridge graph ownership', () => {
       expect(getByTestId('source-nodes')).toHaveTextContent('node-1:120,140|node-2:360,320');
       expect(getByTestId('context-nodes')).toHaveTextContent('node-1:120,140|node-2:360,320');
       expect(getByTestId('source-edges')).toHaveTextContent('edge-1:node-1.result->node-2.value');
-      expect(getByTestId('context-edges')).toHaveTextContent(
-        'edge-1:node-1.result->node-2.value'
-      );
+      expect(getByTestId('context-edges')).toHaveTextContent('edge-1:node-1.result->node-2.value');
     });
 
     fireEvent.click(getByRole('button', { name: 'context-move-node' }));
@@ -142,9 +135,7 @@ describe('AI Paths state bridge graph ownership', () => {
       expect(getByTestId('source-nodes')).toHaveTextContent('node-1:640,500|node-2:360,320');
       expect(getByTestId('context-nodes')).toHaveTextContent('node-1:640,500|node-2:360,320');
       expect(getByTestId('source-edges')).toHaveTextContent('edge-1:node-1.result->node-2.value');
-      expect(getByTestId('context-edges')).toHaveTextContent(
-        'edge-1:node-1.result->node-2.value'
-      );
+      expect(getByTestId('context-edges')).toHaveTextContent('edge-1:node-1.result->node-2.value');
     });
   });
 });

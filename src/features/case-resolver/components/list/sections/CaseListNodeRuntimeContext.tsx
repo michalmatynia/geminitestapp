@@ -38,7 +38,9 @@ export function CaseListNodeRuntimeProvider({
   children: React.ReactNode;
 }): React.JSX.Element {
   return (
-    <CaseListNodeRuntimeContext.Provider value={value}>{children}</CaseListNodeRuntimeContext.Provider>
+    <CaseListNodeRuntimeContext.Provider value={value}>
+      {children}
+    </CaseListNodeRuntimeContext.Provider>
   );
 }
 

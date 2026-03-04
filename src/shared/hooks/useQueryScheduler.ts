@@ -20,7 +20,7 @@ export function useQueryScheduler(): {
   ) => void;
   cancelScheduledQuery: (id: string) => void;
   clearAllScheduled: () => void;
-  } {
+} {
   const queryClient = useQueryClient();
   const scheduledQueries = useRef<
     Map<
@@ -30,9 +30,9 @@ export function useQueryScheduler(): {
         queryFn: () => Promise<unknown>;
         config: QuerySchedulerConfig;
         timeout?: NodeJS.Timeout;
-          }
-          >
-          >(new Map());
+      }
+    >
+  >(new Map());
 
   const scheduleQuery = useCallback(
     (
@@ -48,7 +48,8 @@ export function useQueryScheduler(): {
       }
 
       const delay =
-        config.delay || (config.priority === 'high' ? 0 : config.priority === 'medium' ? 1000 : 3000);
+        config.delay ||
+        (config.priority === 'high' ? 0 : config.priority === 'medium' ? 1000 : 3000);
 
       const timeout = setTimeout((): void => {
         if (!config.condition || config.condition()) {

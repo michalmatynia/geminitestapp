@@ -14,39 +14,36 @@ type TraderaListingQueueJobData = {
   jobId?: string;
 };
 
-const queue: ManagedQueue<TraderaListingQueueJobData> = createManagedQueue<TraderaListingQueueJobData>({
-  name: 'tradera-listings',
-  concurrency: 1,
-  defaultJobOptions: {
-    attempts: 1,
-    removeOnComplete: true,
-    removeOnFail: false,
-  },
-  processor: async (data: TraderaListingQueueJobData, jobId: string) => {
-    await processTraderaListingJob({ ...data, jobId });
-    return { ok: true, listingId: data.listingId, action: data.action };
-  },
-  onCompleted: async (jobId: string, _result: unknown, data: TraderaListingQueueJobData) => {
-    await ErrorSystem.logInfo('Tradera listing job completed', {
-      service: 'tradera-listing-queue',
-      listingId: data.listingId,
-      action: data.action,
-      jobId,
-    });
-  },
-  onFailed: async (
-    jobId: string,
-    error: Error,
-    data: TraderaListingQueueJobData
-  ) => {
-    await ErrorSystem.captureException(error, {
-      service: 'tradera-listing-queue',
-      listingId: data.listingId,
-      action: data.action,
-      jobId,
-    });
-  },
-});
+const queue: ManagedQueue<TraderaListingQueueJobData> =
+  createManagedQueue<TraderaListingQueueJobData>({
+    name: 'tradera-listings',
+    concurrency: 1,
+    defaultJobOptions: {
+      attempts: 1,
+      removeOnComplete: true,
+      removeOnFail: false,
+    },
+    processor: async (data: TraderaListingQueueJobData, jobId: string) => {
+      await processTraderaListingJob({ ...data, jobId });
+      return { ok: true, listingId: data.listingId, action: data.action };
+    },
+    onCompleted: async (jobId: string, _result: unknown, data: TraderaListingQueueJobData) => {
+      await ErrorSystem.logInfo('Tradera listing job completed', {
+        service: 'tradera-listing-queue',
+        listingId: data.listingId,
+        action: data.action,
+        jobId,
+      });
+    },
+    onFailed: async (jobId: string, error: Error, data: TraderaListingQueueJobData) => {
+      await ErrorSystem.captureException(error, {
+        service: 'tradera-listing-queue',
+        listingId: data.listingId,
+        action: data.action,
+        jobId,
+      });
+    },
+  });
 
 export const startTraderaListingQueue = (): void => {
   queue.startWorker();

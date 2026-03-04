@@ -93,7 +93,10 @@ describe('POST /api/ai/actions/execute handler', () => {
 
     await expect(
       POST_handler(
-        makeRequest({ proposalId: '00000000-0000-0000-0000-000000000000', approval: VALID_APPROVAL }),
+        makeRequest({
+          proposalId: '00000000-0000-0000-0000-000000000000',
+          approval: VALID_APPROVAL,
+        }),
         {} as Parameters<typeof POST_handler>[1]
       )
     ).rejects.toThrow('Proposal not found.');
@@ -122,9 +125,9 @@ describe('POST /api/ai/actions/execute handler', () => {
       headers: { 'content-type': 'application/json' },
       body: '{bad-json',
     });
-    await expect(
-      POST_handler(req, {} as Parameters<typeof POST_handler>[1])
-    ).rejects.toThrow('Invalid JSON body.');
+    await expect(POST_handler(req, {} as Parameters<typeof POST_handler>[1])).rejects.toThrow(
+      'Invalid JSON body.'
+    );
   });
 
   it('throws for invalid proposalId (not UUID)', async () => {

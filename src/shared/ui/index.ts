@@ -75,7 +75,6 @@ export * from './metadata-item';
 export * from './documentation-section';
 export * from './Drawer';
 export * from './SidePanel';
-export * from './DynamicFilters';
 export * from './templates';
 export * from './templates/StandardDataTablePanel';
 export {

@@ -1,8 +1,4 @@
-import type {
-  TagRecord,
-  TagCreateInput,
-  TagUpdateInput,
-} from '@/shared/contracts/notes';
+import type { TagRecord, TagCreateInput, TagUpdateInput } from '@/shared/contracts/notes';
 import prisma from '@/shared/lib/db/prisma';
 
 import { getOrCreateDefaultNotebook } from './notebook-impl';
@@ -26,10 +22,10 @@ export const getTagById = async (id: string): Promise<TagRecord | null> => {
   const tag = await prisma.tag.findUnique({ where: { id } });
   return tag
     ? {
-      ...tag,
-      createdAt: tag.createdAt.toISOString(),
-      updatedAt: tag.updatedAt.toISOString(),
-    }
+        ...tag,
+        createdAt: tag.createdAt.toISOString(),
+        updatedAt: tag.updatedAt.toISOString(),
+      }
     : null;
 };
 

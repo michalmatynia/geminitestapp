@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/features/auth/server';
 import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
-import { 
+import {
   settingsBackfillRequestSchema as backfillSchema,
-  type SettingsBackfillResult as BackfillResult 
+  type SettingsBackfillResult as BackfillResult,
 } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, forbiddenError, internalError } from '@/shared/errors/app-error';

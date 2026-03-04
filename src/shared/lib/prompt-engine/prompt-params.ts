@@ -1,7 +1,4 @@
-import type {
-  ParamSpec,
-  ParamIssue,
-} from '@/shared/contracts/prompt-engine';
+import type { ParamSpec, ParamIssue } from '@/shared/contracts/prompt-engine';
 import { validateParamsAgainstSpecs, getDeepValue } from '@/shared/utils/prompt-params';
 
 export * from '@/shared/utils/prompt-params';

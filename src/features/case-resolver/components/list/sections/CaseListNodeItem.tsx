@@ -110,7 +110,10 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
   if (isCaseContentFolderNode) {
     return (
       <div
-        className={cn('group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition', stateClassName)}
+        className={cn(
+          'group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition',
+          stateClassName
+        )}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
       >
         {hasChildren ? (
@@ -125,7 +128,11 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
             }}
             aria-label={isExpanded ? 'Collapse folder' : 'Expand folder'}
           >
-            {isExpanded ? <ChevronDown className='size-3.5' /> : <ChevronRight className='size-3.5' />}
+            {isExpanded ? (
+              <ChevronDown className='size-3.5' />
+            ) : (
+              <ChevronRight className='size-3.5' />
+            )}
           </Button>
         ) : (
           <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>
@@ -148,7 +155,10 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
           >
             <span className='truncate'>{node.name}</span>
           </Button>
-          <Badge variant='neutral' className='shrink-0 border-border/60 bg-card/30 text-[10px] h-4 px-1'>
+          <Badge
+            variant='neutral'
+            className='shrink-0 border-border/60 bg-card/30 text-[10px] h-4 px-1'
+          >
             Folder
           </Badge>
         </div>
@@ -162,7 +172,10 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
       caseContentFile?.fileType === 'scanfile' || node.kind === 'case_content_file_scan';
     return (
       <div
-        className={cn('group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition', stateClassName)}
+        className={cn(
+          'group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition',
+          stateClassName
+        )}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
       >
         <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
@@ -204,7 +217,10 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
 
   return (
     <div
-      className={cn('group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition', stateClassName)}
+      className={cn(
+        'group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition',
+        stateClassName
+      )}
       style={{ paddingLeft: `${depth * 16 + 8}px` }}
     >
       {hasChildren ? (
@@ -219,7 +235,11 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
           }}
           aria-label={isExpanded ? 'Collapse case' : 'Expand case'}
         >
-          {isExpanded ? <ChevronDown className='size-3.5' /> : <ChevronRight className='size-3.5' />}
+          {isExpanded ? (
+            <ChevronDown className='size-3.5' />
+          ) : (
+            <ChevronRight className='size-3.5' />
+          )}
         </Button>
       ) : (
         <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
@@ -293,7 +313,10 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
                 status={caseStatus}
                 size='sm'
                 variant={caseStatus === 'completed' ? 'success' : 'warning'}
-                className={cn('h-5 font-bold uppercase', !isStatusToggleDisabled && 'cursor-pointer hover:brightness-110')}
+                className={cn(
+                  'h-5 font-bold uppercase',
+                  !isStatusToggleDisabled && 'cursor-pointer hover:brightness-110'
+                )}
                 onClick={(): void => {
                   if (isStatusToggleDisabled) return;
                   if (!caseFile) return;
@@ -348,7 +371,10 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
               </Button>
             ) : null}
             {caseFile?.tagId ? (
-              <Badge variant='outline' className='bg-blue-500/5 text-blue-300 border-blue-500/20 text-[10px] h-5 px-1.5 max-w-[120px] truncate'>
+              <Badge
+                variant='outline'
+                className='bg-blue-500/5 text-blue-300 border-blue-500/20 text-[10px] h-5 px-1.5 max-w-[120px] truncate'
+              >
                 {caseTagPathById.get(caseFile.tagId) ?? caseFile.tagId}
               </Badge>
             ) : null}
@@ -363,7 +389,10 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
               </Badge>
             ) : null}
             {caseFile?.categoryId ? (
-              <Badge variant='outline' className='bg-emerald-500/5 text-emerald-200 border-emerald-500/20 text-[10px] h-5 px-1.5 max-w-[120px] truncate'>
+              <Badge
+                variant='outline'
+                className='bg-emerald-500/5 text-emerald-200 border-emerald-500/20 text-[10px] h-5 px-1.5 max-w-[120px] truncate'
+              >
                 {caseCategoryPathById.get(caseFile.categoryId) ?? caseFile.categoryId}
               </Badge>
             ) : null}

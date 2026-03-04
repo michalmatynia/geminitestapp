@@ -33,14 +33,14 @@ export async function resolveToolContext(input: {
   const runRecord =
     'chatbotAgentRun' in prisma
       ? await prisma.chatbotAgentRun.findUnique({
-        where: { id: runId },
-        select: {
-          model: true,
-          searchProvider: true,
-          planState: true,
-          memoryKey: true,
-        },
-      })
+          where: { id: runId },
+          select: {
+            model: true,
+            searchProvider: true,
+            planState: true,
+            memoryKey: true,
+          },
+        })
       : null;
 
   const [

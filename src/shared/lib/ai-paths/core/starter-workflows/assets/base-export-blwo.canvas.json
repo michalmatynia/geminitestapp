@@ -36,16 +36,7 @@
         "cursor",
         "page"
       ],
-      "outputs": [
-        "value",
-        "bundle",
-        "status",
-        "headers",
-        "items",
-        "route",
-        "error",
-        "success"
-      ],
+      "outputs": ["value", "bundle", "status", "headers", "items", "route", "error", "success"],
       "config": {
         "apiAdvanced": {
           "url": "/api/integrations/products/{{bundle.entityId}}/export-to-base",
@@ -172,17 +163,10 @@
         "description_en",
         "prompt"
       ],
-      "outputs": [
-        "bundle"
-      ],
+      "outputs": ["bundle"],
       "config": {
         "bundle": {
-          "includePorts": [
-            "entityId",
-            "entityType",
-            "result",
-            "value"
-          ]
+          "includePorts": ["entityId", "entityType", "result", "value"]
         }
       },
       "connections": {
@@ -236,19 +220,8 @@
         "x": 220,
         "y": 300
       },
-      "inputs": [
-        "trigger",
-        "context",
-        "meta",
-        "entityId",
-        "entityType"
-      ],
-      "outputs": [
-        "context",
-        "meta",
-        "entityId",
-        "entityType"
-      ],
+      "inputs": ["trigger", "context", "meta", "entityId", "entityType"],
+      "outputs": ["context", "meta", "entityId", "entityType"],
       "config": {
         "fetcher": {
           "sourceMode": "live_context",
@@ -328,19 +301,8 @@
         "x": 390,
         "y": 120
       },
-      "inputs": [
-        "context",
-        "bundle",
-        "prompt",
-        "result",
-        "value",
-        "entityId",
-        "entityType"
-      ],
-      "outputs": [
-        "value",
-        "bundle"
-      ],
+      "inputs": ["context", "bundle", "prompt", "result", "value", "entityId", "entityType"],
+      "outputs": ["value", "bundle"],
       "config": {
         "http": {
           "url": "/api/integrations/exports/base/default-connection",
@@ -384,19 +346,8 @@
         "x": 390,
         "y": 470
       },
-      "inputs": [
-        "context",
-        "bundle",
-        "prompt",
-        "result",
-        "value",
-        "entityId",
-        "entityType"
-      ],
-      "outputs": [
-        "value",
-        "bundle"
-      ],
+      "inputs": ["context", "bundle", "prompt", "result", "value", "entityId", "entityType"],
+      "outputs": ["value", "bundle"],
       "config": {
         "http": {
           "url": "/api/integrations/exports/base/default-inventory",
@@ -440,20 +391,11 @@
         "x": 760,
         "y": 120
       },
-      "inputs": [
-        "context",
-        "result",
-        "bundle",
-        "value"
-      ],
-      "outputs": [
-        "result"
-      ],
+      "inputs": ["context", "result", "bundle", "value"],
+      "outputs": ["result"],
       "config": {
         "mapper": {
-          "outputs": [
-            "result"
-          ],
+          "outputs": ["result"],
           "mappings": {
             "result": "value.connectionId"
           }
@@ -489,20 +431,11 @@
         "x": 760,
         "y": 470
       },
-      "inputs": [
-        "context",
-        "result",
-        "bundle",
-        "value"
-      ],
-      "outputs": [
-        "value"
-      ],
+      "inputs": ["context", "result", "bundle", "value"],
+      "outputs": ["value"],
       "config": {
         "mapper": {
-          "outputs": [
-            "value"
-          ],
+          "outputs": ["value"],
           "mappings": {
             "value": "value.inventoryId"
           }
@@ -539,10 +472,7 @@
         "y": 300
       },
       "inputs": [],
-      "outputs": [
-        "trigger",
-        "triggerName"
-      ],
+      "outputs": ["trigger", "triggerName"],
       "config": {
         "trigger": {
           "event": "5f36f340-3d89-4f6f-a08f-2387f380b90b"
@@ -570,15 +500,7 @@
         "x": 1800,
         "y": 300
       },
-      "inputs": [
-        "result",
-        "status",
-        "error",
-        "value",
-        "bundle",
-        "route",
-        "success"
-      ],
+      "inputs": ["result", "status", "error", "value", "bundle", "route", "success"],
       "outputs": [],
       "connections": {
         "incoming": [

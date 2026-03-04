@@ -1,26 +1,21 @@
 import type * as React from 'react';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-call */
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
-import { 
-  CaseResolverWorkspace, 
-  CaseResolverFile 
-} from '@/shared/contracts/case-resolver';
-import { 
-  createCaseResolverWorkspaceMutationId, 
-  stampCaseResolverWorkspaceMutation, 
-  getCaseResolverWorkspaceRevision, 
+import { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
+import {
+  createCaseResolverWorkspaceMutationId,
+  stampCaseResolverWorkspaceMutation,
+  getCaseResolverWorkspaceRevision,
   persistCaseResolverWorkspaceSnapshot,
 } from '../../../workspace-persistence';
 import { createCaseResolverFile } from '../../../settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { 
-  isDescendantCaseId 
-} from '../utils';
+import { isDescendantCaseId } from '../utils';
 import { waitForCaseAvailability } from './case-availability';
 
 export const handleCreateCaseImpl = async (args: {
@@ -37,8 +32,21 @@ export const handleCreateCaseImpl = async (args: {
   toast: any;
   settingsStoreRefetchRef: React.MutableRefObject<() => void>;
 }): Promise<void> => {
-  const { caseDraft, workspace, setWorkspace, lastPersistedWorkspaceValueRef, lastPersistedWorkspaceRevisionRef, createCaseMutationIdRef, setIsCreatingCase, setIsCreateCaseModalOpen, setCaseDraft, setEditingCaseId, toast, settingsStoreRefetchRef } = args;
-  
+  const {
+    caseDraft,
+    workspace,
+    setWorkspace,
+    lastPersistedWorkspaceValueRef,
+    lastPersistedWorkspaceRevisionRef,
+    createCaseMutationIdRef,
+    setIsCreatingCase,
+    setIsCreateCaseModalOpen,
+    setCaseDraft,
+    setEditingCaseId,
+    toast,
+    settingsStoreRefetchRef,
+  } = args;
+
   if (!caseDraft.name?.trim()) {
     toast('Case name is required.', { variant: 'error' });
     return;
@@ -58,12 +66,11 @@ export const handleCreateCaseImpl = async (args: {
           ? Math.max(0, Math.floor(file.caseTreeOrder))
           : -1
       );
-    const nextCaseTreeOrder =
-      siblingCaseOrders.length > 0 ? Math.max(...siblingCaseOrders) + 1 : 0;
+    const nextCaseTreeOrder = siblingCaseOrders.length > 0 ? Math.max(...siblingCaseOrders) + 1 : 0;
     const newFile = createCaseResolverFile({
       id: createCaseResolverWorkspaceMutationId('file'),
       fileType: 'case',
-      name: (caseDraft.name).trim(),
+      name: caseDraft.name.trim(),
       folder: caseDraft.folder || '',
       parentCaseId,
       caseStatus: caseDraft.caseStatus === 'completed' ? 'completed' : 'pending',
@@ -112,12 +119,12 @@ export const handleCreateCaseImpl = async (args: {
     setEditingCaseId(null);
     toast('Case created successfully.', { variant: 'success' });
 
-    void waitForCaseAvailability(newFile.id, { 
-      lastPersistedWorkspaceRevisionRef, 
-      lastPersistedWorkspaceValueRef, 
-      setWorkspace, 
+    void waitForCaseAvailability(newFile.id, {
+      lastPersistedWorkspaceRevisionRef,
+      lastPersistedWorkspaceValueRef,
+      setWorkspace,
       settingsStoreRefetchRef,
-      options: { source: 'cases_page_create_sync' } 
+      options: { source: 'cases_page_create_sync' },
     });
   } catch (error) {
     logClientError(error, {
@@ -144,7 +151,19 @@ export const handleSaveCaseDraftImpl = async (args: {
   toast: any;
   settingsStoreRefetchRef: React.MutableRefObject<() => void>;
 }): Promise<void> => {
-  const { editingCaseId, caseDraft, workspace, setWorkspace, lastPersistedWorkspaceValueRef, lastPersistedWorkspaceRevisionRef, setIsCreatingCase, setIsCreateCaseModalOpen, setCaseDraft, setEditingCaseId, toast } = args;
+  const {
+    editingCaseId,
+    caseDraft,
+    workspace,
+    setWorkspace,
+    lastPersistedWorkspaceValueRef,
+    lastPersistedWorkspaceRevisionRef,
+    setIsCreatingCase,
+    setIsCreateCaseModalOpen,
+    setCaseDraft,
+    setEditingCaseId,
+    toast,
+  } = args;
 
   if (!editingCaseId) {
     await handleCreateCaseImpl(args);
@@ -242,8 +261,7 @@ export const handleSaveCaseDraftImpl = async (args: {
         : null
       : (existingCase.happeningDate ?? null);
   const resolvedDocumentVersion =
-    caseDraft.activeDocumentVersion === 'exploded' ||
-    caseDraft.activeDocumentVersion === 'original'
+    caseDraft.activeDocumentVersion === 'exploded' || caseDraft.activeDocumentVersion === 'original'
       ? caseDraft.activeDocumentVersion
       : existingCase.activeDocumentVersion === 'exploded'
         ? 'exploded'
@@ -265,7 +283,9 @@ export const handleSaveCaseDraftImpl = async (args: {
       ? caseDraft.isLocked === true
       : (existingCase as any).isLocked === true;
   const resolvedIsSent =
-    caseDraft.isSent !== undefined ? caseDraft.isSent === true : (existingCase as any).isSent === true;
+    caseDraft.isSent !== undefined
+      ? caseDraft.isSent === true
+      : (existingCase as any).isSent === true;
 
   setIsCreatingCase(true);
   try {
@@ -345,7 +365,21 @@ export const handleUpdateCaseImpl = async (args: {
   setEditingCaseId: (id: string | null) => void;
   toast: any;
 }): Promise<void> => {
-  const { editingCaseId, editingCaseName, editingCaseParentId, editingCaseReferenceCaseIds, editingCaseTagId, editingCaseCaseIdentifierId, editingCaseCategoryId, workspace, setWorkspace, lastPersistedWorkspaceValueRef, lastPersistedWorkspaceRevisionRef, setEditingCaseId, toast } = args;
+  const {
+    editingCaseId,
+    editingCaseName,
+    editingCaseParentId,
+    editingCaseReferenceCaseIds,
+    editingCaseTagId,
+    editingCaseCaseIdentifierId,
+    editingCaseCategoryId,
+    workspace,
+    setWorkspace,
+    lastPersistedWorkspaceValueRef,
+    lastPersistedWorkspaceRevisionRef,
+    setEditingCaseId,
+    toast,
+  } = args;
 
   if (!editingCaseId || !editingCaseName.trim()) {
     toast('Case name is required.', { variant: 'error' });
@@ -408,7 +442,17 @@ export const handleDeleteCaseImpl = async (args: {
   toast: any;
   setConfirmation: (val: any) => void;
 }): Promise<void> => {
-  const { caseId, workspace, setWorkspace, lastPersistedWorkspaceValueRef, lastPersistedWorkspaceRevisionRef, editingCaseId, setEditingCaseId, toast, setConfirmation } = args;
+  const {
+    caseId,
+    workspace,
+    setWorkspace,
+    lastPersistedWorkspaceValueRef,
+    lastPersistedWorkspaceRevisionRef,
+    editingCaseId,
+    setEditingCaseId,
+    toast,
+    setConfirmation,
+  } = args;
 
   try {
     const mutationId = createCaseResolverWorkspaceMutationId();

@@ -52,7 +52,11 @@ export const mongoNoteRepository: NoteRepository = {
     return mongoNoteCrudImpl.update(id, data, mongoNoteRepository.getOrCreateDefaultNotebook);
   },
 
-  async syncRelatedNotesBatch(noteId: string, addedIds: string[], removedIds: string[]): Promise<void> {
+  async syncRelatedNotesBatch(
+    noteId: string,
+    addedIds: string[],
+    removedIds: string[]
+  ): Promise<void> {
     return mongoNoteCrudImpl.syncRelatedNotesBatch(noteId, addedIds, removedIds);
   },
 
@@ -61,7 +65,8 @@ export const mongoNoteRepository: NoteRepository = {
   },
 
   async getAllTags(notebookId?: string | null): Promise<TagRecord[]> {
-    const resolvedNotebookId = notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
+    const resolvedNotebookId =
+      notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
     return mongoTagImpl.getAllTags(resolvedNotebookId);
   },
 
@@ -83,7 +88,8 @@ export const mongoNoteRepository: NoteRepository = {
   },
 
   async getAllCategories(notebookId?: string | null): Promise<CategoryRecord[]> {
-    const resolvedNotebookId = notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
+    const resolvedNotebookId =
+      notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
     return mongoCategoryImpl.getAllCategories(resolvedNotebookId);
   },
 
@@ -92,7 +98,8 @@ export const mongoNoteRepository: NoteRepository = {
   },
 
   async getCategoryTree(notebookId?: string | null): Promise<CategoryWithChildren[]> {
-    const resolvedNotebookId = notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
+    const resolvedNotebookId =
+      notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
     return mongoCategoryImpl.getCategoryTree(resolvedNotebookId);
   },
 

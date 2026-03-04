@@ -1024,7 +1024,10 @@ export type ImageStudioSequenceRunDispatchMode = 'queued' | 'inline';
 
 export type ImageStudioSequenceRunHistoryEventSource =
   | 'api'
-  | 'queue' | 'worker' | 'stream' | 'client';
+  | 'queue'
+  | 'worker'
+  | 'stream'
+  | 'client';
 
 export type ImageStudioSequenceMaskContext = {
   polygons: Array<Array<{ x: number; y: number }>>;

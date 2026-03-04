@@ -1,13 +1,7 @@
 import type { MasterTreeNodeStatus } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
-const VALID_NODE_STATUSES = new Set<string>([
-  'loading',
-  'error',
-  'locked',
-  'warning',
-  'success',
-]);
+const VALID_NODE_STATUSES = new Set<string>(['loading', 'error', 'locked', 'warning', 'success']);
 
 /**
  * Reads `node.metadata['_status']` and returns the typed status value, or null

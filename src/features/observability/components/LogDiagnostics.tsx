@@ -7,12 +7,7 @@ import {
   type MongoIndexInfoDto as MongoIndexInfo,
   type MongoCollectionIndexStatusDto as MongoCollectionIndexStatus,
 } from '@/shared/contracts/observability';
-import {
-  Button,
-  StandardDataTablePanel,
-  StatusBadge,
-  Hint,
-} from '@/shared/ui';
+import { Button, StandardDataTablePanel, StatusBadge, Hint } from '@/shared/ui';
 import type { ColumnDef, Row } from '@tanstack/react-table';
 import { formatTimestamp } from '../utils/formatTimestamp';
 

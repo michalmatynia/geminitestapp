@@ -462,9 +462,13 @@ export const updateAiPathsSettingsBulk = async (
 
   let data: unknown;
   try {
-    data = await api.post<unknown>('/api/ai-paths/settings', { items: payload }, {
-      timeout: AI_PATHS_SETTINGS_WRITE_TIMEOUT_MS,
-    });
+    data = await api.post<unknown>(
+      '/api/ai-paths/settings',
+      { items: payload },
+      {
+        timeout: AI_PATHS_SETTINGS_WRITE_TIMEOUT_MS,
+      }
+    );
   } catch (error) {
     if (error instanceof ApiError) {
       throw new Error(`Failed to update AI Paths settings (${error.status})`, { cause: error });
@@ -491,9 +495,13 @@ export const updateAiPathsSetting = async (
 ): Promise<AiPathsSettingRecord> => {
   let data: unknown;
   try {
-    data = await api.post<unknown>('/api/ai-paths/settings', { key, value }, {
-      timeout: AI_PATHS_SETTINGS_WRITE_TIMEOUT_MS,
-    });
+    data = await api.post<unknown>(
+      '/api/ai-paths/settings',
+      { key, value },
+      {
+        timeout: AI_PATHS_SETTINGS_WRITE_TIMEOUT_MS,
+      }
+    );
   } catch (error) {
     if (error instanceof ApiError) {
       throw new Error(`Failed to update AI Paths setting (${error.status})`, { cause: error });
@@ -572,8 +580,8 @@ export const applyAiPathsMaintenanceActions = async (
   const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
   const appliedActionIds = Array.isArray(payload['appliedActionIds'])
     ? payload['appliedActionIds'].filter((value: unknown): value is AiPathsMaintenanceActionId =>
-      isAiPathsMaintenanceActionId(value)
-    )
+        isAiPathsMaintenanceActionId(value)
+      )
     : [];
   const report = normalizeAiPathsMaintenanceReport(payload['report']);
   invalidateAiPathsSettingsCache();

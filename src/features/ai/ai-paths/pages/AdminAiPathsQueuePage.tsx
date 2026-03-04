@@ -6,13 +6,7 @@ import { useEffect, useState } from 'react';
 
 import { FileUploadEventsPanel } from '@/features/files/components/FileUploadEventsPanel';
 import ProductListingJobsPanel from '@/shared/lib/jobs/components/ProductListingJobsPanel';
-import {
-  Badge,
-  Button,
-  ListPanel,
-  Breadcrumbs,
-  Hint,
-} from '@/shared/ui';
+import { Badge, Button, ListPanel, Breadcrumbs, Hint } from '@/shared/ui';
 
 import { ImageStudioRunsQueuePanel } from '../components/ImageStudioRunsQueuePanel';
 import { JobQueuePanel } from '../components/job-queue-panel';

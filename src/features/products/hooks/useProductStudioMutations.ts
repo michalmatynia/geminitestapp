@@ -1,14 +1,8 @@
 'use client';
 
 import { api } from '@/shared/lib/api-client';
-import {
-  createCreateMutationV2,
-  createUpdateMutationV2,
-} from '@/shared/lib/query-factories-v2';
-import {
-  invalidateProductsAndCounts,
-  invalidateImageStudioSlots,
-} from './productCache';
+import { createCreateMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { invalidateProductsAndCounts, invalidateImageStudioSlots } from './productCache';
 import type { ProductWithImages } from '@/shared/contracts/products';
 
 export function useSendToStudioMutation() {

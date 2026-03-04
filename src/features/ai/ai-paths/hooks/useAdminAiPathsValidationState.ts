@@ -1,7 +1,5 @@
 'use client';
 
- 
-
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -65,7 +63,9 @@ export function useAdminAiPathsValidationState() {
           pathConfigs: {},
         },
         settingsParseError:
-          error instanceof Error ? error : new Error('Failed to parse AI Paths validation settings.'),
+          error instanceof Error
+            ? error
+            : new Error('Failed to parse AI Paths validation settings.'),
       };
     }
   }, [settingsQuery.data]);

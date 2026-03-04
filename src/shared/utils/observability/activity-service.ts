@@ -2,11 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import type {
-  CreateActivityLog,
-  ActivityLog,
-  ActivityFilters,
-} from '@/shared/contracts/system';
+import type { CreateActivityLog, ActivityLog, ActivityFilters } from '@/shared/contracts/system';
 
 import { getActivityRepository } from '../../lib/observability/activity-repository';
 import { logSystemEvent } from '../../lib/observability/system-logger';
@@ -39,7 +35,7 @@ export async function logActivity(data: CreateActivityLog): Promise<ActivityLog>
       userId: data.userId ?? null,
       entityId: data.entityId ?? null,
       entityType: data.entityType ?? null,
-      metadata: (data.metadata) ?? null,
+      metadata: data.metadata ?? null,
       createdAt: nowIso,
       updatedAt: nowIso,
     };

@@ -23,14 +23,7 @@ describe('starter workflow guardrails', () => {
   };
 
   it('does not keep workflow-specific settings-store modules', () => {
-    const serverDir = join(
-      process.cwd(),
-      'src',
-      'features',
-      'ai',
-      'ai-paths',
-      'server'
-    );
+    const serverDir = join(process.cwd(), 'src', 'features', 'ai', 'ai-paths', 'server');
     const allowed = new Set([
       'settings-store-cache.ts',
       'settings-store.constants.ts',
@@ -52,14 +45,7 @@ describe('starter workflow guardrails', () => {
   });
 
   it('does not import legacy workflow-specific server builders', () => {
-    const serverDir = join(
-      process.cwd(),
-      'src',
-      'features',
-      'ai',
-      'ai-paths',
-      'server'
-    );
+    const serverDir = join(process.cwd(), 'src', 'features', 'ai', 'ai-paths', 'server');
     const forbiddenImportPatterns = [
       'settings-store-translation-en-pl',
       'settings-store-parameter-inference',
@@ -82,23 +68,8 @@ describe('starter workflow guardrails', () => {
   it('does not import starter-specific upgrade helpers in runtime sanitizers', () => {
     const workspaceRoot = process.cwd();
     const runtimeSanitizerFiles = [
-      join(
-        workspaceRoot,
-        'src',
-        'shared',
-        'lib',
-        'ai-paths',
-        'hooks',
-        'useAiPathTriggerEvent.ts'
-      ),
-      join(
-        workspaceRoot,
-        'src',
-        'features',
-        'products',
-        'hooks',
-        'useAiPathSettings.ts'
-      ),
+      join(workspaceRoot, 'src', 'shared', 'lib', 'ai-paths', 'hooks', 'useAiPathTriggerEvent.ts'),
+      join(workspaceRoot, 'src', 'features', 'products', 'hooks', 'useAiPathSettings.ts'),
       join(
         workspaceRoot,
         'src',
@@ -130,8 +101,6 @@ describe('starter workflow guardrails', () => {
       'upgrade_translation_en_pl',
     ]);
 
-    expect(
-      report.actions.some((action) => deprecatedActionIds.has(action.id))
-    ).toBe(false);
+    expect(report.actions.some((action) => deprecatedActionIds.has(action.id))).toBe(false);
   });
 });

@@ -1,14 +1,11 @@
-import {
-  SequenceActionInput,
-  SequenceActionResult,
-} from './sequence-actions/types';
+import { SequenceActionInput, SequenceActionResult } from './sequence-actions/types';
 
 import { handleCreateSkuAutoIncrementSequence } from './sequence-actions/sku-actions';
 import { handleCreateLatestPriceStockSequence } from './sequence-actions/price-stock-actions';
-import { 
-  handleCreateNameLengthMirrorPattern, 
-  handleCreateNameCategoryMirrorPattern, 
-  handleCreateNameMirrorPolishSequence 
+import {
+  handleCreateNameLengthMirrorPattern,
+  handleCreateNameCategoryMirrorPattern,
+  handleCreateNameMirrorPolishSequence,
 } from './sequence-actions/mirror-actions';
 import {
   handleSaveSequenceGroup,
@@ -19,7 +16,7 @@ import {
   handleRemoveFromGroup,
   handleCreateGroup,
   handleRenameGroup,
-  handleUpdateGroupDebounce
+  handleUpdateGroupDebounce,
 } from './sequence-actions/group-actions';
 
 /**
@@ -34,12 +31,17 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
     handleCreateNameMirrorPolishSequence: () => handleCreateNameMirrorPolishSequence(args),
     handleSaveSequenceGroup: (groupId: string) => handleSaveSequenceGroup({ ...args, groupId }),
     handleUngroup: (groupId: string) => handleUngroup({ ...args, groupId }),
-    handleMoveGroup: (groupId: string, targetIndex: number) => handleMoveGroup({ ...args, groupId, targetIndex }),
-    handleReorderInGroup: (patternId: string, targetIndex: number) => handleReorderInGroup({ ...args, patternId, targetIndex }),
-    handleMoveToGroup: (patternId: string, groupId: string) => handleMoveToGroup({ ...args, patternId, groupId }),
+    handleMoveGroup: (groupId: string, targetIndex: number) =>
+      handleMoveGroup({ ...args, groupId, targetIndex }),
+    handleReorderInGroup: (patternId: string, targetIndex: number) =>
+      handleReorderInGroup({ ...args, patternId, targetIndex }),
+    handleMoveToGroup: (patternId: string, groupId: string) =>
+      handleMoveToGroup({ ...args, patternId, groupId }),
     handleRemoveFromGroup: (patternId: string) => handleRemoveFromGroup({ ...args, patternId }),
     handleCreateGroup: (patternIds: string[]) => handleCreateGroup({ ...args, patternIds }),
-    handleRenameGroup: (groupId: string, label: string) => handleRenameGroup({ ...args, groupId, label }),
-    handleUpdateGroupDebounce: (groupId: string, debounceMs: number) => handleUpdateGroupDebounce({ ...args, groupId, debounceMs }),
+    handleRenameGroup: (groupId: string, label: string) =>
+      handleRenameGroup({ ...args, groupId, label }),
+    handleUpdateGroupDebounce: (groupId: string, debounceMs: number) =>
+      handleUpdateGroupDebounce({ ...args, groupId, debounceMs }),
   };
 }

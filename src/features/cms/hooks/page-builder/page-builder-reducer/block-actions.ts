@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
- 
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import {
@@ -61,13 +60,17 @@ export function reduceBlockActions(
     case 'REMOVE_BLOCK': {
       const updatedSections = state.sections.map((s: SectionInstance) =>
         s.id === (action as any).sectionId
-          ? { ...s, blocks: s.blocks.filter((b: BlockInstance) => b.id !== (action as any).blockId) }
+          ? {
+              ...s,
+              blocks: s.blocks.filter((b: BlockInstance) => b.id !== (action as any).blockId),
+            }
           : s
       );
       return {
         ...state,
         sections: updatedSections,
-        selectedNodeId: state.selectedNodeId === (action as any).blockId ? null : state.selectedNodeId,
+        selectedNodeId:
+          state.selectedNodeId === (action as any).blockId ? null : state.selectedNodeId,
       };
     }
 
@@ -75,13 +78,13 @@ export function reduceBlockActions(
       const updatedSections = state.sections.map((s: SectionInstance) =>
         s.id === (action as any).sectionId
           ? {
-            ...s,
-            blocks: s.blocks.map((b: BlockInstance) =>
-              b.id === (action as any).blockId
-                ? applyTextAtomSettings(b, { ...b.settings, ...(action as any).settings })
-                : b
-            ),
-          }
+              ...s,
+              blocks: s.blocks.map((b: BlockInstance) =>
+                b.id === (action as any).blockId
+                  ? applyTextAtomSettings(b, { ...b.settings, ...(action as any).settings })
+                  : b
+              ),
+            }
           : s
       );
       return { ...state, sections: updatedSections };
@@ -93,7 +96,10 @@ export function reduceBlockActions(
         if (s.id === (action as any).fromSectionId) {
           const block = s.blocks.find((b: BlockInstance) => b.id === (action as any).blockId);
           if (block) movedBlock = block;
-          return { ...s, blocks: s.blocks.filter((b: BlockInstance) => b.id !== (action as any).blockId) };
+          return {
+            ...s,
+            blocks: s.blocks.filter((b: BlockInstance) => b.id !== (action as any).blockId),
+          };
         }
         return s;
       });

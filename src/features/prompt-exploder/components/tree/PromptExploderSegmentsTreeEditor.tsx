@@ -25,10 +25,7 @@ import {
   buildPromptExploderTreeRevision,
   usePromptExploderHandleOnlyDrag,
 } from '../../tree/shared';
-import {
-  parsePromptExploderTreeNodeId,
-  toPromptExploderTreeNodeId,
-} from '../../tree/types';
+import { parsePromptExploderTreeNodeId, toPromptExploderTreeNodeId } from '../../tree/types';
 
 export function PromptExploderSegmentsTreeEditor(): React.JSX.Element {
   const { documentState, selectedSegmentId } = useDocumentState();
@@ -93,8 +90,9 @@ export function PromptExploderSegmentsTreeEditor(): React.JSX.Element {
   );
 
   useEffect(() => {
-    const parsedSelectedNode =
-      controller.selectedNodeId ? parsePromptExploderTreeNodeId(controller.selectedNodeId) : null;
+    const parsedSelectedNode = controller.selectedNodeId
+      ? parsePromptExploderTreeNodeId(controller.selectedNodeId)
+      : null;
     const resolvedSegmentId =
       parsedSelectedNode?.kind === 'segment' ? parsedSelectedNode.entityId : null;
     if ((resolvedSegmentId ?? null) === (selectedSegmentId ?? null)) return;
@@ -108,7 +106,9 @@ export function PromptExploderSegmentsTreeEditor(): React.JSX.Element {
           <div className='text-xs font-medium uppercase tracking-[0.08em] text-gray-400'>
             Segment Tree
           </div>
-          <div className='text-[11px] text-gray-500'>Handle-only reorder on master tree runtime.</div>
+          <div className='text-[11px] text-gray-500'>
+            Handle-only reorder on master tree runtime.
+          </div>
         </div>
         <Button
           type='button'
@@ -171,7 +171,9 @@ export function PromptExploderSegmentsTreeEditor(): React.JSX.Element {
           />
         </div>
       </PromptExploderTreeNodeRuntimeProvider>
-      <div className='text-[11px] text-gray-500'>Select a segment on the left, edit details on the right.</div>
+      <div className='text-[11px] text-gray-500'>
+        Select a segment on the left, edit details on the right.
+      </div>
     </Card>
   );
 }

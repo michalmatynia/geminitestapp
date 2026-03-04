@@ -280,227 +280,239 @@ export function buildImageStudioSequenceSnapshot(
   };
 }
 
-const imageStudioSettingsSchema = z.object({
-  version: z.literal(1).optional().default(1),
-  projectSequencing: z
-    .object({
-      enabled: z.boolean().optional().default(defaultImageStudioSettings.projectSequencing.enabled),
-      trigger: z
-        .enum(['manual', 'product_studio'])
-        .optional()
-        .default(defaultImageStudioSettings.projectSequencing.trigger),
-      runtime: z
-        .enum(['server'])
-        .optional()
-        .default(defaultImageStudioSettings.projectSequencing.runtime),
-      operations: z
-        .array(z.enum(IMAGE_STUDIO_SEQUENCE_OPERATIONS))
-        .optional()
-        .default(defaultImageStudioSettings.projectSequencing.operations),
-      steps: z.array(z.unknown()).optional(),
-      presets: z
-        .array(
-          z.object({
-            id: z.string().trim().min(1),
-            name: z.string().trim().min(1),
-            description: z.string().trim().nullable().optional(),
-            steps: z.array(z.unknown()).optional(),
-            updatedAt: z.string().trim().nullable().optional(),
-          })
-        )
-        .optional(),
-      activePresetId: z.string().trim().min(1).nullable().optional().default(null),
-      upscaleStrategy: z
-        .enum(['scale', 'target_resolution'])
-        .optional()
-        .default(defaultImageStudioSettings.projectSequencing.upscaleStrategy),
-      upscaleScale: z
-        .number()
-        .finite()
-        .min(1.1)
-        .max(8)
-        .optional()
-        .default(defaultImageStudioSettings.projectSequencing.upscaleScale),
-      upscaleTargetWidth: z
-        .number()
-        .int()
-        .min(1)
-        .max(32_768)
-        .optional()
-        .default(defaultImageStudioSettings.projectSequencing.upscaleTargetWidth),
-      upscaleTargetHeight: z
-        .number()
-        .int()
-        .min(1)
-        .max(32_768)
-        .optional()
-        .default(defaultImageStudioSettings.projectSequencing.upscaleTargetHeight),
-      snapshotHash: z
-        .string()
-        .trim()
-        .min(1)
-        .nullable()
-        .optional()
-        .default(defaultImageStudioSettings.projectSequencing.snapshotHash),
-      snapshotSavedAt: z
-        .string()
-        .trim()
-        .min(1)
-        .nullable()
-        .optional()
-        .default(defaultImageStudioSettings.projectSequencing.snapshotSavedAt),
-      snapshotStepCount: z
-        .number()
-        .int()
-        .min(0)
-        .optional()
-        .default(defaultImageStudioSettings.projectSequencing.snapshotStepCount),
-      snapshotModelId: z
-        .string()
-        .trim()
-        .min(1)
-        .nullable()
-        .optional()
-        .default(defaultImageStudioSettings.projectSequencing.snapshotModelId),
-    })
-    .strict()
-    .optional()
-    .default(defaultImageStudioSettings.projectSequencing),
-  promptExtraction: z
-    .object({
-      mode: z
-        .enum(['programmatic', 'gpt', 'hybrid'])
-        .optional()
-        .default(defaultImageStudioSettings.promptExtraction.mode),
-      applyAutofix: z
-        .boolean()
-        .optional()
-        .default(defaultImageStudioSettings.promptExtraction.applyAutofix),
-      autoApplyFormattedPrompt: z
-        .boolean()
-        .optional()
-        .default(defaultImageStudioSettings.promptExtraction.autoApplyFormattedPrompt),
-      showValidationSummary: z
-        .boolean()
-        .optional()
-        .default(defaultImageStudioSettings.promptExtraction.showValidationSummary),
-      gpt: z
-        .object({
-          temperature: finiteNumberOrNull,
-          top_p: finiteNumberOrNull,
-          max_output_tokens: intOrNull,
-        })
-        .strict()
-        .optional()
-        .default(defaultImageStudioSettings.promptExtraction.gpt),
-    })
-    .strict()
-    .optional()
-    .default(defaultImageStudioSettings.promptExtraction),
-  uiExtractor: z
-    .object({
-      mode: z
-        .enum(['heuristic', 'ai', 'both'])
-        .optional()
-        .default(defaultImageStudioSettings.uiExtractor.mode),
-      temperature: finiteNumberOrNull,
-      max_output_tokens: intOrNull,
-    })
-    .strict()
-    .optional()
-    .default(defaultImageStudioSettings.uiExtractor),
-  helpTooltips: z
-    .object({
-      cropButtonsEnabled: z
-        .boolean()
-        .optional()
-        .default(defaultImageStudioSettings.helpTooltips.cropButtonsEnabled),
-      sequencerFieldsEnabled: z
-        .boolean()
-        .optional()
-        .default(defaultImageStudioSettings.helpTooltips.sequencerFieldsEnabled),
-      versionGraphButtonsEnabled: z
-        .boolean()
-        .optional()
-        .default(defaultImageStudioSettings.helpTooltips.versionGraphButtonsEnabled),
-    })
-    .strict()
-    .optional()
-    .default(defaultImageStudioSettings.helpTooltips),
-  targetAi: z
-    .object({
-      provider: z.literal('openai').optional().default('openai'),
-      openai: z
-        .object({
-          api: z
-            .enum(['responses', 'images'])
-            .optional()
-            .default(defaultImageStudioSettings.targetAi.openai.api),
-          temperature: finiteNumberOrNull,
-          top_p: finiteNumberOrNull,
-          max_output_tokens: intOrNull,
-          presence_penalty: finiteNumberOrNull,
-          frequency_penalty: finiteNumberOrNull,
-          seed: intOrNull,
-          user: nonEmptyStringOrNull,
-          stream: z.boolean().optional().default(defaultImageStudioSettings.targetAi.openai.stream),
-          reasoning_effort: z.enum(['low', 'medium', 'high']).nullable().optional().default(null),
-          response_format: z
-            .enum(['text', 'json'])
-            .nullable()
-            .optional()
-            .default(defaultImageStudioSettings.targetAi.openai.response_format),
-          tool_choice: z.enum(['auto', 'none']).nullable().optional().default(null),
-          image: z
-            .object({
-              size: nonEmptyStringOrNull,
-              quality: z
-                .enum(['auto', 'low', 'medium', 'high', 'standard', 'hd'])
-                .nullable()
-                .optional()
-                .default(null),
-              background: z
-                .enum(['auto', 'transparent', 'opaque', 'white'])
-                .nullable()
-                .optional()
-                .default(null),
-              format: z
-                .enum(['png', 'jpeg', 'webp'])
-                .nullable()
-                .optional()
-                .default(defaultImageStudioSettings.targetAi.openai.image.format),
-              n: z
-                .number()
-                .int()
-                .min(1)
-                .max(10)
-                .nullable()
-                .optional()
-                .default(defaultImageStudioSettings.targetAi.openai.image.n),
-              moderation: z.enum(['auto', 'low']).nullable().optional().default(null),
-              output_compression: z
-                .number()
-                .int()
-                .min(0)
-                .max(100)
-                .nullable()
-                .optional()
-                .default(null),
-              partial_images: z.number().int().min(0).max(3).nullable().optional().default(null),
+const imageStudioSettingsSchema = z
+  .object({
+    version: z.literal(1).optional().default(1),
+    projectSequencing: z
+      .object({
+        enabled: z
+          .boolean()
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.enabled),
+        trigger: z
+          .enum(['manual', 'product_studio'])
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.trigger),
+        runtime: z
+          .enum(['server'])
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.runtime),
+        operations: z
+          .array(z.enum(IMAGE_STUDIO_SEQUENCE_OPERATIONS))
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.operations),
+        steps: z.array(z.unknown()).optional(),
+        presets: z
+          .array(
+            z.object({
+              id: z.string().trim().min(1),
+              name: z.string().trim().min(1),
+              description: z.string().trim().nullable().optional(),
+              steps: z.array(z.unknown()).optional(),
+              updatedAt: z.string().trim().nullable().optional(),
             })
-            .strict()
-            .optional()
-            .default(defaultImageStudioSettings.targetAi.openai.image),
-          advanced_overrides: z.record(z.string(), z.unknown()).nullable().optional().default(null),
-        })
-        .strict()
-        .optional()
-        .default(defaultImageStudioSettings.targetAi.openai),
-    })
-    .strict()
-    .optional()
-    .default(defaultImageStudioSettings.targetAi),
-}).strict();
+          )
+          .optional(),
+        activePresetId: z.string().trim().min(1).nullable().optional().default(null),
+        upscaleStrategy: z
+          .enum(['scale', 'target_resolution'])
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.upscaleStrategy),
+        upscaleScale: z
+          .number()
+          .finite()
+          .min(1.1)
+          .max(8)
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.upscaleScale),
+        upscaleTargetWidth: z
+          .number()
+          .int()
+          .min(1)
+          .max(32_768)
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.upscaleTargetWidth),
+        upscaleTargetHeight: z
+          .number()
+          .int()
+          .min(1)
+          .max(32_768)
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.upscaleTargetHeight),
+        snapshotHash: z
+          .string()
+          .trim()
+          .min(1)
+          .nullable()
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.snapshotHash),
+        snapshotSavedAt: z
+          .string()
+          .trim()
+          .min(1)
+          .nullable()
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.snapshotSavedAt),
+        snapshotStepCount: z
+          .number()
+          .int()
+          .min(0)
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.snapshotStepCount),
+        snapshotModelId: z
+          .string()
+          .trim()
+          .min(1)
+          .nullable()
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.snapshotModelId),
+      })
+      .strict()
+      .optional()
+      .default(defaultImageStudioSettings.projectSequencing),
+    promptExtraction: z
+      .object({
+        mode: z
+          .enum(['programmatic', 'gpt', 'hybrid'])
+          .optional()
+          .default(defaultImageStudioSettings.promptExtraction.mode),
+        applyAutofix: z
+          .boolean()
+          .optional()
+          .default(defaultImageStudioSettings.promptExtraction.applyAutofix),
+        autoApplyFormattedPrompt: z
+          .boolean()
+          .optional()
+          .default(defaultImageStudioSettings.promptExtraction.autoApplyFormattedPrompt),
+        showValidationSummary: z
+          .boolean()
+          .optional()
+          .default(defaultImageStudioSettings.promptExtraction.showValidationSummary),
+        gpt: z
+          .object({
+            temperature: finiteNumberOrNull,
+            top_p: finiteNumberOrNull,
+            max_output_tokens: intOrNull,
+          })
+          .strict()
+          .optional()
+          .default(defaultImageStudioSettings.promptExtraction.gpt),
+      })
+      .strict()
+      .optional()
+      .default(defaultImageStudioSettings.promptExtraction),
+    uiExtractor: z
+      .object({
+        mode: z
+          .enum(['heuristic', 'ai', 'both'])
+          .optional()
+          .default(defaultImageStudioSettings.uiExtractor.mode),
+        temperature: finiteNumberOrNull,
+        max_output_tokens: intOrNull,
+      })
+      .strict()
+      .optional()
+      .default(defaultImageStudioSettings.uiExtractor),
+    helpTooltips: z
+      .object({
+        cropButtonsEnabled: z
+          .boolean()
+          .optional()
+          .default(defaultImageStudioSettings.helpTooltips.cropButtonsEnabled),
+        sequencerFieldsEnabled: z
+          .boolean()
+          .optional()
+          .default(defaultImageStudioSettings.helpTooltips.sequencerFieldsEnabled),
+        versionGraphButtonsEnabled: z
+          .boolean()
+          .optional()
+          .default(defaultImageStudioSettings.helpTooltips.versionGraphButtonsEnabled),
+      })
+      .strict()
+      .optional()
+      .default(defaultImageStudioSettings.helpTooltips),
+    targetAi: z
+      .object({
+        provider: z.literal('openai').optional().default('openai'),
+        openai: z
+          .object({
+            api: z
+              .enum(['responses', 'images'])
+              .optional()
+              .default(defaultImageStudioSettings.targetAi.openai.api),
+            temperature: finiteNumberOrNull,
+            top_p: finiteNumberOrNull,
+            max_output_tokens: intOrNull,
+            presence_penalty: finiteNumberOrNull,
+            frequency_penalty: finiteNumberOrNull,
+            seed: intOrNull,
+            user: nonEmptyStringOrNull,
+            stream: z
+              .boolean()
+              .optional()
+              .default(defaultImageStudioSettings.targetAi.openai.stream),
+            reasoning_effort: z.enum(['low', 'medium', 'high']).nullable().optional().default(null),
+            response_format: z
+              .enum(['text', 'json'])
+              .nullable()
+              .optional()
+              .default(defaultImageStudioSettings.targetAi.openai.response_format),
+            tool_choice: z.enum(['auto', 'none']).nullable().optional().default(null),
+            image: z
+              .object({
+                size: nonEmptyStringOrNull,
+                quality: z
+                  .enum(['auto', 'low', 'medium', 'high', 'standard', 'hd'])
+                  .nullable()
+                  .optional()
+                  .default(null),
+                background: z
+                  .enum(['auto', 'transparent', 'opaque', 'white'])
+                  .nullable()
+                  .optional()
+                  .default(null),
+                format: z
+                  .enum(['png', 'jpeg', 'webp'])
+                  .nullable()
+                  .optional()
+                  .default(defaultImageStudioSettings.targetAi.openai.image.format),
+                n: z
+                  .number()
+                  .int()
+                  .min(1)
+                  .max(10)
+                  .nullable()
+                  .optional()
+                  .default(defaultImageStudioSettings.targetAi.openai.image.n),
+                moderation: z.enum(['auto', 'low']).nullable().optional().default(null),
+                output_compression: z
+                  .number()
+                  .int()
+                  .min(0)
+                  .max(100)
+                  .nullable()
+                  .optional()
+                  .default(null),
+                partial_images: z.number().int().min(0).max(3).nullable().optional().default(null),
+              })
+              .strict()
+              .optional()
+              .default(defaultImageStudioSettings.targetAi.openai.image),
+            advanced_overrides: z
+              .record(z.string(), z.unknown())
+              .nullable()
+              .optional()
+              .default(null),
+          })
+          .strict()
+          .optional()
+          .default(defaultImageStudioSettings.targetAi.openai),
+      })
+      .strict()
+      .optional()
+      .default(defaultImageStudioSettings.targetAi),
+  })
+  .strict();
 
 const resolveActivePresetId = (
   requestedPresetId: string | null | undefined,
@@ -605,7 +617,9 @@ export function parseImageStudioSettings(raw: string | null | undefined): ImageS
 
   const snapshotHash = asTrimmedString(parsedSettings.projectSequencing.snapshotHash);
   const snapshotSavedAt = asTrimmedString(parsedSettings.projectSequencing.snapshotSavedAt);
-  const snapshotStepCount = asNonNegativeInteger(parsedSettings.projectSequencing.snapshotStepCount);
+  const snapshotStepCount = asNonNegativeInteger(
+    parsedSettings.projectSequencing.snapshotStepCount
+  );
   const snapshotModelId = asTrimmedString(parsedSettings.projectSequencing.snapshotModelId);
 
   const projectSequencing: ImageStudioProjectSequencingSettings = {

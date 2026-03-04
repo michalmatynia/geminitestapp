@@ -226,7 +226,13 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
 
   // Debounce changes for text and number fields
   useEffect(() => {
-    if (field.type !== 'text' && field.type !== 'number' && field.type !== 'date' && field.type !== 'search') return;
+    if (
+      field.type !== 'text' &&
+      field.type !== 'number' &&
+      field.type !== 'date' &&
+      field.type !== 'search'
+    )
+      return;
     if (localValue === value) return;
 
     const timer = setTimeout(() => {

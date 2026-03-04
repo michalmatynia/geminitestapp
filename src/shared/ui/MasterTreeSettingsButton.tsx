@@ -4,8 +4,10 @@ import React from 'react';
 
 import { cn, getFolderTreeInstanceSettingsHref, type FolderTreeInstance } from '@/shared/utils';
 
-export interface MasterTreeSettingsButtonProps
-  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'onMouseDown'> {
+export interface MasterTreeSettingsButtonProps extends Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  'onClick' | 'onMouseDown'
+> {
   instance: FolderTreeInstance;
   href?: string;
   onOpen?: (instance: FolderTreeInstance) => void;
@@ -46,4 +48,3 @@ export function MasterTreeSettingsButton({
     </button>
   );
 }
-

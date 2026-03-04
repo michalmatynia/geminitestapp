@@ -16,12 +16,7 @@ export type ContextNodeKind = z.infer<typeof contextNodeKindSchema>;
 export const riskTierSchema = z.enum(['none', 'low', 'medium', 'high', 'critical']);
 export type RiskTier = z.infer<typeof riskTierSchema>;
 
-export const dataClassificationSchema = z.enum([
-  'public',
-  'internal',
-  'restricted',
-  'secret',
-]);
+export const dataClassificationSchema = z.enum(['public', 'internal', 'restricted', 'secret']);
 export type DataClassification = z.infer<typeof dataClassificationSchema>;
 
 export const contextRelationshipTypeSchema = z.enum([
@@ -106,12 +101,7 @@ export const contextRegistryRefSchema = z.object({
 });
 export type ContextRegistryRef = z.infer<typeof contextRegistryRefSchema>;
 
-export const contextRuntimeDocumentSectionKindSchema = z.enum([
-  'facts',
-  'items',
-  'events',
-  'text',
-]);
+export const contextRuntimeDocumentSectionKindSchema = z.enum(['facts', 'items', 'events', 'text']);
 export type ContextRuntimeDocumentSectionKind = z.infer<
   typeof contextRuntimeDocumentSectionKindSchema
 >;
@@ -162,18 +152,14 @@ export const contextRegistryResolutionBundleSchema = z.object({
   truncated: z.boolean(),
   engineVersion: z.string(),
 });
-export type ContextRegistryResolutionBundle = z.infer<
-  typeof contextRegistryResolutionBundleSchema
->;
+export type ContextRegistryResolutionBundle = z.infer<typeof contextRegistryResolutionBundleSchema>;
 
 export const contextRegistryConsumerEnvelopeSchema = z.object({
   refs: z.array(contextRegistryRefSchema),
   engineVersion: z.string(),
   resolved: contextRegistryResolutionBundleSchema.optional(),
 });
-export type ContextRegistryConsumerEnvelope = z.infer<
-  typeof contextRegistryConsumerEnvelopeSchema
->;
+export type ContextRegistryConsumerEnvelope = z.infer<typeof contextRegistryConsumerEnvelopeSchema>;
 
 // ─── Search ───────────────────────────────────────────────────────────────────
 

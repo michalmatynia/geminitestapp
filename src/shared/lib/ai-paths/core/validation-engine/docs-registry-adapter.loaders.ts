@@ -1,4 +1,3 @@
- 
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';
@@ -44,7 +43,10 @@ const DOCS_AI_PATHS_PREFIX = 'docs/ai-paths/';
 const AI_PATHS_FEATURE_PREFIX = 'src/features/ai/ai-paths/';
 
 const normalizeRepoRelativePath = (candidate: string): string =>
-  candidate.trim().replace(/\\/g, '/').replace(/^\.\/+/, '');
+  candidate
+    .trim()
+    .replace(/\\/g, '/')
+    .replace(/^\.\/+/, '');
 
 const hasPathTraversal = (segments: string[]): boolean =>
   segments.some((segment) => segment === '..');
@@ -53,8 +55,8 @@ const resolveAiPathsDocsAbsolutePath = (candidate: string): string => {
   if (path.isAbsolute(candidate)) {
     const absoluteCandidate = path.normalize(candidate);
     const allowedAbsoluteRoots = [DOCS_AI_PATHS_ROOT, AI_PATHS_FEATURE_ROOT];
-    const isUnderAllowedRoot = allowedAbsoluteRoots.some((root) =>
-      absoluteCandidate === root || absoluteCandidate.startsWith(`${root}${path.sep}`)
+    const isUnderAllowedRoot = allowedAbsoluteRoots.some(
+      (root) => absoluteCandidate === root || absoluteCandidate.startsWith(`${root}${path.sep}`)
     );
     if (isUnderAllowedRoot) {
       return absoluteCandidate;

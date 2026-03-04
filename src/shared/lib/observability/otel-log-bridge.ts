@@ -2,7 +2,12 @@ import { SeverityNumber, logs } from '@opentelemetry/api-logs';
 
 import type { SystemLogLevelDto as SystemLogLevel } from '@/shared/contracts/observability';
 
-import { isSensitiveKey, REDACTED_VALUE, redactSensitiveText, truncateString } from './log-redaction';
+import {
+  isSensitiveKey,
+  REDACTED_VALUE,
+  redactSensitiveText,
+  truncateString,
+} from './log-redaction';
 import { getActiveOtelContextAttributes } from './otel-context';
 
 const OTEL_LOGGER_NAME = 'geminitestapp.system-logger';
@@ -34,10 +39,7 @@ const mapSeverity = (level: SystemLogLevel): SeverityNumber => {
   return SeverityNumber.INFO;
 };
 
-const asAttributeValue = (
-  key: string,
-  value: unknown
-): string | number | boolean | undefined => {
+const asAttributeValue = (key: string, value: unknown): string | number | boolean | undefined => {
   if (value === null || value === undefined) return undefined;
   if (isSensitiveKey(key)) return REDACTED_VALUE;
 
@@ -116,4 +118,3 @@ export const emitOtelLogRecord = (input: EmitOtelLogRecordInput): void => {
     // Never throw from observability bridge.
   }
 };
-

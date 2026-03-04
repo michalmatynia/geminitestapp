@@ -77,11 +77,10 @@ export const EMPTY_RUNTIME_STATE: RuntimeState = {
 
 export const parseRuntimeState = (value: unknown): RuntimeState => {
   if (!value) return EMPTY_RUNTIME_STATE;
-  const assertNoLegacyRunIdentity = (
-    record: Record<string, unknown>,
-    location: string
-  ): void => {
-    const deprecatedKeys = ['runId', 'runStartedAt'].filter((key: string): boolean => key in record);
+  const assertNoLegacyRunIdentity = (record: Record<string, unknown>, location: string): void => {
+    const deprecatedKeys = ['runId', 'runStartedAt'].filter(
+      (key: string): boolean => key in record
+    );
     if (deprecatedKeys.length === 0) return;
     throw validationError('Legacy AI Paths runtime identity fields are no longer supported.', {
       reason: 'deprecated_runtime_identity_fields',
@@ -107,7 +106,10 @@ export const parseRuntimeState = (value: unknown): RuntimeState => {
         if (!Array.isArray(entries)) return;
         entries.forEach((entry: unknown, index: number): void => {
           if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
-          assertNoLegacyRunIdentity(entry as Record<string, unknown>, `history.${nodeId}[${index}]`);
+          assertNoLegacyRunIdentity(
+            entry as Record<string, unknown>,
+            `history.${nodeId}[${index}]`
+          );
         });
       }
     );

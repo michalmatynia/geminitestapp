@@ -212,8 +212,9 @@ const collectAiPathsDomain = async (
       ? runtimeAnalyticsEnabled
         ? 'Queue and SLO are healthy.'
         : 'Queue is healthy. Runtime analytics telemetry is disabled.'
-      : status.slo.breaches[0]?.message ?? 'AI Paths queue reported degraded health.';
-  const updatedAt = status.lastPollTime > 0 ? new Date(status.lastPollTime).toISOString() : nowIso();
+      : (status.slo.breaches[0]?.message ?? 'AI Paths queue reported degraded health.');
+  const updatedAt =
+    status.lastPollTime > 0 ? new Date(status.lastPollTime).toISOString() : nowIso();
   const queueLagValue = status.queueLagMs === null ? 'n/a' : status.queueLagMs;
 
   return {
@@ -227,11 +228,17 @@ const collectAiPathsDomain = async (
       { key: 'queued_count', label: 'Queued', value: status.queuedCount },
       { key: 'active_runs', label: 'Active runs', value: status.activeRuns },
       { key: 'queue_lag_ms', label: 'Queue lag (ms)', value: queueLagValue },
-      { key: 'throughput_per_minute', label: 'Throughput / min', value: status.throughputPerMinute },
+      {
+        key: 'throughput_per_minute',
+        label: 'Throughput / min',
+        value: status.throughputPerMinute,
+      },
       {
         key: 'runtime_analytics',
         label: 'Runtime analytics',
-        value: runtimeAnalyticsEnabled ? status.runtimeAnalytics?.storage ?? 'disabled' : 'disabled',
+        value: runtimeAnalyticsEnabled
+          ? (status.runtimeAnalytics?.storage ?? 'disabled')
+          : 'disabled',
       },
       {
         key: 'brain_reports_24h',
@@ -276,11 +283,13 @@ const collectChatbotDomain = async (
   const timedRecords: TimedStatusRecord[] = jobs.flatMap((job) => {
     const timestampMs = parseTimestampMs(job.createdAt);
     if (timestampMs === null) return [];
-    return [{
-      id: job.id,
-      status: job.status,
-      timestampMs,
-    }];
+    return [
+      {
+        id: job.id,
+        status: job.status,
+        timestampMs,
+      },
+    ];
   });
 
   const trend = buildFailedTrend(timedRecords, window, range);
@@ -306,7 +315,11 @@ const collectChatbotDomain = async (
       { key: 'completed', label: 'Completed', value: counts.completed },
       { key: 'failed', label: 'Failed', value: counts.failed },
       { key: 'canceled', label: 'Canceled', value: counts.canceled },
-      { key: 'failed_current_window', label: `Failed (${RANGE_LABELS[range]})`, value: trend.current ?? 0 },
+      {
+        key: 'failed_current_window',
+        label: `Failed (${RANGE_LABELS[range]})`,
+        value: trend.current ?? 0,
+      },
       { key: 'failed_previous_window', label: 'Failed (prev)', value: trend.previous ?? 0 },
     ],
     trend,
@@ -355,11 +368,13 @@ const collectAgentRuntimeDomain = async (
   const timedRecords: TimedStatusRecord[] = runs.flatMap((run) => {
     const timestampMs = parseTimestampMs(run.updatedAt);
     if (timestampMs === null) return [];
-    return [{
-      id: run.id,
-      status: run.status as TimedStatusRecord['status'],
-      timestampMs,
-    }];
+    return [
+      {
+        id: run.id,
+        status: run.status as TimedStatusRecord['status'],
+        timestampMs,
+      },
+    ];
   });
 
   const trend = buildFailedTrend(timedRecords, window, range);
@@ -386,7 +401,11 @@ const collectAgentRuntimeDomain = async (
       { key: 'failed', label: 'Failed', value: counts.failed },
       { key: 'stopped', label: 'Stopped', value: counts.stopped },
       { key: 'waiting_human', label: 'Waiting human', value: counts.waiting_human },
-      { key: 'failed_current_window', label: `Failed (${RANGE_LABELS[range]})`, value: trend.current ?? 0 },
+      {
+        key: 'failed_current_window',
+        label: `Failed (${RANGE_LABELS[range]})`,
+        value: trend.current ?? 0,
+      },
       { key: 'failed_previous_window', label: 'Failed (prev)', value: trend.previous ?? 0 },
     ],
     trend,
@@ -419,11 +438,13 @@ const collectImageStudioDomain = async (
   const timedRecords: TimedStatusRecord[] = result.runs.flatMap((run) => {
     const timestampMs = parseTimestampMs(run.updatedAt ?? run.createdAt);
     if (timestampMs === null) return [];
-    return [{
-      id: run.id,
-      status: run.status as TimedStatusRecord['status'],
-      timestampMs,
-    }];
+    return [
+      {
+        id: run.id,
+        status: run.status as TimedStatusRecord['status'],
+        timestampMs,
+      },
+    ];
   });
 
   const trend = buildFailedTrend(timedRecords, window, range);
@@ -448,7 +469,11 @@ const collectImageStudioDomain = async (
       { key: 'running', label: 'Running', value: counts.running },
       { key: 'completed', label: 'Completed', value: counts.completed },
       { key: 'failed', label: 'Failed', value: counts.failed },
-      { key: 'failed_current_window', label: `Failed (${RANGE_LABELS[range]})`, value: trend.current ?? 0 },
+      {
+        key: 'failed_current_window',
+        label: `Failed (${RANGE_LABELS[range]})`,
+        value: trend.current ?? 0,
+      },
       { key: 'failed_previous_window', label: 'Failed (prev)', value: trend.previous ?? 0 },
     ],
     trend,

@@ -288,7 +288,7 @@ export const createPromptExtractionHandlers = (
           params: flattened.map((leaf) => ({
             path: leaf.path,
             value: leaf.value,
-             
+
             spec: deps.previewSpecs?.[leaf.path] ?? null,
           })),
 

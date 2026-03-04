@@ -420,10 +420,9 @@ export function GenerationToolbarInner(): React.JSX.Element {
     );
     setCenterLayoutCustomPresets(nextPresets);
     setCenterLayoutPresetDraftName('');
-    toast(
-      deletedName ? `Deleted preset "${deletedName}".` : 'Deleted selected custom preset.',
-      { variant: 'success' }
-    );
+    toast(deletedName ? `Deleted preset "${deletedName}".` : 'Deleted selected custom preset.', {
+      variant: 'success',
+    });
   }, [activeProjectId, setCenterLayoutCustomPresets, setCenterLayoutPresetDraftName, state, toast]);
   const handleRunAnalysisFromCenterAction = useCallback((): void => {
     void handleRunAnalysisFromCenter();
@@ -507,7 +506,9 @@ export function GenerationToolbarInner(): React.JSX.Element {
   const cropSectionRuntime = useMemo(
     () => ({
       cropBusyLabel,
-      boundaryStatusLabel: state.hasShapeCropBoundary ? 'Boundary ready' : 'Move image outside canvas',
+      boundaryStatusLabel: state.hasShapeCropBoundary
+        ? 'Boundary ready'
+        : 'Move image outside canvas',
       cropModeOptions,
       cropTooltipContent,
       cropTooltipsEnabled,
@@ -578,7 +579,9 @@ export function GenerationToolbarInner(): React.JSX.Element {
       centerLayoutPresetOptions: state.centerLayoutPresetOptions,
       centerLayoutCanDeletePreset: Boolean(state.selectedCenterCustomPresetId),
       centerLayoutCanSavePreset: state.centerLayoutPresetDraftName.trim().length > 0,
-      centerLayoutSavePresetLabel: state.selectedCenterCustomPresetId ? 'Update Preset' : 'Save Preset',
+      centerLayoutSavePresetLabel: state.selectedCenterCustomPresetId
+        ? 'Update Preset'
+        : 'Save Preset',
       centerLayoutDetectionOptions: detectionModeOptions,
       centerLayoutProjectCanvasSize: projectCanvasSize,
       centerLayoutShadowPolicyOptions: shadowPolicyOptions,

@@ -2,10 +2,6 @@ import 'server-only';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
- 
- 
- 
- 
 
 /**
  * AI Path Runtime Analytics Service
@@ -20,37 +16,28 @@ export * from './runtime-analytics/cache';
 export * from './runtime-analytics/trace';
 export * from './runtime-analytics/recording';
 
-import { 
-  AiPathRuntimeAnalyticsRange, 
-  AiPathRuntimeAnalyticsSummary 
+import {
+  AiPathRuntimeAnalyticsRange,
+  AiPathRuntimeAnalyticsSummary,
 } from '@/shared/contracts/ai-paths';
 import { getRedisConnection } from '@/shared/lib/queue';
-import { 
-  keyRuns, 
-  keyDurations, 
-  keyNodes, 
-  keyBrain, 
-  SUMMARY_QUERY_TIMEOUT_MS 
+import {
+  keyRuns,
+  keyDurations,
+  keyNodes,
+  keyBrain,
+  SUMMARY_QUERY_TIMEOUT_MS,
 } from './runtime-analytics/config';
-import { 
-  withTimeout, 
-  parseDurationMember, 
-  clampRate 
-} from './runtime-analytics/utils';
-import { 
-  buildSummaryCacheKey, 
-  readCachedSummary, 
-  setCachedSummary, 
-  summaryInFlight, 
-  readStaleSummary 
+import { withTimeout, parseDurationMember, clampRate } from './runtime-analytics/utils';
+import {
+  buildSummaryCacheKey,
+  readCachedSummary,
+  setCachedSummary,
+  summaryInFlight,
+  readStaleSummary,
 } from './runtime-analytics/cache';
-import { 
-  emptySummary, 
-  loadRuntimeTraceAnalytics 
-} from './runtime-analytics/trace';
-import { 
-  getRuntimeAnalyticsAvailability 
-} from './runtime-analytics/availability';
+import { emptySummary, loadRuntimeTraceAnalytics } from './runtime-analytics/trace';
+import { getRuntimeAnalyticsAvailability } from './runtime-analytics/availability';
 
 export const getRuntimeAnalyticsSummary = async (
   window: { from: Date; to: Date },
@@ -138,12 +125,12 @@ export const getRuntimeAnalyticsSummary = async (
           : null;
       const p95DurationMs =
         parsedDurations.length > 0
-          ? parsedDurations[Math.floor(parsedDurations.length * 0.95)] ?? null
+          ? (parsedDurations[Math.floor(parsedDurations.length * 0.95)] ?? null)
           : null;
 
-      const successRate = total > 0 ? clampRate(((completed) / (total)) * 100) : 0;
-      const failureRate = total > 0 ? clampRate(((failed) / (total)) * 100) : 0;
-      const deadLetterRate = total > 0 ? clampRate(((deadLettered) / (total)) * 100) : 0;
+      const successRate = total > 0 ? clampRate((completed / total) * 100) : 0;
+      const failureRate = total > 0 ? clampRate((failed / total) * 100) : 0;
+      const deadLetterRate = total > 0 ? clampRate((deadLettered / total) * 100) : 0;
 
       const summary: AiPathRuntimeAnalyticsSummary = {
         from: window.from.toISOString(),
@@ -177,7 +164,7 @@ export const getRuntimeAnalyticsSummary = async (
         brain: {
           analyticsReports: brainAnalytics,
           logReports: brainLogs,
-          totalReports: (brainAnalytics) + (brainLogs),
+          totalReports: brainAnalytics + brainLogs,
           warningReports: brainWarning,
           errorReports: brainError,
         },

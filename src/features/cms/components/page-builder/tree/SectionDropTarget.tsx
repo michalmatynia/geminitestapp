@@ -56,7 +56,7 @@ export function SectionDropTarget({
   const draggedSectionIndex = dragState.section.index;
   const draggedSection = pbState.sections.find((section) => section.id === draggedSectionId);
   const draggedSectionParentId = draggedSection?.parentSectionId ?? null;
-  const draggedSectionResolvedZone = (draggedSectionZone) ?? draggedSection?.zone ?? null;
+  const draggedSectionResolvedZone = draggedSectionZone ?? draggedSection?.zone ?? null;
   const draggedSectionResolvedIndex = React.useMemo((): number | null => {
     if (draggedSectionIndex !== null) return draggedSectionIndex;
     if (!draggedSectionId || !draggedSection) return null;
@@ -67,7 +67,13 @@ export function SectionDropTarget({
     );
     const siblingIndex = siblingSections.findIndex((section) => section.id === draggedSectionId);
     return siblingIndex >= 0 ? siblingIndex : null;
-  }, [draggedSection, draggedSectionId, draggedSectionIndex, draggedSectionParentId, pbState.sections]);
+  }, [
+    draggedSection,
+    draggedSectionId,
+    draggedSectionIndex,
+    draggedSectionParentId,
+    pbState.sections,
+  ]);
 
   const isDraggingBlock = Boolean(draggedBlockId);
   const isDraggingSection =

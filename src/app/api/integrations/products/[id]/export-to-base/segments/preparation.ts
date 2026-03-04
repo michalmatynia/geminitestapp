@@ -52,7 +52,8 @@ export const parseMappedParameterId = (value: unknown): string => {
   const trimmed = value.trim();
   const match = trimmed.match(/parameter:([^:]+)/);
   if (match?.[1]) return match[1].split('|')[0] ?? '';
-  if (trimmed.startsWith('parameter:')) return trimmed.replace(/^parameter:/, '').split('|')[0] ?? '';
+  if (trimmed.startsWith('parameter:'))
+    return trimmed.replace(/^parameter:/, '').split('|')[0] ?? '';
   return '';
 };
 
@@ -65,7 +66,8 @@ const remapLegacyParameterSourceMappings = async (args: {
   const parameterMappings = mappings.filter((m) =>
     String(m['sourceKey'] || '').startsWith('parameter:')
   );
-  if (parameterMappings.length === 0) return mappings;      try {
+  if (parameterMappings.length === 0) return mappings;
+  try {
     const parameterRepository = await getParameterRepository();
     const allParameters = await parameterRepository.listParameters({});
     const paramsById = new Map<string, (typeof allParameters)[0]>();
@@ -73,18 +75,18 @@ const remapLegacyParameterSourceMappings = async (args: {
       paramsById.set(p.id, p);
       paramsById.set(p.id.toLowerCase(), p);
     });
-  
+
     return mappings.map((mapping) => {
       const sourceKey = String(mapping['sourceKey'] || '');
       if (!sourceKey.startsWith('parameter:')) return mapping;
-  
+
       const fullValue = sourceKey.replace(/^parameter:/, '');
       const parts = fullValue.split('|');
       const parameterId = parts[0]!;
       const langSuffix = parts[1];
-  
+
       const parameter = paramsById.get(parameterId) || paramsById.get(parameterId.toLowerCase());
-  
+
       if (parameter) {
         let parameterName = parameter.name_en;
         if (langSuffix === 'pl' && parameter.name_pl) {
@@ -92,7 +94,7 @@ const remapLegacyParameterSourceMappings = async (args: {
         } else if (langSuffix === 'de' && parameter.name_de) {
           parameterName = parameter.name_de;
         }
-  
+
         const suffix = langSuffix ? `|${langSuffix}` : '';
         return {
           ...mapping,
@@ -100,7 +102,8 @@ const remapLegacyParameterSourceMappings = async (args: {
         };
       }
       return mapping;
-    });  } catch (error) {
+    });
+  } catch (error) {
     await ErrorSystem.logWarning('[export-to-base] Failed to remap legacy parameter mappings', {
       productId: args.productId,
       error: error instanceof Error ? error.message : String(error),
@@ -206,11 +209,11 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
     const fallbackTemplateId = requestedTemplateId
       ? ''
       : toTrimmedString(
-        await getExportActiveTemplateId({
-          connectionId: data.connectionId,
-          inventoryId: resolvedInventoryId,
-        })
-      );
+          await getExportActiveTemplateId({
+            connectionId: data.connectionId,
+            inventoryId: resolvedInventoryId,
+          })
+        );
     const templateIdToUse = requestedTemplateId || fallbackTemplateId;
     if (templateIdToUse) {
       const templates: Template[] = await listExportTemplates();
@@ -264,21 +267,21 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
 
   const productProducerIds = !imagesOnly
     ? Array.from(
-      new Set(
-        (product.producers ?? [])
-          .map((producer) => getProducerRefId(producer))
-          .filter((producerId): producerId is string => Boolean(producerId))
+        new Set(
+          (product.producers ?? [])
+            .map((producer) => getProducerRefId(producer))
+            .filter((producerId): producerId is string => Boolean(producerId))
+        )
       )
-    )
     : [];
   const productTagIds = !imagesOnly
     ? Array.from(
-      new Set(
-        (product.tags ?? [])
-          .map((tag) => tag.tagId?.trim())
-          .filter((tagId): tagId is string => Boolean(tagId))
+        new Set(
+          (product.tags ?? [])
+            .map((tag) => tag.tagId?.trim())
+            .filter((tagId): tagId is string => Boolean(tagId))
+        )
       )
-    )
     : [];
 
   let producerNameById: Record<string, string> | null = null;

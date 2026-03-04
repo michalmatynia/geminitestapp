@@ -2,10 +2,7 @@
 
 import { fetchAnalyticsSummary, type AnalyticsRange } from '@/shared/lib/analytics/api';
 import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
-import type {
-  AnalyticsScope,
-  AnalyticsSummary,
-} from '@/shared/contracts/analytics';
+import type { AnalyticsScope, AnalyticsSummary } from '@/shared/contracts/analytics';
 import type { SingleQuery, MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2, createCreateMutationV2 } from '@/shared/lib/query-factories-v2';

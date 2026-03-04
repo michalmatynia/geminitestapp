@@ -67,11 +67,12 @@ const parseOtlpHeaders = (raw: string | null): Record<string, string> | undefine
 const hasExplicitOtelEndpoint = (): boolean =>
   Boolean(
     readEnvTrimmed('OTEL_EXPORTER_OTLP_ENDPOINT') ||
-      readEnvTrimmed('OTEL_EXPORTER_OTLP_TRACES_ENDPOINT') ||
-      readEnvTrimmed('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT')
+    readEnvTrimmed('OTEL_EXPORTER_OTLP_TRACES_ENDPOINT') ||
+    readEnvTrimmed('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT')
   );
 
-const shouldEnableNodeOtel = (): boolean => readBooleanEnv('OTEL_ENABLED') || hasExplicitOtelEndpoint();
+const shouldEnableNodeOtel = (): boolean =>
+  readBooleanEnv('OTEL_ENABLED') || hasExplicitOtelEndpoint();
 
 const buildTraceExporter = (headers: Record<string, string> | undefined): OTLPTraceExporter => {
   const tracesEndpoint =
@@ -86,7 +87,8 @@ const buildTraceExporter = (headers: Record<string, string> | undefined): OTLPTr
 
 const buildLogExporter = (headers: Record<string, string> | undefined): OTLPLogExporter => {
   const logsEndpoint =
-    readEnvTrimmed('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT') || readEnvTrimmed('OTEL_EXPORTER_OTLP_ENDPOINT');
+    readEnvTrimmed('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT') ||
+    readEnvTrimmed('OTEL_EXPORTER_OTLP_ENDPOINT');
 
   return new OTLPLogExporter({
     ...(logsEndpoint ? { url: normalizeSignalEndpoint(logsEndpoint, LOG_SIGNAL_PATH) } : {}),

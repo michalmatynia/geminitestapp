@@ -3,7 +3,11 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { BrainRoutingTree } from '@/shared/lib/ai-brain/components/BrainRoutingTree';
-import { defaultBrainAssignment, defaultBrainSettings, BRAIN_CAPABILITY_KEYS } from '@/shared/lib/ai-brain/settings';
+import {
+  defaultBrainAssignment,
+  defaultBrainSettings,
+  BRAIN_CAPABILITY_KEYS,
+} from '@/shared/lib/ai-brain/settings';
 
 const useMasterFolderTreeShellMock = vi.fn();
 let latestTreeOptions: unknown = null;
@@ -72,8 +76,6 @@ describe('BrainRoutingTree', () => {
     expect(options.nodes.some((node) => node.type === 'folder' && node.parentId === null)).toBe(
       true
     );
-    expect(options.nodes.some((node) => node.type === 'file' && node.parentId !== null)).toBe(
-      true
-    );
+    expect(options.nodes.some((node) => node.type === 'file' && node.parentId !== null)).toBe(true);
   });
 });

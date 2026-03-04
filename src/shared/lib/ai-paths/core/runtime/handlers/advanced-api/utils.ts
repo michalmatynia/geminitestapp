@@ -1,21 +1,7 @@
- 
- 
- 
-
-import { 
-  RuntimePortValues, 
-  AdvancedApiConfig 
-} from '@/shared/contracts/ai-paths';
-import { 
-  NodeHandlerContext 
-} from '@/shared/contracts/ai-paths-runtime';
-import { 
-  getValueAtMappingPath, 
-  safeStringify 
-} from '../../utils';
-import { 
-  JsonRecord, 
-} from './config';
+import { RuntimePortValues, AdvancedApiConfig } from '@/shared/contracts/ai-paths';
+import { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
+import { getValueAtMappingPath, safeStringify } from '../../utils';
+import { JsonRecord } from './config';
 
 export const toObject = (value: unknown): JsonRecord => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};

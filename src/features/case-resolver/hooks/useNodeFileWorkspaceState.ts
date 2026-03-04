@@ -60,9 +60,9 @@ export function useNodeFileWorkspaceState({
   const { addNode, setNodes, updateNode, setEdges } = useGraphActions();
   const { selectedNodeId, selectedEdgeId, configOpen } = useSelectionState();
   const { selectNode, setConfigOpen } = useSelectionActions();
-  const [newNodeType, setNewNodeType] = useState<
-    'prompt' | 'model' | 'database' | 'viewer'
-  >('prompt');
+  const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'database' | 'viewer'>(
+    'prompt'
+  );
   const [isSidePanelVisible, setIsSidePanelVisible] = useState(false);
   const [isNodeInspectorOpen, setIsNodeInspectorOpen] = useState(false);
   const [isLinkedPreviewOpen, setIsLinkedPreviewOpen] = useState(false);

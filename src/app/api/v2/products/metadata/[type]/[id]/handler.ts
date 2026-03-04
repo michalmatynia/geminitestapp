@@ -78,12 +78,12 @@ const mapPriceGroupResponse = <
     currency?: { code: string } | null;
   },
 >(
-    group: T
-  ): T & { currencyCode: string; groupType: 'standard' | 'dependent' } => ({
-    ...group,
-    currencyCode: group.currency?.code ?? group.currencyId,
-    groupType: resolveGroupType(group.type, group.sourceGroupId),
-  });
+  group: T
+): T & { currencyCode: string; groupType: 'standard' | 'dependent' } => ({
+  ...group,
+  currencyCode: group.currency?.code ?? group.currencyId,
+  groupType: resolveGroupType(group.type, group.sourceGroupId),
+});
 
 const mapMongoPriceGroupResponse = (
   group: MongoPriceGroupDoc,
@@ -139,9 +139,7 @@ const mapMongoPriceGroupResponse = (
   };
 };
 
-const resolveMongoPriceGroup = async (
-  idOrGroupId: string
-): Promise<MongoPriceGroupDoc | null> => {
+const resolveMongoPriceGroup = async (idOrGroupId: string): Promise<MongoPriceGroupDoc | null> => {
   const mongo = await getMongoDb();
   return (await mongo.collection<MongoPriceGroupDoc>('price_groups').findOne({
     $or: [{ id: idOrGroupId }, { groupId: idOrGroupId }],
@@ -299,7 +297,8 @@ export async function PUT_products_metadata_id_handler(
       const name = readString(data, 'name');
       if (name) update['name'] = name;
       if ('description' in data) {
-        update['description'] = data['description'] === null ? null : readString(data, 'description');
+        update['description'] =
+          data['description'] === null ? null : readString(data, 'description');
       }
       const isDefault = readBoolean(data, 'isDefault');
       if (isDefault !== null) update['isDefault'] = isDefault;
@@ -320,10 +319,9 @@ export async function PUT_products_metadata_id_handler(
       const addToPrice = readNumber(data, 'addToPrice');
       if (addToPrice !== null) update['addToPrice'] = Math.trunc(addToPrice);
 
-      await mongo.collection<MongoPriceGroupDoc>('price_groups').updateOne(
-        { $or: [{ id: resolvedId }, { groupId: resolvedId }] },
-        { $set: update }
-      );
+      await mongo
+        .collection<MongoPriceGroupDoc>('price_groups')
+        .updateOne({ $or: [{ id: resolvedId }, { groupId: resolvedId }] }, { $set: update });
 
       const updated = await resolveMongoPriceGroup(resolvedId);
       if (!updated) throw notFoundError(`Price group not found after update: ${resolvedId}`);
@@ -409,21 +407,24 @@ export async function DELETE_products_metadata_id_handler(
       await mongo.collection<MongoPriceGroupDoc>('price_groups').deleteOne({
         $or: [{ id: resolvedId }, { groupId: resolvedId }],
       });
-      await mongo.collection<MongoCatalogDoc>('catalogs').updateMany(
-        { priceGroupIds: resolvedId },
-        {
+      await mongo
+        .collection<MongoCatalogDoc>('catalogs')
+        .updateMany({ priceGroupIds: resolvedId }, {
           $pull: { priceGroupIds: resolvedId },
           $set: { updatedAt: now },
-        } as unknown as UpdateFilter<MongoCatalogDoc>
-      );
-      await mongo.collection('catalogs').updateMany(
-        { defaultPriceGroupId: resolvedId },
-        { $set: { defaultPriceGroupId: null, updatedAt: now } }
-      );
-      await mongo.collection('products').updateMany(
-        { defaultPriceGroupId: resolvedId },
-        { $set: { defaultPriceGroupId: null, updatedAt: now } }
-      );
+        } as unknown as UpdateFilter<MongoCatalogDoc>);
+      await mongo
+        .collection('catalogs')
+        .updateMany(
+          { defaultPriceGroupId: resolvedId },
+          { $set: { defaultPriceGroupId: null, updatedAt: now } }
+        );
+      await mongo
+        .collection('products')
+        .updateMany(
+          { defaultPriceGroupId: resolvedId },
+          { $set: { defaultPriceGroupId: null, updatedAt: now } }
+        );
       return new Response(null, { status: 204 });
     }
 

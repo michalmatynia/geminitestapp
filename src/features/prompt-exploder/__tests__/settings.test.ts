@@ -15,14 +15,10 @@ describe('parsePromptExploderSettingsResult', () => {
   });
 
   it('accepts canonical settings payloads', () => {
-    const parsed = parsePromptExploderSettingsResult(
-      JSON.stringify(defaultPromptExploderSettings)
-    );
+    const parsed = parsePromptExploderSettingsResult(JSON.stringify(defaultPromptExploderSettings));
 
     expect(parsed.error).toBeNull();
-    expect(parsed.settings.ai.operationMode).toBe(
-      defaultPromptExploderSettings.ai.operationMode
-    );
+    expect(parsed.settings.ai.operationMode).toBe(defaultPromptExploderSettings.ai.operationMode);
   });
 
   it('rejects deprecated AI snapshot keys in non-empty payloads', () => {
@@ -83,9 +79,7 @@ describe('parsePromptExploderSettings', () => {
   });
 
   it('throws for invalid non-empty payloads', () => {
-    expect(() => parsePromptExploderSettings('{"broken"')).toThrowError(
-      /not valid json/i
-    );
+    expect(() => parsePromptExploderSettings('{"broken"')).toThrowError(/not valid json/i);
   });
 
   it('throws for deprecated AI snapshot keys in non-empty payloads', () => {

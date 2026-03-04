@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import {
-  listImageStudioSequenceRuns,
-} from '@/features/ai/image-studio/server/sequence-run-repository';
+import { listImageStudioSequenceRuns } from '@/features/ai/image-studio/server/sequence-run-repository';
 import { type ImageStudioSequenceRunStatus } from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 

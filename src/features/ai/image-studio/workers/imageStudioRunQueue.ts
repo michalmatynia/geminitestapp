@@ -1,9 +1,7 @@
 import 'server-only';
 
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import {
-  executeImageStudioRun,
-} from '@/features/ai/image-studio/server/run-executor';
+import { executeImageStudioRun } from '@/features/ai/image-studio/server/run-executor';
 import {
   type ImageStudioRunExecutionMeta,
   type ImageStudioRunDispatchMode,
@@ -179,12 +177,12 @@ const collectGenerationSourceContext = async (
     (baseSourceId && sourceSlotIds.includes(baseSourceId) ? baseSourceId : null) ??
     (baseAssetPath
       ? (sourceSlotIds.find((slotId) => {
-        const slot = sourceSlotsById.get(slotId);
-        if (!slot) return false;
-        const slotPath =
+          const slot = sourceSlotsById.get(slotId);
+          if (!slot) return false;
+          const slotPath =
             normalizeAssetPath(slot.imageFile?.filepath) ?? normalizeAssetPath(slot.imageUrl);
-        return slotPath === baseAssetPath;
-      }) ?? null)
+          return slotPath === baseAssetPath;
+        }) ?? null)
       : null) ??
     sourceSlotIds[0] ??
     null;
@@ -247,12 +245,12 @@ const createRunOutputSlotMetadata = (params: {
   const relationType = isCenterOperation ? 'center:output' : 'generation:output';
   const sourceReferenceIds = params.sourceContext.primarySourceSlotId
     ? params.sourceContext.sourceSlotIds.filter(
-      (id) => id !== params.sourceContext.primarySourceSlotId
-    )
+        (id) => id !== params.sourceContext.primarySourceSlotId
+      )
     : params.sourceContext.sourceSlotIds;
-  const centerMeta = (isCenterOperation && isObjectRecord(params.executionMeta)
-    ? params.executionMeta
-    : null) as ImageStudioCenterExecutionMeta | null;
+  const centerMeta = (
+    isCenterOperation && isObjectRecord(params.executionMeta) ? params.executionMeta : null
+  ) as ImageStudioCenterExecutionMeta | null;
   return {
     role: 'generation',
     ...(params.sourceContext.primarySourceSlotId
@@ -283,25 +281,25 @@ const createRunOutputSlotMetadata = (params: {
       : {}),
     ...(!isCenterOperation && params.generationCost
       ? {
-        generationCosts: {
-          ...params.generationCost,
-          actualCostUsd: params.generationCost.totalCostUsdPerOutput,
-          tokenCostUsd: params.generationCost.promptCostUsdPerOutput,
-        },
-      }
+          generationCosts: {
+            ...params.generationCost,
+            actualCostUsd: params.generationCost.totalCostUsdPerOutput,
+            tokenCostUsd: params.generationCost.promptCostUsdPerOutput,
+          },
+        }
       : {}),
     ...(isCenterOperation
       ? {
-        center: {
-          mode: centerMeta?.operation === 'center_object' ? centerMeta.mode : 'server_alpha_bbox',
-          sourceObjectBounds:
+          center: {
+            mode: centerMeta?.operation === 'center_object' ? centerMeta.mode : 'server_alpha_bbox',
+            sourceObjectBounds:
               centerMeta?.operation === 'center_object' ? centerMeta.sourceObjectBounds : null,
-          targetObjectBounds:
+            targetObjectBounds:
               centerMeta?.operation === 'center_object' ? centerMeta.targetObjectBounds : null,
-          layout: centerMeta?.operation === 'center_object' ? (centerMeta.layout ?? null) : null,
-          timestamp: params.finishedAt,
-        },
-      }
+            layout: centerMeta?.operation === 'center_object' ? (centerMeta.layout ?? null) : null,
+            timestamp: params.finishedAt,
+          },
+        }
       : {}),
     generationParams: {
       prompt: params.run.request.prompt,
@@ -328,10 +326,10 @@ const materializeRunOutputSlots = async (params: {
   const outputCount = params.outputs.length;
   const generationCost = model
     ? estimateGenerationCost({
-      prompt: params.run.request.prompt ?? '',
-      model,
-      outputCount,
-    })
+        prompt: params.run.request.prompt ?? '',
+        model,
+        outputCount,
+      })
     : null;
   const createdSlotIds: string[] = [];
 

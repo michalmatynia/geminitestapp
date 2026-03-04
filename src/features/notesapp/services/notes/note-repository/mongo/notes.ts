@@ -1,23 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
- 
- 
- 
+
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { randomUUID } from 'crypto';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { 
-  NoteDocument, 
-  TagDocument, 
-  CategoryDocument, 
-  NoteFileDocument, 
-  NoteTagEmbedded, 
-  NoteCategoryEmbedded, 
-  NoteRelationFromEmbedded, 
-  NoteRelationToEmbedded 
+import {
+  NoteDocument,
+  TagDocument,
+  CategoryDocument,
+  NoteFileDocument,
+  NoteTagEmbedded,
+  NoteCategoryEmbedded,
+  NoteRelationFromEmbedded,
+  NoteRelationToEmbedded,
 } from '../../types/mongo-note-types';
-import { 
+import {
   NoteRecord,
   NoteWithRelations,
   NoteFilters,
@@ -25,14 +23,14 @@ import {
   NoteUpdateInput,
   NoteFileRecord,
 } from '@/shared/contracts/notes';
-import { 
-  toNoteResponse, 
-  toNoteFileResponse, 
-  buildSearchFilter, 
-  buildIncomingRelationsMap, 
-  toIsoCreatedAt, 
-  toTagResponse, 
-  toCategoryResponse 
+import {
+  toNoteResponse,
+  toNoteFileResponse,
+  buildSearchFilter,
+  buildIncomingRelationsMap,
+  toIsoCreatedAt,
+  toTagResponse,
+  toCategoryResponse,
 } from '../mongo-note-repository-utils';
 import { Filter, UpdateFilter, WithId } from 'mongodb';
 import { notFoundError } from '@/shared/errors/app-error';
@@ -43,10 +41,12 @@ const categoryCollectionName = 'categories';
 const noteFileCollectionName = 'noteFiles';
 
 export const mongoNoteCrudImpl = {
-  async getAll(filters: NoteFilters = {}, getOrCreateDefaultNotebook: () => Promise<any>): Promise<NoteWithRelations[]> {
+  async getAll(
+    filters: NoteFilters = {},
+    getOrCreateDefaultNotebook: () => Promise<any>
+  ): Promise<NoteWithRelations[]> {
     const db = await getMongoDb();
-    const resolvedNotebookId =
-      filters.notebookId ?? (await getOrCreateDefaultNotebook()).id;
+    const resolvedNotebookId = filters.notebookId ?? (await getOrCreateDefaultNotebook()).id;
     const effectiveFilters = { ...filters, notebookId: resolvedNotebookId };
     const collection = db.collection<NoteDocument>(noteCollectionName);
     const searchFilter = buildSearchFilter(effectiveFilters);
@@ -57,9 +57,9 @@ export const mongoNoteCrudImpl = {
     const noteFileCollection = db.collection<NoteFileDocument>(noteFileCollectionName);
     const noteFiles = noteIds.length
       ? await noteFileCollection
-        .find({ noteId: { $in: noteIds } } as Filter<NoteFileDocument>)
-        .sort({ slotIndex: 1 })
-        .toArray()
+          .find({ noteId: { $in: noteIds } } as Filter<NoteFileDocument>)
+          .sort({ slotIndex: 1 })
+          .toArray()
       : [];
     const filesByNoteId = new Map<string, NoteFileRecord[]>();
     noteFiles.forEach((fileDoc: WithId<NoteFileDocument>): void => {
@@ -70,10 +70,10 @@ export const mongoNoteCrudImpl = {
     });
     const incomingDocs = noteIds.length
       ? await collection
-        .find({
-          'relationsFrom.targetNoteId': { $in: noteIds },
-        } as Filter<NoteDocument>)
-        .toArray()
+          .find({
+            'relationsFrom.targetNoteId': { $in: noteIds },
+          } as Filter<NoteDocument>)
+          .toArray()
       : [];
     const incomingMap = buildIncomingRelationsMap(incomingDocs, noteIdSet);
 
@@ -191,14 +191,16 @@ export const mongoNoteCrudImpl = {
     return result;
   },
 
-  async create(data: NoteCreateInput, getOrCreateDefaultNotebook: () => Promise<any>): Promise<NoteWithRelations> {
+  async create(
+    data: NoteCreateInput,
+    getOrCreateDefaultNotebook: () => Promise<any>
+  ): Promise<NoteWithRelations> {
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
 
     const id = randomUUID();
     const now = new Date();
-    const resolvedNotebookId =
-      data.notebookId ?? (await getOrCreateDefaultNotebook()).id;
+    const resolvedNotebookId = data.notebookId ?? (await getOrCreateDefaultNotebook()).id;
 
     // Fetch tags if provided
     let tags: NoteTagEmbedded[] = [];
@@ -270,15 +272,18 @@ export const mongoNoteCrudImpl = {
     return (await mongoNoteCrudImpl.getById(id))!;
   },
 
-  async update(id: string, data: NoteUpdateInput, getOrCreateDefaultNotebook: () => Promise<any>): Promise<NoteWithRelations | null> {
+  async update(
+    id: string,
+    data: NoteUpdateInput,
+    getOrCreateDefaultNotebook: () => Promise<any>
+  ): Promise<NoteWithRelations | null> {
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
     const currentDoc = await collection.findOne({
       $or: [{ id }, { _id: id }],
     } as Filter<NoteDocument>);
     if (!currentDoc) throw notFoundError('Note not found');
-    const fallbackNotebookId =
-      currentDoc.notebookId ?? (await getOrCreateDefaultNotebook()).id;
+    const fallbackNotebookId = currentDoc.notebookId ?? (await getOrCreateDefaultNotebook()).id;
 
     const setFields: Partial<NoteDocument> = {
       updatedAt: new Date().toISOString(),

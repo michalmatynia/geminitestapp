@@ -3,9 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-import type {
-  CaseResolverCaptureProposalState,
-} from '@/features/case-resolver-capture/proposals';
+import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture/proposals';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import { useCaptureProposalState } from './capture-actions/useCaptureProposalState';

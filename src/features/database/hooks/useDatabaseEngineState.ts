@@ -123,15 +123,12 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     const errors: string[] = [];
     const loggedErrors: Array<{ label: string; error: unknown }> = [];
 
-    const parseSetting = <T,>(
-      label: string,
-      parser: () => T,
-      fallback: T
-    ): T => {
+    const parseSetting = <T>(label: string, parser: () => T, fallback: T): T => {
       try {
         return parser();
       } catch (error) {
-        const message = error instanceof Error ? error.message : `Invalid ${label} settings payload.`;
+        const message =
+          error instanceof Error ? error.message : `Invalid ${label} settings payload.`;
         errors.push(message);
         loggedErrors.push({ label, error });
         return fallback;
@@ -255,7 +252,10 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       await updateSettingsBulk.mutateAsync([
         { key: DATABASE_ENGINE_POLICY_KEY, value: JSON.stringify(policy) },
         { key: DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY, value: JSON.stringify(serviceRouteMap) },
-        { key: DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY, value: JSON.stringify(collectionRouteMap) },
+        {
+          key: DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
+          value: JSON.stringify(collectionRouteMap),
+        },
         { key: DATABASE_ENGINE_BACKUP_SCHEDULE_KEY, value: JSON.stringify(backupSchedule) },
         { key: DATABASE_ENGINE_OPERATION_CONTROLS_KEY, value: JSON.stringify(operationControls) },
       ]);

@@ -6,9 +6,7 @@ import {
   type ImageStudioUpscaleErrorCode,
   type ImageStudioUpscaleRequest,
 } from '@/features/ai/image-studio/contracts/upscale';
-import {
-  resolveUpscaleStrategyFromRequest,
-} from '@/features/ai/image-studio/server/upscale-utils';
+import { resolveUpscaleStrategyFromRequest } from '@/features/ai/image-studio/server/upscale-utils';
 import { badRequestError } from '@/shared/errors/app-error';
 import { ResolvedUpscaleRequest, UploadedClientUpscaleImage } from './types';
 
@@ -38,7 +36,9 @@ export const isFileLike = (value: FormDataEntryValue | null): value is File => {
   return typeof candidate.size === 'number' && typeof candidate.arrayBuffer === 'function';
 };
 
-export const resolveUpscaleRequest = (payload: ImageStudioUpscaleRequest): ResolvedUpscaleRequest => {
+export const resolveUpscaleRequest = (
+  payload: ImageStudioUpscaleRequest
+): ResolvedUpscaleRequest => {
   const strategy = resolveUpscaleStrategyFromRequest({
     strategy: payload.strategy,
     targetWidth: payload.targetWidth,

@@ -71,10 +71,7 @@ type CreateUploadHandlersDeps = {
   temporaryObjectUpload: TemporaryObjectUploadDraft | null;
   toast: Toast;
   toSlotName: (filename: string, index: number) => string;
-  updateSlotMutation: AsyncMutation<
-    { id: string; data: Partial<ImageStudioSlotRecord> },
-    unknown
-  >;
+  updateSlotMutation: AsyncMutation<{ id: string; data: Partial<ImageStudioSlotRecord> }, unknown>;
   uploadMutation: AsyncMutation<{ files: File[]; folder: string }, UploadMutationResult>;
 };
 
@@ -84,9 +81,7 @@ type UploadHandlers = {
   handleLocalUpload: (files: File[]) => Promise<void>;
 };
 
-const toAssetDraft = (
-  primary: UploadAssetRecord
-): TemporaryObjectUploadDraft => ({
+const toAssetDraft = (primary: UploadAssetRecord): TemporaryObjectUploadDraft => ({
   id: primary.id,
   filepath: primary.filepath,
   filename: primary.filename ?? '',
@@ -108,7 +103,7 @@ const getUploadFailureMessage = (result: UploadMutationResult, fallback: string)
   const warning = Array.isArray(result.warnings) ? result.warnings[0] : null;
   const failure =
     Array.isArray(result.failures) && result.failures.length > 0
-      ? result.failures[0]?.error ?? null
+      ? (result.failures[0]?.error ?? null)
       : null;
   const message = failure ?? warning;
   return typeof message === 'string' && message.trim().length > 0 ? message : fallback;

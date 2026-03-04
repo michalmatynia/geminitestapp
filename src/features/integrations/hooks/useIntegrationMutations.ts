@@ -20,7 +20,7 @@ import { invalidateIntegrationConnections } from './integrationCache';
 export function useCreateIntegration(): MutationResult<
   Integration,
   { name: string; slug: string }
-  > {
+> {
   const mutationKey = QUERY_KEYS.integrations.all;
   return createMutationV2<Integration, { name: string; slug: string }>({
     mutationFn: (variables) => api.post<Integration>('/api/integrations', variables),
@@ -148,28 +148,27 @@ export function useTestConnection() {
 
 export function useDisconnectAllegro() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createMutationV2<
-    Record<string, unknown>,
-    { integrationId: string; connectionId: string }
-  >({
-    mutationFn: ({ integrationId, connectionId }): Promise<Record<string, unknown>> =>
-      api.post<Record<string, unknown>>(
-        `/api/integrations/connections/${connectionId}/allegro/disconnect`,
-        { integrationId, connectionId }
-      ),
-    mutationKey,
-    meta: {
-      source: 'integrations.hooks.useDisconnectAllegro',
-      operation: 'action',
-      resource: 'integrations.connections.allegro.disconnect',
-      domain: 'integrations',
+  return createMutationV2<Record<string, unknown>, { integrationId: string; connectionId: string }>(
+    {
+      mutationFn: ({ integrationId, connectionId }): Promise<Record<string, unknown>> =>
+        api.post<Record<string, unknown>>(
+          `/api/integrations/connections/${connectionId}/allegro/disconnect`,
+          { integrationId, connectionId }
+        ),
       mutationKey,
-      tags: ['integrations', 'connections', 'allegro', 'disconnect'],
-    },
-    invalidate: (queryClient, _data, variables) => {
-      void invalidateIntegrationConnections(queryClient, variables.integrationId);
-    },
-  });
+      meta: {
+        source: 'integrations.hooks.useDisconnectAllegro',
+        operation: 'action',
+        resource: 'integrations.connections.allegro.disconnect',
+        domain: 'integrations',
+        mutationKey,
+        tags: ['integrations', 'connections', 'allegro', 'disconnect'],
+      },
+      invalidate: (queryClient, _data, variables) => {
+        void invalidateIntegrationConnections(queryClient, variables.integrationId);
+      },
+    }
+  );
 }
 
 export function useBaseApiRequest() {

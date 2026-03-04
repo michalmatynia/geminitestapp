@@ -90,8 +90,7 @@ export function SettingsTab(): React.JSX.Element {
                 {model || 'No Brain model configured'}
               </div>
               <div className='mt-1 text-[11px] text-gray-500'>
-                Managed by Brain. Update `/admin/brain?tab=routing` to change Chatbot model
-                routing.
+                Managed by Brain. Update `/admin/brain?tab=routing` to change Chatbot model routing.
               </div>
             </div>
           </FormField>

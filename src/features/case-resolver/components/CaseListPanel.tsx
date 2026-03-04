@@ -20,7 +20,13 @@ import {
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree/v2';
 import { CaseListSearchPanel } from './list/search';
-import { Button, Card, MasterTreeSettingsButton, Skeleton, StandardDataTablePanel } from '@/shared/ui';
+import {
+  Button,
+  Card,
+  MasterTreeSettingsButton,
+  Skeleton,
+  StandardDataTablePanel,
+} from '@/shared/ui';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
@@ -91,16 +97,18 @@ const CASE_LIST_LOADING_SKELETON_ROWS = 8;
 const CaseListLoadingSkeleton = memo(function CaseListLoadingSkeleton(): React.JSX.Element {
   return (
     <div className='space-y-2 py-2'>
-      {Array.from({ length: CASE_LIST_LOADING_SKELETON_ROWS }).map((_, index): React.JSX.Element => (
-        <div
-          key={`case-list-loading-row-${index}`}
-          className='flex items-center gap-3 rounded-md border border-border/50 bg-card/30 px-3 py-2'
-        >
-          <Skeleton className='size-4 rounded-sm' />
-          <Skeleton className='h-4 flex-1 max-w-[420px]' />
-          <Skeleton className='h-4 w-24' />
-        </div>
-      ))}
+      {Array.from({ length: CASE_LIST_LOADING_SKELETON_ROWS }).map(
+        (_, index): React.JSX.Element => (
+          <div
+            key={`case-list-loading-row-${index}`}
+            className='flex items-center gap-3 rounded-md border border-border/50 bg-card/30 px-3 py-2'
+          >
+            <Skeleton className='size-4 rounded-sm' />
+            <Skeleton className='h-4 flex-1 max-w-[420px]' />
+            <Skeleton className='h-4 w-24' />
+          </div>
+        )
+      )}
     </div>
   );
 });
@@ -569,12 +577,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
         isHeldCaseAncestorOf={isHeldCaseAncestorOf}
       />
     ),
-    [
-      heldCaseId,
-      heldCaseFile,
-      isHierarchyLocked,
-      isHeldCaseAncestorOf,
-    ]
+    [heldCaseId, heldCaseFile, isHierarchyLocked, isHeldCaseAncestorOf]
   );
 
   const caseListNodeRuntimeValue = useMemo(

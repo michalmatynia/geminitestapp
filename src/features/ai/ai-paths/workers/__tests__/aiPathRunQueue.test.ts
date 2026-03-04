@@ -90,9 +90,11 @@ describe('aiPathRunQueue status', () => {
       lastPollTime: 1709337600000,
       timeSinceLastPoll: 500,
     });
-    (globalThis as typeof globalThis & {
-      __aiPathRunQueueState__?: { workerStarted: boolean; recoveryScheduled: boolean };
-    }).__aiPathRunQueueState__ = {
+    (
+      globalThis as typeof globalThis & {
+        __aiPathRunQueueState__?: { workerStarted: boolean; recoveryScheduled: boolean };
+      }
+    ).__aiPathRunQueueState__ = {
       workerStarted: true,
       recoveryScheduled: false,
     };

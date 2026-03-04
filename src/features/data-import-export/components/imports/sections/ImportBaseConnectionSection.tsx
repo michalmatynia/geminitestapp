@@ -222,9 +222,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
                 { value: 'download', label: 'Download product images' },
               ]}
             />
-            <Hint className='mt-2'>
-              Download stores images locally in your uploads folder.
-            </Hint>
+            <Hint className='mt-2'>Download stores images locally in your uploads folder.</Hint>
           </FormField>
 
           <FormField label='Import Strategy'>
@@ -259,9 +257,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
               className='border-none bg-transparent hover:bg-transparent p-0'
               labelClassName='text-[11px] font-medium'
             />
-            <Hint className='mt-2'>
-              Existing SKUs will be skipped if unchecked.
-            </Hint>
+            <Hint className='mt-2'>Existing SKUs will be skipped if unchecked.</Hint>
           </FormField>
         </div>
 

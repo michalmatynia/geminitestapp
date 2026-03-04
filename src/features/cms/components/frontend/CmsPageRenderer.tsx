@@ -6,7 +6,12 @@ import {
 import { buildHierarchyIndexes } from '@/features/cms/hooks/page-builder/section-hierarchy';
 import type { GsapAnimationConfig } from '@/features/gsap';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
-import type { PageComponent, BlockInstance, PageZone, SectionInstance } from '@/shared/contracts/cms';
+import type {
+  PageComponent,
+  BlockInstance,
+  PageZone,
+  SectionInstance,
+} from '@/shared/contracts/cms';
 import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
 
 import { CmsPageProvider } from './CmsPageContext';
@@ -64,26 +69,25 @@ export function CmsPageRenderer({
 }: CmsPageRendererProps): React.ReactNode {
   const hoverVars = getHoverEffectVars(hoverEffect, hoverScale);
 
-  const sections: SectionInstance[] = components
-    .map((comp: PageComponent, idx: number) => {
-      const content = (comp.content ?? {}) as SectionContent;
-      const sectionId =
-        typeof content.sectionId === 'string' && content.sectionId.trim().length > 0
-          ? content.sectionId
-          : `section-${idx}`;
-      const parentSectionId =
-        typeof content.parentSectionId === 'string' && content.parentSectionId.trim().length > 0
-          ? content.parentSectionId
-          : null;
-      return {
-        id: sectionId,
-        type: comp.type,
-        zone: normalizePageZone(content.zone),
-        parentSectionId,
-        settings: content.settings ?? {},
-        blocks: content.blocks ?? [],
-      };
-    });
+  const sections: SectionInstance[] = components.map((comp: PageComponent, idx: number) => {
+    const content = (comp.content ?? {}) as SectionContent;
+    const sectionId =
+      typeof content.sectionId === 'string' && content.sectionId.trim().length > 0
+        ? content.sectionId
+        : `section-${idx}`;
+    const parentSectionId =
+      typeof content.parentSectionId === 'string' && content.parentSectionId.trim().length > 0
+        ? content.parentSectionId
+        : null;
+    return {
+      id: sectionId,
+      type: comp.type,
+      zone: normalizePageZone(content.zone),
+      parentSectionId,
+      settings: content.settings ?? {},
+      blocks: content.blocks ?? [],
+    };
+  });
 
   const hierarchy = buildHierarchyIndexes(sections);
   const rootSectionIdsByZone: Record<PageZone, string[]> = {
@@ -113,7 +117,9 @@ export function CmsPageRenderer({
                   <div key={section.id}>
                     <GsapAnimationWrapper
                       config={
-                        section.settings['gsapAnimation'] as Partial<GsapAnimationConfig> | undefined
+                        section.settings['gsapAnimation'] as
+                          | Partial<GsapAnimationConfig>
+                          | undefined
                       }
                     >
                       <CssAnimationWrapper
@@ -130,8 +136,16 @@ export function CmsPageRenderer({
                       </CssAnimationWrapper>
                     </GsapAnimationWrapper>
                     {childIds.length > 0 ? (
-                      <div className={depth === 1 ? 'ml-4 border-l border-white/10 pl-3' : 'ml-5 border-l border-white/10 pl-3'}>
-                        {childIds.map((childId: string) => renderSectionSubtree(childId, depth + 1))}
+                      <div
+                        className={
+                          depth === 1
+                            ? 'ml-4 border-l border-white/10 pl-3'
+                            : 'ml-5 border-l border-white/10 pl-3'
+                        }
+                      >
+                        {childIds.map((childId: string) =>
+                          renderSectionSubtree(childId, depth + 1)
+                        )}
                       </div>
                     ) : null}
                   </div>

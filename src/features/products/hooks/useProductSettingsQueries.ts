@@ -266,7 +266,7 @@ export function useSaveCatalogMutation(): SaveMutation<Catalog> {
 export function useSaveCategoryMutation(): SaveMutation<
   ProductCategory,
   { id: string | undefined; data: Partial<ProductCategory> }
-  > {
+> {
   const mutationKey = productSettingsKeys.all;
   return createMutationV2({
     mutationFn: ({ id, data }: { id: string | undefined; data: Partial<ProductCategory> }) =>
@@ -290,7 +290,7 @@ export function useSaveCategoryMutation(): SaveMutation<
 export function useDeleteCategoryMutation(): UpdateMutation<
   void,
   { id: string; catalogId: string | null }
-  > {
+> {
   const mutationKey = productSettingsKeys.all;
   return createDeleteMutationV2({
     mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteCategory(id),
@@ -312,7 +312,7 @@ export function useDeleteCategoryMutation(): UpdateMutation<
 export function useReorderCategoryMutation(): UpdateMutation<
   ProductCategory,
   ReorderCategoryPayload
-  > {
+> {
   const mutationKey = productSettingsKeys.all;
   return createUpdateMutationV2({
     mutationFn: (payload: ReorderCategoryPayload) => api.reorderCategory(payload),
@@ -335,7 +335,7 @@ export function useReorderCategoryMutation(): UpdateMutation<
 export function useSaveTagMutation(): SaveMutation<
   ProductTag,
   { id: string | undefined; data: Partial<ProductTag> }
-  > {
+> {
   const mutationKey = productSettingsKeys.all;
   return createMutationV2({
     mutationFn: ({ id, data }: { id: string | undefined; data: Partial<ProductTag> }) =>
@@ -359,7 +359,7 @@ export function useSaveTagMutation(): SaveMutation<
 export function useDeleteTagMutation(): UpdateMutation<
   void,
   { id: string; catalogId: string | null }
-  > {
+> {
   const mutationKey = productSettingsKeys.all;
   return createDeleteMutationV2({
     mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteTag(id),
@@ -381,7 +381,7 @@ export function useDeleteTagMutation(): UpdateMutation<
 export function useSaveParameterMutation(): SaveMutation<
   ProductParameter,
   { id: string | undefined; data: Partial<ProductParameter> }
-  > {
+> {
   const mutationKey = productSettingsKeys.all;
   return createMutationV2({
     mutationFn: ({ id, data }: { id: string | undefined; data: Partial<ProductParameter> }) =>
@@ -405,7 +405,7 @@ export function useSaveParameterMutation(): SaveMutation<
 export function useDeleteParameterMutation(): UpdateMutation<
   void,
   { id: string; catalogId: string | null }
-  > {
+> {
   const queryKey = productSettingsKeys.all;
   return createDeleteMutationV2({
     mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteParameter(id),
@@ -427,7 +427,7 @@ export function useDeleteParameterMutation(): UpdateMutation<
 export function useUpdateValidatorSettingsMutation(): UpdateMutation<
   ProductValidatorSettings,
   Partial<ProductValidatorSettings>
-  > {
+> {
   const mutationKey = productSettingsKeys.validatorSettings();
   return createUpdateMutationV2({
     mutationFn: api.updateValidatorSettings,
@@ -449,7 +449,7 @@ export function useUpdateValidatorSettingsMutation(): UpdateMutation<
 export function useCreateValidationPatternMutation(): CreateMutation<
   ProductValidationPattern,
   CreateValidationPatternPayload
-  > {
+> {
   const mutationKey = productSettingsKeys.validatorPatterns();
   return createCreateMutationV2({
     mutationFn: api.createValidationPattern,
@@ -471,7 +471,7 @@ export function useCreateValidationPatternMutation(): CreateMutation<
 export function useUpdateValidationPatternMutation(): UpdateMutation<
   ProductValidationPattern,
   { id: string; data: UpdateValidationPatternPayload }
-  > {
+> {
   const mutationKey = productSettingsKeys.validatorPatterns();
   return createUpdateMutationV2({
     mutationFn: ({ id, data }: { id: string; data: UpdateValidationPatternPayload }) =>
@@ -513,7 +513,7 @@ export function useDeleteValidationPatternMutation(): DeleteMutation {
 export function useReorderValidationPatternsMutation(): UpdateMutation<
   { updated: ProductValidationPattern[] },
   { updates: ReorderValidationPatternUpdatePayload[] }
-  > {
+> {
   const mutationKey = productSettingsKeys.validatorPatterns();
   return createUpdateMutationV2({
     mutationFn: (payload: { updates: ReorderValidationPatternUpdatePayload[] }) =>
@@ -536,11 +536,10 @@ export function useReorderValidationPatternsMutation(): UpdateMutation<
 export function useImportValidationPatternsMutation(): UpdateMutation<
   ImportValidationPatternsResult,
   ImportValidationPatternsPayload
-  > {
+> {
   const mutationKey = productSettingsKeys.validatorPatterns();
   return createUpdateMutationV2({
-    mutationFn: (payload: ImportValidationPatternsPayload) =>
-      api.importValidationPatterns(payload),
+    mutationFn: (payload: ImportValidationPatternsPayload) => api.importValidationPatterns(payload),
     mutationKey,
     meta: {
       source: 'products.hooks.useImportValidationPatternsMutation',

@@ -129,12 +129,9 @@ export function useParallelQueries<T extends Record<string, unknown>>(
       data,
       isLoading: queryResults.some((q) => q.isLoading),
       isError: queryResults.some((q) => q.isError),
-      errors: queryResults
-        .filter((q) => q.isError)
-        .map((q) => q.error as Error),
+      errors: queryResults.filter((q) => q.isError).map((q) => q.error as Error),
       isSuccess: queryResults.every((q) => q.isSuccess),
-      refetch: async () =>
-        await Promise.all(queryResults.map((q) => q.refetch())),
+      refetch: async () => await Promise.all(queryResults.map((q) => q.refetch())),
     };
   }, [queryResults, keys]);
 

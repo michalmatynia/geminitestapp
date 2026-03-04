@@ -1,14 +1,8 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
-import {
-  validatorScopeSchema,
-  validatorPatternListSchema,
-} from './validator';
-import {
-  type PromptValidationRule,
-  type PromptEngineSettings,
-} from './prompt-engine';
+import { validatorScopeSchema, validatorPatternListSchema } from './validator';
+import { type PromptValidationRule, type PromptEngineSettings } from './prompt-engine';
 
 /**
  * Prompt Exploder Basic DTOs
@@ -371,10 +365,7 @@ export type PromptExploderBenchmarkSuggestion = z.infer<
  * Prompt Exploder Runtime & Settings DTOs
  */
 
-import type {
-  ParamSpec,
-  ParamSpecKind,
-} from './prompt-engine';
+import type { ParamSpec, ParamSpecKind } from './prompt-engine';
 
 export type PromptExploderParamUiRecommendation = {
   baseKind: ParamSpecKind;
@@ -404,11 +395,7 @@ export type PromptExploderParamEntriesState = {
   paramDescriptions: Record<string, string>;
 };
 
-export const promptExploderOperationModeSchema = z.enum([
-  'rules_only',
-  'hybrid',
-  'ai_assisted',
-]);
+export const promptExploderOperationModeSchema = z.enum(['rules_only', 'hybrid', 'ai_assisted']);
 export type PromptExploderOperationMode = z.infer<typeof promptExploderOperationModeSchema>;
 
 export const promptExploderCaseResolverCaptureModeSchema = z.enum([
@@ -505,40 +492,42 @@ export type PromptExploderCaseResolverExtractionMode = z.infer<
   typeof promptExploderCaseResolverExtractionModeSchema
 >;
 
-export const promptExploderSettingsSchema = z.object({
-  version: z.number(),
-  runtime: z
-    .object({
-      ruleProfile: promptExploderRuntimeRuleProfileSchema,
-      validationRuleStack: z.string(),
-      allowValidationStackFallback: z.boolean().optional(),
-      caseResolverCaptureMode: promptExploderCaseResolverExtractionModeSchema.optional(),
-      orchestratorEnabled: z.boolean().optional(),
-      benchmarkSuite: z.string().optional(),
-      benchmarkLowConfidenceThreshold: z.number().optional(),
-      benchmarkSuggestionLimit: z.number().optional(),
-      customBenchmarkCases: z.array(promptExploderBenchmarkCaseConfigSchema).optional(),
-    })
-    .strict(),
-  learning: z
-    .object({
-      enabled: z.boolean(),
-      similarityThreshold: z.number(),
-      templateMergeThreshold: z.number(),
-      benchmarkSuggestionUpsertTemplates: z.boolean().optional(),
-      minApprovalsForMatching: z.number(),
-      maxTemplates: z.number(),
-      autoActivateLearnedTemplates: z.boolean(),
-      templates: z.array(z.lazy(() => promptExploderLearnedTemplateSchema)),
-    })
-    .strict(),
-  ai: z
-    .object({
-      operationMode: promptExploderOperationModeSchema,
-    })
-    .strict(),
-  patternSnapshots: z.array(z.lazy(() => promptExploderPatternSnapshotSchema)).optional(),
-}).strict();
+export const promptExploderSettingsSchema = z
+  .object({
+    version: z.number(),
+    runtime: z
+      .object({
+        ruleProfile: promptExploderRuntimeRuleProfileSchema,
+        validationRuleStack: z.string(),
+        allowValidationStackFallback: z.boolean().optional(),
+        caseResolverCaptureMode: promptExploderCaseResolverExtractionModeSchema.optional(),
+        orchestratorEnabled: z.boolean().optional(),
+        benchmarkSuite: z.string().optional(),
+        benchmarkLowConfidenceThreshold: z.number().optional(),
+        benchmarkSuggestionLimit: z.number().optional(),
+        customBenchmarkCases: z.array(promptExploderBenchmarkCaseConfigSchema).optional(),
+      })
+      .strict(),
+    learning: z
+      .object({
+        enabled: z.boolean(),
+        similarityThreshold: z.number(),
+        templateMergeThreshold: z.number(),
+        benchmarkSuggestionUpsertTemplates: z.boolean().optional(),
+        minApprovalsForMatching: z.number(),
+        maxTemplates: z.number(),
+        autoActivateLearnedTemplates: z.boolean(),
+        templates: z.array(z.lazy(() => promptExploderLearnedTemplateSchema)),
+      })
+      .strict(),
+    ai: z
+      .object({
+        operationMode: promptExploderOperationModeSchema,
+      })
+      .strict(),
+    patternSnapshots: z.array(z.lazy(() => promptExploderPatternSnapshotSchema)).optional(),
+  })
+  .strict();
 
 export interface PromptExploderSettings {
   version: number;
@@ -900,7 +889,9 @@ export const promptExploderSegmentationRecordSchema = z.object({
   updatedAt: z.string(),
 });
 
-export type PromptExploderSegmentationRecord = z.infer<typeof promptExploderSegmentationRecordSchema>;
+export type PromptExploderSegmentationRecord = z.infer<
+  typeof promptExploderSegmentationRecordSchema
+>;
 
 export type PromptExploderSegmentationLibraryState = {
   records: PromptExploderSegmentationRecord[];

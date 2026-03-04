@@ -3,10 +3,7 @@ import type {
   ApplyBaseParameterImportResult,
   ExtractedBaseParameter,
 } from '@/shared/contracts/integrations';
-import type {
-  ProductParameter,
-  ProductParameterValue,
-} from '@/shared/contracts/products';
+import type { ProductParameter, ProductParameterValue } from '@/shared/contracts/products';
 
 import { extractBaseParameters } from './extractor';
 import { getCatalogParameterLinks, mergeCatalogParameterLinks } from './link-map-repository';
@@ -199,10 +196,10 @@ export const applyBaseParameterImport = async (
     input.prefetchedLinks ??
     (useLinkMap
       ? await getCatalogParameterLinks({
-        catalogId: input.catalogId,
-        connectionId: input.connectionId ?? null,
-        inventoryId: input.inventoryId ?? null,
-      })
+          catalogId: input.catalogId,
+          connectionId: input.connectionId ?? null,
+          inventoryId: input.inventoryId ?? null,
+        })
       : {});
   const linkUpdates: Record<string, string> = {};
 

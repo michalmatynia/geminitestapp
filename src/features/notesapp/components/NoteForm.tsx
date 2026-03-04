@@ -7,7 +7,15 @@ import React from 'react';
 import { MarkdownToolbarActionsProvider } from '@/features/notesapp/context/MarkdownToolbarActionsContext';
 import { useNoteFormContext, NoteFormProvider } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFormProps } from '@/shared/contracts/notes';
-import { Button, Input, FormField, Dialog, DialogContent, DialogTitle, FormSection } from '@/shared/ui';
+import {
+  Button,
+  Input,
+  FormField,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  FormSection,
+} from '@/shared/ui';
 
 import { FileAttachments } from './editor/FileAttachments';
 import { MarkdownEditor } from './editor/MarkdownEditor';

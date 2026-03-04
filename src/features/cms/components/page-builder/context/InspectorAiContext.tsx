@@ -533,12 +533,12 @@ export function InspectorAiProvider({
       const filtered =
         allowed.size > 0
           ? Object.entries(settingsPatch).reduce<Record<string, unknown>>(
-            (acc: Record<string, unknown>, [key, value]: [string, unknown]) => {
-              if (allowed.has(key)) acc[key] = value;
-              return acc;
-            },
-            {}
-          )
+              (acc: Record<string, unknown>, [key, value]: [string, unknown]) => {
+                if (allowed.has(key)) acc[key] = value;
+                return acc;
+              },
+              {}
+            )
           : settingsPatch;
       const entries = Object.entries(filtered);
       if (entries.length === 0) {

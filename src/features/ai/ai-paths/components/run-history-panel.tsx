@@ -107,9 +107,7 @@ export function RunHistoryPanel(): React.JSX.Element {
     if (!run?.meta || typeof run.meta !== 'object') {
       return { durationMs: null as number | null, iterations: null as number | null };
     }
-    const rawTrace = (run.meta)['runtimeTrace'] as
-      | RuntimeTraceMeta
-      | undefined;
+    const rawTrace = run.meta['runtimeTrace'] as RuntimeTraceMeta | undefined;
     const duration =
       typeof rawTrace?.profile?.summary?.durationMs === 'number'
         ? rawTrace.profile.summary.durationMs
@@ -123,7 +121,7 @@ export function RunHistoryPanel(): React.JSX.Element {
 
   const getRuntimeFingerprint = (run: AiPathRunRecord | null): string | null => {
     if (!run?.meta || typeof run.meta !== 'object') return null;
-    const raw = (run.meta)['runtimeFingerprint'];
+    const raw = run.meta['runtimeFingerprint'];
     if (typeof raw !== 'string') return null;
     const trimmed = raw.trim();
     return trimmed.length > 0 ? trimmed : null;
@@ -410,9 +408,7 @@ export function RunHistoryPanel(): React.JSX.Element {
           className='mt-4 border-border/70 bg-black/30 text-[11px] text-gray-200'
         >
           <div className='mb-2 flex flex-wrap items-center justify-between gap-2'>
-            <Label className='text-[10px] uppercase text-gray-500'>
-              Compare runs (A vs B)
-            </Label>
+            <Label className='text-[10px] uppercase text-gray-500'>Compare runs (A vs B)</Label>
             <div className='text-[10px] text-gray-500'>
               A: <span className='font-mono'>{primaryRun.id}</span> · B:{' '}
               <span className='font-mono'>{secondaryRun.id}</span>
@@ -436,20 +432,17 @@ export function RunHistoryPanel(): React.JSX.Element {
                       </span>
                     </div>
                     <div className='text-[10px] text-gray-400'>
-                      Created:{' '}
-                      {run.createdAt ? new Date(run.createdAt).toLocaleString() : '–'}
+                      Created: {run.createdAt ? new Date(run.createdAt).toLocaleString() : '–'}
                     </div>
                     <div className='text-[10px] text-gray-400'>
-                      Finished:{' '}
-                      {run.finishedAt ? new Date(run.finishedAt).toLocaleString() : '–'}
+                      Finished: {run.finishedAt ? new Date(run.finishedAt).toLocaleString() : '–'}
                     </div>
                     <div className='text-[10px] text-gray-400'>
                       Runtime:{' '}
                       {typeof durationMs === 'number' ? `${durationMs.toFixed(0)}ms` : 'n/a'}
                     </div>
                     <div className='text-[10px] text-gray-400'>
-                      Iterations:{' '}
-                      {typeof iterations === 'number' ? iterations : 'n/a'}
+                      Iterations: {typeof iterations === 'number' ? iterations : 'n/a'}
                     </div>
                     <div className='text-[10px] text-gray-400'>
                       Retries:{' '}
@@ -459,9 +452,7 @@ export function RunHistoryPanel(): React.JSX.Element {
                     </div>
                     <div className='text-[10px] text-gray-400'>
                       Fingerprint:{' '}
-                      <span className='font-mono'>
-                        {fingerprint ? fingerprint : 'n/a'}
-                      </span>
+                      <span className='font-mono'>{fingerprint ? fingerprint : 'n/a'}</span>
                     </div>
                   </div>
                 );

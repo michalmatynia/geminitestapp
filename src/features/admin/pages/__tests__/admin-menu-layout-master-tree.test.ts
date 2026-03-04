@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import type { AdminMenuCustomNode, AdminNavNodeEntry, AdminNavItem } from '@/shared/contracts/admin';
-import { moveMasterTreeNode, reorderMasterTreeNode } from '@/shared/utils/master-folder-tree-engine';
+import type {
+  AdminMenuCustomNode,
+  AdminNavNodeEntry,
+  AdminNavItem,
+} from '@/shared/contracts/admin';
+import {
+  moveMasterTreeNode,
+  reorderMasterTreeNode,
+} from '@/shared/utils/master-folder-tree-engine';
 
 import {
   buildAdminMenuLayoutMasterNodes,

@@ -205,10 +205,9 @@ export const listBrainModels = async (
   options: ListBrainModelsOptions = {}
 ): Promise<BrainModelsResponse> => {
   const providerCatalogRaw = await readStoredSettingValue(AI_BRAIN_PROVIDER_CATALOG_KEY);
-  const providerCatalog =
-    providerCatalogRaw?.trim().length
-      ? parseBrainProviderCatalog(providerCatalogRaw)
-      : defaultBrainProviderCatalog;
+  const providerCatalog = providerCatalogRaw?.trim().length
+    ? parseBrainProviderCatalog(providerCatalogRaw)
+    : defaultBrainProviderCatalog;
   const liveOllamaModels = await fetchLiveOllamaModels();
   const catalogArrays = entriesToCatalogArrays(catalogToEntries(providerCatalog));
 
@@ -248,12 +247,12 @@ export const listBrainModels = async (
   const ollamaWarning =
     liveOllamaModels === null
       ? {
-        code: 'OLLAMA_UNAVAILABLE',
-        message:
-          `Live Ollama discovery failed for ${OLLAMA_BASE_URL}. ` +
-          'Showing Brain-configured model catalog only. ' +
-          'If OLLAMA_BASE_URL includes /v1, set it to the host root (for example http://localhost:11434).',
-      }
+          code: 'OLLAMA_UNAVAILABLE',
+          message:
+            `Live Ollama discovery failed for ${OLLAMA_BASE_URL}. ` +
+            'Showing Brain-configured model catalog only. ' +
+            'If OLLAMA_BASE_URL includes /v1, set it to the host root (for example http://localhost:11434).',
+        }
       : undefined;
 
   const warning = ollamaWarning;

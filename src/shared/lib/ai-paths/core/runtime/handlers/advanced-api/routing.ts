@@ -4,21 +4,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
-import { 
-  AdvancedApiConfig, 
-  RuntimePortValues 
-} from '@/shared/contracts/ai-paths';
-import { 
-  NodeHandlerContext 
-} from '@/shared/contracts/ai-paths-runtime';
-import { 
-  AdvancedApiErrorRoute 
-} from './config';
-import { 
-  parseJsonWithTemplates, 
-  toStringRecord, 
-  toNumberArray 
-} from './utils';
+import { AdvancedApiConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
+import { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
+import { AdvancedApiErrorRoute } from './config';
+import { parseJsonWithTemplates, toStringRecord, toNumberArray } from './utils';
 
 export const parseErrorRoutes = (
   config: AdvancedApiConfig,
@@ -26,13 +15,10 @@ export const parseErrorRoutes = (
   reportAiPathsError: NodeHandlerContext['reportAiPathsError'],
   nodeId: string
 ): AdvancedApiErrorRoute[] =>
-  (parseJsonWithTemplates as any)(
-    config.errorRoutesJson,
-    nodeInputs,
-    [],
-    reportAiPathsError,
-    { action: 'parseAdvancedApiErrorRoutes', nodeId }
-  ).filter((entry: unknown): entry is AdvancedApiErrorRoute => {
+  (parseJsonWithTemplates as any)(config.errorRoutesJson, nodeInputs, [], reportAiPathsError, {
+    action: 'parseAdvancedApiErrorRoutes',
+    nodeId,
+  }).filter((entry: unknown): entry is AdvancedApiErrorRoute => {
     if (!entry || typeof entry !== 'object') return false;
     const record = entry as AdvancedApiErrorRoute;
     return (

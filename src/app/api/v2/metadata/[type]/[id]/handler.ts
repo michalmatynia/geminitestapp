@@ -9,7 +9,11 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { MongoCountryDoc, MongoLanguageDoc, MongoCatalogDoc } from '@/shared/lib/db/services/database-sync-types';
+import type {
+  MongoCountryDoc,
+  MongoLanguageDoc,
+  MongoCatalogDoc,
+} from '@/shared/lib/db/services/database-sync-types';
 import type { UpdateFilter } from 'mongodb';
 
 const unwrapPayload = (value: unknown): Record<string, unknown> => {
@@ -83,7 +87,13 @@ const mapMongoLanguage = (
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
-  countries: Array<{ id: string; code: string; name: string; isActive: boolean; countryId: string }>;
+  countries: Array<{
+    id: string;
+    code: string;
+    name: string;
+    isActive: boolean;
+    countryId: string;
+  }>;
 } => {
   const id = String(doc.id ?? doc.code ?? '');
   const code = String(doc.code ?? doc.id ?? '').toUpperCase();
@@ -239,17 +249,18 @@ export async function PUT_metadata_id_handler(
       if ('name' in data) update['name'] = readString(data, 'name') ?? nextCode ?? resolvedId;
       if (currencyIds !== null) update['currencyIds'] = currencyIds;
 
-      await mongo.collection<MongoCountryDoc>('countries').updateOne(
-        { $or: [{ id: resolvedId }, { code: resolvedId }] },
-        { $set: update }
-      );
+      await mongo
+        .collection<MongoCountryDoc>('countries')
+        .updateOne({ $or: [{ id: resolvedId }, { code: resolvedId }] }, { $set: update });
 
       if (nextId !== resolvedId) {
-        await mongo.collection<MongoLanguageDoc>('languages').updateMany(
-          { 'countries.countryId': resolvedId },
-          { $set: { 'countries.$[entry].countryId': nextId, updatedAt: now } },
-          { arrayFilters: [{ 'entry.countryId': resolvedId }] }
-        );
+        await mongo
+          .collection<MongoLanguageDoc>('languages')
+          .updateMany(
+            { 'countries.countryId': resolvedId },
+            { $set: { 'countries.$[entry].countryId': nextId, updatedAt: now } },
+            { arrayFilters: [{ 'entry.countryId': resolvedId }] }
+          );
       }
 
       const updated = await resolveMongoCountry(nextId);
@@ -309,25 +320,24 @@ export async function PUT_metadata_id_handler(
         update['countries'] = countryIds.map((countryId: string) => ({ countryId }));
       }
 
-      await mongo.collection<MongoLanguageDoc>('languages').updateOne(
-        { $or: [{ id: resolvedId }, { code: resolvedId }] },
-        { $set: update }
-      );
+      await mongo
+        .collection<MongoLanguageDoc>('languages')
+        .updateOne({ $or: [{ id: resolvedId }, { code: resolvedId }] }, { $set: update });
 
       if (nextId !== resolvedId) {
-        await mongo.collection<MongoCatalogDoc>('catalogs').updateMany(
-          { languageIds: resolvedId },
-          {
+        await mongo
+          .collection<MongoCatalogDoc>('catalogs')
+          .updateMany({ languageIds: resolvedId }, {
             $pull: { languageIds: resolvedId },
             $addToSet: { languageIds: nextId },
             $set: { updatedAt: now },
-          } as unknown as UpdateFilter<MongoCatalogDoc>
-        );
-        await mongo.collection<MongoCatalogDoc>('catalogs').updateMany(
-
-          { defaultLanguageId: resolvedId },
-          { $set: { defaultLanguageId: nextId, updatedAt: now } }
-        );
+          } as unknown as UpdateFilter<MongoCatalogDoc>);
+        await mongo
+          .collection<MongoCatalogDoc>('catalogs')
+          .updateMany(
+            { defaultLanguageId: resolvedId },
+            { $set: { defaultLanguageId: nextId, updatedAt: now } }
+          );
       }
 
       const updated = await resolveMongoLanguage(nextId);
@@ -409,14 +419,12 @@ export async function DELETE_metadata_id_handler(
       if (!existing) throw notFoundError(`Country not found: ${id}`);
       const resolvedId = String(existing.id ?? existing.code ?? id);
       await mongo.collection<MongoCountryDoc>('countries').deleteOne({ id: resolvedId });
-      await mongo.collection<MongoLanguageDoc>('languages').updateMany(
-        { 'countries.countryId': resolvedId },
-        {
+      await mongo
+        .collection<MongoLanguageDoc>('languages')
+        .updateMany({ 'countries.countryId': resolvedId }, {
           $pull: { countries: { countryId: resolvedId } },
           $set: { updatedAt: new Date() },
-        } as unknown as UpdateFilter<MongoLanguageDoc>
-      );
-
+        } as unknown as UpdateFilter<MongoLanguageDoc>);
 
       return new Response(null, { status: 204 });
     }
@@ -435,18 +443,17 @@ export async function DELETE_metadata_id_handler(
       const resolvedId = String(existing.id ?? existing.code ?? id);
       const now = new Date();
       await mongo.collection<MongoLanguageDoc>('languages').deleteOne({ id: resolvedId });
-      await mongo.collection<MongoCatalogDoc>('catalogs').updateMany(
-        { languageIds: resolvedId },
-        {
-          $pull: { languageIds: resolvedId },
-          $set: { updatedAt: now },
-        } as unknown as UpdateFilter<MongoCatalogDoc>
-      );
+      await mongo.collection<MongoCatalogDoc>('catalogs').updateMany({ languageIds: resolvedId }, {
+        $pull: { languageIds: resolvedId },
+        $set: { updatedAt: now },
+      } as unknown as UpdateFilter<MongoCatalogDoc>);
 
-      await mongo.collection('catalogs').updateMany(
-        { defaultLanguageId: resolvedId },
-        { $set: { defaultLanguageId: null, updatedAt: now } }
-      );
+      await mongo
+        .collection('catalogs')
+        .updateMany(
+          { defaultLanguageId: resolvedId },
+          { $set: { defaultLanguageId: null, updatedAt: now } }
+        );
       return new Response(null, { status: 204 });
     }
 

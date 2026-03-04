@@ -98,13 +98,13 @@ export async function executeDatabaseInsert({
       const customInsertPayload = {
         ...(queryPayload.provider
           ? {
-            provider: queryPayload.provider,
-          }
+              provider: queryPayload.provider,
+            }
           : {}),
         ...(queryPayload.collectionMap
           ? {
-            collectionMap: queryPayload.collectionMap,
-          }
+              collectionMap: queryPayload.collectionMap,
+            }
           : {}),
         action: 'insertOne' as const,
         collection,
@@ -182,13 +182,13 @@ export async function executeDatabaseInsert({
       const customInsertPayload = {
         ...(queryPayload.provider
           ? {
-            provider: queryPayload.provider,
-          }
+              provider: queryPayload.provider,
+            }
           : {}),
         ...(queryPayload.collectionMap
           ? {
-            collectionMap: queryPayload.collectionMap,
-          }
+              collectionMap: queryPayload.collectionMap,
+            }
           : {}),
         action: 'insertOne' as const,
         collection,

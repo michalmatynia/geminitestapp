@@ -4,7 +4,16 @@ import React from 'react';
 
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { Tabs, TabsList, TabsTrigger, TabsContent, StatusBadge, LogList, Card, MetadataItem } from '@/shared/ui';
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  StatusBadge,
+  LogList,
+  Card,
+  MetadataItem,
+} from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 import { useAgentRunsContext } from '../context/AgentRunsContext';
@@ -38,9 +47,17 @@ export function AgentRunDetailModal({
             <h3 className='text-sm font-medium text-white mb-4'>Run Information</h3>
             <div className='grid grid-cols-2 gap-6'>
               <div className='space-y-3'>
-                <MetadataItem label='Status' value={<StatusBadge status={selectedAgentRun.status} />} variant='minimal' />
+                <MetadataItem
+                  label='Status'
+                  value={<StatusBadge status={selectedAgentRun.status} />}
+                  variant='minimal'
+                />
                 <MetadataItem label='Model' value={selectedAgentRun.model} variant='minimal' />
-                <MetadataItem label='Created' value={new Date(selectedAgentRun.createdAt || 0).toLocaleString()} variant='minimal' />
+                <MetadataItem
+                  label='Created'
+                  value={new Date(selectedAgentRun.createdAt || 0).toLocaleString()}
+                  variant='minimal'
+                />
               </div>
               <div className='col-span-2'>
                 <span className='text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2 block'>

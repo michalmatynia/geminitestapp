@@ -180,9 +180,7 @@ export const productBulkImagesBase64RequestSchema = z.object({
   productIds: z.array(z.string().min(1)).min(1),
 });
 
-export type ProductBulkImagesBase64Request = z.infer<
-  typeof productBulkImagesBase64RequestSchema
->;
+export type ProductBulkImagesBase64Request = z.infer<typeof productBulkImagesBase64RequestSchema>;
 
 /**
  * Product API Paged Result

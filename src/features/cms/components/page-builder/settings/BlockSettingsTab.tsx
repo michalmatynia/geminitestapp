@@ -216,10 +216,7 @@ export function BlockSettingsTab(): React.JSX.Element | null {
   const blockSettingsForRender = rowSettingsForRender ?? selectedBlock.settings;
 
   return (
-    <SettingsFormProvider
-      values={blockSettingsForRender}
-      onChange={handleBlockSettingChange}
-    >
+    <SettingsFormProvider values={blockSettingsForRender} onChange={handleBlockSettingChange}>
       <div className='space-y-4'>
         {isImageElementInContainer && backgroundTargetOptions.length > 1 && (
           <div className='rounded border border-border/40 bg-gray-900/40 p-3 mb-4'>
@@ -234,21 +231,21 @@ export function BlockSettingsTab(): React.JSX.Element | null {
         )}
         {isImageElementInContainer && isInBackgroundMode
           ? renderFieldGroups(
-            groupSettingsFields(prependManagementFields(IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS)),
-            blockSettingsForRender,
-            handleBlockSettingChange
-          )
+              groupSettingsFields(prependManagementFields(IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS)),
+              blockSettingsForRender,
+              handleBlockSettingChange
+            )
           : renderFieldGroups(
-            groupSettingsFields(prependManagementFields(blockDef.settingsSchema)),
-            blockSettingsForRender,
-            handleBlockSettingChange,
-            (f) =>
-              selectedBlock.type === 'AppEmbed' && f.key === 'appId'
-                ? { ...f, options: appEmbedOptions }
-                : isRowBlock && rowHeightMode === 'inherit' && f.key === 'height'
-                  ? { ...f, disabled: true }
-                  : f
-          )}
+              groupSettingsFields(prependManagementFields(blockDef.settingsSchema)),
+              blockSettingsForRender,
+              handleBlockSettingChange,
+              (f) =>
+                selectedBlock.type === 'AppEmbed' && f.key === 'appId'
+                  ? { ...f, options: appEmbedOptions }
+                  : isRowBlock && rowHeightMode === 'inherit' && f.key === 'height'
+                    ? { ...f, disabled: true }
+                    : f
+            )}
         {isGridImageElement && !isInBackgroundMode && (
           <div className='grid gap-2 border-t border-border/30 pt-4'>
             {selectedParentColumn && (

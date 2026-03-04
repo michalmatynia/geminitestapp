@@ -7,9 +7,7 @@ import path from 'path';
 import OpenAI, { toFile } from 'openai';
 import sharp from 'sharp';
 
-import {
-  badRequestError,
-} from '@/shared/errors/app-error';
+import { badRequestError } from '@/shared/errors/app-error';
 import { parseImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 import { imageStudioRunRequestSchema, type ImageFileRecord } from '@/shared/contracts/image-studio';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
@@ -96,7 +94,8 @@ export const ensureWithinProject = (diskPath: string, projectId: string): void =
   }
 };
 
-export const toOutputFolder = (projectId: string): string => path.join(projectsRoot, projectId, 'outputs');
+export const toOutputFolder = (projectId: string): string =>
+  path.join(projectsRoot, projectId, 'outputs');
 
 export const mapBackground = (
   value: string | null | undefined

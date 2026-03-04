@@ -1,9 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import sharp from 'sharp';
-import {
-  createImageStudioSlots,
-} from '@/features/ai/image-studio/server/slot-repository';
+import { createImageStudioSlots } from '@/features/ai/image-studio/server/slot-repository';
 import type {
   ImageStudioSlotRecord,
   ImageStudioSequenceRunRecord,

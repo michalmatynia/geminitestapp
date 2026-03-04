@@ -1,10 +1,7 @@
 import { z } from 'zod';
 import { playwrightSettingsSchema } from '../playwright';
 
-import {
-  aiNodeTypeSchema,
-  aiPathsValidationRuleSchema,
-} from './base';
+import { aiNodeTypeSchema, aiPathsValidationRuleSchema } from './base';
 
 export const aiPathsValidationDocsSyncStateSchema = z.object({
   lastSnapshotHash: z.string().optional(),

@@ -28,9 +28,7 @@ const toNotebookRecord = (doc: NotebookDocument): NotebookRecord => ({
   defaultThemeId: doc.defaultThemeId ?? null,
   createdAt: typeof doc.createdAt === 'string' ? doc.createdAt : doc.createdAt.toISOString(),
   updatedAt:
-    typeof doc.updatedAt === 'string'
-      ? doc.updatedAt
-      : doc.updatedAt?.toISOString() ?? null,
+    typeof doc.updatedAt === 'string' ? doc.updatedAt : (doc.updatedAt?.toISOString() ?? null),
 });
 
 type MongoNotebookImpl = {
@@ -50,22 +48,22 @@ export const mongoNotebookImpl: MongoNotebookImpl = {
     const notebook = existing[0]
       ? toNotebookRecord(existing[0])
       : toNotebookRecord(
-        await (async (): Promise<NotebookDocument> => {
-          const id = randomUUID();
-          const now = new Date();
-          const doc: NotebookDocument = {
-            _id: id,
-            id,
-            name: 'Default',
-            color: '#3b82f6',
-            defaultThemeId: null,
-            createdAt: now.toISOString(),
-            updatedAt: now.toISOString(),
-          };
-          await collection.insertOne(doc);
-          return doc;
-        })()
-      );
+          await (async (): Promise<NotebookDocument> => {
+            const id = randomUUID();
+            const now = new Date();
+            const doc: NotebookDocument = {
+              _id: id,
+              id,
+              name: 'Default',
+              color: '#3b82f6',
+              defaultThemeId: null,
+              createdAt: now.toISOString(),
+              updatedAt: now.toISOString(),
+            };
+            await collection.insertOne(doc);
+            return doc;
+          })()
+        );
 
     const noteCollection = db.collection<NoteDocument>(noteCollectionName);
     const tagCollection = db.collection<TagDocument>(tagCollectionName);

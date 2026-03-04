@@ -27,8 +27,8 @@ export const handleTemplate: NodeHandler = ({
   const prompt = templateConfig.template
     ? renderTemplate(templateConfig.template, data, currentValue)
     : Object.entries(data)
-      .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
-      .join('\n');
+        .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
+        .join('\n');
   return { prompt: prompt || 'Prompt: (no template)' };
 };
 

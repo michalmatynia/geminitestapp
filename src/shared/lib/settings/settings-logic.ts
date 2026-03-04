@@ -19,7 +19,8 @@ export const isHeavySettingKey = (key: string): boolean =>
 
 export const isAiPathsSettingKey = (key: string): boolean => key.startsWith(AI_PATHS_KEY_PREFIX);
 
-export const isSlowSettingsScope = (scope: SettingsScope): boolean => scope === 'all' || scope === 'heavy';
+export const isSlowSettingsScope = (scope: SettingsScope): boolean =>
+  scope === 'all' || scope === 'heavy';
 
 export const parsePositiveInt = (value: string | undefined, fallback: number): number => {
   const parsed = Number(value);
@@ -55,7 +56,10 @@ export const withSettingsScopeTimeout = async <T>(
   }
 };
 
-export const applyScopeFilter = (settings: SettingRecord[], scope: SettingsScope): SettingRecord[] => {
+export const applyScopeFilter = (
+  settings: SettingRecord[],
+  scope: SettingsScope
+): SettingRecord[] => {
   const withoutAiPaths = settings.filter(
     (setting: SettingRecord) => !isAiPathsSettingKey(setting.key)
   );

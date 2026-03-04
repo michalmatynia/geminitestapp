@@ -132,7 +132,7 @@ export const prismaActivityRepository: ActivityRepository = {
         userId: data.userId ?? null,
         entityId: data.entityId ?? null,
         entityType: data.entityType ?? null,
-        metadata: (data.metadata) ?? null,
+        metadata: data.metadata ?? null,
         createdAt: nowIso,
         updatedAt: nowIso,
       };

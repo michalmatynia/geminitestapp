@@ -26,7 +26,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+  const actual = (await importOriginal()) as any;
   return {
     ...actual,
     Card: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,

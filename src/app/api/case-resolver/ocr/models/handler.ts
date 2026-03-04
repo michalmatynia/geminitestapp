@@ -33,11 +33,11 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     keySource: 'brain',
     ...(payload.warning
       ? {
-        warning: {
-          code: payload.warning.code ?? 'BRAIN_WARNING',
-          message: payload.warning.message ?? 'Brain model discovery warning.',
-        },
-      }
+          warning: {
+            code: payload.warning.code ?? 'BRAIN_WARNING',
+            message: payload.warning.message ?? 'Brain model discovery warning.',
+          },
+        }
       : {}),
   };
   return NextResponse.json(response);

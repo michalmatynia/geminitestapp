@@ -1,22 +1,7 @@
- 
- 
- 
- 
- 
- 
-
 import { Edge } from '@/shared/contracts/ai-paths';
 import { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
-import { 
-  appendInputValue, 
-  getPortDataTypes, 
-  isValueCompatibleWithTypes 
-} from '../utils';
-import { 
-  resolveEdgeFromNodeId, 
-  resolveEdgeFromPort, 
-  resolveEdgeToPort 
-} from './engine-utils';
+import { appendInputValue, getPortDataTypes, isValueCompatibleWithTypes } from '../utils';
+import { resolveEdgeFromNodeId, resolveEdgeFromPort, resolveEdgeToPort } from './engine-utils';
 
 export function collectNodeInputs(
   nodeId: string,

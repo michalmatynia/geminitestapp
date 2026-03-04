@@ -71,7 +71,11 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
   const handleMaxValueBytesChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
     const raw = event.target.value.trim();
     const next =
-      raw.length === 0 ? undefined : Number.isFinite(Number(raw)) ? Number(raw) : stateConfig.maxValueBytes;
+      raw.length === 0
+        ? undefined
+        : Number.isFinite(Number(raw))
+          ? Number(raw)
+          : stateConfig.maxValueBytes;
     updateSelectedNodeConfig({
       state: {
         ...stateConfig,
@@ -100,7 +104,8 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
           onChange={handleKeyChange}
         />
         <p className='mt-1 text-[11px] text-gray-500'>
-          Shared variable name in <span className='font-mono text-gray-300'>RuntimeState.variables</span>.
+          Shared variable name in{' '}
+          <span className='font-mono text-gray-300'>RuntimeState.variables</span>.
         </p>
       </div>
       <div className='space-y-2'>
@@ -116,9 +121,10 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
           </SelectContent>
         </Select>
         <p className='mt-1 text-[11px] text-gray-500'>
-          In <span className='font-mono text-gray-300'>read</span> mode, the node outputs the current
-          variable value (or default). In <span className='font-mono text-gray-300'>write</span> mode it
-          stores <span className='font-mono text-gray-300'>inputs.value</span>. In{' '}
+          In <span className='font-mono text-gray-300'>read</span> mode, the node outputs the
+          current variable value (or default). In{' '}
+          <span className='font-mono text-gray-300'>write</span> mode it stores{' '}
+          <span className='font-mono text-gray-300'>inputs.value</span>. In{' '}
           <span className='font-mono text-gray-300'>increment</span> mode it adds{' '}
           <span className='font-mono text-gray-300'>inputs.delta</span> (default 1).
         </p>
@@ -132,9 +138,10 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
           onChange={handleInitialJsonChange}
         />
         <p className='mt-1 text-[11px] text-gray-500'>
-          Used only when the variable does not yet exist. If empty or invalid, the node will fall back to
-          <span className='font-mono text-gray-300'> inputs.value</span> (for read) or numeric defaults
-          (for increment).
+          Used only when the variable does not yet exist. If empty or invalid, the node will fall
+          back to
+          <span className='font-mono text-gray-300'> inputs.value</span> (for read) or numeric
+          defaults (for increment).
         </p>
       </div>
       <div className='space-y-2'>
@@ -157,10 +164,7 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
       </div>
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>Expected value type (optional)</Label>
-        <Select
-          value={stateConfig.expectedType ?? ''}
-          onValueChange={handleExpectedTypeChange}
-        >
+        <Select value={stateConfig.expectedType ?? ''} onValueChange={handleExpectedTypeChange}>
           <SelectTrigger className='h-8 w-full rounded-md border border-border bg-card/70 text-xs text-gray-100'>
             <SelectValue placeholder='Any type' />
           </SelectTrigger>

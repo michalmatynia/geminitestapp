@@ -7,11 +7,12 @@ export * from './folder-tree-profiles-v2/constants';
 export * from './folder-tree-profiles-v2/schema';
 export { defaultFolderTreeProfilesV2 };
 
-export const createDefaultFolderTreeProfilesV2 = (): FolderTreeProfilesV2Map => 
+export const createDefaultFolderTreeProfilesV2 = (): FolderTreeProfilesV2Map =>
   logic.createDefaultFolderTreeProfilesV2(defaultFolderTreeProfilesV2);
 
-export const parseFolderTreeProfilesV2 = (raw: string | null | undefined): FolderTreeProfilesV2Map =>
-  logic.parseFolderTreeProfilesV2(raw, defaultFolderTreeProfilesV2);
+export const parseFolderTreeProfilesV2 = (
+  raw: string | null | undefined
+): FolderTreeProfilesV2Map => logic.parseFolderTreeProfilesV2(raw, defaultFolderTreeProfilesV2);
 
 export const getFolderTreePlaceholderClasses = logic.getFolderTreePlaceholderClasses;
 export const cloneProfileV2 = logic.cloneProfileV2;

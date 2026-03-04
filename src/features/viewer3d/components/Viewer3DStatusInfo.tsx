@@ -23,9 +23,19 @@ export function Viewer3DStatusInfo(): React.JSX.Element {
       <div className='flex items-center gap-4'>
         <div className='flex items-center gap-2'>
           <Layers className='h-4 w-4 text-gray-500' />
-          <MetadataItem label='Env' value={environment} valueClassName='text-gray-300' variant='minimal' />
+          <MetadataItem
+            label='Env'
+            value={environment}
+            valueClassName='text-gray-300'
+            variant='minimal'
+          />
         </div>
-        <MetadataItem label='Light' value={lighting} valueClassName='text-gray-300' variant='minimal' />
+        <MetadataItem
+          label='Light'
+          value={lighting}
+          valueClassName='text-gray-300'
+          variant='minimal'
+        />
       </div>
       <div className='flex items-center gap-2'>
         {enableBloom && <StatusBadge status='Bloom' variant='info' />}

@@ -8,7 +8,5 @@ export type SystemLogRuntimeContextAdapter = {
   id: string;
   ownedStaticContextKeys: readonly string[];
   canHydrate(context: Record<string, unknown> | null): boolean;
-  hydrate(
-    context: Record<string, unknown>
-  ): Promise<SystemLogRuntimeContextHydrationResult | null>;
+  hydrate(context: Record<string, unknown>): Promise<SystemLogRuntimeContextHydrationResult | null>;
 };

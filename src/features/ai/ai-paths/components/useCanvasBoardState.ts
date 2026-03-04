@@ -216,9 +216,7 @@ export function useCanvasBoardState({
         graphState.edges.forEach((edge) => {
           const toNodeId = typeof edge.to === 'string' ? edge.to : null;
           const toPort =
-            typeof edge.toPort === 'string' && edge.toPort.trim().length > 0
-              ? edge.toPort
-              : null;
+            typeof edge.toPort === 'string' && edge.toPort.trim().length > 0 ? edge.toPort : null;
           if (toNodeId !== nodeId || toPort !== port) return;
           const fromNodeId = typeof edge.from === 'string' ? edge.from : null;
           const fromPort =

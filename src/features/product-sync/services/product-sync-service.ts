@@ -32,10 +32,7 @@ import type {
   ProductSyncRunStats,
   ProductSyncRunStatus,
 } from '@/shared/contracts/product-sync';
-import type {
-  ProductWithImages,
-  UpdateProductInput,
-} from '@/shared/contracts/products';
+import type { ProductWithImages, UpdateProductInput } from '@/shared/contracts/products';
 
 const BASE_INTEGRATION_SLUGS = new Set(['base', 'base-com', 'baselinker']);
 const BASE_DETAILS_BATCH_SIZE = 100;

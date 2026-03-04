@@ -1,19 +1,13 @@
 import type * as React from 'react';
- 
- 
- 
- 
- 
- 
 
-import { 
-  fetchCaseResolverWorkspaceSnapshot, 
-  getCaseResolverWorkspaceRevision, 
-  logCaseResolverWorkspaceEvent 
+import {
+  fetchCaseResolverWorkspaceSnapshot,
+  getCaseResolverWorkspaceRevision,
+  logCaseResolverWorkspaceEvent,
 } from '../../../workspace-persistence';
-import { 
-  CASE_RESOLVER_CASE_READY_MAX_ATTEMPTS, 
-  CASE_RESOLVER_CASE_READY_INTERVAL_MS 
+import {
+  CASE_RESOLVER_CASE_READY_MAX_ATTEMPTS,
+  CASE_RESOLVER_CASE_READY_INTERVAL_MS,
 } from '../utils';
 import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
@@ -31,7 +25,13 @@ export const waitForCaseAvailability = async (
     };
   }
 ): Promise<boolean> => {
-  const { lastPersistedWorkspaceRevisionRef, lastPersistedWorkspaceValueRef, setWorkspace, settingsStoreRefetchRef, options } = args;
+  const {
+    lastPersistedWorkspaceRevisionRef,
+    lastPersistedWorkspaceValueRef,
+    setWorkspace,
+    settingsStoreRefetchRef,
+    options,
+  } = args;
   const source = options?.source ?? 'cases_page_case_sync';
   const maxAttempts = options?.maxAttempts ?? CASE_RESOLVER_CASE_READY_MAX_ATTEMPTS;
   const intervalMs = options?.intervalMs ?? CASE_RESOLVER_CASE_READY_INTERVAL_MS;

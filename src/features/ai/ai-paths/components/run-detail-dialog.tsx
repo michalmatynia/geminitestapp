@@ -158,7 +158,7 @@ export function RunDetailDialog(): React.JSX.Element {
         let defaultCount = 0;
         let errorCount = 0;
         entriesForNode.forEach((entry: RuntimeHistoryEntry) => {
-          const outputs = (entry.outputs ?? {});
+          const outputs = entry.outputs ?? {};
           const caseIdRaw = outputs['caseId'];
           const errorCodeRaw = outputs['errorCode'];
           if (typeof errorCodeRaw === 'string' && errorCodeRaw.length > 0) {
@@ -335,7 +335,8 @@ export function RunDetailDialog(): React.JSX.Element {
                     >
                       <div className='flex flex-wrap items-center justify-between gap-2'>
                         <span className='font-semibold'>
-                          {summary.nodeTitle} <span className='font-mono text-xs'>({summary.nodeId})</span>
+                          {summary.nodeTitle}{' '}
+                          <span className='font-mono text-xs'>({summary.nodeId})</span>
                         </span>
                         <span className='text-[10px] text-emerald-200'>
                           Samples: {summary.total}
@@ -455,7 +456,12 @@ export function RunDetailDialog(): React.JSX.Element {
             className='bg-black/20'
           >
             <div className='mt-3 space-y-3'>
-              <JsonViewer title='Run' data={runDetail.run} maxHeight='200px' className='bg-card/70' />
+              <JsonViewer
+                title='Run'
+                data={runDetail.run}
+                maxHeight='200px'
+                className='bg-card/70'
+              />
               <JsonViewer
                 title='Nodes'
                 data={runDetail.nodes}

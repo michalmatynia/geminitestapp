@@ -1,7 +1,5 @@
 'use client';
 
- 
-
 import { useEffect, useMemo } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

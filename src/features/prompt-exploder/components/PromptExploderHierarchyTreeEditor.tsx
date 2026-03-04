@@ -19,10 +19,7 @@ import {
   removePromptExploderListItemById,
   updatePromptExploderListItemById,
 } from '../hierarchy-master-tree';
-import {
-  buildPromptExploderTreeRevision,
-  usePromptExploderHandleOnlyDrag,
-} from '../tree/shared';
+import { buildPromptExploderTreeRevision, usePromptExploderHandleOnlyDrag } from '../tree/shared';
 
 import type { PromptExploderListItem } from '../types';
 
@@ -275,11 +272,11 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
           })()}{' '}
           {renderLogicalEditor
             ? renderLogicalEditor({
-              item: selectedItem,
-              onChange: (updater) => {
-                updateSelectedItem((current) => updater(current));
-              },
-            })
+                item: selectedItem,
+                onChange: (updater) => {
+                  updateSelectedItem((current) => updater(current));
+                },
+              })
             : null}
         </div>
       ) : null}

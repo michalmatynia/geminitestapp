@@ -2,10 +2,7 @@ import type {
   CreateValidationPatternPayload,
   UpdateValidationPatternPayload,
 } from '@/features/products/api/settings';
-import { 
-  ProductValidationPattern, 
-  SequenceGroupDraft 
-} from '@/shared/contracts/products';
+import { ProductValidationPattern, SequenceGroupDraft } from '@/shared/contracts/products';
 import { QueryClient } from '@tanstack/react-query';
 
 export type CreatePatternMutation = {

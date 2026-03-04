@@ -11,10 +11,7 @@ export const GET = apiHandlerWithParams<{ entity: string }>(
     const normalized = params.entity.toLowerCase();
     const node = registryBackend
       .listAll()
-      .find(
-        (n) =>
-          n.id.endsWith(`:${normalized}`) || n.name.toLowerCase() === normalized
-      );
+      .find((n) => n.id.endsWith(`:${normalized}`) || n.name.toLowerCase() === normalized);
     return NextResponse.json({
       entity: params.entity,
       schema: node?.jsonSchema2020 ?? null,

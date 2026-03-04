@@ -4,11 +4,7 @@ import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract'
 
 import { filterMasterTreeToMatches, searchMasterTreeNodes } from '../search';
 
-const node = (
-  id: string,
-  name: string,
-  parentId: string | null = null
-): MasterTreeNode => ({
+const node = (id: string, name: string, parentId: string | null = null): MasterTreeNode => ({
   id,
   type: 'file',
   kind: 'file',
@@ -97,10 +93,7 @@ describe('searchMasterTreeNodes', () => {
   });
 
   it('applies deterministic tiebreak ordering for equal-score matches', () => {
-    const nodesForTieBreak: MasterTreeNode[] = [
-      node('b-id', 'Beta'),
-      node('a-id', 'Alpha'),
-    ];
+    const nodesForTieBreak: MasterTreeNode[] = [node('b-id', 'Beta'), node('a-id', 'Alpha')];
 
     const results = searchMasterTreeNodes(nodesForTieBreak, 'a');
     expect(results.map((result) => result.nodeId)).toEqual(['a-id', 'b-id']);
@@ -109,10 +102,42 @@ describe('searchMasterTreeNodes', () => {
 
 describe('filterMasterTreeToMatches', () => {
   const nodes: MasterTreeNode[] = [
-    { id: 'root', type: 'folder', kind: 'folder', parentId: null, name: 'root', path: '/root', sortOrder: 0 },
-    { id: 'child', type: 'folder', kind: 'folder', parentId: 'root', name: 'child', path: '/root/child', sortOrder: 0 },
-    { id: 'leaf', type: 'file', kind: 'file', parentId: 'child', name: 'leaf', path: '/root/child/leaf', sortOrder: 0 },
-    { id: 'other', type: 'file', kind: 'file', parentId: 'root', name: 'other', path: '/root/other', sortOrder: 0 },
+    {
+      id: 'root',
+      type: 'folder',
+      kind: 'folder',
+      parentId: null,
+      name: 'root',
+      path: '/root',
+      sortOrder: 0,
+    },
+    {
+      id: 'child',
+      type: 'folder',
+      kind: 'folder',
+      parentId: 'root',
+      name: 'child',
+      path: '/root/child',
+      sortOrder: 0,
+    },
+    {
+      id: 'leaf',
+      type: 'file',
+      kind: 'file',
+      parentId: 'child',
+      name: 'leaf',
+      path: '/root/child/leaf',
+      sortOrder: 0,
+    },
+    {
+      id: 'other',
+      type: 'file',
+      kind: 'file',
+      parentId: 'root',
+      name: 'other',
+      path: '/root/other',
+      sortOrder: 0,
+    },
   ];
 
   it('returns empty arrays when matches is empty', () => {

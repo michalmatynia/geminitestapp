@@ -5,14 +5,7 @@ import React, { useState } from 'react';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { SLUG_REGEX } from '@/features/cms/validations/slug';
 import type { CmsDomain } from '@/shared/contracts/cms';
-import {
-  Input,
-  ToggleRow,
-  FormSection,
-  FormField,
-  FormActions,
-  SearchableList,
-} from '@/shared/ui';
+import { Input, ToggleRow, FormSection, FormField, FormActions, SearchableList } from '@/shared/ui';
 
 export type SlugFormSubmitData = {
   slug: string;

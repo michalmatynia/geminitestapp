@@ -1,8 +1,6 @@
 'use client';
 
-import {
-  type UseMutationResult,
-} from '@tanstack/react-query';
+import { type UseMutationResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { createOptimisticMutationV2 } from '@/shared/lib/query-factories-v2';

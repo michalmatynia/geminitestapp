@@ -1,14 +1,11 @@
 'use client';
 
-
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { DatabaseInfo, DatabaseType } from '@/shared/contracts';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import {
-  isValidDatabaseEngineBackupTimeUtc,
-} from '@/shared/lib/db/database-engine-backup-schedule';
+import { isValidDatabaseEngineBackupTimeUtc } from '@/shared/lib/db/database-engine-backup-schedule';
 import {
   DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
   DATABASE_ENGINE_OPERATION_CONTROLS_KEY,
@@ -61,7 +58,7 @@ export function useDatabaseBackupsState() {
     const errors: string[] = [];
     const loggedErrors: unknown[] = [];
 
-    const parseSetting = <T,>(parser: () => T, fallback: T): T => {
+    const parseSetting = <T>(parser: () => T, fallback: T): T => {
       try {
         return parser();
       } catch (error) {
@@ -386,17 +383,17 @@ ${String(error)}`);
     const nextSchedule =
       activeTargetKey === 'mongodb'
         ? {
-          ...backupSchedule,
-          schedulerEnabled: schedulerEnabledDraft,
-          repeatTickEnabled: repeatTickEnabledDraft,
-          mongodb: activeTargetNext,
-        }
+            ...backupSchedule,
+            schedulerEnabled: schedulerEnabledDraft,
+            repeatTickEnabled: repeatTickEnabledDraft,
+            mongodb: activeTargetNext,
+          }
         : {
-          ...backupSchedule,
-          schedulerEnabled: schedulerEnabledDraft,
-          repeatTickEnabled: repeatTickEnabledDraft,
-          postgresql: activeTargetNext,
-        };
+            ...backupSchedule,
+            schedulerEnabled: schedulerEnabledDraft,
+            repeatTickEnabled: repeatTickEnabledDraft,
+            postgresql: activeTargetNext,
+          };
 
     try {
       await updateSetting.mutateAsync({

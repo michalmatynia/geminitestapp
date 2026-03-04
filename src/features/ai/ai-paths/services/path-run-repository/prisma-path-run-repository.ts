@@ -430,12 +430,12 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     const where: Prisma.AiPathRunWhereInput =
       Object.keys(baseWhere).length > 0
         ? {
-          AND: [baseWhere, { OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }] }],
-        }
+            AND: [baseWhere, { OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }] }],
+          }
         : {
-          status: 'queued',
-          OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
-        };
+            status: 'queued',
+            OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
+          };
     const [queuedCount, oldest] = await Promise.all([
       prisma.aiPathRun.count({ where }),
       prisma.aiPathRun.findFirst({
@@ -537,15 +537,15 @@ export const prismaPathRunRepository: AiPathRunRepository = {
           input.status ||
           input.iteration
             ? toNullableJsonInput({
-              ...((input.metadata as Record<string, unknown>) || {}),
-              ...(input.nodeId ? { nodeId: input.nodeId } : {}),
-              ...(input.nodeType ? { nodeType: input.nodeType } : {}),
-              ...(input.nodeTitle ? { nodeTitle: input.nodeTitle } : {}),
-              ...(input.status ? { status: input.status } : {}),
-              ...(input.iteration !== undefined && input.iteration !== null
-                ? { iteration: input.iteration }
-                : {}),
-            })
+                ...((input.metadata as Record<string, unknown>) || {}),
+                ...(input.nodeId ? { nodeId: input.nodeId } : {}),
+                ...(input.nodeType ? { nodeType: input.nodeType } : {}),
+                ...(input.nodeTitle ? { nodeTitle: input.nodeTitle } : {}),
+                ...(input.status ? { status: input.status } : {}),
+                ...(input.iteration !== undefined && input.iteration !== null
+                  ? { iteration: input.iteration }
+                  : {}),
+              })
             : undefined,
       },
     });
@@ -568,13 +568,13 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     const where =
       afterDate && afterId
         ? {
-          runId,
-          OR: [{ createdAt: { gt: afterDate } }, { createdAt: afterDate, id: { gt: afterId } }],
-        }
+            runId,
+            OR: [{ createdAt: { gt: afterDate } }, { createdAt: afterDate, id: { gt: afterId } }],
+          }
         : {
-          runId,
-          ...(since ? { createdAt: { gt: since } } : {}),
-        };
+            runId,
+            ...(since ? { createdAt: { gt: since } } : {}),
+          };
     const events = await prisma.aiPathRunEvent.findMany({
       where,
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],

@@ -363,10 +363,12 @@ const resolveLegacyProviderCatalogEntries = (
   BRAIN_CATALOG_POOL_VALUES.flatMap((pool: AiBrainCatalogPool): AiBrainCatalogEntry[] => {
     const values = parsed[pool];
     if (!Array.isArray(values)) return [];
-    return values.map((value: unknown): AiBrainCatalogEntry => ({
-      pool,
-      value: typeof value === 'string' ? value : '',
-    }));
+    return values.map(
+      (value: unknown): AiBrainCatalogEntry => ({
+        pool,
+        value: typeof value === 'string' ? value : '',
+      })
+    );
   });
 
 const isLegacyProviderCatalogKey = (value: string): value is AiBrainCatalogPool =>

@@ -357,8 +357,8 @@ export const describeDynamicReplacementRecipe = (
   const logic =
     recipe.logicOperator && recipe.logicOperator !== 'none'
       ? ` if ${recipe.logicOperator} ${recipe.logicOperand ?? ''} ? ${
-        recipe.logicWhenTrueAction ?? 'keep'
-      } : ${recipe.logicWhenFalseAction ?? 'keep'}`
+          recipe.logicWhenTrueAction ?? 'keep'
+        } : ${recipe.logicWhenFalseAction ?? 'keep'}`
       : '';
   const assembly = recipe.resultAssembly ?? 'segment_only';
   const targetApply = recipe.targetApply ?? 'replace_matched_segment';

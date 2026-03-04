@@ -32,10 +32,7 @@ export function ColumnSettingsTab(): React.JSX.Element | null {
   const columnSettings = columnSettingsForRender ?? selectedColumn.settings;
 
   return (
-    <SettingsFormProvider
-      values={columnSettings}
-      onChange={handleColumnSettingChange}
-    >
+    <SettingsFormProvider values={columnSettings} onChange={handleColumnSettingChange}>
       <div className='space-y-4'>
         {renderFieldGroups(
           groupSettingsFields(prependManagementFields(columnDef.settingsSchema)),

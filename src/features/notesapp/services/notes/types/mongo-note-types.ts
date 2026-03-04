@@ -1,7 +1,4 @@
-import type {
-  TagRecord,
-  CategoryRecord,
-} from '@/shared/contracts/notes';
+import type { TagRecord, CategoryRecord } from '@/shared/contracts/notes';
 
 export interface NoteTagEmbedded {
   tagId: string;

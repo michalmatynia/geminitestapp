@@ -357,18 +357,14 @@ export async function buildBaseProductData(
       sourceKey: mapping.targetField,
       targetField: normalizeExportTargetField(mapping.sourceKey),
     }));
-    const templateData = applyExportTemplateMappings(
-      product,
-      exportMappings,
-      {
-        imageBaseUrl: options?.imageBaseUrl ?? null,
-        diagnostics: options?.imageDiagnostics,
-        producerNameById: options?.producerNameById ?? null,
-        producerExternalIdByInternalId: options?.producerExternalIdByInternalId ?? null,
-        tagNameById: options?.tagNameById ?? null,
-        tagExternalIdByInternalId: options?.tagExternalIdByInternalId ?? null,
-      }
-    );
+    const templateData = applyExportTemplateMappings(product, exportMappings, {
+      imageBaseUrl: options?.imageBaseUrl ?? null,
+      diagnostics: options?.imageDiagnostics,
+      producerNameById: options?.producerNameById ?? null,
+      producerExternalIdByInternalId: options?.producerExternalIdByInternalId ?? null,
+      tagNameById: options?.tagNameById ?? null,
+      tagExternalIdByInternalId: options?.tagExternalIdByInternalId ?? null,
+    });
     mergeTextFields(baseData, templateData);
     mergeNumericFields(templateData, 'prices');
     const stockAliases = options?.stockWarehouseAliases ?? null;

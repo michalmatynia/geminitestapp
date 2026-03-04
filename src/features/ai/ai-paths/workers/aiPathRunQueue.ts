@@ -1,47 +1,38 @@
- 
 import 'server-only';
 
-import { 
-  AI_PATH_RUN_QUEUE_NAME, 
-  LOG_SOURCE, 
+import {
+  AI_PATH_RUN_QUEUE_NAME,
+  LOG_SOURCE,
   RECOVERY_REPEAT_MS,
   REQUIRE_DURABLE_QUEUE,
   QUEUE_HOT_WAITING_LIMIT,
-  QUEUE_UNAVAILABLE_RETRY_AFTER_MS
+  QUEUE_UNAVAILABLE_RETRY_AFTER_MS,
 } from './ai-path-run-queue/config';
-import { 
-  aiPathRunQueueState, 
-  localFallbackTimers 
-} from './ai-path-run-queue/state';
-import { 
-  getAiPathRunQueueStatus, 
+import { aiPathRunQueueState, localFallbackTimers } from './ai-path-run-queue/state';
+import {
+  getAiPathRunQueueStatus,
   getAiPathRunQueueHotStatus,
   clearAiPathRunQueueStatusCache,
 } from './ai-path-run-queue/status';
-import { 
-  getAiPathsEnabledCached, 
+import {
+  getAiPathsEnabledCached,
   assertAiPathsEnabled,
   clearAiPathsEnabledCache as resetAiPathsEnabledCache,
 } from './ai-path-run-queue/brain-gate';
-import { 
-  queue, 
-  enqueuePathRunJob 
-} from './ai-path-run-queue/queue';
+import { queue, enqueuePathRunJob } from './ai-path-run-queue/queue';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { serviceUnavailableError } from '@/shared/errors/app-error';
 import { createDebugQueueLogger } from './ai-path-run-queue-utils';
 
-import { 
-  type AiPathRunQueueStatus, 
-} from '@/shared/contracts/ai-paths-runtime';
+import { type AiPathRunQueueStatus } from '@/shared/contracts/ai-paths-runtime';
 import { type AiPathRunQueueHotStatus } from './ai-path-run-queue/types';
 
-export { 
-  getAiPathRunQueueStatus, 
+export {
+  getAiPathRunQueueStatus,
   getAiPathRunQueueHotStatus,
   assertAiPathsEnabled,
-  enqueuePathRunJob
+  enqueuePathRunJob,
 };
 
 export const __testOnly = {
@@ -188,7 +179,7 @@ export const assertAiPathRunQueueReady = async (): Promise<AiPathRunQueueStatus>
 
   startAiPathRunQueue();
   await waitForQueueReconciliation();
-  
+
   const status = await getAiPathRunQueueStatus();
   if (status.running) return status;
 

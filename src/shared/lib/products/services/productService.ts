@@ -225,12 +225,15 @@ async function getProducts(
     }
 
     if (shouldLogTiming()) {
-      await ErrorSystem.logInfo(`[getProducts] Total: ${totalMs.toFixed(2)}ms, Repo: ${repoMs.toFixed(2)}ms`, {
-        service: 'product-service',
-        action: 'getProducts',
-        totalMs,
-        repoMs,
-      });
+      await ErrorSystem.logInfo(
+        `[getProducts] Total: ${totalMs.toFixed(2)}ms, Repo: ${repoMs.toFixed(2)}ms`,
+        {
+          service: 'product-service',
+          action: 'getProducts',
+          totalMs,
+          repoMs,
+        }
+      );
     }
 
     return products;

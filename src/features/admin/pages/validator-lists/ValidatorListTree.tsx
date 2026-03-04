@@ -2,10 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import {
-  FolderTreeViewportV2,
-  useMasterFolderTreeShell,
-} from '@/features/foldertree/v2';
+import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/features/foldertree/v2';
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
 import type { ValidatorPatternList } from '@/shared/contracts/admin';
 import type {

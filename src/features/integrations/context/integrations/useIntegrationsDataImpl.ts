@@ -1,7 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useIntegrations, useIntegrationConnections, usePlaywrightPersonas } from '@/features/integrations/hooks/useIntegrationQueries';
+import {
+  useIntegrations,
+  useIntegrationConnections,
+  usePlaywrightPersonas,
+} from '@/features/integrations/hooks/useIntegrationQueries';
 import type { Integration, IntegrationConnection } from '@/shared/contracts/integrations';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { useToast } from '@/shared/ui';
@@ -12,7 +16,7 @@ const EMPTY_PERSONAS: PlaywrightPersona[] = [];
 
 export function useIntegrationsDataImpl() {
   const { toast } = useToast();
-  
+
   const integrationsQuery = useIntegrations();
   const integrations = integrationsQuery.data ?? EMPTY_INTEGRATIONS;
   const integrationsLoading = integrationsQuery.isLoading;

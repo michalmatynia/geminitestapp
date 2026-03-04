@@ -1,7 +1,5 @@
 'use client';
 
- 
-
 import { type UseMutationResult } from '@tanstack/react-query';
 import { useState, useMemo, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 
@@ -164,7 +162,6 @@ export function useUsersState(): UseUsersStateReturn {
         u.id.toLowerCase().includes(q)
     );
   }, [users, search]);
-
 
   const handleRoleChange = useCallback((userId: string, roleId: string) => {
     setLocalUserRoles((prev) => {

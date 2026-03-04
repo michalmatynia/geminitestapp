@@ -3,11 +3,7 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { Filter, UpdateFilter } from 'mongodb';
 
 import type { TagDocument, NoteDocument } from '../../types/mongo-note-types';
-import type {
-  TagRecord,
-  TagCreateInput,
-  TagUpdateInput,
-} from '@/shared/contracts/notes';
+import type { TagRecord, TagCreateInput, TagUpdateInput } from '@/shared/contracts/notes';
 import { notFoundError } from '@/shared/errors/app-error';
 
 const tagCollectionName = 'tags';
@@ -20,9 +16,7 @@ const toTagRecord = (doc: TagDocument): TagRecord => ({
   notebookId: doc.notebookId ?? null,
   createdAt: typeof doc.createdAt === 'string' ? doc.createdAt : doc.createdAt.toISOString(),
   updatedAt:
-    typeof doc.updatedAt === 'string'
-      ? doc.updatedAt
-      : doc.updatedAt?.toISOString() ?? null,
+    typeof doc.updatedAt === 'string' ? doc.updatedAt : (doc.updatedAt?.toISOString() ?? null),
 });
 
 type MongoTagImpl = {
@@ -88,10 +82,12 @@ export const mongoTagImpl: MongoTagImpl = {
 
     // Update embedded tags in notes
     const tag = toTagRecord(result);
-    await db.collection<NoteDocument>(noteCollectionName).updateMany(
-      { 'tags.tagId': tag.id } as Filter<NoteDocument>,
-      { $set: { 'tags.$.tag': tag } } as UpdateFilter<NoteDocument>
-    );
+    await db
+      .collection<NoteDocument>(noteCollectionName)
+      .updateMany(
+        { 'tags.tagId': tag.id } as Filter<NoteDocument>,
+        { $set: { 'tags.$.tag': tag } } as UpdateFilter<NoteDocument>
+      );
 
     return tag;
   },
@@ -105,9 +101,11 @@ export const mongoTagImpl: MongoTagImpl = {
     if (result.deletedCount === 0) throw notFoundError('Tag not found');
 
     // Remove from notes
-    await db.collection<NoteDocument>(noteCollectionName).updateMany(
-      {} as Filter<NoteDocument>,
-      { $pull: { tags: { tagId: id } } } as UpdateFilter<NoteDocument>
-    );
+    await db
+      .collection<NoteDocument>(noteCollectionName)
+      .updateMany(
+        {} as Filter<NoteDocument>,
+        { $pull: { tags: { tagId: id } } } as UpdateFilter<NoteDocument>
+      );
   },
 };

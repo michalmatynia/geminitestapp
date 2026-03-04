@@ -38,7 +38,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       path: hydratedLog.path ?? null,
       method: hydratedLog.method ?? null,
       statusCode: hydratedLog.statusCode ?? null,
-      ...(hydratedLog.createdAt ? { createdAt: new Date(hydratedLog.createdAt).toISOString() } : {}),
+      ...(hydratedLog.createdAt
+        ? { createdAt: new Date(hydratedLog.createdAt).toISOString() }
+        : {}),
     },
   });
   return NextResponse.json({ insight });

@@ -418,9 +418,10 @@ export const validateCanonicalPathNodeIdentities = (
     }
   });
 
-  const selectedNodeId = typeof pathConfig.uiState?.selectedNodeId === 'string'
-    ? pathConfig.uiState.selectedNodeId
-    : null;
+  const selectedNodeId =
+    typeof pathConfig.uiState?.selectedNodeId === 'string'
+      ? pathConfig.uiState.selectedNodeId
+      : null;
   if (selectedNodeId) {
     const trimmedSelectedNodeId = selectedNodeId.trim();
     if (selectedNodeId !== trimmedSelectedNodeId || !usedIds.has(trimmedSelectedNodeId)) {
@@ -626,20 +627,20 @@ export const repairPathNodeIdentities = (
 
   const nextConfig: PathConfig = changed
     ? {
-      ...pathConfig,
-      nodes: repairedNodes,
-      edges: repairedEdges,
-      ...(nextUiState ? { uiState: nextUiState } : {}),
-      ...(remappedParserSamples.changed
-        ? { parserSamples: remappedParserSamples.value as PathConfig['parserSamples'] }
-        : {}),
-      ...(remappedUpdaterSamples.changed
-        ? { updaterSamples: remappedUpdaterSamples.value as PathConfig['updaterSamples'] }
-        : {}),
-      ...(remappedRuntimeState.changed
-        ? { runtimeState: remappedRuntimeState.runtimeState }
-        : {}),
-    }
+        ...pathConfig,
+        nodes: repairedNodes,
+        edges: repairedEdges,
+        ...(nextUiState ? { uiState: nextUiState } : {}),
+        ...(remappedParserSamples.changed
+          ? { parserSamples: remappedParserSamples.value as PathConfig['parserSamples'] }
+          : {}),
+        ...(remappedUpdaterSamples.changed
+          ? { updaterSamples: remappedUpdaterSamples.value as PathConfig['updaterSamples'] }
+          : {}),
+        ...(remappedRuntimeState.changed
+          ? { runtimeState: remappedRuntimeState.runtimeState }
+          : {}),
+      }
     : pathConfig;
 
   return {

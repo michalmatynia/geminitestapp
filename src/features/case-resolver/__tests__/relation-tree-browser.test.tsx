@@ -135,7 +135,9 @@ describe('RelationTreeBrowser', () => {
   });
 
   it('rejects row-body drag start and allows drag start from handle only', async () => {
-    const rows = [createRow({ fileId: 'file-1', name: 'Doc 1', caseId: 'case-1', signature: 'SIG/1' })];
+    const rows = [
+      createRow({ fileId: 'file-1', name: 'Doc 1', caseId: 'case-1', signature: 'SIG/1' }),
+    ];
     const relationTree = buildRelationMasterTree({ rows });
     const dataTransfer = createDataTransfer();
 
@@ -158,7 +160,10 @@ describe('RelationTreeBrowser', () => {
 
     fireEvent.dragStart(fileRow as Element, { dataTransfer });
 
-    expect(dataTransfer.setData).not.toHaveBeenCalledWith('application/case-resolver-file-id', 'file-1');
+    expect(dataTransfer.setData).not.toHaveBeenCalledWith(
+      'application/case-resolver-file-id',
+      'file-1'
+    );
     expect(
       logCaseResolverWorkspaceEventMock.mock.calls.some(
         (call) =>
@@ -172,7 +177,10 @@ describe('RelationTreeBrowser', () => {
     fireEvent.pointerDown(dragHandle);
     fireEvent.dragStart(fileRow as Element, { dataTransfer });
 
-    expect(dataTransfer.setData).toHaveBeenCalledWith('application/case-resolver-file-id', 'file-1');
+    expect(dataTransfer.setData).toHaveBeenCalledWith(
+      'application/case-resolver-file-id',
+      'file-1'
+    );
     expect(
       logCaseResolverWorkspaceEventMock.mock.calls.some(
         (call) =>
@@ -224,7 +232,9 @@ describe('RelationTreeBrowser', () => {
   });
 
   it('supports file selection and single-link action in link mode', () => {
-    const rows = [createRow({ fileId: 'file-9', name: 'Doc 9', caseId: 'case-9', signature: 'SIG/9' })];
+    const rows = [
+      createRow({ fileId: 'file-9', name: 'Doc 9', caseId: 'case-9', signature: 'SIG/9' }),
+    ];
     const relationTree = buildRelationMasterTree({ rows });
     const onToggleFileSelection = vi.fn();
     const onLinkFile = vi.fn();

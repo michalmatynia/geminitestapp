@@ -14,9 +14,9 @@ import {
 type PathActionsInput = Parameters<typeof useAiPathsSettingsPathActions>[0];
 
 vi.mock('@/shared/lib/ai-paths/settings-store-client', async () => {
-  const actual = await vi.importActual<typeof import('@/shared/lib/ai-paths/settings-store-client')>(
-    '@/shared/lib/ai-paths/settings-store-client'
-  );
+  const actual = await vi.importActual<
+    typeof import('@/shared/lib/ai-paths/settings-store-client')
+  >('@/shared/lib/ai-paths/settings-store-client');
   return {
     ...actual,
     fetchAiPathsSettingsByKeysCached: vi.fn(),
@@ -80,8 +80,10 @@ const buildInput = (): {
   const setStrictFlowMode = createDispatchMock<boolean>();
   const setBlockedRunPolicy = createDispatchMock<PathActionsInput['blockedRunPolicy']>();
   const setAiPathsValidation = createDispatchMock<PathActionsInput['aiPathsValidation']>();
-  const setParserSamples = createDispatchMock<Record<string, PathActionsInput['parserSamples'][string]>>();
-  const setUpdaterSamples = createDispatchMock<Record<string, PathActionsInput['updaterSamples'][string]>>();
+  const setParserSamples =
+    createDispatchMock<Record<string, PathActionsInput['parserSamples'][string]>>();
+  const setUpdaterSamples =
+    createDispatchMock<Record<string, PathActionsInput['updaterSamples'][string]>>();
   const setRuntimeState = createDispatchMock<RuntimeState>();
   const setLastRunAt = createDispatchMock<string | null>();
   const setIsPathLocked = createDispatchMock<boolean>();
@@ -190,9 +192,12 @@ describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
       expect(mocks.setActivePathId).toHaveBeenCalledWith(oldPathId);
     });
     expect(mocks.setPathConfigs).not.toHaveBeenCalled();
-    expect(mocks.toast).toHaveBeenCalledWith('Failed to load selected path. Try again in a moment.', {
-      variant: 'error',
-    });
+    expect(mocks.toast).toHaveBeenCalledWith(
+      'Failed to load selected path. Try again in a moment.',
+      {
+        variant: 'error',
+      }
+    );
   });
 
   it('switches path using fallback full-settings lookup when selective fetch fails', async () => {

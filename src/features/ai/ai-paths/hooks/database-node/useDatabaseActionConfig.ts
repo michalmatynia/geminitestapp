@@ -57,10 +57,10 @@ export function useDatabaseActionConfig(args: {
           },
           actionCategory: normalizedCategory,
           action: normalizedAction,
-          operation: args.databaseConfig.useMongoActions === false
-            ? (args.databaseConfig.operation ?? 'query')
-            : args.mapOperationFromActionCategory(normalizedCategory),
-
+          operation:
+            args.databaseConfig.useMongoActions === false
+              ? (args.databaseConfig.operation ?? 'query')
+              : args.mapOperationFromActionCategory(normalizedCategory),
         },
       });
     },
@@ -89,7 +89,6 @@ export function useDatabaseActionConfig(args: {
           actionCategory: normalizedCategory,
           action: nextActionResolved,
           operation: args.mapOperationFromActionCategory(normalizedCategory),
-
         },
       });
     },

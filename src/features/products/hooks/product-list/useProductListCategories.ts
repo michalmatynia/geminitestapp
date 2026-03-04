@@ -43,34 +43,32 @@ export function useProductListCategories({
     [categoryLookupCatalogIds]
   );
 
-  const categoryBatchQuery = createListQueryV2<ProductCategory, Record<string, ProductCategory[]>>(
-    {
+  const categoryBatchQuery = createListQueryV2<ProductCategory, Record<string, ProductCategory[]>>({
+    queryKey: batchCategoryQueryKey,
+    queryFn: ({ signal }): Promise<Record<string, ProductCategory[]>> => {
+      if (categoryLookupCatalogIds.length === 0) return Promise.resolve({});
+      return api.get<Record<string, ProductCategory[]>>(
+        `/api/products/categories/batch?catalogIds=${categoryLookupCatalogIds.map(encodeURIComponent).join(',')}`,
+        {
+          signal,
+          timeout: PRODUCT_CATEGORY_BATCH_TIMEOUT_MS,
+        }
+      );
+    },
+    staleTime: 5 * 60 * 1_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    enabled: categoryLookupCatalogIds.length > 0,
+    meta: {
+      source: 'products.hooks.useProductListCategories',
+      operation: 'list',
+      resource: 'products.categories.batch',
+      domain: 'products',
       queryKey: batchCategoryQueryKey,
-      queryFn: ({ signal }): Promise<Record<string, ProductCategory[]>> => {
-        if (categoryLookupCatalogIds.length === 0) return Promise.resolve({});
-        return api.get<Record<string, ProductCategory[]>>(
-          `/api/products/categories/batch?catalogIds=${categoryLookupCatalogIds.map(encodeURIComponent).join(',')}`,
-          {
-            signal,
-            timeout: PRODUCT_CATEGORY_BATCH_TIMEOUT_MS,
-          }
-        );
-      },
-      staleTime: 5 * 60 * 1_000,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      enabled: categoryLookupCatalogIds.length > 0,
-      meta: {
-        source: 'products.hooks.useProductListCategories',
-        operation: 'list',
-        resource: 'products.categories.batch',
-        domain: 'products',
-        queryKey: batchCategoryQueryKey,
-        tags: ['products', 'categories', 'batch'],
-      },
-    }
-  );
+      tags: ['products', 'categories', 'batch'],
+    },
+  });
 
   const categoryNameById = useMemo((): Map<string, string> => {
     const map = new Map<string, string>();

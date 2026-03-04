@@ -22,20 +22,17 @@ export function useFolderTreeProfiles(): FolderTreeProfilesV2Map {
     settingsStore.get(getFolderTreeProfileV2Key(instance))
   );
 
-  return useMemo(
-    () => {
-      const profiles = {} as FolderTreeProfilesV2Map;
-      folderTreeInstanceValues.forEach((instance: FolderTreeInstance, index: number) => {
-        const raw = profileRawValues[index];
-        profiles[instance] =
-          raw !== undefined
-            ? parseFolderTreeProfileV2Entry(instance, raw)
-            : defaultFolderTreeProfilesV2[instance];
-      });
-      return profiles;
-    },
-    [...profileRawValues]
-  );
+  return useMemo(() => {
+    const profiles = {} as FolderTreeProfilesV2Map;
+    folderTreeInstanceValues.forEach((instance: FolderTreeInstance, index: number) => {
+      const raw = profileRawValues[index];
+      profiles[instance] =
+        raw !== undefined
+          ? parseFolderTreeProfileV2Entry(instance, raw)
+          : defaultFolderTreeProfilesV2[instance];
+    });
+    return profiles;
+  }, [...profileRawValues]);
 }
 
 export function useFolderTreeProfile(instance: FolderTreeInstance): FolderTreeProfileV2 {

@@ -20,7 +20,10 @@ import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
 import { useCmsSlugs, useUpdatePage } from '../../hooks/useCmsQueries';
 import { normalizePageSlugValues } from '../../utils/slug-utils';
 import { isCmsSectionHidden } from '../../utils/page-builder-normalization';
-import { buildHierarchyIndexes, flattenByZonePreorder } from '../../hooks/page-builder/section-hierarchy';
+import {
+  buildHierarchyIndexes,
+  flattenByZonePreorder,
+} from '../../hooks/page-builder/section-hierarchy';
 import {
   usePageBuilderState,
   usePageBuilderDispatch,
@@ -176,7 +179,7 @@ export function PagePreviewPanel(): React.ReactNode {
     (event: React.PointerEvent<HTMLDivElement>): void => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
-      if (target.closest('[data-cms-canvas=\'true\']')) return;
+      if (target.closest("[data-cms-canvas='true']")) return;
       dispatch({ type: 'SELECT_NODE', nodeId: null });
     },
     [dispatch]
@@ -450,13 +453,13 @@ export function PagePreviewPanel(): React.ReactNode {
   const shouldScaleCanvas = isDesktopPreview && canvasWidth !== null && canvasScale < 0.999;
   const scaledCanvasStyle: React.CSSProperties = shouldScaleCanvas
     ? {
-      width: `${canvasWidth}px`,
-      position: 'absolute',
-      left: '50%',
-      top: 0,
-      transform: `translateX(-50%) scale(${canvasScale})`,
-      transformOrigin: 'top center',
-    }
+        width: `${canvasWidth}px`,
+        position: 'absolute',
+        left: '50%',
+        top: 0,
+        transform: `translateX(-50%) scale(${canvasScale})`,
+        transformOrigin: 'top center',
+      }
     : {};
   const scaledCanvasWrapperStyle: React.CSSProperties =
     shouldScaleCanvas && canvasScaledHeight
@@ -466,7 +469,7 @@ export function PagePreviewPanel(): React.ReactNode {
   useEffect((): (() => void) | void => {
     if (!isDesktopPreview) return undefined;
     const viewport = canvasRef.current?.closest(
-      '[data-cms-canvas-viewport=\'true\']'
+      "[data-cms-canvas-viewport='true']"
     ) as HTMLDivElement | null;
     if (!viewport || typeof window === 'undefined') return undefined;
 
@@ -689,7 +692,11 @@ export function PagePreviewPanel(): React.ReactNode {
                                 <PreviewSection section={section} />
                                 {childIds.length > 0 ? (
                                   <div
-                                    className={depth === 1 ? 'ml-4 border-l border-white/10 pl-3' : 'ml-5 border-l border-white/10 pl-3'}
+                                    className={
+                                      depth === 1
+                                        ? 'ml-4 border-l border-white/10 pl-3'
+                                        : 'ml-5 border-l border-white/10 pl-3'
+                                    }
                                   >
                                     {childIds.map((childId: string) =>
                                       renderSectionSubtree(childId, depth + 1)
@@ -702,7 +709,11 @@ export function PagePreviewPanel(): React.ReactNode {
 
                           return (
                             <div key={zone}>
-                              <div>{rootIds.map((sectionId: string) => renderSectionSubtree(sectionId, 1))}</div>
+                              <div>
+                                {rootIds.map((sectionId: string) =>
+                                  renderSectionSubtree(sectionId, 1)
+                                )}
+                              </div>
                             </div>
                           );
                         })}

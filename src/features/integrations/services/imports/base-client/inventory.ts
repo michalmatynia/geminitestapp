@@ -1,16 +1,6 @@
-import { 
-  callBaseApi, 
-  callBaseApiRaw, 
-  BaseApiRawResult 
-} from './core';
-import { 
-  extractInventoryList, 
-  extractWarehouseList 
-} from '../base-client-parsers';
-import { 
-  BaseInventory, 
-  BaseWarehouse 
-} from '@/shared/contracts/integrations';
+import { callBaseApi, callBaseApiRaw, BaseApiRawResult } from './core';
+import { extractInventoryList, extractWarehouseList } from '../base-client-parsers';
+import { BaseInventory, BaseWarehouse } from '@/shared/contracts/integrations';
 
 export async function fetchBaseInventories(token: string): Promise<BaseInventory[]> {
   const methods = ['getInventories', 'getInventory', 'getInventoryList'];

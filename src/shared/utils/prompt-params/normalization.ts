@@ -1,7 +1,4 @@
-import { 
-  segmentizeJsLikeText, 
-  Segment 
-} from './scanner';
+import { segmentizeJsLikeText, Segment } from './scanner';
 
 export function normalizeParamsObject(rawObjectText: string): string {
   const segments = segmentizeJsLikeText(rawObjectText);

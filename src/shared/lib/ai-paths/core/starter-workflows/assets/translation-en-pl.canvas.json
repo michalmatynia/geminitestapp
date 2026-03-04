@@ -25,16 +25,8 @@
         "x": 80,
         "y": 180
       },
-      "inputs": [
-        "entityJson",
-        "context"
-      ],
-      "outputs": [
-        "bundle",
-        "description_en",
-        "parameters",
-        "entityId"
-      ],
+      "inputs": ["entityJson", "context"],
+      "outputs": ["bundle", "description_en", "parameters", "entityId"],
       "config": {
         "parser": {
           "mappings": {
@@ -55,17 +47,8 @@
         "x": 380,
         "y": 120
       },
-      "inputs": [
-        "value",
-        "prompt",
-        "regexCallback"
-      ],
-      "outputs": [
-        "grouped",
-        "matches",
-        "value",
-        "aiPrompt"
-      ],
+      "inputs": ["value", "prompt", "regexCallback"],
+      "outputs": ["grouped", "matches", "value", "aiPrompt"],
       "config": {
         "regex": {
           "pattern": "\\{[\\s\\S]*\\}",
@@ -84,17 +67,8 @@
         "x": 380,
         "y": 280
       },
-      "inputs": [
-        "value",
-        "prompt",
-        "regexCallback"
-      ],
-      "outputs": [
-        "grouped",
-        "matches",
-        "value",
-        "aiPrompt"
-      ],
+      "inputs": ["value", "prompt", "regexCallback"],
+      "outputs": ["grouped", "matches", "value", "aiPrompt"],
       "config": {
         "regex": {
           "pattern": "\\{[\\s\\S]*\\}",
@@ -113,18 +87,8 @@
         "x": 760,
         "y": 200
       },
-      "inputs": [
-        "entityId",
-        "entityType",
-        "value",
-        "result",
-        "bundle",
-        "context"
-      ],
-      "outputs": [
-        "result",
-        "bundle"
-      ],
+      "inputs": ["entityId", "entityType", "value", "result", "bundle", "context"],
+      "outputs": ["result", "bundle"],
       "config": {
         "database": {
           "operation": "update",

@@ -1,13 +1,13 @@
 import { type QueryKey } from '@tanstack/react-query';
-import {
-  QueryOptionsWithoutCore,
-  InfiniteQueryOptionsWithoutCore,
-} from './types';
+import { QueryOptionsWithoutCore, InfiniteQueryOptionsWithoutCore } from './types';
 
 export const DEFAULT_STALE_TIME_MS = 5 * 60 * 1000;
 const MIN_REFETCH_INTERVAL_MS = 1;
 
-export type AnyRefetchIntervalOption = number | false | ((query: unknown) => number | false | undefined);
+export type AnyRefetchIntervalOption =
+  | number
+  | false
+  | ((query: unknown) => number | false | undefined);
 
 type QueryLikeWithEnabledOption = {
   options?: {
@@ -106,8 +106,8 @@ export const applyInfiniteQueryRuntimeGuards = <
   TQueryKey extends QueryKey,
   TPageParam,
 >(
-    options: InfiniteQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey, TPageParam>
-  ): InfiniteQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey, TPageParam> => {
+  options: InfiniteQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey, TPageParam>
+): InfiniteQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey, TPageParam> => {
   const { refetchInterval, ...rest } = options;
   const guardedRefetchInterval = guardRefetchInterval(
     refetchInterval as unknown as AnyRefetchIntervalOption | undefined

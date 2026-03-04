@@ -37,15 +37,21 @@ export function StatusToggle({
   const getBadgeVariant = (): VariantProps<typeof badgeVariants>['variant'] => {
     if (enabled) {
       switch (enabledVariant) {
-        case 'cyan': return 'cyan';
-        case 'blue': return 'processing';
-        default: return 'active';
+        case 'cyan':
+          return 'cyan';
+        case 'blue':
+          return 'processing';
+        default:
+          return 'active';
       }
     } else {
       switch (disabledVariant) {
-        case 'slate': return 'removed';
-        case 'gray': return 'neutral';
-        default: return 'failed';
+        case 'slate':
+          return 'removed';
+        case 'gray':
+          return 'neutral';
+        default:
+          return 'failed';
       }
     }
   };

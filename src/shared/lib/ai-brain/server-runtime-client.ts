@@ -9,10 +9,7 @@ import type {
 import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/shared/contracts/image-studio';
 import { configurationError, operationFailedError } from '@/shared/errors/app-error';
 
-import {
-  inferBrainModelVendor,
-  normalizeBrainModelId,
-} from './model-vendor';
+import { inferBrainModelVendor, normalizeBrainModelId } from './model-vendor';
 import type { BrainModelVendor } from '@/shared/contracts/ai-brain';
 import { resolveOllamaBaseUrl } from './ollama-config';
 import { readStoredSettingValue } from './server';
@@ -260,10 +257,10 @@ export const runBrainChatCompletion = async (input: {
       body: JSON.stringify({
         ...(systemPrompt
           ? {
-            systemInstruction: {
-              parts: [{ text: systemPrompt }],
-            },
-          }
+              systemInstruction: {
+                parts: [{ text: systemPrompt }],
+              },
+            }
           : {}),
         contents,
         generationConfig: {

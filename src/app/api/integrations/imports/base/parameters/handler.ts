@@ -435,8 +435,8 @@ export async function postBaseImportParametersHandler(
   const connection = normalizedConnectionId
     ? connections.find((entry: (typeof connections)[number]) => entry.id === normalizedConnectionId)
     : connections.find(
-      (entry: (typeof connections)[number]) => entry.baseApiToken || entry.password
-    );
+        (entry: (typeof connections)[number]) => entry.baseApiToken || entry.password
+      );
   if (!connection?.baseApiToken && !connection?.password) {
     throw badRequestError('No Base API token configured.');
   }
@@ -455,12 +455,12 @@ export async function postBaseImportParametersHandler(
   const productIds: string[] = data.productId
     ? [data.productId]
     : extractProductIdsFromListPayload(
-      await callBaseApi(token, 'getInventoryProductsList', {
-        inventory_id: data.inventoryId,
-        limit: sampleSize,
-      }),
-      sampleSize
-    );
+        await callBaseApi(token, 'getInventoryProductsList', {
+          inventory_id: data.inventoryId,
+          limit: sampleSize,
+        }),
+        sampleSize
+      );
   if (productIds.length === 0) {
     throw notFoundError('No products found in selected inventory.', {
       inventoryId: data.inventoryId,
@@ -474,9 +474,9 @@ export async function postBaseImportParametersHandler(
   const explicitProductId = data.productId?.trim() ?? '';
   const matchedProducts = explicitProductId
     ? (() => {
-      const product = extractProductRecord(payload, explicitProductId);
-      return product ? [{ record: product, productId: explicitProductId }] : [];
-    })()
+        const product = extractProductRecord(payload, explicitProductId);
+        return product ? [{ record: product, productId: explicitProductId }] : [];
+      })()
     : extractProductRecords(payload, productIds);
 
   if (matchedProducts.length === 0) {
@@ -544,11 +544,11 @@ export async function getBaseImportParametersHandler(
   return NextResponse.json(
     cache
       ? {
-        inventoryId: cache.inventoryId,
-        productId: cache.productId,
-        keys: cache.keys,
-        values: cache.values,
-      }
+          inventoryId: cache.inventoryId,
+          productId: cache.productId,
+          keys: cache.keys,
+          values: cache.values,
+        }
       : { keys: [], values: {} }
   );
 }

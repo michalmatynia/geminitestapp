@@ -276,9 +276,7 @@ export function JobQueueOverview({
                     </div>
                   </>
                 ) : (
-                  <div className='mt-1 text-[10px] text-gray-400'>
-                    Runtime analytics disabled.
-                  </div>
+                  <div className='mt-1 text-[10px] text-gray-400'>Runtime analytics disabled.</div>
                 )}
               </div>
             </div>

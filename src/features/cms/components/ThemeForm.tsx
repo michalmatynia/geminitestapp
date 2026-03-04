@@ -2,17 +2,8 @@
 
 import React, { useState } from 'react';
 
-import type {
-  CmsThemeColors,
-  CmsThemeTypography,
-  CmsThemeSpacing,
-} from '@/shared/contracts/cms';
-import {
-  Input,
-  FormSection,
-  FormField,
-  FormActions,
-} from '@/shared/ui';
+import type { CmsThemeColors, CmsThemeTypography, CmsThemeSpacing } from '@/shared/contracts/cms';
+import { Input, FormSection, FormField, FormActions } from '@/shared/ui';
 
 export type ThemeFormSubmitData = {
   name: string;
@@ -66,7 +57,9 @@ export function ThemeForm({
 }: ThemeFormProps): React.JSX.Element {
   const [name, setName] = useState(initialData?.name ?? '');
   const [colors, setColors] = useState<CmsThemeColors>(initialData?.colors ?? DEFAULT_COLORS);
-  const [typography, setTypography] = useState<CmsThemeTypography>(initialData?.typography ?? DEFAULT_TYPOGRAPHY);
+  const [typography, setTypography] = useState<CmsThemeTypography>(
+    initialData?.typography ?? DEFAULT_TYPOGRAPHY
+  );
   const [spacing, setSpacing] = useState<CmsThemeSpacing>(initialData?.spacing ?? DEFAULT_SPACING);
 
   const handleSubmit = (e: React.FormEvent): void => {

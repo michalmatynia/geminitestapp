@@ -1,8 +1,5 @@
 import { ObjectId, type Filter } from 'mongodb';
-import {
-  CategoryMapping,
-  CategoryMappingWithDetails,
-} from '@/shared/contracts/integrations';
+import { CategoryMapping, CategoryMappingWithDetails } from '@/shared/contracts/integrations';
 
 export type MongoCategoryMappingDoc = {
   _id: string | ObjectId;
@@ -60,7 +57,9 @@ export const buildMongoIdFilter = (id: string): Filter<MongoCategoryMappingDoc> 
   return { _id: id } as Filter<MongoCategoryMappingDoc>;
 };
 
-export const mapMongoCategoryMappingToRecord = (record: MongoCategoryMappingDoc): CategoryMapping => ({
+export const mapMongoCategoryMappingToRecord = (
+  record: MongoCategoryMappingDoc
+): CategoryMapping => ({
   id: record._id.toString(),
   connectionId: record.connectionId,
   externalCategoryId: record.externalCategoryId,

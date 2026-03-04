@@ -1,14 +1,10 @@
- 
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { runAgentBrowserControl, runAgentTool } from '@/features/ai/agent-runtime/tools';
-import { 
-  PlanStep, 
-  PlannerMeta 
-} from '@/shared/contracts/agent-runtime';
+import { PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 import unknownToErrorMessage from '@/shared/utils/error-formatting';
-import { 
-  appendTaskTypeToPrompt, 
-  isExtractionStep 
+import {
+  appendTaskTypeToPrompt,
+  isExtractionStep,
 } from '@/features/ai/agent-runtime/planning/utils';
 import { Browser, BrowserContext } from 'playwright';
 
@@ -23,24 +19,24 @@ export async function executeTool(args: {
   runHeadless: boolean | undefined;
   sharedBrowser: Browser | null;
   sharedContext: BrowserContext | null;
-}): Promise<{ 
-  toolResult: Awaited<ReturnType<typeof runAgentTool>> | null; 
-  toolError: unknown; 
+}): Promise<{
+  toolResult: Awaited<ReturnType<typeof runAgentTool>> | null;
+  toolError: unknown;
   toolName: string;
   shouldRunExtraction: boolean;
   shouldInitializeBrowser: boolean;
 }> {
-  const { 
-    step, 
-    stepIndex, 
-    hasBrowserContext, 
-    runPrompt, 
-    taskType, 
-    runId, 
-    agentBrowser, 
-    runHeadless, 
-    sharedBrowser, 
-    sharedContext 
+  const {
+    step,
+    stepIndex,
+    hasBrowserContext,
+    runPrompt,
+    taskType,
+    runId,
+    agentBrowser,
+    runHeadless,
+    sharedBrowser,
+    sharedContext,
   } = args;
 
   const shouldInitializeBrowser = !hasBrowserContext || stepIndex === 0;
@@ -51,7 +47,7 @@ export async function executeTool(args: {
   );
   const toolName = shouldInitializeBrowser || shouldRunExtraction ? 'playwright' : 'snapshot';
   const toolStart = Date.now();
-  
+
   const toolContext = {
     type: 'tool-execution',
     toolName,
@@ -62,7 +58,7 @@ export async function executeTool(args: {
   };
 
   await logAgentAudit(runId, 'info', 'Tool execution started.', toolContext);
-  
+
   const toolTimeoutId = setTimeout(() => {
     void logAgentAudit(runId, 'warning', 'Tool execution taking longer than expected.', {
       ...toolContext,
@@ -72,33 +68,33 @@ export async function executeTool(args: {
 
   let toolResult: Awaited<ReturnType<typeof runAgentTool>> | null = null;
   let toolError: unknown = null;
-  
+
   try {
     toolResult =
       shouldInitializeBrowser || shouldRunExtraction
         ? await runAgentTool(
-          {
-            name: 'playwright',
-            input: {
-              prompt: toolPrompt,
-              browser: agentBrowser || 'chromium',
-              runId,
-              ...(typeof runHeadless === 'boolean' && {
-                runHeadless: runHeadless,
-              }),
-              stepId: step.id,
-              stepLabel: step.title,
+            {
+              name: 'playwright',
+              input: {
+                prompt: toolPrompt,
+                browser: agentBrowser || 'chromium',
+                runId,
+                ...(typeof runHeadless === 'boolean' && {
+                  runHeadless: runHeadless,
+                }),
+                stepId: step.id,
+                stepLabel: step.title,
+              },
             },
-          },
-          sharedBrowser ?? undefined,
-          sharedContext ?? undefined
-        )
+            sharedBrowser ?? undefined,
+            sharedContext ?? undefined
+          )
         : await runAgentBrowserControl({
-          runId,
-          action: 'snapshot',
-          stepId: step.id,
-          stepLabel: step.title,
-        });
+            runId,
+            action: 'snapshot',
+            stepId: step.id,
+            stepLabel: step.title,
+          });
   } catch (error) {
     toolError = error;
   } finally {

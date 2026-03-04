@@ -57,7 +57,9 @@ export interface SmartPrefetchResult {
 }
 
 // Smart prefetching based on user behavior
-export function useSmartPrefetch(options?: { domain?: TanstackFactoryDomain }): SmartPrefetchResult {
+export function useSmartPrefetch(options?: {
+  domain?: TanstackFactoryDomain;
+}): SmartPrefetchResult {
   const queryClient = useQueryClient();
   const domain = options?.domain ?? 'global';
 

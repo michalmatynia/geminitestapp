@@ -90,8 +90,7 @@ const normalizeContext = (
   }
   if (
     otelContext.otelTraceId &&
-    (typeof normalized['otelTraceId'] !== 'string' ||
-      normalized['otelTraceId'].trim().length === 0)
+    (typeof normalized['otelTraceId'] !== 'string' || normalized['otelTraceId'].trim().length === 0)
   ) {
     normalized['otelTraceId'] = otelContext.otelTraceId;
   }

@@ -10,7 +10,9 @@ import type { BaseFieldMapping } from '../helpers';
 
 type BuildBaseProductDataOptions = NonNullable<Parameters<typeof buildBaseProductData>[3]>;
 type ExportProductToBaseOptions = NonNullable<Parameters<typeof exportProductToBase>[5]>;
-type ExportProductImagesToBaseOptions = NonNullable<Parameters<typeof exportProductImagesToBase>[4]>;
+type ExportProductImagesToBaseOptions = NonNullable<
+  Parameters<typeof exportProductImagesToBase>[4]
+>;
 type ExportMappings = NonNullable<Parameters<typeof buildBaseProductData>[1]>;
 type ExportResult = Awaited<ReturnType<typeof exportProductToBase>>;
 type BaseExportPayload = Awaited<ReturnType<typeof buildBaseProductData>>;
@@ -50,7 +52,9 @@ const collectExportFields = (exportData: BaseExportPayload): string[] =>
   });
 
 const withoutStockMappings = (mappings: ExportMappings): ExportMappings =>
-  mappings.filter((mapping: BaseFieldMapping) => !mapping.sourceKey.trim().toLowerCase().startsWith('stock'));
+  mappings.filter(
+    (mapping: BaseFieldMapping) => !mapping.sourceKey.trim().toLowerCase().startsWith('stock')
+  );
 
 export async function executeBaseExport(args: {
   imagesOnly: boolean;
@@ -89,9 +93,12 @@ export async function executeBaseExport(args: {
     product,
     canRetryWrite,
   } = args;
-  let { effectiveMappings, warehouseId, exportImagesAsBase64, imageBase64Mode, imageTransform } = args;
+  let { effectiveMappings, warehouseId, exportImagesAsBase64, imageBase64Mode, imageTransform } =
+    args;
 
-  const buildSharedOptions = (includeStockWithoutWarehouse: boolean): BuildBaseProductDataOptions => ({
+  const buildSharedOptions = (
+    includeStockWithoutWarehouse: boolean
+  ): BuildBaseProductDataOptions => ({
     imageBaseUrl,
     includeStockWithoutWarehouse,
     ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),

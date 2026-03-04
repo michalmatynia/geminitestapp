@@ -35,9 +35,7 @@ import {
   reassemblePromptSegments,
   updatePromptExploderDocument,
 } from '../parser';
-import {
-  type PromptExploderParserTuningRuleDraft,
-} from '@/shared/contracts/prompt-exploder';
+import { type PromptExploderParserTuningRuleDraft } from '@/shared/contracts/prompt-exploder';
 import {
   parsePromptExploderLibrary,
   PROMPT_EXPLODER_LIBRARY_KEY,
@@ -48,10 +46,7 @@ import {
   resolvePromptValidationRuntime,
 } from '../prompt-validation-orchestrator';
 import { leavePromptRuntimeScope, tryEnterPromptRuntimeScope } from '../runtime-load-shedder';
-import {
-  parsePromptExploderSettingsResult,
-  PROMPT_EXPLODER_SETTINGS_KEY,
-} from '../settings';
+import { parsePromptExploderSettingsResult, PROMPT_EXPLODER_SETTINGS_KEY } from '../settings';
 import {
   buildCaseResolverSegmentCaptureRules,
   resolveCaseResolverBridgePayloadForTransfer,
@@ -404,17 +399,17 @@ export function usePromptExploderState() {
       );
       const nextDocument = orchestratorEnabled
         ? explodePromptWithValidationRuntime({
-          prompt: trimmed,
-          runtime: runtimeResolution.runtime,
-          similarityThreshold,
-        })
+            prompt: trimmed,
+            runtime: runtimeResolution.runtime,
+            similarityThreshold,
+          })
         : explodePromptText({
-          prompt: trimmed,
-          validationRules: runtimeResolution.runtime.runtimeValidationRules,
-          learnedTemplates: runtimeResolution.runtime.runtimeLearnedTemplates,
-          similarityThreshold,
-          validationScope: runtimeResolution.runtime.identity.scope,
-        });
+            prompt: trimmed,
+            validationRules: runtimeResolution.runtime.runtimeValidationRules,
+            learnedTemplates: runtimeResolution.runtime.runtimeLearnedTemplates,
+            similarityThreshold,
+            validationScope: runtimeResolution.runtime.identity.scope,
+          });
       lastExplosionRef.current = {
         signature: runtimeSignature,
         document: nextDocument,

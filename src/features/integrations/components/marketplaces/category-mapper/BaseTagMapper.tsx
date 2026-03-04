@@ -34,7 +34,7 @@ export function BaseTagMapper(): React.JSX.Element {
       internalColumnHeader: 'Local Tag',
       externalColumnHeader: 'Marketplace Tag',
       internalItems: tagsQuery.data ?? [],
-      externalItems: (externalTagsQuery.data ?? []),
+      externalItems: externalTagsQuery.data ?? [],
       currentMappings: mappingsQuery.data ?? [],
       getInternalId: (item) => item.id,
       getInternalLabel: (item) => item.name,

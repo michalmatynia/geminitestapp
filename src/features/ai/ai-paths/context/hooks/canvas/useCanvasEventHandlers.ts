@@ -73,12 +73,11 @@ export function useCanvasEventHandlers(args: {
     (event: WheelLikeEvent): void => {
       const zoomFactor = 1 - event.deltaY * 0.0015;
       const targetScale = clampScale(latestScaleRef.current * zoomFactor);
-      const hasFiniteClient =
-        Number.isFinite(event.clientX) && Number.isFinite(event.clientY);
+      const hasFiniteClient = Number.isFinite(event.clientX) && Number.isFinite(event.clientY);
       const anchor =
         resolveViewportPointFromClient(
-          hasFiniteClient ? event.clientX : resolveViewportCenter()?.x ?? 0,
-          hasFiniteClient ? event.clientY : resolveViewportCenter()?.y ?? 0
+          hasFiniteClient ? event.clientX : (resolveViewportCenter()?.x ?? 0),
+          hasFiniteClient ? event.clientY : (resolveViewportCenter()?.y ?? 0)
         ) ?? null;
       const targetView = nav.getZoomTargetView(targetScale, anchor);
       nav.setViewClamped(targetView);

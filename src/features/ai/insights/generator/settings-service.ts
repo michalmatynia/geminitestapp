@@ -76,7 +76,10 @@ export const readInsightSettingValue = async (key: string): Promise<string | nul
   }
 };
 
-export const parseBooleanSetting = (value: string | null | undefined, fallback: boolean): boolean => {
+export const parseBooleanSetting = (
+  value: string | null | undefined,
+  fallback: boolean
+): boolean => {
   if (value == null) return fallback;
   return value === 'true' || value === '1';
 };

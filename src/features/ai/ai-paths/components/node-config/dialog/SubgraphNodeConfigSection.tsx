@@ -18,14 +18,14 @@ export function SubgraphNodeConfigSection(): React.JSX.Element | null {
 
   const handleFieldChange =
     (field: keyof SubgraphConfig) =>
-      (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
-        updateSelectedNodeConfig({
-          subgraph: {
-            ...subgraphConfig,
-            [field]: event.target.value,
-          },
-        });
-      };
+    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
+      updateSelectedNodeConfig({
+        subgraph: {
+          ...subgraphConfig,
+          [field]: event.target.value,
+        },
+      });
+    };
 
   return (
     <div className='space-y-4'>
@@ -85,8 +85,8 @@ export function SubgraphNodeConfigSection(): React.JSX.Element | null {
           onChange={handleFieldChange('outputMappingJson')}
         />
         <p className='mt-1 text-[11px] text-gray-500'>
-          Optional mapping from subgraph outputs back to this node&apos;s outputs. Keys are
-          subgraph output port names, values are local output port names.
+          Optional mapping from subgraph outputs back to this node&apos;s outputs. Keys are subgraph
+          output port names, values are local output port names.
         </p>
         <p className='mt-1 text-[11px] text-amber-300'>
           Note: Subgraph execution is not yet supported in the local runtime. This configuration is
@@ -96,4 +96,3 @@ export function SubgraphNodeConfigSection(): React.JSX.Element | null {
     </div>
   );
 }
-

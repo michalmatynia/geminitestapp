@@ -7,15 +7,9 @@ import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { pruneProductStudioSourceSlotsForProject } from '@/shared/lib/products/services/product-studio-config';
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import {
-  ImageStudioSlotRecord,
-  SlotGenerationMetadata,
-} from '@/shared/contracts/image-studio';
+import { ImageStudioSlotRecord, SlotGenerationMetadata } from '@/shared/contracts/image-studio';
 
-export type {
-  ImageStudioSlotRecord,
-  SlotGenerationMetadata,
-};
+export type { ImageStudioSlotRecord, SlotGenerationMetadata };
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 

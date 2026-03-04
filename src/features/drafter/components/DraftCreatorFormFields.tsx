@@ -297,7 +297,9 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
                 <Input
                   id='ean'
                   value={ean}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setEan(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    setEan(e.target.value)
+                  }
                   placeholder='Enter EAN'
                 />
               ) : null}
@@ -305,7 +307,9 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
                 <Input
                   id='gtin'
                   value={gtin}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setGtin(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    setGtin(e.target.value)
+                  }
                   placeholder='Enter GTIN'
                 />
               ) : null}
@@ -313,7 +317,9 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
                 <Input
                   id='asin'
                   value={asin}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setAsin(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    setAsin(e.target.value)
+                  }
                   placeholder='Enter ASIN'
                 />
               ) : null}

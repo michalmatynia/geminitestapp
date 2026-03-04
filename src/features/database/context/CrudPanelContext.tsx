@@ -33,4 +33,3 @@ export function CrudPanelProvider({
 }): React.JSX.Element {
   return <CrudPanelContext.Provider value={value}>{children}</CrudPanelContext.Provider>;
 }
-

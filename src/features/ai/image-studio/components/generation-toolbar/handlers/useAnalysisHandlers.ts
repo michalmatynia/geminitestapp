@@ -8,9 +8,7 @@ import {
   type ImageStudioAnalysisResponse,
 } from '../../../contracts/analysis';
 import type { AnalysisResult } from '../../analysis/analysis-types';
-import {
-  analyzeCanvasImageObject,
-} from '../GenerationToolbarImageUtils';
+import { analyzeCanvasImageObject } from '../GenerationToolbarImageUtils';
 import {
   saveImageStudioAnalysisPlanSnapshot,
   type ImageStudioAnalysisSharedLayout,
@@ -40,9 +38,9 @@ export function useAnalysisHandlers(
     centerLayoutPayload,
     autoScaleLayoutPayload,
   } = state;
-  
+
   const abortControllerRef = useRef<AbortController | null>(null);
-  
+
   const toSharedLayout = (layout: AnalysisResult['layout']): ImageStudioAnalysisSharedLayout => {
     const splitAxes = Math.abs(layout.paddingXPercent - layout.paddingYPercent) >= 0.01;
     return {
@@ -59,7 +57,7 @@ export function useAnalysisHandlers(
       detection: layout.detection,
     };
   };
-  
+
   const runAnalysis = async (
     mode: 'server_analysis_v1' | 'client_analysis_v1',
     layout: ImageStudioCenterLayoutConfig
@@ -73,21 +71,21 @@ export function useAnalysisHandlers(
       toast('Select a slot image before analysis.', { variant: 'info' });
       return;
     }
-  
+
     const sourceSignature = state.workingSourceSignature;
-  
+
     if (!sourceSignature) {
       toast('Unable to capture source signature for analysis. Reselect slot image and retry.', {
         variant: 'info',
       });
       return;
     }
-  
+
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
     setAnalysisBusy(true);
     setAnalysisStatus('resolving');
-  
+
     try {
       let nextResult: AnalysisResult;
       if (mode === 'client_analysis_v1') {
@@ -123,9 +121,9 @@ export function useAnalysisHandlers(
           authoritativeSource: response.authoritativeSource,
         };
       }
-  
+
       const sharedLayout = toSharedLayout(nextResult.layout);
-  
+
       if (activeProjectId) {
         saveImageStudioAnalysisPlanSnapshot(activeProjectId, {
           slotId,
@@ -155,9 +153,7 @@ export function useAnalysisHandlers(
       applyAnalysisLayoutToAutoScaler(sharedLayout, 'manual');
 
       const isClient = state.centerMode.startsWith('client_');
-      const preferredCenterMode = isClient
-        ? 'client_object_layout_v1'
-        : 'server_object_layout_v1';
+      const preferredCenterMode = isClient ? 'client_object_layout_v1' : 'server_object_layout_v1';
 
       // Handle center mode switching if needed
       if (

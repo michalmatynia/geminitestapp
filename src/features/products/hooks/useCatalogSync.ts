@@ -4,10 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { Catalog, PriceGroupWithDetails } from '@/shared/contracts/products';
-import type {
-  LanguageRecord,
-  CurrencyRecord,
-} from '@/shared/contracts/internationalization';
+import type { LanguageRecord, CurrencyRecord } from '@/shared/contracts/internationalization';
 import { api } from '@/shared/lib/api-client';
 import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
@@ -286,10 +283,10 @@ export function useCatalogSync(
     const scopedLanguages =
       allowedIds.length > 0
         ? languages.filter((lang) => {
-          const idKey = String(lang.id).trim().toUpperCase();
-          const codeKey = String(lang.code).trim().toUpperCase();
-          return normalizedAllowed.has(idKey) || normalizedAllowed.has(codeKey);
-        })
+            const idKey = String(lang.id).trim().toUpperCase();
+            const codeKey = String(lang.code).trim().toUpperCase();
+            return normalizedAllowed.has(idKey) || normalizedAllowed.has(codeKey);
+          })
         : languages;
 
     const seen = new Set<string>();
@@ -320,11 +317,11 @@ export function useCatalogSync(
     const defaultLanguageId = catalog?.defaultLanguageId ?? null;
     const defaultLang = defaultLanguageId
       ? languages.find((lang) => {
-        const value = String(defaultLanguageId).trim().toUpperCase();
-        const idKey = String(lang.id).trim().toUpperCase();
-        const codeKey = String(lang.code).trim().toUpperCase();
-        return value === idKey || value === codeKey;
-      })
+          const value = String(defaultLanguageId).trim().toUpperCase();
+          const idKey = String(lang.id).trim().toUpperCase();
+          const codeKey = String(lang.code).trim().toUpperCase();
+          return value === idKey || value === codeKey;
+        })
       : null;
     const defaultOption = defaultLang
       ? supportedLanguageMap[defaultLang.code?.trim().toUpperCase() || '']

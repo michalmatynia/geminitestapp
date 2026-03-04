@@ -132,10 +132,7 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
       className='p-4'
       actions={
         <div className='flex items-center gap-2'>
-          <StatusBadge
-            status={activeRun.status}
-            className='font-bold'
-          />
+          <StatusBadge status={activeRun.status} className='font-bold' />
           <Button
             type='button'
             variant='secondary'

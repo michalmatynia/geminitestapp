@@ -19,16 +19,13 @@ const parsePositiveInt = (value: string | undefined, fallback: number): number =
 // ---------------------------------------------------------------------------
 
 const POOL_LOG_COOLDOWN_MS = 30_000; // suppress repeated events of the same type
-const SLOW_COMMAND_THRESHOLD_MS = parsePositiveInt(
-  process.env['MONGODB_SLOW_COMMAND_MS'],
-  3_000
-);
+const SLOW_COMMAND_THRESHOLD_MS = parsePositiveInt(process.env['MONGODB_SLOW_COMMAND_MS'], 3_000);
 const MONITOR_COMMANDS = process.env['MONGODB_MONITOR_COMMANDS'] === 'true';
 
 const poolLoggedAt = new Map<string, number>();
 const shouldEmit = (key: string): boolean => {
   const now = Date.now();
-  if ((now - (poolLoggedAt.get(key) ?? 0)) < POOL_LOG_COOLDOWN_MS) return false;
+  if (now - (poolLoggedAt.get(key) ?? 0) < POOL_LOG_COOLDOWN_MS) return false;
   poolLoggedAt.set(key, now);
   return true;
 };
@@ -39,9 +36,7 @@ const mongoLog = (
   context: Record<string, unknown>
 ): void => {
   void import('@/shared/lib/observability/system-logger')
-    .then(({ logSystemEvent }) =>
-      logSystemEvent({ level, source: 'mongodb', message, context })
-    )
+    .then(({ logSystemEvent }) => logSystemEvent({ level, source: 'mongodb', message, context }))
     .catch(() => {});
 };
 
@@ -83,16 +78,19 @@ const attachMongoObservability = (client: MongoClient): void => {
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (client as any).on('connectionClosed', (e: { connectionId: number; reason: string; address: string }) => {
-    const key = `connClosed:${e.address}:${e.reason}`;
-    if (!shouldEmit(key)) return;
-    mongoLog('info', `MongoDB connection closed: ${e.reason}`, {
-      event: 'connectionClosed',
-      connectionId: e.connectionId,
-      reason: e.reason,
-      address: e.address,
-    });
-  });
+  (client as any).on(
+    'connectionClosed',
+    (e: { connectionId: number; reason: string; address: string }) => {
+      const key = `connClosed:${e.address}:${e.reason}`;
+      if (!shouldEmit(key)) return;
+      mongoLog('info', `MongoDB connection closed: ${e.reason}`, {
+        event: 'connectionClosed',
+        connectionId: e.connectionId,
+        reason: e.reason,
+        address: e.address,
+      });
+    }
+  );
 
   // --- Command monitoring (opt-in via MONGODB_MONITOR_COMMANDS=true) ---
   if (MONITOR_COMMANDS) {

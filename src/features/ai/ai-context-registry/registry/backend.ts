@@ -9,7 +9,10 @@ export type { ContextRegistryBackend };
 // ─── Normalization ────────────────────────────────────────────────────────────
 
 function normalize(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
 }
 
 // ─── CodeFirstRegistryBackend ─────────────────────────────────────────────────
@@ -26,9 +29,7 @@ export class CodeFirstRegistryBackend implements ContextRegistryBackend {
   }
 
   getByIds(ids: string[]): ContextNode[] {
-    return ids
-      .map((id) => this.byId.get(id))
-      .filter((n): n is ContextNode => n !== undefined);
+    return ids.map((id) => this.byId.get(id)).filter((n): n is ContextNode => n !== undefined);
   }
 
   listAll(): ContextNode[] {
@@ -82,9 +83,7 @@ export class CodeFirstRegistryBackend implements ContextRegistryBackend {
         const nodeTags = new Set(node.tags.map(normalize));
         if (!filterTags.every((t) => nodeTags.has(normalize(t)))) continue;
       }
-      const hay = normalize(
-        `${node.id} ${node.name} ${node.description} ${node.tags.join(' ')}`
-      );
+      const hay = normalize(`${node.id} ${node.name} ${node.description} ${node.tags.join(' ')}`);
       let score = 0;
       for (const t of tokens) if (hay.includes(t)) score++;
       scored.push({ node, score });
@@ -98,9 +97,7 @@ export class CodeFirstRegistryBackend implements ContextRegistryBackend {
 
   private buildIndex(nodes: ContextNode[]): void {
     for (const n of nodes) {
-      const hay = normalize(
-        `${n.id} ${n.name} ${n.description} ${n.tags.join(' ')}`
-      );
+      const hay = normalize(`${n.id} ${n.name} ${n.description} ${n.tags.join(' ')}`);
       for (const token of new Set(hay.split(' ').filter(Boolean))) {
         if (!this.inverted.has(token)) this.inverted.set(token, new Set());
         this.inverted.get(token)!.add(n.id);

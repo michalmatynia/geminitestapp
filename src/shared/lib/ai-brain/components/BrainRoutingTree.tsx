@@ -9,11 +9,7 @@ import {
 } from '@/features/foldertree/v2';
 
 import { getBrainCapabilityDefinition } from '../settings';
-import type {
-  AiBrainAssignment,
-  AiBrainCapabilityKey,
-  AiBrainSettings,
-} from '../settings';
+import type { AiBrainAssignment, AiBrainCapabilityKey, AiBrainSettings } from '../settings';
 import { BrainRoutingCapabilityNodeItem } from './BrainRoutingCapabilityNodeItem';
 import { BrainRoutingFeatureNodeItem } from './BrainRoutingFeatureNodeItem';
 import {
@@ -106,7 +102,16 @@ export function BrainRoutingTree({
         />
       );
     },
-    [capabilityByNodeId, effectiveCapabilityAssignments, featureByNodeId, isPending, onEdit, onToggleEnabled, settings.assignments, settings.capabilities]
+    [
+      capabilityByNodeId,
+      effectiveCapabilityAssignments,
+      featureByNodeId,
+      isPending,
+      onEdit,
+      onToggleEnabled,
+      settings.assignments,
+      settings.capabilities,
+    ]
   );
 
   return (

@@ -173,19 +173,19 @@ export const toDbSchemaSnapshot = (schema: SchemaData, syncedAt: string): DbSche
     const schemaSources = schema['sources'];
     const sources = schemaSources
       ? (['mongodb', 'prisma'] as const).reduce(
-        (acc, provider) => {
-          const source = schemaSources[provider] as
+          (acc, provider) => {
+            const source = schemaSources[provider] as
               | { provider: string; collections: CollectionSchema[] }
               | undefined;
-          if (!source) return acc;
-          acc[provider] = {
-            provider: source.provider as 'mongodb' | 'prisma',
-            collections: source.collections.map(toDbSchemaSnapshotSourceCollection),
-          };
-          return acc;
-        },
+            if (!source) return acc;
+            acc[provider] = {
+              provider: source.provider as 'mongodb' | 'prisma',
+              collections: source.collections.map(toDbSchemaSnapshotSourceCollection),
+            };
+            return acc;
+          },
           {} as NonNullable<DbSchemaSnapshot['sources']>
-      )
+        )
       : undefined;
 
     return {

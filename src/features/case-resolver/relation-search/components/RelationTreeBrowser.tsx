@@ -8,7 +8,10 @@ import {
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree/v2';
 import { useMasterFolderTreeSearch } from '@/features/foldertree/v2/search';
-import type { MasterTreeDropPosition, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+import type {
+  MasterTreeDropPosition,
+  MasterTreeNode,
+} from '@/shared/utils/master-folder-tree-contract';
 import {
   defaultFolderTreeProfilesV2,
   resolveFolderTreeMultiSelectConfig,
@@ -18,11 +21,7 @@ import {
 import { logCaseResolverWorkspaceEvent } from '../../workspace-persistence';
 import { RelationTreeNodeItem } from './RelationTreeNodeItem';
 import { RelationTreeNodeRuntimeProvider } from './RelationTreeNodeRuntimeContext';
-import type {
-  RelationBrowserMode,
-  RelationTreeInstance,
-  RelationTreeLookup,
-} from '../types';
+import type { RelationBrowserMode, RelationTreeInstance, RelationTreeLookup } from '../types';
 
 const DRAG_FILE_ID_TYPE = 'application/case-resolver-file-id';
 
@@ -42,7 +41,9 @@ type RelationTreeBrowserProps = {
   emptyLabel?: string | undefined;
 };
 
-const resolveNodeTypeFromMetadata = (node: FolderTreeViewportRenderNodeInput['node']): 'case' | 'folder' | 'file' => {
+const resolveNodeTypeFromMetadata = (
+  node: FolderTreeViewportRenderNodeInput['node']
+): 'case' | 'folder' | 'file' => {
   const raw = String(node.metadata?.['relationNodeType'] ?? '');
   if (raw === 'file' || raw === 'case' || raw === 'folder') return raw;
   if (node.kind === 'relation_file') return 'file';
@@ -67,10 +68,7 @@ export function RelationTreeBrowser({
 }: RelationTreeBrowserProps): React.JSX.Element {
   const profile = useMemo(() => defaultFolderTreeProfilesV2[instance], [instance]);
   const searchConfig = useMemo(() => resolveFolderTreeSearchConfig(profile), [profile]);
-  const multiSelectConfig = useMemo(
-    () => resolveFolderTreeMultiSelectConfig(profile),
-    [profile]
-  );
+  const multiSelectConfig = useMemo(() => resolveFolderTreeMultiSelectConfig(profile), [profile]);
   const controller = useFolderTreeInstanceV2({
     initialNodes: nodes,
     profile,
@@ -127,10 +125,13 @@ export function RelationTreeBrowser({
     config: searchConfig,
   });
 
-  const handleArmDragHandle = useCallback((fileId: string): void => {
-    if (mode !== 'add_to_node_canvas') return;
-    dragArmedFileIdRef.current = fileId;
-  }, [mode]);
+  const handleArmDragHandle = useCallback(
+    (fileId: string): void => {
+      if (mode !== 'add_to_node_canvas') return;
+      dragArmedFileIdRef.current = fileId;
+    },
+    [mode]
+  );
 
   const canStartDrag = useCallback(
     ({ node }: { node: FolderTreeViewportRenderNodeInput['node'] }): boolean => {
@@ -201,7 +202,9 @@ export function RelationTreeBrowser({
   );
 
   const renderNode = useCallback(
-    (input: FolderTreeViewportRenderNodeInput): React.JSX.Element => <RelationTreeNodeItem {...input} />,
+    (input: FolderTreeViewportRenderNodeInput): React.JSX.Element => (
+      <RelationTreeNodeItem {...input} />
+    ),
     []
   );
 

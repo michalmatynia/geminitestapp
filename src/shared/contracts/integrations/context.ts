@@ -1,9 +1,9 @@
 import type { UseMutationResult } from '@tanstack/react-query';
-import type { 
-  Integration, 
+import type {
+  Integration,
   IntegrationConnection,
   CategoryMappingWithDetails,
-  ExternalCategory
+  ExternalCategory,
 } from './index';
 import type { PlaywrightPersona } from '../playwright';
 import type { CatalogRecord, ProductCategory } from '../products';

@@ -156,7 +156,7 @@ export const handleAdvancedApi: NodeHandler = async ({
     responseText: string;
     status: number;
     ok: boolean;
-    route: any;
+    route: unknown;
     timedOut: boolean;
     networkError: boolean;
     responseData: unknown;
@@ -420,25 +420,32 @@ export const handleAdvancedApi: NodeHandler = async ({
     throw new Error('Advanced API execution failed to produce an envelope');
   }
 
-  const finalEnvelope = {
+  const finalEnvelope: JsonRecord = {
     ...lastEnvelope,
     ...(paginationMode !== 'none' ? { items: aggregateItems, pageCount } : {}),
   };
 
   const outputs = buildMappedOutputs(outputMappings, finalEnvelope);
+  const envelopeStatus =
+    typeof finalEnvelope['status'] === 'number' ? finalEnvelope['status'] : 0;
+  const envelopeOk = finalEnvelope['ok'] === true;
+  const envelopeError =
+    typeof finalEnvelope['error'] === 'string' ? finalEnvelope['error'] : null;
+  const envelopeRoute =
+    typeof finalEnvelope['route'] === 'string' ? finalEnvelope['route'] : null;
 
   return {
     ...outputs,
     value:
-      paginationMode !== 'none' && aggregateMode === 'all_pages'
+      paginationMode !== 'none' && (aggregateMode as string) === 'all_pages'
         ? aggregateItems
-        : finalEnvelope.value,
+        : finalEnvelope['value'],
     bundle: finalEnvelope,
-    status: finalEnvelope.status,
-    ok: finalEnvelope.ok,
-    error: finalEnvelope.error ?? null,
-    success: finalEnvelope.ok,
-    route: finalEnvelope.route,
+    status: envelopeStatus,
+    ok: envelopeOk,
+    error: envelopeError,
+    success: envelopeOk,
+    route: envelopeRoute,
   };
 };
 

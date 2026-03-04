@@ -3,25 +3,14 @@
 import React from 'react';
 import { Copy, GripVertical, Pencil, Trash2 } from 'lucide-react';
 
+import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
 import { StatusBadge, StatusToggle, TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
-import { cn, type MasterTreeNode } from '@/shared/utils';
+import { cn } from '@/shared/utils';
 
 import { fromPatternMasterNodeId } from '../validator-pattern-master-tree';
 import { useValidatorPatternTreeContext } from '../ValidatorPatternTreeContext';
 
-export interface PatternNodeItemProps {
-  node: MasterTreeNode;
-  depth: number;
-  hasChildren: boolean;
-  isExpanded: boolean;
-  isSelected: boolean;
-  isRenaming: boolean;
-  isDragging: boolean;
-  isDropTarget: boolean;
-  dropPosition: 'inside' | 'before' | 'after' | null;
-  select: (event?: React.MouseEvent<HTMLElement>) => void;
-  toggleExpand: () => void;
-}
+export type PatternNodeItemProps = FolderTreeViewportRenderNodeInput;
 
 export function PatternNodeItem({
   node,

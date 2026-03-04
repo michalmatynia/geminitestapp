@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import type { RedisOverviewDto } from '@/shared/contracts/database';
+import type { RedisOverview } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { getRedisClient } from '@/shared/lib/redis';
 
@@ -33,7 +33,7 @@ const getNamespace = (key: string): string => {
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const client = getRedisClient();
   if (!client) {
-    const disabled: RedisOverviewDto = {
+    const disabled: RedisOverview = {
       enabled: false,
       connected: false,
       urlConfigured: Boolean(process.env['REDIS_URL']),
@@ -103,7 +103,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     }))
     .sort((a, b) => b.keyCount - a.keyCount || a.namespace.localeCompare(b.namespace));
 
-  const payload: RedisOverviewDto = {
+  const payload: RedisOverview = {
     enabled: true,
     connected,
     urlConfigured: Boolean(process.env['REDIS_URL']),

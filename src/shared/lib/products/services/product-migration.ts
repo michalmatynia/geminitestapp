@@ -4,8 +4,8 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type {
   CatalogRecord,
-  ProductMigrationDirectionDto as MigrationDirection,
-  ProductMigrationBatchResultDto as MigrationBatchResult,
+  ProductMigrationDirection as MigrationDirection,
+  ProductMigrationBatchResult as MigrationBatchResult,
 } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

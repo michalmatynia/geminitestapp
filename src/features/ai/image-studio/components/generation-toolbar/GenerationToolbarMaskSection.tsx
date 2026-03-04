@@ -4,48 +4,27 @@ import React from 'react';
 import { Button, SelectSimple, ToggleRow } from '@/shared/ui';
 
 import { useGenerationToolbarContext, type MaskAttachMode } from './GenerationToolbarContext';
+import { useGenerationToolbarMaskSectionRuntime } from './GenerationToolbarSectionContexts';
 
-type SelectOption = {
-  value: string;
-  label: string;
-};
-
-type GenerationToolbarMaskSectionProps = {
-  exportMaskCount: number;
-  maskAttachModeOptions: SelectOption[];
-  maskGenerationBusy: boolean;
-  maskGenerationLabel: string;
-  maskGenLoading: boolean;
-  maskGenMode: string;
-  maskInvert: boolean;
-  maskModeOptions: SelectOption[];
-  maskPreviewEnabled: boolean;
-  onAttachMasks: () => void;
-  onGenerateMask: () => void;
-  onMaskGenModeChange: (value: string) => void;
-  onMaskInvertChange: (checked: boolean) => void;
-  onMaskPreviewEnabledChange: (checked: boolean) => void;
-  workingSlotPresent: boolean;
-};
-
-export function GenerationToolbarMaskSection({
-  exportMaskCount,
-  maskAttachModeOptions,
-  maskGenerationBusy,
-  maskGenerationLabel,
-  maskGenLoading,
-  maskGenMode,
-  maskInvert,
-  maskModeOptions,
-  maskPreviewEnabled,
-  onAttachMasks,
-  onGenerateMask,
-  onMaskGenModeChange,
-  onMaskInvertChange,
-  onMaskPreviewEnabledChange,
-  workingSlotPresent,
-}: GenerationToolbarMaskSectionProps): React.JSX.Element {
+export function GenerationToolbarMaskSection(): React.JSX.Element {
   const { maskAttachMode, setMaskAttachMode } = useGenerationToolbarContext();
+  const {
+    exportMaskCount,
+    maskAttachModeOptions,
+    maskGenerationBusy,
+    maskGenerationLabel,
+    maskGenLoading,
+    maskGenMode,
+    maskInvert,
+    maskModeOptions,
+    maskPreviewEnabled,
+    onAttachMasks,
+    onGenerateMask,
+    onMaskGenModeChange,
+    onMaskInvertChange,
+    onMaskPreviewEnabledChange,
+    workingSlotPresent,
+  } = useGenerationToolbarMaskSectionRuntime();
 
   return (
     <div className='rounded border border-border/60 bg-card/40 p-3'>

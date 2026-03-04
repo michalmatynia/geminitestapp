@@ -17,14 +17,14 @@ import {
   Breadcrumbs,
 } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
-import { ThemeForm } from '@/features/cms/components/ThemeForm';
+import { ThemeForm, type ThemeFormSubmitData } from '@/features/cms/components/ThemeForm';
 
 function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.Element {
   const router = useRouter();
   const updateTheme = useUpdateTheme();
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (data: any): Promise<void> => {
+  const handleSubmit = async (data: ThemeFormSubmitData): Promise<void> => {
     const validation = validateFormData(cmsThemeUpdateSchema, data, 'Theme form is invalid.');
     if (!validation.success) {
       setError(validation.firstError);

@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/features/auth/server';
 import { getProductAiJobs, getQueueStatus } from '@/features/jobs/server';
 import type {
-  DatabaseEngineOperationJobDto,
-  DatabaseEngineOperationsJobsDto,
+  DatabaseEngineOperationJob,
+  DatabaseEngineOperationsJobs,
 } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError } from '@/shared/errors/app-error';
@@ -20,7 +20,7 @@ type DatabaseEngineOperationJobRecord = Awaited<ReturnType<typeof getProductAiJo
 const isDatabaseEngineOperationJob = (job: DatabaseEngineOperationJobRecord): boolean =>
   job.jobType === 'db_backup' || job.jobType === 'db_sync';
 
-const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOperationJobDto => {
+const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOperationJob => {
   const payload =
     job.payload && typeof job.payload === 'object'
       ? (job.payload as Record<string, unknown>)
@@ -30,12 +30,12 @@ const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOp
   const rawDbType = payload?.['dbType'];
   const dbType =
     rawDbType === 'mongodb' || rawDbType === 'postgresql'
-      ? (rawDbType as DatabaseEngineOperationJobDto['dbType'])
+      ? (rawDbType as DatabaseEngineOperationJob['dbType'])
       : null;
   const rawDirection = payload?.['direction'];
   const direction =
     rawDirection === 'mongo_to_prisma' || rawDirection === 'prisma_to_mongo'
-      ? (rawDirection as DatabaseEngineOperationJobDto['direction'])
+      ? (rawDirection as DatabaseEngineOperationJob['direction'])
       : null;
   const source = typeof payload?.['source'] === 'string' ? payload['source'] : null;
   const resultSummary =
@@ -45,7 +45,7 @@ const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOp
         ? result['warning']
         : null;
 
-  let status: DatabaseEngineOperationJobDto['status'] = 'queued';
+  let status: DatabaseEngineOperationJob['status'] = 'queued';
   if (job.status === 'running') status = 'running';
   if (job.status === 'completed') status = 'completed';
   if (job.status === 'failed') status = 'failed';
@@ -53,7 +53,7 @@ const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOp
 
   return {
     id: job.id,
-    type: (job.jobType ?? 'db_backup') as DatabaseEngineOperationJobDto['type'],
+    type: (job.jobType ?? 'db_backup') as DatabaseEngineOperationJob['type'],
     status,
     dbType,
     direction,
@@ -95,7 +95,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     .slice(0, limit)
     .map(toOperationJob);
 
-  const payload: DatabaseEngineOperationsJobsDto = {
+  const payload: DatabaseEngineOperationsJobs = {
     timestamp: new Date().toISOString(),
     queueStatus,
     jobs,

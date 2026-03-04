@@ -1,83 +1,12 @@
 import React from 'react';
 
-import {
-  ImageStudioAnalysisSummaryChip,
-  type ImageStudioAnalysisSummaryChipData,
-} from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
+import { ImageStudioAnalysisSummaryChip } from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
 import { Button, SelectSimple, Tooltip } from '@/shared/ui';
 
 import { useGenerationToolbarContext, type AutoScalerMode } from './GenerationToolbarContext';
+import { useGenerationToolbarAutoScalerSectionRuntime } from './GenerationToolbarSectionContexts';
 import type { ImageStudioCenterShadowPolicy } from '../../contracts/center';
-
-type SelectOption = {
-  value: string;
-  label: string;
-};
-
-type AutoScaleTooltipContent = {
-  apply: string;
-  fillMissingCanvasWhite: string;
-  mode: string;
-  padding: string;
-  paddingAxes: string;
-  shadowPolicy: string;
-};
-
-type GenerationToolbarAutoScalerSectionProps = {
-  analysisPlanAvailable: boolean;
-  analysisPlanSourceMetadataMissing: boolean;
-  analysisWorkingSourceMetadataMissing: boolean;
-  analysisPlanIsStale: boolean;
-  analysisPlanSlotMissing: boolean;
-  analysisPlanWillSwitchSlot: boolean;
-  analysisPlanSwitchSlotLabel: string;
-  slotSelectionLocked: boolean;
-  analysisSummaryData: ImageStudioAnalysisSummaryChipData | null;
-  analysisSummaryIsStale: boolean;
-  analysisConfigMismatchMessage: string | null;
-  analysisBusy: boolean;
-  analysisBusyLabel: string;
-  autoScaleBusyLabel: string;
-  autoScaleLayoutProjectCanvasSize: { width: number; height: number } | null;
-  autoScaleShadowPolicyOptions: SelectOption[];
-  autoScaleTooltipContent: AutoScaleTooltipContent;
-  autoScaleTooltipsEnabled: boolean;
-  autoScaleModeOptions: SelectOption[];
-  hasSourceImage: boolean;
-  onAutoScale: () => void;
-  onRunAnalysis: () => void;
-  onCancelAutoScale: () => void;
-  onOpenSharedDetectionSettings: () => void;
-  onToggleAutoScaleLayoutSplitAxes: () => void;
-};
-
-export function GenerationToolbarAutoScalerSection({
-  analysisPlanAvailable,
-  analysisPlanSourceMetadataMissing,
-  analysisWorkingSourceMetadataMissing,
-  analysisPlanIsStale,
-  analysisPlanSlotMissing,
-  analysisPlanWillSwitchSlot,
-  analysisPlanSwitchSlotLabel,
-  slotSelectionLocked,
-  analysisSummaryData,
-  analysisSummaryIsStale,
-  analysisConfigMismatchMessage,
-  analysisBusy,
-  analysisBusyLabel,
-  autoScaleBusyLabel,
-  autoScaleLayoutProjectCanvasSize,
-  autoScaleShadowPolicyOptions,
-  autoScaleTooltipContent,
-  autoScaleTooltipsEnabled,
-  autoScaleModeOptions,
-  hasSourceImage,
-  onAutoScale,
-  onRunAnalysis,
-  onCancelAutoScale,
-  onOpenSharedDetectionSettings,
-  onToggleAutoScaleLayoutSplitAxes,
-}: GenerationToolbarAutoScalerSectionProps): React.JSX.Element {
+export function GenerationToolbarAutoScalerSection(): React.JSX.Element {
   const {
     autoScaleMode,
     setAutoScaleMode,
@@ -94,6 +23,33 @@ export function GenerationToolbarAutoScalerSection({
     setAutoScaleLayoutFillMissingCanvasWhite,
     autoScaleBusy,
   } = useGenerationToolbarContext();
+  const {
+    analysisPlanAvailable,
+    analysisPlanSourceMetadataMissing,
+    analysisWorkingSourceMetadataMissing,
+    analysisPlanIsStale,
+    analysisPlanSlotMissing,
+    analysisPlanWillSwitchSlot,
+    analysisPlanSwitchSlotLabel,
+    slotSelectionLocked,
+    analysisSummaryData,
+    analysisSummaryIsStale,
+    analysisConfigMismatchMessage,
+    analysisBusy,
+    analysisBusyLabel,
+    autoScaleBusyLabel,
+    autoScaleLayoutProjectCanvasSize,
+    autoScaleShadowPolicyOptions,
+    autoScaleTooltipContent,
+    autoScaleTooltipsEnabled,
+    autoScaleModeOptions,
+    hasSourceImage,
+    onAutoScale,
+    onRunAnalysis,
+    onCancelAutoScale,
+    onOpenSharedDetectionSettings,
+    onToggleAutoScaleLayoutSplitAxes,
+  } = useGenerationToolbarAutoScalerSectionRuntime();
 
   const sliderValue = autoScaleLayoutPadding.trim() === '' ? '0' : autoScaleLayoutPadding;
   const maybeWrapTooltip = (

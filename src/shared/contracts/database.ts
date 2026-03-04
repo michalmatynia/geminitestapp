@@ -14,7 +14,7 @@ export const databaseSyncRequestSchema = z.object({
   manual: z.boolean().optional(),
 });
 
-export type DatabaseSyncRequestDto = z.infer<typeof databaseSyncRequestSchema>;
+export type DatabaseSyncRequest = z.infer<typeof databaseSyncRequestSchema>;
 
 export const databasePreviewModeSchema = z.enum([
   'full',
@@ -60,7 +60,7 @@ export const databasePreviewPayloadSchema = z.object({
   tables: z.array(databasePreviewTableSchema).optional(),
   tableRows: z.array(databaseTablePreviewDataSchema).optional(),
   tableDetails: z.array(z.lazy(() => databaseTableDetailSchema)).optional(),
-  enums: z.array(z.lazy(() => databaseEnumInfoDto)).optional(),
+  enums: z.array(z.lazy(() => databaseEnumInfoSchema)).optional(),
   databaseSize: z.string().optional(),
   page: z.number().optional(),
   pageSize: z.number().optional(),
@@ -330,12 +330,12 @@ export const databaseForeignKeyInfoSchema = z.object({
 
 export type DatabaseForeignKeyInfo = z.infer<typeof databaseForeignKeyInfoSchema>;
 
-export const databaseEnumInfoDto = z.object({
+export const databaseEnumInfoSchema = z.object({
   name: z.string(),
   values: z.array(z.string()),
 });
 
-export type DatabaseEnumInfo = z.infer<typeof databaseEnumInfoDto>;
+export type DatabaseEnumInfo = z.infer<typeof databaseEnumInfoSchema>;
 
 export const databaseTableDetailSchema = z.object({
   name: z.string(),
@@ -473,7 +473,7 @@ export const databaseEngineBackupRunNowRequestSchema = z.object({
   dbType: z.enum(['mongodb', 'postgresql', 'all']).default('all'),
 });
 
-export type DatabaseEngineBackupRunNowRequestDto = z.infer<
+export type DatabaseEngineBackupRunNowRequest = z.infer<
   typeof databaseEngineBackupRunNowRequestSchema
 >;
 
@@ -654,74 +654,10 @@ export const settingsBackfillRequestSchema = z.object({
   manual: z.boolean().optional(),
 });
 
-export type SettingsBackfillRequestDto = z.infer<typeof settingsBackfillRequestSchema>;
-
-// DTO aliases used across API/UI modules.
-export type DatabaseTypeDto = DatabaseType;
-export type DatabaseSyncDirectionDto = DatabaseSyncDirection;
-export type DatabasePreviewModeDto = DatabasePreviewMode;
-export type DatabasePreviewGroupDto = DatabasePreviewGroup;
-export type DatabasePreviewTableDto = DatabasePreviewTable;
-export type DatabaseTablePreviewDataDto = DatabaseTablePreviewData;
-export type DatabasePreviewPayloadDto = DatabasePreviewPayload;
-export type DatabasePreviewRequestDto = DatabasePreviewRequest;
-export type DatabaseBackupFileDto = DatabaseBackupFile;
-export type DatabaseBackupResultDto = DatabaseBackupResult;
-export type FullDatabaseBackupResultDto = FullDatabaseBackupResult;
-export type DatabaseBrowseParamsDto = DatabaseBrowseParams;
-export type DatabaseBrowseDto = DatabaseBrowse;
-export type DatabaseInfoDto = DatabaseInfo;
-export type DatabaseBackupOperationResponseDto = DatabaseBackupResponse;
-export type DatabaseRestoreOperationResponseDto = DatabaseRestoreResponse;
-export type DatabaseSyncOptionsDto = DatabaseSyncOptions;
-export type DatabaseSyncCollectionResultDto = DatabaseSyncCollectionResult;
-export type DatabaseSyncResultDto = DatabaseSyncResult;
-export type DatabaseEngineProviderDto = DatabaseEngineProvider;
-export type DatabaseEnginePrimaryProviderDto = DatabaseEnginePrimaryProvider;
-export type DatabaseEngineServiceDto = DatabaseEngineService;
-export type DatabaseEnginePolicyDto = DatabaseEnginePolicy;
-export type DatabaseEngineOperationControlsDto = DatabaseEngineOperationControls;
-export type DatabaseEngineBackupTargetScheduleDto = DatabaseEngineBackupTargetSchedule;
-export type DatabaseEngineBackupScheduleDto = DatabaseEngineBackupSchedule;
-export type SqlQueryFieldDto = SqlQueryField;
-export type SqlQueryResultDto = SqlQueryResult;
-export type CrudOperationDto = CrudOperation;
-export type CrudRequestDto = CrudRequest;
-export type CrudResultDto = CrudResult;
-export type DatabaseColumnInfoDto = DatabaseColumnInfo;
-export type DatabaseIndexInfoDto = DatabaseIndexInfo;
-export type DatabaseForeignKeyInfoDto = DatabaseForeignKeyInfo;
-export type DatabaseEnumInfoDto = DatabaseEnumInfo;
-export type DatabaseTableDetailDto = DatabaseTableDetail;
-export type FieldInfoDto = FieldInfo;
-export type CollectionSchemaDto = CollectionSchema;
-export type SchemaProviderDto = SchemaProvider;
-export type MultiSchemaResponseDto = MultiSchemaResponse;
-export type SchemaResponseDto = SchemaResponse;
-export type SchemaResponsePayloadDto = SchemaResponse;
-export type DatabaseEngineOperationJobDto = DatabaseEngineOperationJob;
-export type DatabaseEngineOperationsJobsDto = DatabaseEngineOperationsJobs;
-export type DatabaseEngineCollectionProviderPreviewItemDto =
-  DatabaseEngineCollectionProviderPreviewItem;
-export type DatabaseEngineProviderPreviewDto = DatabaseEngineProviderPreview;
-export type CollectionCopyResultDto = CollectionCopyResult;
-export type DatabaseEngineBackupRunNowResponseDto = DatabaseEngineBackupRunNowResponse;
-export type DatabaseEngineBackupSchedulerStatusDto = DatabaseEngineBackupSchedulerStatus;
-export type DatabaseEngineBackupSchedulerTickResultDto = DatabaseEngineBackupSchedulerTickResult;
-export type DatabaseEngineBackupSchedulerTickResponseDto =
-  DatabaseEngineBackupSchedulerTickResponse;
-export type DatabaseEngineCollectionStatusDto = DatabaseEngineCollectionStatus;
-export type DatabaseEngineServiceStatusDto = DatabaseEngineServiceStatus;
-export type DatabaseEngineStatusDto = DatabaseEngineStatus;
-export type RedisStatusDto = RedisStatus;
-export type RedisOverviewDto = RedisOverview;
-export type AiQueryDto = AiQuery;
-export type DatabasePresetOptionDto = DatabasePresetOption;
-export type DatabaseEngineWorkspaceViewDto = DatabaseEngineWorkspaceView;
-export type SettingsBackfillResultDto = SettingsBackfillResult;
+export type SettingsBackfillRequest = z.infer<typeof settingsBackfillRequestSchema>;
 
 /**
- * Database UI Context DTOs
+ * Database UI Context Contracts
  */
 
 export interface DatabaseUiConfig {

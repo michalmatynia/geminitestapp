@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useGenerationToolbarState } from './GenerationToolbar.hooks';
 import { UPSCALE_MAX_OUTPUT_SIDE } from './GenerationToolbar.utils';
@@ -19,6 +19,14 @@ import { GenerationToolbarCenterSection } from './GenerationToolbarCenterSection
 import { GenerationToolbarCropSection } from './GenerationToolbarCropSection';
 import { GenerationToolbarDefaultsSection } from './GenerationToolbarDefaultsSection';
 import { GenerationToolbarMaskSection } from './GenerationToolbarMaskSection';
+import {
+  GenerationToolbarAutoScalerSectionRuntimeProvider,
+  GenerationToolbarCenterSectionRuntimeProvider,
+  GenerationToolbarCropSectionRuntimeProvider,
+  GenerationToolbarDefaultsSectionRuntimeProvider,
+  GenerationToolbarMaskSectionRuntimeProvider,
+  GenerationToolbarUpscaleSectionRuntimeProvider,
+} from './GenerationToolbarSectionContexts';
 import { GenerationToolbarUpscaleSection } from './GenerationToolbarUpscaleSection';
 
 export function GenerationToolbarInner(): React.JSX.Element {
@@ -307,264 +315,392 @@ export function GenerationToolbarInner(): React.JSX.Element {
   const generationModel =
     brainGenerationModel.effectiveModelId.trim() || 'Not configured in AI Brain';
   const generationImageCount = String(studioSettings.targetAi.openai.image.n ?? 1);
+  const handleImageCountChange = useCallback(
+    (value: string): void => {
+      setStudioSettings((prev) => ({
+        ...prev,
+        targetAi: {
+          ...prev.targetAi,
+          openai: {
+            ...prev.targetAi.openai,
+            image: { ...prev.targetAi.openai.image, n: Number(value) },
+          },
+        },
+      }));
+    },
+    [setStudioSettings]
+  );
+  const handleAttachMasks = useCallback((): void => {
+    void attachMaskVariantsFromSelection();
+  }, [attachMaskVariantsFromSelection]);
+  const handleGenerateMask = useCallback((): void => {
+    void handleAiMaskGeneration(maskGenMode);
+  }, [handleAiMaskGeneration, maskGenMode]);
+  const handleMaskGenModeChange = useCallback(
+    (value: string): void => {
+      setMaskGenMode(value as 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges');
+    },
+    [setMaskGenMode]
+  );
+  const handleMaskInvertChange = useCallback(
+    (checked: boolean): void => {
+      setMaskInvert(Boolean(checked));
+    },
+    [setMaskInvert]
+  );
+  const handleMaskPreviewEnabledChange = useCallback(
+    (checked: boolean): void => {
+      setMaskPreviewEnabled(Boolean(checked));
+    },
+    [setMaskPreviewEnabled]
+  );
+  const handleCropAction = useCallback((): void => {
+    void handleCrop();
+  }, [handleCrop]);
+  const handleSquareCropAction = useCallback((): void => {
+    void handleSquareCrop();
+  }, [handleSquareCrop]);
+  const handlePreviewViewCropAction = useCallback((): void => {
+    void handlePreviewViewCrop();
+  }, [handlePreviewViewCrop]);
+  const handleUpscaleAction = useCallback((): void => {
+    void handleUpscale();
+  }, [handleUpscale]);
+  const handleCenterLayoutPresetChange = useCallback(
+    (value: string): void => {
+      const values = getObjectLayoutPresetValuesFromOption(
+        value as ObjectLayoutPresetOptionValue,
+        centerLayoutCustomPresets
+      );
+      if (!values) return;
+      state.setCenterLayoutDetection(values.detection);
+      state.setCenterLayoutShadowPolicy(values.shadowPolicy);
+      state.setCenterLayoutWhiteThreshold(String(values.whiteThreshold));
+      state.setCenterLayoutChromaThreshold(String(values.chromaThreshold));
+    },
+    [centerLayoutCustomPresets, state]
+  );
+  const handleCenterLayoutSavePreset = useCallback((): void => {
+    void (async (): Promise<void> => {
+      if (!state.centerLayoutPresetDraftName.trim().length) return;
+      try {
+        const saved = saveObjectLayoutCustomPreset(activeProjectId, {
+          presetId: state.selectedCenterCustomPresetId ?? undefined,
+          name: centerLayoutPresetDraftName.trim(),
+          values: {
+            detection: state.centerLayoutDetection,
+            shadowPolicy: state.centerLayoutShadowPolicy,
+            whiteThreshold: state.centerLayoutWhiteThresholdValue,
+            chromaThreshold: state.centerLayoutChromaThresholdValue,
+          },
+        });
+        setCenterLayoutCustomPresets(saved.presets);
+        setCenterLayoutPresetDraftName(saved.savedPreset.name);
+        toast(`Saved preset "${saved.savedPreset.name}".`, { variant: 'success' });
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Failed to save custom preset.', {
+          variant: 'error',
+        });
+      }
+    })();
+  }, [
+    activeProjectId,
+    centerLayoutPresetDraftName,
+    setCenterLayoutCustomPresets,
+    setCenterLayoutPresetDraftName,
+    state,
+    toast,
+  ]);
+  const handleCenterLayoutDeletePreset = useCallback((): void => {
+    if (!state.selectedCenterCustomPresetId) return;
+    const deletedName = state.selectedCenterCustomPreset?.name?.trim() ?? '';
+    const nextPresets = deleteObjectLayoutCustomPreset(
+      activeProjectId,
+      state.selectedCenterCustomPresetId
+    );
+    setCenterLayoutCustomPresets(nextPresets);
+    setCenterLayoutPresetDraftName('');
+    toast(
+      deletedName ? `Deleted preset "${deletedName}".` : 'Deleted selected custom preset.',
+      { variant: 'success' }
+    );
+  }, [activeProjectId, setCenterLayoutCustomPresets, setCenterLayoutPresetDraftName, state, toast]);
+  const handleRunAnalysisFromCenterAction = useCallback((): void => {
+    void handleRunAnalysisFromCenter();
+  }, [handleRunAnalysisFromCenter]);
+  const handleCenterObjectAction = useCallback((): void => {
+    void handleCenterObject();
+  }, [handleCenterObject]);
+  const handleToggleCenterLayoutAdvanced = useCallback((): void => {
+    state.setCenterLayoutAdvancedEnabled(!state.centerLayoutAdvancedEnabled);
+  }, [state]);
+  const handleToggleCenterLayoutSplitAxes = useCallback((): void => {
+    state.setCenterLayoutSplitAxes(!state.centerLayoutSplitAxes);
+  }, [state]);
+  const handleToggleCenterGuides = useCallback((): void => {
+    setCenterGuidesEnabled(!centerGuidesEnabled);
+  }, [centerGuidesEnabled, setCenterGuidesEnabled]);
+  const handleAutoScaleAction = useCallback((): void => {
+    void handleAutoScale();
+  }, [handleAutoScale]);
+  const handleRunAnalysisFromAutoScalerAction = useCallback((): void => {
+    void handleRunAnalysisFromAutoScaler();
+  }, [handleRunAnalysisFromAutoScaler]);
+  const handleOpenSharedDetectionSettings = useCallback((): void => {
+    state.setCenterLayoutAdvancedEnabled(true);
+    const preferredCenterMode =
+      state.centerMode === 'client_alpha_bbox' || state.centerMode === 'client_object_layout_v1'
+        ? 'client_object_layout_v1'
+        : 'server_object_layout_v1';
+    if (state.centerMode !== preferredCenterMode) {
+      state.setCenterMode(preferredCenterMode);
+    }
+  }, [state]);
+  const handleToggleAutoScaleLayoutSplitAxes = useCallback((): void => {
+    state.setAutoScaleLayoutSplitAxes(!state.autoScaleLayoutSplitAxes);
+  }, [state]);
+  const defaultsSectionRuntime = useMemo(
+    () => ({
+      model: generationModel,
+      imageCount: generationImageCount,
+      imageCountOptions,
+      onImageCountChange: handleImageCountChange,
+    }),
+    [generationImageCount, generationModel, handleImageCountChange, imageCountOptions]
+  );
+  const maskSectionRuntime = useMemo(
+    () => ({
+      exportMaskCount,
+      maskAttachModeOptions,
+      maskGenerationBusy,
+      maskGenerationLabel,
+      maskGenLoading,
+      maskGenMode,
+      maskInvert,
+      maskModeOptions,
+      maskPreviewEnabled,
+      onAttachMasks: handleAttachMasks,
+      onGenerateMask: handleGenerateMask,
+      onMaskGenModeChange: handleMaskGenModeChange,
+      onMaskInvertChange: handleMaskInvertChange,
+      onMaskPreviewEnabledChange: handleMaskPreviewEnabledChange,
+      workingSlotPresent: Boolean(workingSlot),
+    }),
+    [
+      exportMaskCount,
+      handleAttachMasks,
+      handleGenerateMask,
+      handleMaskGenModeChange,
+      handleMaskInvertChange,
+      handleMaskPreviewEnabledChange,
+      maskAttachModeOptions,
+      maskGenerationBusy,
+      maskGenerationLabel,
+      maskGenLoading,
+      maskGenMode,
+      maskInvert,
+      maskModeOptions,
+      maskPreviewEnabled,
+      workingSlot,
+    ]
+  );
+  const cropSectionRuntime = useMemo(
+    () => ({
+      cropBusyLabel,
+      boundaryStatusLabel: state.hasShapeCropBoundary ? 'Boundary ready' : 'Move image outside canvas',
+      cropModeOptions,
+      cropTooltipContent,
+      cropTooltipsEnabled,
+      hasCropBoundary: state.hasShapeCropBoundary,
+      hasSourceImage,
+      onCancelCrop: handleCancelCrop,
+      onCreateCropBox: handleCreateCropBox,
+      onCrop: handleCropAction,
+      onSquareCrop: handleSquareCropAction,
+      onViewCrop: handlePreviewViewCropAction,
+    }),
+    [
+      cropBusyLabel,
+      cropModeOptions,
+      cropTooltipContent,
+      cropTooltipsEnabled,
+      handleCancelCrop,
+      handleCreateCropBox,
+      handleCropAction,
+      handlePreviewViewCropAction,
+      handleSquareCropAction,
+      hasSourceImage,
+      state.hasShapeCropBoundary,
+    ]
+  );
+  const upscaleSectionRuntime = useMemo(
+    () => ({
+      hasSourceImage,
+      onCancelUpscale: handleCancelUpscale,
+      onUpscale: handleUpscaleAction,
+      upscaleBusyLabel,
+      upscaleMaxOutputSide: UPSCALE_MAX_OUTPUT_SIDE,
+      upscaleModeOptions,
+      upscaleScaleOptions,
+      upscaleSmoothingOptions,
+      upscaleStrategyOptions,
+    }),
+    [
+      handleCancelUpscale,
+      handleUpscaleAction,
+      hasSourceImage,
+      upscaleBusyLabel,
+      upscaleModeOptions,
+      upscaleScaleOptions,
+      upscaleSmoothingOptions,
+      upscaleStrategyOptions,
+    ]
+  );
+  const centerSectionRuntime = useMemo(
+    () => ({
+      analysisPlanAvailable: state.analysisPlanAvailable,
+      analysisPlanSourceMetadataMissing,
+      analysisWorkingSourceMetadataMissing: state.analysisWorkingSourceMetadataMissing,
+      analysisPlanIsStale: state.analysisPlanIsStale,
+      analysisPlanSlotMissing,
+      analysisPlanWillSwitchSlot,
+      analysisPlanSwitchSlotLabel,
+      slotSelectionLocked: state.slotSelectionLocked,
+      analysisSummaryData: state.analysisSummaryData,
+      analysisSummaryIsStale: state.analysisPlanIsStale,
+      analysisConfigMismatchMessage: state.centerAnalysisConfigMismatchMessage,
+      analysisBusy,
+      analysisBusyLabel,
+      centerBusyLabel,
+      centerGuidesEnabled,
+      centerLayoutEnabled: centerIsObjectLayoutMode,
+      centerLayoutPreset: state.centerLayoutPresetOptionValue,
+      centerLayoutPresetOptions: state.centerLayoutPresetOptions,
+      centerLayoutCanDeletePreset: Boolean(state.selectedCenterCustomPresetId),
+      centerLayoutCanSavePreset: state.centerLayoutPresetDraftName.trim().length > 0,
+      centerLayoutSavePresetLabel: state.selectedCenterCustomPresetId ? 'Update Preset' : 'Save Preset',
+      centerLayoutDetectionOptions: detectionModeOptions,
+      centerLayoutProjectCanvasSize: projectCanvasSize,
+      centerLayoutShadowPolicyOptions: shadowPolicyOptions,
+      centerTooltipContent,
+      centerTooltipsEnabled: cropTooltipsEnabled,
+      centerModeOptions,
+      hasSourceImage,
+      onCancelCenter: handleCancelCenter,
+      onCenterLayoutPresetChange: handleCenterLayoutPresetChange,
+      onCenterLayoutSavePreset: handleCenterLayoutSavePreset,
+      onCenterLayoutDeletePreset: handleCenterLayoutDeletePreset,
+      onRunAnalysis: handleRunAnalysisFromCenterAction,
+      onCenterObject: handleCenterObjectAction,
+      onToggleCenterLayoutAdvanced: handleToggleCenterLayoutAdvanced,
+      onToggleCenterLayoutSplitAxes: handleToggleCenterLayoutSplitAxes,
+      onToggleCenterGuides: handleToggleCenterGuides,
+    }),
+    [
+      analysisBusy,
+      analysisBusyLabel,
+      analysisPlanSlotMissing,
+      analysisPlanSourceMetadataMissing,
+      analysisPlanSwitchSlotLabel,
+      analysisPlanWillSwitchSlot,
+      centerBusyLabel,
+      centerGuidesEnabled,
+      centerIsObjectLayoutMode,
+      centerModeOptions,
+      centerTooltipContent,
+      cropTooltipsEnabled,
+      detectionModeOptions,
+      handleCancelCenter,
+      handleCenterLayoutDeletePreset,
+      handleCenterLayoutPresetChange,
+      handleCenterLayoutSavePreset,
+      handleCenterObjectAction,
+      handleRunAnalysisFromCenterAction,
+      handleToggleCenterGuides,
+      handleToggleCenterLayoutAdvanced,
+      handleToggleCenterLayoutSplitAxes,
+      hasSourceImage,
+      projectCanvasSize,
+      shadowPolicyOptions,
+      state,
+    ]
+  );
+  const autoScalerSectionRuntime = useMemo(
+    () => ({
+      analysisPlanAvailable: state.analysisPlanAvailable,
+      analysisPlanSourceMetadataMissing,
+      analysisWorkingSourceMetadataMissing: state.analysisWorkingSourceMetadataMissing,
+      analysisPlanIsStale: state.analysisPlanIsStale,
+      analysisPlanSlotMissing,
+      analysisPlanWillSwitchSlot,
+      analysisPlanSwitchSlotLabel,
+      slotSelectionLocked: state.slotSelectionLocked,
+      analysisSummaryData: state.analysisSummaryData,
+      analysisSummaryIsStale: state.analysisPlanIsStale,
+      analysisConfigMismatchMessage: state.autoScaleAnalysisConfigMismatchMessage,
+      analysisBusy,
+      analysisBusyLabel,
+      autoScaleBusyLabel,
+      autoScaleLayoutProjectCanvasSize: projectCanvasSize,
+      autoScaleShadowPolicyOptions: shadowPolicyOptions,
+      autoScaleTooltipContent,
+      autoScaleTooltipsEnabled: cropTooltipsEnabled,
+      autoScaleModeOptions,
+      hasSourceImage,
+      onAutoScale: handleAutoScaleAction,
+      onRunAnalysis: handleRunAnalysisFromAutoScalerAction,
+      onCancelAutoScale: handleCancelAutoScale,
+      onOpenSharedDetectionSettings: handleOpenSharedDetectionSettings,
+      onToggleAutoScaleLayoutSplitAxes: handleToggleAutoScaleLayoutSplitAxes,
+    }),
+    [
+      analysisBusy,
+      analysisBusyLabel,
+      analysisPlanSlotMissing,
+      analysisPlanSourceMetadataMissing,
+      analysisPlanSwitchSlotLabel,
+      analysisPlanWillSwitchSlot,
+      autoScaleBusyLabel,
+      autoScaleModeOptions,
+      autoScaleTooltipContent,
+      cropTooltipsEnabled,
+      handleAutoScaleAction,
+      handleCancelAutoScale,
+      handleOpenSharedDetectionSettings,
+      handleRunAnalysisFromAutoScalerAction,
+      handleToggleAutoScaleLayoutSplitAxes,
+      hasSourceImage,
+      projectCanvasSize,
+      shadowPolicyOptions,
+      state,
+    ]
+  );
 
   return (
     <div className='space-y-3'>
-      <GenerationToolbarDefaultsSection
-        model={generationModel}
-        imageCount={generationImageCount}
-        imageCountOptions={imageCountOptions}
-        onImageCountChange={(value: string) => {
-          setStudioSettings((prev) => ({
-            ...prev,
-            targetAi: {
-              ...prev.targetAi,
-              openai: {
-                ...prev.targetAi.openai,
-                image: { ...prev.targetAi.openai.image, n: Number(value) },
-              },
-            },
-          }));
-        }}
-      />
+      <GenerationToolbarDefaultsSectionRuntimeProvider value={defaultsSectionRuntime}>
+        <GenerationToolbarDefaultsSection />
+      </GenerationToolbarDefaultsSectionRuntimeProvider>
 
-      <GenerationToolbarMaskSection
-        exportMaskCount={exportMaskCount}
-        maskAttachModeOptions={maskAttachModeOptions}
-        maskGenerationBusy={maskGenerationBusy}
-        maskGenerationLabel={maskGenerationLabel}
-        maskGenLoading={maskGenLoading}
-        maskGenMode={maskGenMode}
-        maskInvert={maskInvert}
-        maskModeOptions={maskModeOptions}
-        maskPreviewEnabled={maskPreviewEnabled}
-        onAttachMasks={() => {
-          const action = async () => {
-            await attachMaskVariantsFromSelection();
-          };
-          void action();
-        }}
-        onGenerateMask={() => {
-          const action = async () => {
-            await handleAiMaskGeneration(maskGenMode);
-          };
-          void action();
-        }}
-        onMaskGenModeChange={(value: string) => {
-          const mode = value as 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges';
-          setMaskGenMode(mode);
-        }}
-        onMaskInvertChange={(checked: boolean) => {
-          setMaskInvert(Boolean(checked));
-        }}
-        onMaskPreviewEnabledChange={(checked: boolean) => {
-          setMaskPreviewEnabled(Boolean(checked));
-        }}
-        workingSlotPresent={Boolean(workingSlot)}
-      />
+      <GenerationToolbarMaskSectionRuntimeProvider value={maskSectionRuntime}>
+        <GenerationToolbarMaskSection />
+      </GenerationToolbarMaskSectionRuntimeProvider>
 
-      <GenerationToolbarCropSection
-        cropBusyLabel={cropBusyLabel}
-        boundaryStatusLabel={
-          state.hasShapeCropBoundary ? 'Boundary ready' : 'Move image outside canvas'
-        }
-        cropModeOptions={cropModeOptions}
-        cropTooltipContent={cropTooltipContent}
-        cropTooltipsEnabled={cropTooltipsEnabled}
-        hasCropBoundary={state.hasShapeCropBoundary}
-        hasSourceImage={hasSourceImage}
-        onCancelCrop={handleCancelCrop}
-        onCreateCropBox={handleCreateCropBox}
-        onCrop={() => {
-          const action = async () => {
-            await handleCrop();
-          };
-          void action();
-        }}
-        onSquareCrop={() => {
-          const action = async () => {
-            await handleSquareCrop();
-          };
-          void action();
-        }}
-        onViewCrop={() => {
-          const action = async () => {
-            await handlePreviewViewCrop();
-          };
-          void action();
-        }}
-      />
+      <GenerationToolbarCropSectionRuntimeProvider value={cropSectionRuntime}>
+        <GenerationToolbarCropSection />
+      </GenerationToolbarCropSectionRuntimeProvider>
 
-      <GenerationToolbarUpscaleSection
-        hasSourceImage={hasSourceImage}
-        onCancelUpscale={handleCancelUpscale}
-        onUpscale={() => {
-          const action = async () => {
-            await handleUpscale();
-          };
-          void action();
-        }}
-        upscaleBusyLabel={upscaleBusyLabel}
-        upscaleMaxOutputSide={UPSCALE_MAX_OUTPUT_SIDE}
-        upscaleModeOptions={upscaleModeOptions}
-        upscaleScaleOptions={upscaleScaleOptions}
-        upscaleSmoothingOptions={upscaleSmoothingOptions}
-        upscaleStrategyOptions={upscaleStrategyOptions}
-      />
+      <GenerationToolbarUpscaleSectionRuntimeProvider value={upscaleSectionRuntime}>
+        <GenerationToolbarUpscaleSection />
+      </GenerationToolbarUpscaleSectionRuntimeProvider>
 
-      <GenerationToolbarCenterSection
-        analysisPlanAvailable={state.analysisPlanAvailable}
-        analysisPlanSourceMetadataMissing={analysisPlanSourceMetadataMissing}
-        analysisWorkingSourceMetadataMissing={state.analysisWorkingSourceMetadataMissing}
-        analysisPlanIsStale={state.analysisPlanIsStale}
-        analysisPlanSlotMissing={analysisPlanSlotMissing}
-        analysisPlanWillSwitchSlot={analysisPlanWillSwitchSlot}
-        analysisPlanSwitchSlotLabel={analysisPlanSwitchSlotLabel}
-        slotSelectionLocked={state.slotSelectionLocked}
-        analysisSummaryData={state.analysisSummaryData}
-        analysisSummaryIsStale={state.analysisPlanIsStale}
-        analysisConfigMismatchMessage={state.centerAnalysisConfigMismatchMessage}
-        analysisBusy={analysisBusy}
-        analysisBusyLabel={analysisBusyLabel}
-        centerBusyLabel={centerBusyLabel}
-        centerGuidesEnabled={centerGuidesEnabled}
-        centerLayoutEnabled={centerIsObjectLayoutMode}
-        centerLayoutPreset={state.centerLayoutPresetOptionValue}
-        centerLayoutPresetOptions={state.centerLayoutPresetOptions}
-        centerLayoutCanDeletePreset={Boolean(state.selectedCenterCustomPresetId)}
-        centerLayoutCanSavePreset={state.centerLayoutPresetDraftName.trim().length > 0}
-        centerLayoutSavePresetLabel={
-          state.selectedCenterCustomPresetId ? 'Update Preset' : 'Save Preset'
-        }
-        centerLayoutDetectionOptions={detectionModeOptions}
-        centerLayoutProjectCanvasSize={projectCanvasSize}
-        centerLayoutShadowPolicyOptions={shadowPolicyOptions}
-        centerTooltipContent={centerTooltipContent}
-        centerTooltipsEnabled={cropTooltipsEnabled}
-        centerModeOptions={centerModeOptions}
-        hasSourceImage={hasSourceImage}
-        onCancelCenter={handleCancelCenter}
-        onCenterLayoutPresetChange={(value: string) => {
-          const values = getObjectLayoutPresetValuesFromOption(
-            value as ObjectLayoutPresetOptionValue,
-            centerLayoutCustomPresets
-          );
-          if (!values) return;
-          state.setCenterLayoutDetection(values.detection);
-          state.setCenterLayoutShadowPolicy(values.shadowPolicy);
-          state.setCenterLayoutWhiteThreshold(String(values.whiteThreshold));
-          state.setCenterLayoutChromaThreshold(String(values.chromaThreshold));
-        }}
-        onCenterLayoutSavePreset={(): void => {
-          void (async (): Promise<void> => {
-            if (!state.centerLayoutPresetDraftName.trim().length) return;
-            try {
-              const saved = saveObjectLayoutCustomPreset(activeProjectId, {
-                presetId: state.selectedCenterCustomPresetId ?? undefined,
-                name: centerLayoutPresetDraftName.trim(),
-                values: {
-                  detection: state.centerLayoutDetection,
-                  shadowPolicy: state.centerLayoutShadowPolicy,
-                  whiteThreshold: state.centerLayoutWhiteThresholdValue,
-                  chromaThreshold: state.centerLayoutChromaThresholdValue,
-                },
-              });
-              setCenterLayoutCustomPresets(saved.presets);
-              setCenterLayoutPresetDraftName(saved.savedPreset.name);
-              toast(`Saved preset "${saved.savedPreset.name}".`, { variant: 'success' });
-            } catch (error) {
-              toast(error instanceof Error ? error.message : 'Failed to save custom preset.', {
-                variant: 'error',
-              });
-            }
-          })();
-        }}
-        onCenterLayoutDeletePreset={() => {
-          if (!state.selectedCenterCustomPresetId) return;
-          const deletedName = state.selectedCenterCustomPreset?.name?.trim() ?? '';
-          const nextPresets = deleteObjectLayoutCustomPreset(
-            activeProjectId,
-            state.selectedCenterCustomPresetId
-          );
-          setCenterLayoutCustomPresets(nextPresets);
-          setCenterLayoutPresetDraftName('');
-          toast(
-            deletedName ? `Deleted preset "${deletedName}".` : 'Deleted selected custom preset.',
-            { variant: 'success' }
-          );
-        }}
-        onRunAnalysis={() => {
-          const action = async () => {
-            await handleRunAnalysisFromCenter();
-          };
-          void action();
-        }}
-        onCenterObject={() => {
-          const action = async () => {
-            await handleCenterObject();
-          };
-          void action();
-        }}
-        onToggleCenterLayoutAdvanced={() => {
-          state.setCenterLayoutAdvancedEnabled(!state.centerLayoutAdvancedEnabled);
-        }}
-        onToggleCenterLayoutSplitAxes={() => {
-          state.setCenterLayoutSplitAxes(!state.centerLayoutSplitAxes);
-        }}
-        onToggleCenterGuides={() => {
-          setCenterGuidesEnabled(!centerGuidesEnabled);
-        }}
-      />
+      <GenerationToolbarCenterSectionRuntimeProvider value={centerSectionRuntime}>
+        <GenerationToolbarCenterSection />
+      </GenerationToolbarCenterSectionRuntimeProvider>
 
-      <GenerationToolbarAutoScalerSection
-        analysisPlanAvailable={state.analysisPlanAvailable}
-        analysisPlanSourceMetadataMissing={analysisPlanSourceMetadataMissing}
-        analysisWorkingSourceMetadataMissing={state.analysisWorkingSourceMetadataMissing}
-        analysisPlanIsStale={state.analysisPlanIsStale}
-        analysisPlanSlotMissing={analysisPlanSlotMissing}
-        analysisPlanWillSwitchSlot={analysisPlanWillSwitchSlot}
-        analysisPlanSwitchSlotLabel={analysisPlanSwitchSlotLabel}
-        slotSelectionLocked={state.slotSelectionLocked}
-        analysisSummaryData={state.analysisSummaryData}
-        analysisSummaryIsStale={state.analysisPlanIsStale}
-        analysisConfigMismatchMessage={state.autoScaleAnalysisConfigMismatchMessage}
-        analysisBusy={analysisBusy}
-        analysisBusyLabel={analysisBusyLabel}
-        autoScaleBusyLabel={autoScaleBusyLabel}
-        autoScaleLayoutProjectCanvasSize={projectCanvasSize}
-        autoScaleShadowPolicyOptions={shadowPolicyOptions}
-        autoScaleTooltipContent={autoScaleTooltipContent}
-        autoScaleTooltipsEnabled={cropTooltipsEnabled}
-        autoScaleModeOptions={autoScaleModeOptions}
-        hasSourceImage={hasSourceImage}
-        onAutoScale={() => {
-          const action = async () => {
-            await handleAutoScale();
-          };
-          void action();
-        }}
-        onRunAnalysis={() => {
-          const action = async () => {
-            await handleRunAnalysisFromAutoScaler();
-          };
-          void action();
-        }}
-        onCancelAutoScale={handleCancelAutoScale}
-        onOpenSharedDetectionSettings={() => {
-          state.setCenterLayoutAdvancedEnabled(true);
-          const preferredCenterMode =
-            state.centerMode === 'client_alpha_bbox' ||
-            state.centerMode === 'client_object_layout_v1'
-              ? 'client_object_layout_v1'
-              : 'server_object_layout_v1';
-          if (state.centerMode !== preferredCenterMode) {
-            state.setCenterMode(preferredCenterMode);
-          }
-        }}
-        onToggleAutoScaleLayoutSplitAxes={() => {
-          state.setAutoScaleLayoutSplitAxes(!state.autoScaleLayoutSplitAxes);
-        }}
-      />
+      <GenerationToolbarAutoScalerSectionRuntimeProvider value={autoScalerSectionRuntime}>
+        <GenerationToolbarAutoScalerSection />
+      </GenerationToolbarAutoScalerSectionRuntimeProvider>
     </div>
   );
 }

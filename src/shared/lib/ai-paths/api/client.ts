@@ -61,11 +61,12 @@ import {
 } from './client/analytics';
 
 import type { 
-  DatabaseBrowseDto, 
-  SchemaResponsePayloadDto 
+  SchemaResponse 
 } from '@/shared/contracts/database';
-
-export type SchemaResponse = SchemaResponsePayloadDto;
+export type { SchemaResponse };
+import type { 
+  AiPathRuntimeAnalyticsSummary 
+} from '@/shared/contracts/ai-paths';
 
 export type {
   ApiResponse,
@@ -75,7 +76,8 @@ export type {
   EntityUpdatePayload,
   AgentEnqueuePayload,
   PlaywrightNodeEnqueuePayload,
-  PlaywrightNodeRunSnapshot
+  PlaywrightNodeRunSnapshot,
+  AiPathRuntimeAnalyticsSummary,
 };
 
 // ============================================================================

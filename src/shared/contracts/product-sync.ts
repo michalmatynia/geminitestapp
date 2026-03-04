@@ -15,10 +15,9 @@ export const productSyncAppFieldSchema = z.enum([
   'ean',
   'weight',
 ]);
-export type ProductSyncAppFieldDto = z.infer<typeof productSyncAppFieldSchema>;
-export type ProductSyncAppField = ProductSyncAppFieldDto;
+export type ProductSyncAppField = z.infer<typeof productSyncAppFieldSchema>;
 
-export const PRODUCT_SYNC_APP_FIELDS: ProductSyncAppFieldDto[] = [
+export const PRODUCT_SYNC_APP_FIELDS: ProductSyncAppField[] = [
   'stock',
   'price',
   'name_en',
@@ -29,18 +28,16 @@ export const PRODUCT_SYNC_APP_FIELDS: ProductSyncAppFieldDto[] = [
 ];
 
 export const productSyncDirectionSchema = z.enum(['disabled', 'base_to_app', 'app_to_base']);
-export type ProductSyncDirectionDto = z.infer<typeof productSyncDirectionSchema>;
-export type ProductSyncDirection = ProductSyncDirectionDto;
+export type ProductSyncDirection = z.infer<typeof productSyncDirectionSchema>;
 
-export const PRODUCT_SYNC_DIRECTION_OPTIONS: ProductSyncDirectionDto[] = [
+export const PRODUCT_SYNC_DIRECTION_OPTIONS: ProductSyncDirection[] = [
   'disabled',
   'base_to_app',
   'app_to_base',
 ];
 
 export const productSyncConflictPolicySchema = z.enum(['skip']);
-export type ProductSyncConflictPolicyDto = z.infer<typeof productSyncConflictPolicySchema>;
-export type ProductSyncConflictPolicy = ProductSyncConflictPolicyDto;
+export type ProductSyncConflictPolicy = z.infer<typeof productSyncConflictPolicySchema>;
 
 export const productSyncFieldRuleSchema = z.object({
   id: z.string(),
@@ -48,10 +45,9 @@ export const productSyncFieldRuleSchema = z.object({
   baseField: z.string(),
   direction: productSyncDirectionSchema,
 });
-export type ProductSyncFieldRuleDto = z.infer<typeof productSyncFieldRuleSchema>;
-export type ProductSyncFieldRule = ProductSyncFieldRuleDto;
+export type ProductSyncFieldRule = z.infer<typeof productSyncFieldRuleSchema>;
 
-export const DEFAULT_PRODUCT_SYNC_FIELD_RULES: Array<Omit<ProductSyncFieldRuleDto, 'id'>> = [
+export const DEFAULT_PRODUCT_SYNC_FIELD_RULES: Array<Omit<ProductSyncFieldRule, 'id'>> = [
   {
     appField: 'stock',
     baseField: 'stock',
@@ -100,16 +96,15 @@ export const productSyncProfileSchema = namedDtoSchema.extend({
   fieldRules: z.array(productSyncFieldRuleSchema),
   lastRunAt: z.string().nullable(),
 });
-export type ProductSyncProfileDto = z.infer<typeof productSyncProfileSchema>;
-export type ProductSyncProfile = ProductSyncProfileDto;
+export type ProductSyncProfile = z.infer<typeof productSyncProfileSchema>;
 
 export const createProductSyncProfileSchema = productSyncProfileSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
-export type CreateProductSyncProfileDto = z.infer<typeof createProductSyncProfileSchema>;
-export type UpdateProductSyncProfileDto = Partial<CreateProductSyncProfileDto>;
+export type CreateProductSyncProfileInput = z.infer<typeof createProductSyncProfileSchema>;
+export type UpdateProductSyncProfileInput = Partial<CreateProductSyncProfileInput>;
 
 export const productSyncRunStatusSchema = z.enum([
   'queued',
@@ -118,12 +113,10 @@ export const productSyncRunStatusSchema = z.enum([
   'partial_success',
   'failed',
 ]);
-export type ProductSyncRunStatusDto = z.infer<typeof productSyncRunStatusSchema>;
-export type ProductSyncRunStatus = ProductSyncRunStatusDto;
+export type ProductSyncRunStatus = z.infer<typeof productSyncRunStatusSchema>;
 
 export const productSyncRunTriggerSchema = z.enum(['manual', 'scheduled', 'relink']);
-export type ProductSyncRunTriggerDto = z.infer<typeof productSyncRunTriggerSchema>;
-export type ProductSyncRunTrigger = ProductSyncRunTriggerDto;
+export type ProductSyncRunTrigger = z.infer<typeof productSyncRunTriggerSchema>;
 
 export const productSyncRunStatsSchema = z.object({
   total: z.number(),
@@ -134,8 +127,7 @@ export const productSyncRunStatsSchema = z.object({
   localUpdated: z.number(),
   baseUpdated: z.number(),
 });
-export type ProductSyncRunStatsDto = z.infer<typeof productSyncRunStatsSchema>;
-export type ProductSyncRunStats = ProductSyncRunStatsDto;
+export type ProductSyncRunStats = z.infer<typeof productSyncRunStatsSchema>;
 
 export const productSyncRunRecordSchema = dtoBaseSchema.extend({
   profileId: z.string(),
@@ -149,12 +141,10 @@ export const productSyncRunRecordSchema = dtoBaseSchema.extend({
   errorMessage: z.string().nullable(),
   stats: productSyncRunStatsSchema,
 });
-export type ProductSyncRunRecordDto = z.infer<typeof productSyncRunRecordSchema>;
-export type ProductSyncRunRecord = ProductSyncRunRecordDto;
+export type ProductSyncRunRecord = z.infer<typeof productSyncRunRecordSchema>;
 
 export const productSyncRunItemStatusSchema = z.enum(['success', 'skipped', 'failed']);
-export type ProductSyncRunItemStatusDto = z.infer<typeof productSyncRunItemStatusSchema>;
-export type ProductSyncRunItemStatus = ProductSyncRunItemStatusDto;
+export type ProductSyncRunItemStatus = z.infer<typeof productSyncRunItemStatusSchema>;
 
 export const productSyncRunItemRecordSchema = dtoBaseSchema.extend({
   runId: z.string(),
@@ -167,8 +157,7 @@ export const productSyncRunItemRecordSchema = dtoBaseSchema.extend({
   message: z.string().nullable(),
   errorMessage: z.string().nullable(),
 });
-export type ProductSyncRunItemRecordDto = z.infer<typeof productSyncRunItemRecordSchema>;
-export type ProductSyncRunItemRecord = ProductSyncRunItemRecordDto;
+export type ProductSyncRunItemRecord = z.infer<typeof productSyncRunItemRecordSchema>;
 
 export const productSyncRunDetailSchema = z.object({
   run: productSyncRunRecordSchema,
@@ -180,8 +169,7 @@ export const productSyncRunDetailSchema = z.object({
     totalPages: z.number(),
   }),
 });
-export type ProductSyncRunDetailDto = z.infer<typeof productSyncRunDetailSchema>;
-export type ProductSyncRunDetail = ProductSyncRunDetailDto;
+export type ProductSyncRunDetail = z.infer<typeof productSyncRunDetailSchema>;
 
 export const PRODUCT_SYNC_PROFILE_SETTINGS_KEY = 'product_sync_profiles';
 export const PRODUCT_SYNC_RUN_KEY_PREFIX = 'product_sync_run:';

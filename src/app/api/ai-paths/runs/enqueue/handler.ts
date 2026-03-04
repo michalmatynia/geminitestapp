@@ -177,7 +177,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   try {
     await withTiming('queueReadyMs', async () => {
-      return await withTimeout(
+      await withTimeout(
         assertAiPathRunQueueReadyForEnqueue(),
         QUEUE_PREFLIGHT_TIMEOUT_MS,
         `queue_preflight_timeout after ${QUEUE_PREFLIGHT_TIMEOUT_MS}ms`

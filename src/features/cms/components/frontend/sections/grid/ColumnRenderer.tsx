@@ -21,7 +21,7 @@ import {
 } from './frontend-grid-utils';
 import { BackgroundImageLayer } from './BackgroundImageLayer';
 import { SectionBlockRenderer } from './SectionBlockRenderer';
-import type { CmsBlockInstanceDto as BlockInstance } from '@/shared/contracts/cms';
+import type { BlockInstance } from '@/shared/contracts/cms';
 
 export function ColumnRenderer({ column }: { column: BlockInstance }): React.ReactNode {
   const children = column.blocks ?? [];

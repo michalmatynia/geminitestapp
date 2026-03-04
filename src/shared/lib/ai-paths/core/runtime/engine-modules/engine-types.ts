@@ -1,4 +1,5 @@
 import type { AiNode, Edge, RuntimePortValues } from '@/shared/contracts/ai-paths';
+import type { ToastOptions } from '@/shared/contracts/ui';
 import type {
   AiPathRuntimeProfileEvent,
   RuntimeProfileNodeStats,

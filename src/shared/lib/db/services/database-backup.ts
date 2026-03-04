@@ -22,10 +22,10 @@ import {
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   DatabaseBackupResult,
-  FullDatabaseBackupResultDto,
+  FullDatabaseBackupResult,
 } from '@/shared/contracts/database';
 
-export type { DatabaseBackupResult, FullDatabaseBackupResultDto };
+export type { DatabaseBackupResult, FullDatabaseBackupResult };
 
 import { forbiddenError, operationFailedError } from '@/shared/errors/app-error';
 
@@ -151,7 +151,7 @@ export const createPostgresBackup = async (): Promise<DatabaseBackupResult> => {
   }
 };
 
-export const createFullDatabaseBackup = async (): Promise<FullDatabaseBackupResultDto> => {
+export const createFullDatabaseBackup = async (): Promise<FullDatabaseBackupResult> => {
   if (shouldSkipBackups()) {
     const timestamp = Date.now();
     const message = 'Backup skipped (SKIP_DB_BACKUP=true)';

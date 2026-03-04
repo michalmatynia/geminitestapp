@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useDraftQueries, useDeleteDraft } from '@/features/drafter/hooks/useDraftQueries';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { ProductDraftDto } from '@/shared/contracts/products';
+import type { ProductDraft } from '@/shared/contracts/products';
 import {
   Button,
   ListPanel,
@@ -22,10 +22,10 @@ import { useDrafterContext } from '../context/DrafterContext';
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
 interface DraftListItem extends SimpleSettingsListItem {
-  original: ProductDraftDto;
+  original: ProductDraft;
 }
 
-const resolveDraftIconColor = (draft: ProductDraftDto): string | undefined => {
+const resolveDraftIconColor = (draft: ProductDraft): string | undefined => {
   if (draft.iconColorMode !== 'custom') return undefined;
   if (typeof draft.iconColor !== 'string') return undefined;
   const normalized = draft.iconColor.trim();
@@ -79,7 +79,7 @@ export function DraftList(): React.JSX.Element {
         loading={!!deleting}
       />
       <SimpleSettingsList<DraftListItem>
-        items={drafts.map((draft: ProductDraftDto): DraftListItem => ({
+        items={drafts.map((draft: ProductDraft): DraftListItem => ({
           id: draft.id,
           title: (
             <div className='flex items-center gap-3'>

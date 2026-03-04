@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import React, { useMemo, Suspense } from 'react';
 
-import type { DatabaseEngineOperationJobDto, DatabaseEngineWorkspaceView } from '@/shared/contracts/database';
+import type { DatabaseEngineOperationJob, DatabaseEngineWorkspaceView } from '@/shared/contracts/database';
 import {
   Button,
   FormSection,
@@ -102,7 +102,7 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
     [collectionRouteMap, updateCollectionRoute]
   );
 
-  const jobColumns = useMemo<ColumnDef<DatabaseEngineOperationJobDto>[]>(
+  const jobColumns = useMemo<ColumnDef<DatabaseEngineOperationJob>[]>(
     () => [
       {
         accessorKey: 'id',

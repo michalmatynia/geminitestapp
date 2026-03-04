@@ -5,7 +5,7 @@ import {
   updateDraftPayloadSchema,
   resolveDraftCategoryId,
 } from '@/features/drafter/validations/draft-payload';
-import type { UpdateProductDraftDto } from '@/features/products/server';
+import type { UpdateProductDraftInput } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
@@ -46,7 +46,7 @@ export async function PUT_handler(
   const updated = await updateDraft(params.id, {
     ...data,
     ...(categoryId !== undefined ? { categoryId } : {}),
-  } as UpdateProductDraftDto);
+  } as UpdateProductDraftInput);
   if (!updated) {
     throw notFoundError('Draft not found.', { draftId: params.id });
   }

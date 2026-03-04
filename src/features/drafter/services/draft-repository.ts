@@ -7,9 +7,9 @@ import { Prisma } from '@prisma/client';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import {
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
-  type ProductDraftDto,
-  type CreateProductDraftDto,
-  type UpdateProductDraftDto,
+  type ProductDraft,
+  type CreateProductDraftInput,
+  type UpdateProductDraftInput,
   type ProductDraftOpenFormTab,
   type DraftProvider,
   type ProductParameterValue,
@@ -98,7 +98,7 @@ const getDraftProvider = async (): Promise<DraftProvider> => {
 };
 
 // MongoDB implementation
-const listDrafts_Mongo = async (): Promise<ProductDraftDto[]> => {
+const listDrafts_Mongo = async (): Promise<ProductDraft[]> => {
   const mongo = await getMongoDb();
   const drafts = await mongo
     .collection<MongoDraftDoc>('product_drafts')
@@ -149,7 +149,7 @@ const listDrafts_Mongo = async (): Promise<ProductDraftDto[]> => {
   }));
 };
 
-const getDraft_Mongo = async (id: string): Promise<ProductDraftDto | null> => {
+const getDraft_Mongo = async (id: string): Promise<ProductDraft | null> => {
   const mongo = await getMongoDb();
   const draft = await mongo.collection<MongoDraftDoc>('product_drafts').findOne({ _id: id });
 
@@ -198,7 +198,7 @@ const getDraft_Mongo = async (id: string): Promise<ProductDraftDto | null> => {
   };
 };
 
-const createDraft_Mongo = async (input: CreateProductDraftDto): Promise<ProductDraftDto> => {
+const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<ProductDraft> => {
   const mongo = await getMongoDb();
   const now = new Date();
   const id = randomUUID();
@@ -292,15 +292,15 @@ const createDraft_Mongo = async (input: CreateProductDraftDto): Promise<ProductD
 
 const updateDraft_Mongo = async (
   id: string,
-  input: UpdateProductDraftDto
-): Promise<ProductDraftDto | null> => {
+  input: UpdateProductDraftInput
+): Promise<ProductDraft | null> => {
   const mongo = await getMongoDb();
   const now = new Date();
   const updatePayload: Partial<MongoDraftDoc> = {};
 
   // Explicitly copy non-undefined values to satisfy exactOptionalPropertyTypes
-  (Object.keys(input) as (keyof UpdateProductDraftDto)[]).forEach(
-    (key: keyof UpdateProductDraftDto) => {
+  (Object.keys(input) as (keyof UpdateProductDraftInput)[]).forEach(
+    (key: keyof UpdateProductDraftInput) => {
       const val = input[key];
       if (val !== undefined) {
         (updatePayload as Record<string, unknown>)[key] = val;
@@ -403,7 +403,7 @@ const deleteDraft_Mongo = async (id: string): Promise<boolean> => {
 };
 
 // Prisma implementation
-const listDrafts_Prisma = async (): Promise<ProductDraftDto[]> => {
+const listDrafts_Prisma = async (): Promise<ProductDraft[]> => {
   const drafts = await prisma.productDraft.findMany({
     orderBy: { createdAt: 'desc' },
   });
@@ -426,7 +426,7 @@ const listDrafts_Prisma = async (): Promise<ProductDraftDto[]> => {
   }));
 };
 
-const getDraft_Prisma = async (id: string): Promise<ProductDraftDto | null> => {
+const getDraft_Prisma = async (id: string): Promise<ProductDraft | null> => {
   const draft = await prisma.productDraft.findUnique({
     where: { id },
   });
@@ -451,7 +451,7 @@ const getDraft_Prisma = async (id: string): Promise<ProductDraftDto | null> => {
   };
 };
 
-const createDraft_Prisma = async (input: CreateProductDraftDto): Promise<ProductDraftDto> => {
+const createDraft_Prisma = async (input: CreateProductDraftInput): Promise<ProductDraft> => {
   const draft = await prisma.productDraft.create({
     data: {
       name: input.name,
@@ -510,8 +510,8 @@ const createDraft_Prisma = async (input: CreateProductDraftDto): Promise<Product
 
 const updateDraft_Prisma = async (
   id: string,
-  input: UpdateProductDraftDto
-): Promise<ProductDraftDto | null> => {
+  input: UpdateProductDraftInput
+): Promise<ProductDraft | null> => {
   try {
     const {
       validatorEnabled: _validatorEnabled,
@@ -564,25 +564,25 @@ const deleteDraft_Prisma = async (id: string): Promise<boolean> => {
 };
 
 // Public API
-export const listDrafts = async (): Promise<ProductDraftDto[]> => {
+export const listDrafts = async (): Promise<ProductDraft[]> => {
   const provider = await getDraftProvider();
   return provider === 'mongodb' ? listDrafts_Mongo() : listDrafts_Prisma();
 };
 
-export const getDraft = async (id: string): Promise<ProductDraftDto | null> => {
+export const getDraft = async (id: string): Promise<ProductDraft | null> => {
   const provider = await getDraftProvider();
   return provider === 'mongodb' ? getDraft_Mongo(id) : getDraft_Prisma(id);
 };
 
-export const createDraft = async (input: CreateProductDraftDto): Promise<ProductDraftDto> => {
+export const createDraft = async (input: CreateProductDraftInput): Promise<ProductDraft> => {
   const provider = await getDraftProvider();
   return provider === 'mongodb' ? createDraft_Mongo(input) : createDraft_Prisma(input);
 };
 
 export const updateDraft = async (
   id: string,
-  input: UpdateProductDraftDto
-): Promise<ProductDraftDto | null> => {
+  input: UpdateProductDraftInput
+): Promise<ProductDraft | null> => {
   const provider = await getDraftProvider();
   return provider === 'mongodb' ? updateDraft_Mongo(id, input) : updateDraft_Prisma(id, input);
 };

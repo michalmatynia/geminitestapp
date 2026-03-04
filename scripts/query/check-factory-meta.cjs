@@ -41,7 +41,10 @@ const REPO_SCAN_IGNORED_DIRS = new Set([
   'temp',
 ]);
 const FACTORY_META_IGNORED_FILES = new Set(['src/shared/lib/query-factories-v2.ts']);
-const RAW_QUERY_EXECUTION_ALLOWLIST = new Set(['src/shared/lib/query-factories-v2.ts']);
+const RAW_QUERY_EXECUTION_ALLOWLIST = new Set([
+  'src/shared/lib/query-factories-v2.ts',
+  'src/shared/lib/tanstack-factory-v2/executors.ts',
+]);
 const RAW_QUERY_EXECUTION_METHODS = new Set(['fetchQuery', 'prefetchQuery', 'ensureQueryData']);
 
 // Config: force all createMutationV2 to use 'action' if STRICT_GENERIC_ACTION is true.

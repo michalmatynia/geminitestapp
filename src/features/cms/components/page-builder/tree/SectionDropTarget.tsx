@@ -56,6 +56,18 @@ export function SectionDropTarget({
   const draggedSectionIndex = dragState.section.index;
   const draggedSection = pbState.sections.find((section) => section.id === draggedSectionId);
   const draggedSectionParentId = draggedSection?.parentSectionId ?? null;
+  const draggedSectionResolvedZone = (draggedSectionZone) ?? draggedSection?.zone ?? null;
+  const draggedSectionResolvedIndex = React.useMemo((): number | null => {
+    if (draggedSectionIndex !== null) return draggedSectionIndex;
+    if (!draggedSectionId || !draggedSection) return null;
+    const siblingSections = pbState.sections.filter(
+      (section) =>
+        section.zone === draggedSection.zone &&
+        (section.parentSectionId ?? null) === draggedSectionParentId
+    );
+    const siblingIndex = siblingSections.findIndex((section) => section.id === draggedSectionId);
+    return siblingIndex >= 0 ? siblingIndex : null;
+  }, [draggedSection, draggedSectionId, draggedSectionIndex, draggedSectionParentId, pbState.sections]);
 
   const isDraggingBlock = Boolean(draggedBlockId);
   const isDraggingSection =
@@ -66,8 +78,19 @@ export function SectionDropTarget({
     isDraggingBlock &&
     PROMOTABLE_BLOCK_TYPES.includes(draggedBlockType ?? '');
   const isDragging = isDraggingSection || canPromoteBlock;
+  const isSameSectionPositionTarget =
+    isDraggingSection &&
+    draggedSectionParentId === toParentSectionId &&
+    isCmsSectionSamePositionDrop({
+      draggedZone: draggedSectionResolvedZone,
+      draggedIndex: draggedSectionResolvedIndex,
+      targetZone: zone,
+      targetIndex: toIndex,
+    });
+  const shouldRenderSectionTarget = isDraggingSection && !isSameSectionPositionTarget;
+  const shouldRenderTarget = canPromoteBlock || shouldRenderSectionTarget;
 
-  if (!isDragging) return null;
+  if (!isDragging || !shouldRenderTarget) return null;
 
   return (
     <div
@@ -76,7 +99,7 @@ export function SectionDropTarget({
       data-cms-section-drop-parent={toParentSectionId ?? 'root'}
       data-cms-section-drop-index={String(toIndex)}
       onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
-        if (isDraggingSection) {
+        if (shouldRenderSectionTarget) {
           const sectionDrag = readSectionDragData(event.dataTransfer, {
             id: draggedSectionId,
             zone: draggedSectionZone,
@@ -109,7 +132,7 @@ export function SectionDropTarget({
         event.stopPropagation();
         setIsOver(false);
 
-        if (isDraggingSection) {
+        if (shouldRenderSectionTarget) {
           const sectionDrag = readSectionDragData(event.dataTransfer, {
             id: draggedSectionId,
             zone: draggedSectionZone,
@@ -166,7 +189,7 @@ export function SectionDropTarget({
             {isOver ? 'Release to extract' : 'Drop here to extract'}
           </span>
         ) : null}
-        {isDraggingSection && !canPromoteBlock ? (
+        {shouldRenderSectionTarget && !canPromoteBlock ? (
           <span
             className={cn(
               'text-[9px] font-medium',

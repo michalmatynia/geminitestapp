@@ -16,7 +16,7 @@ import { useSectionData } from '../SectionDataContext';
 import { getSectionStyles, getTextAlign } from '../../theme-styles';
 import { getCustomCssSelector, buildScopedCustomCss } from '@/features/cms/utils/custom-css';
 import { resolveJustifyContent, resolveAlignItems } from './frontend-grid-utils';
-import type { CmsBlockInstanceDto as BlockInstance } from '@/shared/contracts/cms';
+import type { BlockInstance } from '@/shared/contracts/cms';
 
 export function SectionBlockRenderer({ block }: { block: BlockInstance }): React.ReactNode {
   const children = block.blocks ?? [];

@@ -47,7 +47,12 @@ export interface LibraryState {
   selectedSegmentationRecordId: string | null;
   segmentationRecords: PromptExploderSegmentationRecord[];
   selectedSegmentationRecord: PromptExploderSegmentationRecord | null;
+  segmentationLibraryState: PromptExploderSegmentationLibraryState;
 }
+
+import { 
+  type PromptExploderSegmentationLibraryState 
+} from '@/shared/contracts/prompt-exploder';
 
 export interface LibraryActions {
   setSelectedLibraryItemId: React.Dispatch<React.SetStateAction<string | null>>;
@@ -106,13 +111,22 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
   }, [promptLibraryItems, selectedLibraryItemId]);
 
   const rawSegmentationLibrary = settingsMap.get(PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY) ?? null;
-  const segmentationLibraryState = useMemo(
+  const parsedSegmentationLibraryState = useMemo(
     () => parsePromptExploderSegmentationLibrary(rawSegmentationLibrary),
     [rawSegmentationLibrary]
   );
   const segmentationRecords = useMemo(
-    () => sortPromptExploderSegmentationRecordsByCapturedAt(segmentationLibraryState.records),
-    [segmentationLibraryState.records]
+    () =>
+      sortPromptExploderSegmentationRecordsByCapturedAt(parsedSegmentationLibraryState.records),
+    [parsedSegmentationLibraryState.records]
+  );
+  const segmentationLibraryState = useMemo<PromptExploderSegmentationLibraryState>(
+    () => ({
+      records: segmentationRecords,
+      lastCapturedAt: segmentationRecords[0]?.capturedAt ?? null,
+      totalCaptured: parsedSegmentationLibraryState.records.length,
+    }),
+    [parsedSegmentationLibraryState.records.length, segmentationRecords]
   );
   const selectedSegmentationRecord = useMemo(() => {
     if (!selectedSegmentationRecordId) return null;
@@ -346,7 +360,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
         };
       }
       const nextRecords = appendPromptExploderSegmentationRecord({
-        records: segmentationLibraryState.records,
+        records: parsedSegmentationLibraryState.records,
         nextRecord,
         maxRecords: PROMPT_EXPLODER_SEGMENTATION_LIBRARY_MAX_RECORDS,
       });
@@ -387,7 +401,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
       persistSegmentationRecords,
       promptText,
       returnTarget,
-      segmentationLibraryState.records,
+      parsedSegmentationLibraryState.records,
       toast,
     ]
   );
@@ -425,13 +439,13 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
 
   const handleDeleteSegmentationRecord = useCallback(
     async (recordId: string): Promise<void> => {
-      const target = segmentationLibraryState.records.find((record) => record.id === recordId);
+      const target = parsedSegmentationLibraryState.records.find((record) => record.id === recordId);
       if (!target) {
         toast('Segmentation context record no longer exists.', { variant: 'info' });
         return;
       }
       const nextRecords = removePromptExploderSegmentationRecordById(
-        segmentationLibraryState.records,
+        parsedSegmentationLibraryState.records,
         recordId
       );
       try {
@@ -455,7 +469,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
     },
     [
       persistSegmentationRecords,
-      segmentationLibraryState.records,
+      parsedSegmentationLibraryState.records,
       selectedSegmentationRecordId,
       toast,
     ]
@@ -491,6 +505,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
       selectedSegmentationRecordId,
       segmentationRecords,
       selectedSegmentationRecord,
+      segmentationLibraryState,
     }),
     [
       selectedLibraryItemId,
@@ -500,6 +515,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
       selectedSegmentationRecordId,
       segmentationRecords,
       selectedSegmentationRecord,
+      segmentationLibraryState,
     ]
   );
 

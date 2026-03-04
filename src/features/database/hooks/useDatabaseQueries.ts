@@ -412,9 +412,9 @@ export function useDatabaseBackupRunNowMutation(): UpdateMutation<
       tags: ['database', 'engine', 'backup', 'run-now'],
     },
     invalidate: (queryClient, payload) => {
-      void invalidateEngineSchedulerStatus(queryClient);
+      invalidateEngineSchedulerStatus(queryClient);
       payload.queued.forEach((item) => {
-        void invalidateBackups(queryClient, item.dbType);
+        invalidateBackups(queryClient, item.dbType);
       });
     },
   });

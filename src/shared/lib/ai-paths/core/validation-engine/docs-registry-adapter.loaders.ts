@@ -37,6 +37,57 @@ import {
   type AiPathsDocAssertionConditionInput,
 } from './docs-registry-adapter.types';
 
+const PROJECT_ROOT = process.cwd();
+const DOCS_AI_PATHS_ROOT = path.join(PROJECT_ROOT, 'docs', 'ai-paths');
+const AI_PATHS_FEATURE_ROOT = path.join(PROJECT_ROOT, 'src', 'features', 'ai', 'ai-paths');
+const DOCS_AI_PATHS_PREFIX = 'docs/ai-paths/';
+const AI_PATHS_FEATURE_PREFIX = 'src/features/ai/ai-paths/';
+
+const normalizeRepoRelativePath = (candidate: string): string =>
+  candidate.trim().replace(/\\/g, '/').replace(/^\.\/+/, '');
+
+const hasPathTraversal = (segments: string[]): boolean =>
+  segments.some((segment) => segment === '..');
+
+const resolveAiPathsDocsAbsolutePath = (candidate: string): string => {
+  if (path.isAbsolute(candidate)) {
+    const absoluteCandidate = path.normalize(candidate);
+    const allowedAbsoluteRoots = [DOCS_AI_PATHS_ROOT, AI_PATHS_FEATURE_ROOT];
+    const isUnderAllowedRoot = allowedAbsoluteRoots.some((root) =>
+      absoluteCandidate === root || absoluteCandidate.startsWith(`${root}${path.sep}`)
+    );
+    if (isUnderAllowedRoot) {
+      return absoluteCandidate;
+    }
+    throw new Error(
+      `Path "${candidate}" is outside allowed docs roots: "${DOCS_AI_PATHS_ROOT}" or "${AI_PATHS_FEATURE_ROOT}".`
+    );
+  }
+
+  const normalized = normalizeRepoRelativePath(candidate);
+  if (normalized.startsWith(DOCS_AI_PATHS_PREFIX)) {
+    const tail = normalized.slice(DOCS_AI_PATHS_PREFIX.length);
+    const segments = tail.split('/').filter((segment) => segment.length > 0);
+    if (hasPathTraversal(segments)) {
+      throw new Error(`Path "${candidate}" includes forbidden parent traversal.`);
+    }
+    return path.join(DOCS_AI_PATHS_ROOT, ...segments);
+  }
+
+  if (normalized.startsWith(AI_PATHS_FEATURE_PREFIX)) {
+    const tail = normalized.slice(AI_PATHS_FEATURE_PREFIX.length);
+    const segments = tail.split('/').filter((segment) => segment.length > 0);
+    if (hasPathTraversal(segments)) {
+      throw new Error(`Path "${candidate}" includes forbidden parent traversal.`);
+    }
+    return path.join(AI_PATHS_FEATURE_ROOT, ...segments);
+  }
+
+  throw new Error(
+    `Path "${candidate}" must start with "${DOCS_AI_PATHS_PREFIX}" or "${AI_PATHS_FEATURE_PREFIX}".`
+  );
+};
+
 export const parseSnippetWiringAssertions = (
   snippetName: string,
   snippetText: string,
@@ -323,7 +374,7 @@ export const normalizeManifest = (
 };
 
 export const readAiPathsDocsManifest = async (warnings: string[]): Promise<AiPathsDocsManifest> => {
-  const absolutePath = path.resolve(process.cwd(), DOCS_MANIFEST_PATH);
+  const absolutePath = resolveAiPathsDocsAbsolutePath(DOCS_MANIFEST_PATH);
   try {
     const manifestText = await readFile(absolutePath, 'utf8');
     let parsed: unknown = null;
@@ -361,7 +412,7 @@ export const buildMarkdownSourcePayload = async (args: {
   warnings: string[];
 }): Promise<{ hash: string; assertions: AiPathsDocAssertion[] }> => {
   const { source, warnings } = args;
-  const absolutePath = path.resolve(process.cwd(), source.path);
+  const absolutePath = resolveAiPathsDocsAbsolutePath(source.path);
   try {
     const content = await readFile(absolutePath, 'utf8');
     const hash = hashText(content);
@@ -441,7 +492,7 @@ export const buildSemanticNodesCatalogSourcePayload = async (args: {
   warnings: string[];
 }): Promise<{ hash: string; assertions: AiPathsDocAssertion[] }> => {
   const { source, warnings } = args;
-  const absolutePath = path.resolve(process.cwd(), source.path);
+  const absolutePath = resolveAiPathsDocsAbsolutePath(source.path);
   try {
     const content = await readFile(absolutePath, 'utf8');
     const parsed = JSON.parse(content) as unknown;
@@ -582,7 +633,7 @@ export const buildTooltipDocsCatalogSourcePayload = async (args: {
   warnings: string[];
 }): Promise<{ hash: string; assertions: AiPathsDocAssertion[] }> => {
   const { source, warnings } = args;
-  const absolutePath = path.resolve(process.cwd(), source.path);
+  const absolutePath = resolveAiPathsDocsAbsolutePath(source.path);
   try {
     const content = await readFile(absolutePath, 'utf8');
     const parsed = JSON.parse(content) as unknown;
@@ -658,7 +709,7 @@ export const buildCoverageMatrixSourcePayload = async (args: {
   warnings: string[];
 }): Promise<{ hash: string; assertions: AiPathsDocAssertion[] }> => {
   const { source, warnings } = args;
-  const absolutePath = path.resolve(process.cwd(), source.path);
+  const absolutePath = resolveAiPathsDocsAbsolutePath(source.path);
   try {
     const content = await readFile(absolutePath, 'utf8');
     const parsedRows = parseCsvRecords(content);

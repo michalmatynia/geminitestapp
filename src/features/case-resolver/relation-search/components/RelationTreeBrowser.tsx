@@ -15,9 +15,9 @@ import {
   resolveFolderTreeSearchConfig,
 } from '@/shared/utils/folder-tree-profiles-v2';
 
-import type { NodeFileDocumentSearchRow } from '../../components/CaseResolverNodeFileUtils';
 import { logCaseResolverWorkspaceEvent } from '../../workspace-persistence';
 import { RelationTreeNodeItem } from './RelationTreeNodeItem';
+import { RelationTreeNodeRuntimeProvider } from './RelationTreeNodeRuntimeContext';
 import type {
   RelationBrowserMode,
   RelationTreeInstance,
@@ -201,46 +201,40 @@ export function RelationTreeBrowser({
   );
 
   const renderNode = useCallback(
-    (input: FolderTreeViewportRenderNodeInput): React.JSX.Element => {
-      const nodeType = resolveNodeTypeFromMetadata(input.node);
-      const row: NodeFileDocumentSearchRow | null =
-        nodeType === 'file' ? (lookup.fileRowByNodeId.get(input.node.id) ?? null) : null;
-      const fileId = row?.file.id ?? '';
-      const isFileSelected = fileId.length > 0 && (selectedFileIds?.has(fileId) ?? false);
-      return (
-        <RelationTreeNodeItem
-          {...input}
-          mode={mode}
-          nodeType={nodeType}
-          row={row}
-          isLocked={isLocked}
-          isFileSelected={isFileSelected}
-          onToggleFileSelection={onToggleFileSelection}
-          onLinkFile={(nextFileId): void => {
-            logCaseResolverWorkspaceEvent({
-              source: 'relation_tree_browser',
-              action:
-                mode === 'link_relations'
-                  ? 'relation_tree_node_link_clicked'
-                  : 'relation_tree_node_add_clicked',
-              message: `file_id=${nextFileId}`,
-            });
-            if (mode === 'link_relations') {
-              onLinkFile?.(nextFileId);
-              return;
-            }
-            onAddFile?.(nextFileId);
-          }}
-          onAddFile={onAddFile}
-          onPreviewFile={onPreviewFile}
-          onArmDragHandle={handleArmDragHandle}
-        />
-      );
-    },
+    (input: FolderTreeViewportRenderNodeInput): React.JSX.Element => <RelationTreeNodeItem {...input} />,
+    []
+  );
+
+  const nodeRuntimeContextValue = useMemo(
+    () => ({
+      mode,
+      lookup,
+      isLocked,
+      selectedFileIds,
+      onToggleFileSelection,
+      onLinkFile: (nextFileId: string): void => {
+        logCaseResolverWorkspaceEvent({
+          source: 'relation_tree_browser',
+          action:
+            mode === 'link_relations'
+              ? 'relation_tree_node_link_clicked'
+              : 'relation_tree_node_add_clicked',
+          message: `file_id=${nextFileId}`,
+        });
+        if (mode === 'link_relations') {
+          onLinkFile?.(nextFileId);
+          return;
+        }
+        onAddFile?.(nextFileId);
+      },
+      onAddFile,
+      onPreviewFile,
+      onArmDragHandle: handleArmDragHandle,
+    }),
     [
       handleArmDragHandle,
       isLocked,
-      lookup.fileRowByNodeId,
+      lookup,
       mode,
       onAddFile,
       onLinkFile,
@@ -251,18 +245,20 @@ export function RelationTreeBrowser({
   );
 
   return (
-    <FolderTreeViewportV2
-      controller={controller}
-      className={className}
-      emptyLabel={emptyLabel}
-      searchState={searchState}
-      multiSelectConfig={multiSelectConfig}
-      enableDnd={mode === 'add_to_node_canvas'}
-      canStartDrag={mode === 'add_to_node_canvas' ? canStartDrag : undefined}
-      canDrop={mode === 'add_to_node_canvas' ? canDrop : undefined}
-      onNodeDragStart={mode === 'add_to_node_canvas' ? handleNodeDragStart : undefined}
-      rootDropUi={{ enabled: false }}
-      renderNode={renderNode}
-    />
+    <RelationTreeNodeRuntimeProvider value={nodeRuntimeContextValue}>
+      <FolderTreeViewportV2
+        controller={controller}
+        className={className}
+        emptyLabel={emptyLabel}
+        searchState={searchState}
+        multiSelectConfig={multiSelectConfig}
+        enableDnd={mode === 'add_to_node_canvas'}
+        canStartDrag={mode === 'add_to_node_canvas' ? canStartDrag : undefined}
+        canDrop={mode === 'add_to_node_canvas' ? canDrop : undefined}
+        onNodeDragStart={mode === 'add_to_node_canvas' ? handleNodeDragStart : undefined}
+        rootDropUi={{ enabled: false }}
+        renderNode={renderNode}
+      />
+    </RelationTreeNodeRuntimeProvider>
   );
 }

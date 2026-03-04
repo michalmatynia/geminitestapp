@@ -453,6 +453,23 @@ export interface UseNoteOperationsProps {
   }) => void;
 }
 
+export interface UseNoteOperationsResult {
+  handleCreateFolder: (parentId?: string | null) => Promise<void>;
+  handleDeleteFolder: (folderId: string) => Promise<void>;
+  handleRenameFolder: (folderId: string, newName: string) => Promise<void>;
+  handleDuplicateNote: (noteId: string) => Promise<void>;
+  handleDeleteNoteFromTree: (noteId: string) => Promise<void>;
+  handleRenameNote: (noteId: string, newTitle: string) => Promise<void>;
+  handleMoveNoteToFolder: (noteId: string, folderId: string | null) => Promise<void>;
+  handleMoveFolderToFolder: (folderId: string, targetParentId: string | null) => Promise<void>;
+  handleReorderFolder: (
+    folderId: string,
+    targetId: string,
+    position: 'before' | 'after'
+  ) => Promise<void>;
+  handleRelateNotes: (sourceNoteId: string, targetNoteId: string) => Promise<void>;
+}
+
 export interface UseNoteFiltersProps {
   settings: NoteSettings;
   updateSettings: (settings: Partial<NoteSettings>) => void;
@@ -664,7 +681,7 @@ export interface NotesAppContextValue {
   }) => void;
 
   // Operations
-  operations: any; // ReturnType<typeof useNoteOperations>;
+  operations: UseNoteOperationsResult;
   undoStack: UndoAction[];
   undoHistory: { label: string }[];
   handleUndoFolderTree: (count?: number) => Promise<void>;

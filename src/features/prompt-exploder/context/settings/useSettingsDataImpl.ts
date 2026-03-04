@@ -83,6 +83,7 @@ export function useSettingsDataImpl(args: {
   const [isParserTuningOpen, setIsParserTuningOpen] = useState(false);
   const [snapshotDraftName, setSnapshotDraftName] = useState('');
   const [selectedSnapshotId, setSelectedSnapshotId] = useState('');
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [sessionLearnedRules, setSessionLearnedRules] = useState<PromptValidationRule[]>([]);
   const [sessionLearnedTemplates, setSessionLearnedTemplates] = useState<
     PromptExploderLearnedTemplate[]
@@ -414,5 +415,7 @@ export function useSettingsDataImpl(args: {
     isBusy,
     settingsMap,
     templateMergeThreshold: learningDraft.templateMergeThreshold,
+    saveError,
+    setSaveError,
   };
 }

@@ -225,38 +225,9 @@ export function ValidatorPatternTree(): React.JSX.Element {
 
   const renderNode = useCallback((input: FolderTreeViewportRenderNodeInput): React.ReactNode => {
     if (input.node.type === 'folder') {
-      return (
-        <SequenceGroupFolderNodeItem
-          node={input.node}
-          depth={input.depth}
-          hasChildren={input.hasChildren}
-          isExpanded={input.isExpanded}
-          isSelected={input.isSelected}
-          isRenaming={input.isRenaming}
-          isDragging={input.isDragging}
-          isDropTarget={input.isDropTarget}
-          dropPosition={input.dropPosition}
-          select={input.select}
-          toggleExpand={input.toggleExpand}
-          startRename={input.startRename}
-        />
-      );
+      return <SequenceGroupFolderNodeItem {...input} />;
     }
-    return (
-      <PatternNodeItem
-        node={input.node}
-        depth={input.depth}
-        hasChildren={input.hasChildren}
-        isExpanded={input.isExpanded}
-        isSelected={input.isSelected}
-        isRenaming={input.isRenaming}
-        isDragging={input.isDragging}
-        isDropTarget={input.isDropTarget}
-        dropPosition={input.dropPosition}
-        select={input.select}
-        toggleExpand={input.toggleExpand}
-      />
-    );
+    return <PatternNodeItem {...input} />;
   }, []);
 
   // Show group settings panel below tree when a sequence-group folder is selected

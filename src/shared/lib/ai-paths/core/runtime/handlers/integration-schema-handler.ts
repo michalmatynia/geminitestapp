@@ -4,7 +4,7 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
-import type { CollectionSchema, CollectionSchemaDto } from '@/shared/contracts/database';
+import type { CollectionSchema } from '@/shared/contracts/database';
 
 import { dbApi, type ApiResponse } from '@/shared/lib/ai-paths/api';
 
@@ -77,8 +77,8 @@ const filterCollections = (
   const baseCollectionsRaw = Array.isArray(schema.collections)
     ? schema.collections
     : Object.values(schema.collections);
-  const baseCollections: CollectionSchemaDto[] = Array.from(
-    baseCollectionsRaw as unknown as CollectionSchemaDto[]
+  const baseCollections: CollectionSchema[] = Array.from(
+    baseCollectionsRaw as unknown as CollectionSchema[]
   );
 
   if (schema.provider === 'multi') {
@@ -90,7 +90,7 @@ const filterCollections = (
       collections,
     } as SchemaResponse;
   }
-  const collections = baseCollections.filter((c: CollectionSchemaDto): boolean =>
+  const collections = baseCollections.filter((c: CollectionSchema): boolean =>
     selectedSet.has(c.name.toLowerCase())
   );
   return {
@@ -146,12 +146,12 @@ export const handleDbSchema: NodeHandler = async ({
     const baseCollectionsRaw = Array.isArray(schema.collections)
       ? schema.collections
       : Object.values(schema.collections);
-    const baseCollections: CollectionSchemaDto[] = Array.from(
-      baseCollectionsRaw as unknown as CollectionSchemaDto[]
+    const baseCollections: CollectionSchema[] = Array.from(
+      baseCollectionsRaw as unknown as CollectionSchema[]
     );
 
-    schema.collections = baseCollections.map((c): CollectionSchemaDto => {
-      const result: CollectionSchemaDto = {
+    schema.collections = baseCollections.map((c): CollectionSchema => {
+      const result: CollectionSchema = {
         name: c.name,
         fields: config.includeFields ? (c.fields ?? []) : [],
       };

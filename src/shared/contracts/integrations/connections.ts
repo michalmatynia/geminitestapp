@@ -54,7 +54,6 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
 });
 
 export type IntegrationConnection = z.infer<typeof integrationConnectionSchema>;
-export type IntegrationConnectionDto = IntegrationConnection;
 
 export const createIntegrationConnectionSchema = integrationConnectionSchema.omit({
   id: true,

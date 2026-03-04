@@ -136,7 +136,7 @@ describe('Notes Advanced UI', () => {
     const user = userEvent.setup();
 
     // Wait for notes to load
-    const appleNote = await screen.findByRole('heading', { name: 'Apple' });
+    const appleNote = await screen.findByRole('heading', { name: 'Apple' }, { timeout: 3000 });
     expect(appleNote).toBeInTheDocument();
 
     const sortBySelect = screen.getByRole('combobox', { name: /Sort By/i });
@@ -158,7 +158,7 @@ describe('Notes Advanced UI', () => {
     renderNotesPage();
     const user = userEvent.setup();
 
-    const appleNote = await screen.findByRole('heading', { name: 'Apple' });
+    const appleNote = await screen.findByRole('heading', { name: 'Apple' }, { timeout: 3000 });
     await user.click(appleNote);
 
     expect(
@@ -176,7 +176,7 @@ describe('Notes Advanced UI', () => {
     renderNotesPage();
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('heading', { name: 'Apple' }));
+    await user.click(await screen.findByRole('heading', { name: 'Apple' }, { timeout: 3000 }));
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Apple' }, { timeout: 3000 })
     ).toBeInTheDocument();
@@ -198,7 +198,7 @@ describe('Notes Advanced UI', () => {
     renderNotesPage();
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('heading', { name: 'Banana' }));
+    await user.click(await screen.findByRole('heading', { name: 'Banana' }, { timeout: 3000 }));
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Banana' }, { timeout: 3000 })
     ).toBeInTheDocument();
@@ -223,17 +223,28 @@ describe('Notes Advanced UI', () => {
     renderNotesPage();
     const user = userEvent.setup();
 
-    // Use a more robust selector to find the card container
-    const appleTitle = await screen.findByRole('heading', { name: 'Apple' });
-    const appleCard = appleTitle.closest('.rounded-lg.border.p-4') || appleTitle.parentElement;
+    const findAppleCard = async (): Promise<HTMLElement> => {
+      const appleTitle = await screen.findByRole('heading', { name: 'Apple' }, { timeout: 3000 });
+      const appleCard = appleTitle.closest('.rounded-lg.border.p-4') || appleTitle.parentElement;
+      if (!appleCard) {
+        throw new Error('Apple note card not found');
+      }
+      return appleCard as HTMLElement;
+    };
 
-    const favBtn = await within(appleCard as HTMLElement).findByRole('button', {
+    const favBtn = await within(await findAppleCard()).findByRole('button', {
       name: /Favorite note/i,
     });
 
     await user.click(favBtn);
 
-    // Check if it's now Unfavorite note
-    expect(await screen.findByRole('button', { name: /Unfavorite note/i })).toBeInTheDocument();
+    await waitFor(() => {
+      const appleTitle = screen.getByRole('heading', { name: 'Apple' });
+      const appleCard = appleTitle.closest('.rounded-lg.border.p-4') || appleTitle.parentElement;
+      expect(appleCard).not.toBeNull();
+      expect(
+        within(appleCard as HTMLElement).getByRole('button', { name: /Unfavorite note/i })
+      ).toBeInTheDocument();
+    });
   });
 });

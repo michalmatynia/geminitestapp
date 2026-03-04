@@ -269,7 +269,7 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
   const sanitizedAssets = sanitizeCaseResolverNodeFileAssetSnapshots({
     assets,
     files: filesWithSanitizedGraph,
-    mode: 'reject',
+    mode: 'strip',
   });
 
   const sanitizedFiles = filesWithSanitizedGraph.map((file: CaseResolverFile): CaseResolverFile => {

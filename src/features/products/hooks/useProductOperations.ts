@@ -10,7 +10,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { getProductListQueryKey } from '@/features/products/hooks/productCache';
 import { useDuplicateProduct } from '@/features/products/hooks/useProductsMutations';
 import type { ProductWithImages } from '@/shared/contracts/products';
-import type { ProductDraftDto } from '@/shared/contracts/products';
+import type { ProductDraft } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
@@ -32,7 +32,7 @@ export function useProductOperations(
   setActionError: React.Dispatch<React.SetStateAction<string | null>>;
   handleOpenCreateModal: () => void;
   handleConfirmSku: (skuInput: string) => Promise<void>;
-  handleOpenCreateFromDraft: (draft: ProductDraftDto) => void;
+  handleOpenCreateFromDraft: (draft: ProductDraft) => void;
   handleCreateSuccess: (info?: { queued?: boolean }) => void;
   handleEditSuccess: (info?: { queued?: boolean }) => void;
   handleEditSave: (savedProduct: ProductWithImages) => void;
@@ -119,7 +119,7 @@ export function useProductOperations(
     }
   };
 
-  const handleOpenCreateFromDraft = (draft: ProductDraftDto): void => {
+  const handleOpenCreateFromDraft = (draft: ProductDraft): void => {
     const draftSku = typeof draft.sku === 'string' ? draft.sku.trim().toUpperCase() : '';
     setInitialSku(draftSku);
     setIsCreateOpen(true);

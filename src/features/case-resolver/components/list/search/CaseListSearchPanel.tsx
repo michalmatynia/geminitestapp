@@ -23,6 +23,7 @@ import {
   resolveIdentifierSearchLabel,
 } from '../../CaseResolverNodeFileUtils';
 import { CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF, formatCaseTimestamp } from '../case-list-utils';
+import { CaseListSearchActionsProvider, useCaseListSearchActionsContext } from './CaseListSearchActionsContext';
 
 type CaseListSearchMatchedFile = {
   file: CaseResolverFile;
@@ -262,13 +263,10 @@ function resolveFileIcon(fileType: CaseResolverFile['fileType']): React.JSX.Elem
 
 function FileSubRow({
   matched,
-  onPrefetchFile,
-  onOpenFile,
 }: {
   matched: CaseListSearchMatchedFile;
-  onPrefetchFile: (file: CaseResolverFile) => void;
-  onOpenFile: (file: CaseResolverFile) => void;
 }): React.JSX.Element {
+  const { onPrefetchFile, onOpenFile } = useCaseListSearchActionsContext();
   const { file, folderPath } = matched;
   const dateLabel = formatCaseTimestamp(file.updatedAt ?? file.createdAt);
 
@@ -306,19 +304,12 @@ function CaseAccordionRow({
   entry,
   isExpanded,
   onToggle,
-  onPrefetchCase,
-  onOpenCase,
-  onPrefetchFile,
-  onOpenFile,
 }: {
   entry: CaseListSearchEntry;
   isExpanded: boolean;
   onToggle: () => void;
-  onPrefetchCase: (caseId: string) => void;
-  onOpenCase: (caseId: string) => void;
-  onPrefetchFile: (file: CaseResolverFile) => void;
-  onOpenFile: (file: CaseResolverFile) => void;
 }): React.JSX.Element {
+  const { onPrefetchCase, onOpenCase } = useCaseListSearchActionsContext();
   const { caseFile, matchedFiles } = entry;
   const caseStatus = caseFile.caseStatus ?? 'pending';
   const hasFiles = matchedFiles.length > 0;
@@ -401,8 +392,6 @@ function CaseAccordionRow({
             <FileSubRow
               key={matched.file.id}
               matched={matched}
-              onPrefetchFile={onPrefetchFile}
-              onOpenFile={onOpenFile}
             />
           ))}
         </div>
@@ -460,59 +449,66 @@ export function CaseListSearchPanel({
   const totalFiles = entries.reduce((sum, entry) => sum + entry.matchedFiles.length, 0);
   const allExpanded =
     entries.length > 0 && entries.every((entry) => expandedCaseIds.has(entry.caseFile.id));
+  const searchActionsContextValue = useMemo(
+    () => ({
+      onPrefetchCase,
+      onPrefetchFile,
+      onOpenCase,
+      onOpenFile,
+    }),
+    [onOpenCase, onOpenFile, onPrefetchCase, onPrefetchFile]
+  );
 
   return (
-    <div className='relative flex min-h-0 flex-1 flex-col'>
-      <div className='flex items-center justify-between border-b border-border/40 px-3 py-2 text-[12px] text-gray-400'>
-        <span>
-          <span className='font-medium text-gray-200'>{entries.length}</span>{' '}
-          {entries.length === 1 ? 'case' : 'cases'}
-          {totalFiles > 0 ? (
-            <>
-              {' · '}
-              <span className='font-medium text-gray-200'>{totalFiles}</span>{' '}
-              {totalFiles === 1 ? 'file' : 'files'} matching
-            </>
+    <CaseListSearchActionsProvider value={searchActionsContextValue}>
+      <div className='relative flex min-h-0 flex-1 flex-col'>
+        <div className='flex items-center justify-between border-b border-border/40 px-3 py-2 text-[12px] text-gray-400'>
+          <span>
+            <span className='font-medium text-gray-200'>{entries.length}</span>{' '}
+            {entries.length === 1 ? 'case' : 'cases'}
+            {totalFiles > 0 ? (
+              <>
+                {' · '}
+                <span className='font-medium text-gray-200'>{totalFiles}</span>{' '}
+                {totalFiles === 1 ? 'file' : 'files'} matching
+              </>
+            ) : null}
+          </span>
+          {entries.length > 0 ? (
+            <Button
+              variant='link'
+              className='h-auto p-0 text-[11px] text-sky-400 hover:text-sky-300 hover:no-underline'
+              onClick={allExpanded ? collapseAll : expandAll}
+            >
+              {allExpanded ? 'Collapse all' : 'Expand all'}
+            </Button>
           ) : null}
-        </span>
-        {entries.length > 0 ? (
-          <Button
-            variant='link'
-            className='h-auto p-0 text-[11px] text-sky-400 hover:text-sky-300 hover:no-underline'
-            onClick={allExpanded ? collapseAll : expandAll}
-          >
-            {allExpanded ? 'Collapse all' : 'Expand all'}
-          </Button>
-        ) : null}
-      </div>
+        </div>
 
-      <div className='min-h-0 flex-1 overflow-auto p-2'>
-        {entries.length === 0 ? (
-          <div className='flex items-center justify-center py-8 text-[13px] text-gray-500'>
-            No cases or files match your search.
-          </div>
-        ) : (
-          <div className='space-y-0.5'>
-            {entries.map((entry) => (
-              <CaseAccordionRow
-                key={entry.caseFile.id}
-                entry={entry}
-                isExpanded={expandedCaseIds.has(entry.caseFile.id)}
-                onToggle={() => toggleCase(entry.caseFile.id)}
-                onPrefetchCase={onPrefetchCase}
-                onOpenCase={onOpenCase}
-                onPrefetchFile={onPrefetchFile}
-                onOpenFile={onOpenFile}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+        <div className='min-h-0 flex-1 overflow-auto p-2'>
+          {entries.length === 0 ? (
+            <div className='flex items-center justify-center py-8 text-[13px] text-gray-500'>
+              No cases or files match your search.
+            </div>
+          ) : (
+            <div className='space-y-0.5'>
+              {entries.map((entry) => (
+                <CaseAccordionRow
+                  key={entry.caseFile.id}
+                  entry={entry}
+                  isExpanded={expandedCaseIds.has(entry.caseFile.id)}
+                  onToggle={() => toggleCase(entry.caseFile.id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
 
-      <MasterTreeSettingsButton
-        instance='case_resolver_cases'
-        href={CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF}
-      />
-    </div>
+        <MasterTreeSettingsButton
+          instance='case_resolver_cases'
+          href={CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF}
+        />
+      </div>
+    </CaseListSearchActionsProvider>
   );
 }

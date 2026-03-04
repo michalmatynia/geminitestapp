@@ -5,13 +5,12 @@ import {
   useUpdatePreferredInventory,
 } from '@/features/integrations/hooks/useIntegrationMutations';
 import {
-  getExportTemplatesQueryOptions,
-  getActiveExportTemplateQueryOptions,
-  getDefaultExportInventoryQueryOptions,
-  getBaseInventoriesQueryOptions,
+  useExportTemplates,
+  useActiveExportTemplate,
+  useDefaultExportInventory,
+  useBaseInventories,
 } from '@/features/integrations/hooks/useIntegrationQueries';
 import type { IntegrationTemplate as Template, BaseInventory } from '@/shared/contracts/integrations';
-import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 
 // Why: Base.com has complex, interconnected setup:
 // - Templates define field mapping
@@ -39,16 +38,10 @@ export function useBaseComSettings(
   const hasInitializedInventory = useRef(false);
 
   // Queries
-  const results = createMultiQueryV2({
-    queries: [
-      getExportTemplatesQueryOptions(),
-      getActiveExportTemplateQueryOptions(),
-      getDefaultExportInventoryQueryOptions(),
-      getBaseInventoriesQueryOptions(connectionId, isBaseComIntegration),
-    ] as const,
-  });
-
-  const [templatesQuery, activeTemplateQuery, defaultInventoryQuery, inventoriesQuery] = results;
+  const templatesQuery = useExportTemplates();
+  const activeTemplateQuery = useActiveExportTemplate();
+  const defaultInventoryQuery = useDefaultExportInventory();
+  const inventoriesQuery = useBaseInventories(connectionId, isBaseComIntegration);
 
   // Mutations
   const updatePreferredTemplateMutation = useUpdatePreferredTemplate();

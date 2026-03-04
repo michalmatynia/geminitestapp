@@ -16,6 +16,7 @@ const QUIET_TEST_LOG_PATTERNS = [
   'Activity:',
   'completed successfully',
   '[system] [timing]',
+  '[getProducts] Total:',
   'Resolved provider:',
   'enqueuePathRun timing',
   '[mock-prompt] returning prompt for value:',
@@ -39,8 +40,10 @@ const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const shouldSuppressStructuredTestLog = (args: unknown[]): boolean => {
-  const [firstArg, secondArg] = args;
-  const message = typeof firstArg === 'string' ? firstArg : '';
+  const [, secondArg] = args;
+  const message = args
+    .filter((arg): arg is string => typeof arg === 'string')
+    .join(' ');
 
   if (QUIET_TEST_LOG_PATTERNS.some((pattern: string): boolean => message.includes(pattern))) {
     return true;

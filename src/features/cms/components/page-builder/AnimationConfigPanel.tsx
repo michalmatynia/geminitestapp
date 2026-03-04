@@ -5,8 +5,8 @@ import React from 'react';
 
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
 import type {
-  AnimationPresetDto as AnimationPreset,
-  AnimationTriggerDto as AnimationTrigger,
+  AnimationPreset,
+  AnimationTrigger,
 } from '@/shared/contracts/gsap';
 import { ANIMATION_PRESETS, ANIMATION_EASINGS } from '@/shared/contracts/gsap';
 import {

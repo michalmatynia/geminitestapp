@@ -1,26 +1,35 @@
 'use client';
 
-import { ChevronDown, ChevronRight, FileText, Folder, FolderOpen, GripVertical, Lock, Plus, ScanText } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Folder,
+  FolderOpen,
+  GripVertical,
+  Lock,
+  Plus,
+  ScanText,
+} from 'lucide-react';
 import React from 'react';
 
+import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
 import { Button, Checkbox, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
-import type { NodeFileDocumentSearchRow } from '../../components/CaseResolverNodeFileUtils';
-import type { RelationBrowserMode, RelationTreeNodeType } from '../types';
-import { getCaseResolverDocTooltipWithFallback } from '../utils/docs';
 
-type RelationTreeNodeItemProps = FolderTreeViewportRenderNodeInput & {
-  mode: RelationBrowserMode;
-  nodeType: RelationTreeNodeType;
-  row: NodeFileDocumentSearchRow | null;
-  isLocked: boolean;
-  isFileSelected: boolean;
-  onToggleFileSelection?: ((fileId: string) => void) | undefined;
-  onLinkFile?: ((fileId: string) => void) | undefined;
-  onAddFile?: ((fileId: string) => void) | undefined;
-  onPreviewFile?: ((fileId: string) => void) | undefined;
-  onArmDragHandle?: ((fileId: string) => void) | undefined;
+import { getCaseResolverDocTooltipWithFallback } from '../utils/docs';
+import { useRelationTreeNodeRuntimeContext } from './RelationTreeNodeRuntimeContext';
+
+type RelationTreeNodeItemProps = FolderTreeViewportRenderNodeInput;
+
+const resolveNodeTypeFromMetadata = (
+  node: FolderTreeViewportRenderNodeInput['node']
+): 'case' | 'folder' | 'file' => {
+  const raw = String(node.metadata?.['relationNodeType'] ?? '');
+  if (raw === 'file' || raw === 'case' || raw === 'folder') return raw;
+  if (node.kind === 'relation_file') return 'file';
+  if (node.kind === 'relation_case') return 'case';
+  return 'folder';
 };
 
 const renderFileTypeIcon = (fileType: string): React.JSX.Element => {
@@ -31,16 +40,6 @@ const renderFileTypeIcon = (fileType: string): React.JSX.Element => {
 };
 
 export function RelationTreeNodeItem({
-  mode,
-  nodeType,
-  row,
-  isLocked,
-  isFileSelected,
-  onToggleFileSelection,
-  onLinkFile,
-  onAddFile,
-  onPreviewFile,
-  onArmDragHandle,
   node,
   depth,
   hasChildren,
@@ -51,6 +50,22 @@ export function RelationTreeNodeItem({
   toggleExpand,
   select,
 }: RelationTreeNodeItemProps): React.JSX.Element {
+  const {
+    mode,
+    lookup,
+    isLocked,
+    selectedFileIds,
+    onToggleFileSelection,
+    onLinkFile,
+    onAddFile,
+    onPreviewFile,
+    onArmDragHandle,
+  } = useRelationTreeNodeRuntimeContext();
+  const nodeType = resolveNodeTypeFromMetadata(node);
+  const row = nodeType === 'file' ? (lookup.fileRowByNodeId.get(node.id) ?? null) : null;
+  const fileId = row?.file.id ?? '';
+  const isFileSelected = fileId.length > 0 && (selectedFileIds?.has(fileId) ?? false);
+
   const stateClassName =
     dropPosition === 'before'
       ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-blue-500/60'
@@ -65,7 +80,10 @@ export function RelationTreeNodeItem({
   if (nodeType !== 'file' || !row) {
     return (
       <div
-        className={cn('group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition', stateClassName)}
+        className={cn(
+          'group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition',
+          stateClassName
+        )}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
       >
         {hasChildren ? (
@@ -80,7 +98,11 @@ export function RelationTreeNodeItem({
             }}
             aria-label={isExpanded ? 'Collapse' : 'Expand'}
           >
-            {isExpanded ? <ChevronDown className='size-3.5' /> : <ChevronRight className='size-3.5' />}
+            {isExpanded ? (
+              <ChevronDown className='size-3.5' />
+            ) : (
+              <ChevronRight className='size-3.5' />
+            )}
           </Button>
         ) : (
           <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
@@ -112,7 +134,10 @@ export function RelationTreeNodeItem({
 
   return (
     <div
-      className={cn('group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition', stateClassName)}
+      className={cn(
+        'group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition',
+        stateClassName
+      )}
       style={{ paddingLeft: `${depth * 16 + 8}px` }}
     >
       <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
@@ -125,10 +150,7 @@ export function RelationTreeNodeItem({
         />
       ) : (
         <Tooltip
-          content={getCaseResolverDocTooltipWithFallback(
-            'dragToCanvas',
-            'Drag from handle to canvas'
-          )}
+          content={getCaseResolverDocTooltipWithFallback('dragToCanvas', 'Drag from handle to canvas')}
           side='top'
         >
           <button

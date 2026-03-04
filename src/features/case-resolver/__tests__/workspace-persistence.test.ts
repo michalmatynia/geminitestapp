@@ -129,7 +129,7 @@ describe('case-resolver workspace persistence', () => {
     }
   });
 
-  it('rejects deprecated inline node-file snapshots before persist', async () => {
+  it('strips deprecated inline node-file snapshots before persist', async () => {
     const workspace = {
       ...createDefaultCaseResolverWorkspace(),
       assets: [
@@ -156,12 +156,13 @@ describe('case-resolver workspace persistence', () => {
       source: 'test',
     });
 
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.conflict).toBe(false);
-      expect(result.error).toMatch(/Inline Case Resolver node-file snapshots are no longer supported\./);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const persistedAsset = result.workspace.assets.find((asset) => asset.id === 'node-file-inline');
+      expect(persistedAsset?.kind).toBe('node_file');
+      expect(persistedAsset?.textContent ?? '').toBe('');
     }
-    expect(fetchMock).toHaveBeenCalledTimes(0);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('requests fresh settings snapshots for workspace recovery reads', async () => {
@@ -695,9 +696,11 @@ describe('case-resolver workspace persistence', () => {
 
     expect(compactedDoc && 'documentContentMarkdown' in compactedDoc).toBe(false);
     expect(compactedDoc && 'documentContentPlainText' in compactedDoc).toBe(false);
+    expect(compactedDoc && 'documentContent' in compactedDoc).toBe(false);
     expect(compactedDoc?.documentContentHtml).toBe('<p>Hello</p>');
     const docHistory = compactedDoc?.documentHistory?.[0] as Record<string, unknown> | undefined;
     expect(docHistory).toBeDefined();
+    expect(docHistory && 'documentContent' in docHistory).toBe(false);
     expect(docHistory && 'documentContentMarkdown' in docHistory).toBe(false);
     expect(docHistory && 'documentContentPlainText' in docHistory).toBe(false);
     expect(docHistory?.['documentContentHtml']).toBe('<p>History</p>');
@@ -708,7 +711,7 @@ describe('case-resolver workspace persistence', () => {
     ]).toBe('keyed');
   });
 
-  it('rejects inline node-file snapshot text during workspace compaction', () => {
+  it('strips inline node-file snapshot text during workspace compaction', () => {
     const workspace = {
       ...createDefaultCaseResolverWorkspace(),
       assets: [
@@ -722,9 +725,11 @@ describe('case-resolver workspace persistence', () => {
       ],
     };
 
-    expect(() => compactCaseResolverWorkspaceForPersist(workspace)).toThrow(
-      /Inline Case Resolver node-file snapshots are no longer supported\./
-    );
+    const compacted = compactCaseResolverWorkspaceForPersist(workspace);
+    const compactedAsset = compacted.assets.find((asset) => asset.id === 'node-asset-inline');
+
+    expect(compactedAsset?.kind).toBe('node_file');
+    expect('textContent' in (compactedAsset ?? {})).toBe(false);
   });
 
   it('rehydrates compacted scanfile payload as markdown-authoritative content', () => {

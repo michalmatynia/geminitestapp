@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
-  DatabaseBrowseParamsDto as BrowseParams,
-  DatabaseBrowseDto as BrowseResponse,
+  DatabaseBrowseParams as BrowseParams,
+  DatabaseBrowse as BrowseResponse,
 } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';

@@ -12,6 +12,7 @@ import { Button, Card, FormField, Input, SectionHeader, Textarea } from '@/share
 
 import { SegmentEditorListItemLogicalEditor } from '../SegmentEditorListItemLogicalEditor';
 import { PromptExploderTreeNode } from './PromptExploderTreeNode';
+import { PromptExploderTreeNodeRuntimeProvider } from './PromptExploderTreeNodeRuntimeContext';
 import { buildPromptExploderTreeRevision, usePromptExploderHandleOnlyDrag } from '../../tree/shared';
 import {
   buildPromptExploderSubsectionMasterNodes,
@@ -94,6 +95,13 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
 
   const { armDragHandle, releaseDragHandle, canStartHandleOnlyDrag } =
     usePromptExploderHandleOnlyDrag();
+  const treeNodeRuntimeContextValue = useMemo(
+    () => ({
+      armDragHandle,
+      releaseDragHandle,
+    }),
+    [armDragHandle, releaseDragHandle]
+  );
 
   const selectedMetadata = controller.selectedNodeId
     ? readPromptExploderTreeMetadata(
@@ -203,50 +211,46 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
       />
       <div className='grid gap-3 lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]'>
         <Card variant='subtle-compact' padding='sm' className='space-y-2 border-border/60 bg-card/20'>
-          <div className='max-h-[320px] overflow-y-auto rounded border border-border/60 bg-card/30 p-2'>
-            <FolderTreeViewportV2
-              controller={controller}
-              scrollToNodeRef={scrollToNodeRef}
-              enableDnd
-              className='space-y-0.5'
-              emptyLabel='No subsections detected.'
-              rootDropUi={rootDropUi}
-              canStartDrag={canStartHandleOnlyDrag}
-              canDrop={({ draggedNodeId, targetId, position, defaultAllowed }) => {
-                if (!defaultAllowed) return false;
-                const dragged = readPromptExploderTreeMetadata(
-                  masterNodes.find((node) => node.id === draggedNodeId) ?? { metadata: undefined }
-                );
-                const target =
-                  targetId === null
-                    ? null
-                    : readPromptExploderTreeMetadata(
-                      masterNodes.find((node) => node.id === targetId) ?? { metadata: undefined }
-                    );
-                if (!dragged) return false;
-                if (targetId === null) {
-                  return dragged.kind === 'subsection';
-                }
-                if (!target) return false;
-                if (dragged.kind === 'subsection') {
-                  return target.kind === 'subsection' && position !== 'inside';
-                }
-                if (dragged.kind === 'subsection_item') {
-                  if (target.kind === 'subsection') return position === 'inside';
-                  if (target.kind === 'subsection_item') return true;
+          <PromptExploderTreeNodeRuntimeProvider value={treeNodeRuntimeContextValue}>
+            <div className='max-h-[320px] overflow-y-auto rounded border border-border/60 bg-card/30 p-2'>
+              <FolderTreeViewportV2
+                controller={controller}
+                scrollToNodeRef={scrollToNodeRef}
+                enableDnd
+                className='space-y-0.5'
+                emptyLabel='No subsections detected.'
+                rootDropUi={rootDropUi}
+                canStartDrag={canStartHandleOnlyDrag}
+                canDrop={({ draggedNodeId, targetId, position, defaultAllowed }) => {
+                  if (!defaultAllowed) return false;
+                  const dragged = readPromptExploderTreeMetadata(
+                    masterNodes.find((node) => node.id === draggedNodeId) ?? { metadata: undefined }
+                  );
+                  const target =
+                    targetId === null
+                      ? null
+                      : readPromptExploderTreeMetadata(
+                        masterNodes.find((node) => node.id === targetId) ?? { metadata: undefined }
+                      );
+                  if (!dragged) return false;
+                  if (targetId === null) {
+                    return dragged.kind === 'subsection';
+                  }
+                  if (!target) return false;
+                  if (dragged.kind === 'subsection') {
+                    return target.kind === 'subsection' && position !== 'inside';
+                  }
+                  if (dragged.kind === 'subsection_item') {
+                    if (target.kind === 'subsection') return position === 'inside';
+                    if (target.kind === 'subsection_item') return true;
+                    return false;
+                  }
                   return false;
-                }
-                return false;
-              }}
-              renderNode={(input) => (
-                <PromptExploderTreeNode
-                  {...input}
-                  armDragHandle={armDragHandle}
-                  releaseDragHandle={releaseDragHandle}
-                />
-              )}
-            />
-          </div>
+                }}
+                renderNode={(input) => <PromptExploderTreeNode {...input} />}
+              />
+            </div>
+          </PromptExploderTreeNodeRuntimeProvider>
         </Card>
         <Card variant='subtle-compact' padding='md' className='space-y-3 border-border/60 bg-card/20'>
           {selectedSubsection ? (

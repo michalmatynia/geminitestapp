@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { dtoBaseSchema, type DtoBase } from '../base';
+import { type DtoBase } from '../base';
 import { aiNodeSchema, edgeSchema } from '../ai-paths';
 
 /**

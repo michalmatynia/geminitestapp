@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { dtoBaseSchema } from './base';
 
 /**
- * Drafter DTOs
+ * Drafter Contracts
  */
 
 export const draftSchema = dtoBaseSchema.extend({
@@ -15,7 +15,7 @@ export const draftSchema = dtoBaseSchema.extend({
   publishedAt: z.string().nullable(),
 });
 
-export type DraftDto = z.infer<typeof draftSchema>;
+export type Draft = z.infer<typeof draftSchema>;
 
 export const createDraftSchema = draftSchema.omit({
   id: true,
@@ -23,12 +23,12 @@ export const createDraftSchema = draftSchema.omit({
   updatedAt: true,
 });
 
-export type CreateDraftDto = z.infer<typeof createDraftSchema>;
-export type UpdateDraftDto = Partial<CreateDraftDto>;
+export type CreateDraftInput = z.infer<typeof createDraftSchema>;
+export type UpdateDraftInput = Partial<CreateDraftInput>;
 
 export const publishDraftSchema = z.object({
   id: z.string(),
   publishedAt: z.string().optional(),
 });
 
-export type PublishDraftDto = z.infer<typeof publishDraftSchema>;
+export type PublishDraftInput = z.infer<typeof publishDraftSchema>;

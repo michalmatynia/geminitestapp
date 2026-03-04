@@ -3,9 +3,17 @@ import { useContext } from 'react';
 import {
   DocumentStateContext,
   DocumentActionsContext,
+  DocumentPromptContext,
   type DocumentState,
   type DocumentActions,
+  type DocumentPromptState,
 } from '../DocumentContext';
+
+export const useDocumentPrompt = (): DocumentPromptState => {
+  const ctx = useContext(DocumentPromptContext);
+  if (!ctx) throw new Error('useDocumentPrompt must be used within DocumentProvider');
+  return ctx;
+};
 
 export const useDocumentState = (): DocumentState => {
   const ctx = useContext(DocumentStateContext);

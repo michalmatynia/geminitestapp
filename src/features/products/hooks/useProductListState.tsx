@@ -15,7 +15,7 @@ import { useProductSync } from '@/features/products/hooks/useProductEnhancements
 import { useProductOperations } from '@/features/products/hooks/useProductOperations';
 import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import { useQueuedProductIds } from '@/features/products/state/queued-product-ops';
-import type { ProductWithImages, ProductDraftDto } from '@/shared/contracts/products';
+import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
@@ -354,7 +354,7 @@ export function useProductListState(): ProductListContextType & {
 
   const { data: allDrafts = [] } = useDraftQueries();
   const activeDrafts = useMemo(
-    () => allDrafts.filter((d: ProductDraftDto) => d.active !== false),
+    () => allDrafts.filter((d: ProductDraft) => d.active !== false),
     [allDrafts]
   );
 

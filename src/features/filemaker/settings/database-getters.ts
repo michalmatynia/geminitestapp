@@ -50,15 +50,11 @@ export const parseFilemakerDatabase = (raw: string | null | undefined): Filemake
 export const parseFilemakerDatabaseForCaseResolver = (
   raw: string | null | undefined
 ): FilemakerDatabase => {
-  try {
-    const parsed = parseFilemakerDatabasePayload(raw);
-    return normalizeFilemakerDatabase(parsed, {
-      rejectLegacyInlinePayloads: false,
-      stripCompatibilityFields: true,
-    });
-  } catch {
-    return normalizeFilemakerDatabase(null);
-  }
+  const parsed = parseFilemakerDatabasePayload(raw);
+  return normalizeFilemakerDatabase(parsed, {
+    rejectLegacyInlinePayloads: true,
+    stripCompatibilityFields: true,
+  });
 };
 
 export const getFilemakerAddressById = (

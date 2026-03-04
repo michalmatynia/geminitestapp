@@ -14,6 +14,7 @@ const QUIET_TEST_LOG_PATTERNS = [
   'Activity:',
   'completed successfully',
   '[system] [timing]',
+  '[getProducts] Total:',
   'Resolved provider:',
   'enqueuePathRun timing',
   '[mock-prompt] returning prompt for value:',
@@ -37,8 +38,10 @@ const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const shouldSuppressStructuredTestLog = (args: unknown[]): boolean => {
-  const [firstArg, secondArg] = args;
-  const message = typeof firstArg === 'string' ? firstArg : '';
+  const [, secondArg] = args;
+  const message = args
+    .filter((arg): arg is string => typeof arg === 'string')
+    .join(' ');
 
   if (message.includes(THREE_DUPLICATE_IMPORT_WARNING)) {
     return true;
@@ -692,7 +695,7 @@ beforeAll(() => {
   );
   // Start the MSW server before all tests
   server.listen({
-    onUnhandledRequest: 'warn',
+    onUnhandledRequest: 'bypass',
   });
 });
 

@@ -4,8 +4,8 @@ import {
   ApiResponse 
 } from './base';
 import type { 
-  DatabaseBrowseDto, 
-  SchemaResponsePayloadDto 
+  DatabaseBrowse, 
+  SchemaResponse 
 } from '@/shared/contracts/database';
 
 export type DbActionPayload = {
@@ -75,13 +75,13 @@ export async function entityUpdate<T>(payload: EntityUpdatePayload): Promise<Api
 export async function fetchSchema(args?: {
   provider?: string;
   includeCounts?: boolean;
-}): Promise<ApiResponse<SchemaResponsePayloadDto>> {
+}): Promise<ApiResponse<SchemaResponse>> {
   const params = new URLSearchParams();
   if (args?.provider) params.set('provider', args.provider);
   if (args?.includeCounts) params.set('includeCounts', 'true');
   const query = params.toString();
   const url = query ? `/api/databases/schema?${query}` : '/api/databases/schema';
-  return apiFetch<SchemaResponsePayloadDto>(url);
+  return apiFetch<SchemaResponse>(url);
 }
 
 export async function browseDatabase(args: {
@@ -90,7 +90,7 @@ export async function browseDatabase(args: {
   query?: string;
   limit?: number;
   skip?: number;
-}): Promise<ApiResponse<DatabaseBrowseDto>> {
+}): Promise<ApiResponse<DatabaseBrowse>> {
   const params = new URLSearchParams();
   params.set('collection', args.collection);
   params.set('provider', args.provider ?? 'auto');
@@ -99,5 +99,5 @@ export async function browseDatabase(args: {
   if (typeof args.query === 'string' && args.query.trim()) {
     params.set('query', args.query.trim());
   }
-  return apiFetch<DatabaseBrowseDto>(`/api/databases/browse?${params.toString()}`);
+  return apiFetch<DatabaseBrowse>(`/api/databases/browse?${params.toString()}`);
 }

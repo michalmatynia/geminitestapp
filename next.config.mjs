@@ -29,6 +29,9 @@ const nextConfig = {
   compress: true, // Ensure gzip compression is enabled
   output: 'standalone', // Docker-friendly build output
   outputFileTracingRoot: __dirname,
+  outputFileTracingExcludes: {
+    '/api/ai-paths/playwright/[runId]/artifacts/[file]': ['./test-results/**/*'],
+  },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },

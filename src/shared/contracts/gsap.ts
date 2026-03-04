@@ -49,16 +49,13 @@ export const animationPresetSchema = z.enum([
   'orbit',
   'skew',
 ]);
-export type AnimationPresetDto = z.infer<typeof animationPresetSchema>;
-export type AnimationPreset = AnimationPresetDto;
+export type AnimationPreset = z.infer<typeof animationPresetSchema>;
 
 export const animationEasingSchema = z.string();
-export type AnimationEasingDto = string;
-export type AnimationEasing = AnimationEasingDto;
+export type AnimationEasing = string;
 
 export const animationTriggerSchema = z.enum(['load', 'hover', 'scroll', 'click', 'viewport']);
-export type AnimationTriggerDto = z.infer<typeof animationTriggerSchema>;
-export type AnimationTrigger = AnimationTriggerDto;
+export type AnimationTrigger = z.infer<typeof animationTriggerSchema>;
 
 export const staggerFromSchema = z.union([
   z.enum(['start', 'center', 'end', 'edges', 'random']),

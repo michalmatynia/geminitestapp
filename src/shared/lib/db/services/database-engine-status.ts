@@ -9,12 +9,12 @@ import { getIntegrationDataProvider } from '@/shared/lib/integrations/services/i
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import type {
-  DatabaseEngineCollectionStatusDto,
-  DatabaseEnginePrimaryProviderDto,
-  DatabaseEngineProviderDto,
-  DatabaseEngineServiceStatusDto,
-  DatabaseEngineServiceDto,
-  DatabaseEngineStatusDto,
+  DatabaseEngineCollectionStatus,
+  DatabaseEnginePrimaryProvider,
+  DatabaseEngineProvider,
+  DatabaseEngineServiceStatus,
+  DatabaseEngineService,
+  DatabaseEngineStatus,
 } from '@/shared/contracts/database';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import {
@@ -30,14 +30,44 @@ import prisma from '@/shared/lib/db/prisma';
 type DmmfModel = { name: string };
 type DmmfDatamodel = { models?: DmmfModel[] };
 
-const services: DatabaseEngineServiceDto[] = ['app', 'auth', 'product', 'integrations', 'cms'];
+const services: DatabaseEngineService[] = ['app', 'auth', 'product', 'integrations', 'cms'];
+const PROJECT_ROOT = process.cwd();
+const PRISMA_ROOT_DIR = path.join(PROJECT_ROOT, 'prisma');
+const PRISMA_SCHEMA_DEFAULT_PATH = path.join(PRISMA_ROOT_DIR, 'schema.prisma');
+
+const resolvePrismaSchemaPath = (candidate: string): string => {
+  if (path.isAbsolute(candidate)) {
+    return candidate;
+  }
+
+  const normalized = candidate.trim().replace(/\\/g, '/').replace(/^\.\/+/, '');
+  if (!normalized) {
+    return PRISMA_SCHEMA_DEFAULT_PATH;
+  }
+
+  if (normalized.startsWith('prisma/')) {
+    const relativePath = normalized.slice('prisma/'.length);
+    const segments = relativePath.split('/').filter((segment) => segment.length > 0);
+    if (segments.some((segment) => segment === '..')) {
+      return PRISMA_SCHEMA_DEFAULT_PATH;
+    }
+    return path.join(PRISMA_ROOT_DIR, ...segments);
+  }
+
+  const segments = normalized.split('/').filter((segment) => segment.length > 0);
+  if (segments.some((segment) => segment === '..')) {
+    return PRISMA_SCHEMA_DEFAULT_PATH;
+  }
+
+  return path.join(PRISMA_ROOT_DIR, ...segments);
+};
 
 const getPrismaSchemaPath = (): string => {
   const schemaPath = process.env['PRISMA_SCHEMA_PATH'];
   if (schemaPath) {
-    return path.isAbsolute(schemaPath) ? schemaPath : path.join(process.cwd(), schemaPath);
+    return resolvePrismaSchemaPath(schemaPath);
   }
-  return path.join(process.cwd(), 'prisma', 'schema.prisma');
+  return PRISMA_SCHEMA_DEFAULT_PATH;
 };
 
 const parsePrismaModelNamesFromSchema = (): string[] => {
@@ -104,7 +134,7 @@ const getKnownMongoCollections = async (): Promise<string[]> => {
   }
 };
 
-const isProviderConfigured = (provider: DatabaseEngineProviderDto): boolean =>
+const isProviderConfigured = (provider: DatabaseEngineProvider): boolean =>
   provider === 'redis' ? isRedisProviderConfigured() : isPrimaryProviderConfigured(provider);
 
 const getErrorMessage = (error: unknown): string => {
@@ -113,8 +143,8 @@ const getErrorMessage = (error: unknown): string => {
 };
 
 const resolveEffectiveServiceProvider = async (
-  service: DatabaseEngineServiceDto
-): Promise<DatabaseEnginePrimaryProviderDto> => {
+  service: DatabaseEngineService
+): Promise<DatabaseEnginePrimaryProvider> => {
   if (service === 'app') return getAppDbProvider();
   if (service === 'auth') return getAuthDataProvider();
   if (service === 'product') return getProductDataProvider();
@@ -123,8 +153,8 @@ const resolveEffectiveServiceProvider = async (
 };
 
 const buildCollectionStatus = async (
-  collectionRouteMap: Record<string, DatabaseEngineProviderDto>
-): Promise<DatabaseEngineCollectionStatusDto> => {
+  collectionRouteMap: Record<string, DatabaseEngineProvider>
+): Promise<DatabaseEngineCollectionStatus> => {
   const [mongoCollections, prismaCollections] = await Promise.all([
     getKnownMongoCollections(),
     Promise.resolve(getKnownPrismaCollections()),
@@ -158,12 +188,12 @@ const buildCollectionStatus = async (
 };
 
 const buildServiceStatuses = async (params: {
-  policy: DatabaseEngineStatusDto['policy'];
-  serviceRouteMap: Partial<Record<DatabaseEngineServiceDto, DatabaseEngineProviderDto>>;
-}): Promise<DatabaseEngineServiceStatusDto[]> => {
+  policy: DatabaseEngineStatus['policy'];
+  serviceRouteMap: Partial<Record<DatabaseEngineService, DatabaseEngineProvider>>;
+}): Promise<DatabaseEngineServiceStatus[]> => {
   const { policy, serviceRouteMap } = params;
   return Promise.all(
-    services.map(async (service): Promise<DatabaseEngineServiceStatusDto> => {
+    services.map(async (service): Promise<DatabaseEngineServiceStatus> => {
       const configuredProvider = serviceRouteMap[service] ?? null;
       const missingExplicitRoute = policy.requireExplicitServiceRouting && !configuredProvider;
       const unsupportedConfiguredProvider = configuredProvider === 'redis';
@@ -198,9 +228,9 @@ const buildServiceStatuses = async (params: {
 };
 
 const buildBlockingIssues = (params: {
-  policy: DatabaseEngineStatusDto['policy'];
-  servicesStatus: DatabaseEngineServiceStatusDto[];
-  collectionsStatus: DatabaseEngineCollectionStatusDto;
+  policy: DatabaseEngineStatus['policy'];
+  servicesStatus: DatabaseEngineServiceStatus[];
+  collectionsStatus: DatabaseEngineCollectionStatus;
 }): string[] => {
   const { policy, servicesStatus, collectionsStatus } = params;
   const issues: string[] = [];
@@ -245,7 +275,7 @@ const buildBlockingIssues = (params: {
   return issues;
 };
 
-export async function getDatabaseEngineStatus(): Promise<DatabaseEngineStatusDto> {
+export async function getDatabaseEngineStatus(): Promise<DatabaseEngineStatus> {
   const [policy, partialServiceRouteMap, collectionRouteMap] = await Promise.all([
     getDatabaseEnginePolicy(),
     getDatabaseEngineServiceRouteMap(),
@@ -258,16 +288,16 @@ export async function getDatabaseEngineStatus(): Promise<DatabaseEngineStatusDto
     serviceRouteMap: partialServiceRouteMap,
   });
   const serviceStatusByService = new Map(
-    servicesStatus.map((status: DatabaseEngineServiceStatusDto) => [status.service, status])
+    servicesStatus.map((status: DatabaseEngineServiceStatus) => [status.service, status])
   );
   const serviceRouteMap = services.reduce(
     (acc, service) => {
       const status = serviceStatusByService.get(service);
-      const fallbackProvider = (status?.effectiveProvider ?? 'prisma') as DatabaseEngineProviderDto;
+      const fallbackProvider = (status?.effectiveProvider ?? 'prisma') as DatabaseEngineProvider;
       acc[service] = partialServiceRouteMap[service] ?? fallbackProvider;
       return acc;
     },
-    {} as Record<DatabaseEngineServiceDto, DatabaseEngineProviderDto>
+    {} as Record<DatabaseEngineService, DatabaseEngineProvider>
   );
   const blockingIssues = buildBlockingIssues({
     policy,

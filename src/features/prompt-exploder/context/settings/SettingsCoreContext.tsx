@@ -3,7 +3,10 @@
 import { createContext, useContext } from 'react';
 import type { ValidatorPatternList } from '@/shared/contracts/validator';
 import type { PromptEngineSettings } from '@/shared/contracts/prompt-engine';
-import { parsePromptExploderSettings } from '../../settings';
+import {
+  parsePromptExploderSettings,
+  type PromptExploderSettingsValidationError,
+} from '../../settings';
 
 import type { 
   PromptExploderRuntimeValidationScope, 
@@ -14,7 +17,7 @@ import type {
 export interface SettingsCoreState {
   promptSettings: PromptEngineSettings;
   promptExploderSettings: ReturnType<typeof parsePromptExploderSettings>;
-  promptExploderSettingsValidationError: any;
+  promptExploderSettingsValidationError: PromptExploderSettingsValidationError | null;
   validatorPatternLists: ValidatorPatternList[];
   incomingBridgeSource: string | null;
   activeValidationScope: PromptExploderRuntimeValidationScope;

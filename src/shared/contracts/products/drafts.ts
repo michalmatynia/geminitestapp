@@ -20,7 +20,7 @@ import type {
   ProductParameterUpdateInput,
 } from './parameters';
 import type { Producer } from './producers';
-import type { ProductFilter, ProductStockOperator, ProductListPreferences } from './filters';
+import type { ProductFilter, ProductStockOperator } from './filters';
 import type {
   ProductTagFilters,
   ProductTag,
@@ -99,8 +99,7 @@ export const productDraftSchema = namedDtoSchema.extend({
   baseProductId: z.string().nullable().optional(),
 });
 
-export type ProductDraftDto = z.infer<typeof productDraftSchema>;
-export type ProductDraft = ProductDraftDto;
+export type ProductDraft = z.infer<typeof productDraftSchema>;
 
 export const createProductDraftSchema = productDraftSchema.omit({
   id: true,
@@ -108,13 +107,11 @@ export const createProductDraftSchema = productDraftSchema.omit({
   updatedAt: true,
 });
 
-export type CreateProductDraftDto = z.infer<typeof createProductDraftSchema>;
-export type CreateProductDraftInput = CreateProductDraftDto;
+export type CreateProductDraftInput = z.infer<typeof createProductDraftSchema>;
 
 export const updateProductDraftSchema = createProductDraftSchema.partial();
 
-export type UpdateProductDraftDto = Partial<CreateProductDraftDto>;
-export type UpdateProductDraftInput = UpdateProductDraftDto;
+export type UpdateProductDraftInput = Partial<CreateProductDraftInput>;
 
 /**
  * Product Repository Interfaces

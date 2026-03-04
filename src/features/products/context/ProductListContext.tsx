@@ -6,7 +6,7 @@ import type {
   Catalog,
   PriceGroupWithDetails,
   ProductWithImages,
-  ProductDraftDto,
+  ProductDraft,
 } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 
@@ -17,7 +17,7 @@ export interface ProductListContextType {
   // Actions
   onCreateProduct: () => void;
   onCreateFromDraft: (draftId: string) => void;
-  activeDrafts: ProductDraftDto[];
+  activeDrafts: ProductDraft[];
 
   // Pagination
   page: number;
@@ -120,7 +120,7 @@ export interface ProductListContextType {
   setIsPromptOpen: (open: boolean) => void;
   handleConfirmSku: (sku: string) => Promise<void>;
   initialSku: string;
-  createDraft: ProductDraftDto | null;
+  createDraft: ProductDraft | null;
   initialCatalogId: string | null;
   onCloseCreate: () => void;
   onCreateSuccess: (info?: { queued?: boolean }) => void;
@@ -231,7 +231,7 @@ export interface ProductListTableContextType {
 export interface ProductListActionsContextType {
   onCreateProduct: () => void;
   onCreateFromDraft: (draftId: string) => void;
-  activeDrafts: ProductDraftDto[];
+  activeDrafts: ProductDraft[];
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
   productNameKey: 'name_en' | 'name_pl' | 'name_de';
   priceGroups: PriceGroupWithDetails[];
@@ -259,7 +259,7 @@ export interface ProductListModalsContextType {
   setIsPromptOpen: (open: boolean) => void;
   handleConfirmSku: (sku: string) => Promise<void>;
   initialSku: string;
-  createDraft: ProductDraftDto | null;
+  createDraft: ProductDraft | null;
   initialCatalogId: string | null;
   onCloseCreate: () => void;
   onCreateSuccess: (info?: { queued?: boolean }) => void;

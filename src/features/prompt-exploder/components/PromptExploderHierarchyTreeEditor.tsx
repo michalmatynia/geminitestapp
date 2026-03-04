@@ -11,6 +11,7 @@ import { Button, Input, Label } from '@/shared/ui';
 
 import { usePromptExploderHierarchyTreeContext } from './PromptExploderHierarchyTreeContext';
 import { PromptExploderTreeNode } from './tree/PromptExploderTreeNode';
+import { PromptExploderTreeNodeRuntimeProvider } from './tree/PromptExploderTreeNodeRuntimeContext';
 import {
   buildPromptExploderMasterNodes,
   fromPromptExploderMasterNodeId,
@@ -120,6 +121,13 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
   });
   const { armDragHandle, releaseDragHandle, canStartHandleOnlyDrag } =
     usePromptExploderHandleOnlyDrag();
+  const treeNodeRuntimeContextValue = useMemo(
+    () => ({
+      armDragHandle,
+      releaseDragHandle,
+    }),
+    [armDragHandle, releaseDragHandle]
+  );
 
   const selectedItemId = controller.selectedNodeId
     ? fromPromptExploderMasterNodeId(controller.selectedNodeId)
@@ -215,24 +223,20 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
         </div>
       </div>
 
-      <div className='max-h-[260px] overflow-y-auto rounded border border-border/60 bg-card/30 p-2'>
-        <FolderTreeViewportV2
-          controller={controller}
-          scrollToNodeRef={scrollToNodeRef}
-          enableDnd
-          className='space-y-0.5'
-          emptyLabel={emptyLabel}
-          rootDropUi={rootDropUi}
-          canStartDrag={canStartHandleOnlyDrag}
-          renderNode={(input) => (
-            <PromptExploderTreeNode
-              {...input}
-              armDragHandle={armDragHandle}
-              releaseDragHandle={releaseDragHandle}
-            />
-          )}
-        />
-      </div>
+      <PromptExploderTreeNodeRuntimeProvider value={treeNodeRuntimeContextValue}>
+        <div className='max-h-[260px] overflow-y-auto rounded border border-border/60 bg-card/30 p-2'>
+          <FolderTreeViewportV2
+            controller={controller}
+            scrollToNodeRef={scrollToNodeRef}
+            enableDnd
+            className='space-y-0.5'
+            emptyLabel={emptyLabel}
+            rootDropUi={rootDropUi}
+            canStartDrag={canStartHandleOnlyDrag}
+            renderNode={(input) => <PromptExploderTreeNode {...input} />}
+          />
+        </div>
+      </PromptExploderTreeNodeRuntimeProvider>
 
       {selectedItem ? (
         <div className='space-y-2 rounded border border-border/60 bg-card/30 p-2'>

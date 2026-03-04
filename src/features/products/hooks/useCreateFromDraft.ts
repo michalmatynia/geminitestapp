@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { draftKeys } from '@/features/drafter/hooks/useDraftQueries';
-import type { ProductDraftDto } from '@/shared/contracts/products';
+import type { ProductDraft } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
@@ -12,8 +12,8 @@ import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type UseCreateFromDraftProps = {
-  setCreateDraft: (draft: ProductDraftDto | null) => void;
-  handleOpenCreateFromDraft: (draft: ProductDraftDto) => void;
+  setCreateDraft: (draft: ProductDraft | null) => void;
+  handleOpenCreateFromDraft: (draft: ProductDraft) => void;
 };
 
 export function useCreateFromDraft({
@@ -26,10 +26,10 @@ export function useCreateFromDraft({
   const handleCreateFromDraft = useCallback(
     async (draftId: string) => {
       try {
-        const draft = await fetchQueryV2<ProductDraftDto>(queryClient, {
+        const draft = await fetchQueryV2<ProductDraft>(queryClient, {
           queryKey: normalizeQueryKey(draftKeys.detail(draftId)),
           queryFn: () =>
-            api.get<ProductDraftDto>(`/api/drafts/${draftId}`, {
+            api.get<ProductDraft>(`/api/drafts/${draftId}`, {
               timeout: 30_000,
             }),
           staleTime: 5 * 60 * 1000,

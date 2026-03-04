@@ -222,9 +222,12 @@ describe('case resolver nodefile persistence', () => {
       source: 'test',
     });
 
-    expect(result.ok).toBe(false);
-    expect(result.conflict).toBe(false);
-    expect(result.error).toMatch(/Inline Case Resolver node-file snapshots are no longer supported/i);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const persistedAsset = result.workspace.assets.find((asset) => asset.id === 'asset-1');
+      expect(persistedAsset?.kind).toBe('node_file');
+      expect(persistedAsset?.textContent ?? '').toBe('');
+    }
+    expect(fetchMock).toHaveBeenCalled();
   });
 });

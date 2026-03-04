@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 
 import { FormModal, Button } from '@/shared/ui';
 
-import type { ProductDraftDto } from '@/shared/contracts/products';
+import type { ProductDraft } from '@/shared/contracts/products';
 import { useDrafterContext } from '../context/DrafterContext';
 import { useDraftQueries } from '../hooks/useDraftQueries';
 import { DraftCreator } from './DraftCreator';
@@ -19,7 +19,7 @@ export function DraftCreatorModal(): React.JSX.Element | null {
 
   const { data: drafts = [] } = useDraftQueries();
   const editingDraft =
-    drafts.find((d: ProductDraftDto) => d.id === editingDraftId) ?? null;
+    drafts.find((d: ProductDraft) => d.id === editingDraftId) ?? null;
 
   const [isDraftActive, setIsDraftActive] = useState<boolean>(true);
 

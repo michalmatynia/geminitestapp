@@ -4,7 +4,7 @@ import { ArrowRight, ArrowLeft, ArrowLeftRight, Check, X } from 'lucide-react';
 import React from 'react';
 
 import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
-import type { SyncDirectionDto as SyncDirection } from '@/shared/contracts/products';
+import type { SyncDirection } from '@/shared/contracts/products';
 import { Button, Card, Hint, Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

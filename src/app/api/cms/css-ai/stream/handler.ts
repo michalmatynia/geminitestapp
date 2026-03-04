@@ -4,7 +4,7 @@ import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/
 import { streamBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { runTeachingChat } from '@/features/ai/agentcreator/teaching/server/chat';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
-import type { CmsCssAiRequestDto as CssAiRequest } from '@/shared/contracts/cms';
+import type { CmsCssAiRequest as CssAiRequest } from '@/shared/contracts/cms';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 

@@ -18,12 +18,6 @@ const cloneLogicalConditions = (conditions: PromptExploderListItem['logicalCondi
     }))
     : [];
 
-const cloneListItem = (item: PromptExploderListItem): PromptExploderListItem => ({
-  ...item,
-  logicalConditions: cloneLogicalConditions(item.logicalConditions),
-  children: item.children.map(cloneListItem),
-});
-
 const buildFallbackItemMap = (subsections: PromptExploderSubsection[]): Map<string, PromptExploderListItem> => {
   const byId = new Map<string, PromptExploderListItem>();
   const walk = (items: PromptExploderListItem[]): void => {

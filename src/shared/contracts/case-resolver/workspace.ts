@@ -19,7 +19,6 @@ import {
   caseResolverEdgeMetaSchema,
 } from './graph';
 import {
-  caseResolverRelationGraphSchema,
   type CaseResolverRelationGraph,
 } from './relations';
 

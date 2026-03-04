@@ -19,11 +19,9 @@ import {
   readPromptExploderTreeMetadata,
   type PromptExploderTreeNodeKind,
 } from '../../tree/types';
+import { usePromptExploderTreeNodeRuntimeContext } from './PromptExploderTreeNodeRuntimeContext';
 
-type PromptExploderTreeNodeProps = FolderTreeViewportRenderNodeInput & {
-  armDragHandle: (nodeId: string) => void;
-  releaseDragHandle: () => void;
-};
+type PromptExploderTreeNodeProps = FolderTreeViewportRenderNodeInput;
 
 const resolveNodeIcon = (kind: PromptExploderTreeNodeKind | null) => {
   switch (kind) {
@@ -52,9 +50,8 @@ export function PromptExploderTreeNode({
   dropPosition,
   select,
   toggleExpand,
-  armDragHandle,
-  releaseDragHandle,
 }: PromptExploderTreeNodeProps): React.JSX.Element {
+  const { armDragHandle, releaseDragHandle } = usePromptExploderTreeNodeRuntimeContext();
   const metadata = readPromptExploderTreeMetadata(node);
   const Icon = resolveNodeIcon(metadata?.kind ?? null);
   const stateClassName = isSelected

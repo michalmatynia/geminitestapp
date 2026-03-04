@@ -1,23 +1,18 @@
 import { z } from 'zod';
 export const productDbProviderSchema = z.enum(['prisma', 'mongodb']);
-export type ProductDbProviderDto = z.infer<typeof productDbProviderSchema>;
-export type ProductDbProvider = ProductDbProviderDto;
+export type ProductDbProvider = z.infer<typeof productDbProviderSchema>;
 
 export const integrationDbProviderSchema = z.enum(['prisma', 'mongodb']);
-export type IntegrationDbProviderDto = z.infer<typeof integrationDbProviderSchema>;
-export type IntegrationDbProvider = IntegrationDbProviderDto;
+export type IntegrationDbProvider = z.infer<typeof integrationDbProviderSchema>;
 
 export const productMigrationDirectionSchema = z.enum(['prisma-to-mongo', 'mongo-to-prisma']);
-export type ProductMigrationDirectionDto = z.infer<typeof productMigrationDirectionSchema>;
-export type ProductMigrationDirection = ProductMigrationDirectionDto;
+export type ProductMigrationDirection = z.infer<typeof productMigrationDirectionSchema>;
 
 export const syncDirectionSchema = z.enum(['to_base', 'from_base', 'bidirectional']);
-export type SyncDirectionDto = z.infer<typeof syncDirectionSchema>;
-export type SyncDirection = SyncDirectionDto;
+export type SyncDirection = z.infer<typeof syncDirectionSchema>;
 
 export const priceGroupTypeSchema = z.enum(['standard', 'dependent']);
-export type PriceGroupTypeDto = z.infer<typeof priceGroupTypeSchema>;
-export type PriceGroupType = PriceGroupTypeDto;
+export type PriceGroupType = z.infer<typeof priceGroupTypeSchema>;
 
 export const productMigrationBatchResultSchema = z.object({
   direction: productMigrationDirectionSchema,
@@ -28,5 +23,4 @@ export const productMigrationBatchResultSchema = z.object({
   missingCatalogIds: z.array(z.string()),
 });
 
-export type ProductMigrationBatchResultDto = z.infer<typeof productMigrationBatchResultSchema>;
-export type ProductMigrationBatchResult = ProductMigrationBatchResultDto;
+export type ProductMigrationBatchResult = z.infer<typeof productMigrationBatchResultSchema>;

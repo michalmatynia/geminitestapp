@@ -3,50 +3,24 @@ import React from 'react';
 import { Button, SelectSimple, Tooltip } from '@/shared/ui';
 
 import { useGenerationToolbarContext, type CropMode } from './GenerationToolbarContext';
+import { useGenerationToolbarCropSectionRuntime } from './GenerationToolbarSectionContexts';
 
-type SelectOption = {
-  value: string;
-  label: string;
-};
-
-type CropTooltipContent = {
-  cancelCrop: string;
-  crop: string;
-  cropBoxTool: string;
-  squareCrop: string;
-  viewCrop: string;
-};
-
-type GenerationToolbarCropSectionProps = {
-  boundaryStatusLabel: string;
-  cropBusyLabel: string;
-  cropModeOptions: SelectOption[];
-  cropTooltipContent: CropTooltipContent;
-  cropTooltipsEnabled: boolean;
-  hasCropBoundary: boolean;
-  hasSourceImage: boolean;
-  onCancelCrop: () => void;
-  onCreateCropBox: () => void;
-  onCrop: () => void;
-  onSquareCrop: () => void;
-  onViewCrop: () => void;
-};
-
-export function GenerationToolbarCropSection({
-  boundaryStatusLabel,
-  cropBusyLabel,
-  cropModeOptions,
-  cropTooltipContent,
-  cropTooltipsEnabled,
-  hasCropBoundary,
-  hasSourceImage,
-  onCancelCrop,
-  onCreateCropBox,
-  onCrop,
-  onSquareCrop,
-  onViewCrop,
-}: GenerationToolbarCropSectionProps): React.JSX.Element {
+export function GenerationToolbarCropSection(): React.JSX.Element {
   const { cropMode, setCropMode, cropBusy } = useGenerationToolbarContext();
+  const {
+    boundaryStatusLabel,
+    cropBusyLabel,
+    cropModeOptions,
+    cropTooltipContent,
+    cropTooltipsEnabled,
+    hasCropBoundary,
+    hasSourceImage,
+    onCancelCrop,
+    onCreateCropBox,
+    onCrop,
+    onSquareCrop,
+    onViewCrop,
+  } = useGenerationToolbarCropSectionRuntime();
 
   const maybeWrapTooltip = (content: string, child: React.JSX.Element): React.JSX.Element => {
     if (!cropTooltipsEnabled) return child;

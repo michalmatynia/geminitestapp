@@ -7,7 +7,6 @@ import {
   RuntimeHistoryEntry,
   RuntimePortValues,
   NodeHandlerContext,
-  ToastFn,
 } from '@/shared/contracts/ai-paths-runtime';
 import { ToastOptions } from '@/shared/contracts/ui';
 
@@ -88,9 +87,11 @@ const readRuntimeRetryPolicy = (node: AiNode): RuntimeRetryPolicy => {
     typeof retryConfig['backoffMs'] === 'number' && Number.isFinite(retryConfig['backoffMs'])
       ? Math.max(0, Math.trunc(retryConfig['backoffMs']))
       : DEFAULT_RETRY_BACKOFF_MS;
+  const legacyEnabledValue = (retryConfig as { enabled?: unknown }).enabled;
+  const isRetryEnabled = legacyEnabledValue === true || attemptsValue > 1;
 
   return {
-    enabled: retryConfig['enabled'] === true,
+    enabled: isRetryEnabled,
     attempts: attemptsValue,
     backoffMs: backoffValue,
   };

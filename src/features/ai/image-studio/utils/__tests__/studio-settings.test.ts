@@ -68,71 +68,90 @@ describe('parseImageStudioSettings', () => {
     expect(parsed.targetAi.openai.image.n).toBe(2);
   });
 
-  it('strips deprecated persisted generation model fields', () => {
-    const parsed = parseImageStudioSettings(
-      JSON.stringify({
-        ...defaultImageStudioSettings,
-        targetAi: {
-          ...defaultImageStudioSettings.targetAi,
-          openai: {
-            ...defaultImageStudioSettings.targetAi.openai,
-            model: 'gpt-image-1',
+  it('rejects deprecated persisted generation model fields', () => {
+    expect(() =>
+      parseImageStudioSettings(
+        JSON.stringify({
+          ...defaultImageStudioSettings,
+          targetAi: {
+            ...defaultImageStudioSettings.targetAi,
+            openai: {
+              ...defaultImageStudioSettings.targetAi.openai,
+              model: 'gpt-image-1',
+            },
           },
-        },
-      })
-    );
-
-    expect(parsed.targetAi.openai.api).toBe(defaultImageStudioSettings.targetAi.openai.api);
+        })
+      )
+    ).toThrowError(/deprecated AI snapshot keys/i);
   });
 
-  it('strips deprecated persisted prompt extractor model fields', () => {
-    const parsed = parseImageStudioSettings(
-      JSON.stringify({
-        ...defaultImageStudioSettings,
-        promptExtraction: {
-          ...defaultImageStudioSettings.promptExtraction,
-          gpt: {
-            ...defaultImageStudioSettings.promptExtraction.gpt,
-            model: 'gpt-4o-mini',
+  it('rejects deprecated persisted prompt extractor model fields', () => {
+    expect(() =>
+      parseImageStudioSettings(
+        JSON.stringify({
+          ...defaultImageStudioSettings,
+          promptExtraction: {
+            ...defaultImageStudioSettings.promptExtraction,
+            gpt: {
+              ...defaultImageStudioSettings.promptExtraction.gpt,
+              model: 'gpt-4o-mini',
+            },
           },
-        },
-      })
-    );
-
-    expect(parsed.promptExtraction.gpt.max_output_tokens).toBe(
-      defaultImageStudioSettings.promptExtraction.gpt.max_output_tokens
-    );
+        })
+      )
+    ).toThrowError(/deprecated AI snapshot keys/i);
   });
 
-  it('strips deprecated persisted UI extractor model fields', () => {
-    const parsed = parseImageStudioSettings(
-      JSON.stringify({
-        ...defaultImageStudioSettings,
-        uiExtractor: {
-          ...defaultImageStudioSettings.uiExtractor,
-          model: 'gpt-4.1-mini',
-        },
-      })
-    );
-
-    expect(parsed.uiExtractor.mode).toBe(defaultImageStudioSettings.uiExtractor.mode);
+  it('rejects deprecated persisted UI extractor model fields', () => {
+    expect(() =>
+      parseImageStudioSettings(
+        JSON.stringify({
+          ...defaultImageStudioSettings,
+          uiExtractor: {
+            ...defaultImageStudioSettings.uiExtractor,
+            model: 'gpt-4.1-mini',
+          },
+        })
+      )
+    ).toThrowError(/deprecated AI snapshot keys/i);
   });
 
-  it('strips deprecated persisted modelPresets fields', () => {
-    const parsed = parseImageStudioSettings(
-      JSON.stringify({
-        ...defaultImageStudioSettings,
-        targetAi: {
-          ...defaultImageStudioSettings.targetAi,
-          openai: {
-            ...defaultImageStudioSettings.targetAi.openai,
-            modelPresets: ['gpt-image-1'],
+  it('rejects deprecated persisted modelPresets fields', () => {
+    expect(() =>
+      parseImageStudioSettings(
+        JSON.stringify({
+          ...defaultImageStudioSettings,
+          targetAi: {
+            ...defaultImageStudioSettings.targetAi,
+            openai: {
+              ...defaultImageStudioSettings.targetAi.openai,
+              modelPresets: ['gpt-image-1'],
+            },
           },
-        },
-      })
-    );
+        })
+      )
+    ).toThrowError(/deprecated AI snapshot keys/i);
+  });
 
-    expect(parsed.targetAi.openai.image.n).toBe(defaultImageStudioSettings.targetAi.openai.image.n);
+  it('rejects non-empty payloads with any deprecated snapshot key', () => {
+    expect(() =>
+      parseImageStudioSettings(
+        JSON.stringify({
+          ...defaultImageStudioSettings,
+          promptExtraction: {
+            ...defaultImageStudioSettings.promptExtraction,
+            gpt: {
+              ...defaultImageStudioSettings.promptExtraction.gpt,
+              model: 'gpt-4o-mini',
+            },
+          },
+          uiExtractor: {
+            ...defaultImageStudioSettings.uiExtractor,
+            model: 'gpt-4.1-mini',
+          },
+        })
+      )
+    ).toThrowError(/deprecated AI snapshot keys/i);
   });
 
   it('still rejects unknown strict fields', () => {

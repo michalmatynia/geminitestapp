@@ -5,9 +5,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
-import { Document, WithId } from 'mongodb';
+import { Document } from 'mongodb';
 import {
-  ProductDocument,
   toProductResponse,
 } from '../mongo-product-repository-mappers';
 import {

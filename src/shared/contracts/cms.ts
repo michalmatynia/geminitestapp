@@ -170,13 +170,12 @@ export type PageSeoData = CmsPageSeoDto;
 /**
  * CMS Page Builder Contracts
  */
-export type CmsBlockInstanceDto = {
+export type BlockInstance = {
   id: string;
   type: string;
   settings: Record<string, unknown>;
-  blocks?: CmsBlockInstanceDto[] | undefined;
+  blocks?: BlockInstance[] | undefined;
 };
-export type BlockInstance = CmsBlockInstanceDto;
 
 export interface PreviewBlockItemProps {
   block: BlockInstance;
@@ -194,7 +193,7 @@ export interface PreviewSectionBlockProps {
   mediaStyles?: React.CSSProperties;
 }
 
-export const cmsBlockInstanceSchema: z.ZodType<CmsBlockInstanceDto> = z.lazy(() =>
+export const cmsBlockInstanceSchema: z.ZodType<BlockInstance> = z.lazy(() =>
   z.object({
     id: z.string(),
     type: z.string(),
@@ -207,16 +206,16 @@ export const pageZoneSchema = z.enum(['header', 'template', 'footer']);
 export type PageZoneDto = z.infer<typeof pageZoneSchema>;
 export type PageZone = PageZoneDto;
 
-export type CmsSectionInstanceDto = {
+export type SectionInstance = {
   id: string;
   type: string;
   zone: PageZone;
   parentSectionId?: string | null;
   settings: Record<string, unknown>;
-  blocks: CmsBlockInstanceDto[];
+  blocks: BlockInstance[];
 };
 
-export const cmsSectionInstanceSchema: z.ZodType<CmsSectionInstanceDto> = z.object({
+export const cmsSectionInstanceSchema: z.ZodType<SectionInstance> = z.object({
   id: z.string(),
   type: z.string(),
   zone: pageZoneSchema,
@@ -224,8 +223,6 @@ export const cmsSectionInstanceSchema: z.ZodType<CmsSectionInstanceDto> = z.obje
   settings: z.record(z.string(), z.unknown()),
   blocks: z.array(cmsBlockInstanceSchema),
 });
-
-export type SectionInstance = CmsSectionInstanceDto;
 
 export interface BulkOperationResult {
   ok: boolean;
@@ -673,7 +670,7 @@ export const cmsCssAiRequestSchema = z.object({
   messages: z.array(chatMessageSchema).optional(),
 });
 
-export type CmsCssAiRequestDto = z.infer<typeof cmsCssAiRequestSchema>;
+export type CmsCssAiRequest = z.infer<typeof cmsCssAiRequestSchema>;
 
 /**
  * CMS Domain Settings Contract
@@ -761,8 +758,7 @@ export const cssAnimationEffectSchema = z.enum([
   'bounce',
   'reveal',
 ]);
-export type CssAnimationEffectDto = z.infer<typeof cssAnimationEffectSchema>;
-export type CssAnimationEffect = CssAnimationEffectDto;
+export type CssAnimationEffect = z.infer<typeof cssAnimationEffectSchema>;
 
 export const cssAnimationTriggerSchema = z.enum([
   'load',
@@ -773,8 +769,7 @@ export const cssAnimationTriggerSchema = z.enum([
   'click',
   'viewport',
 ]);
-export type CssAnimationTriggerDto = z.infer<typeof cssAnimationTriggerSchema>;
-export type CssAnimationTrigger = CssAnimationTriggerDto;
+export type CssAnimationTrigger = z.infer<typeof cssAnimationTriggerSchema>;
 
 export const cssAnimationDirectionSchema = z.enum([
   'normal',
@@ -782,12 +777,10 @@ export const cssAnimationDirectionSchema = z.enum([
   'alternate',
   'alternate-reverse',
 ]);
-export type CssAnimationDirectionDto = z.infer<typeof cssAnimationDirectionSchema>;
-export type CssAnimationDirection = CssAnimationDirectionDto;
+export type CssAnimationDirection = z.infer<typeof cssAnimationDirectionSchema>;
 
 export const cssAnimationFillModeSchema = z.enum(['none', 'forwards', 'backwards', 'both']);
-export type CssAnimationFillModeDto = z.infer<typeof cssAnimationFillModeSchema>;
-export type CssAnimationFillMode = CssAnimationFillModeDto;
+export type CssAnimationFillMode = z.infer<typeof cssAnimationFillModeSchema>;
 
 export const cssAnimationConfigSchema = z.object({
   enabled: z.boolean().optional(),
@@ -808,8 +801,7 @@ export const cssAnimationConfigSchema = z.object({
   scrollOffset: z.number().optional(),
 });
 
-export type CssAnimationConfigDto = z.infer<typeof cssAnimationConfigSchema>;
-export type CssAnimationConfig = CssAnimationConfigDto;
+export type CssAnimationConfig = z.infer<typeof cssAnimationConfigSchema>;
 
 export const DEFAULT_CSS_ANIMATION_CONFIG: CssAnimationConfig = {
   enabled: false,

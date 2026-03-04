@@ -1,25 +1,12 @@
 import React from 'react';
 
 import { Input, SelectSimple } from '@/shared/ui';
+import { useGenerationToolbarDefaultsSectionRuntime } from './GenerationToolbarSectionContexts';
 
-type SelectOption = {
-  value: string;
-  label: string;
-};
+export function GenerationToolbarDefaultsSection(): React.JSX.Element {
+  const { imageCount, imageCountOptions, model, onImageCountChange } =
+    useGenerationToolbarDefaultsSectionRuntime();
 
-type GenerationToolbarDefaultsSectionProps = {
-  imageCount: string;
-  imageCountOptions: SelectOption[];
-  model: string;
-  onImageCountChange: (value: string) => void;
-};
-
-export function GenerationToolbarDefaultsSection({
-  imageCount,
-  imageCountOptions,
-  model,
-  onImageCountChange,
-}: GenerationToolbarDefaultsSectionProps): React.JSX.Element {
   return (
     <div className='rounded border border-border/60 bg-card/40 p-3'>
       <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>

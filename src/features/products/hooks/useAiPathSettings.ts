@@ -2,6 +2,7 @@
 
 import {
   AI_PATHS_UI_STATE_KEY,
+  LEGACY_PATH_INDEX_KEY,
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
   TRIGGER_EVENTS,
@@ -284,7 +285,7 @@ const loadPathSettingsData = async (
     const preferredConfigKey = `${PATH_CONFIG_PREFIX}${args.preferredActivePathId}`;
     try {
       const selectiveSettings = await fetchAiPathsSettingsByKeysCached(
-        [PATH_INDEX_KEY, AI_PATHS_UI_STATE_KEY, preferredConfigKey],
+        [PATH_INDEX_KEY, LEGACY_PATH_INDEX_KEY, AI_PATHS_UI_STATE_KEY, preferredConfigKey],
         { timeoutMs: AI_PATHS_SETTINGS_SELECTIVE_TIMEOUT_MS }
       );
       const hasPreferredConfig = selectiveSettings.some((item) => item.key === preferredConfigKey);
@@ -343,7 +344,7 @@ export async function fetchPathSettings(
   const configs: Record<string, PathConfig> = {};
   let settingsPathOrder: string[] = [];
 
-  const indexRaw = map.get(PATH_INDEX_KEY);
+  const indexRaw = map.get(PATH_INDEX_KEY) ?? map.get(LEGACY_PATH_INDEX_KEY);
   if (indexRaw) {
     try {
       const parsedIndex = JSON.parse(indexRaw) as PathMeta[];

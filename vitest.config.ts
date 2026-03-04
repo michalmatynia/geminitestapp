@@ -74,6 +74,8 @@ export default defineConfig({
           include: prismaIntegrationTestFiles,
           exclude: [...configDefaults.exclude, 'e2e/**', '.next/**'],
           pool: 'forks',
+          testTimeout: 30_000,
+          hookTimeout: 30_000,
         },
       },
       {

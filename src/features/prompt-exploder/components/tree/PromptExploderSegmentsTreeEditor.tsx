@@ -16,6 +16,7 @@ import { Button, Card } from '@/shared/ui';
 import { useDocumentActions, useDocumentState } from '../../context/hooks/useDocument';
 import { useSegmentEditorActions } from '../../context/hooks/useSegmentEditor';
 import { PromptExploderTreeNode } from './PromptExploderTreeNode';
+import { PromptExploderTreeNodeRuntimeProvider } from './PromptExploderTreeNodeRuntimeContext';
 import {
   buildPromptExploderSegmentMasterNodes,
   rebuildPromptExploderSegmentsFromMasterNodes,
@@ -83,6 +84,13 @@ export function PromptExploderSegmentsTreeEditor(): React.JSX.Element {
 
   const { armDragHandle, releaseDragHandle, canStartHandleOnlyDrag } =
     usePromptExploderHandleOnlyDrag();
+  const treeNodeRuntimeContextValue = useMemo(
+    () => ({
+      armDragHandle,
+      releaseDragHandle,
+    }),
+    [armDragHandle, releaseDragHandle]
+  );
 
   useEffect(() => {
     const parsedSelectedNode =
@@ -121,52 +129,48 @@ export function PromptExploderSegmentsTreeEditor(): React.JSX.Element {
           Add Below
         </Button>
       </div>
-      <div className='max-h-[65vh] overflow-y-auto rounded border border-border/60 bg-card/30 p-2'>
-        <FolderTreeViewportV2
-          controller={controller}
-          scrollToNodeRef={scrollToNodeRef}
-          enableDnd
-          className='space-y-0.5'
-          emptyLabel='No segments yet'
-          rootDropUi={rootDropUi}
-          canStartDrag={canStartHandleOnlyDrag}
-          canDrop={({ targetId, position, defaultAllowed }) => {
-            if (targetId === null) return defaultAllowed;
-            return defaultAllowed && position !== 'inside';
-          }}
-          renderNode={(input) => (
-            <PromptExploderTreeNode
-              {...input}
-              armDragHandle={armDragHandle}
-              releaseDragHandle={releaseDragHandle}
-            />
-          )}
-          onNodeDrop={async (input, treeController) => {
-            await handleMasterTreeDrop({
-              input,
-              controller: treeController,
-              onInternalDrop: async ({ input: dropInput, controller: dropController }) => {
-                if (dropInput.targetId === null) {
-                  const targetIndex = dropInput.rootDropZone === 'top' ? 0 : undefined;
-                  await dropController.dropNodeToRoot(dropInput.draggedNodeId, targetIndex);
-                  return true;
-                }
+      <PromptExploderTreeNodeRuntimeProvider value={treeNodeRuntimeContextValue}>
+        <div className='max-h-[65vh] overflow-y-auto rounded border border-border/60 bg-card/30 p-2'>
+          <FolderTreeViewportV2
+            controller={controller}
+            scrollToNodeRef={scrollToNodeRef}
+            enableDnd
+            className='space-y-0.5'
+            emptyLabel='No segments yet'
+            rootDropUi={rootDropUi}
+            canStartDrag={canStartHandleOnlyDrag}
+            canDrop={({ targetId, position, defaultAllowed }) => {
+              if (targetId === null) return defaultAllowed;
+              return defaultAllowed && position !== 'inside';
+            }}
+            renderNode={(input) => <PromptExploderTreeNode {...input} />}
+            onNodeDrop={async (input, treeController) => {
+              await handleMasterTreeDrop({
+                input,
+                controller: treeController,
+                onInternalDrop: async ({ input: dropInput, controller: dropController }) => {
+                  if (dropInput.targetId === null) {
+                    const targetIndex = dropInput.rootDropZone === 'top' ? 0 : undefined;
+                    await dropController.dropNodeToRoot(dropInput.draggedNodeId, targetIndex);
+                    return true;
+                  }
 
-                if (dropInput.position === 'inside') {
-                  return true;
-                }
+                  if (dropInput.position === 'inside') {
+                    return true;
+                  }
 
-                await dropController.reorderNode(
-                  dropInput.draggedNodeId,
-                  dropInput.targetId,
-                  dropInput.position
-                );
-                return true;
-              },
-            });
-          }}
-        />
-      </div>
+                  await dropController.reorderNode(
+                    dropInput.draggedNodeId,
+                    dropInput.targetId,
+                    dropInput.position
+                  );
+                  return true;
+                },
+              });
+            }}
+          />
+        </div>
+      </PromptExploderTreeNodeRuntimeProvider>
       <div className='text-[11px] text-gray-500'>Select a segment on the left, edit details on the right.</div>
     </Card>
   );

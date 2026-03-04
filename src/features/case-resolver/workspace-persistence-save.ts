@@ -2,7 +2,6 @@ import {
   type CaseResolverWorkspace,
   type PersistCaseResolverWorkspaceResult,
 } from '@/shared/contracts/case-resolver';
-import { validationError } from '@/shared/errors/app-error';
 
 import {
   getCaseResolverWorkspaceNormalizationDiagnostics,
@@ -26,6 +25,7 @@ import {
 
 import {
   readCaseResolverNodeFileSnapshotStorageMode,
+  CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY,
 } from './node-file-persistence';
 
 import {
@@ -91,26 +91,30 @@ const sanitizeCanonicalNodeFileSnapshotPayload = (
 ): CaseResolverWorkspace['assets'][number] => {
   if (asset.kind !== 'node_file') return asset;
   const inlineText = typeof asset.textContent === 'string' ? asset.textContent.trim() : '';
-  if (inlineText.length > 0) {
-    throw validationError('Inline Case Resolver node-file snapshots are no longer supported.', {
-      source: 'case_resolver.workspace_persistence',
-      assetId: asset.id,
-      reason: 'inline_node_file_snapshot_not_supported',
-    });
-  }
+  const metadata =
+    asset.metadata && typeof asset.metadata === 'object' && !Array.isArray(asset.metadata)
+      ? (asset.metadata as Record<string, unknown>)
+      : {};
   const storageMode = readCaseResolverNodeFileSnapshotStorageMode(asset);
-  if (storageMode && storageMode !== CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED) {
-    throw validationError(
-      'Legacy Case Resolver node-file snapshot storage metadata is no longer supported.',
-      {
-        source: 'case_resolver.workspace_persistence',
-        assetId: asset.id,
-        reason: 'legacy_snapshot_storage_mode_not_supported',
-        storageMode,
-      }
-    );
+  const shouldNormalizeStorageMode =
+    typeof storageMode === 'string' &&
+    storageMode.trim().length > 0 &&
+    storageMode !== CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED;
+  if (inlineText.length === 0 && !shouldNormalizeStorageMode) {
+    return asset;
   }
-  return asset;
+  const nextMetadata = shouldNormalizeStorageMode
+    ? {
+      ...metadata,
+      [CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY]:
+        CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED,
+    }
+    : asset.metadata;
+  return {
+    ...asset,
+    textContent: '',
+    ...(nextMetadata !== undefined ? { metadata: nextMetadata } : {}),
+  };
 };
 
 export const compactCaseResolverWorkspaceForPersist = (
@@ -131,6 +135,11 @@ export const compactCaseResolverWorkspaceForPersist = (
             delete rest['documentContentHtml'];
             delete rest['documentContentPlainText'];
           } else {
+            const htmlValue =
+              typeof rest['documentContentHtml'] === 'string' ? rest['documentContentHtml'] : '';
+            if (htmlValue.trim().length > 0) {
+              delete rest['documentContent'];
+            }
             delete rest['documentContentMarkdown'];
             delete rest['documentContentPlainText'];
           }
@@ -156,6 +165,13 @@ export const compactCaseResolverWorkspaceForPersist = (
         documentContentPlainText: _plainText,
         ...fileRest
       } = file;
+      if (
+        typeof file.documentContentHtml === 'string' &&
+        file.documentContentHtml.trim().length > 0 &&
+        'documentContent' in fileRest
+      ) {
+        delete (fileRest as Record<string, unknown>)['documentContent'];
+      }
       return {
         ...fileRest,
         documentHistory: compactedHistory,

@@ -4,11 +4,10 @@ import path from 'node:path';
 import { NextRequest, NextResponse } from 'next/server';
 
 import type {
-  FieldInfoDto as FieldInfo,
-  CollectionSchemaDto as CollectionSchema,
-  SchemaProviderDto as SchemaProvider,
-  SchemaResponseDto as SchemaResponse,
-  SchemaResponsePayloadDto as SchemaResponsePayload,
+  FieldInfo,
+  CollectionSchema,
+  SchemaProvider,
+  SchemaResponse,
 } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
@@ -38,8 +37,37 @@ type DmmfDatamodel = {
 const MONGO_SCHEMA_CONCURRENCY = 8;
 const PRISMA_COUNT_CONCURRENCY = 8;
 
+const PROJECT_ROOT = process.cwd();
+const PRISMA_ROOT_DIR = path.join(PROJECT_ROOT, 'prisma');
 const PRISMA_SCHEMA_ENV_PATH = process.env['PRISMA_SCHEMA_PATH'];
-const PRISMA_SCHEMA_DEFAULT_PATH = path.join(process.cwd(), 'prisma', 'schema.prisma');
+const PRISMA_SCHEMA_DEFAULT_PATH = path.join(PRISMA_ROOT_DIR, 'schema.prisma');
+
+const resolvePrismaSchemaPath = (candidate: string): string => {
+  if (path.isAbsolute(candidate)) {
+    return candidate;
+  }
+
+  const normalized = candidate.trim().replace(/\\/g, '/').replace(/^\.\/+/, '');
+  if (!normalized) {
+    return PRISMA_SCHEMA_DEFAULT_PATH;
+  }
+
+  if (normalized.startsWith('prisma/')) {
+    const relativePath = normalized.slice('prisma/'.length);
+    const segments = relativePath.split('/').filter((segment) => segment.length > 0);
+    if (segments.some((segment) => segment === '..')) {
+      return PRISMA_SCHEMA_DEFAULT_PATH;
+    }
+    return path.join(PRISMA_ROOT_DIR, ...segments);
+  }
+
+  const segments = normalized.split('/').filter((segment) => segment.length > 0);
+  if (segments.some((segment) => segment === '..')) {
+    return PRISMA_SCHEMA_DEFAULT_PATH;
+  }
+
+  return path.join(PRISMA_ROOT_DIR, ...segments);
+};
 
 async function mapWithConcurrency<T, R>(
   items: T[],
@@ -72,9 +100,7 @@ async function mapWithConcurrency<T, R>(
 
 const readPrismaSchemaFile = (): string | null => {
   const schemaPath = PRISMA_SCHEMA_ENV_PATH
-    ? path.isAbsolute(PRISMA_SCHEMA_ENV_PATH)
-      ? PRISMA_SCHEMA_ENV_PATH
-      : path.join(process.cwd(), PRISMA_SCHEMA_ENV_PATH)
+    ? resolvePrismaSchemaPath(PRISMA_SCHEMA_ENV_PATH)
     : PRISMA_SCHEMA_DEFAULT_PATH;
   try {
     return readFileSync(schemaPath, 'utf8');
@@ -338,7 +364,7 @@ export async function getDatabasesSchemaHandler(
       });
     }
 
-    const payload: SchemaResponsePayload = {
+    const payload: SchemaResponse = {
       provider: 'multi',
       collections,
       sources,

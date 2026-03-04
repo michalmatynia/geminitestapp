@@ -418,44 +418,33 @@ describe('filemaker settings', () => {
     ).toThrowError(/Legacy Filemaker inline address payloads are no longer supported/);
   });
 
-  it('strips legacy inline address fields for case resolver consumers', () => {
-    const database = parseFilemakerDatabaseForCaseResolver(
-      JSON.stringify({
-        version: 2,
-        persons: [
-          createPersonRecord({
-            street: 'Main Street',
-            streetNumber: '1',
-            city: 'Warsaw',
-            postalCode: '00-001',
-            country: 'Poland',
-            countryId: 'country-pl',
-          }),
-        ],
-        organizations: [],
-        events: [],
-        addresses: [],
-        addressLinks: [],
-        phoneNumbers: [],
-        phoneNumberLinks: [],
-        emails: [],
-        emailLinks: [],
-        eventOrganizationLinks: [],
-      })
-    );
-
-    expect(database.persons).toHaveLength(1);
-    expect(database.persons[0]).toMatchObject({
-      id: 'p-1',
-      street: '',
-      streetNumber: '',
-      city: '',
-      postalCode: '',
-      country: '',
-      countryId: '',
-    });
-    expect(database.addresses).toHaveLength(0);
-    expect(database.addressLinks).toHaveLength(0);
+  it('rejects inline address fields for case resolver consumers', () => {
+    expect(() =>
+      parseFilemakerDatabaseForCaseResolver(
+        JSON.stringify({
+          version: 2,
+          persons: [
+            createPersonRecord({
+              street: 'Main Street',
+              streetNumber: '1',
+              city: 'Warsaw',
+              postalCode: '00-001',
+              country: 'Poland',
+              countryId: 'country-pl',
+            }),
+          ],
+          organizations: [],
+          events: [],
+          addresses: [],
+          addressLinks: [],
+          phoneNumbers: [],
+          phoneNumberLinks: [],
+          emails: [],
+          emailLinks: [],
+          eventOrganizationLinks: [],
+        })
+      )
+    ).toThrowError(/Legacy Filemaker inline address payloads are no longer supported/);
   });
 
   it('rejects inline address fields even when canonical address links exist', () => {
@@ -500,22 +489,10 @@ describe('filemaker settings', () => {
     ).toThrowError(/Legacy Filemaker inline address payloads are no longer supported/);
   });
 
-  it('returns empty database for case resolver when filemaker payload is invalid', () => {
-    const database = parseFilemakerDatabaseForCaseResolver('{"version":2');
-
-    expect(database).toMatchObject({
-      version: 2,
-      persons: [],
-      organizations: [],
-      events: [],
-      addresses: [],
-      addressLinks: [],
-      phoneNumbers: [],
-      phoneNumberLinks: [],
-      emails: [],
-      emailLinks: [],
-      eventOrganizationLinks: [],
-    });
+  it('rejects invalid filemaker payload for case resolver', () => {
+    expect(() => parseFilemakerDatabaseForCaseResolver('{"version":2')).toThrowError(
+      /Invalid Filemaker database JSON payload/
+    );
   });
 
   it('rejects inline person phoneNumbers when canonical phone links are missing', () => {

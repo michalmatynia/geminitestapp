@@ -1,7 +1,13 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
+import {
+  CANVAS_HEIGHT,
+  CANVAS_WIDTH,
+  NODE_MIN_HEIGHT,
+  NODE_WIDTH,
+  type AiNode,
+} from '@/shared/lib/ai-paths';
 
 import { useCanvasInteractionsNodes } from '../hooks/useCanvasInteractions.nodes';
 
@@ -24,6 +30,8 @@ const createPointerEvent = (
 ): React.PointerEvent<Element> =>
   ({
     pointerId: 1,
+    pointerType: 'mouse',
+    buttons: 1,
     clientX: 100,
     clientY: 100,
     shiftKey: false,
@@ -215,8 +223,8 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
     act(() => {
       result.current.handlePointerMoveNode(
         createPointerEvent(target, {
-          clientX: 2110,
-          clientY: 2110,
+          clientX: 99999,
+          clientY: 99999,
         }),
         'node-1'
       );
@@ -225,15 +233,126 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
     act(() => {
       result.current.handlePointerUpNode(
         createPointerEvent(target, {
-          clientX: 2110,
-          clientY: 2110,
+          clientX: 99999,
+          clientY: 99999,
         }),
         'node-1'
       );
     });
 
+    const maxX = CANVAS_WIDTH - NODE_WIDTH - 16;
+    const maxY = CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16;
     expect(props.updateNode).toHaveBeenCalledWith('node-1', {
-      position: { x: 2100, y: 2100 },
+      position: { x: maxX, y: maxY },
     });
+  });
+
+  it('ignores pointer move events when the primary pointer button is not pressed', async () => {
+    const props = buildHookProps();
+    const target = document.createElement('div');
+    Object.assign(target, {
+      setPointerCapture: vi.fn(),
+      releasePointerCapture: vi.fn(),
+      hasPointerCapture: vi.fn(() => false),
+    });
+    const { result } = renderHook(() => useCanvasInteractionsNodes(props));
+
+    await act(async () => {
+      await result.current.handlePointerDownNode(createPointerEvent(target), 'node-1');
+    });
+
+    act(() => {
+      result.current.handlePointerMoveNode(
+        createPointerEvent(target, {
+          clientX: 140,
+          clientY: 140,
+          pointerType: 'mouse',
+          buttons: 0,
+        }),
+        'node-1'
+      );
+    });
+
+    act(() => {
+      result.current.handlePointerUpNode(createPointerEvent(target), 'node-1');
+    });
+
+    expect(props.startDrag).not.toHaveBeenCalled();
+    expect(props.updateNode).not.toHaveBeenCalled();
+  });
+
+  it('allows pointer moves with zero buttons when pointer capture is still active', async () => {
+    const props = buildHookProps();
+    const target = document.createElement('div');
+    Object.assign(target, {
+      setPointerCapture: vi.fn(),
+      releasePointerCapture: vi.fn(),
+      hasPointerCapture: vi.fn(() => true),
+    });
+    const { result } = renderHook(() => useCanvasInteractionsNodes(props));
+
+    await act(async () => {
+      await result.current.handlePointerDownNode(createPointerEvent(target), 'node-1');
+    });
+
+    act(() => {
+      result.current.handlePointerMoveNode(
+        createPointerEvent(target, {
+          clientX: 150,
+          clientY: 140,
+          pointerType: 'mouse',
+          buttons: 0,
+        }),
+        'node-1'
+      );
+    });
+
+    act(() => {
+      result.current.handlePointerUpNode(
+        createPointerEvent(target, {
+          clientX: 150,
+          clientY: 140,
+        }),
+        'node-1'
+      );
+    });
+
+    expect(props.startDrag).toHaveBeenCalledWith('node-1', 60, 60);
+    expect(props.updateNode).toHaveBeenCalledWith('node-1', {
+      position: { x: 90, y: 80 },
+    });
+  });
+
+  it('ignores non-finite pointer coordinates to prevent invalid node movement', async () => {
+    const props = buildHookProps();
+    const target = document.createElement('div');
+    const { result } = renderHook(() => useCanvasInteractionsNodes(props));
+
+    await act(async () => {
+      await result.current.handlePointerDownNode(createPointerEvent(target), 'node-1');
+    });
+
+    act(() => {
+      result.current.handlePointerMoveNode(
+        createPointerEvent(target, {
+          clientX: Number.POSITIVE_INFINITY,
+          clientY: Number.POSITIVE_INFINITY,
+        }),
+        'node-1'
+      );
+    });
+
+    act(() => {
+      result.current.handlePointerUpNode(
+        createPointerEvent(target, {
+          clientX: Number.POSITIVE_INFINITY,
+          clientY: Number.POSITIVE_INFINITY,
+        }),
+        'node-1'
+      );
+    });
+
+    expect(props.startDrag).not.toHaveBeenCalled();
+    expect(props.updateNode).not.toHaveBeenCalled();
   });
 });

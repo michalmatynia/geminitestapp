@@ -110,6 +110,13 @@ export type ProductStudioAuditEntry = {
   errorMessage: string | null;
 };
 
+export type ProductStudioRunStatus =
+  | 'queued'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'cancelled';
+
 export type ProductImageSlotPreview = {
   index: number;
   label: string;
@@ -155,7 +162,7 @@ export interface ProductStudioContextValue {
 
   // Run Status
   activeRunId: string | null;
-  runStatus: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | null;
+  runStatus: ProductStudioRunStatus | null;
 
   // Actions
   handleSendToStudio: () => Promise<void>;
@@ -177,6 +184,17 @@ export interface ProductStudioContextValue {
 const ProductStudioContext = createContext<ProductStudioContextValue | null>(null);
 
 const STUDIO_PROJECT_NOT_CONNECTED = '__product_studio_not_connected__';
+const PRODUCT_STUDIO_RUN_STATUSES: ProductStudioRunStatus[] = [
+  'queued',
+  'running',
+  'completed',
+  'failed',
+  'cancelled',
+];
+
+const isProductStudioRunStatus = (value: unknown): value is ProductStudioRunStatus =>
+  typeof value === 'string' &&
+  PRODUCT_STUDIO_RUN_STATUSES.includes(value as ProductStudioRunStatus);
 
 export function ProductStudioProvider({
   children,
@@ -231,9 +249,7 @@ export function ProductStudioProvider({
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditError, setAuditError] = useState<string | null>(null);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
-  const [runStatus, setRunStatus] = useState<
-    'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | null
-  >(null);
+  const [runStatus, setRunStatus] = useState<ProductStudioRunStatus | null>(null);
   const [activeRunBaselineVariantIds, setActiveRunBaselineVariantIds] = useState<string[]>([]);
   const [pendingExpectedOutputs, setPendingExpectedOutputs] = useState<number>(0);
 
@@ -368,7 +384,7 @@ export function ProductStudioProvider({
       });
       setActiveRunId(result.runId);
       setActiveRunBaselineVariantIds(baselineIds);
-      setRunStatus(result.runStatus as any);
+      setRunStatus(isProductStudioRunStatus(result.runStatus) ? result.runStatus : null);
       setPendingExpectedOutputs(Math.max(0, Math.floor(result.expectedOutputs ?? 0)));
       toast('Image sent to Studio.', { variant: 'success' });
       await refreshVariants();

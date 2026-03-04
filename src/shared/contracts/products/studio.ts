@@ -6,10 +6,9 @@ export const productStudioSequenceGenerationModeSchema = z.enum([
   'auto',
 ]);
 
-export type ProductStudioSequenceGenerationModeDto = z.infer<
+export type ProductStudioSequenceGenerationMode = z.infer<
   typeof productStudioSequenceGenerationModeSchema
 >;
-export type ProductStudioSequenceGenerationMode = ProductStudioSequenceGenerationModeDto;
 
 export const productStudioExecutionRouteSchema = z.enum([
   'studio_sequencer',
@@ -18,8 +17,7 @@ export const productStudioExecutionRouteSchema = z.enum([
   'ai_direct_generation',
 ]);
 
-export type ProductStudioExecutionRouteDto = z.infer<typeof productStudioExecutionRouteSchema>;
-export type ProductStudioExecutionRoute = ProductStudioExecutionRouteDto;
+export type ProductStudioExecutionRoute = z.infer<typeof productStudioExecutionRouteSchema>;
 
 export const productStudioSequencingDiagnosticsScopeSchema = z.enum([
   'project',
@@ -27,10 +25,9 @@ export const productStudioSequencingDiagnosticsScopeSchema = z.enum([
   'default',
 ]);
 
-export type ProductStudioSequencingDiagnosticsScopeDto = z.infer<
+export type ProductStudioSequencingDiagnosticsScope = z.infer<
   typeof productStudioSequencingDiagnosticsScopeSchema
 >;
-export type ProductStudioSequencingDiagnosticsScope = ProductStudioSequencingDiagnosticsScopeDto;
 
 export const productStudioSequenceReadinessStateSchema = z.enum([
   'ready',
@@ -40,7 +37,7 @@ export const productStudioSequenceReadinessStateSchema = z.enum([
   'project_snapshot_stale',
 ]);
 
-export type ProductStudioSequenceReadinessStateDto = z.infer<
+export type ProductStudioSequenceReadinessState = z.infer<
   typeof productStudioSequenceReadinessStateSchema
 >;
 
@@ -63,8 +60,7 @@ export const productStudioSequencingConfigSchema = z.object({
   needsSaveDefaultsReason: z.string().nullable(),
 });
 
-export type ProductStudioSequencingConfigDto = z.infer<typeof productStudioSequencingConfigSchema>;
-export type ProductStudioSequencingConfig = ProductStudioSequencingConfigDto;
+export type ProductStudioSequencingConfig = z.infer<typeof productStudioSequencingConfigSchema>;
 
 export const productStudioSequencingDiagnosticsSchema = z.object({
   projectId: z.string().nullable(),
@@ -82,10 +78,9 @@ export const productStudioSequencingDiagnosticsSchema = z.object({
   selectedSnapshotModelId: z.string().nullable(),
 });
 
-export type ProductStudioSequencingDiagnosticsDto = z.infer<
+export type ProductStudioSequencingDiagnostics = z.infer<
   typeof productStudioSequencingDiagnosticsSchema
 >;
-export type ProductStudioSequencingDiagnostics = ProductStudioSequencingDiagnosticsDto;
 
 export const productStudioSequenceReadinessSchema = z.object({
   ready: z.boolean(),
@@ -94,10 +89,9 @@ export const productStudioSequenceReadinessSchema = z.object({
   message: z.string().nullable(),
 });
 
-export type ProductStudioSequenceReadinessDto = z.infer<
+export type ProductStudioSequenceReadiness = z.infer<
   typeof productStudioSequenceReadinessSchema
 >;
-export type ProductStudioSequenceReadiness = ProductStudioSequenceReadinessDto;
 
 export const DEFAULT_PRODUCT_STUDIO_SEQUENCE_READINESS: ProductStudioSequenceReadiness = {
   ready: false,
@@ -125,7 +119,7 @@ export const productStudioRotateRequestSchema = z.object({
   direction: z.enum(['left', 'right']),
 });
 
-export type ProductStudioRotateRequestDto = z.infer<typeof productStudioRotateRequestSchema>;
+export type ProductStudioRotateRequest = z.infer<typeof productStudioRotateRequestSchema>;
 
 export const productStudioAcceptRequestSchema = z.object({
   imageSlotIndex: z.number().int().min(0),
@@ -133,7 +127,7 @@ export const productStudioAcceptRequestSchema = z.object({
   projectId: z.string().trim().nullable().optional(),
 });
 
-export type ProductStudioAcceptRequestDto = z.infer<typeof productStudioAcceptRequestSchema>;
+export type ProductStudioAcceptRequest = z.infer<typeof productStudioAcceptRequestSchema>;
 
 export const productStudioSendRequestSchema = z.object({
   imageSlotIndex: z.number().int().min(0),
@@ -142,7 +136,7 @@ export const productStudioSendRequestSchema = z.object({
   sequenceGenerationMode: productStudioSequenceGenerationModeSchema.optional(),
 });
 
-export type ProductStudioSendRequestDto = z.infer<typeof productStudioSendRequestSchema>;
+export type ProductStudioSendRequest = z.infer<typeof productStudioSendRequestSchema>;
 
 export const productStudioLinkRequestSchema = z.object({
   imageSlotIndex: z.number().int().min(0),
@@ -150,7 +144,7 @@ export const productStudioLinkRequestSchema = z.object({
   rotateBeforeSendDeg: z.literal(90).nullable().optional(),
 });
 
-export type ProductStudioLinkRequestDto = z.infer<typeof productStudioLinkRequestSchema>;
+export type ProductStudioLinkRequest = z.infer<typeof productStudioLinkRequestSchema>;
 
 /**
  * Product Draft Contracts

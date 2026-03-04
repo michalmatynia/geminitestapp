@@ -11,18 +11,12 @@ import {
 } from '@/features/notesapp/utils/master-folder-tree';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import type { NotesMasterTreeOperations } from '@/shared/contracts/notes';
-import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { Button, Input, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+import { useNotesAppTreeNodeRuntimeContext } from './NotesAppTreeNodeRuntimeContext';
 
-export type NotesAppTreeNodeProps = FolderTreeViewportRenderNodeInput & {
-  controller: MasterFolderTreeController;
-  FolderClosedIcon: React.ComponentType<{ className?: string }>;
-  FolderOpenIcon: React.ComponentType<{ className?: string }>;
-  FileIcon: React.ComponentType<{ className?: string }>;
-  DragHandleIcon: React.ComponentType<{ className?: string }>;
-};
+export type NotesAppTreeNodeProps = FolderTreeViewportRenderNodeInput;
 
 type NotesAppTreeNodeOperations = NotesMasterTreeOperations & {
   handleCreateFolder: (parentId?: string | null) => Promise<void>;
@@ -41,12 +35,9 @@ export function NotesAppTreeNode({
   select,
   toggleExpand,
   startRename,
-  controller,
-  FolderClosedIcon,
-  FolderOpenIcon,
-  FileIcon,
-  DragHandleIcon,
 }: NotesAppTreeNodeProps): React.JSX.Element {
+  const { controller, FolderClosedIcon, FolderOpenIcon, FileIcon, DragHandleIcon } =
+    useNotesAppTreeNodeRuntimeContext();
   const notesAppContext = useNotesAppContext();
   const {
     setSelectedFolderId,

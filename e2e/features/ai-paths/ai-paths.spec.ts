@@ -107,6 +107,34 @@ const addPlaywrightNodeToCanvas = async (page: import('@playwright/test').Page):
   });
 };
 
+const addNodeToCanvas = async (
+  page: import('@playwright/test').Page,
+  nodeType: string,
+  dropPoint: { x: number; y: number }
+): Promise<void> => {
+  await page.getByRole('tab', { name: 'Canvas' }).click();
+  const searchInput = page.locator('[data-doc-id="palette_search"]');
+  await expect(searchInput).toBeVisible();
+  await searchInput.fill(nodeType);
+  const paletteNode = page.locator(`[data-doc-id="node_palette_${nodeType}"]`).first();
+  await expect(paletteNode).toBeVisible();
+  const dropZone = page.locator('[data-doc-id="canvas_drop_zone"]').first();
+  await expect(dropZone).toBeVisible();
+  const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
+  await paletteNode.dispatchEvent('dragstart', { dataTransfer });
+  await dropZone.dispatchEvent('dragover', {
+    dataTransfer,
+    clientX: dropPoint.x,
+    clientY: dropPoint.y,
+  });
+  await dropZone.dispatchEvent('drop', {
+    dataTransfer,
+    clientX: dropPoint.x,
+    clientY: dropPoint.y,
+  });
+  await searchInput.fill('');
+};
+
 test.describe('AI Paths Admin Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/admin/ai-paths');
@@ -187,6 +215,71 @@ test.describe('AI Paths Admin Page', () => {
     await node.click({ force: true });
 
     await expect(page.getByText('Inspector')).toBeVisible();
+  });
+
+  test('should keep newly added nodes stable on click and persist drag movement', async ({
+    page,
+  }) => {
+    await page.getByRole('tab', { name: 'Canvas' }).click();
+
+    const allNodes = page.locator('[data-node-root]');
+    const beforeTriggerCount = await allNodes.count();
+    await addNodeToCanvas(page, 'trigger', { x: 420, y: 280 });
+    await expect(allNodes).toHaveCount(beforeTriggerCount + 1);
+
+    const triggerNode = allNodes.nth(beforeTriggerCount);
+    const triggerBody = triggerNode.locator('[data-node-body]').first();
+    await expect(triggerBody).toBeVisible();
+
+    await triggerBody.click({ force: true });
+    await triggerBody.click({ force: true });
+    await triggerBody.click({ force: true });
+    await expect(triggerNode).toBeVisible();
+
+    const triggerTransformBefore = await triggerNode.getAttribute('transform');
+    const triggerBox = await triggerBody.boundingBox();
+    expect(triggerBox).toBeTruthy();
+    if (!triggerBox) {
+      throw new Error('Expected trigger node body bounding box to be available');
+    }
+
+    await page.mouse.move(triggerBox.x + triggerBox.width / 2, triggerBox.y + triggerBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(
+      triggerBox.x + triggerBox.width / 2 + 140,
+      triggerBox.y + triggerBox.height / 2 + 90
+    );
+    await page.mouse.up();
+
+    await expect
+      .poll(async () => triggerNode.getAttribute('transform'))
+      .not.toBe(triggerTransformBefore);
+
+    const beforeModelCount = await allNodes.count();
+    await addNodeToCanvas(page, 'model', { x: 620, y: 320 });
+    await expect(allNodes).toHaveCount(beforeModelCount + 1);
+
+    const modelNode = allNodes.nth(beforeModelCount);
+    const modelBody = modelNode.locator('[data-node-body]').first();
+    await expect(modelBody).toBeVisible();
+    const modelTransformBefore = await modelNode.getAttribute('transform');
+    const modelBox = await modelBody.boundingBox();
+    expect(modelBox).toBeTruthy();
+    if (!modelBox) {
+      throw new Error('Expected model node body bounding box to be available');
+    }
+
+    await page.mouse.move(modelBox.x + modelBox.width / 2, modelBox.y + modelBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(
+      modelBox.x + modelBox.width / 2 + 120,
+      modelBox.y + modelBox.height / 2 + 70
+    );
+    await page.mouse.up();
+
+    await expect
+      .poll(async () => modelNode.getAttribute('transform'))
+      .not.toBe(modelTransformBefore);
   });
 
   test('should create, rename and save a new path', async ({ page }) => {

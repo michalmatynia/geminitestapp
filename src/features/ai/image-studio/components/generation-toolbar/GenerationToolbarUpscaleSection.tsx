@@ -8,35 +8,9 @@ import {
   type UpscaleStrategy,
 } from './GenerationToolbarContext';
 import type { UpscaleSmoothingQuality } from './GenerationToolbarImageUtils';
+import { useGenerationToolbarUpscaleSectionRuntime } from './GenerationToolbarSectionContexts';
 
-type SelectOption = {
-  value: string;
-  label: string;
-};
-
-type GenerationToolbarUpscaleSectionProps = {
-  hasSourceImage: boolean;
-  onCancelUpscale: () => void;
-  onUpscale: () => void;
-  upscaleBusyLabel: string;
-  upscaleMaxOutputSide: number;
-  upscaleModeOptions: SelectOption[];
-  upscaleScaleOptions: SelectOption[];
-  upscaleSmoothingOptions: SelectOption[];
-  upscaleStrategyOptions: SelectOption[];
-};
-
-export function GenerationToolbarUpscaleSection({
-  hasSourceImage,
-  onCancelUpscale,
-  onUpscale,
-  upscaleBusyLabel,
-  upscaleMaxOutputSide,
-  upscaleModeOptions,
-  upscaleScaleOptions,
-  upscaleSmoothingOptions,
-  upscaleStrategyOptions,
-}: GenerationToolbarUpscaleSectionProps): React.JSX.Element {
+export function GenerationToolbarUpscaleSection(): React.JSX.Element {
   const {
     upscaleMode,
     setUpscaleMode,
@@ -52,6 +26,17 @@ export function GenerationToolbarUpscaleSection({
     setUpscaleSmoothingQuality,
     upscaleBusy,
   } = useGenerationToolbarContext();
+  const {
+    hasSourceImage,
+    onCancelUpscale,
+    onUpscale,
+    upscaleBusyLabel,
+    upscaleMaxOutputSide,
+    upscaleModeOptions,
+    upscaleScaleOptions,
+    upscaleSmoothingOptions,
+    upscaleStrategyOptions,
+  } = useGenerationToolbarUpscaleSectionRuntime();
 
   return (
     <div className='rounded border border-border/60 bg-card/40 p-3'>

@@ -10,7 +10,7 @@ import type {
   ProductTag,
   ProductParameter,
   ProductParameterValue,
-  CreateProductDraftDto as CreateProductDraftInput,
+  CreateProductDraftInput,
 } from '@/shared/contracts/products';
 import { getCategoriesFlat, getParameters, getTags } from '@/features/products/api/settings';
 import { ProductImagesTabContent } from '@/features/products/components/form/ProductImagesTabContent';

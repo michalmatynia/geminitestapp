@@ -23,6 +23,11 @@ const ERROR_PATTERNS = [
   [/ai|openai|ollama|llm|token limit|embedding|vision|prompt/i, ERROR_CATEGORY.AI],
 ] satisfies ReadonlyArray<readonly [RegExp, ErrorCategory]>;
 
+const ERROR_CATEGORY_VALUES = Object.values(ERROR_CATEGORY);
+
+const isErrorCategory = (value: unknown): value is ErrorCategory =>
+  typeof value === 'string' && ERROR_CATEGORY_VALUES.some((category) => category === value);
+
 /**
  * Classifies an error into a category based on its message or instance type.
  */
@@ -32,8 +37,8 @@ export function classifyError(error: unknown): ErrorCategory {
   }
 
   if (isApiErrorLike(error)) {
-    if (error.category && Object.values(ERROR_CATEGORY).includes(error.category as any)) {
-      return error.category as ErrorCategory;
+    if (isErrorCategory(error.category)) {
+      return error.category;
     }
     if (error.status === 401 || error.status === 403) return ERROR_CATEGORY.AUTH;
     if (error.status === 404 || error.status === 400) return ERROR_CATEGORY.VALIDATION;

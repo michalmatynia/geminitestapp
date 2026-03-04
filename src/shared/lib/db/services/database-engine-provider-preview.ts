@@ -2,8 +2,8 @@ import 'server-only';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
-  DatabaseEngineCollectionProviderPreviewItemDto,
-  DatabaseEngineProviderPreviewDto,
+  DatabaseEngineCollectionProviderPreviewItem,
+  DatabaseEngineProviderPreview,
 } from '@/shared/contracts/database';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import {
@@ -24,7 +24,7 @@ const uniqueSorted = (items: string[]): string[] =>
 
 export async function getDatabaseEngineProviderPreview(input?: {
   collections?: string[];
-}): Promise<DatabaseEngineProviderPreviewDto> {
+}): Promise<DatabaseEngineProviderPreview> {
   const [policy, routeMap, status] = await Promise.all([
     getDatabaseEnginePolicy(),
     getCollectionRouteMap(),
@@ -52,7 +52,7 @@ export async function getDatabaseEngineProviderPreview(input?: {
       ? uniqueSorted(fromRequest)
       : uniqueSorted([...status.collections.knownCollections, ...Object.keys(routeMap)]);
 
-  const items: DatabaseEngineCollectionProviderPreviewItemDto[] = await Promise.all(
+  const items: DatabaseEngineCollectionProviderPreviewItem[] = await Promise.all(
     candidates.map(async (collection) => {
       const configuredProvider = routeMap[collection] ?? null;
       if (configuredProvider === 'mongodb' || configuredProvider === 'prisma') {

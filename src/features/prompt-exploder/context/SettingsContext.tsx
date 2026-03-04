@@ -33,8 +33,9 @@ import { SettingsActionsContext, type SettingsActions } from './settings/Setting
 
 import { useSettingsDataImpl } from './settings/useSettingsDataImpl';
 import { useSettingsActionsImpl } from './settings/useSettingsActionsImpl';
-import { useLibrary } from './LibraryContext';
-import { useDocument } from './DocumentContext';
+import { useLibrary } from './hooks/useLibrary';
+import { useDocumentPrompt } from './hooks/useDocument';
+import type { PromptValidationOrchestrationResult } from '../prompt-validation-orchestrator';
 
 export type { LearningDraft, SettingsActions };
 export { SettingsActionsContext };
@@ -44,7 +45,7 @@ export interface SettingsState
   isBusy: boolean;
   templateMergeThreshold: number;
   settingsMap: Map<string, string>;
-  runtimeSelection: any;
+  runtimeSelection: PromptValidationOrchestrationResult;
   applyToDrafts: boolean;
   setApplyToDrafts: (value: boolean) => void;
 }
@@ -63,7 +64,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   });
 
   const { segmentationLibraryState } = useLibrary();
-  const { documentState } = useDocument();
+  const { returnTarget } = useDocumentPrompt();
 
   const actions = useSettingsActionsImpl({
     settingsMap,
@@ -89,7 +90,6 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   });
 
   const [applyToDrafts, setApplyToDrafts] = React.useState(false);
-  const returnTarget = documentState?.returnTarget || 'image-studio';
 
   const coreValue = useMemo<SettingsCoreState>(
     () => ({

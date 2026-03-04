@@ -64,7 +64,12 @@ export default function EditPagePageLoader(): React.JSX.Element {
             <Button variant='secondary' onClick={() => router.push('/admin/cms/pages')}>
               Back to Pages
             </Button>
-            <Button variant='outline' onClick={() => pageQuery.refetch()}>
+            <Button
+              variant='outline'
+              onClick={() => {
+                void pageQuery.refetch();
+              }}
+            >
               Retry
             </Button>
           </div>

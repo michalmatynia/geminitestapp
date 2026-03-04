@@ -94,19 +94,7 @@ export function ValidatorListTree({
 
   const renderNode = useCallback(
     (input: FolderTreeViewportRenderNodeInput): React.ReactNode => (
-      <ValidatorListNodeItem
-        node={input.node}
-        depth={input.depth}
-        hasChildren={input.hasChildren}
-        isExpanded={input.isExpanded}
-        isSelected={input.isSelected}
-        isRenaming={input.isRenaming}
-        isDragging={input.isDragging}
-        isDropTarget={input.isDropTarget}
-        dropPosition={input.dropPosition}
-        select={input.select}
-        toggleExpand={input.toggleExpand}
-      />
+      <ValidatorListNodeItem {...input} />
     ),
     []
   );

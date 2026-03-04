@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PromptExploderHierarchyTreeProvider } from '@/features/prompt-exploder/components/PromptExploderHierarchyTreeContext';
 import { PromptExploderHierarchyTreeEditor } from '@/features/prompt-exploder/components/PromptExploderHierarchyTreeEditor';
+import { PromptExploderTreeNodeRuntimeProvider } from '@/features/prompt-exploder/components/tree/PromptExploderTreeNodeRuntimeContext';
 import { PromptExploderSegmentsTreeEditor } from '@/features/prompt-exploder/components/tree/PromptExploderSegmentsTreeEditor';
 import { PromptExploderSubsectionsTreeEditor } from '@/features/prompt-exploder/components/tree/PromptExploderSubsectionsTreeEditor';
 import { toPromptExploderTreeNodeId } from '@/features/prompt-exploder/tree/types';
@@ -138,6 +139,19 @@ const getLatestViewportProps = (): FolderTreeViewportV2Props => {
   return latestCall;
 };
 
+const renderTreeNodeWithRuntime = (node: React.ReactNode): void => {
+  render(
+    <PromptExploderTreeNodeRuntimeProvider
+      value={{
+        armDragHandle: vi.fn(),
+        releaseDragHandle: vi.fn(),
+      }}
+    >
+      {node}
+    </PromptExploderTreeNodeRuntimeProvider>
+  );
+};
+
 describe('Prompt Exploder master-tree DnD wiring', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -206,7 +220,7 @@ describe('Prompt Exploder master-tree DnD wiring', () => {
       toggleExpand: vi.fn(),
       startRename: vi.fn(),
     });
-    render(<>{renderedNode}</>);
+    renderTreeNodeWithRuntime(<>{renderedNode}</>);
     expect(screen.getByText('A1')).toBeTruthy();
     expect(document.querySelector('[data-master-tree-drag-handle=\"true\"]')).toBeTruthy();
   });
@@ -342,7 +356,7 @@ describe('Prompt Exploder master-tree DnD wiring', () => {
       toggleExpand: vi.fn(),
       startRename: vi.fn(),
     });
-    render(<>{renderedNode}</>);
+    renderTreeNodeWithRuntime(<>{renderedNode}</>);
     expect(screen.getByText('Alpha')).toBeTruthy();
     expect(document.querySelector('[data-master-tree-drag-handle=\"true\"]')).toBeTruthy();
   });

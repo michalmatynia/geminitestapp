@@ -241,9 +241,6 @@ export const updateProductValidatorSettingsSchema = z.object({
     .optional(),
 });
 
-export type UpdateProductValidatorSettingsDto = z.infer<
-  typeof updateProductValidatorSettingsSchema
->;
 export type UpdateProductValidatorSettings = z.infer<typeof updateProductValidatorSettingsSchema>;
 
 export const productValidatorConfigSchema = z.object({

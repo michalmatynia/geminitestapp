@@ -104,7 +104,7 @@ const parseAgentPersonas = (value: unknown): AgentPersona[] => {
 };
 
 const fetchAgentPersonas = async (): Promise<AgentPersona[]> => {
-  const response = await settingsApi.list({ scope: 'heavy' });
+  const response = await settingsApi.list('heavy' as const);
   if (!response.ok) return [];
   const record = response.data.find(
     (item: { key: string }) => item.key === AGENT_PERSONA_SETTINGS_KEY

@@ -2,7 +2,6 @@
 
 import { createContext, useContext } from 'react';
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
-import type { PromptValidationOrchestrationResult } from '../../prompt-validation-orchestrator';
 import type { PromptExploderLearnedTemplate } from '../../types';
 import type {
   PromptExploderRuntimeValidationScope,

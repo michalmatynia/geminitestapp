@@ -5,7 +5,7 @@ import {
   createDraftPayloadSchema,
   resolveDraftCategoryId,
 } from '@/features/drafter/validations/draft-payload';
-import type { CreateProductDraftDto } from '@/features/products/server';
+import type { CreateProductDraftInput } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
@@ -34,6 +34,6 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const draft = await createDraft({
     ...data,
     categoryId,
-  } as CreateProductDraftDto);
+  } as CreateProductDraftInput);
   return NextResponse.json(draft, { status: 201 });
 }

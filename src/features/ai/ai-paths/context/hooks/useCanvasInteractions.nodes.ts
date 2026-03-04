@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { AiNode, Edge, NodeDefinition, RuntimeState } from '@/shared/lib/ai-paths';
 import {
+  CANVAS_HEIGHT,
+  CANVAS_WIDTH,
+  NODE_MIN_HEIGHT,
+  NODE_WIDTH,
   createNodeInstanceId,
   getDefaultConfigForType,
   palette,
@@ -67,6 +71,11 @@ type PointerCaptureState = {
   pointerId: number;
   target: PointerCaptureTarget;
 };
+
+const clampNodePosition = (x: number, y: number): { x: number; y: number } => ({
+  x: Math.min(Math.max(x, 16), CANVAS_WIDTH - NODE_WIDTH - 16),
+  y: Math.min(Math.max(y, 16), CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16),
+});
 
 export function useCanvasInteractionsNodes({
   nodes,
@@ -330,11 +339,30 @@ export function useCanvasInteractionsNodes({
 
   const handlePointerMoveNode = useCallback(
     (event: React.PointerEvent<Element>, nodeId: string): void => {
+      const pointerType = typeof event.pointerType === 'string' ? event.pointerType : '';
+      const hasNoPrimaryButtonPressed =
+        (pointerType === 'mouse' || pointerType === 'pen') &&
+        typeof event.buttons === 'number' &&
+        (event.buttons & 1) === 0;
+      if (hasNoPrimaryButtonPressed) {
+        const capture = pointerCaptureRef.current;
+        const pointerMatchesCapture = capture?.pointerId === event.pointerId;
+        const captureTarget = capture?.target ?? null;
+        const hasPointerCaptureForPointer =
+          pointerMatchesCapture &&
+          (typeof captureTarget?.hasPointerCapture !== 'function' ||
+            captureTarget.hasPointerCapture(event.pointerId));
+        if (!hasPointerCaptureForPointer) {
+          return;
+        }
+      }
+
       const pointerCanvas = updateLastPointerCanvasPosFromClient(event.clientX, event.clientY);
       if (!pointerCanvas) return;
       const pointerWorld = toWorldPoint(pointerCanvas);
       const canvasX = pointerWorld.x;
       const canvasY = pointerWorld.y;
+      if (!Number.isFinite(canvasX) || !Number.isFinite(canvasY)) return;
       let activeDragSession =
         activeDragSessionRef.current?.nodeId === nodeId &&
         activeDragSessionRef.current.pointerId === event.pointerId
@@ -375,9 +403,10 @@ export function useCanvasInteractionsNodes({
           prev.map((item: AiNode): AiNode => {
             const base = dragSelection.basePositions.get(item.id);
             if (!base) return item;
+            const clamped = clampNodePosition(base.x + deltaX, base.y + deltaY);
             return {
               ...item,
-              position: { x: base.x + deltaX, y: base.y + deltaY },
+              position: clamped,
             };
           })
         );
@@ -385,9 +414,10 @@ export function useCanvasInteractionsNodes({
       }
       const nextY = canvasY - activeOffsetY;
       const nextX = canvasX - activeOffsetX;
+      const clamped = clampNodePosition(nextX, nextY);
 
       // RAF throttling
-      pendingDragRef.current = { nodeId, x: nextX, y: nextY };
+      pendingDragRef.current = { nodeId, x: clamped.x, y: clamped.y };
       if (rafIdRef.current === null) {
         rafIdRef.current = requestAnimationFrame(() => {
           if (pendingDragRef.current) {
@@ -601,10 +631,10 @@ export function useCanvasInteractionsNodes({
       const scale = Number.isFinite(view.scale) && view.scale > 0 ? view.scale : 1;
       const localX = (event.clientX - viewport.left - view.x) / scale;
       const localY = (event.clientY - viewport.top - view.y) / scale;
+      if (!Number.isFinite(localX) || !Number.isFinite(localY)) return;
       updateLastPointerCanvasPosFromClient(event.clientX, event.clientY);
 
-      const nextX = localX - 200 / 2; // NODE_WIDTH
-      const nextY = localY - 100 / 2; // NODE_MIN_HEIGHT
+      const clamped = clampNodePosition(localX - NODE_WIDTH / 2, localY - NODE_MIN_HEIGHT / 2);
 
       const defaultConfig = getDefaultConfigForType(payload.type, payload.outputs, payload.inputs);
       const mergedConfig = payload.config ? { ...defaultConfig, ...payload.config } : defaultConfig;
@@ -618,14 +648,14 @@ export function useCanvasInteractionsNodes({
         nodeTypeId: resolveNodeTypeId(payload, palette),
         createdAt: nowIso,
         updatedAt: null,
-        position: { x: nextX, y: nextY },
+        position: clamped,
         data: {},
         ...(mergedConfig ? { config: mergedConfig } : {}),
       };
 
       setNodes((prev: AiNode[]) => [...prev, newNode]);
       selectNode(newNodeId);
-      setLastDrop({ x: nextX, y: nextY });
+      setLastDrop(clamped);
       ensureNodeVisible(newNode);
       toast(`Node added: ${payload.title}`, { variant: 'success' });
     },

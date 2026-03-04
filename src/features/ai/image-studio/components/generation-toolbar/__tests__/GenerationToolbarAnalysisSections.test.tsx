@@ -3,6 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GenerationToolbarAutoScalerSection } from '../GenerationToolbarAutoScalerSection';
 import { GenerationToolbarCenterSection } from '../GenerationToolbarCenterSection';
+import {
+  GenerationToolbarAutoScalerSectionRuntimeProvider,
+  GenerationToolbarCenterSectionRuntimeProvider,
+} from '../GenerationToolbarSectionContexts';
 
 const mockToolbarContext = {
   centerMode: 'server_object_layout_v1',
@@ -48,7 +52,7 @@ vi.mock('../GenerationToolbarContext', () => ({
   useGenerationToolbarContext: () => mockToolbarContext,
 }));
 
-const baseCenterProps = (overrides?: Record<string, unknown>) => ({
+const baseCenterRuntime = (overrides?: Record<string, unknown>) => ({
   analysisPlanAvailable: true,
   analysisPlanSourceMetadataMissing: false,
   analysisWorkingSourceMetadataMissing: false,
@@ -98,7 +102,7 @@ const baseCenterProps = (overrides?: Record<string, unknown>) => ({
   ...(overrides ?? {}),
 });
 
-const baseAutoScalerProps = (overrides?: Record<string, unknown>) => ({
+const baseAutoScalerRuntime = (overrides?: Record<string, unknown>) => ({
   analysisPlanAvailable: true,
   analysisPlanSourceMetadataMissing: false,
   analysisWorkingSourceMetadataMissing: false,
@@ -143,9 +147,23 @@ describe('GenerationToolbar analysis integration section UX', () => {
     });
   });
 
+  const renderCenter = (overrides?: Record<string, unknown>) =>
+    render(
+      <GenerationToolbarCenterSectionRuntimeProvider value={baseCenterRuntime(overrides)}>
+        <GenerationToolbarCenterSection />
+      </GenerationToolbarCenterSectionRuntimeProvider>
+    );
+
+  const renderAutoScaler = (overrides?: Record<string, unknown>) =>
+    render(
+      <GenerationToolbarAutoScalerSectionRuntimeProvider value={baseAutoScalerRuntime(overrides)}>
+        <GenerationToolbarAutoScalerSection />
+      </GenerationToolbarAutoScalerSectionRuntimeProvider>
+    );
+
   it('shows "Run Analysis" in both Object Layouting and Auto Scaler sections', () => {
-    render(<GenerationToolbarCenterSection {...baseCenterProps()} />);
-    render(<GenerationToolbarAutoScalerSection {...baseAutoScalerProps()} />);
+    renderCenter();
+    renderAutoScaler();
 
     expect(screen.getAllByRole('button', { name: 'Run Analysis' })).toHaveLength(2);
   });
@@ -153,10 +171,8 @@ describe('GenerationToolbar analysis integration section UX', () => {
   it('invokes run callbacks from both sections', () => {
     const onRunCenter = vi.fn();
     const onRunAuto = vi.fn();
-    render(<GenerationToolbarCenterSection {...baseCenterProps({ onRunAnalysis: onRunCenter })} />);
-    render(
-      <GenerationToolbarAutoScalerSection {...baseAutoScalerProps({ onRunAnalysis: onRunAuto })} />
-    );
+    renderCenter({ onRunAnalysis: onRunCenter });
+    renderAutoScaler({ onRunAnalysis: onRunAuto });
 
     const buttons = screen.getAllByRole('button', { name: 'Run Analysis' });
     fireEvent.click(buttons[0]!);
@@ -167,14 +183,10 @@ describe('GenerationToolbar analysis integration section UX', () => {
   });
 
   it('keeps Run Analysis enabled when plan is stale and still shows stale guidance', () => {
-    render(
-      <GenerationToolbarCenterSection
-        {...baseCenterProps({
-          analysisPlanIsStale: true,
-          analysisSummaryIsStale: true,
-        })}
-      />
-    );
+    renderCenter({
+      analysisPlanIsStale: true,
+      analysisSummaryIsStale: true,
+    });
 
     const button = screen.getByRole('button', { name: 'Run Analysis' });
     expect(button).toBeEnabled();
@@ -184,23 +196,17 @@ describe('GenerationToolbar analysis integration section UX', () => {
   });
 
   it('disables Run Analysis when there is no source image', () => {
-    render(
-      <GenerationToolbarAutoScalerSection {...baseAutoScalerProps({ hasSourceImage: false })} />
-    );
+    renderAutoScaler({ hasSourceImage: false });
     const button = screen.getByRole('button', { name: 'Run Analysis' });
     expect(button).toBeDisabled();
     expect(button).toHaveAttribute('title', 'Select a slot image before analysis');
   });
 
   it('disables Run Analysis while analysis is already running', () => {
-    render(
-      <GenerationToolbarCenterSection
-        {...baseCenterProps({
-          analysisBusy: true,
-          analysisBusyLabel: 'Analyze: Processing',
-        })}
-      />
-    );
+    renderCenter({
+      analysisBusy: true,
+      analysisBusyLabel: 'Analyze: Processing',
+    });
     const button = screen.getByRole('button', { name: 'Analyze: Processing' });
     expect(button).toBeDisabled();
     expect(button).toHaveAttribute('title', 'Analysis is already running');
@@ -209,15 +215,10 @@ describe('GenerationToolbar analysis integration section UX', () => {
   it('renders mismatch message and invokes shared detection deep-link action', () => {
     const onOpenSharedDetectionSettings = vi.fn();
 
-    render(
-      <GenerationToolbarAutoScalerSection
-        {...baseAutoScalerProps({
-          analysisConfigMismatchMessage:
-            'Current controls differ from analysis plan: padding, detection.',
-          onOpenSharedDetectionSettings,
-        })}
-      />
-    );
+    renderAutoScaler({
+      analysisConfigMismatchMessage: 'Current controls differ from analysis plan: padding, detection.',
+      onOpenSharedDetectionSettings,
+    });
 
     expect(
       screen.getByText('Current controls differ from analysis plan: padding, detection.')

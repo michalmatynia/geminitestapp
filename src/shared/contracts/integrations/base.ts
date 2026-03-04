@@ -42,7 +42,6 @@ export const integrationSchema = namedDtoSchema.extend({
 });
 
 export type Integration = z.infer<typeof integrationSchema>;
-export type IntegrationDto = Integration;
 
 export const createIntegrationSchema = integrationSchema.omit({
   id: true,

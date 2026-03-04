@@ -1,9 +1,9 @@
 'use client';
 
 import type {
-  ProductDraftDto,
-  CreateProductDraftDto,
-  UpdateProductDraftDto,
+  ProductDraft,
+  CreateProductDraftInput,
+  UpdateProductDraftInput,
 } from '@/shared/contracts/products';
 import type { ListQuery, SingleQuery, MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
@@ -26,12 +26,12 @@ export {
   useDeleteDraftMutation as useDeleteDraft,
 };
 
-export function useDrafts(notebookId?: string): ListQuery<ProductDraftDto> {
+export function useDrafts(notebookId?: string): ListQuery<ProductDraft> {
   const queryKey = draftKeys.list(notebookId ?? 'all');
-  return createListQueryV2<ProductDraftDto>({
+  return createListQueryV2<ProductDraft>({
     queryKey,
     queryFn: () =>
-      api.get<ProductDraftDto[]>('/api/drafts', {
+      api.get<ProductDraft[]>('/api/drafts', {
         params: notebookId ? { notebookId } : undefined,
       }),
     meta: {
@@ -45,12 +45,12 @@ export function useDrafts(notebookId?: string): ListQuery<ProductDraftDto> {
   });
 }
 
-export function useDraft(id: string | null): SingleQuery<ProductDraftDto> {
+export function useDraft(id: string | null): SingleQuery<ProductDraft> {
   const queryKey = draftKeys.detail(id ?? 'none');
-  return createSingleQueryV2<ProductDraftDto>({
+  return createSingleQueryV2<ProductDraft>({
     id,
     queryKey: (noteId) => draftKeys.detail(noteId),
-    queryFn: () => api.get<ProductDraftDto>(`/api/drafts/${id}`),
+    queryFn: () => api.get<ProductDraft>(`/api/drafts/${id}`),
     enabled: !!id,
     meta: {
       source: 'drafter.hooks.useDraft',
@@ -63,9 +63,9 @@ export function useDraft(id: string | null): SingleQuery<ProductDraftDto> {
   });
 }
 
-export function useCreateDraftMutation(): MutationResult<ProductDraftDto, CreateProductDraftDto> {
-  return createCreateMutationV2<ProductDraftDto, CreateProductDraftDto>({
-    mutationFn: (data) => api.post<ProductDraftDto>('/api/drafts', data),
+export function useCreateDraftMutation(): MutationResult<ProductDraft, CreateProductDraftInput> {
+  return createCreateMutationV2<ProductDraft, CreateProductDraftInput>({
+    mutationFn: (data) => api.post<ProductDraft>('/api/drafts', data),
     meta: {
       source: 'drafter.hooks.useCreateDraftMutation',
       operation: 'create',
@@ -78,11 +78,11 @@ export function useCreateDraftMutation(): MutationResult<ProductDraftDto, Create
 }
 
 export function useUpdateDraftMutation(): MutationResult<
-  ProductDraftDto,
-  { id: string; data: UpdateProductDraftDto }
+  ProductDraft,
+  { id: string; data: UpdateProductDraftInput }
   > {
-  return createUpdateMutationV2<ProductDraftDto, { id: string; data: UpdateProductDraftDto }>({
-    mutationFn: ({ id, data }) => api.put<ProductDraftDto>(`/api/drafts/${id}`, data),
+  return createUpdateMutationV2<ProductDraft, { id: string; data: UpdateProductDraftInput }>({
+    mutationFn: ({ id, data }) => api.put<ProductDraft>(`/api/drafts/${id}`, data),
     meta: {
       source: 'drafter.hooks.useUpdateDraftMutation',
       operation: 'update',

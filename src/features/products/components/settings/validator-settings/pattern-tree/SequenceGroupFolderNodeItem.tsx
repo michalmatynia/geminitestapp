@@ -3,26 +3,14 @@
 import React from 'react';
 import { GripVertical, Layers } from 'lucide-react';
 
+import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
 import { TreeCaret, TreeContextMenu, TreeRow, Button } from '@/shared/ui';
-import { cn, type MasterTreeNode } from '@/shared/utils';
+import { cn } from '@/shared/utils';
 
 import { fromSeqGroupMasterNodeId } from '../validator-pattern-master-tree';
 import { useValidatorPatternTreeContext } from '../ValidatorPatternTreeContext';
 
-export interface SequenceGroupFolderNodeItemProps {
-  node: MasterTreeNode;
-  depth: number;
-  hasChildren: boolean;
-  isExpanded: boolean;
-  isSelected: boolean;
-  isRenaming: boolean;
-  isDragging: boolean;
-  isDropTarget: boolean;
-  dropPosition: 'inside' | 'before' | 'after' | null;
-  select: (event?: React.MouseEvent<HTMLElement>) => void;
-  toggleExpand: () => void;
-  startRename: () => void;
-}
+export type SequenceGroupFolderNodeItemProps = FolderTreeViewportRenderNodeInput;
 
 export function SequenceGroupFolderNodeItem({
   node,

@@ -1,112 +1,15 @@
 import React from 'react';
 
-import {
-  ImageStudioAnalysisSummaryChip,
-  type ImageStudioAnalysisSummaryChipData,
-} from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
+import { ImageStudioAnalysisSummaryChip } from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
 import { Button, SelectSimple, Tooltip } from '@/shared/ui';
 
 import { useGenerationToolbarContext, type CenterMode } from './GenerationToolbarContext';
+import { useGenerationToolbarCenterSectionRuntime } from './GenerationToolbarSectionContexts';
 import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterShadowPolicy,
 } from '../../contracts/center';
-
-type SelectOption = {
-  value: string;
-  label: string;
-};
-
-type CenterTooltipContent = {
-  apply: string;
-  detection: string;
-  fillMissingCanvasWhite: string;
-  mode: string;
-  padding: string;
-  paddingAxes: string;
-  shadowPolicy: string;
-  thresholds: string;
-};
-
-type GenerationToolbarCenterSectionProps = {
-  analysisPlanAvailable: boolean;
-  analysisPlanSourceMetadataMissing: boolean;
-  analysisWorkingSourceMetadataMissing: boolean;
-  analysisPlanIsStale: boolean;
-  analysisPlanSlotMissing: boolean;
-  analysisPlanWillSwitchSlot: boolean;
-  analysisPlanSwitchSlotLabel: string;
-  slotSelectionLocked: boolean;
-  analysisSummaryData: ImageStudioAnalysisSummaryChipData | null;
-  analysisSummaryIsStale: boolean;
-  analysisConfigMismatchMessage: string | null;
-  analysisBusy: boolean;
-  analysisBusyLabel: string;
-  centerBusyLabel: string;
-  centerGuidesEnabled: boolean;
-  centerLayoutEnabled: boolean;
-  centerLayoutPreset: string;
-  centerLayoutPresetOptions: SelectOption[];
-  centerLayoutCanDeletePreset: boolean;
-  centerLayoutCanSavePreset: boolean;
-  centerLayoutSavePresetLabel: string;
-  centerLayoutDetectionOptions: SelectOption[];
-  centerLayoutProjectCanvasSize: { width: number; height: number } | null;
-  centerLayoutShadowPolicyOptions: SelectOption[];
-  centerTooltipContent: CenterTooltipContent;
-  centerTooltipsEnabled: boolean;
-  centerModeOptions: SelectOption[];
-  hasSourceImage: boolean;
-  onCancelCenter: () => void;
-  onCenterLayoutPresetChange: (value: string) => void;
-  onCenterLayoutSavePreset: () => void;
-  onCenterLayoutDeletePreset: () => void;
-  onRunAnalysis: () => void;
-  onCenterObject: () => void;
-  onToggleCenterLayoutAdvanced: () => void;
-  onToggleCenterLayoutSplitAxes: () => void;
-  onToggleCenterGuides: () => void;
-};
-
-export function GenerationToolbarCenterSection({
-  analysisPlanAvailable,
-  analysisPlanSourceMetadataMissing,
-  analysisWorkingSourceMetadataMissing,
-  analysisPlanIsStale,
-  analysisPlanSlotMissing,
-  analysisPlanWillSwitchSlot,
-  analysisPlanSwitchSlotLabel,
-  slotSelectionLocked,
-  analysisSummaryData,
-  analysisSummaryIsStale,
-  analysisConfigMismatchMessage,
-  analysisBusy,
-  analysisBusyLabel,
-  centerBusyLabel,
-  centerGuidesEnabled,
-  centerLayoutEnabled,
-  centerLayoutPreset,
-  centerLayoutPresetOptions,
-  centerLayoutCanDeletePreset,
-  centerLayoutCanSavePreset,
-  centerLayoutSavePresetLabel,
-  centerLayoutDetectionOptions,
-  centerLayoutProjectCanvasSize,
-  centerLayoutShadowPolicyOptions,
-  centerTooltipContent,
-  centerTooltipsEnabled,
-  centerModeOptions,
-  hasSourceImage,
-  onCancelCenter,
-  onCenterLayoutPresetChange,
-  onCenterLayoutSavePreset,
-  onCenterLayoutDeletePreset,
-  onRunAnalysis,
-  onCenterObject,
-  onToggleCenterLayoutAdvanced,
-  onToggleCenterLayoutSplitAxes,
-  onToggleCenterGuides,
-}: GenerationToolbarCenterSectionProps): React.JSX.Element {
+export function GenerationToolbarCenterSection(): React.JSX.Element {
   const {
     centerMode,
     setCenterMode,
@@ -132,6 +35,45 @@ export function GenerationToolbarCenterSection({
     setCenterLayoutFillMissingCanvasWhite,
     centerBusy,
   } = useGenerationToolbarContext();
+  const {
+    analysisPlanAvailable,
+    analysisPlanSourceMetadataMissing,
+    analysisWorkingSourceMetadataMissing,
+    analysisPlanIsStale,
+    analysisPlanSlotMissing,
+    analysisPlanWillSwitchSlot,
+    analysisPlanSwitchSlotLabel,
+    slotSelectionLocked,
+    analysisSummaryData,
+    analysisSummaryIsStale,
+    analysisConfigMismatchMessage,
+    analysisBusy,
+    analysisBusyLabel,
+    centerBusyLabel,
+    centerGuidesEnabled,
+    centerLayoutEnabled,
+    centerLayoutPreset,
+    centerLayoutPresetOptions,
+    centerLayoutCanDeletePreset,
+    centerLayoutCanSavePreset,
+    centerLayoutSavePresetLabel,
+    centerLayoutDetectionOptions,
+    centerLayoutProjectCanvasSize,
+    centerLayoutShadowPolicyOptions,
+    centerTooltipContent,
+    centerTooltipsEnabled,
+    centerModeOptions,
+    hasSourceImage,
+    onCancelCenter,
+    onCenterLayoutPresetChange,
+    onCenterLayoutSavePreset,
+    onCenterLayoutDeletePreset,
+    onRunAnalysis,
+    onCenterObject,
+    onToggleCenterLayoutAdvanced,
+    onToggleCenterLayoutSplitAxes,
+    onToggleCenterGuides,
+  } = useGenerationToolbarCenterSectionRuntime();
 
   const sliderValue = centerLayoutPadding.trim() === '' ? '0' : centerLayoutPadding;
   const maybeWrapTooltip = (

@@ -363,16 +363,18 @@ const flushQueue = async (): Promise<void> => {
   }
 
   if (typeof fetch !== 'function') return;
-  await fetch(TELEMETRY_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body,
-    keepalive: true,
-  }).catch(() => {
+  try {
+    await fetch(TELEMETRY_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body,
+      keepalive: true,
+    });
+  } catch {
     // Never throw from telemetry transport.
-  });
+  }
 };
 
 const scheduleFlush = (): void => {
@@ -461,7 +463,8 @@ export const emitTanstackTelemetry = (input: EmitTanstackTelemetryInput): boolea
   }
 
   // Centrally log error if stage is 'error', logError is enabled and not already logged by API client
-  const alreadyLogged = (input.error as any)?.__logged === true;
+  const alreadyLogged =
+    isSerializableRecord(input.error) && input.error['__logged'] === true;
   if (input.stage === 'error' && resolvedMeta.logError && input.error && !alreadyLogged) {
     logClientError(input.error, {
       context: {

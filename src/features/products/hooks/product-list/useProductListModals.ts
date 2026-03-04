@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import type { ProductWithImages, ProductDraftDto } from '@/shared/contracts/products';
+import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import { useIntegrationOperations } from '@/features/integrations/hooks/useIntegrationOperations';
 import type { Toast } from '@/shared/contracts/ui';
 
@@ -22,7 +22,7 @@ export function useProductListModals({
   rowSelection: Record<string, boolean>;
   toast: Toast;
 }) {
-  const [createDraft, setCreateDraft] = useState<ProductDraftDto | null>(null);
+  const [createDraft, setCreateDraft] = useState<ProductDraft | null>(null);
 
   const {
     integrationsProduct,

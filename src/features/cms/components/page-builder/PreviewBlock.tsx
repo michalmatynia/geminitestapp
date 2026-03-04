@@ -9,8 +9,8 @@ import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalizat
 import type { GsapAnimationConfig } from '@/features/gsap';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import type {
-  CmsSectionInstanceDto as SectionInstance,
-  CmsBlockInstanceDto as BlockInstance,
+  SectionInstance,
+  BlockInstance,
   PreviewBlockItemProps,
 } from '@/shared/contracts/cms';
 import { Button, Card } from '@/shared/ui';

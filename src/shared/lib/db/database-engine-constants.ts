@@ -1,12 +1,21 @@
 import type {
-  DatabaseEngineProviderDto,
-  DatabaseEnginePrimaryProviderDto,
-  DatabaseEngineServiceDto,
-  DatabaseEnginePolicyDto,
-  DatabaseEngineOperationControlsDto,
-  DatabaseEngineBackupScheduleDto,
-  DatabaseEngineBackupTargetScheduleDto,
+  DatabaseEngineProvider,
+  DatabaseEnginePrimaryProvider,
+  DatabaseEngineService,
+  DatabaseEnginePolicy,
+  DatabaseEngineOperationControls,
+  DatabaseEngineBackupSchedule,
+  DatabaseEngineBackupTargetSchedule,
 } from '@/shared/contracts/database';
+
+export type {
+  DatabaseEngineProvider,
+  DatabaseEnginePrimaryProvider,
+  DatabaseEnginePolicy,
+  DatabaseEngineOperationControls,
+  DatabaseEngineBackupSchedule,
+  DatabaseEngineBackupTargetSchedule,
+};
 
 export const DATABASE_ENGINE_POLICY_KEY = 'database_engine_policy_v1';
 export const DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY = 'database_engine_service_route_map_v1';
@@ -14,12 +23,7 @@ export const DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY = 'database_engine_collect
 export const DATABASE_ENGINE_BACKUP_SCHEDULE_KEY = 'database_engine_backup_schedule_v1';
 export const DATABASE_ENGINE_OPERATION_CONTROLS_KEY = 'database_engine_operation_controls_v1';
 
-export type DatabaseEngineProvider = DatabaseEngineProviderDto;
-export type DatabaseEnginePrimaryProvider = DatabaseEnginePrimaryProviderDto;
-
-export type DatabaseEngineServiceRoute = DatabaseEngineServiceDto;
-
-export type DatabaseEnginePolicy = DatabaseEnginePolicyDto;
+export type DatabaseEngineServiceRoute = DatabaseEngineService;
 
 export const DEFAULT_DATABASE_ENGINE_POLICY: DatabaseEnginePolicy = {
   requireExplicitServiceRouting: false,
@@ -29,8 +33,6 @@ export const DEFAULT_DATABASE_ENGINE_POLICY: DatabaseEnginePolicy = {
   allowAutomaticMigrations: true,
   strictProviderAvailability: false,
 };
-
-export type DatabaseEngineOperationControls = DatabaseEngineOperationControlsDto;
 
 export const DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS: DatabaseEngineOperationControls = {
   allowManualFullSync: true,
@@ -45,10 +47,6 @@ export const DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS: DatabaseEngineOperation
 export type DatabaseEngineBackupCadence = 'daily' | 'every_n_days' | 'weekly';
 export type DatabaseEngineBackupType = 'mongodb' | 'postgresql';
 export type DatabaseEngineBackupStatus = 'idle' | 'queued' | 'running' | 'success' | 'failed';
-
-export type DatabaseEngineBackupTargetSchedule = DatabaseEngineBackupTargetScheduleDto;
-
-export type DatabaseEngineBackupSchedule = DatabaseEngineBackupScheduleDto;
 
 const DEFAULT_DATABASE_ENGINE_BACKUP_TARGET_SCHEDULE: DatabaseEngineBackupTargetSchedule = {
   enabled: false,

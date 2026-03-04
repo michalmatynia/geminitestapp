@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   AI_PATHS_HISTORY_RETENTION_KEY,
   AI_PATHS_UI_STATE_KEY,
+  LEGACY_PATH_INDEX_KEY,
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
   TRIGGER_EVENTS,
@@ -155,7 +156,7 @@ const loadPathConfigsFromSettings = async (
   const map = new Map<string, string>(
     data.map((item: { key: string; value: string }) => [item.key, item.value])
   );
-  const indexRaw = map.get(PATH_INDEX_KEY);
+  const indexRaw = map.get(PATH_INDEX_KEY) ?? map.get(LEGACY_PATH_INDEX_KEY);
   if (!indexRaw?.trim()) {
     return { configs: {}, settingsPathOrder: [] };
   }

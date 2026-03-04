@@ -7,7 +7,7 @@ import {
 } from '@/shared/lib/db/services/database-collection-copy';
 import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import type {
-  DatabaseSyncCollectionResultDto,
+  DatabaseSyncCollectionResult,
   DatabaseSyncDirection,
 } from '@/shared/contracts/database';
 import { authError, badRequestError } from '@/shared/errors/app-error';
@@ -42,7 +42,7 @@ export async function POST_handler(req: NextRequest): Promise<Response> {
   const result = (await copyCollection(
     collection,
     direction
-  )) as unknown as DatabaseSyncCollectionResultDto;
+  )) as unknown as DatabaseSyncCollectionResult;
   return NextResponse.json(result);
 }
 

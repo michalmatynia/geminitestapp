@@ -54,6 +54,7 @@ import type {
 } from '../types';
 
 import { DocumentPromptContext, type DocumentPromptState } from './document/DocumentPromptContext';
+export { DocumentPromptContext, type DocumentPromptState };
 import { DocumentCoreContext, type DocumentCoreState } from './document/DocumentCoreContext';
 import {
   DocumentSelectionContext,

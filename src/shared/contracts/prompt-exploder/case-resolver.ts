@@ -137,5 +137,4 @@ export type CaseResolverSegmentCaptureRule = {
   overwrite: boolean;
   sequence: number;
 };
-
-export type PromptExploderCaseResolverCaptureMode = 'manual' | 'assisted' | 'fully-auto';
+export type { PromptExploderCaseResolverCaptureMode } from './settings';

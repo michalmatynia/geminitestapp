@@ -252,13 +252,14 @@ export function AdminCaseResolverCasesProvider({
     setCaseSortOrder,
     setCaseViewMode,
     setCaseShowNestedContent,
+    setCaseFilterPanelDefaultExpanded,
     setDidHydrateCaseListViewDefaults,
     setConfirmation,
     setCasesLoadState,
     setCasesLoadMessage: (msg: string | null) => setCasesLoadMessage(msg || ''),
     toast: toast as any, 
     settingsStoreRefetchRef,
-  } as any);
+  });
 
   const caseIdentifierOptions = useMemo<Array<{ value: string; label: string }>>(
     () =>

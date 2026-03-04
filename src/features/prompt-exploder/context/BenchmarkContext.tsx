@@ -2,7 +2,7 @@
 
 import React, { createContext, useCallback, useMemo, useState } from 'react';
 
-import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
+import { PROMPT_ENGINE_SETTINGS_KEY, type PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -298,12 +298,13 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
       try {
         const basePromptSettings = promptSettings;
         const shouldUpsertTemplates = learningDraft.benchmarkSuggestionUpsertTemplates;
+        const initialLearnedRules: PromptValidationRule[] = [
+          ...(basePromptSettings.promptValidation.learnedRules ?? []),
+          ...sessionLearnedRules,
+        ];
         const benchmarkApply = applyBenchmarkSuggestions({
           suggestions: validSuggestions,
-          initialRules: ([
-            ...(basePromptSettings.promptValidation.learnedRules ?? []),
-            ...sessionLearnedRules,
-          ]) as unknown as PromptValidationRule[],
+          initialRules: initialLearnedRules,
           initialTemplates: effectiveLearnedTemplates,
           shouldUpsertTemplates,
           templateMergeThreshold,

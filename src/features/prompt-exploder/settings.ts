@@ -52,7 +52,14 @@ export const PROMPT_EXPLODER_STORAGE_KEYS = [
 export function parsePromptExploderSettings(raw: unknown): PromptExploderSettings {
   const result = promptExploderSettingsSchema.safeParse(raw);
   if (!result.success) return defaultPromptExploderSettings;
-  return result.data;
+  const data = result.data as any;
+  return {
+    ...defaultPromptExploderSettings,
+    ...data,
+    runtime: data['runtime'] ?? defaultPromptExploderSettings.runtime,
+    learning: data['learning'] ?? defaultPromptExploderSettings.learning,
+    ai: data['ai'] ?? defaultPromptExploderSettings.ai,
+  } as PromptExploderSettings;
 }
 
 export function parsePromptExploderSettingsResult(raw: unknown): {
@@ -66,8 +73,15 @@ export function parsePromptExploderSettingsResult(raw: unknown): {
       error: result.error.message,
     };
   }
+  const data = result.data as any;
   return {
-    settings: result.data,
+    settings: {
+      ...defaultPromptExploderSettings,
+      ...data,
+      runtime: data['runtime'] ?? defaultPromptExploderSettings.runtime,
+      learning: data['learning'] ?? defaultPromptExploderSettings.learning,
+      ai: data['ai'] ?? defaultPromptExploderSettings.ai,
+    } as PromptExploderSettings,
     error: null,
   };
 }

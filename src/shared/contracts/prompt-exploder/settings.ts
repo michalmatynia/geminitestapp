@@ -138,6 +138,7 @@ export const promptExploderSettingsSchema = z.object({
     .default({
       operationMode: 'hybrid',
     }),
+  promptValidation: z.any().optional(),
   patternSnapshots: z.array(promptExploderPatternSnapshotSchema).default([]),
 });
 

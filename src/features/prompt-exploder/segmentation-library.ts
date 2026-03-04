@@ -100,10 +100,19 @@ export const parsePromptExploderSegmentationLibrary = (
 ): PromptExploderSegmentationLibraryState => {
   if (!rawValue?.trim()) return defaultPromptExploderSegmentationLibraryState;
   try {
-    const parsed: unknown = JSON.parse(rawValue);
+    const parsed: any = JSON.parse(rawValue);
     const result = promptExploderSegmentationLibraryStateSchema.safeParse(parsed);
     if (!result.success) return defaultPromptExploderSegmentationLibraryState;
-    return result.data;
+    const data = result.data as any;
+    return {
+      version: data['version'] ?? PROMPT_EXPLODER_SEGMENTATION_LIBRARY_VERSION,
+      records: (data['records'] ?? []).map((record: any) => ({
+        ...record,
+        documentSnapshot: record['documentSnapshot'],
+        prompt: record['prompt'] ?? record['sourcePrompt'],
+        segments: record['segments'] ?? record['documentSnapshot']?.['segments'] ?? [],
+      })) as PromptExploderSegmentationRecord[],
+    };
   } catch {
     return defaultPromptExploderSegmentationLibraryState;
   }

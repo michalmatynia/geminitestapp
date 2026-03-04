@@ -69,6 +69,7 @@ export type UseAdminCaseResolverCasesActionsArgs = {
   setCaseSortOrder: (order: any) => void;
   setCaseViewMode: (mode: any) => void;
   setCaseShowNestedContent: (show: boolean) => void;
+  setCaseFilterPanelDefaultExpanded: (expanded: boolean) => void;
   setDidHydrateCaseListViewDefaults: (hydrated: boolean) => void;
   setConfirmation: Dispatch<SetStateAction<CaseResolverCaseListConfirmationState>>;
   setCasesLoadState: (state: any) => void;

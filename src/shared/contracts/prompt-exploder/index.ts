@@ -22,13 +22,12 @@ export {
   type PromptExploderCaseResolverCaptureRole,
   type CaseResolverCaptureField,
   type CaseResolverSegmentCaptureRule,
-  type PromptExploderCaseResolverCaptureMode,
 } from './case-resolver';
 export * from './patterns';
 export * from './params';
 
 // Explicitly export to avoid ambiguity
-export { 
+export {
   promptExploderSegmentationRecordSchema,
   type PromptExploderOrchestratorRollout,
   type SegmentSelectionStrategy,
@@ -51,12 +50,9 @@ export {
   promptExploderTreeNodeKindSchema,
   promptExploderTreeMetadataSchema,
   type ParsedPromptHeading,
-  type ApplyBenchmarkSuggestionsResult,
-  type BenchmarkSuggestionPreparation,
   type PromptExploderBenchmarkCase,
   type PromptExploderBenchmarkReport,
-  type ParseCustomBenchmarkCasesResult,
-  type PromptExploderPatternPackResult
+  type PromptExploderPatternPackResult,
 } from './ui';
 
 export {
@@ -67,5 +63,8 @@ export {
   type PromptExploderBenchmarkSuite,
   type PromptExploderBenchmarkSuggestion,
   type PromptExploderBenchmarkCaseReport,
-  type PromptExploderBenchmarkAggregate
+  type PromptExploderBenchmarkAggregate,
+  type ApplyBenchmarkSuggestionsResult,
+  type BenchmarkSuggestionPreparation,
+  type ParseCustomBenchmarkCasesResult,
 } from './benchmark';

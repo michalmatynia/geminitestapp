@@ -121,17 +121,17 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     const error = parsedSettingsResult.error;
     const raw = rawSettings?.trim() ?? '';
     if (!error || !raw) return;
-    const signature = `${raw}::error::${error}`;
+    const signature = `${raw}::error::${error.code}::${error.message}`;
     if (lastSettingsErrorSignatureRef.current === signature) return;
     lastSettingsErrorSignatureRef.current = signature;
-    logClientError(new Error(error), {
+    logClientError(new Error(error.message), {
       context: {
         source: 'AdminPromptExploderSettingsPage',
         action: 'parsePromptExploderSettings',
         settingKey: PROMPT_EXPLODER_SETTINGS_KEY,
       },
     });
-    toast(error, { variant: 'error' });
+    toast(error.message, { variant: 'error' });
   }, [parsedSettingsResult.error, rawSettings, toast]);
 
   useEffect(() => {
@@ -373,7 +373,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
           title='Prompt Exploder Settings'
           description='Persisted settings are invalid and cannot be loaded.'
         />
-        <Alert variant='error'>{(settingsValidationError as any).message}</Alert>
+        <Alert variant='error'>{settingsValidationError.message}</Alert>
         <div className='flex flex-wrap items-center gap-2'>
           <Button
             type='button'

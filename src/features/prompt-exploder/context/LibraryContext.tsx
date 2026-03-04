@@ -32,6 +32,7 @@ import {
 import {
   type PromptExploderSegmentationRecord,
   type CaptureSegmentationRecordResult,
+  type PromptExploderSegmentationLibraryState,
 } from '@/shared/contracts/prompt-exploder';
 import { useBenchmarkActions } from './hooks/useBenchmark';
 import { useDocumentState, useDocumentActions } from './hooks/useDocument';
@@ -49,8 +50,6 @@ export interface LibraryState {
   selectedSegmentationRecord: PromptExploderSegmentationRecord | null;
   segmentationLibraryState: PromptExploderSegmentationLibraryState;
 }
-
-import { type PromptExploderSegmentationLibraryState } from '@/shared/contracts/prompt-exploder';
 
 export interface LibraryActions {
   setSelectedLibraryItemId: React.Dispatch<React.SetStateAction<string | null>>;

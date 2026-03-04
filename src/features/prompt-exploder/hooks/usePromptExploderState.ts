@@ -306,7 +306,7 @@ export function usePromptExploderState() {
       return;
     }
     const persistedStack = normalizePromptExploderValidationRuleStack(
-      promptExploderSettings.runtime.validationRuleStack as unknown as PromptExploderValidationRuleStack,
+      promptExploderSettings.runtime.validationRuleStack as PromptExploderValidationRuleStack | null | undefined,
       validatorPatternLists
     );
     const preferredStack = shouldPreferCaseResolverValidationStack

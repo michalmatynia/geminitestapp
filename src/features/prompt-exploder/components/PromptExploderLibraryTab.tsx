@@ -66,6 +66,16 @@ export function PromptExploderLibraryTab(): React.JSX.Element {
     return buildSegmentationAnalysisContextJsonForRecord(selectedSegmentationRecord.id) ?? '';
   }, [buildSegmentationAnalysisContextJsonForRecord, selectedSegmentationRecord]);
 
+  const selectedStackLabel = useMemo((): string => {
+    if (!selectedSegmentationRecord) return '—';
+    const stack = selectedSegmentationRecord.validationRuleStack;
+    if (typeof stack === 'string') return stack;
+    if (!stack || typeof stack !== 'object') return '—';
+    const stackName = typeof stack['name'] === 'string' ? stack['name'] : '';
+    const stackId = typeof stack['id'] === 'string' ? stack['id'] : '';
+    return stackName || stackId || '—';
+  }, [selectedSegmentationRecord]);
+
   const fullContextJson = useMemo(
     () => buildSegmentationAnalysisContextJsonForAll(),
     [buildSegmentationAnalysisContextJsonForAll]
@@ -206,14 +216,7 @@ export function PromptExploderLibraryTab(): React.JSX.Element {
                 Scope: {selectedSegmentationRecord.validationScope}
               </div>
               <div className='text-xs text-gray-300'>
-                Stack:{' '}
-                {typeof selectedSegmentationRecord.validationRuleStack === 'string'
-                  ? selectedSegmentationRecord.validationRuleStack
-                  : typeof selectedSegmentationRecord.validationRuleStack === 'object'
-                    ? selectedSegmentationRecord.validationRuleStack.name ||
-                      selectedSegmentationRecord.validationRuleStack.id ||
-                      '—'
-                    : '—'}
+                Stack: {selectedStackLabel}
               </div>
               <div className='text-xs text-gray-300'>
                 Target: {selectedSegmentationRecord.returnTarget}

@@ -121,7 +121,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const draftsValue = useMemo<SettingsDraftsState>(
     () => ({
       learningDraft: data.learningDraft,
-      setLearningDraft: data.setLearningDraftState,
+      setLearningDraft: (update) => {
+        if (typeof update === 'function') {
+          data.setLearningDraftState(update);
+        } else {
+          data.setLearningDraftState((prev) => ({ ...prev, ...update }));
+        }
+      },
       hasUnsavedLearningDraft: data.hasUnsavedLearningDraft,
       parserTuningDrafts: data.parserTuningDrafts,
       setParserTuningDrafts: data.setParserTuningDraftsState,

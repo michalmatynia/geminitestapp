@@ -60,6 +60,35 @@ describe('prompt exploder segmentation library', () => {
     expect(parsed.records).toEqual([]);
   });
 
+  it('hydrates legacy records missing prompt and segments via adapter', () => {
+    const payload = {
+      version: 1,
+      records: [
+        {
+          id: 'legacy_record',
+          sourcePrompt: 'Legacy source prompt',
+          sourcePromptLength: 20,
+          reassembledPrompt: 'Legacy output',
+          reassembledPromptLength: 13,
+          documentSnapshot: buildDocument([buildSegment('legacy_segment')]),
+          segmentCount: 1,
+          returnTarget: 'image-studio',
+          validationScope: 'prompt_exploder',
+          validationRuleStack: 'prompt-exploder',
+          capturedAt: '2026-03-01T09:00:00.000Z',
+          createdAt: '2026-03-01T09:00:00.000Z',
+          updatedAt: '2026-03-01T09:00:00.000Z',
+        },
+      ],
+    };
+
+    const parsed = parsePromptExploderSegmentationLibrary(JSON.stringify(payload));
+
+    expect(parsed.records).toHaveLength(1);
+    expect(parsed.records[0]?.prompt).toBe('Legacy source prompt');
+    expect(parsed.records[0]?.segments.map((segment) => segment.id)).toEqual(['legacy_segment']);
+  });
+
   it('builds a segmentation record from prompt and document snapshot', () => {
     const document = buildDocument([buildSegment('a')]);
     const record = buildPromptExploderSegmentationRecord({
@@ -128,6 +157,8 @@ describe('prompt exploder segmentation library', () => {
           capturedAt: new Date(Date.UTC(2026, 2, 1, 10, index, 0)).toISOString(),
           createdAt: new Date(Date.UTC(2026, 2, 1, 10, index, 0)).toISOString(),
           updatedAt: new Date(Date.UTC(2026, 2, 1, 10, index, 0)).toISOString(),
+          prompt: `Source ${index}`,
+          segments: [buildSegment(`s_${index}`)],
         }) satisfies PromptExploderSegmentationRecord
     );
 

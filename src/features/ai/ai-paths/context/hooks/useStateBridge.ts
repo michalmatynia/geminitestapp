@@ -219,6 +219,7 @@ export function useStateBridgeGraph({
     pathId: string | null;
     sourceNodesHash: string;
     sourceEdgesHash: string;
+    holdContextToSource: boolean;
   } | null>(null);
   const pendingContextNodesSyncRef = useRef<{
     hash: string;
@@ -259,6 +260,7 @@ export function useStateBridgeGraph({
       pathId: normalizedActivePathId,
       sourceNodesHash,
       sourceEdgesHash,
+      holdContextToSource: true,
     };
     pendingContextNodesSyncRef.current = null;
     pendingContextEdgesSyncRef.current = null;
@@ -295,6 +297,13 @@ export function useStateBridgeGraph({
     if (!transition) return;
     if (transition.pathId !== normalizedActivePathId) {
       activePathTransitionRef.current = null;
+      return;
+    }
+    if (transition.holdContextToSource) {
+      activePathTransitionRef.current = {
+        ...transition,
+        holdContextToSource: false,
+      };
       return;
     }
     if (

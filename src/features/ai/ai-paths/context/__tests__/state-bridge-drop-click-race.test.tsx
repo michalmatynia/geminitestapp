@@ -222,6 +222,41 @@ function BridgePathSwitchImmediateEchoHarness(): React.JSX.Element {
   );
 }
 
+function BridgePathSwitchDelayedGraphHarness(): React.JSX.Element {
+  const [sourceActivePathId, setSourceActivePathId] = React.useState<string | null>('path-a');
+  const [sourceNodes, setSourceNodes] = React.useState<AiNode[]>([buildNode('path-a-node-1', 80, 96)]);
+  const [sourceEdges, setSourceEdges] = React.useState<Edge[]>([]);
+  const { nodes: contextNodes } = useGraphState();
+
+  useStateBridgeGraph({
+    nodes: sourceNodes,
+    edges: sourceEdges,
+    activePathId: sourceActivePathId,
+    onNodesChangeFromContext: setSourceNodes,
+    onEdgesChangeFromContext: setSourceEdges,
+  });
+
+  return (
+    <div>
+      <output data-testid='delayed-source-path'>{sourceActivePathId ?? 'none'}</output>
+      <output data-testid='delayed-source-nodes'>{serializeNodes(sourceNodes)}</output>
+      <output data-testid='delayed-context-nodes'>{serializeNodes(contextNodes)}</output>
+      <button type='button' onClick={() => setSourceActivePathId('path-b')}>
+        delayed-source-switch-path-only
+      </button>
+      <button
+        type='button'
+        onClick={() => {
+          setSourceNodes([buildNode('path-b-node-1', 640, 420)]);
+          setSourceEdges([]);
+        }}
+      >
+        delayed-source-apply-path-b-graph
+      </button>
+    </div>
+  );
+}
+
 describe('AI Paths state bridge drop/click race protections', () => {
   it('prevents stale source->context sync from dropping a freshly added node', async () => {
     const { getByRole, getByTestId } = render(
@@ -347,6 +382,36 @@ describe('AI Paths state bridge drop/click race protections', () => {
       expect(getByTestId('immediate-source-path')).toHaveTextContent('path-b');
       expect(getByTestId('immediate-source-nodes')).toHaveTextContent('path-b-node-1:640,420');
       expect(getByTestId('immediate-context-nodes')).toHaveTextContent('path-b-node-1:640,420');
+    });
+  });
+
+  it('keeps transition gate active when path id changes before source graph payload arrives', async () => {
+    const { getByRole, getByTestId } = render(
+      <AiPathsProvider initialNodes={[buildNode('path-a-node-1', 80, 96)]} initialEdges={[]}>
+        <BridgePathSwitchDelayedGraphHarness />
+      </AiPathsProvider>
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('delayed-source-path')).toHaveTextContent('path-a');
+      expect(getByTestId('delayed-source-nodes')).toHaveTextContent('path-a-node-1:80,96');
+      expect(getByTestId('delayed-context-nodes')).toHaveTextContent('path-a-node-1:80,96');
+    });
+
+    fireEvent.click(getByRole('button', { name: 'delayed-source-switch-path-only' }));
+
+    await waitFor(() => {
+      expect(getByTestId('delayed-source-path')).toHaveTextContent('path-b');
+      expect(getByTestId('delayed-source-nodes')).toHaveTextContent('path-a-node-1:80,96');
+      expect(getByTestId('delayed-context-nodes')).toHaveTextContent('path-a-node-1:80,96');
+    });
+
+    fireEvent.click(getByRole('button', { name: 'delayed-source-apply-path-b-graph' }));
+
+    await waitFor(() => {
+      expect(getByTestId('delayed-source-path')).toHaveTextContent('path-b');
+      expect(getByTestId('delayed-source-nodes')).toHaveTextContent('path-b-node-1:640,420');
+      expect(getByTestId('delayed-context-nodes')).toHaveTextContent('path-b-node-1:640,420');
     });
   });
 });

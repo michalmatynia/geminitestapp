@@ -1,23 +1,15 @@
 import { z } from 'zod';
 import {
   promptExploderDocumentSchema,
+  promptExploderSegmentSchema,
   type PromptExploderSegment,
   type PromptExploderBinding,
 } from './document';
+import { type PromptExploderSegmentType } from './base';
 import {
-  type PromptExploderSegmentType,
-} from './base';
-import {
-  type PromptExploderBenchmarkSuggestion,
   type PromptExploderBenchmarkCaseReport,
   type PromptExploderBenchmarkAggregate,
 } from './benchmark';
-import {
-  type PromptExploderLearnedTemplate,
-  type PromptExploderOperationMode,
-  type PromptEngineSettings,
-} from './settings';
-import { type PromptValidationRule } from '../prompt-engine';
 
 export type PromptExploderOrchestratorRollout = {
   enabled: boolean;
@@ -35,8 +27,12 @@ export type SegmentSelectionStrategy =
       kind: 'preserve_id';
       previousId: string | null;
     }
-  | "manual"
-  | "all";
+  | {
+      kind: 'manual';
+    }
+  | {
+      kind: 'all';
+    };
 
 export type PromptExploderSegmentationReturnTarget = 'image-studio' | 'case-resolver';
 
@@ -54,14 +50,11 @@ export const promptExploderSegmentationRecordSchema = z.object({
   capturedAt: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  prompt: z.string(),
+  segments: z.array(promptExploderSegmentSchema),
 });
 
-export type PromptExploderSegmentationRecord = z.infer<
-  typeof promptExploderSegmentationRecordSchema
-> & {
-  prompt: string;
-  segments: PromptExploderSegment[];
-};
+export type PromptExploderSegmentationRecord = z.infer<typeof promptExploderSegmentationRecordSchema>;
 
 export type PromptExploderSegmentationLibraryState = {
   records: PromptExploderSegmentationRecord[];
@@ -210,32 +203,6 @@ export type PromptExploderTreeMetadata = z.infer<typeof promptExploderTreeMetada
 export type ParsedPromptHeading = {
   code: string | null;
   title: string;
-};
-
-export type ParseCustomBenchmarkCasesResult =
-  | { ok: true; cases: PromptExploderBenchmarkCase[] }
-  | { ok: false; error: string };
-
-export type ApplyBenchmarkSuggestionsResult = {
-  nextLearnedRules: PromptValidationRule[];
-  appliedRules: PromptValidationRule[];
-  addedCount: number;
-  updatedCount: number;
-  nextTemplates: PromptExploderLearnedTemplate[];
-  touchedTemplateIds: string[];
-  invalidSegmentTitles: string[];
-};
-
-export type BenchmarkSuggestionPreparation = {
-  uniqueSuggestions: PromptExploderBenchmarkSuggestion[];
-  validSuggestions: PromptExploderBenchmarkSuggestion[];
-  invalidSegmentTitles: string[];
-};
-
-export type PromptExploderPatternPackResult = {
-  nextSettings: PromptEngineSettings;
-  addedRuleIds: string[];
-  updatedRuleIds: string[];
 };
 
 export type PromptExploderBenchmarkCase = {

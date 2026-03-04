@@ -1,15 +1,18 @@
 'use client';
 
-import { createContext, useContext } from 'react';
-import type { 
-  PromptExploderParserTuningRuleDraft,
+import { createContext, useContext, type Dispatch, type SetStateAction } from 'react';
+
+import type {
   PromptExploderLearnedTemplate,
+  PromptExploderParserTuningRuleDraft,
+  PromptExploderRuntimeRuleProfile,
+  PromptExploderValidationRuleStack,
 } from '@/shared/contracts/prompt-exploder';
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 
 export interface LearningDraft {
-  runtimeRuleProfile: 'all' | 'pattern_pack' | 'learned_only';
-  runtimeValidationRuleStack: string | { id: string; name?: string; rules?: any[]; ruleIds?: string[]; isCustom?: boolean };
+  runtimeRuleProfile: PromptExploderRuntimeRuleProfile;
+  runtimeValidationRuleStack: PromptExploderValidationRuleStack;
   enabled: boolean;
   autoActivate: boolean;
   similarityThreshold: number;
@@ -21,26 +24,24 @@ export interface LearningDraft {
   autoActivateLearnedTemplates: boolean;
 }
 
-export interface SettingsDraftsContextValue {
+export interface SettingsDraftsState {
   learningDraft: LearningDraft;
-  setLearningDraft: (draft: Partial<LearningDraft> | ((prev: LearningDraft) => LearningDraft)) => void;
+  setLearningDraft: Dispatch<SetStateAction<LearningDraft>>;
   parserTuningDrafts: PromptExploderParserTuningRuleDraft[];
-  setParserTuningDrafts: (drafts: PromptExploderParserTuningRuleDraft[] | ((prev: PromptExploderParserTuningRuleDraft[]) => PromptExploderParserTuningRuleDraft[])) => void;
-  isParserTuningOpen: boolean;
-  setIsParserTuningOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  sessionLearnedRules: PromptValidationRule[];
-  sessionLearnedTemplates: PromptExploderLearnedTemplate[];
+  setParserTuningDrafts: Dispatch<SetStateAction<PromptExploderParserTuningRuleDraft[]>>;
   hasUnsavedLearningDraft: boolean;
   hasUnsavedParserTuningDrafts: boolean;
   saveError: string | null;
-  setSaveError: (error: string | null) => void;
+  setSaveError: Dispatch<SetStateAction<string | null>>;
+  isParserTuningOpen: boolean;
+  setIsParserTuningOpen: Dispatch<SetStateAction<boolean>>;
+  sessionLearnedRules: PromptValidationRule[];
+  sessionLearnedTemplates: PromptExploderLearnedTemplate[];
 }
 
-export type SettingsDraftsState = SettingsDraftsContextValue;
+export const SettingsDraftsContext = createContext<SettingsDraftsState | null>(null);
 
-export const SettingsDraftsContext = createContext<SettingsDraftsContextValue | null>(null);
-
-export function useSettingsDrafts(): SettingsDraftsContextValue {
+export function useSettingsDrafts(): SettingsDraftsState {
   const context = useContext(SettingsDraftsContext);
   if (!context) {
     throw new Error('useSettingsDrafts must be used within SettingsProvider');

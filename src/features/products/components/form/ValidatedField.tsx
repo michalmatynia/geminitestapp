@@ -56,9 +56,10 @@ export const ValidatedField = memo(function ValidatedField({
       firstIssue &&
       (firstIssue.severity === 'warning' ? 'border-amber-500/60' : 'border-red-500/60')
   );
+  const resolvedLabel = isRequired ? `${label} *` : label;
 
   return (
-    <FormField label={label} error={error} id={fieldNameKey} required={isRequired}>
+    <FormField label={resolvedLabel} error={error} id={fieldNameKey}>
       <div className='relative'>
         {type === 'textarea' ? (
           <Textarea

@@ -170,7 +170,15 @@ type ProductFormProviderConfigContextType = {
   nonFormDirtyTrackingLockedRef: { current: boolean };
 };
 
+type ProductFormProviderRuntimeValue = {
+  product?: ProductWithImages;
+  draft?: ProductDraft | null;
+};
+
 export const ProductFormSubmitContext = createContext<ProductFormSubmitContextType | null>(null);
+export const ProductFormProviderRuntimeContext = createContext<ProductFormProviderRuntimeValue | null>(
+  null
+);
 const ProductFormProviderConfigContext = createContext<ProductFormProviderConfigContextType | null>(
   null
 );
@@ -388,24 +396,34 @@ export function ProductFormProvider({
   initialSku?: string;
   initialCatalogId?: string;
 }): React.ReactNode {
+  const runtime = useContext(ProductFormProviderRuntimeContext);
+  const resolvedProduct = product ?? runtime?.product;
+  const resolvedDraft = draft ?? runtime?.draft;
   const nonFormDirtyTrackingLockedRef = useRef<boolean>(false);
   const providerConfigContextValue = useMemo(
     (): ProductFormProviderConfigContextType => ({
-      product,
-      draft,
+      product: resolvedProduct,
+      draft: resolvedDraft,
       initialCatalogId,
       onSuccess,
       onEditSave,
       requireHydratedEditProduct,
       nonFormDirtyTrackingLockedRef,
     }),
-    [product, draft, initialCatalogId, onSuccess, onEditSave, requireHydratedEditProduct]
+    [
+      initialCatalogId,
+      onEditSave,
+      onSuccess,
+      requireHydratedEditProduct,
+      resolvedDraft,
+      resolvedProduct,
+    ]
   );
 
   return (
     <ProductFormCoreProvider
-      product={product}
-      draft={draft}
+      product={resolvedProduct}
+      draft={resolvedDraft}
       requireSku={requireSku}
       initialSku={initialSku}
     >

@@ -2,10 +2,12 @@
 
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+import { useMemo } from 'react';
 
 import ProductForm from '@/features/products/components/ProductForm';
 import {
   ProductFormProvider,
+  ProductFormProviderRuntimeContext,
   useProductFormContext,
 } from '@/features/products/context/ProductFormContext';
 import type { ProductWithImages } from '@/shared/contracts/products';
@@ -78,9 +80,18 @@ export default function EditProductPage({
 }: {
   product: ProductWithImages;
 }): React.JSX.Element {
+  const providerRuntimeValue = useMemo(
+    () => ({
+      product: initialProduct,
+    }),
+    [initialProduct]
+  );
+
   return (
-    <ProductFormProvider product={initialProduct}>
-      <EditProductForm />
-    </ProductFormProvider>
+    <ProductFormProviderRuntimeContext.Provider value={providerRuntimeValue}>
+      <ProductFormProvider>
+        <EditProductForm />
+      </ProductFormProvider>
+    </ProductFormProviderRuntimeContext.Provider>
   );
 }

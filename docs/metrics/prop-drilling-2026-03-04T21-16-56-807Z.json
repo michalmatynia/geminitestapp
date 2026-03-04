@@ -1,12 +1,12 @@
 {
   "summary": {
-    "generatedAt": "2026-03-04T21:22:02.623Z",
-    "scannedSourceFiles": 3897,
+    "generatedAt": "2026-03-04T21:16:56.807Z",
+    "scannedSourceFiles": 3901,
     "scannedJsxFiles": 1388,
     "componentCount": 2057,
-    "componentsWithForwarding": 227,
-    "resolvedTransitionCount": 1396,
-    "candidateChainCount": 0,
+    "componentsWithForwarding": 228,
+    "resolvedTransitionCount": 1415,
+    "candidateChainCount": 4,
     "highPriorityChainCount": 0,
     "unknownSpreadForwardingCount": 14,
     "topFeatureScopes": [
@@ -16,7 +16,7 @@
       },
       {
         "scope": "shared-ui",
-        "count": 44
+        "count": 45
       },
       {
         "scope": "feature:cms",
@@ -92,7 +92,152 @@
       }
     ]
   },
-  "backlog": [],
+  "backlog": [
+    {
+      "score": 89,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/products/components/form/ValidatedField.tsx#ValidatedField",
+      "sinkComponentId": "src/shared/ui/label.tsx#Label",
+      "componentPath": [
+        "src/features/products/components/form/ValidatedField.tsx#ValidatedField",
+        "src/shared/ui/form-section.tsx#FormField",
+        "src/shared/ui/label.tsx#Label"
+      ],
+      "propPath": [
+        "required",
+        "required",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/products/components/form/ValidatedField.tsx#ValidatedField",
+          "toComponentId": "src/shared/ui/form-section.tsx#FormField",
+          "sourceProp": "required",
+          "targetProp": "required",
+          "relativePath": "src/features/products/components/form/ValidatedField.tsx",
+          "line": 61
+        },
+        {
+          "fromComponentId": "src/shared/ui/form-section.tsx#FormField",
+          "toComponentId": "src/shared/ui/label.tsx#Label",
+          "sourceProp": "required",
+          "targetProp": "className",
+          "relativePath": "src/shared/ui/form-section.tsx",
+          "line": 111
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/products/components/EditProductForm.tsx#EditProductPage",
+      "sinkComponentId": "src/features/products/context/ProductFormCoreContext.tsx#ProductFormCoreProvider",
+      "componentPath": [
+        "src/features/products/components/EditProductForm.tsx#EditProductPage",
+        "src/features/products/context/ProductFormContext.tsx#ProductFormProvider",
+        "src/features/products/context/ProductFormCoreContext.tsx#ProductFormCoreProvider"
+      ],
+      "propPath": [
+        "product",
+        "product",
+        "product"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/products/components/EditProductForm.tsx#EditProductPage",
+          "toComponentId": "src/features/products/context/ProductFormContext.tsx#ProductFormProvider",
+          "sourceProp": "product",
+          "targetProp": "product",
+          "relativePath": "src/features/products/components/EditProductForm.tsx",
+          "line": 82
+        },
+        {
+          "fromComponentId": "src/features/products/context/ProductFormContext.tsx#ProductFormProvider",
+          "toComponentId": "src/features/products/context/ProductFormCoreContext.tsx#ProductFormCoreProvider",
+          "sourceProp": "product",
+          "targetProp": "product",
+          "relativePath": "src/features/products/context/ProductFormContext.tsx",
+          "line": 406
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/templates/FilterPanel.tsx#FilterPanel",
+      "sinkComponentId": "src/shared/ui/input.tsx#Input",
+      "componentPath": [
+        "src/shared/ui/templates/FilterPanel.tsx#FilterPanel",
+        "src/shared/ui/templates/panels/PanelFilters.tsx#PanelFilters",
+        "src/shared/ui/input.tsx#Input"
+      ],
+      "propPath": [
+        "searchPlaceholder",
+        "searchPlaceholder",
+        "placeholder"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/templates/FilterPanel.tsx#FilterPanel",
+          "toComponentId": "src/shared/ui/templates/panels/PanelFilters.tsx#PanelFilters",
+          "sourceProp": "searchPlaceholder",
+          "targetProp": "searchPlaceholder",
+          "relativePath": "src/shared/ui/templates/FilterPanel.tsx",
+          "line": 106
+        },
+        {
+          "fromComponentId": "src/shared/ui/templates/panels/PanelFilters.tsx#PanelFilters",
+          "toComponentId": "src/shared/ui/input.tsx#Input",
+          "sourceProp": "searchPlaceholder",
+          "targetProp": "placeholder",
+          "relativePath": "src/shared/ui/templates/panels/PanelFilters.tsx",
+          "line": 148
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/templates/modals/SelectModal.tsx#SelectModal",
+      "sinkComponentId": "src/shared/ui/app-modal.tsx#AppModal",
+      "componentPath": [
+        "src/shared/ui/templates/modals/SelectModal.tsx#SelectModal",
+        "src/shared/ui/FormModal.tsx#FormModal",
+        "src/shared/ui/app-modal.tsx#AppModal"
+      ],
+      "propPath": [
+        "size",
+        "size",
+        "size"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/templates/modals/SelectModal.tsx#SelectModal",
+          "toComponentId": "src/shared/ui/FormModal.tsx#FormModal",
+          "sourceProp": "size",
+          "targetProp": "size",
+          "relativePath": "src/shared/ui/templates/modals/SelectModal.tsx",
+          "line": 85
+        },
+        {
+          "fromComponentId": "src/shared/ui/FormModal.tsx#FormModal",
+          "toComponentId": "src/shared/ui/app-modal.tsx#AppModal",
+          "sourceProp": "size",
+          "targetProp": "size",
+          "relativePath": "src/shared/ui/FormModal.tsx",
+          "line": 212
+        }
+      ]
+    }
+  ],
   "componentBacklog": [
     {
       "componentId": "src/features/ai/image-studio/components/docs/sections/DocsRuntimeStateSection.tsx#DocsRuntimeStateSection",
@@ -149,6 +294,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/shared/ui/templates/StandardDataTablePanel.tsx#StandardDataTablePanel",
+      "name": "StandardDataTablePanel",
+      "relativePath": "src/shared/ui/templates/StandardDataTablePanel.tsx",
+      "feature": "shared-ui",
+      "forwardedPropCount": 14,
+      "outgoingTransitionCount": 14,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/ai/agentcreator/teaching/components/DocumentAddForm.tsx#DocumentAddForm",
       "name": "DocumentAddForm",
       "relativePath": "src/features/ai/agentcreator/teaching/components/DocumentAddForm.tsx",
@@ -171,6 +325,15 @@
       "name": "DocumentWysiwygEditor",
       "relativePath": "src/features/document-editor/components/DocumentWysiwygEditor.tsx",
       "feature": "feature:document-editor",
+      "forwardedPropCount": 11,
+      "outgoingTransitionCount": 11,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/shared/ui/templates/FilterPanel.tsx#FilterPanel",
+      "name": "FilterPanel",
+      "relativePath": "src/shared/ui/templates/FilterPanel.tsx",
+      "feature": "shared-ui",
       "forwardedPropCount": 11,
       "outgoingTransitionCount": 11,
       "hasUnknownSpreadForwarding": false
@@ -215,24 +378,6 @@
       "componentId": "src/shared/ui/PageLayout.tsx#PageLayout",
       "name": "PageLayout",
       "relativePath": "src/shared/ui/PageLayout.tsx",
-      "feature": "shared-ui",
-      "forwardedPropCount": 10,
-      "outgoingTransitionCount": 10,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/shared/ui/templates/FilterPanel.tsx#FilterPanel",
-      "name": "FilterPanel",
-      "relativePath": "src/shared/ui/templates/FilterPanel.tsx",
-      "feature": "shared-ui",
-      "forwardedPropCount": 10,
-      "outgoingTransitionCount": 10,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/shared/ui/templates/StandardDataTablePanel.tsx#StandardDataTablePanel",
-      "name": "StandardDataTablePanel",
-      "relativePath": "src/shared/ui/templates/StandardDataTablePanel.tsx",
       "feature": "shared-ui",
       "forwardedPropCount": 10,
       "outgoingTransitionCount": 10,
@@ -383,6 +528,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/products/components/form/ValidatedField.tsx#ValidatedField",
+      "name": "ValidatedField",
+      "relativePath": "src/features/products/components/form/ValidatedField.tsx",
+      "feature": "feature:products",
+      "forwardedPropCount": 7,
+      "outgoingTransitionCount": 11,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/ai/image-studio/components/slot-tree/CardNodeItem.tsx#CardNodeItem",
       "name": "CardNodeItem",
       "relativePath": "src/features/ai/image-studio/components/slot-tree/CardNodeItem.tsx",
@@ -440,6 +594,15 @@
       "componentId": "src/shared/ui/templates/DocumentSearchPage.tsx#DocumentSearchPage",
       "name": "DocumentSearchPage",
       "relativePath": "src/shared/ui/templates/DocumentSearchPage.tsx",
+      "feature": "shared-ui",
+      "forwardedPropCount": 7,
+      "outgoingTransitionCount": 8,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/shared/ui/templates/modals/SelectModal.tsx#SelectModal",
+      "name": "SelectModal",
+      "relativePath": "src/shared/ui/templates/modals/SelectModal.tsx",
       "feature": "shared-ui",
       "forwardedPropCount": 7,
       "outgoingTransitionCount": 8,
@@ -587,15 +750,6 @@
       "feature": "shared-ui",
       "forwardedPropCount": 6,
       "outgoingTransitionCount": 6,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/products/components/form/ValidatedField.tsx#ValidatedField",
-      "name": "ValidatedField",
-      "relativePath": "src/features/products/components/form/ValidatedField.tsx",
-      "feature": "feature:products",
-      "forwardedPropCount": 5,
-      "outgoingTransitionCount": 9,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -953,6 +1107,15 @@
       "componentId": "src/features/products/components/ProductImageManager.tsx#ProductImageManager",
       "name": "ProductImageManager",
       "relativePath": "src/features/products/components/ProductImageManager.tsx",
+      "feature": "feature:products",
+      "forwardedPropCount": 4,
+      "outgoingTransitionCount": 4,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/products/context/ProductFormContext.tsx#ProductFormProvider",
+      "name": "ProductFormProvider",
+      "relativePath": "src/features/products/context/ProductFormContext.tsx",
       "feature": "feature:products",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 4,
@@ -1850,15 +2013,6 @@
       "hasUnknownSpreadForwarding": true
     },
     {
-      "componentId": "src/features/products/context/ProductFormContext.tsx#ProductFormProvider",
-      "name": "ProductFormProvider",
-      "relativePath": "src/features/products/context/ProductFormContext.tsx",
-      "feature": "feature:products",
-      "forwardedPropCount": 2,
-      "outgoingTransitionCount": 2,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/prompt-exploder/components/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
       "name": "DocsTooltipEnhancer",
       "relativePath": "src/features/prompt-exploder/components/DocsTooltipEnhancer.tsx",
@@ -2138,5 +2292,150 @@
       "hasUnknownSpreadForwarding": true
     }
   ],
-  "chains": []
+  "chains": [
+    {
+      "score": 89,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/products/components/form/ValidatedField.tsx#ValidatedField",
+      "sinkComponentId": "src/shared/ui/label.tsx#Label",
+      "componentPath": [
+        "src/features/products/components/form/ValidatedField.tsx#ValidatedField",
+        "src/shared/ui/form-section.tsx#FormField",
+        "src/shared/ui/label.tsx#Label"
+      ],
+      "propPath": [
+        "required",
+        "required",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/products/components/form/ValidatedField.tsx#ValidatedField",
+          "toComponentId": "src/shared/ui/form-section.tsx#FormField",
+          "sourceProp": "required",
+          "targetProp": "required",
+          "relativePath": "src/features/products/components/form/ValidatedField.tsx",
+          "line": 61
+        },
+        {
+          "fromComponentId": "src/shared/ui/form-section.tsx#FormField",
+          "toComponentId": "src/shared/ui/label.tsx#Label",
+          "sourceProp": "required",
+          "targetProp": "className",
+          "relativePath": "src/shared/ui/form-section.tsx",
+          "line": 111
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/products/components/EditProductForm.tsx#EditProductPage",
+      "sinkComponentId": "src/features/products/context/ProductFormCoreContext.tsx#ProductFormCoreProvider",
+      "componentPath": [
+        "src/features/products/components/EditProductForm.tsx#EditProductPage",
+        "src/features/products/context/ProductFormContext.tsx#ProductFormProvider",
+        "src/features/products/context/ProductFormCoreContext.tsx#ProductFormCoreProvider"
+      ],
+      "propPath": [
+        "product",
+        "product",
+        "product"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/products/components/EditProductForm.tsx#EditProductPage",
+          "toComponentId": "src/features/products/context/ProductFormContext.tsx#ProductFormProvider",
+          "sourceProp": "product",
+          "targetProp": "product",
+          "relativePath": "src/features/products/components/EditProductForm.tsx",
+          "line": 82
+        },
+        {
+          "fromComponentId": "src/features/products/context/ProductFormContext.tsx#ProductFormProvider",
+          "toComponentId": "src/features/products/context/ProductFormCoreContext.tsx#ProductFormCoreProvider",
+          "sourceProp": "product",
+          "targetProp": "product",
+          "relativePath": "src/features/products/context/ProductFormContext.tsx",
+          "line": 406
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/templates/FilterPanel.tsx#FilterPanel",
+      "sinkComponentId": "src/shared/ui/input.tsx#Input",
+      "componentPath": [
+        "src/shared/ui/templates/FilterPanel.tsx#FilterPanel",
+        "src/shared/ui/templates/panels/PanelFilters.tsx#PanelFilters",
+        "src/shared/ui/input.tsx#Input"
+      ],
+      "propPath": [
+        "searchPlaceholder",
+        "searchPlaceholder",
+        "placeholder"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/templates/FilterPanel.tsx#FilterPanel",
+          "toComponentId": "src/shared/ui/templates/panels/PanelFilters.tsx#PanelFilters",
+          "sourceProp": "searchPlaceholder",
+          "targetProp": "searchPlaceholder",
+          "relativePath": "src/shared/ui/templates/FilterPanel.tsx",
+          "line": 106
+        },
+        {
+          "fromComponentId": "src/shared/ui/templates/panels/PanelFilters.tsx#PanelFilters",
+          "toComponentId": "src/shared/ui/input.tsx#Input",
+          "sourceProp": "searchPlaceholder",
+          "targetProp": "placeholder",
+          "relativePath": "src/shared/ui/templates/panels/PanelFilters.tsx",
+          "line": 148
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/templates/modals/SelectModal.tsx#SelectModal",
+      "sinkComponentId": "src/shared/ui/app-modal.tsx#AppModal",
+      "componentPath": [
+        "src/shared/ui/templates/modals/SelectModal.tsx#SelectModal",
+        "src/shared/ui/FormModal.tsx#FormModal",
+        "src/shared/ui/app-modal.tsx#AppModal"
+      ],
+      "propPath": [
+        "size",
+        "size",
+        "size"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/templates/modals/SelectModal.tsx#SelectModal",
+          "toComponentId": "src/shared/ui/FormModal.tsx#FormModal",
+          "sourceProp": "size",
+          "targetProp": "size",
+          "relativePath": "src/shared/ui/templates/modals/SelectModal.tsx",
+          "line": 85
+        },
+        {
+          "fromComponentId": "src/shared/ui/FormModal.tsx#FormModal",
+          "toComponentId": "src/shared/ui/app-modal.tsx#AppModal",
+          "sourceProp": "size",
+          "targetProp": "size",
+          "relativePath": "src/shared/ui/FormModal.tsx",
+          "line": 212
+        }
+      ]
+    }
+  ]
 }

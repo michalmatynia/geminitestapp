@@ -1,15 +1,15 @@
 # Prop Drilling Scan
 
-Generated at: 2026-03-04T21:13:36.030Z
+Generated at: 2026-03-04T21:22:02.623Z
 
 ## Snapshot
 
-- Scanned source files: 3901
+- Scanned source files: 3897
 - JSX files scanned: 1388
 - Components detected: 2057
-- Components forwarding parent props: 228
-- Resolved forwarded transitions: 1415
-- Candidate chains (depth >= 3): 8
+- Components forwarding parent props: 227
+- Resolved forwarded transitions: 1396
+- Candidate chains (depth >= 3): 0
 - High-priority chains (depth >= 4): 0
 - Unknown spread forwarding edges: 14
 
@@ -18,7 +18,7 @@ Generated at: 2026-03-04T21:13:36.030Z
 | Feature Scope | Forwarding Components |
 | --- | ---: |
 | `feature:ai` | 55 |
-| `shared-ui` | 45 |
+| `shared-ui` | 44 |
 | `feature:cms` | 32 |
 | `feature:products` | 27 |
 | `feature:case-resolver` | 18 |
@@ -48,16 +48,16 @@ Generated at: 2026-03-04T21:13:36.030Z
 | 4 | `VectorDrawingCanvas` | `src/shared/lib/vector-drawing/components/VectorDrawingCanvas.tsx` | 18 | 18 | no |
 | 5 | `MemoizedViewer3D` | `src/features/cms/components/page-builder/preview/MemoizedViewer3D.tsx` | 17 | 17 | no |
 | 6 | `PromptGenerationSection` | `src/shared/ui/PromptGenerationSection.tsx` | 16 | 18 | no |
-| 7 | `StandardDataTablePanel` | `src/shared/ui/templates/StandardDataTablePanel.tsx` | 14 | 14 | no |
-| 8 | `DocumentAddForm` | `src/features/ai/agentcreator/teaching/components/DocumentAddForm.tsx` | 12 | 13 | no |
-| 9 | `AiPathsProvider` | `src/features/ai/ai-paths/context/AiPathsProvider.tsx` | 12 | 12 | no |
-| 10 | `DocumentWysiwygEditor` | `src/features/document-editor/components/DocumentWysiwygEditor.tsx` | 11 | 11 | no |
-| 11 | `FilterPanel` | `src/shared/ui/templates/FilterPanel.tsx` | 11 | 11 | no |
-| 12 | `RegexConfigBasicTab` | `src/features/ai/ai-paths/components/node-config/dialog/regex/RegexConfigBasicTab.tsx` | 10 | 17 | no |
-| 13 | `CanvasControlPanel` | `src/features/ai/ai-paths/components/CanvasControlPanel.tsx` | 10 | 12 | no |
-| 14 | `SequenceRunCard` | `src/features/ai/image-studio/components/sequencing/SequenceRunCard.tsx` | 10 | 11 | no |
-| 15 | `CaseListSorting` | `src/features/case-resolver/components/list/sections/CaseListSorting.tsx` | 10 | 10 | no |
-| 16 | `PageLayout` | `src/shared/ui/PageLayout.tsx` | 10 | 10 | no |
+| 7 | `DocumentAddForm` | `src/features/ai/agentcreator/teaching/components/DocumentAddForm.tsx` | 12 | 13 | no |
+| 8 | `AiPathsProvider` | `src/features/ai/ai-paths/context/AiPathsProvider.tsx` | 12 | 12 | no |
+| 9 | `DocumentWysiwygEditor` | `src/features/document-editor/components/DocumentWysiwygEditor.tsx` | 11 | 11 | no |
+| 10 | `RegexConfigBasicTab` | `src/features/ai/ai-paths/components/node-config/dialog/regex/RegexConfigBasicTab.tsx` | 10 | 17 | no |
+| 11 | `CanvasControlPanel` | `src/features/ai/ai-paths/components/CanvasControlPanel.tsx` | 10 | 12 | no |
+| 12 | `SequenceRunCard` | `src/features/ai/image-studio/components/sequencing/SequenceRunCard.tsx` | 10 | 11 | no |
+| 13 | `CaseListSorting` | `src/features/case-resolver/components/list/sections/CaseListSorting.tsx` | 10 | 10 | no |
+| 14 | `PageLayout` | `src/shared/ui/PageLayout.tsx` | 10 | 10 | no |
+| 15 | `FilterPanel` | `src/shared/ui/templates/FilterPanel.tsx` | 10 | 10 | no |
+| 16 | `StandardDataTablePanel` | `src/shared/ui/templates/StandardDataTablePanel.tsx` | 10 | 10 | no |
 | 17 | `VectorToolbar` | `src/shared/ui/vector-canvas.rendering.tsx` | 10 | 10 | no |
 | 18 | `SearchSimulator` | `src/features/ai/agentcreator/teaching/components/SearchSimulator.tsx` | 9 | 18 | no |
 | 19 | `PromptExploderCaptureMappingModal` | `src/features/case-resolver/components/PromptExploderCaptureMappingModal.tsx` | 9 | 18 | no |
@@ -74,141 +74,21 @@ Generated at: 2026-03-04T21:13:36.030Z
 | 30 | `ListPanel` | `src/shared/ui/list-panel.tsx` | 8 | 8 | no |
 | 31 | `ContentDisplayModal` | `src/shared/ui/templates/ContentDisplayModal.tsx` | 8 | 8 | no |
 | 32 | `RegexAiPromptSection` | `src/features/ai/ai-paths/components/node-config/dialog/regex/RegexAiPromptSection.tsx` | 7 | 14 | no |
-| 33 | `ValidatedField` | `src/features/products/components/form/ValidatedField.tsx` | 7 | 11 | no |
-| 34 | `CardNodeItem` | `src/features/ai/image-studio/components/slot-tree/CardNodeItem.tsx` | 7 | 10 | no |
-| 35 | `FolderNodeItem` | `src/features/ai/image-studio/components/slot-tree/FolderNodeItem.tsx` | 7 | 10 | no |
-| 36 | `PatternNodeItem` | `src/features/products/components/settings/validator-settings/pattern-tree/PatternNodeItem.tsx` | 7 | 9 | no |
-| 37 | `BrainRoutingFeatureNodeItem` | `src/shared/lib/ai-brain/components/BrainRoutingFeatureNodeItem.tsx` | 7 | 9 | no |
-| 38 | `PlaceholderMatrixDialog` | `src/features/ai/ai-paths/components/node-config/database/PlaceholderMatrixDialog.tsx` | 7 | 8 | no |
-| 39 | `CircleIconButton` | `src/features/products/components/list/ProductColumns.tsx` | 7 | 8 | no |
-| 40 | `DocumentSearchPage` | `src/shared/ui/templates/DocumentSearchPage.tsx` | 7 | 8 | no |
+| 33 | `CardNodeItem` | `src/features/ai/image-studio/components/slot-tree/CardNodeItem.tsx` | 7 | 10 | no |
+| 34 | `FolderNodeItem` | `src/features/ai/image-studio/components/slot-tree/FolderNodeItem.tsx` | 7 | 10 | no |
+| 35 | `PatternNodeItem` | `src/features/products/components/settings/validator-settings/pattern-tree/PatternNodeItem.tsx` | 7 | 9 | no |
+| 36 | `BrainRoutingFeatureNodeItem` | `src/shared/lib/ai-brain/components/BrainRoutingFeatureNodeItem.tsx` | 7 | 9 | no |
+| 37 | `PlaceholderMatrixDialog` | `src/features/ai/ai-paths/components/node-config/database/PlaceholderMatrixDialog.tsx` | 7 | 8 | no |
+| 38 | `CircleIconButton` | `src/features/products/components/list/ProductColumns.tsx` | 7 | 8 | no |
+| 39 | `DocumentSearchPage` | `src/shared/ui/templates/DocumentSearchPage.tsx` | 7 | 8 | no |
+| 40 | `LabeledSlider` | `src/features/ai/image-studio/components/LabeledSlider.tsx` | 7 | 7 | no |
 
 ## Ranked Chain Backlog
 
 | Rank | Score | Depth | Root | Sink | Root Fanout | Features | Prop Path |
 | ---: | ---: | ---: | --- | --- | ---: | ---: | --- |
-| 1 | 89 | 3 | `ValidatedField` | `Label` | 1 | 2 | `required -> required -> className` |
-| 2 | 83 | 3 | `EditProductPage` | `ProductFormCoreProvider` | 1 | 1 | `product -> product -> product` |
-| 3 | 83 | 3 | `FilterPanel` | `Input` | 1 | 1 | `searchPlaceholder -> searchPlaceholder -> placeholder` |
-| 4 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `title -> title -> title` |
-| 5 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `description -> description -> description` |
-| 6 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `headerActions -> headerActions -> actions` |
-| 7 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `refresh -> refresh -> refresh` |
-| 8 | 83 | 3 | `SelectModal` | `AppModal` | 1 | 1 | `size -> size -> size` |
 
 ## Top Chain Details
-
-### 1. ValidatedField -> Label
-
-- Score: 89
-- Depth: 3
-- Root fanout: 1
-- Prop path: required -> required -> className
-- Component path:
-  - `ValidatedField` (src/features/products/components/form/ValidatedField.tsx)
-  - `FormField` (src/shared/ui/form-section.tsx)
-  - `Label` (src/shared/ui/label.tsx)
-- Transition lines:
-  - `ValidatedField` -> `FormField`: `required` -> `required` at src/features/products/components/form/ValidatedField.tsx:61
-  - `FormField` -> `Label`: `required` -> `className` at src/shared/ui/form-section.tsx:111
-
-### 2. EditProductPage -> ProductFormCoreProvider
-
-- Score: 83
-- Depth: 3
-- Root fanout: 1
-- Prop path: product -> product -> product
-- Component path:
-  - `EditProductPage` (src/features/products/components/EditProductForm.tsx)
-  - `ProductFormProvider` (src/features/products/context/ProductFormContext.tsx)
-  - `ProductFormCoreProvider` (src/features/products/context/ProductFormCoreContext.tsx)
-- Transition lines:
-  - `EditProductPage` -> `ProductFormProvider`: `product` -> `product` at src/features/products/components/EditProductForm.tsx:82
-  - `ProductFormProvider` -> `ProductFormCoreProvider`: `product` -> `product` at src/features/products/context/ProductFormContext.tsx:406
-
-### 3. FilterPanel -> Input
-
-- Score: 83
-- Depth: 3
-- Root fanout: 1
-- Prop path: searchPlaceholder -> searchPlaceholder -> placeholder
-- Component path:
-  - `FilterPanel` (src/shared/ui/templates/FilterPanel.tsx)
-  - `PanelFilters` (src/shared/ui/templates/panels/PanelFilters.tsx)
-  - `Input` (src/shared/ui/input.tsx)
-- Transition lines:
-  - `FilterPanel` -> `PanelFilters`: `searchPlaceholder` -> `searchPlaceholder` at src/shared/ui/templates/FilterPanel.tsx:106
-  - `PanelFilters` -> `Input`: `searchPlaceholder` -> `placeholder` at src/shared/ui/templates/panels/PanelFilters.tsx:148
-
-### 4. StandardDataTablePanel -> SectionHeader
-
-- Score: 83
-- Depth: 3
-- Root fanout: 1
-- Prop path: title -> title -> title
-- Component path:
-  - `StandardDataTablePanel` (src/shared/ui/templates/StandardDataTablePanel.tsx)
-  - `ListPanel` (src/shared/ui/list-panel.tsx)
-  - `SectionHeader` (src/shared/ui/section-header.tsx)
-- Transition lines:
-  - `StandardDataTablePanel` -> `ListPanel`: `title` -> `title` at src/shared/ui/templates/StandardDataTablePanel.tsx:134
-  - `ListPanel` -> `SectionHeader`: `title` -> `title` at src/shared/ui/list-panel.tsx:81
-
-### 5. StandardDataTablePanel -> SectionHeader
-
-- Score: 83
-- Depth: 3
-- Root fanout: 1
-- Prop path: description -> description -> description
-- Component path:
-  - `StandardDataTablePanel` (src/shared/ui/templates/StandardDataTablePanel.tsx)
-  - `ListPanel` (src/shared/ui/list-panel.tsx)
-  - `SectionHeader` (src/shared/ui/section-header.tsx)
-- Transition lines:
-  - `StandardDataTablePanel` -> `ListPanel`: `description` -> `description` at src/shared/ui/templates/StandardDataTablePanel.tsx:134
-  - `ListPanel` -> `SectionHeader`: `description` -> `description` at src/shared/ui/list-panel.tsx:81
-
-### 6. StandardDataTablePanel -> SectionHeader
-
-- Score: 83
-- Depth: 3
-- Root fanout: 1
-- Prop path: headerActions -> headerActions -> actions
-- Component path:
-  - `StandardDataTablePanel` (src/shared/ui/templates/StandardDataTablePanel.tsx)
-  - `ListPanel` (src/shared/ui/list-panel.tsx)
-  - `SectionHeader` (src/shared/ui/section-header.tsx)
-- Transition lines:
-  - `StandardDataTablePanel` -> `ListPanel`: `headerActions` -> `headerActions` at src/shared/ui/templates/StandardDataTablePanel.tsx:134
-  - `ListPanel` -> `SectionHeader`: `headerActions` -> `actions` at src/shared/ui/list-panel.tsx:81
-
-### 7. StandardDataTablePanel -> SectionHeader
-
-- Score: 83
-- Depth: 3
-- Root fanout: 1
-- Prop path: refresh -> refresh -> refresh
-- Component path:
-  - `StandardDataTablePanel` (src/shared/ui/templates/StandardDataTablePanel.tsx)
-  - `ListPanel` (src/shared/ui/list-panel.tsx)
-  - `SectionHeader` (src/shared/ui/section-header.tsx)
-- Transition lines:
-  - `StandardDataTablePanel` -> `ListPanel`: `refresh` -> `refresh` at src/shared/ui/templates/StandardDataTablePanel.tsx:134
-  - `ListPanel` -> `SectionHeader`: `refresh` -> `refresh` at src/shared/ui/list-panel.tsx:81
-
-### 8. SelectModal -> AppModal
-
-- Score: 83
-- Depth: 3
-- Root fanout: 1
-- Prop path: size -> size -> size
-- Component path:
-  - `SelectModal` (src/shared/ui/templates/modals/SelectModal.tsx)
-  - `FormModal` (src/shared/ui/FormModal.tsx)
-  - `AppModal` (src/shared/ui/app-modal.tsx)
-- Transition lines:
-  - `SelectModal` -> `FormModal`: `size` -> `size` at src/shared/ui/templates/modals/SelectModal.tsx:85
-  - `FormModal` -> `AppModal`: `size` -> `size` at src/shared/ui/FormModal.tsx:212
 
 ## Execution Notes
 

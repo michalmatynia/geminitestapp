@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { FormModal } from '@/shared/ui/FormModal';
 import { SearchInput } from '@/shared/ui/search-input';
 import { cn } from '@/shared/utils';
@@ -27,22 +28,31 @@ export interface SelectModalProps<T> {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-/**
- * Reusable modal template for single/multi-select operations.
- * Refactored to leverage FormModal and SearchInput for consistent UX.
- */
-export function SelectModal<T>({
-  open,
-  onClose,
-  title,
-  subtitle,
-  options,
-  onSelect,
-  loading = false,
-  searchable = true,
-  multiple = false,
-  size: modalSize = 'md',
-}: SelectModalProps<T>) {
+type SelectModalRuntimeValue = {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  subtitle?: string;
+  options: SelectOption<unknown>[];
+  onSelect: (option: SelectOption<unknown> | SelectOption<unknown>[]) => void;
+  loading: boolean;
+  searchable: boolean;
+  multiple: boolean;
+  modalSize: 'sm' | 'md' | 'lg' | 'xl';
+};
+
+const {
+  Context: SelectModalRuntimeContext,
+  useStrictContext: useSelectModalRuntime,
+} = createStrictContext<SelectModalRuntimeValue>({
+  hookName: 'useSelectModalRuntime',
+  providerName: 'SelectModalRuntimeProvider',
+  displayName: 'SelectModalRuntimeContext',
+});
+
+function SelectModalRuntime(): React.JSX.Element {
+  const { open, onClose, title, subtitle, options, onSelect, loading, searchable, multiple, modalSize } =
+    useSelectModalRuntime();
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set());
 
@@ -56,7 +66,7 @@ export function SelectModal<T>({
   }, [options, search, searchable]);
 
   const handleSelect = useCallback(
-    (option: SelectOption<T>) => {
+    (option: SelectOption<unknown>) => {
       if (multiple) {
         const next = new Set(selectedIds);
         if (next.has(option.id)) {
@@ -140,5 +150,44 @@ export function SelectModal<T>({
         )}
       </div>
     </FormModal>
+  );
+}
+
+/**
+ * Reusable modal template for single/multi-select operations.
+ * Refactored to leverage FormModal and SearchInput for consistent UX.
+ */
+export function SelectModal<T>({
+  open,
+  onClose,
+  title,
+  subtitle,
+  options,
+  onSelect,
+  loading = false,
+  searchable = true,
+  multiple = false,
+  size: modalSize = 'md',
+}: SelectModalProps<T>) {
+  const runtimeValue = useMemo<SelectModalRuntimeValue>(
+    () => ({
+      open,
+      onClose,
+      title,
+      subtitle,
+      options: options as SelectOption<unknown>[],
+      onSelect: onSelect as (option: SelectOption<unknown> | SelectOption<unknown>[]) => void,
+      loading,
+      searchable,
+      multiple,
+      modalSize,
+    }),
+    [loading, modalSize, multiple, onClose, onSelect, open, options, searchable, subtitle, title]
+  );
+
+  return (
+    <SelectModalRuntimeContext.Provider value={runtimeValue}>
+      <SelectModalRuntime />
+    </SelectModalRuntimeContext.Provider>
   );
 }

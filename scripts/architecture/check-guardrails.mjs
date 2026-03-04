@@ -10,6 +10,21 @@ const root = process.cwd();
 const baselinePath = path.join(root, 'scripts', 'architecture', 'guardrails-baseline.json');
 const execFile = promisify(execFileCallback);
 
+const parseSummary = (stdout, source) => {
+  let parsed;
+  try {
+    parsed = JSON.parse(stdout);
+  } catch {
+    throw new Error(`${source} did not return JSON summary output.`);
+  }
+
+  const summary = parsed?.summary;
+  if (!summary || typeof summary !== 'object') {
+    throw new Error(`${source} did not produce a valid summary object.`);
+  }
+  return summary;
+};
+
 const collectPropDrillingGuardrail = async () => {
   const { stdout } = await execFile(
     'node',
@@ -19,16 +34,54 @@ const collectPropDrillingGuardrail = async () => {
     }
   );
 
-  const parsed = JSON.parse(stdout);
-  const value = Number(parsed?.summary?.highPriorityChainCount);
-  if (!Number.isFinite(value)) {
+  const summary = parseSummary(stdout, 'scan-prop-drilling');
+  const depthGte4Chains = Number(summary?.highPriorityChainCount);
+  const componentsWithForwarding = Number(summary?.componentsWithForwarding);
+  if (!Number.isFinite(depthGte4Chains)) {
     throw new Error('Prop-drilling scan did not produce summary.highPriorityChainCount.');
   }
+  if (!Number.isFinite(componentsWithForwarding)) {
+    throw new Error('Prop-drilling scan did not produce summary.componentsWithForwarding.');
+  }
 
-  return value;
+  return {
+    depthGte4Chains,
+    componentsWithForwarding,
+  };
 };
 
-const toSnapshot = (metrics, propDrillingDepthGte4Chains) => ({
+const collectUiConsolidationGuardrail = async () => {
+  const { stdout } = await execFile(
+    'node',
+    [
+      'scripts/architecture/scan-ui-consolidation.mjs',
+      '--ci',
+      '--no-history',
+      '--no-write',
+      '--summary-json',
+    ],
+    {
+      cwd: root,
+    }
+  );
+
+  const summary = parseSummary(stdout, 'scan-ui-consolidation');
+  const totalOpportunities = Number(summary?.totalOpportunities);
+  const highPriorityOpportunities = Number(summary?.highPriorityCount);
+  if (!Number.isFinite(totalOpportunities)) {
+    throw new Error('UI consolidation scan did not produce summary.totalOpportunities.');
+  }
+  if (!Number.isFinite(highPriorityOpportunities)) {
+    throw new Error('UI consolidation scan did not produce summary.highPriorityCount.');
+  }
+
+  return {
+    totalOpportunities,
+    highPriorityOpportunities,
+  };
+};
+
+const toSnapshot = (metrics, propDrilling, uiConsolidation) => ({
   'source.filesOver1000': metrics.source.filesOver1000,
   'source.filesOver1500': metrics.source.filesOver1500,
   'source.useClientFiles': metrics.source.useClientFiles,
@@ -42,7 +95,10 @@ const toSnapshot = (metrics, propDrillingDepthGte4Chains) => ({
   'imports.sharedToFeaturesTotalImports': metrics.imports.sharedToFeaturesTotalImports,
   'architecture.crossFeatureEdgePairs': metrics.architecture.crossFeatureEdgePairs,
   'runtime.setIntervalOccurrences': metrics.runtime.setIntervalOccurrences,
-  'propDrilling.depthGte4Chains': propDrillingDepthGte4Chains,
+  'propDrilling.depthGte4Chains': propDrilling.depthGte4Chains,
+  'propDrilling.componentsWithForwarding': propDrilling.componentsWithForwarding,
+  'uiConsolidation.totalOpportunities': uiConsolidation.totalOpportunities,
+  'uiConsolidation.highPriorityOpportunities': uiConsolidation.highPriorityOpportunities,
 });
 
 const printRow = (label, current, max, status) => {
@@ -72,8 +128,11 @@ const writeBaseline = async (snapshot) => {
 
 const run = async () => {
   const metrics = await collectMetrics({ root });
-  const propDrillingDepthGte4Chains = await collectPropDrillingGuardrail();
-  const snapshot = toSnapshot(metrics, propDrillingDepthGte4Chains);
+  const [propDrilling, uiConsolidation] = await Promise.all([
+    collectPropDrillingGuardrail(),
+    collectUiConsolidationGuardrail(),
+  ]);
+  const snapshot = toSnapshot(metrics, propDrilling, uiConsolidation);
 
   if (args.has('--update-baseline')) {
     await writeBaseline(snapshot);

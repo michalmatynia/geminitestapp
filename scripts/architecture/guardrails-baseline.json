@@ -17,6 +17,9 @@
     "imports.sharedToFeaturesTotalImports": 13,
     "architecture.crossFeatureEdgePairs": 71,
     "runtime.setIntervalOccurrences": 22,
-    "propDrilling.depthGte4Chains": 0
+    "propDrilling.depthGte4Chains": 0,
+    "propDrilling.componentsWithForwarding": 0,
+    "uiConsolidation.totalOpportunities": 0,
+    "uiConsolidation.highPriorityOpportunities": 0
   }
 }

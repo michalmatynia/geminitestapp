@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { useCaseListNodeRuntimeContext } from '@/features/case-resolver/components/list/sections/CaseListNodeRuntimeContext';
 import { useCaseListSearchActionsContext } from '@/features/case-resolver/components/list/search';
 import { useCaseResolverTreeNodeRuntimeContext } from '@/features/case-resolver/components/CaseResolverTreeNodeRuntimeContext';
+import { CaseResolverEntitySettingsModal } from '@/features/case-resolver/components/modals/CaseResolverEntitySettingsModal';
 import { useRelationTreeNodeRuntimeContext } from '@/features/case-resolver/relation-search/components/RelationTreeNodeRuntimeContext';
 import { useDocumentRelationSearchUiContext } from '@/features/case-resolver/relation-search/components/DocumentRelationSearchUiContext';
 
@@ -31,6 +32,10 @@ function DocumentRelationSearchUiConsumer(): React.JSX.Element {
 function RelationTreeNodeRuntimeConsumer(): React.JSX.Element {
   useRelationTreeNodeRuntimeContext();
   return <div>ok</div>;
+}
+
+function CaseResolverEntitySettingsModalConsumer(): React.JSX.Element {
+  return <CaseResolverEntitySettingsModal />;
 }
 
 describe('prop-drilling runtime contexts', () => {
@@ -61,6 +66,12 @@ describe('prop-drilling runtime contexts', () => {
   it('throws when RelationTreeNodeRuntime context is missing', () => {
     expect(() => render(<RelationTreeNodeRuntimeConsumer />)).toThrow(
       'useRelationTreeNodeRuntimeContext must be used within a RelationTreeNodeRuntimeProvider'
+    );
+  });
+
+  it('throws when CaseResolverEntitySettingsModal context is missing', () => {
+    expect(() => render(<CaseResolverEntitySettingsModalConsumer />)).toThrow(
+      'useCaseResolverEntitySettingsModalRuntime must be used within CaseResolverEntitySettingsModalProvider'
     );
   });
 });

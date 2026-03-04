@@ -2,10 +2,7 @@ import 'server-only';
 
 import { Prisma, AiPathRunEventLevel } from '@prisma/client';
 
-import {
-  AI_PATHS_RUN_SOURCE_TABS,
-  AI_PATHS_RUN_SOURCE_VALUES,
-} from '@/shared/lib/ai-paths/run-sources';
+import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 import type {
   AiNode,
   AiPathRunCreateInput,
@@ -237,10 +234,6 @@ const buildRunWhere = (options: AiPathRunListOptions = {}): Prisma.AiPathRunWher
     andFilters.push({ status: options.status });
   }
   if (source) {
-    const sourceTabPaths: Array<['source', 'tab'] | ['sourceInfo', 'tab']> = [
-      ['source', 'tab'],
-      ['sourceInfo', 'tab'],
-    ];
     if (sourceMode === 'exclude') {
       if (source === 'ai_paths_ui') {
         andFilters.push({
@@ -248,11 +241,6 @@ const buildRunWhere = (options: AiPathRunListOptions = {}): Prisma.AiPathRunWher
             ...AI_PATHS_RUN_SOURCE_VALUES.map((value) => ({
               NOT: { meta: { path: ['source'], equals: value } },
             })),
-            ...sourceTabPaths.flatMap((path) =>
-              AI_PATHS_RUN_SOURCE_TABS.map((tab) => ({
-                NOT: { meta: { path, equals: tab } },
-              }))
-            ),
           ],
         });
       } else {
@@ -262,16 +250,9 @@ const buildRunWhere = (options: AiPathRunListOptions = {}): Prisma.AiPathRunWher
       }
     } else if (source === 'ai_paths_ui') {
       andFilters.push({
-        OR: [
-          ...AI_PATHS_RUN_SOURCE_VALUES.map((value) => ({
-            meta: { path: ['source'], equals: value },
-          })),
-          ...sourceTabPaths.flatMap((path) =>
-            AI_PATHS_RUN_SOURCE_TABS.map((tab) => ({
-              meta: { path, equals: tab },
-            }))
-          ),
-        ],
+        OR: AI_PATHS_RUN_SOURCE_VALUES.map((value) => ({
+          meta: { path: ['source'], equals: value },
+        })),
       });
     } else {
       andFilters.push({ meta: { path: ['source'], equals: source } });
@@ -298,6 +279,10 @@ const buildRunWhere = (options: AiPathRunListOptions = {}): Prisma.AiPathRunWher
   }
 
   return andFilters.length > 0 ? { AND: andFilters } : {};
+};
+
+export const __testOnly = {
+  buildRunWhere,
 };
 
 export const prismaPathRunRepository: AiPathRunRepository = {

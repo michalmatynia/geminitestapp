@@ -346,6 +346,33 @@ Progress (2026-03-04):
 120. Pruned residual path-save raw-message compatibility token matching in `useAiPathsPersistence.helpers` by removing deprecated snapshot-key branching; raw passthrough now remains limited to canonical path/runtime validation failures only.
 121. Pruned starter-workflow factory node-shape cast in `core/utils/factory.ts` by typing raw seed nodes as `Omit<AiNode, 'createdAt' | 'updatedAt' | 'data'>` and removing the cast adapter in `createAiDescriptionPath`.
 122. Extended canonical guardrails in `scripts/ai-paths/check-canonical.mjs` to block reintroduction of legacy path-save raw-message patterns (`/deprecated ai snapshot keys/i`, `/legacy ai paths/i`) while requiring canonical validation patterns (`/ai path config contains/i`, `/invalid ai paths runtime state payload/i`, `/^invalid payload\\b/i`).
+123. Pruned run-execution metadata compatibility aliases in `job-queue-panel-utils` by removing fallback reads from legacy/synthetic keys (`execution_mode`, `runMode`, `run_mode`, `mode`) and resolving execution kind from canonical `executionMode` paths only (`meta.executionMode`, `meta.runtime.executionMode`).
+124. Extended canonical guardrails in `scripts/ai-paths/check-canonical.mjs` to block reintroduction of legacy run-execution metadata alias snippets in `job-queue-panel-utils` while requiring canonical `executionMode` metadata reads.
+125. Retired deprecated maintenance action id `upgrade_server_execution_mode` from canonical maintenance contracts (`src/shared/contracts/ai-paths.ts`, `settings-store.constants.ts`) and canonical guard expectations in `scripts/ai-paths/check-canonical.mjs`.
+126. Pruned dead server-execution-mode maintenance compatibility runtime by deleting `settings-store-execution-mode-server.ts` (+ test), removing upgrade counting/apply branches from `settings-store.maintenance.ts`, and rewiring maintenance API/server tests to the canonical action set only.
+127. Pruned enqueue metadata source compatibility rewrite in `src/app/api/ai-paths/runs/enqueue/handler.ts`; object-shaped `meta.source` payloads are now rejected (`meta.source must be a string`) instead of being rewritten to compatibility metadata.
+128. Extended canonical guardrails in `scripts/ai-paths/check-canonical.mjs` to block reintroduction of enqueue source-object compatibility rewrite snippets and require the canonical rejection guard.
+129. Pruned run-source metadata compatibility in queue/repository listing flows by removing object/tab/sourceInfo source fallbacks (`meta.source.tab`, `meta.sourceInfo.tab`, `sourceInfo.executionMode`) from `job-queue-panel-utils`, `prisma-path-run-repository`, and `mongo-path-run-repository`; filtering/origin now use canonical string `meta.source` only.
+130. Extended canonical guardrails and regression coverage for canonical run-source filtering:
+    1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of repository source-tab/sourceInfo compatibility snippets.
+    2. Added `run-source-filters.canonical.test.ts` to lock canonical-only source filter behavior in Prisma/Mongo repository builders.
+131. Pruned queue-cache run-source compatibility in `src/shared/lib/query-invalidation.ts` by removing object/tab/sourceInfo fallback parsing (`meta.source.tab`, `meta.sourceInfo.tab`, `tab:*`) and matching node-origin source only via canonical string `meta.source`.
+132. Extended canonical guardrails and queue-cache regression coverage for canonical run-source metadata:
+    1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of queue-cache source fallback snippets in `query-invalidation.ts`.
+    2. `__tests__/shared/lib/query-invalidation.test.ts` now verifies `ai_paths_ui` source-filtered queue cache accepts canonical string sources and ignores removed object-shaped source metadata.
+133. Pruned residual run-source tab-helper compatibility surface by reducing `src/shared/lib/ai-paths/run-sources.ts` to canonical source-value helpers only (`AI_PATHS_RUN_SOURCE_VALUES`, `isAiPathsRunSourceValue`) and removing tab alias exports (`AI_PATHS_RUN_SOURCE_TABS`, `isAiPathsRunSourceTab`).
+134. Pruned dead duplicate feature-local run-source helper module by deleting `src/features/ai/ai-paths/lib/run-sources.ts` and extending canonical guardrails to block its reintroduction.
+135. Pruned legacy run-mode alias compatibility in settings runtime state application by removing `runMode === 'queue'` fallback branches from:
+    1. `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts`
+    2. `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsPathActions.ts`
+    Canonical run-mode normalization now accepts only `manual`/`automatic`/`step`, otherwise defaults to `manual`.
+136. Extended canonical guardrails and regression coverage for run-mode alias pruning:
+    1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of `runMode === 'queue'` compatibility snippets in settings persistence/path-actions runtime files.
+    2. `useAiPathsSettingsPathActions.switch-path.test.tsx` now verifies legacy `runMode: 'queue'` path payloads resolve to canonical `setRunMode('manual')`.
+137. Pruned requestId dedupe compatibility scan in `src/features/ai/ai-paths/services/path-run-service.ts` by removing provider fallback list-scan logic; enqueue dedupe now relies only on canonical repository requestId filtering (`listRuns` with `requestId`, `limit: 1`, `offset: 0`).
+138. Extended canonical guardrails and service regression coverage for requestId dedupe canonicalization:
+    1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of requestId scan fallback snippets (`existingByScan`, provider-safe fallback comment) in `path-run-service.ts`.
+    2. `path-run-service.test.ts` now verifies canonical requestId dedupe performs a single repository lookup and does not enqueue/create a duplicate run when a matching active run exists.
 
 Session 6 explicit deletion checklist (prepared):
 
@@ -463,6 +490,109 @@ Progress (2026-03-04):
    1. `npm run ai-paths:check:canonical` -> passed (`4206` files scanned).
    2. `npm run lint` -> passed (`eslint src`).
    3. `npm run build` -> passed (`next build` exit `0`) with a non-blocking trace-copy warning for missing temp file `tmp/integration-slug-audit.cjs`.
+10. Added queue-panel execution-kind regression coverage after seam 123 and re-validated canonical guardrails:
+   1. `src/features/ai/ai-paths/components/__tests__/job-queue-panel-utils.test.ts` -> passed (`1` file, `6` tests).
+   2. `npm run ai-paths:check:canonical` -> passed (`4207` files scanned).
+11. Re-ran production build from a clean output directory (`rm -rf .next && npm run build`):
+   1. Build passed (`next build` exit `0`).
+   2. Previous trace-copy warning for `tmp/integration-slug-audit.cjs` did not reproduce after clean build (stale trace-cache artifact).
+12. Re-ran maintenance contract regression after seams 125-126 and re-validated canonical guards:
+   1. `src/app/api/ai-paths/settings/maintenance/handler.test.ts`
+   2. `src/features/ai/ai-paths/server/__tests__/settings-store-maintenance.translation-en-pl.test.ts`
+   3. `src/features/ai/ai-paths/server/__tests__/starter-workflow-guardrails.test.ts`
+   Result: `3` files passed, `9` tests passed.
+   4. `npm run ai-paths:check:canonical` -> passed (`4206` files scanned).
+13. Post-seam full build validation currently blocked by unrelated workspace import regressions outside AI-Paths migration scope:
+   1. `src/features/ai/chatbot/pages/AdminChatbotPage.tsx` -> missing `../components/DebugPanel`.
+   2. `src/features/products/components/ProductForm.tsx` -> missing `@/features/products/components/DebugPanel`.
+   3. `src/features/products/pages/AdminProductsPage.tsx` -> missing `@/features/products/components/DebugPanel`.
+14. Re-ran enqueue metadata contract regression after seam 127 and re-validated canonical guards:
+   1. `src/app/api/ai-paths/runs/enqueue/handler.test.ts` -> passed (`1` file, `4` tests).
+   2. `npm run ai-paths:check:canonical` -> passed (`4209` files scanned).
+15. Pruned queue-panel run-source metadata compatibility in seam 129:
+   1. `src/features/ai/ai-paths/components/job-queue-panel-utils.ts` now resolves run source from canonical string `meta.source` only.
+   2. Removed compatibility reads for object-shaped `meta.source.tab`, `meta.sourceInfo.tab`, `sourceInfo.executionMode`, and `tab:*` origin classification.
+   3. Added regression coverage in `src/features/ai/ai-paths/components/__tests__/job-queue-panel-utils.test.ts` for canonical source resolution and removed object-source compatibility.
+   4. Extended canonical guardrails (`scripts/ai-paths/check-canonical.mjs`) to block reintroduction of queue-panel source metadata compatibility snippets.
+16. Pruned repository run-source filter compatibility in seams 129-130 and re-validated canonical guards:
+   1. `src/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository.ts`
+      1. removed `meta.source.tab` / `meta.sourceInfo.tab` compatibility filter paths.
+      2. canonical source filtering now matches `meta.source` only.
+   2. `src/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository.ts`
+      1. removed `meta.source.tab` / `meta.sourceInfo.tab` compatibility filter clauses.
+      2. canonical source filtering now matches `meta.source` only.
+   3. Added regression tests:
+      1. `src/features/ai/ai-paths/services/path-run-repository/__tests__/run-source-filters.canonical.test.ts` -> passed (`1` file, `4` tests).
+   4. Re-ran focused regression bundle:
+      1. `src/features/ai/ai-paths/services/path-run-repository/__tests__/run-source-filters.canonical.test.ts`
+      2. `src/features/ai/ai-paths/components/__tests__/job-queue-panel-utils.test.ts`
+      3. `src/app/api/ai-paths/runs/enqueue/handler.test.ts`
+      Result: `3` files passed, `17` tests passed.
+   5. `npm run ai-paths:check:canonical` -> passed (`4212` files scanned).
+17. Pruned queue-cache run-source compatibility in seams 131-132 and re-validated canonical guards:
+   1. `src/shared/lib/query-invalidation.ts`
+      1. removed object/tab/sourceInfo source fallback parsing from queue-cache filter logic.
+      2. node-source matching now uses canonical string `meta.source` values only.
+   2. Added queue-cache regression coverage:
+      1. `__tests__/shared/lib/query-invalidation.test.ts` now asserts canonical string-source inclusion and object-shaped source exclusion for `source=ai_paths_ui` filters.
+   3. Re-ran focused regression bundle:
+      1. `__tests__/shared/lib/query-invalidation.test.ts`
+      2. `src/features/ai/ai-paths/services/path-run-repository/__tests__/run-source-filters.canonical.test.ts`
+      3. `src/features/ai/ai-paths/components/__tests__/job-queue-panel-utils.test.ts`
+      4. `src/app/api/ai-paths/runs/enqueue/handler.test.ts`
+      Result: `4` files passed, `33` tests passed.
+   4. `npm run ai-paths:check:canonical` -> passed (`4213` files scanned).
+18. Pruned run-source helper compatibility surfaces in seams 133-134 and re-validated canonical guards:
+   1. `src/shared/lib/ai-paths/run-sources.ts`
+      1. removed tab helper exports (`AI_PATHS_RUN_SOURCE_TABS`, `isAiPathsRunSourceTab`).
+      2. retained canonical source-value helpers only.
+   2. Deleted dead duplicate module `src/features/ai/ai-paths/lib/run-sources.ts`.
+   3. Added canonical guardrail checks in `scripts/ai-paths/check-canonical.mjs`:
+      1. duplicate feature-local run-sources file must remain deleted.
+      2. shared run-sources must not reintroduce tab-helper compatibility exports.
+   4. Re-ran focused regression bundle:
+      1. `__tests__/features/ai/ai-paths/lib/run-sources.test.ts`
+      2. `__tests__/shared/lib/query-invalidation.test.ts`
+      3. `src/features/ai/ai-paths/services/path-run-repository/__tests__/run-source-filters.canonical.test.ts`
+      4. `src/features/ai/ai-paths/components/__tests__/job-queue-panel-utils.test.ts`
+      5. `src/app/api/ai-paths/runs/enqueue/handler.test.ts`
+      Result: `5` files passed, `34` tests passed.
+   5. `npm run ai-paths:check:canonical` -> passed (`4212` files scanned).
+19. Pruned run-mode queue alias compatibility in seams 135-136 and re-validated canonical guards:
+   1. Removed runtime `runMode === 'queue'` compatibility mapping in:
+      1. `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts`
+      2. `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsPathActions.ts`
+   2. Added regression assertion:
+      1. `src/features/ai/ai-paths/components/ai-paths-settings/__tests__/useAiPathsSettingsPathActions.switch-path.test.tsx`
+         verifies fetched config with `runMode: 'queue'` resolves via canonical fallback to `setRunMode('manual')`.
+   3. Re-ran focused regression bundle:
+      1. `useAiPathsSettingsPathActions.switch-path.test.tsx`
+      2. `useAiPathsPersistence.prefetch.test.tsx`
+      3. `__tests__/shared/lib/query-invalidation.test.ts`
+      4. `__tests__/features/ai/ai-paths/lib/run-sources.test.ts`
+      5. `run-source-filters.canonical.test.ts`
+      6. `job-queue-panel-utils.test.ts`
+      7. `enqueue/handler.test.ts`
+      Result: `7` files passed, `42` tests passed.
+   4. `npm run ai-paths:check:canonical` -> passed (`4214` files scanned).
+20. Pruned requestId dedupe compatibility scan in seams 137-138 and re-validated canonical guards:
+   1. `src/features/ai/ai-paths/services/path-run-service.ts`
+      1. removed provider fallback list-scan branch for requestId dedupe.
+      2. canonical dedupe lookup now uses `listRuns({ requestId, limit: 1, offset: 0 })` only.
+   2. Added regression:
+      1. `src/features/ai/ai-paths/services/__tests__/path-run-service.test.ts`
+         verifies requestId dedupe uses one canonical lookup and returns existing run without create.
+   3. Re-ran focused regression bundle:
+      1. `path-run-service.test.ts`
+      2. `useAiPathsSettingsPathActions.switch-path.test.tsx`
+      3. `useAiPathsPersistence.prefetch.test.tsx`
+      4. `__tests__/shared/lib/query-invalidation.test.ts`
+      5. `__tests__/features/ai/ai-paths/lib/run-sources.test.ts`
+      6. `run-source-filters.canonical.test.ts`
+      7. `job-queue-panel-utils.test.ts`
+      8. `enqueue/handler.test.ts`
+      Result: `8` files passed, `45` tests passed.
+   4. `npm run ai-paths:check:canonical` -> passed (`4218` files scanned).
 
 ## Deprecation map
 

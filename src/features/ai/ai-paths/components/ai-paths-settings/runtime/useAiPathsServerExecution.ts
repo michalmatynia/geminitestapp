@@ -22,6 +22,7 @@ import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 
 import {
   mergeRuntimeStateSnapshot,
+  mergeRuntimeNodeOutputsForStatus,
   resolveRunAt,
   resolveRunStartedAt,
   buildActivePathConfig,
@@ -637,12 +638,14 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                   ...(prev.inputs ?? {}),
                   ...(nodeInputs ? { [nodeId]: nodeInputs } : {}),
                 };
-                const mergedNodeOutputs = {
-                  ...(prev.outputs?.[nodeId] ?? {}),
-                  ...(nodeOutputs ?? {}),
+                const mergedNodeOutputs = mergeRuntimeNodeOutputsForStatus({
+                  previous: prev.outputs?.[nodeId],
+                  next: {
+                    ...(nodeOutputs ?? {}),
+                    ...(isFailed && errorMessage ? { error: errorMessage } : {}),
+                  },
                   status,
-                  ...(isFailed && errorMessage ? { error: errorMessage } : {}),
-                };
+                });
                 const nextCurrentRun = {
                   ...(prev.currentRun ?? {}),
                   id: resolvedRunId,

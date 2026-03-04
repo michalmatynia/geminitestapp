@@ -5,29 +5,11 @@ import React from 'react';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { StatusBadge, MetadataItem, FormActions } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
+import { formatDateTime, formatFileSize } from '@/shared/utils';
 
 import { InlineImagePreviewCanvas } from '../studio-modals/InlineImagePreviewCanvas';
 import { useStudioInlineEdit } from '../studio-modals/StudioInlineEditContext';
 import type { LinkedGeneratedVariantViewModel as LinkedGeneratedVariant } from '../studio-modals/slot-inline-edit-tab-types';
-
-const formatBytes = (value: number | null): string => {
-  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return 'n/a';
-  const units = ['B', 'KB', 'MB', 'GB'];
-  let size = value;
-  let unitIndex = 0;
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex += 1;
-  }
-  const precision = unitIndex === 0 ? 0 : size >= 10 ? 1 : 2;
-  return `${size.toFixed(precision)} ${units[unitIndex]}`;
-};
-
-const formatLinkedVariantTimestamp = (value: string): string => {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return parsed.toLocaleString();
-};
 
 export function GenerationPreviewModal({
   isOpen,
@@ -94,11 +76,11 @@ export function GenerationPreviewModal({
             <MetadataItem label='Dimensions' value={selectedGenerationModalDimensions} />
             <MetadataItem
               label='File Size'
-              value={formatBytes(selectedGenerationPreview.output.size)}
+              value={formatFileSize(selectedGenerationPreview.output.size)}
             />
             <MetadataItem
               label='Generated On'
-              value={formatLinkedVariantTimestamp(selectedGenerationPreview.runCreatedAt)}
+              value={formatDateTime(selectedGenerationPreview.runCreatedAt)}
             />
           </div>
         )}

@@ -2,6 +2,7 @@
 
 import React, { type ReactNode } from 'react';
 
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
 import { Card } from './card';
@@ -10,13 +11,18 @@ import { Label } from './label';
 import { Switch } from './switch';
 import { StatusToggle } from './status-toggle';
 
+type ToggleRowType = 'checkbox' | 'switch' | 'status';
+
+type ToggleRowStatusEnabledVariant = 'emerald' | 'cyan' | 'blue';
+type ToggleRowStatusDisabledVariant = 'red' | 'slate' | 'gray';
+
 interface ToggleRowProps {
   label: ReactNode;
   description?: ReactNode;
   icon?: ReactNode;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
-  type?: 'checkbox' | 'switch' | 'status';
+  type?: ToggleRowType;
   disabled?: boolean;
   className?: string;
   labelClassName?: string;
@@ -24,9 +30,86 @@ interface ToggleRowProps {
   children?: ReactNode;
   enabledLabel?: string;
   disabledLabel?: string;
-  enabledVariant?: 'emerald' | 'cyan' | 'blue';
-  disabledVariant?: 'red' | 'slate' | 'gray';
+  enabledVariant?: ToggleRowStatusEnabledVariant;
+  disabledVariant?: ToggleRowStatusDisabledVariant;
   controlWrapper?: (control: ReactNode) => ReactNode;
+}
+
+type ToggleRowControlRuntimeValue = {
+  generatedId: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  type: ToggleRowType;
+  disabled: boolean;
+  enabledLabel?: string;
+  disabledLabel?: string;
+  enabledVariant?: ToggleRowStatusEnabledVariant;
+  disabledVariant?: ToggleRowStatusDisabledVariant;
+  controlWrapper?: (control: ReactNode) => ReactNode;
+};
+
+const {
+  Context: ToggleRowControlRuntimeContext,
+  useStrictContext: useToggleRowControlRuntime,
+} = createStrictContext<ToggleRowControlRuntimeValue>({
+  hookName: 'useToggleRowControlRuntime',
+  providerName: 'ToggleRowControlRuntimeProvider',
+  displayName: 'ToggleRowControlRuntimeContext',
+});
+
+type ToggleRowControlRuntimeProviderProps = {
+  value: ToggleRowControlRuntimeValue;
+  children: ReactNode;
+};
+
+function ToggleRowControlRuntimeProvider({
+  value,
+  children,
+}: ToggleRowControlRuntimeProviderProps): React.JSX.Element {
+  return (
+    <ToggleRowControlRuntimeContext.Provider value={value}>
+      {children}
+    </ToggleRowControlRuntimeContext.Provider>
+  );
+}
+
+function ToggleRowControl(): React.JSX.Element {
+  const runtime = useToggleRowControlRuntime();
+
+  let control: ReactNode;
+  if (runtime.type === 'switch') {
+    control = (
+      <Switch
+        id={runtime.generatedId}
+        checked={runtime.checked}
+        onCheckedChange={runtime.onCheckedChange}
+        disabled={runtime.disabled}
+      />
+    );
+  } else if (runtime.type === 'status') {
+    control = (
+      <StatusToggle
+        enabled={runtime.checked}
+        onToggle={runtime.onCheckedChange}
+        disabled={runtime.disabled}
+        enabledLabel={runtime.enabledLabel}
+        disabledLabel={runtime.disabledLabel}
+        enabledVariant={runtime.enabledVariant}
+        disabledVariant={runtime.disabledVariant}
+      />
+    );
+  } else {
+    control = (
+      <Checkbox
+        id={runtime.generatedId}
+        checked={runtime.checked}
+        onCheckedChange={(val: boolean | 'indeterminate') => runtime.onCheckedChange(val === true)}
+        disabled={runtime.disabled}
+      />
+    );
+  }
+
+  return <>{runtime.controlWrapper ? runtime.controlWrapper(control) : control}</>;
 }
 
 export function ToggleRow({
@@ -48,43 +131,32 @@ export function ToggleRow({
   controlWrapper,
 }: ToggleRowProps): React.JSX.Element {
   const generatedId = id || React.useId();
-
-  const renderControl = () => {
-    let control: ReactNode;
-    if (type === 'switch') {
-      control = (
-        <Switch
-          id={generatedId}
-          checked={checked}
-          onCheckedChange={onCheckedChange}
-          disabled={disabled}
-        />
-      );
-    } else if (type === 'status') {
-      control = (
-        <StatusToggle
-          enabled={checked}
-          onToggle={onCheckedChange}
-          disabled={disabled}
-          enabledLabel={enabledLabel}
-          disabledLabel={disabledLabel}
-          enabledVariant={enabledVariant}
-          disabledVariant={disabledVariant}
-        />
-      );
-    } else {
-      control = (
-        <Checkbox
-          id={generatedId}
-          checked={checked}
-          onCheckedChange={(val: boolean | 'indeterminate') => onCheckedChange(val === true)}
-          disabled={disabled}
-        />
-      );
-    }
-
-    return controlWrapper ? controlWrapper(control) : control;
-  };
+  const controlRuntimeValue = React.useMemo<ToggleRowControlRuntimeValue>(
+    () => ({
+      generatedId,
+      checked,
+      onCheckedChange,
+      type,
+      disabled,
+      enabledLabel,
+      disabledLabel,
+      enabledVariant,
+      disabledVariant,
+      controlWrapper,
+    }),
+    [
+      generatedId,
+      checked,
+      onCheckedChange,
+      type,
+      disabled,
+      enabledLabel,
+      disabledLabel,
+      enabledVariant,
+      disabledVariant,
+      controlWrapper,
+    ]
+  );
 
   return (
     <Card
@@ -109,7 +181,9 @@ export function ToggleRow({
         </div>
         {description && <p className='text-[11px] text-gray-500 leading-tight'>{description}</p>}
       </div>
-      {renderControl()}
+      <ToggleRowControlRuntimeProvider value={controlRuntimeValue}>
+        <ToggleRowControl />
+      </ToggleRowControlRuntimeProvider>
     </Card>
   );
 }

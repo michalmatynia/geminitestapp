@@ -1,4 +1,5 @@
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -47,9 +48,26 @@ vi.mock('@/features/cms/hooks/useTreeActionsContext', () => ({
   }),
 }));
 
-vi.mock('@/features/cms/components/page-builder/tree/SectionPicker', () => ({
-  SectionPicker: () => <div data-testid='section-picker' />,
+vi.mock('@/features/cms/components/page-builder/tree/TreeSectionPicker', () => ({
+  TreeSectionPicker: () => <div data-testid='section-picker' />,
 }));
+
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0 },
+      mutations: { retry: false },
+    },
+  });
+
+const renderZoneFooterNode = (zone: 'header' | 'template' | 'footer', sectionCount: number) => {
+  const queryClient = createTestQueryClient();
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <ZoneFooterNode zone={zone} sectionCount={sectionCount} />
+    </QueryClientProvider>
+  );
+};
 
 describe('ZoneFooterNode section drops', () => {
   beforeEach(() => {
@@ -76,7 +94,7 @@ describe('ZoneFooterNode section drops', () => {
       endSectionDrag: endSectionDragMock,
     });
 
-    render(<ZoneFooterNode zone='template' sectionCount={3} />);
+    renderZoneFooterNode('template', 3);
 
     const dropTarget = screen.getByText('Drop section');
     fireEvent.dragOver(dropTarget);
@@ -108,7 +126,7 @@ describe('ZoneFooterNode section drops', () => {
       endSectionDrag: endSectionDragMock,
     });
 
-    render(<ZoneFooterNode zone='footer' sectionCount={1} />);
+    renderZoneFooterNode('footer', 1);
     fireEvent.drop(screen.getByText('Drop section'));
 
     expect(moveSectionByMasterMock).toHaveBeenCalledWith('section-master', 'footer', 1);

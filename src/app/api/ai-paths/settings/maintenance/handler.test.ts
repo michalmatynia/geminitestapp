@@ -13,7 +13,6 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
     'compact_oversized_configs',
     'repair_path_index',
     'ensure_starter_workflow_defaults',
-    'upgrade_server_execution_mode',
   ] as const,
   inspectAiPathsSettingsMaintenance: inspectAiPathsSettingsMaintenanceMock,
   applyAiPathsSettingsMaintenance: applyAiPathsSettingsMaintenanceMock,
@@ -54,7 +53,7 @@ describe('ai-paths maintenance handler', () => {
 
   it('passes canonical maintenance action ids to apply', async () => {
     applyAiPathsSettingsMaintenanceMock.mockResolvedValue({
-      appliedActionIds: ['upgrade_server_execution_mode'],
+      appliedActionIds: ['repair_path_index'],
       report: {
         scannedAt: '2026-03-03T10:00:00.000Z',
         pendingActions: 0,
@@ -66,15 +65,13 @@ describe('ai-paths maintenance handler', () => {
     const response = await POST_handler(
       new NextRequest('http://localhost/api/ai-paths/settings/maintenance', {
         method: 'POST',
-        body: JSON.stringify({ actionIds: ['upgrade_server_execution_mode'] }),
+        body: JSON.stringify({ actionIds: ['repair_path_index'] }),
       }) as Parameters<typeof POST_handler>[0],
       {} as Parameters<typeof POST_handler>[1]
     );
 
     expect(response.status).toBe(200);
-    expect(applyAiPathsSettingsMaintenanceMock).toHaveBeenCalledWith([
-      'upgrade_server_execution_mode',
-    ]);
+    expect(applyAiPathsSettingsMaintenanceMock).toHaveBeenCalledWith(['repair_path_index']);
   });
 
   it('rejects deprecated compatibility action ids', async () => {

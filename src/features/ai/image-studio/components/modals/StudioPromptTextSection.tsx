@@ -1,0 +1,43 @@
+'use client';
+
+import React from 'react';
+
+import { Label, Textarea } from '@/shared/ui';
+import { cn } from '@/shared/utils';
+
+interface StudioPromptTextSectionProps {
+  label: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  placeholder?: string;
+  containerClassName?: string;
+  labelClassName?: string;
+  textareaClassName?: string;
+  textareaSize?: 'default' | 'sm' | 'xs';
+}
+
+export function StudioPromptTextSection({
+  label,
+  value,
+  onValueChange,
+  placeholder,
+  containerClassName,
+  labelClassName,
+  textareaClassName,
+  textareaSize = 'default',
+}: StudioPromptTextSectionProps): React.JSX.Element {
+  return (
+    <div className={cn('space-y-2', containerClassName)}>
+      <Label className={cn('text-xs text-gray-400', labelClassName)}>{label}</Label>
+      <Textarea
+        size={textareaSize}
+        value={value}
+        onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+          onValueChange(event.target.value)
+        }
+        className={cn('font-mono text-[11px]', textareaClassName)}
+        placeholder={placeholder}
+      />
+    </div>
+  );
+}

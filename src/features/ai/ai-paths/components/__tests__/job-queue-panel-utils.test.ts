@@ -1,12 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { AiPathRunNodeRecord } from '@/shared/contracts/ai-paths';
+import type { AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 vi.mock('../AiPathsSettingsUtils', () => ({
   safeJsonStringify: (value: unknown): string => JSON.stringify(value ?? null),
 }));
 
-import { normalizeRunNodes } from '../job-queue-panel-utils';
+import {
+  normalizeRunNodes,
+  resolveRunExecutionKind,
+  resolveRunOrigin,
+  resolveRunSource,
+  resolveRunSourceDebug,
+} from '../job-queue-panel-utils';
 
 const buildNode = (patch: Partial<AiPathRunNodeRecord>): AiPathRunNodeRecord => ({
   id: patch.id ?? `row-${patch.nodeId ?? 'node'}`,
@@ -24,6 +30,17 @@ const buildNode = (patch: Partial<AiPathRunNodeRecord>): AiPathRunNodeRecord => 
   completedAt: patch.completedAt ?? null,
   finishedAt: patch.finishedAt ?? null,
   errorMessage: patch.errorMessage ?? null,
+});
+
+const buildRun = (patch: Partial<AiPathRunRecord>): AiPathRunRecord => ({
+  id: patch.id ?? 'run-1',
+  createdAt: patch.createdAt ?? '2026-02-23T10:00:00.000Z',
+  updatedAt: patch.updatedAt ?? '2026-02-23T10:00:00.000Z',
+  status: patch.status ?? 'queued',
+  pathId: patch.pathId ?? 'path-1',
+  pathName: patch.pathName ?? 'Path 1',
+  meta: patch.meta ?? {},
+  ...patch,
 });
 
 describe('normalizeRunNodes', () => {
@@ -86,5 +103,91 @@ describe('normalizeRunNodes', () => {
     expect(normalizeRunNodes(null)).toEqual([]);
     expect(normalizeRunNodes(undefined)).toEqual([]);
     expect(normalizeRunNodes({})).toEqual([]);
+  });
+});
+
+describe('resolveRunExecutionKind', () => {
+  it('resolves canonical top-level executionMode metadata', () => {
+    const run = buildRun({
+      meta: {
+        executionMode: 'server',
+      },
+    });
+
+    expect(resolveRunExecutionKind(run)).toBe('server');
+  });
+
+  it('resolves canonical nested executionMode metadata', () => {
+    const run = buildRun({
+      meta: {
+        runtime: {
+          executionMode: 'local',
+        },
+      },
+    });
+
+    expect(resolveRunExecutionKind(run)).toBe('local');
+  });
+
+  it('ignores removed legacy execution aliases and falls back to unknown', () => {
+    const run = buildRun({
+      meta: {
+        execution_mode: 'server',
+        runMode: 'manual',
+        run_mode: 'manual',
+        mode: 'worker',
+        runtime: {
+          mode: 'local',
+        },
+        sourceInfo: {
+          mode: 'server',
+        },
+      },
+    });
+
+    expect(resolveRunExecutionKind(run)).toBe('unknown');
+  });
+
+  it('ignores removed sourceInfo execution-mode compatibility metadata', () => {
+    const run = buildRun({
+      meta: {
+        sourceInfo: {
+          executionMode: 'server',
+        },
+      },
+    });
+
+    expect(resolveRunExecutionKind(run)).toBe('unknown');
+  });
+});
+
+describe('resolveRunSource', () => {
+  it('resolves canonical string source metadata', () => {
+    const run = buildRun({
+      meta: {
+        source: 'AI_PATHS_UI',
+      },
+    });
+
+    expect(resolveRunSource(run)).toBe('ai_paths_ui');
+    expect(resolveRunOrigin(run)).toBe('node');
+    expect(resolveRunSourceDebug(run)).toBe('src=ai_paths_ui');
+  });
+
+  it('ignores removed object-shaped source compatibility metadata', () => {
+    const run = buildRun({
+      meta: {
+        source: {
+          tab: 'product',
+        },
+        sourceInfo: {
+          tab: 'notes',
+        },
+      },
+    });
+
+    expect(resolveRunSource(run)).toBeNull();
+    expect(resolveRunOrigin(run)).toBe('unknown');
+    expect(resolveRunSourceDebug(run)).toBe('src=-');
   });
 });

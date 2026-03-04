@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import type { AiNode, RuntimeState, RuntimePortValues } from '@/shared/lib/ai-paths';
 import { TRIGGER_EVENTS, evaluateRunPreflight, stableStringify } from '@/shared/lib/ai-paths';
 
-import { buildTriggerContext, createRunId } from '../utils';
+import { buildTriggerContext, createRunId, mergeRuntimeNodeOutputsForStatus } from '../utils';
 
 import { evaluateLocalExecutionSecurity } from '../local-execution-security';
 import type { LocalExecutionArgs } from '../types';
@@ -802,15 +802,16 @@ export function useLocalExecutionTriggers(
     (simulationNode: AiNode, context: Record<string, unknown>): void => {
       const simulationOutputs = buildSimulationOutputsFromContext(context);
       args.setRuntimeState((prev: RuntimeState): RuntimeState => {
+        const nextSimulationOutputs = mergeRuntimeNodeOutputsForStatus({
+          previous: prev.outputs?.[simulationNode.id],
+          next: simulationOutputs,
+          status: 'completed',
+        });
         const next: RuntimeState = {
           ...prev,
           outputs: {
             ...(prev.outputs ?? {}),
-            [simulationNode.id]: {
-              ...(prev.outputs?.[simulationNode.id] ?? {}),
-              ...simulationOutputs,
-              status: 'completed',
-            },
+            [simulationNode.id]: nextSimulationOutputs,
           },
         };
         args.runtimeStateRef.current = next;

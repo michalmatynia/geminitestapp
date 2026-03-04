@@ -204,9 +204,7 @@ export function useAiPathsSettingsPathActions({
           repairedConfig.runMode === 'manual' ||
           repairedConfig.runMode === 'step'
           ? repairedConfig.runMode
-          : repairedConfig.runMode === 'queue'
-            ? 'automatic'
-            : 'manual'
+          : 'manual'
       );
       setStrictFlowMode(repairedConfig.strictFlowMode !== false);
       setBlockedRunPolicy(

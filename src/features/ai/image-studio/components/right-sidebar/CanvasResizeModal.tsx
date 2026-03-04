@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { Button, Input, Label } from '@/shared/ui';
+import { Button, FormActions, Input, Label } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 import { cn } from '@/shared/utils';
 import {
@@ -133,29 +133,18 @@ export function CanvasResizeModal({
       title='Resize Canvas'
       size='md'
       footer={
-        <div className='flex items-center justify-end gap-2'>
-          <Button
-            size='xs'
-            type='button'
-            variant='outline'
-            onClick={onClose}
-            disabled={resizeProjectCanvasMutation.isPending}
-          >
-            Cancel
-          </Button>
-          <Button
-            size='xs'
-            type='button'
-            onClick={() => {
-              void handleSubmit();
-            }}
-            disabled={!canSubmit}
-            loading={resizeProjectCanvasMutation.isPending}
-            loadingText='Applying...'
-          >
-            Apply Resize
-          </Button>
-        </div>
+        <FormActions
+          size='xs'
+          onCancel={onClose}
+          onSave={() => {
+            void handleSubmit();
+          }}
+          cancelText='Cancel'
+          saveText='Apply Resize'
+          isSaving={resizeProjectCanvasMutation.isPending}
+          isDisabled={!canSubmit}
+          saveLoadingText='Applying...'
+        />
       }
     >
       <div className='space-y-4 text-sm text-gray-200'>

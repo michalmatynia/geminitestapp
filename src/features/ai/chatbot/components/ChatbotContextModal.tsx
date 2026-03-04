@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import type { EntityModalProps } from '@/shared/contracts/ui';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, Input, Tag } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
@@ -18,6 +19,61 @@ interface ChatbotContextModalProps extends EntityModalProps<ContextDraft> {
   setTagDraft: (value: string) => void;
   isSaving: boolean;
   onSave: () => void;
+}
+
+export interface ChatbotContextModalRuntimeValue {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  fields: SettingsField<ContextDraft>[];
+  values: ContextDraft;
+  onChange: (vals: Partial<ContextDraft>) => void;
+  isSaving: boolean;
+  onSave: () => void;
+}
+
+export const {
+  Context: ChatbotContextModalRuntimeContext,
+  useStrictContext: useChatbotContextModalRuntime,
+} = createStrictContext<ChatbotContextModalRuntimeValue>({
+  hookName: 'useChatbotContextModalRuntime',
+  providerName: 'ChatbotContextModalProvider',
+  displayName: 'ChatbotContextModalRuntimeContext',
+});
+
+interface ChatbotContextModalProviderProps {
+  value: ChatbotContextModalRuntimeValue;
+  children: React.ReactNode;
+}
+
+export function ChatbotContextModalProvider({
+  value,
+  children,
+}: ChatbotContextModalProviderProps): React.JSX.Element {
+  return (
+    <ChatbotContextModalRuntimeContext.Provider value={value}>
+      {children}
+    </ChatbotContextModalRuntimeContext.Provider>
+  );
+}
+
+export function ChatbotContextModalPanel(): React.JSX.Element {
+  const { open, onClose, title, fields, values, onChange, onSave, isSaving } =
+    useChatbotContextModalRuntime();
+
+  return (
+    <SettingsPanelBuilder
+      open={open}
+      onClose={onClose}
+      title={title}
+      fields={fields}
+      values={values}
+      onChange={onChange}
+      onSave={async () => onSave()}
+      isSaving={isSaving}
+      size='lg'
+    />
+  );
 }
 
 export function ChatbotContextModal({
@@ -144,21 +200,27 @@ export function ChatbotContextModal({
     [draftTags, tagDraft, isSaving, setModalDraft, setTagDraft]
   );
 
-  const handleChange = (vals: Partial<ContextDraft>) => {
+  const handleChange = useCallback((vals: Partial<ContextDraft>) => {
     setModalDraft((prev) => (prev ? { ...prev, ...vals } : prev));
-  };
+  }, [setModalDraft]);
+
+  const runtimeValue = useMemo<ChatbotContextModalRuntimeValue>(
+    () => ({
+      open: isOpen && Boolean(modalDraft),
+      onClose,
+      title: editingItem ? 'Edit Context' : 'New Context',
+      fields,
+      values: effectiveDraft,
+      onChange: handleChange,
+      onSave,
+      isSaving,
+    }),
+    [editingItem, effectiveDraft, fields, handleChange, isOpen, isSaving, modalDraft, onClose, onSave]
+  );
 
   return (
-    <SettingsPanelBuilder
-      open={isOpen && Boolean(modalDraft)}
-      onClose={onClose}
-      title={editingItem ? 'Edit Context' : 'New Context'}
-      fields={fields}
-      values={effectiveDraft}
-      onChange={handleChange}
-      onSave={async () => onSave()}
-      isSaving={isSaving}
-      size='lg'
-    />
+    <ChatbotContextModalProvider value={runtimeValue}>
+      <ChatbotContextModalPanel />
+    </ChatbotContextModalProvider>
   );
 }

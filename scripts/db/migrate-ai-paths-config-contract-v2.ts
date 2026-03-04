@@ -354,6 +354,7 @@ async function main(): Promise<void> {
       2
     )
   );
+  process.exit(0);
 }
 
 void main().catch((error) => {

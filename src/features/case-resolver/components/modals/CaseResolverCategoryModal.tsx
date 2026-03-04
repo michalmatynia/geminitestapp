@@ -3,12 +3,13 @@
 import React, { useMemo } from 'react';
 
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import {
-  SettingsPanelBuilder,
-  type SettingsField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+import { type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import type { CaseResolverCategory } from '../../types';
+import {
+  CaseResolverEntitySettingsModal,
+  CaseResolverEntitySettingsModalProvider,
+} from './CaseResolverEntitySettingsModal';
 
 type CategoryFormData = {
   name: string;
@@ -28,7 +29,7 @@ interface CaseResolverCategoryModalProps extends EntityModalProps<CaseResolverCa
 export function CaseResolverCategoryModal({
   isOpen,
   onClose,
-  item: editableCategory,
+  item,
   formData,
   setFormData,
   parentOptions,
@@ -67,25 +68,26 @@ export function CaseResolverCategoryModal({
     [parentOptions]
   );
 
-  const handleChange = (vals: Partial<CategoryFormData>) => {
-    setFormData((prev) => {
-      const next = { ...prev, ...vals };
-      if (vals.parentId === '__root__') next.parentId = null;
-      return next;
-    });
-  };
+  const runtimeValue = useMemo(
+    () => ({
+      isOpen,
+      onClose,
+      item,
+      createTitle: 'Create Category',
+      editTitle: 'Edit Category',
+      fields,
+      formData,
+      setFormData,
+      onSave,
+      isSaving,
+      parentNullSentinel: '__root__',
+    }),
+    [fields, formData, isOpen, isSaving, item, onClose, onSave, setFormData]
+  );
 
   return (
-    <SettingsPanelBuilder
-      open={isOpen}
-      onClose={onClose}
-      title={editableCategory ? 'Edit Category' : 'Create Category'}
-      fields={fields}
-      values={formData}
-      onChange={handleChange}
-      onSave={async () => onSave()}
-      isSaving={isSaving}
-      size='md'
-    />
+    <CaseResolverEntitySettingsModalProvider value={runtimeValue}>
+      <CaseResolverEntitySettingsModal />
+    </CaseResolverEntitySettingsModalProvider>
   );
 }

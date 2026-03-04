@@ -2,8 +2,9 @@ import React from 'react';
 
 import type { ListingAttempt, ListingJob, ProductJob } from '@/shared/contracts/integrations';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { StatusBadge, Card } from '@/shared/ui';
-import { DetailModal } from '@/shared/ui/templates/modals';
+import { StatusBadge } from '@/shared/ui';
+import { DetailModal, DetailModalSection } from '@/shared/ui/templates/modals';
+import { formatDateTime } from '@/shared/utils';
 
 export interface ExportJobDetailItem {
   job: ProductJob;
@@ -20,21 +21,13 @@ export function ExportJobDetailModal({
 }: ExportJobDetailModalProps): React.JSX.Element | null {
   if (!isOpen || !selectedListing) return null;
 
-  const formatDateTime = (value: Date | string | null | undefined): string => {
-    if (!value) return '—';
-    const date: Date = value instanceof Date ? value : new Date(value);
-    if (Number.isNaN(date.getTime())) return '—';
-    return date.toLocaleString();
-  };
-
   const listing = selectedListing.listing;
   const selectedStatus = listing.status ?? 'n/a';
 
   return (
     <DetailModal isOpen={isOpen} onClose={onClose} title='Export Job Details' size='lg'>
       <div className='space-y-6 text-sm'>
-        <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/35'>
-          <h3 className='text-sm font-medium text-white mb-4'>Listing Information</h3>
+        <DetailModalSection title='Listing Information'>
           <div className='grid grid-cols-2 gap-y-4'>
             <div>
               <p className='text-gray-500 mb-1'>External ID</p>
@@ -53,11 +46,10 @@ export function ExportJobDetailModal({
               <p className='text-gray-200'>{formatDateTime(listing.updatedAt)}</p>
             </div>
           </div>
-        </Card>
+        </DetailModalSection>
 
         {selectedListing.listing.exportHistory && (
-          <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/35'>
-            <h3 className='text-sm font-medium text-white mb-4'>Sync History</h3>
+          <DetailModalSection title='Sync History'>
             <div className='space-y-2'>
               {selectedListing.listing.exportHistory.length === 0 ? (
                 <p className='text-gray-500 italic'>No history available.</p>
@@ -75,7 +67,7 @@ export function ExportJobDetailModal({
                 ))
               )}
             </div>
-          </Card>
+          </DetailModalSection>
         )}
       </div>
     </DetailModal>

@@ -48,6 +48,7 @@ import {
   buildRuntimeProfileSnapshot,
   buildSkipSet,
   computeDurationMs,
+  mergeNodeOutputsForStatus,
   mergeRuntimePortMaps,
   resolveTriggerNodeId,
   sanitizeRuntimeState,
@@ -339,10 +340,11 @@ export const executePathRun = async (
           const safeInputs = cloneJsonSafe(nodeInputs) as RuntimePortValues;
           const safePrevOutputs = cloneJsonSafe(prevOutputs ?? {}) as RuntimePortValues;
           accInputs[node.id] = safeInputs;
-          accOutputs[node.id] = {
-            ...(accOutputs[node.id] ?? {}),
+          accOutputs[node.id] = mergeNodeOutputsForStatus({
+            previous: accOutputs[node.id],
+            next: {},
             status: 'running',
-          } as RuntimePortValues;
+          });
 
           // These observability writes are non-critical: if MongoDB is degraded
           // the run must still continue.  Individual .catch keeps Promise.all
@@ -410,11 +412,11 @@ export const executePathRun = async (
           const safeInputs = cloneJsonSafe(nodeInputs) as RuntimePortValues;
           const safeOutputs = cloneJsonSafe(nextOutputs) as RuntimePortValues;
           accInputs[node.id] = safeInputs;
-          accOutputs[node.id] = {
-            ...(accOutputs[node.id] ?? {}),
-            ...safeOutputs,
+          accOutputs[node.id] = mergeNodeOutputsForStatus({
+            previous: accOutputs[node.id],
+            next: safeOutputs,
             status,
-          } as RuntimePortValues;
+          });
 
           const metadata =
             node.type === 'database' ? extractDatabaseRuntimeMetadata(safeOutputs) : null;
@@ -467,11 +469,11 @@ export const executePathRun = async (
             skipReason: reason,
             message,
           };
-          accOutputs[node.id] = {
-            ...(accOutputs[node.id] ?? {}),
-            ...safeOutputs,
+          accOutputs[node.id] = mergeNodeOutputsForStatus({
+            previous: accOutputs[node.id],
+            next: safeOutputs,
             status: 'blocked',
-          } as RuntimePortValues;
+          });
 
           await Promise.all([
             repo
@@ -520,11 +522,11 @@ export const executePathRun = async (
           const safeInputs = cloneJsonSafe(nodeInputs) as RuntimePortValues;
           const errorOutputs = extractNodeErrorOutputs(error);
           accInputs[node.id] = safeInputs;
-          accOutputs[node.id] = {
-            ...(accOutputs[node.id] ?? {}),
-            ...errorOutputs,
+          accOutputs[node.id] = mergeNodeOutputsForStatus({
+            previous: accOutputs[node.id],
+            next: errorOutputs ?? {},
             status: 'failed',
-          } as RuntimePortValues;
+          });
 
           await Promise.all([
             repo

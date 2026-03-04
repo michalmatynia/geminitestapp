@@ -6,8 +6,8 @@ import React, { Suspense } from 'react';
 import { AgentCreatorSettingsProvider } from '@/features/ai/agentcreator';
 import { Tabs, TabsContent, TabsList, TabsTrigger, LoadingState, Card } from '@/shared/ui';
 
+import { ChatbotDebugPanel } from '../components/ChatbotDebugPanel';
 import { ChatInterface } from '../components/ChatInterface';
-import { DebugPanel } from '../components/DebugPanel';
 import { SessionSidebar } from '../components/SessionSidebar';
 import { SettingsTab } from '../components/SettingsTab';
 import { ChatbotProvider } from '../context/ChatbotContext';
@@ -57,7 +57,7 @@ function ChatbotPageInner(): React.JSX.Element | null {
           </Tabs>
         </Card>
         <Card className='hidden overflow-hidden border-border/60 bg-card/40 p-0 lg:block'>
-          <DebugPanel />
+          <ChatbotDebugPanel />
         </Card>
       </div>
     </div>

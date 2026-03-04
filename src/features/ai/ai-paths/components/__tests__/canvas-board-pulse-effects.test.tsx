@@ -138,6 +138,69 @@ describe('useCanvasPulseEffects', () => {
     expect(result.current.inputPulseNodes.has(targetNode.id)).toBe(false);
   });
 
+  it('activates incoming edge and input pulse for processing node_status events', () => {
+    const sourceNode = buildNode({
+      id: 'node-source-processing',
+      outputs: ['result'],
+    });
+    const targetNode = buildNode({
+      id: 'node-target-processing',
+      inputs: ['trigger'],
+    });
+    const edge: Edge = {
+      id: 'edge-source-target-processing',
+      from: sourceNode.id,
+      to: targetNode.id,
+      fromPort: 'result',
+      toPort: 'trigger',
+    };
+    const maps = buildPortMaps([edge]);
+    const nodeById = new Map<string, AiNode>([
+      [sourceNode.id, sourceNode],
+      [targetNode.id, targetNode],
+    ]);
+    const runtimeState: RuntimeSnapshot = {
+      inputs: {},
+      outputs: {},
+    };
+    const runtimeEvents: AiPathRuntimeEvent[] = [
+      {
+        id: 'evt-processing-status',
+        source: 'server',
+        kind: 'node_status',
+        level: 'info',
+        message: 'Target processing',
+        nodeId: targetNode.id,
+        status: 'processing',
+        timestamp: '2026-03-04T10:01:00.000Z',
+      } as AiPathRuntimeEvent,
+    ];
+
+    const { result } = renderHook(() =>
+      useCanvasPulseEffects({
+        nodes: [sourceNode, targetNode],
+        edges: [edge],
+        runtimeEvents,
+        runtimeState,
+        getPortValue: () => undefined,
+        ...maps,
+        nodeById,
+        flowAnimationMs: 300,
+        nodePulseMs: 250,
+      })
+    );
+
+    expect(result.current.activeEdgeIds.has(edge.id)).toBe(true);
+    expect(result.current.inputPulseNodes.has(targetNode.id)).toBe(true);
+
+    act(() => {
+      vi.advanceTimersByTime(301);
+    });
+
+    expect(result.current.activeEdgeIds.has(edge.id)).toBe(false);
+    expect(result.current.inputPulseNodes.has(targetNode.id)).toBe(false);
+  });
+
   it('derives edge and node pulses from output payload changes when runtime events are empty', () => {
     const sourceNode = buildNode({
       id: 'node-source',

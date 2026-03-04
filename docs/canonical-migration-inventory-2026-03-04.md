@@ -447,6 +447,140 @@ Goal: migrate feature surfaces to their canonical latest contracts and remove ru
 - Extended Prompt Exploder runtime prune guardrails:
   - `src/features/prompt-exploder/__tests__/runtime-prune.test.ts` now blocks reintroduction of `_rules`-suffix key fallback usage.
 
+## Executed Item 37 (Prompt Exploder Return-Target Scope Fallback Prune)
+
+- Removed URL return-target based scope-forcing compatibility from settings hydration:
+  - `src/features/prompt-exploder/context/settings/useSettingsDataImpl.ts` no longer treats `/admin/case-resolver` return targets as an implicit case-resolver validation-stack preference.
+- Canonical scope preference now resolves only from bridge payload source:
+  - `incomingBridgeSource === 'case-resolver'`.
+- Extended Prompt Exploder runtime prune guardrails:
+  - `src/features/prompt-exploder/__tests__/runtime-prune.test.ts` now blocks reintroduction of `incomingBridgeSource === 'case-resolver' || isCaseResolverReturnTarget` fallback coupling.
+
+## Executed Item 38 (Prompt Exploder Legacy Hook Scope Fallback Prune)
+
+- Removed URL return-target fallback coupling from legacy Prompt Exploder hook runtime selection:
+  - `src/features/prompt-exploder/hooks/usePromptExploderState.ts` no longer treats `returnTarget === 'case-resolver'` as an implicit case-resolver validation-stack preference.
+- Scope preference in that hook is now canonical bridge-source only:
+  - `incomingBridgeSource === 'case-resolver'`.
+- Extended Prompt Exploder runtime prune guardrails:
+  - `src/features/prompt-exploder/__tests__/runtime-prune.test.ts` now blocks reintroduction of `incomingBridgeSource === 'case-resolver' || returnTarget === 'case-resolver'` fallback coupling.
+
+## Executed Item 39 (Prompt Exploder Legacy State Hook Retirement)
+
+- Retired orphaned legacy state hook module:
+  - removed `src/features/prompt-exploder/hooks/usePromptExploderState.ts`.
+- This removes a duplicate/legacy Prompt Exploder state surface that was no longer imported by runtime codepaths.
+- Extended Prompt Exploder runtime prune guardrails:
+  - `src/features/prompt-exploder/__tests__/runtime-prune.test.ts` now blocks reintroduction of `export function usePromptExploderState(` in runtime source.
+
+## Executed Item 40 (AI Paths Enqueue Meta Source Compatibility Prune)
+
+- Removed runtime compatibility rewrite for object-shaped enqueue metadata source:
+  - `src/app/api/ai-paths/runs/enqueue/handler.ts` now rejects `meta.source` objects with `Invalid enqueue metadata: meta.source must be a string.`
+- Added regression coverage:
+  - `src/app/api/ai-paths/runs/enqueue/handler.test.ts` verifies object-shaped `meta.source` payloads are rejected and enqueue service is not called.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of enqueue source-object compatibility rewrite snippets.
+
+## Executed Item 41 (AI Paths Queue Run Source Metadata Compatibility Prune)
+
+- Removed queue panel compatibility reads for legacy run-source metadata shapes:
+  - `src/features/ai/ai-paths/components/job-queue-panel-utils.ts` now resolves run source from canonical string `meta.source` only.
+  - removed object-source tab fallback (`meta.source.tab`), `meta.sourceInfo.tab`, and `tab:*` origin classification.
+  - removed `sourceInfo.executionMode` fallback in run execution-kind classification.
+- Added/updated regression coverage:
+  - `src/features/ai/ai-paths/components/__tests__/job-queue-panel-utils.test.ts`
+    - verifies canonical string-source resolution and node-origin classification.
+    - verifies object-shaped source/sourceInfo metadata and sourceInfo execution-mode metadata are ignored.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of queue-panel source metadata compatibility snippets.
+
+## Executed Item 42 (AI Paths Run Repository Source-Tab Compatibility Prune)
+
+- Removed legacy source-tab compatibility branches from run-list repository filters:
+  - `src/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository.ts`
+    - removed `['source', 'tab']` and `['sourceInfo', 'tab']` filter paths from `buildRunWhere`.
+    - `ai_paths_ui` include/exclude source filtering now matches canonical `meta.source` values only.
+  - `src/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository.ts`
+    - removed `'meta.source.tab'` and `'meta.sourceInfo.tab'` clauses from `buildRunFilter`.
+    - `ai_paths_ui` include/exclude source filtering now matches canonical `'meta.source'` only.
+- Added focused regression coverage for source-filter builders:
+  - `src/features/ai/ai-paths/services/path-run-repository/__tests__/run-source-filters.canonical.test.ts`
+  - verifies Prisma/Mongo `ai_paths_ui` include/exclude filters are canonical and contain no source-tab/sourceInfo fallbacks.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of repository source-tab/sourceInfo compatibility snippets and requires canonical source-filter snippets.
+
+## Executed Item 43 (AI Paths Queue Cache Source-Tab Compatibility Prune)
+
+- Removed legacy run-source metadata fallback parsing from queue-cache filtering:
+  - `src/shared/lib/query-invalidation.ts`
+  - `resolveRunSource` now reads only canonical string `meta.source`.
+  - removed compatibility reads for object-shaped source metadata (`meta.source.tab`) and `meta.sourceInfo.tab`.
+  - removed `tab:*` source-prefix classification from `isAiPathsNodeSource`.
+- Queue cache source matching now treats node-origin runs as canonical source values only:
+  - uses `AI_PATHS_RUN_SOURCE_VALUES` via `AI_PATHS_NODE_SOURCES`.
+- Added regression coverage:
+  - `__tests__/shared/lib/query-invalidation.test.ts`
+    - verifies `source=ai_paths_ui` include filter accepts canonical string-source runs.
+    - verifies object-shaped source metadata is no longer treated as node-source for queue cache insertion.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of queue-cache source fallback snippets (`meta.sourceInfo`, object-source parsing, `tab:` handling, `AI_PATHS_RUN_SOURCE_TABS`) and requires canonical source snippets.
+
+## Executed Item 44 (Prompt Exploder Route-Context Compatibility Prune)
+
+- Removed Prompt Exploder runtime fallback to route-derived Case Resolver context during apply:
+  - `src/features/prompt-exploder/context/DocumentContext.tsx` no longer reads `returnTo` query-derived `fileId` / `sessionId` as transfer context fallbacks.
+  - Case Resolver apply transfer context now resolves from canonical incoming bridge payload context only.
+- Removed draft payload consumability coupling to route session metadata:
+  - runtime draft hydration now consumes canonical `target === 'prompt-exploder'` payloads without `sessionId` URL compatibility gating.
+- Extended Prompt Exploder runtime prune guardrails:
+  - `src/features/prompt-exploder/__tests__/runtime-prune.test.ts` now blocks reintroduction of route-context/session fallback tokens and legacy session-gate compatibility pattern.
+
+## Executed Item 45 (AI Paths Run-Source Helper Surface Prune)
+
+- Pruned shared run-source helper surface to canonical value-only APIs:
+  - `src/shared/lib/ai-paths/run-sources.ts`
+  - removed tab-helper exports:
+    - `AI_PATHS_RUN_SOURCE_TABS`
+    - `isAiPathsRunSourceTab`
+  - retained canonical helpers:
+    - `AI_PATHS_RUN_SOURCE_VALUES`
+    - `isAiPathsRunSourceValue`
+- Removed dead duplicate feature-local run-source helper module:
+  - deleted `src/features/ai/ai-paths/lib/run-sources.ts`
+- Updated regression coverage:
+  - `__tests__/features/ai/ai-paths/lib/run-sources.test.ts` now asserts canonical value-only source classification.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` now enforces:
+    - deleted duplicate feature-local run-sources module must remain removed.
+    - shared run-sources must not reintroduce tab-helper compatibility exports.
+
+## Executed Item 46 (AI Paths Run-Mode Queue Alias Compatibility Prune)
+
+- Removed runtime run-mode compatibility alias `queue -> automatic` from settings state application flows:
+  - `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts`
+  - `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsPathActions.ts`
+- Canonical run-mode normalization now accepts only:
+  - `manual`
+  - `automatic`
+  - `step`
+  with non-canonical values defaulting to `manual`.
+- Added regression coverage:
+  - `src/features/ai/ai-paths/components/ai-paths-settings/__tests__/useAiPathsSettingsPathActions.switch-path.test.tsx`
+  - verifies fetched config payloads with `runMode: 'queue'` are normalized via canonical fallback to `setRunMode('manual')`.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of `runMode === 'queue'` compatibility snippets in settings persistence/path-actions runtime files.
+
+## Executed Item 47 (Prompt Exploder Launch Session-Query Compatibility Prune)
+
+- Removed unused Prompt Exploder launch-time `sessionId` query compatibility parameter:
+  - `src/features/case-resolver/hooks/useAdminCaseResolverDocumentActions.ts`
+  - Case Resolver now navigates to `/admin/prompt-exploder` with canonical `returnTo` only.
+- Prompt Exploder runtime session/context resolution remains bridge-payload driven:
+  - no route-session query token is required for Prompt Exploder draft hydration or apply context.
+- Extended Prompt Exploder runtime prune guardrails:
+  - `src/features/prompt-exploder/__tests__/runtime-prune.test.ts` now blocks reintroduction of `searchParams?.get('sessionId')` runtime coupling in Prompt Exploder source.
+
 ## Next Item
 
 Continue opportunistic canonicalization in remaining non-critical surfaces outside the current wave plan.

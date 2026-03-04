@@ -1,13 +1,34 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { execFile as execFileCallback } from 'node:child_process';
+import { promisify } from 'node:util';
 
 import { collectMetrics } from './lib-metrics.mjs';
 
 const args = new Set(process.argv.slice(2));
 const root = process.cwd();
 const baselinePath = path.join(root, 'scripts', 'architecture', 'guardrails-baseline.json');
+const execFile = promisify(execFileCallback);
 
-const toSnapshot = (metrics) => ({
+const collectPropDrillingGuardrail = async () => {
+  const { stdout } = await execFile(
+    'node',
+    ['scripts/architecture/scan-prop-drilling.mjs', '--ci', '--no-history', '--no-write', '--summary-json'],
+    {
+      cwd: root,
+    }
+  );
+
+  const parsed = JSON.parse(stdout);
+  const value = Number(parsed?.summary?.highPriorityChainCount);
+  if (!Number.isFinite(value)) {
+    throw new Error('Prop-drilling scan did not produce summary.highPriorityChainCount.');
+  }
+
+  return value;
+};
+
+const toSnapshot = (metrics, propDrillingDepthGte4Chains) => ({
   'source.filesOver1000': metrics.source.filesOver1000,
   'source.filesOver1500': metrics.source.filesOver1500,
   'source.useClientFiles': metrics.source.useClientFiles,
@@ -21,6 +42,7 @@ const toSnapshot = (metrics) => ({
   'imports.sharedToFeaturesTotalImports': metrics.imports.sharedToFeaturesTotalImports,
   'architecture.crossFeatureEdgePairs': metrics.architecture.crossFeatureEdgePairs,
   'runtime.setIntervalOccurrences': metrics.runtime.setIntervalOccurrences,
+  'propDrilling.depthGte4Chains': propDrillingDepthGte4Chains,
 });
 
 const printRow = (label, current, max, status) => {
@@ -50,7 +72,8 @@ const writeBaseline = async (snapshot) => {
 
 const run = async () => {
   const metrics = await collectMetrics({ root });
-  const snapshot = toSnapshot(metrics);
+  const propDrillingDepthGte4Chains = await collectPropDrillingGuardrail();
+  const snapshot = toSnapshot(metrics, propDrillingDepthGte4Chains);
 
   if (args.has('--update-baseline')) {
     await writeBaseline(snapshot);

@@ -80,7 +80,6 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
-  const caseResolverSessionId = searchParams?.get('sessionId')?.trim() ?? '';
   const isCaseResolverReturnTarget = useMemo((): boolean => {
     try {
       const parsed = new URL(returnTo, 'https://local.prompt-exploder');
@@ -89,15 +88,6 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
       return false;
     }
   }, [returnTo]);
-  const returnToCaseResolverFileId = useMemo((): string => {
-    if (!isCaseResolverReturnTarget) return '';
-    try {
-      const parsed = new URL(returnTo, 'https://local.prompt-exploder');
-      return parsed.searchParams.get('fileId')?.trim() ?? '';
-    } catch {
-      return '';
-    }
-  }, [isCaseResolverReturnTarget, returnTo]);
 
   const { runtimeSelection, runtimeGuardrailIssue, promptExploderSettings } = useSettingsState();
 
@@ -392,36 +382,13 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
         return;
       }
       if (returnTarget === 'case-resolver') {
-        const incomingContextFileId = incomingCaseResolverContext?.fileId?.trim() ?? '';
-        const routeContextFileId = returnToCaseResolverFileId;
-        const hasExplicitContextFileMismatch =
-          routeContextFileId.length > 0 &&
-          incomingContextFileId.length > 0 &&
-          incomingContextFileId !== routeContextFileId;
-        const resolvedContextFileId = routeContextFileId || incomingContextFileId;
-        const incomingContextSessionId = incomingCaseResolverContext?.sessionId?.trim() ?? '';
-        const routeContextSessionId = caseResolverSessionId;
-        const resolvedContextSessionId = routeContextSessionId || incomingContextSessionId;
+        const resolvedContextFileId = incomingCaseResolverContext?.fileId?.trim() ?? '';
+        const resolvedContextSessionId = incomingCaseResolverContext?.sessionId?.trim() ?? '';
         if (!resolvedContextFileId) {
           toast('Cannot apply to Case Resolver without a valid target document context.', {
             variant: 'error',
           });
           return;
-        }
-        if (hasExplicitContextFileMismatch) {
-          toast(
-            'Target document context mismatch detected. Applying to the return target document.',
-            { variant: 'warning' }
-          );
-        }
-        const hasExplicitSessionMismatch =
-          routeContextSessionId.length > 0 &&
-          incomingContextSessionId.length > 0 &&
-          incomingContextSessionId !== routeContextSessionId;
-        if (hasExplicitSessionMismatch) {
-          toast('Session metadata mismatch detected; applying with the current return session.', {
-            variant: 'warning',
-          });
         }
 
         const transferSegments = documentState?.segments ?? [];
@@ -509,11 +476,9 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     }
   }, [
     documentState,
-    caseResolverSessionId,
     incomingCaseResolverContext,
     promptText,
     promptExploderSettings.runtime.caseResolverCaptureMode,
-    returnToCaseResolverFileId,
     returnTarget,
     returnTo,
     router,
@@ -597,16 +562,8 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   useEffect(() => {
     const payload = readPromptExploderDraftPayload();
     const rawPayloadContext = payload?.caseResolverContext ?? null;
-    const rawPayloadSessionId = rawPayloadContext?.sessionId?.trim() ?? '';
-    const hasMatchingCaseResolverSession =
-      isCaseResolverReturnTarget &&
-      (caseResolverSessionId.length === 0 ||
-        rawPayloadSessionId.length === 0 ||
-        rawPayloadSessionId === caseResolverSessionId);
     const isConsumableDraftPayload =
-      payload !== null &&
-      payload.target === 'prompt-exploder' &&
-      (payload.source !== 'case-resolver' || hasMatchingCaseResolverSession);
+      payload !== null && payload.target === 'prompt-exploder';
     const nextBridgeSource = isConsumableDraftPayload ? (payload?.source ?? null) : null;
     if (nextBridgeSource !== incomingBridgeSource) {
       setIncomingBridgeSource(nextBridgeSource);
@@ -636,11 +593,9 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
       return;
     }
   }, [
-    caseResolverSessionId,
     clearDocument,
     incomingBridgeSource,
     incomingCaseResolverContext,
-    isCaseResolverReturnTarget,
   ]);
 
   // ── Context values ─────────────────────────────────────────────────────────

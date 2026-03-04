@@ -3,12 +3,13 @@
 import React, { useMemo } from 'react';
 
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import {
-  SettingsPanelBuilder,
-  type SettingsField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+import { type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import type { CaseResolverIdentifier } from '../../types';
+import {
+  CaseResolverEntitySettingsModal,
+  CaseResolverEntitySettingsModalProvider,
+} from './CaseResolverEntitySettingsModal';
 
 type CaseIdentifierFormData = {
   name: string;
@@ -27,7 +28,7 @@ interface CaseResolverIdentifierModalProps extends EntityModalProps<CaseResolver
 export function CaseResolverIdentifierModal({
   isOpen,
   onClose,
-  item: editingIdentifier,
+  item,
   formData,
   setFormData,
   parentIdentifierOptions,
@@ -63,25 +64,26 @@ export function CaseResolverIdentifierModal({
     [parentIdentifierOptions]
   );
 
-  const handleChange = (vals: Partial<CaseIdentifierFormData>) => {
-    setFormData((prev) => {
-      const next = { ...prev, ...vals };
-      if (vals.parentId === '__none__') next.parentId = null;
-      return next;
-    });
-  };
+  const runtimeValue = useMemo(
+    () => ({
+      isOpen,
+      onClose,
+      item,
+      createTitle: 'Create Case Identifier',
+      editTitle: 'Edit Case Identifier',
+      fields,
+      formData,
+      setFormData,
+      onSave,
+      isSaving,
+      parentNullSentinel: '__none__',
+    }),
+    [fields, formData, isOpen, isSaving, item, onClose, onSave, setFormData]
+  );
 
   return (
-    <SettingsPanelBuilder
-      open={isOpen}
-      onClose={onClose}
-      title={editingIdentifier ? 'Edit Case Identifier' : 'Create Case Identifier'}
-      fields={fields}
-      values={formData}
-      onChange={handleChange}
-      onSave={async () => onSave()}
-      isSaving={isSaving}
-      size='md'
-    />
+    <CaseResolverEntitySettingsModalProvider value={runtimeValue}>
+      <CaseResolverEntitySettingsModal />
+    </CaseResolverEntitySettingsModalProvider>
   );
 }

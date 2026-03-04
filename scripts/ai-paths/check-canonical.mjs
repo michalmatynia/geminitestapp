@@ -19,7 +19,6 @@ const EXPECTED_MAINTENANCE_ACTION_IDS = [
   'compact_oversized_configs',
   'repair_path_index',
   'ensure_starter_workflow_defaults',
-  'upgrade_server_execution_mode',
 ];
 
 const ALLOWED_LEGACY_INDEX_FILES = new Set(['src/app/api/ai-paths/settings/handler.ts']);
@@ -34,6 +33,23 @@ const ENGINE_CORE_FILE = 'src/shared/lib/ai-paths/core/runtime/engine-core.ts';
 const GRAPH_PORTS_FILE = 'src/shared/lib/ai-paths/core/utils/graph.ports.ts';
 const PATH_PERSISTENCE_HELPERS_FILE =
   'src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.helpers.ts';
+const SETTINGS_PERSISTENCE_FILE =
+  'src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts';
+const SETTINGS_PATH_ACTIONS_FILE =
+  'src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsPathActions.ts';
+const JOB_QUEUE_PANEL_UTILS_FILE = 'src/features/ai/ai-paths/components/job-queue-panel-utils.ts';
+const RUNS_ENQUEUE_HANDLER_FILE = 'src/app/api/ai-paths/runs/enqueue/handler.ts';
+const PATH_RUN_SERVICE_FILE = 'src/features/ai/ai-paths/services/path-run-service.ts';
+const PATH_RUN_EXECUTOR_LOGIC_FILE = 'src/features/ai/ai-paths/services/path-run-executor.logic.ts';
+const SETTINGS_RUNTIME_UTILS_FILE =
+  'src/features/ai/ai-paths/components/ai-paths-settings/runtime/utils.ts';
+const PRISMA_RUN_REPOSITORY_FILE =
+  'src/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository.ts';
+const MONGO_RUN_REPOSITORY_FILE =
+  'src/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository.ts';
+const QUERY_INVALIDATION_FILE = 'src/shared/lib/query-invalidation.ts';
+const SHARED_RUN_SOURCES_FILE = 'src/shared/lib/ai-paths/run-sources.ts';
+const FEATURE_RUN_SOURCES_FILE = 'src/features/ai/ai-paths/lib/run-sources.ts';
 const TRIGGER_FETCHER_MIGRATION_FILE =
   'src/shared/lib/ai-paths/core/normalization/normalization.edges.ts';
 
@@ -350,6 +366,267 @@ const checkPathSaveRawMessageCompatibilityPrune = () => {
   }
 };
 
+const checkRunExecutionMetaCompatibilityPrune = () => {
+  const text = readFile(JOB_QUEUE_PANEL_UTILS_FILE);
+  const forbiddenSnippets = [
+    "meta['execution_mode']",
+    "meta['runMode']",
+    "meta['run_mode']",
+    "meta['mode']",
+    "runtimeMeta?.['mode']",
+    "sourceInfoMeta?.['mode']",
+    "sourceInfoMeta?.['executionMode']",
+  ];
+  const requiredSnippets = ["meta['executionMode']", "runtimeMeta?.['executionMode']"];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        JOB_QUEUE_PANEL_UTILS_FILE,
+        `legacy run execution metadata compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        JOB_QUEUE_PANEL_UTILS_FILE,
+        `missing canonical run execution metadata snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkRunSourceMetaCompatibilityPrune = () => {
+  const text = readFile(JOB_QUEUE_PANEL_UTILS_FILE);
+  const forbiddenSnippets = [
+    "meta['sourceInfo']",
+    "sourceRaw && typeof sourceRaw === 'object'",
+    "source.startsWith('tab:')",
+    'infoTab=',
+  ];
+  const requiredSnippets = ["readStringValue(meta['source'])", 'return `src=${'];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        JOB_QUEUE_PANEL_UTILS_FILE,
+        `legacy run source metadata compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        JOB_QUEUE_PANEL_UTILS_FILE,
+        `missing canonical run source metadata snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkEnqueueMetaSourceCompatibilityPrune = () => {
+  const text = readFile(RUNS_ENQUEUE_HANDLER_FILE);
+  const forbiddenSnippets = [
+    'sourceInfo: sourceValue',
+    "triggerEventId ? 'trigger_button' : 'ai_paths_ui'",
+  ];
+  const requiredSnippets = ['meta.source must be a string'];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        RUNS_ENQUEUE_HANDLER_FILE,
+        `legacy enqueue metadata source compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        RUNS_ENQUEUE_HANDLER_FILE,
+        `missing canonical enqueue metadata source guard snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkRunSourceFilterCompatibilityPrune = () => {
+  const prismaText = readFile(PRISMA_RUN_REPOSITORY_FILE);
+  const mongoText = readFile(MONGO_RUN_REPOSITORY_FILE);
+
+  const forbiddenPrismaSnippets = ["['source', 'tab']", "['sourceInfo', 'tab']"];
+  const requiredPrismaSnippets = ["meta: { path: ['source'], equals: value }"];
+
+  for (const snippet of forbiddenPrismaSnippets) {
+    if (prismaText.includes(snippet)) {
+      reportViolation(
+        PRISMA_RUN_REPOSITORY_FILE,
+        `legacy run source filter compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredPrismaSnippets) {
+    if (!prismaText.includes(snippet)) {
+      reportViolation(
+        PRISMA_RUN_REPOSITORY_FILE,
+        `missing canonical run source filter snippet: ${snippet}`
+      );
+    }
+  }
+
+  const forbiddenMongoSnippets = ["'meta.source.tab'", "'meta.sourceInfo.tab'"];
+  const requiredMongoSnippets = ["'meta.source': { $in: [...AI_PATHS_RUN_SOURCE_VALUES] }"];
+
+  for (const snippet of forbiddenMongoSnippets) {
+    if (mongoText.includes(snippet)) {
+      reportViolation(
+        MONGO_RUN_REPOSITORY_FILE,
+        `legacy run source filter compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredMongoSnippets) {
+    if (!mongoText.includes(snippet)) {
+      reportViolation(
+        MONGO_RUN_REPOSITORY_FILE,
+        `missing canonical run source filter snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkQueueCacheRunSourceCompatibilityPrune = () => {
+  const text = readFile(QUERY_INVALIDATION_FILE);
+  const forbiddenSnippets = [
+    "meta['sourceInfo']",
+    "source.startsWith('tab:')",
+    "sourceRaw && typeof sourceRaw === 'object'",
+    'AI_PATHS_RUN_SOURCE_TABS',
+  ];
+  const requiredSnippets = ["normalizeString(meta['source'])", 'AI_PATHS_NODE_SOURCES.has(source)'];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        QUERY_INVALIDATION_FILE,
+        `legacy queue-cache run source compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        QUERY_INVALIDATION_FILE,
+        `missing canonical queue-cache run source snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkRunSourceHelpersCompatibilityPrune = () => {
+  if (fs.existsSync(path.join(ROOT, FEATURE_RUN_SOURCES_FILE))) {
+    reportViolation(
+      FEATURE_RUN_SOURCES_FILE,
+      'legacy duplicate run-sources helper module must remain removed'
+    );
+  }
+
+  const text = readFile(SHARED_RUN_SOURCES_FILE);
+  const forbiddenSnippets = ['AI_PATHS_RUN_SOURCE_TABS', 'isAiPathsRunSourceTab'];
+  const requiredSnippets = ['AI_PATHS_RUN_SOURCE_VALUES', 'isAiPathsRunSourceValue'];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        SHARED_RUN_SOURCES_FILE,
+        `legacy run-source helper compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        SHARED_RUN_SOURCES_FILE,
+        `missing canonical run-source helper snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkRunModeQueueCompatibilityPrune = () => {
+  const files = [SETTINGS_PERSISTENCE_FILE, SETTINGS_PATH_ACTIONS_FILE];
+  for (const file of files) {
+    const text = readFile(file);
+    if (text.includes("runMode === 'queue'")) {
+      reportViolation(file, "legacy runMode compatibility alias detected: runMode === 'queue'");
+    }
+  }
+};
+
+const checkRequestIdLookupCompatibilityPrune = () => {
+  const text = readFile(PATH_RUN_SERVICE_FILE);
+  const forbiddenSnippets = [
+    'Provider-safe fallback when JSON-path filtering on meta is unavailable.',
+    'existingByScan',
+  ];
+  const requiredSnippets = ['requestId', 'limit: 1', 'offset: 0'];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        PATH_RUN_SERVICE_FILE,
+        `legacy requestId lookup compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        PATH_RUN_SERVICE_FILE,
+        `missing canonical requestId lookup snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkRuntimeNodeStatusAliasCompatibilityPrune = () => {
+  const executorLogicText = readFile(PATH_RUN_EXECUTOR_LOGIC_FILE);
+  const runtimeUtilsText = readFile(SETTINGS_RUNTIME_UTILS_FILE);
+
+  const executorForbiddenSnippets = ["case 'paused':", "case 'dead_lettered':"];
+  const runtimeUtilsForbiddenSnippets = [
+    "if (status === 'paused')",
+    "if (status === 'dead_lettered')",
+  ];
+
+  for (const snippet of executorForbiddenSnippets) {
+    if (executorLogicText.includes(snippet)) {
+      reportViolation(
+        PATH_RUN_EXECUTOR_LOGIC_FILE,
+        `legacy runtime-node status alias snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of runtimeUtilsForbiddenSnippets) {
+    if (runtimeUtilsText.includes(snippet)) {
+      reportViolation(
+        SETTINGS_RUNTIME_UTILS_FILE,
+        `legacy runtime-node status alias snippet detected: ${snippet}`
+      );
+    }
+  }
+};
+
 const main = () => {
   const sourceFiles = collectSourceFiles(SRC_DIR);
 
@@ -368,6 +645,15 @@ const main = () => {
   checkLegacyDbQueryProviderMigrationPrune(sourceFiles);
   checkLegacyPortAliasPrune();
   checkPathSaveRawMessageCompatibilityPrune();
+  checkRunExecutionMetaCompatibilityPrune();
+  checkRunSourceMetaCompatibilityPrune();
+  checkEnqueueMetaSourceCompatibilityPrune();
+  checkRunSourceFilterCompatibilityPrune();
+  checkQueueCacheRunSourceCompatibilityPrune();
+  checkRunSourceHelpersCompatibilityPrune();
+  checkRunModeQueueCompatibilityPrune();
+  checkRequestIdLookupCompatibilityPrune();
+  checkRuntimeNodeStatusAliasCompatibilityPrune();
 
   if (violations.length > 0) {
     console.error('[ai-paths:check:canonical] failed with violations:');

@@ -186,6 +186,7 @@ describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
     const { input, mocks } = buildInput();
     const nextPathId = 'path_next';
     const fetchedConfig = createDefaultPathConfig(nextPathId);
+    fetchedConfig.runMode = 'queue';
 
     mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([
       {
@@ -207,6 +208,7 @@ describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
     expect(mocks.setIsPathSwitching).toHaveBeenCalledWith(false);
     expect(mocks.persistActivePathPreference).toHaveBeenCalledWith(nextPathId);
     expect(mocks.setPathConfigs).toHaveBeenCalledTimes(1);
+    expect(setRunModeGraphMock).toHaveBeenCalledWith('manual');
   });
 
   it('does not replace target path with default config when fetch fails', async () => {

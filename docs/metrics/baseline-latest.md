@@ -1,12 +1,12 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-04T19:22:38.962Z
+Generated at: 2026-03-04T19:47:14.022Z
 
 ## Snapshot
 
-- Source files: 4207
-- Source lines: 653359
-- use client files: 1281
+- Source files: 4213
+- Source lines: 653588
+- use client files: 1284
 - Files >= 1000 LOC: 6
 - Files >= 1500 LOC: 2
 - Largest file: `src/features/case-resolver/__tests__/workspace.test.ts` (1802 LOC)
@@ -17,6 +17,8 @@ Generated at: 2026-03-04T19:22:38.962Z
 - Cross-feature dependency pairs: 71
 - Shared -> features imports: 11
 - setInterval occurrences: 22
+- Prop-drilling chains (depth >= 3): 547
+- Prop-drilling chains (depth >= 4): 114
 
 ## Top API Hotspots (by LOC)
 

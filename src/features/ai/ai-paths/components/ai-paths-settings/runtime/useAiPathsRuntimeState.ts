@@ -15,6 +15,26 @@ import {
   type SetNodeStatusInput,
 } from '@/shared/contracts/ai-paths-runtime';
 
+const TERMINAL_NODE_STATUSES: ReadonlySet<AiPathRuntimeNodeStatus> = new Set([
+  'completed',
+  'cached',
+  'failed',
+  'canceled',
+  'timeout',
+  'skipped',
+  'blocked',
+]);
+
+const TRANSIENT_NODE_STATUSES: ReadonlySet<AiPathRuntimeNodeStatus> = new Set([
+  'queued',
+  'pending',
+  'processing',
+  'running',
+  'polling',
+  'waiting_callback',
+  'advance_pending',
+]);
+
 export function useAiPathsRuntimeState() {
   const [runStatus, setRunStatus] = useState<RunStatus>('idle');
   const [runtimeNodeStatuses, setRuntimeNodeStatuses] = useState<AiPathRuntimeNodeStatusMap>({});
@@ -73,6 +93,8 @@ export function useAiPathsRuntimeState() {
       s === 'idle' ||
       s === 'queued' ||
       s === 'running' ||
+      s === 'pending' ||
+      s === 'processing' ||
       s === 'completed' ||
       s === 'failed' ||
       s === 'canceled' ||
@@ -97,6 +119,10 @@ export function useAiPathsRuntimeState() {
         return 'Queued';
       case 'running':
         return 'Running';
+      case 'pending':
+        return 'Pending';
+      case 'processing':
+        return 'Processing';
       case 'completed':
         return 'Completed';
       case 'failed':
@@ -126,6 +152,22 @@ export function useAiPathsRuntimeState() {
     (input: SetNodeStatusInput): void => {
       const normalizedStatus = normalizeNodeStatus(input.status);
       if (!normalizedStatus) return;
+      const prevStatus = runtimeNodeStatusesRef.current[input.nodeId];
+      if (prevStatus === normalizedStatus) return;
+
+      if (prevStatus) {
+        const isQueueLikeDowngrade =
+          (normalizedStatus === 'queued' || normalizedStatus === 'pending') &&
+          prevStatus !== 'idle' &&
+          prevStatus !== 'queued' &&
+          prevStatus !== 'pending';
+        const isLateTransientAfterTerminal =
+          TERMINAL_NODE_STATUSES.has(prevStatus) && TRANSIENT_NODE_STATUSES.has(normalizedStatus);
+        if (isQueueLikeDowngrade || isLateTransientAfterTerminal) {
+          return;
+        }
+      }
+
       // Track node execution timing
       if (normalizedStatus === 'running') {
         nodeStartTimesRef.current[input.nodeId] = performance.now();
@@ -146,8 +188,6 @@ export function useAiPathsRuntimeState() {
         delete nodeStartTimesRef.current[input.nodeId];
         setNodeDurations((prev) => ({ ...prev, [input.nodeId]: dur }));
       }
-      const prevStatus = runtimeNodeStatusesRef.current[input.nodeId];
-      if (prevStatus === normalizedStatus) return;
       const next = {
         ...runtimeNodeStatusesRef.current,
         [input.nodeId]: normalizedStatus,

@@ -1,6 +1,7 @@
 import type * as React from 'react';
 import type {
   AiNode,
+  AiPathRuntimeNodeStatus,
   AiPathRunRecord,
   Edge,
   PathConfig,
@@ -57,6 +58,66 @@ export const resolveRunAt = (run: AiPathRunRecord): string => {
   );
 };
 
+const normalizeNodeStatusForMerge = (value: unknown): AiPathRuntimeNodeStatus | null => {
+  if (typeof value !== 'string') return null;
+  const status = value.trim().toLowerCase();
+  if (
+    status === 'idle' ||
+    status === 'queued' ||
+    status === 'running' ||
+    status === 'completed' ||
+    status === 'cached' ||
+    status === 'failed' ||
+    status === 'canceled' ||
+    status === 'skipped' ||
+    status === 'blocked' ||
+    status === 'pending' ||
+    status === 'processing' ||
+    status === 'polling' ||
+    status === 'waiting_callback' ||
+    status === 'advance_pending' ||
+    status === 'timeout'
+  ) {
+    return status;
+  }
+  return null;
+};
+
+export const mergeRuntimeNodeOutputsForStatus = (input: {
+  previous: RuntimePortValues | undefined;
+  next: RuntimePortValues | undefined;
+  status: unknown;
+}): RuntimePortValues => {
+  const nextOutputs = input.next ?? {};
+  const { status: _nextStatus, ...nextOutputsWithoutStatus } = nextOutputs;
+  const previousStatus = normalizeNodeStatusForMerge(input.previous?.['status']);
+  const normalizedStatus = normalizeNodeStatusForMerge(input.status);
+  const effectiveStatus = normalizedStatus ?? previousStatus;
+  const merged = {
+    ...(input.previous ?? {}),
+    ...nextOutputsWithoutStatus,
+    ...(effectiveStatus ? { status: effectiveStatus } : {}),
+  } as RuntimePortValues;
+
+  const hasOwn = (key: string): boolean => Object.prototype.hasOwnProperty.call(nextOutputs, key);
+
+  if (effectiveStatus !== 'blocked') {
+    delete merged['blockedReason'];
+    delete merged['requiredPorts'];
+    delete merged['waitingOnPorts'];
+    delete merged['skipReason'];
+    if (!hasOwn('message')) {
+      delete merged['message'];
+    }
+  }
+
+  if (!hasOwn('error')) {
+    delete merged['error'];
+  }
+
+  return merged;
+};
+
 /**
  * Merge an incoming runtime state snapshot into current state
  */
@@ -69,10 +130,25 @@ export const mergeRuntimeStateSnapshot = (
     ...(current.inputs ?? {}),
     ...(incoming.inputs ?? {}),
   };
-  const nextOutputs: Record<string, RuntimePortValues> = {
-    ...(current.outputs ?? {}),
-    ...(incoming.outputs ?? {}),
-  };
+  const nextOutputs: Record<string, RuntimePortValues> = {};
+  const outputNodeIds = new Set<string>([
+    ...Object.keys(current.outputs ?? {}),
+    ...Object.keys(incoming.outputs ?? {}),
+  ]);
+  outputNodeIds.forEach((nodeId: string) => {
+    const incomingNodeOutputs = incoming.outputs?.[nodeId];
+    if (incomingNodeOutputs === undefined) {
+      if (current.outputs?.[nodeId] !== undefined) {
+        nextOutputs[nodeId] = current.outputs[nodeId]!;
+      }
+      return;
+    }
+    nextOutputs[nodeId] = mergeRuntimeNodeOutputsForStatus({
+      previous: current.outputs?.[nodeId],
+      next: incomingNodeOutputs,
+      status: incomingNodeOutputs['status'],
+    });
+  });
 
   const incomingHashes = incoming.hashes ?? undefined;
   const hasIncomingHashes = !!incomingHashes && Object.keys(incomingHashes).length > 0;

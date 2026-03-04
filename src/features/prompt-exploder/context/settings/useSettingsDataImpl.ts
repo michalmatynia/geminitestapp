@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { useToast } from '@/shared/ui';
 import type { useSettingsMap } from '@/shared/hooks/use-settings';
 import {
@@ -43,9 +42,6 @@ type UseSettingsDataImplArgs = {
 export function useSettingsDataImpl(args: UseSettingsDataImplArgs) {
   const { settingsQuery, settingsMap } = args;
   const { toast } = useToast();
-  const searchParams = useSearchParams();
-  const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
-  const isCaseResolverReturnTarget = returnTo.startsWith('/admin/case-resolver');
 
   const [learningDraft, setLearningDraftState] = useState<LearningDraft>({
     runtimeRuleProfile: 'all',
@@ -99,8 +95,7 @@ export function useSettingsDataImpl(args: UseSettingsDataImplArgs) {
     [rawValidatorPatternLists]
   );
 
-  const shouldPreferCaseResolverValidationStack =
-    incomingBridgeSource === 'case-resolver' || isCaseResolverReturnTarget;
+  const shouldPreferCaseResolverValidationStack = incomingBridgeSource === 'case-resolver';
   const preferredValidatorScope = shouldPreferCaseResolverValidationStack
     ? 'case-resolver-prompt-exploder'
     : 'prompt-exploder';
@@ -134,12 +129,8 @@ export function useSettingsDataImpl(args: UseSettingsDataImplArgs) {
       setIncomingBridgeSource(payload.source);
       return;
     }
-    if (isCaseResolverReturnTarget) {
-      setIncomingBridgeSource('case-resolver');
-      return;
-    }
     setIncomingBridgeSource(null);
-  }, [isCaseResolverReturnTarget]);
+  }, []);
 
   useEffect(() => {
     const handleStorage = (event: StorageEvent): void => {
@@ -149,17 +140,13 @@ export function useSettingsDataImpl(args: UseSettingsDataImplArgs) {
         setIncomingBridgeSource(payload.source);
         return;
       }
-      if (isCaseResolverReturnTarget) {
-        setIncomingBridgeSource('case-resolver');
-        return;
-      }
       setIncomingBridgeSource(null);
     };
     window.addEventListener('storage', handleStorage);
     return (): void => {
       window.removeEventListener('storage', handleStorage);
     };
-  }, [isCaseResolverReturnTarget]);
+  }, []);
 
   useEffect(() => {
     if (settingsQuery.isLoading) return;

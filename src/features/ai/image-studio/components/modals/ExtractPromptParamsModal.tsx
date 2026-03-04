@@ -1,20 +1,18 @@
 'use client';
 
-import { Loader2, Zap, Cpu, Sparkles, Wand2 } from 'lucide-react';
+import { Zap, Cpu, Sparkles, Wand2 } from 'lucide-react';
 import React from 'react';
 
 import type { ModalStateProps } from '@/shared/contracts/ui';
-import {
-  FormModal,
-  Button,
-  Label,
-  Textarea,
-  StandardDataTablePanel,
-  EmptyState,
-} from '@/shared/ui';
+import { FormModal, Label, StandardDataTablePanel, EmptyState } from '@/shared/ui';
 
 import { PromptExtractionHistoryPanel } from '../studio-modals/PromptExtractionHistoryPanel';
 import { useStudioInlineEdit } from '../studio-modals/StudioInlineEditContext';
+import {
+  StudioActionButtonRow,
+  type StudioActionButtonConfig,
+} from './StudioActionButtonRow';
+import { StudioPromptTextSection } from './StudioPromptTextSection';
 import type { ColumnDef } from '@tanstack/react-table';
 
 export function ExtractPromptParamsModal({ isOpen, onClose }: ModalStateProps): React.JSX.Element {
@@ -77,67 +75,57 @@ export function ExtractPromptParamsModal({ isOpen, onClose }: ModalStateProps): 
     [previewControls]
   );
 
-  const actions = (
-    <>
-      <Button
-        size='sm'
-        variant='outline'
-        onClick={() => {
+  const actionButtons = React.useMemo<StudioActionButtonConfig[]>(
+    () => [
+      {
+        key: 'smart-extract',
+        label: 'Smart',
+        onClick: () => {
           void handleSmartExtraction();
-        }}
-        disabled={extractBusy !== 'none'}
-        className='gap-2'
-        loading={extractBusy === 'smart'}
-      >
-        <Zap className='size-4' />
-        Smart
-      </Button>{' '}
-      <Button
-        size='sm'
-        variant='outline'
-        onClick={() => {
+        },
+        disabled: extractBusy !== 'none',
+        loading: extractBusy === 'smart',
+        icon: <Zap className='size-4' />,
+      },
+      {
+        key: 'programmatic-extract',
+        label: 'Programmatic',
+        onClick: () => {
           void handleProgrammaticExtraction();
-        }}
-        disabled={extractBusy !== 'none'}
-        className='gap-2'
-      >
-        {extractBusy === 'programmatic' ? (
-          <Loader2 className='size-4 animate-spin' />
-        ) : (
-          <Cpu className='size-4' />
-        )}
-        Programmatic
-      </Button>
-      <Button
-        size='sm'
-        variant='outline'
-        onClick={() => {
+        },
+        disabled: extractBusy !== 'none',
+        loading: extractBusy === 'programmatic',
+        icon: <Cpu className='size-4' />,
+      },
+      {
+        key: 'ai-extract',
+        label: 'AI Only',
+        onClick: () => {
           void handleAiExtraction();
-        }}
-        disabled={extractBusy !== 'none'}
-        className='gap-2'
-        loading={extractBusy === 'ai'}
-      >
-        <Sparkles className='size-4' />
-        AI Only
-      </Button>{' '}
-      <Button
-        size='sm'
-        variant='outline'
-        onClick={() => {
+        },
+        disabled: extractBusy !== 'none',
+        loading: extractBusy === 'ai',
+        icon: <Sparkles className='size-4' />,
+      },
+      {
+        key: 'suggest-controls',
+        label: 'Suggest',
+        onClick: () => {
           void handleSuggestUiControls();
-        }}
-        disabled={!previewParams || extractBusy !== 'none'}
-        className='gap-2'
-      >
-        {extractBusy === 'ui' ? (
-          <Loader2 className='size-4 animate-spin' />
-        ) : (
-          <Wand2 className='size-4' />
-        )}
-        Suggest
-      </Button>
-    </>
+        },
+        disabled: !previewParams || extractBusy !== 'none',
+        loading: extractBusy === 'ui',
+        icon: <Wand2 className='size-4' />,
+      },
+    ],
+    [
+      extractBusy,
+      handleAiExtraction,
+      handleProgrammaticExtraction,
+      handleSmartExtraction,
+      handleSuggestUiControls,
+      previewParams,
+    ]
   );
 
   return (
@@ -151,22 +139,17 @@ export function ExtractPromptParamsModal({ isOpen, onClose }: ModalStateProps): 
       }}
       isSaveDisabled={!previewParams}
       saveText='Apply Changes'
-      actions={actions}
+      actions={<StudioActionButtonRow actions={actionButtons} />}
     >
       <div className='space-y-6'>
-        <div className='space-y-2'>
-          <Label className='text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1'>
-            Prompt Source
-          </Label>
-          <Textarea
-            value={extractDraftPrompt}
-            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-              setExtractDraftPrompt(event.target.value)
-            }
-            className='h-40 font-mono text-[11px] bg-black/20'
-            placeholder='Paste prompt text with params object...'
-          />
-        </div>
+        <StudioPromptTextSection
+          label='Prompt Source'
+          value={extractDraftPrompt}
+          onValueChange={setExtractDraftPrompt}
+          labelClassName='font-bold uppercase tracking-wider text-muted-foreground ml-1'
+          textareaClassName='h-40 bg-black/20'
+          placeholder='Paste prompt text with params object...'
+        />
 
         {extractError ? (
           <div className='rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive'>

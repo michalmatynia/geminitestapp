@@ -6,7 +6,7 @@ import {
   GraphExecutionCancelled,
 } from '@/shared/lib/ai-paths';
 
-import { createRunId } from '../utils';
+import { createRunId, mergeRuntimeNodeOutputsForStatus } from '../utils';
 
 import type { LocalExecutionArgs } from '../types';
 import { extractDatabaseRuntimeMetadata } from '../useAiPathsLocalExecution.helpers';
@@ -124,10 +124,11 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
                   },
                   outputs: {
                     ...prevOutputs,
-                    [node.id]: {
-                      ...(prevOutputs[node.id] ?? {}),
+                    [node.id]: mergeRuntimeNodeOutputsForStatus({
+                      previous: prevOutputs[node.id],
+                      next: {},
                       status: 'running',
-                    },
+                    }),
                   },
                 };
                 args.runtimeStateRef.current = next;
@@ -172,11 +173,11 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
                 ...(metadata ? { metadata } : {}),
               });
               args.setRuntimeState((prev: RuntimeState): RuntimeState => {
-                const nextOutput = {
-                  ...(prev.outputs?.[node.id] ?? {}),
-                  ...nextOutputs,
+                const nextOutput = mergeRuntimeNodeOutputsForStatus({
+                  previous: prev.outputs?.[node.id],
+                  next: nextOutputs,
                   status: normalizedStatus,
-                } as RuntimePortValues;
+                });
                 const next: RuntimeState = {
                   ...prev,
                   currentRun: {
@@ -229,6 +230,14 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
                 metadata: { error: message },
               });
               args.setRuntimeState((prev: RuntimeState): RuntimeState => {
+                const nextOutput = mergeRuntimeNodeOutputsForStatus({
+                  previous: prev.outputs?.[node.id],
+                  next: {
+                    ...(prevOutputs ?? {}),
+                    error: message,
+                  },
+                  status: 'failed',
+                });
                 const next: RuntimeState = {
                   ...prev,
                   currentRun: {
@@ -243,11 +252,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
                   },
                   outputs: {
                     ...(prev.outputs ?? {}),
-                    [node.id]: {
-                      ...(prevOutputs ?? {}),
-                      status: 'failed',
-                      error: message,
-                    } as RuntimePortValues,
+                    [node.id]: nextOutput,
                   },
                 };
                 args.runtimeStateRef.current = next;

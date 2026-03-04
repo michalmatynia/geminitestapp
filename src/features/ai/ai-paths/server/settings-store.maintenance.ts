@@ -11,10 +11,6 @@ import {
 import { compactPathConfigValue } from './settings-store.compaction';
 import { parsePathMetas } from './settings-store.parsing';
 import {
-  needsServerExecutionModeConfigUpgrade,
-  upgradeServerExecutionModeConfig,
-} from './settings-store-execution-mode-server';
-import {
   countPendingStarterWorkflowDefaults,
   ensureStarterWorkflowDefaults,
 } from './starter-workflows-settings';
@@ -30,16 +26,6 @@ export const countPendingPathConfigCompactions = (records: AiPathsSettingRecord[
     if (!shouldCompact) return count;
     const compacted = compactPathConfigValue(entry.value);
     return compacted ? count + 1 : count;
-  }, 0);
-};
-
-export const countPendingServerExecutionModeUpgrades = (
-  records: AiPathsSettingRecord[]
-): number => {
-  if (records.length === 0) return 0;
-  return records.reduce((count: number, entry: AiPathsSettingRecord): number => {
-    if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) return count;
-    return needsServerExecutionModeConfigUpgrade(entry.value) ? count + 1 : count;
   }, 0);
 };
 
@@ -138,18 +124,6 @@ export const buildAiPathsMaintenanceReport = (
     });
   }
 
-  const serverModeUpgradeCount = countPendingServerExecutionModeUpgrades(records);
-  if (serverModeUpgradeCount > 0) {
-    actions.push({
-      id: 'upgrade_server_execution_mode',
-      title: 'Upgrade Server Execution Mode',
-      description: `Migrate ${serverModeUpgradeCount} path(s) to support server-side execution mode.`,
-      blocking: false,
-      status: 'pending',
-      affectedRecords: serverModeUpgradeCount,
-    });
-  }
-
   return {
     scannedAt: new Date().toISOString(),
     pendingActions: actions.length,
@@ -184,22 +158,6 @@ export const runMaintenanceAction = (args: {
         const compacted = compactPathConfigValue(entry.value);
         if (compacted) {
           nextRecords.push({ ...entry, value: compacted });
-          affectedCount++;
-        } else {
-          nextRecords.push(entry);
-        }
-      });
-      break;
-
-    case 'upgrade_server_execution_mode':
-      args.records.forEach((entry: AiPathsSettingRecord) => {
-        if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) {
-          nextRecords.push(entry);
-          return;
-        }
-        const upgraded = upgradeServerExecutionModeConfig(entry.value);
-        if (upgraded && upgraded !== entry.value) {
-          nextRecords.push({ ...entry, value: upgraded });
           affectedCount++;
         } else {
           nextRecords.push(entry);
@@ -253,7 +211,6 @@ export const runFullMaintenance = (records: AiPathsSettingRecord[]): AiPathsMain
       'compact_oversized_configs',
       'repair_path_index',
       'ensure_starter_workflow_defaults',
-      'upgrade_server_execution_mode',
     ] as AiPathsMaintenanceActionId[]
   ).forEach((actionId: AiPathsMaintenanceActionId) => {
     const report = runMaintenanceAction({ actionId, records: currentRecords });

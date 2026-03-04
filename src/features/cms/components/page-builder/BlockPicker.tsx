@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react';
 
 import { APP_EMBED_SETTING_KEY, type AppEmbedId } from '@/features/app-embeds/lib/constants';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { PickerOption } from '@/shared/contracts/ui';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
@@ -15,6 +16,34 @@ import type { BlockDefinition } from '../../types/page-builder';
 interface BlockPickerProps {
   sectionType: string;
   onSelect: (blockType: string) => void;
+}
+
+type BlockPickerSelectRuntimeValue = {
+  onSelect: (blockType: string) => void;
+};
+
+const {
+  Context: BlockPickerSelectRuntimeContext,
+  useStrictContext: useBlockPickerSelectRuntime,
+} = createStrictContext<BlockPickerSelectRuntimeValue>({
+  hookName: 'useBlockPickerSelectRuntime',
+  providerName: 'BlockPickerSelectRuntimeProvider',
+  displayName: 'BlockPickerSelectRuntimeContext',
+});
+
+function BlockPickerDropdown({
+  groups,
+}: {
+  groups: Array<{ label: string; options: PickerOption[] }>;
+}): React.JSX.Element {
+  const runtime = useBlockPickerSelectRuntime();
+  return (
+    <GenericPickerDropdown
+      groups={groups}
+      onSelect={(option: PickerOption) => runtime.onSelect(option.key)}
+      ariaLabel='Add block'
+    />
+  );
 }
 
 export function BlockPicker({ sectionType, onSelect }: BlockPickerProps): React.ReactNode {
@@ -43,14 +72,16 @@ export function BlockPicker({ sectionType, onSelect }: BlockPickerProps): React.
     ],
     [blockTypes]
   );
+  const selectRuntimeValue = useMemo<BlockPickerSelectRuntimeValue>(
+    () => ({ onSelect }),
+    [onSelect]
+  );
 
   if (blockTypes.length === 0) return null;
 
   return (
-    <GenericPickerDropdown
-      groups={groups}
-      onSelect={(option: PickerOption) => onSelect(option.key)}
-      ariaLabel='Add block'
-    />
+    <BlockPickerSelectRuntimeContext.Provider value={selectRuntimeValue}>
+      <BlockPickerDropdown groups={groups} />
+    </BlockPickerSelectRuntimeContext.Provider>
   );
 }

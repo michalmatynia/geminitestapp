@@ -146,4 +146,51 @@ describe('path-run-service enqueuePathRun', () => {
       })
     );
   });
+
+  it('uses canonical requestId lookup only once when deduplicating enqueue runs', async () => {
+    const config = createDefaultPathConfig('path_request_id_dedupe');
+    const existingRun = {
+      id: 'run-existing',
+      pathId: config.id,
+      status: 'queued',
+      startedAt: null,
+      meta: { requestId: 'req-123' },
+    };
+    const listRunsMock = vi.fn().mockResolvedValue({ runs: [existingRun], total: 1 });
+    const createRunMock = vi.fn();
+
+    getPathRunRepositoryMock.mockResolvedValue({
+      listRuns: listRunsMock,
+      createRun: createRunMock,
+      createRunNodes: vi.fn(),
+      createRunEvent: vi.fn(),
+      updateRunIfStatus: vi.fn().mockResolvedValue(null),
+    });
+
+    const { enqueuePathRun } = await loadModule();
+    const run = await enqueuePathRun({
+      pathId: config.id,
+      pathName: config.name,
+      nodes: config.nodes,
+      edges: config.edges,
+      requestId: 'req-123',
+      meta: {
+        aiPathsValidation: {
+          enabled: false,
+        },
+      },
+    });
+
+    expect(run.id).toBe('run-existing');
+    expect(listRunsMock).toHaveBeenCalledTimes(1);
+    expect(listRunsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pathId: config.id,
+        requestId: 'req-123',
+        limit: 1,
+        offset: 0,
+      })
+    );
+    expect(createRunMock).not.toHaveBeenCalled();
+  });
 });

@@ -2,10 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import {
-  AI_PATHS_RUN_SOURCE_TABS,
-  AI_PATHS_RUN_SOURCE_VALUES,
-} from '@/shared/lib/ai-paths/run-sources';
+import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 import type {
   AiNode,
   Edge,
@@ -309,19 +306,11 @@ const buildRunFilter = (options: AiPathRunListOptions = {}): Record<string, unkn
     if (sourceMode === 'exclude') {
       if (source === 'ai_paths_ui') {
         andFilters.push({ 'meta.source': { $nin: [...AI_PATHS_RUN_SOURCE_VALUES] } });
-        andFilters.push({ 'meta.source.tab': { $nin: [...AI_PATHS_RUN_SOURCE_TABS] } });
-        andFilters.push({ 'meta.sourceInfo.tab': { $nin: [...AI_PATHS_RUN_SOURCE_TABS] } });
       } else {
         andFilters.push({ 'meta.source': { $ne: source } });
       }
     } else if (source === 'ai_paths_ui') {
-      andFilters.push({
-        $or: [
-          { 'meta.source': { $in: [...AI_PATHS_RUN_SOURCE_VALUES] } },
-          { 'meta.source.tab': { $in: [...AI_PATHS_RUN_SOURCE_TABS] } },
-          { 'meta.sourceInfo.tab': { $in: [...AI_PATHS_RUN_SOURCE_TABS] } },
-        ],
-      });
+      andFilters.push({ 'meta.source': { $in: [...AI_PATHS_RUN_SOURCE_VALUES] } });
     } else {
       andFilters.push({ 'meta.source': source });
     }
@@ -351,6 +340,10 @@ const buildRunFilter = (options: AiPathRunListOptions = {}): Record<string, unkn
     });
   }
   return andFilters.length > 0 ? { $and: andFilters } : {};
+};
+
+export const __testOnly = {
+  buildRunFilter,
 };
 
 const buildRunIdConstraint = (runIds: string[]): Record<string, unknown> => ({

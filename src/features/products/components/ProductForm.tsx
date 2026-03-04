@@ -3,7 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import DebugPanel from '@/features/products/components/DebugPanel';
+import ProductFormDebugPanel from '@/features/products/components/ProductFormDebugPanel';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
 import {
@@ -89,7 +89,7 @@ export default function ProductForm({
       }}
       className='relative min-h-[400px] pb-10'
     >
-      {isDebugOpen && <DebugPanel />}
+      {isDebugOpen && <ProductFormDebugPanel />}
       <ProductValidationSettingsProvider
         value={{
           validationInstanceScope: validator.validationInstanceScope,

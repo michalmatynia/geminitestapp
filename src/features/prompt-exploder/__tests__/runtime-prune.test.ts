@@ -13,10 +13,19 @@ const forbiddenRuntimeCompatTokens = [
   'runtime_retry',
   'parseStoredValidationRuleStack',
   'stack.id ??',
+  'export function usePromptExploderState(',
+  'returnToCaseResolverFileId',
+  'hasMatchingCaseResolverSession',
+  'routeContextSessionId',
+  'routeContextFileId',
 ];
 const forbiddenRuntimeCompatPatterns: RegExp[] = [
   /launchAppliesToScopes:\s*rule\.launchAppliesToScopes\s*\?\?\s*rule\.appliesToScopes/s,
   /PROMPT_ENGINE_SETTINGS_KEY\s*\+\s*['_"]_rules['"]/s,
+  /incomingBridgeSource\s*===\s*'case-resolver'\s*\|\|\s*isCaseResolverReturnTarget/s,
+  /incomingBridgeSource\s*===\s*'case-resolver'\s*\|\|\s*returnTarget\s*===\s*'case-resolver'/s,
+  /payload\.source\s*!==\s*'case-resolver'\s*\|\|\s*hasMatchingCaseResolverSession/s,
+  /searchParams\?\.\s*get\(['"]sessionId['"]\)/s,
 ];
 
 const collectSourceFiles = (dir: string): string[] => {

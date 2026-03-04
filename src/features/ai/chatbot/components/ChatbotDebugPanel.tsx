@@ -11,11 +11,13 @@ interface LogEntry {
   message: string;
 }
 
-interface DebugPanelProps {
+interface ChatbotDebugPanelProps {
   agentRunLogs?: LogEntry[];
 }
 
-export function DebugPanel({ agentRunLogs = [] }: DebugPanelProps): React.JSX.Element {
+export function ChatbotDebugPanel({
+  agentRunLogs = [],
+}: ChatbotDebugPanelProps): React.JSX.Element {
   const { debugState } = useChatbotUI();
 
   return (

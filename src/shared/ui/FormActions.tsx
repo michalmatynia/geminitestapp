@@ -18,6 +18,7 @@ interface FormActionsProps {
   saveVariant?: VariantProps<typeof buttonVariants>['variant'];
   cancelVariant?: VariantProps<typeof buttonVariants>['variant'];
   saveIcon?: React.ReactNode | undefined;
+  saveLoadingText?: string | undefined;
   children?: React.ReactNode | undefined;
   size?: 'default' | 'sm' | 'lg' | 'xs';
 }
@@ -33,6 +34,7 @@ export function FormActions({
   saveVariant = 'default',
   cancelVariant = 'outline',
   saveIcon,
+  saveLoadingText = 'Saving...',
   children,
   size = 'sm',
 }: FormActionsProps): React.JSX.Element {
@@ -58,7 +60,7 @@ export function FormActions({
           onClick={onSave}
           disabled={isDisabled || isSaving}
           loading={isSaving}
-          loadingText='Saving...'
+          loadingText={saveLoadingText}
         >
           {saveIcon && !isSaving && <span className='mr-2'>{saveIcon}</span>}
           {!isSaving && saveText}

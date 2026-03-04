@@ -1150,9 +1150,7 @@ describe('evaluateGraph', () => {
       ...defaultOptions,
       nodes,
       edges,
-      control: {
-        onHalt,
-      },
+      onHalt,
     });
 
     expect(result.outputs['model-1']?.['status']).toBe('blocked');

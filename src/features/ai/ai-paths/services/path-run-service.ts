@@ -246,22 +246,6 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       if (existingByRequestId.runs[0]) {
         return existingByRequestId.runs[0];
       }
-
-      // Provider-safe fallback when JSON-path filtering on meta is unavailable.
-      const existingByScan = await repo.listRuns({
-        ...(input.userId ? { userId: input.userId } : {}),
-        pathId: input.pathId,
-        statuses: [...ACTIVE_RUN_STATUS_FILTER],
-        limit: 50,
-        offset: 0,
-      });
-      const matched = existingByScan.runs.find((run: AiPathRunRecord) => {
-        const meta = run.meta && typeof run.meta === 'object' ? run.meta : null;
-        return meta?.['requestId'] === requestId;
-      });
-      if (matched) {
-        return matched;
-      }
     }
 
     const rawEdges = input.edges ?? [];

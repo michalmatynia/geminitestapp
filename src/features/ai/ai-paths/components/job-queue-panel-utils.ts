@@ -3,10 +3,7 @@ import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
 } from '@/shared/lib/ai-paths';
-import {
-  AI_PATHS_RUN_SOURCE_TABS,
-  AI_PATHS_RUN_SOURCE_VALUES,
-} from '@/shared/lib/ai-paths/run-sources';
+import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 import type { StatusVariant } from '@/shared/ui';
 
 import { safeJsonStringify } from './AiPathsSettingsUtils';
@@ -113,7 +110,6 @@ export type RunExecutionKind = 'server' | 'local' | 'other' | 'unknown';
 export type StreamConnectionStatus = 'connecting' | 'live' | 'stopped' | 'paused';
 
 const AI_PATHS_RUN_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
-const AI_PATHS_SOURCE_TABS = new Set<string>(AI_PATHS_RUN_SOURCE_TABS);
 
 export const formatDate = (value?: Date | string | null): string => {
   if (!value) return '-';
@@ -250,49 +246,21 @@ export const resolveRunSource = (run: AiPathRunRecord): string | null => {
   const meta = readMetaRecord(run.meta);
   if (!meta) return null;
 
-  const sourceRaw = meta['source'];
-  const directSource = readStringValue(sourceRaw);
+  const directSource = readStringValue(meta['source']);
   if (directSource) return directSource.toLowerCase();
-
-  if (sourceRaw && typeof sourceRaw === 'object' && !Array.isArray(sourceRaw)) {
-    const sourceTab = readStringValue((sourceRaw as Record<string, unknown>)['tab']);
-    if (sourceTab) return `tab:${sourceTab.toLowerCase()}`;
-  }
-
-  const sourceInfoRaw = meta['sourceInfo'];
-  if (sourceInfoRaw && typeof sourceInfoRaw === 'object' && !Array.isArray(sourceInfoRaw)) {
-    const sourceInfoTab = readStringValue((sourceInfoRaw as Record<string, unknown>)['tab']);
-    if (sourceInfoTab) return `tab:${sourceInfoTab.toLowerCase()}`;
-  }
 
   return null;
 };
 
 export const resolveRunSourceDebug = (run: AiPathRunRecord): string => {
   const meta = readMetaRecord(run.meta);
-  if (!meta) return 'src=- infoTab=-';
-
-  const sourceRaw = meta['source'];
-  const sourceValue =
-    readStringValue(sourceRaw)?.toLowerCase() ??
-    (sourceRaw && typeof sourceRaw === 'object' && !Array.isArray(sourceRaw) ? 'object' : '-');
-
-  const sourceInfoRaw = meta['sourceInfo'];
-  const sourceInfoTab =
-    sourceInfoRaw && typeof sourceInfoRaw === 'object' && !Array.isArray(sourceInfoRaw)
-      ? (readStringValue((sourceInfoRaw as Record<string, unknown>)['tab'])?.toLowerCase() ?? '-')
-      : '-';
-
-  return `src=${sourceValue} infoTab=${sourceInfoTab}`;
+  if (!meta) return 'src=-';
+  return `src=${readStringValue(meta['source'])?.toLowerCase() ?? '-'}`;
 };
 
 export const resolveRunOrigin = (run: AiPathRunRecord): RunOrigin => {
   const source = resolveRunSource(run);
   if (!source) return 'unknown';
-  if (source.startsWith('tab:')) {
-    const tab = source.slice(4);
-    return AI_PATHS_SOURCE_TABS.has(tab) ? 'node' : 'external';
-  }
   return AI_PATHS_RUN_SOURCES.has(source) ? 'node' : 'external';
 };
 
@@ -323,24 +291,8 @@ export const resolveRunExecutionKind = (run: AiPathRunRecord): RunExecutionKind 
     meta['runtime'] && typeof meta['runtime'] === 'object' && !Array.isArray(meta['runtime'])
       ? (meta['runtime'] as Record<string, unknown>)
       : null;
-  const sourceInfoMeta =
-    meta['sourceInfo'] &&
-    typeof meta['sourceInfo'] === 'object' &&
-    !Array.isArray(meta['sourceInfo'])
-      ? (meta['sourceInfo'] as Record<string, unknown>)
-      : null;
 
-  const candidates: unknown[] = [
-    meta['executionMode'],
-    meta['execution_mode'],
-    meta['runMode'],
-    meta['run_mode'],
-    meta['mode'],
-    runtimeMeta?.['executionMode'],
-    runtimeMeta?.['mode'],
-    sourceInfoMeta?.['executionMode'],
-    sourceInfoMeta?.['mode'],
-  ];
+  const candidates: unknown[] = [meta['executionMode'], runtimeMeta?.['executionMode']];
   for (const candidate of candidates) {
     const resolved = resolveExecutionCandidate(candidate);
     if (resolved) return resolved;

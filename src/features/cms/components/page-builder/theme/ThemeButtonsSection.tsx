@@ -3,14 +3,12 @@
 import React from 'react';
 
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import { SettingsField, SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { WEIGHT_OPTIONS } from './theme-constants';
-import { useThemeSettings } from '../ThemeSettingsContext';
+import { ThemeSettingsFieldsSection } from './ThemeSettingsFieldsSection';
 
 export function ThemeButtonsSection(): React.JSX.Element {
-  const { theme, update } = useThemeSettings();
-
   const fields: SettingsField<ThemeSettings>[] = [
     { key: 'btnPaddingX', label: 'Padding X', type: 'number', min: 4, max: 48, suffix: 'px' },
     { key: 'btnPaddingY', label: 'Padding Y', type: 'number', min: 4, max: 24, suffix: 'px' },
@@ -78,15 +76,5 @@ export function ThemeButtonsSection(): React.JSX.Element {
     { key: 'btnShadowBlur', label: 'Shadow Blur', type: 'number', min: 0, max: 40, suffix: 'px' },
   ];
 
-  return (
-    <SettingsFieldsRenderer
-      fields={fields}
-      values={theme}
-      onChange={(values) => {
-        Object.entries(values).forEach(([key, value]) => {
-          update(key as keyof ThemeSettings, value);
-        });
-      }}
-    />
-  );
+  return <ThemeSettingsFieldsSection fields={fields} />;
 }

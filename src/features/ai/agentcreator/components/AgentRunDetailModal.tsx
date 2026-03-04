@@ -11,10 +11,10 @@ import {
   TabsContent,
   StatusBadge,
   LogList,
-  Card,
   MetadataItem,
 } from '@/shared/ui';
-import { DetailModal } from '@/shared/ui/templates/modals';
+import { DetailModal, DetailModalSection } from '@/shared/ui/templates/modals';
+import { formatDateTime } from '@/shared/utils';
 
 import { useAgentRunsContext } from '../context/AgentRunsContext';
 
@@ -43,8 +43,7 @@ export function AgentRunDetailModal({
         </TabsList>
 
         <TabsContent value='summary' className='space-y-4 pt-4'>
-          <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/35'>
-            <h3 className='text-sm font-medium text-white mb-4'>Run Information</h3>
+          <DetailModalSection title='Run Information'>
             <div className='grid grid-cols-2 gap-6'>
               <div className='space-y-3'>
                 <MetadataItem
@@ -55,7 +54,7 @@ export function AgentRunDetailModal({
                 <MetadataItem label='Model' value={selectedAgentRun.model} variant='minimal' />
                 <MetadataItem
                   label='Created'
-                  value={new Date(selectedAgentRun.createdAt || 0).toLocaleString()}
+                  value={formatDateTime(selectedAgentRun.createdAt)}
                   variant='minimal'
                 />
               </div>
@@ -68,7 +67,7 @@ export function AgentRunDetailModal({
                 </div>
               </div>
             </div>
-          </Card>
+          </DetailModalSection>
         </TabsContent>
 
         <TabsContent value='logs' className='space-y-2 pt-4'>

@@ -3,14 +3,12 @@
 import React from 'react';
 
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import { SettingsField, SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { FONT_OPTIONS, WEIGHT_OPTIONS } from './theme-constants';
-import { useThemeSettings } from '../ThemeSettingsContext';
+import { ThemeSettingsFieldsSection } from './ThemeSettingsFieldsSection';
 
 export function ThemeTypographySection(): React.JSX.Element {
-  const { theme, update } = useThemeSettings();
-
   const fields: SettingsField<ThemeSettings>[] = [
     { key: 'baseSize', label: 'Base size', type: 'number', min: 12, max: 24, suffix: 'px' },
     { key: 'headingFont', label: 'Heading font', type: 'select', options: FONT_OPTIONS },
@@ -46,15 +44,5 @@ export function ThemeTypographySection(): React.JSX.Element {
     { key: 'lineHeight', label: 'Body line height', type: 'range', min: 1, max: 2.5, step: 0.1 },
   ];
 
-  return (
-    <SettingsFieldsRenderer
-      fields={fields}
-      values={theme}
-      onChange={(values) => {
-        Object.entries(values).forEach(([key, value]) => {
-          update(key as keyof ThemeSettings, value);
-        });
-      }}
-    />
-  );
+  return <ThemeSettingsFieldsSection fields={fields} />;
 }

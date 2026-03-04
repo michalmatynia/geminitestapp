@@ -59,4 +59,48 @@ describe('useAiPathsRuntimeState', () => {
 
     expect(result.current.runtimeNodeStatuses['node-fetcher']).toBe('failed');
   });
+
+  it('ignores stale queued updates after node is already completed', () => {
+    const { result } = renderHook(() => useAiPathsRuntimeState());
+
+    act(() => {
+      result.current.setNodeStatus({
+        nodeId: 'node-trigger',
+        status: 'completed',
+        source: 'server',
+      });
+    });
+
+    act(() => {
+      result.current.setNodeStatus({
+        nodeId: 'node-trigger',
+        status: 'queued',
+        source: 'server',
+      });
+    });
+
+    expect(result.current.runtimeNodeStatuses['node-trigger']).toBe('completed');
+  });
+
+  it('accepts pending and processing runtime statuses', () => {
+    const { result } = renderHook(() => useAiPathsRuntimeState());
+
+    act(() => {
+      result.current.setNodeStatus({
+        nodeId: 'node-fetcher',
+        status: 'pending',
+        source: 'server',
+      });
+    });
+
+    act(() => {
+      result.current.setNodeStatus({
+        nodeId: 'node-fetcher',
+        status: 'processing',
+        source: 'server',
+      });
+    });
+
+    expect(result.current.runtimeNodeStatuses['node-fetcher']).toBe('processing');
+  });
 });

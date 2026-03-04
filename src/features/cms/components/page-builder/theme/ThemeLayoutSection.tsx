@@ -3,13 +3,11 @@
 import React from 'react';
 
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import { SettingsField, SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
-import { useThemeSettings } from '../ThemeSettingsContext';
+import { ThemeSettingsFieldsSection } from './ThemeSettingsFieldsSection';
 
 export function ThemeLayoutSection(): React.JSX.Element {
-  const { theme, update } = useThemeSettings();
-
   const fields: SettingsField<ThemeSettings>[] = [
     { key: 'fullWidth', label: 'Full width page', type: 'checkbox' },
     {
@@ -93,15 +91,5 @@ export function ThemeLayoutSection(): React.JSX.Element {
     },
   ];
 
-  return (
-    <SettingsFieldsRenderer
-      fields={fields}
-      values={theme}
-      onChange={(values) => {
-        Object.entries(values).forEach(([key, value]) => {
-          update(key as keyof ThemeSettings, value);
-        });
-      }}
-    />
-  );
+  return <ThemeSettingsFieldsSection fields={fields} />;
 }

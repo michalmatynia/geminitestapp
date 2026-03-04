@@ -161,6 +161,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
   it('does not request removed legacy validation key during hydration', async () => {
     const activePathId = 'path_active';
     const activeConfig = createDefaultPathConfig(activePathId);
+    activeConfig.runMode = 'queue';
 
     mockedFetchAiPathsSettingsByKeysCached.mockImplementation(async (keys) => {
       if (keys.includes(`${PATH_CONFIG_PREFIX}${activePathId}`)) {

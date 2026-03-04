@@ -251,9 +251,7 @@ export function useAdminCaseResolverDocumentActions({
     const returnTo = `/admin/case-resolver?openEditor=1&fileId=${encodeURIComponent(
       editingDocumentDraft.id
     )}&promptExploderSessionId=${encodeURIComponent(promptExploderSessionId)}`;
-    router.push(
-      `/admin/prompt-exploder?returnTo=${encodeURIComponent(returnTo)}&sessionId=${encodeURIComponent(promptExploderSessionId)}`
-    );
+    router.push(`/admin/prompt-exploder?returnTo=${encodeURIComponent(returnTo)}`);
   }, [editingDocumentDraft, router, toast]);
 
   const handleCopyDraftFileId = useCallback(async (): Promise<void> => {

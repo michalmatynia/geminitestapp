@@ -1,7 +1,9 @@
 'use client';
 
 import type { ModalStateProps } from '@/shared/contracts/ui';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { type VariantProps } from 'class-variance-authority';
+import { useMemo } from 'react';
 
 import { AppModal } from './app-modal';
 import { FormActions } from './FormActions';
@@ -33,6 +35,85 @@ interface FormModalProps extends Partial<ModalStateProps> {
   padding?: 'default' | 'none';
   actions?: ReactNode;
   className?: string;
+}
+
+type FormModalHeaderRuntimeValue = {
+  title: string;
+  subtitle?: string;
+  showSaveButton: boolean;
+  handleSave: () => void;
+  saveText: string;
+  resolvedSaveVariant: VariantProps<typeof buttonVariants>['variant'];
+  saveIcon?: ReactNode;
+  isSaving: boolean;
+  isSaveButtonDisabled: boolean;
+  actions?: ReactNode;
+  showCancelButton: boolean;
+  handleRequestClose: () => void;
+  cancelText: string;
+  isCloseLocked: boolean;
+};
+
+const {
+  Context: FormModalHeaderRuntimeContext,
+  useStrictContext: useFormModalHeaderRuntime,
+} = createStrictContext<FormModalHeaderRuntimeValue>({
+  hookName: 'useFormModalHeaderRuntime',
+  providerName: 'FormModalHeaderRuntimeProvider',
+  displayName: 'FormModalHeaderRuntimeContext',
+});
+
+type FormModalHeaderRuntimeProviderProps = {
+  value: FormModalHeaderRuntimeValue;
+  children: ReactNode;
+};
+
+function FormModalHeaderRuntimeProvider({
+  value,
+  children,
+}: FormModalHeaderRuntimeProviderProps): React.JSX.Element {
+  return (
+    <FormModalHeaderRuntimeContext.Provider value={value}>
+      {children}
+    </FormModalHeaderRuntimeContext.Provider>
+  );
+}
+
+function FormModalHeaderContent(): React.JSX.Element {
+  const runtime = useFormModalHeaderRuntime();
+
+  return (
+    <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
+      <div className='min-w-0'>
+        <div className='flex min-w-0 items-center gap-2'>
+          {runtime.showSaveButton ? (
+            <FormActions
+              onSave={runtime.handleSave}
+              saveText={runtime.saveText}
+              saveVariant={runtime.resolvedSaveVariant}
+              saveIcon={runtime.saveIcon}
+              isSaving={runtime.isSaving}
+              isDisabled={runtime.isSaveButtonDisabled}
+              className='mr-2'
+            />
+          ) : null}
+          <h2 className='truncate text-2xl font-bold tracking-tight text-white'>{runtime.title}</h2>
+        </div>
+        {runtime.subtitle ? <p className='mt-1 text-sm text-gray-400'>{runtime.subtitle}</p> : null}
+      </div>
+      <div className='flex flex-wrap items-center justify-end gap-2'>
+        {runtime.actions}
+        {runtime.showCancelButton ? (
+          <FormActions
+            onCancel={runtime.handleRequestClose}
+            cancelText={runtime.cancelText}
+            isSaving={runtime.isSaving}
+            isDisabled={runtime.isCloseLocked}
+          />
+        ) : null}
+      </div>
+    </div>
+  );
 }
 
 export function FormModal({
@@ -86,37 +167,45 @@ export function FormModal({
     }
   };
 
+  const headerRuntimeValue = useMemo<FormModalHeaderRuntimeValue>(
+    () => ({
+      title,
+      subtitle,
+      showSaveButton,
+      handleSave,
+      saveText,
+      resolvedSaveVariant,
+      saveIcon,
+      isSaving,
+      isSaveButtonDisabled,
+      actions,
+      showCancelButton,
+      handleRequestClose,
+      cancelText,
+      isCloseLocked,
+    }),
+    [
+      title,
+      subtitle,
+      showSaveButton,
+      handleSave,
+      saveText,
+      resolvedSaveVariant,
+      saveIcon,
+      isSaving,
+      isSaveButtonDisabled,
+      actions,
+      showCancelButton,
+      handleRequestClose,
+      cancelText,
+      isCloseLocked,
+    ]
+  );
+
   const header = (
-    <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
-      <div className='min-w-0'>
-        <div className='flex min-w-0 items-center gap-2'>
-          {showSaveButton && (
-            <FormActions
-              onSave={handleSave}
-              saveText={saveText}
-              saveVariant={resolvedSaveVariant}
-              saveIcon={saveIcon}
-              isSaving={isSaving}
-              isDisabled={isSaveButtonDisabled}
-              className='mr-2'
-            />
-          )}
-          <h2 className='truncate text-2xl font-bold tracking-tight text-white'>{title}</h2>
-        </div>
-        {subtitle ? <p className='mt-1 text-sm text-gray-400'>{subtitle}</p> : null}
-      </div>
-      <div className='flex flex-wrap items-center justify-end gap-2'>
-        {actions}
-        {showCancelButton ? (
-          <FormActions
-            onCancel={handleRequestClose}
-            cancelText={cancelText}
-            isSaving={isSaving}
-            isDisabled={isCloseLocked}
-          />
-        ) : null}
-      </div>
-    </div>
+    <FormModalHeaderRuntimeProvider value={headerRuntimeValue}>
+      <FormModalHeaderContent />
+    </FormModalHeaderRuntimeProvider>
   );
 
   return (

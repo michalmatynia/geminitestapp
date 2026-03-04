@@ -82,10 +82,6 @@ export const toRuntimeNodeStatus = (value: unknown): AiPathNodeStatus | null => 
     case 'processing':
     case 'timeout':
       return normalized;
-    case 'paused':
-      return 'running';
-    case 'dead_lettered':
-      return 'failed';
     default:
       return null;
   }
@@ -105,6 +101,38 @@ export const mergeRuntimePortMaps = (
       } as RuntimePortValues;
     });
   });
+  return merged;
+};
+
+export const mergeNodeOutputsForStatus = (input: {
+  previous: RuntimePortValues | undefined;
+  next: RuntimePortValues;
+  status: AiPathNodeStatus;
+}): RuntimePortValues => {
+  const merged = {
+    ...(input.previous ?? {}),
+    ...input.next,
+    status: input.status,
+  } as RuntimePortValues;
+
+  const hasOwn = (key: string): boolean => Object.prototype.hasOwnProperty.call(input.next, key);
+
+  // Drop stale blocking diagnostics when the node moved out of blocked state.
+  if (input.status !== 'blocked') {
+    delete merged['blockedReason'];
+    delete merged['requiredPorts'];
+    delete merged['waitingOnPorts'];
+    delete merged['skipReason'];
+    if (!hasOwn('message')) {
+      delete merged['message'];
+    }
+  }
+
+  // Keep only explicit error payloads from the latest update.
+  if (!hasOwn('error')) {
+    delete merged['error'];
+  }
+
   return merged;
 };
 

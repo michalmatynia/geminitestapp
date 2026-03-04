@@ -20,7 +20,7 @@ import { toCmsSectionNodeId } from '../utils/cms-master-tree';
 import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
 import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
-import { SectionPicker } from './SectionPicker';
+import { TreeSectionPicker } from './TreeSectionPicker';
 import type { SectionNodeItemProps } from './tree-types';
 
 export function SectionNodeItem({
@@ -327,7 +327,7 @@ export function SectionNodeItem({
               })}
             </div>
             <div className='mt-2'>
-              <SectionPicker
+              <TreeSectionPicker
                 disabled={false}
                 variant='blocks'
                 sectionType={section.type}

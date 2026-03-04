@@ -2,10 +2,15 @@
 
 import React, { useState, useCallback } from 'react';
 import { Play, Sparkles, Workflow } from 'lucide-react';
-import { Button, Label, Textarea, ValidatorFormatterToggle, useToast } from '@/shared/ui';
+import { ValidatorFormatterToggle, useToast } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 import { RightSidebarPromptControlHeader } from './RightSidebarPromptControlHeader';
 import { UIPresetsPanel } from '../UIPresetsPanel';
+import {
+  StudioActionButtonRow,
+  type StudioActionButtonConfig,
+} from '../modals/StudioActionButtonRow';
+import { StudioPromptTextSection } from '../modals/StudioPromptTextSection';
 import { usePromptState, usePromptActions } from '../../context/PromptContext';
 import { useUiState, useUiActions } from '../../context/UiContext';
 import { useProjectsState } from '../../context/ProjectsContext';
@@ -248,6 +253,57 @@ export function ControlPromptModal({
     />
   );
 
+  const promptActions = React.useMemo<StudioActionButtonConfig[]>(() => {
+    const actions: StudioActionButtonConfig[] = [];
+    if (modelSupportsSequenceGeneration) {
+      actions.push({
+        key: 'generate-sequence',
+        label: 'Generate Sequence',
+        loadingText: 'Starting Sequence...',
+        size: 'xs',
+        onClick: onRunSequenceGeneration,
+        disabled: generationBusy || sequenceRunBusy,
+        loading: sequenceRunBusy,
+        icon: <Workflow className='size-4' />,
+      });
+    }
+    actions.push(
+      {
+        key: 'generate-prompt',
+        label: 'Generate From Prompt',
+        size: 'xs',
+        variant: 'default',
+        onClick: onRunGeneration,
+        disabled: !promptText.trim() || generationBusy || sequenceRunBusy,
+        loading: generationBusy,
+        icon: <Play className='size-4' />,
+      },
+      {
+        key: 'extract-prompt',
+        label: 'Extract',
+        size: 'xs',
+        title: 'Extract functions and selectors from prompt',
+        ariaLabel: 'Extract functions and selectors from prompt',
+        disabled: !promptText.trim(),
+        onClick: () => {
+          onClose();
+          handleExtractReviewOpen();
+        },
+        icon: <Sparkles className='size-4' />,
+      }
+    );
+    return actions;
+  }, [
+    generationBusy,
+    handleExtractReviewOpen,
+    modelSupportsSequenceGeneration,
+    onClose,
+    onRunGeneration,
+    onRunSequenceGeneration,
+    promptText,
+    sequenceRunBusy,
+  ]);
+
   return (
     <DetailModal
       isOpen={isOpen}
@@ -258,16 +314,14 @@ export function ControlPromptModal({
       className='md:min-w-[63rem] max-w-[66rem] [&>div:first-child]:border-b-0'
     >
       <div className='space-y-4 text-sm text-gray-200'>
-        <div className='space-y-2'>
-          <Label className='text-xs text-gray-400'>Prompt</Label>
-          <Textarea
-            size='sm'
-            value={promptText}
-            onChange={(event) => setPromptText(event.target.value)}
-            className='h-44 font-mono text-[11px]'
-            placeholder='Paste prompt here...'
-          />
-        </div>
+        <StudioPromptTextSection
+          label='Prompt'
+          value={promptText}
+          onValueChange={setPromptText}
+          textareaSize='sm'
+          textareaClassName='h-44'
+          placeholder='Paste prompt here...'
+        />
 
         <UIPresetsPanel />
 
@@ -282,45 +336,7 @@ export function ControlPromptModal({
           />
         </div>
 
-        <div className='flex items-center justify-end gap-2'>
-          {modelSupportsSequenceGeneration ? (
-            <Button
-              size='xs'
-              type='button'
-              variant='outline'
-              onClick={onRunSequenceGeneration}
-              disabled={generationBusy || sequenceRunBusy}
-              loading={sequenceRunBusy}
-            >
-              <Workflow className='mr-2 size-4' />
-              {sequenceRunBusy ? 'Starting Sequence...' : 'Generate Sequence'}
-            </Button>
-          ) : null}
-          <Button
-            size='xs'
-            type='button'
-            onClick={onRunGeneration}
-            disabled={!promptText.trim() || generationBusy || sequenceRunBusy}
-            loading={generationBusy}
-          >
-            <Play className='mr-2 size-4' />
-            Generate From Prompt
-          </Button>
-          <Button
-            size='xs'
-            variant='outline'
-            title='Extract functions and selectors from prompt'
-            aria-label='Extract functions and selectors from prompt'
-            disabled={!promptText.trim()}
-            onClick={() => {
-              onClose();
-              handleExtractReviewOpen();
-            }}
-          >
-            <Sparkles className='mr-2 size-4' />
-            Extract
-          </Button>
-        </div>
+        <StudioActionButtonRow actions={promptActions} />
       </div>
     </DetailModal>
   );

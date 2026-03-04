@@ -384,7 +384,6 @@ export const AI_PATHS_MAINTENANCE_ACTION_IDS = [
   'compact_oversized_configs',
   'repair_path_index',
   'ensure_starter_workflow_defaults',
-  'upgrade_server_execution_mode',
 ] as const;
 
 export type AiPathsMaintenanceActionId = (typeof AI_PATHS_MAINTENANCE_ACTION_IDS)[number];

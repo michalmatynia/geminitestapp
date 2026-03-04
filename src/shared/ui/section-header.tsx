@@ -1,8 +1,9 @@
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
 import { RefreshButton } from './RefreshButton';
 
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 
 type SectionHeaderSize = 'lg' | 'md' | 'sm' | 'xs' | 'xxs';
 
@@ -36,6 +37,41 @@ type SectionHeaderProps = {
   children?: ReactNode | undefined;
 };
 
+type SectionHeaderRefreshRuntimeValue = {
+  onRefresh: () => void;
+  isRefreshing: boolean;
+};
+
+const {
+  Context: SectionHeaderRefreshRuntimeContext,
+  useStrictContext: useSectionHeaderRefreshRuntime,
+} = createStrictContext<SectionHeaderRefreshRuntimeValue>({
+  hookName: 'useSectionHeaderRefreshRuntime',
+  providerName: 'SectionHeaderRefreshRuntimeProvider',
+  displayName: 'SectionHeaderRefreshRuntimeContext',
+});
+
+type SectionHeaderRefreshRuntimeProviderProps = {
+  value: SectionHeaderRefreshRuntimeValue;
+  children: ReactNode;
+};
+
+function SectionHeaderRefreshRuntimeProvider({
+  value,
+  children,
+}: SectionHeaderRefreshRuntimeProviderProps): React.JSX.Element {
+  return (
+    <SectionHeaderRefreshRuntimeContext.Provider value={value}>
+      {children}
+    </SectionHeaderRefreshRuntimeContext.Provider>
+  );
+}
+
+function SectionHeaderRefreshAction(): React.JSX.Element {
+  const runtime = useSectionHeaderRefreshRuntime();
+  return <RefreshButton onRefresh={runtime.onRefresh} isRefreshing={runtime.isRefreshing} />;
+}
+
 export function SectionHeader({
   title,
   subtitle, // Added subtitle
@@ -52,6 +88,14 @@ export function SectionHeader({
   descriptionClassName,
   children, // Added children
 }: SectionHeaderProps) {
+  const refreshRuntimeValue = useMemo<SectionHeaderRefreshRuntimeValue | null>(() => {
+    if (!refresh) return null;
+    return {
+      onRefresh: refresh.onRefresh,
+      isRefreshing: refresh.isRefreshing,
+    };
+  }, [refresh]);
+
   return (
     <div
       className={cn(
@@ -106,9 +150,11 @@ export function SectionHeader({
         <div className={cn('flex flex-wrap items-center gap-2 shrink-0', actionsClassName)}>
           {' '}
           {/* Added shrink-0 for actions */}
-          {refresh && (
-            <RefreshButton onRefresh={refresh.onRefresh} isRefreshing={refresh.isRefreshing} />
-          )}
+          {refreshRuntimeValue ? (
+            <SectionHeaderRefreshRuntimeProvider value={refreshRuntimeValue}>
+              <SectionHeaderRefreshAction />
+            </SectionHeaderRefreshRuntimeProvider>
+          ) : null}
           {actions}
         </div>
       )}

@@ -88,16 +88,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const { nodes, edges, ...rest } = data;
   let normalizedMeta = rest.meta ?? null;
   if (normalizedMeta && typeof normalizedMeta === 'object') {
-    const metaRecord = normalizedMeta;
-    const sourceValue = metaRecord['source'];
-    if (sourceValue && typeof sourceValue === 'object') {
-      const triggerEventId =
-        typeof metaRecord['triggerEventId'] === 'string' ? metaRecord['triggerEventId'] : null;
-      normalizedMeta = {
-        ...metaRecord,
-        sourceInfo: sourceValue,
-        source: triggerEventId ? 'trigger_button' : 'ai_paths_ui',
-      };
+    const sourceValue = normalizedMeta['source'];
+    if (sourceValue && typeof sourceValue === 'object' && !Array.isArray(sourceValue)) {
+      throw badRequestError('Invalid enqueue metadata: meta.source must be a string.');
     }
   }
   if (!Array.isArray(nodes) || !Array.isArray(edges)) {

@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { type VariantProps } from 'class-variance-authority';
 
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 import { Badge, badgeVariants } from './badge';
 
@@ -16,6 +17,31 @@ export interface StatusToggleProps {
   size?: 'sm' | 'default';
   disabled?: boolean;
   className?: string;
+}
+
+type StatusToggleRuntimeValue = {
+  variant: VariantProps<typeof badgeVariants>['variant'];
+  onClick: (() => void) | undefined;
+  className: string;
+  label: string;
+};
+
+const {
+  Context: StatusToggleRuntimeContext,
+  useStrictContext: useStatusToggleRuntime,
+} = createStrictContext<StatusToggleRuntimeValue>({
+  hookName: 'useStatusToggleRuntime',
+  providerName: 'StatusToggleRuntimeProvider',
+  displayName: 'StatusToggleRuntimeContext',
+});
+
+function StatusToggleBadge(): React.JSX.Element {
+  const runtime = useStatusToggleRuntime();
+  return (
+    <Badge variant={runtime.variant} onClick={runtime.onClick} className={runtime.className}>
+      {runtime.label}
+    </Badge>
+  );
 }
 
 /**
@@ -56,18 +82,24 @@ export function StatusToggle({
     }
   };
 
-  return (
-    <Badge
-      variant={getBadgeVariant()}
-      onClick={disabled ? undefined : () => onToggle(!enabled)}
-      className={cn(
+  const runtimeValue = useMemo<StatusToggleRuntimeValue>(
+    () => ({
+      variant: getBadgeVariant(),
+      onClick: disabled ? undefined : () => onToggle(!enabled),
+      className: cn(
         'cursor-pointer select-none font-bold transition-all border',
         size === 'sm' ? 'h-6 px-2 text-[9px]' : 'h-7 px-2.5 text-[10px]',
         disabled && 'opacity-50 pointer-events-none',
         className
-      )}
-    >
-      {enabled ? enabledLabel : disabledLabel}
-    </Badge>
+      ),
+      label: enabled ? enabledLabel : disabledLabel,
+    }),
+    [className, disabled, enabled, enabledLabel, disabledLabel, onToggle, size]
+  );
+
+  return (
+    <StatusToggleRuntimeContext.Provider value={runtimeValue}>
+      <StatusToggleBadge />
+    </StatusToggleRuntimeContext.Provider>
   );
 }

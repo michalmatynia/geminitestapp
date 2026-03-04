@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
 import { Button } from './button';
@@ -34,6 +35,70 @@ type AppModalProps = {
   contentClassName?: string | undefined;
   bodyClassName?: string | undefined;
 };
+
+type AppModalDefaultHeaderRuntimeValue = {
+  title: React.ReactNode;
+  subtitle?: React.ReactNode;
+  titleHidden: boolean;
+  headerActions?: React.ReactNode;
+  showClose: boolean;
+  canClose: boolean;
+  handleClose: () => void;
+};
+
+const {
+  Context: AppModalDefaultHeaderRuntimeContext,
+  useStrictContext: useAppModalDefaultHeaderRuntime,
+} = createStrictContext<AppModalDefaultHeaderRuntimeValue>({
+  hookName: 'useAppModalDefaultHeaderRuntime',
+  providerName: 'AppModalDefaultHeaderRuntimeProvider',
+  displayName: 'AppModalDefaultHeaderRuntimeContext',
+});
+
+type AppModalDefaultHeaderRuntimeProviderProps = {
+  value: AppModalDefaultHeaderRuntimeValue;
+  children: React.ReactNode;
+};
+
+function AppModalDefaultHeaderRuntimeProvider({
+  value,
+  children,
+}: AppModalDefaultHeaderRuntimeProviderProps): React.JSX.Element {
+  return (
+    <AppModalDefaultHeaderRuntimeContext.Provider value={value}>
+      {children}
+    </AppModalDefaultHeaderRuntimeContext.Provider>
+  );
+}
+
+function AppModalDefaultHeader(): React.JSX.Element {
+  const runtime = useAppModalDefaultHeaderRuntime();
+
+  return (
+    <SectionHeader
+      title={runtime.title}
+      subtitle={runtime.subtitle}
+      size='md'
+      titleClassName={cn(runtime.titleHidden && 'sr-only')}
+      actions={
+        <div className='flex items-center gap-2'>
+          {runtime.headerActions}
+          {runtime.showClose ? (
+            <Button
+              type='button'
+              onClick={runtime.handleClose}
+              disabled={!runtime.canClose}
+              variant='outline'
+              size='sm'
+            >
+              Close
+            </Button>
+          ) : null}
+        </div>
+      }
+    />
+  );
+}
 
 const sizeClasses = {
   sm: 'max-w-lg md:min-w-[420px]',
@@ -113,6 +178,18 @@ export function AppModal({
     (typeof title === 'string' && title.trim().length > 0
       ? `${title} dialog`
       : 'Modal dialog content');
+  const defaultHeaderRuntimeValue = React.useMemo<AppModalDefaultHeaderRuntimeValue>(
+    () => ({
+      title,
+      subtitle,
+      titleHidden,
+      headerActions,
+      showClose,
+      canClose,
+      handleClose: () => handleOpenChange(false),
+    }),
+    [title, subtitle, titleHidden, headerActions, showClose, canClose, handleOpenChange]
+  );
 
   return (
     <Dialog open={isCurrentlyOpen} onOpenChange={handleOpenChange}>
@@ -139,28 +216,9 @@ export function AppModal({
             {header ? (
               header
             ) : (
-              <SectionHeader
-                title={title}
-                subtitle={subtitle}
-                size='md'
-                titleClassName={cn(titleHidden && 'sr-only')}
-                actions={
-                  <div className='flex items-center gap-2'>
-                    {headerActions}
-                    {showClose ? (
-                      <Button
-                        type='button'
-                        onClick={() => handleOpenChange(false)}
-                        disabled={!canClose}
-                        variant='outline'
-                        size='sm'
-                      >
-                        Close
-                      </Button>
-                    ) : null}
-                  </div>
-                }
-              />
+              <AppModalDefaultHeaderRuntimeProvider value={defaultHeaderRuntimeValue}>
+                <AppModalDefaultHeader />
+              </AppModalDefaultHeaderRuntimeProvider>
             )}
           </div>
 

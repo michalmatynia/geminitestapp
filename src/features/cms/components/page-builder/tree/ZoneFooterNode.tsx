@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import type { PageZone } from '@/shared/contracts/cms';
 import { useComponentTreePanelContext } from './ComponentTreePanelContext';
 import { useDragState } from '../../../hooks/useDragStateContext';
-import { SectionPicker } from './SectionPicker';
+import { TreeSectionPicker } from './TreeSectionPicker';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
@@ -72,7 +72,7 @@ export function ZoneFooterNode({
             Empty Zone
           </Button>
         ) : null}
-        <SectionPicker
+        <TreeSectionPicker
           disabled={!currentPage}
           zone={zone}
           onSelect={(sectionType: string): void => sectionActions.add(sectionType, zone)}

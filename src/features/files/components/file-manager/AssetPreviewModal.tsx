@@ -4,8 +4,9 @@ import React from 'react';
 
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
-import { StatusBadge, MetadataItem, Badge, FormField, Card } from '@/shared/ui';
-import { DetailModal } from '@/shared/ui/templates/modals';
+import { StatusBadge, MetadataItem, Badge } from '@/shared/ui';
+import { DetailModal, DetailModalSection } from '@/shared/ui/templates/modals';
+import { formatDateTime, formatFileSize } from '@/shared/utils';
 
 interface AssetPreviewModalProps extends EntityModalProps<Asset3DRecord> {}
 
@@ -26,7 +27,7 @@ export function AssetPreviewModal({
     >
       <div className='space-y-6'>
         <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-          <MetadataItem label='Size' value={`${((previewAsset.size ?? 0) / 1024).toFixed(2)} KB`} />
+          <MetadataItem label='Size' value={formatFileSize(previewAsset.size)} />
           <MetadataItem label='MIME Type' value={previewAsset.mimetype} />
           <MetadataItem
             label='Visibility'
@@ -41,18 +42,18 @@ export function AssetPreviewModal({
           <MetadataItem label='Category' value={previewAsset.categoryId ?? '—'} />
           <MetadataItem
             label='Added'
-            value={previewAsset.createdAt ? new Date(previewAsset.createdAt).toLocaleString() : '—'}
+            value={formatDateTime(previewAsset.createdAt)}
             valueClassName='text-xs text-gray-400'
           />
           <MetadataItem
             label='Last Modified'
-            value={previewAsset.updatedAt ? new Date(previewAsset.updatedAt).toLocaleString() : '—'}
+            value={formatDateTime(previewAsset.updatedAt)}
             valueClassName='text-xs text-gray-400'
           />
         </div>
 
         {(previewAsset.tags ?? []).length > 0 && (
-          <FormField label='Tags'>
+          <DetailModalSection title='Tags'>
             <div className='flex flex-wrap gap-2'>
               {(previewAsset.tags ?? []).map((tag) => (
                 <Badge key={tag} variant='secondary' className='text-[10px]'>
@@ -60,28 +61,20 @@ export function AssetPreviewModal({
                 </Badge>
               ))}
             </div>
-          </FormField>
+          </DetailModalSection>
         )}
 
         {previewAsset.description && (
-          <FormField label='Description'>
-            <Card
-              variant='subtle-compact'
-              padding='md'
-              className='border-border bg-card/30 text-sm text-gray-300 leading-relaxed'
-            >
-              {previewAsset.description}
-            </Card>
-          </FormField>
+          <DetailModalSection title='Description' className='border-border bg-card/30'>
+            <p className='text-sm text-gray-300 leading-relaxed'>{previewAsset.description}</p>
+          </DetailModalSection>
         )}
 
-        <FormField label='System Metadata'>
-          <Card variant='subtle-compact' padding='md' className='border-border bg-gray-950'>
-            <pre className='max-h-64 overflow-auto text-[11px] text-gray-400 font-mono leading-relaxed'>
-              {JSON.stringify(previewAsset.metadata ?? {}, null, 2)}
-            </pre>
-          </Card>
-        </FormField>
+        <DetailModalSection title='System Metadata' className='border-border bg-gray-950'>
+          <pre className='max-h-64 overflow-auto text-[11px] text-gray-400 font-mono leading-relaxed'>
+            {JSON.stringify(previewAsset.metadata ?? {}, null, 2)}
+          </pre>
+        </DetailModalSection>
       </div>
     </DetailModal>
   );

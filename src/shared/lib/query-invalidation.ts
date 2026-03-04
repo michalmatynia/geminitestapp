@@ -1,6 +1,7 @@
 import { QueryClient, type QueryKey } from '@tanstack/react-query';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { StudioSlotsResponse } from '@/shared/contracts/image-studio';
+import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 
 import { QUERY_KEYS } from './query-keys';
 
@@ -431,21 +432,7 @@ type AiPathQueueCachePayload = {
   total: number;
 };
 
-const AI_PATHS_RUN_SOURCE_VALUES = new Set([
-  'ai_paths_ui',
-  'ai_paths_direct',
-  'trigger_button',
-  'product_panel',
-]);
-
-const AI_PATHS_RUN_SOURCE_TABS = new Set([
-  'product',
-  'products',
-  'note',
-  'notes',
-  'translation',
-  'translations',
-]);
+const AI_PATHS_NODE_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
 
 const AI_PATH_RUN_QUEUE_CHANNEL = 'ai-path-queue';
 
@@ -463,31 +450,12 @@ const readMetaRecord = (meta: AiPathRunRecord['meta']): Record<string, unknown> 
 const resolveRunSource = (run: AiPathRunRecord): string | null => {
   const meta = readMetaRecord(run.meta as Record<string, unknown>);
   if (!meta) return null;
-
-  const sourceRaw = meta['source'];
-  const sourceValue = normalizeString(sourceRaw);
-  if (sourceValue) return sourceValue;
-
-  if (sourceRaw && typeof sourceRaw === 'object' && !Array.isArray(sourceRaw)) {
-    const sourceTab = normalizeString((sourceRaw as Record<string, unknown>)['tab']);
-    if (sourceTab) return `tab:${sourceTab}`;
-  }
-
-  const sourceInfoRaw = meta['sourceInfo'];
-  if (sourceInfoRaw && typeof sourceInfoRaw === 'object' && !Array.isArray(sourceInfoRaw)) {
-    const sourceInfoTab = normalizeString((sourceInfoRaw as Record<string, unknown>)['tab']);
-    if (sourceInfoTab) return `tab:${sourceInfoTab}`;
-  }
-
-  return null;
+  return normalizeString(meta['source']);
 };
 
 const isAiPathsNodeSource = (source: string | null): boolean => {
   if (!source) return false;
-  if (source.startsWith('tab:')) {
-    return AI_PATHS_RUN_SOURCE_TABS.has(source.slice(4));
-  }
-  return AI_PATHS_RUN_SOURCE_VALUES.has(source);
+  return AI_PATHS_NODE_SOURCES.has(source);
 };
 
 const matchesSourceFilter = (

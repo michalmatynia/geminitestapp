@@ -9,7 +9,7 @@ import { ProductFormMetadataContext } from '@/features/products/context/ProductF
 import { ProductFormParameterContext } from '@/features/products/context/ProductFormParameterContext';
 import { ProductFormStudioContext } from '@/features/products/context/ProductFormStudioContext';
 
-export default function DebugPanel(): React.JSX.Element | null {
+export default function ProductFormDebugPanel(): React.JSX.Element | null {
   const coreContext = useContext(ProductFormCoreContext);
   const metadataContext = useContext(ProductFormMetadataContext);
   const imageContext = useContext(ProductFormImageContext);

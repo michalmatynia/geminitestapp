@@ -153,4 +153,28 @@ describe('ai-paths runs enqueue handler', () => {
       })
     );
   });
+
+  it('rejects legacy object-shaped enqueue metadata source', async () => {
+    const config = createDefaultPathConfig('path-legacy-meta-source');
+
+    await expect(
+      POST_handler(
+        makeRequest({
+          pathId: config.id,
+          pathName: config.name,
+          nodes: config.nodes,
+          edges: config.edges,
+          meta: {
+            source: {
+              tab: 'product',
+            },
+            triggerEventId: 'trigger_event_id',
+          },
+        }),
+        {} as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow(/meta\.source must be a string/i);
+
+    expect(enqueuePathRunMock).not.toHaveBeenCalled();
+  });
 });

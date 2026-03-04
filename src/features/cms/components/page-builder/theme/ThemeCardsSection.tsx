@@ -3,12 +3,13 @@
 import React from 'react';
 
 import type { ColorScheme, ThemeSettings } from '@/shared/contracts/cms-theme';
-import { SettingsField, SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
+import { ThemeSettingsFieldsSection } from './ThemeSettingsFieldsSection';
 import { useThemeSettings } from '../ThemeSettingsContext';
 
 export function ThemeProductCardsSection(): React.JSX.Element {
-  const { theme, update } = useThemeSettings();
+  const { theme } = useThemeSettings();
 
   const fields: SettingsField<ThemeSettings>[] = [
     {
@@ -135,21 +136,11 @@ export function ThemeProductCardsSection(): React.JSX.Element {
     { key: 'cardShadowBlur', label: 'Shadow Blur', type: 'number', min: 0, max: 40, suffix: 'px' },
   ];
 
-  return (
-    <SettingsFieldsRenderer
-      fields={fields}
-      values={theme}
-      onChange={(values) => {
-        Object.entries(values).forEach(([key, value]) => {
-          update(key as keyof ThemeSettings, value);
-        });
-      }}
-    />
-  );
+  return <ThemeSettingsFieldsSection fields={fields} />;
 }
 
 export function ThemeCollectionCardsSection(): React.JSX.Element {
-  const { theme, update } = useThemeSettings();
+  const { theme } = useThemeSettings();
 
   const fields: SettingsField<ThemeSettings>[] = [
     {
@@ -267,21 +258,11 @@ export function ThemeCollectionCardsSection(): React.JSX.Element {
     },
   ];
 
-  return (
-    <SettingsFieldsRenderer
-      fields={fields}
-      values={theme}
-      onChange={(values) => {
-        Object.entries(values).forEach(([key, value]) => {
-          update(key as keyof ThemeSettings, value);
-        });
-      }}
-    />
-  );
+  return <ThemeSettingsFieldsSection fields={fields} />;
 }
 
 export function ThemeBlogCardsSection(): React.JSX.Element {
-  const { theme, update } = useThemeSettings();
+  const { theme } = useThemeSettings();
 
   const fields: SettingsField<ThemeSettings>[] = [
     {
@@ -396,15 +377,5 @@ export function ThemeBlogCardsSection(): React.JSX.Element {
     { key: 'blogShadowBlur', label: 'Shadow Blur', type: 'number', min: 0, max: 40, suffix: 'px' },
   ];
 
-  return (
-    <SettingsFieldsRenderer
-      fields={fields}
-      values={theme}
-      onChange={(values) => {
-        Object.entries(values).forEach(([key, value]) => {
-          update(key as keyof ThemeSettings, value);
-        });
-      }}
-    />
-  );
+  return <ThemeSettingsFieldsSection fields={fields} />;
 }

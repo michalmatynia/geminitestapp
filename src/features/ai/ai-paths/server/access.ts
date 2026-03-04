@@ -170,7 +170,7 @@ export const enforceAiPathsRunRateLimit = async (access: AiPathsAccessContext): 
   const repo = await getPathRunRepository();
   const now = Date.now();
   const windowMs = RUN_RATE_WINDOW_SECONDS * 1000;
-  const activeStatuses: AiPathRunStatus[] = ['queued', 'running', 'paused'];
+  const activeStatuses: AiPathRunStatus[] = ['running', 'paused'];
 
   // Run rate-limit probes in parallel with short soft timeouts.
   // If a probe times out, fail open for that probe to keep enqueue hot path responsive.
@@ -228,7 +228,12 @@ export const enforceAiPathsRunRateLimit = async (access: AiPathsAccessContext): 
   if (active && active.runs.length >= RUN_ACTIVE_MAX) {
     throw rateLimitedError(
       'Too many active runs. Wait for one to finish before starting another.',
-      windowMs
+      windowMs,
+      {
+        activeCount: active.runs.length,
+        activeLimit: RUN_ACTIVE_MAX,
+        activeStatuses,
+      }
     );
   }
   if (queueStats && queueStats.queuedCount >= RUN_GLOBAL_QUEUED_MAX) {

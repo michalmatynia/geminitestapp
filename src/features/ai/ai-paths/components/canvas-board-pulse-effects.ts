@@ -35,6 +35,15 @@ type UseCanvasPulseEffectsResult = {
   outputPulseNodes: Set<string>;
 };
 
+const FLOW_START_RUNTIME_STATUSES = new Set<string>([
+  'running',
+  'pending',
+  'processing',
+  'polling',
+  'waiting_callback',
+  'advance_pending',
+]);
+
 export function useCanvasPulseEffects({
   nodes,
   edges,
@@ -151,7 +160,8 @@ export function useCanvasPulseEffects({
       const nodeId = event.nodeId?.trim() ?? '';
       if (!nodeId) return;
 
-      const isStartSignal = event.kind === 'node_started' || normalizedStatus === 'running';
+      const isStartSignal =
+        event.kind === 'node_started' || FLOW_START_RUNTIME_STATUSES.has(normalizedStatus);
       const isFinishSignal =
         event.kind === 'node_finished' ||
         normalizedStatus === 'completed' ||

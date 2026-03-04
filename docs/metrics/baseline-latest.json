@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-04T19:22:38.962Z",
+  "generatedAt": "2026-03-04T19:47:14.022Z",
   "source": {
-    "totalFiles": 4207,
-    "totalLines": 653359,
-    "useClientFiles": 1281,
+    "totalFiles": 4213,
+    "totalLines": 653588,
+    "useClientFiles": 1284,
     "filesOver800": 50,
     "filesOver1000": 6,
     "filesOver1500": 2,
@@ -220,18 +220,18 @@
     "featureSizeByLines": [
       {
         "feature": "ai",
-        "files": 842,
-        "lines": 169523
+        "files": 844,
+        "lines": 170049
       },
       {
         "feature": "case-resolver",
-        "files": 268,
-        "lines": 59456
+        "files": 269,
+        "lines": 59578
       },
       {
         "feature": "cms",
         "files": 266,
-        "lines": 43441
+        "lines": 43459
       },
       {
         "feature": "products",
@@ -245,8 +245,8 @@
       },
       {
         "feature": "prompt-exploder",
-        "files": 144,
-        "lines": 26825
+        "files": 143,
+        "lines": 26245
       },
       {
         "feature": "notesapp",
@@ -286,7 +286,7 @@
       {
         "feature": "viewer3d",
         "files": 30,
-        "lines": 4656
+        "lines": 4645
       },
       {
         "feature": "prompt-engine",
@@ -321,7 +321,7 @@
       {
         "feature": "files",
         "files": 24,
-        "lines": 2140
+        "lines": 2133
       },
       {
         "feature": "internationalization",
@@ -446,11 +446,15 @@
         "lines": 872
       },
       {
+        "path": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/segments/useLocalExecutionTriggers.ts",
+        "lines": 868
+      },
+      {
         "path": "src/features/ai/image-studio/context/VersionGraphContext.tsx",
         "lines": 868
       },
       {
-        "path": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/segments/useLocalExecutionTriggers.ts",
+        "path": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsServerExecution.ts",
         "lines": 867
       },
       {
@@ -464,10 +468,6 @@
       {
         "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
         "lines": 865
-      },
-      {
-        "path": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsServerExecution.ts",
-        "lines": 864
       },
       {
         "path": "src/shared/utils/folder-tree-profiles-v2/defaults.ts",
@@ -568,5 +568,10 @@
         "lines": 13
       }
     ]
+  },
+  "propDrilling": {
+    "candidateChains": 547,
+    "depthGte4Chains": 114,
+    "forwardingComponents": 262
   }
 }

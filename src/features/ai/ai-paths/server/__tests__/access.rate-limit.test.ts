@@ -1,0 +1,131 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { AiPathRunRecord, AiPathRunStatus } from '@/shared/contracts/ai-paths';
+
+const {
+  listRunsMock,
+  getQueueStatsMock,
+  getPathRunRepositoryMock,
+} = vi.hoisted(() => ({
+  listRunsMock: vi.fn(),
+  getQueueStatsMock: vi.fn(),
+  getPathRunRepositoryMock: vi.fn(),
+}));
+
+vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
+  getPathRunRepository: getPathRunRepositoryMock,
+}));
+
+vi.mock('@/features/auth/server', () => ({
+  auth: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/observability/system-logger', () => ({
+  logSystemEvent: vi.fn(),
+}));
+
+import { enforceAiPathsRunRateLimit } from '../access';
+
+const buildRun = (id: string, status: AiPathRunStatus): AiPathRunRecord =>
+  ({
+    id,
+    userId: 'user-1',
+    pathId: 'path-1',
+    pathName: 'Path 1',
+    status,
+    triggerEvent: null,
+    triggerNodeId: null,
+    triggerContext: null,
+    graph: { nodes: [], edges: [] },
+    runtimeState: null,
+    meta: null,
+    entityId: null,
+    entityType: null,
+    errorMessage: null,
+    retryCount: 0,
+    maxAttempts: 3,
+    nextRetryAt: null,
+    deadLetteredAt: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: null,
+    startedAt: null,
+    finishedAt: null,
+  }) as AiPathRunRecord;
+
+describe('enforceAiPathsRunRateLimit', () => {
+  beforeEach(() => {
+    listRunsMock.mockReset();
+    getQueueStatsMock.mockReset().mockResolvedValue({
+      queuedCount: 0,
+      oldestQueuedAt: null,
+    });
+    getPathRunRepositoryMock.mockReset().mockResolvedValue({
+      listRuns: listRunsMock,
+      getQueueStats: getQueueStatsMock,
+    });
+  });
+
+  it('does not count queued runs as active-limit blockers', async () => {
+    listRunsMock.mockImplementation(async (options: { statuses?: AiPathRunStatus[] }) => {
+      if (Array.isArray(options.statuses)) {
+        if (options.statuses.includes('running') || options.statuses.includes('paused')) {
+          return { runs: [], total: 0 };
+        }
+        return {
+          runs: [
+            buildRun('run-q1', 'queued'),
+            buildRun('run-q2', 'queued'),
+            buildRun('run-q3', 'queued'),
+            buildRun('run-q4', 'queued'),
+            buildRun('run-q5', 'queued'),
+          ],
+          total: 5,
+        };
+      }
+      return { runs: [], total: 0 };
+    });
+
+    await expect(
+      enforceAiPathsRunRateLimit({
+        userId: 'user-1',
+        permissions: [],
+        isElevated: false,
+      })
+    ).resolves.toBeUndefined();
+
+    expect(listRunsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statuses: ['running', 'paused'],
+      })
+    );
+  });
+
+  it('blocks when running/paused runs reach active limit', async () => {
+    listRunsMock.mockImplementation(async (options: { statuses?: AiPathRunStatus[] }) => {
+      if (Array.isArray(options.statuses)) {
+        if (!(options.statuses.includes('running') || options.statuses.includes('paused'))) {
+          return { runs: [], total: 0 };
+        }
+        return {
+          runs: [
+            buildRun('run-r1', 'running'),
+            buildRun('run-r2', 'running'),
+            buildRun('run-r3', 'running'),
+            buildRun('run-r4', 'paused'),
+            buildRun('run-r5', 'paused'),
+          ],
+          total: 5,
+        };
+      }
+      return { runs: [], total: 0 };
+    });
+
+    await expect(
+      enforceAiPathsRunRateLimit({
+        userId: 'user-1',
+        permissions: [],
+        isElevated: false,
+      })
+    ).rejects.toThrow('Too many active runs. Wait for one to finish before starting another.');
+  });
+});

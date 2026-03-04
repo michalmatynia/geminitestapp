@@ -24,6 +24,29 @@ vi.mock('@/features/cms/components/frontend/GsapAnimationWrapper', () => ({
 }));
 
 describe('CmsPageRenderer Component', () => {
+  const buildComponent = ({
+    type,
+    zone = 'template',
+    sectionId,
+    settings = {},
+  }: {
+    type: string;
+    zone?: unknown;
+    sectionId: string;
+    settings?: Record<string, unknown>;
+  }): PageComponent =>
+    ({
+      type,
+      order: 0,
+      content: {
+        zone,
+        settings,
+        blocks: [],
+        sectionId,
+        parentSectionId: null,
+      },
+    }) as unknown as PageComponent;
+
   it('should render nothing when no components are provided', () => {
     const { container } = render(<CmsPageRenderer components={[]} />);
     expect(container.querySelector('.cms-page')).toBeInTheDocument();
@@ -32,18 +55,9 @@ describe('CmsPageRenderer Component', () => {
 
   it('should render sections in zone order (header -> template -> footer)', () => {
     const components = [
-      {
-        type: 'RichText',
-        content: { zone: 'template', settings: {}, blocks: [] },
-      } as unknown as PageComponent,
-      {
-        type: 'Hero',
-        content: { zone: 'header', settings: {}, blocks: [] },
-      } as unknown as PageComponent,
-      {
-        type: 'Newsletter',
-        content: { zone: 'footer', settings: {}, blocks: [] },
-      } as unknown as PageComponent,
+      buildComponent({ type: 'RichText', zone: 'template', sectionId: 's-template' }),
+      buildComponent({ type: 'Hero', zone: 'header', sectionId: 's-header' }),
+      buildComponent({ type: 'Newsletter', zone: 'footer', sectionId: 's-footer' }),
     ];
 
     render(<CmsPageRenderer components={components} />);
@@ -61,10 +75,7 @@ describe('CmsPageRenderer Component', () => {
 
   it('should handle missing zone by defaulting to \'template\'', () => {
     const components = [
-      {
-        type: 'Grid',
-        content: { settings: {}, blocks: [] },
-      } as unknown as PageComponent,
+      buildComponent({ type: 'Grid', zone: undefined, sectionId: 's-grid-missing-zone' }),
     ];
 
     render(<CmsPageRenderer components={components} />);
@@ -73,10 +84,7 @@ describe('CmsPageRenderer Component', () => {
 
   it('should handle invalid zone by defaulting to \'template\'', () => {
     const components = [
-      {
-        type: 'Grid',
-        content: { zone: 'invalid-zone', settings: {}, blocks: [] },
-      } as unknown as PageComponent,
+      buildComponent({ type: 'Grid', zone: 'invalid-zone', sectionId: 's-grid-invalid-zone' }),
     ];
 
     render(<CmsPageRenderer components={components} />);
@@ -85,14 +93,18 @@ describe('CmsPageRenderer Component', () => {
 
   it('should hide sections only when isHidden is strict boolean true', () => {
     const components = [
-      {
+      buildComponent({
         type: 'Hero',
-        content: { zone: 'template', settings: { isHidden: false }, blocks: [] },
-      } as unknown as PageComponent,
-      {
+        zone: 'template',
+        sectionId: 's-visible-hero',
+        settings: { isHidden: false },
+      }),
+      buildComponent({
         type: 'RichText',
-        content: { zone: 'template', settings: { isHidden: true }, blocks: [] },
-      } as unknown as PageComponent,
+        zone: 'template',
+        sectionId: 's-hidden-rich-text',
+        settings: { isHidden: true },
+      }),
     ];
 
     render(<CmsPageRenderer components={components} />);
@@ -102,14 +114,13 @@ describe('CmsPageRenderer Component', () => {
 
   it('should render multiple sections in the same zone in their original order', () => {
     const components = [
-      {
-        type: 'Hero',
-        content: { zone: 'template', settings: { id: 1 }, blocks: [] },
-      } as unknown as PageComponent,
-      {
+      buildComponent({ type: 'Hero', zone: 'template', sectionId: 's-hero', settings: { id: 1 } }),
+      buildComponent({
         type: 'RichText',
-        content: { zone: 'template', settings: { id: 2 }, blocks: [] },
-      } as unknown as PageComponent,
+        zone: 'template',
+        sectionId: 's-rich-text',
+        settings: { id: 2 },
+      }),
     ];
 
     render(<CmsPageRenderer components={components} />);

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "wave": "wave1-data-canonicalization-verification",
+  "reportMode": "template",
+  "environment": "local",
+  "generatedAt": "2026-03-04T00:00:00.000Z",
+  "commandTimeoutMs": 120000,
+  "aggregate": {
+    "total": 10,
+    "pending": 10,
+    "success": 0,
+    "failed": 0,
+    "skipped": 0
+  },
+  "commands": [
+    {
+      "id": "products-normalize-v2",
+      "label": "Products canonical shape normalization",
+      "command": "npm run products:normalize:v2",
+      "expectedMode": "dry-run",
+      "status": "pending",
+      "exitCode": null,
+      "startedAt": null,
+      "finishedAt": null,
+      "durationMs": null,
+      "parsedSummary": null,
+      "stdout": null,
+      "stderr": null
+    }
+  ]
+}

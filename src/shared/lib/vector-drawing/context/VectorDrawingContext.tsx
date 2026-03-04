@@ -1,7 +1,8 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 import type { VectorShape, VectorToolMode } from '@/shared/contracts/vector';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export interface VectorDrawingContextValue {
   shapes: VectorShape[];
@@ -33,19 +34,15 @@ export interface VectorDrawingContextValue {
   disableSimplify?: boolean;
 }
 
-const VectorDrawingContext = createContext<VectorDrawingContextValue | null>(null);
-
-export function useVectorDrawing(): VectorDrawingContextValue {
-  const context = useContext(VectorDrawingContext);
-  if (!context) {
-    throw new Error('useVectorDrawing must be used within a VectorDrawingProvider');
-  }
-  return context;
-}
-
-export function useOptionalVectorDrawing(): VectorDrawingContextValue | null {
-  return useContext(VectorDrawingContext);
-}
+export const {
+  Context: VectorDrawingContext,
+  useStrictContext: useVectorDrawing,
+  useOptionalContext: useOptionalVectorDrawing,
+} = createStrictContext<VectorDrawingContextValue>({
+  hookName: 'useVectorDrawing',
+  providerName: 'a VectorDrawingProvider',
+  displayName: 'VectorDrawingContext',
+});
 
 export interface VectorDrawingProviderProps {
   children: React.ReactNode;

@@ -268,9 +268,7 @@ export function useAiPathsPersistence(
         setRunMode(
           config.runMode === 'automatic' || config.runMode === 'manual' || config.runMode === 'step'
             ? config.runMode
-            : config.runMode === 'queue'
-              ? 'automatic'
-              : 'manual'
+            : 'manual'
         );
         setStrictFlowMode(config.strictFlowMode !== false);
         setBlockedRunPolicy(

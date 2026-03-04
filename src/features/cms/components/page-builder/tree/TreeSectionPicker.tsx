@@ -25,7 +25,7 @@ type BlockVariantProps = {
 
 type TreeSectionPickerProps = SectionVariantProps | BlockVariantProps;
 
-export function SectionPicker(props: TreeSectionPickerProps): React.ReactNode {
+export function TreeSectionPicker(props: TreeSectionPickerProps): React.ReactNode {
   if (props.variant === 'blocks') {
     if (props.disabled) return null;
     return <BlockPicker sectionType={props.sectionType} onSelect={props.onSelect} />;

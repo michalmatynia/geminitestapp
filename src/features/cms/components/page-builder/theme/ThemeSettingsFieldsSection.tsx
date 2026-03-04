@@ -1,0 +1,43 @@
+'use client';
+
+import React from 'react';
+
+import type { ThemeSettings } from '@/shared/contracts/cms-theme';
+import {
+  SettingsFieldsRenderer,
+  type SettingsField,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
+
+import { useThemeSettings } from '../ThemeSettingsContext';
+
+interface ThemeSettingsFieldsSectionProps {
+  fields: SettingsField<ThemeSettings>[];
+  className?: string;
+}
+
+export function ThemeSettingsFieldsSection({
+  fields,
+  className,
+}: ThemeSettingsFieldsSectionProps): React.JSX.Element {
+  const { theme, update } = useThemeSettings();
+
+  const handleChange = React.useCallback(
+    (values: Partial<ThemeSettings>): void => {
+      Object.entries(values).forEach(([key, value]) => {
+        if (value !== undefined) {
+          update(key as keyof ThemeSettings, value);
+        }
+      });
+    },
+    [update]
+  );
+
+  return (
+    <SettingsFieldsRenderer
+      fields={fields}
+      values={theme}
+      onChange={handleChange}
+      className={className}
+    />
+  );
+}

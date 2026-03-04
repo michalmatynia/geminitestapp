@@ -1,11 +1,36 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { execFile as execFileCallback } from 'node:child_process';
+import { promisify } from 'node:util';
 
 import { collectMetrics, formatCompactSummary } from './lib-metrics.mjs';
 
 const args = new Set(process.argv.slice(2));
 const root = process.cwd();
 const outDir = path.join(root, 'docs', 'metrics');
+const execFile = promisify(execFileCallback);
+
+const collectPropDrillingSummary = async () => {
+  const { stdout } = await execFile(
+    'node',
+    ['scripts/architecture/scan-prop-drilling.mjs', '--ci', '--no-history', '--no-write', '--summary-json'],
+    {
+      cwd: root,
+    }
+  );
+
+  const parsed = JSON.parse(stdout);
+  const summary = parsed?.summary;
+  if (!summary || typeof summary !== 'object') {
+    throw new Error('Prop drilling summary is missing from scanner output.');
+  }
+
+  return {
+    candidateChains: Number(summary.candidateChainCount ?? 0),
+    depthGte4Chains: Number(summary.highPriorityChainCount ?? 0),
+    forwardingComponents: Number(summary.componentsWithForwarding ?? 0),
+  };
+};
 
 const writeJson = async (targetPath, value) => {
   await fs.writeFile(targetPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
@@ -41,6 +66,10 @@ const generateMarkdown = (metrics) => {
   lines.push(`- Cross-feature dependency pairs: ${metrics.architecture.crossFeatureEdgePairs}`);
   lines.push(`- Shared -> features imports: ${metrics.imports.sharedToFeaturesTotalImports}`);
   lines.push(`- setInterval occurrences: ${metrics.runtime.setIntervalOccurrences}`);
+  if (metrics.propDrilling) {
+    lines.push(`- Prop-drilling chains (depth >= 3): ${metrics.propDrilling.candidateChains}`);
+    lines.push(`- Prop-drilling chains (depth >= 4): ${metrics.propDrilling.depthGte4Chains}`);
+  }
   lines.push('');
   lines.push('## Top API Hotspots (by LOC)');
   lines.push('');
@@ -70,7 +99,14 @@ const generateMarkdown = (metrics) => {
 };
 
 const run = async () => {
-  const metrics = await collectMetrics({ root });
+  const [metricsCore, propDrilling] = await Promise.all([
+    collectMetrics({ root }),
+    collectPropDrillingSummary(),
+  ]);
+  const metrics = {
+    ...metricsCore,
+    propDrilling,
+  };
   await fs.mkdir(outDir, { recursive: true });
 
   const stamp = metrics.generatedAt.replace(/[:.]/g, '-');

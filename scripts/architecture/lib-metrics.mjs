@@ -243,5 +243,10 @@ export const formatCompactSummary = (metrics) => {
   lines.push(`Cross-feature edge pairs: ${metrics.architecture.crossFeatureEdgePairs}`);
   lines.push(`Shared -> features imports: ${metrics.imports.sharedToFeaturesTotalImports}`);
   lines.push(`setInterval occurrences: ${metrics.runtime.setIntervalOccurrences}`);
+  if (metrics.propDrilling) {
+    lines.push(
+      `Prop drilling chains: depth>=3: ${metrics.propDrilling.candidateChains}, depth>=4: ${metrics.propDrilling.depthGte4Chains}`
+    );
+  }
   return lines.join('\n');
 };

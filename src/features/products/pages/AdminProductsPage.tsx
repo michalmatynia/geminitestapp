@@ -1,6 +1,6 @@
 'use client';
 
-import DebugPanel from '@/features/products/components/DebugPanel';
+import ProductFormDebugPanel from '@/features/products/components/ProductFormDebugPanel';
 import { ProductListPanel } from '@/features/products/components/ProductListPanel';
 import { ProductModals } from '@/features/products/components/ProductModals';
 import { ProductListProvider } from '@/features/products/context/ProductListContext';
@@ -12,7 +12,7 @@ export function AdminProductsPage(): React.JSX.Element {
 
   return (
     <>
-      {state.isDebugOpen && <DebugPanel />}
+      {state.isDebugOpen && <ProductFormDebugPanel />}
       <ConfirmModal
         isOpen={state.isMassDeleteConfirmOpen}
         onClose={() => state.setIsMassDeleteConfirmOpen(false)}

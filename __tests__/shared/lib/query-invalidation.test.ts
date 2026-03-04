@@ -209,6 +209,65 @@ describe('query-invalidation helpers', () => {
       expect(data?.runs[0]?.id).toBe('run-completed');
     });
 
+    it('adds run to ai_paths_ui source-filtered queue when source is canonical string', () => {
+      const queryKey = QUERY_KEYS.ai.aiPaths.jobQueue({
+        status: 'all',
+        source: 'ai_paths_ui',
+        sourceMode: 'include',
+        page: 1,
+        pageSize: 25,
+      });
+      queryClient.setQueryData(queryKey, {
+        runs: [createRun({ id: 'run-existing' })],
+        total: 1,
+      });
+
+      helpers.optimisticallyInsertAiPathRunInQueueCache(
+        queryClient,
+        createRun({
+          id: 'run-canonical-source',
+          status: 'queued',
+          meta: { source: 'trigger_button' },
+        })
+      );
+
+      const data = queryClient.getQueryData<{ runs: Array<{ id: string }>; total: number }>(
+        queryKey
+      );
+      expect(data?.total).toBe(2);
+      expect(data?.runs[0]?.id).toBe('run-canonical-source');
+    });
+
+    it('does not add run to ai_paths_ui source-filtered queue when source uses removed object metadata', () => {
+      const queryKey = QUERY_KEYS.ai.aiPaths.jobQueue({
+        status: 'all',
+        source: 'ai_paths_ui',
+        sourceMode: 'include',
+        page: 1,
+        pageSize: 25,
+      });
+      queryClient.setQueryData(queryKey, {
+        runs: [createRun({ id: 'run-existing' })],
+        total: 1,
+      });
+
+      helpers.optimisticallyInsertAiPathRunInQueueCache(
+        queryClient,
+        createRun({
+          id: 'run-legacy-object-source',
+          status: 'queued',
+          meta: { source: { tab: 'product' } },
+        })
+      );
+
+      const data = queryClient.getQueryData<{ runs: Array<{ id: string }>; total: number }>(
+        queryKey
+      );
+      expect(data?.total).toBe(1);
+      expect(data?.runs).toHaveLength(1);
+      expect(data?.runs[0]?.id).toBe('run-existing');
+    });
+
     it('emits run-enqueued browser event', () => {
       const listener = vi.fn();
       window.addEventListener('ai-path-run-enqueued', listener as EventListener);

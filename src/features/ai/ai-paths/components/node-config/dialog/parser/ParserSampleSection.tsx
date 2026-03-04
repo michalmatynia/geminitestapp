@@ -17,18 +17,20 @@ export interface ParserSampleSectionProps {
   handleDetectImages: () => void;
 }
 
-export function ParserSampleSection({
-  selectedNodeId,
-  sampleState,
-  setParserSamples,
-  simulationOptions,
-  parserSampleLoading,
-  handleFetchParserSample,
-  parsedSampleError,
-  sampleMappingsLength,
-  applySampleMappings,
-  handleDetectImages,
-}: ParserSampleSectionProps): React.JSX.Element {
+export function ParserSampleSection(props: ParserSampleSectionProps): React.JSX.Element {
+  const {
+    selectedNodeId,
+    sampleState,
+    setParserSamples,
+    simulationOptions,
+    parserSampleLoading,
+    handleFetchParserSample,
+    parsedSampleError,
+    sampleMappingsLength,
+    applySampleMappings,
+    handleDetectImages,
+  } = props;
+
   return (
     <FormField label='Sample JSON'>
       <div className='grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-center'>

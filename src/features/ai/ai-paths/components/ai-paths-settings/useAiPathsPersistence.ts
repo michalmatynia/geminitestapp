@@ -33,6 +33,10 @@ import {
   parseRuntimeState,
   sanitizePathConfig,
 } from '../AiPathsSettingsUtils';
+import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
+import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
+import { usePersistenceActions } from '@/features/ai/ai-paths/context/PersistenceContext';
+import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 import {
   type AiPathsUiState,
   type PathSaveOptions,
@@ -61,36 +65,39 @@ export function useAiPathsPersistence(
     paletteCollapsed,
     pathConfigs,
     reportAiPathsError,
-    setAiPathsValidation,
-    setActivePathId,
-    setActiveTrigger,
-    setBlockedRunPolicy,
-    setConfigOpen,
-    setEdges,
-    setExecutionMode,
-    setFlowIntensity,
-    setHistoryRetentionOptionsMax,
-    setHistoryRetentionPasses,
-    setIsPathActive,
-    setIsPathLocked,
-    setLastRunAt,
-    setLoading,
-    setNodes,
-    setParserSamples,
-    setPathDescription,
-    setPathConfigs,
-    setPathName,
-    setPaths,
-    setRunMode,
-    setRuntimeState,
-    setSelectedNodeId,
-    setStrictFlowMode,
-    setUpdaterSamples,
     toast,
     isPathLocked,
     isPathActive,
     paths,
   } = args;
+  const {
+    setNodes,
+    setEdges,
+    setPathConfigs,
+    setPaths,
+    setActivePathId,
+    setPathName,
+    setPathDescription,
+    setActiveTrigger,
+    setExecutionMode,
+    setFlowIntensity,
+    setRunMode,
+    setStrictFlowMode,
+    setBlockedRunPolicy,
+    setAiPathsValidation,
+    setHistoryRetentionPasses,
+    setHistoryRetentionOptionsMax,
+    setIsPathLocked,
+    setIsPathActive,
+  } = useGraphActions();
+  const {
+    setRuntimeState,
+    setParserSamples,
+    setUpdaterSamples,
+    setLastRunAt,
+  } = useRuntimeActions();
+  const { setLoading } = usePersistenceActions();
+  const { selectNode, setConfigOpen } = useSelectionActions();
 
   const [uiStateLoaded, setUiStateLoaded] = useState(false);
   const loadInFlightRef = useRef(false);
@@ -312,7 +319,7 @@ export function useAiPathsPersistence(
           preferredNodeId && normalizedNodes.some((node): boolean => node.id === preferredNodeId)
             ? preferredNodeId
             : (normalizedNodes[0]?.id ?? null);
-        setSelectedNodeId(selectedNodeId);
+        selectNode(selectedNodeId);
         setConfigOpen(false);
 
         if (resolvedActivePathId !== preferredActivePathId) {

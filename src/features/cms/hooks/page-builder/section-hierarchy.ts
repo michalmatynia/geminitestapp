@@ -38,11 +38,6 @@ export type MoveSectionSubtreeResult = {
 const clampIndex = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
 
-const normalizeZone = (zone: unknown): PageZone => {
-  if (zone === 'header' || zone === 'template' || zone === 'footer') return zone;
-  return 'template';
-};
-
 const listFor = (map: Map<string | null, string[]>, key: string | null): string[] => {
   const list = map.get(key);
   if (list) return list;
@@ -116,7 +111,7 @@ const ensureNoCyclesAndInvalidParents = (sections: SectionInstance[]): SectionIn
   const sanitized = sections.map((section: SectionInstance) => {
     const parentId = section.parentSectionId ?? null;
     if (!parentId || !byId.has(parentId) || parentId === section.id) {
-      return { ...section, zone: normalizeZone(section.zone), parentSectionId: null };
+      return { ...section, parentSectionId: null };
     }
 
     // Check ancestry chain for cycles
@@ -124,19 +119,18 @@ const ensureNoCyclesAndInvalidParents = (sections: SectionInstance[]): SectionIn
     const seen = new Set<string>([section.id]);
     while (cursor) {
       if (seen.has(cursor)) {
-        return { ...section, zone: normalizeZone(section.zone), parentSectionId: null };
+        return { ...section, parentSectionId: null };
       }
       seen.add(cursor);
       const cursorNode = byId.get(cursor);
       if (!cursorNode) {
-        return { ...section, zone: normalizeZone(section.zone), parentSectionId: null };
+        return { ...section, parentSectionId: null };
       }
       cursor = cursorNode.parentSectionId ?? null;
     }
 
     return {
       ...section,
-      zone: normalizeZone(section.zone),
       parentSectionId: parentId,
     };
   });
@@ -251,7 +245,7 @@ export const sanitizeSectionHierarchy = (
   rootIds.forEach((rootId: string) => {
     const root = nodeById.get(rootId);
     if (!root) return;
-    applyZoneInheritance(rootId, normalizeZone(root.zone));
+    applyZoneInheritance(rootId, root.zone);
   });
 
   // Enforce max depth by detaching overflowing nodes to root.
@@ -381,9 +375,11 @@ export const moveSectionSubtree = (
     childrenByParent.set(null, rebuiltRoots);
   }
 
-  const resolvedZone = toParentSectionId
-    ? normalizeZone(nodeById.get(toParentSectionId)?.zone)
-    : toZone;
+  const targetParentZone = toParentSectionId ? nodeById.get(toParentSectionId)?.zone : null;
+  if (toParentSectionId && !targetParentZone) {
+    return { ok: false, reason: 'PARENT_NOT_FOUND', sections: sanitized };
+  }
+  const resolvedZone = targetParentZone ?? toZone;
 
   movingNode.parentSectionId = toParentSectionId ?? null;
 

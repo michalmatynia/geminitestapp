@@ -139,6 +139,29 @@ describe('reducePageBuilderStateCore section hierarchy actions', () => {
     expect(next).toBe(state);
   });
 
+  it('adds section with canonical defaults merged with explicit initial settings', () => {
+    const next = reducePageBuilderStateCore(createState([]), {
+      type: 'ADD_SECTION',
+      sectionType: 'Hero',
+      zone: 'template',
+      initialSettings: {
+        imageHeight: 'small',
+      },
+    });
+
+    expect(next.sections).toHaveLength(1);
+    const added = next.sections[0];
+    expect(added).toBeDefined();
+    expect(added?.type).toBe('Hero');
+    expect(added?.zone).toBe('template');
+    expect(added?.settings).toMatchObject({
+      imageHeight: 'small',
+      colorScheme: 'scheme-1',
+      paddingTop: 36,
+      paddingBottom: 36,
+    });
+  });
+
   it('hydrates sections from canonical page components without legacy parent normalization', () => {
     const page = createPage([
       {
@@ -189,5 +212,27 @@ describe('reducePageBuilderStateCore section hierarchy actions', () => {
         blocks: [],
       },
     ]);
+  });
+
+  it('adds grid root image blocks with canonical background target', () => {
+    const state = createState([
+      createSection({
+        id: 'grid-1',
+        type: 'Grid',
+        blocks: [{ id: 'row-1', type: 'Row', settings: {}, blocks: [] }],
+      }),
+    ]);
+
+    const next = reducePageBuilderStateCore(state, {
+      type: 'ADD_BLOCK',
+      sectionId: 'grid-1',
+      blockType: 'ImageElement',
+    });
+
+    const gridSection = next.sections.find((section) => section.id === 'grid-1');
+    const imageBlock = gridSection?.blocks.find((block) => block.type === 'ImageElement');
+
+    expect(imageBlock).toBeDefined();
+    expect(imageBlock?.settings['backgroundTarget']).toBe('grid');
   });
 });

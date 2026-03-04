@@ -2,11 +2,11 @@
 
 import React, { useEffect, useMemo, useRef } from 'react';
 
-import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/features/foldertree/v2';
-import type {
-  MasterFolderTreeAdapterV3,
-  MasterFolderTreeTransaction,
-} from '@/shared/contracts/master-folder-tree';
+import {
+  createMasterFolderTreeTransactionAdapter,
+  FolderTreeViewportV2,
+  useMasterFolderTreeShell,
+} from '@/features/foldertree/v2';
 import { Button, Input, Label } from '@/shared/ui';
 
 import { usePromptExploderHierarchyTreeContext } from './PromptExploderHierarchyTreeContext';
@@ -82,26 +82,17 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
   const treeRevision = useMemo(() => buildPromptExploderTreeRevision(masterNodes), [masterNodes]);
   const expandedNodeIds = useMemo(() => masterNodes.map((node) => node.id), [masterNodes]);
 
-  const adapter = useMemo<MasterFolderTreeAdapterV3>(
-    () => ({
-      prepare: async (tx: MasterFolderTreeTransaction) => ({
-        tx,
-        preparedAt: Date.now(),
+  const adapter = useMemo(
+    () =>
+      createMasterFolderTreeTransactionAdapter({
+        onApply: async (tx) => {
+          const nextItems = rebuildPromptExploderListFromMasterNodes({
+            nodes: tx.nextNodes,
+            previousItems: itemsRef.current,
+          });
+          onChangeRef.current(nextItems);
+        },
       }),
-      apply: async (tx: MasterFolderTreeTransaction) => {
-        const nextItems = rebuildPromptExploderListFromMasterNodes({
-          nodes: tx.nextNodes,
-          previousItems: itemsRef.current,
-        });
-        onChangeRef.current(nextItems);
-        return {
-          tx,
-          appliedAt: Date.now(),
-        };
-      },
-      commit: async () => {},
-      rollback: async () => {},
-    }),
     []
   );
 

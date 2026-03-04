@@ -1,10 +1,8 @@
 import {
-  getSectionDefinition,
   getBlockDefinition,
 } from '../../components/page-builder/section-registry';
-import { sanitizeSectionHierarchy } from './section-hierarchy';
 
-import type { SectionInstance, BlockInstance, SettingsField } from '../../types/page-builder';
+import type { SectionInstance, BlockInstance } from '../../types/page-builder';
 
 // ---------------------------------------------------------------------------
 // ID generation
@@ -200,74 +198,63 @@ export function createRowBlock(columnCount: number): BlockInstance {
 
 export function splitGridBlocks(blocks: BlockInstance[]): {
   rows: BlockInstance[];
-  columns: BlockInstance[];
   extras: BlockInstance[];
 } {
   const rows: BlockInstance[] = [];
-  const columns: BlockInstance[] = [];
   const extras: BlockInstance[] = [];
   for (const block of blocks) {
     if (block.type === 'Row') {
       rows.push(block);
-    } else if (block.type === 'Column') {
-      columns.push(block);
     } else {
       extras.push(block);
     }
   }
-  return { rows, columns, extras };
+  return { rows, extras };
 }
 
 export function ensureGridRows(section: SectionInstance): SectionInstance {
   if (section.type !== 'Grid') return section;
-  const { rows, columns, extras } = splitGridBlocks(section.blocks);
+  const { rows, extras } = splitGridBlocks(section.blocks);
   if (rows.length > 0) {
-    if (columns.length === 0) return section;
-    const rowDef = getBlockDefinition('Row');
-    const extraRow: BlockInstance = {
-      id: uid(),
-      type: 'Row',
-      settings: rowDef ? { ...rowDef.defaultSettings } : {},
-      blocks: columns,
-    };
-    const allRows = [...rows, extraRow];
+    const canonicalRows = rows.map((row: BlockInstance): BlockInstance => {
+      const columns = (row.blocks ?? []).filter((block: BlockInstance) => block.type === 'Column');
+      return {
+        ...row,
+        blocks: columns.length > 0 ? columns : [createColumnBlock()],
+      };
+    });
     const maxColumns = Math.max(
       1,
-      ...allRows.map(
+      ...canonicalRows.map(
         (row: BlockInstance) =>
-          (row.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column').length
+          (row.blocks ?? []).filter((block: BlockInstance) => block.type === 'Column').length
       )
     );
     return {
       ...section,
-      blocks: [...allRows, ...extras],
-      settings: { ...section.settings, rows: allRows.length, columns: maxColumns },
+      blocks: [...canonicalRows, ...extras],
+      settings: { ...section.settings, rows: canonicalRows.length, columns: maxColumns },
     };
   }
-  const rowDef = getBlockDefinition('Row');
-  const rowsSetting = (section.settings['rows'] as number) ?? 1;
+  const rowsSettingRaw = section.settings['rows'];
+  const columnsSettingRaw = section.settings['columns'];
+  const rowsSetting =
+    typeof rowsSettingRaw === 'number' && Number.isFinite(rowsSettingRaw) && rowsSettingRaw > 0
+      ? Math.floor(rowsSettingRaw)
+      : 1;
   const columnsSetting =
-    (section.settings['columns'] as number) ?? Math.max(1, columns.length || 1);
-  if (columns.length === 0) {
-    const rows = Array.from({ length: Math.max(1, rowsSetting) }, () =>
-      createRowBlock(columnsSetting)
-    );
-    return {
-      ...section,
-      blocks: [...rows, ...extras],
-      settings: { ...section.settings, rows: rows.length, columns: columnsSetting },
-    };
-  }
-  const row: BlockInstance = {
-    id: uid(),
-    type: 'Row',
-    settings: rowDef ? { ...rowDef.defaultSettings } : {},
-    blocks: columns,
-  };
+    typeof columnsSettingRaw === 'number' &&
+      Number.isFinite(columnsSettingRaw) &&
+      columnsSettingRaw > 0
+      ? Math.floor(columnsSettingRaw)
+      : 1;
+  const canonicalRows = Array.from({ length: Math.max(1, rowsSetting) }, () =>
+    createRowBlock(columnsSetting)
+  );
   return {
     ...section,
-    blocks: [row, ...extras],
-    settings: { ...section.settings, rows: 1, columns: columns.length },
+    blocks: [...canonicalRows, ...extras],
+    settings: { ...section.settings, rows: canonicalRows.length, columns: columnsSetting },
   };
 }
 
@@ -412,33 +399,6 @@ export function insertBlockIntoColumnBlocks(
   });
 }
 
-// ---------------------------------------------------------------------------
-// Normalization
-// ---------------------------------------------------------------------------
-
-export function normalizeBlocks(blocks: BlockInstance[], seen: Set<string>): BlockInstance[] {
-  return blocks.map((block: BlockInstance): BlockInstance => {
-    const normalizedId = ensureUniqueId(block.id, seen);
-    const nested = block.blocks ? normalizeBlocks(block.blocks, seen) : undefined;
-    const def = getBlockDefinition(block.type);
-    const mergedSettings = applySettingsDefaults(
-      block.settings ?? {},
-      def?.settingsSchema,
-      def?.defaultSettings ?? {}
-    );
-    const normalized: BlockInstance = {
-      ...block,
-      id: normalizedId,
-      settings: mergedSettings,
-      ...(nested ? { blocks: nested } : {}),
-    };
-    if (normalized.type === TEXT_ATOM_BLOCK_TYPE) {
-      return applyTextAtomSettings(normalized, mergedSettings, seen);
-    }
-    return normalized;
-  });
-}
-
 export function updateSectionNestedBlocks(
   blocks: BlockInstance[],
   parentBlockId: string,
@@ -453,38 +413,6 @@ export function updateSectionNestedBlocks(
     }
     return block;
   });
-}
-
-export function normalizeSections(sections: SectionInstance[]): SectionInstance[] {
-  const seen = new Set<string>();
-  const normalized = sections.map((section: SectionInstance): SectionInstance => {
-    const normalizedId = ensureUniqueId(section.id, seen);
-    const baseSection = ensureGridRows({ ...section, id: normalizedId });
-    const normalizedBlocks = normalizeBlocks(baseSection.blocks ?? [], seen);
-    if (baseSection.type === TEXT_ATOM_BLOCK_TYPE) {
-      const updatedBlock = applyTextAtomSettings(
-        {
-          id: baseSection.id,
-          type: TEXT_ATOM_BLOCK_TYPE,
-          settings: baseSection.settings,
-          blocks: normalizedBlocks,
-        },
-        baseSection.settings,
-        seen
-      );
-      return {
-        ...baseSection,
-        parentSectionId: baseSection.parentSectionId ?? null,
-        blocks: updatedBlock.blocks ?? [],
-      };
-    }
-    return {
-      ...baseSection,
-      parentSectionId: baseSection.parentSectionId ?? null,
-      blocks: normalizedBlocks,
-    };
-  });
-  return sanitizeSectionHierarchy(normalized);
 }
 
 // ---------------------------------------------------------------------------
@@ -616,43 +544,4 @@ export function cloneSection(section: SectionInstance): SectionInstance {
     blocks: section.blocks.map(cloneBlock),
   };
   return ensureGridRows(cloned);
-}
-
-// ---------------------------------------------------------------------------
-// Settings
-// ---------------------------------------------------------------------------
-
-export function applySettingsDefaults(
-  settings: Record<string, unknown>,
-  schema: SettingsField[] | undefined,
-  base: Record<string, unknown>
-): Record<string, unknown> {
-  const merged: Record<string, unknown> = { ...base, ...settings };
-  if (Array.isArray(schema)) {
-    for (const field of schema) {
-      if (merged[field.key] === undefined && field.defaultValue !== undefined) {
-        merged[field.key] = field.defaultValue;
-      }
-    }
-  }
-  return merged;
-}
-
-export function buildSectionSettings(
-  type: string,
-  settings: Record<string, unknown>
-): Record<string, unknown> {
-  const def = getSectionDefinition(type);
-  if (!def) return settings;
-  const merged = applySettingsDefaults(settings, def.settingsSchema, def.defaultSettings);
-  if (type === 'AnnouncementBar') {
-    const left = typeof merged['paddingLeft'] === 'number' ? merged['paddingLeft'] : undefined;
-    const right = typeof merged['paddingRight'] === 'number' ? merged['paddingRight'] : undefined;
-    return {
-      ...merged,
-      paddingLeft: left === 24 || left === undefined ? 0 : left,
-      paddingRight: right === 24 || right === undefined ? 0 : right,
-    };
-  }
-  return merged;
 }

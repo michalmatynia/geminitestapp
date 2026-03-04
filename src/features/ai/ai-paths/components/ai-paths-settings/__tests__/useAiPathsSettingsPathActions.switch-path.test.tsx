@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import type { Dispatch, SetStateAction } from 'react';
 
-import type { PathConfig, PathMeta, RuntimeState } from '@/shared/lib/ai-paths';
+import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
 
 import { useAiPathsSettingsPathActions } from '../useAiPathsSettingsPathActions';
@@ -12,6 +12,29 @@ import {
 } from '@/shared/lib/ai-paths/settings-store-client';
 
 type PathActionsInput = Parameters<typeof useAiPathsSettingsPathActions>[0];
+const selectNodeMock = vi.fn();
+const setNodesGraphMock = vi.fn();
+const setEdgesGraphMock = vi.fn();
+const setPathConfigsGraphMock = vi.fn();
+const setPathsGraphMock = vi.fn();
+const setActivePathIdGraphMock = vi.fn();
+const setPathNameGraphMock = vi.fn();
+const setPathDescriptionGraphMock = vi.fn();
+const setActiveTriggerGraphMock = vi.fn();
+const setExecutionModeGraphMock = vi.fn();
+const setFlowIntensityGraphMock = vi.fn();
+const setRunModeGraphMock = vi.fn();
+const setStrictFlowModeGraphMock = vi.fn();
+const setBlockedRunPolicyGraphMock = vi.fn();
+const setAiPathsValidationGraphMock = vi.fn();
+const setIsPathLockedGraphMock = vi.fn();
+const setIsPathActiveGraphMock = vi.fn();
+const setRuntimeStateMock = vi.fn();
+const setParserSamplesRuntimeMock = vi.fn();
+const setUpdaterSamplesRuntimeMock = vi.fn();
+const setLastRunAtRuntimeMock = vi.fn();
+const setConfigOpenSelectionMock = vi.fn();
+const setIsPathSwitchingPersistenceMock = vi.fn();
 
 vi.mock('@/shared/lib/ai-paths/settings-store-client', async () => {
   const actual = await vi.importActual<
@@ -25,6 +48,49 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', async () => {
   };
 });
 
+vi.mock('@/features/ai/ai-paths/context/SelectionContext', () => ({
+  useSelectionActions: () => ({
+    selectNode: selectNodeMock,
+    setConfigOpen: setConfigOpenSelectionMock,
+  }),
+}));
+
+vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
+  useGraphActions: () => ({
+    setNodes: setNodesGraphMock,
+    setEdges: setEdgesGraphMock,
+    setPathConfigs: setPathConfigsGraphMock,
+    setPaths: setPathsGraphMock,
+    setActivePathId: setActivePathIdGraphMock,
+    setPathName: setPathNameGraphMock,
+    setPathDescription: setPathDescriptionGraphMock,
+    setActiveTrigger: setActiveTriggerGraphMock,
+    setExecutionMode: setExecutionModeGraphMock,
+    setFlowIntensity: setFlowIntensityGraphMock,
+    setRunMode: setRunModeGraphMock,
+    setStrictFlowMode: setStrictFlowModeGraphMock,
+    setBlockedRunPolicy: setBlockedRunPolicyGraphMock,
+    setAiPathsValidation: setAiPathsValidationGraphMock,
+    setIsPathLocked: setIsPathLockedGraphMock,
+    setIsPathActive: setIsPathActiveGraphMock,
+  }),
+}));
+
+vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({
+  useRuntimeActions: () => ({
+    setRuntimeState: setRuntimeStateMock,
+    setParserSamples: setParserSamplesRuntimeMock,
+    setUpdaterSamples: setUpdaterSamplesRuntimeMock,
+    setLastRunAt: setLastRunAtRuntimeMock,
+  }),
+}));
+
+vi.mock('@/features/ai/ai-paths/context/PersistenceContext', () => ({
+  usePersistenceActions: () => ({
+    setIsPathSwitching: setIsPathSwitchingPersistenceMock,
+  }),
+}));
+
 const mockedFetchAiPathsSettingsByKeysCached = vi.mocked(fetchAiPathsSettingsByKeysCached);
 const mockedFetchAiPathsSettingsCached = vi.mocked(fetchAiPathsSettingsCached);
 
@@ -36,24 +102,13 @@ const createDispatchMock = <T,>() => {
   };
 };
 
-const emptyRuntimeState = (): RuntimeState =>
-  ({
-    status: 'idle',
-    nodeStatuses: {},
-    nodeOutputs: {},
-    variables: {},
-    events: [],
-    inputs: {},
-    outputs: {},
-  }) as RuntimeState;
-
 const buildInput = (): {
   input: PathActionsInput;
   mocks: {
-    setActivePathId: ReturnType<typeof createDispatchMock<string | null>>['mock'];
+    setActivePathId: ReturnType<typeof vi.fn>;
     setIsPathSwitching: ReturnType<typeof createDispatchMock<boolean>>['mock'];
-    setPathConfigs: ReturnType<typeof createDispatchMock<Record<string, PathConfig>>>['mock'];
-    setPaths: ReturnType<typeof createDispatchMock<PathMeta[]>>['mock'];
+    setPathConfigs: ReturnType<typeof vi.fn>;
+    setPaths: ReturnType<typeof vi.fn>;
     toast: ReturnType<typeof vi.fn>;
     persistActivePathPreference: ReturnType<typeof vi.fn>;
   };
@@ -67,32 +122,6 @@ const buildInput = (): {
     updatedAt: oldConfig.updatedAt,
   };
 
-  const setActivePathId = createDispatchMock<string | null>();
-  const setIsPathSwitching = createDispatchMock<boolean>();
-  const setPathConfigs = createDispatchMock<Record<string, PathConfig>>();
-  const setPaths = createDispatchMock<PathMeta[]>();
-  const setNodes = createDispatchMock(oldConfig.nodes);
-  const setEdges = createDispatchMock(oldConfig.edges);
-  const setPathName = createDispatchMock<string>();
-  const setPathDescription = createDispatchMock<string>();
-  const setActiveTrigger = createDispatchMock<string>();
-  const setExecutionMode = createDispatchMock<PathActionsInput['executionMode']>();
-  const setFlowIntensity = createDispatchMock<PathActionsInput['flowIntensity']>();
-  const setRunMode = createDispatchMock<PathActionsInput['runMode']>();
-  const setStrictFlowMode = createDispatchMock<boolean>();
-  const setBlockedRunPolicy = createDispatchMock<PathActionsInput['blockedRunPolicy']>();
-  const setAiPathsValidation = createDispatchMock<PathActionsInput['aiPathsValidation']>();
-  const setParserSamples =
-    createDispatchMock<Record<string, PathActionsInput['parserSamples'][string]>>();
-  const setUpdaterSamples =
-    createDispatchMock<Record<string, PathActionsInput['updaterSamples'][string]>>();
-  const setRuntimeState = createDispatchMock<RuntimeState>();
-  const setLastRunAt = createDispatchMock<string | null>();
-  const setIsPathLocked = createDispatchMock<boolean>();
-  const setIsPathActive = createDispatchMock<boolean>();
-  const setSelectedNodeId = createDispatchMock<string | null>();
-  const setConfigOpen = createDispatchMock<boolean>();
-
   const toast = vi.fn();
   const persistPathSettings = vi.fn().mockResolvedValue(undefined);
   const persistSettingsBulk = vi.fn().mockResolvedValue(undefined);
@@ -100,34 +129,10 @@ const buildInput = (): {
 
   const input: PathActionsInput = {
     activePathId: oldPathId,
-    setActivePathId: setActivePathId.dispatch,
     isPathLocked: false,
     pathConfigs: { [oldPathId]: oldConfig },
-    setPathConfigs: setPathConfigs.dispatch,
     paths: [oldPath],
-    setPaths: setPaths.dispatch,
-    setNodes: setNodes.dispatch,
-    setEdges: setEdges.dispatch,
-    setPathName: setPathName.dispatch,
-    setPathDescription: setPathDescription.dispatch,
-    setActiveTrigger: setActiveTrigger.dispatch,
-    setExecutionMode: setExecutionMode.dispatch,
-    setFlowIntensity: setFlowIntensity.dispatch,
-    setRunMode: setRunMode.dispatch,
-    setStrictFlowMode: setStrictFlowMode.dispatch,
-    setBlockedRunPolicy: setBlockedRunPolicy.dispatch,
-    setAiPathsValidation: setAiPathsValidation.dispatch,
-    setParserSamples: setParserSamples.dispatch,
-    setUpdaterSamples: setUpdaterSamples.dispatch,
-    setRuntimeState: setRuntimeState.dispatch,
-    setLastRunAt: setLastRunAt.dispatch,
-    setIsPathLocked: setIsPathLocked.dispatch,
-    setIsPathActive: setIsPathActive.dispatch,
-    setSelectedNodeId: setSelectedNodeId.dispatch,
-    setIsPathSwitching: setIsPathSwitching.dispatch,
-    setConfigOpen: setConfigOpen.dispatch,
     normalizeTriggerLabel: (value) => value ?? 'Product Modal - Context Filter',
-    updateActivePathMeta: vi.fn(),
     persistPathSettings,
     persistSettingsBulk,
     persistActivePathPreference,
@@ -139,10 +144,10 @@ const buildInput = (): {
   return {
     input,
     mocks: {
-      setActivePathId: setActivePathId.mock,
-      setIsPathSwitching: setIsPathSwitching.mock,
-      setPathConfigs: setPathConfigs.mock,
-      setPaths: setPaths.mock,
+      setActivePathId: setActivePathIdGraphMock,
+      setIsPathSwitching: setIsPathSwitchingPersistenceMock,
+      setPathConfigs: setPathConfigsGraphMock,
+      setPaths: setPathsGraphMock,
       toast,
       persistActivePathPreference,
     },
@@ -152,6 +157,29 @@ const buildInput = (): {
 describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    selectNodeMock.mockReset();
+    setConfigOpenSelectionMock.mockReset();
+    setNodesGraphMock.mockReset();
+    setEdgesGraphMock.mockReset();
+    setPathConfigsGraphMock.mockReset();
+    setPathsGraphMock.mockReset();
+    setActivePathIdGraphMock.mockReset();
+    setPathNameGraphMock.mockReset();
+    setPathDescriptionGraphMock.mockReset();
+    setActiveTriggerGraphMock.mockReset();
+    setExecutionModeGraphMock.mockReset();
+    setFlowIntensityGraphMock.mockReset();
+    setRunModeGraphMock.mockReset();
+    setStrictFlowModeGraphMock.mockReset();
+    setBlockedRunPolicyGraphMock.mockReset();
+    setAiPathsValidationGraphMock.mockReset();
+    setIsPathLockedGraphMock.mockReset();
+    setIsPathActiveGraphMock.mockReset();
+    setRuntimeStateMock.mockReset();
+    setParserSamplesRuntimeMock.mockReset();
+    setUpdaterSamplesRuntimeMock.mockReset();
+    setLastRunAtRuntimeMock.mockReset();
+    setIsPathSwitchingPersistenceMock.mockReset();
   });
 
   it('applies fetched path config and persists active path preference', async () => {

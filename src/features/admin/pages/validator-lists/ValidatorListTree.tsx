@@ -2,13 +2,13 @@
 
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/features/foldertree/v2';
+import {
+  createMasterFolderTreeTransactionAdapter,
+  FolderTreeViewportV2,
+  useMasterFolderTreeShell,
+} from '@/features/foldertree/v2';
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
 import type { ValidatorPatternList } from '@/shared/contracts/admin';
-import type {
-  MasterFolderTreeAdapterV3,
-  MasterFolderTreeTransaction,
-} from '@/shared/contracts/master-folder-tree';
 import { FolderTreePanel } from '@/shared/ui';
 
 import {
@@ -50,20 +50,14 @@ export function ValidatorListTree({
     onReorderRef.current = onReorder;
   }, [onReorder]);
 
-  const adapter = useMemo<MasterFolderTreeAdapterV3>(
-    () => ({
-      prepare: async (tx) => ({ tx, preparedAt: Date.now() }),
-      apply: async (tx: MasterFolderTreeTransaction) => {
-        const reordered = resolveValidatorListOrderFromNodes(tx.nextNodes, listByIdRef.current);
-        onReorderRef.current(reordered);
-        return {
-          tx,
-          appliedAt: Date.now(),
-        };
-      },
-      commit: async () => {},
-      rollback: async () => {},
-    }),
+  const adapter = useMemo(
+    () =>
+      createMasterFolderTreeTransactionAdapter({
+        onApply: async (tx) => {
+          const reordered = resolveValidatorListOrderFromNodes(tx.nextNodes, listByIdRef.current);
+          onReorderRef.current(reordered);
+        },
+      }),
     []
   );
 

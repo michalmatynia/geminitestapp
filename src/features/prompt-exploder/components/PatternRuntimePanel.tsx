@@ -99,13 +99,11 @@ export function PatternRuntimePanel(): React.JSX.Element {
     const cacheHits = observability.counters.runtime_cache_hit;
     const cacheMisses = observability.counters.runtime_cache_miss;
     const selectionTotal = observability.counters.runtime_selection_total;
-    const fallbackTotal = observability.counters.runtime_selection_fallback;
     const totalErrors =
       observability.errors.scope_resolution +
       observability.errors.rule_compile +
       observability.errors.runtime_execution;
     const cacheHitRate = cacheHits + cacheMisses > 0 ? cacheHits / (cacheHits + cacheMisses) : 0;
-    const fallbackRate = selectionTotal > 0 ? fallbackTotal / selectionTotal : 0;
     const errorRate = selectionTotal > 0 ? totalErrors / selectionTotal : 0;
     const toPercent = (value: number): string => `${(value * 100).toFixed(1)}%`;
     const pipelineP95 =
@@ -118,7 +116,6 @@ export function PatternRuntimePanel(): React.JSX.Element {
     return {
       status: observability.health.status,
       cacheHitRate: toPercent(cacheHitRate),
-      fallbackRate: toPercent(fallbackRate),
       errorRate: toPercent(errorRate),
       pipelineP95: pipelineP95.toFixed(1),
       explodeP95: explodeP95.toFixed(1),
@@ -522,10 +519,6 @@ export function PatternRuntimePanel(): React.JSX.Element {
           <div>
             <div className='text-[10px] text-gray-500'>Cache Hit Rate</div>
             <div>{runtimeHealth.cacheHitRate}</div>
-          </div>
-          <div>
-            <div className='text-[10px] text-gray-500'>Fallback Rate</div>
-            <div>{runtimeHealth.fallbackRate}</div>
           </div>
           <div>
             <div className='text-[10px] text-gray-500'>Error Rate</div>

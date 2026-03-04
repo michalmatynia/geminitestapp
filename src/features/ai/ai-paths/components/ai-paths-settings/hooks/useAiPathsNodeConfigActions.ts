@@ -1,11 +1,12 @@
 import { useCallback } from 'react';
 import type { AiNode, NodeConfig } from '@/shared/lib/ai-paths';
+import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 
 export function useAiPathsNodeConfigActions(args: {
   selectedNodeId: string | null;
-  setNodes: (nodes: (prev: AiNode[]) => AiNode[]) => void;
 }) {
-  const { selectedNodeId, setNodes } = args;
+  const { selectedNodeId } = args;
+  const { setNodes } = useGraphActions();
 
   const updateSelectedNode = useCallback(
     (patch: Partial<AiNode>, options?: { nodeId?: string }): void => {

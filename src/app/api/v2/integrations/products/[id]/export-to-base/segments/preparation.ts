@@ -9,7 +9,6 @@ import {
   type Template,
 } from '@/features/integrations/server';
 import {
-  getParameterRepository,
   getProducerRepository,
   getTagRepository,
   type ProducerRepository,
@@ -47,116 +46,27 @@ const toBaseFieldMappings = (value: unknown): BaseFieldMapping[] => {
       item !== null && typeof item === 'object' && !Array.isArray(item) && 'targetField' in item
   );
 };
-export const parseMappedParameterId = (value: unknown): string => {
-  if (typeof value !== 'string') return '';
-  const trimmed = value.trim();
-  const match = trimmed.match(/parameter:([^:]+)/);
-  if (match?.[1]) return match[1].split('|')[0] ?? '';
-  if (trimmed.startsWith('parameter:'))
-    return trimmed.replace(/^parameter:/, '').split('|')[0] ?? '';
-  return '';
-};
+const LEGACY_PARAMETER_SOURCE_PREFIX = 'parameter:';
 
-const remapLegacyParameterSourceMappings = async (args: {
-  productId: string;
-  product: BaseExportProductLike;
-  mappings: BaseFieldMapping[];
-}): Promise<BaseFieldMapping[]> => {
-  const { mappings } = args;
-  const parameterMappings = mappings.filter((m) =>
-    String(m['sourceKey'] || '').startsWith('parameter:')
-  );
-  if (parameterMappings.length === 0) return mappings;
-  try {
-    const parameterRepository = await getParameterRepository();
-    const allParameters = await parameterRepository.listParameters({});
-    const paramsById = new Map<string, (typeof allParameters)[0]>();
-    allParameters.forEach((p) => {
-      paramsById.set(p.id, p);
-      paramsById.set(p.id.toLowerCase(), p);
-    });
-
-    return mappings.map((mapping) => {
-      const sourceKey = String(mapping['sourceKey'] || '');
-      if (!sourceKey.startsWith('parameter:')) return mapping;
-
-      const fullValue = sourceKey.replace(/^parameter:/, '');
-      const parts = fullValue.split('|');
-      const parameterId = parts[0]!;
-      const langSuffix = parts[1];
-
-      const parameter = paramsById.get(parameterId) || paramsById.get(parameterId.toLowerCase());
-
-      if (parameter) {
-        let parameterName = parameter.name_en;
-        if (langSuffix === 'pl' && parameter.name_pl) {
-          parameterName = parameter.name_pl;
-        } else if (langSuffix === 'de' && parameter.name_de) {
-          parameterName = parameter.name_de;
-        }
-
-        const suffix = langSuffix ? `|${langSuffix}` : '';
-        return {
-          ...mapping,
-          sourceKey: `text_fields.features${suffix}.${parameterName}`,
-        };
-      }
-      return mapping;
-    });
-  } catch (error) {
-    await ErrorSystem.logWarning('[export-to-base] Failed to remap legacy parameter mappings', {
-      productId: args.productId,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return mappings;
-  }
-};
-
-const validateTemplateParameterMappings = (args: {
-  productId: string;
-  product: BaseExportProductLike;
+const assertNoLegacyParameterSourceMappings = (args: {
+  templateId: string;
   mappings: BaseFieldMapping[];
 }): void => {
-  const { product, mappings } = args;
-  const productParameterNames = new Set(
-    (product.parameters ?? []).map((p) => String(p.name || p.id).toLowerCase())
+  const legacyMappings = args.mappings.filter((mapping) =>
+    String(mapping.sourceKey ?? '')
+      .trim()
+      .toLowerCase()
+      .startsWith(LEGACY_PARAMETER_SOURCE_PREFIX)
   );
-  const templateParameterMappings = mappings.filter((m) =>
-    String(m['sourceKey'] || '').startsWith('parameter:')
-  );
-  const missingParameterNames: string[] = [];
-  const emptyParameterNames: string[] = [];
-  const emptyParameterIds: string[] = [];
+  if (legacyMappings.length === 0) return;
 
-  templateParameterMappings.forEach((mapping) => {
-    const sourceKey = String(mapping['sourceKey'] || '');
-    const parameterName = parseMappedParameterId(sourceKey);
-    if (!parameterName) return;
-
-    if (!productParameterNames.has(parameterName.toLowerCase())) {
-      missingParameterNames.push(parameterName);
-    } else {
-      const productParam = (product.parameters ?? []).find(
-        (p) => String(p.name || p.id).toLowerCase() === parameterName.toLowerCase()
-      );
-      const value = productParam?.value;
-      if (value === undefined || value === null || String(value).trim().length === 0) {
-        emptyParameterNames.push(parameterName);
-        if (productParam?.id) emptyParameterIds.push(productParam.id);
-      }
+  throw badRequestError(
+    `Export template "${args.templateId}" contains legacy parameter source mappings. Run "npm run migrate:base-export-template-parameter-sources:v2 -- --write" and retry.`,
+    {
+      templateId: args.templateId,
+      legacyMappingCount: legacyMappings.length,
     }
-  });
-
-  if (emptyParameterNames.length > 0) {
-    void ErrorSystem.logWarning(
-      `[export-to-base] Product has empty values for ${emptyParameterNames.length} mapped template parameter(s)`,
-      {
-        productId: args.productId,
-        parameterNames: emptyParameterNames,
-        parameterIds: emptyParameterIds,
-      }
-    );
-  }
+  );
 };
 
 export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseExportProductLike>({
@@ -238,9 +148,8 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
           exportImagesAsBase64?: unknown;
         };
         mappings = toBaseFieldMappings(templateRecord.mappings);
-        mappings = await remapLegacyParameterSourceMappings({
-          productId,
-          product,
+        assertNoLegacyParameterSourceMappings({
+          templateId: template.id,
           mappings,
         });
         resolvedTemplateId = template.id;
@@ -257,12 +166,6 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         }
       }
     }
-
-    validateTemplateParameterMappings({
-      productId,
-      product,
-      mappings,
-    });
   }
 
   const productProducerIds = !imagesOnly

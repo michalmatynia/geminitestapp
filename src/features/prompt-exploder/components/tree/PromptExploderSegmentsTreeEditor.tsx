@@ -3,14 +3,11 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import {
+  createMasterFolderTreeTransactionAdapter,
   FolderTreeViewportV2,
   handleMasterTreeDrop,
   useMasterFolderTreeShell,
 } from '@/features/foldertree/v2';
-import type {
-  MasterFolderTreeAdapterV3,
-  MasterFolderTreeTransaction,
-} from '@/shared/contracts/master-folder-tree';
 import { Button, Card } from '@/shared/ui';
 
 import { useDocumentActions, useDocumentState } from '../../context/hooks/useDocument';
@@ -44,26 +41,17 @@ export function PromptExploderSegmentsTreeEditor(): React.JSX.Element {
     ? toPromptExploderTreeNodeId('segment', selectedSegmentId)
     : undefined;
 
-  const adapter = useMemo<MasterFolderTreeAdapterV3>(
-    () => ({
-      prepare: async (tx: MasterFolderTreeTransaction) => ({
-        tx,
-        preparedAt: Date.now(),
+  const adapter = useMemo(
+    () =>
+      createMasterFolderTreeTransactionAdapter({
+        onApply: async (tx) => {
+          const nextSegments = rebuildPromptExploderSegmentsFromMasterNodes({
+            nodes: tx.nextNodes,
+            previousSegments: segmentsRef.current,
+          });
+          replaceSegments(nextSegments);
+        },
       }),
-      apply: async (tx: MasterFolderTreeTransaction) => {
-        const nextSegments = rebuildPromptExploderSegmentsFromMasterNodes({
-          nodes: tx.nextNodes,
-          previousSegments: segmentsRef.current,
-        });
-        replaceSegments(nextSegments);
-        return {
-          tx,
-          appliedAt: Date.now(),
-        };
-      },
-      commit: async () => {},
-      rollback: async () => {},
-    }),
     [replaceSegments]
   );
 

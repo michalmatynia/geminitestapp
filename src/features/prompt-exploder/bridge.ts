@@ -47,7 +47,6 @@ type BridgeStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 const QUOTA_ERROR_NAMES = new Set(['QuotaExceededError', 'NS_ERROR_DOM_QUOTA_REACHED']);
 const PROMPT_COMPACT_LENGTHS = [200_000, 100_000, 50_000, 20_000, 8_000] as const;
 const PROMPT_EXPLODER_PAYLOAD_TTL_MS = 15 * 60 * 1000;
-const FALLBACK_CREATED_AT = '1970-01-01T00:00:00.000Z';
 const BRIDGE_PAYLOAD_VERSION = 2;
 const BRIDGE_PAYLOAD_STATUSES: PromptExploderBridgePayloadStatus[] = [
   'pending',
@@ -195,24 +194,24 @@ const toNonNegativeInt = (value: unknown): number | undefined => {
   return undefined;
 };
 
-const normalizeBridgeSource = (value: unknown): PromptExploderBridgeSource => {
+const normalizeBridgeSource = (value: unknown): PromptExploderBridgeSource | null => {
   const normalized = toTrimmedString(value).toLowerCase();
-  if (!normalized) return 'image-studio';
+  if (!normalized) return null;
 
   if (CANONICAL_BRIDGE_SOURCES.has(normalized)) {
     return normalized as PromptExploderBridgeSource;
   }
-  return 'image-studio';
+  return null;
 };
 
-const normalizeBridgeTarget = (value: unknown): PromptExploderBridgeTarget => {
+const normalizeBridgeTarget = (value: unknown): PromptExploderBridgeTarget | null => {
   const normalized = toTrimmedString(value).toLowerCase();
-  if (!normalized) return 'image-studio';
+  if (!normalized) return null;
 
   if (CANONICAL_BRIDGE_TARGETS.has(normalized)) {
     return normalized as PromptExploderBridgeTarget;
   }
-  return 'image-studio';
+  return null;
 };
 
 const sanitizeCaseResolverPartyCandidate = (
@@ -284,16 +283,16 @@ const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | n
     if (typeof parsed.prompt !== 'string') return null;
     const source = normalizeBridgeSource(parsed.source);
     const target = normalizeBridgeTarget(parsed.target);
-    const createdAt =
-      typeof parsed.createdAt === 'string' && parsed.createdAt.trim().length > 0
-        ? parsed.createdAt
-        : FALLBACK_CREATED_AT;
+    if (!source || !target) return null;
+    const createdAt = toIsoTimestamp(typeof parsed.createdAt === 'string' ? parsed.createdAt : null);
+    if (!createdAt) return null;
     const transferId = toTrimmedString(parsed.transferId) || createBridgeTransferId();
     const payloadVersion = (() => {
       const candidate = toNonNegativeInt(parsed.payloadVersion);
-      if (typeof candidate !== 'number') return 1;
-      return candidate > 0 ? candidate : 1;
+      if (typeof candidate !== 'number' || candidate < BRIDGE_PAYLOAD_VERSION) return null;
+      return candidate;
     })();
+    if (!payloadVersion) return null;
     const expiresAt =
       toIsoTimestamp(typeof parsed.expiresAt === 'string' ? parsed.expiresAt : null) ?? undefined;
     const statusRaw = toTrimmedString(parsed.status);
@@ -509,9 +508,6 @@ const shouldConsumeForTarget = (
   payload: PromptExploderBridgePayload,
   target: PromptExploderBridgeTarget
 ): boolean => {
-  if (!payload.target) {
-    return target === 'prompt-exploder' || target === 'image-studio';
-  }
   return payload.target === target;
 };
 

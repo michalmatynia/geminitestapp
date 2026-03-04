@@ -24,7 +24,6 @@ import {
   getGapStyle,
   resolveJustifyContent,
   resolveAlignItems,
-  isBackgroundModeImage,
   collectBackgroundImages,
   getBlockMinHeight,
 } from '@/features/cms/components/page-builder/preview/preview-utils';
@@ -58,18 +57,8 @@ export function PreviewGridSection() {
   const sectionStyles = getSectionStyles(section.settings, colorSchemes);
 
   const rowBlocks = section.blocks.filter((b: BlockInstance) => b.type === 'Row');
-  const directColumns = section.blocks.filter((b: BlockInstance) => b.type === 'Column');
 
-  // Legacy: ImageElements directly in grid that don't have background mode set
-  const gridImageBlocks = section.blocks.filter(
-    (b: BlockInstance) =>
-      b.type === 'ImageElement' &&
-      !isBackgroundModeImage(b, 'grid') &&
-      !isBackgroundModeImage(b, 'row') &&
-      !isBackgroundModeImage(b, 'column')
-  );
-
-  // New: Collect all ImageElements with backgroundTarget: "grid" from entire block tree
+  // Collect all ImageElements with backgroundTarget: "grid" from entire block tree.
   const gridBackgroundModeImages = collectBackgroundImages(section.blocks, 'grid');
 
   const sectionGap = (section.settings['gap'] as string) || 'medium';
@@ -89,28 +78,13 @@ export function PreviewGridSection() {
     | Record<string, unknown>
     | undefined;
   const hasGridBackgroundSetting = Boolean((gridBackgroundSettings?.['src'] as string) || '');
-  const hasGridBackgroundLayers = gridImageBlocks.length > 0 || gridBackgroundModeImages.length > 0;
+  const hasGridBackgroundLayers = gridBackgroundModeImages.length > 0;
   const hasGridBackground = hasGridBackgroundSetting || hasGridBackgroundLayers;
 
-  const rowCount = rowBlocks.length > 0 ? rowBlocks.length : directColumns.length > 0 ? 1 : 0;
+  const rowCount = rowBlocks.length;
   const canRemoveRow = rowCount > 1;
 
-  const rowsToRender: Array<{ row: BlockInstance; virtual: boolean }> =
-    rowBlocks.length > 0
-      ? rowBlocks.map((row: BlockInstance) => ({ row, virtual: false }))
-      : directColumns.length > 0
-        ? [
-          {
-            row: {
-              id: `row-virtual-${section.id}`,
-              type: 'Row',
-              settings: {},
-              blocks: directColumns,
-            },
-            virtual: true,
-          },
-        ]
-        : [];
+  const rowsToRender: BlockInstance[] = rowBlocks;
 
   const hasZeroSpacing = [
     'paddingTop',
@@ -128,7 +102,7 @@ export function PreviewGridSection() {
 
   const isEmptyGrid =
     rowsToRender.length > 0 &&
-    rowsToRender.every(({ row }: { row: BlockInstance }) => {
+    rowsToRender.every((row: BlockInstance) => {
       const columns = (row.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column');
       return (
         columns.length > 0 &&
@@ -136,7 +110,7 @@ export function PreviewGridSection() {
       );
     });
 
-  const hasFixedHeights = rowsToRender.some(({ row }: { row: BlockInstance }) => {
+  const hasFixedHeights = rowsToRender.some((row: BlockInstance) => {
     const rowHeightMode = (row.settings?.['heightMode'] as string) || 'inherit';
     const rowHeight = (row.settings?.['height'] as number) || 0;
     if (rowHeightMode === 'fixed' && rowHeight > 0) return true;
@@ -170,11 +144,6 @@ export function PreviewGridSection() {
       {renderSectionActions()}
       {divider}
       <div className={`relative ${hasGridBackground ? 'overflow-hidden' : ''}`}>
-        {gridImageBlocks.map((block: BlockInstance) => (
-          <React.Fragment key={`grid-background-${block.id}`}>
-            {renderBackgroundImageLayer(block.settings, mediaStyles)}
-          </React.Fragment>
-        ))}
         {gridBackgroundModeImages.map((block: BlockInstance) => (
           <React.Fragment key={`grid-bg-mode-${block.id}`}>
             {renderBackgroundImageLayer(block.settings, mediaStyles)}
@@ -200,7 +169,7 @@ export function PreviewGridSection() {
           ) : (
             <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
               <div className={`flex flex-col ${sectionGapClass}`} style={sectionGapStyle}>
-                {rowsToRender.map(({ row, virtual }, rowIndex) => {
+                {rowsToRender.map((row, rowIndex) => {
                   const rowColumns = (row.blocks ?? []).filter(
                     (b: BlockInstance) => b.type === 'Column'
                   );
@@ -208,7 +177,7 @@ export function PreviewGridSection() {
                   const rowHasContent = rowColumns.some(
                     (column: BlockInstance) => (column.blocks ?? []).length > 0
                   );
-                  const isRowSelected = showEditorChrome && !virtual && selectedNodeId === row.id;
+                  const isRowSelected = showEditorChrome && selectedNodeId === row.id;
                   const rowGapValue = resolveGapValue(row.settings?.['gap'], columnGapValue);
                   const rowGapClass = rowHasContent ? getGapClass(rowGapValue) : 'gap-0';
                   const rowGapPxRaw = row.settings?.['gapPx'];
@@ -247,15 +216,13 @@ export function PreviewGridSection() {
                   return (
                     <div key={row.id}>
                       <div
-                        role={!virtual ? 'button' : undefined}
-                        tabIndex={!virtual ? 0 : undefined}
+                        role='button'
+                        tabIndex={0}
                         onClick={(e: React.MouseEvent): void => {
-                          if (virtual) return;
                           e.stopPropagation();
                           onSelect(row.id);
                         }}
                         onKeyDown={(e: React.KeyboardEvent): void => {
-                          if (virtual) return;
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.stopPropagation();
                             onSelect(row.id);
@@ -277,7 +244,7 @@ export function PreviewGridSection() {
                         {hasRowBackgroundSetting &&
                           renderBackgroundImageLayer(rowBackgroundSettings, mediaStyles)}
 
-                        {!virtual && isRowSelected && onRemoveRow && showEditorChrome && (
+                        {isRowSelected && onRemoveRow && showEditorChrome && (
                           <div className='absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full border border-border/40 bg-gray-900/80 px-1.5 py-1 text-xs text-gray-200 shadow-sm'>
                             <Button
                               variant='ghost'
@@ -343,8 +310,9 @@ export function PreviewGridSection() {
                             }
 
                             const columnBlocks = column.blocks ?? [];
-                            const columnBackgroundModeImages = columnBlocks.filter(
-                              (b: BlockInstance) => isBackgroundModeImage(b, 'column')
+                            const columnBackgroundModeImages = collectBackgroundImages(
+                              columnBlocks,
+                              'column'
                             );
                             const columnBackgroundSettings = column.settings?.[
                               'backgroundImage'

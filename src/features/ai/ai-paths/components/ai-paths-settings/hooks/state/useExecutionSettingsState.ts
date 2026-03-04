@@ -1,4 +1,4 @@
-import { useCallback, useState, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, type Dispatch, type SetStateAction } from 'react';
 import type {
   AiPathsValidationConfig,
   PathBlockedRunPolicy,
@@ -7,26 +7,13 @@ import type {
   PathRunMode,
 } from '@/shared/lib/ai-paths';
 import {
-  AI_PATHS_HISTORY_RETENTION_DEFAULT,
-  AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT,
-  DEFAULT_AI_PATHS_VALIDATION_CONFIG,
+  normalizeAiPathsValidationConfig,
 } from '@/shared/lib/ai-paths';
 import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
 
 export function useExecutionSettingsState() {
   const graphState = useGraphState();
   const graphActions = useGraphActions();
-
-  const [blockedRunPolicy, setBlockedRunPolicy] = useState<PathBlockedRunPolicy>('fail_run');
-  const [aiPathsValidationState, setAiPathsValidationState] = useState<AiPathsValidationConfig>(
-    DEFAULT_AI_PATHS_VALIDATION_CONFIG
-  );
-  const [historyRetentionPasses, setHistoryRetentionPasses] = useState<number>(
-    AI_PATHS_HISTORY_RETENTION_DEFAULT
-  );
-  const [historyRetentionOptionsMax, setHistoryRetentionOptionsMax] = useState<number>(
-    AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT
-  );
 
   const setExecutionMode = useCallback<Dispatch<SetStateAction<PathExecutionMode>>>(
     (next): void => {
@@ -60,6 +47,40 @@ export function useExecutionSettingsState() {
     [graphActions, graphState.strictFlowMode]
   );
 
+  const setBlockedRunPolicy = useCallback<Dispatch<SetStateAction<PathBlockedRunPolicy>>>(
+    (next): void => {
+      const resolved = typeof next === 'function' ? next(graphState.blockedRunPolicy) : next;
+      graphActions.setBlockedRunPolicy(resolved);
+    },
+    [graphActions, graphState.blockedRunPolicy]
+  );
+
+  const setAiPathsValidationState = useCallback<Dispatch<SetStateAction<AiPathsValidationConfig>>>(
+    (next): void => {
+      const resolved = typeof next === 'function' ? next(graphState.aiPathsValidation) : next;
+      graphActions.setAiPathsValidation(normalizeAiPathsValidationConfig(resolved));
+    },
+    [graphActions, graphState.aiPathsValidation]
+  );
+
+  const setHistoryRetentionPasses = useCallback<Dispatch<SetStateAction<number>>>(
+    (next): void => {
+      const resolved =
+        typeof next === 'function' ? next(graphState.historyRetentionPasses) : Number(next);
+      graphActions.setHistoryRetentionPasses(resolved);
+    },
+    [graphActions, graphState.historyRetentionPasses]
+  );
+
+  const setHistoryRetentionOptionsMax = useCallback<Dispatch<SetStateAction<number>>>(
+    (next): void => {
+      const resolved =
+        typeof next === 'function' ? next(graphState.historyRetentionOptionsMax) : Number(next);
+      graphActions.setHistoryRetentionOptionsMax(resolved);
+    },
+    [graphActions, graphState.historyRetentionOptionsMax]
+  );
+
   return {
     executionMode: graphState.executionMode,
     setExecutionMode,
@@ -69,13 +90,13 @@ export function useExecutionSettingsState() {
     setRunMode,
     strictFlowMode: graphState.strictFlowMode,
     setStrictFlowMode,
-    blockedRunPolicy,
+    blockedRunPolicy: graphState.blockedRunPolicy,
     setBlockedRunPolicy,
-    aiPathsValidationState,
+    aiPathsValidationState: graphState.aiPathsValidation,
     setAiPathsValidationState,
-    historyRetentionPasses,
+    historyRetentionPasses: graphState.historyRetentionPasses,
     setHistoryRetentionPasses,
-    historyRetentionOptionsMax,
+    historyRetentionOptionsMax: graphState.historyRetentionOptionsMax,
     setHistoryRetentionOptionsMax,
   };
 }

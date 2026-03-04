@@ -16,12 +16,23 @@ Completed in codebase:
 3. Removed legacy aggregate profile APIs and settings key usage (`parseFolderTreeProfilesV2`, `coerceProfileV2`, `FOLDER_TREE_PROFILES_V2_SETTING_KEY`).
 4. Added instance parity guard test for profile defaults + settings metadata + persistence feedback.
 5. Added DB migration script `scripts/db/migrate-master-folder-tree-profiles-v2.ts` with `--dry-run`/`--apply`, provider selection, optional `--report-json`, and optional `--delete-legacy-key`.
+6. Standardized remaining inline transaction adapters to shared factory helper:
+   - Added `src/features/foldertree/v2/adapter/createMasterFolderTreeTransactionAdapter.ts`
+   - Added tests in `src/features/foldertree/v2/__tests__/createMasterFolderTreeTransactionAdapter.test.ts`
+   - Updated: Admin Menu, Validator Lists, Validator Patterns, Prompt Exploder (segments/hierarchy/subsections), Brain Catalog.
+7. Executed migration script:
+   - Dry-run report: `/tmp/master-folder-tree-migration-dryrun.json`
+   - Apply report: `/tmp/master-folder-tree-migration-apply.json`
+   - Result: legacy `folder_tree_profiles_v2` key not present, no writes required (`writesApplied: 0`).
+8. Added runtime consumer usage guard:
+   - `src/shared/utils/__tests__/folder-tree-instance-consumer-usage.test.ts`
+   - Ensures every registered folder-tree instance has at least one runtime consumer reference in `src/`.
 
 Operational follow-up required:
 
 1. Run migration in dry-run mode in each target environment.
 2. Review generated report.
-3. Run in apply mode and optionally delete the legacy aggregate key.
+3. Run in apply mode and optionally delete the legacy aggregate key (if present in that environment).
 
 ## Canonical Target (Newest Form)
 
@@ -43,11 +54,11 @@ Operational follow-up required:
 3. Compatibility alias type:
    - `MasterFolderTreeAdapter = MasterFolderTreeAdapterV3`
 4. Cross-instance coupling:
-   - Admin menu tree currently uses `prompt_exploder_hierarchy` instance key.
+   - Resolved by introducing dedicated `admin_menu_layout` instance key.
 
 ## Instance Coverage Matrix
 
-Registered instances (current 15):
+Registered instances (current 16):
 
 1. `notes` (`src/features/notesapp/components/NotesAppFolderTree.tsx`)
 2. `image_studio` (`src/features/ai/image-studio/components/SlotTree.tsx`)
@@ -62,12 +73,9 @@ Registered instances (current 15):
 11. `validator_pattern_tree` (`src/features/products/components/settings/validator-settings/ValidatorPatternTree.tsx`)
 12. `prompt_exploder_segments` (`src/features/prompt-exploder/components/tree/PromptExploderSegmentsTreeEditor.tsx`)
 13. `prompt_exploder_hierarchy` (`src/features/prompt-exploder/components/PromptExploderHierarchyTreeEditor.tsx` + `PromptExploderSubsectionsTreeEditor.tsx`)
-14. `brain_catalog_tree` (`src/shared/lib/ai-brain/components/BrainCatalogTree.tsx`)
-15. `brain_routing_tree` (`src/shared/lib/ai-brain/components/BrainRoutingTree.tsx`)
-
-Additional non-registered consumer to migrate:
-
-16. Admin menu custom layout (`src/features/admin/pages/AdminMenuSettingsPage.tsx`) using `prompt_exploder_hierarchy` today.
+14. `admin_menu_layout` (`src/features/admin/pages/AdminMenuSettingsPage.tsx`)
+15. `brain_catalog_tree` (`src/shared/lib/ai-brain/components/BrainCatalogTree.tsx`)
+16. `brain_routing_tree` (`src/shared/lib/ai-brain/components/BrainRoutingTree.tsx`)
 
 ## Migration Sequence (PR-by-PR)
 

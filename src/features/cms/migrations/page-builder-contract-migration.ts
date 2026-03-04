@@ -1,6 +1,7 @@
 import type { BlockInstance, PageComponent, PageZone } from '@/shared/contracts/cms';
 
 const VALID_ZONES = new Set<PageZone>(['header', 'template', 'footer']);
+const VALID_IMAGE_BACKGROUND_TARGETS = new Set(['grid', 'row', 'column']);
 const CANONICAL_CONTENT_KEYS = new Set([
   'zone',
   'settings',
@@ -43,6 +44,78 @@ const normalizeParentSectionId = (value: unknown, sectionId: string): string | n
   const trimmed = value.trim();
   if (!trimmed || trimmed === sectionId) return null;
   return trimmed;
+};
+
+const normalizeGridBlocks = (
+  sourceBlocks: BlockInstance[],
+  sectionId: string
+): { blocks: BlockInstance[]; changed: boolean } => {
+  const rows: BlockInstance[] = [];
+  const columns: BlockInstance[] = [];
+  const extras: BlockInstance[] = [];
+  for (const block of sourceBlocks) {
+    if (block.type === 'Row') {
+      rows.push(block);
+      continue;
+    }
+    if (block.type === 'Column') {
+      columns.push(block);
+      continue;
+    }
+    extras.push(block);
+  }
+
+  let changed = false;
+  let working = sourceBlocks;
+
+  if (columns.length > 0) {
+    changed = true;
+    const existingIds = new Set<string>(
+      sourceBlocks
+        .map((block: BlockInstance): string | null => {
+          const id = block.id;
+          return typeof id === 'string' && id.length > 0 ? id : null;
+        })
+        .filter((id: string | null): id is string => Boolean(id))
+    );
+    let rowId = `${sectionId}-migrated-grid-row`;
+    let suffix = 1;
+    while (existingIds.has(rowId)) {
+      rowId = `${sectionId}-migrated-grid-row-${suffix}`;
+      suffix += 1;
+    }
+    const migratedRow: BlockInstance = {
+      id: rowId,
+      type: 'Row',
+      settings: {},
+      blocks: columns,
+    };
+    const canonicalRows = rows.length > 0 ? [...rows, migratedRow] : [migratedRow];
+    working = [...canonicalRows, ...extras];
+  }
+
+  const blocksWithCanonicalTargets = working.map((block: BlockInstance): BlockInstance => {
+    if (block.type !== 'ImageElement') return block;
+    const settings = isRecord(block.settings) ? block.settings : {};
+    const target = settings['backgroundTarget'];
+    if (typeof target === 'string' && VALID_IMAGE_BACKGROUND_TARGETS.has(target)) {
+      return block;
+    }
+    changed = true;
+    return {
+      ...block,
+      settings: {
+        ...settings,
+        backgroundTarget: 'grid',
+      },
+    };
+  });
+
+  if (changed) {
+    return { blocks: blocksWithCanonicalTargets, changed: true };
+  }
+
+  return { blocks: sourceBlocks, changed: false };
 };
 
 type CanonicalComponentContent = {
@@ -121,8 +194,17 @@ export const migrateCmsPageBuilderComponents = (
     const settings = isRecord(rawContent['settings']) ? rawContent['settings'] : {};
     if (rawContent['settings'] !== settings) stats.normalizedSettings += 1;
 
-    const blocks = Array.isArray(rawContent['blocks']) ? (rawContent['blocks'] as BlockInstance[]) : [];
-    if (rawContent['blocks'] !== blocks) stats.normalizedBlocks += 1;
+    const sourceBlocks = Array.isArray(rawContent['blocks'])
+      ? (rawContent['blocks'] as BlockInstance[])
+      : [];
+    let blocks = sourceBlocks;
+    let normalizedBlocks = rawContent['blocks'] !== sourceBlocks;
+    if (component.type === 'Grid') {
+      const normalizedGrid = normalizeGridBlocks(sourceBlocks, sectionId);
+      blocks = normalizedGrid.blocks;
+      normalizedBlocks = normalizedBlocks || normalizedGrid.changed;
+    }
+    if (normalizedBlocks) stats.normalizedBlocks += 1;
 
     const legacyKeys = Object.keys(rawContent).filter((key: string): boolean => {
       return !CANONICAL_CONTENT_KEYS.has(key);

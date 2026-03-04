@@ -12,9 +12,13 @@ const DEFAULTS = {
   checkLogFile: path.join('logs', 'observability-check.log'),
   errorLogFile: path.join('logs', 'observability-check.error.log'),
   maxRuntimeErrorFindings: 100,
+  maxCheckLogBytes: 1_000_000,
+  maxErrorLogBytes: 4_000_000,
   scanRuntimeLogs: true,
   emitCiAnnotations: true,
 };
+
+const LOG_SCHEMA_VERSION = 2;
 
 const parseArgs = (argv) => {
   const options = { ...DEFAULTS };
@@ -39,6 +43,14 @@ const parseArgs = (argv) => {
       const parsed = Number.parseInt(arg.slice('--max-runtime-error-findings='.length), 10);
       options.maxRuntimeErrorFindings =
         Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULTS.maxRuntimeErrorFindings;
+    } else if (arg.startsWith('--max-check-log-bytes=')) {
+      const parsed = Number.parseInt(arg.slice('--max-check-log-bytes='.length), 10);
+      options.maxCheckLogBytes =
+        Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULTS.maxCheckLogBytes;
+    } else if (arg.startsWith('--max-error-log-bytes=')) {
+      const parsed = Number.parseInt(arg.slice('--max-error-log-bytes='.length), 10);
+      options.maxErrorLogBytes =
+        Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULTS.maxErrorLogBytes;
     } else if (arg === '--no-runtime-log-scan') {
       options.scanRuntimeLogs = false;
     } else if (arg === '--no-ci-annotations') {
@@ -543,10 +555,19 @@ const parseRuntimeLogLine = (rawLine) => {
   return null;
 };
 
+const normalizeRuntimeErrorFingerprint = (level, snippet) =>
+  `${level}:${snippet
+    .toLowerCase()
+    .replace(/\b[0-9a-f]{8,}\b/g, '<hex>')
+    .replace(/\b\d+\b/g, '<n>')
+    .replace(/\s+/g, ' ')
+    .trim()}`;
+
 const collectRuntimeLogErrors = (root, logsDir, { excludedFiles, maxFindings }) => {
   const logsRoot = resolveFromRoot(root, logsDir);
   const errorEntries = [];
   const readFailures = [];
+  const fingerprintCounts = new Map();
 
   if (!fs.existsSync(logsRoot)) {
     return {
@@ -555,6 +576,7 @@ const collectRuntimeLogErrors = (root, logsDir, { excludedFiles, maxFindings }) 
       totalErrors: 0,
       truncated: false,
       readFailures,
+      fingerprints: [],
       errors: errorEntries,
     };
   }
@@ -584,6 +606,19 @@ const collectRuntimeLogErrors = (root, logsDir, { excludedFiles, maxFindings }) 
       const parsed = parseRuntimeLogLine(lines[i]);
       if (!parsed) continue;
 
+      const fingerprint = normalizeRuntimeErrorFingerprint(parsed.level, parsed.snippet);
+      const currentFingerprint = fingerprintCounts.get(fingerprint);
+      if (currentFingerprint) {
+        currentFingerprint.count += 1;
+      } else {
+        fingerprintCounts.set(fingerprint, {
+          fingerprint,
+          level: parsed.level,
+          sample: parsed.snippet,
+          count: 1,
+        });
+      }
+
       totalErrors += 1;
       if (errorEntries.length < maxFindings) {
         errorEntries.push({
@@ -602,17 +637,70 @@ const collectRuntimeLogErrors = (root, logsDir, { excludedFiles, maxFindings }) 
     totalErrors,
     truncated: totalErrors > errorEntries.length,
     readFailures,
+    fingerprints: [...fingerprintCounts.values()]
+      .sort((left, right) => right.count - left.count)
+      .slice(0, 25),
     errors: errorEntries,
   };
 };
 
+const collectExecutionContext = () => {
+  const isGithubActions = Boolean(process.env['GITHUB_ACTIONS']);
+  const isCi = isGithubActions || Boolean(process.env['CI']);
+  const branch =
+    process.env['GITHUB_HEAD_REF'] ??
+    process.env['GITHUB_REF_NAME'] ??
+    process.env['CI_COMMIT_REF_NAME'] ??
+    process.env['BRANCH_NAME'] ??
+    null;
+  const commit =
+    process.env['GITHUB_SHA'] ?? process.env['CI_COMMIT_SHA'] ?? process.env['COMMIT_SHA'] ?? null;
+
+  return {
+    environment: isGithubActions ? 'github-actions' : isCi ? 'ci' : 'local',
+    branch: branch && branch.trim().length > 0 ? branch : null,
+    commit: commit && commit.trim().length > 0 ? commit : null,
+    workflow: process.env['GITHUB_WORKFLOW'] ?? null,
+    job: process.env['GITHUB_JOB'] ?? null,
+    runId: process.env['GITHUB_RUN_ID'] ?? process.env['CI_PIPELINE_ID'] ?? null,
+    actor: process.env['GITHUB_ACTOR'] ?? process.env['CI_COMMIT_AUTHOR'] ?? null,
+  };
+};
+
+const buildSummaryPayload = (report) => ({
+  schemaVersion: LOG_SCHEMA_VERSION,
+  generatedAt: report.generatedAt,
+  mode: report.mode,
+  status: report.status,
+  context: report.executionContext,
+  counters: {
+    routes: report.routeCoverage,
+    loggerViolations: report.logger.totalViolations,
+    coreViolations: report.core.totalViolations,
+    legacyCompatibilityViolations: report.legacyCompatibility.totalViolations,
+    runtimeErrors: report.runtimeLogs.totalErrors,
+  },
+  runtime: {
+    filesScanned: report.runtimeLogs.filesScanned,
+    totalErrors: report.runtimeLogs.totalErrors,
+    truncated: report.runtimeLogs.truncated,
+    fingerprintCount: Array.isArray(report.runtimeLogs.fingerprints)
+      ? report.runtimeLogs.fingerprints.length
+      : 0,
+  },
+  comment: report.comment,
+});
+
 const buildSummaryLine = (report) =>
-  `[observability:${report.status}] routes=${report.routeCoverage.totalRoutes} wrapped=${report.routeCoverage.wrappedRoutes} delegated=${report.routeCoverage.delegatedRoutes} uncovered=${report.routeCoverage.uncoveredRoutes} loggerViolations=${report.logger.totalViolations} coreViolations=${report.core.totalViolations} legacyCompatViolations=${report.legacyCompatibility.totalViolations} runtimeErrors=${report.runtimeLogs.totalErrors}`;
+  `[observability:v${LOG_SCHEMA_VERSION}:${report.status}] routes=${report.routeCoverage.totalRoutes} wrapped=${report.routeCoverage.wrappedRoutes} delegated=${report.routeCoverage.delegatedRoutes} uncovered=${report.routeCoverage.uncoveredRoutes} loggerViolations=${report.logger.totalViolations} coreViolations=${report.core.totalViolations} legacyCompatViolations=${report.legacyCompatibility.totalViolations} runtimeErrors=${report.runtimeLogs.totalErrors}`;
 
 const buildErrorComment = (report, errorLogFile) => {
   if (report.runtimeLogs.totalErrors > 0) {
     const suffix = report.runtimeLogs.totalErrors === 1 ? 'entry' : 'entries';
-    return `Error discovered in runtime logs: ${report.runtimeLogs.totalErrors} ${suffix}. See ${errorLogFile}.`;
+    const uniqueFingerprints = Array.isArray(report.runtimeLogs.fingerprints)
+      ? report.runtimeLogs.fingerprints.length
+      : 0;
+    return `Error discovered in runtime logs: ${report.runtimeLogs.totalErrors} ${suffix} (${uniqueFingerprints} fingerprints). See ${errorLogFile}.`;
   }
   if (report.legacyCompatibility.totalViolations > 0) {
     return `Error discovered in legacy compatibility guardrails: ${report.legacyCompatibility.totalViolations} violations. See ${errorLogFile}.`;
@@ -623,16 +711,54 @@ const buildErrorComment = (report, errorLogFile) => {
   return null;
 };
 
-const persistReportLogs = (report, { checkLogPath, errorLogPath }) => {
+const compactJsonLineFile = (filePath, maxBytes, label, writeErrors) => {
+  if (!Number.isFinite(maxBytes) || maxBytes <= 0 || !fs.existsSync(filePath)) return;
+
+  try {
+    const stats = fs.statSync(filePath);
+    if (!stats.isFile() || stats.size <= maxBytes) return;
+
+    const content = fs.readFileSync(filePath, 'utf8');
+    const lines = content
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    if (lines.length === 0) return;
+
+    const sizeOfLines = (value) => Buffer.byteLength(`${value.join('\n')}\n`, 'utf8');
+    while (lines.length > 1 && sizeOfLines(lines) > maxBytes) {
+      lines.shift();
+    }
+
+    let nextContent = `${lines.join('\n')}\n`;
+    if (Buffer.byteLength(nextContent, 'utf8') > maxBytes) {
+      nextContent = `${JSON.stringify({
+        schemaVersion: LOG_SCHEMA_VERSION,
+        generatedAt: new Date().toISOString(),
+        status: 'compacted',
+        message: `${label} exceeded ${maxBytes} bytes and was compacted`,
+      })}\n`;
+    }
+
+    fs.writeFileSync(filePath, nextContent, 'utf8');
+  } catch (error) {
+    writeErrors.push(
+      `Failed to compact ${label} (${filePath}): ${error instanceof Error ? error.message : 'unknown error'}`
+    );
+  }
+};
+
+const persistReportLogs = (
+  report,
+  { checkLogPath, errorLogPath, maxCheckLogBytes, maxErrorLogBytes }
+) => {
   const writeErrors = [];
+  const summaryPayload = buildSummaryPayload(report);
 
   try {
     fs.mkdirSync(path.dirname(checkLogPath), { recursive: true });
-    fs.appendFileSync(
-      checkLogPath,
-      `${report.generatedAt} ${buildSummaryLine(report)}${report.comment ? ` comment="${report.comment}"` : ''}\n`,
-      'utf8'
-    );
+    fs.appendFileSync(checkLogPath, `${JSON.stringify(summaryPayload)}\n`, 'utf8');
+    compactJsonLineFile(checkLogPath, maxCheckLogBytes, 'check log', writeErrors);
   } catch (error) {
     writeErrors.push(
       `Failed to append check log (${checkLogPath}): ${error instanceof Error ? error.message : 'unknown error'}`
@@ -642,11 +768,28 @@ const persistReportLogs = (report, { checkLogPath, errorLogPath }) => {
   if (report.status !== 'passed') {
     try {
       fs.mkdirSync(path.dirname(errorLogPath), { recursive: true });
+      const errorPayload = {
+        schemaVersion: LOG_SCHEMA_VERSION,
+        generatedAt: report.generatedAt,
+        mode: report.mode,
+        status: report.status,
+        context: report.executionContext,
+        summary: summaryPayload,
+        failures: {
+          logger: report.logger.violations,
+          core: report.core.violations,
+          legacyCompatibility: report.legacyCompatibility.violations,
+          runtimeLogErrors: report.runtimeLogs.errors,
+          runtimeErrorFingerprints: report.runtimeLogs.fingerprints ?? [],
+          runtimeReadFailures: report.runtimeLogs.readFailures ?? [],
+        },
+      };
       fs.appendFileSync(
         errorLogPath,
-        `${report.generatedAt} ${report.comment ?? 'Observability check failed'}\n${JSON.stringify(report, null, 2)}\n\n`,
+        `${JSON.stringify(errorPayload)}\n`,
         'utf8'
       );
+      compactJsonLineFile(errorLogPath, maxErrorLogBytes, 'error log', writeErrors);
     } catch (error) {
       writeErrors.push(
         `Failed to append error log (${errorLogPath}): ${error instanceof Error ? error.message : 'unknown error'}`
@@ -721,6 +864,8 @@ export const runObservabilityCheck = ({
   checkLogFile = DEFAULTS.checkLogFile,
   errorLogFile = DEFAULTS.errorLogFile,
   maxRuntimeErrorFindings = DEFAULTS.maxRuntimeErrorFindings,
+  maxCheckLogBytes = DEFAULTS.maxCheckLogBytes,
+  maxErrorLogBytes = DEFAULTS.maxErrorLogBytes,
   scanRuntimeLogs = DEFAULTS.scanRuntimeLogs,
 } = {}) => {
   const checkLogPath = resolveFromRoot(root, checkLogFile);
@@ -737,14 +882,15 @@ export const runObservabilityCheck = ({
         maxFindings: maxRuntimeErrorFindings,
       })
     : {
-        logsDir,
-        filesScanned: 0,
-        totalErrors: 0,
-        truncated: false,
-        readFailures: [],
-        errors: [],
-        disabled: true,
-      };
+      logsDir,
+      filesScanned: 0,
+      totalErrors: 0,
+      truncated: false,
+      readFailures: [],
+      fingerprints: [],
+      errors: [],
+      disabled: true,
+    };
 
   const hasBlockingViolations =
     loggerViolations.length > 0 ||
@@ -752,8 +898,10 @@ export const runObservabilityCheck = ({
     legacyCompatibilityViolations.length > 0 ||
     runtimeLogs.totalErrors > 0;
   const report = {
+    schemaVersion: LOG_SCHEMA_VERSION,
     generatedAt: new Date().toISOString(),
     mode,
+    executionContext: collectExecutionContext(),
     routeCoverage,
     logger: {
       totalViolations: loggerViolations.length,
@@ -771,6 +919,8 @@ export const runObservabilityCheck = ({
     logArtifacts: {
       checkLogFile: toReportPath(root, checkLogPath),
       errorLogFile: toReportPath(root, errorLogPath),
+      maxCheckLogBytes,
+      maxErrorLogBytes,
       writeErrors: [],
     },
     status: hasBlockingViolations ? 'failed' : 'passed',
@@ -780,6 +930,8 @@ export const runObservabilityCheck = ({
   report.logArtifacts.writeErrors = persistReportLogs(report, {
     checkLogPath,
     errorLogPath,
+    maxCheckLogBytes,
+    maxErrorLogBytes,
   });
   if (report.logArtifacts.writeErrors.length > 0) {
     report.core.totalViolations += report.logArtifacts.writeErrors.length;

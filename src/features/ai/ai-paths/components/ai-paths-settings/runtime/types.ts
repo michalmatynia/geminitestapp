@@ -6,9 +6,7 @@ import type {
   AiPathRuntimeNodeStatusMap,
   AiPathsValidationConfig,
   Edge,
-  PathConfig,
   PathBlockedRunPolicy,
-  PathDebugSnapshot,
   PathExecutionMode,
   PathRunMode,
   ParserSampleState,
@@ -52,7 +50,6 @@ export interface ServerExecutionArgs {
   resetRuntimeNodeStatuses: (next?: AiPathRuntimeNodeStatusMap) => void;
   setRuntimeState: Dispatch<SetStateAction<RuntimeState>>;
   setRuntimeEvents: Dispatch<SetStateAction<AiPathRuntimeEvent[]>>;
-  setPathConfigs: Dispatch<SetStateAction<Record<string, PathConfig>>>;
   appendRuntimeEvent: (input: RuntimeEventInput) => void;
   setNodeStatus: (input: SetNodeStatusInput) => void;
   normalizeNodeStatus: (value: unknown) => AiPathRuntimeNodeStatus | null;
@@ -111,8 +108,6 @@ export interface LocalExecutionArgs {
   appendRuntimeEvent: (input: RuntimeEventInput) => void;
   setNodeStatus: (input: SetNodeStatusInput) => void;
   setRuntimeState: Dispatch<SetStateAction<RuntimeState>>;
-  setPathConfigs: Dispatch<SetStateAction<Record<string, PathConfig>>>;
-  setPathDebugSnapshots: Dispatch<SetStateAction<Record<string, PathDebugSnapshot>>>;
   setLastRunAt: (at: string | null) => void;
   settleTransientNodeStatuses: (
     terminalStatus: 'completed' | 'failed' | 'canceled',
@@ -156,14 +151,6 @@ export interface UseAiPathsRuntimeArgs {
   nodes: AiNode[];
   edges: Edge[];
   onCanonicalEdgesDetected?: (edges: Edge[]) => void;
-  runtimeState: RuntimeState;
-  parserSamples: Record<string, ParserSampleState>;
-  updaterSamples: Record<string, UpdaterSampleState>;
-  setRuntimeState: Dispatch<SetStateAction<RuntimeState>>;
-  setPathConfigs: Dispatch<SetStateAction<Record<string, PathConfig>>>;
-  setPathDebugSnapshots: Dispatch<SetStateAction<Record<string, PathDebugSnapshot>>>;
-  setLastRunAt: (at: string | null) => void;
-  lastRunAt?: string | null;
   reportAiPathsError: (
     error: unknown,
     context: Record<string, unknown>,

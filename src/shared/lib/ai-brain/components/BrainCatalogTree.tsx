@@ -3,14 +3,11 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
+  createMasterFolderTreeTransactionAdapter,
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree/v2';
-import type {
-  MasterFolderTreeAdapterV3,
-  MasterFolderTreeTransaction,
-} from '@/shared/contracts/master-folder-tree';
 
 import type { AiBrainCatalogEntry } from '../settings';
 import { BrainCatalogNodeItem } from './BrainCatalogNodeItem';
@@ -48,23 +45,14 @@ export function BrainCatalogTree({
     onChangeRef.current = onChange;
   }, [onChange]);
 
-  const adapter = useMemo<MasterFolderTreeAdapterV3>(
-    () => ({
-      prepare: async (tx: MasterFolderTreeTransaction) => ({
-        tx,
-        preparedAt: Date.now(),
+  const adapter = useMemo(
+    () =>
+      createMasterFolderTreeTransactionAdapter({
+        onApply: async (tx) => {
+          const reordered = resolveBrainCatalogOrderFromNodes(tx.nextNodes, entryByNodeIdRef.current);
+          onChangeRef.current(reordered);
+        },
       }),
-      apply: async (tx: MasterFolderTreeTransaction) => {
-        const reordered = resolveBrainCatalogOrderFromNodes(tx.nextNodes, entryByNodeIdRef.current);
-        onChangeRef.current(reordered);
-        return {
-          tx,
-          appliedAt: Date.now(),
-        };
-      },
-      commit: async () => {},
-      rollback: async () => {},
-    }),
     []
   );
 

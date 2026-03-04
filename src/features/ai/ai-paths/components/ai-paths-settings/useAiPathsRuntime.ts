@@ -21,13 +21,17 @@ import type { UseAiPathsRuntimeArgs, UseAiPathsRuntimeResult, QueuedRun } from '
 export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntimeResult {
   const runtimeContextState = useRuntimeState();
   const runtimeContextActions = useRuntimeActions();
+  const setRuntimeState = runtimeContextActions.setRuntimeState;
+  const setLastRunAt = runtimeContextActions.setLastRunAt;
+  const parserSamples = runtimeContextState.parserSamples;
+  const updaterSamples = runtimeContextState.updaterSamples;
   const sendingToAi = runtimeContextState.sendingToAi;
   const brainAssignment = useBrainAssignment({
     capability: 'ai_paths.model',
   });
 
   // Shared refs
-  const runtimeStateRef = useRef<RuntimeState>(args.runtimeState);
+  const runtimeStateRef = useRef<RuntimeState>(runtimeContextState.runtimeState);
   const runInFlightRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const pauseRequestedRef = useRef(false);
@@ -73,6 +77,10 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   const server = useAiPathsServerExecution({
     ...args,
     ...state,
+    parserSamples,
+    updaterSamples,
+    setRuntimeState,
+    setLastRunAt,
     normalizedNodes,
     sanitizedEdges,
     runtimeStateRef,
@@ -85,6 +93,10 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     ...args,
     ...state,
     ...server,
+    parserSamples,
+    updaterSamples,
+    setRuntimeState,
+    setLastRunAt,
     normalizedNodes,
     sanitizedEdges,
     runtimeStateRef,
@@ -107,6 +119,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   // 4. Simulation logic
   const simulation = useAiPathsSimulation({
     ...args,
+    setRuntimeState,
     normalizedNodes,
     sanitizedEdges,
     runtimeStateRef,
@@ -116,8 +129,8 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
 
   // Effect to sync refs
   useEffect(() => {
-    runtimeStateRef.current = args.runtimeState;
-  }, [args.runtimeState]);
+    runtimeStateRef.current = runtimeContextState.runtimeState;
+  }, [runtimeContextState.runtimeState]);
 
   // Cleanup only on unmount. Depending on the whole `server` object causes
   // cleanup to fire on normal rerenders, which aborts active local runs.
@@ -226,7 +239,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     let directJobId: string | null = null;
 
     try {
-      const sourceOutputs = args.runtimeState.outputs?.[sourceNodeId] ?? {};
+      const sourceOutputs = runtimeContextState.runtimeState.outputs?.[sourceNodeId] ?? {};
       const payload = {
         prompt,
         ...(selectedModelId ? { modelId: selectedModelId } : {}),
@@ -288,7 +301,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
 
       if (!result) throw new Error('AI prompt timed out.');
 
-      args.setRuntimeState((prev: RuntimeState): RuntimeState => {
+      setRuntimeState((prev: RuntimeState): RuntimeState => {
         const aiOutputs = prev.outputs?.[aiNode.id] ?? {};
 
         return {
@@ -320,7 +333,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
 
   const clearNodeCache = useCallback(
     (nodeId: string): void => {
-      args.setRuntimeState((prev: RuntimeState) => {
+      setRuntimeState((prev: RuntimeState) => {
         const nextHashes = { ...(prev.hashes ?? {}) };
         const nextTimestamps = { ...(prev.hashTimestamps ?? {}) };
         delete nextHashes[nodeId];
@@ -346,7 +359,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
         message: `Cache cleared for node ${nodeId}.`,
       });
     },
-    [args, state]
+    [setRuntimeState, state]
   );
 
   const resetRuntimeDiagnostics = useCallback((): void => {

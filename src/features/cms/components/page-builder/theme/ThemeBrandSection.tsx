@@ -38,9 +38,9 @@ export function ThemeBrandSection(): React.JSX.Element {
     >(
       key: K
     ) =>
-    (value: string): void => {
-      update(key, value);
-    };
+      (value: string): void => {
+        update(key, value);
+      };
 
   const handleBrandImageWidthChange = (values: Partial<BrandImageSettings>): void => {
     applyThemePatch(values);

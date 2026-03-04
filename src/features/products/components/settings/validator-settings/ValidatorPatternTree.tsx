@@ -2,13 +2,13 @@
 
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/features/foldertree/v2';
+import {
+  createMasterFolderTreeTransactionAdapter,
+  FolderTreeViewportV2,
+  useMasterFolderTreeShell,
+} from '@/features/foldertree/v2';
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
 import { useReorderValidationPatternsMutation } from '@/features/products/hooks/useProductSettingsQueries';
-import type {
-  MasterFolderTreeAdapterV3,
-  MasterFolderTreeTransaction,
-} from '@/shared/contracts/master-folder-tree';
 import type { SequenceGroupDraft } from '@/shared/contracts/products';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { Button, FolderTreePanel, FormField, Input } from '@/shared/ui';
@@ -131,19 +131,17 @@ export function ValidatorPatternTree(): React.JSX.Element {
     reorderPatternsMutationRef.current = reorderPatternsMutation;
   }, [reorderPatternsMutation]);
 
-  const adapter = useMemo<MasterFolderTreeAdapterV3>(
-    () => ({
-      prepare: async (tx: MasterFolderTreeTransaction) => ({
-        tx,
-        preparedAt: Date.now(),
-      }),
-      apply: async (tx: MasterFolderTreeTransaction) => {
-        const updates = resolveValidatorPatternReorderUpdates({
-          previousNodes: tx.previousNodes,
-          nextNodes: tx.nextNodes,
-        });
+  const adapter = useMemo(
+    () =>
+      createMasterFolderTreeTransactionAdapter({
+        onApply: async (tx) => {
+          const updates = resolveValidatorPatternReorderUpdates({
+            previousNodes: tx.previousNodes,
+            nextNodes: tx.nextNodes,
+          });
 
-        if (updates.length > 0) {
+          if (updates.length === 0) return;
+
           try {
             await reorderPatternsMutationRef.current.mutateAsync({ updates });
           } catch (error: unknown) {
@@ -157,16 +155,8 @@ export function ValidatorPatternTree(): React.JSX.Element {
             });
             throw error instanceof Error ? error : new Error('Failed to reorder patterns.');
           }
-        }
-
-        return {
-          tx,
-          appliedAt: Date.now(),
-        };
-      },
-      commit: async () => {},
-      rollback: async () => {},
-    }),
+        },
+      }),
     []
   );
 

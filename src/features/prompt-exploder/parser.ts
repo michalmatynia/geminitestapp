@@ -9,11 +9,13 @@ import { renderPromptExploderSegment } from './parser-segment-factory';
 import { inferTypeFromLearnedTemplates } from './parser-type-inference';
 import { parseSegmentsLoop, parseSegmentsRuleDriven } from './utils/parser-loops';
 import { normalizePromptSource, trimTrailingBlankLines } from './utils/parser-utils';
+import { defaultPromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import type {
   PromptExploderLearnedTemplate,
   PromptExploderRuntimeValidationScope,
 } from '@/shared/contracts/prompt-exploder';
+import { getPromptExploderScopedRules } from './pattern-pack';
 
 import type {
   PromptExploderBinding,
@@ -260,7 +262,11 @@ export function explodePromptText(args: {
 }): PromptExploderDocument {
   const sourcePrompt = normalizePromptSource(args.prompt);
   const validationScope = normalizeRuntimeValidationScope(args.validationScope);
-  const runtime = resolveRuntimePatterns(args.validationRules, validationScope, {
+  const validationRules =
+    args.validationRules === undefined || args.validationRules === null
+      ? getPromptExploderScopedRules(defaultPromptEngineSettings, validationScope)
+      : args.validationRules;
+  const runtime = resolveRuntimePatterns(validationRules, validationScope, {
     runtimeCacheKey: args.runtimeCacheKey,
     correlationId: args.correlationId,
   });

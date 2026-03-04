@@ -733,6 +733,12 @@ Rejected when visual coherence does not hold.`;
   });
 
   it('applies Case Resolver scoped rules only when case_resolver scope is selected', () => {
+    const promptExploderBaseRule: PromptValidationRule = createRegexRule({
+      id: 'segment.heading.block',
+      pattern: '^\\s*[A-Z][A-Z0-9 _()\\-/:&+.,]{3,}\\s*$',
+      title: 'Prompt Exploder Base Heading',
+      message: 'Prompt Exploder base heading',
+    });
     const caseResolverRule: PromptValidationRule = {
       ...createRegexRule({
         id: 'segment.boundary.pipeline',
@@ -747,7 +753,7 @@ Rejected when visual coherence does not hold.`;
 
     const withoutCaseScope = explodePromptText({
       prompt: CUSTOM_BOUNDARY_PROMPT,
-      validationRules: [caseResolverRule],
+      validationRules: [promptExploderBaseRule, caseResolverRule],
       validationScope: 'prompt_exploder',
     });
     const withoutCaseScopeSegment = withoutCaseScope.segments.find(
@@ -757,7 +763,7 @@ Rejected when visual coherence does not hold.`;
 
     const withCaseScope = explodePromptText({
       prompt: CUSTOM_BOUNDARY_PROMPT,
-      validationRules: [caseResolverRule],
+      validationRules: [promptExploderBaseRule, caseResolverRule],
       validationScope: 'case_resolver_prompt_exploder',
     });
     const withCaseScopeSegment = withCaseScope.segments.find(

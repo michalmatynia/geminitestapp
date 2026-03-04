@@ -22,10 +22,6 @@ import {
   type PromptExploderBridgeSource,
   type PromptExploderCaseResolverContext,
 } from '../bridge';
-import {
-  isPromptExploderOrchestratorEnabled,
-  resolvePromptExploderOrchestratorRollout,
-} from '../feature-flags';
 import { promptExploderClampNumber } from '../helpers/formatting';
 import type {
   PromptExploderParamEntry,
@@ -33,7 +29,6 @@ import type {
 } from '@/shared/contracts/prompt-exploder';
 import { buildPromptExploderParamEntries } from '../params-editor';
 import {
-  explodePromptText,
   reassemblePromptSegments,
   updatePromptExploderDocument,
 } from '../parser';
@@ -333,29 +328,18 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
         scope: runtimeSelection.identity.scope,
       });
 
-      const rollout = resolvePromptExploderOrchestratorRollout({
-        settingsEnabled: promptExploderSettings.runtime.orchestratorEnabled ?? true,
-        cohortSeed: runtimeSelection.identity.cacheKey,
-      });
-      const orchestratorEnabled = isPromptExploderOrchestratorEnabled(
-        promptExploderSettings.runtime.orchestratorEnabled ?? true,
-        runtimeSelection.identity.cacheKey
-      );
-      const nextDocument = orchestratorEnabled
-        ? explodePromptWithValidationRuntime({
-          prompt: trimmed,
-          runtime: runtimeSelection,
-          similarityThreshold,
-        })
-        : explodePromptText({
-          prompt: trimmed,
-          validationRules: runtimeSelection.runtimeValidationRules,
-          learnedTemplates: runtimeSelection.runtimeLearnedTemplates,
-          similarityThreshold,
-          validationScope: runtimeSelection.identity.scope,
-          runtimeCacheKey: runtimeSelection.identity.cacheKey,
-          correlationId: runtimeSelection.correlationId,
+      const orchestratorEnabled = promptExploderSettings.runtime.orchestratorEnabled ?? true;
+      if (!orchestratorEnabled) {
+        toast('Prompt runtime orchestrator is disabled in settings.', {
+          variant: 'error',
         });
+        return;
+      }
+      const nextDocument = explodePromptWithValidationRuntime({
+        prompt: trimmed,
+        runtime: runtimeSelection,
+        similarityThreshold,
+      });
       lastExplosionRef.current = {
         signature: runtimeSignature,
         document: nextDocument,
@@ -367,23 +351,6 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
       toast(`Exploded into ${nextDocument.segments.length} segment(s).`, {
         variant: 'success',
       });
-      if (!orchestratorEnabled) {
-        logClientError(
-          new Error('Prompt runtime orchestrator disabled for current rollout cohort.'),
-          {
-            context: {
-              source: 'DocumentProvider',
-              action: 'handleExplode.rollout',
-              scope: runtimeSelection.identity.scope,
-              stack: runtimeSelection.identity.stack,
-              rolloutReason: rollout.reason,
-              rolloutPercent: rollout.canaryPercent,
-              rolloutBucket: rollout.bucket,
-              level: 'warn',
-            },
-          }
-        );
-      }
     } catch (error) {
       logClientError(error, {
         context: {
@@ -480,13 +447,6 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
             captureRules,
             mode: promptExploderSettings.runtime.caseResolverCaptureMode,
           });
-          if (transferPayload.usedFallback) {
-            toast(
-              'Unexpected capture fallback path detected. Transfer was blocked; review extraction mode and rules.',
-              { variant: 'error' }
-            );
-            return;
-          }
           hasCaptureData = transferPayload.hasCaptureData;
           captureParties = transferPayload.payload.parties;
           captureMetadata = transferPayload.payload.metadata;
@@ -645,7 +605,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
         rawPayloadSessionId === caseResolverSessionId);
     const isConsumableDraftPayload =
       payload !== null &&
-      (!payload.target || payload.target === 'prompt-exploder') &&
+      payload.target === 'prompt-exploder' &&
       (payload.source !== 'case-resolver' || hasMatchingCaseResolverSession);
     const nextBridgeSource = isConsumableDraftPayload ? (payload?.source ?? null) : null;
     if (nextBridgeSource !== incomingBridgeSource) {

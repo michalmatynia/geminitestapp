@@ -203,7 +203,6 @@ export const resolveCaseResolverBridgePayloadForTransfer = (args: {
   };
   requestedMode: PromptExploderCaseResolverExtractionMode;
   effectiveMode: PromptExploderCaseResolverExtractionMode;
-  usedFallback: boolean;
   hasCaptureData: boolean;
 } => {
   const requestedMode: PromptExploderCaseResolverExtractionMode =
@@ -222,7 +221,6 @@ export const resolveCaseResolverBridgePayloadForTransfer = (args: {
     payload: initialPayload,
     requestedMode,
     effectiveMode: requestedMode,
-    usedFallback: false,
     hasCaptureData: initialHasCaptureData,
   };
 };

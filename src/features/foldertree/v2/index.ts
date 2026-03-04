@@ -1,4 +1,5 @@
 export * from './adapter/createMasterFolderTreeAdapterV3';
+export * from './adapter/createMasterFolderTreeTransactionAdapter';
 export * from './components/FolderTreeContextMenu';
 export * from './components/FolderTreeViewportV2';
 export * from './hooks/useFolderTreeInstanceV2';

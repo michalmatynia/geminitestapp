@@ -1,8 +1,8 @@
-import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { ParserSampleState, UpdaterSampleState } from '@/shared/lib/ai-paths';
 import { dbApi, entityApi } from '@/shared/lib/ai-paths';
+import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
 import { createMutationV2, fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -17,8 +17,6 @@ type ToastFn = (
 ) => void;
 
 type UseAiPathsSettingsSamplesInput = {
-  setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
-  setUpdaterSamples: React.Dispatch<React.SetStateAction<Record<string, UpdaterSampleState>>>;
   toast: ToastFn;
 };
 
@@ -51,11 +49,10 @@ export type UseAiPathsSettingsSamplesReturn = {
 };
 
 export function useAiPathsSettingsSamples({
-  setParserSamples,
-  setUpdaterSamples,
   toast,
 }: UseAiPathsSettingsSamplesInput): UseAiPathsSettingsSamplesReturn {
   const queryClient = useQueryClient();
+  const { setParserSamples, setUpdaterSamples } = useRuntimeActions();
   const fetchParserSampleMutation = createMutationV2({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('settings.fetch-parser-sample'),
     mutationFn: async ({

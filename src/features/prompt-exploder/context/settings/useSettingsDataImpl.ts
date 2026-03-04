@@ -25,7 +25,6 @@ import {
   resolvePromptValidationRuntime,
   type PromptValidationOrchestrationResult,
 } from '../../prompt-validation-orchestrator';
-import { getPromptExploderRuntimeGuardrailIssue } from '../../runtime-guardrails';
 import {
   PromptExploderParserTuningRuleDraft,
   PromptExploderLearnedTemplate,
@@ -161,7 +160,7 @@ export function useSettingsDataImpl(args: UseSettingsDataImplArgs) {
 
   useEffect(() => {
     const payload = readPromptExploderDraftPayload();
-    if (payload && (!payload.target || payload.target === 'prompt-exploder')) {
+    if (payload?.target === 'prompt-exploder') {
       setIncomingBridgeSource(payload.source);
       return;
     }
@@ -176,7 +175,7 @@ export function useSettingsDataImpl(args: UseSettingsDataImplArgs) {
     const handleStorage = (event: StorageEvent): void => {
       if (event.key !== PROMPT_EXPLODER_DRAFT_PROMPT_KEY) return;
       const payload = readPromptExploderDraftPayload();
-      if (payload && (!payload.target || payload.target === 'prompt-exploder')) {
+      if (payload?.target === 'prompt-exploder') {
         setIncomingBridgeSource(payload.source);
         return;
       }
@@ -241,7 +240,6 @@ export function useSettingsDataImpl(args: UseSettingsDataImplArgs) {
   const runtimeResolution = useMemo((): {
     selection: PromptValidationOrchestrationResult;
     warning: Error | null;
-    guardrailIssue: string | null;
   } => {
     const selection = resolvePromptValidationRuntime({
       promptSettings,
@@ -259,9 +257,6 @@ export function useSettingsDataImpl(args: UseSettingsDataImplArgs) {
     return {
       selection,
       warning: null,
-      guardrailIssue: getPromptExploderRuntimeGuardrailIssue({
-        runtimeSelection: selection,
-      }),
     };
   }, [
     learningDraft.enabled,
@@ -278,7 +273,7 @@ export function useSettingsDataImpl(args: UseSettingsDataImplArgs) {
   ]);
 
   const runtimeSelection = runtimeResolution.selection;
-  const runtimeGuardrailIssue = runtimeResolution.guardrailIssue;
+  const runtimeGuardrailIssue: string | null = null;
 
   const isBusy = settingsQuery.isLoading || settingsQuery.isRefetching;
 

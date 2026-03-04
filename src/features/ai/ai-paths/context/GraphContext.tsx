@@ -7,12 +7,22 @@ import type {
   Edge,
   PathMeta,
   PathConfig,
+  PathBlockedRunPolicy,
   PathExecutionMode,
   PathFlowIntensity,
+  AiPathsValidationConfig,
   PathRunMode,
   NodeConfig,
 } from '@/shared/lib/ai-paths';
-import { initialNodes, initialEdges, normalizeNodes, sanitizeEdges } from '@/shared/lib/ai-paths';
+import {
+  initialNodes,
+  initialEdges,
+  normalizeNodes,
+  sanitizeEdges,
+  AI_PATHS_HISTORY_RETENTION_DEFAULT,
+  AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT,
+  DEFAULT_AI_PATHS_VALIDATION_CONFIG,
+} from '@/shared/lib/ai-paths';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -61,6 +71,10 @@ export interface GraphState {
   flowIntensity: PathFlowIntensity;
   runMode: PathRunMode;
   strictFlowMode: boolean;
+  blockedRunPolicy: PathBlockedRunPolicy;
+  aiPathsValidation: AiPathsValidationConfig;
+  historyRetentionPasses: number;
+  historyRetentionOptionsMax: number;
 
   // Path flags
   isPathLocked: boolean;
@@ -106,6 +120,10 @@ export interface GraphActions {
   setFlowIntensity: (intensity: PathFlowIntensity) => void;
   setRunMode: (mode: PathRunMode) => void;
   setStrictFlowMode: (enabled: boolean) => void;
+  setBlockedRunPolicy: (policy: PathBlockedRunPolicy) => void;
+  setAiPathsValidation: (config: AiPathsValidationConfig) => void;
+  setHistoryRetentionPasses: (passes: number) => void;
+  setHistoryRetentionOptionsMax: (max: number) => void;
 
   // Path flags
   setIsPathLocked: (locked: boolean) => void;
@@ -124,6 +142,10 @@ export interface GraphActions {
     flowIntensity?: PathFlowIntensity | undefined;
     runMode?: PathRunMode | undefined;
     strictFlowMode?: boolean | undefined;
+    blockedRunPolicy?: PathBlockedRunPolicy | undefined;
+    aiPathsValidation?: AiPathsValidationConfig | undefined;
+    historyRetentionPasses?: number | undefined;
+    historyRetentionOptionsMax?: number | undefined;
     isPathLocked?: boolean | undefined;
     isPathActive?: boolean | undefined;
   }) => void;
@@ -142,6 +164,10 @@ const DEFAULT_EXECUTION_MODE: PathExecutionMode = 'server';
 const DEFAULT_FLOW_INTENSITY: PathFlowIntensity = 'medium';
 const DEFAULT_RUN_MODE: PathRunMode = 'manual';
 const DEFAULT_STRICT_FLOW_MODE = true;
+const DEFAULT_BLOCKED_RUN_POLICY: PathBlockedRunPolicy = 'fail_run';
+const DEFAULT_AI_PATHS_VALIDATION: AiPathsValidationConfig = DEFAULT_AI_PATHS_VALIDATION_CONFIG;
+const DEFAULT_HISTORY_RETENTION_PASSES = AI_PATHS_HISTORY_RETENTION_DEFAULT;
+const DEFAULT_HISTORY_RETENTION_OPTIONS_MAX = AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT;
 
 // ---------------------------------------------------------------------------
 // Contexts (split for re-render optimization)
@@ -191,6 +217,16 @@ export function GraphProvider({
     useState<PathFlowIntensity>(DEFAULT_FLOW_INTENSITY);
   const [runMode, setRunModeInternal] = useState<PathRunMode>(DEFAULT_RUN_MODE);
   const [strictFlowMode, setStrictFlowModeInternal] = useState<boolean>(DEFAULT_STRICT_FLOW_MODE);
+  const [blockedRunPolicy, setBlockedRunPolicyInternal] =
+    useState<PathBlockedRunPolicy>(DEFAULT_BLOCKED_RUN_POLICY);
+  const [aiPathsValidation, setAiPathsValidationInternal] =
+    useState<AiPathsValidationConfig>(DEFAULT_AI_PATHS_VALIDATION);
+  const [historyRetentionPasses, setHistoryRetentionPassesInternal] = useState<number>(
+    DEFAULT_HISTORY_RETENTION_PASSES
+  );
+  const [historyRetentionOptionsMax, setHistoryRetentionOptionsMaxInternal] = useState<number>(
+    DEFAULT_HISTORY_RETENTION_OPTIONS_MAX
+  );
 
   // Path flags
   const [isPathLocked, setIsPathLockedInternal] = useState(false);
@@ -375,6 +411,10 @@ export function GraphProvider({
       flowIntensity?: PathFlowIntensity | undefined;
       runMode?: PathRunMode | undefined;
       strictFlowMode?: boolean | undefined;
+      blockedRunPolicy?: PathBlockedRunPolicy | undefined;
+      aiPathsValidation?: AiPathsValidationConfig | undefined;
+      historyRetentionPasses?: number | undefined;
+      historyRetentionOptionsMax?: number | undefined;
       isPathLocked?: boolean | undefined;
       isPathActive?: boolean | undefined;
     }) => {
@@ -393,6 +433,14 @@ export function GraphProvider({
       if (data.flowIntensity !== undefined) setFlowIntensityInternal(data.flowIntensity);
       if (data.runMode !== undefined) setRunModeInternal(data.runMode);
       if (data.strictFlowMode !== undefined) setStrictFlowModeInternal(data.strictFlowMode);
+      if (data.blockedRunPolicy !== undefined) setBlockedRunPolicyInternal(data.blockedRunPolicy);
+      if (data.aiPathsValidation !== undefined) setAiPathsValidationInternal(data.aiPathsValidation);
+      if (data.historyRetentionPasses !== undefined) {
+        setHistoryRetentionPassesInternal(data.historyRetentionPasses);
+      }
+      if (data.historyRetentionOptionsMax !== undefined) {
+        setHistoryRetentionOptionsMaxInternal(data.historyRetentionOptionsMax);
+      }
       if (data.isPathLocked !== undefined) setIsPathLockedInternal(data.isPathLocked);
       if (data.isPathActive !== undefined) setIsPathActiveInternal(data.isPathActive);
     },
@@ -411,7 +459,12 @@ export function GraphProvider({
     setActiveTriggerInternal(DEFAULT_TRIGGER);
     setExecutionModeInternal(DEFAULT_EXECUTION_MODE);
     setFlowIntensityInternal(DEFAULT_FLOW_INTENSITY);
+    setRunModeInternal(DEFAULT_RUN_MODE);
     setStrictFlowModeInternal(DEFAULT_STRICT_FLOW_MODE);
+    setBlockedRunPolicyInternal(DEFAULT_BLOCKED_RUN_POLICY);
+    setAiPathsValidationInternal(DEFAULT_AI_PATHS_VALIDATION);
+    setHistoryRetentionPassesInternal(DEFAULT_HISTORY_RETENTION_PASSES);
+    setHistoryRetentionOptionsMaxInternal(DEFAULT_HISTORY_RETENTION_OPTIONS_MAX);
     setIsPathLockedInternal(false);
     setIsPathActiveInternal(true);
   }, [setEdges, setNodes]);
@@ -445,6 +498,10 @@ export function GraphProvider({
       setFlowIntensity: setFlowIntensityInternal,
       setRunMode: setRunModeInternal,
       setStrictFlowMode: setStrictFlowModeInternal,
+      setBlockedRunPolicy: setBlockedRunPolicyInternal,
+      setAiPathsValidation: setAiPathsValidationInternal,
+      setHistoryRetentionPasses: setHistoryRetentionPassesInternal,
+      setHistoryRetentionOptionsMax: setHistoryRetentionOptionsMaxInternal,
 
       // Path flags
       setIsPathLocked: setIsPathLockedInternal,
@@ -485,6 +542,10 @@ export function GraphProvider({
       flowIntensity,
       runMode,
       strictFlowMode,
+      blockedRunPolicy,
+      aiPathsValidation,
+      historyRetentionPasses,
+      historyRetentionOptionsMax,
       isPathLocked,
       isPathActive,
       graphRevision,
@@ -503,6 +564,10 @@ export function GraphProvider({
       flowIntensity,
       runMode,
       strictFlowMode,
+      blockedRunPolicy,
+      aiPathsValidation,
+      historyRetentionPasses,
+      historyRetentionOptionsMax,
       isPathLocked,
       isPathActive,
       graphRevision,

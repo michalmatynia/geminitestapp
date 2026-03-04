@@ -30,7 +30,6 @@ export * from './migration';
 // Explicitly export to avoid ambiguity
 export {
   promptExploderSegmentationRecordSchema,
-  type PromptExploderOrchestratorRollout,
   type SegmentSelectionStrategy,
   type PromptExploderSegmentationReturnTarget,
   type PromptExploderSegmentationRecord,

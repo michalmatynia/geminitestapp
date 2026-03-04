@@ -19,6 +19,7 @@ import {
 } from '@/shared/lib/ai-paths';
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
 import { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
+import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import { usePresetsActions, usePresetsState } from '@/features/ai/ai-paths/context/PresetsContext';
 import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 
@@ -34,8 +35,6 @@ type UseAiPathsPresetsArgs = {
   edges: Edge[];
   selectedNode: AiNode | null;
   isPathLocked: boolean;
-  setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
-  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   ensureNodeVisible: (node: AiNode) => void;
   getCanvasCenterPosition: () => { x: number; y: number };
   toast: ToastFn;
@@ -86,8 +85,6 @@ export function useAiPathsPresets({
   edges,
   selectedNode,
   isPathLocked,
-  setNodes,
-  setEdges,
   ensureNodeVisible,
   getCanvasCenterPosition,
   toast,
@@ -96,6 +93,7 @@ export function useAiPathsPresets({
 }: UseAiPathsPresetsArgs): AiPathsPresets {
   const presetsState = usePresetsState();
   const presetsActions = usePresetsActions();
+  const { setNodes, setEdges } = useGraphActions();
   const { selectNode, selectEdge } = useSelectionActions();
 
   const clusterPresets = presetsState.clusterPresets;

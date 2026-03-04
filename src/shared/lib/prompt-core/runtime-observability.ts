@@ -92,7 +92,6 @@ export const PROMPT_VALIDATION_RUNTIME_SLO_TARGETS: PromptValidationRuntimeSloTa
   p95ExplodeMs: 100,
   p95CompileMs: 40,
   maxErrorRate: 0.005,
-  maxFallbackRate: 0.01,
 };
 
 const toRate = (numerator: number, denominator: number): number => {
@@ -104,7 +103,6 @@ const evaluateRuntimeHealth = (args: {
   timingByName: Map<PromptValidationTimingName, number[]>;
   totalErrors: number;
   selectionTotal: number;
-  fallbackTotal: number;
   targets: PromptValidationRuntimeSloTargets;
 }): PromptValidationRuntimeHealth => {
   const pipelineValues = args.timingByName.get('runtime_pipeline_ms') ?? [];
@@ -114,7 +112,6 @@ const evaluateRuntimeHealth = (args: {
   const explodeP95 = percentile(explodeValues, 0.95);
   const compileP95 = percentile(compileValues, 0.95);
   const errorRate = toRate(args.totalErrors, Math.max(1, args.selectionTotal));
-  const fallbackRate = toRate(args.fallbackTotal, Math.max(1, args.selectionTotal));
 
   const checks = [
     {
@@ -140,12 +137,6 @@ const evaluateRuntimeHealth = (args: {
       ok: errorRate <= args.targets.maxErrorRate,
       value: errorRate,
       target: args.targets.maxErrorRate,
-    },
-    {
-      name: 'fallback_rate',
-      ok: fallbackRate <= args.targets.maxFallbackRate,
-      value: fallbackRate,
-      target: args.targets.maxFallbackRate,
     },
   ];
 
@@ -183,7 +174,6 @@ export const getPromptValidationObservabilitySnapshot = (
   });
   const counterValues: Record<PromptValidationCounterName, number> = {
     runtime_selection_total: getCounterValue('runtime_selection_total'),
-    runtime_selection_fallback: getCounterValue('runtime_selection_fallback'),
     runtime_cache_hit: getCounterValue('runtime_cache_hit'),
     runtime_cache_miss: getCounterValue('runtime_cache_miss'),
     runtime_case_resolver_pack_fallback: getCounterValue('runtime_case_resolver_pack_fallback'),
@@ -208,7 +198,6 @@ export const getPromptValidationObservabilitySnapshot = (
     timingByName: grouped,
     totalErrors,
     selectionTotal: counterValues.runtime_selection_total,
-    fallbackTotal: counterValues.runtime_selection_fallback,
     targets: PROMPT_VALIDATION_RUNTIME_SLO_TARGETS,
   });
 

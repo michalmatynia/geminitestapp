@@ -8,11 +8,19 @@ import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
 } from '@/features/data-import-export/utils/image-retry-presets';
+import {
+  buildActiveTemplateScopeKey,
+  normalizeActiveTemplateId,
+  parseScopedActiveTemplateMap,
+  stringifyScopedActiveTemplateMap,
+  type ActiveTemplateScopeInput,
+} from '@/features/integrations/services/active-template-preference';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getProductDataProvider as _getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { type ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import { type Template, type TemplateMapping } from '@/shared/contracts/integrations/templates';
+import { badRequestError } from '@/shared/errors/app-error';
 
 export type { Template, TemplateMapping };
 
@@ -73,18 +81,7 @@ const DEFAULT_CONNECTION_KEY = 'base_export_default_connection_id';
 const STOCK_FALLBACK_KEY = 'base_export_stock_fallback_enabled';
 const IMAGE_RETRY_PRESETS_KEY = 'base_export_image_retry_presets';
 const BASEHOST_MAPPING_KEYS = new Set(['images_basehost_all', 'image_basehost_all']);
-const ACTIVE_TEMPLATE_SCOPE_SEPARATOR = '::';
-const LEGACY_ACTIVE_TEMPLATE_SCOPE_KEY = '__global__';
-
-type ActiveTemplateScopeInput = {
-  connectionId?: string | null;
-  inventoryId?: string | null;
-};
-
-type ScopedActiveTemplateMap = {
-  defaultTemplateId: string | null;
-  byScope: Record<string, string>;
-};
+const LEGACY_PARAMETER_SOURCE_PREFIX = 'parameter:';
 
 const stripBasehostMappings = (mappings: TemplateMapping[]): TemplateMapping[] =>
   mappings.filter((mapping: TemplateMapping) => {
@@ -129,91 +126,27 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
   }
 };
 
-const normalizeOptionalId = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
-const buildActiveTemplateScopeKey = (scope?: ActiveTemplateScopeInput): string | null => {
-  const connectionId = normalizeOptionalId(scope?.connectionId);
-  const inventoryId = normalizeOptionalId(scope?.inventoryId);
-  if (!connectionId || !inventoryId) return null;
-  return `${connectionId}${ACTIVE_TEMPLATE_SCOPE_SEPARATOR}${inventoryId}`;
-};
-
-const parseActiveTemplateMap = (raw: string | null): ScopedActiveTemplateMap => {
-  if (!raw) {
-    return { defaultTemplateId: null, byScope: {} };
-  }
-  const trimmed = raw.trim();
-  if (!trimmed) {
-    return { defaultTemplateId: null, byScope: {} };
-  }
-
-  try {
-    const parsed = JSON.parse(trimmed) as unknown;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      return { defaultTemplateId: trimmed, byScope: {} };
-    }
-    const record = parsed as Record<string, unknown>;
-    const byScopeRaw = record['byScope'];
-    const byScope: Record<string, string> = {};
-    if (byScopeRaw && typeof byScopeRaw === 'object' && !Array.isArray(byScopeRaw)) {
-      Object.entries(byScopeRaw as Record<string, unknown>).forEach(
-        ([scopeKey, scopeValue]: [string, unknown]) => {
-          const normalizedScopeKey = scopeKey.trim();
-          const normalizedTemplateId = normalizeOptionalId(scopeValue);
-          if (!normalizedScopeKey || !normalizedTemplateId) return;
-          byScope[normalizedScopeKey] = normalizedTemplateId;
-        }
-      );
-    } else {
-      Object.entries(record).forEach(([key, value]: [string, unknown]) => {
-        const normalizedKey = key.trim();
-        const normalizedValue = normalizeOptionalId(value);
-        if (!normalizedKey || !normalizedValue) return;
-        if (
-          normalizedKey.includes(ACTIVE_TEMPLATE_SCOPE_SEPARATOR) ||
-          normalizedKey === LEGACY_ACTIVE_TEMPLATE_SCOPE_KEY
-        ) {
-          byScope[normalizedKey] = normalizedValue;
-        }
-      });
-    }
-
-    const defaultTemplateId =
-      normalizeOptionalId(record['defaultTemplateId']) ??
-      normalizeOptionalId(record['templateId']) ??
-      null;
-
-    return { defaultTemplateId, byScope };
-  } catch {
-    return { defaultTemplateId: trimmed, byScope: {} };
-  }
-};
-
-const stringifyActiveTemplateMap = (map: ScopedActiveTemplateMap): string => {
-  const defaultTemplateId = normalizeOptionalId(map.defaultTemplateId);
-  const byScopeEntries = Object.entries(map.byScope).reduce(
-    (acc: Record<string, string>, [scopeKey, templateId]: [string, string]) => {
-      const normalizedScopeKey = scopeKey.trim();
-      const normalizedTemplateId = normalizeOptionalId(templateId);
-      if (!normalizedScopeKey || !normalizedTemplateId) return acc;
-      acc[normalizedScopeKey] = normalizedTemplateId;
-      return acc;
-    },
-    {}
+const assertNoLegacyParameterSourceMappings = (args: {
+  mappings?: TemplateMapping[] | null;
+  templateId?: string;
+}): void => {
+  const mappings = Array.isArray(args.mappings) ? args.mappings : [];
+  const legacyMappings = mappings.filter((mapping: TemplateMapping) =>
+    String(mapping.sourceKey ?? '')
+      .trim()
+      .toLowerCase()
+      .startsWith(LEGACY_PARAMETER_SOURCE_PREFIX)
   );
+  if (legacyMappings.length === 0) return;
 
-  if (Object.keys(byScopeEntries).length === 0) {
-    return defaultTemplateId ?? '';
-  }
-
-  return JSON.stringify({
-    defaultTemplateId,
-    byScope: byScopeEntries,
-  });
+  const templateRef = args.templateId ? ` "${args.templateId}"` : '';
+  throw badRequestError(
+    `Export template${templateRef} contains legacy parameter source mappings. Run "npm run migrate:base-export-template-parameter-sources:v2 -- --write" and retry.`,
+    {
+      templateId: args.templateId ?? null,
+      legacyMappingCount: legacyMappings.length,
+    }
+  );
 };
 
 const readTemplatesValue = async (): Promise<string | null> => {
@@ -502,6 +435,10 @@ export const createExportTemplate = async (input: {
   mappings?: TemplateMapping[];
   exportImagesAsBase64?: boolean;
 }): Promise<Template> => {
+  assertNoLegacyParameterSourceMappings({
+    mappings: input.mappings ?? [],
+  });
+
   const templates = await listExportTemplates();
   const now = new Date().toISOString();
   const template: Template = {
@@ -529,6 +466,13 @@ export const updateExportTemplate = async (
     exportImagesAsBase64: boolean | undefined;
   }>
 ): Promise<Template | null> => {
+  if (input.mappings !== undefined) {
+    assertNoLegacyParameterSourceMappings({
+      templateId: id,
+      mappings: input.mappings,
+    });
+  }
+
   const templates = await listExportTemplates();
   const index = templates.findIndex((template: Template) => template.id === id);
   if (index === -1) return null;
@@ -563,7 +507,7 @@ export const getExportActiveTemplateId = async (
 ): Promise<string | null> => {
   try {
     const value = await readActiveTemplateValue();
-    const map = parseActiveTemplateMap(value);
+    const map = parseScopedActiveTemplateMap(value);
     const scopeKey = buildActiveTemplateScopeKey(scope);
     if (scopeKey) {
       const scopedTemplateId = map.byScope[scopeKey];
@@ -589,8 +533,8 @@ export const setExportActiveTemplateId = async (
   value: string | null,
   scope?: ActiveTemplateScopeInput
 ): Promise<void> => {
-  const current = parseActiveTemplateMap(await readActiveTemplateValue());
-  const normalizedValue = normalizeOptionalId(value);
+  const current = parseScopedActiveTemplateMap(await readActiveTemplateValue());
+  const normalizedValue = normalizeActiveTemplateId(value);
   const scopeKey = buildActiveTemplateScopeKey(scope);
 
   if (!scopeKey) {
@@ -601,7 +545,7 @@ export const setExportActiveTemplateId = async (
     delete current.byScope[scopeKey];
   }
 
-  await writeActiveTemplateValue(stringifyActiveTemplateMap(current));
+  await writeActiveTemplateValue(stringifyScopedActiveTemplateMap(current));
 };
 
 export const getExportDefaultInventoryId = async (): Promise<string | null> => {

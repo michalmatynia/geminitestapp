@@ -22,6 +22,7 @@ import {
   STORAGE_VERSION,
   createDefaultPathConfig,
 } from '@/shared/lib/ai-paths';
+import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 
 type ToastFn = (
   message: string,
@@ -34,22 +35,14 @@ type UseAiPathsSettingsModeActionsInput = {
   activePathId: string | null;
   isPathLocked: boolean;
   isPathActive: boolean;
-  setIsPathLocked: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsPathActive: React.Dispatch<React.SetStateAction<boolean>>;
   activeTrigger: string;
   executionMode: PathExecutionMode;
-  setExecutionMode: React.Dispatch<React.SetStateAction<PathExecutionMode>>;
   flowIntensity: PathFlowIntensity;
-  setFlowIntensity: React.Dispatch<React.SetStateAction<PathFlowIntensity>>;
   runMode: PathRunMode;
-  setRunMode: React.Dispatch<React.SetStateAction<PathRunMode>>;
   strictFlowMode: boolean;
-  setStrictFlowMode: React.Dispatch<React.SetStateAction<boolean>>;
   blockedRunPolicy: PathBlockedRunPolicy;
-  setBlockedRunPolicy: React.Dispatch<React.SetStateAction<PathBlockedRunPolicy>>;
   aiPathsValidation: AiPathsValidationConfig;
   historyRetentionPasses: number;
-  setHistoryRetentionPasses: React.Dispatch<React.SetStateAction<number>>;
   nodes: AiNode[];
   edges: Edge[];
   pathName: string;
@@ -61,8 +54,6 @@ type UseAiPathsSettingsModeActionsInput = {
   selectedNodeId: string | null;
   pathConfigs: Record<string, PathConfig>;
   paths: PathMeta[];
-  setPaths: React.Dispatch<React.SetStateAction<PathMeta[]>>;
-  setPathConfigs: React.Dispatch<React.SetStateAction<Record<string, PathConfig>>>;
   persistPathSettings: (
     nextPaths: PathMeta[],
     nextActivePathId: string,
@@ -92,22 +83,14 @@ export function useAiPathsSettingsModeActions({
   activePathId,
   isPathLocked,
   isPathActive,
-  setIsPathLocked,
-  setIsPathActive,
   activeTrigger,
   executionMode,
-  setExecutionMode,
   flowIntensity,
-  setFlowIntensity,
   runMode,
-  setRunMode,
   strictFlowMode,
-  setStrictFlowMode,
   blockedRunPolicy,
-  setBlockedRunPolicy,
   aiPathsValidation,
   historyRetentionPasses,
-  setHistoryRetentionPasses,
   nodes,
   edges,
   pathName,
@@ -119,13 +102,24 @@ export function useAiPathsSettingsModeActions({
   selectedNodeId,
   pathConfigs,
   paths,
-  setPaths,
-  setPathConfigs,
   persistPathSettings,
   persistSettingsBulk,
   reportAiPathsError,
   toast,
 }: UseAiPathsSettingsModeActionsInput): UseAiPathsSettingsModeActionsReturn {
+  const {
+    setPaths,
+    setPathConfigs,
+    setExecutionMode,
+    setFlowIntensity,
+    setRunMode,
+    setStrictFlowMode,
+    setIsPathLocked,
+    setIsPathActive,
+    setBlockedRunPolicy,
+    setHistoryRetentionPasses,
+  } = useGraphActions();
+
   const handleExecutionModeChange = useCallback(
     (mode: PathExecutionMode): void => {
       if (!activePathId) {

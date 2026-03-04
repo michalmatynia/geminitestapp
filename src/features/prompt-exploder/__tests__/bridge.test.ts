@@ -183,6 +183,7 @@ describe('prompt exploder bridge parties', () => {
           },
         },
         createdAt: freshCreatedAt,
+        payloadVersion: 2,
       })
     );
 
@@ -199,6 +200,7 @@ describe('prompt exploder bridge parties', () => {
         prompt: 'Fallback timestamp payload',
         source: 'prompt-exploder',
         target: 'case-resolver',
+        payloadVersion: 2,
       })
     );
 
@@ -257,6 +259,7 @@ describe('prompt exploder bridge parties', () => {
           sessionId: 'stale-local-session',
         },
         createdAt: freshCreatedAt,
+        payloadVersion: 2,
       })
     );
     sessionStorage.setItem(
@@ -271,6 +274,7 @@ describe('prompt exploder bridge parties', () => {
           sessionId: 'stale-session',
         },
         createdAt: freshCreatedAt,
+        payloadVersion: 2,
       })
     );
 
@@ -321,6 +325,7 @@ describe('prompt exploder bridge parties', () => {
           documentVersionAtStart: 5,
         },
         createdAt: freshCreatedAt,
+        payloadVersion: 2,
       })
     );
 
@@ -348,6 +353,7 @@ describe('prompt exploder bridge parties', () => {
           documentVersionAtStart: -3,
         },
         createdAt: freshCreatedAt,
+        payloadVersion: 2,
       })
     );
 
@@ -360,7 +366,7 @@ describe('prompt exploder bridge parties', () => {
     });
   });
 
-  it('falls back unknown bridge aliases to canonical defaults', () => {
+  it('rejects non-canonical bridge aliases', () => {
     const freshCreatedAt = new Date().toISOString();
     window.localStorage.setItem(
       PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
@@ -369,11 +375,11 @@ describe('prompt exploder bridge parties', () => {
         source: 'prompt_exploder',
         target: 'studio',
         createdAt: freshCreatedAt,
+        payloadVersion: 2,
       })
     );
 
     const payload = consumePromptExploderApplyPayload('image-studio');
-    expect(payload?.source).toBe('image-studio');
-    expect(payload?.target).toBe('image-studio');
+    expect(payload).toBeNull();
   });
 });

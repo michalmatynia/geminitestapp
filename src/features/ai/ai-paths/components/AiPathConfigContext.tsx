@@ -18,7 +18,6 @@ import type { Toast } from '@/shared/contracts/ui';
 
 import {
   useGraphState,
-  usePersistenceActions,
   usePresetsActions,
   usePresetsState,
   useRuntimeActions,
@@ -164,7 +163,6 @@ const useAiPathConfigDefaults = () => {
   const runtimeActions = useRuntimeActions();
   const presetsState = usePresetsState();
   const presetsActions = usePresetsActions();
-  const persistenceActions = usePersistenceActions();
 
   const selectedNode = useMemo(
     () =>
@@ -240,14 +238,15 @@ const useAiPathConfigDefaults = () => {
       updateSelectedNode: orchestrator.updateSelectedNode,
       updateSelectedNodeConfig: orchestrator.updateSelectedNodeConfig,
       clearNodeHistory: orchestrator.handleClearNodeHistory,
-      savePathConfig: persistenceActions.savePathConfig,
+      // Node dialog saves should use the orchestrator save pipeline directly.
+      savePathConfig: orchestrator.handleSave,
       toast,
     }),
     [
       orchestrator.updateSelectedNode,
       orchestrator.updateSelectedNodeConfig,
       orchestrator.handleClearNodeHistory,
-      persistenceActions.savePathConfig,
+      orchestrator.handleSave,
       toast,
     ]
   );

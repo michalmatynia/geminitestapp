@@ -1,8 +1,5 @@
 import type {
   AiNode,
-  ClusterPreset,
-  DbNodePreset,
-  DbQueryPreset,
   Edge,
   ParserSampleState,
   PathConfig,
@@ -11,14 +8,10 @@ import type {
   PathFlowIntensity,
   AiPathsValidationConfig,
   PathRunMode,
-  PathDebugSnapshot,
   PathMeta,
   RuntimeState,
   UpdaterSampleState,
 } from '@/shared/lib/ai-paths';
-
-import type { Dispatch, SetStateAction } from 'react';
-
 export type ToastFn = (
   message: string,
   options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
@@ -60,51 +53,12 @@ export type UseAiPathsPersistenceArgs = {
   selectedNodeId: string | null;
   runtimeState: RuntimeState;
   updaterSamples: Record<string, UpdaterSampleState>;
-  normalizeDbNodePreset: (raw: Partial<DbNodePreset>) => DbNodePreset;
-  normalizeDbQueryPreset: (raw: Partial<DbQueryPreset>) => DbQueryPreset;
   normalizeTriggerLabel: (value?: string | null) => string;
-  persistLastError: (
-    payload: { message: string; time: string; pathId?: string | null } | null
-  ) => Promise<void>;
   reportAiPathsError: (
     error: unknown,
     context: Record<string, unknown>,
     fallbackMessage?: string
   ) => void;
-  setActivePathId: (value: string | null) => void;
-  setActiveTrigger: (value: string) => void;
-  setClusterPresets: Dispatch<SetStateAction<ClusterPreset[]>>;
-  setDbNodePresets: Dispatch<SetStateAction<DbNodePreset[]>>;
-  setDbQueryPresets: Dispatch<SetStateAction<DbQueryPreset[]>>;
-  setEdges: Dispatch<SetStateAction<Edge[]>>;
-  setExpandedPaletteGroups: Dispatch<SetStateAction<Set<string>>>;
-  setLastError: Dispatch<
-    SetStateAction<{ message: string; time: string; pathId?: string | null } | null>
-  >;
-  setLastRunAt: (value: string | null) => void;
-  setLoading: (value: boolean) => void;
-  setIsPathActive: (value: boolean) => void;
-  setIsPathLocked: (value: boolean) => void;
-  setNodes: Dispatch<SetStateAction<AiNode[]>>;
-  setPaletteCollapsed: (value: boolean) => void;
-  setParserSamples: Dispatch<SetStateAction<Record<string, ParserSampleState>>>;
-  setPathConfigs: Dispatch<SetStateAction<Record<string, PathConfig>>>;
-  setPathDebugSnapshots: Dispatch<SetStateAction<Record<string, PathDebugSnapshot>>>;
-  setPathDescription: (value: string) => void;
-  setExecutionMode: (value: PathExecutionMode) => void;
-  setFlowIntensity: (value: PathFlowIntensity) => void;
-  setRunMode: (value: PathRunMode) => void;
-  setStrictFlowMode: (value: boolean) => void;
-  setBlockedRunPolicy: (value: PathBlockedRunPolicy) => void;
-  setAiPathsValidation: (value: AiPathsValidationConfig) => void;
-  setHistoryRetentionPasses: (value: number) => void;
-  setHistoryRetentionOptionsMax: (value: number) => void;
-  setPathName: (value: string) => void;
-  setPaths: Dispatch<SetStateAction<PathMeta[]>>;
-  setRuntimeState: Dispatch<SetStateAction<RuntimeState>>;
-  setConfigOpen: (value: boolean) => void;
-  setSelectedNodeId: (value: string | null) => void;
-  setUpdaterSamples: Dispatch<SetStateAction<Record<string, UpdaterSampleState>>>;
   toast: ToastFn;
 };
 

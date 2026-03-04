@@ -4,7 +4,6 @@ import {
   buildTextAtomLetterBlocks,
   applyTextAtomSettings,
   createRowBlock,
-  buildSectionSettings,
   TEXT_ATOM_BLOCK_TYPE,
 } from '../block-helpers';
 import { moveSectionSubtree, removeSectionSubtree } from '../section-hierarchy';
@@ -33,7 +32,10 @@ export function reduceSectionActions(
       const def = getSectionDefinition(sectionType);
       if (!def) return state;
 
-      const settings = buildSectionSettings(sectionType, action.initialSettings ?? {});
+      const settings = {
+        ...def.defaultSettings,
+        ...(action.initialSettings ?? {}),
+      };
       let initialBlocks: BlockInstance[] = [];
       if (sectionType === 'Grid') {
         const rows = (settings['rows'] as number) ?? 1;

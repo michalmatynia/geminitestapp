@@ -27,6 +27,7 @@ import type {
   RuntimeControlHandlers,
   RuntimeNodeConfigHandlers,
 } from '@/shared/contracts/ai-paths';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export type { LastErrorInfo, RuntimeRunStatus, RuntimeControlHandlers, RuntimeNodeConfigHandlers };
 
@@ -226,6 +227,51 @@ export function RuntimeProvider({
   const runControlHandlersRef = useRef<RuntimeControlHandlers>({});
   const runtimeNodeConfigHandlersRef = useRef<RuntimeNodeConfigHandlers>({});
 
+  const reportMissingRunControlHandler = useCallback(
+    (action: string, options?: { nodeId?: string | null; markFailed?: boolean }): void => {
+      const message = `AI Paths runtime handler "${action}" is not initialized. Reload the page and try again.`;
+      setLastErrorInternal({
+        message,
+        time: new Date().toISOString(),
+      });
+      if (options?.markFailed) {
+        setRuntimeRunStatusInternal('failed');
+      }
+      logClientError(new Error(message), {
+        context: {
+          source: 'ai-paths.runtime-context',
+          action,
+          feature: 'ai-paths',
+          category: 'AI',
+          level: 'error',
+          nodeId: options?.nodeId ?? null,
+        },
+      });
+    },
+    []
+  );
+
+  const reportMissingRuntimeNodeConfigHandler = useCallback(
+    (action: string, options?: { nodeId?: string | null }): void => {
+      const message = `AI Paths runtime node-config handler "${action}" is not initialized. Reload the page and try again.`;
+      setLastErrorInternal({
+        message,
+        time: new Date().toISOString(),
+      });
+      logClientError(new Error(message), {
+        context: {
+          source: 'ai-paths.runtime-context',
+          action,
+          feature: 'ai-paths',
+          category: 'AI',
+          level: 'error',
+          nodeId: options?.nodeId ?? null,
+        },
+      });
+    },
+    []
+  );
+
   // Memoized update operations
   const updateNodeInputs = useCallback((nodeId: string, inputs: RuntimePortValues) => {
     setRuntimeStateInternal((prev) => ({
@@ -341,40 +387,78 @@ export function RuntimeProvider({
 
   const fireTrigger = useCallback(
     async (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => {
-      await runControlHandlersRef.current.fireTrigger?.(node, event);
+      const handler = runControlHandlersRef.current.fireTrigger;
+      if (!handler) {
+        reportMissingRunControlHandler('fireTrigger', { nodeId: node.id, markFailed: true });
+        return;
+      }
+      await handler(node, event);
     },
-    []
+    [reportMissingRunControlHandler]
   );
 
   const fireTriggerPersistent = useCallback(
     async (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => {
-      await runControlHandlersRef.current.fireTriggerPersistent?.(node, event);
+      const handler = runControlHandlersRef.current.fireTriggerPersistent;
+      if (!handler) {
+        reportMissingRunControlHandler('fireTriggerPersistent', {
+          nodeId: node.id,
+          markFailed: true,
+        });
+        return;
+      }
+      await handler(node, event);
     },
-    []
+    [reportMissingRunControlHandler]
   );
 
   const pauseActiveRun = useCallback(() => {
-    runControlHandlersRef.current.pauseActiveRun?.();
-  }, []);
+    const handler = runControlHandlersRef.current.pauseActiveRun;
+    if (!handler) {
+      reportMissingRunControlHandler('pauseActiveRun');
+      return;
+    }
+    handler();
+  }, [reportMissingRunControlHandler]);
 
   const resumeActiveRun = useCallback(() => {
-    runControlHandlersRef.current.resumeActiveRun?.();
-  }, []);
+    const handler = runControlHandlersRef.current.resumeActiveRun;
+    if (!handler) {
+      reportMissingRunControlHandler('resumeActiveRun');
+      return;
+    }
+    handler();
+  }, [reportMissingRunControlHandler]);
 
   const stepActiveRun = useCallback((triggerNode?: AiNode) => {
-    runControlHandlersRef.current.stepActiveRun?.(triggerNode);
-  }, []);
+    const handler = runControlHandlersRef.current.stepActiveRun;
+    if (!handler) {
+      reportMissingRunControlHandler('stepActiveRun', { nodeId: triggerNode?.id ?? null });
+      return;
+    }
+    handler(triggerNode);
+  }, [reportMissingRunControlHandler]);
 
   const cancelActiveRun = useCallback(() => {
-    runControlHandlersRef.current.cancelActiveRun?.();
-  }, []);
+    const handler = runControlHandlersRef.current.cancelActiveRun;
+    if (!handler) {
+      reportMissingRunControlHandler('cancelActiveRun');
+      return;
+    }
+    handler();
+  }, [reportMissingRunControlHandler]);
 
   const clearWires = useCallback(() => {
-    const result = runControlHandlersRef.current.clearWires?.();
+    const handler = runControlHandlersRef.current.clearWires;
+    if (!handler) {
+      reportMissingRunControlHandler('clearWires');
+      return;
+    }
+    const result = handler();
     if (result && typeof (result as Promise<unknown>).then === 'function') {
       void (result as Promise<unknown>).catch(() => {});
     }
-  }, []);
+  }, [reportMissingRunControlHandler]);
 
   const setRuntimeNodeConfigHandlers = useCallback((handlers: RuntimeNodeConfigHandlers) => {
     runtimeNodeConfigHandlersRef.current = handlers;
@@ -382,13 +466,14 @@ export function RuntimeProvider({
 
   const fetchParserSample = useCallback(
     async (nodeId: string, entityType: string, entityId: string): Promise<void> => {
-      await (runtimeNodeConfigHandlersRef.current.fetchParserSample?.(
-        nodeId,
-        entityType,
-        entityId
-      ) ?? Promise.resolve());
+      const handler = runtimeNodeConfigHandlersRef.current.fetchParserSample;
+      if (!handler) {
+        reportMissingRuntimeNodeConfigHandler('fetchParserSample', { nodeId });
+        return;
+      }
+      await handler(nodeId, entityType, entityId);
     },
-    []
+    [reportMissingRuntimeNodeConfigHandler]
   );
 
   const fetchUpdaterSample = useCallback(
@@ -398,27 +483,36 @@ export function RuntimeProvider({
       entityId: string,
       options?: { notify?: boolean }
     ): Promise<void> => {
-      await (runtimeNodeConfigHandlersRef.current.fetchUpdaterSample?.(
-        nodeId,
-        entityType,
-        entityId,
-        options
-      ) ?? Promise.resolve());
+      const handler = runtimeNodeConfigHandlersRef.current.fetchUpdaterSample;
+      if (!handler) {
+        reportMissingRuntimeNodeConfigHandler('fetchUpdaterSample', { nodeId });
+        return;
+      }
+      await handler(nodeId, entityType, entityId, options);
     },
-    []
+    [reportMissingRuntimeNodeConfigHandler]
   );
 
   const runSimulation = useCallback(async (node: AiNode, triggerEvent?: string): Promise<void> => {
-    const result = runtimeNodeConfigHandlersRef.current.runSimulation?.(node, triggerEvent);
+    const handler = runtimeNodeConfigHandlersRef.current.runSimulation;
+    if (!handler) {
+      reportMissingRuntimeNodeConfigHandler('runSimulation', { nodeId: node.id });
+      return;
+    }
+    const result = handler(node, triggerEvent);
     if (result && typeof (result as Promise<unknown>).then === 'function') {
       await (result as Promise<unknown>);
     }
-  }, []);
+  }, [reportMissingRuntimeNodeConfigHandler]);
 
   const sendToAi = useCallback(async (databaseNodeId: string, prompt: string): Promise<void> => {
-    await (runtimeNodeConfigHandlersRef.current.sendToAi?.(databaseNodeId, prompt) ??
-      Promise.resolve());
-  }, []);
+    const handler = runtimeNodeConfigHandlersRef.current.sendToAi;
+    if (!handler) {
+      reportMissingRuntimeNodeConfigHandler('sendToAi', { nodeId: databaseNodeId });
+      return;
+    }
+    await handler(databaseNodeId, prompt);
+  }, [reportMissingRuntimeNodeConfigHandler]);
 
   // Actions are stable
   const actions = useMemo<RuntimeActions>(

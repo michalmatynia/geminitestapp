@@ -11,6 +11,13 @@ import {
 import { useTemplateMutation } from '@/features/data-import-export/hooks/useImportQueries';
 import type { useToast } from '@/shared/ui';
 
+const LEGACY_EXPORT_PARAMETER_SOURCE_PREFIX = 'parameter:';
+
+const hasLegacyExportParameterSourceMapping = (mappings: TemplateMapping[]): boolean =>
+  mappings.some((mapping: TemplateMapping) =>
+    mapping.sourceKey.trim().toLowerCase().startsWith(LEGACY_EXPORT_PARAMETER_SOURCE_PREFIX)
+  );
+
 export function useImportExportTemplates({
   toast,
   importTemplates,
@@ -103,6 +110,14 @@ export function useImportExportTemplates({
       }))
       .filter((mapping: TemplateMapping) => mapping.sourceKey && mapping.targetField);
 
+    if (!isImport && hasLegacyExportParameterSourceMapping(cleanMappings)) {
+      toast(
+        'Export template contains legacy parameter source mappings. Use canonical text_fields.features.<name> mappings before duplicating.',
+        { variant: 'error' }
+      );
+      return;
+    }
+
     const mutation = isImport ? createImportTemplateMutation : createExportTemplateMutation;
     const duplicatedName = `${(sourceTemplate.name || 'Template').trim()} Copy`;
 
@@ -153,6 +168,14 @@ export function useImportExportTemplates({
       }))
       .filter((mapping: TemplateMapping) => mapping.sourceKey && mapping.targetField);
 
+    if (hasLegacyExportParameterSourceMapping(cleanMappings)) {
+      toast(
+        'Import template includes legacy parameter source mappings that are not supported for export copy. Update mappings to canonical fields first.',
+        { variant: 'error' }
+      );
+      return;
+    }
+
     const baseName = (sourceTemplate.name || 'Template').trim();
     const exportTemplateNameCandidate = baseName.toLowerCase().includes('export')
       ? baseName
@@ -199,6 +222,14 @@ export function useImportExportTemplates({
         targetField: m.targetField.trim(),
       }))
       .filter((m: TemplateMapping) => m.sourceKey && m.targetField);
+
+    if (!isImport && hasLegacyExportParameterSourceMapping(cleanedMappings)) {
+      toast(
+        'Legacy export source mapping "parameter:<id>" is no longer supported. Use canonical text_fields.features.<name> source fields.',
+        { variant: 'error' }
+      );
+      return;
+    }
 
     const mutation = isImport
       ? activeTemplateId

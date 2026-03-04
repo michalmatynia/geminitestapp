@@ -192,12 +192,7 @@ export type PromptExploderValidationRuleStackOption = {
   ruleCount?: number;
 };
 
-export const promptExploderValidationStackResolutionReasonSchema = z.enum([
-  'exact_match',
-  'rule_passed',
-  'rule_failed',
-  'rule_skipped',
-]);
+export const promptExploderValidationStackResolutionReasonSchema = z.enum(['exact_match']);
 export type PromptExploderValidationStackResolutionReason = z.infer<
   typeof promptExploderValidationStackResolutionReasonSchema
 >;
@@ -207,7 +202,6 @@ export type PromptExploderValidationStackResolution = {
   scope: PromptExploderRuntimeValidationScope;
   validatorScope: ValidatorScope;
   list?: ValidatorPatternList;
-  usedFallback: boolean;
   reason: PromptExploderValidationStackResolutionReason;
   passed?: boolean;
   stackId?: string;

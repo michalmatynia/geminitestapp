@@ -7,6 +7,31 @@ import { fetchAiPathsSettingsByKeysCached } from '@/shared/lib/ai-paths/settings
 
 import type { UseAiPathsPersistenceArgs } from '../useAiPathsPersistence.types';
 import { useAiPathsPersistence } from '../useAiPathsPersistence';
+const selectNodeMock = vi.fn();
+const setConfigOpenSelectionMock = vi.fn();
+const setNodesGraphMock = vi.fn();
+const setEdgesGraphMock = vi.fn();
+const setPathConfigsGraphMock = vi.fn();
+const setPathsGraphMock = vi.fn();
+const setActivePathIdGraphMock = vi.fn();
+const setPathNameGraphMock = vi.fn();
+const setPathDescriptionGraphMock = vi.fn();
+const setActiveTriggerGraphMock = vi.fn();
+const setExecutionModeGraphMock = vi.fn();
+const setFlowIntensityGraphMock = vi.fn();
+const setRunModeGraphMock = vi.fn();
+const setStrictFlowModeGraphMock = vi.fn();
+const setBlockedRunPolicyGraphMock = vi.fn();
+const setAiPathsValidationGraphMock = vi.fn();
+const setHistoryRetentionPassesGraphMock = vi.fn();
+const setHistoryRetentionOptionsMaxGraphMock = vi.fn();
+const setIsPathLockedGraphMock = vi.fn();
+const setIsPathActiveGraphMock = vi.fn();
+const setRuntimeStateMock = vi.fn();
+const setParserSamplesMock = vi.fn();
+const setUpdaterSamplesMock = vi.fn();
+const setLastRunAtMock = vi.fn();
+const setLoadingPersistenceMock = vi.fn();
 
 const preferenceMock = {
   resolveUserPreferences: vi.fn(() => null),
@@ -57,11 +82,81 @@ vi.mock('../hooks/persistence/usePresetPersistence', () => ({
   usePresetPersistence: () => presetMock,
 }));
 
+vi.mock('@/features/ai/ai-paths/context/SelectionContext', () => ({
+  useSelectionActions: () => ({
+    selectNode: selectNodeMock,
+    setConfigOpen: setConfigOpenSelectionMock,
+  }),
+}));
+
+vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
+  useGraphActions: () => ({
+    setNodes: setNodesGraphMock,
+    setEdges: setEdgesGraphMock,
+    setPathConfigs: setPathConfigsGraphMock,
+    setPaths: setPathsGraphMock,
+    setActivePathId: setActivePathIdGraphMock,
+    setPathName: setPathNameGraphMock,
+    setPathDescription: setPathDescriptionGraphMock,
+    setActiveTrigger: setActiveTriggerGraphMock,
+    setExecutionMode: setExecutionModeGraphMock,
+    setFlowIntensity: setFlowIntensityGraphMock,
+    setRunMode: setRunModeGraphMock,
+    setStrictFlowMode: setStrictFlowModeGraphMock,
+    setBlockedRunPolicy: setBlockedRunPolicyGraphMock,
+    setAiPathsValidation: setAiPathsValidationGraphMock,
+    setHistoryRetentionPasses: setHistoryRetentionPassesGraphMock,
+    setHistoryRetentionOptionsMax: setHistoryRetentionOptionsMaxGraphMock,
+    setIsPathLocked: setIsPathLockedGraphMock,
+    setIsPathActive: setIsPathActiveGraphMock,
+  }),
+}));
+
+vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({
+  useRuntimeActions: () => ({
+    setRuntimeState: setRuntimeStateMock,
+    setParserSamples: setParserSamplesMock,
+    setUpdaterSamples: setUpdaterSamplesMock,
+    setLastRunAt: setLastRunAtMock,
+  }),
+}));
+
+vi.mock('@/features/ai/ai-paths/context/PersistenceContext', () => ({
+  usePersistenceActions: () => ({
+    setLoading: setLoadingPersistenceMock,
+  }),
+}));
+
 const mockedFetchAiPathsSettingsByKeysCached = vi.mocked(fetchAiPathsSettingsByKeysCached);
 
 describe('useAiPathsPersistence idle prefetch', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    selectNodeMock.mockReset();
+    setConfigOpenSelectionMock.mockReset();
+    setNodesGraphMock.mockReset();
+    setEdgesGraphMock.mockReset();
+    setPathConfigsGraphMock.mockReset();
+    setPathsGraphMock.mockReset();
+    setActivePathIdGraphMock.mockReset();
+    setPathNameGraphMock.mockReset();
+    setPathDescriptionGraphMock.mockReset();
+    setActiveTriggerGraphMock.mockReset();
+    setExecutionModeGraphMock.mockReset();
+    setFlowIntensityGraphMock.mockReset();
+    setRunModeGraphMock.mockReset();
+    setStrictFlowModeGraphMock.mockReset();
+    setBlockedRunPolicyGraphMock.mockReset();
+    setAiPathsValidationGraphMock.mockReset();
+    setHistoryRetentionPassesGraphMock.mockReset();
+    setHistoryRetentionOptionsMaxGraphMock.mockReset();
+    setIsPathLockedGraphMock.mockReset();
+    setIsPathActiveGraphMock.mockReset();
+    setRuntimeStateMock.mockReset();
+    setParserSamplesMock.mockReset();
+    setUpdaterSamplesMock.mockReset();
+    setLastRunAtMock.mockReset();
+    setLoadingPersistenceMock.mockReset();
   });
 
   it('prefetches non-active path configs after initial hydration', async () => {
@@ -69,7 +164,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
     const secondaryPathId = 'path_secondary';
     const activeConfig = createDefaultPathConfig(activePathId);
     const secondaryConfig = createDefaultPathConfig(secondaryPathId);
-    let pathConfigsState: Record<string, PathConfig> = {
+    const pathConfigsState: Record<string, PathConfig> = {
       [activePathId]: activeConfig,
     };
 
@@ -132,51 +227,8 @@ describe('useAiPathsPersistence idle prefetch', () => {
       selectedNodeId: null,
       runtimeState: {} as UseAiPathsPersistenceArgs['runtimeState'],
       updaterSamples: {},
-      normalizeDbNodePreset: (raw) => raw as never,
-      normalizeDbQueryPreset: (raw) => raw as never,
       normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',
-      persistLastError: async () => undefined,
       reportAiPathsError: vi.fn(),
-      setActivePathId: vi.fn(),
-      setActiveTrigger: vi.fn(),
-      setClusterPresets: vi.fn(),
-      setDbNodePresets: vi.fn(),
-      setDbQueryPresets: vi.fn(),
-      setEdges: vi.fn(),
-      setExpandedPaletteGroups: vi.fn(),
-      setLastError: vi.fn(),
-      setLastRunAt: vi.fn(),
-      setLoading: vi.fn(),
-      setIsPathActive: vi.fn(),
-      setIsPathLocked: vi.fn(),
-      setNodes: vi.fn(),
-      setPaletteCollapsed: vi.fn(),
-      setParserSamples: vi.fn(),
-      setPathConfigs: vi.fn(
-        (
-          updater:
-            | Record<string, PathConfig>
-            | ((prev: Record<string, PathConfig>) => Record<string, PathConfig>)
-        ) => {
-          pathConfigsState = typeof updater === 'function' ? updater(pathConfigsState) : updater;
-        }
-      ),
-      setPathDebugSnapshots: vi.fn(),
-      setPathDescription: vi.fn(),
-      setExecutionMode: vi.fn(),
-      setFlowIntensity: vi.fn(),
-      setRunMode: vi.fn(),
-      setStrictFlowMode: vi.fn(),
-      setBlockedRunPolicy: vi.fn(),
-      setAiPathsValidation: vi.fn(),
-      setHistoryRetentionPasses: vi.fn(),
-      setHistoryRetentionOptionsMax: vi.fn(),
-      setPathName: vi.fn(),
-      setPaths: vi.fn(),
-      setRuntimeState: vi.fn(),
-      setConfigOpen: vi.fn(),
-      setSelectedNodeId: vi.fn(),
-      setUpdaterSamples: vi.fn(),
       toast: vi.fn(),
     };
 

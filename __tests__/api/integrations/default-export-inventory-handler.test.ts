@@ -21,7 +21,7 @@ type DefaultExportInventoryResponse = {
   inventoryId: string | null;
 };
 
-describe('api/integrations/exports/base/default-inventory handler', () => {
+describe('api/v2/integrations/exports/base/default-inventory handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -30,7 +30,7 @@ describe('api/integrations/exports/base/default-inventory handler', () => {
     getExportDefaultInventoryIdMock.mockResolvedValue('4069');
 
     const response = await GET_handler(
-      new NextRequest('http://localhost/api/integrations/exports/base/default-inventory', {
+      new NextRequest('http://localhost/api/v2/integrations/exports/base/default-inventory', {
         method: 'GET',
       }),
       mockContext
@@ -45,7 +45,7 @@ describe('api/integrations/exports/base/default-inventory handler', () => {
     getExportDefaultInventoryIdMock.mockRejectedValue(new Error('settings read failed'));
 
     const response = await GET_handler(
-      new NextRequest('http://localhost/api/integrations/exports/base/default-inventory', {
+      new NextRequest('http://localhost/api/v2/integrations/exports/base/default-inventory', {
         method: 'GET',
       }),
       mockContext

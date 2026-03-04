@@ -106,9 +106,7 @@ export interface UseAiPathsSettingsStateReturn {
   handleSwitchPath: (pathId: string) => void;
   savePathIndex: (nextPaths: PathMeta[]) => Promise<void>;
   nodes: AiNode[];
-  setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
   edges: Edge[];
-  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   runtimeState: RuntimeState;
   edgePaths: {
     id: string;

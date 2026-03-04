@@ -55,7 +55,6 @@ describe('prompt validation orchestrator runtime', () => {
       learningEnabled: true,
       minApprovalsForMatching: 1,
       maxTemplates: 1000,
-      strictUnknownStack: true,
     });
     const second = resolvePromptValidationRuntime({
       promptSettings,
@@ -66,7 +65,6 @@ describe('prompt validation orchestrator runtime', () => {
       learningEnabled: true,
       minApprovalsForMatching: 1,
       maxTemplates: 1000,
-      strictUnknownStack: true,
     });
 
     const snapshot = getPromptValidationRuntimeSelectionCacheSnapshot();
@@ -90,7 +88,6 @@ describe('prompt validation orchestrator runtime', () => {
       learningEnabled: true,
       minApprovalsForMatching: 1,
       maxTemplates: 1000,
-      strictUnknownStack: true,
     });
 
     const updatedLists = lists.map((list, index) =>
@@ -105,7 +102,6 @@ describe('prompt validation orchestrator runtime', () => {
       learningEnabled: true,
       minApprovalsForMatching: 1,
       maxTemplates: 1000,
-      strictUnknownStack: true,
     });
     const runtimeC = resolvePromptValidationRuntime({
       promptSettings: promptSettingsB,
@@ -116,7 +112,6 @@ describe('prompt validation orchestrator runtime', () => {
       learningEnabled: true,
       minApprovalsForMatching: 1,
       maxTemplates: 1000,
-      strictUnknownStack: true,
     });
 
     expect(runtimeB.identity.listVersion).not.toBe(runtimeA.identity.listVersion);
@@ -125,7 +120,7 @@ describe('prompt validation orchestrator runtime', () => {
     expect(runtimeC.identity.cacheKey).not.toBe(runtimeA.identity.cacheKey);
   });
 
-  it('treats known case-resolver stack aliases as explicit when validator lists are empty', () => {
+  it('resolves known case-resolver stack ids when validator lists are empty', () => {
     resetPromptValidationRuntimeSelectionCache();
     const promptSettings = buildPromptSettings(
       buildRegexRule({
@@ -141,16 +136,14 @@ describe('prompt validation orchestrator runtime', () => {
       promptExploderSettings: defaultPromptExploderSettings,
       validatorPatternLists: [],
       runtimeRuleProfile: 'all',
-      runtimeValidationRuleStack: 'case_resolver_prompt_exploder',
+      runtimeValidationRuleStack: 'case-resolver-prompt-exploder',
       learningEnabled: true,
       minApprovalsForMatching: 1,
       maxTemplates: 1000,
       preferredValidatorScope: 'case-resolver-prompt-exploder',
-      strictUnknownStack: true,
     });
 
     expect(runtime.stackResolution.reason).toBe('exact_match');
-    expect(runtime.stackResolution.usedFallback).toBe(false);
     expect(runtime.identity.scope).toBe('case_resolver_prompt_exploder');
     expect(runtime.identity.stack).toBe('case-resolver-prompt-exploder');
   });
@@ -162,6 +155,7 @@ describe('prompt validation orchestrator runtime', () => {
       id: 'segment.heading.markdown',
       pattern: '^##\\s+SECTION\\b',
       appliesToScopes: ['prompt_exploder'],
+      promptExploderTreatAsHeading: true,
     });
 
     explodePromptText({
@@ -223,7 +217,6 @@ describe('prompt validation orchestrator runtime', () => {
       learningEnabled: true,
       minApprovalsForMatching: 1,
       maxTemplates: 1000,
-      strictUnknownStack: true,
     });
     explodePromptText({
       prompt: 'ALLOW',
@@ -246,7 +239,6 @@ describe('prompt validation orchestrator runtime', () => {
       learningEnabled: true,
       minApprovalsForMatching: 1,
       maxTemplates: 1000,
-      strictUnknownStack: true,
     });
 
     const after = getPromptExploderRuntimePatternCacheSnapshot();

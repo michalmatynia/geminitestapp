@@ -28,7 +28,7 @@ type DefaultExportConnectionResponse = {
   connectionId: string | null;
 };
 
-describe('api/integrations/exports/base/default-connection handler', () => {
+describe('api/v2/integrations/exports/base/default-connection handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getExportDefaultConnectionIdMock.mockResolvedValue(null);
@@ -39,7 +39,7 @@ describe('api/integrations/exports/base/default-connection handler', () => {
 
   it('returns null when no default connection is stored', async () => {
     const response = await GET_handler(
-      new NextRequest('http://localhost/api/integrations/exports/base/default-connection', {
+      new NextRequest('http://localhost/api/v2/integrations/exports/base/default-connection', {
         method: 'GET',
       }),
       mockContext
@@ -60,7 +60,7 @@ describe('api/integrations/exports/base/default-connection handler', () => {
     ]);
 
     const response = await GET_handler(
-      new NextRequest('http://localhost/api/integrations/exports/base/default-connection', {
+      new NextRequest('http://localhost/api/v2/integrations/exports/base/default-connection', {
         method: 'GET',
       }),
       mockContext
@@ -86,7 +86,7 @@ describe('api/integrations/exports/base/default-connection handler', () => {
     ]);
 
     const response = await GET_handler(
-      new NextRequest('http://localhost/api/integrations/exports/base/default-connection', {
+      new NextRequest('http://localhost/api/v2/integrations/exports/base/default-connection', {
         method: 'GET',
       }),
       mockContext
@@ -103,7 +103,7 @@ describe('api/integrations/exports/base/default-connection handler', () => {
     listIntegrationsMock.mockRejectedValue(new Error('repository offline'));
 
     const response = await GET_handler(
-      new NextRequest('http://localhost/api/integrations/exports/base/default-connection', {
+      new NextRequest('http://localhost/api/v2/integrations/exports/base/default-connection', {
         method: 'GET',
       }),
       mockContext
@@ -119,7 +119,7 @@ describe('api/integrations/exports/base/default-connection handler', () => {
     getExportDefaultConnectionIdMock.mockRejectedValue(new Error('settings read failed'));
 
     const response = await GET_handler(
-      new NextRequest('http://localhost/api/integrations/exports/base/default-connection', {
+      new NextRequest('http://localhost/api/v2/integrations/exports/base/default-connection', {
         method: 'GET',
       }),
       mockContext

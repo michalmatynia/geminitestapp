@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import type { AiNode, Edge } from '@/shared/lib/ai-paths';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -36,6 +37,7 @@ export interface PersistenceState {
   // Loading state
   loading: boolean;
   loadNonce: number;
+  isPathSwitching: boolean;
 
   // Saving state
   saving: boolean;
@@ -51,6 +53,7 @@ export interface PersistenceActions {
   setLoading: (loading: boolean) => void;
   incrementLoadNonce: () => void;
   setLoadNonce: (nonce: number) => void;
+  setIsPathSwitching: (switching: boolean) => void;
 
   // Saving actions
   setSaving: (saving: boolean) => void;
@@ -79,6 +82,8 @@ export interface PersistenceActions {
 
 const PersistenceStateContext = createContext<PersistenceState | null>(null);
 const PersistenceActionsContext = createContext<PersistenceActions | null>(null);
+const MISSING_SAVE_HANDLER_MESSAGE =
+  'AI Paths save handler is not initialized. Reload the page and try again.';
 
 // ---------------------------------------------------------------------------
 // Provider
@@ -96,6 +101,7 @@ export function PersistenceProvider({
   // Loading state
   const [loading, setLoadingInternal] = useState(initialLoading);
   const [loadNonce, setLoadNonceInternal] = useState(0);
+  const [isPathSwitching, setIsPathSwitchingInternal] = useState(false);
 
   // Saving state
   const [saving, setSavingInternal] = useState(false);
@@ -147,9 +153,27 @@ export function PersistenceProvider({
     operationHandlersRef.current = handlers;
   }, []);
 
-  const savePathConfig = useCallback(async (options?: SavePathConfigOptions): Promise<boolean> => {
-    return await (operationHandlersRef.current.savePathConfig?.(options) ?? Promise.resolve(false));
-  }, []);
+  const savePathConfig = useCallback(
+    async (options?: SavePathConfigOptions): Promise<boolean> => {
+      const handler = operationHandlersRef.current.savePathConfig;
+      if (!handler) {
+        setAutoSaveStatusInternal('error');
+        setSavingInternal(false);
+        const error = new Error(MISSING_SAVE_HANDLER_MESSAGE);
+        logClientError(error, {
+          context: {
+            source: 'ai-paths.persistence-context',
+            action: 'savePathConfig',
+            category: 'AI',
+            level: 'error',
+          },
+        });
+        return false;
+      }
+      return await handler(options);
+    },
+    []
+  );
 
   // Actions are stable
   const actions = useMemo<PersistenceActions>(
@@ -158,6 +182,7 @@ export function PersistenceProvider({
       setLoading: setLoadingInternal,
       incrementLoadNonce,
       setLoadNonce: setLoadNonceInternal,
+      setIsPathSwitching: setIsPathSwitchingInternal,
 
       // Saving actions
       setSaving: setSavingInternal,
@@ -194,12 +219,13 @@ export function PersistenceProvider({
     () => ({
       loading,
       loadNonce,
+      isPathSwitching,
       saving,
       autoSaveStatus,
       autoSaveAt,
       isDirty,
     }),
-    [loading, loadNonce, saving, autoSaveStatus, autoSaveAt, isDirty]
+    [loading, loadNonce, isPathSwitching, saving, autoSaveStatus, autoSaveAt, isDirty]
   );
 
   return (

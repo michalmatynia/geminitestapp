@@ -18,6 +18,7 @@ import {
   notifyAiPathRunEnqueued,
   optimisticallyInsertAiPathRunInQueueCache,
 } from '@/shared/lib/query-invalidation';
+import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 
 import {
   mergeRuntimeStateSnapshot,
@@ -26,6 +27,7 @@ import {
   buildActivePathConfig,
 } from './utils';
 import { parseRuntimeState } from '../../AiPathsSettingsUtils';
+import { collectInvalidRunNodePayloadIssues } from './payload-validation';
 
 import type { ServerExecutionArgs } from './types';
 
@@ -124,6 +126,7 @@ const resolveEntityTypeFromContext = (
 
 export function useAiPathsServerExecution(args: ServerExecutionArgs) {
   const queryClient = useQueryClient();
+  const { setPathConfigs } = useGraphActions();
   const serverRunActiveRef = useRef(false);
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -174,6 +177,46 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
       );
       const entityId = resolveEntityIdFromContext(triggerContext);
       const entityType = resolveEntityTypeFromContext(triggerContext, entityId);
+      const nodePayloadIssues = collectInvalidRunNodePayloadIssues(args.normalizedNodes);
+      if (nodePayloadIssues.length > 0) {
+        const firstIssue = nodePayloadIssues[0];
+        const message = firstIssue
+          ? `Cannot run path: invalid node payload for ${firstIssue.nodeId} (missing ${firstIssue.missingFields.join(', ')}).`
+          : 'Cannot run path: invalid node payload.';
+        args.appendRuntimeEvent({
+          source: 'server',
+          kind: 'run_failed',
+          level: 'error',
+          message,
+        });
+        args.setNodeStatus({
+          nodeId: triggerNode.id,
+          status: 'failed',
+          source: 'server',
+          nodeType: triggerNode.type,
+          nodeTitle: triggerNode.title ?? null,
+          kind: 'node_failed',
+          level: 'error',
+          message: `Node ${triggerNode.title ?? triggerNode.id} failed to enqueue.`,
+          metadata: {
+            error: message,
+            nodePayloadIssues: nodePayloadIssues.slice(0, 5),
+          },
+        });
+        args.settleTransientNodeStatuses('failed');
+        args.toast(message, { variant: 'error' });
+        stopServerRunStream();
+        logClientError(new Error('Invalid AI Paths run node payload'), {
+          context: {
+            source: 'useAiPathsServerExecution',
+            action: 'validateEnqueuePayload',
+            pathId: args.activePathId,
+            triggerNodeId: triggerNode.id,
+            nodePayloadIssues: nodePayloadIssues.slice(0, 10),
+          },
+        });
+        return;
+      }
 
       try {
         const enqueueResult = await enqueueAiPathRun({
@@ -331,7 +374,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           });
           args.setLastRunAt(finishedAt);
           if (args.activePathId) {
-            args.setPathConfigs((prev) => ({
+            setPathConfigs((prev) => ({
               ...prev,
               [args.activePathId!]: {
                 ...(prev[args.activePathId!] ??
@@ -713,7 +756,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
         });
       }
     },
-    [args, queryClient, stopServerRunStream]
+    [args, queryClient, setPathConfigs, stopServerRunStream]
   );
 
   return {

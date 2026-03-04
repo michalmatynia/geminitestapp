@@ -116,4 +116,37 @@ describe('ExportTemplateRepository', () => {
 
     expect(activeId).toBe(template.id);
   });
+
+  it('rejects legacy parameter source mappings on create', async () => {
+    if (shouldSkipPrismaSettingsTests()) return;
+
+    await expect(
+      createExportTemplate({
+        name: 'Legacy source mapping',
+        mappings: [
+          {
+            sourceKey: 'parameter:param-material',
+            targetField: 'text_fields.features.Material',
+          },
+        ],
+      })
+    ).rejects.toThrow(/legacy parameter source mappings/i);
+  });
+
+  it('rejects legacy parameter source mappings on update', async () => {
+    if (shouldSkipPrismaSettingsTests()) return;
+
+    const template = await createExportTemplate({ name: 'Update validation' });
+
+    await expect(
+      updateExportTemplate(template.id, {
+        mappings: [
+          {
+            sourceKey: 'parameter:param-material',
+            targetField: 'text_fields.features.Material',
+          },
+        ],
+      })
+    ).rejects.toThrow(/legacy parameter source mappings/i);
+  });
 });

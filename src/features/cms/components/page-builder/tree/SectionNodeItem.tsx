@@ -11,7 +11,6 @@ import { cn } from '@/shared/utils';
 import { readSectionDragData, setSectionDragData } from '@/features/cms/utils/page-builder-dnd';
 import { isDescendant } from '@/features/cms/hooks/page-builder/section-hierarchy';
 import { BlockNodeItem } from './BlockNodeItem';
-import { ColumnNodeItem } from './ColumnNodeItem';
 import { useComponentTreePanelContext } from './ComponentTreePanelContext';
 import { RowNodeItem } from './RowNodeItem';
 import { SectionBlockNodeItem } from './SectionBlockNodeItem';
@@ -93,11 +92,6 @@ export function SectionNodeItem({
   const rowIndexById = new Map<string, number>();
   rootRows.forEach((row, index) => {
     rowIndexById.set(row.id, index);
-  });
-  const rootColumns = section.blocks.filter((block) => block.type === 'Column');
-  const columnIndexById = new Map<string, number>();
-  rootColumns.forEach((column, index) => {
-    columnIndexById.set(column.id, index);
   });
   const childSectionCount = allSections.filter(
     (candidate) => candidate.parentSectionId === section.id
@@ -322,10 +316,6 @@ export function SectionNodeItem({
                       rowCount={rootRows.length}
                     />
                   );
-                }
-                if (block.type === 'Column') {
-                  const columnIndex = columnIndexById.get(block.id) ?? idx;
-                  return <ColumnNodeItem key={block.id} column={block} columnIndex={columnIndex} />;
                 }
                 if (block.type === 'SlideshowFrame') {
                   return <SlideshowFrameNodeItem key={block.id} frame={block} index={idx} />;

@@ -24,7 +24,6 @@ export const promptExploderBridgeSourceSchema = z.enum([
   'template',
   'sequence',
   'qa_matrix',
-  'prompt_exploder',
   'prompt-exploder',
   'image-studio',
   'case-resolver',
@@ -32,13 +31,11 @@ export const promptExploderBridgeSourceSchema = z.enum([
 export type PromptExploderBridgeSource = z.infer<typeof promptExploderBridgeSourceSchema>;
 
 export const promptExploderBridgeTargetSchema = z.enum([
-  'studio',
   'image-studio',
   'case-resolver',
   'external',
   'clipboard',
   'file',
-  'prompt_exploder',
   'prompt-exploder',
 ]);
 export type PromptExploderBridgeTarget = z.infer<typeof promptExploderBridgeTargetSchema>;

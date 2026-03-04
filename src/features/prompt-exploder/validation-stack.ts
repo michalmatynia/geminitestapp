@@ -102,7 +102,6 @@ const resolveCanonicalStackByScope = (
       scope: toRuntimeScope(matchedList.scope),
       validatorScope: matchedList.scope,
       list: matchedList,
-      usedFallback: false,
       reason: 'exact_match',
     };
   }
@@ -111,7 +110,6 @@ const resolveCanonicalStackByScope = (
     scope: toRuntimeScope(scope),
     validatorScope: scope,
     list: undefined,
-    usedFallback: false,
     reason: 'exact_match',
   };
 };
@@ -157,7 +155,6 @@ export const resolvePromptExploderValidationStack = (args: {
       scope: toRuntimeScope(matchedList.scope),
       validatorScope: matchedList.scope,
       list: matchedList,
-      usedFallback: false,
       reason: 'exact_match',
     };
   }

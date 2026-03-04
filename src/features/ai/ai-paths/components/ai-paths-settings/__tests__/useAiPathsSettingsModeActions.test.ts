@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Dispatch, SetStateAction } from 'react';
 
 import type { PathConfig, PathMeta, RuntimeState } from '@/shared/lib/ai-paths';
@@ -8,6 +8,31 @@ import { DEFAULT_AI_PATHS_VALIDATION_CONFIG, createDefaultPathConfig } from '@/s
 import { useAiPathsSettingsModeActions } from '../useAiPathsSettingsModeActions';
 
 type ModeActionsInput = Parameters<typeof useAiPathsSettingsModeActions>[0];
+const setPathsGraphMock = vi.fn();
+const setPathConfigsGraphMock = vi.fn();
+const setExecutionModeGraphMock = vi.fn();
+const setFlowIntensityGraphMock = vi.fn();
+const setRunModeGraphMock = vi.fn();
+const setStrictFlowModeGraphMock = vi.fn();
+const setBlockedRunPolicyGraphMock = vi.fn();
+const setHistoryRetentionPassesGraphMock = vi.fn();
+const setIsPathLockedGraphMock = vi.fn();
+const setIsPathActiveGraphMock = vi.fn();
+
+vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
+  useGraphActions: () => ({
+    setPaths: setPathsGraphMock,
+    setPathConfigs: setPathConfigsGraphMock,
+    setExecutionMode: setExecutionModeGraphMock,
+    setFlowIntensity: setFlowIntensityGraphMock,
+    setRunMode: setRunModeGraphMock,
+    setStrictFlowMode: setStrictFlowModeGraphMock,
+    setBlockedRunPolicy: setBlockedRunPolicyGraphMock,
+    setHistoryRetentionPasses: setHistoryRetentionPassesGraphMock,
+    setIsPathLocked: setIsPathLockedGraphMock,
+    setIsPathActive: setIsPathActiveGraphMock,
+  }),
+}));
 
 const createDispatchMock = <T>(): {
   dispatch: Dispatch<SetStateAction<T>>;
@@ -32,6 +57,19 @@ const emptyRuntimeState = (): RuntimeState =>
   }) as RuntimeState;
 
 describe('useAiPathsSettingsModeActions', () => {
+  beforeEach(() => {
+    setPathsGraphMock.mockReset();
+    setPathConfigsGraphMock.mockReset();
+    setExecutionModeGraphMock.mockReset();
+    setFlowIntensityGraphMock.mockReset();
+    setRunModeGraphMock.mockReset();
+    setStrictFlowModeGraphMock.mockReset();
+    setBlockedRunPolicyGraphMock.mockReset();
+    setHistoryRetentionPassesGraphMock.mockReset();
+    setIsPathLockedGraphMock.mockReset();
+    setIsPathActiveGraphMock.mockReset();
+  });
+
   it('preserves existing path version when toggling active state', async () => {
     const activePathId = 'path_syr8f4';
     const existingVersion = 12;
@@ -57,17 +95,6 @@ describe('useAiPathsSettingsModeActions', () => {
       [activePathId]: pathConfig,
     };
 
-    const setIsPathLocked = createDispatchMock<boolean>();
-    const setIsPathActive = createDispatchMock<boolean>();
-    const setExecutionMode = createDispatchMock<ModeActionsInput['executionMode']>();
-    const setFlowIntensity = createDispatchMock<ModeActionsInput['flowIntensity']>();
-    const setRunMode = createDispatchMock<ModeActionsInput['runMode']>();
-    const setStrictFlowMode = createDispatchMock<boolean>();
-    const setBlockedRunPolicy = createDispatchMock<ModeActionsInput['blockedRunPolicy']>();
-    const setHistoryRetentionPasses = createDispatchMock<number>();
-    const setPaths = createDispatchMock<PathMeta[]>();
-    const setPathConfigs = createDispatchMock<Record<string, PathConfig>>();
-
     const persistPathSettings = vi
       .fn<
         (nextPaths: PathMeta[], nextActivePathId: string, nextConfig: PathConfig) => Promise<void>
@@ -83,22 +110,14 @@ describe('useAiPathsSettingsModeActions', () => {
       activePathId,
       isPathLocked: false,
       isPathActive: true,
-      setIsPathLocked: setIsPathLocked.dispatch,
-      setIsPathActive: setIsPathActive.dispatch,
       activeTrigger: 'Product Modal - Infer Parameters',
       executionMode: 'server',
-      setExecutionMode: setExecutionMode.dispatch,
       flowIntensity: 'medium',
-      setFlowIntensity: setFlowIntensity.dispatch,
       runMode: 'manual',
-      setRunMode: setRunMode.dispatch,
       strictFlowMode: true,
-      setStrictFlowMode: setStrictFlowMode.dispatch,
       blockedRunPolicy: 'fail_run',
-      setBlockedRunPolicy: setBlockedRunPolicy.dispatch,
       aiPathsValidation: DEFAULT_AI_PATHS_VALIDATION_CONFIG,
       historyRetentionPasses: 10,
-      setHistoryRetentionPasses: setHistoryRetentionPasses.dispatch,
       nodes: [],
       edges: [],
       pathName: 'Parameter Inference',
@@ -110,8 +129,6 @@ describe('useAiPathsSettingsModeActions', () => {
       selectedNodeId: null,
       pathConfigs,
       paths,
-      setPaths: setPaths.dispatch,
-      setPathConfigs: setPathConfigs.dispatch,
       persistPathSettings,
       persistSettingsBulk,
       reportAiPathsError,
@@ -124,10 +141,10 @@ describe('useAiPathsSettingsModeActions', () => {
       result.current.handleTogglePathActive();
     });
 
-    expect(setIsPathActive.mock).toHaveBeenCalledWith(false);
-    expect(setPathConfigs.mock).toHaveBeenCalledTimes(1);
+    expect(setIsPathActiveGraphMock).toHaveBeenCalledWith(false);
+    expect(setPathConfigsGraphMock).toHaveBeenCalledTimes(1);
 
-    const setPathConfigsArg = setPathConfigs.mock.mock.calls[0]?.[0];
+    const setPathConfigsArg = setPathConfigsGraphMock.mock.calls[0]?.[0];
     expect(typeof setPathConfigsArg).toBe('function');
     const nextConfigs = (
       setPathConfigsArg as (prev: Record<string, PathConfig>) => Record<string, PathConfig>

@@ -77,6 +77,39 @@ describe('migrateCmsPageBuilderComponents', () => {
     expect(migrated.stats.normalizedBlocks).toBe(1);
   });
 
+  it('canonicalizes legacy grid root columns and image background targets', () => {
+    const source = [
+      makeComponent({
+        type: 'Grid',
+        content: {
+          zone: 'template',
+          sectionId: 'grid-root',
+          parentSectionId: null,
+          settings: {},
+          blocks: [
+            { id: 'column-1', type: 'Column', settings: {}, blocks: [] },
+            {
+              id: 'legacy-grid-image',
+              type: 'ImageElement',
+              settings: { src: '/grid-bg.png' },
+            },
+          ],
+        } as unknown as PageComponent['content'],
+      }),
+    ];
+
+    const migrated = migrateCmsPageBuilderComponents(source);
+    const content = migrated.components[0]?.content;
+    const migratedRow = content?.blocks?.find((block) => block.type === 'Row');
+    const migratedImage = content?.blocks?.find((block) => block.id === 'legacy-grid-image');
+
+    expect(migrated.changed).toBe(true);
+    expect(migratedRow).toBeDefined();
+    expect((migratedRow?.blocks ?? []).map((block) => block.type)).toEqual(['Column']);
+    expect((migratedImage?.settings as Record<string, unknown>)['backgroundTarget']).toBe('grid');
+    expect(migrated.stats.normalizedBlocks).toBe(1);
+  });
+
   it('keeps already canonical components unchanged', () => {
     const source = [makeComponent()];
     const migrated = migrateCmsPageBuilderComponents(source);

@@ -303,7 +303,7 @@ describe('case resolver extraction bridge payload', () => {
     expect(payload.parties?.addressee?.city).toBe('Szczecin');
   });
 
-  it('does not apply transfer fallback when rules-only mode has no captures', () => {
+  it('keeps rules-only transfer empty when no capture rules match', () => {
     const segments: PromptExploderSegment[] = [
       createSegment({
         id: 'heuristic-place-date',
@@ -327,7 +327,6 @@ describe('case resolver extraction bridge payload', () => {
 
     expect(result.requestedMode).toBe('rules_only');
     expect(result.effectiveMode).toBe('rules_only');
-    expect(result.usedFallback).toBe(false);
     expect(result.hasCaptureData).toBe(false);
     expect(result.payload.parties).toBeUndefined();
     expect(result.payload.metadata).toBeUndefined();
@@ -367,7 +366,6 @@ describe('case resolver extraction bridge payload', () => {
 
     expect(result.requestedMode).toBe('rules_only');
     expect(result.effectiveMode).toBe('rules_only');
-    expect(result.usedFallback).toBe(false);
     expect(result.hasCaptureData).toBe(true);
     expect(result.payload.parties?.addresser?.displayName).toBe('Michał Matynia');
     expect(result.payload.parties?.addresser?.rawText).toContain('Fioletowa 71/2');
@@ -375,7 +373,7 @@ describe('case resolver extraction bridge payload', () => {
     expect(result.payload.parties?.addressee).toBeUndefined();
   });
 
-  it('reports no transfer captures when both rule and fallback extraction fail', () => {
+  it('reports no transfer captures when rule extraction fails', () => {
     const segments: PromptExploderSegment[] = [
       createSegment({
         id: 'plain',
@@ -390,7 +388,6 @@ describe('case resolver extraction bridge payload', () => {
     });
 
     expect(result.requestedMode).toBe('rules_only');
-    expect(result.usedFallback).toBe(false);
     expect(result.hasCaptureData).toBe(false);
     expect(result.payload.parties).toBeUndefined();
     expect(result.payload.metadata).toBeUndefined();

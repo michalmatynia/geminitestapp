@@ -1,8 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { listExportTemplatesMock, getParameterByIdMock } = vi.hoisted(() => ({
+const { listExportTemplatesMock } = vi.hoisted(() => ({
   listExportTemplatesMock: vi.fn(),
-  getParameterByIdMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/server', () => ({
@@ -24,13 +23,6 @@ vi.mock('@/features/integrations/server', () => ({
 }));
 
 vi.mock('@/features/products/server', () => ({
-  getParameterRepository: vi.fn(async () => ({
-    getParameterById: getParameterByIdMock,
-    listParameters: vi.fn(async () => [
-      { id: 'param-material', name_en: 'Material', name_pl: 'Materiał' },
-      { id: 'param-color', name_en: 'Color', name_pl: 'Kolor' },
-    ]),
-  })),
   getProducerRepository: vi.fn(async () => ({
     getProducerById: vi.fn(async () => null),
   })),
@@ -50,33 +42,68 @@ vi.mock('@/shared/lib/observability/system-logger', () => ({
   },
 }));
 
-import {
-  parseMappedParameterId,
-  prepareBaseExportMappingsAndProduct,
-} from '@/app/api/v2/integrations/products/[id]/export-to-base/segments/preparation';
+import { prepareBaseExportMappingsAndProduct } from '@/app/api/v2/integrations/products/[id]/export-to-base/segments/preparation';
 
-describe('parseMappedParameterId', () => {
+describe('prepareBaseExportMappingsAndProduct', () => {
   beforeEach(() => {
     listExportTemplatesMock.mockReset();
-    getParameterByIdMock.mockReset();
   });
 
-  it('parses basic parameter mappings', () => {
-    expect(parseMappedParameterId('parameter:param-material')).toBe('param-material');
+  it('keeps canonical v2 parameter mappings unchanged', async () => {
+    listExportTemplatesMock.mockResolvedValue([
+      {
+        id: 'tpl-v2',
+        mappings: [
+          {
+            sourceKey: 'text_fields.features.Material',
+            targetField: 'parameter:param-material',
+          },
+          {
+            sourceKey: 'text_fields.features|pl.Materiał',
+            targetField: 'parameter:param-material|pl',
+          },
+        ],
+      },
+    ]);
+
+    const result = await prepareBaseExportMappingsAndProduct({
+      data: {
+        connectionId: 'conn-1',
+        inventoryId: 'inv-1',
+        templateId: 'tpl-v2',
+      },
+      imagesOnly: false,
+      productId: 'product-1',
+      resolvedInventoryId: 'inv-1',
+      product: {
+        id: 'product-1',
+        categoryId: null,
+        producers: [],
+        tags: [],
+        catalogs: [{ catalogId: 'catalog-1' }],
+        parameters: [
+          {
+            parameterId: 'param-material',
+            value: 'Wood',
+            valuesByLanguage: { pl: 'Drewno' },
+          },
+        ],
+      },
+    });
+
+    expect(result.mappings).toEqual([
+      {
+        sourceKey: 'text_fields.features.Material',
+        targetField: 'parameter:param-material',
+      },
+      {
+        sourceKey: 'text_fields.features|pl.Materiał',
+        targetField: 'parameter:param-material|pl',
+      },
+    ]);
   });
 
-  it('parses translated parameter mappings with language suffix', () => {
-    expect(parseMappedParameterId('parameter:param-material|en')).toBe('param-material');
-    expect(parseMappedParameterId('parameter:param-material|de')).toBe('param-material');
-  });
-
-  it('returns empty for non-parameter mappings', () => {
-    expect(parseMappedParameterId('name')).toBe('');
-    expect(parseMappedParameterId('')).toBe('');
-    expect(parseMappedParameterId(undefined)).toBe('');
-  });
-
-  it('normalizes legacy parameter source mappings to Base text_fields.features keys', async () => {
+  it('rejects templates that still use legacy parameter source mappings', async () => {
     listExportTemplatesMock.mockResolvedValue([
       {
         id: 'tpl-legacy',
@@ -96,61 +123,28 @@ describe('parseMappedParameterId', () => {
         ],
       },
     ]);
-    getParameterByIdMock.mockResolvedValue({
-      id: 'param-material',
-      name_en: 'Material',
-      name_pl: 'Materiał',
-      name_de: null,
-    });
 
-    const result = await prepareBaseExportMappingsAndProduct({
-      data: {
-        connectionId: 'conn-1',
-        inventoryId: 'inv-1',
-        templateId: 'tpl-legacy',
-      },
-      imagesOnly: false,
-      productId: 'product-1',
-      resolvedInventoryId: 'inv-1',
-      product: {
-        categoryId: null,
-        producers: [],
-        tags: [],
-        catalogs: [
-          {
-            catalogId: 'catalog-1',
-            catalog: {
-              defaultLanguageId: 'EN',
-            },
-          },
-        ],
-        parameters: [
-          {
-            parameterId: 'param-material',
-            value: 'Wood',
-            valuesByLanguage: {
-              pl: 'Drewno',
-            },
-          },
-        ],
-      },
-    });
-
-    expect(result.mappings).toEqual(
-      expect.arrayContaining([
-        {
-          sourceKey: 'text_fields.features.Material',
-          targetField: 'parameter:param-material',
+    await expect(
+      prepareBaseExportMappingsAndProduct({
+        data: {
+          connectionId: 'conn-1',
+          inventoryId: 'inv-1',
+          templateId: 'tpl-legacy',
         },
-        {
-          sourceKey: 'text_fields.features|en.Material',
-          targetField: 'parameter:param-material|en',
+        imagesOnly: false,
+        productId: 'product-1',
+        resolvedInventoryId: 'inv-1',
+        product: {
+          id: 'product-1',
+          categoryId: null,
+          producers: [],
+          tags: [],
+          catalogs: [{ catalogId: 'catalog-1' }],
+          parameters: [{ parameterId: 'param-material', value: 'Wood' }],
         },
-        {
-          sourceKey: 'text_fields.features|pl.Materiał',
-          targetField: 'parameter:param-material|pl',
-        },
-      ])
+      })
+    ).rejects.toThrow(
+      'contains legacy parameter source mappings. Run "npm run migrate:base-export-template-parameter-sources:v2 -- --write" and retry.'
     );
   });
 });

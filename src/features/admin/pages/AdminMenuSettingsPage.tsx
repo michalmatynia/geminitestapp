@@ -14,14 +14,11 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
+  createMasterFolderTreeTransactionAdapter,
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree/v2';
-import type {
-  MasterFolderTreeAdapterV3,
-  MasterFolderTreeTransaction,
-} from '@/shared/contracts/master-folder-tree';
 import type { AdminNavLeaf, AdminNavNodeEntry } from '@/shared/contracts/admin';
 import {
   Button,
@@ -251,19 +248,13 @@ function MenuBuilderSection(): React.JSX.Element {
     replaceCustomNavFromMasterNodesRef.current = replaceCustomNavFromMasterNodes;
   }, [replaceCustomNavFromMasterNodes]);
 
-  const adapter = useMemo<MasterFolderTreeAdapterV3>(
-    () => ({
-      prepare: async (tx: MasterFolderTreeTransaction) => ({ tx, preparedAt: Date.now() }),
-      apply: async (tx: MasterFolderTreeTransaction) => {
-        replaceCustomNavFromMasterNodesRef.current(tx.nextNodes);
-        return {
-          tx,
-          appliedAt: Date.now(),
-        };
-      },
-      commit: async () => {},
-      rollback: async () => {},
-    }),
+  const adapter = useMemo(
+    () =>
+      createMasterFolderTreeTransactionAdapter({
+        onApply: async (tx) => {
+          replaceCustomNavFromMasterNodesRef.current(tx.nextNodes);
+        },
+      }),
     []
   );
 

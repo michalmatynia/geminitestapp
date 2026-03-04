@@ -26,6 +26,27 @@ const useMasterFolderTreeShellMock = vi.fn(() => ({
 }));
 
 vi.mock('@/features/foldertree/v2', () => ({
+  createMasterFolderTreeTransactionAdapter: ({
+    onApply,
+  }: {
+    onApply?: (tx: {
+      nextNodes: unknown[];
+      previousNodes: unknown[];
+      operation: { type: string };
+    }) => Promise<void> | void;
+  }) => ({
+    prepare: async (tx: unknown) => ({ tx, preparedAt: Date.now() }),
+    apply: async (tx: {
+      nextNodes: unknown[];
+      previousNodes: unknown[];
+      operation: { type: string };
+    }) => {
+      await onApply?.(tx);
+      return { tx, appliedAt: Date.now() };
+    },
+    commit: async () => {},
+    rollback: async () => {},
+  }),
   useMasterFolderTreeShell: (...args: unknown[]) => useMasterFolderTreeShellMock(...args),
   FolderTreeViewportV2: () => <div data-testid='folder-tree-viewport' />, 
 }));

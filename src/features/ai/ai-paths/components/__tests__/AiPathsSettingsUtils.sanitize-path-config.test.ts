@@ -200,6 +200,29 @@ describe('sanitizePathConfig', () => {
     expect(() => sanitizePathConfig(config)).toThrowError(/legacy node identities/i);
   });
 
+  it('backfills missing node createdAt/updatedAt timestamps', () => {
+    const config = createDefaultPathConfig('path-missing-node-timestamps');
+    const [firstNode, ...restNodes] = config.nodes;
+    expect(firstNode).toBeDefined();
+    config.nodes = [
+      {
+        ...(firstNode as AiNode),
+        createdAt: undefined as unknown as string,
+        updatedAt: undefined as unknown as string | null,
+      },
+      ...restNodes,
+    ];
+
+    const sanitized = sanitizePathConfig(config);
+    const sanitizedNode = sanitized.nodes.find(
+      (node: AiNode): boolean => node.id === (firstNode as AiNode).id
+    );
+    expect(sanitizedNode).toBeDefined();
+    expect(typeof sanitizedNode?.createdAt).toBe('string');
+    expect((sanitizedNode?.createdAt ?? '').length).toBeGreaterThan(0);
+    expect(sanitizedNode?.updatedAt).toBeNull();
+  });
+
   it('preserves shared object-backed ports when persisting runtime state', () => {
     const sharedValue = {
       color: 'red',

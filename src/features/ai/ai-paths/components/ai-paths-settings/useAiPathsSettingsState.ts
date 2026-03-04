@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import type {
   Edge,
@@ -29,10 +29,10 @@ import {
   DOCS_DESCRIPTION_SNIPPET,
   DOCS_JOBS_SNIPPET,
 } from './docs-snippets';
+import { usePersistenceActions, useRuntimeActions } from '@/features/ai/ai-paths/context';
 import { useContextSettingsState } from './hooks/state/useContextSettingsState';
 import { useCoreSettingsState } from './hooks/state/useCoreSettingsState';
 import { useExecutionSettingsState } from './hooks/state/useExecutionSettingsState';
-import { useUiSettingsState } from './hooks/state/useUiSettingsState';
 
 import { useAiPathsNodeConfigActions } from './hooks/useAiPathsNodeConfigActions';
 import { useAiPathsRuntimeManagement } from './hooks/useAiPathsRuntimeManagement';
@@ -51,6 +51,8 @@ export function useAiPathsSettingsState({
 }: AiPathsSettingsStateOptions): UseAiPathsSettingsStateReturn {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
+  const { setOperationHandlers } = usePersistenceActions();
+  const { setRunControlHandlers, setRuntimeNodeConfigHandlers } = useRuntimeActions();
 
   const normalizeTriggerLabel = (value?: string | null): string =>
     value === 'Product Modal - Context Grabber'
@@ -59,50 +61,31 @@ export function useAiPathsSettingsState({
 
   const {
     nodes,
-    setNodes,
     edges,
-    setEdges,
     paths,
-    setPaths,
     pathConfigs,
-    setPathConfigs,
     activePathId,
-    setActivePathId,
     isPathLocked,
-    setIsPathLocked,
     isPathActive,
-    setIsPathActive,
     pathName,
     setPathName,
     pathDescription,
     setPathDescription,
     activeTrigger,
-    setActiveTrigger,
   } = useCoreSettingsState();
 
   const {
     executionMode,
-    setExecutionMode,
     flowIntensity,
-    setFlowIntensity,
     runMode,
-    setRunMode,
     strictFlowMode,
-    setStrictFlowMode,
     blockedRunPolicy,
-    setBlockedRunPolicy,
     aiPathsValidationState,
     setAiPathsValidationState,
     historyRetentionPasses,
-    setHistoryRetentionPasses,
     historyRetentionOptionsMax,
-    setHistoryRetentionOptionsMax,
   } = useExecutionSettingsState();
 
-  const {
-    isPathSwitching,
-    setIsPathSwitching,
-  } = useUiSettingsState();
   const {
     selectedNodeId,
     configOpen,
@@ -116,18 +99,15 @@ export function useAiPathsSettingsState({
     lastError,
     loading,
     loadNonce,
-    setRuntimeState,
+    isPathSwitching,
     setParserSamples,
     setUpdaterSamples,
-    setPathDebugSnapshots,
-    setLastRunAt,
     setLastError,
-    setSelectedNodeId,
     setConfigOpen,
     setNodeConfigDirty,
     setSimulationOpenNodeId,
-    setLoading,
     setLoadNonce,
+    setIsPathSwitching,
   } = useContextSettingsState();
 
   const {
@@ -135,19 +115,14 @@ export function useAiPathsSettingsState({
     reportAiPathsError,
     persistLastError,
   } = useAiPathsErrorState({
-    setAiPathsValidationState,
-    setLastError,
     toast,
   });
 
   const nodeConfig = useAiPathsNodeConfigActions({
     selectedNodeId,
-    setNodes,
   });
 
-  const runtimeMgmt = useAiPathsRuntimeManagement({
-    setRuntimeState,
-  });
+  const runtimeMgmt = useAiPathsRuntimeManagement();
 
   const { confirmNodeSwitch } = useAiPathsNodeSwitchConfirm({
     configOpen,
@@ -209,7 +184,6 @@ export function useAiPathsSettingsState({
 
   const {
     clusterPresets,
-    setClusterPresets,
     dbQueryPresets,
     setDbQueryPresets,
     saveDbQueryPresets,
@@ -232,19 +206,14 @@ export function useAiPathsSettingsState({
     presetsJson,
     setPresetsJson,
     expandedPaletteGroups,
-    setExpandedPaletteGroups,
     paletteCollapsed,
     setPaletteCollapsed,
     togglePaletteGroup,
-    normalizeDbQueryPreset,
-    normalizeDbNodePreset,
   } = useAiPathsPresets({
     nodes,
     edges,
     selectedNode: selectedNodeForPresets,
     isPathLocked,
-    setNodes,
-    setEdges,
     ensureNodeVisible,
     getCanvasCenterPosition,
     toast,
@@ -260,8 +229,6 @@ export function useAiPathsSettingsState({
     handleFetchParserSample,
     handleFetchUpdaterSample,
   } = useAiPathsSettingsSamples({
-    setParserSamples,
-    setUpdaterSamples,
     toast,
   });
 
@@ -301,45 +268,17 @@ export function useAiPathsSettingsState({
     updaterSamples,
     executionMode,
     flowIntensity,
-    normalizeDbNodePreset,
-    normalizeDbQueryPreset,
     normalizeTriggerLabel,
-    persistLastError,
     reportAiPathsError,
-    setActivePathId,
-    setActiveTrigger,
-    setClusterPresets,
-    setDbNodePresets,
-    setDbQueryPresets,
-    setEdges,
-    setExpandedPaletteGroups,
-    setLastError,
-    setLastRunAt,
-    setLoading,
-    setIsPathActive,
-    setIsPathLocked,
-    setNodes,
-    setPaletteCollapsed,
-    setParserSamples,
-    setPathConfigs,
-    setPathDebugSnapshots,
-    setPathDescription,
-    setExecutionMode,
-    setFlowIntensity,
-    setRunMode,
-    setStrictFlowMode,
-    setBlockedRunPolicy,
-    setAiPathsValidation: setAiPathsValidationState,
-    setHistoryRetentionPasses,
-    setHistoryRetentionOptionsMax,
-    setPathName,
-    setPaths,
-    setRuntimeState,
-    setConfigOpen,
-    setSelectedNodeId,
-    setUpdaterSamples,
     toast,
   });
+
+  useEffect(() => {
+    setOperationHandlers({ savePathConfig: handleSave });
+    return () => {
+      setOperationHandlers({});
+    };
+  }, [handleSave, setOperationHandlers]);
 
   const { selectedNode, pathFlagsById, autoSaveLabel, autoSaveClasses } =
     useAiPathsSettingsDerivedState({
@@ -377,13 +316,6 @@ export function useAiPathsSettingsState({
     isPathActive,
     nodes,
     edges,
-    runtimeState,
-    parserSamples,
-    updaterSamples,
-    setRuntimeState,
-    setPathConfigs,
-    setPathDebugSnapshots,
-    setLastRunAt,
     reportAiPathsError,
     toast,
   });
@@ -394,10 +326,8 @@ export function useAiPathsSettingsState({
     toast,
     confirm,
     runtimeState,
-    setRuntimeState,
     resetRuntimeDiagnostics: runtime.resetRuntimeDiagnostics,
     edges,
-    setEdges,
     nodes,
     pathName,
     pathDescription,
@@ -415,7 +345,6 @@ export function useAiPathsSettingsState({
     selectedNodeId,
     configOpen,
     pathConfigs,
-    setPathConfigs,
     paths,
     persistPathSettings: persistPathSettingsVoid,
     reportAiPathsError,
@@ -428,36 +357,56 @@ export function useAiPathsSettingsState({
     },
   });
 
+  useEffect(() => {
+    if (typeof setRunControlHandlers !== 'function') return;
+    setRunControlHandlers({
+      fireTrigger: runtime.handleFireTrigger,
+      fireTriggerPersistent: runtime.handleFireTriggerPersistent,
+      pauseActiveRun: runtime.handlePauseRun,
+      resumeActiveRun: runtime.handleResumeRun,
+      stepActiveRun: runtime.handleStepRun,
+      cancelActiveRun: runtime.handleCancelRun,
+      clearWires: cleanup.handleClearWires,
+    });
+    return () => {
+      setRunControlHandlers({});
+    };
+  }, [
+    cleanup.handleClearWires,
+    runtime.handleCancelRun,
+    runtime.handleFireTrigger,
+    runtime.handleFireTriggerPersistent,
+    runtime.handlePauseRun,
+    runtime.handleResumeRun,
+    runtime.handleStepRun,
+    setRunControlHandlers,
+  ]);
+
+  useEffect(() => {
+    if (typeof setRuntimeNodeConfigHandlers !== 'function') return;
+    setRuntimeNodeConfigHandlers({
+      fetchParserSample: handleFetchParserSample,
+      fetchUpdaterSample: handleFetchUpdaterSample,
+      runSimulation: runtime.handleRunSimulation,
+      sendToAi: runtime.handleSendToAi,
+    });
+    return () => {
+      setRuntimeNodeConfigHandlers({});
+    };
+  }, [
+    handleFetchParserSample,
+    handleFetchUpdaterSample,
+    runtime.handleRunSimulation,
+    runtime.handleSendToAi,
+    setRuntimeNodeConfigHandlers,
+  ]);
+
   const pathActions = useAiPathsSettingsPathActions({
     activePathId,
-    setActivePathId,
     isPathLocked,
     pathConfigs,
-    setPathConfigs,
     paths,
-    setPaths,
-    setNodes,
-    setEdges,
-    setSelectedNodeId,
-    setLastRunAt,
-    setRuntimeState,
-    setIsPathSwitching,
-    setParserSamples,
-    setUpdaterSamples,
-    setExecutionMode,
-    setFlowIntensity,
-    setRunMode,
-    setStrictFlowMode,
-    setBlockedRunPolicy,
-    setAiPathsValidation: setAiPathsValidationState,
-    setPathName,
-    setPathDescription,
-    setActiveTrigger,
-    setIsPathActive,
-    setIsPathLocked,
-    setConfigOpen,
     normalizeTriggerLabel,
-    updateActivePathMeta: (name: string) => setPathName(name),
     persistPathSettings: persistPathSettingsVoid,
     persistSettingsBulk,
     persistActivePathPreference,
@@ -470,22 +419,14 @@ export function useAiPathsSettingsState({
     activePathId,
     isPathLocked,
     isPathActive,
-    setIsPathLocked,
-    setIsPathActive,
     activeTrigger,
     executionMode,
-    setExecutionMode,
     flowIntensity,
-    setFlowIntensity,
     runMode,
-    setRunMode,
     strictFlowMode,
-    setStrictFlowMode,
     blockedRunPolicy,
-    setBlockedRunPolicy,
     aiPathsValidation: aiPathsValidationState,
     historyRetentionPasses,
-    setHistoryRetentionPasses,
     nodes,
     edges,
     pathName,
@@ -497,8 +438,6 @@ export function useAiPathsSettingsState({
     selectedNodeId,
     pathConfigs,
     paths,
-    setPaths,
-    setPathConfigs,
     persistPathSettings: persistPathSettingsVoid,
     persistSettingsBulk,
     reportAiPathsError,
@@ -537,9 +476,7 @@ export function useAiPathsSettingsState({
     connectingFromNode,
     // Graph
     nodes,
-    setNodes,
     edges,
-    setEdges,
     paths,
     activePathId,
     isPathLocked,

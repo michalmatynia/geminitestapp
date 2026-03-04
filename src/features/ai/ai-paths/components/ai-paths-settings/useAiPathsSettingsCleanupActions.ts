@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import type {
   AiNode,
@@ -16,6 +16,8 @@ import type {
 } from '@/shared/lib/ai-paths';
 import type { Toast } from '@/shared/contracts/ui';
 import { STORAGE_VERSION } from '@/shared/lib/ai-paths';
+import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
+import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 
 type ConfirmFn = (input: {
   title: string;
@@ -31,10 +33,8 @@ type UseAiPathsSettingsCleanupActionsInput = {
   toast: Toast;
   confirm: ConfirmFn;
   runtimeState: RuntimeState;
-  setRuntimeState: React.Dispatch<React.SetStateAction<RuntimeState>>;
   resetRuntimeDiagnostics: () => void;
   edges: Edge[];
-  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   nodes: AiNode[];
   pathName: string;
   pathDescription: string;
@@ -52,7 +52,6 @@ type UseAiPathsSettingsCleanupActionsInput = {
   selectedNodeId: string | null;
   configOpen: boolean;
   pathConfigs: Record<string, PathConfig>;
-  setPathConfigs: React.Dispatch<React.SetStateAction<Record<string, PathConfig>>>;
   paths: PathMeta[];
   persistPathSettings: (
     nextPaths: PathMeta[],
@@ -122,10 +121,8 @@ export function useAiPathsSettingsCleanupActions({
   toast,
   confirm,
   runtimeState,
-  setRuntimeState,
   resetRuntimeDiagnostics,
   edges,
-  setEdges,
   nodes,
   pathName,
   pathDescription,
@@ -143,12 +140,14 @@ export function useAiPathsSettingsCleanupActions({
   selectedNodeId,
   configOpen,
   pathConfigs,
-  setPathConfigs,
   paths,
   persistPathSettings,
   reportAiPathsError,
   pruneRuntimeInputs,
 }: UseAiPathsSettingsCleanupActionsInput): UseAiPathsSettingsCleanupActionsReturn {
+  const { setEdges, setPathConfigs } = useGraphActions();
+  const { setRuntimeState } = useRuntimeActions();
+
   const handleClearWires = useCallback(async (): Promise<void> => {
     if (!activePathId) return;
     if (isPathLocked) {

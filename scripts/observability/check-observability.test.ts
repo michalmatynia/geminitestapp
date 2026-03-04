@@ -20,6 +20,17 @@ const writeSource = (root: string, relativeFile: string, contents: string): void
   fs.writeFileSync(filePath, contents, 'utf8');
 };
 
+const readJsonLines = (root: string, relativeFile: string): Record<string, unknown>[] => {
+  const filePath = path.join(root, relativeFile);
+  const raw = fs.readFileSync(filePath, 'utf8').trim();
+  if (!raw) return [];
+  return raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line) => JSON.parse(line) as Record<string, unknown>);
+};
+
 describe('runObservabilityCheck logger enforcement', () => {
   afterEach(() => {
     while (tempRoots.length > 0) {
@@ -123,6 +134,63 @@ describe('runObservabilityCheck logger enforcement', () => {
     expect(report.logger.totalViolations).toBe(0);
   });
 
+  it('writes versioned summary log entry with execution context metadata', () => {
+    const root = createTempRoot();
+    writeSource(
+      root,
+      'src/good-log.ts',
+      "import { logger } from '@/shared/utils/logger';\nlogger.info('[observability.check] startup complete');\n"
+    );
+
+    const previousEnv = {
+      GITHUB_ACTIONS: process.env['GITHUB_ACTIONS'],
+      GITHUB_REF_NAME: process.env['GITHUB_REF_NAME'],
+      GITHUB_SHA: process.env['GITHUB_SHA'],
+      GITHUB_RUN_ID: process.env['GITHUB_RUN_ID'],
+    };
+    process.env['GITHUB_ACTIONS'] = 'true';
+    process.env['GITHUB_REF_NAME'] = 'feature/observability-check';
+    process.env['GITHUB_SHA'] = 'abcdef123456';
+    process.env['GITHUB_RUN_ID'] = '4242';
+
+    try {
+      const report = runObservabilityCheck({
+        mode: 'check',
+        root,
+        srcDir: 'src',
+        apiDir: 'src/app/api',
+        logsDir: 'logs',
+        checkLogFile: 'logs/quality-check.log',
+        errorLogFile: 'logs/quality-check.error.log',
+        allowPartial: true,
+      });
+
+      expect(report.status).toBe('passed');
+      const entries = readJsonLines(root, 'logs/quality-check.log');
+      const entry = entries[entries.length - 1];
+      expect(entry).toMatchObject({
+        schemaVersion: 2,
+        mode: 'check',
+        status: 'passed',
+        context: {
+          environment: 'github-actions',
+          branch: 'feature/observability-check',
+          commit: 'abcdef123456',
+          runId: '4242',
+        },
+      });
+    } finally {
+      if (previousEnv.GITHUB_ACTIONS === undefined) delete process.env['GITHUB_ACTIONS'];
+      else process.env['GITHUB_ACTIONS'] = previousEnv.GITHUB_ACTIONS;
+      if (previousEnv.GITHUB_REF_NAME === undefined) delete process.env['GITHUB_REF_NAME'];
+      else process.env['GITHUB_REF_NAME'] = previousEnv.GITHUB_REF_NAME;
+      if (previousEnv.GITHUB_SHA === undefined) delete process.env['GITHUB_SHA'];
+      else process.env['GITHUB_SHA'] = previousEnv.GITHUB_SHA;
+      if (previousEnv.GITHUB_RUN_ID === undefined) delete process.env['GITHUB_RUN_ID'];
+      else process.env['GITHUB_RUN_ID'] = previousEnv.GITHUB_RUN_ID;
+    }
+  });
+
   it('fails and provides an error comment when runtime logs contain errors', () => {
     const root = createTempRoot();
     writeSource(
@@ -153,13 +221,21 @@ describe('runObservabilityCheck logger enforcement', () => {
       file: 'logs/app.log',
       line: 2,
     });
+    expect(report.runtimeLogs.fingerprints[0]).toMatchObject({
+      count: 1,
+    });
     expect(report.comment).toContain('Error discovered in runtime logs');
     expect(report.logArtifacts.checkLogFile).toBe('logs/quality-check.log');
     expect(report.logArtifacts.errorLogFile).toBe('logs/quality-check.error.log');
     expect(fs.existsSync(path.join(root, 'logs/quality-check.log'))).toBe(true);
     expect(fs.existsSync(path.join(root, 'logs/quality-check.error.log'))).toBe(true);
-    const errorLogContents = fs.readFileSync(path.join(root, 'logs/quality-check.error.log'), 'utf8');
-    expect(errorLogContents).toContain('Database connection failed');
+    const errorEntries = readJsonLines(root, 'logs/quality-check.error.log');
+    const errorEntry = errorEntries[errorEntries.length - 1];
+    expect(errorEntry).toMatchObject({
+      schemaVersion: 2,
+      status: 'failed',
+    });
+    expect(JSON.stringify(errorEntry)).toContain('Database connection failed');
   });
 
   it('keeps status passed when runtime logs are clean and still appends check log', () => {
@@ -187,5 +263,48 @@ describe('runObservabilityCheck logger enforcement', () => {
     expect(report.comment).toBeNull();
     expect(fs.existsSync(path.join(root, 'logs/quality-check.log'))).toBe(true);
     expect(fs.existsSync(path.join(root, 'logs/quality-check.error.log'))).toBe(false);
+  });
+
+  it('compacts check log when it exceeds max configured bytes', () => {
+    const root = createTempRoot();
+    writeSource(
+      root,
+      'src/good-log.ts',
+      "import { logger } from '@/shared/utils/logger';\nlogger.info('[observability.check] startup complete');\n"
+    );
+
+    const prefilledCheckLog = path.join(root, 'logs/quality-check.log');
+    fs.mkdirSync(path.dirname(prefilledCheckLog), { recursive: true });
+    const oldEntries = Array.from({ length: 120 }, (_, index) =>
+      JSON.stringify({
+        schemaVersion: 2,
+        generatedAt: `2026-03-04T01:00:${String(index).padStart(2, '0')}Z`,
+        status: 'old',
+        idx: index,
+        note: 'x'.repeat(64),
+      })
+    ).join('\n');
+    fs.writeFileSync(prefilledCheckLog, `${oldEntries}\n`, 'utf8');
+
+    const report = runObservabilityCheck({
+      mode: 'check',
+      root,
+      srcDir: 'src',
+      apiDir: 'src/app/api',
+      logsDir: 'logs',
+      checkLogFile: 'logs/quality-check.log',
+      errorLogFile: 'logs/quality-check.error.log',
+      allowPartial: true,
+      maxCheckLogBytes: 3_000,
+    });
+
+    expect(report.status).toBe('passed');
+    const checkLogContent = fs.readFileSync(prefilledCheckLog, 'utf8');
+    expect(Buffer.byteLength(checkLogContent, 'utf8')).toBeLessThanOrEqual(3_000);
+    const entries = checkLogContent
+      .trim()
+      .split(/\r?\n/)
+      .map((line) => JSON.parse(line) as Record<string, unknown>);
+    expect(entries.some((entry) => entry['status'] === 'passed')).toBe(true);
   });
 });

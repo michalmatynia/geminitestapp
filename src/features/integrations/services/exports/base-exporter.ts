@@ -37,31 +37,8 @@ export type { ImageExportDiagnostics, ImageUrlDiagnostic };
 
 const IMAGE_EXPORT_ALIASES = new Set(['images_all', 'image_slots_all', 'image_links_all']);
 
-const PRODUCT_PARAMETER_MAPPING_PREFIX = 'parameter:';
-
-const normalizeParameterPrefixedBaseField = (value: string): string => {
-  const trimmed = value.trim();
-  if (!trimmed) return trimmed;
-  if (!trimmed.toLowerCase().startsWith(PRODUCT_PARAMETER_MAPPING_PREFIX)) {
-    return trimmed;
-  }
-
-  const payload = trimmed.slice(PRODUCT_PARAMETER_MAPPING_PREFIX.length).trim();
-  if (!payload) return trimmed;
-
-  const languageDelimiterIndex = payload.indexOf('|');
-  if (languageDelimiterIndex < 0) {
-    return payload;
-  }
-
-  const parameterId = payload.slice(0, languageDelimiterIndex).trim();
-  if (!parameterId) return trimmed;
-  const languageCode = payload.slice(languageDelimiterIndex + 1).trim();
-  return languageCode ? `${parameterId}|${languageCode}` : parameterId;
-};
-
 const normalizeExportTargetField = (targetField: string): string => {
-  const trimmed = normalizeParameterPrefixedBaseField(targetField);
+  const trimmed = targetField.trim();
   const normalized = trimmed.toLowerCase();
   if (IMAGE_EXPORT_ALIASES.has(normalized)) {
     return 'images';

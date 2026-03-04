@@ -217,7 +217,6 @@ describe('SectionNodeItem tree behavior', () => {
     const section = createSection({
       blocks: [
         { id: 'row-1', type: 'Row', settings: {}, blocks: [] },
-        { id: 'column-1', type: 'Column', settings: {}, blocks: [] },
         { id: 'frame-1', type: 'SlideshowFrame', settings: {}, blocks: [] },
         { id: 'container-1', type: 'Container', settings: {}, blocks: [] },
         { id: 'leaf-1', type: 'TextElement', settings: {} },
@@ -229,7 +228,6 @@ describe('SectionNodeItem tree behavior', () => {
     render(<SectionNodeItem section={section} sectionIndex={0} />);
 
     expect(screen.getByTestId('row-row-1')).toBeInTheDocument();
-    expect(screen.getByTestId('column-column-1')).toBeInTheDocument();
     expect(screen.getByTestId('frame-frame-1')).toBeInTheDocument();
     expect(screen.getByTestId('section-block-container-1')).toBeInTheDocument();
     expect(screen.getByTestId('block-leaf-1')).toBeInTheDocument();

@@ -134,6 +134,14 @@ export function useContextSettingsState() {
     [persistenceActions, persistenceState.loadNonce]
   );
 
+  const setIsPathSwitching = useCallback<Dispatch<SetStateAction<boolean>>>(
+    (next): void => {
+      const resolved = typeof next === 'function' ? next(persistenceState.isPathSwitching) : next;
+      persistenceActions.setIsPathSwitching(Boolean(resolved));
+    },
+    [persistenceActions, persistenceState.isPathSwitching]
+  );
+
   return {
     selectedNodeId: selectionState.selectedNodeId,
     configOpen: selectionState.configOpen,
@@ -147,6 +155,7 @@ export function useContextSettingsState() {
     lastError: runtimeContextState.lastError,
     loading: persistenceState.loading,
     loadNonce: persistenceState.loadNonce,
+    isPathSwitching: persistenceState.isPathSwitching,
     setRuntimeState,
     setParserSamples,
     setUpdaterSamples,
@@ -159,5 +168,6 @@ export function useContextSettingsState() {
     setSimulationOpenNodeId,
     setLoading,
     setLoadNonce,
+    setIsPathSwitching,
   };
 }

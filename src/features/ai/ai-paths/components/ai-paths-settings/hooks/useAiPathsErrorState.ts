@@ -1,7 +1,8 @@
-import { useCallback, type Dispatch, type SetStateAction } from 'react';
+import { useCallback } from 'react';
 
-import type { AiPathsValidationConfig } from '@/shared/lib/ai-paths';
 import type { Toast } from '@/shared/ui';
+import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
+import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 
 import { useAiPathsValidationActions } from './useAiPathsValidationActions';
 
@@ -11,17 +12,14 @@ type LastErrorInfo = {
   pathId?: string | null;
 } | null;
 
-type UseAiPathsErrorStateArgs = {
-  setAiPathsValidationState: (config: AiPathsValidationConfig) => void;
-  setLastError: Dispatch<SetStateAction<LastErrorInfo>>;
-  toast: Toast;
-};
+type UseAiPathsErrorStateArgs = { toast: Toast };
 
 export function useAiPathsErrorState({
-  setAiPathsValidationState,
-  setLastError,
   toast,
 }: UseAiPathsErrorStateArgs) {
+  const { setAiPathsValidation } = useGraphActions();
+  const { setLastError } = useRuntimeActions();
+
   const setLastErrorString = useCallback(
     (error: string | null): void => {
       setLastError(error ? { message: error, time: new Date().toISOString() } : null);
@@ -30,7 +28,7 @@ export function useAiPathsErrorState({
   );
 
   const validation = useAiPathsValidationActions({
-    setAiPathsValidation: setAiPathsValidationState,
+    setAiPathsValidation,
     setLastError: setLastErrorString,
     toast: toast as unknown as Toast,
   });

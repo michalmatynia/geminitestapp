@@ -331,12 +331,6 @@ export const resolvePromptValidationRuntime = (
       scope: stackResolution.scope ?? 'global',
       stack: resolveStackId(stackResolution.stack),
     });
-    if (stackResolution.usedFallback) {
-      recordPromptValidationCounter('runtime_selection_fallback', 1, {
-        scope: stackResolution.scope ?? 'global',
-        stack: resolveStackId(stackResolution.stack),
-      });
-    }
     recordPromptValidationTiming('scope_resolve_ms', performance.now() - stackStartedAt, {
       scope: stackResolution.scope ?? 'global',
       stack: resolveStackId(stackResolution.stack),

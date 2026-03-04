@@ -23,14 +23,9 @@ import {
   savePromptExploderApplyPrompt,
   savePromptExploderApplyPromptForCaseResolver,
 } from '../bridge';
-import {
-  isPromptExploderOrchestratorEnabled,
-  resolvePromptExploderOrchestratorRollout,
-} from '../feature-flags';
 import { promptExploderClampNumber } from '../helpers/formatting';
 import { promptExploderCreateApprovalDraftFromSegment } from '../helpers/segment-helpers';
 import {
-  explodePromptText,
   reassemblePromptSegments,
   updatePromptExploderDocument,
 } from '../parser';
@@ -368,27 +363,18 @@ export function usePromptExploderState() {
         scope: runtimeResolution.runtime.identity.scope,
       });
 
-      const rollout = resolvePromptExploderOrchestratorRollout({
-        settingsEnabled: promptExploderSettings.runtime.orchestratorEnabled ?? true,
-        cohortSeed: runtimeResolution.runtime.identity.cacheKey,
-      });
-      const orchestratorEnabled = isPromptExploderOrchestratorEnabled(
-        promptExploderSettings.runtime.orchestratorEnabled ?? true,
-        runtimeResolution.runtime.identity.cacheKey
-      );
-      const nextDocument = orchestratorEnabled
-        ? explodePromptWithValidationRuntime({
-          prompt: trimmed,
-          runtime: runtimeResolution.runtime,
-          similarityThreshold,
-        })
-        : explodePromptText({
-          prompt: trimmed,
-          validationRules: runtimeResolution.runtime.runtimeValidationRules,
-          learnedTemplates: runtimeResolution.runtime.runtimeLearnedTemplates,
-          similarityThreshold,
-          validationScope: runtimeResolution.runtime.identity.scope,
+      const orchestratorEnabled = promptExploderSettings.runtime.orchestratorEnabled ?? true;
+      if (!orchestratorEnabled) {
+        toast('Prompt runtime orchestrator is disabled in settings.', {
+          variant: 'error',
         });
+        return;
+      }
+      const nextDocument = explodePromptWithValidationRuntime({
+        prompt: trimmed,
+        runtime: runtimeResolution.runtime,
+        similarityThreshold,
+      });
       lastExplosionRef.current = {
         signature: runtimeSignature,
         document: nextDocument,
@@ -400,23 +386,6 @@ export function usePromptExploderState() {
       toast(`Exploded into ${nextDocument.segments.length} segment(s).`, {
         variant: 'success',
       });
-      if (!orchestratorEnabled) {
-        logClientError(
-          new Error('Prompt runtime orchestrator disabled for current rollout cohort.'),
-          {
-            context: {
-              source: 'usePromptExploderState',
-              action: 'handleExplode.rollout',
-              scope: runtimeResolution.runtime.identity.scope,
-              stack: runtimeResolution.runtime.identity.stack,
-              rolloutReason: rollout.reason,
-              rolloutPercent: rollout.canaryPercent,
-              rolloutBucket: rollout.bucket,
-              level: 'warn',
-            },
-          }
-        );
-      }
     } catch (error) {
       logClientError(error, {
         context: {
@@ -512,13 +481,6 @@ export function usePromptExploderState() {
         captureRules,
         mode: promptExploderSettings.runtime.caseResolverCaptureMode,
       });
-      if (transferPayload.usedFallback) {
-        toast(
-          'Unexpected capture fallback path detected. Transfer was blocked; review extraction mode and rules.',
-          { variant: 'error' }
-        );
-        return;
-      }
       if (!transferPayload.hasCaptureData) {
         if (promptExploderSettings.runtime.caseResolverCaptureMode === 'rules_only') {
           toast(

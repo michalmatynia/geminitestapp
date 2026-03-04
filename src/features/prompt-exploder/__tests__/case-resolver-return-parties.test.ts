@@ -63,7 +63,6 @@ describe('case resolver return parties payload', () => {
 
     expect(result.requestedMode).toBe('rules_only');
     expect(result.effectiveMode).toBe('rules_only');
-    expect(result.usedFallback).toBe(false);
     expect(result.hasCaptureData).toBe(true);
     expect(result.payload.parties?.addresser?.displayName).toBe('Michał Matynia');
     expect(result.payload.parties?.addressee?.displayName).toBe(
@@ -92,7 +91,6 @@ describe('case resolver return parties payload', () => {
       mode: 'rules_only',
     });
 
-    expect(result.usedFallback).toBe(false);
     expect(result.hasCaptureData).toBe(true);
     expect(result.payload.parties?.addressee?.displayName).toBe('Jan Kowalski');
     expect(result.payload.parties?.addressee?.kind).toBe('person');

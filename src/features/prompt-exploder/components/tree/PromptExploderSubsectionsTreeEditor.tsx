@@ -3,11 +3,11 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Plus } from 'lucide-react';
 
-import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/features/foldertree/v2';
-import type {
-  MasterFolderTreeAdapterV3,
-  MasterFolderTreeTransaction,
-} from '@/shared/contracts/master-folder-tree';
+import {
+  createMasterFolderTreeTransactionAdapter,
+  FolderTreeViewportV2,
+  useMasterFolderTreeShell,
+} from '@/features/foldertree/v2';
 import { Button, Card, FormField, Input, SectionHeader, Textarea } from '@/shared/ui';
 
 import { SegmentEditorListItemLogicalEditor } from '../SegmentEditorListItemLogicalEditor';
@@ -62,29 +62,20 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
   );
   const treeRevision = useMemo(() => buildPromptExploderTreeRevision(masterNodes), [masterNodes]);
 
-  const adapter = useMemo<MasterFolderTreeAdapterV3>(
-    () => ({
-      prepare: async (tx: MasterFolderTreeTransaction) => ({
-        tx,
-        preparedAt: Date.now(),
+  const adapter = useMemo(
+    () =>
+      createMasterFolderTreeTransactionAdapter({
+        onApply: async (tx) => {
+          const nextSubsections = rebuildPromptExploderSubsectionsFromMasterNodes({
+            nodes: tx.nextNodes,
+            previousSubsections: subsectionsRef.current,
+          });
+          updateSegment(selectedSegment.id, (current: PromptExploderSegment) => ({
+            ...current,
+            subsections: nextSubsections,
+          }));
+        },
       }),
-      apply: async (tx: MasterFolderTreeTransaction) => {
-        const nextSubsections = rebuildPromptExploderSubsectionsFromMasterNodes({
-          nodes: tx.nextNodes,
-          previousSubsections: subsectionsRef.current,
-        });
-        updateSegment(selectedSegment.id, (current: PromptExploderSegment) => ({
-          ...current,
-          subsections: nextSubsections,
-        }));
-        return {
-          tx,
-          appliedAt: Date.now(),
-        };
-      },
-      commit: async () => {},
-      rollback: async () => {},
-    }),
     [selectedSegment.id, updateSegment]
   );
 

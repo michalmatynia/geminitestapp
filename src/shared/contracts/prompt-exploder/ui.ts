@@ -11,13 +11,6 @@ import {
   type PromptExploderBenchmarkAggregate,
 } from './benchmark';
 
-export type PromptExploderOrchestratorRollout = {
-  enabled: boolean;
-  reason: 'settings';
-  bucket: number;
-  canaryPercent: number;
-};
-
 export type SegmentSelectionStrategy =
   | {
       kind: 'match_title';

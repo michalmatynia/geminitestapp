@@ -3,12 +3,17 @@ import type { PathConfig, PathDebugSnapshot, RuntimeState } from '@/shared/lib/a
 import { PATH_DEBUG_PREFIX, appendLocalRun } from '@/shared/lib/ai-paths';
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
+import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 
 import { buildActivePathConfig, buildDebugSnapshot, safeJsonStringify } from '../utils';
 
 import type { LocalExecutionArgs } from '../types';
 
 export function useLocalRunOutcome(args: LocalExecutionArgs) {
+  const { setPathConfigs } = useGraphActions();
+  const { setPathDebugSnapshots } = useRuntimeActions();
+
   const persistDebugSnapshot = useCallback(
     async (pathId: string | null, runAt: string, state: RuntimeState): Promise<void> => {
       if (!pathId) return;
@@ -18,7 +23,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
       if (!payload) return;
       try {
         await updateAiPathsSetting(`${PATH_DEBUG_PREFIX}${pathId}`, payload);
-        args.setPathDebugSnapshots((prev: Record<string, PathDebugSnapshot>) => ({
+        setPathDebugSnapshots((prev: Record<string, PathDebugSnapshot>) => ({
           ...prev,
           [pathId]: snapshot,
         }));
@@ -28,7 +33,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
         });
       }
     },
-    [args.normalizedNodes, args.setPathDebugSnapshots]
+    [args.normalizedNodes, setPathDebugSnapshots]
   );
 
   const finalizeLocalRunOutcome = useCallback(
@@ -58,7 +63,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
         args.setLastRunAt(finishedAt);
         void persistDebugSnapshot(args.activePathId ?? null, finishedAt, outcome.state);
         if (args.activePathId) {
-          args.setPathConfigs((prev: Record<string, PathConfig>) => ({
+          setPathConfigs((prev: Record<string, PathConfig>) => ({
             ...prev,
             [args.activePathId!]: {
               ...(prev[args.activePathId!] ??
@@ -126,7 +131,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
         if (outcome.state) {
           args.setLastRunAt(finishedAt);
           if (args.activePathId) {
-            args.setPathConfigs((prev: Record<string, PathConfig>) => ({
+            setPathConfigs((prev: Record<string, PathConfig>) => ({
               ...prev,
               [args.activePathId!]: {
                 ...(prev[args.activePathId!] ??
@@ -185,7 +190,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
         args.toast('Run canceled.', { variant: 'info' });
         args.setLastRunAt(finishedAt);
         if (args.activePathId) {
-          args.setPathConfigs((prev: Record<string, PathConfig>) => ({
+          setPathConfigs((prev: Record<string, PathConfig>) => ({
             ...prev,
             [args.activePathId!]: {
               ...(prev[args.activePathId!] ??
@@ -230,7 +235,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
         });
       }
     },
-    [args, persistDebugSnapshot]
+    [args, persistDebugSnapshot, setPathConfigs]
   );
 
   return { finalizeLocalRunOutcome, persistDebugSnapshot };

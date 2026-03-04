@@ -41,9 +41,20 @@ export function reduceBlockActions(
       }
       const newBlock = createBlockInstance(action.blockType);
       if (!newBlock) return state;
-      const updatedSections = state.sections.map((s: SectionInstance) =>
-        s.id === action.sectionId ? { ...s, blocks: [...s.blocks, newBlock] } : s
-      );
+      const updatedSections = state.sections.map((s: SectionInstance) => {
+        if (s.id !== action.sectionId) return s;
+        const blockToInsert =
+          s.type === 'Grid' && newBlock.type === 'ImageElement'
+            ? {
+              ...newBlock,
+              settings: {
+                ...newBlock.settings,
+                backgroundTarget: 'grid',
+              },
+            }
+            : newBlock;
+        return { ...s, blocks: [...s.blocks, blockToInsert] };
+      });
       return {
         ...state,
         sections: updatedSections,
@@ -55,9 +66,9 @@ export function reduceBlockActions(
       const updatedSections = state.sections.map((s: SectionInstance) =>
         s.id === action.sectionId
           ? {
-              ...s,
-              blocks: s.blocks.filter((b: BlockInstance) => b.id !== action.blockId),
-            }
+            ...s,
+            blocks: s.blocks.filter((b: BlockInstance) => b.id !== action.blockId),
+          }
           : s
       );
       return {
@@ -71,13 +82,13 @@ export function reduceBlockActions(
       const updatedSections = state.sections.map((s: SectionInstance) =>
         s.id === action.sectionId
           ? {
-              ...s,
-              blocks: s.blocks.map((b: BlockInstance) =>
-                b.id === action.blockId
-                  ? applyTextAtomSettings(b, { ...b.settings, ...action.settings })
-                  : b
-              ),
-            }
+            ...s,
+            blocks: s.blocks.map((b: BlockInstance) =>
+              b.id === action.blockId
+                ? applyTextAtomSettings(b, { ...b.settings, ...action.settings })
+                : b
+            ),
+          }
           : s
       );
       return { ...state, sections: updatedSections };

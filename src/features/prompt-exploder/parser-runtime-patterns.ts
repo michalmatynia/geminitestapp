@@ -10,8 +10,6 @@ import type {
   PromptValidationRule,
 } from '@/shared/contracts/prompt-engine';
 
-import { DEFAULT_PATTERN_IDS } from './parser-default-patterns';
-
 import type { PromptExploderSegmentType } from './types';
 import type { PromptExploderRuntimeValidationScope } from './validation-stack';
 
@@ -79,7 +77,6 @@ export type RuntimeRegexRule = {
 };
 
 export type PatternRuntime = {
-  allowDefaultFallback: boolean;
   byId: Map<string, RegExp>;
   scopedRules: PromptValidationRule[];
   regexRules: RuntimeRegexRule[];
@@ -231,28 +228,9 @@ const compileRuntimePatterns = (
     return scopes.length === 0 || scopes.includes(activeRuleScope) || scopes.includes('global');
   });
 
-  const allowDefaultFallback =
-    scope !== 'case_resolver_prompt_exploder' && scopedRules.length === 0;
   const byId = new Map<string, RegExp>();
   const runtimeRulesById = new Map<string, RuntimeRegexRule>();
   const compileErrors: PromptValidationRuleCompileError[] = [];
-
-  if (allowDefaultFallback) {
-    Object.entries(DEFAULT_PATTERN_IDS).forEach(([id, regex]) => {
-      byId.set(id, regex);
-      runtimeRulesById.set(id, {
-        id,
-        label: id,
-        sequenceGroupLabel: null,
-        regex,
-        segmentTypeHint: typeFromPatternId(id),
-        confidenceBoost: 0,
-        priority: 0,
-        sequence: 0,
-        treatAsHeading: false,
-      });
-    });
-  }
 
   scopedRules.forEach((rule) => {
     if (rule.kind !== 'regex') return;
@@ -322,7 +300,7 @@ const compileRuntimePatterns = (
     (rule) => !rule.treatAsHeading && /^segment\.not_heading\./i.test(rule.id)
   );
 
-  if (!allowDefaultFallback && regexRules.length === 0) {
+  if (regexRules.length === 0) {
     throw (
       compileErrors[0] ??
       new PromptValidationRuleCompileError(
@@ -335,7 +313,7 @@ const compileRuntimePatterns = (
     );
   }
 
-  if (!allowDefaultFallback && headingRules.length === 0) {
+  if (scope === 'case_resolver_prompt_exploder' && headingRules.length === 0) {
     throw (
       compileErrors[0] ??
       new PromptValidationRuleCompileError(
@@ -353,7 +331,6 @@ const compileRuntimePatterns = (
   }
 
   return {
-    allowDefaultFallback,
     byId,
     scopedRules,
     regexRules,
@@ -467,18 +444,18 @@ export const testPattern = (runtime: PatternRuntime, patternId: string, value: s
 export const resolveBoundaryRegex = (
   runtime: PatternRuntime,
   patternId: string,
-  fallback: RegExp
+  _fallback: RegExp
 ): RegExp => {
-  return runtime.byId.get(patternId) ?? (runtime.allowDefaultFallback ? fallback : NEVER_MATCH_RE);
+  return runtime.byId.get(patternId) ?? NEVER_MATCH_RE;
 };
 
 export const resolveBoundaryRegexOptional = (
   runtime: PatternRuntime | undefined,
   patternId: string,
-  fallback: RegExp
+  _fallback: RegExp
 ): RegExp => {
-  if (!runtime) return fallback;
-  return runtime.byId.get(patternId) ?? (runtime.allowDefaultFallback ? fallback : NEVER_MATCH_RE);
+  if (!runtime) return NEVER_MATCH_RE;
+  return runtime.byId.get(patternId) ?? NEVER_MATCH_RE;
 };
 
 export const matchesBoundaryHeading = (

@@ -576,14 +576,12 @@ export function TemplatesTabContent(): React.JSX.Element {
                       if (sourceUsesParameterPrefix) {
                         const parsedSourceParameter = parseParameterTarget(sourceValue);
                         if (parsedSourceParameter) {
-                          const baseFieldKey = parsedSourceParameter.languageCode
-                            ? `${parsedSourceParameter.parameterId}|${parsedSourceParameter.languageCode}`
-                            : parsedSourceParameter.parameterId;
                           return (
-                            <p className='text-[11px] text-amber-300'>
-                                Source uses <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code>{' '}
-                                notation. Export normalizes it to Base field key{' '}
-                              <code>{baseFieldKey}</code>.
+                            <p className='text-[11px] text-red-300'>
+                                Legacy source format <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code>{' '}
+                                is not supported for export. Use canonical Base source fields
+                                (for example <code>text_fields.features.Material</code> or{' '}
+                              <code>text_fields.features|de.Material</code>).
                             </p>
                           );
                         }

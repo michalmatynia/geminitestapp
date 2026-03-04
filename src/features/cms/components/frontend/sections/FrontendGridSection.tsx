@@ -24,7 +24,6 @@ import {
   resolveGapValue,
   resolveJustifyContent,
   resolveAlignItems,
-  isBackgroundModeImage,
   collectBackgroundImages,
 } from './grid/frontend-grid-utils';
 import { BackgroundImageLayer } from './grid/BackgroundImageLayer';
@@ -38,14 +37,6 @@ export function FrontendGridSection(): React.ReactNode {
   const sectionSelector = sectionId ? getCustomCssSelector(sectionId) : null;
   const sectionCustomCss = buildScopedCustomCss(settings['customCss'], sectionSelector);
   const rowBlocks = blocks.filter((b: BlockInstance) => b.type === 'Row');
-  const directColumns = blocks.filter((b: BlockInstance) => b.type === 'Column');
-  const gridImageBlocks = blocks.filter(
-    (b: BlockInstance) =>
-      b.type === 'ImageElement' &&
-      !isBackgroundModeImage(b, 'grid') &&
-      !isBackgroundModeImage(b, 'row') &&
-      !isBackgroundModeImage(b, 'column')
-  );
   const gridBackgroundModeImages = collectBackgroundImages(blocks, 'grid');
   const sectionGap = (settings['gap'] as string) || 'medium';
   const rowGapSetting = settings['rowGap'] as string | undefined;
@@ -60,15 +51,10 @@ export function FrontendGridSection(): React.ReactNode {
       : 0;
   const gridBackgroundSettings = settings['backgroundImage'] as Record<string, unknown> | undefined;
   const hasGridBackgroundSetting = Boolean((gridBackgroundSettings?.['src'] as string) || '');
-  const hasGridBackgroundLayers = gridImageBlocks.length > 0 || gridBackgroundModeImages.length > 0;
+  const hasGridBackgroundLayers = gridBackgroundModeImages.length > 0;
   const hasGridBackground = hasGridBackgroundSetting || hasGridBackgroundLayers;
 
-  const rowsToRender: BlockInstance[] =
-    rowBlocks.length > 0
-      ? rowBlocks
-      : directColumns.length > 0
-        ? [{ id: 'row-virtual', type: 'Row', settings: {}, blocks: directColumns }]
-        : [];
+  const rowsToRender: BlockInstance[] = rowBlocks;
 
   if (rowsToRender.length === 0) return null;
 
@@ -93,11 +79,6 @@ export function FrontendGridSection(): React.ReactNode {
               {sectionCustomCss ? (
                 <style data-cms-custom-css={sectionId}>{sectionCustomCss}</style>
               ) : null}
-              {gridImageBlocks.map((block: BlockInstance) => (
-                <Fragment key={`grid-background-${block.id}`}>
-                  <BackgroundImageLayer settings={block.settings} />
-                </Fragment>
-              ))}
               {gridBackgroundModeImages.map((block: BlockInstance) => (
                 <Fragment key={`grid-bg-mode-${block.id}`}>
                   <BackgroundImageLayer settings={block.settings} />

@@ -13,6 +13,9 @@ import {
 import { buildCompileWarningMessage } from '@/shared/lib/ai-paths/core/utils/compile-warning-message';
 import { updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-client';
 import { buildPersistedRuntimeState, sanitizePathConfig } from '../../../AiPathsSettingsUtils';
+import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
+import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
+import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 import {
   buildNodesForAutoSave as buildNodesForAutoSaveHelper,
   lintPathNodeRoles,
@@ -31,6 +34,9 @@ export function usePathPersistence(
     persistLastError: (error: unknown) => Promise<void>;
   }
 ) {
+  const { setNodes, setEdges, setPathConfigs, setPaths } = useGraphActions();
+  const { setLastError } = useRuntimeActions();
+  const { selectNode } = useSelectionActions();
   const [saving, setSaving] = useState(false);
   const [autoSaveAt, setAutoSaveAt] = useState<string | null>(null);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
@@ -272,7 +278,7 @@ export function usePathPersistence(
           !options?.edgesOverride &&
           stableStringify(rawEdgesForSave) !== stableStringify(edgesForSave)
         ) {
-          args.setEdges(edgesForSave);
+          setEdges(edgesForSave);
         }
         const compileReport = compileGraph(nodesForSave, edgesForSave);
         if (!silent && compileReport.errors > 0) {
@@ -354,12 +360,12 @@ export function usePathPersistence(
             ? preferredSelectedNodeId
             : (finalNodes[0]?.id ?? null);
 
-        args.setPathConfigs({ ...pathConfigsRef.current, [args.activePathId]: finalConfig });
-        args.setNodes(finalNodes);
-        args.setEdges(finalEdges);
-        args.setSelectedNodeId(finalSelectedNodeId);
-        args.setPaths(finalPaths);
-        args.setLastError(null);
+        setPathConfigs({ ...pathConfigsRef.current, [args.activePathId]: finalConfig });
+        setNodes(finalNodes);
+        setEdges(finalEdges);
+        selectNode(finalSelectedNodeId);
+        setPaths(finalPaths);
+        setLastError(null);
         void core.persistLastError(null);
         lastSavedSnapshotRef.current = buildPathSnapshot(resolvedName);
         if (!silent) {
@@ -396,6 +402,12 @@ export function usePathPersistence(
       buildActivePathConfig,
       buildNodesForAutoSave,
       persistPathSettings,
+      setEdges,
+      setNodes,
+      setPathConfigs,
+      setPaths,
+      setLastError,
+      selectNode,
     ]
   );
 

@@ -88,7 +88,7 @@ describe('base import parameters handler', () => {
     });
 
     const response = await postBaseImportParametersHandler(
-      new NextRequest('http://localhost/api/integrations/imports/base/parameters', {
+      new NextRequest('http://localhost/api/v2/integrations/imports/base/parameters', {
         method: 'POST',
         body: JSON.stringify({
           inventoryId: 'inventory-1',
@@ -139,7 +139,7 @@ describe('base import parameters handler', () => {
     });
 
     const response = await postBaseImportParametersHandler(
-      new NextRequest('http://localhost/api/integrations/imports/base/parameters', {
+      new NextRequest('http://localhost/api/v2/integrations/imports/base/parameters', {
         method: 'POST',
         body: JSON.stringify({
           inventoryId: 'inventory-1',

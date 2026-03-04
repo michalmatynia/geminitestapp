@@ -2,17 +2,8 @@ import React, { useCallback } from 'react';
 
 import type {
   AiNode,
-  Edge,
-  ParserSampleState,
-  PathBlockedRunPolicy,
   PathConfig,
-  PathExecutionMode,
-  PathFlowIntensity,
-  AiPathsValidationConfig,
   PathMeta,
-  PathRunMode,
-  RuntimeState,
-  UpdaterSampleState,
 } from '@/shared/lib/ai-paths';
 import {
   PATH_CONFIG_PREFIX,
@@ -37,7 +28,10 @@ import {
   fetchAiPathsSettingsCached,
   fetchAiPathsSettingsByKeysCached,
 } from '@/shared/lib/ai-paths/settings-store-client';
+import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
+import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
+import { usePersistenceActions } from '@/features/ai/ai-paths/context/PersistenceContext';
 
 import {
   normalizeParserSamples,
@@ -63,33 +57,10 @@ type ToastFn = (
 
 type UseAiPathsSettingsPathActionsInput = {
   activePathId: string | null;
-  setActivePathId: React.Dispatch<React.SetStateAction<string | null>>;
   isPathLocked: boolean;
   pathConfigs: Record<string, PathConfig>;
-  setPathConfigs: React.Dispatch<React.SetStateAction<Record<string, PathConfig>>>;
   paths: PathMeta[];
-  setPaths: React.Dispatch<React.SetStateAction<PathMeta[]>>;
-  setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
-  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
-  setPathName: React.Dispatch<React.SetStateAction<string>>;
-  setPathDescription: React.Dispatch<React.SetStateAction<string>>;
-  setActiveTrigger: React.Dispatch<React.SetStateAction<string>>;
-  setExecutionMode: React.Dispatch<React.SetStateAction<PathExecutionMode>>;
-  setFlowIntensity: React.Dispatch<React.SetStateAction<PathFlowIntensity>>;
-  setRunMode: React.Dispatch<React.SetStateAction<PathRunMode>>;
-  setStrictFlowMode: React.Dispatch<React.SetStateAction<boolean>>;
-  setBlockedRunPolicy: React.Dispatch<React.SetStateAction<PathBlockedRunPolicy>>;
-  setAiPathsValidation: React.Dispatch<React.SetStateAction<AiPathsValidationConfig>>;
-  setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
-  setUpdaterSamples: React.Dispatch<React.SetStateAction<Record<string, UpdaterSampleState>>>;
-  setRuntimeState: React.Dispatch<React.SetStateAction<RuntimeState>>;
-  setLastRunAt: React.Dispatch<React.SetStateAction<string | null>>;
-  setIsPathLocked: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsPathActive: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsPathSwitching: React.Dispatch<React.SetStateAction<boolean>>;
-  setConfigOpen: React.Dispatch<React.SetStateAction<boolean>>;
   normalizeTriggerLabel: (value?: string | null) => string;
-  updateActivePathMeta: (name: string) => void;
   persistPathSettings: (
     nextPaths: PathMeta[],
     nextActivePathId: string,
@@ -120,33 +91,10 @@ export type UseAiPathsSettingsPathActionsReturn = {
 
 export function useAiPathsSettingsPathActions({
   activePathId,
-  setActivePathId,
   isPathLocked,
   pathConfigs,
-  setPathConfigs,
   paths,
-  setPaths,
-  setNodes,
-  setEdges,
-  setPathName,
-  setPathDescription,
-  setActiveTrigger,
-  setExecutionMode,
-  setFlowIntensity,
-  setRunMode,
-  setStrictFlowMode,
-  setBlockedRunPolicy,
-  setAiPathsValidation,
-  setParserSamples,
-  setUpdaterSamples,
-  setRuntimeState,
-  setLastRunAt,
-  setIsPathLocked,
-  setIsPathActive,
-  setIsPathSwitching,
-  setConfigOpen,
   normalizeTriggerLabel,
-  updateActivePathMeta,
   persistPathSettings,
   persistSettingsBulk,
   persistActivePathPreference,
@@ -154,7 +102,28 @@ export function useAiPathsSettingsPathActions({
   confirm,
   toast,
 }: UseAiPathsSettingsPathActionsInput): UseAiPathsSettingsPathActionsReturn {
-  const { selectNode } = useSelectionActions();
+  const {
+    setNodes,
+    setEdges,
+    setPaths,
+    setPathConfigs,
+    setActivePathId,
+    setPathName,
+    setPathDescription,
+    setActiveTrigger,
+    setExecutionMode,
+    setFlowIntensity,
+    setRunMode,
+    setStrictFlowMode,
+    setBlockedRunPolicy,
+    setAiPathsValidation,
+    setIsPathLocked,
+    setIsPathActive,
+  } = useGraphActions();
+  const { setRuntimeState, setParserSamples, setUpdaterSamples, setLastRunAt } =
+    useRuntimeActions();
+  const { selectNode, setConfigOpen } = useSelectionActions();
+  const { setIsPathSwitching } = usePersistenceActions();
   const switchRequestSeqRef = React.useRef(0);
 
   const sanitizePathConfigWithRuntimeFallback = useCallback(
@@ -302,14 +271,12 @@ export function useAiPathsSettingsPathActions({
         [activePathId]: resetConfig,
       })
     );
-    updateActivePathMeta(resetConfig.name);
   }, [
     activePathId,
     applyPathConfigState,
     isPathLocked,
     setPathConfigs,
     toast,
-    updateActivePathMeta,
   ]);
 
   const handleCreatePath = useCallback((): void => {

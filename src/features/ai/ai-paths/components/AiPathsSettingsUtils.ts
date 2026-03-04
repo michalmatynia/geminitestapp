@@ -291,6 +291,12 @@ const isDatabaseOperation = (value: unknown): value is DatabaseOperation =>
 
 const LEGACY_TRIGGER_DATA_PORTS = new Set(['context', 'meta', 'entityId', 'entityType']);
 
+const resolveNodeCreatedAt = (value: unknown, fallbackTimestamp: string): string =>
+  typeof value === 'string' && value.trim().length > 0 ? value : fallbackTimestamp;
+
+const resolveNodeUpdatedAt = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value : null;
+
 const resolveEdgeSourceNodeId = (edge: Record<string, unknown>): string => {
   const from = typeof edge['from'] === 'string' ? edge['from'].trim() : '';
   if (from) return from;
@@ -482,7 +488,15 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
   const normalizedNodes = normalizeNodes(sanitizedNodes);
   const rawEdges = Array.isArray(contractBackfilled.edges) ? contractBackfilled.edges : [];
   assertNoLegacyTriggerDataGraph(normalizedNodes, rawEdges);
-  const graphNodes = normalizeNodes(normalizedNodes);
+  const fallbackNodeTimestamp =
+    typeof contractBackfilled.updatedAt === 'string' && contractBackfilled.updatedAt.trim().length > 0
+      ? contractBackfilled.updatedAt
+      : new Date().toISOString();
+  const graphNodes = normalizeNodes(normalizedNodes).map((node: AiNode): AiNode => ({
+    ...node,
+    createdAt: resolveNodeCreatedAt(node.createdAt, fallbackNodeTimestamp),
+    updatedAt: resolveNodeUpdatedAt(node.updatedAt),
+  }));
   const normalizedEdges = sanitizeEdges(graphNodes, rawEdges);
   if (stableStringify(normalizedEdges) !== stableStringify(rawEdges)) {
     throw validationError('AI Path config contains invalid or non-canonical edges.', {

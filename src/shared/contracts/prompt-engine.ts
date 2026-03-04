@@ -253,7 +253,6 @@ export const promptValidationStackResolutionSchema = z.object({
   scope: promptExploderRuntimeValidationScopeSchema,
   validatorScope: validatorScopeSchema,
   list: validatorPatternListSchema.nullable(),
-  usedFallback: z.boolean(),
   reason: z.enum(['exact_match']),
 });
 
@@ -418,7 +417,6 @@ export type PromptValidationErrorName = z.infer<typeof promptValidationErrorName
 
 export const promptValidationCounterNameSchema = z.enum([
   'runtime_selection_total',
-  'runtime_selection_fallback',
   'runtime_cache_hit',
   'runtime_cache_miss',
   'runtime_case_resolver_pack_fallback',
@@ -445,7 +443,6 @@ export const promptValidationRuntimeSloTargetsSchema = z.object({
   p95ExplodeMs: z.number(),
   p95CompileMs: z.number(),
   maxErrorRate: z.number(),
-  maxFallbackRate: z.number(),
 });
 
 export type PromptValidationRuntimeSloTargets = z.infer<

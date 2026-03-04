@@ -12,11 +12,11 @@ export interface SelectIntegrationModalProps extends ModalStateProps {
   onSelect: (integrationId: string, connectionId: string) => void;
 }
 
-export default function SelectIntegrationModal({
-  isOpen,
-  onClose,
-  onSelect,
-}: SelectIntegrationModalProps): React.JSX.Element | null {
+export default function SelectIntegrationModal(
+  props: SelectIntegrationModalProps
+): React.JSX.Element | null {
+  const { isOpen, onClose, onSelect } = props;
+
   const {
     integrations,
     loading,

@@ -39,13 +39,12 @@ import { savePromptExploderDraftPrompt } from '@/features/prompt-exploder/bridge
 import { useRouter } from 'next/navigation';
 import { useRightSidebarContext } from '../RightSidebarContext';
 
-export function ControlPromptModal({
-  isOpen,
-  onClose,
-}: {
+export function ControlPromptModal(props: {
   isOpen: boolean;
   onClose: () => void;
 }): React.JSX.Element {
+  const { isOpen, onClose } = props;
+
   const router = useRouter();
   const { toast } = useToast();
   const { projectId } = useProjectsState();

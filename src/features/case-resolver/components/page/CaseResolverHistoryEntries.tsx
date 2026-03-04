@@ -13,12 +13,11 @@ type CaseResolverHistoryEntriesProps = {
   isRestoreDisabled: boolean;
 };
 
-export function CaseResolverHistoryEntries({
-  entries,
-  formatTimestamp,
-  onRestore,
-  isRestoreDisabled,
-}: CaseResolverHistoryEntriesProps): React.JSX.Element {
+export function CaseResolverHistoryEntries(
+  props: CaseResolverHistoryEntriesProps
+): React.JSX.Element {
+  const { entries, formatTimestamp, onRestore, isRestoreDisabled } = props;
+
   return (
     <div className='rounded-lg border border-border/40 bg-card/20 overflow-hidden'>
       {entries.length === 0 ? (

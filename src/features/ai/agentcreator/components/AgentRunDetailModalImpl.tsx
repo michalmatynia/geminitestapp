@@ -20,10 +20,9 @@ import { useAgentRunsContext } from '../context/AgentRunsContext';
 
 export interface AgentRunDetailModalProps extends EntityModalProps<AiPathRunRecord> {}
 
-export function AgentRunDetailModal({
-  isOpen,
-  onClose,
-}: AgentRunDetailModalProps): React.JSX.Element | null {
+export function AgentRunDetailModal(props: AgentRunDetailModalProps): React.JSX.Element | null {
+  const { isOpen, onClose } = props;
+
   const { selectedAgentRun, agentSnapshots, agentBrowserLogs, agentAuditLogs } =
     useAgentRunsContext();
 

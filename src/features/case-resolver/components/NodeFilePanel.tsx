@@ -13,7 +13,9 @@ type NodeFilePanelProps = {
   onOpen: () => void;
 };
 
-export function NodeFilePanel({ meta, file, onOpen }: NodeFilePanelProps): React.JSX.Element {
+export function NodeFilePanel(props: NodeFilePanelProps): React.JSX.Element {
+  const { meta, file, onOpen } = props;
+
   const preview = file ? resolveContentPreview(file) : '';
   const typeLabel = meta.fileType === 'scanfile' ? 'Scan File' : 'Document';
   const TypeIcon = meta.fileType === 'scanfile' ? ScanLine : FileText;

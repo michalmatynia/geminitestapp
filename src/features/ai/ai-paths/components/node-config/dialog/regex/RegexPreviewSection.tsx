@@ -15,13 +15,9 @@ export type RegexPreviewSectionProps = {
   };
 };
 
-export function RegexPreviewSection({
-  sampleLines,
-  sampleSource,
-  onSampleChange,
-  isExtractMode,
-  preview,
-}: RegexPreviewSectionProps): React.JSX.Element {
+export function RegexPreviewSection(props: RegexPreviewSectionProps): React.JSX.Element {
+  const { sampleLines, sampleSource, onSampleChange, isExtractMode, preview } = props;
+
   return (
     <div className='space-y-3'>
       <div className='flex items-center justify-between'>

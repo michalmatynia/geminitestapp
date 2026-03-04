@@ -11,10 +11,12 @@ type FileUploadEventsPanelProps = {
   description?: string;
 };
 
-export function FileUploadEventsPanel({
-  title = 'File Uploads Runtime',
-  description = 'Track upload successes and failures across services.',
-}: FileUploadEventsPanelProps): React.JSX.Element {
+export function FileUploadEventsPanel(props: FileUploadEventsPanelProps): React.JSX.Element {
+  const {
+    title = 'File Uploads Runtime',
+    description = 'Track upload successes and failures across services.',
+  } = props;
+
   return (
     <FileUploadEventsProvider>
       <FileUploadEventsPanelProvider value={{ title, description }}>

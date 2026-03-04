@@ -21,13 +21,9 @@ interface OutputImageGridProps {
   columns?: 2 | 3 | undefined;
 }
 
-export function OutputImageGrid({
-  outputs,
-  onSaveAsSlot,
-  onDelete,
-  className,
-  columns = 2,
-}: OutputImageGridProps): React.JSX.Element | null {
+export function OutputImageGrid(props: OutputImageGridProps): React.JSX.Element | null {
+  const { outputs, onSaveAsSlot, onDelete, className, columns = 2 } = props;
+
   if (outputs.length === 0) return null;
 
   return (

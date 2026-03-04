@@ -19,10 +19,9 @@ import { useAsset3DPickerModalRuntime } from './Asset3DPickerModalRuntimeContext
 
 type Asset3DPickerModalProps = EntityModalProps<Asset3DRecord, Asset3DRecord>;
 
-export function Asset3DPickerModal({
-  isOpen,
-  onClose,
-}: Asset3DPickerModalProps): React.JSX.Element | null {
+export function Asset3DPickerModal(props: Asset3DPickerModalProps): React.JSX.Element | null {
+  const { isOpen, onClose } = props;
+
   const { onSelectAsset } = useAsset3DPickerModalRuntime();
   const [previewAsset, setPreviewAsset] = useState<Asset3DRecord | null>(null);
   const [filters, setFilters] = useState({

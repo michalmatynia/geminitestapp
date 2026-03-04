@@ -6,13 +6,12 @@ import { Button, Input } from '@/shared/ui';
 import { SelectModal, type SelectOption } from '@/shared/ui/templates/modals/SelectModal';
 import { useCmsSlugs } from '../../../../hooks/useCmsQueries';
 
-export function LinkField({
-  value,
-  onChange,
-}: {
+export function LinkField(props: {
   value: string;
   onChange: (v: string) => void;
 }): React.ReactNode {
+  const { value, onChange } = props;
+
   const [open, setOpen] = useState(false);
   const { data: slugs = [] } = useCmsSlugs();
 

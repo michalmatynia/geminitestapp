@@ -175,19 +175,15 @@ const formatMetadata = (metadata?: Record<string, unknown> | null): string | nul
   }
 };
 
-export function RunTimeline({
-  run,
-  nodes,
-  events,
-  eventsOverflow,
-  eventsBatchLimit,
-}: {
+export function RunTimeline(props: {
   run: AiPathRunRecord;
   nodes: AiPathRunNodeRecord[];
   events: AiPathRunEventRecord[];
   eventsOverflow?: boolean;
   eventsBatchLimit?: number | null;
 }): React.JSX.Element {
+  const { run, nodes, events, eventsOverflow, eventsBatchLimit } = props;
+
   const timelineItems = React.useMemo(
     (): TimelineItem[] => buildTimelineItems(run, nodes),
     [run, nodes]

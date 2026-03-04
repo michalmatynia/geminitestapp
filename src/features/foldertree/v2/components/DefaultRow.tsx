@@ -22,20 +22,22 @@ const STATUS_COLOR_CLASSES: Record<MasterTreeNodeStatus, string> = {
   success: 'text-green-400',
 };
 
-export const DefaultRow = ({
-  node,
-  depth,
-  hasChildren,
-  isExpanded,
-  isSelected,
-  isMultiSelected,
-  isDragging,
-  dropPosition,
-  nodeStatus,
-  isSearchMatch,
-  select,
-  toggleExpand,
-}: FolderTreeViewportRenderNodeInput): React.JSX.Element => {
+export const DefaultRow = (props: FolderTreeViewportRenderNodeInput): React.JSX.Element => {
+  const {
+    node,
+    depth,
+    hasChildren,
+    isExpanded,
+    isSelected,
+    isMultiSelected,
+    isDragging,
+    dropPosition,
+    nodeStatus,
+    isSearchMatch,
+    select,
+    toggleExpand,
+  } = props;
+
   const stateClassName = isSelected
     ? 'bg-blue-600 text-white shadow-sm'
     : isMultiSelected

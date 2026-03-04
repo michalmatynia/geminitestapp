@@ -12,10 +12,11 @@ type DatabaseAiPromptConnectionStatusProps = {
   updateQueryConfig: (patch: { mode?: 'preset' | 'custom'; queryTemplate?: string }) => void;
 };
 
-export function DatabaseAiPromptConnectionStatus({
-  aiPrompt,
-  updateQueryConfig,
-}: DatabaseAiPromptConnectionStatusProps): React.JSX.Element {
+export function DatabaseAiPromptConnectionStatus(
+  props: DatabaseAiPromptConnectionStatusProps
+): React.JSX.Element {
+  const { aiPrompt, updateQueryConfig } = props;
+
   const { edges, nodes, selectedNode, runtimeState, sendingToAi, onSendToAi, toast } =
     useAiPathConfig();
   const brainModel = useBrainModelOptions({

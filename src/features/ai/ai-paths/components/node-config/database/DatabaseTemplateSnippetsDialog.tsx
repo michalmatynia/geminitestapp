@@ -32,17 +32,21 @@ type DatabaseTemplateSnippetsDialogProps = {
   projectionPresets: ProjectionPreset[];
 };
 
-export function DatabaseTemplateSnippetsDialog({
-  open,
-  onOpenChange,
-  templateSnippets,
-  readQueryTypes,
-  queryOperatorGroups,
-  updateOperatorGroups,
-  aggregationStageSnippets,
-  sortPresets,
-  projectionPresets,
-}: DatabaseTemplateSnippetsDialogProps): React.JSX.Element {
+export function DatabaseTemplateSnippetsDialog(
+  props: DatabaseTemplateSnippetsDialogProps
+): React.JSX.Element {
+  const {
+    open,
+    onOpenChange,
+    templateSnippets,
+    readQueryTypes,
+    queryOperatorGroups,
+    updateOperatorGroups,
+    aggregationStageSnippets,
+    sortPresets,
+    projectionPresets,
+  } = props;
+
   const { setSelectedAiQueryId, updateQueryConfig, insertTemplateSnippet, resolvedProvider } =
     useDatabaseConstructorContext();
 

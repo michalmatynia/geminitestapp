@@ -15,7 +15,9 @@ import {
 import { StudioPromptTextSection } from './StudioPromptTextSection';
 import type { ColumnDef } from '@tanstack/react-table';
 
-export function ExtractPromptParamsModal({ isOpen, onClose }: ModalStateProps): React.JSX.Element {
+export function ExtractPromptParamsModal(props: ModalStateProps): React.JSX.Element {
+  const { isOpen, onClose } = props;
+
   const {
     extractDraftPrompt,
     setExtractDraftPrompt,

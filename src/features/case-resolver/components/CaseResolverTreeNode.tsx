@@ -23,20 +23,22 @@ import { useCaseResolverTreeNodeRuntimeContext } from './CaseResolverTreeNodeRun
 
 export type CaseResolverTreeNodeProps = FolderTreeViewportRenderNodeInput;
 
-export function CaseResolverTreeNode({
-  node,
-  depth,
-  hasChildren,
-  isExpanded,
-  isSelected,
-  isRenaming,
-  isDragging,
-  isDropTarget,
-  dropPosition,
-  select,
-  toggleExpand,
-  startRename,
-}: CaseResolverTreeNodeProps): React.JSX.Element {
+export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JSX.Element {
+  const {
+    node,
+    depth,
+    hasChildren,
+    isExpanded,
+    isSelected,
+    isRenaming,
+    isDragging,
+    isDropTarget,
+    dropPosition,
+    select,
+    toggleExpand,
+    startRename,
+  } = props;
+
   const {
     armDragHandle,
     releaseDragHandle,

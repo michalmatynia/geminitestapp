@@ -28,16 +28,20 @@ type TriggerButtonListManagerProps = {
   isReordering?: boolean;
 };
 
-export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> = ({
-  data,
-  onEdit,
-  onDelete,
-  onOrderChange,
-  onToggleVisibility,
-  onOpenPath,
-  isLoading,
-  isReordering = false,
-}: TriggerButtonListManagerProps) => {
+export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> = (
+  props: TriggerButtonListManagerProps
+) => {
+  const {
+    data,
+    onEdit,
+    onDelete,
+    onOrderChange,
+    onToggleVisibility,
+    onOpenPath,
+    isLoading,
+    isReordering = false,
+  } = props;
+
   const [localRows, setLocalRows] = useState<AiTriggerButtonRecord[]>(data);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);

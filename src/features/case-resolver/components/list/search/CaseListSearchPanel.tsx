@@ -271,7 +271,9 @@ function resolveFileIcon(fileType: CaseResolverFile['fileType']): React.JSX.Elem
   return <FileText className='size-3.5 shrink-0 text-sky-400/70' />;
 }
 
-function FileSubRow({ matched }: { matched: CaseListSearchMatchedFile }): React.JSX.Element {
+function FileSubRow(props: { matched: CaseListSearchMatchedFile }): React.JSX.Element {
+  const { matched } = props;
+
   const { onPrefetchFile, onOpenFile } = useCaseListSearchActionsContext();
   const { file, folderPath } = matched;
   const dateLabel = formatCaseTimestamp(file.updatedAt ?? file.createdAt);
@@ -308,15 +310,13 @@ function FileSubRow({ matched }: { matched: CaseListSearchMatchedFile }): React.
   );
 }
 
-function CaseAccordionRow({
-  entry,
-  isExpanded,
-  onToggle,
-}: {
+function CaseAccordionRow(props: {
   entry: CaseListSearchEntry;
   isExpanded: boolean;
   onToggle: () => void;
 }): React.JSX.Element {
+  const { entry, isExpanded, onToggle } = props;
+
   const { onPrefetchCase, onOpenCase } = useCaseListSearchActionsContext();
   const { caseFile, matchedFiles } = entry;
   const caseStatus = caseFile.caseStatus ?? 'pending';
@@ -412,16 +412,18 @@ function CaseAccordionRow({
   );
 }
 
-export function CaseListSearchPanel({
-  workspace,
-  identifierLabelById,
-  query,
-  caseOrderById,
-  onPrefetchCase,
-  onPrefetchFile,
-  onOpenCase,
-  onOpenFile,
-}: CaseListSearchPanelProps): React.JSX.Element {
+export function CaseListSearchPanel(props: CaseListSearchPanelProps): React.JSX.Element {
+  const {
+    workspace,
+    identifierLabelById,
+    query,
+    caseOrderById,
+    onPrefetchCase,
+    onPrefetchFile,
+    onOpenCase,
+    onOpenFile,
+  } = props;
+
   const entries = useMemo(
     () =>
       buildCaseListSearchEntries({

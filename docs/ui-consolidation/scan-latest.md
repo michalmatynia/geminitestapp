@@ -1,10 +1,10 @@
 # UI Consolidation Scan
 
-Generated at: 2026-03-04T20:36:09.950Z
+Generated at: 2026-03-04T23:33:39.803Z
 
 ## Snapshot
 
-- Scanned UI files: 1117
+- Scanned UI files: 1118
 - Duplicate-name clusters: 7
 - Prop-signature clusters: 0
 - Token-similarity clusters: 0
@@ -16,7 +16,7 @@ Generated at: 2026-03-04T20:36:09.950Z
 | Domain | Files |
 | --- | ---: |
 | `feature` | 805 |
-| `app` | 158 |
+| `app` | 159 |
 | `shared-ui` | 117 |
 | `shared` | 37 |
 
@@ -24,7 +24,7 @@ Generated at: 2026-03-04T20:36:09.950Z
 
 | Family | Files |
 | --- | ---: |
-| `Unknown` | 558 |
+| `Unknown` | 559 |
 | `Section` | 139 |
 | `Page` | 136 |
 | `Panel` | 75 |

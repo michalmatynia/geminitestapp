@@ -20,7 +20,8 @@ Final scan source: `docs/ui-consolidation/scan-latest.md`
 
 ## Validation run summary
 
-- `node scripts/architecture/scan-ui-consolidation.mjs`: passed, final `Opportunities: 0` (`2026-03-04T20:36:09.950Z`).
+- `node scripts/architecture/scan-ui-consolidation.mjs`: passed, final `Opportunities: 0` (`2026-03-04T23:33:39.803Z`).
+- `node scripts/architecture/check-ui-consolidation.mjs`: passed, guardrail snapshot `propForwarding=0 | propDepthGte4Chains=0 | uiOpportunities=0 | uiHighPriority=0`.
 - Targeted `npx eslint` on all touched consolidation files: passed.
 - Targeted unit test:
   - `npx vitest run src/features/ai/chatbot/components/__tests__/ChatbotContextModal.runtime-context.test.tsx`: passed.

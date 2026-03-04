@@ -1,7 +1,7 @@
 {
   "summary": {
-    "generatedAt": "2026-03-04T20:36:09.950Z",
-    "scannedFileCount": 1117,
+    "generatedAt": "2026-03-04T23:33:39.803Z",
+    "scannedFileCount": 1118,
     "duplicateNameClusterCount": 7,
     "propSignatureClusterCount": 0,
     "tokenSimilarityClusterCount": 0,
@@ -10,7 +10,7 @@
     "familyCounts": [
       {
         "family": "Unknown",
-        "count": 558
+        "count": 559
       },
       {
         "family": "Section",
@@ -84,7 +84,7 @@
       },
       {
         "domain": "app",
-        "count": 158
+        "count": 159
       },
       {
         "domain": "shared-ui",
@@ -137,15 +137,16 @@
       "domain": "app",
       "scope": "app",
       "family": "Page",
-      "lines": 42,
+      "lines": 43,
       "useClient": false,
       "imports": [
         "next/link",
         "react",
-        "@/shared/ui"
+        "@/shared/ui/PageLayout",
+        "@/shared/ui/card"
       ],
       "templateImports": 0,
-      "uiPrimitiveImports": 0,
+      "uiPrimitiveImports": 2,
       "tokenSet": {},
       "propsSignature": null
     },
@@ -268,15 +269,16 @@
       "domain": "app",
       "scope": "app",
       "family": "Page",
-      "lines": 45,
+      "lines": 46,
       "useClient": false,
       "imports": [
         "next/link",
         "react",
-        "@/shared/ui"
+        "@/shared/ui/PageLayout",
+        "@/shared/ui/card"
       ],
       "templateImports": 0,
-      "uiPrimitiveImports": 0,
+      "uiPrimitiveImports": 2,
       "tokenSet": {},
       "propsSignature": null
     },
@@ -811,7 +813,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/cms/public"
+        "@/features/cms/pages/CmsHomePage"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -827,7 +829,7 @@
       "lines": 2,
       "useClient": false,
       "imports": [
-        "@/features/cms/public"
+        "@/features/cms/components/CmsEditorLayout"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -844,7 +846,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/cms/public"
+        "@/features/cms/pages/pages/EditPagePage"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -878,7 +880,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/cms/public"
+        "@/features/cms/pages/pages/PagesPage"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -895,7 +897,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/cms/public"
+        "@/features/cms/pages/slugs/EditSlugPage"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -912,11 +914,11 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/cms/public",
-        "@/shared/ui"
+        "@/features/cms/pages/slugs/CreateSlugPage",
+        "@/shared/ui/LoadingState"
       ],
       "templateImports": 0,
-      "uiPrimitiveImports": 0,
+      "uiPrimitiveImports": 1,
       "tokenSet": {},
       "propsSignature": null
     },
@@ -930,11 +932,11 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/cms/public",
-        "@/shared/ui"
+        "@/features/cms/pages/slugs/SlugsPage",
+        "@/shared/ui/LoadingState"
       ],
       "templateImports": 0,
-      "uiPrimitiveImports": 0,
+      "uiPrimitiveImports": 1,
       "tokenSet": {},
       "propsSignature": null
     },
@@ -948,7 +950,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/cms/public"
+        "@/features/cms/pages/themes/EditThemePage"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -965,7 +967,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/cms/public"
+        "@/features/cms/pages/themes/CreateThemePage"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -982,7 +984,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/cms/public"
+        "@/features/cms/pages/themes/ThemesPage"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -999,7 +1001,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/cms/public"
+        "@/features/cms/pages/zones/ZonesPage"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -1373,7 +1375,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/admin/public"
+        "@/features/admin/pages/AdminFrontManagePage"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -1791,11 +1793,11 @@
       "useClient": false,
       "imports": [
         "next/link",
-        "@/shared/ui",
+        "@/shared/ui/button",
         "react"
       ],
       "templateImports": 0,
-      "uiPrimitiveImports": 0,
+      "uiPrimitiveImports": 1,
       "tokenSet": {},
       "propsSignature": null
     },
@@ -1932,7 +1934,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/products/server"
+        "@/features/products/pages/ProductEditPage"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2579,7 +2581,7 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 38,
+      "lines": 34,
       "useClient": false,
       "imports": [
         "@/features/cms/components/frontend/CmsPageRenderer",
@@ -2588,7 +2590,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "colorSchemes|defaultSlug|hasCmsContent|rendererComponents|themeSettings"
+      "propsSignature": null
     },
     {
       "path": "src/app/(frontend)/home-fallback-content.tsx",
@@ -2636,10 +2638,10 @@
       "imports": [
         "next/link",
         "react",
-        "@/shared/ui"
+        "@/shared/ui/button"
       ],
       "templateImports": 0,
-      "uiPrimitiveImports": 0,
+      "uiPrimitiveImports": 1,
       "tokenSet": {},
       "propsSignature": null
     },
@@ -2699,7 +2701,7 @@
       "useClient": false,
       "imports": [
         "react",
-        "@/features/products/server"
+        "@/features/products/pages/ProductPublicPage"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -2773,6 +2775,23 @@
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 1,
+      "tokenSet": {},
+      "propsSignature": "error|reset"
+    },
+    {
+      "path": "src/app/global-error.tsx",
+      "basename": "global-error.tsx",
+      "domain": "app",
+      "scope": "app",
+      "family": "Unknown",
+      "lines": 41,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/shared/utils/observability/client-error-logger"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
       "tokenSet": {},
       "propsSignature": "error|reset"
     },
@@ -3011,7 +3030,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 113,
+      "lines": 112,
       "useClient": true,
       "imports": [
         "react",
@@ -3025,7 +3044,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "isOpen|onClose"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/agentcreator/teaching/components/AgentTeachingCollectionModal.tsx",
@@ -3053,7 +3072,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Form",
-      "lines": 84,
+      "lines": 86,
       "useClient": true,
       "imports": [
         "react",
@@ -3063,7 +3082,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "collectionId|isAdding|isDeleting|onAdd|setSource|setTags|setText|setTitle|source|tags|text|title"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/agentcreator/teaching/components/LearnerAgentForm.tsx",
@@ -3071,7 +3090,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Form",
-      "lines": 210,
+      "lines": 206,
       "useClient": true,
       "imports": [
         "react",
@@ -3082,7 +3101,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "chatModel|collections|draft|embeddingModel|onChange"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/agentcreator/teaching/components/SearchSimulator.tsx",
@@ -3090,7 +3109,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 131,
+      "lines": 133,
       "useClient": true,
       "imports": [
         "react",
@@ -3101,7 +3120,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "collectionId|error|isSearching|minScore|onSearch|query|results|setMinScore|setQuery|setTopK|topK"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/AiPathConfigContext.tsx",
@@ -3130,7 +3149,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Settings",
-      "lines": 44,
+      "lines": 52,
       "useClient": true,
       "imports": [
         "react",
@@ -3193,7 +3212,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Panel",
-      "lines": 179,
+      "lines": 181,
       "useClient": true,
       "imports": [
         "react",
@@ -3205,7 +3224,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "className|edgeRoutingMode|onEdgeRoutingModeChange|onFitToNodes|onFitToSelection|onResetView|onToggleMinimap|onZoomIn|onZoomOut|showMinimap|svgPerf|viewScale"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/CanvasSvgNode.tsx",
@@ -3235,7 +3254,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 24,
+      "lines": 23,
       "useClient": true,
       "imports": [
         "react",
@@ -3245,7 +3264,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "enabled|rootId"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/FocusModeTogglePortal.tsx",
@@ -3253,7 +3272,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 37,
+      "lines": 36,
       "useClient": false,
       "imports": [
         "lucide-react",
@@ -3264,7 +3283,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "isFocusMode|onToggleFocusMode"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/ImageStudioRunsQueuePanel.tsx",
@@ -3485,7 +3504,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 397,
+      "lines": 401,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -3983,7 +4002,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 289,
+      "lines": 291,
       "useClient": false,
       "imports": [
         "react",
@@ -3994,7 +4013,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "autoRefreshEnabled|autoRefreshInterval|lagThresholdMs|onClearHistory|onToggleMetricsPanel|queueHistory|queueStatus|queueStatusError|queueStatusFetching|showMetricsPanel"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/job-queue-panel.tsx",
@@ -4002,7 +4021,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 106,
+      "lines": 114,
       "useClient": true,
       "imports": [
         "react",
@@ -4087,7 +4106,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Modal",
-      "lines": 58,
+      "lines": 54,
       "useClient": true,
       "imports": [
         "react",
@@ -4097,7 +4116,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "isOpen|item|onClose|onSave|setDraftName"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/node-config/ContextNodeConfigSection.tsx",
@@ -4155,7 +4174,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 670,
+      "lines": 672,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -4198,7 +4217,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 124,
+      "lines": 125,
       "useClient": true,
       "imports": [
         "react",
@@ -4210,7 +4229,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "aiPrompt|updateQueryConfig"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/node-config/database/DatabaseAiQueryReviewSection.tsx",
@@ -4434,9 +4453,10 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Tab",
-      "lines": 282,
+      "lines": 319,
       "useClient": true,
       "imports": [
+        "react",
         "@/shared/lib/ai-paths",
         "@/features/ai/ai-paths/utils/ui-utils",
         "@/shared/ui",
@@ -4454,7 +4474,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Dialog",
-      "lines": 273,
+      "lines": 277,
       "useClient": false,
       "imports": [
         "react",
@@ -4466,7 +4486,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "aggregationStageSnippets|onOpenChange|open|projectionPresets|queryOperatorGroups|readQueryTypes|sortPresets|templateSnippets|updateOperatorGroups"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/node-config/database/PlaceholderMatrixDialog.tsx",
@@ -4474,7 +4494,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Dialog",
-      "lines": 157,
+      "lines": 159,
       "useClient": true,
       "imports": [
         "react",
@@ -4484,7 +4504,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "groups|onInsert|onOpenChange|onSync|onTargetChange|open|syncing|target|targetOptions"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/node-config/dialog/AgentNodeConfigSection.tsx",
@@ -4599,7 +4619,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 200,
+      "lines": 197,
       "useClient": true,
       "imports": [
         "react",
@@ -4611,7 +4631,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "label|onChange|placeholder|value"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/node-config/dialog/BundleNodeConfigSection.tsx",
@@ -4653,7 +4673,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 185,
+      "lines": 182,
       "useClient": true,
       "imports": [
         "react",
@@ -4664,7 +4684,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "label|onChange|placeholder|value"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/node-config/dialog/CompareNodeConfigSection.tsx",
@@ -5083,7 +5103,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 105,
+      "lines": 101,
       "useClient": false,
       "imports": [
         "lucide-react",
@@ -5093,7 +5113,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "codeSnippets|onAccept|onReject|onSelectSnippetIndex|pendingAiRegex|selectedSnippetIndex"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/node-config/dialog/RegexTemplatesTabContent.tsx",
@@ -5101,7 +5121,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 410,
+      "lines": 412,
       "useClient": false,
       "imports": [
         "react",
@@ -5111,7 +5131,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "globalTemplates|onApplyGlobalTemplate|onApplyNodeTemplate|onRemoveGlobalTemplate|onRemoveNodeTemplate|onUpdateGlobalTemplate|onUpdateNodeTemplate|regexTemplates|settingsLoading"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/node-config/dialog/RouterNodeConfigSection.tsx",
@@ -5370,7 +5390,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "List",
-      "lines": 71,
+      "lines": 68,
       "useClient": true,
       "imports": [
         "react",
@@ -5379,7 +5399,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "entries|removeMapping|uniqueSuggestedPathOptions|updateMappingKey|updateMappingPath"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/node-config/dialog/parser/ParserSampleSection.tsx",
@@ -5387,7 +5407,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 235,
+      "lines": 237,
       "useClient": true,
       "imports": [
         "react",
@@ -5397,7 +5417,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "applySampleMappings|handleDetectImages|handleFetchParserSample|parsedSampleError|parserSampleLoading|sampleMappingsLength|sampleState|selectedNodeId|setParserSamples|simulationOptions"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/node-config/dialog/regex/RegexAiPromptSection.tsx",
@@ -5405,7 +5425,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 112,
+      "lines": 114,
       "useClient": true,
       "imports": [
         "react",
@@ -5415,7 +5435,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "connectedModel|nodeId|onSendToAi|onUpdateRegex|placeholderTooltips|regexConfig|resolvedAiPrompt|sendingToAi"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/node-config/dialog/regex/RegexAiProposalSection.tsx",
@@ -5423,7 +5443,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 84,
+      "lines": 86,
       "useClient": true,
       "imports": [
         "react",
@@ -5433,7 +5453,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "activeVariant|aiProposals|hasAiProposal|normalizedFlags|onApplyVariant|onUseProposal|regexConfig"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/node-config/dialog/regex/RegexConfigBasicTab.tsx",
@@ -5441,7 +5461,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Tab",
-      "lines": 296,
+      "lines": 298,
       "useClient": true,
       "imports": [
         "react",
@@ -5452,7 +5472,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "isExtractMode|isSavingGlobal|onSaveGlobalTemplate|onSaveNodeTemplate|onTemplateNameChange|onUpdateRegex|onUpdateVariantField|regexConfig|regexMode|regexValidation|templateName"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/node-config/dialog/regex/RegexPreviewSection.tsx",
@@ -5460,7 +5480,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 60,
+      "lines": 56,
       "useClient": true,
       "imports": [
         "react",
@@ -5469,7 +5489,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "isExtractMode|onSampleChange|preview|sampleLines|sampleSource"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/node-config-dialog.tsx",
@@ -5568,7 +5588,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 740,
+      "lines": 736,
       "useClient": true,
       "imports": [
         "react",
@@ -5578,7 +5598,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "events|eventsBatchLimit|eventsOverflow|nodes|run"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/ai-paths/components/runtime-event-log-panel.tsx",
@@ -5855,7 +5875,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 227,
+      "lines": 230,
       "useClient": true,
       "imports": [
         "react",
@@ -5868,7 +5888,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "children|value"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/chatbot/components/ChatbotDebugPanel.tsx",
@@ -6078,7 +6098,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Tab",
-      "lines": 702,
+      "lines": 704,
       "useClient": true,
       "imports": [
         "react",
@@ -6112,7 +6132,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 787,
+      "lines": 791,
       "useClient": true,
       "imports": [
         "react",
@@ -6190,7 +6210,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 54,
+      "lines": 56,
       "useClient": true,
       "imports": [
         "react",
@@ -6200,7 +6220,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "className|disabled|fallbackValue|label|max|min|onChange|step|value"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/LeftSidebar.tsx",
@@ -6264,7 +6284,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 99,
+      "lines": 95,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -6276,7 +6296,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "className|columns|onDelete|onSaveAsSlot|outputs"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/ParamRow.tsx",
@@ -6602,7 +6622,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 43,
+      "lines": 39,
       "useClient": true,
       "imports": [
         "react",
@@ -6822,7 +6842,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Modal",
-      "lines": 402,
+      "lines": 401,
       "useClient": true,
       "imports": [
         "react",
@@ -6836,7 +6856,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "getSlotImageSrc|isOpen|item|onClose"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/VersionNodeMapCanvas.tsx",
@@ -6981,7 +7001,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 349,
+      "lines": 351,
       "useClient": true,
       "imports": [
         "react",
@@ -6993,7 +7013,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "analysisCurrentSourceMetadataMissing|analysisPlanIsStale|analysisSourceSignatureMissing|availableSlots|currentWorkingSlotId|persistedPlanSnapshot|queueAnalysisApplyIntent|result|resultSourceSlotId|slotSelectionLocked"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/analysis/sections/AnalysisSettingsSection.tsx",
@@ -7001,7 +7021,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 361,
+      "lines": 367,
       "useClient": true,
       "imports": [
         "react",
@@ -7019,7 +7039,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 278,
+      "lines": 271,
       "useClient": true,
       "imports": [
         "react",
@@ -7031,7 +7051,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "isRunning|pathMetas|projectId|triggerAnalysisForPath"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/center-preview/CenterPreviewContext.tsx",
@@ -7056,7 +7076,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 37,
+      "lines": 36,
       "useClient": false,
       "imports": [
         "lucide-react",
@@ -7067,7 +7087,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "isFocusMode|onToggleFocusMode"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/center-preview/SplitVariantPreview.tsx",
@@ -7094,7 +7114,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 81,
+      "lines": 79,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -7105,7 +7125,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "canCompare|onGoToSourceSlot|onToggleSourceVariantView|onToggleSplitVariantView"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/center-preview/VariantPanel.tsx",
@@ -7170,7 +7190,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 181,
+      "lines": 193,
       "useClient": true,
       "imports": [
         "react",
@@ -7190,7 +7210,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "activeCanvasImageSrc|canCompareSelectedVariants|canCompareWithSource|canNavigateToSource|canRevealLoadedCardInTree|compareVariantImageA|compareVariantImageB|handleGoToSourceSlot|handlePreviewCanvasCropRectChange|handlePreviewCanvasImageFrameChange|handleRevealInTreeFromCanvas|handleToggleSourceVariantView|handleToggleSplitVariantView|isCompositeSlot|liveMaskShapes|projectCanvasSize|sourceSlotImageSrc|splitVariantView|vectorContextValue|workingSlotImageSrc"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/center-preview/sections/CenterPreviewHeader.tsx",
@@ -7219,7 +7239,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 165,
+      "lines": 177,
       "useClient": true,
       "imports": [
         "react",
@@ -7228,7 +7248,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "activeMaskId|brushRadius|compositeAssetsLength|extractDraftPromptLength|extractReviewOpen|generationHistoryLength|maskEdgeSensitivity|maskEligibleCount|maskFeather|maskGenLoading|maskGenMode|maskInvert|maskShapesLength|maskThresholdSensitivity|metricValue|paramSpecsCount|paramsStateCount|persistedTreeFoldersLength|previewMode|projectId|projectSearch|projectsQueryCount|promptIssueCount|promptTextLength|runOutputsLength|runPending|selectedFolder|selectedSlotName|slotBase64DraftLength|slotImageUrlDraftLength|slotsLength|tool|virtualFoldersLength|workingSlotName"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/generation-toolbar/GenerationToolbarAutoScalerSection.tsx",
@@ -7424,7 +7444,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Modal",
-      "lines": 58,
+      "lines": 57,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -7438,7 +7458,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "isOpen|isUploading|localUploadTrigger|onClose|onSelectFile|title"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/modals/ExtractPromptParamsModal.tsx",
@@ -7462,7 +7482,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 247,
+      "lines": 249,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -7478,7 +7498,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "isOpen|onClose"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/modals/GenerationPreviewModal.tsx",
@@ -7502,7 +7522,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 91,
+      "lines": 92,
       "useClient": true,
       "imports": [
         "react",
@@ -7517,7 +7537,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "isOpen|onClose"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/modals/SlotCreateModal.tsx",
@@ -7525,7 +7545,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Modal",
-      "lines": 69,
+      "lines": 66,
       "useClient": true,
       "imports": [
         "react",
@@ -7536,7 +7556,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "disabled|isOpen|onClose|onSelectMode"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/modals/SlotInlineEditModal.tsx",
@@ -7544,7 +7564,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Modal",
-      "lines": 51,
+      "lines": 46,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -7557,7 +7577,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "children|header|isOpen|item|onClose|onCopyId"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/modals/StudioActionButtonRow.tsx",
@@ -7583,7 +7603,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
-      "lines": 44,
+      "lines": 46,
       "useClient": true,
       "imports": [
         "react",
@@ -7593,7 +7613,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "containerClassName|label|labelClassName|onValueChange|placeholder|textareaClassName|textareaSize|value"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/right-sidebar/CanvasResizeModal.tsx",
@@ -7617,7 +7637,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 235,
+      "lines": 234,
       "useClient": true,
       "imports": [
         "react",
@@ -7635,7 +7655,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "isOpen|onClose"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/right-sidebar/ControlPromptModal.tsx",
@@ -7659,7 +7679,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 344,
+      "lines": 364,
       "useClient": true,
       "imports": [
         "react",
@@ -7688,7 +7708,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "isOpen|onClose"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/right-sidebar/RightSidebarControlsTab.tsx",
@@ -7749,16 +7769,17 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Header",
-      "lines": 60,
-      "useClient": false,
+      "lines": 69,
+      "useClient": true,
       "imports": [
         "react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/ui"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "onClose|onOpenPromptExploder|onSave|projectId|promptSaveBusy|promptText"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/right-sidebar/RightSidebarQuickActions.tsx",
@@ -7825,7 +7846,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Card",
-      "lines": 125,
+      "lines": 127,
       "useClient": true,
       "imports": [
         "react",
@@ -7837,7 +7858,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "activeSequenceRunId|activeSequenceStatus|activeStepLabel|displayState|enabledStepsCount|handleCancelSequence|handleRetryPendingSlotSync|handleStartSequence|isSequenceRunning|pendingTerminalSlotId|projectId|sequenceError|sequenceLog|sequencingEnabled|slotSyncWarning|workingSlotPresent"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/sequencing/SequenceRuntimeCard.tsx",
@@ -7864,7 +7885,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Card",
-      "lines": 607,
+      "lines": 620,
       "useClient": false,
       "imports": [
         "lucide-react",
@@ -7872,6 +7893,7 @@
         "@/shared/ui",
         "../StudioCard",
         "./SequenceStepEditor",
+        "./SequenceStepEditorRuntimeContext",
         "./sequencing-constants",
         "@/features/ai/image-studio/utils/studio-settings"
       ],
@@ -7886,19 +7908,20 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 716,
+      "lines": 703,
       "useClient": false,
       "imports": [
         "react",
         "@/shared/ui",
         "./sequencing-constants",
         "@/features/ai/image-studio/utils/studio-docs",
-        "@/features/ai/image-studio/utils/studio-settings"
+        "@/features/ai/image-studio/utils/studio-settings",
+        "./SequenceStepEditorRuntimeContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "activeGenerationModel|cropShapeGeometryById|cropShapeOptions|operation|sequencerFieldTooltipsEnabled|step|stepId|updateStep"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/settings/GenerationSettingsTab.tsx",
@@ -7985,7 +8008,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 235,
+      "lines": 229,
       "useClient": true,
       "imports": [
         "react",
@@ -7998,7 +8021,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "depth|hasChildren|isExpanded|isRenaming|isSelected|node|select|toggleExpand"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/slot-tree/FolderNodeItem.tsx",
@@ -8006,7 +8029,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 273,
+      "lines": 275,
       "useClient": true,
       "imports": [
         "react",
@@ -8019,7 +8042,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "depth|dropPosition|hasChildren|isDropTarget|isExpanded|isRenaming|isSelected|node|select|toggleExpand"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/image-studio/components/slot-tree/SlotTreeContext.tsx",
@@ -8309,7 +8332,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Card",
-      "lines": 27,
+      "lines": 29,
       "useClient": false,
       "imports": [
         "react",
@@ -8327,7 +8350,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Panel",
-      "lines": 75,
+      "lines": 71,
       "useClient": true,
       "imports": [
         "react",
@@ -8338,7 +8361,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "description|emptyDescription|query|runMutation|title"
+      "propsSignature": null
     },
     {
       "path": "src/features/ai/insights/components/LogInsightsPanel.tsx",
@@ -8462,11 +8485,12 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 32,
+      "lines": 62,
       "useClient": true,
       "imports": [
         "react",
         "../context/AdminCaseResolverCasesContext",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/ui"
       ],
       "templateImports": 0,
@@ -8480,7 +8504,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Panel",
-      "lines": 827,
+      "lines": 816,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -8494,7 +8518,6 @@
         "@/shared/providers/SettingsStoreProvider",
         "@/shared/utils/master-folder-tree-contract",
         "@/shared/contracts/master-folder-tree",
-        "@/shared/contracts/case-resolver",
         "../context/AdminCaseResolverCasesContext",
         "../hooks/useAdminCaseResolverCasesState",
         "./CaseFilterPanel",
@@ -8818,11 +8841,12 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 32,
+      "lines": 68,
       "useClient": true,
       "imports": [
         "react",
-        "@/features/document-editor"
+        "@/features/document-editor",
+        "@/shared/lib/react/createStrictContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -8835,7 +8859,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Header",
-      "lines": 229,
+      "lines": 257,
       "useClient": true,
       "imports": [
         "react",
@@ -8843,6 +8867,7 @@
         "lucide-react",
         "@/shared/ui",
         "@/features/foldertree/v2/search",
+        "@/shared/lib/react/createStrictContext",
         "../context/CaseResolverPageContext",
         "../context/CaseResolverFolderTreeContext"
       ],
@@ -8857,7 +8882,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 463,
+      "lines": 465,
       "useClient": true,
       "imports": [
         "react",
@@ -8874,7 +8899,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "depth|dropPosition|hasChildren|isDragging|isDropTarget|isExpanded|isRenaming|isSelected|node|select|startRename|toggleExpand"
+      "propsSignature": null
     },
     {
       "path": "src/features/case-resolver/components/CaseResolverTreeNodeRuntimeContext.tsx",
@@ -8963,7 +8988,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Panel",
-      "lines": 167,
+      "lines": 166,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -8979,7 +9004,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "newNodeType|onExplanatoryClick|onNodeInspectorClick|setNewNodeType"
+      "propsSignature": null
     },
     {
       "path": "src/features/case-resolver/components/NodeFilePanel.tsx",
@@ -8987,7 +9012,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Panel",
-      "lines": 67,
+      "lines": 69,
       "useClient": false,
       "imports": [
         "react",
@@ -8999,7 +9024,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "file|meta|onOpen"
+      "propsSignature": null
     },
     {
       "path": "src/features/case-resolver/components/NodeFileWorkspaceContext.tsx",
@@ -9027,7 +9052,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Modal",
-      "lines": 345,
+      "lines": 349,
       "useClient": false,
       "imports": [
         "react",
@@ -9041,7 +9066,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 2,
       "tokenSet": {},
-      "propsSignature": "applying|diagnostics|draft|onApply|onClose|onUpdateAction|onUpdateDateAction|onUpdateReference|open|partyOptions|resolveMatchedPartyLabel|targetFileName"
+      "propsSignature": null
     },
     {
       "path": "src/features/case-resolver/components/list/CaseListHeader.tsx",
@@ -9049,13 +9074,14 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Header",
-      "lines": 116,
+      "lines": 159,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
         "@/shared/ui",
-        "@/features/foldertree/v2/search"
+        "@/features/foldertree/v2/search",
+        "@/shared/lib/react/createStrictContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -9085,7 +9111,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Panel",
-      "lines": 527,
+      "lines": 529,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -9109,7 +9135,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 75,
+      "lines": 71,
       "useClient": true,
       "imports": [
         "react",
@@ -9120,7 +9146,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "heldCaseFile|isHierarchyLocked|onClearHeldCase|onOpenCase|onPrefetchCase"
+      "propsSignature": null
     },
     {
       "path": "src/features/case-resolver/components/list/sections/CaseListNodeItem.tsx",
@@ -9128,7 +9154,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 434,
+      "lines": 438,
       "useClient": true,
       "imports": [
         "react",
@@ -9143,7 +9169,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "canNestHeldHere|canShowNestHeldAction|depth|dropPosition|hasChildren|heldCaseId|isDragging|isDropTarget|isExpanded|isRenaming|nestHeldDisabledReason|node|toggleExpand"
+      "propsSignature": null
     },
     {
       "path": "src/features/case-resolver/components/list/sections/CaseListNodeRuntimeContext.tsx",
@@ -9168,7 +9194,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 122,
+      "lines": 124,
       "useClient": true,
       "imports": [
         "react",
@@ -9179,7 +9205,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "caseShowNestedContent|caseSortBy|caseSortOrder|className|handleSaveDefaults|isHierarchyLocked|isSavingDefaults|setCaseShowNestedContent|setCaseSortBy|setCaseSortOrder|setIsHierarchyLocked"
+      "propsSignature": null
     },
     {
       "path": "src/features/case-resolver/components/modals/CaseFileEditorModal.tsx",
@@ -9187,7 +9213,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Modal",
-      "lines": 42,
+      "lines": 37,
       "useClient": true,
       "imports": [
         "react",
@@ -9198,7 +9224,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "children|isOpen|item|onClose|onSave|onSuccess"
+      "propsSignature": null
     },
     {
       "path": "src/features/case-resolver/components/modals/CaseResolverCategoryModal.tsx",
@@ -9222,7 +9248,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 245,
+      "lines": 272,
       "useClient": true,
       "imports": [
         "react",
@@ -9234,7 +9260,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "parentOptions|props"
+      "propsSignature": null
     },
     {
       "path": "src/features/case-resolver/components/modals/CaseResolverEntitySettingsModal.tsx",
@@ -9337,7 +9363,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 72,
+      "lines": 71,
       "useClient": false,
       "imports": [
         "lucide-react",
@@ -9349,7 +9375,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "entries|formatTimestamp|isRestoreDisabled|onRestore"
+      "propsSignature": null
     },
     {
       "path": "src/features/case-resolver/components/page/CaseResolverPageMainContent.tsx",
@@ -9383,7 +9409,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 86,
+      "lines": 83,
       "useClient": true,
       "imports": [
         "react",
@@ -9393,7 +9419,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "disabled|label|onValueChange|options|placeholder|value"
+      "propsSignature": null
     },
     {
       "path": "src/features/case-resolver/components/page/CaseResolverScanFileEditor.tsx",
@@ -9425,11 +9451,12 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Panel",
-      "lines": 137,
+      "lines": 160,
       "useClient": true,
       "imports": [
         "react",
         "@/shared/utils",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/contracts/case-resolver",
         "../context/DocumentRelationSearchContext",
         "../../components/CaseResolverNodeFileUtils",
@@ -9470,7 +9497,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 268,
+      "lines": 270,
       "useClient": true,
       "imports": [
         "react",
@@ -9486,7 +9513,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "className|emptyLabel|instance|isLocked|lookup|mode|nodes|onAddFile|onLinkFile|onPreviewFile|onToggleFileSelection|searchQuery|selectedFileIds"
+      "propsSignature": null
     },
     {
       "path": "src/features/case-resolver/relation-search/components/RelationTreeNodeItem.tsx",
@@ -9494,7 +9521,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 223,
+      "lines": 225,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -9508,7 +9535,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "depth|dropPosition|hasChildren|isDragging|isDropTarget|isExpanded|node|select|toggleExpand"
+      "propsSignature": null
     },
     {
       "path": "src/features/case-resolver/relation-search/components/RelationTreeNodeRuntimeContext.tsx",
@@ -9708,7 +9735,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 64,
+      "lines": 63,
       "useClient": true,
       "imports": [
         "@/shared/ui"
@@ -9716,7 +9743,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "content|onChange"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/SlugForm.tsx",
@@ -9724,7 +9751,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Form",
-      "lines": 128,
+      "lines": 123,
       "useClient": true,
       "imports": [
         "react",
@@ -9736,7 +9763,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "domains|initialData|isSaving|onCancel|onSubmit|submitText"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/ThemeForm.tsx",
@@ -9744,7 +9771,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Form",
-      "lines": 217,
+      "lines": 213,
       "useClient": true,
       "imports": [
         "react",
@@ -9754,7 +9781,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "initialData|isSaving|onCancel|onSubmit|submitText"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/frontend/CmsMenu.tsx",
@@ -9802,7 +9829,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 258,
+      "lines": 217,
       "useClient": false,
       "imports": [
         "react",
@@ -9812,7 +9839,6 @@
         "@/features/gsap",
         "@/shared/contracts/cms",
         "@/shared/contracts/cms-theme",
-        "@/shared/lib/react/createStrictContext",
         "./CmsPageContext",
         "./CssAnimationWrapper",
         "./GsapAnimationWrapper",
@@ -9840,7 +9866,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "colorSchemes|components|hoverEffect|hoverScale|layout|mediaStyles|mediaVars"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/frontend/CmsPageShell.tsx",
@@ -9848,7 +9874,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 81,
+      "lines": 77,
       "useClient": false,
       "imports": [
         "@/features/cms/components/frontend/CmsMenu",
@@ -9859,7 +9885,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "children|colorSchemes|menu|showMenu|theme"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/frontend/CssAnimationWrapper.tsx",
@@ -10761,7 +10787,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Modal",
-      "lines": 206,
+      "lines": 204,
       "useClient": true,
       "imports": [
         "react",
@@ -10771,12 +10797,13 @@
         "@/shared/contracts/viewer3d",
         "@/shared/ui",
         "@/shared/ui/templates/modals",
-        "@/shared/ui/templates/panels"
+        "@/shared/ui/templates/panels",
+        "./Asset3DPickerModalRuntimeContext"
       ],
       "templateImports": 2,
       "uiPrimitiveImports": 2,
       "tokenSet": {},
-      "propsSignature": "isOpen|onClose|onSelect"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/BlockPicker.tsx",
@@ -10931,7 +10958,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Panel",
-      "lines": 136,
+      "lines": 138,
       "useClient": false,
       "imports": [
         "lucide-react",
@@ -10947,7 +10974,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "autoConfirmSelection|onFilesSelected|onOpenChange|onSelect|open|selectionMode"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/MenuSettingsPanel.tsx",
@@ -11114,7 +11141,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 616,
+      "lines": 658,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -11124,6 +11151,7 @@
         "@/features/cms/utils/page-builder-normalization",
         "@/features/gsap",
         "@/shared/contracts/cms",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/ui",
         "../frontend/CmsPageRenderer",
         "../frontend/CssAnimationWrapper",
@@ -11177,7 +11205,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Modal",
-      "lines": 198,
+      "lines": 200,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -11191,7 +11219,7 @@
       "templateImports": 2,
       "uiPrimitiveImports": 2,
       "tokenSet": {},
-      "propsSignature": "elements|groupedTemplates|isOpen|onClose|onDeleteTemplate|onSelect|primitives|templates"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/SectionTemplatePicker.tsx",
@@ -11219,7 +11247,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 421,
+      "lines": 417,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -11242,7 +11270,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "children|onChange|value"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/ThemeSettingsContext.tsx",
@@ -11635,7 +11663,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 104,
+      "lines": 108,
       "useClient": true,
       "imports": [
         "react",
@@ -11645,7 +11673,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "autoFit|autoRotate|autoRotateSpeed|backgroundColor|bloomIntensity|enableBloom|enableContactShadows|enableShadows|enableVignette|environment|exposure|height|lightIntensity|lighting|modelUrl|positionX|positionY|positionZ|presentationMode|rotationX|rotationY|rotationZ|scale|showGround"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/preview/PreviewCarouselBlocks.tsx",
@@ -11847,7 +11875,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 49,
+      "lines": 51,
       "useClient": true,
       "imports": [
         "react",
@@ -11859,7 +11887,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "PreviewBlockItem|blocks|className|emptyState|showEmptyState"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/preview/sections/PreviewSectionFrame.tsx",
@@ -11884,7 +11912,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 50,
+      "lines": 47,
       "useClient": true,
       "imports": [
         "react",
@@ -11895,7 +11923,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "className|label|mediaKey|onOpenMedia|sectionId|show"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/preview/sections/PreviewSectionVariants.tsx",
@@ -12266,7 +12294,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 60,
+      "lines": 59,
       "useClient": true,
       "imports": [
         "react",
@@ -12278,7 +12306,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "onChange|value"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/settings/fields/composite/BackgroundField.tsx",
@@ -12441,7 +12469,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 439,
+      "lines": 416,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -12453,13 +12481,14 @@
         "@/shared/ui",
         "@/shared/utils",
         "./Asset3DPickerModal",
+        "./Asset3DPickerModalRuntimeContext",
         "./MediaLibraryPanel",
         "../../hooks/useCmsQueries"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "disabled|label|onChange|value"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/theme/MiniRichTextEditor.tsx",
@@ -12467,7 +12496,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 201,
+      "lines": 199,
       "useClient": true,
       "imports": [
         "@tiptap/extension-link",
@@ -12481,7 +12510,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "active|children|disabled|onClick|title"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/theme/ThemeAiSection.tsx",
@@ -12570,7 +12599,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 508,
+      "lines": 457,
       "useClient": true,
       "imports": [
         "react",
@@ -12676,7 +12705,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 44,
+      "lines": 35,
       "useClient": true,
       "imports": [
         "react",
@@ -12687,7 +12716,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "className|fields"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/theme/ThemeSocialSection.tsx",
@@ -12734,7 +12763,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 266,
+      "lines": 264,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -12754,7 +12783,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "block|disableDrag|index"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/tree/ColumnNodeItem.tsx",
@@ -12762,7 +12791,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 276,
+      "lines": 274,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -12786,7 +12815,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "column|columnIndex|rowColumnCount"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/tree/ComponentTreeNodeRenderer.tsx",
@@ -12794,7 +12823,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 91,
+      "lines": 89,
       "useClient": true,
       "imports": [
         "react",
@@ -12809,7 +12838,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "depth|hasChildren|isExpanded|node|toggleExpand"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/tree/ComponentTreeNodeRuntimeContext.tsx",
@@ -12853,7 +12882,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 276,
+      "lines": 278,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -12876,7 +12905,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "row|rowCount|rowIndex"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/tree/SectionBlockNodeItem.tsx",
@@ -12884,7 +12913,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 280,
+      "lines": 282,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -12907,7 +12936,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "block|index"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/tree/SectionDropTarget.tsx",
@@ -12939,7 +12968,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 343,
+      "lines": 345,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -12966,7 +12995,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "hasTreeChildren|isTreeExpanded|section|sectionIndex|toggleTreeExpand"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/tree/SlideshowFrameNodeItem.tsx",
@@ -12974,7 +13003,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 364,
+      "lines": 363,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -12997,7 +13026,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "frame|index"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/tree/TreeColumnContext.tsx",
@@ -13375,7 +13404,7 @@
       "domain": "feature",
       "scope": "feature:database",
       "family": "Unknown",
-      "lines": 120,
+      "lines": 115,
       "useClient": false,
       "imports": [
         "@/shared/contracts/database",
@@ -13393,7 +13422,7 @@
       "domain": "feature",
       "scope": "feature:database",
       "family": "Panel",
-      "lines": 350,
+      "lines": 345,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -13409,7 +13438,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "columns|initialData|isPending|mode|onClose|onSubmit"
+      "propsSignature": null
     },
     {
       "path": "src/features/database/components/DatabaseBackupsPanel.tsx",
@@ -13482,16 +13511,16 @@
       "domain": "feature",
       "scope": "feature:database",
       "family": "Modal",
-      "lines": 37,
+      "lines": 42,
       "useClient": false,
       "imports": [
         "react-syntax-highlighter",
         "react-syntax-highlighter/dist/esm/styles/prism",
         "@/shared/contracts/ui",
-        "@/shared/ui/templates"
+        "@/shared/ui"
       ],
-      "templateImports": 1,
-      "uiPrimitiveImports": 1,
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
       "tokenSet": {},
       "propsSignature": null
     },
@@ -13501,7 +13530,7 @@
       "domain": "feature",
       "scope": "feature:database",
       "family": "Modal",
-      "lines": 73,
+      "lines": 75,
       "useClient": true,
       "imports": [
         "react",
@@ -13562,7 +13591,7 @@
       "domain": "feature",
       "scope": "feature:database",
       "family": "Unknown",
-      "lines": 82,
+      "lines": 78,
       "useClient": true,
       "imports": [
         "react",
@@ -13573,7 +13602,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "history|onClearHistory|onSelectQuery|setShowHistory|showHistory"
+      "propsSignature": null
     },
     {
       "path": "src/features/document-editor/components/DocumentWysiwygEditor.tsx",
@@ -13581,7 +13610,7 @@
       "domain": "feature",
       "scope": "feature:document-editor",
       "family": "Unknown",
-      "lines": 73,
+      "lines": 75,
       "useClient": true,
       "imports": [
         "react",
@@ -13591,7 +13620,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "allowFontFamily|allowTextAlign|appearance|disabled|editorContentClassName|enableAdvancedTools|loadingLabel|onChange|placeholder|surfaceClassName|toolbarClassName|value"
+      "propsSignature": null
     },
     {
       "path": "src/features/document-editor/components/MarkdownSplitEditor.tsx",
@@ -13618,7 +13647,7 @@
       "domain": "feature",
       "scope": "feature:document-editor",
       "family": "Toolbar",
-      "lines": 355,
+      "lines": 357,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -13629,7 +13658,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "canRedo|canUndo|fileReferenceOptions|fontFamily|isMigrating|isModeLocked|mode|onApplyBulletList|onApplyChecklist|onApplyLinePrefix|onApplySpanStyle|onApplyWrap|onFontFamilyChange|onInsertAtCursor|onInsertFileReference|onMigrateToMarkdown|onMigrateToWysiwyg|onModeChange|onRedo|onTextColorChange|onTogglePreview|onUndo|showPreview|textColor"
+      "propsSignature": null
     },
     {
       "path": "src/features/document-editor/components/RichTextEditor.tsx",
@@ -13637,7 +13666,7 @@
       "domain": "feature",
       "scope": "feature:document-editor",
       "family": "Unknown",
-      "lines": 18,
+      "lines": 62,
       "useClient": true,
       "imports": [
         "next/dynamic",
@@ -13689,7 +13718,7 @@
       "domain": "feature",
       "scope": "feature:document-editor",
       "family": "Toolbar",
-      "lines": 60,
+      "lines": 55,
       "useClient": true,
       "imports": [
         "react",
@@ -13700,7 +13729,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "children|disabled|isActive|onClick|title|variant"
+      "propsSignature": null
     },
     {
       "path": "src/features/drafter/components/DraftCreator.tsx",
@@ -14009,7 +14038,7 @@
       "domain": "feature",
       "scope": "feature:filemaker",
       "family": "Section",
-      "lines": 98,
+      "lines": 102,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -14027,10 +14056,11 @@
       "domain": "feature",
       "scope": "feature:filemaker",
       "family": "Unknown",
-      "lines": 70,
+      "lines": 118,
       "useClient": true,
       "imports": [
         "react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/ui",
         "@/shared/contracts/ui",
         "@tanstack/react-table"
@@ -14046,7 +14076,7 @@
       "domain": "feature",
       "scope": "feature:filemaker",
       "family": "Section",
-      "lines": 77,
+      "lines": 76,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -14057,7 +14087,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "emailExtractionText|emails|isSaving|onEmailExtractionTextChange|onExtractEmails"
+      "propsSignature": null
     },
     {
       "path": "src/features/filemaker/components/shared/FilemakerPartyEditPageLayout.tsx",
@@ -14065,7 +14095,7 @@
       "domain": "feature",
       "scope": "feature:filemaker",
       "family": "Unknown",
-      "lines": 43,
+      "lines": 40,
       "useClient": true,
       "imports": [
         "react",
@@ -14074,7 +14104,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "children|isSaving|itemName|notFoundMessage|onCancel|onSave"
+      "propsSignature": null
     },
     {
       "path": "src/features/filemaker/components/shared/filemaker-nav-actions.tsx",
@@ -14101,7 +14131,7 @@
       "domain": "feature",
       "scope": "feature:files",
       "family": "Unknown",
-      "lines": 58,
+      "lines": 69,
       "useClient": true,
       "imports": [
         "react",
@@ -14117,7 +14147,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "autoConfirmSelection|defaultFolder|mode|onSelectFile|selectionMode|showBulkActions|showFolderFilter|showTagSearch"
+      "propsSignature": null
     },
     {
       "path": "src/features/files/components/FileUploadEventsPanel.tsx",
@@ -14125,7 +14155,7 @@
       "domain": "feature",
       "scope": "feature:files",
       "family": "Panel",
-      "lines": 26,
+      "lines": 28,
       "useClient": true,
       "imports": [
         "react",
@@ -14136,7 +14166,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "description|title"
+      "propsSignature": null
     },
     {
       "path": "src/features/files/components/file-manager/AssetPreviewModal.tsx",
@@ -14160,7 +14190,7 @@
       "domain": "feature",
       "scope": "feature:files",
       "family": "Unknown",
-      "lines": 82,
+      "lines": 80,
       "useClient": true,
       "imports": [
         "react",
@@ -14173,7 +14203,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "isOpen|item|onClose"
+      "propsSignature": null
     },
     {
       "path": "src/features/files/components/file-manager/FileManagerBulkActions.tsx",
@@ -14335,7 +14365,7 @@
       "domain": "feature",
       "scope": "feature:foldertree",
       "family": "Panel",
-      "lines": 731,
+      "lines": 729,
       "useClient": true,
       "imports": [
         "react",
@@ -14347,7 +14377,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "meta|profile|updateProfile"
+      "propsSignature": null
     },
     {
       "path": "src/features/foldertree/v2/components/DefaultRow.tsx",
@@ -14355,7 +14385,7 @@
       "domain": "feature",
       "scope": "feature:foldertree",
       "family": "Unknown",
-      "lines": 93,
+      "lines": 95,
       "useClient": true,
       "imports": [
         "react",
@@ -14394,7 +14424,7 @@
       "domain": "feature",
       "scope": "feature:foldertree",
       "family": "Unknown",
-      "lines": 669,
+      "lines": 671,
       "useClient": true,
       "imports": [
         "@tanstack/react-virtual",
@@ -14419,7 +14449,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "autoExpandOnHoverMs|canDrop|canStartDrag|className|contextMenuItems|controller|emptyLabel|enableDnd|estimateRowHeight|multiSelectConfig|onNodeDragStart|onNodeDrop|renderNode|renderToolbar|resolveDraggedNodeId|resolveDropPosition|rootDropUi|scrollToNodeRef|searchState"
+      "propsSignature": null
     },
     {
       "path": "src/features/gsap/components/AnimationPresetPicker.tsx",
@@ -14816,7 +14846,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Modal",
-      "lines": 84,
+      "lines": 83,
       "useClient": true,
       "imports": [
         "react",
@@ -14830,7 +14860,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "connection|onClose"
+      "propsSignature": null
     },
     {
       "path": "src/features/integrations/components/connections/manager/ConnectionForm.tsx",
@@ -14858,7 +14888,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 315,
+      "lines": 317,
       "useClient": true,
       "imports": [
         "react",
@@ -14870,7 +14900,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "form|idPrefix|integrationSlug|mode|selectedConnection|setForm"
+      "propsSignature": null
     },
     {
       "path": "src/features/integrations/components/connections/manager/ConnectionList.tsx",
@@ -15086,7 +15116,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "isOpen|onClose|onSelect"
+      "propsSignature": null
     },
     {
       "path": "src/features/integrations/components/listings/SelectProductForListingModal.tsx",
@@ -15246,14 +15276,15 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 20,
+      "lines": 25,
       "useClient": false,
       "imports": [
         "react",
         "@/shared/ui",
         "@/shared/contracts/integrations",
         "./listing-item/ProductListingDetails",
-        "./listing-item/ProductListingActions"
+        "./listing-item/ProductListingActions",
+        "./listing-item/ProductListingItemRuntimeContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -15436,7 +15467,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 212,
+      "lines": 210,
       "useClient": true,
       "imports": [
         "react",
@@ -15445,7 +15476,8 @@
         "@/shared/contracts/integrations",
         "@/shared/ui",
         "@/features/integrations/constants/slugs",
-        "@/features/integrations/components/listings/useImageRetryPresets"
+        "@/features/integrations/components/listings/useImageRetryPresets",
+        "./ProductListingItemRuntimeContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -15458,7 +15490,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 205,
+      "lines": 202,
       "useClient": true,
       "imports": [
         "react",
@@ -15466,7 +15498,8 @@
         "@/shared/contracts/integrations",
         "@/shared/ui",
         "@/features/integrations/constants/slugs",
-        "lucide-react"
+        "lucide-react",
+        "./ProductListingItemRuntimeContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -15709,7 +15742,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 31,
+      "lines": 29,
       "useClient": false,
       "imports": [
         "react",
@@ -15718,7 +15751,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "disabled|onChange|options|value"
+      "propsSignature": null
     },
     {
       "path": "src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperTableHeaderActions.tsx",
@@ -15726,7 +15759,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 40,
+      "lines": 38,
       "useClient": false,
       "imports": [
         "react",
@@ -15736,7 +15769,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "isFetching|isSaving|onFetch|onSave|pendingCount"
+      "propsSignature": null
     },
     {
       "path": "src/features/internationalization/components/InternationalizationSettings.tsx",
@@ -15827,7 +15860,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Modal",
-      "lines": 35,
+      "lines": 33,
       "useClient": false,
       "imports": [
         "react",
@@ -15840,7 +15873,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "isOpen|onClose|onSuccess"
+      "propsSignature": null
     },
     {
       "path": "src/features/notesapp/components/NoteCard.tsx",
@@ -15848,7 +15881,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Card",
-      "lines": 137,
+      "lines": 147,
       "useClient": true,
       "imports": [
         "react",
@@ -15911,7 +15944,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "formRef|note|onSuccess"
+      "propsSignature": null
     },
     {
       "path": "src/features/notesapp/components/NoteListView.tsx",
@@ -16219,12 +16252,13 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Header",
-      "lines": 56,
+      "lines": 69,
       "useClient": true,
       "imports": [
         "react",
         "lucide-react",
         "@/features/notesapp/hooks/NotesAppContext",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/contracts/notes",
         "@/shared/ui"
       ],
@@ -16239,12 +16273,14 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Header",
-      "lines": 145,
+      "lines": 207,
       "useClient": true,
       "imports": [
         "react",
         "lucide-react",
         "@/features/notesapp/hooks/NotesAppContext",
+        "@/shared/lib/react/createStrictContext",
+        "@/shared/contracts/notes",
         "@/shared/ui",
         "@/shared/contracts/master-folder-tree"
       ],
@@ -16259,7 +16295,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Unknown",
-      "lines": 234,
+      "lines": 236,
       "useClient": true,
       "imports": [
         "react",
@@ -16277,7 +16313,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "depth|hasChildren|isExpanded|isRenaming|isSelected|node|select|startRename|toggleExpand"
+      "propsSignature": null
     },
     {
       "path": "src/features/notesapp/components/tree/NotesAppTreeNodeRuntimeContext.tsx",
@@ -16345,7 +16381,7 @@
       "domain": "feature",
       "scope": "feature:observability",
       "family": "Card",
-      "lines": 95,
+      "lines": 94,
       "useClient": true,
       "imports": [
         "react",
@@ -16357,7 +16393,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "accentClassName|document"
+      "propsSignature": null
     },
     {
       "path": "src/features/observability/components/ContextRegistryNodesCard.tsx",
@@ -16471,7 +16507,7 @@
       "domain": "feature",
       "scope": "feature:playwright",
       "family": "Form",
-      "lines": 381,
+      "lines": 373,
       "useClient": true,
       "imports": [
         "react",
@@ -16484,7 +16520,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "label|maxKey|minKey"
+      "propsSignature": null
     },
     {
       "path": "src/features/playwright/components/context/PlaywrightSettingsFormViewContext.tsx",
@@ -16532,11 +16568,12 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Form",
-      "lines": 87,
+      "lines": 98,
       "useClient": true,
       "imports": [
         "next/dynamic",
         "next/navigation",
+        "react",
         "@/features/products/components/ProductForm",
         "@/features/products/context/ProductFormContext",
         "@/shared/contracts/products",
@@ -16646,7 +16683,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 55,
+      "lines": 57,
       "useClient": true,
       "imports": [
         "@/shared/contracts/product-image-manager",
@@ -16725,7 +16762,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 382,
+      "lines": 384,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -16793,7 +16830,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 329,
+      "lines": 322,
       "useClient": true,
       "imports": [
         "next/dynamic",
@@ -16815,7 +16852,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "onHasUnsavedChangesChange|onIsSavingChange|submitRef"
+      "propsSignature": null
     },
     {
       "path": "src/features/products/components/cells/ProductImageCell.tsx",
@@ -16841,7 +16878,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Settings",
-      "lines": 375,
+      "lines": 370,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -16854,7 +16891,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "catalogs|loading|onCatalogChange|onRefresh|parameters|selectedCatalogId"
+      "propsSignature": null
     },
     {
       "path": "src/features/products/components/form/CatalogMultiSelectField.tsx",
@@ -16862,7 +16899,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 33,
+      "lines": 45,
       "useClient": false,
       "imports": [
         "react",
@@ -16889,7 +16926,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "onChange|props"
+      "propsSignature": null
     },
     {
       "path": "src/features/products/components/form/ProducerMultiSelectField.tsx",
@@ -16897,7 +16934,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 33,
+      "lines": 37,
       "useClient": false,
       "imports": [
         "react",
@@ -17032,7 +17069,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 369,
+      "lines": 368,
       "useClient": true,
       "imports": [
         "react",
@@ -17053,7 +17090,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "currentCategoryLabel|issue|proposedCategoryLabel|selectedCategoryId"
+      "propsSignature": null
     },
     {
       "path": "src/features/products/components/form/ProductFormParameters.tsx",
@@ -17185,12 +17222,13 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 347,
+      "lines": 418,
       "useClient": true,
       "imports": [
         "react",
         "@/features/products/context/ProductFormMetadataContext",
         "@/shared/errors/app-error",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/ui",
         "./ProductMetadataFieldContext"
       ],
@@ -17205,7 +17243,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 33,
+      "lines": 37,
       "useClient": false,
       "imports": [
         "react",
@@ -17223,7 +17261,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 104,
+      "lines": 101,
       "useClient": true,
       "imports": [
         "react",
@@ -17239,7 +17277,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "label|name|placeholder|required|rows|step|type|unit"
+      "propsSignature": null
     },
     {
       "path": "src/features/products/components/form/ValidatorIssueHint.tsx",
@@ -17247,7 +17285,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 213,
+      "lines": 214,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -17262,7 +17300,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "denyLabel|hideMatchSnippet|issue|onDeny|onReplace|proposedValueOverride|value"
+      "propsSignature": null
     },
     {
       "path": "src/features/products/components/form/studio/StudioActionsBar.tsx",
@@ -17390,7 +17428,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 472,
+      "lines": 468,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -17416,7 +17454,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "ariaLabel|children|className|disabled|onClick|onFocus|onMouseEnter|title"
+      "propsSignature": null
     },
     {
       "path": "src/features/products/components/list/ProductFilters.tsx",
@@ -17540,7 +17578,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 754,
+      "lines": 790,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -17554,7 +17592,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "canMoveDown|canMoveUp|condition|disableRemove|onChange|onDuplicate|onMoveDown|onMoveUp|onRemove"
+      "propsSignature": null
     },
     {
       "path": "src/features/products/components/list/advanced-filter/AdvancedFilterModal.tsx",
@@ -17562,7 +17600,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Modal",
-      "lines": 157,
+      "lines": 151,
       "useClient": true,
       "imports": [
         "react",
@@ -17574,7 +17612,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "fieldValueOptions|onApply|onClear|onClose|onSavePreset|open|value"
+      "propsSignature": null
     },
     {
       "path": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx",
@@ -17603,7 +17641,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 393,
+      "lines": 389,
       "useClient": true,
       "imports": [
         "react",
@@ -17623,7 +17661,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "onOpenIntegrations|prefetchListings|product|showMarketplaceBadge|status"
+      "propsSignature": null
     },
     {
       "path": "src/features/products/components/list/columns/buttons/TraderaStatusButton.tsx",
@@ -17631,7 +17669,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 43,
+      "lines": 41,
       "useClient": true,
       "imports": [
         "react",
@@ -17642,7 +17680,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "onOpenListings|prefetchListings|status"
+      "propsSignature": null
     },
     {
       "path": "src/features/products/components/modals/ProductFormModal.tsx",
@@ -17650,7 +17688,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Modal",
-      "lines": 94,
+      "lines": 100,
       "useClient": true,
       "imports": [
         "next/dynamic",
@@ -17665,7 +17703,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "isOpen|onClose|submitButtonText|title|validationInstanceScopeOverride"
+      "propsSignature": null
     },
     {
       "path": "src/features/products/components/settings/CategoriesSettings.tsx",
@@ -17743,7 +17781,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 113,
+      "lines": 110,
       "useClient": true,
       "imports": [
         "react",
@@ -17756,7 +17794,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "depth|dropPosition|hasChildren|isExpanded|node|toggleExpand"
+      "propsSignature": null
     },
     {
       "path": "src/features/products/components/settings/CategoryTreeNodeRuntimeContext.tsx",
@@ -18004,7 +18042,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Modal",
-      "lines": 216,
+      "lines": 218,
       "useClient": true,
       "imports": [
         "react",
@@ -18022,7 +18060,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "defaultId|isOpen|item|items|loading|onClose|onSuccess"
+      "propsSignature": null
     },
     {
       "path": "src/features/products/components/settings/modals/catalog-modal/CatalogPriceGroupsSection.tsx",
@@ -18066,7 +18104,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Modal",
-      "lines": 91,
+      "lines": 88,
       "useClient": true,
       "imports": [
         "react",
@@ -18079,7 +18117,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "isOpen|item|onClose|onSuccess"
+      "propsSignature": null
     },
     {
       "path": "src/features/products/components/settings/pricing/PriceGroupsSettings.tsx",
@@ -18252,7 +18290,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 255,
+      "lines": 250,
       "useClient": true,
       "imports": [
         "react",
@@ -18270,7 +18308,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "draft|groupId|isPending|onSave|onUngroup|setGroupDrafts"
+      "propsSignature": null
     },
     {
       "path": "src/features/products/components/settings/validator-settings/ValidatorPatternTreeContext.tsx",
@@ -18428,7 +18466,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 179,
+      "lines": 173,
       "useClient": true,
       "imports": [
         "react",
@@ -18442,7 +18480,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "depth|hasChildren|isDragging|isExpanded|isSelected|node|select|toggleExpand"
+      "propsSignature": null
     },
     {
       "path": "src/features/products/components/settings/validator-settings/pattern-tree/SequenceGroupFolderNodeItem.tsx",
@@ -18450,7 +18488,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 212,
+      "lines": 216,
       "useClient": true,
       "imports": [
         "react",
@@ -18464,7 +18502,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "depth|dropPosition|hasChildren|isDragging|isDropTarget|isExpanded|isRenaming|isSelected|node|select|startRename|toggleExpand"
+      "propsSignature": null
     },
     {
       "path": "src/features/prompt-engine/components/LearnedRuleItem.tsx",
@@ -18472,7 +18510,7 @@
       "domain": "feature",
       "scope": "feature:prompt-engine",
       "family": "Unknown",
-      "lines": 87,
+      "lines": 89,
       "useClient": true,
       "imports": [
         "react",
@@ -18555,7 +18593,7 @@
       "domain": "feature",
       "scope": "feature:prompt-engine",
       "family": "Unknown",
-      "lines": 108,
+      "lines": 112,
       "useClient": true,
       "imports": [
         "react",
@@ -18577,7 +18615,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "collapsed|onCollapsedChange"
+      "propsSignature": null
     },
     {
       "path": "src/features/prompt-engine/components/RuleItemSimilarPatternsSection.tsx",
@@ -18833,7 +18871,7 @@
       "domain": "feature",
       "scope": "feature:prompt-exploder",
       "family": "Unknown",
-      "lines": 24,
+      "lines": 23,
       "useClient": true,
       "imports": [
         "react",
@@ -18843,7 +18881,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "enabled|rootId"
+      "propsSignature": null
     },
     {
       "path": "src/features/prompt-exploder/components/ExplosionMetricsPanel.tsx",
@@ -18934,16 +18972,17 @@
       "domain": "feature",
       "scope": "feature:prompt-exploder",
       "family": "Unknown",
-      "lines": 27,
+      "lines": 53,
       "useClient": true,
       "imports": [
         "react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/ui"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "docsTooltipsEnabled|onDocsTooltipsChange"
+      "propsSignature": null
     },
     {
       "path": "src/features/prompt-exploder/components/PromptExploderHeaderBar.tsx",
@@ -18951,7 +18990,7 @@
       "domain": "feature",
       "scope": "feature:prompt-exploder",
       "family": "Unknown",
-      "lines": 73,
+      "lines": 79,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -19378,7 +19417,7 @@
       "domain": "feature",
       "scope": "feature:prompt-exploder",
       "family": "Unknown",
-      "lines": 140,
+      "lines": 142,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -19392,7 +19431,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "depth|dropPosition|hasChildren|isDragging|isExpanded|isMultiSelected|isSelected|node|select|toggleExpand"
+      "propsSignature": null
     },
     {
       "path": "src/features/prompt-exploder/components/tree/PromptExploderTreeNodeRuntimeContext.tsx",
@@ -19417,10 +19456,12 @@
       "domain": "feature",
       "scope": "feature:viewer3d",
       "family": "Card",
-      "lines": 144,
+      "lines": 195,
       "useClient": true,
       "imports": [
         "lucide-react",
+        "react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/contracts/viewer3d",
         "@/shared/ui",
         "@/shared/utils",
@@ -19453,7 +19494,7 @@
       "domain": "feature",
       "scope": "feature:viewer3d",
       "family": "Unknown",
-      "lines": 214,
+      "lines": 212,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -19469,7 +19510,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "isOpen|item|onClose"
+      "propsSignature": null
     },
     {
       "path": "src/features/viewer3d/components/Asset3DPreviewModal.tsx",
@@ -19493,7 +19534,7 @@
       "domain": "feature",
       "scope": "feature:viewer3d",
       "family": "Unknown",
-      "lines": 141,
+      "lines": 139,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -19512,7 +19553,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "isOpen|item|onClose"
+      "propsSignature": null
     },
     {
       "path": "src/features/viewer3d/components/Asset3DUploader.tsx",
@@ -19543,7 +19584,7 @@
       "domain": "feature",
       "scope": "feature:viewer3d",
       "family": "Unknown",
-      "lines": 573,
+      "lines": 568,
       "useClient": true,
       "imports": [
         "@react-three/drei",
@@ -19563,7 +19604,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "autoRotate|autoRotateSpeed|children"
+      "propsSignature": null
     },
     {
       "path": "src/features/viewer3d/components/Viewer3DSettingsPanel.tsx",
@@ -19702,7 +19743,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 183,
+      "lines": 179,
       "useClient": true,
       "imports": [
         "@/shared/ui",
@@ -19713,7 +19754,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "allowedProviders|assignment|onChange|readOnly|showSystemPrompt"
+      "propsSignature": null
     },
     {
       "path": "src/shared/lib/ai-brain/components/BrainCatalogNodeItem.tsx",
@@ -19721,12 +19762,13 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 126,
+      "lines": 134,
       "useClient": true,
       "imports": [
         "react",
         "lucide-react",
         "@/shared/lib/ai-brain/catalog-entries",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/lib/ai-brain/settings",
         "@/shared/ui",
         "@/shared/utils"
@@ -19734,7 +19776,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "depth|entry|isDragging|isPending|isSelected|node|onEdit|onRemove|select"
+      "propsSignature": null
     },
     {
       "path": "src/shared/lib/ai-brain/components/BrainCatalogTree.tsx",
@@ -19742,7 +19784,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 101,
+      "lines": 108,
       "useClient": true,
       "imports": [
         "react",
@@ -19762,11 +19804,12 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 133,
+      "lines": 142,
       "useClient": true,
       "imports": [
         "react",
         "lucide-react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/ui",
         "@/shared/utils",
         "../settings"
@@ -19774,7 +19817,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "capability|depth|enabled|isDragging|isPending|isSelected|node|onEdit|onToggleEnabled|select|sourceLabel"
+      "propsSignature": null
     },
     {
       "path": "src/shared/lib/ai-brain/components/BrainRoutingEditModal.tsx",
@@ -19782,7 +19825,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Modal",
-      "lines": 136,
+      "lines": 134,
       "useClient": true,
       "imports": [
         "react",
@@ -19794,7 +19837,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "capability|onClose|open"
+      "propsSignature": null
     },
     {
       "path": "src/shared/lib/ai-brain/components/BrainRoutingFeatureNodeItem.tsx",
@@ -19802,7 +19845,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 77,
+      "lines": 72,
       "useClient": true,
       "imports": [
         "react",
@@ -19814,7 +19857,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "depth|group|hasChildren|isDragging|isExpanded|isSelected|node|select|toggleExpand"
+      "propsSignature": null
     },
     {
       "path": "src/shared/lib/ai-brain/components/BrainRoutingTree.tsx",
@@ -19822,7 +19865,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 128,
+      "lines": 138,
       "useClient": true,
       "imports": [
         "react",
@@ -19880,7 +19923,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 49,
+      "lines": 45,
       "useClient": true,
       "imports": [
         "@/shared/ui"
@@ -19888,7 +19931,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "description|label|onChange|placeholder|value"
+      "propsSignature": null
     },
     {
       "path": "src/shared/lib/ai-brain/components/MetricsTab.tsx",
@@ -20222,7 +20265,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "isOpen|item|onClose"
+      "propsSignature": null
     },
     {
       "path": "src/shared/lib/jobs/components/JobTable.tsx",
@@ -20230,7 +20273,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Table",
-      "lines": 166,
+      "lines": 178,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -20247,7 +20290,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "alerts|data|filters|footer|header|isCancelling|isDeleting|isLoading|onCancel|onDelete|onViewDetails"
+      "propsSignature": null
     },
     {
       "path": "src/shared/lib/jobs/components/ProductListingJobsPanel.tsx",
@@ -20296,7 +20339,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 67,
+      "lines": 82,
       "useClient": true,
       "imports": [
         "react",
@@ -20306,7 +20349,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "isCancelling|isDeleting|jobId|onCancel|onDelete|onViewDetails|status"
+      "propsSignature": null
     },
     {
       "path": "src/shared/lib/jobs/components/job-table/JobStatusCell.tsx",
@@ -20314,7 +20357,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 53,
+      "lines": 63,
       "useClient": true,
       "imports": [
         "react",
@@ -20370,7 +20413,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 108,
+      "lines": 110,
       "useClient": true,
       "imports": [
         "react",
@@ -20473,7 +20516,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "List",
-      "lines": 151,
+      "lines": 153,
       "useClient": true,
       "imports": [
         "react",
@@ -20484,7 +20527,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "className|items|listClassName|ordered|searchPlaceholder|searchable|size|title|variant"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/Drawer.tsx",
@@ -20492,7 +20535,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Drawer",
-      "lines": 105,
+      "lines": 107,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -20531,7 +20574,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Panel",
-      "lines": 41,
+      "lines": 43,
       "useClient": true,
       "imports": [
         "react",
@@ -20541,7 +20584,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "bodyClassName|children|className|header|masterInstance|masterSettingsHref|onOpenMasterSettings|props"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/FormActions.tsx",
@@ -20549,7 +20592,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 72,
+      "lines": 103,
       "useClient": true,
       "imports": [
         "react",
@@ -20568,7 +20611,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Modal",
-      "lines": 231,
+      "lines": 234,
       "useClient": true,
       "imports": [
         "@/shared/contracts/ui",
@@ -20582,7 +20625,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "children|value"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/Hint.tsx",
@@ -20590,7 +20633,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 55,
+      "lines": 57,
       "useClient": false,
       "imports": [
         "react",
@@ -20600,7 +20643,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "children|className|italic|size|uppercase|variant"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/JsonViewer.tsx",
@@ -20679,10 +20722,11 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 115,
+      "lines": 213,
       "useClient": true,
       "imports": [
         "react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/utils",
         "./FormActions",
         "./section-header",
@@ -20699,16 +20743,18 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Section",
-      "lines": 175,
-      "useClient": false,
+      "lines": 216,
+      "useClient": true,
       "imports": [
         "lucide-react",
+        "react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/ui"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "badgeTextColor|badgeVariant|finalResultLabel|finalResultValue|initialResultLabel|initialResultValue|inputLabel|inputValue|modelLabel|modelOptions|modelValue|onCopyFinalResult|onCopyInitialResult|onInputChange|onModelChange|onOutputEnabledChange|onOutputPromptChange|outputEnabled|outputEnabledCheckboxId|outputPlaceholder|outputPromptLabel|outputPromptValue|pathNumber|pathTitle"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/QueryDevPanel.tsx",
@@ -20773,18 +20819,17 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Card",
-      "lines": 148,
+      "lines": 86,
       "useClient": false,
       "imports": [
-        "@/shared/lib/react/createStrictContext",
         "@/shared/utils",
-        "react",
-        "./card"
+        "./card",
+        "react"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "actions|badges|children|className|description|footer|media|mediaClassName|onClick|title|variant"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/SearchableList.tsx",
@@ -20792,7 +20837,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "List",
-      "lines": 114,
+      "lines": 116,
       "useClient": true,
       "imports": [
         "react",
@@ -20983,7 +21028,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 72,
+      "lines": 74,
       "useClient": true,
       "imports": [
         "react",
@@ -20994,7 +21039,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "active|activeClassName|className|icon|label|onClick|size|variant"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/client-only.tsx",
@@ -21018,7 +21063,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 100,
+      "lines": 102,
       "useClient": true,
       "imports": [
         "@radix-ui/react-collapsible",
@@ -21030,7 +21075,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "actions|children|className|contentClassName|description|headerClassName|iconClassName|onOpenChange|open|title|titleClassName|triggerClassName|variant"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/confirm-dialog.tsx",
@@ -21056,7 +21101,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 86,
+      "lines": 88,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -21067,7 +21112,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "children|className|disabled|showText|size|timeout|value|variant"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/data-table.tsx",
@@ -21170,7 +21215,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 91,
+      "lines": 93,
       "useClient": true,
       "imports": [
         "next/image",
@@ -21179,7 +21224,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "children|file|onClose"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/file-upload.tsx",
@@ -21187,7 +21232,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 327,
+      "lines": 331,
       "useClient": true,
       "imports": [
         "@radix-ui/react-slot",
@@ -21199,7 +21244,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "accept|buttonProps|children|enableDrop|enablePaste|multiple|onError|onFilesSelected|showProgress"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/filters-container.tsx",
@@ -21207,7 +21252,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 49,
+      "lines": 51,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -21219,7 +21264,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "children|className|gridClassName|hasActiveFilters|onReset|title"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/form-section.tsx",
@@ -21227,7 +21272,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 139,
+      "lines": 134,
       "useClient": false,
       "imports": [
         "@/shared/utils",
@@ -21239,7 +21284,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "actions|children|className|description|gridClassName|id|subtitle|title|titleIcon|variant"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/image-retry-dropdown.tsx",
@@ -21247,7 +21292,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 54,
+      "lines": 56,
       "useClient": true,
       "imports": [
         "@/shared/contracts",
@@ -21257,7 +21302,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "buttonClassName|className|disabled|onRetry|presets"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/input.tsx",
@@ -21283,7 +21328,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 73,
+      "lines": 75,
       "useClient": true,
       "imports": [
         "@/shared/contracts",
@@ -21293,7 +21338,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "className|disabled|integrations|loading|onConnectionChange|onIntegrationChange|selectedConnectionId|selectedIntegrationId"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/item-library.tsx",
@@ -21301,7 +21346,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 259,
+      "lines": 261,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -21346,7 +21391,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 118,
+      "lines": 120,
       "useClient": false,
       "imports": [
         "lucide-react",
@@ -21357,7 +21402,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "actions|actionsClassName|alerts|alertsClassName|children|className|contentClassName|description|descriptionClassName|emptyState|eyebrow|filters|filtersClassName|footer|footerClassName|header|headerActions|headerClassName|icon|isLoading|loadingMessage|refresh|title|titleClassName|variant"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/metadata-item.tsx",
@@ -21399,7 +21444,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 141,
+      "lines": 143,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -21413,7 +21458,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "className|disabled|emptyMessage|label|loading|onChange|options|placeholder|searchPlaceholder|selected|single"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/pagination.tsx",
@@ -21421,7 +21466,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 157,
+      "lines": 159,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -21434,7 +21479,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "className|isLoading|onPageChange|onPageSizeChange|page|pageSize|pageSizeOptions|showInfo|showLabels|showPageSize|totalCount|totalPages|variant"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/radio-group.tsx",
@@ -21574,7 +21619,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 119,
+      "lines": 121,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -21629,7 +21674,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 100,
+      "lines": 102,
       "useClient": false,
       "imports": [
         "react",
@@ -21640,7 +21685,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "className|hideLabel|icon|label|onClick|size|status|title|variant"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/status-toggle.tsx",
@@ -21686,7 +21731,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 32,
+      "lines": 29,
       "useClient": false,
       "imports": [
         "react",
@@ -21695,7 +21740,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "cellClassName|columns|rowClassName|rows"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/table.tsx",
@@ -21774,7 +21819,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Modal",
-      "lines": 63,
+      "lines": 65,
       "useClient": true,
       "imports": [
         "react",
@@ -21783,7 +21828,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "children|className|onClose|onOpenChange|open|padding|showClose|size|subtitle|title|variant"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/templates/DocumentSearchPage.tsx",
@@ -21791,7 +21836,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 63,
+      "lines": 65,
       "useClient": true,
       "imports": [
         "react",
@@ -21801,7 +21846,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "breadcrumb|children|className|contentClassName|emptyState|endAdornment|filters|hasResults|loading|startAdornment|title|titleAdornment"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/templates/FilterPanel.tsx",
@@ -21809,10 +21854,11 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Panel",
-      "lines": 150,
+      "lines": 265,
       "useClient": true,
       "imports": [
         "react",
+        "@/shared/lib/react/createStrictContext",
         "./panels/PanelFilters",
         "@/shared/contracts/ui"
       ],
@@ -21827,7 +21873,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 240,
+      "lines": 242,
       "useClient": true,
       "imports": [
         "react",
@@ -21836,7 +21882,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "config|isConnected|onRequest|onSetBodyOrParams|onSetMethod|onSetPath|presets|state"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/templates/SettingsFormModal.tsx",
@@ -21844,12 +21890,13 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Modal",
-      "lines": 63,
+      "lines": 143,
       "useClient": true,
       "imports": [
+        "react",
         "@/shared/contracts/ui",
-        "../FormModal",
-        "react"
+        "@/shared/lib/react/createStrictContext",
+        "../FormModal"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -21862,7 +21909,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 429,
+      "lines": 436,
       "useClient": true,
       "imports": [
         "react",
@@ -21888,7 +21935,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "List",
-      "lines": 150,
+      "lines": 154,
       "useClient": true,
       "imports": [
         "react",
@@ -21909,13 +21956,15 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Panel",
-      "lines": 165,
+      "lines": 347,
       "useClient": true,
       "imports": [
         "react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/utils",
         "../data-table",
         "../list-panel",
+        "../section-header",
         "@tanstack/react-table"
       ],
       "templateImports": 0,
@@ -21954,7 +22003,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 29,
+      "lines": 28,
       "useClient": false,
       "imports": [
         "react",
@@ -21963,7 +22012,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "disabled|onChange|options|value"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/templates/mappers/GenericMapperHeaderActions.tsx",
@@ -21971,7 +22020,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 33,
+      "lines": 31,
       "useClient": false,
       "imports": [
         "react",
@@ -21981,7 +22030,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "isFetching|isSaving|onFetch|onSave|pendingCount"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/templates/mappers/GenericMapperStats.tsx",
@@ -21989,7 +22038,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 37,
+      "lines": 34,
       "useClient": false,
       "imports": [
         "react",
@@ -21998,7 +22047,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "itemLabel|mapped|pending|total"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/templates/modals/ConfirmModal.tsx",
@@ -22064,7 +22113,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Modal",
-      "lines": 208,
+      "lines": 210,
       "useClient": true,
       "imports": [
         "react",
@@ -22077,7 +22126,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 3,
       "tokenSet": {},
-      "propsSignature": "actions|cancelText|children|confirmText|defaultValue|isLoading|isOpen|label|onChange|onClose|onImport|onLoadSample|onPreview|placeholder|previewText|sampleValue|subtitle|title|value"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/templates/modals/PromptModal.tsx",
@@ -22085,7 +22134,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Modal",
-      "lines": 92,
+      "lines": 94,
       "useClient": true,
       "imports": [
         "react",
@@ -22096,7 +22145,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 3,
       "tokenSet": {},
-      "propsSignature": "cancelText|confirmText|defaultValue|isLoading|label|message|onClose|onConfirm|open|placeholder|required|title"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/templates/modals/SelectModal.tsx",
@@ -22104,10 +22153,11 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Modal",
-      "lines": 145,
+      "lines": 194,
       "useClient": true,
       "imports": [
         "react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/ui/FormModal",
         "@/shared/ui/search-input",
         "@/shared/utils"
@@ -22143,7 +22193,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 433,
+      "lines": 445,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -22159,7 +22209,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 3,
       "tokenSet": {},
-      "propsSignature": "actions|className|collapsible|compact|defaultExpanded|filters|onFilterChange|onReset|onSearchChange|search|searchPlaceholder|values"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/templates/panels/PanelHeader.tsx",
@@ -22187,10 +22237,11 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 50,
+      "lines": 116,
       "useClient": true,
       "imports": [
         "react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/ui/pagination"
       ],
       "templateImports": 0,
@@ -22320,7 +22371,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 190,
+      "lines": 193,
       "useClient": true,
       "imports": [
         "react",
@@ -22335,7 +22386,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "children|value"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/tooltip.tsx",
@@ -22431,7 +22482,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Header",
-      "lines": 38,
+      "lines": 32,
       "useClient": false,
       "imports": [
         "../section-header",
@@ -22440,7 +22491,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "actions|actionsClassName|children|className|subtitle|title|titleClassName"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/tree/TreeRow.tsx",
@@ -22467,7 +22518,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 57,
+      "lines": 59,
       "useClient": true,
       "imports": [
         "react",
@@ -22477,7 +22528,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "className|formatterEnabled|formatterLabel|onFormatterChange|onValidatorChange|validatorEnabled|validatorLabel"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/vector-canvas/components/CanvasBackgroundLayer.tsx",
@@ -22533,7 +22584,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 57,
+      "lines": 53,
       "useClient": false,
       "imports": [
         "react",
@@ -22542,7 +22593,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "onFit|onZoomIn|onZoomOut|scale|show"
+      "propsSignature": null
     },
     {
       "path": "src/shared/ui/vector-canvas/components/CanvasImageLayer.tsx",
@@ -22592,12 +22643,13 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 275,
-      "useClient": false,
+      "lines": 359,
+      "useClient": true,
       "imports": [
         "react",
         "lucide-react",
         "@/shared/contracts/vector",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/utils",
         "./button",
         "./tooltip",

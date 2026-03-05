@@ -2,8 +2,6 @@
 
 import React, { createContext, useContext } from 'react';
 
-import { internalError } from '@/shared/errors/app-error';
-
 import type { ProductImageManagerController } from './ProductImageManager';
 
 type ProductImageManagerControllerProviderProps = {
@@ -28,14 +26,4 @@ export function ProductImageManagerControllerProvider({
 
 export function useOptionalProductImageManagerController(): ProductImageManagerController | null {
   return useContext(ProductImageManagerControllerContext);
-}
-
-export function useProductImageManagerController(): ProductImageManagerController {
-  const context = useContext(ProductImageManagerControllerContext);
-  if (!context) {
-    throw internalError(
-      'useProductImageManagerController must be used within ProductImageManagerControllerProvider'
-    );
-  }
-  return context;
 }

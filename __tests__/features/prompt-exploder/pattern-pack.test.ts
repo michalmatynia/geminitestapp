@@ -4,7 +4,7 @@ import {
   defaultPromptEngineSettings,
   type PromptEngineSettings,
   type PromptValidationScope,
-} from '@/features/prompt-engine/settings';
+} from '@/shared/lib/prompt-engine/settings';
 import {
   ensurePromptExploderPatternPack,
   getPromptExploderScopedRules,

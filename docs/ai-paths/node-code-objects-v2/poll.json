@@ -1,0 +1,350 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v2",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "generatedAt": "2026-03-05T07:53:41.543Z",
+  "id": "node_obj_poll_portable_v2",
+  "nodeType": "poll",
+  "nodeDocVersion": "2026-02-20.v1",
+  "title": "Poll Job",
+  "purpose": "Poll an AI job or database query until it completes.",
+  "nodeFamily": "orchestration",
+  "portability": {
+    "copyPasteReady": true,
+    "requiresUniqueNodeId": true,
+    "compatibleEngines": [
+      "ai-paths.portable-engine.v1"
+    ]
+  },
+  "ports": {
+    "inputs": [
+      "jobId",
+      "query",
+      "value",
+      "entityId",
+      "productId",
+      "bundle"
+    ],
+    "outputs": [
+      "result",
+      "status",
+      "jobId",
+      "bundle"
+    ]
+  },
+  "statusModel": {
+    "idle": {
+      "meaning": "Node has not started for the current run.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "processing": {
+      "meaning": "Node is actively computing. Pulsating indicates processing, not waiting. Outgoing edges stay inactive until an output port receives a value.",
+      "edgeAnimationPolicy": {
+        "incoming": "active_if_signal_present",
+        "outgoing": "inactive"
+      }
+    },
+    "waiting": {
+      "meaning": "Node is waiting for an external callback/response. Previously consumed input edges must stop animating; outgoing edges remain inactive until output exists.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "success": {
+      "meaning": "Node completed successfully and emitted output values.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "error": {
+      "meaning": "Node failed and may emit error-specific outputs.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "skipped": {
+      "meaning": "Node execution was skipped by control flow or guard conditions.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    }
+  },
+  "runtimeSemantics": {
+    "executionKind": "asynchronous",
+    "waitForResultSupported": false,
+    "wireActivationRules": {
+      "processing": "When node is processing, show node pulse only. Do not animate outgoing edges until an output port value is produced.",
+      "waiting": "When node is waiting for external response, keep both consumed incoming and future outgoing edges inactive.",
+      "completed": "Animate only edges carrying newly emitted outputs.",
+      "errored": "Animate only explicit error-route outputs (if connected)."
+    }
+  },
+  "configContract": {
+    "fields": [
+      {
+        "path": "poll.mode",
+        "description": "job = poll AI job status; database = poll database query.",
+        "defaultValue": "job"
+      },
+      {
+        "path": "poll.intervalMs",
+        "description": "Wait time between polling attempts (ms).",
+        "defaultValue": "1000"
+      },
+      {
+        "path": "poll.maxAttempts",
+        "description": "Maximum polling attempts before failing.",
+        "defaultValue": "40"
+      },
+      {
+        "path": "poll.dbQuery",
+        "description": "Database query definition used when mode is database (provider/collection/preset/queryTemplate/etc)."
+      },
+      {
+        "path": "poll.dbQuery.provider",
+        "description": "Database provider (mongodb|prisma).",
+        "defaultValue": "mongodb"
+      },
+      {
+        "path": "poll.dbQuery.collection",
+        "description": "Collection to query (example: products).",
+        "defaultValue": "\"products\""
+      },
+      {
+        "path": "poll.dbQuery.mode",
+        "description": "preset uses a predefined query; custom uses queryTemplate.",
+        "defaultValue": "preset"
+      },
+      {
+        "path": "poll.dbQuery.preset",
+        "description": "Preset query shape (by_id/by_productId/by_entityId/by_field).",
+        "defaultValue": "by_id"
+      },
+      {
+        "path": "poll.dbQuery.field",
+        "description": "Field used by preset queries (example: _id, productId).",
+        "defaultValue": "\"_id\""
+      },
+      {
+        "path": "poll.dbQuery.idType",
+        "description": "How to treat IDs: string vs objectId.",
+        "defaultValue": "string"
+      },
+      {
+        "path": "poll.dbQuery.queryTemplate",
+        "description": "JSON query template (string) with {{placeholders}}.",
+        "defaultValue": "\"{...}\""
+      },
+      {
+        "path": "poll.dbQuery.limit",
+        "description": "Limit for multi-result queries.",
+        "defaultValue": "20"
+      },
+      {
+        "path": "poll.dbQuery.sort",
+        "description": "Sort JSON (string).",
+        "defaultValue": "\"\""
+      },
+      {
+        "path": "poll.dbQuery.projection",
+        "description": "Projection JSON (string).",
+        "defaultValue": "\"\""
+      },
+      {
+        "path": "poll.dbQuery.single",
+        "description": "If true, treat result as a single document.",
+        "defaultValue": "false"
+      },
+      {
+        "path": "poll.successPath",
+        "description": "Optional JSON path evaluated against the polled result to determine completion."
+      },
+      {
+        "path": "poll.successOperator",
+        "description": "truthy/equals/contains/notEquals used with successPath.",
+        "defaultValue": "truthy"
+      },
+      {
+        "path": "poll.successValue",
+        "description": "String value used by equals/contains/notEquals."
+      },
+      {
+        "path": "poll.resultPath",
+        "description": "Optional JSON path to extract the final result payload to emit."
+      },
+      {
+        "path": "runtime.cache.mode",
+        "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+        "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.waitForInputs",
+        "description": "If true, wait until all connected input ports have values before executing the node.",
+        "defaultValue": "false"
+      }
+    ]
+  },
+  "copyPaste": {
+    "minimalNode": {
+      "id": "node_poll_example",
+      "type": "poll",
+      "title": "Poll Job",
+      "description": "Poll an AI job or database query until it completes.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "jobId",
+        "query",
+        "value",
+        "entityId",
+        "productId",
+        "bundle"
+      ],
+      "outputs": [
+        "result",
+        "status",
+        "jobId",
+        "bundle"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      }
+    },
+    "fullNode": {
+      "id": "node_poll_example",
+      "type": "poll",
+      "title": "Poll Job",
+      "description": "Poll an AI job or database query until it completes.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "jobId",
+        "query",
+        "value",
+        "entityId",
+        "productId",
+        "bundle"
+      ],
+      "outputs": [
+        "result",
+        "status",
+        "jobId",
+        "bundle"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      },
+      "config": {
+        "poll": {
+          "mode": "job",
+          "intervalMs": 1000,
+          "maxAttempts": 40,
+          "dbQuery": {
+            "provider": "mongodb",
+            "collection": "products",
+            "mode": "preset",
+            "preset": "by_id",
+            "field": "_id",
+            "idType": "string",
+            "queryTemplate": "{...}",
+            "limit": 20,
+            "sort": "",
+            "projection": "",
+            "single": false
+          },
+          "successOperator": "truthy"
+        },
+        "runtime": {
+          "cache": {
+            "mode": "auto"
+          },
+          "waitForInputs": false
+        }
+      }
+    },
+    "pathSnippet": {
+      "nodes": [
+        {
+          "id": "node_poll_example",
+          "type": "poll",
+          "title": "Poll Job",
+          "description": "Poll an AI job or database query until it completes.",
+          "position": {
+            "x": 100,
+            "y": 100
+          },
+          "inputs": [
+            "jobId",
+            "query",
+            "value",
+            "entityId",
+            "productId",
+            "bundle"
+          ],
+          "outputs": [
+            "result",
+            "status",
+            "jobId",
+            "bundle"
+          ],
+          "data": {},
+          "connections": {
+            "incoming": [],
+            "outgoing": []
+          },
+          "config": {
+            "poll": {
+              "mode": "job",
+              "intervalMs": 1000,
+              "maxAttempts": 40,
+              "dbQuery": {
+                "provider": "mongodb",
+                "collection": "products",
+                "mode": "preset",
+                "preset": "by_id",
+                "field": "_id",
+                "idType": "string",
+                "queryTemplate": "{...}",
+                "limit": 20,
+                "sort": "",
+                "projection": "",
+                "single": false
+              },
+              "successOperator": "truthy"
+            },
+            "runtime": {
+              "cache": {
+                "mode": "auto"
+              },
+              "waitForInputs": false
+            }
+          }
+        }
+      ],
+      "edges": []
+    }
+  },
+  "notes": [],
+  "source": {
+    "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "semanticNodeHashAlgorithm": "sha256",
+    "semanticNodeHash": "6bed270f19afc27bb4ee9f42723aaae11c297d22ea4980626e95719cf8c6f293"
+  },
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "73f1c00403b1530ecfa4ac514ffd425ceb85faa248f3f6a9029d42db98dc0738"
+}

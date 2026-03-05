@@ -4,7 +4,6 @@ import React, { createContext, useContext, useMemo } from 'react';
 
 import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';
 import type { ImageFileSelection } from '@/shared/contracts/files';
-import { internalError } from '@/shared/errors/app-error';
 
 export type ProductImagesTabContextValue = {
   showFileManager?: boolean;
@@ -97,28 +96,8 @@ export function useOptionalProductImagesTabStateContext(): ProductImagesTabState
   return useContext(ProductImagesTabStateContext);
 }
 
-export function useProductImagesTabStateContext(): ProductImagesTabStateContextValue {
-  const context = useContext(ProductImagesTabStateContext);
-  if (!context) {
-    throw internalError(
-      'useProductImagesTabStateContext must be used within ProductImagesTabProvider'
-    );
-  }
-  return context;
-}
-
 export function useOptionalProductImagesTabActionsContext():
   | ProductImagesTabActionsContextValue
   | null {
   return useContext(ProductImagesTabActionsContext);
-}
-
-export function useProductImagesTabActionsContext(): ProductImagesTabActionsContextValue {
-  const context = useContext(ProductImagesTabActionsContext);
-  if (!context) {
-    throw internalError(
-      'useProductImagesTabActionsContext must be used within ProductImagesTabProvider'
-    );
-  }
-  return context;
 }

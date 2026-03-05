@@ -1,0 +1,227 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v2",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "generatedAt": "2026-03-05T07:53:41.543Z",
+  "id": "node_obj_parser_portable_v2",
+  "nodeType": "parser",
+  "nodeDocVersion": "2026-02-20.v1",
+  "title": "JSON Parser",
+  "purpose": "Extract fields into outputs or a single bundle.",
+  "nodeFamily": "transform",
+  "portability": {
+    "copyPasteReady": true,
+    "requiresUniqueNodeId": true,
+    "compatibleEngines": [
+      "ai-paths.portable-engine.v1"
+    ]
+  },
+  "ports": {
+    "inputs": [
+      "entityJson",
+      "context"
+    ],
+    "outputs": [
+      "productId",
+      "title",
+      "images",
+      "content_en"
+    ]
+  },
+  "statusModel": {
+    "idle": {
+      "meaning": "Node has not started for the current run.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "processing": {
+      "meaning": "Node is actively computing. Pulsating indicates processing, not waiting. Outgoing edges stay inactive until an output port receives a value.",
+      "edgeAnimationPolicy": {
+        "incoming": "active_if_signal_present",
+        "outgoing": "inactive"
+      }
+    },
+    "waiting": {
+      "meaning": "Node is waiting for an external callback/response. Previously consumed input edges must stop animating; outgoing edges remain inactive until output exists.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "success": {
+      "meaning": "Node completed successfully and emitted output values.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "error": {
+      "meaning": "Node failed and may emit error-specific outputs.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "skipped": {
+      "meaning": "Node execution was skipped by control flow or guard conditions.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    }
+  },
+  "runtimeSemantics": {
+    "executionKind": "synchronous",
+    "waitForResultSupported": false,
+    "wireActivationRules": {
+      "processing": "When node is processing, show node pulse only. Do not animate outgoing edges until an output port value is produced.",
+      "waiting": "When node is waiting for external response, keep both consumed incoming and future outgoing edges inactive.",
+      "completed": "Animate only edges carrying newly emitted outputs.",
+      "errored": "Animate only explicit error-route outputs (if connected)."
+    }
+  },
+  "configContract": {
+    "fields": [
+      {
+        "path": "parser.outputMode",
+        "description": "individual emits one port per mapping; bundle emits a single bundle output.",
+        "defaultValue": "individual"
+      },
+      {
+        "path": "parser.mappings",
+        "description": "Map output port name -> JSON path (relative to entityJson/context).",
+        "defaultValue": "{}"
+      },
+      {
+        "path": "parser.presetId",
+        "description": "Optional preset that seeds mappings and output options (keeps your parser consistent)."
+      },
+      {
+        "path": "runtime.cache.mode",
+        "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+        "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.waitForInputs",
+        "description": "If true, wait until all connected input ports have values before executing the node.",
+        "defaultValue": "false"
+      }
+    ]
+  },
+  "copyPaste": {
+    "minimalNode": {
+      "id": "node_parser_example",
+      "type": "parser",
+      "title": "JSON Parser",
+      "description": "Extract fields into outputs or a single bundle.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "entityJson",
+        "context"
+      ],
+      "outputs": [
+        "productId",
+        "title",
+        "images",
+        "content_en"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      }
+    },
+    "fullNode": {
+      "id": "node_parser_example",
+      "type": "parser",
+      "title": "JSON Parser",
+      "description": "Extract fields into outputs or a single bundle.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "entityJson",
+        "context"
+      ],
+      "outputs": [
+        "productId",
+        "title",
+        "images",
+        "content_en"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      },
+      "config": {
+        "parser": {
+          "outputMode": "individual",
+          "mappings": {}
+        },
+        "runtime": {
+          "cache": {
+            "mode": "auto"
+          },
+          "waitForInputs": false
+        }
+      }
+    },
+    "pathSnippet": {
+      "nodes": [
+        {
+          "id": "node_parser_example",
+          "type": "parser",
+          "title": "JSON Parser",
+          "description": "Extract fields into outputs or a single bundle.",
+          "position": {
+            "x": 100,
+            "y": 100
+          },
+          "inputs": [
+            "entityJson",
+            "context"
+          ],
+          "outputs": [
+            "productId",
+            "title",
+            "images",
+            "content_en"
+          ],
+          "data": {},
+          "connections": {
+            "incoming": [],
+            "outgoing": []
+          },
+          "config": {
+            "parser": {
+              "outputMode": "individual",
+              "mappings": {}
+            },
+            "runtime": {
+              "cache": {
+                "mode": "auto"
+              },
+              "waitForInputs": false
+            }
+          }
+        }
+      ],
+      "edges": []
+    }
+  },
+  "notes": [],
+  "source": {
+    "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/parser.json",
+    "semanticNodeHashAlgorithm": "sha256",
+    "semanticNodeHash": "40b4d56d51ee3d3433bbd68043b97490a57bed8beaf03406f62d0010a8993d1e"
+  },
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "2f2759fe97c34328d11fe1aad15d3ce879049b7f1cb6aff6bfad66bb69239902"
+}

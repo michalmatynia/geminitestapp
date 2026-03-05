@@ -243,6 +243,106 @@ describe('buildMongoUpdatePlan', () => {
     expect(toast).toHaveBeenCalled();
   });
 
+  it('falls back to sourcePath mappings when custom template guardrail fails', async () => {
+    const reportAiPathsError = vi.fn();
+    const toast = vi.fn();
+    const templateInputs = {
+      entityId: 'product-1',
+      value: {
+        description_pl: 'Opis',
+      },
+      result: {
+        parameters: [{ parameterId: 'param-1', value: 'Wartosc' }],
+      },
+    };
+    const result = await buildMongoUpdatePlan({
+      actionCategory: 'update',
+      action: 'updateOne',
+      node: {
+        id: 'node-db-update-translate-en-pl',
+        type: 'database',
+        title: 'Database Update',
+      } as AiNode,
+      prevOutputs: {},
+      reportAiPathsError,
+      toast,
+      resolvedInputs: {
+        entityId: 'product-1',
+        value: {
+          description_pl: 'Opis',
+        },
+        result: {
+          parameters: [{ parameterId: 'param-1', value: 'Wartosc' }],
+        },
+      },
+      nodeInputPorts: ['entityId', 'value', 'result'],
+      dbConfig: {
+        operation: 'update',
+        mode: 'replace',
+        updatePayloadMode: 'custom',
+        mappings: [
+          {
+            sourcePort: 'value',
+            sourcePath: 'description_pl',
+            targetPath: 'description_pl',
+          },
+          {
+            sourcePort: 'result',
+            sourcePath: 'parameters',
+            targetPath: 'parameters',
+          },
+        ],
+      } as unknown as DatabaseConfig,
+      queryConfig: {
+        provider: 'auto',
+        collection: 'products',
+        mode: 'custom',
+        preset: 'by_id',
+        field: 'id',
+        idType: 'string',
+        queryTemplate: '{"id":"{{entityId}}"}',
+        limit: 1,
+        sort: '',
+        projection: '',
+        single: true,
+      } as DbQueryConfig,
+      collection: 'products',
+      filter: { id: 'product-1' },
+      idType: 'string',
+      updateTemplate:
+        '{\n' +
+        '  "$set": {\n' +
+        '    "description_pl": "{{value.description_pl}}",\n' +
+        '    "parameters": {{bundle.parameters}}\n' +
+        '  }\n' +
+        '}',
+      templateInputs,
+      parseJsonTemplate: (template: string): unknown =>
+        parseJsonSafe(
+          renderJsonTemplate(template, templateInputs as Record<string, unknown>, templateInputs['value'])
+        ),
+      ensureExistingParameterTemplateContext: vi.fn(async () => {}),
+      aiPrompt: '',
+    });
+
+    expect('plan' in result).toBe(true);
+    if (!('plan' in result)) {
+      throw new Error('Expected recovered mapping plan.');
+    }
+    expect(result.plan.updates).toEqual({
+      description_pl: 'Opis',
+      parameters: [{ parameterId: 'param-1', value: 'Wartosc' }],
+    });
+    expect(result.plan.debugPayload['templateGuardrailFallback']).toEqual(
+      expect.objectContaining({
+        applied: true,
+        reason: 'write-template-values',
+      })
+    );
+    expect(reportAiPathsError).not.toHaveBeenCalled();
+    expect(toast).not.toHaveBeenCalled();
+  });
+
   it('returns explicit guardrail output when update template ports are missing', async () => {
     const reportAiPathsError = vi.fn();
     const toast = vi.fn();

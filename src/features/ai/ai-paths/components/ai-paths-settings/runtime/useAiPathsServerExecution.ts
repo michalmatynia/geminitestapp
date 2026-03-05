@@ -73,6 +73,43 @@ const parseSsePayload = (event: MessageEvent): unknown => {
   }
 };
 
+type ApiErrorMetadata = {
+  code: string | null;
+  category: string | null;
+  errorId: string | null;
+  fingerprint: string | null;
+  retryable: boolean;
+  retryAfterMs: number | null;
+  details: Record<string, unknown> | null;
+  suggestedActions: unknown[] | null;
+};
+
+const readApiErrorMetadata = (value: unknown): ApiErrorMetadata => {
+  if (!isObjectRecord(value)) {
+    return {
+      code: null,
+      category: null,
+      errorId: null,
+      fingerprint: null,
+      retryable: false,
+      retryAfterMs: null,
+      details: null,
+      suggestedActions: null,
+    };
+  }
+  const detailsRaw = value['details'];
+  return {
+    code: asString(value['code']),
+    category: asString(value['category']),
+    errorId: asString(value['errorId']),
+    fingerprint: asString(value['fingerprint']),
+    retryable: value['retryable'] === true,
+    retryAfterMs: asNumber(value['retryAfterMs']),
+    details: isObjectRecord(detailsRaw) ? detailsRaw : null,
+    suggestedActions: Array.isArray(value['suggestedActions']) ? value['suggestedActions'] : null,
+  };
+};
+
 const normalizeRuntimeEventLevel = (value: unknown): RuntimeEventLevel => {
   if (value === 'debug' || value === 'info' || value === 'warn' || value === 'error') {
     return value;
@@ -252,6 +289,14 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
         triggerLabel: args.activeTrigger ?? null,
         strictFlowMode: args.strictFlowMode !== false,
         blockedRunPolicy: args.blockedRunPolicy ?? 'fail_run',
+        preflightRuntimeHints: {
+          ...(Object.keys(args.parserSamples ?? {}).length > 0
+            ? { parserSamples: args.parserSamples }
+            : {}),
+          ...(Object.keys(args.updaterSamples ?? {}).length > 0
+            ? { updaterSamples: args.updaterSamples }
+            : {}),
+        },
         ...(args.aiPathsValidation ? { aiPathsValidation: args.aiPathsValidation } : {}),
       };
       const enqueuePayload = {
@@ -354,10 +399,14 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
         const enqueueResult = await enqueueAiPathRun(enqueuePayload);
 
         if (!enqueueResult.ok) {
+          const errorMetadata = readApiErrorMetadata(enqueueResult as unknown);
           const enqueueError =
             typeof enqueueResult.error === 'string' && enqueueResult.error.trim().length > 0
               ? enqueueResult.error
               : 'Failed to enqueue server run.';
+          const enqueueErrorWithCode = errorMetadata.code
+            ? `[${errorMetadata.code}] ${enqueueError}`
+            : enqueueError;
           const blocked =
             enqueueError.includes('Validation blocked run') ||
             enqueueError.includes('Graph compile failed') ||
@@ -367,7 +416,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             source: 'server',
             kind: 'run_failed',
             level: blocked ? 'warn' : 'error',
-            message: enqueueError,
+            message: enqueueErrorWithCode,
           });
           args.setNodeStatus({
             nodeId: triggerNode.id,
@@ -380,11 +429,25 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             message: blocked
               ? `Node ${triggerNode.title ?? triggerNode.id} blocked before enqueue.`
               : `Node ${triggerNode.title ?? triggerNode.id} failed to enqueue.`,
-            metadata: { error: enqueueError },
+            metadata: {
+              error: enqueueError,
+              ...(errorMetadata.code ? { errorCode: errorMetadata.code } : {}),
+              ...(errorMetadata.category ? { errorCategory: errorMetadata.category } : {}),
+              ...(errorMetadata.errorId ? { errorId: errorMetadata.errorId } : {}),
+              ...(errorMetadata.fingerprint ? { fingerprint: errorMetadata.fingerprint } : {}),
+              ...(errorMetadata.retryable ? { retryable: true } : {}),
+              ...(typeof errorMetadata.retryAfterMs === 'number'
+                ? { retryAfterMs: errorMetadata.retryAfterMs }
+                : {}),
+              ...(errorMetadata.details ? { details: errorMetadata.details } : {}),
+              ...(errorMetadata.suggestedActions
+                ? { suggestedActions: errorMetadata.suggestedActions }
+                : {}),
+            },
           });
           args.settleTransientNodeStatuses('failed', {}, { settleQueued: true });
           args.setRunStatus('idle');
-          args.toast(enqueueError, { variant: blocked ? 'warning' : 'error' });
+          args.toast(enqueueErrorWithCode, { variant: blocked ? 'warning' : 'error' });
           stopServerRunStream();
           return;
         }

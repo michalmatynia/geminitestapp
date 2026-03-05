@@ -34,6 +34,7 @@ import {
   normalizeRunDetail,
   normalizeRunEvents,
   normalizeRunNodes,
+  refreshRunDetailErrorSummary,
   type QueueHistoryEntry,
   type QueueStatus,
   type RunDetail,
@@ -685,7 +686,13 @@ export function JobQueueProvider({
           setRunDetails((prev) => {
             const current = prev[runId];
             if (!current) return prev;
-            return { ...prev, [runId]: { ...current, run: payload } };
+            return {
+              ...prev,
+              [runId]: refreshRunDetailErrorSummary({
+                ...current,
+                run: payload,
+              }),
+            };
           });
         } catch (error) {
           console.error('[JobQueueContext] Failed to parse run stream payload:', error);
@@ -699,7 +706,13 @@ export function JobQueueProvider({
           setRunDetails((prev) => {
             const current = prev[runId];
             if (!current) return prev;
-            return { ...prev, [runId]: { ...current, nodes: normalizeRunNodes(payload) } };
+            return {
+              ...prev,
+              [runId]: refreshRunDetailErrorSummary({
+                ...current,
+                nodes: normalizeRunNodes(payload),
+              }),
+            };
           });
         } catch (error) {
           console.error('[JobQueueContext] Failed to parse nodes stream payload:', error);
@@ -727,7 +740,13 @@ export function JobQueueProvider({
             merged.sort(
               (a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
             );
-            return { ...prev, [runId]: { ...current, events: merged } };
+            return {
+              ...prev,
+              [runId]: refreshRunDetailErrorSummary({
+                ...current,
+                events: merged,
+              }),
+            };
           });
         } catch (error) {
           console.error('[JobQueueContext] Failed to parse events stream payload:', error);

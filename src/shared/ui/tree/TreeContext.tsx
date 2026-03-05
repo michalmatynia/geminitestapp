@@ -22,7 +22,7 @@ export function TreeProvider({
   return <TreeContext.Provider value={value}>{children}</TreeContext.Provider>;
 }
 
-export function useTreeContext() {
+function useTreeContext() {
   return useContext(TreeContext);
 }
 

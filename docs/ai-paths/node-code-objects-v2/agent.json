@@ -1,0 +1,270 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v2",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "generatedAt": "2026-03-05T07:53:41.543Z",
+  "id": "node_obj_agent_portable_v2",
+  "nodeType": "agent",
+  "nodeDocVersion": "2026-02-20.v1",
+  "title": "Reasoning Agent",
+  "purpose": "Run a multi-step agent persona over the prompt.",
+  "nodeFamily": "ai-generation",
+  "portability": {
+    "copyPasteReady": true,
+    "requiresUniqueNodeId": true,
+    "compatibleEngines": [
+      "ai-paths.portable-engine.v1"
+    ]
+  },
+  "ports": {
+    "inputs": [
+      "prompt",
+      "bundle",
+      "context",
+      "entityJson",
+      "value",
+      "result",
+      "title",
+      "images",
+      "content_en",
+      "entityId",
+      "entityType",
+      "productId"
+    ],
+    "outputs": [
+      "result",
+      "jobId",
+      "status",
+      "bundle"
+    ]
+  },
+  "statusModel": {
+    "idle": {
+      "meaning": "Node has not started for the current run.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "processing": {
+      "meaning": "Node is actively computing. Pulsating indicates processing, not waiting. Outgoing edges stay inactive until an output port receives a value.",
+      "edgeAnimationPolicy": {
+        "incoming": "active_if_signal_present",
+        "outgoing": "inactive"
+      }
+    },
+    "waiting": {
+      "meaning": "Node is waiting for an external callback/response. Previously consumed input edges must stop animating; outgoing edges remain inactive until output exists.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "success": {
+      "meaning": "Node completed successfully and emitted output values.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "error": {
+      "meaning": "Node failed and may emit error-specific outputs.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "skipped": {
+      "meaning": "Node execution was skipped by control flow or guard conditions.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    }
+  },
+  "runtimeSemantics": {
+    "executionKind": "asynchronous",
+    "waitForResultSupported": true,
+    "wireActivationRules": {
+      "processing": "When node is processing, show node pulse only. Do not animate outgoing edges until an output port value is produced.",
+      "waiting": "When node is waiting for external response, keep both consumed incoming and future outgoing edges inactive.",
+      "completed": "Animate only edges carrying newly emitted outputs.",
+      "errored": "Animate only explicit error-route outputs (if connected)."
+    }
+  },
+  "configContract": {
+    "fields": [
+      {
+        "path": "agent.personaId",
+        "description": "Persona to use from Agent Creator. Empty means runtime defaults.",
+        "defaultValue": "\"\""
+      },
+      {
+        "path": "agent.promptTemplate",
+        "description": "Optional template to build the agent prompt from incoming ports.",
+        "defaultValue": "\"\""
+      },
+      {
+        "path": "agent.waitForResult",
+        "description": "When true, waits for completion and emits result. When false, emits jobId/status.",
+        "defaultValue": "true"
+      },
+      {
+        "path": "runtime.cache.mode",
+        "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+        "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.waitForInputs",
+        "description": "If true, wait until all connected input ports have values before executing the node.",
+        "defaultValue": "false"
+      }
+    ]
+  },
+  "copyPaste": {
+    "minimalNode": {
+      "id": "node_agent_example",
+      "type": "agent",
+      "title": "Reasoning Agent",
+      "description": "Run a multi-step agent persona over the prompt.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "prompt",
+        "bundle",
+        "context",
+        "entityJson",
+        "value",
+        "result",
+        "title",
+        "images",
+        "content_en",
+        "entityId",
+        "entityType",
+        "productId"
+      ],
+      "outputs": [
+        "result",
+        "jobId",
+        "status",
+        "bundle"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      }
+    },
+    "fullNode": {
+      "id": "node_agent_example",
+      "type": "agent",
+      "title": "Reasoning Agent",
+      "description": "Run a multi-step agent persona over the prompt.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "prompt",
+        "bundle",
+        "context",
+        "entityJson",
+        "value",
+        "result",
+        "title",
+        "images",
+        "content_en",
+        "entityId",
+        "entityType",
+        "productId"
+      ],
+      "outputs": [
+        "result",
+        "jobId",
+        "status",
+        "bundle"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      },
+      "config": {
+        "agent": {
+          "personaId": "",
+          "promptTemplate": "",
+          "waitForResult": true
+        },
+        "runtime": {
+          "cache": {
+            "mode": "auto"
+          },
+          "waitForInputs": false
+        }
+      }
+    },
+    "pathSnippet": {
+      "nodes": [
+        {
+          "id": "node_agent_example",
+          "type": "agent",
+          "title": "Reasoning Agent",
+          "description": "Run a multi-step agent persona over the prompt.",
+          "position": {
+            "x": 100,
+            "y": 100
+          },
+          "inputs": [
+            "prompt",
+            "bundle",
+            "context",
+            "entityJson",
+            "value",
+            "result",
+            "title",
+            "images",
+            "content_en",
+            "entityId",
+            "entityType",
+            "productId"
+          ],
+          "outputs": [
+            "result",
+            "jobId",
+            "status",
+            "bundle"
+          ],
+          "data": {},
+          "connections": {
+            "incoming": [],
+            "outgoing": []
+          },
+          "config": {
+            "agent": {
+              "personaId": "",
+              "promptTemplate": "",
+              "waitForResult": true
+            },
+            "runtime": {
+              "cache": {
+                "mode": "auto"
+              },
+              "waitForInputs": false
+            }
+          }
+        }
+      ],
+      "edges": []
+    }
+  },
+  "notes": [],
+  "source": {
+    "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/agent.json",
+    "semanticNodeHashAlgorithm": "sha256",
+    "semanticNodeHash": "c4f89d1364ac8557ddd3e33bb60df57e49c513d0c192fd39a0fc3eebdc8ef422"
+  },
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "bc105efa4ff8778f0e5a332ee94f26df71ac351f463953593eb37623fb371248"
+}

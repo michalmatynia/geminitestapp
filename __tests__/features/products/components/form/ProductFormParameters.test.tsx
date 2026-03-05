@@ -218,7 +218,6 @@ describe('ProductFormParameters multilingual values', () => {
 
     fireEvent.change(englishInput, { target: { value: 'Steel' } });
     expect(updateParameterValueByLanguage).toHaveBeenCalledWith(0, 'en', 'Steel');
-    expect(updateParameterValue).toHaveBeenCalledWith(0, 'Steel');
 
     fireEvent.click(screen.getByRole('tab', { name: 'Polish' }));
     const polishInput = screen.getByPlaceholderText('Value (Polish)');

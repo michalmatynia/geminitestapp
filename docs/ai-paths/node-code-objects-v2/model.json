@@ -1,0 +1,236 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v2",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "generatedAt": "2026-03-05T07:53:41.543Z",
+  "id": "node_obj_model_portable_v2",
+  "nodeType": "model",
+  "nodeDocVersion": "2026-02-20.v1",
+  "title": "Model",
+  "purpose": "Runs a selected model.",
+  "nodeFamily": "ai-generation",
+  "portability": {
+    "copyPasteReady": true,
+    "requiresUniqueNodeId": true,
+    "compatibleEngines": [
+      "ai-paths.portable-engine.v1"
+    ]
+  },
+  "ports": {
+    "inputs": [
+      "prompt",
+      "images"
+    ],
+    "outputs": [
+      "result",
+      "jobId"
+    ]
+  },
+  "statusModel": {
+    "idle": {
+      "meaning": "Node has not started for the current run.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "processing": {
+      "meaning": "Node is actively computing. Pulsating indicates processing, not waiting. Outgoing edges stay inactive until an output port receives a value.",
+      "edgeAnimationPolicy": {
+        "incoming": "active_if_signal_present",
+        "outgoing": "inactive"
+      }
+    },
+    "waiting": {
+      "meaning": "Node is waiting for an external callback/response. Previously consumed input edges must stop animating; outgoing edges remain inactive until output exists.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "success": {
+      "meaning": "Node completed successfully and emitted output values.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "error": {
+      "meaning": "Node failed and may emit error-specific outputs.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "skipped": {
+      "meaning": "Node execution was skipped by control flow or guard conditions.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    }
+  },
+  "runtimeSemantics": {
+    "executionKind": "asynchronous",
+    "waitForResultSupported": true,
+    "wireActivationRules": {
+      "processing": "When node is processing, show node pulse only. Do not animate outgoing edges until an output port value is produced.",
+      "waiting": "When node is waiting for external response, keep both consumed incoming and future outgoing edges inactive.",
+      "completed": "Animate only edges carrying newly emitted outputs.",
+      "errored": "Animate only explicit error-route outputs (if connected)."
+    }
+  },
+  "configContract": {
+    "fields": [
+      {
+        "path": "model.modelId",
+        "description": "Model identifier to run.",
+        "defaultValue": "gpt-4o"
+      },
+      {
+        "path": "model.temperature",
+        "description": "Sampling temperature (0-2).",
+        "defaultValue": "0.2"
+      },
+      {
+        "path": "model.maxTokens",
+        "description": "Maximum output tokens.",
+        "defaultValue": "2048"
+      },
+      {
+        "path": "model.vision",
+        "description": "When true, image URLs are included as vision inputs if connected.",
+        "defaultValue": "false"
+      },
+      {
+        "path": "model.waitForResult",
+        "description": "When true, node waits and emits result. When false, emits jobId/status immediately.",
+        "defaultValue": "true"
+      },
+      {
+        "path": "runtime.cache.mode",
+        "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+        "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.waitForInputs",
+        "description": "If true, wait until all connected input ports have values before executing the node.",
+        "defaultValue": "false"
+      }
+    ]
+  },
+  "copyPaste": {
+    "minimalNode": {
+      "id": "node_model_example",
+      "type": "model",
+      "title": "Model",
+      "description": "Runs a selected model.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "prompt",
+        "images"
+      ],
+      "outputs": [
+        "result",
+        "jobId"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      }
+    },
+    "fullNode": {
+      "id": "node_model_example",
+      "type": "model",
+      "title": "Model",
+      "description": "Runs a selected model.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "prompt",
+        "images"
+      ],
+      "outputs": [
+        "result",
+        "jobId"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      },
+      "config": {
+        "model": {
+          "modelId": "gpt-4o",
+          "temperature": 0.2,
+          "maxTokens": 2048,
+          "vision": false,
+          "waitForResult": true
+        },
+        "runtime": {
+          "cache": {
+            "mode": "auto"
+          },
+          "waitForInputs": false
+        }
+      }
+    },
+    "pathSnippet": {
+      "nodes": [
+        {
+          "id": "node_model_example",
+          "type": "model",
+          "title": "Model",
+          "description": "Runs a selected model.",
+          "position": {
+            "x": 100,
+            "y": 100
+          },
+          "inputs": [
+            "prompt",
+            "images"
+          ],
+          "outputs": [
+            "result",
+            "jobId"
+          ],
+          "data": {},
+          "connections": {
+            "incoming": [],
+            "outgoing": []
+          },
+          "config": {
+            "model": {
+              "modelId": "gpt-4o",
+              "temperature": 0.2,
+              "maxTokens": 2048,
+              "vision": false,
+              "waitForResult": true
+            },
+            "runtime": {
+              "cache": {
+                "mode": "auto"
+              },
+              "waitForInputs": false
+            }
+          }
+        }
+      ],
+      "edges": []
+    }
+  },
+  "notes": [],
+  "source": {
+    "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/model.json",
+    "semanticNodeHashAlgorithm": "sha256",
+    "semanticNodeHash": "10b82d8debfae435ca227a48b0bf661e1aca278188352ff6dfca2ba773ddb8a0"
+  },
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "8e8c6e4e4a5317a5aef3bb2ead73a0e39ad71fb09813c4fc569399474a31a724"
+}

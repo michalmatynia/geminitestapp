@@ -1,0 +1,227 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v2",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "generatedAt": "2026-03-05T07:53:41.543Z",
+  "id": "node_obj_iterator_portable_v2",
+  "nodeType": "iterator",
+  "nodeDocVersion": "2026-02-20.v1",
+  "title": "Iterator",
+  "purpose": "Iterate over an array and emit one item at a time (advance on callback).",
+  "nodeFamily": "orchestration",
+  "portability": {
+    "copyPasteReady": true,
+    "requiresUniqueNodeId": true,
+    "compatibleEngines": [
+      "ai-paths.portable-engine.v1"
+    ]
+  },
+  "ports": {
+    "inputs": [
+      "value",
+      "callback"
+    ],
+    "outputs": [
+      "value",
+      "index",
+      "total",
+      "done",
+      "status"
+    ]
+  },
+  "statusModel": {
+    "idle": {
+      "meaning": "Node has not started for the current run.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "processing": {
+      "meaning": "Node is actively computing. Pulsating indicates processing, not waiting. Outgoing edges stay inactive until an output port receives a value.",
+      "edgeAnimationPolicy": {
+        "incoming": "active_if_signal_present",
+        "outgoing": "inactive"
+      }
+    },
+    "waiting": {
+      "meaning": "Node is waiting for an external callback/response. Previously consumed input edges must stop animating; outgoing edges remain inactive until output exists.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "success": {
+      "meaning": "Node completed successfully and emitted output values.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "error": {
+      "meaning": "Node failed and may emit error-specific outputs.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "skipped": {
+      "meaning": "Node execution was skipped by control flow or guard conditions.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    }
+  },
+  "runtimeSemantics": {
+    "executionKind": "synchronous",
+    "waitForResultSupported": false,
+    "wireActivationRules": {
+      "processing": "When node is processing, show node pulse only. Do not animate outgoing edges until an output port value is produced.",
+      "waiting": "When node is waiting for external response, keep both consumed incoming and future outgoing edges inactive.",
+      "completed": "Animate only edges carrying newly emitted outputs.",
+      "errored": "Animate only explicit error-route outputs (if connected)."
+    }
+  },
+  "configContract": {
+    "fields": [
+      {
+        "path": "iterator.autoContinue",
+        "description": "If true, the runtime will automatically attempt to advance to the next item after a callback is received.",
+        "defaultValue": "true"
+      },
+      {
+        "path": "iterator.maxSteps",
+        "description": "Safety cap for automatic continuation steps per run/tick (prevents infinite loops).",
+        "defaultValue": "50"
+      },
+      {
+        "path": "runtime.cache.mode",
+        "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+        "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.waitForInputs",
+        "description": "If true, wait until all connected input ports have values before executing the node.",
+        "defaultValue": "false"
+      }
+    ]
+  },
+  "copyPaste": {
+    "minimalNode": {
+      "id": "node_iterator_example",
+      "type": "iterator",
+      "title": "Iterator",
+      "description": "Iterate over an array and emit one item at a time (advance on callback).",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "value",
+        "callback"
+      ],
+      "outputs": [
+        "value",
+        "index",
+        "total",
+        "done",
+        "status"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      }
+    },
+    "fullNode": {
+      "id": "node_iterator_example",
+      "type": "iterator",
+      "title": "Iterator",
+      "description": "Iterate over an array and emit one item at a time (advance on callback).",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "value",
+        "callback"
+      ],
+      "outputs": [
+        "value",
+        "index",
+        "total",
+        "done",
+        "status"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      },
+      "config": {
+        "iterator": {
+          "autoContinue": true,
+          "maxSteps": 50
+        },
+        "runtime": {
+          "cache": {
+            "mode": "auto"
+          },
+          "waitForInputs": false
+        }
+      }
+    },
+    "pathSnippet": {
+      "nodes": [
+        {
+          "id": "node_iterator_example",
+          "type": "iterator",
+          "title": "Iterator",
+          "description": "Iterate over an array and emit one item at a time (advance on callback).",
+          "position": {
+            "x": 100,
+            "y": 100
+          },
+          "inputs": [
+            "value",
+            "callback"
+          ],
+          "outputs": [
+            "value",
+            "index",
+            "total",
+            "done",
+            "status"
+          ],
+          "data": {},
+          "connections": {
+            "incoming": [],
+            "outgoing": []
+          },
+          "config": {
+            "iterator": {
+              "autoContinue": true,
+              "maxSteps": 50
+            },
+            "runtime": {
+              "cache": {
+                "mode": "auto"
+              },
+              "waitForInputs": false
+            }
+          }
+        }
+      ],
+      "edges": []
+    }
+  },
+  "notes": [],
+  "source": {
+    "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/iterator.json",
+    "semanticNodeHashAlgorithm": "sha256",
+    "semanticNodeHash": "5f7cf778405cc759dbde169b966b504eda46c86cefc9ea0fb2125bab01e74fdd"
+  },
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "477782c85c0bfe36e736fbee998ad9157fd7c85a4ab50e54fc4dc30326f0f290"
+}

@@ -18,7 +18,3 @@ export const useBindingsActions = (): BindingsActions => {
   if (!ctx) throw new Error('useBindingsActions must be used within BindingsProvider');
   return ctx;
 };
-
-export const useBindings = (): BindingsState & BindingsActions => {
-  return { ...useBindingsState(), ...useBindingsActions() };
-};

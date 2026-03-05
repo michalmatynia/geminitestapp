@@ -30,6 +30,74 @@ import {
 } from '@/shared/lib/ai-paths/core/utils/node-identity';
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 import { hashString, stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
+import {
+  beginPortablePathMigratorAttempt,
+  getPortablePathEnvelopeVerificationAuditSinkSnapshot,
+  getPortablePathEnvelopeVerificationObservabilitySnapshot,
+  getPortablePathMigratorObservabilitySnapshot,
+  getPortablePathSigningPolicyUsageSnapshot,
+  listPortablePathEnvelopeVerificationAuditSinkIds,
+  markPortablePathMigratorFailure,
+  markPortablePathMigratorRegistration,
+  markPortablePathMigratorSuccess,
+  markPortablePathMigratorUnregistration,
+  recordPortablePathEnvelopeVerificationEvent,
+  recordPortablePathMigratorSource,
+  recordPortablePathSigningPolicyUsage,
+  registerPortablePathEnvelopeVerificationAuditSink,
+  registerPortablePathEnvelopeVerificationObservabilityHook,
+  registerPortablePathMigratorObservabilityHook,
+  registerPortablePathSigningPolicyUsageHook,
+  resetPortablePathEnvelopeVerificationAuditSinkSnapshot,
+  resetPortablePathEnvelopeVerificationObservabilitySnapshot,
+  resetPortablePathMigratorObservabilitySnapshot,
+  resetPortablePathSigningPolicyUsageSnapshot,
+  unregisterPortablePathEnvelopeVerificationAuditSink,
+} from './portable-engine-observability';
+import type {
+  PortablePathEnvelopeVerificationOutcome,
+  PortablePathEnvelopeVerificationStatus,
+} from './portable-engine-observability';
+
+export {
+  getPortablePathEnvelopeVerificationAuditSinkSnapshot,
+  getPortablePathEnvelopeVerificationObservabilitySnapshot,
+  getPortablePathMigratorObservabilitySnapshot,
+  getPortablePathSigningPolicyUsageSnapshot,
+  listPortablePathEnvelopeVerificationAuditSinkIds,
+  registerPortablePathEnvelopeVerificationAuditSink,
+  registerPortablePathEnvelopeVerificationObservabilityHook,
+  registerPortablePathMigratorObservabilityHook,
+  registerPortablePathSigningPolicyUsageHook,
+  resetPortablePathEnvelopeVerificationAuditSinkSnapshot,
+  resetPortablePathEnvelopeVerificationObservabilitySnapshot,
+  resetPortablePathMigratorObservabilitySnapshot,
+  resetPortablePathSigningPolicyUsageSnapshot,
+  unregisterPortablePathEnvelopeVerificationAuditSink,
+};
+
+export type {
+  PortablePathEnvelopeVerificationAuditEvent,
+  PortablePathEnvelopeVerificationAuditSink,
+  PortablePathEnvelopeVerificationAuditSinkById,
+  PortablePathEnvelopeVerificationAuditSinkFailureTelemetry,
+  PortablePathEnvelopeVerificationAuditSinkSnapshot,
+  PortablePathEnvelopeVerificationObservabilityByKeyId,
+  PortablePathEnvelopeVerificationObservabilityHook,
+  PortablePathEnvelopeVerificationObservabilitySnapshot,
+  PortablePathEnvelopeVerificationOutcome,
+  PortablePathEnvelopeVerificationStatus,
+  PortablePathMigratorFailureReason,
+  PortablePathMigratorFailureTelemetry,
+  PortablePathMigratorObservabilityByVersion,
+  PortablePathMigratorObservabilityEvent,
+  PortablePathMigratorObservabilityHook,
+  PortablePathMigratorObservabilitySnapshot,
+  PortablePathSigningPolicyUsageByProfile,
+  PortablePathSigningPolicyUsageEvent,
+  PortablePathSigningPolicyUsageHook,
+  PortablePathSigningPolicyUsageSnapshot,
+} from './portable-engine-observability';
 
 export const AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION = 'ai-paths.portable-engine.v1' as const;
 
@@ -331,168 +399,6 @@ export type PortablePathPackageMigrator = (
   input: AiPathPortablePackageVersioned
 ) => PortablePathPackageMigrationResult;
 
-export type PortablePathMigratorFailureReason = 'missing_migrator' | 'migrator_error';
-
-export type PortablePathMigratorObservabilityByVersion = {
-  attempts: number;
-  successes: number;
-  failures: number;
-  lastError: string | null;
-  lastMigratedAt: string | null;
-};
-
-export type PortablePathMigratorFailureTelemetry = {
-  specVersion: string;
-  reason: PortablePathMigratorFailureReason;
-  error: string;
-  at: string;
-};
-
-export type PortablePathMigratorObservabilitySnapshot = {
-  totals: {
-    registrationCount: number;
-    unregistrationCount: number;
-    migrationAttempts: number;
-    migrationSuccesses: number;
-    migrationFailures: number;
-  };
-  sourceCounts: Record<PortablePathInputSource, number>;
-  bySpecVersion: Record<string, PortablePathMigratorObservabilityByVersion>;
-  recentFailures: PortablePathMigratorFailureTelemetry[];
-};
-
-export type PortablePathMigratorObservabilityEvent =
-  | { type: 'migrator_registered'; specVersion: string }
-  | { type: 'migrator_unregistered'; specVersion: string }
-  | { type: 'migration_succeeded'; specVersion: string; warningCount: number }
-  | {
-      type: 'migration_failed';
-      specVersion: string;
-      reason: PortablePathMigratorFailureReason;
-      error: string;
-    }
-  | { type: 'source_migrated'; source: PortablePathInputSource };
-
-export type PortablePathMigratorObservabilityHook = (
-  event: PortablePathMigratorObservabilityEvent,
-  snapshot: PortablePathMigratorObservabilitySnapshot
-) => void;
-
-export type PortablePathSigningPolicyUsageEvent = {
-  at: string;
-  profile: PortablePathSigningPolicyProfile;
-  surface: PortablePathSigningPolicySurface;
-  fingerprintVerificationMode: PortablePathFingerprintVerificationMode;
-  envelopeSignatureVerificationMode: PortablePathEnvelopeSignatureVerificationMode;
-};
-
-export type PortablePathSigningPolicyUsageByProfile = {
-  uses: number;
-  bySurface: Record<PortablePathSigningPolicySurface, number>;
-  fingerprintModeCounts: Record<PortablePathFingerprintVerificationMode, number>;
-  envelopeModeCounts: Record<PortablePathEnvelopeSignatureVerificationMode, number>;
-  lastUsedAt: string | null;
-  lastSurface: PortablePathSigningPolicySurface | null;
-};
-
-export type PortablePathSigningPolicyUsageSnapshot = {
-  totals: {
-    uses: number;
-  };
-  byProfile: Record<PortablePathSigningPolicyProfile, PortablePathSigningPolicyUsageByProfile>;
-  bySurface: Record<PortablePathSigningPolicySurface, number>;
-  recentEvents: PortablePathSigningPolicyUsageEvent[];
-};
-
-export type PortablePathSigningPolicyUsageHook = (
-  event: PortablePathSigningPolicyUsageEvent,
-  snapshot: PortablePathSigningPolicyUsageSnapshot
-) => void;
-
-export type PortablePathEnvelopeVerificationOutcome =
-  | 'signature_missing'
-  | 'key_missing'
-  | 'async_required'
-  | 'unsupported_algorithm'
-  | 'verification_unavailable'
-  | 'mismatch'
-  | 'verified';
-
-export type PortablePathEnvelopeVerificationStatus = 'verified' | 'warned' | 'rejected';
-
-export type PortablePathEnvelopeVerificationAuditEvent = {
-  at: string;
-  phase: 'sync' | 'async';
-  mode: PortablePathEnvelopeSignatureVerificationMode;
-  algorithm: string | null;
-  keyId: string | null;
-  candidateSecretCount: number;
-  matchedSecretIndex: number | null;
-  outcome: PortablePathEnvelopeVerificationOutcome;
-  status: PortablePathEnvelopeVerificationStatus;
-};
-
-export type PortablePathEnvelopeVerificationObservabilityByKeyId = {
-  events: number;
-  verified: number;
-  warned: number;
-  rejected: number;
-  lastOutcome: PortablePathEnvelopeVerificationOutcome | null;
-  lastSeenAt: string | null;
-  lastAlgorithm: string | null;
-};
-
-export type PortablePathEnvelopeVerificationObservabilitySnapshot = {
-  totals: {
-    events: number;
-    verified: number;
-    warned: number;
-    rejected: number;
-  };
-  byKeyId: Record<string, PortablePathEnvelopeVerificationObservabilityByKeyId>;
-  recentEvents: PortablePathEnvelopeVerificationAuditEvent[];
-};
-
-export type PortablePathEnvelopeVerificationObservabilityHook = (
-  event: PortablePathEnvelopeVerificationAuditEvent,
-  snapshot: PortablePathEnvelopeVerificationObservabilitySnapshot
-) => void;
-
-export type PortablePathEnvelopeVerificationAuditSink = {
-  id: string;
-  write: (
-    event: PortablePathEnvelopeVerificationAuditEvent,
-    snapshot: PortablePathEnvelopeVerificationObservabilitySnapshot
-  ) => void | Promise<void>;
-};
-
-export type PortablePathEnvelopeVerificationAuditSinkById = {
-  writesAttempted: number;
-  writesSucceeded: number;
-  writesFailed: number;
-  lastError: string | null;
-  lastWrittenAt: string | null;
-};
-
-export type PortablePathEnvelopeVerificationAuditSinkFailureTelemetry = {
-  sinkId: string;
-  error: string;
-  at: string;
-};
-
-export type PortablePathEnvelopeVerificationAuditSinkSnapshot = {
-  totals: {
-    registrationCount: number;
-    unregistrationCount: number;
-    writesAttempted: number;
-    writesSucceeded: number;
-    writesFailed: number;
-  };
-  registeredSinkIds: string[];
-  bySinkId: Record<string, PortablePathEnvelopeVerificationAuditSinkById>;
-  recentFailures: PortablePathEnvelopeVerificationAuditSinkFailureTelemetry[];
-};
-
 const UNSAFE_OBJECT_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
 
 const PORTABLE_PACKAGE_SPEC_V2 = 'ai-paths.portable-engine.v2' as const;
@@ -557,590 +463,6 @@ const BUILTIN_PORTABLE_PATH_MIGRATOR_VERSIONS = new Set<string>([
   PORTABLE_PACKAGE_SPEC_V2,
 ]);
 
-const MAX_PORTABLE_PATH_MIGRATOR_FAILURE_EVENTS = 25;
-const MAX_PORTABLE_PATH_SIGNING_POLICY_USAGE_EVENTS = 100;
-const MAX_PORTABLE_PATH_ENVELOPE_VERIFICATION_EVENTS = 100;
-const MAX_PORTABLE_PATH_ENVELOPE_VERIFICATION_SINK_FAILURE_EVENTS = 50;
-const PORTABLE_PATH_ENVELOPE_KEY_ID_UNSPECIFIED = '(none)';
-
-const createEmptyPortablePathSourceCounts = (): Record<PortablePathInputSource, number> => ({
-  portable_package: 0,
-  portable_envelope: 0,
-  semantic_canvas: 0,
-  path_config: 0,
-});
-
-const createEmptyPortablePathSigningPolicySurfaceCounts = (): Record<
-  PortablePathSigningPolicySurface,
-  number
-> => ({
-  canvas: 0,
-  product: 0,
-  api: 0,
-});
-
-const createEmptyPortablePathFingerprintVerificationModeCounts = (): Record<
-  PortablePathFingerprintVerificationMode,
-  number
-> => ({
-  off: 0,
-  warn: 0,
-  strict: 0,
-});
-
-const createEmptyPortablePathEnvelopeSignatureVerificationModeCounts = (): Record<
-  PortablePathEnvelopeSignatureVerificationMode,
-  number
-> => ({
-  off: 0,
-  warn: 0,
-  strict: 0,
-});
-
-const createEmptyPortablePathSigningPolicyByProfile = (): Record<
-  PortablePathSigningPolicyProfile,
-  PortablePathSigningPolicyUsageByProfile
-> => ({
-  dev: {
-    uses: 0,
-    bySurface: createEmptyPortablePathSigningPolicySurfaceCounts(),
-    fingerprintModeCounts: createEmptyPortablePathFingerprintVerificationModeCounts(),
-    envelopeModeCounts: createEmptyPortablePathEnvelopeSignatureVerificationModeCounts(),
-    lastUsedAt: null,
-    lastSurface: null,
-  },
-  staging: {
-    uses: 0,
-    bySurface: createEmptyPortablePathSigningPolicySurfaceCounts(),
-    fingerprintModeCounts: createEmptyPortablePathFingerprintVerificationModeCounts(),
-    envelopeModeCounts: createEmptyPortablePathEnvelopeSignatureVerificationModeCounts(),
-    lastUsedAt: null,
-    lastSurface: null,
-  },
-  prod: {
-    uses: 0,
-    bySurface: createEmptyPortablePathSigningPolicySurfaceCounts(),
-    fingerprintModeCounts: createEmptyPortablePathFingerprintVerificationModeCounts(),
-    envelopeModeCounts: createEmptyPortablePathEnvelopeSignatureVerificationModeCounts(),
-    lastUsedAt: null,
-    lastSurface: null,
-  },
-});
-
-const createEmptyPortablePathMigratorObservabilityState =
-  (): PortablePathMigratorObservabilitySnapshot => ({
-    totals: {
-      registrationCount: 0,
-      unregistrationCount: 0,
-      migrationAttempts: 0,
-      migrationSuccesses: 0,
-      migrationFailures: 0,
-    },
-    sourceCounts: createEmptyPortablePathSourceCounts(),
-    bySpecVersion: {},
-    recentFailures: [],
-  });
-
-let portablePathMigratorObservabilityState = createEmptyPortablePathMigratorObservabilityState();
-const portablePathMigratorObservabilityHooks = new Set<PortablePathMigratorObservabilityHook>();
-
-const clonePortablePathMigratorObservabilitySnapshot = (
-  snapshot: PortablePathMigratorObservabilitySnapshot
-): PortablePathMigratorObservabilitySnapshot => ({
-  totals: { ...snapshot.totals },
-  sourceCounts: { ...snapshot.sourceCounts },
-  bySpecVersion: Object.fromEntries(
-    Object.entries(snapshot.bySpecVersion).map(([specVersion, stats]) => [specVersion, { ...stats }])
-  ),
-  recentFailures: snapshot.recentFailures.map((failure) => ({ ...failure })),
-});
-
-const emitPortablePathMigratorObservabilityEvent = (
-  event: PortablePathMigratorObservabilityEvent
-): void => {
-  if (portablePathMigratorObservabilityHooks.size === 0) return;
-  const snapshot = clonePortablePathMigratorObservabilitySnapshot(portablePathMigratorObservabilityState);
-  for (const hook of portablePathMigratorObservabilityHooks) {
-    try {
-      hook(event, snapshot);
-    } catch {
-      // Observability hooks must not break migration flow.
-    }
-  }
-};
-
-const ensurePortablePathMigratorVersionStats = (
-  specVersion: string
-): PortablePathMigratorObservabilityByVersion => {
-  if (!portablePathMigratorObservabilityState.bySpecVersion[specVersion]) {
-    portablePathMigratorObservabilityState.bySpecVersion[specVersion] = {
-      attempts: 0,
-      successes: 0,
-      failures: 0,
-      lastError: null,
-      lastMigratedAt: null,
-    };
-  }
-  return portablePathMigratorObservabilityState.bySpecVersion[specVersion];
-};
-
-const recordPortablePathMigratorSource = (source: PortablePathInputSource): void => {
-  portablePathMigratorObservabilityState.sourceCounts[source] += 1;
-  emitPortablePathMigratorObservabilityEvent({
-    type: 'source_migrated',
-    source,
-  });
-};
-
-const recordPortablePathMigratorFailure = (
-  specVersion: string,
-  reason: PortablePathMigratorFailureReason,
-  error: string
-): void => {
-  portablePathMigratorObservabilityState.totals.migrationFailures += 1;
-  const stats = ensurePortablePathMigratorVersionStats(specVersion);
-  stats.failures += 1;
-  stats.lastError = error;
-  const telemetry: PortablePathMigratorFailureTelemetry = {
-    specVersion,
-    reason,
-    error,
-    at: new Date().toISOString(),
-  };
-  portablePathMigratorObservabilityState.recentFailures.push(telemetry);
-  if (portablePathMigratorObservabilityState.recentFailures.length > MAX_PORTABLE_PATH_MIGRATOR_FAILURE_EVENTS) {
-    portablePathMigratorObservabilityState.recentFailures.shift();
-  }
-  emitPortablePathMigratorObservabilityEvent({
-    type: 'migration_failed',
-    specVersion,
-    reason,
-    error,
-  });
-};
-
-export const registerPortablePathMigratorObservabilityHook = (
-  hook: PortablePathMigratorObservabilityHook
-): (() => void) => {
-  portablePathMigratorObservabilityHooks.add(hook);
-  return () => {
-    portablePathMigratorObservabilityHooks.delete(hook);
-  };
-};
-
-export const getPortablePathMigratorObservabilitySnapshot =
-  (): PortablePathMigratorObservabilitySnapshot =>
-    clonePortablePathMigratorObservabilitySnapshot(portablePathMigratorObservabilityState);
-
-export const resetPortablePathMigratorObservabilitySnapshot = (): void => {
-  portablePathMigratorObservabilityState = createEmptyPortablePathMigratorObservabilityState();
-};
-
-const createEmptyPortablePathSigningPolicyUsageState =
-  (): PortablePathSigningPolicyUsageSnapshot => ({
-    totals: {
-      uses: 0,
-    },
-    byProfile: createEmptyPortablePathSigningPolicyByProfile(),
-    bySurface: createEmptyPortablePathSigningPolicySurfaceCounts(),
-    recentEvents: [],
-  });
-
-let portablePathSigningPolicyUsageState = createEmptyPortablePathSigningPolicyUsageState();
-const portablePathSigningPolicyUsageHooks = new Set<PortablePathSigningPolicyUsageHook>();
-
-const clonePortablePathSigningPolicyUsageSnapshot = (
-  snapshot: PortablePathSigningPolicyUsageSnapshot
-): PortablePathSigningPolicyUsageSnapshot => ({
-  totals: { ...snapshot.totals },
-  byProfile: {
-    dev: {
-      ...snapshot.byProfile.dev,
-      bySurface: { ...snapshot.byProfile.dev.bySurface },
-      fingerprintModeCounts: { ...snapshot.byProfile.dev.fingerprintModeCounts },
-      envelopeModeCounts: { ...snapshot.byProfile.dev.envelopeModeCounts },
-    },
-    staging: {
-      ...snapshot.byProfile.staging,
-      bySurface: { ...snapshot.byProfile.staging.bySurface },
-      fingerprintModeCounts: { ...snapshot.byProfile.staging.fingerprintModeCounts },
-      envelopeModeCounts: { ...snapshot.byProfile.staging.envelopeModeCounts },
-    },
-    prod: {
-      ...snapshot.byProfile.prod,
-      bySurface: { ...snapshot.byProfile.prod.bySurface },
-      fingerprintModeCounts: { ...snapshot.byProfile.prod.fingerprintModeCounts },
-      envelopeModeCounts: { ...snapshot.byProfile.prod.envelopeModeCounts },
-    },
-  },
-  bySurface: { ...snapshot.bySurface },
-  recentEvents: snapshot.recentEvents.map((event) => ({ ...event })),
-});
-
-const emitPortablePathSigningPolicyUsageEvent = (
-  event: PortablePathSigningPolicyUsageEvent
-): void => {
-  if (portablePathSigningPolicyUsageHooks.size === 0) return;
-  const snapshot = clonePortablePathSigningPolicyUsageSnapshot(portablePathSigningPolicyUsageState);
-  for (const hook of portablePathSigningPolicyUsageHooks) {
-    try {
-      hook(event, snapshot);
-    } catch {
-      // Observability hooks must not break portable path resolution flow.
-    }
-  }
-};
-
-const recordPortablePathSigningPolicyUsage = (input: {
-  profile: PortablePathSigningPolicyProfile;
-  surface: PortablePathSigningPolicySurface;
-  fingerprintVerificationMode: PortablePathFingerprintVerificationMode;
-  envelopeSignatureVerificationMode: PortablePathEnvelopeSignatureVerificationMode;
-}): void => {
-  const event: PortablePathSigningPolicyUsageEvent = {
-    at: new Date().toISOString(),
-    profile: input.profile,
-    surface: input.surface,
-    fingerprintVerificationMode: input.fingerprintVerificationMode,
-    envelopeSignatureVerificationMode: input.envelopeSignatureVerificationMode,
-  };
-  portablePathSigningPolicyUsageState.totals.uses += 1;
-  portablePathSigningPolicyUsageState.bySurface[input.surface] += 1;
-  const profileStats = portablePathSigningPolicyUsageState.byProfile[input.profile];
-  profileStats.uses += 1;
-  profileStats.bySurface[input.surface] += 1;
-  profileStats.fingerprintModeCounts[input.fingerprintVerificationMode] += 1;
-  profileStats.envelopeModeCounts[input.envelopeSignatureVerificationMode] += 1;
-  profileStats.lastUsedAt = event.at;
-  profileStats.lastSurface = input.surface;
-  portablePathSigningPolicyUsageState.recentEvents.push(event);
-  if (portablePathSigningPolicyUsageState.recentEvents.length > MAX_PORTABLE_PATH_SIGNING_POLICY_USAGE_EVENTS) {
-    portablePathSigningPolicyUsageState.recentEvents.shift();
-  }
-  emitPortablePathSigningPolicyUsageEvent(event);
-};
-
-export const registerPortablePathSigningPolicyUsageHook = (
-  hook: PortablePathSigningPolicyUsageHook
-): (() => void) => {
-  portablePathSigningPolicyUsageHooks.add(hook);
-  return () => {
-    portablePathSigningPolicyUsageHooks.delete(hook);
-  };
-};
-
-export const getPortablePathSigningPolicyUsageSnapshot = (): PortablePathSigningPolicyUsageSnapshot =>
-  clonePortablePathSigningPolicyUsageSnapshot(portablePathSigningPolicyUsageState);
-
-export const resetPortablePathSigningPolicyUsageSnapshot = (): void => {
-  portablePathSigningPolicyUsageState = createEmptyPortablePathSigningPolicyUsageState();
-};
-
-const createEmptyPortablePathEnvelopeVerificationObservabilityState =
-  (): PortablePathEnvelopeVerificationObservabilitySnapshot => ({
-    totals: {
-      events: 0,
-      verified: 0,
-      warned: 0,
-      rejected: 0,
-    },
-    byKeyId: {},
-    recentEvents: [],
-  });
-
-let portablePathEnvelopeVerificationObservabilityState =
-  createEmptyPortablePathEnvelopeVerificationObservabilityState();
-const portablePathEnvelopeVerificationObservabilityHooks = new Set<
-  PortablePathEnvelopeVerificationObservabilityHook
->();
-
-const clonePortablePathEnvelopeVerificationObservabilitySnapshot = (
-  snapshot: PortablePathEnvelopeVerificationObservabilitySnapshot
-): PortablePathEnvelopeVerificationObservabilitySnapshot => ({
-  totals: { ...snapshot.totals },
-  byKeyId: Object.fromEntries(
-    Object.entries(snapshot.byKeyId).map(([keyId, stats]) => [keyId, { ...stats }])
-  ),
-  recentEvents: snapshot.recentEvents.map((event) => ({ ...event })),
-});
-
-const emitPortablePathEnvelopeVerificationObservabilityEvent = (
-  event: PortablePathEnvelopeVerificationAuditEvent
-): void => {
-  if (portablePathEnvelopeVerificationObservabilityHooks.size === 0) return;
-  const snapshot = clonePortablePathEnvelopeVerificationObservabilitySnapshot(
-    portablePathEnvelopeVerificationObservabilityState
-  );
-  for (const hook of portablePathEnvelopeVerificationObservabilityHooks) {
-    try {
-      hook(event, snapshot);
-    } catch {
-      // Observability hooks must not break verification flow.
-    }
-  }
-};
-
-const resolvePortablePathEnvelopeVerificationKeyIdBucket = (keyId: string | null): string => {
-  if (typeof keyId !== 'string') return PORTABLE_PATH_ENVELOPE_KEY_ID_UNSPECIFIED;
-  const normalized = keyId.trim();
-  return normalized.length > 0 ? normalized : PORTABLE_PATH_ENVELOPE_KEY_ID_UNSPECIFIED;
-};
-
-const ensurePortablePathEnvelopeVerificationByKeyId = (
-  keyId: string
-): PortablePathEnvelopeVerificationObservabilityByKeyId => {
-  if (!portablePathEnvelopeVerificationObservabilityState.byKeyId[keyId]) {
-    portablePathEnvelopeVerificationObservabilityState.byKeyId[keyId] = {
-      events: 0,
-      verified: 0,
-      warned: 0,
-      rejected: 0,
-      lastOutcome: null,
-      lastSeenAt: null,
-      lastAlgorithm: null,
-    };
-  }
-  return portablePathEnvelopeVerificationObservabilityState.byKeyId[keyId];
-};
-
-const recordPortablePathEnvelopeVerificationEvent = (
-  event: Omit<PortablePathEnvelopeVerificationAuditEvent, 'at'>
-): void => {
-  const finalizedEvent: PortablePathEnvelopeVerificationAuditEvent = {
-    ...event,
-    at: new Date().toISOString(),
-  };
-  portablePathEnvelopeVerificationObservabilityState.totals.events += 1;
-  switch (finalizedEvent.status) {
-    case 'verified':
-      portablePathEnvelopeVerificationObservabilityState.totals.verified += 1;
-      break;
-    case 'warned':
-      portablePathEnvelopeVerificationObservabilityState.totals.warned += 1;
-      break;
-    case 'rejected':
-      portablePathEnvelopeVerificationObservabilityState.totals.rejected += 1;
-      break;
-    default:
-      break;
-  }
-  const keyIdBucket = resolvePortablePathEnvelopeVerificationKeyIdBucket(finalizedEvent.keyId);
-  const byKeyIdStats = ensurePortablePathEnvelopeVerificationByKeyId(keyIdBucket);
-  byKeyIdStats.events += 1;
-  switch (finalizedEvent.status) {
-    case 'verified':
-      byKeyIdStats.verified += 1;
-      break;
-    case 'warned':
-      byKeyIdStats.warned += 1;
-      break;
-    case 'rejected':
-      byKeyIdStats.rejected += 1;
-      break;
-    default:
-      break;
-  }
-  byKeyIdStats.lastOutcome = finalizedEvent.outcome;
-  byKeyIdStats.lastSeenAt = finalizedEvent.at;
-  byKeyIdStats.lastAlgorithm = finalizedEvent.algorithm;
-
-  portablePathEnvelopeVerificationObservabilityState.recentEvents.push(finalizedEvent);
-  if (
-    portablePathEnvelopeVerificationObservabilityState.recentEvents.length >
-    MAX_PORTABLE_PATH_ENVELOPE_VERIFICATION_EVENTS
-  ) {
-    portablePathEnvelopeVerificationObservabilityState.recentEvents.shift();
-  }
-  emitPortablePathEnvelopeVerificationObservabilityEvent(finalizedEvent);
-  dispatchPortablePathEnvelopeVerificationAuditSinks(finalizedEvent);
-};
-
-export const registerPortablePathEnvelopeVerificationObservabilityHook = (
-  hook: PortablePathEnvelopeVerificationObservabilityHook
-): (() => void) => {
-  portablePathEnvelopeVerificationObservabilityHooks.add(hook);
-  return () => {
-    portablePathEnvelopeVerificationObservabilityHooks.delete(hook);
-  };
-};
-
-export const getPortablePathEnvelopeVerificationObservabilitySnapshot =
-  (): PortablePathEnvelopeVerificationObservabilitySnapshot =>
-    clonePortablePathEnvelopeVerificationObservabilitySnapshot(
-      portablePathEnvelopeVerificationObservabilityState
-    );
-
-export const resetPortablePathEnvelopeVerificationObservabilitySnapshot = (): void => {
-  portablePathEnvelopeVerificationObservabilityState =
-    createEmptyPortablePathEnvelopeVerificationObservabilityState();
-};
-
-const createEmptyPortablePathEnvelopeVerificationAuditSinkState =
-  (): PortablePathEnvelopeVerificationAuditSinkSnapshot => ({
-    totals: {
-      registrationCount: 0,
-      unregistrationCount: 0,
-      writesAttempted: 0,
-      writesSucceeded: 0,
-      writesFailed: 0,
-    },
-    registeredSinkIds: [],
-    bySinkId: {},
-    recentFailures: [],
-  });
-
-let portablePathEnvelopeVerificationAuditSinkState =
-  createEmptyPortablePathEnvelopeVerificationAuditSinkState();
-const portablePathEnvelopeVerificationAuditSinks = new Map<
-  string,
-  PortablePathEnvelopeVerificationAuditSink
->();
-
-const clonePortablePathEnvelopeVerificationAuditSinkSnapshot = (
-  snapshot: PortablePathEnvelopeVerificationAuditSinkSnapshot
-): PortablePathEnvelopeVerificationAuditSinkSnapshot => ({
-  totals: { ...snapshot.totals },
-  registeredSinkIds: [...snapshot.registeredSinkIds],
-  bySinkId: Object.fromEntries(
-    Object.entries(snapshot.bySinkId).map(([sinkId, stats]) => [sinkId, { ...stats }])
-  ),
-  recentFailures: snapshot.recentFailures.map((item) => ({ ...item })),
-});
-
-const ensurePortablePathEnvelopeVerificationAuditSinkById = (
-  sinkId: string
-): PortablePathEnvelopeVerificationAuditSinkById => {
-  if (!portablePathEnvelopeVerificationAuditSinkState.bySinkId[sinkId]) {
-    portablePathEnvelopeVerificationAuditSinkState.bySinkId[sinkId] = {
-      writesAttempted: 0,
-      writesSucceeded: 0,
-      writesFailed: 0,
-      lastError: null,
-      lastWrittenAt: null,
-    };
-  }
-  return portablePathEnvelopeVerificationAuditSinkState.bySinkId[sinkId];
-};
-
-const markPortablePathEnvelopeVerificationAuditSinkAttempt = (sinkId: string): void => {
-  portablePathEnvelopeVerificationAuditSinkState.totals.writesAttempted += 1;
-  const sink = ensurePortablePathEnvelopeVerificationAuditSinkById(sinkId);
-  sink.writesAttempted += 1;
-};
-
-const markPortablePathEnvelopeVerificationAuditSinkSuccess = (sinkId: string): void => {
-  portablePathEnvelopeVerificationAuditSinkState.totals.writesSucceeded += 1;
-  const sink = ensurePortablePathEnvelopeVerificationAuditSinkById(sinkId);
-  sink.writesSucceeded += 1;
-  sink.lastError = null;
-  sink.lastWrittenAt = new Date().toISOString();
-};
-
-const markPortablePathEnvelopeVerificationAuditSinkFailure = (
-  sinkId: string,
-  error: unknown
-): void => {
-  const message = error instanceof Error ? error.message : String(error);
-  portablePathEnvelopeVerificationAuditSinkState.totals.writesFailed += 1;
-  const sink = ensurePortablePathEnvelopeVerificationAuditSinkById(sinkId);
-  sink.writesFailed += 1;
-  sink.lastError = message;
-  sink.lastWrittenAt = new Date().toISOString();
-  portablePathEnvelopeVerificationAuditSinkState.recentFailures.push({
-    sinkId,
-    error: message,
-    at: new Date().toISOString(),
-  });
-  if (
-    portablePathEnvelopeVerificationAuditSinkState.recentFailures.length >
-    MAX_PORTABLE_PATH_ENVELOPE_VERIFICATION_SINK_FAILURE_EVENTS
-  ) {
-    portablePathEnvelopeVerificationAuditSinkState.recentFailures.shift();
-  }
-};
-
-const dispatchPortablePathEnvelopeVerificationAuditSinks = (
-  event: PortablePathEnvelopeVerificationAuditEvent
-): void => {
-  if (portablePathEnvelopeVerificationAuditSinks.size === 0) return;
-  const snapshot = clonePortablePathEnvelopeVerificationObservabilitySnapshot(
-    portablePathEnvelopeVerificationObservabilityState
-  );
-  for (const [sinkId, sink] of portablePathEnvelopeVerificationAuditSinks.entries()) {
-    markPortablePathEnvelopeVerificationAuditSinkAttempt(sinkId);
-    try {
-      const sinkResult = sink.write(event, snapshot);
-      Promise.resolve(sinkResult)
-        .then(() => {
-          markPortablePathEnvelopeVerificationAuditSinkSuccess(sinkId);
-        })
-        .catch((error: unknown) => {
-          markPortablePathEnvelopeVerificationAuditSinkFailure(sinkId, error);
-        });
-    } catch (error: unknown) {
-      markPortablePathEnvelopeVerificationAuditSinkFailure(sinkId, error);
-    }
-  }
-};
-
-export const registerPortablePathEnvelopeVerificationAuditSink = (
-  sink: PortablePathEnvelopeVerificationAuditSink
-): (() => void) => {
-  const sinkId = sink.id.trim();
-  if (sinkId.length === 0) {
-    throw new Error('Portable envelope verification audit sink id cannot be empty.');
-  }
-  if (portablePathEnvelopeVerificationAuditSinks.has(sinkId)) {
-    throw new Error(`Portable envelope verification audit sink "${sinkId}" is already registered.`);
-  }
-  portablePathEnvelopeVerificationAuditSinks.set(sinkId, {
-    ...sink,
-    id: sinkId,
-  });
-  portablePathEnvelopeVerificationAuditSinkState.totals.registrationCount += 1;
-  ensurePortablePathEnvelopeVerificationAuditSinkById(sinkId);
-  portablePathEnvelopeVerificationAuditSinkState.registeredSinkIds =
-    Array.from(portablePathEnvelopeVerificationAuditSinks.keys()).sort();
-  return () => {
-    unregisterPortablePathEnvelopeVerificationAuditSink(sinkId);
-  };
-};
-
-export const unregisterPortablePathEnvelopeVerificationAuditSink = (sinkId: string): boolean => {
-  const normalizedSinkId = sinkId.trim();
-  if (normalizedSinkId.length === 0) return false;
-  const deleted = portablePathEnvelopeVerificationAuditSinks.delete(normalizedSinkId);
-  if (deleted) {
-    portablePathEnvelopeVerificationAuditSinkState.totals.unregistrationCount += 1;
-    portablePathEnvelopeVerificationAuditSinkState.registeredSinkIds =
-      Array.from(portablePathEnvelopeVerificationAuditSinks.keys()).sort();
-  }
-  return deleted;
-};
-
-export const listPortablePathEnvelopeVerificationAuditSinkIds = (): string[] =>
-  Array.from(portablePathEnvelopeVerificationAuditSinks.keys()).sort();
-
-export const getPortablePathEnvelopeVerificationAuditSinkSnapshot =
-  (): PortablePathEnvelopeVerificationAuditSinkSnapshot =>
-    clonePortablePathEnvelopeVerificationAuditSinkSnapshot(
-      portablePathEnvelopeVerificationAuditSinkState
-    );
-
-export const resetPortablePathEnvelopeVerificationAuditSinkSnapshot = (
-  options?: { clearRegisteredSinks?: boolean }
-): void => {
-  const registeredSinkIds = options?.clearRegisteredSinks
-    ? []
-    : Array.from(portablePathEnvelopeVerificationAuditSinks.keys()).sort();
-  if (options?.clearRegisteredSinks) {
-    portablePathEnvelopeVerificationAuditSinks.clear();
-  }
-  portablePathEnvelopeVerificationAuditSinkState =
-    createEmptyPortablePathEnvelopeVerificationAuditSinkState();
-  portablePathEnvelopeVerificationAuditSinkState.registeredSinkIds = registeredSinkIds;
-};
-
 const normalizePortablePathMigratorSpecVersion = (specVersion: string): string => {
   const normalized = specVersion.trim();
   const parsed = portablePathPackageVersionedSpecVersionSchema.safeParse(normalized);
@@ -1156,12 +478,7 @@ export const registerPortablePathPackageMigrator = (
 ): void => {
   const normalizedVersion = normalizePortablePathMigratorSpecVersion(specVersion);
   portablePathPackageMigrationRegistry.set(normalizedVersion, migrator);
-  portablePathMigratorObservabilityState.totals.registrationCount += 1;
-  ensurePortablePathMigratorVersionStats(normalizedVersion);
-  emitPortablePathMigratorObservabilityEvent({
-    type: 'migrator_registered',
-    specVersion: normalizedVersion,
-  });
+  markPortablePathMigratorRegistration(normalizedVersion);
 };
 
 export const listPortablePathPackageMigratorVersions = (): string[] =>
@@ -1174,11 +491,7 @@ export const unregisterPortablePathPackageMigrator = (specVersion: string): bool
   }
   const deleted = portablePathPackageMigrationRegistry.delete(normalizedVersion);
   if (deleted) {
-    portablePathMigratorObservabilityState.totals.unregistrationCount += 1;
-    emitPortablePathMigratorObservabilityEvent({
-      type: 'migrator_unregistered',
-      specVersion: normalizedVersion,
-    });
+    markPortablePathMigratorUnregistration(normalizedVersion);
   }
   return deleted;
 };
@@ -1461,13 +774,11 @@ export const migratePortablePathInput = (
   const packageParsed = aiPathPortablePackageVersionedSchema.safeParse(input);
   if (packageParsed.success) {
     const specVersion = packageParsed.data.specVersion;
-    portablePathMigratorObservabilityState.totals.migrationAttempts += 1;
-    const versionStats = ensurePortablePathMigratorVersionStats(specVersion);
-    versionStats.attempts += 1;
+    beginPortablePathMigratorAttempt(specVersion);
     const migrator = portablePathPackageMigrationRegistry.get(specVersion);
     if (!migrator) {
       const error = `Unsupported portable package spec version "${specVersion}". Supported versions: ${listPortablePathPackageMigratorVersions().join(', ')}`;
-      recordPortablePathMigratorFailure(specVersion, 'missing_migrator', error);
+      markPortablePathMigratorFailure(specVersion, 'missing_migrator', error);
       return {
         ok: false,
         error,
@@ -1475,16 +786,12 @@ export const migratePortablePathInput = (
     }
     const migratedPackage = migrator(packageParsed.data);
     if (!migratedPackage.ok) {
-      recordPortablePathMigratorFailure(specVersion, 'migrator_error', migratedPackage.error);
+      markPortablePathMigratorFailure(specVersion, 'migrator_error', migratedPackage.error);
       return {
         ok: false,
         error: migratedPackage.error,
       };
     }
-    portablePathMigratorObservabilityState.totals.migrationSuccesses += 1;
-    versionStats.successes += 1;
-    versionStats.lastError = null;
-    versionStats.lastMigratedAt = new Date().toISOString();
 
     const migrationWarnings: PortablePathMigrationWarning[] = [
       ...migratedPackage.value.migrationWarnings,
@@ -1507,8 +814,7 @@ export const migratePortablePathInput = (
       });
     }
     recordPortablePathMigratorSource('portable_package');
-    emitPortablePathMigratorObservabilityEvent({
-      type: 'migration_succeeded',
+    markPortablePathMigratorSuccess({
       specVersion,
       warningCount: migrationWarnings.length,
     });

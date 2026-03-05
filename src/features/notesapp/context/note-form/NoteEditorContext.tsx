@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import { createContext } from 'react';
 import type { ThemeRecord } from '@/shared/contracts/notes';
 
 export interface NoteEditorData {
@@ -29,9 +29,3 @@ export interface NoteEditorData {
 }
 
 export const NoteEditorContext = createContext<NoteEditorData | null>(null);
-
-export function useNoteEditor(): NoteEditorData {
-  const context = useContext(NoteEditorContext);
-  if (!context) throw new Error('useNoteEditor must be used within NoteFormProvider');
-  return context;
-}

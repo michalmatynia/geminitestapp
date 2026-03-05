@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import { createContext } from 'react';
 import type { NoteFileRecord } from '@/shared/contracts/notes';
 
 export interface NoteFilesData {
@@ -31,9 +31,3 @@ export interface NoteFilesData {
 }
 
 export const NoteFilesContext = createContext<NoteFilesData | null>(null);
-
-export function useNoteFiles(): NoteFilesData {
-  const context = useContext(NoteFilesContext);
-  if (!context) throw new Error('useNoteFiles must be used within NoteFormProvider');
-  return context;
-}

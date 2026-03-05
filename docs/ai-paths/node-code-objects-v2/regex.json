@@ -1,0 +1,292 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v2",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "generatedAt": "2026-03-05T07:53:41.543Z",
+  "id": "node_obj_regex_portable_v2",
+  "nodeType": "regex",
+  "nodeDocVersion": "2026-02-20.v1",
+  "title": "Regex Grouper",
+  "purpose": "Group strings with regex or extract matched fragments.",
+  "nodeFamily": "transform",
+  "portability": {
+    "copyPasteReady": true,
+    "requiresUniqueNodeId": true,
+    "compatibleEngines": [
+      "ai-paths.portable-engine.v1"
+    ]
+  },
+  "ports": {
+    "inputs": [
+      "value",
+      "prompt",
+      "regexCallback"
+    ],
+    "outputs": [
+      "grouped",
+      "matches",
+      "value",
+      "aiPrompt"
+    ]
+  },
+  "statusModel": {
+    "idle": {
+      "meaning": "Node has not started for the current run.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "processing": {
+      "meaning": "Node is actively computing. Pulsating indicates processing, not waiting. Outgoing edges stay inactive until an output port receives a value.",
+      "edgeAnimationPolicy": {
+        "incoming": "active_if_signal_present",
+        "outgoing": "inactive"
+      }
+    },
+    "waiting": {
+      "meaning": "Node is waiting for an external callback/response. Previously consumed input edges must stop animating; outgoing edges remain inactive until output exists.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "success": {
+      "meaning": "Node completed successfully and emitted output values.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "error": {
+      "meaning": "Node failed and may emit error-specific outputs.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "skipped": {
+      "meaning": "Node execution was skipped by control flow or guard conditions.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    }
+  },
+  "runtimeSemantics": {
+    "executionKind": "synchronous",
+    "waitForResultSupported": false,
+    "wireActivationRules": {
+      "processing": "When node is processing, show node pulse only. Do not animate outgoing edges until an output port value is produced.",
+      "waiting": "When node is waiting for external response, keep both consumed incoming and future outgoing edges inactive.",
+      "completed": "Animate only edges carrying newly emitted outputs.",
+      "errored": "Animate only explicit error-route outputs (if connected)."
+    }
+  },
+  "configContract": {
+    "fields": [
+      {
+        "path": "regex.pattern",
+        "description": "JavaScript/ECMAScript regex pattern (without / delimiters).",
+        "defaultValue": "\"\""
+      },
+      {
+        "path": "regex.flags",
+        "description": "Regex flags string (example: g, i, m).",
+        "defaultValue": "\"g\""
+      },
+      {
+        "path": "regex.mode",
+        "description": "group = emit grouped matches; extract = emit selected capture on value output; extract_json = extract and parse JSON when possible.",
+        "defaultValue": "group"
+      },
+      {
+        "path": "regex.matchMode",
+        "description": "first = one match per input string; first_overall = stop after the first match across all inputs; all = all matches per input string.",
+        "defaultValue": "first"
+      },
+      {
+        "path": "regex.groupBy",
+        "description": "Selector used for grouping (group mode) or extraction (extract mode): match/0, capture index (1...), named group, groups, or captures.",
+        "defaultValue": "match"
+      },
+      {
+        "path": "regex.outputMode",
+        "description": "Grouped output mode: object (Record) or array (list of groups).",
+        "defaultValue": "object"
+      },
+      {
+        "path": "regex.includeUnmatched",
+        "description": "If true, inputs that do not match are emitted under unmatchedKey.",
+        "defaultValue": "true"
+      },
+      {
+        "path": "regex.unmatchedKey",
+        "description": "Group key label for unmatched values.",
+        "defaultValue": "\"__unmatched__\""
+      },
+      {
+        "path": "regex.splitLines",
+        "description": "If true, string inputs are split by newline into multiple items.",
+        "defaultValue": "true"
+      },
+      {
+        "path": "regex.sampleText",
+        "description": "Optional sample text used for preview / AI prompt rendering.",
+        "defaultValue": "\"\""
+      },
+      {
+        "path": "regex.aiPrompt",
+        "description": "Optional AI prompt template used to propose a regex.",
+        "defaultValue": "\"\""
+      },
+      {
+        "path": "runtime.cache.mode",
+        "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+        "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.waitForInputs",
+        "description": "If true, wait until all connected input ports have values before executing the node.",
+        "defaultValue": "false"
+      }
+    ]
+  },
+  "copyPaste": {
+    "minimalNode": {
+      "id": "node_regex_example",
+      "type": "regex",
+      "title": "Regex Grouper",
+      "description": "Group strings with regex or extract matched fragments.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "value",
+        "prompt",
+        "regexCallback"
+      ],
+      "outputs": [
+        "grouped",
+        "matches",
+        "value",
+        "aiPrompt"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      }
+    },
+    "fullNode": {
+      "id": "node_regex_example",
+      "type": "regex",
+      "title": "Regex Grouper",
+      "description": "Group strings with regex or extract matched fragments.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "value",
+        "prompt",
+        "regexCallback"
+      ],
+      "outputs": [
+        "grouped",
+        "matches",
+        "value",
+        "aiPrompt"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      },
+      "config": {
+        "regex": {
+          "pattern": "",
+          "flags": "g",
+          "mode": "group",
+          "matchMode": "first",
+          "groupBy": "match",
+          "outputMode": "object",
+          "includeUnmatched": true,
+          "unmatchedKey": "__unmatched__",
+          "splitLines": true,
+          "sampleText": "",
+          "aiPrompt": "You are a regex expert. Propose a JavaScript RegExp to group items in the input.\n\nReturn ONLY JSON:\n{\"pattern\":\"...\",\"flags\":\"...\",\"groupBy\":\"match|1|<namedGroup>\"}\n\nInput:\n{{text}}",
+          "aiAutoRun": false
+        },
+        "runtime": {
+          "cache": {
+            "mode": "auto"
+          },
+          "waitForInputs": false
+        }
+      }
+    },
+    "pathSnippet": {
+      "nodes": [
+        {
+          "id": "node_regex_example",
+          "type": "regex",
+          "title": "Regex Grouper",
+          "description": "Group strings with regex or extract matched fragments.",
+          "position": {
+            "x": 100,
+            "y": 100
+          },
+          "inputs": [
+            "value",
+            "prompt",
+            "regexCallback"
+          ],
+          "outputs": [
+            "grouped",
+            "matches",
+            "value",
+            "aiPrompt"
+          ],
+          "data": {},
+          "connections": {
+            "incoming": [],
+            "outgoing": []
+          },
+          "config": {
+            "regex": {
+              "pattern": "",
+              "flags": "g",
+              "mode": "group",
+              "matchMode": "first",
+              "groupBy": "match",
+              "outputMode": "object",
+              "includeUnmatched": true,
+              "unmatchedKey": "__unmatched__",
+              "splitLines": true,
+              "sampleText": "",
+              "aiPrompt": "You are a regex expert. Propose a JavaScript RegExp to group items in the input.\n\nReturn ONLY JSON:\n{\"pattern\":\"...\",\"flags\":\"...\",\"groupBy\":\"match|1|<namedGroup>\"}\n\nInput:\n{{text}}",
+              "aiAutoRun": false
+            },
+            "runtime": {
+              "cache": {
+                "mode": "auto"
+              },
+              "waitForInputs": false
+            }
+          }
+        }
+      ],
+      "edges": []
+    }
+  },
+  "notes": [],
+  "source": {
+    "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "semanticNodeHashAlgorithm": "sha256",
+    "semanticNodeHash": "d0583ae56728de97269462932f310e12dd01956d086b9e3447b8a285e93f544e"
+  },
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "0b2a71ad71f0a8074a6e84fd89338067f1e2935b3c84de8470de6521f5e617e8"
+}

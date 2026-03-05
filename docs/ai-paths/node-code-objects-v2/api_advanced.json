@@ -1,0 +1,363 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v2",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "generatedAt": "2026-03-05T07:53:41.543Z",
+  "id": "node_obj_api_advanced_portable_v2",
+  "nodeType": "api_advanced",
+  "nodeDocVersion": "2026-02-20.v1",
+  "title": "API Operation (Advanced)",
+  "purpose": "Advanced API node with auth, retries, pagination, and error routing.",
+  "nodeFamily": "integration",
+  "portability": {
+    "copyPasteReady": true,
+    "requiresUniqueNodeId": true,
+    "compatibleEngines": [
+      "ai-paths.portable-engine.v1"
+    ]
+  },
+  "ports": {
+    "inputs": [
+      "context",
+      "bundle",
+      "prompt",
+      "result",
+      "value",
+      "entityId",
+      "entityType",
+      "cursor",
+      "page"
+    ],
+    "outputs": [
+      "value",
+      "bundle",
+      "status",
+      "headers",
+      "items",
+      "route",
+      "error",
+      "success"
+    ]
+  },
+  "statusModel": {
+    "idle": {
+      "meaning": "Node has not started for the current run.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "processing": {
+      "meaning": "Node is actively computing. Pulsating indicates processing, not waiting. Outgoing edges stay inactive until an output port receives a value.",
+      "edgeAnimationPolicy": {
+        "incoming": "active_if_signal_present",
+        "outgoing": "inactive"
+      }
+    },
+    "waiting": {
+      "meaning": "Node is waiting for an external callback/response. Previously consumed input edges must stop animating; outgoing edges remain inactive until output exists.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "success": {
+      "meaning": "Node completed successfully and emitted output values.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "error": {
+      "meaning": "Node failed and may emit error-specific outputs.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "skipped": {
+      "meaning": "Node execution was skipped by control flow or guard conditions.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    }
+  },
+  "runtimeSemantics": {
+    "executionKind": "asynchronous",
+    "waitForResultSupported": true,
+    "wireActivationRules": {
+      "processing": "When node is processing, show node pulse only. Do not animate outgoing edges until an output port value is produced.",
+      "waiting": "When node is waiting for external response, keep both consumed incoming and future outgoing edges inactive.",
+      "completed": "Animate only edges carrying newly emitted outputs.",
+      "errored": "Animate only explicit error-route outputs (if connected)."
+    }
+  },
+  "configContract": {
+    "fields": [
+      {
+        "path": "apiAdvanced.url",
+        "description": "Request URL template.",
+        "defaultValue": "\"\""
+      },
+      {
+        "path": "apiAdvanced.method",
+        "description": "HTTP method including advanced methods (HEAD/OPTIONS).",
+        "defaultValue": "GET"
+      },
+      {
+        "path": "apiAdvanced.pathParamsJson",
+        "description": "JSON object for explicit path parameter substitution before request execution.",
+        "defaultValue": "{}"
+      },
+      {
+        "path": "apiAdvanced.queryParamsJson",
+        "description": "JSON object for explicit query parameters. Values can include templates.",
+        "defaultValue": "{}"
+      },
+      {
+        "path": "apiAdvanced.headersJson",
+        "description": "JSON object for request headers.",
+        "defaultValue": "{}"
+      },
+      {
+        "path": "apiAdvanced.authMode",
+        "description": "none/api_key/bearer/basic/oauth2_client_credentials/connection auth strategy.",
+        "defaultValue": "none"
+      },
+      {
+        "path": "apiAdvanced.responseMode",
+        "description": "How to interpret response payload: json/text/status.",
+        "defaultValue": "json"
+      },
+      {
+        "path": "apiAdvanced.responsePath",
+        "description": "Optional JSON path selection from parsed response payload.",
+        "defaultValue": "\"\""
+      },
+      {
+        "path": "apiAdvanced.outputMappingsJson",
+        "description": "JSON object mapping output port -> JSON path in response envelope.",
+        "defaultValue": "{}"
+      },
+      {
+        "path": "apiAdvanced.retryEnabled",
+        "description": "Enable/disable retry behavior.",
+        "defaultValue": "true"
+      },
+      {
+        "path": "apiAdvanced.retryAttempts",
+        "description": "Maximum attempts including first request.",
+        "defaultValue": "2"
+      },
+      {
+        "path": "apiAdvanced.retryOnStatusJson",
+        "description": "JSON array of status codes that should be retried when retries are enabled.",
+        "defaultValue": "[429,500,502,503,504]"
+      },
+      {
+        "path": "apiAdvanced.paginationMode",
+        "description": "none/page/cursor/link pagination strategy.",
+        "defaultValue": "none"
+      },
+      {
+        "path": "apiAdvanced.errorRoutesJson",
+        "description": "JSON array of explicit error route matchers and target output ports.",
+        "defaultValue": "[]"
+      },
+      {
+        "path": "runtime.cache.mode",
+        "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+        "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.waitForInputs",
+        "description": "If true, wait until all connected input ports have values before executing the node.",
+        "defaultValue": "false"
+      }
+    ]
+  },
+  "copyPaste": {
+    "minimalNode": {
+      "id": "node_api_advanced_example",
+      "type": "api_advanced",
+      "title": "API Operation (Advanced)",
+      "description": "Advanced API node with auth, retries, pagination, and error routing.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "context",
+        "bundle",
+        "prompt",
+        "result",
+        "value",
+        "entityId",
+        "entityType",
+        "cursor",
+        "page"
+      ],
+      "outputs": [
+        "value",
+        "bundle",
+        "status",
+        "headers",
+        "items",
+        "route",
+        "error",
+        "success"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      }
+    },
+    "fullNode": {
+      "id": "node_api_advanced_example",
+      "type": "api_advanced",
+      "title": "API Operation (Advanced)",
+      "description": "Advanced API node with auth, retries, pagination, and error routing.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "context",
+        "bundle",
+        "prompt",
+        "result",
+        "value",
+        "entityId",
+        "entityType",
+        "cursor",
+        "page"
+      ],
+      "outputs": [
+        "value",
+        "bundle",
+        "status",
+        "headers",
+        "items",
+        "route",
+        "error",
+        "success"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      },
+      "config": {
+        "apiAdvanced": {
+          "url": "",
+          "method": "GET",
+          "pathParamsJson": {},
+          "queryParamsJson": {},
+          "headersJson": {},
+          "authMode": "none",
+          "responseMode": "json",
+          "responsePath": "",
+          "outputMappingsJson": {},
+          "retryEnabled": true,
+          "retryAttempts": 2,
+          "retryOnStatusJson": [
+            429,
+            500,
+            502,
+            503,
+            504
+          ],
+          "paginationMode": "none",
+          "errorRoutesJson": []
+        },
+        "runtime": {
+          "cache": {
+            "mode": "auto"
+          },
+          "waitForInputs": false
+        }
+      }
+    },
+    "pathSnippet": {
+      "nodes": [
+        {
+          "id": "node_api_advanced_example",
+          "type": "api_advanced",
+          "title": "API Operation (Advanced)",
+          "description": "Advanced API node with auth, retries, pagination, and error routing.",
+          "position": {
+            "x": 100,
+            "y": 100
+          },
+          "inputs": [
+            "context",
+            "bundle",
+            "prompt",
+            "result",
+            "value",
+            "entityId",
+            "entityType",
+            "cursor",
+            "page"
+          ],
+          "outputs": [
+            "value",
+            "bundle",
+            "status",
+            "headers",
+            "items",
+            "route",
+            "error",
+            "success"
+          ],
+          "data": {},
+          "connections": {
+            "incoming": [],
+            "outgoing": []
+          },
+          "config": {
+            "apiAdvanced": {
+              "url": "",
+              "method": "GET",
+              "pathParamsJson": {},
+              "queryParamsJson": {},
+              "headersJson": {},
+              "authMode": "none",
+              "responseMode": "json",
+              "responsePath": "",
+              "outputMappingsJson": {},
+              "retryEnabled": true,
+              "retryAttempts": 2,
+              "retryOnStatusJson": [
+                429,
+                500,
+                502,
+                503,
+                504
+              ],
+              "paginationMode": "none",
+              "errorRoutesJson": []
+            },
+            "runtime": {
+              "cache": {
+                "mode": "auto"
+              },
+              "waitForInputs": false
+            }
+          }
+        }
+      ],
+      "edges": []
+    }
+  },
+  "notes": [],
+  "source": {
+    "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "semanticNodeHashAlgorithm": "sha256",
+    "semanticNodeHash": "69f3bde2c13c1b27ec39583ca125716647c33685897bc8ead8c5f2879a15178f"
+  },
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "1346aa9f81ff2b19b8ac0d9fe651d7ebc9c8629cc62fb1159f9c114100762896"
+}

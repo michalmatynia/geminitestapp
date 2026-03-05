@@ -169,6 +169,8 @@ export const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT
   'PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_SECRET';
 export const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_KEY_ID_ENV =
   'PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_KEY_ID';
+export const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_REDACTION_MODE_ENV =
+  'PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_REDACTION_MODE';
 export const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_ALERT_TYPE =
   'portable_audit_sink_auto_remediation_dead_letter_replay';
 export const PORTABLE_PATH_SIGNING_POLICY_TREND_KIND =
@@ -186,6 +188,10 @@ export const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_SETTINGS_KEY 
 export const PORTABLE_PATH_SIGNING_POLICY_ALERT_LEVELS = ['off', 'warn', 'error'] as const;
 export type PortablePathSigningPolicyAlertLevel =
   (typeof PORTABLE_PATH_SIGNING_POLICY_ALERT_LEVELS)[number];
+export const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_REDACTION_MODES =
+  ['off', 'sensitive'] as const;
+export type PortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode =
+  (typeof PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_REDACTION_MODES)[number];
 
 type PortablePathEnvelopeVerificationSinkLevel = 'info' | 'warn' | 'error';
 
@@ -572,8 +578,7 @@ export const createPortablePathEnvelopeVerificationMongoSink = (
   options: CreatePortablePathEnvelopeVerificationMongoSinkOptions = {}
 ): PortablePathEnvelopeVerificationAuditSinkWithHealthCheck => {
   const sinkId = options.id ?? 'portable-envelope-verification-mongo';
-  const getDb =
-    options.getDb ?? (async () => (await getMongoDb()) as unknown as MongoDbLike);
+  const getDb = options.getDb ?? (async () => (await getMongoDb()) as MongoDbLike);
   const collectionName =
     options.collectionName ??
     PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_MONGO_COLLECTION;
@@ -830,14 +835,14 @@ const DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES 
 const DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_LIMIT = 20;
 const DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_WINDOW_SECONDS =
   7 * 24 * 60 * 60;
-const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_STRATEGIES = [
+const _PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_STRATEGIES = [
   'none',
   'unregister_all',
   'degrade_to_log_only',
 ] as const;
 
 export type PortablePathAuditSinkAutoRemediationStrategy =
-  (typeof PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_STRATEGIES)[number];
+  (typeof _PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_STRATEGIES)[number];
 
 const resolvePortablePathSigningPolicyTrendPersistenceMaxSnapshots = (
   value: number | null | undefined
@@ -1296,6 +1301,43 @@ export const resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportKe
       PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_KEY_ID_ENV
     ]
   ): string | null => parseOptionalSecretFromEnvironment(value);
+
+const resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode = (
+  value: string | undefined | null
+): PortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode | null => {
+  const normalized = String(value ?? '')
+    .trim()
+    .toLowerCase();
+  if (
+    normalized === 'off' ||
+    normalized === '0' ||
+    normalized === 'false'
+  ) {
+    return 'off';
+  }
+  if (
+    normalized === 'sensitive' ||
+    normalized === 'on' ||
+    normalized === '1' ||
+    normalized === 'true' ||
+    normalized === 'low_trust' ||
+    normalized === 'low-trust' ||
+    normalized === 'lower_trust' ||
+    normalized === 'lower-trust'
+  ) {
+    return 'sensitive';
+  }
+  return null;
+};
+
+export const resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionModeFromEnvironment =
+  (
+    value =
+    process.env[
+      PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_REDACTION_MODE_ENV
+    ]
+  ): PortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode | null =>
+    resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode(value);
 
 export const resolvePortablePathSigningPolicyTrendPersistenceMaxSnapshotsFromEnvironment = (
   value = process.env[PORTABLE_PATH_SIGNING_POLICY_TREND_PERSISTENCE_MAX_SNAPSHOTS_ENV]

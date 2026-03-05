@@ -33,22 +33,6 @@ export function SettingsFormProvider({
   );
 }
 
-export function useSettingsFormState(): SettingsFormStateContextValue {
-  const context = useContext(SettingsFormStateContext);
-  if (!context) {
-    throw new Error('useSettingsFormState must be used within a SettingsFormProvider');
-  }
-  return context;
-}
-
-export function useSettingsFormActions(): SettingsFormActionsContextValue {
-  const context = useContext(SettingsFormActionsContext);
-  if (!context) {
-    throw new Error('useSettingsFormActions must be used within a SettingsFormProvider');
-  }
-  return context;
-}
-
 export function useOptionalSettingsFormState(): SettingsFormStateContextValue | null {
   return useContext(SettingsFormStateContext);
 }

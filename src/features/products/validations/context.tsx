@@ -1,8 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
-
-import { internalError } from '@/shared/errors/app-error';
+import React, { createContext, useReducer, type ReactNode } from 'react';
 
 import type { ValidationError } from '@/shared/lib/products/validations/validators';
 
@@ -64,32 +62,4 @@ export function ValidationProvider({ children }: { children: ReactNode }): React
   return (
     <ValidationContext.Provider value={{ state, dispatch }}>{children}</ValidationContext.Provider>
   );
-}
-
-export function useValidationContext(): ValidationContextState & {
-  setGlobalErrors: (errors: ValidationError[]) => void;
-  setFieldValidation: (field: string, isValid: boolean, message?: string) => void;
-  clearFieldValidation: (field: string) => void;
-  setValidating: (isValidating: boolean) => void;
-  reset: () => void;
-  } {
-  const context = useContext(ValidationContext);
-  if (!context) {
-    throw internalError('useValidationContext must be used within ValidationProvider');
-  }
-
-  const { state, dispatch } = context;
-
-  return {
-    ...state,
-    setGlobalErrors: (errors: ValidationError[]): void =>
-      dispatch({ type: 'SET_GLOBAL_ERRORS', errors }),
-    setFieldValidation: (field: string, isValid: boolean, message?: string): void =>
-      dispatch({ type: 'SET_FIELD_VALIDATION', field, isValid, message }),
-    clearFieldValidation: (field: string): void =>
-      dispatch({ type: 'CLEAR_FIELD_VALIDATION', field }),
-    setValidating: (isValidating: boolean): void =>
-      dispatch({ type: 'SET_VALIDATING', isValidating }),
-    reset: (): void => dispatch({ type: 'RESET' }),
-  };
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useCallback, useEffect, useMemo, useState, useContext } from 'react';
+import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
 import { useToast } from '@/shared/ui';
@@ -542,13 +542,6 @@ export function SegmentEditorProvider({
       </SegmentEditorStateContext.Provider>
     </PatternsContext.Provider>
   );
-}
-
-export function useSegmentEditorPatterns(): SegmentEditorPatternsState {
-  const context = useContext(PatternsContext);
-  if (!context)
-    throw new Error('useSegmentEditorPatterns must be used within SegmentEditorProvider');
-  return context;
 }
 
 export { SegmentEditorStateContext, SegmentEditorActionsContext };

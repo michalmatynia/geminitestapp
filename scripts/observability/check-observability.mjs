@@ -451,8 +451,12 @@ const collectLegacyCompatibilityViolations = (root, srcDir) => {
 
     const legacyImportPatterns = [
       {
-        regex: /@\/features\/observability\/public/g,
+        regex: /@\/features\/observability(?=['"])/g,
         message: 'legacy import "@/features/observability" is not allowed',
+      },
+      {
+        regex: /@\/features\/observability\/public/g,
+        message: 'legacy import "@/features/observability/public" is not allowed',
       },
       {
         regex: /@\/features\/observability\/server/g,

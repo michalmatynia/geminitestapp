@@ -1,0 +1,197 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v2",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "generatedAt": "2026-03-05T07:53:41.543Z",
+  "id": "node_obj_mutator_portable_v2",
+  "nodeType": "mutator",
+  "nodeDocVersion": "2026-02-20.v1",
+  "title": "Mutator",
+  "purpose": "Mutate context values with templates.",
+  "nodeFamily": "transform",
+  "portability": {
+    "copyPasteReady": true,
+    "requiresUniqueNodeId": true,
+    "compatibleEngines": [
+      "ai-paths.portable-engine.v1"
+    ]
+  },
+  "ports": {
+    "inputs": [
+      "context"
+    ],
+    "outputs": [
+      "context"
+    ]
+  },
+  "statusModel": {
+    "idle": {
+      "meaning": "Node has not started for the current run.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "processing": {
+      "meaning": "Node is actively computing. Pulsating indicates processing, not waiting. Outgoing edges stay inactive until an output port receives a value.",
+      "edgeAnimationPolicy": {
+        "incoming": "active_if_signal_present",
+        "outgoing": "inactive"
+      }
+    },
+    "waiting": {
+      "meaning": "Node is waiting for an external callback/response. Previously consumed input edges must stop animating; outgoing edges remain inactive until output exists.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "success": {
+      "meaning": "Node completed successfully and emitted output values.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "error": {
+      "meaning": "Node failed and may emit error-specific outputs.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "skipped": {
+      "meaning": "Node execution was skipped by control flow or guard conditions.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    }
+  },
+  "runtimeSemantics": {
+    "executionKind": "synchronous",
+    "waitForResultSupported": false,
+    "wireActivationRules": {
+      "processing": "When node is processing, show node pulse only. Do not animate outgoing edges until an output port value is produced.",
+      "waiting": "When node is waiting for external response, keep both consumed incoming and future outgoing edges inactive.",
+      "completed": "Animate only edges carrying newly emitted outputs.",
+      "errored": "Animate only explicit error-route outputs (if connected)."
+    }
+  },
+  "configContract": {
+    "fields": [
+      {
+        "path": "mutator.path",
+        "description": "JSON path to write to (example: 'meta.flags.needsReview')."
+      },
+      {
+        "path": "mutator.valueTemplate",
+        "description": "Template used to compute the value written at `path` (supports {{placeholders}})."
+      },
+      {
+        "path": "runtime.cache.mode",
+        "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+        "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.waitForInputs",
+        "description": "If true, wait until all connected input ports have values before executing the node.",
+        "defaultValue": "false"
+      }
+    ]
+  },
+  "copyPaste": {
+    "minimalNode": {
+      "id": "node_mutator_example",
+      "type": "mutator",
+      "title": "Mutator",
+      "description": "Mutate context values with templates.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "context"
+      ],
+      "outputs": [
+        "context"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      }
+    },
+    "fullNode": {
+      "id": "node_mutator_example",
+      "type": "mutator",
+      "title": "Mutator",
+      "description": "Mutate context values with templates.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "context"
+      ],
+      "outputs": [
+        "context"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      },
+      "config": {
+        "runtime": {
+          "cache": {
+            "mode": "auto"
+          },
+          "waitForInputs": false
+        }
+      }
+    },
+    "pathSnippet": {
+      "nodes": [
+        {
+          "id": "node_mutator_example",
+          "type": "mutator",
+          "title": "Mutator",
+          "description": "Mutate context values with templates.",
+          "position": {
+            "x": 100,
+            "y": 100
+          },
+          "inputs": [
+            "context"
+          ],
+          "outputs": [
+            "context"
+          ],
+          "data": {},
+          "connections": {
+            "incoming": [],
+            "outgoing": []
+          },
+          "config": {
+            "runtime": {
+              "cache": {
+                "mode": "auto"
+              },
+              "waitForInputs": false
+            }
+          }
+        }
+      ],
+      "edges": []
+    }
+  },
+  "notes": [],
+  "source": {
+    "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/mutator.json",
+    "semanticNodeHashAlgorithm": "sha256",
+    "semanticNodeHash": "d88f2b708a7ae6217db6acec6ad473b8f40a35b917fb89e87a3e1fa0528fd31e"
+  },
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "93bb0a55b902476261cdbe21bb7609e59ed6cdc6e3632ea59c80d3b0467bded0"
+}

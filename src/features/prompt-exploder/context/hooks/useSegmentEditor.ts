@@ -18,7 +18,3 @@ export const useSegmentEditorActions = (): SegmentEditorActions => {
   if (!ctx) throw new Error('useSegmentEditorActions must be used within SegmentEditorProvider');
   return ctx;
 };
-
-export const useSegmentEditor = (): SegmentEditorState & SegmentEditorActions => {
-  return { ...useSegmentEditorState(), ...useSegmentEditorActions() };
-};

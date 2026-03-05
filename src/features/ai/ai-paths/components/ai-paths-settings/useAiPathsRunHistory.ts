@@ -10,7 +10,6 @@ import {
   aiPathRunRecordSchema,
   resumeAiPathRun,
   type AiPathRunEventRecord,
-  type AiPathRunNodeRecord,
   type AiPathRunRecord,
   type RuntimeHistoryEntry,
 } from '@/shared/lib/ai-paths';
@@ -22,6 +21,7 @@ import {
 } from '@/features/ai/ai-paths/context/RunHistoryContext';
 
 import { buildHistoryNodeOptions, type HistoryNodeOption } from '../run-history-utils';
+import { normalizeRunDetail, normalizeRunEvents, normalizeRunNodes } from '../job-queue-panel-utils';
 
 type ToastFn = (
   message: string,
@@ -214,31 +214,16 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
     source.addEventListener('run', (event: MessageEvent) => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunRecord;
-        runHistoryActions.setRunDetail(
-          (
-            prev: {
-              run: AiPathRunRecord;
-              nodes: AiPathRunNodeRecord[];
-              events: AiPathRunEventRecord[];
-            } | null
-          ) => (prev ? { ...prev, run: payload } : prev)
-        );
+        runHistoryActions.setRunDetail((prev) => (prev ? { ...prev, run: payload } : prev));
       } catch {
         // ignore parse errors
       }
     });
     source.addEventListener('nodes', (event: MessageEvent) => {
       try {
-        const payload = JSON.parse(event.data as string) as AiPathRunNodeRecord[];
-        runHistoryActions.setRunDetail(
-          (
-            prev: {
-              run: AiPathRunRecord;
-              nodes: AiPathRunNodeRecord[];
-              events: AiPathRunEventRecord[];
-            } | null
-          ) => (prev ? { ...prev, nodes: payload } : prev)
-        );
+        const payload = JSON.parse(event.data as string) as unknown;
+        const nodes = normalizeRunNodes(payload);
+        runHistoryActions.setRunDetail((prev) => (prev ? { ...prev, nodes } : prev));
       } catch {
         // ignore parse errors
       }
@@ -249,12 +234,12 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
           | AiPathRunEventRecord[]
           | { events?: AiPathRunEventRecord[]; overflow?: boolean; limit?: number };
         if (Array.isArray(payload)) {
-          runHistoryActions.mergeRunEvents(payload);
+          runHistoryActions.mergeRunEvents(normalizeRunEvents(payload));
           runHistoryActions.setRunEventsOverflow(false);
           runHistoryActions.setRunEventsBatchLimit(null);
           return;
         }
-        const events = Array.isArray(payload.events) ? payload.events : [];
+        const events = normalizeRunEvents(payload.events);
         runHistoryActions.mergeRunEvents(events);
         if (typeof payload.limit === 'number') {
           runHistoryActions.setRunEventsBatchLimit(payload.limit);
@@ -388,11 +373,10 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
         if (!response.ok) {
           throw new Error(response.error || 'Failed to load run details.');
         }
-        const data = response.data as {
-          run: AiPathRunRecord;
-          nodes: AiPathRunNodeRecord[];
-          events: AiPathRunEventRecord[];
-        };
+        const data = normalizeRunDetail(response.data);
+        if (!data) {
+          throw new Error('Run detail payload was invalid.');
+        }
         runHistoryActions.setRunDetail(data);
       } catch (error) {
         toast(error instanceof Error ? error.message : 'Failed to load run details.', {

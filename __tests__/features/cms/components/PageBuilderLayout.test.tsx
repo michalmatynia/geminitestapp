@@ -7,13 +7,30 @@ import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 
 // Mock dependencies
 vi.mock('@/features/admin/context/AdminLayoutContext', () => ({
-  useAdminLayout: () => ({
+  useAdminLayoutActions: () => ({
     setIsProgrammaticallyCollapsed: vi.fn(),
   }),
 }));
 
-vi.mock('../../hooks/useBuilderKeyboardShortcuts', () => ({
+vi.mock('@/features/cms/hooks/useBuilderKeyboardShortcuts', () => ({
   useBuilderKeyboardShortcuts: vi.fn(),
+}));
+
+vi.mock('@/features/cms/hooks/useCmsDomainSelection', () => ({
+  useCmsDomainSelection: () => ({
+    activeDomainId: 'domain-1',
+    isLoading: false,
+  }),
+}));
+
+vi.mock('@/features/cms/hooks/useCmsQueries', () => ({
+  useCmsPages: () => ({
+    data: [{ id: 'page-1' }],
+    isLoading: false,
+  }),
+  useCmsPage: () => ({
+    isLoading: false,
+  }),
 }));
 
 // We need to mock components using absolute paths

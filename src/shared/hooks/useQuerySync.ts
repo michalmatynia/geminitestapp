@@ -56,29 +56,3 @@ export function useQuerySync(configs: SyncConfig[]): void {
     });
   });
 }
-
-// Hook for query dependencies - refetch dependent queries when parent changes
-export function useQueryDependency(
-  parentQueryKey: readonly unknown[],
-  dependentQueryKeys: readonly (readonly unknown[])[],
-  options?: { enabled?: boolean }
-): void {
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    if (options?.enabled === false) return;
-
-    const parentKeySnapshot = JSON.stringify(parentQueryKey);
-    const unsubscribe = queryClient.getQueryCache().subscribe((event): void => {
-      if (event.type !== 'updated') return;
-      if (JSON.stringify(event.query.queryKey) !== parentKeySnapshot) return;
-      if (event.query.state.data === undefined) return;
-
-      dependentQueryKeys.forEach((queryKey: readonly unknown[]) => {
-        void queryClient.invalidateQueries({ queryKey });
-      });
-    });
-
-    return (): void => unsubscribe();
-  }, [dependentQueryKeys, options?.enabled, parentQueryKey, queryClient]);
-}

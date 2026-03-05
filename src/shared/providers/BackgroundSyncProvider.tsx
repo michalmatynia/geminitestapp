@@ -106,9 +106,3 @@ export function useBackgroundSyncActions(): BackgroundSyncActionsContextValue {
   }
   return context;
 }
-
-export function useBackgroundSyncStatus(): BackgroundSyncContextValue {
-  const state = useBackgroundSyncState();
-  const actions = useBackgroundSyncActions();
-  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
-}

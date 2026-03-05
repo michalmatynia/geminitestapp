@@ -2,7 +2,6 @@ import { useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
 import { getProductListQueryKey } from '@/shared/lib/product-query-keys';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface BackgroundSyncOptions {
@@ -77,18 +76,6 @@ export function useBackgroundSync({
       await queryClient.refetchQueries({ queryKey });
     },
   };
-}
-
-// Hook for real-time job status updates
-export function useJobStatusSync(
-  jobId: string,
-  enabled: boolean = true
-): { forceSync: () => Promise<void> } {
-  return useBackgroundSync({
-    queryKey: QUERY_KEYS.jobs.status(jobId),
-    interval: 5000, // 5 seconds for jobs
-    enabled: enabled && !!jobId,
-  });
 }
 
 // Hook for product list updates

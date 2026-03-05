@@ -26,7 +26,3 @@ export const useDocumentActions = (): DocumentActions => {
   if (!ctx) throw new Error('useDocumentActions must be used within DocumentProvider');
   return ctx;
 };
-
-export const useDocument = (): DocumentState & DocumentActions => {
-  return { ...useDocumentState(), ...useDocumentActions() };
-};

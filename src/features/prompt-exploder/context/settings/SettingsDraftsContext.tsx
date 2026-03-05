@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, type Dispatch, type SetStateAction } from 'react';
+import { createContext, type Dispatch, type SetStateAction } from 'react';
 
 import type {
   PromptExploderLearnedTemplate,
@@ -40,11 +40,3 @@ export interface SettingsDraftsState {
 }
 
 export const SettingsDraftsContext = createContext<SettingsDraftsState | null>(null);
-
-export function useSettingsDrafts(): SettingsDraftsState {
-  const context = useContext(SettingsDraftsContext);
-  if (!context) {
-    throw new Error('useSettingsDrafts must be used within SettingsProvider');
-  }
-  return context;
-}

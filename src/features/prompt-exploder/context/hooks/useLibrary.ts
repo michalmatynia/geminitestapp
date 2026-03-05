@@ -18,7 +18,3 @@ export const useLibraryActions = (): LibraryActions => {
   if (!ctx) throw new Error('useLibraryActions must be used within LibraryProvider');
   return ctx;
 };
-
-export const useLibrary = (): LibraryState & LibraryActions => {
-  return { ...useLibraryState(), ...useLibraryActions() };
-};

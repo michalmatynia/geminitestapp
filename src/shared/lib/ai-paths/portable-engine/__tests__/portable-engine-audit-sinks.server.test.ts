@@ -61,6 +61,7 @@ import {
   resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayEndpointAllowlistFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportKeyIdFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionModeFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportSecretFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayWindowSecondsFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironment,
@@ -606,6 +607,21 @@ describe('portable-engine envelope verification sink factories', () => {
     ).toBe('replay-export-key-v1');
     expect(
       resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportKeyIdFromEnvironment('')
+    ).toBeNull();
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionModeFromEnvironment(
+        'lower-trust'
+      )
+    ).toBe('sensitive');
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionModeFromEnvironment(
+        'off'
+      )
+    ).toBe('off');
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionModeFromEnvironment(
+        ''
+      )
     ).toBeNull();
     expect(resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment('5')).toBe(5);
     expect(resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment('oops')).toBeNull();

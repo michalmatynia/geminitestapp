@@ -695,6 +695,21 @@ export const evaluateDataContractPreflight = (
               updaterSamples,
             })
           ) {
+            pushIssue(issuesByKey, {
+              nodeId: node.id,
+              nodeType: node.type,
+              nodeTitle: resolveNodeLabel(node, node.id),
+              severity: 'warning',
+              code: 'database_template_token_missing',
+              token,
+              message: `${source.label} token {{${token}}} cannot be verified at preflight (upstream connected, but no runtime/sample evidence yet).`,
+              recommendation:
+                'Seed parser/updater samples or run a dry simulation so template token values can be validated before execution.',
+              metadata: {
+                template: source.label,
+                deferred: true,
+              },
+            });
             return;
           }
           pushIssue(issuesByKey, {

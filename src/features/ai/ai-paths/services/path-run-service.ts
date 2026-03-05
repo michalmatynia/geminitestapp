@@ -9,6 +9,8 @@ import {
   stableStringify,
   validateCanonicalPathNodeIdentities,
 } from '@/shared/lib/ai-paths';
+import { parseRuntimeState } from '@/features/ai/ai-paths/services/path-run-executor.helpers';
+import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
 import {
   evaluateDisabledNodeTypesPolicy,
   formatDisabledNodeTypesPolicyMessage,
@@ -34,7 +36,9 @@ import type {
   Edge,
   AiPathRunListOptions,
   AiPathRunRecord,
+  ParserSampleState,
   PathConfig,
+  UpdaterSampleState,
 } from '@/shared/contracts/ai-paths';
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import { validationError } from '@/shared/errors/app-error';
@@ -55,6 +59,19 @@ type EnqueueRunInput = {
   backoffMaxMs?: number | null;
   requestId?: string | null;
   meta?: Record<string, unknown> | null;
+};
+
+const toRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const toSampleStateMap = <T = unknown>(
+  value: unknown
+): Record<string, T> | undefined => {
+  const record = toRecord(value);
+  if (!record) return undefined;
+  return record as Record<string, T>;
 };
 
 const ACTIVE_RUN_STATUSES = new Set(['queued', 'running']);
@@ -281,12 +298,23 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       ((input.meta as Record<string, unknown> | null)?.['strictFlowMode'] as
         | boolean
         | undefined) !== false;
+    const preflightHints = toRecord(
+      (input.meta as Record<string, unknown> | null)?.['preflightRuntimeHints']
+    );
+    const preflightRuntimeState = preflightHints
+      ? parseRuntimeState(preflightHints['runtimeState'])
+      : undefined;
+    const parserSamples = toSampleStateMap<ParserSampleState>(preflightHints?.['parserSamples']);
+    const updaterSamples = toSampleStateMap<UpdaterSampleState>(preflightHints?.['updaterSamples']);
     const runPreflight = evaluateRunPreflight({
       nodes,
       edges,
       aiPathsValidation: validationConfig,
       strictFlowMode,
       triggerNodeId: input.triggerNodeId ?? null,
+      ...(preflightRuntimeState ? { runtimeState: preflightRuntimeState } : {}),
+      ...(parserSamples ? { parserSamples } : {}),
+      ...(updaterSamples ? { updaterSamples } : {}),
       mode: 'full',
     });
     if (runPreflight.shouldBlock) {
@@ -359,6 +387,22 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       const message = `Run setup failed: ${
         setupError instanceof Error ? setupError.message : String(setupError)
       }`;
+      const errorReport = buildAiPathErrorReport({
+        error: setupError,
+        code: 'AI_PATHS_ENQUEUE_SETUP_FAILED',
+        category: 'runtime',
+        scope: 'enqueue',
+        severity: 'error',
+        userMessage: message,
+        timestamp: finishedAt,
+        traceId: run.id,
+        runId: run.id,
+        retryable: false,
+        metadata: {
+          pathId: run.pathId,
+          runtimeFingerprint,
+        },
+      });
       await repo.updateRunIfStatus(run.id, ['queued'], {
         status: 'failed',
         errorMessage: message,
@@ -373,6 +417,10 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
           runStartedAt: resolveRunStartedAt(run),
           runtimeFingerprint,
           traceId: run.id,
+          errorCode: errorReport.code,
+          errorCategory: errorReport.category,
+          errorScope: errorReport.scope,
+          errorReport,
         },
       });
       await recordRuntimeRunFinished({
@@ -416,6 +464,22 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       const finishedAt = new Date();
       const dispatchMessage = resolveDispatchErrorMessage(dispatchError);
       const message = `Run dispatch failed: ${dispatchMessage}`;
+      const errorReport = buildAiPathErrorReport({
+        error: dispatchError,
+        code: 'AI_PATHS_ENQUEUE_DISPATCH_FAILED',
+        category: 'runtime',
+        scope: 'enqueue',
+        severity: 'error',
+        userMessage: message,
+        timestamp: finishedAt,
+        traceId: run.id,
+        runId: run.id,
+        retryable: true,
+        metadata: {
+          pathId: run.pathId,
+          runtimeFingerprint,
+        },
+      });
 
       await repo.updateRunIfStatus(run.id, ['queued'], {
         status: 'failed',
@@ -433,6 +497,11 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
               runStartedAt: resolveRunStartedAt(run),
               runtimeFingerprint,
               traceId: run.id,
+              errorCode: errorReport.code,
+              errorCategory: errorReport.category,
+              errorScope: errorReport.scope,
+              retryable: errorReport.retryable,
+              errorReport,
             },
           }),
           recordRuntimeRunFinished({
@@ -555,6 +624,23 @@ export const resumePathRun = async (
     } catch (dispatchError) {
       const dispatchMessage = resolveDispatchErrorMessage(dispatchError);
       const failedAt = new Date().toISOString();
+      const errorReport = buildAiPathErrorReport({
+        error: dispatchError,
+        code: 'AI_PATHS_RESUME_DISPATCH_FAILED',
+        category: 'runtime',
+        scope: 'enqueue',
+        severity: 'error',
+        userMessage: `Run dispatch failed during resume: ${dispatchMessage}`,
+        timestamp: failedAt,
+        traceId: runId,
+        runId,
+        retryable: true,
+        metadata: {
+          resumeMode: mode,
+          revertedToStatus: run.status,
+          runtimeFingerprint,
+        },
+      });
       const revertMeta = withRuntimeFingerprintMeta({
         ...(updated.meta ?? {}),
         resumeDispatchFailure: {
@@ -584,6 +670,11 @@ export const resumePathRun = async (
             resumeMode: mode,
             revertedToStatus: run.status,
             traceId: runId,
+            errorCode: errorReport.code,
+            errorCategory: errorReport.category,
+            errorScope: errorReport.scope,
+            retryable: errorReport.retryable,
+            errorReport,
           },
         });
       } catch (eventError) {
@@ -692,6 +783,23 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
     } catch (dispatchError) {
       const dispatchMessage = resolveDispatchErrorMessage(dispatchError);
       const failedAt = new Date().toISOString();
+      const errorReport = buildAiPathErrorReport({
+        error: dispatchError,
+        code: 'AI_PATHS_RETRY_DISPATCH_FAILED',
+        category: 'runtime',
+        scope: 'enqueue',
+        severity: 'error',
+        userMessage: `Run dispatch failed during node retry: ${dispatchMessage}`,
+        timestamp: failedAt,
+        traceId: runId,
+        runId,
+        nodeId,
+        retryable: true,
+        metadata: {
+          revertedToStatus: run.status,
+          runtimeFingerprint,
+        },
+      });
       const revertMeta = withRuntimeFingerprintMeta({
         ...(updated.meta ?? {}),
         retryDispatchFailure: {
@@ -721,6 +829,11 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
             retryNodeId: nodeId,
             revertedToStatus: run.status,
             traceId: runId,
+            errorCode: errorReport.code,
+            errorCategory: errorReport.category,
+            errorScope: errorReport.scope,
+            retryable: errorReport.retryable,
+            errorReport,
           },
         });
       } catch (eventError) {

@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 
 import type { AiPathRunNodeRecord, RuntimeHistoryEntry } from '@/shared/contracts/ai-paths';
+import type { AiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reporting';
 import {
   Button,
   Label,
@@ -120,6 +121,11 @@ export function RunDetailDialog(): React.JSX.Element {
     if (typeof raw !== 'string') return null;
     const trimmed = raw.trim();
     return trimmed.length > 0 ? trimmed : null;
+  }, [runDetail]);
+
+  const errorSummary = useMemo((): AiPathRunErrorSummary | null => {
+    if (!runDetail || !('errorSummary' in runDetail)) return null;
+    return runDetail.errorSummary ?? null;
   }, [runDetail]);
 
   const slowestRuntimeNodeSpan = useMemo(() => {
@@ -274,6 +280,52 @@ export function RunDetailDialog(): React.JSX.Element {
                   )
                 )}
               </div>
+            </div>
+          ) : null}
+          {errorSummary ? (
+            <div className='rounded-md border border-rose-500/40 bg-rose-500/10 p-3'>
+              <div className='flex flex-wrap items-center justify-between gap-2 text-[11px] text-rose-100'>
+                <span className='font-semibold'>Error Summary</span>
+                <span className='font-mono text-[10px] text-rose-200'>
+                  reports={errorSummary.reportCount} errors={errorSummary.totalErrors}
+                </span>
+              </div>
+              {errorSummary.primary ? (
+                <div className='mt-2 rounded-md border border-rose-500/40 bg-black/20 p-2 text-[11px] text-rose-100'>
+                  <div className='font-mono text-[10px] text-rose-200'>
+                    {errorSummary.primary.code}
+                  </div>
+                  <div className='mt-1'>{errorSummary.primary.userMessage}</div>
+                  <div className='mt-1 text-[10px] text-rose-200/80'>
+                    scope={errorSummary.primary.scope}
+                    {errorSummary.primary.nodeId ? ` node=${errorSummary.primary.nodeId}` : ''}
+                    {errorSummary.primary.retryable ? ' retryable=true' : ''}
+                  </div>
+                </div>
+              ) : null}
+              {errorSummary.codes.length > 0 ? (
+                <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-rose-200'>
+                  {errorSummary.codes.map((entry) => (
+                    <span
+                      key={entry.code}
+                      className='rounded-full border border-rose-400/60 bg-rose-500/20 px-2 py-px font-mono'
+                    >
+                      {entry.code}: {entry.count}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+              {errorSummary.nodeFailures.length > 0 ? (
+                <div className='mt-2 space-y-1 text-[10px] text-rose-100/90'>
+                  {errorSummary.nodeFailures.map((node) => (
+                    <div key={node.nodeId} className='rounded border border-rose-500/30 bg-black/20 px-2 py-1'>
+                      <span className='font-mono'>{node.nodeId}</span>
+                      {node.nodeTitle ? ` (${node.nodeTitle})` : ''} - {node.code ?? 'unknown'} x
+                      {node.count}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
           ) : null}
           {runtimeTrace ? (

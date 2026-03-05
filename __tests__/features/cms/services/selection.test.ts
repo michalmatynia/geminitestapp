@@ -1,9 +1,9 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
-import { getCmsDataProvider } from '@/features/cms/services/cms-provider';
+import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
 import { getCmsRepository, resetCmsRepositoryCache } from '@/features/cms/services/cms-repository';
 
-vi.mock('@/features/cms/services/cms-provider', () => ({
+vi.mock('@/shared/lib/cms/services/cms-provider', () => ({
   getCmsDataProvider: vi.fn(),
 }));
 

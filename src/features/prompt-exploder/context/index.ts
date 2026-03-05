@@ -8,22 +8,16 @@ export type { SegmentEditorState, SegmentEditorActions } from './SegmentEditorCo
 export type { BindingsState, BindingsActions, BindingDraft } from './BindingsContext';
 
 export {
-  useSettings,
   useSettingsState,
   useSettingsActions,
-  useDocument,
   useDocumentState,
   useDocumentActions,
-  useBenchmark,
   useBenchmarkState,
   useBenchmarkActions,
-  useLibrary,
   useLibraryState,
   useLibraryActions,
-  useSegmentEditor,
   useSegmentEditorState,
   useSegmentEditorActions,
-  useBindings,
   useBindingsState,
   useBindingsActions,
 } from './hooks';

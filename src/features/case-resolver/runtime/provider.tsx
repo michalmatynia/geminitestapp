@@ -137,7 +137,7 @@ export function CaseResolverRuntimeProvider({
   );
 }
 
-export function useCaseResolverRuntimeStore(): CaseResolverRuntimeStore {
+function useCaseResolverRuntimeStore(): CaseResolverRuntimeStore {
   const store = useContext(CaseResolverRuntimeStoreContext);
   if (!store) {
     throw new Error('useCaseResolverRuntimeStore must be used within CaseResolverRuntimeProvider');

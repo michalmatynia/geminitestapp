@@ -1,0 +1,222 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v2",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "generatedAt": "2026-03-05T07:53:41.543Z",
+  "id": "node_obj_trigger_portable_v2",
+  "nodeType": "trigger",
+  "nodeDocVersion": "2026-02-20.v1",
+  "title": "Trigger: Scheduled Run",
+  "purpose": "Runs on a server schedule or cron.",
+  "nodeFamily": "orchestration",
+  "portability": {
+    "copyPasteReady": true,
+    "requiresUniqueNodeId": true,
+    "compatibleEngines": [
+      "ai-paths.portable-engine.v1"
+    ]
+  },
+  "ports": {
+    "inputs": [
+      "context"
+    ],
+    "outputs": [
+      "trigger",
+      "triggerName",
+      "context",
+      "meta",
+      "entityId",
+      "entityType"
+    ]
+  },
+  "statusModel": {
+    "idle": {
+      "meaning": "Node has not started for the current run.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "processing": {
+      "meaning": "Node is actively computing. Pulsating indicates processing, not waiting. Outgoing edges stay inactive until an output port receives a value.",
+      "edgeAnimationPolicy": {
+        "incoming": "active_if_signal_present",
+        "outgoing": "inactive"
+      }
+    },
+    "waiting": {
+      "meaning": "Node is waiting for an external callback/response. Previously consumed input edges must stop animating; outgoing edges remain inactive until output exists.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "success": {
+      "meaning": "Node completed successfully and emitted output values.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "error": {
+      "meaning": "Node failed and may emit error-specific outputs.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "skipped": {
+      "meaning": "Node execution was skipped by control flow or guard conditions.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    }
+  },
+  "runtimeSemantics": {
+    "executionKind": "synchronous",
+    "waitForResultSupported": false,
+    "wireActivationRules": {
+      "processing": "When node is processing, show node pulse only. Do not animate outgoing edges until an output port value is produced.",
+      "waiting": "When node is waiting for external response, keep both consumed incoming and future outgoing edges inactive.",
+      "completed": "Animate only edges carrying newly emitted outputs.",
+      "errored": "Animate only explicit error-route outputs (if connected)."
+    }
+  },
+  "configContract": {
+    "fields": [
+      {
+        "path": "trigger.event",
+        "description": "What event fires this Trigger node. Use manual for UI-driven runs; scheduled_run for server/cron runs.",
+        "defaultValue": "manual"
+      },
+      {
+        "path": "runtime.cache.mode",
+        "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+        "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.waitForInputs",
+        "description": "If true, wait until all connected input ports have values before executing the node.",
+        "defaultValue": "false"
+      }
+    ]
+  },
+  "copyPaste": {
+    "minimalNode": {
+      "id": "node_trigger_example",
+      "type": "trigger",
+      "title": "Trigger: Scheduled Run",
+      "description": "Runs on a server schedule or cron.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "context"
+      ],
+      "outputs": [
+        "trigger",
+        "triggerName",
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      }
+    },
+    "fullNode": {
+      "id": "node_trigger_example",
+      "type": "trigger",
+      "title": "Trigger: Scheduled Run",
+      "description": "Runs on a server schedule or cron.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "context"
+      ],
+      "outputs": [
+        "trigger",
+        "triggerName",
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      },
+      "config": {
+        "trigger": {
+          "event": "scheduled_run",
+          "contextMode": "trigger_only"
+        },
+        "runtime": {
+          "cache": {
+            "mode": "auto"
+          },
+          "waitForInputs": false
+        }
+      }
+    },
+    "pathSnippet": {
+      "nodes": [
+        {
+          "id": "node_trigger_example",
+          "type": "trigger",
+          "title": "Trigger: Scheduled Run",
+          "description": "Runs on a server schedule or cron.",
+          "position": {
+            "x": 100,
+            "y": 100
+          },
+          "inputs": [
+            "context"
+          ],
+          "outputs": [
+            "trigger",
+            "triggerName",
+            "context",
+            "meta",
+            "entityId",
+            "entityType"
+          ],
+          "data": {},
+          "connections": {
+            "incoming": [],
+            "outgoing": []
+          },
+          "config": {
+            "trigger": {
+              "event": "scheduled_run",
+              "contextMode": "trigger_only"
+            },
+            "runtime": {
+              "cache": {
+                "mode": "auto"
+              },
+              "waitForInputs": false
+            }
+          }
+        }
+      ],
+      "edges": []
+    }
+  },
+  "notes": [],
+  "source": {
+    "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/trigger.json",
+    "semanticNodeHashAlgorithm": "sha256",
+    "semanticNodeHash": "3abc69836bcb192e2a1e6aa3a7c3a33aee7ef8db5ebc689a27036903b576d1e3"
+  },
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "b95548a589685948c1dff851036bce98026b2b9a96af8d61b3e51832d1147a74"
+}

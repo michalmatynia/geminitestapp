@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import { createContext } from 'react';
 
 export interface NoteMetadataData {
   title: string;
@@ -17,9 +17,3 @@ export interface NoteMetadataData {
 }
 
 export const NoteMetadataContext = createContext<NoteMetadataData | null>(null);
-
-export function useNoteMetadataContext(): NoteMetadataData {
-  const context = useContext(NoteMetadataContext);
-  if (!context) throw new Error('useNoteMetadataContext must be used within NoteFormProvider');
-  return context;
-}

@@ -32,6 +32,7 @@ import {
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { AiNode, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import type { ParserSampleState, UpdaterSampleState } from '@/shared/contracts/ai-paths-core/nodes';
 import { validationError } from '@/shared/errors/app-error';
 import {
   invalidateAiPathQueue,
@@ -145,6 +146,27 @@ const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig =>
   sanitizeTriggerPathConfig(config);
 
 export { sanitizeTriggerPathConfig };
+
+const toRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const resolveRuntimeStateHint = (value: unknown): Record<string, unknown> | null => {
+  if (typeof value === 'string') {
+    const parsed = safeParseJson<Record<string, unknown>>(value);
+    if (parsed.error) return null;
+    return toRecord(parsed.value);
+  }
+  return toRecord(value);
+};
+
+const coerceSampleStateMap = <T>(value: unknown): Record<string, T> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, T>;
+};
 
 const loadPathConfigsFromSettings = async (
   settingsData?: Array<{ key: string; value: string }>
@@ -690,12 +712,17 @@ export function useAiPathTriggerEvent(): {
         const validationConfig = normalizeAiPathsValidationConfig(
           selectedConfig.aiPathsValidation ?? null
         );
+        const runtimeStateHint = resolveRuntimeStateHint(selectedConfig.runtimeState);
+        const parserSamples = coerceSampleStateMap<ParserSampleState>(selectedConfig.parserSamples);
+        const updaterSamples = coerceSampleStateMap<UpdaterSampleState>(selectedConfig.updaterSamples);
         const preflight = evaluateRunPreflight({
           nodes: selectedConfig.nodes,
           edges: selectedConfig.edges,
           aiPathsValidation: validationConfig,
           strictFlowMode: selectedConfig.strictFlowMode ?? true,
           triggerNodeId: triggerNode.id,
+          ...(parserSamples ? { parserSamples } : {}),
+          ...(updaterSamples ? { updaterSamples } : {}),
           mode: 'full',
         });
         const preflightDurationMs = performance.now() - preflightStartedAt;
@@ -743,6 +770,15 @@ export function useAiPathTriggerEvent(): {
           entityType: args.entityType,
           meta: {
             historyRetentionPasses,
+            preflightRuntimeHints: {
+              ...(selectedConfig.parserSamples
+                ? { parserSamples: selectedConfig.parserSamples }
+                : {}),
+              ...(selectedConfig.updaterSamples
+                ? { updaterSamples: selectedConfig.updaterSamples }
+                : {}),
+              ...(runtimeStateHint ? { runtimeState: runtimeStateHint } : {}),
+            },
             clientMetadata: {
               source: 'useAiPathTriggerEvent',
               triggerEventId,

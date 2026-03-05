@@ -72,6 +72,8 @@
     "docs:validator:check": "tsx scripts/docs/check-validator-doc-coverage.ts",
     "docs:ai-paths:semantic:generate": "tsx scripts/docs/generate-ai-paths-semantic-grammar.ts",
     "docs:ai-paths:semantic:check": "tsx scripts/docs/check-ai-paths-semantic-grammar.ts",
+    "docs:ai-paths:node-code:generate": "tsx scripts/docs/generate-ai-paths-node-code-objects.ts",
+    "docs:ai-paths:node-code:check": "tsx scripts/docs/check-ai-paths-node-code-objects.ts",
     "docs:ai-paths:tooltip:generate": "tsx scripts/docs/generate-ai-paths-tooltip-catalog.ts",
     "docs:ai-paths:tooltip:check": "tsx scripts/docs/check-ai-paths-tooltip-coverage.ts",
     "check:factory-meta": "node scripts/query/check-factory-meta.cjs",

@@ -1,0 +1,289 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v2",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "generatedAt": "2026-03-05T07:53:41.543Z",
+  "id": "node_obj_fetcher_portable_v2",
+  "nodeType": "fetcher",
+  "nodeDocVersion": "from-node-docs",
+  "title": "Fetcher: Trigger Context",
+  "purpose": "Resolve live trigger context or fetch simulated entity by ID.",
+  "nodeFamily": "orchestration",
+  "portability": {
+    "copyPasteReady": true,
+    "requiresUniqueNodeId": true,
+    "compatibleEngines": [
+      "ai-paths.portable-engine.v1"
+    ]
+  },
+  "ports": {
+    "inputs": [
+      "trigger",
+      "context",
+      "meta",
+      "entityId",
+      "entityType"
+    ],
+    "outputs": [
+      "context",
+      "meta",
+      "entityId",
+      "entityType"
+    ]
+  },
+  "statusModel": {
+    "idle": {
+      "meaning": "Node has not started for the current run.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "processing": {
+      "meaning": "Node is actively computing. Pulsating indicates processing, not waiting. Outgoing edges stay inactive until an output port receives a value.",
+      "edgeAnimationPolicy": {
+        "incoming": "active_if_signal_present",
+        "outgoing": "inactive"
+      }
+    },
+    "waiting": {
+      "meaning": "Node is waiting for an external callback/response. Previously consumed input edges must stop animating; outgoing edges remain inactive until output exists.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "success": {
+      "meaning": "Node completed successfully and emitted output values.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "error": {
+      "meaning": "Node failed and may emit error-specific outputs.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "skipped": {
+      "meaning": "Node execution was skipped by control flow or guard conditions.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    }
+  },
+  "runtimeSemantics": {
+    "executionKind": "synchronous",
+    "waitForResultSupported": false,
+    "wireActivationRules": {
+      "processing": "When node is processing, show node pulse only. Do not animate outgoing edges until an output port value is produced.",
+      "waiting": "When node is waiting for external response, keep both consumed incoming and future outgoing edges inactive.",
+      "completed": "Animate only edges carrying newly emitted outputs.",
+      "errored": "Animate only explicit error-route outputs (if connected)."
+    }
+  },
+  "configContract": {
+    "fields": [
+      {
+        "path": "fetcher.sourceMode",
+        "description": "How to resolve context: live_context, simulation_id, or live_then_simulation.",
+        "defaultValue": "live_context"
+      },
+      {
+        "path": "fetcher.entityType",
+        "description": "Entity type used by simulation fetch modes.",
+        "defaultValue": "product"
+      },
+      {
+        "path": "fetcher.entityId",
+        "description": "Entity ID used by simulation fetch modes (preferred over productId alias)."
+      },
+      {
+        "path": "fetcher.productId",
+        "description": "Product ID alias for entityId.",
+        "defaultValue": "\"\""
+      },
+      {
+        "path": "runtime.cache.mode",
+        "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+        "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
+      },
+      {
+        "path": "runtime.waitForInputs",
+        "description": "If true, wait until all connected input ports have values before executing the node.",
+        "defaultValue": "false"
+      }
+    ]
+  },
+  "copyPaste": {
+    "minimalNode": {
+      "id": "node_fetcher_example",
+      "type": "fetcher",
+      "title": "Fetcher: Trigger Context",
+      "description": "Resolve live trigger context or fetch simulated entity by ID.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "trigger",
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "outputs": [
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      }
+    },
+    "fullNode": {
+      "id": "node_fetcher_example",
+      "type": "fetcher",
+      "title": "Fetcher: Trigger Context",
+      "description": "Resolve live trigger context or fetch simulated entity by ID.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "trigger",
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "outputs": [
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      },
+      "config": {
+        "fetcher": {
+          "sourceMode": "live_context",
+          "entityType": "product",
+          "productId": "",
+          "entityId": ""
+        },
+        "runtime": {
+          "cache": {
+            "mode": "auto",
+            "scope": "run"
+          },
+          "waitForInputs": true,
+          "inputContracts": {
+            "trigger": {
+              "required": true
+            },
+            "context": {
+              "required": false
+            },
+            "meta": {
+              "required": false
+            },
+            "entityId": {
+              "required": false
+            },
+            "entityType": {
+              "required": false
+            }
+          }
+        }
+      }
+    },
+    "pathSnippet": {
+      "nodes": [
+        {
+          "id": "node_fetcher_example",
+          "type": "fetcher",
+          "title": "Fetcher: Trigger Context",
+          "description": "Resolve live trigger context or fetch simulated entity by ID.",
+          "position": {
+            "x": 100,
+            "y": 100
+          },
+          "inputs": [
+            "trigger",
+            "context",
+            "meta",
+            "entityId",
+            "entityType"
+          ],
+          "outputs": [
+            "context",
+            "meta",
+            "entityId",
+            "entityType"
+          ],
+          "data": {},
+          "connections": {
+            "incoming": [],
+            "outgoing": []
+          },
+          "config": {
+            "fetcher": {
+              "sourceMode": "live_context",
+              "entityType": "product",
+              "productId": "",
+              "entityId": ""
+            },
+            "runtime": {
+              "cache": {
+                "mode": "auto",
+                "scope": "run"
+              },
+              "waitForInputs": true,
+              "inputContracts": {
+                "trigger": {
+                  "required": true
+                },
+                "context": {
+                  "required": false
+                },
+                "meta": {
+                  "required": false
+                },
+                "entityId": {
+                  "required": false
+                },
+                "entityType": {
+                  "required": false
+                }
+              }
+            }
+          }
+        }
+      ],
+      "edges": []
+    }
+  },
+  "notes": [],
+  "source": {
+    "semanticNodeFile": "src/shared/lib/ai-paths/core/docs/node-docs.ts",
+    "semanticNodeHashAlgorithm": null,
+    "semanticNodeHash": null
+  },
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "f165e5266aa8625f1522e0fd7d62144ec971f9628c7c195a96341d9b186ae5f2"
+}

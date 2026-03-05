@@ -1,0 +1,245 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v2",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "generatedAt": "2026-03-05T07:53:41.543Z",
+  "id": "node_obj_audio_speaker_portable_v2",
+  "nodeType": "audio_speaker",
+  "nodeDocVersion": "2026-02-20.v1",
+  "title": "Audio Speaker (Mono)",
+  "purpose": "Play incoming audio signals in local runtime.",
+  "nodeFamily": "audio",
+  "portability": {
+    "copyPasteReady": true,
+    "requiresUniqueNodeId": true,
+    "compatibleEngines": [
+      "ai-paths.portable-engine.v1"
+    ]
+  },
+  "ports": {
+    "inputs": [
+      "audioSignal",
+      "frequency",
+      "waveform",
+      "gain",
+      "durationMs",
+      "trigger"
+    ],
+    "outputs": [
+      "status",
+      "audioSignal"
+    ]
+  },
+  "statusModel": {
+    "idle": {
+      "meaning": "Node has not started for the current run.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "processing": {
+      "meaning": "Node is actively computing. Pulsating indicates processing, not waiting. Outgoing edges stay inactive until an output port receives a value.",
+      "edgeAnimationPolicy": {
+        "incoming": "active_if_signal_present",
+        "outgoing": "inactive"
+      }
+    },
+    "waiting": {
+      "meaning": "Node is waiting for an external callback/response. Previously consumed input edges must stop animating; outgoing edges remain inactive until output exists.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "success": {
+      "meaning": "Node completed successfully and emitted output values.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "error": {
+      "meaning": "Node failed and may emit error-specific outputs.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "skipped": {
+      "meaning": "Node execution was skipped by control flow or guard conditions.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    }
+  },
+  "runtimeSemantics": {
+    "executionKind": "synchronous",
+    "waitForResultSupported": false,
+    "wireActivationRules": {
+      "processing": "When node is processing, show node pulse only. Do not animate outgoing edges until an output port value is produced.",
+      "waiting": "When node is waiting for external response, keep both consumed incoming and future outgoing edges inactive.",
+      "completed": "Animate only edges carrying newly emitted outputs.",
+      "errored": "Animate only explicit error-route outputs (if connected)."
+    }
+  },
+  "configContract": {
+    "fields": [
+      {
+        "path": "audioSpeaker.enabled",
+        "description": "If false, speaker stays muted and reports disabled status.",
+        "defaultValue": "true"
+      },
+      {
+        "path": "audioSpeaker.autoPlay",
+        "description": "If true, plays incoming audio signal immediately.",
+        "defaultValue": "true"
+      },
+      {
+        "path": "audioSpeaker.gain",
+        "description": "Speaker output gain multiplier in 0..1 range.",
+        "defaultValue": "1"
+      },
+      {
+        "path": "audioSpeaker.stopPrevious",
+        "description": "Stop existing tone before playing the next signal.",
+        "defaultValue": "true"
+      },
+      {
+        "path": "runtime.cache.mode",
+        "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+        "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.waitForInputs",
+        "description": "If true, wait until all connected input ports have values before executing the node.",
+        "defaultValue": "false"
+      }
+    ]
+  },
+  "copyPaste": {
+    "minimalNode": {
+      "id": "node_audio_speaker_example",
+      "type": "audio_speaker",
+      "title": "Audio Speaker (Mono)",
+      "description": "Play incoming audio signals in local runtime.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "audioSignal",
+        "frequency",
+        "waveform",
+        "gain",
+        "durationMs",
+        "trigger"
+      ],
+      "outputs": [
+        "status",
+        "audioSignal"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      }
+    },
+    "fullNode": {
+      "id": "node_audio_speaker_example",
+      "type": "audio_speaker",
+      "title": "Audio Speaker (Mono)",
+      "description": "Play incoming audio signals in local runtime.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "audioSignal",
+        "frequency",
+        "waveform",
+        "gain",
+        "durationMs",
+        "trigger"
+      ],
+      "outputs": [
+        "status",
+        "audioSignal"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      },
+      "config": {
+        "audioSpeaker": {
+          "enabled": true,
+          "autoPlay": true,
+          "gain": 1,
+          "stopPrevious": true
+        },
+        "runtime": {
+          "cache": {
+            "mode": "auto"
+          },
+          "waitForInputs": false
+        }
+      }
+    },
+    "pathSnippet": {
+      "nodes": [
+        {
+          "id": "node_audio_speaker_example",
+          "type": "audio_speaker",
+          "title": "Audio Speaker (Mono)",
+          "description": "Play incoming audio signals in local runtime.",
+          "position": {
+            "x": 100,
+            "y": 100
+          },
+          "inputs": [
+            "audioSignal",
+            "frequency",
+            "waveform",
+            "gain",
+            "durationMs",
+            "trigger"
+          ],
+          "outputs": [
+            "status",
+            "audioSignal"
+          ],
+          "data": {},
+          "connections": {
+            "incoming": [],
+            "outgoing": []
+          },
+          "config": {
+            "audioSpeaker": {
+              "enabled": true,
+              "autoPlay": true,
+              "gain": 1,
+              "stopPrevious": true
+            },
+            "runtime": {
+              "cache": {
+                "mode": "auto"
+              },
+              "waitForInputs": false
+            }
+          }
+        }
+      ],
+      "edges": []
+    }
+  },
+  "notes": [],
+  "source": {
+    "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/audio_speaker.json",
+    "semanticNodeHashAlgorithm": "sha256",
+    "semanticNodeHash": "1d5c93c395f1d7c0ec4c8abb0d28abc7842f36613e52255c7dc6b0b6abaf2321"
+  },
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "961ded93b2809e63646339296a4cab84173553968abd8a7e46e4f5ffdbf431d9"
+}

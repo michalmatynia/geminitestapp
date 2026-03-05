@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import { createContext } from 'react';
 import type { TagRecord } from '@/shared/contracts/notes';
 
 export interface NoteTagsData {
@@ -18,9 +18,3 @@ export interface NoteTagsData {
 }
 
 export const NoteTagsContext = createContext<NoteTagsData | null>(null);
-
-export function useNoteTagsContext(): NoteTagsData {
-  const context = useContext(NoteTagsContext);
-  if (!context) throw new Error('useNoteTagsContext must be used within NoteFormProvider');
-  return context;
-}

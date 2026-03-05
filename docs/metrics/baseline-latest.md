@@ -1,11 +1,11 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-05T07:14:24.026Z
+Generated at: 2026-03-05T07:24:41.989Z
 
 ## Snapshot
 
-- Source files: 4209
-- Source lines: 677292
+- Source files: 4210
+- Source lines: 677543
 - use client files: 1309
 - Files >= 1000 LOC: 2
 - Files >= 1500 LOC: 2
@@ -65,7 +65,7 @@ Generated at: 2026-03-05T07:14:24.026Z
 | File | LOC |
 | --- | ---: |
 | `src/shared/lib/ai-paths/portable-engine/sinks.server.ts` | 2984 |
-| `src/shared/lib/ai-paths/portable-engine/index.ts` | 2939 |
+| `src/shared/lib/ai-paths/portable-engine/index.ts` | 2241 |
 | `src/app/api/ai-paths/portable-engine/trend-snapshots/handler.test.ts` | 993 |
 | `src/features/case-resolver/__tests__/workspace-persistence.test.ts` | 987 |
 | `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 986 |

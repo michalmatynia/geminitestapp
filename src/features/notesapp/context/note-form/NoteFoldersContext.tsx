@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import { createContext } from 'react';
 
 export interface NoteFoldersData {
   selectedFolderId: string;
@@ -9,9 +9,3 @@ export interface NoteFoldersData {
 }
 
 export const NoteFoldersContext = createContext<NoteFoldersData | null>(null);
-
-export function useNoteFolders(): NoteFoldersData {
-  const context = useContext(NoteFoldersContext);
-  if (!context) throw new Error('useNoteFolders must be used within NoteFormProvider');
-  return context;
-}

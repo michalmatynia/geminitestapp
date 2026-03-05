@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useMemo, useContext } from 'react';
+import React, { createContext, useMemo } from 'react';
 
 import {
   useSettingsMap,
@@ -26,7 +26,7 @@ import { SettingsActionsContext, type SettingsActions } from './settings/Setting
 
 import { useSettingsDataImpl } from './settings/useSettingsDataImpl';
 import { useSettingsActionsImpl } from './settings/useSettingsActionsImpl';
-import { useLibrary } from './hooks/useLibrary';
+import { useLibraryState } from './hooks/useLibrary';
 import { useDocumentPrompt } from './hooks/useDocument';
 import type { PromptValidationOrchestrationResult } from '../prompt-validation-orchestrator';
 
@@ -56,7 +56,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     settingsMap,
   });
 
-  const { segmentationLibraryState } = useLibrary();
+  const { segmentationLibraryState } = useLibraryState();
   const { returnTarget } = useDocumentPrompt();
 
   const actions = useSettingsActionsImpl({
@@ -209,12 +209,4 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       </SettingsRuntimeContext.Provider>
     </SettingsCoreContext.Provider>
   );
-}
-
-export function usePromptExploderSettings(): SettingsState {
-  const context = useContext(SettingsStateContext);
-  if (!context) {
-    throw new Error('usePromptExploderSettings must be used within a SettingsProvider');
-  }
-  return context;
 }

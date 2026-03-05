@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import { createContext } from 'react';
 import type { NoteWithRelations } from '@/shared/contracts/notes';
 
 export interface RelatedNoteItem {
@@ -23,9 +23,3 @@ export interface NoteRelationsData {
 }
 
 export const NoteRelationsContext = createContext<NoteRelationsData | null>(null);
-
-export function useNoteRelations(): NoteRelationsData {
-  const context = useContext(NoteRelationsContext);
-  if (!context) throw new Error('useNoteRelations must be used within NoteFormProvider');
-  return context;
-}

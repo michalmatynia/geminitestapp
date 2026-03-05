@@ -24,7 +24,7 @@ export function RuleListDragProvider({
   return <RuleListDragContext.Provider value={value}>{children}</RuleListDragContext.Provider>;
 }
 
-export function useRuleListDragContext(): RuleListDragContextValue {
+function useRuleListDragContext(): RuleListDragContextValue {
   const context = React.useContext(RuleListDragContext);
   if (!context) {
     throw new Error('useRuleListDragContext must be used within RuleListDragProvider');

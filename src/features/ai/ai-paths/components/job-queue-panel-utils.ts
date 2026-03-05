@@ -1,8 +1,12 @@
 import type {
   AiPathRunEventRecord,
+  AiPathRunErrorSummary,
   AiPathRunNodeRecord,
   AiPathRunRecord,
 } from '@/shared/lib/ai-paths';
+import {
+  buildAiPathRunErrorSummary,
+} from '@/shared/lib/ai-paths/error-reporting';
 import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 import type { StatusVariant } from '@/shared/ui';
 
@@ -103,6 +107,7 @@ export type RunDetail = {
   run: AiPathRunRecord;
   nodes: AiPathRunNodeRecord[];
   events: AiPathRunEventRecord[];
+  errorSummary: AiPathRunErrorSummary | null;
 };
 
 export type RunOrigin = 'node' | 'external' | 'unknown';
@@ -212,23 +217,58 @@ export const normalizeRunNodes = (value: unknown): AiPathRunNodeRecord[] => {
 export const normalizeRunEvents = (value: unknown): AiPathRunEventRecord[] =>
   Array.isArray(value) ? (value as AiPathRunEventRecord[]) : [];
 
+export const refreshRunDetailErrorSummary = (detail: {
+  run: AiPathRunRecord;
+  nodes: AiPathRunNodeRecord[];
+  events: AiPathRunEventRecord[];
+  errorSummary?: AiPathRunErrorSummary | null;
+}): RunDetail => ({
+  run: detail.run,
+  nodes: detail.nodes,
+  events: detail.events,
+  errorSummary: buildAiPathRunErrorSummary({
+    run: detail.run,
+    nodes: detail.nodes,
+    events: detail.events,
+  }),
+});
+
 export const normalizeRunDetail = (
   value: unknown,
   fallbackRun?: AiPathRunRecord
 ): RunDetail | null => {
   if (!value || typeof value !== 'object') {
-    return fallbackRun ? { run: fallbackRun, nodes: [], events: [] } : null;
+    return fallbackRun
+      ? {
+        run: fallbackRun,
+        nodes: [],
+        events: [],
+        errorSummary: buildAiPathRunErrorSummary({
+          run: fallbackRun,
+          nodes: [],
+          events: [],
+        }),
+      }
+      : null;
   }
-  const detail = value as { run?: unknown; nodes?: unknown; events?: unknown };
+  const detail = value as {
+    run?: unknown;
+    nodes?: unknown;
+    events?: unknown;
+    errorSummary?: unknown;
+  };
   const runCandidate = detail.run ?? fallbackRun;
   if (!runCandidate || typeof runCandidate !== 'object') {
     return null;
   }
-  return {
-    run: runCandidate as AiPathRunRecord,
-    nodes: normalizeRunNodes(detail.nodes),
-    events: normalizeRunEvents(detail.events),
-  };
+  const run = runCandidate as AiPathRunRecord;
+  const nodes = normalizeRunNodes(detail.nodes);
+  const events = normalizeRunEvents(detail.events);
+  return refreshRunDetailErrorSummary({
+    run,
+    nodes,
+    events,
+  });
 };
 
 const readMetaRecord = (meta: AiPathRunRecord['meta']): Record<string, unknown> | null => {

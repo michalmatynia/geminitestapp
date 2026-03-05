@@ -123,6 +123,7 @@ export function useCanvasInteractions(args?: {
     setIsPanning,
     updateView: (next) => updateView(next),
     panState,
+    viewScale: view.scale,
   });
 
   const { resolveActiveNodeSelectionIds, updateLastPointerCanvasPosFromClient } = stateHandlers;

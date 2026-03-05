@@ -5,7 +5,7 @@ const getCmsDataProviderMock = vi.fn();
 const mongoRepositoryMock = { provider: 'mongodb' };
 const prismaRepositoryMock = { provider: 'prisma' };
 
-vi.mock('@/features/cms/services/cms-provider', () => ({
+vi.mock('@/shared/lib/cms/services/cms-provider', () => ({
   getCmsDataProvider: getCmsDataProviderMock,
 }));
 

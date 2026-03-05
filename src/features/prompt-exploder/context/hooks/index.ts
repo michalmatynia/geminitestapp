@@ -1,10 +1,9 @@
-export { useSettings, useSettingsState, useSettingsActions } from './useSettings';
-export { useDocument, useDocumentState, useDocumentActions } from './useDocument';
-export { useBenchmark, useBenchmarkState, useBenchmarkActions } from './useBenchmark';
-export { useLibrary, useLibraryState, useLibraryActions } from './useLibrary';
+export { useSettingsState, useSettingsActions } from './useSettings';
+export { useDocumentState, useDocumentActions } from './useDocument';
+export { useBenchmarkState, useBenchmarkActions } from './useBenchmark';
+export { useLibraryState, useLibraryActions } from './useLibrary';
 export {
-  useSegmentEditor,
   useSegmentEditorState,
   useSegmentEditorActions,
 } from './useSegmentEditor';
-export { useBindings, useBindingsState, useBindingsActions } from './useBindings';
+export { useBindingsState, useBindingsActions } from './useBindings';

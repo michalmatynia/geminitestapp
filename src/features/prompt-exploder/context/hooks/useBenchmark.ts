@@ -18,7 +18,3 @@ export const useBenchmarkActions = (): BenchmarkActions => {
   if (!ctx) throw new Error('useBenchmarkActions must be used within BenchmarkProvider');
   return ctx;
 };
-
-export const useBenchmark = (): BenchmarkState & BenchmarkActions => {
-  return { ...useBenchmarkState(), ...useBenchmarkActions() };
-};

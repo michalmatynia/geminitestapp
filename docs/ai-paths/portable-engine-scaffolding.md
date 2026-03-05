@@ -192,6 +192,7 @@ Resolver behavior:
     - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_ENDPOINT_ALLOWLIST` (comma-delimited replay endpoint URL allowlist)
     - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_SECRET` (optional HMAC secret for replay-history export signatures)
     - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_KEY_ID` (optional replay-history export signature key-id hint)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_REDACTION_MODE` (`off` or `sensitive`; `sensitive` redacts endpoint/error fields for lower-trust exports)
   - Auto-remediation fan-out API:
     - `notifyPortablePathAuditSinkAutoRemediation(input, { ... })`
     - Supports webhook and email-relay webhook channels with retry/circuit protection.
@@ -290,11 +291,18 @@ These allow stable package integrity tagging across copy/paste surfaces.
   - `includeAttempts=true|false` (default `false`)
   - `signed=true|false` (default `true`)
   - `format=json|ndjson|csv` (default `json`)
+  - `cursor=<opaque>` (optional, filter-bound cursor for paging older replay entries)
+  - `Accept-Encoding: gzip` (optional request header; enables compressed `ndjson`/`csv` exports for large payloads)
 - Replay history export response includes:
   - replay run counters and filters derived from replay audit logs
   - optional replay attempt details (`includeAttempts=true`)
+  - redaction metadata (`redaction.mode`, `redaction.applied`)
+  - pagination metadata (`hasMore`, `nextCursor`, accepted `cursor`, `scanTruncated`)
   - optional HMAC export signature payload (`signature`) when signing secret is configured
-  - for `ndjson`/`csv`, signature is emitted in `x-ai-paths-export-signature*` headers
+  - for `ndjson`/`csv`, pagination and signature are emitted via `x-ai-paths-pagination*` and `x-ai-paths-export-signature*` headers
+  - response includes `x-ai-paths-export-redaction-mode`
+  - for `ndjson`/`csv`, response includes `Vary: Accept-Encoding` and `x-ai-paths-export-size-bytes`
+  - when compressed, response also includes `Content-Encoding: gzip`, `x-ai-paths-export-compression: gzip`, and `x-ai-paths-export-size-compressed-bytes`
 - Receiver verification endpoint: `POST /api/ai-paths/portable-engine/remediation-webhook`
 - Receiver verification query:
   - `channel=webhook|email` (default `webhook`)
@@ -437,6 +445,5 @@ Receiver operations runbook:
 
 ## Next Hardening Steps
 
-1. Add cursor-based pagination for replay-history exports over very large incident windows.
-2. Add server-side compression for large NDJSON/CSV replay-history exports.
-3. Add redaction mode for replay-history export payload fields in lower-trust environments.
+1. Add cursor signed-integrity token mode for untrusted client export consumers.
+2. Add replay-history export redaction profiles with field-level policy presets.

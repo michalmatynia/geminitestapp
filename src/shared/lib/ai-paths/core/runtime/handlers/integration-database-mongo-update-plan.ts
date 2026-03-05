@@ -124,8 +124,9 @@ export async function buildMongoUpdatePlan({
   const parameterTargetPath =
     normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ?? 'parameters';
 
-  let updates: Record<string, unknown>;
-  let updateDoc: unknown;
+  let updates: Record<string, unknown> = {};
+  let updateDoc: unknown = null;
+  let templateGuardrailFallbackMeta: Record<string, unknown> | null = null;
 
   if (updatePayloadMode === 'mapping') {
     const mappingResult = resolveDatabaseUpdateMappings({
@@ -182,54 +183,100 @@ export async function buildMongoUpdatePlan({
       currentValue,
     });
     if (!templateGuardrail.ok) {
-      const errorMessage = templateGuardrail.message;
-      reportAiPathsError(
-        new Error(errorMessage),
-        {
-          action: 'dbUpdateTemplate',
-          nodeId: node.id,
-          guardrailMeta: templateGuardrail.guardrailMeta,
-        },
-        'Database update blocked:'
+      const sourcePathMappings = (dbConfig.mappings ?? []).filter(
+        (mapping): boolean => normalizeNonEmptyString(mapping.sourcePath) !== null
       );
-      toast(errorMessage, { variant: 'error' });
-      return {
-        output: createWriteTemplateGuardrailOutput({
-          aiPrompt,
-          message: errorMessage,
-          guardrailMeta: templateGuardrail.guardrailMeta,
-        }),
-      };
-    }
-
-    const parsedUpdate: unknown = parseJsonTemplate(updateTemplate);
-    if (!parsedUpdate || (typeof parsedUpdate !== 'object' && !Array.isArray(parsedUpdate))) {
-      toast('Update template must be valid JSON.', { variant: 'error' });
-      return {
-        output: {
-          result: null,
-          bundle: { error: 'Invalid update template' },
-          debugPayload: {
-            mode: 'custom',
-            collection,
-            filter: resolvedFilter,
+      if (sourcePathMappings.length > 0) {
+        const mappingFallback = resolveDatabaseUpdateMappings({
+          dbConfig,
+          nodeInputPorts,
+          resolvedInputs,
+          parameterTargetPath,
+        });
+        if (Object.keys(mappingFallback.updates).length > 0) {
+          updates = mappingFallback.updates;
+          updateDoc = { $set: updates };
+          templateGuardrailFallbackMeta = {
+            applied: true,
+            reason: 'write-template-values',
+            message: templateGuardrail.message,
+            guardrailMeta: templateGuardrail.guardrailMeta,
+            updatePayloadMode: 'mapping_fallback',
+            sourcePathMappings: sourcePathMappings.length,
+            recoveredTargets: Object.keys(mappingFallback.updates),
+          };
+        } else {
+          const errorMessage = templateGuardrail.message;
+          reportAiPathsError(
+            new Error(errorMessage),
+            {
+              action: 'dbUpdateTemplate',
+              nodeId: node.id,
+              guardrailMeta: templateGuardrail.guardrailMeta,
+            },
+            'Database update blocked:'
+          );
+          toast(errorMessage, { variant: 'error' });
+          return {
+            output: createWriteTemplateGuardrailOutput({
+              aiPrompt,
+              message: errorMessage,
+              guardrailMeta: templateGuardrail.guardrailMeta,
+            }),
+          };
+        }
+      } else {
+        const errorMessage = templateGuardrail.message;
+        reportAiPathsError(
+          new Error(errorMessage),
+          {
+            action: 'dbUpdateTemplate',
+            nodeId: node.id,
+            guardrailMeta: templateGuardrail.guardrailMeta,
           },
-          aiPrompt,
-        },
-      };
+          'Database update blocked:'
+        );
+        toast(errorMessage, { variant: 'error' });
+        return {
+          output: createWriteTemplateGuardrailOutput({
+            aiPrompt,
+            message: errorMessage,
+            guardrailMeta: templateGuardrail.guardrailMeta,
+          }),
+        };
+      }
     }
-    updateDoc = parsedUpdate;
 
-    const extractUpdates = (value: unknown): Record<string, unknown> => {
-      const record = toRecord(value);
-      if (!record) return {};
-      const setRecord = toRecord(record['$set']);
-      if (setRecord) return setRecord;
-      const hasOperator = Object.keys(record).some((key: string): boolean => key.startsWith('$'));
-      if (hasOperator) return {};
-      return record;
-    };
-    updates = extractUpdates(updateDoc);
+    if (!updateDoc) {
+      const parsedUpdate: unknown = parseJsonTemplate(updateTemplate);
+      if (!parsedUpdate || (typeof parsedUpdate !== 'object' && !Array.isArray(parsedUpdate))) {
+        toast('Update template must be valid JSON.', { variant: 'error' });
+        return {
+          output: {
+            result: null,
+            bundle: { error: 'Invalid update template' },
+            debugPayload: {
+              mode: 'custom',
+              collection,
+              filter: resolvedFilter,
+            },
+            aiPrompt,
+          },
+        };
+      }
+      updateDoc = parsedUpdate;
+
+      const extractUpdates = (value: unknown): Record<string, unknown> => {
+        const record = toRecord(value);
+        if (!record) return {};
+        const setRecord = toRecord(record['$set']);
+        if (setRecord) return setRecord;
+        const hasOperator = Object.keys(record).some((key: string): boolean => key.startsWith('$'));
+        if (hasOperator) return {};
+        return record;
+      };
+      updates = extractUpdates(updateDoc);
+    }
   }
 
   const debugPayload: Record<string, unknown> = buildMongoUpdateDebugPayload({
@@ -241,6 +288,9 @@ export async function buildMongoUpdatePlan({
     idType,
     resolvedInputs,
   });
+  if (templateGuardrailFallbackMeta) {
+    debugPayload['templateGuardrailFallback'] = templateGuardrailFallbackMeta;
+  }
 
   if (!resolvedFilter || Object.keys(resolvedFilter).length === 0) {
     const error = 'No explicit update filter provided.';

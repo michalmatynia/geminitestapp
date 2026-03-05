@@ -260,12 +260,6 @@ export function useUiToolsState(): UiToolsState {
   return ctx;
 }
 
-export function useUiSequenceState(): UiSequenceState {
-  const ctx = useContext(UiSequenceContext);
-  if (!ctx) throw new Error('useUiSequenceState must be used within a UiProvider');
-  return ctx;
-}
-
 export function useUiState(): UiState {
   const ctx = useContext(UiStateContext);
   if (!ctx) throw new Error('useUiState must be used within a UiProvider');

@@ -40,16 +40,6 @@ export function PromptEngineValidationPageProvider({
   );
 }
 
-export function usePromptEngineValidationPageContext(): PromptEngineValidationPageContextValue {
-  const context = React.useContext(PromptEngineValidationPageContext);
-  if (!context) {
-    throw new Error(
-      'usePromptEngineValidationPageContext must be used within PromptEngineValidationPageProvider'
-    );
-  }
-  return context;
-}
-
 export function useOptionalPromptEngineValidationPageContext(): PromptEngineValidationPageContextValue | null {
   return React.useContext(PromptEngineValidationPageContext);
 }

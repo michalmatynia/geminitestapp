@@ -2,10 +2,25 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PromptEngineFilters } from '@/features/prompt-engine/components/PromptEngineFilters';
-import { usePromptEngine } from '@/features/prompt-engine/context/PromptEngineContext';
+import { usePromptEngineActions } from '@/features/prompt-engine/context/prompt-engine/PromptEngineActionsContext';
+import { usePromptEngineConfig } from '@/features/prompt-engine/context/prompt-engine/PromptEngineConfigContext';
+import { usePromptEngineData } from '@/features/prompt-engine/context/prompt-engine/PromptEngineDataContext';
+import { usePromptEngineFilters } from '@/features/prompt-engine/context/prompt-engine/PromptEngineFiltersContext';
 
-vi.mock('@/features/prompt-engine/context/PromptEngineContext', () => ({
-  usePromptEngine: vi.fn(),
+vi.mock('@/features/prompt-engine/context/prompt-engine/PromptEngineConfigContext', () => ({
+  usePromptEngineConfig: vi.fn(),
+}));
+
+vi.mock('@/features/prompt-engine/context/prompt-engine/PromptEngineFiltersContext', () => ({
+  usePromptEngineFilters: vi.fn(),
+}));
+
+vi.mock('@/features/prompt-engine/context/prompt-engine/PromptEngineDataContext', () => ({
+  usePromptEngineData: vi.fn(),
+}));
+
+vi.mock('@/features/prompt-engine/context/prompt-engine/PromptEngineActionsContext', () => ({
+  usePromptEngineActions: vi.fn(),
 }));
 
 vi.mock('@/shared/ui', () => ({
@@ -53,7 +68,32 @@ const setup = (
   overrides: Partial<Record<string, unknown>> = {}
 ): PromptEngineFiltersContextStub => {
   const context = buildContextStub(overrides);
-  vi.mocked(usePromptEngine).mockReturnValue(context as never);
+  vi.mocked(usePromptEngineConfig).mockReturnValue({
+    patternTab: context.patternTab,
+    patternTabLocked: context.patternTabLocked,
+    exploderSubTab: context.exploderSubTab,
+    exploderSubTabLocked: context.exploderSubTabLocked,
+    scopeLocked: false,
+    promptEngineSettings: {} as never,
+    isUsingDefaults: false,
+  });
+  vi.mocked(usePromptEngineFilters).mockReturnValue({
+    query: context.query,
+    setQuery: context.setQuery,
+    severity: context.severity,
+    setSeverity: context.setSeverity,
+    scope: context.scope,
+    setScope: context.setScope,
+    includeDisabled: context.includeDisabled,
+    setIncludeDisabled: context.setIncludeDisabled,
+  });
+  vi.mocked(usePromptEngineData).mockReturnValue({
+    filteredDrafts: context.filteredDrafts,
+  } as never);
+  vi.mocked(usePromptEngineActions).mockReturnValue({
+    setPatternTab: context.setPatternTab,
+    setExploderSubTab: context.setExploderSubTab,
+  } as never);
   render(<PromptEngineFilters />);
   return context;
 };

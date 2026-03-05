@@ -42,10 +42,10 @@ const DEAD_LETTER_REPLAY_POLICY_SKIP_REASONS = new Set<string>([
   'dead_letter_endpoint_disallowed',
   'dead_letter_outside_replay_window',
 ]);
-const TREND_SNAPSHOT_TRIGGERS = ['manual', 'threshold'] as const;
+const _TREND_SNAPSHOT_TRIGGERS = ['manual', 'threshold'] as const;
 const TREND_SNAPSHOT_CURSOR_VERSION = 1 as const;
 
-type TrendSnapshotTriggerFilter = (typeof TREND_SNAPSHOT_TRIGGERS)[number];
+type TrendSnapshotTriggerFilter = (typeof _TREND_SNAPSHOT_TRIGGERS)[number];
 type TrendSnapshotCursorPayload = {
   version: typeof TREND_SNAPSHOT_CURSOR_VERSION;
   beforeAt: string;

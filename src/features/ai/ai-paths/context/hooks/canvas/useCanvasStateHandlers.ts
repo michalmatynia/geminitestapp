@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react';
 import type { AiNode, RuntimeState, Edge } from '@/shared/lib/ai-paths';
 import type { Toast } from '@/shared/contracts/ui';
+import { clampTranslate } from '@/shared/lib/ai-paths';
 import {
   getMarqueeRect,
   setPointerCaptureSafe,
@@ -50,6 +51,7 @@ export function useCanvasStateHandlers(args: {
   setIsPanning: (isPanning: boolean) => void;
   updateView: (next: { x: number; y: number }) => void;
   panState: { startX: number; startY: number; originX: number; originY: number } | null;
+  viewScale: number;
 }): UseCanvasStateHandlersValue {
   const { toast, viewportRef, startPan, endPan, setIsPanning, updateView } = args;
 
@@ -220,9 +222,18 @@ export function useCanvasStateHandlers(args: {
       updateLastPointerCanvasPosFromClient(clientX, clientY);
       const nextX = args.panState.originX + (clientX - args.panState.startX);
       const nextY = args.panState.originY + (clientY - args.panState.startY);
-      updateView({ x: nextX, y: nextY });
+      const viewportRect = args.viewportRef.current?.getBoundingClientRect() ?? null;
+      const viewport = viewportRect
+        ? {
+          width: viewportRect.width,
+          height: viewportRect.height,
+        }
+        : null;
+      const scale = Number.isFinite(args.viewScale) && args.viewScale > 0 ? args.viewScale : 1;
+      const clamped = clampTranslate(nextX, nextY, scale, viewport);
+      updateView({ x: clamped.x, y: clamped.y });
     },
-    [args.panState, updateView, updateLastPointerCanvasPosFromClient]
+    [args.panState, args.viewScale, args.viewportRef, updateView, updateLastPointerCanvasPosFromClient]
   );
 
   const forcePanEnd = useCallback((): void => {

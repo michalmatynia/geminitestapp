@@ -140,36 +140,3 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
 
   return { batchQuery };
 }
-
-// Hook for query deduplication
-export function useQueryDeduplication(): {
-  deduplicatedQuery: <TData = unknown>(
-    queryKey: unknown[],
-    queryFn: () => Promise<TData>
-  ) => Promise<TData>;
-  } {
-  const activeQueries = useRef<Map<string, Promise<unknown>>>(new Map());
-
-  const deduplicatedQuery = useCallback(
-    async <TData = unknown>(queryKey: unknown[], queryFn: () => Promise<TData>): Promise<TData> => {
-      const key = JSON.stringify(queryKey);
-
-      // Return existing promise if query is already running
-      const existing = activeQueries.current.get(key);
-      if (existing) {
-        return existing as Promise<TData>;
-      }
-
-      // Create new promise and store it
-      const promise = queryFn().finally(() => {
-        activeQueries.current.delete(key);
-      });
-
-      activeQueries.current.set(key, promise);
-      return promise;
-    },
-    []
-  );
-
-  return { deduplicatedQuery };
-}

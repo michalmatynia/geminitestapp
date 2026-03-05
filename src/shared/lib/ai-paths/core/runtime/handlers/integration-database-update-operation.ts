@@ -196,6 +196,87 @@ export async function handleDatabaseUpdateOperation({
     currentValue,
   });
   if (!templateGuardrail.ok) {
+    const sourcePathMappings = (dbConfig.mappings ?? []).filter(
+      (mapping): boolean => typeof mapping.sourcePath === 'string' && mapping.sourcePath.trim().length > 0
+    );
+    if (sourcePathMappings.length > 0) {
+      const mappingFallback = resolveDatabaseUpdateMappings({
+        dbConfig,
+        nodeInputPorts,
+        resolvedInputs,
+        parameterTargetPath:
+          dbConfig.parameterInferenceGuard?.targetPath?.trim().length
+            ? dbConfig.parameterInferenceGuard.targetPath.trim()
+            : 'parameters',
+      });
+      if (Object.keys(mappingFallback.updates).length > 0) {
+        const executionResult = await executeDatabaseUpdate({
+          nodeId: node.id,
+          executed,
+          reportAiPathsError,
+          toast,
+          dryRun,
+          resolvedInputs,
+          dbConfig,
+          queryConfig,
+          updates: mappingFallback.updates,
+          updateStrategy,
+          entityType,
+          shouldUseEntityUpdate,
+          entityId,
+          configuredCollection,
+          updatePayloadMode: 'mapping',
+        });
+        const debugPayload: Record<string, unknown> = {
+          mode: 'mapping_fallback',
+          updateStrategy,
+          entityType,
+          collection: configuredCollection || null,
+          forceCollectionUpdate,
+          idField,
+          entityId,
+          queryTemplate: queryConfig.queryTemplate ?? '',
+          updateTemplate: dbConfig.updateTemplate ?? '',
+          templateGuardrailFallback: {
+            applied: true,
+            reason: 'write-template-values',
+            message: templateGuardrail.message,
+            guardrailMeta: templateGuardrail.guardrailMeta,
+            sourcePathMappings: sourcePathMappings.length,
+            recoveredTargets: Object.keys(mappingFallback.updates),
+          },
+        };
+        if (executionResult.skipped) {
+          return {
+            ...prevOutputs,
+            result: null,
+            bundle: {
+              error: 'Database update was skipped.',
+              guardrail: 'update-skipped',
+            },
+            debugPayload,
+            aiPrompt,
+          };
+        }
+        return {
+          content_en: (nodeInputs['content_en'] as string | undefined) ?? '',
+          bundle: {
+            updates: mappingFallback.updates,
+            ...(executionResult.executionMeta ?? {}),
+            ...(executionResult.writeOutcome ? { writeOutcome: executionResult.writeOutcome } : {}),
+            guardrail: 'write-template-values',
+            guardrailSeverity: 'warning',
+          },
+          result: executionResult.updateResult,
+          debugPayload: {
+            ...debugPayload,
+            execution: executionResult.executionMeta,
+          },
+          ...(executionResult.writeOutcome ? { writeOutcome: executionResult.writeOutcome } : {}),
+          aiPrompt,
+        };
+      }
+    }
     const error = templateGuardrail.message;
     reportAiPathsError(
       new Error(error),

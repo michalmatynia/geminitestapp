@@ -1,0 +1,350 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v2",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "generatedAt": "2026-03-05T07:53:41.543Z",
+  "id": "node_obj_playwright_portable_v2",
+  "nodeType": "playwright",
+  "nodeDocVersion": "2026-02-20.v1",
+  "title": "Playwright",
+  "purpose": "Run programmable browser automation with persona-driven fidelity.",
+  "nodeFamily": "integration",
+  "portability": {
+    "copyPasteReady": true,
+    "requiresUniqueNodeId": true,
+    "compatibleEngines": [
+      "ai-paths.portable-engine.v1"
+    ]
+  },
+  "ports": {
+    "inputs": [
+      "prompt",
+      "bundle",
+      "context",
+      "entityJson",
+      "value",
+      "result",
+      "title",
+      "images",
+      "content_en",
+      "entityId",
+      "entityType",
+      "productId"
+    ],
+    "outputs": [
+      "result",
+      "value",
+      "bundle",
+      "status",
+      "jobId"
+    ]
+  },
+  "statusModel": {
+    "idle": {
+      "meaning": "Node has not started for the current run.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "processing": {
+      "meaning": "Node is actively computing. Pulsating indicates processing, not waiting. Outgoing edges stay inactive until an output port receives a value.",
+      "edgeAnimationPolicy": {
+        "incoming": "active_if_signal_present",
+        "outgoing": "inactive"
+      }
+    },
+    "waiting": {
+      "meaning": "Node is waiting for an external callback/response. Previously consumed input edges must stop animating; outgoing edges remain inactive until output exists.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "success": {
+      "meaning": "Node completed successfully and emitted output values.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "error": {
+      "meaning": "Node failed and may emit error-specific outputs.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "skipped": {
+      "meaning": "Node execution was skipped by control flow or guard conditions.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    }
+  },
+  "runtimeSemantics": {
+    "executionKind": "asynchronous",
+    "waitForResultSupported": true,
+    "wireActivationRules": {
+      "processing": "When node is processing, show node pulse only. Do not animate outgoing edges until an output port value is produced.",
+      "waiting": "When node is waiting for external response, keep both consumed incoming and future outgoing edges inactive.",
+      "completed": "Animate only edges carrying newly emitted outputs.",
+      "errored": "Animate only explicit error-route outputs (if connected)."
+    }
+  },
+  "configContract": {
+    "fields": [
+      {
+        "path": "playwright.personaId",
+        "description": "Optional Playwright Persona ID. When set, node runtime inherits persona browser fidelity settings.",
+        "defaultValue": "\"\""
+      },
+      {
+        "path": "playwright.script",
+        "description": "User script that exports a default async function: `run({ browser, context, page, input, emit, artifacts, log, helpers })`.",
+        "defaultValue": "\"export default async function run(...) { ... }\""
+      },
+      {
+        "path": "playwright.waitForResult",
+        "description": "When true, waits for Playwright completion and emits final outputs. When false, emits runId/job status immediately.",
+        "defaultValue": "true"
+      },
+      {
+        "path": "playwright.timeoutMs",
+        "description": "Per-run timeout budget in milliseconds.",
+        "defaultValue": "120000"
+      },
+      {
+        "path": "playwright.browserEngine",
+        "description": "Browser engine to launch: chromium/firefox/webkit.",
+        "defaultValue": "chromium"
+      },
+      {
+        "path": "playwright.startUrlTemplate",
+        "description": "Optional URL template rendered from incoming ports before script execution (example: https://example.com/{{entityId}}).",
+        "defaultValue": "\"\""
+      },
+      {
+        "path": "playwright.launchOptionsJson",
+        "description": "Raw Playwright launch options JSON merged with persona-driven settings before browser launch.",
+        "defaultValue": "{}"
+      },
+      {
+        "path": "playwright.contextOptionsJson",
+        "description": "Raw Playwright browser context options JSON applied when creating a context/page session.",
+        "defaultValue": "{}"
+      },
+      {
+        "path": "playwright.settingsOverrides",
+        "description": "Optional partial override object for Playwright persona fields (headless, slowMo, timeouts, proxy, device emulation).",
+        "defaultValue": "{}"
+      },
+      {
+        "path": "playwright.capture.screenshot",
+        "description": "Capture final screenshot artifact on run completion.",
+        "defaultValue": "true"
+      },
+      {
+        "path": "playwright.capture.html",
+        "description": "Capture final page HTML artifact on run completion.",
+        "defaultValue": "false"
+      },
+      {
+        "path": "playwright.capture.video",
+        "description": "Enable Playwright video capture for the run context.",
+        "defaultValue": "false"
+      },
+      {
+        "path": "playwright.capture.trace",
+        "description": "Enable Playwright trace collection and save trace.zip artifact.",
+        "defaultValue": "false"
+      },
+      {
+        "path": "runtime.cache.mode",
+        "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+        "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.waitForInputs",
+        "description": "If true, wait until all connected input ports have values before executing the node.",
+        "defaultValue": "false"
+      }
+    ]
+  },
+  "copyPaste": {
+    "minimalNode": {
+      "id": "node_playwright_example",
+      "type": "playwright",
+      "title": "Playwright",
+      "description": "Run programmable browser automation with persona-driven fidelity.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "prompt",
+        "bundle",
+        "context",
+        "entityJson",
+        "value",
+        "result",
+        "title",
+        "images",
+        "content_en",
+        "entityId",
+        "entityType",
+        "productId"
+      ],
+      "outputs": [
+        "result",
+        "value",
+        "bundle",
+        "status",
+        "jobId"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      }
+    },
+    "fullNode": {
+      "id": "node_playwright_example",
+      "type": "playwright",
+      "title": "Playwright",
+      "description": "Run programmable browser automation with persona-driven fidelity.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [
+        "prompt",
+        "bundle",
+        "context",
+        "entityJson",
+        "value",
+        "result",
+        "title",
+        "images",
+        "content_en",
+        "entityId",
+        "entityType",
+        "productId"
+      ],
+      "outputs": [
+        "result",
+        "value",
+        "bundle",
+        "status",
+        "jobId"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      },
+      "config": {
+        "playwright": {
+          "personaId": "",
+          "script": "export default async function run({ page, input, emit }) {\n  const target = input?.prompt || input?.value || input?.result || \"https://example.com\";\n  const url = typeof target === \"string\" && target.trim() ? target.trim() : \"https://example.com\";\n  await page.goto(url, { waitUntil: \"domcontentloaded\" });\n  const title = await page.title();\n  emit(\"result\", title);\n  emit(\"value\", { title, url: page.url() });\n  return { title, url: page.url() };\n}",
+          "waitForResult": true,
+          "timeoutMs": 120000,
+          "browserEngine": "chromium",
+          "startUrlTemplate": "",
+          "launchOptionsJson": "{}",
+          "contextOptionsJson": "{}",
+          "settingsOverrides": {},
+          "capture": {
+            "screenshot": true,
+            "html": false,
+            "video": false,
+            "trace": false
+          }
+        },
+        "runtime": {
+          "cache": {
+            "mode": "auto"
+          },
+          "waitForInputs": false
+        }
+      }
+    },
+    "pathSnippet": {
+      "nodes": [
+        {
+          "id": "node_playwright_example",
+          "type": "playwright",
+          "title": "Playwright",
+          "description": "Run programmable browser automation with persona-driven fidelity.",
+          "position": {
+            "x": 100,
+            "y": 100
+          },
+          "inputs": [
+            "prompt",
+            "bundle",
+            "context",
+            "entityJson",
+            "value",
+            "result",
+            "title",
+            "images",
+            "content_en",
+            "entityId",
+            "entityType",
+            "productId"
+          ],
+          "outputs": [
+            "result",
+            "value",
+            "bundle",
+            "status",
+            "jobId"
+          ],
+          "data": {},
+          "connections": {
+            "incoming": [],
+            "outgoing": []
+          },
+          "config": {
+            "playwright": {
+              "personaId": "",
+              "script": "export default async function run({ page, input, emit }) {\n  const target = input?.prompt || input?.value || input?.result || \"https://example.com\";\n  const url = typeof target === \"string\" && target.trim() ? target.trim() : \"https://example.com\";\n  await page.goto(url, { waitUntil: \"domcontentloaded\" });\n  const title = await page.title();\n  emit(\"result\", title);\n  emit(\"value\", { title, url: page.url() });\n  return { title, url: page.url() };\n}",
+              "waitForResult": true,
+              "timeoutMs": 120000,
+              "browserEngine": "chromium",
+              "startUrlTemplate": "",
+              "launchOptionsJson": "{}",
+              "contextOptionsJson": "{}",
+              "settingsOverrides": {},
+              "capture": {
+                "screenshot": true,
+                "html": false,
+                "video": false,
+                "trace": false
+              }
+            },
+            "runtime": {
+              "cache": {
+                "mode": "auto"
+              },
+              "waitForInputs": false
+            }
+          }
+        }
+      ],
+      "edges": []
+    }
+  },
+  "notes": [
+    "Built-in script templates are available in the Playwright node config dialog."
+  ],
+  "source": {
+    "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "semanticNodeHashAlgorithm": "sha256",
+    "semanticNodeHash": "f3b63284ff083ea90e8ebce1d5c25f299d43ff39dbeba4219ab0ee325945b442"
+  },
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "44f1960b568af3e57b7f4d85c6658965b27680ccba8cd960f8d28514cf51bc93"
+}

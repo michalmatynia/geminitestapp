@@ -3,14 +3,12 @@
 import { type Query } from '@tanstack/react-query';
 
 import type { ProductJob } from '@/shared/contracts/integrations';
-import type { ProductAiJob } from '@/shared/contracts/jobs';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { jobKeys } from '@/shared/lib/query-key-exports';
 
 import {
   getIntegrationJobs,
-  getProductAiJobs,
   getChatbotJobs,
   getTraderaQueueHealth,
   type TraderaQueueHealthResponse,
@@ -52,23 +50,6 @@ export function useIntegrationJobs(): ListQuery<ProductJob> {
       domain: 'jobs',
       queryKey,
       tags: ['jobs', 'integrations'],
-    },
-  });
-}
-
-export function useProductAiJobs(scope: string = 'all'): SingleQuery<{ jobs: ProductAiJob[] }> {
-  const queryKey = jobKeys.productAi(scope);
-  return createSingleQueryV2({
-    id: scope,
-    queryKey,
-    queryFn: () => getProductAiJobs(scope),
-    meta: {
-      source: 'jobs.hooks.useProductAiJobs',
-      operation: 'detail',
-      resource: 'jobs.product-ai',
-      domain: 'jobs',
-      queryKey,
-      tags: ['jobs', 'product-ai'],
     },
   });
 }

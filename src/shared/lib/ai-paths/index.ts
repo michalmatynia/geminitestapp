@@ -24,3 +24,4 @@ export * from './api';
 export * from './local-runs';
 export * from './regex-templates';
 export * from './format-duration';
+export * from './error-reporting';

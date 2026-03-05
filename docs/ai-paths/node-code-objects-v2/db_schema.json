@@ -1,0 +1,231 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v2",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "generatedAt": "2026-03-05T07:53:41.543Z",
+  "id": "node_obj_db_schema_portable_v2",
+  "nodeType": "db_schema",
+  "nodeDocVersion": "2026-02-20.v1",
+  "title": "Database Schema",
+  "purpose": "Provides live database structure as context for AI.",
+  "nodeFamily": "integration",
+  "portability": {
+    "copyPasteReady": true,
+    "requiresUniqueNodeId": true,
+    "compatibleEngines": [
+      "ai-paths.portable-engine.v1"
+    ]
+  },
+  "ports": {
+    "inputs": [],
+    "outputs": [
+      "schema",
+      "context"
+    ]
+  },
+  "statusModel": {
+    "idle": {
+      "meaning": "Node has not started for the current run.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "processing": {
+      "meaning": "Node is actively computing. Pulsating indicates processing, not waiting. Outgoing edges stay inactive until an output port receives a value.",
+      "edgeAnimationPolicy": {
+        "incoming": "active_if_signal_present",
+        "outgoing": "inactive"
+      }
+    },
+    "waiting": {
+      "meaning": "Node is waiting for an external callback/response. Previously consumed input edges must stop animating; outgoing edges remain inactive until output exists.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    },
+    "success": {
+      "meaning": "Node completed successfully and emitted output values.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "error": {
+      "meaning": "Node failed and may emit error-specific outputs.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "active_on_emit"
+      }
+    },
+    "skipped": {
+      "meaning": "Node execution was skipped by control flow or guard conditions.",
+      "edgeAnimationPolicy": {
+        "incoming": "inactive",
+        "outgoing": "inactive"
+      }
+    }
+  },
+  "runtimeSemantics": {
+    "executionKind": "synchronous",
+    "waitForResultSupported": false,
+    "wireActivationRules": {
+      "processing": "When node is processing, show node pulse only. Do not animate outgoing edges until an output port value is produced.",
+      "waiting": "When node is waiting for external response, keep both consumed incoming and future outgoing edges inactive.",
+      "completed": "Animate only edges carrying newly emitted outputs.",
+      "errored": "Animate only explicit error-route outputs (if connected)."
+    }
+  },
+  "configContract": {
+    "fields": [
+      {
+        "path": "db_schema.provider",
+        "description": "Which provider to load: auto (primary), mongodb, prisma, or all.",
+        "defaultValue": "all"
+      },
+      {
+        "path": "db_schema.mode",
+        "description": "all = include all collections; selected = include only `collections`.",
+        "defaultValue": "all"
+      },
+      {
+        "path": "db_schema.collections",
+        "description": "Collection names to include when mode is selected.",
+        "defaultValue": "[]"
+      },
+      {
+        "path": "db_schema.includeFields",
+        "description": "Include field lists for each collection.",
+        "defaultValue": "true"
+      },
+      {
+        "path": "db_schema.includeRelations",
+        "description": "Include inferred relations/foreign key hints when available.",
+        "defaultValue": "false"
+      },
+      {
+        "path": "db_schema.formatAs",
+        "description": "json emits a JSON object; text emits a compact schema text for prompting.",
+        "defaultValue": "json"
+      },
+      {
+        "path": "runtime.cache.mode",
+        "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+        "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.waitForInputs",
+        "description": "If true, wait until all connected input ports have values before executing the node.",
+        "defaultValue": "false"
+      }
+    ]
+  },
+  "copyPaste": {
+    "minimalNode": {
+      "id": "node_db_schema_example",
+      "type": "db_schema",
+      "title": "Database Schema",
+      "description": "Provides live database structure as context for AI.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [],
+      "outputs": [
+        "schema",
+        "context"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      }
+    },
+    "fullNode": {
+      "id": "node_db_schema_example",
+      "type": "db_schema",
+      "title": "Database Schema",
+      "description": "Provides live database structure as context for AI.",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "inputs": [],
+      "outputs": [
+        "schema",
+        "context"
+      ],
+      "data": {},
+      "connections": {
+        "incoming": [],
+        "outgoing": []
+      },
+      "config": {
+        "db_schema": {
+          "provider": "all",
+          "mode": "all",
+          "collections": [],
+          "includeFields": true,
+          "includeRelations": false,
+          "formatAs": "json"
+        },
+        "runtime": {
+          "cache": {
+            "mode": "auto"
+          },
+          "waitForInputs": false
+        }
+      }
+    },
+    "pathSnippet": {
+      "nodes": [
+        {
+          "id": "node_db_schema_example",
+          "type": "db_schema",
+          "title": "Database Schema",
+          "description": "Provides live database structure as context for AI.",
+          "position": {
+            "x": 100,
+            "y": 100
+          },
+          "inputs": [],
+          "outputs": [
+            "schema",
+            "context"
+          ],
+          "data": {},
+          "connections": {
+            "incoming": [],
+            "outgoing": []
+          },
+          "config": {
+            "db_schema": {
+              "provider": "all",
+              "mode": "all",
+              "collections": [],
+              "includeFields": true,
+              "includeRelations": false,
+              "formatAs": "json"
+            },
+            "runtime": {
+              "cache": {
+                "mode": "auto"
+              },
+              "waitForInputs": false
+            }
+          }
+        }
+      ],
+      "edges": []
+    }
+  },
+  "notes": [],
+  "source": {
+    "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "semanticNodeHashAlgorithm": "sha256",
+    "semanticNodeHash": "9ce34ef49b7709e8e6c0008cde0260ba925c9100a3019a342166590eb2d4cd81"
+  },
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "3478af082280773843e0043fd932a6a6f96e09c91d8b518e699e7ed76ef10e8b"
+}

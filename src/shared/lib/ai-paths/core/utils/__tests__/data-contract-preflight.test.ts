@@ -209,7 +209,7 @@ describe('evaluateDataContractPreflight', () => {
     ).toBe(false);
   });
 
-  it('does not flag template token missing when upstream root is connected but unresolved', () => {
+  it('reports deferred template-token warning when upstream root is connected but unresolved', () => {
     const nodes: AiNode[] = [
       buildNode({
         id: 'mapper-1',
@@ -259,14 +259,21 @@ describe('evaluateDataContractPreflight', () => {
       mode: 'full',
     });
 
-    expect(
-      report.issues.some(
-        (issue) =>
-          issue.code === 'database_template_token_missing' &&
-          issue.token === 'value.description_pl' &&
-          issue.nodeId === 'db-1'
-      )
-    ).toBe(false);
+    const deferredIssue = report.issues.find(
+      (issue) =>
+        issue.code === 'database_template_token_missing' &&
+        issue.token === 'value.description_pl' &&
+        issue.nodeId === 'db-1'
+    );
+    expect(deferredIssue).toEqual(
+      expect.objectContaining({
+        severity: 'warning',
+        metadata: expect.objectContaining({
+          deferred: true,
+          template: 'database.updateTemplate',
+        }),
+      })
+    );
   });
 
   it('flags runtime type mismatch on non-database connected inputs', () => {

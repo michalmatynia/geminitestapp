@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import { createContext } from 'react';
 import type { ValidatorPatternList } from '@/shared/contracts/validator';
 import type { PromptEngineSettings } from '@/shared/contracts/prompt-engine';
 import {
@@ -28,9 +28,3 @@ export interface SettingsCoreState {
 }
 
 export const SettingsCoreContext = createContext<SettingsCoreState | null>(null);
-
-export function useSettingsCore(): SettingsCoreState {
-  const context = useContext(SettingsCoreContext);
-  if (!context) throw new Error('useSettingsCore must be used within SettingsProvider');
-  return context;
-}

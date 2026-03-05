@@ -3,6 +3,7 @@ import 'server-only';
 import { cloneJsonSafe, normalizeNodes, sanitizeEdges } from '@/shared/lib/ai-paths';
 import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
 import { GraphExecutionCancelled } from '@/shared/lib/ai-paths/core/runtime/engine-core';
+import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { repairRuntimeStatePorts } from '@/features/ai/ai-paths/services/runtime-state-port-repair';
 import {
@@ -250,10 +251,57 @@ export const executePathRun = async (
     meta: Record<string, unknown>,
     summary?: string
   ): Promise<void> => {
+    const errorReport = buildAiPathErrorReport({
+      error,
+      code:
+        typeof meta['errorCode'] === 'string'
+          ? meta['errorCode']
+          : 'AI_PATHS_RUNTIME_UNHANDLED_ERROR',
+      category: typeof meta['errorCategory'] === 'string' ? meta['errorCategory'] : 'runtime',
+      scope:
+        typeof meta['errorScope'] === 'string'
+          ? (meta['errorScope'] as
+              | 'enqueue'
+              | 'run'
+              | 'node'
+              | 'portable_engine'
+              | 'stream'
+              | 'api'
+              | 'unknown')
+          : typeof meta['nodeId'] === 'string'
+            ? 'node'
+            : 'run',
+      severity:
+        typeof meta['errorSeverity'] === 'string'
+          ? (meta['errorSeverity'] as 'info' | 'warning' | 'error' | 'fatal')
+          : 'error',
+      userMessage: summary ?? undefined,
+      traceId,
+      runId: run.id,
+      nodeId: typeof meta['nodeId'] === 'string' ? meta['nodeId'] : null,
+      nodeType: typeof meta['nodeType'] === 'string' ? meta['nodeType'] : null,
+      nodeTitle: typeof meta['nodeTitle'] === 'string' ? meta['nodeTitle'] : null,
+      attempt: typeof meta['attempt'] === 'number' ? meta['attempt'] : null,
+      iteration: typeof meta['iteration'] === 'number' ? meta['iteration'] : null,
+      retryable: typeof meta['retryable'] === 'boolean' ? meta['retryable'] : null,
+      retryAfterMs: typeof meta['retryAfterMs'] === 'number' ? meta['retryAfterMs'] : null,
+      statusCode: typeof meta['statusCode'] === 'number' ? meta['statusCode'] : null,
+      hints: Array.isArray(meta['hints']) ? (meta['hints'] as string[]) : null,
+      metadata: {
+        runStartedAt,
+        runtimeFingerprint,
+        traceId,
+        ...meta,
+      },
+    });
+
     await ErrorSystem.captureException(error, {
       service: 'ai-paths-runtime',
       pathRunId: run.id,
       summary,
+      errorCode: errorReport.code,
+      errorCategory: errorReport.category,
+      errorScope: errorReport.scope,
       ...meta,
     });
     // Persist the error event to MongoDB.  Guard with try/catch so that a MongoDB
@@ -264,13 +312,24 @@ export const executePathRun = async (
       await repo.createRunEvent({
         runId: run.id,
         level: 'error',
-        message: summary ?? 'AI Paths runtime error',
+        message: summary ?? errorReport.userMessage,
         metadata: {
-          error: error instanceof Error ? error.message : String(error),
           runStartedAt,
           runtimeFingerprint,
           traceId,
           ...meta,
+          error: errorReport.message,
+          errorCode: errorReport.code,
+          errorCategory: errorReport.category,
+          errorScope: errorReport.scope,
+          retryable: errorReport.retryable,
+          ...(typeof errorReport.retryAfterMs === 'number'
+            ? { retryAfterMs: errorReport.retryAfterMs }
+            : {}),
+          ...(typeof errorReport.statusCode === 'number'
+            ? { statusCode: errorReport.statusCode }
+            : {}),
+          errorReport,
         },
       });
     } catch {
@@ -600,6 +659,40 @@ export const executePathRun = async (
 
           const safeInputs = cloneJsonSafe(nodeInputs) as RuntimePortValues;
           const errorOutputs = extractNodeErrorOutputs(error);
+          const errorCodeValue = errorOutputs?.['errorCode'];
+          const errorCode =
+            typeof errorCodeValue === 'string'
+              ? errorCodeValue
+              : 'AI_PATHS_NODE_EXECUTION_FAILED';
+          const hints =
+            Array.isArray(errorOutputs?.['hints']) && errorOutputs['hints'].length > 0
+              ? (errorOutputs['hints'] as unknown[]).filter(
+                (entry: unknown): entry is string => typeof entry === 'string'
+              )
+              : null;
+          const errorOutputKeys = errorOutputs ? Object.keys(errorOutputs).slice(0, 30) : [];
+          const errorReport = buildAiPathErrorReport({
+            error,
+            code: errorCode,
+            category: 'runtime',
+            scope: 'node',
+            severity: 'error',
+            userMessage: `Node ${node.title ?? node.id} failed: ${message}`,
+            timestamp: finishedAt,
+            traceId,
+            runId: run.id,
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            attempt,
+            iteration,
+            hints,
+            metadata: {
+              spanId: nodeSpanId,
+              runtimeFingerprint,
+              errorOutputKeys,
+            },
+          });
           accInputs[node.id] = safeInputs;
           accOutputs[node.id] = mergeNodeOutputsForStatus({
             previous: accOutputs[node.id],
@@ -643,6 +736,11 @@ export const executePathRun = async (
                   iteration,
                   attempt,
                   error: message,
+                  errorCode: errorReport.code,
+                  errorCategory: errorReport.category,
+                  errorScope: errorReport.scope,
+                  errorReport,
+                  ...(errorOutputKeys.length > 0 ? { errorOutputKeys } : {}),
                 },
               })
               .catch(() => {}),

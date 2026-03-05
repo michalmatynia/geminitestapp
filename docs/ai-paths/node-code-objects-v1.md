@@ -1,5 +1,7 @@
 # AI-Paths Node Code Objects (v1)
 
+> `v2` portable semantic node objects are available at [`docs/ai-paths/node-code-objects-v2.md`](./node-code-objects-v2.md).
+
 ## Purpose
 
 Node code objects are reusable JSON snippets for programmatic node authoring.

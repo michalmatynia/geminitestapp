@@ -14,9 +14,10 @@ import type {
   AiPathRunRecord,
   AiPathRunEventRecord,
 } from '@/shared/lib/ai-paths';
-import type {
-  RunDetail as RunDetailData,
-  StreamConnectionStatus as RunStreamStatus,
+import {
+  refreshRunDetailErrorSummary,
+  type RunDetail as RunDetailData,
+  type StreamConnectionStatus as RunStreamStatus,
 } from '../components/job-queue-panel-utils';
 
 // ---------------------------------------------------------------------------
@@ -197,6 +198,14 @@ export function RunHistoryProvider({ children }: RunHistoryProviderProps): React
     await runOperationHandlersRef.current.requeueDeadLetter?.(runId);
   }, []);
 
+  const setRunDetail = useCallback<RunHistoryActions['setRunDetail']>((detail) => {
+    setRunDetailInternal((prev) => {
+      const next = typeof detail === 'function' ? detail(prev) : detail;
+      if (!next) return null;
+      return refreshRunDetailErrorSummary(next);
+    });
+  }, []);
+
   // Actions are stable
   const actions = useMemo<RunHistoryActions>(
     () => ({
@@ -212,7 +221,7 @@ export function RunHistoryProvider({ children }: RunHistoryProviderProps): React
       // Detail panel actions
       setRunDetailOpen: setRunDetailOpenInternal,
       setRunDetailLoading: setRunDetailLoadingInternal,
-      setRunDetail: setRunDetailInternal,
+      setRunDetail,
       clearRunDetail: () => {
         setRunDetailInternal(null);
         setRunDetailOpenInternal(false);
@@ -249,7 +258,7 @@ export function RunHistoryProvider({ children }: RunHistoryProviderProps): React
 
       // Utility for merging events
       mergeRunEvents: (incoming: AiPathRunEventRecord[]) => {
-        setRunDetailInternal((prev) => {
+        setRunDetail((prev) => {
           if (!prev) return prev;
           const existingIds = new Set(prev.events.map((event) => event.id));
           const merged = [...prev.events];
@@ -277,6 +286,7 @@ export function RunHistoryProvider({ children }: RunHistoryProviderProps): React
       refreshRuns,
       requeueDeadLetter,
       resumeRun,
+      setRunDetail,
       setOpenRunDetailHandler,
       setRunOperationHandlers,
     ]

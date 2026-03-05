@@ -18,7 +18,3 @@ export const useSettingsActions = (): SettingsActions => {
   if (!ctx) throw new Error('useSettingsActions must be used within SettingsProvider');
   return ctx;
 };
-
-export const useSettings = (): SettingsState & SettingsActions => {
-  return { ...useSettingsState(), ...useSettingsActions() };
-};

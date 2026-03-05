@@ -1,5 +1,6 @@
 import { createHmac } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
+import { gzipSync } from 'zlib';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -11,7 +12,9 @@ import {
   PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_BOOTSTRAP_SOURCE,
   PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
   resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportKeyIdFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionModeFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportSecretFromEnvironment,
+  type PortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode,
 } from '@/shared/lib/ai-paths/portable-engine/server';
 import { listSystemLogs } from '@/shared/lib/observability/system-logger';
 
@@ -19,6 +22,9 @@ const DEFAULT_HISTORY_LIMIT = 50;
 const MAX_HISTORY_LIMIT = 200;
 const HISTORY_SCAN_PAGE_SIZE = 200;
 const MAX_HISTORY_SCAN_PAGES = 10;
+const REPLAY_HISTORY_CURSOR_VERSION = 1 as const;
+const REPLAY_HISTORY_EXPORT_COMPRESSION_MIN_BYTES = 1024;
+const REPLAY_HISTORY_REDACTED_VALUE = '[redacted]';
 
 type ReplayAttemptHistoryRecord = {
   replayedAt: string | null;
@@ -59,6 +65,21 @@ type ReplayHistoryRecord = {
   attempts: ReplayAttemptHistoryRecord[] | null;
 };
 
+type ReplayHistoryCursorPayload = {
+  version: 1;
+  beforeLoggedAt: string;
+  beforeLogId: string | null;
+  from: string | null;
+  to: string | null;
+};
+
+type ReplayHistoryPagination = {
+  hasMore: boolean;
+  nextCursor: string | null;
+  cursor: ReplayHistoryCursorPayload | null;
+  scanTruncated: boolean;
+};
+
 type ReplayHistoryPayload = {
   specVersion: string;
   kind: 'portable_audit_sink_auto_remediation_dead_letter_replay_history_export';
@@ -69,12 +90,16 @@ type ReplayHistoryPayload = {
     from: string | null;
     to: string | null;
   };
+  redaction: {
+    mode: PortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode;
+    applied: boolean;
+  };
   summary: {
     scannedLogCount: number;
     matchedReplayCount: number;
     returnedCount: number;
-    hasMore: boolean;
   };
+  pagination: ReplayHistoryPagination;
   entries: ReplayHistoryRecord[];
 };
 
@@ -130,6 +155,59 @@ const parseReplayHistoryExportFormat = (value: string | null): ReplayHistoryExpo
   throw badRequestError('Remediation replay history "format" must be one of: json, ndjson, csv.');
 };
 
+const parseReplayHistoryCursor = (
+  value: string | null,
+  filters: {
+    from: Date | null;
+    to: Date | null;
+  }
+): ReplayHistoryCursorPayload | null => {
+  if (!value) return null;
+  try {
+    const decoded = Buffer.from(value, 'base64url').toString('utf8');
+    const parsed = JSON.parse(decoded) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('invalid_shape');
+    }
+    const payload = parsed as Partial<ReplayHistoryCursorPayload>;
+    if (payload.version !== REPLAY_HISTORY_CURSOR_VERSION) {
+      throw new Error('invalid_version');
+    }
+    if (typeof payload.beforeLoggedAt !== 'string' || payload.beforeLoggedAt.trim().length === 0) {
+      throw new Error('invalid_before_logged_at');
+    }
+    const beforeLoggedAt = new Date(payload.beforeLoggedAt);
+    if (Number.isNaN(beforeLoggedAt.getTime())) {
+      throw new Error('invalid_before_logged_at');
+    }
+    const beforeLogId =
+      typeof payload.beforeLogId === 'string' && payload.beforeLogId.trim().length > 0
+        ? payload.beforeLogId
+        : null;
+    const cursorFrom =
+      typeof payload.from === 'string' && payload.from.trim().length > 0 ? payload.from : null;
+    const cursorTo =
+      typeof payload.to === 'string' && payload.to.trim().length > 0 ? payload.to : null;
+    const requestFrom = filters.from?.toISOString() ?? null;
+    const requestTo = filters.to?.toISOString() ?? null;
+    if (cursorFrom !== requestFrom || cursorTo !== requestTo) {
+      throw new Error('cursor_filter_mismatch');
+    }
+    return {
+      version: REPLAY_HISTORY_CURSOR_VERSION,
+      beforeLoggedAt: beforeLoggedAt.toISOString(),
+      beforeLogId,
+      from: cursorFrom,
+      to: cursorTo,
+    };
+  } catch {
+    throw badRequestError('Remediation replay history cursor is invalid.');
+  }
+};
+
+const encodeReplayHistoryCursor = (payload: ReplayHistoryCursorPayload): string =>
+  Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+
 const asRecord = (value: unknown): Record<string, unknown> | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   return value as Record<string, unknown>;
@@ -162,10 +240,15 @@ const toReplayAttemptHistoryRecord = (value: unknown): ReplayAttemptHistoryRecor
   };
 };
 
+type ReplayHistoryRecordWithCursor = ReplayHistoryRecord & {
+  logId: string | null;
+};
+
 const toReplayHistoryRecord = (
   log: Record<string, unknown>,
   includeAttempts: boolean
-): ReplayHistoryRecord | null => {
+): ReplayHistoryRecordWithCursor | null => {
+  const logId = toOptionalString(log['id']);
   const context = asRecord(log['context']);
   if (!context) return null;
   if (context['alertType'] !== PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_ALERT_TYPE) {
@@ -179,6 +262,7 @@ const toReplayHistoryRecord = (
       .filter((entry): entry is ReplayAttemptHistoryRecord => entry !== null)
     : [];
   return {
+    logId,
     loggedAt: toOptionalString(log['createdAt']) ?? new Date().toISOString(),
     level: toOptionalString(log['level']) ?? 'info',
     dryRun: toBoolean(context['dryRun']),
@@ -202,6 +286,35 @@ const toReplayHistoryRecord = (
     },
     attempts: includeAttempts ? attempts : null,
   };
+};
+
+const compareReplayHistoryRecordsDesc = (
+  left: ReplayHistoryRecordWithCursor,
+  right: ReplayHistoryRecordWithCursor
+): number => {
+  const leftTime = Date.parse(left.loggedAt);
+  const rightTime = Date.parse(right.loggedAt);
+  if (Number.isFinite(leftTime) && Number.isFinite(rightTime) && rightTime !== leftTime) {
+    return rightTime - leftTime;
+  }
+  if (left.loggedAt !== right.loggedAt) {
+    return right.loggedAt.localeCompare(left.loggedAt);
+  }
+  return (right.logId ?? '').localeCompare(left.logId ?? '');
+};
+
+const isReplayHistoryRecordBeforeCursor = (
+  entry: ReplayHistoryRecordWithCursor,
+  cursor: ReplayHistoryCursorPayload | null
+): boolean => {
+  if (!cursor) return true;
+  const entryTime = Date.parse(entry.loggedAt);
+  const cursorTime = Date.parse(cursor.beforeLoggedAt);
+  if (!Number.isFinite(entryTime) || !Number.isFinite(cursorTime)) return false;
+  if (entryTime < cursorTime) return true;
+  if (entryTime > cursorTime) return false;
+  if (!cursor.beforeLogId || !entry.logId) return false;
+  return entry.logId.localeCompare(cursor.beforeLogId) < 0;
 };
 
 const signReplayHistoryPayload = (
@@ -236,6 +349,88 @@ const withSignatureHeaders = (
     headers.set('x-ai-paths-export-signature-key-id', signature.keyId);
   }
   return headers;
+};
+
+const withReplayHistoryPaginationHeaders = (
+  headers: Headers,
+  pagination: ReplayHistoryPagination
+): Headers => {
+  headers.set('x-ai-paths-pagination-has-more', String(pagination.hasMore));
+  headers.set('x-ai-paths-pagination-scan-truncated', String(pagination.scanTruncated));
+  if (pagination.nextCursor) {
+    headers.set('x-ai-paths-pagination-next-cursor', pagination.nextCursor);
+  }
+  return headers;
+};
+
+const withReplayHistoryRedactionHeaders = (
+  headers: Headers,
+  redactionMode: PortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode
+): Headers => {
+  headers.set('x-ai-paths-export-redaction-mode', redactionMode);
+  return headers;
+};
+
+const resolveReplayHistoryExportRedactionMode =
+  (): PortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode =>
+    resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionModeFromEnvironment() ??
+    'off';
+
+const applyReplayHistoryRecordRedaction = (
+  entry: ReplayHistoryRecord,
+  redactionMode: PortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode
+): ReplayHistoryRecord => {
+  if (redactionMode === 'off') return entry;
+  return {
+    ...entry,
+    filters: {
+      ...entry.filters,
+      endpoint: null,
+    },
+    attempts: entry.attempts?.map((attempt) => ({
+      ...attempt,
+      endpoint: null,
+      error: attempt.error === null ? null : REPLAY_HISTORY_REDACTED_VALUE,
+    })) ?? null,
+  };
+};
+
+const toMergedVaryHeader = (existing: string | null, value: string): string => {
+  const current = (existing ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+  if (!current.includes(value)) current.push(value);
+  return current.join(', ');
+};
+
+const acceptsGzipEncoding = (request: NextRequest): boolean => {
+  const header = request.headers.get('accept-encoding');
+  if (!header) return false;
+  return header
+    .split(',')
+    .map((entry) => entry.trim().toLowerCase())
+    .some((entry) => entry === 'gzip' || entry.startsWith('gzip;'));
+};
+
+const maybeCompressReplayHistoryExportBody = (
+  request: NextRequest,
+  body: string,
+  headers: Headers
+): string | ArrayBuffer => {
+  headers.set('Vary', toMergedVaryHeader(headers.get('Vary'), 'Accept-Encoding'));
+  const bodyBytes = Buffer.byteLength(body);
+  headers.set('x-ai-paths-export-size-bytes', String(bodyBytes));
+  if (!acceptsGzipEncoding(request) || bodyBytes < REPLAY_HISTORY_EXPORT_COMPRESSION_MIN_BYTES) {
+    return body;
+  }
+  const compressed = gzipSync(body);
+  headers.set('Content-Encoding', 'gzip');
+  headers.set('x-ai-paths-export-compression', 'gzip');
+  headers.set('x-ai-paths-export-size-compressed-bytes', String(compressed.byteLength));
+  const start = compressed.byteOffset;
+  const end = compressed.byteOffset + compressed.byteLength;
+  return compressed.buffer.slice(start, end) as ArrayBuffer;
 };
 
 const escapeCsv = (value: string | number | boolean | null): string => {
@@ -314,7 +509,9 @@ const toReplayHistoryNdjson = (
       limit: payload.limit,
       includeAttempts: payload.includeAttempts,
       filters: payload.filters,
+      redaction: payload.redaction,
       summary: payload.summary,
+      pagination: payload.pagination,
       signature,
     }),
     ...payload.entries.map((entry) => JSON.stringify({ type: 'entry', ...entry })),
@@ -341,10 +538,12 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   );
   const signed = parseBooleanQuery('signed', searchParams.get('signed'), true);
   const format = parseReplayHistoryExportFormat(searchParams.get('format'));
+  const cursor = parseReplayHistoryCursor(searchParams.get('cursor'), { from, to });
 
-  const entries: ReplayHistoryRecord[] = [];
+  const matchedEntries: ReplayHistoryRecordWithCursor[] = [];
   let matchedReplayCount = 0;
   let scannedLogCount = 0;
+  let logsExhausted = false;
   for (let page = 1; page <= MAX_HISTORY_SCAN_PAGES; page += 1) {
     const result = await listSystemLogs({
       page,
@@ -361,15 +560,35 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
         includeAttempts
       );
       if (!replayLog) continue;
+      if (!isReplayHistoryRecordBeforeCursor(replayLog, cursor)) continue;
       matchedReplayCount += 1;
-      if (entries.length < limit) {
-        entries.push(replayLog);
-      }
+      matchedEntries.push(replayLog);
     }
     if (page * HISTORY_SCAN_PAGE_SIZE >= result.total || result.logs.length === 0) {
+      logsExhausted = true;
       break;
     }
   }
+
+  const scanTruncated = !logsExhausted;
+  matchedEntries.sort(compareReplayHistoryRecordsDesc);
+  const selectedEntries = matchedEntries.slice(0, limit);
+  const redactionMode = resolveReplayHistoryExportRedactionMode();
+  const rawEntries: ReplayHistoryRecord[] = selectedEntries.map(({ logId: _logId, ...entry }) => entry);
+  const entries: ReplayHistoryRecord[] = rawEntries.map((entry) =>
+    applyReplayHistoryRecordRedaction(entry, redactionMode)
+  );
+  const hasMore = matchedReplayCount > selectedEntries.length || scanTruncated;
+  const nextCursor =
+    hasMore && selectedEntries.length > 0
+      ? encodeReplayHistoryCursor({
+          version: REPLAY_HISTORY_CURSOR_VERSION,
+          beforeLoggedAt: selectedEntries[selectedEntries.length - 1]!.loggedAt,
+          beforeLogId: selectedEntries[selectedEntries.length - 1]!.logId,
+          from: from?.toISOString() ?? null,
+          to: to?.toISOString() ?? null,
+        })
+      : null;
 
   const generatedAt = new Date().toISOString();
   const payload: ReplayHistoryPayload = {
@@ -382,11 +601,20 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       from: from?.toISOString() ?? null,
       to: to?.toISOString() ?? null,
     },
+    redaction: {
+      mode: redactionMode,
+      applied: redactionMode !== 'off',
+    },
     summary: {
       scannedLogCount,
       matchedReplayCount,
       returnedCount: entries.length,
-      hasMore: matchedReplayCount > entries.length,
+    },
+    pagination: {
+      hasMore,
+      nextCursor,
+      cursor,
+      scanTruncated,
     },
     entries,
   };
@@ -403,34 +631,68 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       : null;
 
   if (format === 'ndjson') {
-    return new NextResponse(toReplayHistoryNdjson(payload, signature), {
-      status: 200,
-      headers: withSignatureHeaders(
-        new Headers({
-          'Cache-Control': 'no-store',
-          'Content-Type': 'application/x-ndjson; charset=utf-8',
-          'Content-Disposition':
-            'attachment; filename="portable-remediation-dead-letter-replay-history.ndjson"',
-        }),
-        signature
+    const headers = withReplayHistoryRedactionHeaders(
+      withReplayHistoryPaginationHeaders(
+        withSignatureHeaders(
+          new Headers({
+            'Cache-Control': 'no-store',
+            'Content-Type': 'application/x-ndjson; charset=utf-8',
+            'Content-Disposition':
+              'attachment; filename="portable-remediation-dead-letter-replay-history.ndjson"',
+          }),
+          signature
+        ),
+        payload.pagination
       ),
+      payload.redaction.mode
+    );
+    const body = maybeCompressReplayHistoryExportBody(
+      req,
+      toReplayHistoryNdjson(payload, signature),
+      headers
+    );
+    return new Response(body, {
+      status: 200,
+      headers,
     });
   }
 
   if (format === 'csv') {
-    return new NextResponse(toReplayHistoryCsv(payload.entries), {
-      status: 200,
-      headers: withSignatureHeaders(
-        new Headers({
-          'Cache-Control': 'no-store',
-          'Content-Type': 'text/csv; charset=utf-8',
-          'Content-Disposition':
-            'attachment; filename="portable-remediation-dead-letter-replay-history.csv"',
-        }),
-        signature
+    const headers = withReplayHistoryRedactionHeaders(
+      withReplayHistoryPaginationHeaders(
+        withSignatureHeaders(
+          new Headers({
+            'Cache-Control': 'no-store',
+            'Content-Type': 'text/csv; charset=utf-8',
+            'Content-Disposition':
+              'attachment; filename="portable-remediation-dead-letter-replay-history.csv"',
+          }),
+          signature
+        ),
+        payload.pagination
       ),
+      payload.redaction.mode
+    );
+    const body = maybeCompressReplayHistoryExportBody(
+      req,
+      toReplayHistoryCsv(payload.entries),
+      headers
+    );
+    return new Response(body, {
+      status: 200,
+      headers,
     });
   }
+
+  const responseHeaders = withReplayHistoryRedactionHeaders(
+    withReplayHistoryPaginationHeaders(
+      new Headers({
+        'Cache-Control': 'no-store',
+      }),
+      payload.pagination
+    ),
+    payload.redaction.mode
+  );
 
   return NextResponse.json(
     {
@@ -438,9 +700,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       signature,
     },
     {
-      headers: {
-        'Cache-Control': 'no-store',
-      },
+      headers: Object.fromEntries(responseHeaders.entries()),
     }
   );
 }

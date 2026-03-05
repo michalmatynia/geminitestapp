@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 
 import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
+import { listUnexpectedFilesBySuffix } from './artifact-hygiene';
 
 const workspaceRoot = process.cwd();
 const nodesDir = path.join(workspaceRoot, 'docs/ai-paths/semantic-grammar/nodes');
@@ -30,13 +31,12 @@ const computeNodeHash = (value: unknown): string =>
     .update(JSON.stringify(normalizeForHashing(value)), 'utf8')
     .digest('hex');
 
-const unexpectedNodeJsonFiles = fs.existsSync(nodesDir)
-  ? fs.readdirSync(nodesDir, { withFileTypes: true })
-      .filter((entry) => entry.isFile() && entry.name.endsWith('.json') && entry.name !== 'index.json')
-      .map((entry) => entry.name)
-      .filter((fileName) => !expectedTypes.has(fileName.slice(0, -'.json'.length)))
-      .sort((left, right) => left.localeCompare(right))
-  : [];
+const unexpectedNodeJsonFiles = listUnexpectedFilesBySuffix({
+  directoryPath: nodesDir,
+  suffix: '.json',
+  expectedBaseNames: expectedTypes,
+  excludedFileNames: ['index.json'],
+});
 
 if (unexpectedNodeJsonFiles.length > 0) {
   console.error('Unexpected semantic node JSON files (not present in AI_PATHS_NODE_DOCS):');

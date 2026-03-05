@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 
 import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
+import { listUnexpectedFilesBySuffix } from './artifact-hygiene';
 
 type NodeObjectIndex = {
   schemaVersion: string;
@@ -86,19 +87,12 @@ const computeHash = (value: unknown): string =>
 const expectedNodeTypes = new Set<string>(AI_PATHS_NODE_DOCS.map((doc) => doc.type));
 const errors: string[] = [];
 
-const unexpectedObjectJsonFiles = fs.existsSync(objectsDir)
-  ? fs.readdirSync(objectsDir, { withFileTypes: true })
-      .filter(
-        (entry) =>
-          entry.isFile() &&
-          entry.name.endsWith('.json') &&
-          entry.name !== 'index.json' &&
-          entry.name !== 'contracts.json'
-      )
-      .map((entry) => entry.name)
-      .filter((fileName) => !expectedNodeTypes.has(fileName.slice(0, -'.json'.length)))
-      .sort((left, right) => left.localeCompare(right))
-  : [];
+const unexpectedObjectJsonFiles = listUnexpectedFilesBySuffix({
+  directoryPath: objectsDir,
+  suffix: '.json',
+  expectedBaseNames: expectedNodeTypes,
+  excludedFileNames: ['index.json', 'contracts.json'],
+});
 
 if (!fs.existsSync(indexPath)) {
   console.error(`Missing node object index: ${path.relative(workspaceRoot, indexPath)}`);

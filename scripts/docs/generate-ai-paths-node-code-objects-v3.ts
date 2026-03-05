@@ -4,6 +4,8 @@ import { createHash } from 'node:crypto';
 
 import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
 import { NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
+import { pruneUnexpectedFilesBySuffix } from './artifact-hygiene';
+import { resolveDocsGeneratedAt } from './docs-generated-at';
 
 type NodeCodeObjectV3Scaffold = {
   schemaVersion?: string;
@@ -121,33 +123,16 @@ const nodeDocTitleByType = new Map<string, string>(
   AI_PATHS_NODE_DOCS.map((doc) => [doc.type, doc.title] as const)
 );
 
-const resolveGeneratedAt = (): string => {
-  const generatedAtValue = process.env['AI_PATHS_DOCS_GENERATED_AT'];
-  const raw = typeof generatedAtValue === 'string'
-    ? generatedAtValue.trim()
-    : '';
-  if (!raw) return '2026-03-05T00:00:00.000Z';
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) {
-    throw new Error(`Invalid AI_PATHS_DOCS_GENERATED_AT value: "${raw}".`);
-  }
-  return parsed.toISOString();
-};
-
-const generatedAt = resolveGeneratedAt();
+const generatedAt = resolveDocsGeneratedAt();
 
 fs.mkdirSync(outputDir, { recursive: true });
 
-const expectedScaffoldFileNames = new Set<string>([
-  'index.scaffold.json',
-  ...pilotNodeTypes.map((nodeType) => `${nodeType}.scaffold.json`),
-]);
-for (const entry of fs.readdirSync(outputDir, { withFileTypes: true })) {
-  if (!entry.isFile()) continue;
-  if (!entry.name.endsWith('.scaffold.json')) continue;
-  if (expectedScaffoldFileNames.has(entry.name)) continue;
-  fs.unlinkSync(path.join(outputDir, entry.name));
-}
+pruneUnexpectedFilesBySuffix({
+  directoryPath: outputDir,
+  suffix: '.scaffold.json',
+  expectedBaseNames: new Set<string>(pilotNodeTypes),
+  excludedFileNames: ['index.scaffold.json'],
+});
 
 const indexScaffold: NodeCodeObjectV3IndexScaffold = {
   schemaVersion: 'ai-paths.node-code-object-index.v3-scaffold',

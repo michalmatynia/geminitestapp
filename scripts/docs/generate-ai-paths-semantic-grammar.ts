@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
+import { pruneUnexpectedFilesBySuffix } from './artifact-hygiene';
 
 const workspaceRoot = process.cwd();
 const semanticDocsDir = path.join(workspaceRoot, 'docs/ai-paths/semantic-grammar');
@@ -65,16 +66,12 @@ const indexRows: NodeDocExportRow[] = [];
 
 fs.mkdirSync(nodesDir, { recursive: true });
 
-const expectedNodeJsonFileNames = new Set<string>(
-  AI_PATHS_NODE_DOCS.map((doc) => `${doc.type}.json`)
-);
-for (const entry of fs.readdirSync(nodesDir, { withFileTypes: true })) {
-  if (!entry.isFile()) continue;
-  if (!entry.name.endsWith('.json')) continue;
-  if (entry.name === 'index.json') continue;
-  if (expectedNodeJsonFileNames.has(entry.name)) continue;
-  fs.unlinkSync(path.join(nodesDir, entry.name));
-}
+pruneUnexpectedFilesBySuffix({
+  directoryPath: nodesDir,
+  suffix: '.json',
+  expectedBaseNames: new Set<string>(AI_PATHS_NODE_DOCS.map((doc) => doc.type)),
+  excludedFileNames: ['index.json'],
+});
 
 for (const doc of AI_PATHS_NODE_DOCS) {
   const fileName = `${doc.type}.json`;

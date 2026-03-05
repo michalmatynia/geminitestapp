@@ -3,6 +3,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 
 import { NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
+import { listUnexpectedFilesBySuffix } from './artifact-hygiene';
 
 type NodeCodeObjectV3IndexScaffold = {
   schemaVersion: string;
@@ -109,13 +110,12 @@ const pilotNodeTypeSet = new Set<string>(pilotNodeTypes);
 
 const errors: string[] = [];
 
-const unexpectedScaffoldFiles = fs.existsSync(outputDir)
-  ? fs.readdirSync(outputDir, { withFileTypes: true })
-      .filter((entry) => entry.isFile() && entry.name.endsWith('.scaffold.json') && entry.name !== 'index.scaffold.json')
-      .map((entry) => entry.name)
-      .filter((fileName) => !pilotNodeTypeSet.has(fileName.slice(0, -'.scaffold.json'.length)))
-      .sort((left, right) => left.localeCompare(right))
-  : [];
+const unexpectedScaffoldFiles = listUnexpectedFilesBySuffix({
+  directoryPath: outputDir,
+  suffix: '.scaffold.json',
+  expectedBaseNames: pilotNodeTypeSet,
+  excludedFileNames: ['index.scaffold.json'],
+});
 
 if (!fs.existsSync(indexScaffoldPath)) {
   console.error(`Missing v3 index scaffold: ${path.relative(workspaceRoot, indexScaffoldPath)}`);

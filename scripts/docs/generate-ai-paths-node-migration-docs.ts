@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
 import { NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
+import { resolveDocsGeneratedAt } from './docs-generated-at';
 
 type SemanticNodeIndexRow = {
   nodeType: string;
@@ -96,19 +97,6 @@ const outputGuidePath = path.join(outputDir, 'MIGRATION_GUIDE.md');
 const perNodeDocsDir = path.join(outputDir, 'nodes');
 
 const stableJson = (value: unknown): string => `${JSON.stringify(value, null, 2)}\n`;
-
-const resolveGeneratedAt = (): string => {
-  const generatedAtValue = process.env['AI_PATHS_DOCS_GENERATED_AT'];
-  const raw = typeof generatedAtValue === 'string'
-    ? generatedAtValue.trim()
-    : '';
-  if (!raw) return '2026-03-05T00:00:00.000Z';
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) {
-    throw new Error(`Invalid AI_PATHS_DOCS_GENERATED_AT value: "${raw}".`);
-  }
-  return parsed.toISOString();
-};
 
 const readJsonFile = <T>(filePath: string, fallback: T): T => {
   if (!fs.existsSync(filePath)) return fallback;
@@ -305,7 +293,7 @@ const familyTotals = Array.from(familyTotalMap.entries())
   }))
   .sort((left, right) => left.nodeFamily.localeCompare(right.nodeFamily));
 
-const generatedAt = resolveGeneratedAt();
+const generatedAt = resolveDocsGeneratedAt();
 
 const payload: NodeMigrationIndexPayload = {
   schemaVersion: 'ai-paths.node-migration-doc-index.v1',

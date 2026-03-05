@@ -4,6 +4,8 @@ import path from 'node:path';
 
 import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from '@/shared/lib/ai-paths/portable-engine';
 import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
+import { pruneUnexpectedFilesBySuffix } from './artifact-hygiene';
+import { resolveDocsGeneratedAt } from './docs-generated-at';
 
 type SemanticNodeDoc = {
   specVersion: string;
@@ -342,33 +344,16 @@ const buildMinimalNode = (
   },
 });
 
-const resolveGeneratedAt = (): string => {
-  const generatedAtValue = process.env['AI_PATHS_DOCS_GENERATED_AT'];
-  const raw = typeof generatedAtValue === 'string'
-    ? generatedAtValue.trim()
-    : '';
-  if (!raw) return '2026-03-05T00:00:00.000Z';
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) {
-    throw new Error(`Invalid AI_PATHS_DOCS_GENERATED_AT value: "${raw}".`);
-  }
-  return parsed.toISOString();
-};
-
-const generatedAt = resolveGeneratedAt();
+const generatedAt = resolveDocsGeneratedAt();
 
 fs.mkdirSync(outputDir, { recursive: true });
 
-const expectedNodeObjectJsonFileNames = new Set<string>(
-  AI_PATHS_NODE_DOCS.map((doc) => `${doc.type}.json`)
-);
-for (const entry of fs.readdirSync(outputDir, { withFileTypes: true })) {
-  if (!entry.isFile()) continue;
-  if (!entry.name.endsWith('.json')) continue;
-  if (entry.name === 'index.json' || entry.name === 'contracts.json') continue;
-  if (expectedNodeObjectJsonFileNames.has(entry.name)) continue;
-  fs.unlinkSync(path.join(outputDir, entry.name));
-}
+pruneUnexpectedFilesBySuffix({
+  directoryPath: outputDir,
+  suffix: '.json',
+  expectedBaseNames: new Set<string>(AI_PATHS_NODE_DOCS.map((doc) => doc.type)),
+  excludedFileNames: ['index.json', 'contracts.json'],
+});
 
 const rows: PortableNodeCodeObjectIndexRow[] = [];
 const contractsByNodeType: PortableNodeCodeObjectContractIndex['contracts'] = {};

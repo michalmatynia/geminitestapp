@@ -74,6 +74,142 @@ const buildPilotEdges = (): Edge[] => [
   },
 ];
 
+const buildTransformPilotNodes = (title: string): AiNode[] => [
+  {
+    id: 'node-constant',
+    type: 'constant',
+    title: 'Constant',
+    description: '',
+    inputs: [],
+    outputs: ['value'],
+    config: {
+      constant: {
+        valueType: 'string',
+        value: JSON.stringify({ title }),
+      },
+    },
+    position: { x: 0, y: 180 },
+  } as AiNode,
+  {
+    id: 'node-parser',
+    type: 'parser',
+    title: 'JSON Parser',
+    description: '',
+    inputs: ['entityJson', 'context'],
+    outputs: ['productId', 'title', 'images', 'content_en'],
+    config: {
+      parser: {
+        outputMode: 'individual',
+        mappings: {
+          title: 'title',
+        },
+      },
+    },
+    position: { x: 180, y: 180 },
+  } as AiNode,
+  {
+    id: 'node-mapper',
+    type: 'mapper',
+    title: 'JSON Mapper',
+    description: '',
+    inputs: ['context', 'result', 'bundle', 'value'],
+    outputs: ['value', 'result'],
+    config: {
+      mapper: {
+        outputs: ['value'],
+        mappings: {
+          value: 'title',
+        },
+      },
+    },
+    position: { x: 360, y: 180 },
+  } as AiNode,
+  {
+    id: 'node-mutator',
+    type: 'mutator',
+    title: 'Mutator',
+    description: '',
+    inputs: ['context'],
+    outputs: ['context'],
+    config: {
+      mutator: {
+        suffix: '-mutated',
+      },
+    },
+    position: { x: 540, y: 180 },
+  } as AiNode,
+  {
+    id: 'node-regex',
+    type: 'regex',
+    title: 'Regex Grouper',
+    description: '',
+    inputs: ['value', 'prompt', 'regexCallback'],
+    outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
+    config: {
+      regex: {
+        pattern: '\\s+',
+        flags: 'g',
+      },
+    },
+    position: { x: 720, y: 180 },
+  } as AiNode,
+  {
+    id: 'node-template',
+    type: 'template',
+    title: 'Template',
+    description: '',
+    inputs: ['value'],
+    outputs: ['prompt'],
+    config: {
+      template: {
+        template: 'out={{value}}',
+      },
+    },
+    position: { x: 900, y: 180 },
+  } as AiNode,
+];
+
+const buildTransformPilotEdges = (): Edge[] => [
+  {
+    id: 'edge-constant-parser',
+    from: 'node-constant',
+    to: 'node-parser',
+    fromPort: 'value',
+    toPort: 'entityJson',
+  },
+  {
+    id: 'edge-parser-mapper',
+    from: 'node-parser',
+    to: 'node-mapper',
+    fromPort: 'title',
+    toPort: 'value',
+  },
+  {
+    id: 'edge-mapper-mutator',
+    from: 'node-mapper',
+    to: 'node-mutator',
+    fromPort: 'value',
+    toPort: 'context',
+  },
+  {
+    id: 'edge-mutator-regex',
+    from: 'node-mutator',
+    to: 'node-regex',
+    fromPort: 'context',
+    toPort: 'value',
+  },
+  {
+    id: 'edge-regex-template',
+    from: 'node-regex',
+    to: 'node-template',
+    fromPort: 'value',
+    toPort: 'value',
+  },
+];
+
+const asRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+
 const pilotHandlers: Record<string, NodeHandler> = {
   constant: ({ node }) => {
     const valueType = node.config?.constant?.valueType;
@@ -91,6 +227,57 @@ const pilotHandlers: Record<string, NodeHandler> = {
     }
     const operand = Number(node.config?.math?.operand ?? 0);
     return { value: numeric + operand };
+  },
+  parser: ({ nodeInputs }) => {
+    const rawInput = nodeInputs['entityJson'] ?? nodeInputs['context'];
+    let parsed = asRecord(rawInput);
+
+    if (typeof rawInput === 'string') {
+      try {
+        parsed = asRecord(JSON.parse(rawInput));
+      } catch {
+        parsed = {};
+      }
+    }
+
+    return {
+      productId: String(parsed['productId'] ?? ''),
+      title: String(parsed['title'] ?? ''),
+      images: Array.isArray(parsed['images']) ? parsed['images'] : [],
+      content_en: String(parsed['content_en'] ?? ''),
+    };
+  },
+  mapper: ({ nodeInputs }) => {
+    const value = nodeInputs['value'] ?? nodeInputs['context'] ?? nodeInputs['result'] ?? nodeInputs['bundle'];
+    return {
+      value: String(value ?? ''),
+      result: value,
+    };
+  },
+  mutator: ({ node, nodeInputs }) => {
+    const input = String(nodeInputs['context'] ?? '');
+    const suffix = String(node.config?.mutator?.suffix ?? '');
+    return {
+      context: `${input}${suffix}`,
+    };
+  },
+  regex: ({ node, nodeInputs }) => {
+    const input = String(nodeInputs['value'] ?? '');
+    const pattern = String(node.config?.regex?.pattern ?? '\\s+');
+    const flags = String(node.config?.regex?.flags ?? 'g');
+    const transformed = (() => {
+      try {
+        return input.replace(new RegExp(pattern, flags), '_');
+      } catch {
+        return input;
+      }
+    })();
+    return {
+      grouped: { transformed: [transformed] },
+      matches: [transformed],
+      value: transformed,
+      aiPrompt: '',
+    };
   },
   template: ({ node, nodeInputs }) => {
     const template = String(node.config?.template?.template ?? '{{value}}');
@@ -132,6 +319,38 @@ const runPilotPath = async (mode: RuntimeMode, value: unknown) => {
 
   const result = await evaluateGraphInternal(nodes, edges, {
     runId: `run-${mode}`,
+    resolveHandler: runtimeKernel.resolveHandler,
+    resolveHandlerTelemetry: (type: string) =>
+      toNodeRuntimeResolutionTelemetry(runtimeKernel.resolveDescriptor(type)),
+    recordHistory: true,
+    profile: {
+      onEvent: (event): void => {
+        if (event.type === 'node') {
+          profileNodeEvents.push(event as unknown as Record<string, unknown>);
+        }
+      },
+    },
+    reportAiPathsError: (): void => {},
+  });
+
+  return {
+    result,
+    profileNodeEvents,
+  };
+};
+
+const runTransformPilotPath = async (mode: RuntimeMode, title: string) => {
+  const nodes = buildTransformPilotNodes(title);
+  const edges = buildTransformPilotEdges();
+  const profileNodeEvents: Array<Record<string, unknown>> = [];
+
+  const runtimeKernel = createNodeRuntimeKernel({
+    resolveLegacyHandler: (nodeType: string) => pilotHandlers[nodeType] ?? null,
+    ...(mode === 'legacy_adapter' ? { v3PilotNodeTypes: [] } : {}),
+  });
+
+  const result = await evaluateGraphInternal(nodes, edges, {
+    runId: `run-transform-${mode}`,
     resolveHandler: runtimeKernel.resolveHandler,
     resolveHandlerTelemetry: (type: string) =>
       toNodeRuntimeResolutionTelemetry(runtimeKernel.resolveDescriptor(type)),
@@ -200,5 +419,44 @@ describe('engine-core v3 pilot dual-run parity', () => {
 
     expect(legacy.result.outputs['node-template']?.['prompt']).toBe('sum=abc');
     expect(v3.result.outputs['node-template']?.['prompt']).toBe('sum=abc');
+  });
+
+  it('keeps outputs, statuses, and strategy telemetry identical for transform pilot path', async () => {
+    const legacy = await runTransformPilotPath('legacy_adapter', 'Wave A Kernel');
+    const v3 = await runTransformPilotPath('code_object_v3', 'Wave A Kernel');
+
+    expect(legacy.result.status).toBe('completed');
+    expect(v3.result.status).toBe('completed');
+    expect(legacy.result.outputs).toEqual(v3.result.outputs);
+    expect(legacy.result.nodeStatuses).toEqual(v3.result.nodeStatuses);
+    expect(stripRuntimeTelemetry(legacy.result.history)).toEqual(stripRuntimeTelemetry(v3.result.history));
+
+    expect(legacy.result.outputs['node-template']?.['prompt']).toBe('out=Wave_A_Kernel-mutated');
+    expect(v3.result.outputs['node-template']?.['prompt']).toBe('out=Wave_A_Kernel-mutated');
+
+    const legacyNodeEvents = legacy.profileNodeEvents.filter(
+      (event) =>
+        event['type'] === 'node' &&
+        event['status'] === 'executed' &&
+        typeof event['nodeId'] === 'string'
+    );
+    const v3NodeEvents = v3.profileNodeEvents.filter(
+      (event) =>
+        event['type'] === 'node' &&
+        event['status'] === 'executed' &&
+        typeof event['nodeId'] === 'string'
+    );
+
+    expect(legacyNodeEvents).toHaveLength(6);
+    expect(v3NodeEvents).toHaveLength(6);
+
+    legacyNodeEvents.forEach((event) => {
+      expect(event['runtimeStrategy']).toBe('legacy_adapter');
+      expect(event['runtimeCodeObjectId']).toBeNull();
+    });
+    v3NodeEvents.forEach((event) => {
+      expect(event['runtimeStrategy']).toBe('code_object_v3');
+      expect(typeof event['runtimeCodeObjectId']).toBe('string');
+    });
   });
 });

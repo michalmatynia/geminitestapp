@@ -37,6 +37,7 @@ Date: 2026-03-05
 31. CI duration readiness summary exposure (Step 31) - completed
 32. Weekly duration supplemental sample ingestion (Step 32) - completed
 33. Weekly duration readiness ETA projection (Step 33) - completed
+34. Weekly duration readiness cadence override (Step 34) - completed
 
 ## Gate Status Snapshot
 
@@ -70,6 +71,7 @@ Date: 2026-03-05
 - CI duration readiness summary: PASS (weekly workflow summary now reports readiness progress and blockers)
 - Weekly duration supplemental ingestion: PASS (combined samples include lint/unit/flow/security historical artifacts)
 - Weekly duration readiness ETA projection: PASS (report and CI summary now include cadence-based estimated readiness date)
+- Weekly duration cadence override: PASS (recalibration supports `--cadence-days` for ETA projection tuning)
 
 ## Current Risks Captured by Baseline
 

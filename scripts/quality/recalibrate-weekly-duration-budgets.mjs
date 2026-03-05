@@ -11,11 +11,14 @@ const minSamplesArg = [...args].find((arg) => arg.startsWith('--min-samples='));
 const maxRunsArg = [...args].find((arg) => arg.startsWith('--max-runs='));
 const percentileArg = [...args].find((arg) => arg.startsWith('--percentile='));
 const headroomArg = [...args].find((arg) => arg.startsWith('--headroom='));
+const cadenceDaysArg = [...args].find((arg) => arg.startsWith('--cadence-days='));
 
 const minSamples = Math.max(1, Number.parseInt(minSamplesArg?.split('=')[1] ?? '8', 10));
 const maxRuns = Math.max(1, Number.parseInt(maxRunsArg?.split('=')[1] ?? '20', 10));
 const percentile = Math.min(0.99, Math.max(0.5, Number.parseFloat(percentileArg?.split('=')[1] ?? '0.9')));
 const headroom = Math.min(1, Math.max(0, Number.parseFloat(headroomArg?.split('=')[1] ?? '0.2')));
+const cadenceDaysParsed = Number.parseInt(cadenceDaysArg?.split('=')[1] ?? '7', 10);
+const cadenceDays = Number.isFinite(cadenceDaysParsed) && cadenceDaysParsed > 0 ? cadenceDaysParsed : 7;
 
 const root = process.cwd();
 const metricsDir = path.join(root, 'docs', 'metrics');
@@ -97,7 +100,6 @@ const readJsonIfExists = async (filePath) => {
 };
 
 const toMillisCeil = (value) => Math.max(1000, Math.ceil(value / 1000) * 1000);
-const WEEKLY_CADENCE_DAYS = 7;
 
 const toBudgetExpression = (ms) => {
   if (!Number.isFinite(ms) || ms < 0) {
@@ -424,7 +426,7 @@ const toMarkdown = (payload) => {
   lines.push(`- Optional checks: ${payload.summary.checksOptional} (no samples: ${payload.summary.checksOptionalNoSamples})`);
   lines.push(`- Required passing runs still needed (minimum): ${payload.summary.requiredRunsNeeded}`);
   lines.push(
-    `- Estimated readiness date (${payload.summary.weeklyCadenceDays ?? WEEKLY_CADENCE_DAYS}-day cadence): ${payload.summary.estimatedReadyDateWeeklyCadence ?? 'unavailable'}`
+    `- Estimated readiness date (${payload.summary.weeklyCadenceDays ?? cadenceDays}-day cadence): ${payload.summary.estimatedReadyDateWeeklyCadence ?? 'unavailable'}`
   );
   if (Array.isArray(payload.summary.blockingChecks) && payload.summary.blockingChecks.length > 0) {
     lines.push(`- Current blocking checks: ${payload.summary.blockingChecks.join(', ')}`);
@@ -470,7 +472,7 @@ const run = async () => {
   const newestRunDateMs = runs.length > 0 ? new Date(runs[runs.length - 1].generatedAt).getTime() : Number.NaN;
   const estimatedReadyDateWeeklyCadence =
     Number.isFinite(newestRunDateMs) && analysis.requiredRunsNeeded > 0
-      ? new Date(newestRunDateMs + analysis.requiredRunsNeeded * WEEKLY_CADENCE_DAYS * 24 * 60 * 60 * 1000).toISOString()
+      ? new Date(newestRunDateMs + analysis.requiredRunsNeeded * cadenceDays * 24 * 60 * 60 * 1000).toISOString()
       : analysis.requiredRunsNeeded === 0 && Number.isFinite(newestRunDateMs)
         ? new Date(newestRunDateMs).toISOString()
         : null;
@@ -496,7 +498,7 @@ const run = async () => {
       checksOptionalNoSamples: analysis.checksOptionalNoSamples,
       requiredRunsNeeded: analysis.requiredRunsNeeded,
       blockingChecks: analysis.blockingChecks,
-      weeklyCadenceDays: WEEKLY_CADENCE_DAYS,
+      weeklyCadenceDays: cadenceDays,
       estimatedReadyDateWeeklyCadence,
       checksChanged: analysis.checksChanged,
       minimumSamplesRequired: analysis.minimumSamplesRequired,

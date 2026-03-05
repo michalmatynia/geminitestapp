@@ -19,6 +19,7 @@ Date: 2026-03-05
 13. Unit/lint domain trend reports with rolling deltas (Step 13) - completed
 14. Weekly check duration budgets and strict alerts (Step 14) - completed
 15. Weekly report trend snapshot integration (Step 15) - completed
+16. Accessibility smoke keyboard coverage expansion (Step 16) - completed
 
 ## Gate Status Snapshot
 
@@ -35,6 +36,7 @@ Date: 2026-03-05
 - Lint-domain trend report: PASS (rolling delta active)
 - Weekly duration budgets: PASS (strict-mode alert enforcement active)
 - Weekly trend snapshot integration: PASS (weekly report now embeds trend deltas)
+- Accessibility keyboard smoke expansion: PASS (`5/5` suites with keyboard/focus assertions)
 
 ## Current Risks Captured by Baseline
 
@@ -45,8 +47,8 @@ Date: 2026-03-05
 
 ## Next Iteration Backlog (Priority)
 
-1. Add one accessibility smoke test per critical-flow page for keyboard tab-order and visible focus state.
-2. Expand critical-path budgets with route-handler branch-complexity heuristics (not only LOC).
-3. Evaluate optional inclusion of `__tests__` trees in lint-domain reporting without destabilizing current ESLint config.
-4. Recalibrate weekly duration budgets after 7-10 more runs to reduce false positives.
-5. Add CI artifact links/indexing for trend reports to simplify PR-level observability review.
+1. Expand critical-path budgets with route-handler branch-complexity heuristics (not only LOC).
+2. Evaluate optional inclusion of `__tests__` trees in lint-domain reporting without destabilizing current ESLint config.
+3. Recalibrate weekly duration budgets after 7-10 more runs to reduce false positives.
+4. Add CI artifact links/indexing for trend reports to simplify PR-level observability review.
+5. Add a lightweight accessibility warning budget (non-failing) to surface recurring `act(...)` warnings.

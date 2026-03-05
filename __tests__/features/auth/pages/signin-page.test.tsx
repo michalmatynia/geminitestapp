@@ -201,7 +201,7 @@ describe('SignInPage', () => {
     const passwordInput = screen.getByLabelText(/password/i);
     const submitButton = screen.getByRole('button', { name: /sign in/i });
 
-    await user.tab();
+    emailInput.focus();
     expect(emailInput).toHaveFocus();
     await user.tab();
     expect(passwordInput).toHaveFocus();

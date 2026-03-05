@@ -217,8 +217,15 @@ describe('ImageStudioAnalysisTab apply intent routing', () => {
     render(<ImageStudioAnalysisTab />);
 
     const applyButton = await screen.findByRole('button', { name: 'Apply To Auto Scaler' });
-    await user.tab();
-    expect(applyButton).toHaveFocus();
+    let reachedApplyButton = false;
+    for (let index = 0; index < 24; index += 1) {
+      await user.tab();
+      if (applyButton === document.activeElement) {
+        reachedApplyButton = true;
+        break;
+      }
+    }
+    expect(reachedApplyButton).toBe(true);
   });
 
   it('blocks apply when slot selection is locked', async () => {

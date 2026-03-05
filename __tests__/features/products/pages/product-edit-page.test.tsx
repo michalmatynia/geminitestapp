@@ -145,11 +145,16 @@ describe('EditProductForm', () => {
     renderWithProviders(<EditProductPage product={mockProduct} />);
 
     const generalTab = await screen.findByRole('tab', { name: /General/i });
-    const otherTab = screen.getByRole('tab', { name: /Other/i });
+    const generalTabId = generalTab.getAttribute('id');
+    const generalPanel =
+      generalTabId !== null
+        ? document.querySelector<HTMLElement>(`[role="tabpanel"][aria-labelledby="${generalTabId}"]`)
+        : null;
 
+    expect(generalPanel).not.toBeNull();
     generalTab.focus();
     expect(generalTab).toHaveFocus();
     await user.tab();
-    expect(otherTab).toHaveFocus();
+    expect(generalPanel).toHaveFocus();
   });
 });

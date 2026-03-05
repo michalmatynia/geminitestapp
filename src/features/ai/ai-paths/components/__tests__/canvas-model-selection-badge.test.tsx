@@ -38,7 +38,10 @@ const buildModelNode = (modelId?: string): AiNode =>
     },
   }) as AiNode;
 
-const buildContextValue = (node: AiNode): CanvasBoardUIContextValue => ({
+const buildContextValue = (
+  node: AiNode,
+  overrides: Partial<Pick<CanvasBoardUIContextValue, 'runtimeNodeStatuses'>> = {}
+): CanvasBoardUIContextValue => ({
   view: { x: 0, y: 0, scale: 1 },
   viewportSize: { width: 1200, height: 800 },
   detailLevel: 'full',
@@ -54,7 +57,7 @@ const buildContextValue = (node: AiNode): CanvasBoardUIContextValue => ({
   selectedNodeIdSet: new Set(),
   selectedEdgeId: null,
   runtimeState: baseRuntimeState,
-  runtimeNodeStatuses: {},
+  runtimeNodeStatuses: overrides.runtimeNodeStatuses ?? {},
   runtimeRunStatus: 'idle',
   nodeDurations: {},
   zoomTo: vi.fn(),
@@ -97,6 +100,18 @@ const buildContextValue = (node: AiNode): CanvasBoardUIContextValue => ({
   onSelectEdge: vi.fn(),
 });
 
+const buildFetcherNode = (): AiNode =>
+  ({
+    id: 'node-fetcher-1',
+    type: 'fetcher',
+    title: 'Fetcher Node',
+    description: '',
+    inputs: ['trigger'],
+    outputs: ['bundle'],
+    position: { x: 24, y: 24 },
+    data: {},
+  }) as AiNode;
+
 describe('Canvas model selection badge', () => {
   it('shows NODE MODEL when a model node has an explicit model selection', () => {
     const node = buildModelNode('gpt-4o-mini');
@@ -126,5 +141,38 @@ describe('Canvas model selection badge', () => {
     );
 
     expect(screen.getByText('BRAIN DEFAULT')).toBeTruthy();
+  });
+
+  it('renders Processing badge for pulsating model nodes with waiting_callback status', () => {
+    const node = buildModelNode('gpt-4o-mini');
+    const { container } = render(
+      <svg>
+        <CanvasBoardUIProvider
+          value={buildContextValue(node, { runtimeNodeStatuses: { [node.id]: 'waiting_callback' } })}
+        >
+          <CanvasSvgNodeLayer />
+        </CanvasBoardUIProvider>
+      </svg>
+    );
+
+    expect(screen.getByText('Processing')).toBeTruthy();
+    expect(container.querySelector('.ai-paths-node-halo')).toBeTruthy();
+  });
+
+  it('keeps Waiting badge for non-processing nodes with waiting_callback status', () => {
+    const node = buildFetcherNode();
+
+    const { container } = render(
+      <svg>
+        <CanvasBoardUIProvider
+          value={buildContextValue(node, { runtimeNodeStatuses: { [node.id]: 'waiting_callback' } })}
+        >
+          <CanvasSvgNodeLayer />
+        </CanvasBoardUIProvider>
+      </svg>
+    );
+
+    expect(screen.getByText('Waiting')).toBeTruthy();
+    expect(container.querySelector('.ai-paths-node-halo')).toBeFalsy();
   });
 });

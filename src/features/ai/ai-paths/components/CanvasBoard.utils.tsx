@@ -11,6 +11,10 @@ import type {
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { type ConnectorInfo } from './canvas-board-connectors';
 import { type EdgeRoutingMode } from '../context/hooks/useEdgePaths';
+export {
+  BLOCKER_PROCESSING_STATUSES,
+  formatRuntimeStatusLabel,
+} from './canvas/signal-flow-visual-state';
 
 type RuntimeEvent = Record<string, unknown>;
 type NodeProcessingStatus = string;
@@ -132,16 +136,6 @@ export interface CanvasBoardState {
   activeShapeId: string | null;
 }
 
-export const formatRuntimeStatusLabel = (status: string): string =>
-  status === 'waiting_callback'
-    ? 'Waiting'
-    : status === 'advance_pending'
-      ? 'Processing'
-      : status
-        .split('_')
-        .map((part: string) => (part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part))
-        .join(' ');
-
 export const runtimeStatusBadgeClassName = (status: string): string => {
   if (status === 'completed') {
     return 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200';
@@ -252,15 +246,6 @@ export const renderNodeDiagnosticsTooltipContent = ({
     </div>
   );
 };
-
-export const BLOCKER_PROCESSING_STATUSES = new Set<string>([
-  'running',
-  'polling',
-  'waiting_callback',
-  'advance_pending',
-  'pending',
-  'processing',
-]);
 
 export const downgradeDetailLevel = (level: SvgDetailLevel): SvgDetailLevel => {
   if (level === 'full') return 'compact';

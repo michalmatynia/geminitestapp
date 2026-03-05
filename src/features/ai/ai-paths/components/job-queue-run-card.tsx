@@ -128,8 +128,11 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
       <div className='flex flex-wrap items-start justify-between gap-3'>
         <div>
           <div className='flex flex-wrap items-center gap-2'>
-            <StatusBadge status={detailRun.status} size='sm' className='font-bold' />
-            {isRunning ? <RunningIndicator /> : null}
+            {isRunning ? (
+              <RunningIndicator />
+            ) : (
+              <StatusBadge status={detailRun.status} size='sm' className='font-bold' />
+            )}
           </div>
           {isScheduledRun ? (
             <div className='mt-1'>

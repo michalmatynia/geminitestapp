@@ -340,6 +340,229 @@ describe('canvas connection preview', () => {
     expect(container.querySelector('.ai-paths-wire-flow')).toBeFalsy();
   });
 
+  it('animates only the edge into a processing model node in a fetched-db-model-dbquery chain', () => {
+    const fetchedNode = buildNode({
+      id: 'node-fetched',
+      type: 'fetcher',
+      outputs: ['bundle'],
+      inputs: [],
+      position: { x: 40, y: 120 },
+    });
+    const databaseNode = buildNode({
+      id: 'node-database',
+      type: 'database',
+      inputs: ['bundle'],
+      outputs: ['result'],
+      position: { x: 260, y: 120 },
+    });
+    const modelNode = buildNode({
+      id: 'node-model',
+      type: 'model',
+      inputs: ['prompt'],
+      outputs: ['result'],
+      position: { x: 480, y: 120 },
+    });
+    const dbQueryNode = buildNode({
+      id: 'node-db-query',
+      type: 'database',
+      inputs: ['query'],
+      outputs: ['result'],
+      position: { x: 700, y: 120 },
+    });
+
+    const edgeFetchedToDb: Edge = {
+      id: 'edge-fetched-db',
+      from: fetchedNode.id,
+      to: databaseNode.id,
+      fromPort: 'bundle',
+      toPort: 'bundle',
+    };
+    const edgeDbToModel: Edge = {
+      id: 'edge-db-model',
+      from: databaseNode.id,
+      to: modelNode.id,
+      fromPort: 'result',
+      toPort: 'prompt',
+    };
+    const edgeModelToDbQuery: Edge = {
+      id: 'edge-model-db-query',
+      from: modelNode.id,
+      to: dbQueryNode.id,
+      fromPort: 'result',
+      toPort: 'query',
+    };
+
+    const value = buildContextValue();
+    value.nodes = [fetchedNode, databaseNode, modelNode, dbQueryNode];
+    value.edges = [edgeFetchedToDb, edgeDbToModel, edgeModelToDbQuery];
+    value.nodeById = new Map([
+      [fetchedNode.id, fetchedNode],
+      [databaseNode.id, databaseNode],
+      [modelNode.id, modelNode],
+      [dbQueryNode.id, dbQueryNode],
+    ]);
+    value.edgeMetaMap = new Map([
+      [edgeFetchedToDb.id, edgeFetchedToDb],
+      [edgeDbToModel.id, edgeDbToModel],
+      [edgeModelToDbQuery.id, edgeModelToDbQuery],
+    ]);
+    value.edgePaths = [
+      {
+        id: edgeFetchedToDb.id,
+        path: 'M 180 140 C 210 140 230 140 250 140',
+        fromNodeId: fetchedNode.id,
+        toNodeId: databaseNode.id,
+        bounds: { minX: 180, minY: 140, maxX: 250, maxY: 140 },
+      },
+      {
+        id: edgeDbToModel.id,
+        path: 'M 400 140 C 430 140 450 140 470 140',
+        fromNodeId: databaseNode.id,
+        toNodeId: modelNode.id,
+        bounds: { minX: 400, minY: 140, maxX: 470, maxY: 140 },
+      },
+      {
+        id: edgeModelToDbQuery.id,
+        path: 'M 620 140 C 650 140 670 140 690 140',
+        fromNodeId: modelNode.id,
+        toNodeId: dbQueryNode.id,
+        bounds: { minX: 620, minY: 140, maxX: 690, maxY: 140 },
+      },
+    ];
+    value.runtimeNodeStatuses = {
+      [databaseNode.id]: 'completed',
+      [modelNode.id]: 'running',
+      [dbQueryNode.id]: 'queued',
+    };
+    value.wireFlowEnabled = true;
+    value.activeEdgeIds = new Set<string>();
+
+    const { container } = render(
+      <svg>
+        <g data-canvas-world='true' transform='translate(0 0) scale(1)'>
+          <CanvasBoardUIProvider value={value}>
+            <CanvasSvgEdgeLayer />
+          </CanvasBoardUIProvider>
+        </g>
+      </svg>
+    );
+
+    const flowingPaths = Array.from(container.querySelectorAll('.ai-paths-wire-flow'));
+    expect(flowingPaths).toHaveLength(1);
+    expect(flowingPaths[0]?.getAttribute('d')).toBe('M 400 140 C 430 140 450 140 470 140');
+  });
+
+  it('does not animate chain edges while the model node is waiting_callback', () => {
+    const fetchedNode = buildNode({
+      id: 'node-fetched-waiting',
+      type: 'fetcher',
+      outputs: ['bundle'],
+      inputs: [],
+      position: { x: 40, y: 220 },
+    });
+    const databaseNode = buildNode({
+      id: 'node-database-waiting',
+      type: 'database',
+      inputs: ['bundle'],
+      outputs: ['result'],
+      position: { x: 260, y: 220 },
+    });
+    const modelNode = buildNode({
+      id: 'node-model-waiting',
+      type: 'model',
+      inputs: ['prompt'],
+      outputs: ['result'],
+      position: { x: 480, y: 220 },
+    });
+    const dbQueryNode = buildNode({
+      id: 'node-db-query-waiting',
+      type: 'database',
+      inputs: ['query'],
+      outputs: ['result'],
+      position: { x: 700, y: 220 },
+    });
+
+    const edgeFetchedToDb: Edge = {
+      id: 'edge-fetched-db-waiting',
+      from: fetchedNode.id,
+      to: databaseNode.id,
+      fromPort: 'bundle',
+      toPort: 'bundle',
+    };
+    const edgeDbToModel: Edge = {
+      id: 'edge-db-model-waiting',
+      from: databaseNode.id,
+      to: modelNode.id,
+      fromPort: 'result',
+      toPort: 'prompt',
+    };
+    const edgeModelToDbQuery: Edge = {
+      id: 'edge-model-db-query-waiting',
+      from: modelNode.id,
+      to: dbQueryNode.id,
+      fromPort: 'result',
+      toPort: 'query',
+    };
+
+    const value = buildContextValue();
+    value.nodes = [fetchedNode, databaseNode, modelNode, dbQueryNode];
+    value.edges = [edgeFetchedToDb, edgeDbToModel, edgeModelToDbQuery];
+    value.nodeById = new Map([
+      [fetchedNode.id, fetchedNode],
+      [databaseNode.id, databaseNode],
+      [modelNode.id, modelNode],
+      [dbQueryNode.id, dbQueryNode],
+    ]);
+    value.edgeMetaMap = new Map([
+      [edgeFetchedToDb.id, edgeFetchedToDb],
+      [edgeDbToModel.id, edgeDbToModel],
+      [edgeModelToDbQuery.id, edgeModelToDbQuery],
+    ]);
+    value.edgePaths = [
+      {
+        id: edgeFetchedToDb.id,
+        path: 'M 180 240 C 210 240 230 240 250 240',
+        fromNodeId: fetchedNode.id,
+        toNodeId: databaseNode.id,
+        bounds: { minX: 180, minY: 240, maxX: 250, maxY: 240 },
+      },
+      {
+        id: edgeDbToModel.id,
+        path: 'M 400 240 C 430 240 450 240 470 240',
+        fromNodeId: databaseNode.id,
+        toNodeId: modelNode.id,
+        bounds: { minX: 400, minY: 240, maxX: 470, maxY: 240 },
+      },
+      {
+        id: edgeModelToDbQuery.id,
+        path: 'M 620 240 C 650 240 670 240 690 240',
+        fromNodeId: modelNode.id,
+        toNodeId: dbQueryNode.id,
+        bounds: { minX: 620, minY: 240, maxX: 690, maxY: 240 },
+      },
+    ];
+    value.runtimeNodeStatuses = {
+      [databaseNode.id]: 'completed',
+      [modelNode.id]: 'waiting_callback',
+      [dbQueryNode.id]: 'queued',
+    };
+    value.wireFlowEnabled = true;
+    value.activeEdgeIds = new Set<string>();
+
+    const { container } = render(
+      <svg>
+        <g data-canvas-world='true' transform='translate(0 0) scale(1)'>
+          <CanvasBoardUIProvider value={value}>
+            <CanvasSvgEdgeLayer />
+          </CanvasBoardUIProvider>
+        </g>
+      </svg>
+    );
+
+    const flowingPaths = Array.from(container.querySelectorAll('.ai-paths-wire-flow'));
+    expect(flowingPaths).toHaveLength(0);
+  });
+
   it('does not render status-based wire flow for waiting_callback nodes', () => {
     const upstreamNode = buildNode({
       id: 'node-upstream',

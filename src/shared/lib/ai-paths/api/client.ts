@@ -57,7 +57,7 @@ import { fetchRuntimeAnalyticsSummary } from './client/analytics';
 
 import type { SchemaResponse } from '@/shared/contracts/database';
 export type { SchemaResponse };
-import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
+import type { AiPathRunRecord, AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
 
 export type {
   ApiResponse,
@@ -141,6 +141,51 @@ export async function enqueueAiPathRun(
     ...(options?.signal ? { signal: options.signal } : {}),
   });
 }
+
+const asNonEmptyString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const readEnqueueRunValue = (data: unknown): unknown => {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+  return (data as Record<string, unknown>)['run'];
+};
+
+export const extractAiPathRunIdFromEnqueueResponseData = (data: unknown): string | null => {
+  const runValue = readEnqueueRunValue(data);
+  if (typeof runValue === 'string') {
+    return asNonEmptyString(runValue);
+  }
+  if (!runValue || typeof runValue !== 'object' || Array.isArray(runValue)) {
+    return null;
+  }
+  return asNonEmptyString((runValue as Record<string, unknown>)['id']);
+};
+
+export const extractAiPathRunRecordFromEnqueueResponseData = (
+  data: unknown
+): AiPathRunRecord | null => {
+  const runValue = readEnqueueRunValue(data);
+  if (!runValue || typeof runValue !== 'object' || Array.isArray(runValue)) {
+    return null;
+  }
+  const runId = asNonEmptyString((runValue as Record<string, unknown>)['id']);
+  if (!runId) return null;
+  return runValue as AiPathRunRecord;
+};
+
+export const resolveAiPathRunFromEnqueueResponseData = (data: unknown): {
+  runId: string | null;
+  runRecord: AiPathRunRecord | null;
+} => {
+  const runRecord = extractAiPathRunRecordFromEnqueueResponseData(data);
+  const runId = runRecord
+    ? asNonEmptyString(runRecord.id)
+    : extractAiPathRunIdFromEnqueueResponseData(data);
+  return { runId, runRecord };
+};
 
 export async function listAiPathRuns(options?: {
   pathId?: string;

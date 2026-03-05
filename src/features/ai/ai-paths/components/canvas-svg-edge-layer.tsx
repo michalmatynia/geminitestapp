@@ -5,23 +5,10 @@ import React from 'react';
 import { useCanvasBoardUI } from './CanvasBoardUIContext';
 import { SignalDots } from './SignalDots';
 import { buildConnectingPreviewPath } from './CanvasBoard.utils';
-
-const FLOWING_RUNTIME_NODE_STATUSES = new Set([
-  'running',
-  'polling',
-  'pending',
-  'processing',
-]);
-
-const TERMINAL_RUNTIME_NODE_STATUSES = new Set([
-  'completed',
-  'failed',
-  'canceled',
-  'cached',
-  'blocked',
-  'skipped',
-  'timeout',
-]);
+import {
+  normalizeRuntimeStatus,
+  resolveEdgeRuntimeActive,
+} from './canvas/signal-flow-visual-state';
 
 export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
   cullPadding = 160,
@@ -114,13 +101,8 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
         const fromNode = nodeById.get(fromNodeId);
         const toNode = nodeById.get(toNodeId);
         const isSchemaConnection = fromNode?.type === 'db_schema' && toNode?.type === 'database';
-        const toRuntimeStatus =
-          typeof runtimeNodeStatuses[toNodeId] === 'string'
-            ? runtimeNodeStatuses[toNodeId].trim().toLowerCase()
-            : '';
-        const toIsFlowing = FLOWING_RUNTIME_NODE_STATUSES.has(toRuntimeStatus);
-        const toIsTerminal = TERMINAL_RUNTIME_NODE_STATUSES.has(toRuntimeStatus);
-        const isRuntimeActiveEdge = toIsFlowing && !toIsTerminal;
+        const toRuntimeStatus = normalizeRuntimeStatus(runtimeNodeStatuses[toNodeId]);
+        const isRuntimeActiveEdge = resolveEdgeRuntimeActive(toRuntimeStatus);
         const isFlowing = activeEdgeIds.has(edge.id) || isRuntimeActiveEdge;
         const isActivePath =
           !isManualConnector &&

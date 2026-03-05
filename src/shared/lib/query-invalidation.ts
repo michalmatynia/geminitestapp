@@ -610,17 +610,44 @@ export const optimisticallyInsertAiPathRunInQueueCache = (
   });
 };
 
-export const notifyAiPathRunEnqueued = (runId?: string | null): void => {
+export const notifyAiPathRunEnqueued = (
+  runId?: string | null,
+  options?: {
+    entityId?: string | null;
+    entityType?: string | null;
+  }
+): void => {
   if (typeof window === 'undefined') return;
   const normalizedRunId =
     typeof runId === 'string' && runId.trim().length > 0 ? runId.trim() : null;
+  const normalizedEntityId =
+    typeof options?.entityId === 'string' && options.entityId.trim().length > 0
+      ? options.entityId.trim()
+      : null;
+  const normalizedEntityType =
+    typeof options?.entityType === 'string' && options.entityType.trim().length > 0
+      ? options.entityType.trim().toLowerCase()
+      : null;
   const payload = {
     type: 'run-enqueued',
     runId: normalizedRunId,
+    entityId: normalizedEntityId,
+    entityType: normalizedEntityType,
     at: Date.now(),
   };
 
   window.dispatchEvent(new CustomEvent('ai-path-run-enqueued', { detail: payload }));
+  if (normalizedEntityType === 'product' && normalizedEntityId) {
+    window.dispatchEvent(
+      new CustomEvent('ai-path-product-run-queued', {
+        detail: {
+          productId: normalizedEntityId,
+          runId: normalizedRunId,
+          at: payload.at,
+        },
+      })
+    );
+  }
 
   if (typeof BroadcastChannel === 'undefined') return;
   try {

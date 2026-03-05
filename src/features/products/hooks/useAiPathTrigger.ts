@@ -2,7 +2,10 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import { enqueueAiPathRun } from '@/shared/lib/ai-paths/api/client';
+import {
+  enqueueAiPathRun,
+  resolveAiPathRunFromEnqueueResponseData,
+} from '@/shared/lib/ai-paths/api/client';
 import { TRIGGER_EVENTS } from '@/shared/lib/ai-paths/core/constants';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -310,19 +313,36 @@ export function useAiPathTrigger(): {
         });
         return;
       }
-      const queuedRun =
-        enqueueResult.data && typeof enqueueResult.data === 'object'
-          ? (enqueueResult.data as { run?: unknown }).run
-          : null;
-      optimisticallyInsertAiPathRunInQueueCache(queryClient, queuedRun);
+      const { runId, runRecord } = resolveAiPathRunFromEnqueueResponseData(enqueueResult.data);
+      if (!runId) {
+        const message = 'Failed to enqueue AI Path run: invalid run identifier from API.';
+        toast(message, { variant: 'error' });
+        logClientError(new Error(message), {
+          context: {
+            source: 'useAiPathTrigger',
+            action: 'enqueueInvalidRunId',
+            productId: product.id,
+            pathId: selectedConfig.id,
+          },
+        });
+        return;
+      }
+      const queuedRunForCache = runRecord ?? {
+        id: runId,
+        pathId: selectedConfig.id,
+        pathName: selectedConfig.name ?? null,
+        status: 'queued',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        entityId: product.id,
+        entityType: 'product',
+      };
+      optimisticallyInsertAiPathRunInQueueCache(queryClient, queuedRunForCache);
       void invalidateAiPathQueue(queryClient);
-      notifyAiPathRunEnqueued(
-        queuedRun &&
-          typeof queuedRun === 'object' &&
-          typeof (queuedRun as { id?: unknown }).id === 'string'
-          ? (queuedRun as { id: string }).id
-          : null
-      );
+      notifyAiPathRunEnqueued(runId, {
+        entityId: product.id,
+        entityType: 'product',
+      });
       toast('AI Path run queued.', { variant: 'success' });
     } catch (error) {
       logClientError(error, {

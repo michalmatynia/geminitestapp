@@ -1,14 +1,9 @@
 import type { DataContractNodeIssueSummary } from '@/shared/lib/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
-
-export const BLOCKER_PROCESSING_STATUSES = new Set<string>([
-  'running',
-  'polling',
-  'waiting_callback',
-  'advance_pending',
-  'pending',
-  'processing',
-]);
+export {
+  BLOCKER_PROCESSING_STATUSES,
+  formatRuntimeStatusLabel,
+} from '../signal-flow-visual-state';
 
 export const INPUT_CONNECTOR_COLORS = {
   fill: 'rgba(56, 189, 248, 0.18)',
@@ -20,18 +15,6 @@ export const OUTPUT_CONNECTOR_COLORS = {
   fill: 'rgba(251, 191, 36, 0.22)',
   stroke: 'rgba(252, 211, 77, 0.9)',
 };
-
-export const formatRuntimeStatusLabel = (status: string): string =>
-  status === 'waiting_callback'
-    ? 'Waiting'
-    : status === 'advance_pending'
-      ? 'Processing'
-      : status
-        .split('_')
-        .map((part: string): string =>
-          part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part
-        )
-        .join(' ');
 
 export const resolveNodePalette = (
   nodeType: string

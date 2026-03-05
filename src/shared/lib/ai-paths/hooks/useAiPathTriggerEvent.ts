@@ -10,7 +10,11 @@ import {
   PATH_INDEX_KEY,
   TRIGGER_EVENTS,
 } from '@/shared/lib/ai-paths/core/constants';
-import { enqueueAiPathRun, listAiPathRuns } from '@/shared/lib/ai-paths/api/client';
+import {
+  enqueueAiPathRun,
+  listAiPathRuns,
+  resolveAiPathRunFromEnqueueResponseData,
+} from '@/shared/lib/ai-paths/api/client';
 import {
   normalizeLoadedPathName,
   normalizeLoadedPathMetas,
@@ -774,8 +778,8 @@ export function useAiPathTriggerEvent(): {
           return;
         }
 
-        const runIdValue = runResult.data.run;
-        if (typeof runIdValue !== 'string' || runIdValue.trim().length === 0) {
+        const { runId, runRecord } = resolveAiPathRunFromEnqueueResponseData(runResult.data);
+        if (!runId) {
           toast('Failed to start AI Path: invalid run identifier from API.', { variant: 'error' });
           args.onProgress?.({
             status: 'error',
@@ -788,7 +792,6 @@ export function useAiPathTriggerEvent(): {
           });
           return;
         }
-        const runId = runIdValue;
 
         const totalPrepMs = performance.now() - phaseStartedAt;
 
@@ -811,18 +814,22 @@ export function useAiPathTriggerEvent(): {
           },
         });
 
-        optimisticallyInsertAiPathRunInQueueCache(queryClient, {
+        const queuedRunForCache = runRecord ?? {
           id: runId,
           pathId: selectedConfig.id,
           pathName: selectedConfig.name,
-          status: 'pending',
+          status: 'queued',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           progress: 0,
-        });
+        };
+        optimisticallyInsertAiPathRunInQueueCache(queryClient, queuedRunForCache);
 
         void invalidateAiPathQueue(queryClient);
-        notifyAiPathRunEnqueued();
+        notifyAiPathRunEnqueued(runId, {
+          entityId: args.entityId ?? null,
+          entityType: args.entityType,
+        });
 
         if (args.entityType === 'product') {
           if (args.entityId) {

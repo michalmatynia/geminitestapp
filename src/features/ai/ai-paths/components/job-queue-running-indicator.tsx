@@ -2,7 +2,24 @@ import React from 'react';
 
 import { StatusBadge } from '@/shared/ui';
 
-export function RunningIndicator({ label = 'Running' }: { label?: string }): React.JSX.Element {
+type RunningIndicatorRuntimeValue = {
+  label: string;
+};
+
+const RunningIndicatorRuntimeContext = React.createContext<RunningIndicatorRuntimeValue | null>(null);
+
+function useRunningIndicatorRuntime(): RunningIndicatorRuntimeValue {
+  const runtime = React.useContext(RunningIndicatorRuntimeContext);
+  if (!runtime) {
+    throw new Error(
+      'useRunningIndicatorRuntime must be used within RunningIndicatorRuntimeContext.Provider'
+    );
+  }
+  return runtime;
+}
+
+function RunningIndicatorBadge(): React.JSX.Element {
+  const { label } = useRunningIndicatorRuntime();
   return (
     <StatusBadge
       status={label}
@@ -15,5 +32,14 @@ export function RunningIndicator({ label = 'Running' }: { label?: string }): Rea
         </span>
       }
     />
+  );
+}
+
+export function RunningIndicator({ label = 'Running' }: { label?: string }): React.JSX.Element {
+  const runtimeValue = React.useMemo<RunningIndicatorRuntimeValue>(() => ({ label }), [label]);
+  return (
+    <RunningIndicatorRuntimeContext.Provider value={runtimeValue}>
+      <RunningIndicatorBadge />
+    </RunningIndicatorRuntimeContext.Provider>
   );
 }

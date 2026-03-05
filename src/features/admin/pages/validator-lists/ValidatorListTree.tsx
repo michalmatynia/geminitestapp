@@ -15,7 +15,7 @@ import {
   buildValidatorListMasterNodes,
   resolveValidatorListOrderFromNodes,
 } from './validator-list-master-tree';
-import { ValidatorListTreeContext } from './ValidatorListTreeContext';
+import { ValidatorListTreeContext, useValidatorListTreeContext } from './ValidatorListTreeContext';
 import { ValidatorListNodeItem } from './ValidatorListNodeItem';
 
 // ─── ValidatorListTree ────────────────────────────────────────────────────────
@@ -27,6 +27,27 @@ export interface ValidatorListTreeProps {
   onToggleLock: (listId: string) => void;
   onRemove: (list: ValidatorPatternList) => void;
   isPending: boolean;
+}
+
+function ValidatorListTreeViewport(): React.JSX.Element {
+  const {
+    controller: treeController,
+    isPending: treePending,
+    scrollToNodeRef,
+    rootDropUi,
+    renderNode,
+  } = useValidatorListTreeContext();
+
+  return (
+    <FolderTreeViewportV2
+      controller={treeController}
+      scrollToNodeRef={scrollToNodeRef}
+      rootDropUi={rootDropUi}
+      renderNode={renderNode}
+      enableDnd={!treePending}
+      emptyLabel='No validation pattern lists'
+    />
+  );
 }
 
 export function ValidatorListTree({
@@ -71,18 +92,6 @@ export function ValidatorListTree({
     adapter,
   });
 
-  const contextValue = useMemo(
-    () => ({
-      controller,
-      listById,
-      onEdit,
-      onToggleLock,
-      onRemove,
-      isPending,
-    }),
-    [controller, listById, onEdit, onToggleLock, onRemove, isPending]
-  );
-
   const renderNode = useCallback(
     (input: FolderTreeViewportRenderNodeInput): React.ReactNode => (
       <ValidatorListNodeItem {...input} />
@@ -90,17 +99,35 @@ export function ValidatorListTree({
     []
   );
 
+  const contextValue = useMemo(
+    () => ({
+      controller,
+      scrollToNodeRef,
+      rootDropUi,
+      renderNode,
+      listById,
+      onEdit,
+      onToggleLock,
+      onRemove,
+      isPending,
+    }),
+    [
+      controller,
+      scrollToNodeRef,
+      rootDropUi,
+      renderNode,
+      listById,
+      onEdit,
+      onToggleLock,
+      onRemove,
+      isPending,
+    ]
+  );
+
   return (
     <ValidatorListTreeContext.Provider value={contextValue}>
       <FolderTreePanel masterInstance='validator_list_tree'>
-        <FolderTreeViewportV2
-          controller={controller}
-          scrollToNodeRef={scrollToNodeRef}
-          rootDropUi={rootDropUi}
-          renderNode={renderNode}
-          enableDnd={!isPending}
-          emptyLabel='No validation pattern lists'
-        />
+        <ValidatorListTreeViewport />
       </FolderTreePanel>
     </ValidatorListTreeContext.Provider>
   );

@@ -9,7 +9,7 @@ import type {
   PromptExploderRuleSegmentType,
   PromptExploderCaptureApplyTo,
   PromptExploderCaptureNormalize,
-} from '../../settings';
+} from '@/shared/lib/prompt-engine/settings';
 
 export function RuleItemExploderSettings(): React.JSX.Element | null {
   const { rule, patchRule } = useRuleItemContext();

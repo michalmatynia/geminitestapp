@@ -3,10 +3,11 @@
 import type { GateConfig } from '@/shared/lib/ai-paths';
 import { Input, SelectSimple, FormField } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 export function GateNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (selectedNode?.type !== 'gate') return null;
 

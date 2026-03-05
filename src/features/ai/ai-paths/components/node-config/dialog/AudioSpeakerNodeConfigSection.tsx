@@ -3,10 +3,11 @@
 import { toNumber } from '@/shared/lib/ai-paths';
 import { Input, ToggleRow, FormField, Hint } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 export function AudioSpeakerNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
   if (selectedNode?.type !== 'audio_speaker') return null;
 
   const speakerConfig = selectedNode.config?.audioSpeaker ?? {

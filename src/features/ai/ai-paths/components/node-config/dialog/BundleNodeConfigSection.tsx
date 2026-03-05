@@ -3,10 +3,11 @@
 import { parsePathList } from '@/shared/lib/ai-paths';
 import { Button, Textarea, FormField } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 export function BundleNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (selectedNode?.type !== 'bundle') return null;
 

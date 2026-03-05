@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { AdminMenuSettingsPage } from '@/features/admin/public';
+import { AdminMenuSettingsPage } from '@/features/admin/';
 
 export const dynamic = 'force-dynamic';
 

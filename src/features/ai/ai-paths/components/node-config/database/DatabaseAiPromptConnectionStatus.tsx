@@ -5,7 +5,12 @@ import React from 'react';
 import type { AiNode, Edge } from '@/shared/lib/ai-paths';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { Button } from '@/shared/ui';
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import {
+  useAiPathGraph,
+  useAiPathOrchestrator,
+  useAiPathRuntime,
+  useAiPathSelection,
+} from '../../AiPathConfigContext';
 
 type DatabaseAiPromptConnectionStatusProps = {
   aiPrompt: string;
@@ -17,8 +22,10 @@ export function DatabaseAiPromptConnectionStatus(
 ): React.JSX.Element {
   const { aiPrompt, updateQueryConfig } = props;
 
-  const { edges, nodes, selectedNode, runtimeState, sendingToAi, onSendToAi, toast } =
-    useAiPathConfig();
+  const { edges, nodes } = useAiPathGraph();
+  const { selectedNode } = useAiPathSelection();
+  const { runtimeState, sendingToAi, onSendToAi } = useAiPathRuntime();
+  const { toast } = useAiPathOrchestrator();
   const brainModel = useBrainModelOptions({
     capability: 'ai_paths.model',
     enabled: Boolean(selectedNode),

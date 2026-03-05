@@ -3,10 +3,11 @@
 import { toNumber } from '@/shared/lib/ai-paths';
 import { Input, FormField } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 export function DelayNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (selectedNode?.type !== 'delay') return null;
 

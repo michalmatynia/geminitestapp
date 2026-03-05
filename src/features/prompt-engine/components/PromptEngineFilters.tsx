@@ -15,7 +15,7 @@ import {
   type ScopeFilter,
   type SeverityFilter,
 } from '../context/prompt-engine/PromptEngineFiltersContext';
-import { PROMPT_VALIDATION_SCOPE_LABELS, PROMPT_VALIDATION_SCOPE_VALUES } from '../settings';
+import { PROMPT_VALIDATION_SCOPE_LABELS, PROMPT_VALIDATION_SCOPE_VALUES } from '@/shared/lib/prompt-engine/settings';
 
 /**
  * REFACTORED: PromptEngineFilters using FilterPanel template

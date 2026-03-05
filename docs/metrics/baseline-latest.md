@@ -1,19 +1,19 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-05T00:28:03.353Z
+Generated at: 2026-03-05T05:25:58.462Z
 
 ## Snapshot
 
-- Source files: 4249
-- Source lines: 659188
-- use client files: 1316
-- Files >= 1000 LOC: 7
-- Files >= 1500 LOC: 2
-- Largest file: `src/features/case-resolver/__tests__/workspace.test.ts` (1802 LOC)
-- API routes: 307
+- Source files: 4194
+- Source lines: 671455
+- use client files: 1310
+- Files >= 1000 LOC: 10
+- Files >= 1500 LOC: 3
+- Largest file: `src/shared/lib/ai-paths/portable-engine/index.ts` (2931 LOC)
+- API routes: 309
 - API delegated server routes: 13
 - API routes without apiHandler/delegation: 0
-- API explicit cache policy coverage: 307/307 (100.0%)
+- API explicit cache policy coverage: 309/309 (100.0%)
 - Cross-feature dependency pairs: 71
 - Shared -> features imports: 11
 - setInterval occurrences: 22
@@ -44,10 +44,9 @@ Generated at: 2026-03-05T00:28:03.353Z
 
 | Edge | References |
 | --- | ---: |
-| `case-resolver -> foldertree` | 19 |
 | `cms -> gsap` | 19 |
 | `case-resolver -> case-resolver-capture` | 16 |
-| `ai -> products` | 15 |
+| `case-resolver -> foldertree` | 15 |
 | `case-resolver -> filemaker` | 13 |
 | `drafter -> products` | 13 |
 | `case-resolver -> document-editor` | 12 |
@@ -57,6 +56,7 @@ Generated at: 2026-03-05T00:28:03.353Z
 | `cms -> viewer3d` | 8 |
 | `integrations -> products` | 8 |
 | `products -> internationalization` | 8 |
+| `ai -> products` | 7 |
 | `integrations -> playwright` | 7 |
 | `products -> foldertree` | 7 |
 
@@ -64,23 +64,23 @@ Generated at: 2026-03-05T00:28:03.353Z
 
 | File | LOC |
 | --- | ---: |
+| `src/shared/lib/ai-paths/portable-engine/index.ts` | 2931 |
+| `src/shared/lib/ai-paths/portable-engine/sinks.server.ts` | 2259 |
 | `src/features/case-resolver/__tests__/workspace.test.ts` | 1802 |
-| `src/features/case-resolver/__tests__/workspace-persistence.test.ts` | 1521 |
 | `src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts` | 1406 |
-| `src/shared/contracts/image-studio.ts` | 1231 |
+| `src/features/case-resolver/__tests__/workspace-persistence.test.ts` | 1249 |
+| `src/shared/contracts/image-studio.ts` | 1240 |
 | `src/shared/contracts/ai-paths-core/nodes.ts` | 1161 |
+| `src/shared/lib/observability/system-logger.ts` | 1090 |
 | `src/shared/lib/ai-paths/core/runtime/engine-core.ts` | 1060 |
-| `src/shared/contracts/cms.ts` | 1029 |
+| `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 1052 |
 | `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 986 |
 | `src/app/api/image-studio/slots/[slotId]/autoscale/handler.test.ts` | 931 |
 | `src/app/api/image-studio/slots/[slotId]/crop/handler.ts` | 929 |
-| `src/features/ai/ai-paths/services/runtime-analytics-service.ts` | 919 |
+| `src/features/ai/ai-paths/services/runtime-analytics-service.ts` | 917 |
 | `src/shared/lib/documentation/catalogs/validator-docs.ts` | 909 |
+| `src/shared/lib/ai-paths/hooks/useAiPathTriggerEvent.ts` | 905 |
 | `src/features/case-resolver-capture/__tests__/proposals.test.ts` | 901 |
-| `src/shared/lib/ai-paths/hooks/useAiPathTriggerEvent.ts` | 898 |
+| `src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsServerExecution.ts` | 894 |
+| `src/shared/contracts/cms.ts` | 894 |
 | `src/shared/lib/ai-brain/context/BrainContext.tsx` | 891 |
-| `src/features/notesapp/context/NoteFormContext.tsx` | 890 |
-| `src/features/ai/ai-paths/services/path-run-service.ts` | 888 |
-| `src/features/products/hooks/useProductFormValidator.ts` | 886 |
-| `src/shared/lib/observability/system-log-repository.ts` | 883 |
-| `src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsServerExecution.ts` | 880 |

@@ -22,6 +22,7 @@ import {
 import type { ConnectorInfo } from './canvas-board-connectors';
 
 const CONNECTOR_HIT_TARGET_PX = 14;
+const CONNECTOR_TOOLTIP_POINTER_OFFSET_PX = 6;
 
 const shouldIgnoreCanvasPanStart = (target: EventTarget | null): boolean => {
   if (!(target instanceof Element)) return false;
@@ -446,8 +447,8 @@ export function CanvasBoard({
               <CanvasConnectorTooltip
                 tooltip={svgConnectorTooltip}
                 position={{
-                  left: svgConnectorTooltip.clientX + 12,
-                  top: svgConnectorTooltip.clientY + 12,
+                  left: svgConnectorTooltip.clientX + CONNECTOR_TOOLTIP_POINTER_OFFSET_PX,
+                  top: svgConnectorTooltip.clientY + CONNECTOR_TOOLTIP_POINTER_OFFSET_PX,
                 }}
                 override={connectorTooltipOverride}
               />

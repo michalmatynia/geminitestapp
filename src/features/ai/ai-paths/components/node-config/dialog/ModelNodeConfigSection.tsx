@@ -6,12 +6,14 @@ import type { AiNode, Edge, ModelConfig } from '@/shared/lib/ai-paths';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { Button, Card, FormField, Input, SelectSimple, Textarea } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathGraph, useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 const BRAIN_DEFAULT_MODEL_OPTION_VALUE = '__brain_default_model__';
 
 export function ModelNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, nodes, edges, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { nodes, edges } = useAiPathGraph();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
   const brainModelOptions = useBrainModelOptions({
     capability: 'ai_paths.model',
     enabled: selectedNode?.type === 'model',

@@ -7,6 +7,16 @@ import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { type SvgConnectorTooltipState } from '../../CanvasBoard.utils';
 import { type ConnectorInfo } from '../../canvas-board-connectors';
 
+const CONNECTOR_TAP_MOVE_THRESHOLD_PX = 4;
+const CONNECTOR_TAP_MOVE_THRESHOLD_SQ = CONNECTOR_TAP_MOVE_THRESHOLD_PX ** 2;
+
+type ConnectorPressState = {
+  key: string;
+  startClientX: number;
+  startClientY: number;
+  moved: boolean;
+};
+
 export interface CanvasSvgNodePortsProps {
   node: AiNode;
   incomingEdgePortSet: Set<string>;
@@ -64,6 +74,95 @@ export function CanvasSvgNodePorts({
   getConnectorInfo,
   setPinnedConnectorKey,
 }: CanvasSvgNodePortsProps): React.JSX.Element {
+  const connectorPressByPointerIdRef = React.useRef<Map<number, ConnectorPressState>>(new Map());
+
+  const beginConnectorPress = React.useCallback(
+    (event: React.PointerEvent<SVGCircleElement>, key: string): void => {
+      if (event.button !== 0) return;
+      connectorPressByPointerIdRef.current.set(event.pointerId, {
+        key,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        moved: false,
+      });
+    },
+    []
+  );
+
+  const trackConnectorPressMove = React.useCallback(
+    (event: React.PointerEvent<SVGCircleElement>, key: string): void => {
+      const press = connectorPressByPointerIdRef.current.get(event.pointerId);
+      if (!press || press.key !== key || press.moved) return;
+      const deltaX = event.clientX - press.startClientX;
+      const deltaY = event.clientY - press.startClientY;
+      if (deltaX * deltaX + deltaY * deltaY > CONNECTOR_TAP_MOVE_THRESHOLD_SQ) {
+        press.moved = true;
+      }
+    },
+    []
+  );
+
+  const consumeConnectorTap = React.useCallback(
+    (event: React.PointerEvent<SVGCircleElement>, key: string): boolean => {
+      const press = connectorPressByPointerIdRef.current.get(event.pointerId);
+      connectorPressByPointerIdRef.current.delete(event.pointerId);
+      if (!press || press.key !== key || event.button !== 0) return false;
+      const deltaX = event.clientX - press.startClientX;
+      const deltaY = event.clientY - press.startClientY;
+      const moved = press.moved || deltaX * deltaX + deltaY * deltaY > CONNECTOR_TAP_MOVE_THRESHOLD_SQ;
+      return !moved;
+    },
+    []
+  );
+
+  const clearConnectorPress = React.useCallback((event: React.PointerEvent<SVGCircleElement>): void => {
+    connectorPressByPointerIdRef.current.delete(event.pointerId);
+  }, []);
+
+  const togglePinnedConnector = React.useCallback(
+    (key: string, isPinned: boolean): void => {
+      if (isPinned) {
+        setPinnedConnectorKey(null);
+        setHoveredConnectorKey(null);
+        return;
+      }
+      setPinnedConnectorKey(key);
+    },
+    [setHoveredConnectorKey, setPinnedConnectorKey]
+  );
+
+  const updateConnectorHover = React.useCallback(
+    (
+      event: React.PointerEvent<SVGCircleElement>,
+      direction: 'input' | 'output',
+      nodeId: string,
+      portName: string,
+      key: string
+    ): void => {
+      setHoveredConnectorKey(key);
+      onConnectorHover?.({
+        clientX: event.clientX,
+        clientY: event.clientY,
+        info: getConnectorInfo(direction, nodeId, portName),
+      });
+    },
+    [getConnectorInfo, onConnectorHover, setHoveredConnectorKey]
+  );
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleWindowPointerClear = (event: PointerEvent): void => {
+      connectorPressByPointerIdRef.current.delete(event.pointerId);
+    };
+    window.addEventListener('pointerup', handleWindowPointerClear);
+    window.addEventListener('pointercancel', handleWindowPointerClear);
+    return (): void => {
+      window.removeEventListener('pointerup', handleWindowPointerClear);
+      window.removeEventListener('pointercancel', handleWindowPointerClear);
+      connectorPressByPointerIdRef.current.clear();
+    };
+  }, []);
+
   return (
     <>
       {node.inputs?.map((port, index) => {
@@ -91,11 +190,21 @@ export function CanvasSvgNodePorts({
               style={{ cursor: 'crosshair' }}
               onPointerDown={(event: React.PointerEvent<SVGCircleElement>) => {
                 event.stopPropagation();
+                beginConnectorPress(event, key);
                 void onReconnectInput(event, node.id, port);
               }}
               onPointerUp={(event: React.PointerEvent<SVGCircleElement>) => {
                 event.stopPropagation();
+                trackConnectorPressMove(event, key);
+                const isConnectorTap = consumeConnectorTap(event, key);
                 void onCompleteConnection(event, node, port);
+                if (isConnectorTap) {
+                  togglePinnedConnector(key, isPinned);
+                }
+              }}
+              onPointerMove={(event: React.PointerEvent<SVGCircleElement>) => {
+                trackConnectorPressMove(event, key);
+                updateConnectorHover(event, 'input', node.id, port, key);
               }}
               onContextMenu={(event: React.MouseEvent<SVGCircleElement>) => {
                 event.preventDefault();
@@ -103,26 +212,13 @@ export function CanvasSvgNodePorts({
                 void onDisconnectPort('input', node.id, port);
               }}
               onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
-                setHoveredConnectorKey(key);
-                onConnectorHover?.({
-                  clientX: event.clientX,
-                  clientY: event.clientY,
-                  info: getConnectorInfo('input', node.id, port),
-                });
+                updateConnectorHover(event, 'input', node.id, port, key);
               }}
               onPointerLeave={() => {
                 setHoveredConnectorKey(null);
                 onConnectorLeave?.();
               }}
-              onClick={(event: React.MouseEvent<SVGCircleElement>) => {
-                event.stopPropagation();
-                if (isPinned) {
-                  setPinnedConnectorKey(null);
-                  setHoveredConnectorKey(null);
-                  return;
-                }
-                setPinnedConnectorKey(key);
-              }}
+              onPointerCancel={clearConnectorPress}
             />
             <circle
               data-port='input'
@@ -137,33 +233,30 @@ export function CanvasSvgNodePorts({
               style={{ cursor: 'crosshair' }}
               onPointerDown={(event: React.PointerEvent<SVGCircleElement>) => {
                 event.stopPropagation();
+                beginConnectorPress(event, key);
                 void onReconnectInput(event, node.id, port);
               }}
               onPointerUp={(event: React.PointerEvent<SVGCircleElement>) => {
                 event.stopPropagation();
+                trackConnectorPressMove(event, key);
+                const isConnectorTap = consumeConnectorTap(event, key);
                 void onCompleteConnection(event, node, port);
+                if (isConnectorTap) {
+                  togglePinnedConnector(key, isPinned);
+                }
+              }}
+              onPointerMove={(event: React.PointerEvent<SVGCircleElement>) => {
+                trackConnectorPressMove(event, key);
+                updateConnectorHover(event, 'input', node.id, port, key);
               }}
               onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
-                setHoveredConnectorKey(key);
-                onConnectorHover?.({
-                  clientX: event.clientX,
-                  clientY: event.clientY,
-                  info: getConnectorInfo('input', node.id, port),
-                });
+                updateConnectorHover(event, 'input', node.id, port, key);
               }}
               onPointerLeave={() => {
                 setHoveredConnectorKey(null);
                 onConnectorLeave?.();
               }}
-              onClick={(event: React.MouseEvent<SVGCircleElement>) => {
-                event.stopPropagation();
-                if (isPinned) {
-                  setPinnedConnectorKey(null);
-                  setHoveredConnectorKey(null);
-                  return;
-                }
-                setPinnedConnectorKey(key);
-              }}
+              onPointerCancel={clearConnectorPress}
             />
             {showPortLabels && (
               <text
@@ -202,7 +295,17 @@ export function CanvasSvgNodePorts({
               style={{ cursor: 'crosshair' }}
               onPointerDown={(event: React.PointerEvent<SVGCircleElement>) => {
                 event.stopPropagation();
+                beginConnectorPress(event, key);
                 void onStartConnection(event, node, port);
+              }}
+              onPointerUp={(event: React.PointerEvent<SVGCircleElement>) => {
+                event.stopPropagation();
+                trackConnectorPressMove(event, key);
+                const isConnectorTap = consumeConnectorTap(event, key);
+                void onCompleteConnection(event, node, port);
+                if (isConnectorTap) {
+                  togglePinnedConnector(key, isPinned);
+                }
               }}
               onContextMenu={(event: React.MouseEvent<SVGCircleElement>) => {
                 event.preventDefault();
@@ -210,34 +313,17 @@ export function CanvasSvgNodePorts({
                 void onDisconnectPort('output', node.id, port);
               }}
               onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
-                setHoveredConnectorKey(key);
-                onConnectorHover?.({
-                  clientX: event.clientX,
-                  clientY: event.clientY,
-                  info: getConnectorInfo('output', node.id, port),
-                });
+                updateConnectorHover(event, 'output', node.id, port, key);
               }}
               onPointerMove={(event: React.PointerEvent<SVGCircleElement>) => {
-                setHoveredConnectorKey(key);
-                onConnectorHover?.({
-                  clientX: event.clientX,
-                  clientY: event.clientY,
-                  info: getConnectorInfo('output', node.id, port),
-                });
+                trackConnectorPressMove(event, key);
+                updateConnectorHover(event, 'output', node.id, port, key);
               }}
               onPointerLeave={() => {
                 setHoveredConnectorKey(null);
                 onConnectorLeave?.();
               }}
-              onClick={(event: React.MouseEvent<SVGCircleElement>) => {
-                event.stopPropagation();
-                if (isPinned) {
-                  setPinnedConnectorKey(null);
-                  setHoveredConnectorKey(null);
-                  return;
-                }
-                setPinnedConnectorKey(key);
-              }}
+              onPointerCancel={clearConnectorPress}
             />
             <circle
               data-port='output'
@@ -252,37 +338,30 @@ export function CanvasSvgNodePorts({
               style={{ cursor: 'crosshair' }}
               onPointerDown={(event: React.PointerEvent<SVGCircleElement>) => {
                 event.stopPropagation();
+                beginConnectorPress(event, key);
                 void onStartConnection(event, node, port);
               }}
+              onPointerUp={(event: React.PointerEvent<SVGCircleElement>) => {
+                event.stopPropagation();
+                trackConnectorPressMove(event, key);
+                const isConnectorTap = consumeConnectorTap(event, key);
+                void onCompleteConnection(event, node, port);
+                if (isConnectorTap) {
+                  togglePinnedConnector(key, isPinned);
+                }
+              }}
               onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
-                setHoveredConnectorKey(key);
-                onConnectorHover?.({
-                  clientX: event.clientX,
-                  clientY: event.clientY,
-                  info: getConnectorInfo('output', node.id, port),
-                });
+                updateConnectorHover(event, 'output', node.id, port, key);
               }}
               onPointerMove={(event: React.PointerEvent<SVGCircleElement>) => {
-                setHoveredConnectorKey(key);
-                onConnectorHover?.({
-                  clientX: event.clientX,
-                  clientY: event.clientY,
-                  info: getConnectorInfo('output', node.id, port),
-                });
+                trackConnectorPressMove(event, key);
+                updateConnectorHover(event, 'output', node.id, port, key);
               }}
               onPointerLeave={() => {
                 setHoveredConnectorKey(null);
                 onConnectorLeave?.();
               }}
-              onClick={(event: React.MouseEvent<SVGCircleElement>) => {
-                event.stopPropagation();
-                if (isPinned) {
-                  setPinnedConnectorKey(null);
-                  setHoveredConnectorKey(null);
-                  return;
-                }
-                setPinnedConnectorKey(key);
-              }}
+              onPointerCancel={clearConnectorPress}
             />
             {showPortLabels && (
               <text

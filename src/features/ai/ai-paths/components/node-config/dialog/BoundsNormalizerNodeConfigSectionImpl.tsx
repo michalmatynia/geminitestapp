@@ -6,7 +6,7 @@ import type { BoundsNormalizerConfig } from '@/shared/contracts/ai-paths-core';
 import { Input, Label, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 const FORMAT_OPTIONS = [
   { value: 'pixels_tlwh', label: '{left,top,width,height} px — standard (default)' },
@@ -46,7 +46,8 @@ function FieldInput(props: {
 }
 
 export function BoundsNormalizerNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
   const [overridesOpen, setOverridesOpen] = useState(false);
   const [dimOpen, setDimOpen] = useState(false);
 

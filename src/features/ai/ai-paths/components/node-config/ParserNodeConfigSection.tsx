@@ -16,21 +16,19 @@ import {
 } from '@/shared/lib/ai-paths';
 import { Button, FormField, Input, SelectSimple, Textarea } from '@/shared/ui';
 
-import { useAiPathConfig } from '../AiPathConfigContext';
+import { useAiPathGraph, useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../AiPathConfigContext';
 
 export function ParserNodeConfigSection(): React.JSX.Element | null {
+  const { selectedNode } = useAiPathSelection();
+  const { nodes } = useAiPathGraph();
   const {
-    selectedNode,
-    nodes,
     runtimeState,
     parserSamples,
     setParserSamples,
     parserSampleLoading,
-    updateSelectedNode,
-    updateSelectedNodeConfig: _updateSelectedNodeConfig,
     handleFetchParserSample,
-    toast,
-  } = useAiPathConfig();
+  } = useAiPathRuntime();
+  const { updateSelectedNode, toast } = useAiPathOrchestrator();
 
   const [parserDraftMappings, setParserDraftMappings] = React.useState<Record<string, string>>({});
   const [parserDraftNodeId, setParserDraftNodeId] = React.useState<string | null>(null);

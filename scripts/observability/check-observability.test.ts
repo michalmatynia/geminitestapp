@@ -133,7 +133,7 @@ describe('runObservabilityCheck logger enforcement', () => {
     writeSource(
       root,
       'src/bad-import.ts',
-      "import { logClientError } from '@/features/observability/public';\nvoid logClientError;\n"
+      "import { logClientError } from '@/features/observability';\nvoid logClientError;\n"
     );
 
     const report = runObservabilityCheck({

@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { ExploderPatternSubTab, PatternCollectionTab } from './PromptEngineContext';
-import type { PromptValidationScope } from '../settings';
+import type { PromptValidationScope } from '@/shared/lib/prompt-engine/settings';
 
 type PromptEngineScopeFilter = PromptValidationScope | 'all';
 

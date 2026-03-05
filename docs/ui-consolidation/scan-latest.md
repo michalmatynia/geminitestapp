@@ -1,14 +1,14 @@
 # UI Consolidation Scan
 
-Generated at: 2026-03-05T02:19:35.305Z
+Generated at: 2026-03-05T05:28:13.562Z
 
 ## Snapshot
 
-- Scanned UI files: 1122
+- Scanned UI files: 1103
 - Duplicate-name clusters: 0
 - Prop-signature clusters: 0
 - Token-similarity clusters: 0
-- Thin re-export wrappers ignored: 27
+- Thin re-export wrappers ignored: 3
 - Total consolidation opportunities: 0
 - High-priority opportunities (score >= 2000): 0
 
@@ -16,22 +16,22 @@ Generated at: 2026-03-05T02:19:35.305Z
 
 | Domain | Files |
 | --- | ---: |
-| `feature` | 809 |
-| `app` | 159 |
-| `shared-ui` | 117 |
+| `feature` | 790 |
+| `app` | 160 |
+| `shared-ui` | 116 |
 | `shared` | 37 |
 
 ## Top Families
 
 | Family | Files |
 | --- | ---: |
-| `Unknown` | 562 |
-| `Section` | 139 |
-| `Page` | 136 |
-| `Panel` | 75 |
-| `Modal` | 69 |
+| `Unknown` | 563 |
+| `Page` | 137 |
+| `Section` | 133 |
+| `Panel` | 76 |
+| `Modal` | 54 |
 | `Tab` | 38 |
-| `Settings` | 19 |
+| `Settings` | 18 |
 | `Header` | 17 |
 | `List` | 14 |
 | `Card` | 13 |

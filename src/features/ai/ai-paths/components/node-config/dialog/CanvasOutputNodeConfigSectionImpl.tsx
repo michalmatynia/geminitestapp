@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import type { CanvasOutputConfig } from '@/shared/contracts/ai-paths-core';
 import { Input, Label } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 function FieldInput(props: {
   label: string;
@@ -29,7 +29,8 @@ function FieldInput(props: {
 }
 
 export function CanvasOutputNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
   const [overridesOpen, setOverridesOpen] = useState(false);
 
   if (selectedNode?.type !== 'canvas_output') return null;

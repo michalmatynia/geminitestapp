@@ -10,7 +10,7 @@ import {
   ruleSearchText,
 } from '../prompt-engine-context-utils';
 import { PatternCollectionTab, ExploderPatternSubTab } from './PromptEngineConfigContext';
-import { DEFAULT_PROMPT_VALIDATION_SCOPES } from '../../settings';
+import { DEFAULT_PROMPT_VALIDATION_SCOPES } from '@/shared/lib/prompt-engine/settings';
 
 export function usePromptEngineFilteringImpl(args: {
   sortedDrafts: RuleDraft[];

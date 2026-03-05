@@ -8,7 +8,7 @@ import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelO
 import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Button, Textarea, Alert, FormField } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathGraph, useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../../AiPathConfigContext';
 import {
   PlaceholderMatrixDialog,
   type PlaceholderGroup,
@@ -16,16 +16,10 @@ import {
 } from '../database/PlaceholderMatrixDialog';
 
 export function PromptNodeConfigSection(): React.JSX.Element | null {
-  const {
-    selectedNode,
-    nodes,
-    edges,
-    runtimeState,
-    updateSelectedNodeConfig,
-    onSendToAi,
-    sendingToAi,
-    toast,
-  } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { nodes, edges } = useAiPathGraph();
+  const { runtimeState, onSendToAi, sendingToAi } = useAiPathRuntime();
+  const { updateSelectedNodeConfig, toast } = useAiPathOrchestrator();
   const promptTemplateRef = React.useRef<HTMLTextAreaElement | null>(null);
   const [placeholderMatrixOpen, setPlaceholderMatrixOpen] = React.useState<boolean>(false);
   const [placeholderTarget, setPlaceholderTarget] = React.useState<PlaceholderTarget>('prompt');

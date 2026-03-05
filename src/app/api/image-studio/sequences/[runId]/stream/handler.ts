@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server';
 import { getImageStudioSequenceRunById } from '@/features/ai/image-studio/server/sequence-run-repository';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-import { startIntervalTask } from '@/shared/lib/timers';
+import { startIntervalTask, type IntervalTaskHandle } from '@/shared/lib/timers';
 
 const REDIS_CONNECT_TIMEOUT_MS = 3000;
 const HEARTBEAT_INTERVAL_MS = 15000;
@@ -54,7 +54,7 @@ export async function GET_handler(
   const stream = new ReadableStream({
     async start(controller) {
       let closed = false;
-      let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+      let heartbeatTimer: IntervalTaskHandle | null = null;
       let subscriber: Redis | null = null;
       const channel = `image-studio:sequence:${runId}`;
 
@@ -67,7 +67,7 @@ export async function GET_handler(
         if (closed) return;
         closed = true;
         if (heartbeatTimer) {
-          clearInterval(heartbeatTimer);
+          heartbeatTimer.cancel();
           heartbeatTimer = null;
         }
         if (subscriber) {

@@ -14,7 +14,7 @@ import {
 
 import { usePromptEngine } from '../context/PromptEngineContext';
 import { type RuleDraft } from '../context/prompt-engine-context-utils';
-import { type PromptValidationSeverity } from '../settings';
+import { type PromptValidationSeverity } from '@/shared/lib/prompt-engine/settings';
 
 const formatSeverityLabel = (severity: PromptValidationSeverity): string => {
   if (severity === 'error') return 'Error';

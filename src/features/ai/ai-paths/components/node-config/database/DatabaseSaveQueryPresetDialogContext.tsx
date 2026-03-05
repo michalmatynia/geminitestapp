@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 export type DatabaseSaveQueryPresetDialogContextValue = {
   open: boolean;
@@ -12,8 +12,25 @@ export type DatabaseSaveQueryPresetDialogContextValue = {
   onSave: () => void;
 };
 
-const DatabaseSaveQueryPresetDialogContext =
-  React.createContext<DatabaseSaveQueryPresetDialogContextValue | null>(null);
+type DatabaseSaveQueryPresetDialogActionKey =
+  | 'onOpenChange'
+  | 'setNewQueryPresetName'
+  | 'onCancel'
+  | 'onSave';
+
+export type DatabaseSaveQueryPresetDialogStateContextValue = Omit<
+  DatabaseSaveQueryPresetDialogContextValue,
+  DatabaseSaveQueryPresetDialogActionKey
+>;
+export type DatabaseSaveQueryPresetDialogActionsContextValue = Pick<
+  DatabaseSaveQueryPresetDialogContextValue,
+  DatabaseSaveQueryPresetDialogActionKey
+>;
+
+const DatabaseSaveQueryPresetDialogStateContext =
+  React.createContext<DatabaseSaveQueryPresetDialogStateContextValue | null>(null);
+const DatabaseSaveQueryPresetDialogActionsContext =
+  React.createContext<DatabaseSaveQueryPresetDialogActionsContextValue | null>(null);
 
 export function DatabaseSaveQueryPresetDialogContextProvider({
   value,
@@ -22,19 +39,65 @@ export function DatabaseSaveQueryPresetDialogContextProvider({
   value: DatabaseSaveQueryPresetDialogContextValue;
   children: React.ReactNode;
 }): React.JSX.Element {
+  const {
+    open,
+    newQueryPresetName,
+    queryTemplateValue,
+    onOpenChange,
+    setNewQueryPresetName,
+    onCancel,
+    onSave,
+  } = value;
+  const stateValue = useMemo<DatabaseSaveQueryPresetDialogStateContextValue>(
+    () => ({
+      open,
+      newQueryPresetName,
+      queryTemplateValue,
+    }),
+    [newQueryPresetName, open, queryTemplateValue]
+  );
+  const actionsValue = useMemo<DatabaseSaveQueryPresetDialogActionsContextValue>(
+    () => ({
+      onOpenChange,
+      setNewQueryPresetName,
+      onCancel,
+      onSave,
+    }),
+    [onCancel, onOpenChange, onSave, setNewQueryPresetName]
+  );
+
   return (
-    <DatabaseSaveQueryPresetDialogContext.Provider value={value}>
-      {children}
-    </DatabaseSaveQueryPresetDialogContext.Provider>
+    <DatabaseSaveQueryPresetDialogActionsContext.Provider value={actionsValue}>
+      <DatabaseSaveQueryPresetDialogStateContext.Provider value={stateValue}>
+        {children}
+      </DatabaseSaveQueryPresetDialogStateContext.Provider>
+    </DatabaseSaveQueryPresetDialogActionsContext.Provider>
   );
 }
 
-export function useDatabaseSaveQueryPresetDialogContext(): DatabaseSaveQueryPresetDialogContextValue {
-  const context = React.useContext(DatabaseSaveQueryPresetDialogContext);
+export function useDatabaseSaveQueryPresetDialogStateContext(): DatabaseSaveQueryPresetDialogStateContextValue {
+  const context = React.useContext(DatabaseSaveQueryPresetDialogStateContext);
   if (!context) {
     throw new Error(
-      'useDatabaseSaveQueryPresetDialogContext must be used within DatabaseSaveQueryPresetDialogContextProvider'
+      'useDatabaseSaveQueryPresetDialogStateContext must be used within DatabaseSaveQueryPresetDialogContextProvider'
     );
   }
   return context;
+}
+
+export function useDatabaseSaveQueryPresetDialogActionsContext(): DatabaseSaveQueryPresetDialogActionsContextValue {
+  const context = React.useContext(DatabaseSaveQueryPresetDialogActionsContext);
+  if (!context) {
+    throw new Error(
+      'useDatabaseSaveQueryPresetDialogActionsContext must be used within DatabaseSaveQueryPresetDialogContextProvider'
+    );
+  }
+  return context;
+}
+
+export function useDatabaseSaveQueryPresetDialogContext(): DatabaseSaveQueryPresetDialogContextValue {
+  const state = useDatabaseSaveQueryPresetDialogStateContext();
+  const actions = useDatabaseSaveQueryPresetDialogActionsContext();
+
+  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
 }

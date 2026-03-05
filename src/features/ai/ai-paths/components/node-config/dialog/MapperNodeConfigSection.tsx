@@ -9,7 +9,7 @@ import {
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Input, SelectSimple, Textarea, FormField } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../../AiPathConfigContext';
 
 type MapperSources = {
   context: unknown;
@@ -77,8 +77,9 @@ const buildLivePreview = (
 };
 
 export function MapperNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, runtimeState, updateSelectedNode, updateSelectedNodeConfig } =
-    useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { runtimeState } = useAiPathRuntime();
+  const { updateSelectedNode, updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (selectedNode?.type !== 'mapper') return null;
 

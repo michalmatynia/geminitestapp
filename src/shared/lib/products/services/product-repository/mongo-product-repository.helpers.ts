@@ -119,16 +119,11 @@ export const normalizeProductParameterValues = (input: unknown): ProductParamete
             {} as Record<string, string>
         )
         : {};
-    const current = byParameterId.get(parameterId);
-    const mergedValuesByLanguage =
-      Object.keys(valuesByLanguage).length > 0 ? valuesByLanguage : (current?.valuesByLanguage ?? {});
-    const resolvedValue = value || resolvePrimaryLocalizedValue(mergedValuesByLanguage) || '';
+    const resolvedValue = value || resolvePrimaryLocalizedValue(valuesByLanguage) || '';
     byParameterId.set(parameterId, {
       parameterId,
       value: resolvedValue,
-      ...(Object.keys(mergedValuesByLanguage).length > 0
-        ? { valuesByLanguage: mergedValuesByLanguage }
-        : {}),
+      ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
     });
   });
 

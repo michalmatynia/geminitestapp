@@ -14,7 +14,7 @@ import {
   type PatternCollectionTab,
 } from '../context/prompt-engine/PromptEngineConfigContext';
 import { PromptEngineValidationPageProvider } from '../context/PromptEngineValidationPageContext';
-import type { PromptValidationScope } from '../settings';
+import type { PromptValidationScope } from '@/shared/lib/prompt-engine/settings';
 
 type AdminPromptEngineValidationPatternsPageProps = {
   embedded?: boolean;

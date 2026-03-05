@@ -3,10 +3,12 @@
 import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths';
 import { Button, Input, SelectSimple, Card, FormField } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../../AiPathConfigContext';
 
 export function SimulationNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig, handleRunSimulation } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { handleRunSimulation } = useAiPathRuntime();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (selectedNode?.type !== 'simulation') return null;
 

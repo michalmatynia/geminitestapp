@@ -8,7 +8,7 @@ import type { LearnerAgentConfig } from '@/shared/lib/ai-paths';
 import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
 import { Button, SelectSimple, Textarea, LoadingState, Card, Alert, FormField } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 const DEFAULT_CONFIG: LearnerAgentConfig = {
   agentId: '',
@@ -19,7 +19,8 @@ const DEFAULT_CONFIG: LearnerAgentConfig = {
 const NO_AGENT_VALUE = '__none__';
 
 export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
   const agentsQuery = useTeachingAgents();
 
   if (selectedNode?.type !== 'learner_agent') return null;

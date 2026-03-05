@@ -3,7 +3,7 @@
 import type { NodeCacheMode, NodeCacheScope, NodeSideEffectPolicy } from '@/shared/lib/ai-paths';
 import { Button, Input, MultiSelect, SelectSimple, ToggleRow, FormField } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../../AiPathConfigContext';
 
 const cacheModeOptions = [
   { value: 'auto', label: 'Auto (deterministic only)' },
@@ -37,7 +37,9 @@ const sideEffectNodeTypes = new Set<string>([
 ]);
 
 export function RuntimeNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig, clearNodeCache } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { clearNodeCache } = useAiPathRuntime();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
   if (!selectedNode) return null;
   const runtimeConfig = selectedNode.config?.runtime ?? {};
   const cacheConfig = runtimeConfig.cache ?? {};

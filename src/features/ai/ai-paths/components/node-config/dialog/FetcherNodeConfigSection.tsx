@@ -3,7 +3,7 @@
 import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths';
 import { Card, Input, SelectSimple, FormField } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 type FetcherSourceMode = 'live_context' | 'simulation_id' | 'live_then_simulation';
 
@@ -23,7 +23,8 @@ const FETCHER_SOURCE_OPTIONS: Array<{ value: FetcherSourceMode; label: string }>
 ];
 
 export function FetcherNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (selectedNode?.type !== 'fetcher') return null;
 

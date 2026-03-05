@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { noteUpdateSchema } from '@/features/notesapp/public';
+import { noteUpdateSchema } from '@/features/notesapp';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { NoteUpdateInput } from '@/shared/contracts/notes';

@@ -4,14 +4,15 @@ import type { AudioWaveform } from '@/shared/lib/ai-paths';
 import { toNumber } from '@/shared/lib/ai-paths';
 import { Input, SelectSimple, FormField } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 const WAVEFORM_OPTIONS: AudioWaveform[] = ['sine', 'square', 'triangle', 'sawtooth'];
 
 const waveformOptions = WAVEFORM_OPTIONS.map((w) => ({ value: w, label: w }));
 
 export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
   if (selectedNode?.type !== 'audio_oscillator') return null;
 
   const oscillatorConfig = selectedNode.config?.audioOscillator ?? {

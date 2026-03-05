@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import type { StringMutatorOperation } from '@/shared/lib/ai-paths';
 import { Button, Input, SelectSimple, ToggleRow, FormField, EmptyState } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 const OPERATION_LABELS: Record<StringMutatorOperation['type'], string> = {
   trim: 'Trim',
@@ -59,7 +59,8 @@ const parseOptionalNumber = (value: string): number | undefined => {
 type StringMutatorOperationDraft = StringMutatorOperation & { id?: string };
 
 export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (selectedNode?.type !== 'string_mutator') return null;
 

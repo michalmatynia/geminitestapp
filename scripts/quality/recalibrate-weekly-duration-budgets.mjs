@@ -5,6 +5,7 @@ const args = new Set(process.argv.slice(2));
 const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
 const includeLatest = !args.has('--exclude-latest');
 const applyBudgets = args.has('--apply-budgets');
+const includeSupplementalSamples = !args.has('--no-supplemental-samples');
 
 const minSamplesArg = [...args].find((arg) => arg.startsWith('--min-samples='));
 const maxRunsArg = [...args].find((arg) => arg.startsWith('--max-runs='));
@@ -64,6 +65,13 @@ const CHECK_READINESS = Object.freeze({
   guardrails: { required: true },
   uiConsolidation: { required: true },
   observability: { required: true },
+});
+
+const SUPPLEMENTAL_SAMPLE_PATTERNS = Object.freeze({
+  lintDomains: /^lint-domain-checks-(?!trend-).+\.json$/,
+  unitDomains: /^unit-domain-timings-(?!trend-).+\.json$/,
+  criticalFlows: /^critical-flow-tests-.+\.json$/,
+  securitySmoke: /^security-smoke-.+\.json$/,
 });
 
 const formatDuration = (ms) => {
@@ -170,14 +178,101 @@ const loadRuns = async (files) => {
     .slice(-maxRuns);
 };
 
-const analyze = (runs) => {
+const summarizeExternalCheckPayload = (payload) => {
+  if (!payload || typeof payload !== 'object' || typeof payload.generatedAt !== 'string') {
+    return null;
+  }
+  const summary = payload.summary ?? {};
+  const results = Array.isArray(payload.results) ? payload.results : [];
+  const failedFromSummary = Number.isFinite(summary.failed) ? Number(summary.failed) : 0;
+  const timedOutFromSummary = Number.isFinite(summary.timedOut) ? Number(summary.timedOut) : 0;
+  const failedFromResults = results.filter((entry) => entry?.status === 'fail').length;
+  const timedOutFromResults = results.filter((entry) => entry?.status === 'timeout').length;
+  const failed = Math.max(failedFromSummary, failedFromResults);
+  const timedOut = Math.max(timedOutFromSummary, timedOutFromResults);
+
+  const durationFromSummary = Number.isFinite(summary.totalDurationMs)
+    ? Number(summary.totalDurationMs)
+    : null;
+  const durationFromResults = results.length > 0
+    ? results.reduce(
+        (acc, entry) => acc + (Number.isFinite(entry?.durationMs) ? Number(entry.durationMs) : 0),
+        0
+      )
+    : null;
+  const durationMs = Number.isFinite(durationFromSummary)
+    ? durationFromSummary
+    : Number.isFinite(durationFromResults)
+      ? durationFromResults
+      : null;
+
+  return {
+    generatedAt: payload.generatedAt,
+    status: failed === 0 && timedOut === 0 ? 'pass' : 'fail',
+    durationMs,
+  };
+};
+
+const loadSupplementalSamplesByCheck = async () => {
+  if (!includeSupplementalSamples) {
+    return {
+      enabled: false,
+      byCheck: {},
+      totalSamples: 0,
+    };
+  }
+
+  const files = await fs.readdir(metricsDir);
+  const byCheck = {};
+  let totalSamples = 0;
+
+  for (const [checkId, pattern] of Object.entries(SUPPLEMENTAL_SAMPLE_PATTERNS)) {
+    const matchingFiles = files.filter((file) => pattern.test(file));
+    const byGeneratedAt = new Map();
+    for (const fileName of matchingFiles) {
+      const filePath = path.join(metricsDir, fileName);
+      const payload = await readJsonIfExists(filePath);
+      const summary = summarizeExternalCheckPayload(payload);
+      if (!summary || summary.status !== 'pass' || !Number.isFinite(summary.durationMs)) {
+        continue;
+      }
+      if (!byGeneratedAt.has(summary.generatedAt)) {
+        byGeneratedAt.set(summary.generatedAt, {
+          sourceFile: fileName,
+          generatedAt: summary.generatedAt,
+          durationMs: Number(summary.durationMs),
+        });
+      }
+    }
+
+    const samples = [...byGeneratedAt.values()].sort(
+      (a, b) => new Date(a.generatedAt).getTime() - new Date(b.generatedAt).getTime()
+    );
+    byCheck[checkId] = samples;
+    totalSamples += samples.length;
+  }
+
+  return {
+    enabled: true,
+    byCheck,
+    totalSamples,
+  };
+};
+
+const analyze = (runs, supplementalSamplesByCheck = {}) => {
   const entries = [];
   for (const [checkId, currentBudgetMs] of Object.entries(WEEKLY_DURATION_BUDGETS_MS)) {
     const readiness = CHECK_READINESS[checkId] ?? { required: true };
-    const passSamples = runs
+    const weeklyPassSamples = runs
       .map((run) => run.checks.find((check) => check.id === checkId))
       .filter((check) => check && check.status === 'pass' && Number.isFinite(check.durationMs))
       .map((check) => Number(check.durationMs));
+    const supplementalPassSamples = Array.isArray(supplementalSamplesByCheck[checkId])
+      ? supplementalSamplesByCheck[checkId]
+          .filter((entry) => Number.isFinite(entry?.durationMs))
+          .map((entry) => Number(entry.durationMs))
+      : [];
+    const passSamples = [...weeklyPassSamples, ...supplementalPassSamples];
 
     const pValue = percentileAt(passSamples, percentile);
     const maxValue = passSamples.length > 0 ? Math.max(...passSamples) : null;
@@ -200,6 +295,8 @@ const analyze = (runs) => {
       label: CHECK_LABELS[checkId] ?? checkId,
       requiredForReadiness: readiness.required,
       currentBudgetMs,
+      sampleCountWeekly: weeklyPassSamples.length,
+      sampleCountSupplemental: supplementalPassSamples.length,
       sampleCount: passSamples.length,
       samplesNeeded,
       percentileDurationMs: pValue,
@@ -230,6 +327,9 @@ const analyze = (runs) => {
     checks: entries.length,
     checksRequired: requiredEntries.length,
     checksOptional: entries.length - requiredEntries.length,
+    samplesWeekly: entries.reduce((acc, entry) => acc + entry.sampleCountWeekly, 0),
+    samplesSupplemental: entries.reduce((acc, entry) => acc + entry.sampleCountSupplemental, 0),
+    samplesTotal: entries.reduce((acc, entry) => acc + entry.sampleCount, 0),
     checksReady: ready.length,
     checksReadyRequired: readyRequired.length,
     checksPending: entries.filter((entry) => entry.status === 'insufficient-data').length,
@@ -317,6 +417,8 @@ const toMarkdown = (payload) => {
   lines.push(`- Minimum pass samples per check: ${payload.summary.minimumSamplesRequired}`);
   lines.push(`- Percentile target: ${(payload.summary.percentile * 100).toFixed(0)}th`);
   lines.push(`- Headroom: ${(payload.summary.headroom * 100).toFixed(0)}%`);
+  lines.push(`- Supplemental sample ingestion: ${payload.summary.supplementalSamplesEnabled ? 'enabled' : 'disabled'}`);
+  lines.push(`- Samples (weekly/supplemental/total): ${payload.summary.samplesWeekly}/${payload.summary.samplesSupplemental}/${payload.summary.samplesTotal}`);
   lines.push(`- Required checks: ${payload.summary.checksRequired} (ready: ${payload.summary.checksReadyRequired}, pending: ${payload.summary.checksPendingRequired})`);
   lines.push(`- Optional checks: ${payload.summary.checksOptional} (no samples: ${payload.summary.checksOptionalNoSamples})`);
   lines.push(`- Required passing runs still needed (minimum): ${payload.summary.requiredRunsNeeded}`);
@@ -338,11 +440,11 @@ const toMarkdown = (payload) => {
   lines.push('');
   lines.push('## Recommendations');
   lines.push('');
-  lines.push('| Check | Requirement | Current | Samples | Need | Pctl | Max | Recommended | Delta | Status |');
-  lines.push('| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |');
+  lines.push('| Check | Requirement | Current | Weekly | Supplemental | Samples | Need | Pctl | Max | Recommended | Delta | Status |');
+  lines.push('| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |');
   for (const entry of payload.recommendations) {
     lines.push(
-      `| ${entry.label} | ${entry.requiredForReadiness ? 'required' : 'optional'} | ${formatDuration(entry.currentBudgetMs)} | ${entry.sampleCount} | ${entry.samplesNeeded} | ${formatDuration(entry.percentileDurationMs)} | ${formatDuration(entry.maxDurationMs)} | ${formatDuration(entry.recommendedBudgetMs)} | ${formatDelta(entry.deltaMs)} | ${entry.status} |`
+      `| ${entry.label} | ${entry.requiredForReadiness ? 'required' : 'optional'} | ${formatDuration(entry.currentBudgetMs)} | ${entry.sampleCountWeekly} | ${entry.sampleCountSupplemental} | ${entry.sampleCount} | ${entry.samplesNeeded} | ${formatDuration(entry.percentileDurationMs)} | ${formatDuration(entry.maxDurationMs)} | ${formatDuration(entry.recommendedBudgetMs)} | ${formatDelta(entry.deltaMs)} | ${entry.status} |`
     );
   }
   lines.push('');
@@ -358,7 +460,8 @@ const run = async () => {
   await fs.mkdir(metricsDir, { recursive: true });
   const files = await listRunFiles();
   const runs = await loadRuns(files);
-  const analysis = analyze(runs);
+  const supplemental = await loadSupplementalSamplesByCheck();
+  const analysis = analyze(runs, supplemental.byCheck);
   const application = await applyRecommendedBudgets(analysis);
 
   const payload = {
@@ -371,6 +474,10 @@ const run = async () => {
       checks: analysis.checks,
       checksRequired: analysis.checksRequired,
       checksOptional: analysis.checksOptional,
+      samplesWeekly: analysis.samplesWeekly,
+      samplesSupplemental: analysis.samplesSupplemental,
+      samplesTotal: analysis.samplesTotal,
+      supplementalSamplesEnabled: supplemental.enabled,
       checksReady: analysis.checksReady,
       checksReadyRequired: analysis.checksReadyRequired,
       checksPending: analysis.checksPending,

@@ -4,7 +4,7 @@ import type { MathConfig } from '@/shared/lib/ai-paths';
 import { toNumber } from '@/shared/lib/ai-paths';
 import { Input, SelectSimple, FormField } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 const operationOptions = [
   { value: 'add', label: 'Add' },
@@ -17,7 +17,8 @@ const operationOptions = [
 ];
 
 export function MathNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (selectedNode?.type !== 'math') return null;
 

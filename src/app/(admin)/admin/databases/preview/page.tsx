@@ -1,6 +1,6 @@
 import { JSX, Suspense } from 'react';
 
-import { DatabasePreviewPage } from '@/features/database/public';
+import { DatabasePreviewPage } from '@/features/database/';
 
 export default function Page(): JSX.Element {
   return (

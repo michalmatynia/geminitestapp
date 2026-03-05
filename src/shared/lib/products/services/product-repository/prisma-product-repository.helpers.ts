@@ -61,24 +61,11 @@ export const normalizeProductParameterValues = (input: unknown): ProductParamete
           {}
         )
         : {};
-    const current = byParameterId.get(parameterId);
-    if (!current) {
-      byParameterId.set(parameterId, {
-        parameterId,
-        value,
-        ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
-      });
-      return;
-    }
-    const mergedValuesByLanguage =
-      Object.keys(valuesByLanguage).length > 0 ? valuesByLanguage : (current.valuesByLanguage ?? {});
-    const resolvedValue = value || resolvePrimaryLocalizedValue(mergedValuesByLanguage) || '';
+    const resolvedValue = value || resolvePrimaryLocalizedValue(valuesByLanguage) || '';
     byParameterId.set(parameterId, {
       parameterId,
       value: resolvedValue,
-      ...(Object.keys(mergedValuesByLanguage).length > 0
-        ? { valuesByLanguage: mergedValuesByLanguage }
-        : {}),
+      ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
     });
   });
   return Array.from(byParameterId.values());

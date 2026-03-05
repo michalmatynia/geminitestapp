@@ -5,14 +5,15 @@ import React from 'react';
 import type { SwitchConfig, SwitchCaseConfig } from '@/shared/lib/ai-paths';
 import { Button, FormField, Input, Label } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 function createCaseId(): string {
   return `case-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 export function SwitchNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (selectedNode?.type !== 'switch') return null;
 

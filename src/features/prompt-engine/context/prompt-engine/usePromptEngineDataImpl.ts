@@ -11,7 +11,7 @@ import {
   parsePromptEngineSettings,
   defaultPromptEngineSettings,
   PromptValidationRule,
-} from '../../settings';
+} from '@/shared/lib/prompt-engine/settings';
 import {
   RuleDraft,
   createRuleDraft,

@@ -9,6 +9,7 @@ import {
 import {
   buildPortableSchemaDiffAllowlistSuggestions,
   classifyPortableSchemaDiffChanges,
+  evaluatePortableSchemaDiffStrictViolations,
   validatePortableSchemaDiffAllowlist,
 } from '../../../scripts/ai-paths/check-portable-schema-diff';
 
@@ -96,6 +97,45 @@ describe('check-portable-schema-diff', () => {
     expect(classified.expectedNonBreaking[0]?.kind).toBe('portable_package');
     expect(classified.expectedBreaking).toHaveLength(1);
     expect(classified.expectedBreaking[0]?.kind).toBe('semantic_canvas');
+    expect(classified.missingGovernanceEntries).toHaveLength(2);
+  });
+
+  it('does not report missing governance when allowlist entry includes owner/ticket metadata', () => {
+    const diff = createSchemaDiffReport({
+      portable_package: 'next-portable-package-hash',
+    });
+    const allowlist = validatePortableSchemaDiffAllowlist(
+      {
+        version: 'ai-paths.portable-schema-diff-allowlist.v1',
+        entries: [
+          {
+            kind: 'portable_package',
+            vNextHash: 'next-portable-package-hash',
+            breakRisk: 'non_breaking',
+            governance: {
+              owner: 'ai-paths-runtime',
+              ticket: 'https://tracker.example.com/AI-123',
+              approvedAt: '2026-03-05T00:00:00.000Z',
+            },
+          },
+        ],
+      },
+      'inline'
+    );
+    const classified = classifyPortableSchemaDiffChanges(
+      diff,
+      allowlist,
+      new Date('2026-03-05T00:00:00.000Z')
+    );
+    expect(classified.unexpectedBreaking).toHaveLength(0);
+    expect(classified.missingGovernanceEntries).toHaveLength(0);
+    expect(
+      evaluatePortableSchemaDiffStrictViolations(classified)
+    ).toMatchObject({
+      hasUnexpectedBreaking: false,
+      hasExpiredAllowlist: false,
+      hasMissingGovernance: false,
+    });
   });
 
   it('treats expired allowlist entries as unexpected breaking', () => {
@@ -161,6 +201,11 @@ describe('check-portable-schema-diff', () => {
       }),
     ]);
     expect(suggestions[0]?.expiresAt).toBe('2026-03-19T00:00:00.000Z');
+    expect(suggestions[0]?.governance).toEqual({
+      owner: 'TODO:owner',
+      ticket: 'TODO:ticket',
+      approvedAt: '2026-03-05T00:00:00.000Z',
+    });
   });
 
   it('returns no suggestions when all changed hashes are allowlisted', () => {

@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { ProductPreferencesPage } from '@/features/products/public';
+import { ProductPreferencesPage } from '@/features/products/';
 
 export default function Page(): JSX.Element {
   return <ProductPreferencesPage />;

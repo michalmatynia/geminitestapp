@@ -8,6 +8,7 @@ import { cn } from '@/shared/utils';
 
 import { AiPathsSettings } from '../components/AiPathsSettings';
 import { FocusModeTogglePortal } from '../components/FocusModeTogglePortal';
+import { PortableEngineTrendSnapshotsPanel } from '../components/PortableEngineTrendSnapshotsPanel';
 
 export function AdminAiPathsPage(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<'canvas' | 'paths' | 'docs'>('canvas');
@@ -59,6 +60,11 @@ export function AdminAiPathsPage(): React.JSX.Element {
         )}
         <div id='ai-paths-name' className='text-sm text-gray-300' />
       </div>
+      {!isFocusMode && activeTab !== 'canvas' ? (
+        <div className='mb-2'>
+          <PortableEngineTrendSnapshotsPanel />
+        </div>
+      ) : null}
       <Card
         variant='subtle'
         padding='none'

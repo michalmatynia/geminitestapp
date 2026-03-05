@@ -1,1 +1,2 @@
 rank,score,from_component,from_file,to_component,to_file,root_fanout,distinct_features,source_prop,target_prop,location
+1,50,PortableEngineTrendSnapshotsPanel,src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx,Card,src/shared/ui/card.tsx,1,2,className,className,src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx:89

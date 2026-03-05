@@ -8,12 +8,16 @@ import type { DatabasePresetOption } from '@/shared/contracts/database';
 import { Button, Input, Label, Textarea } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
-import { useDatabasePresetsTabContext } from './DatabasePresetsTabContext';
+import {
+  useDatabasePresetsTabActionsContext,
+  useDatabasePresetsTabStateContext,
+} from './DatabasePresetsTabContext';
 import { useAiPathPresets } from '../../AiPathConfigContext';
 
 export function DatabasePresetsTab(): React.JSX.Element {
-  const { builtInPresets, onApplyBuiltInPreset, onRenameQueryPreset, onDeleteQueryPreset } =
-    useDatabasePresetsTabContext();
+  const { builtInPresets } = useDatabasePresetsTabStateContext();
+  const { onApplyBuiltInPreset, onRenameQueryPreset, onDeleteQueryPreset } =
+    useDatabasePresetsTabActionsContext();
   const { dbQueryPresets } = useAiPathPresets();
   const [queryNameDrafts, setQueryNameDrafts] = React.useState<Record<string, string>>({});
   const [viewPresetId, setViewPresetId] = React.useState<string | null>(null);

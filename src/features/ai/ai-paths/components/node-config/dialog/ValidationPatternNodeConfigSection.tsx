@@ -18,7 +18,7 @@ import { promptValidationRuleSchema } from '@/shared/contracts/prompt-engine';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { Badge, Button, Input, SelectSimple, Textarea, ToggleRow, FormField } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 type ValidationPatternConfigDraft = {
   source: 'global_stack' | 'path_local';
@@ -161,7 +161,8 @@ const buildLocalRegexRule = (
 });
 
 export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig, toast } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig, toast } = useAiPathOrchestrator();
   const settingsQuery = useSettingsMap();
 
   if (selectedNode?.type !== 'validation_pattern') return null;

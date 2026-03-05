@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { PromptValidationSeverity, PromptValidationScope } from '../../settings';
+import type { PromptValidationSeverity, PromptValidationScope } from '@/shared/lib/prompt-engine/settings';
 
 export type SeverityFilter = PromptValidationSeverity | 'all';
 export type ScopeFilter = PromptValidationScope | 'all';

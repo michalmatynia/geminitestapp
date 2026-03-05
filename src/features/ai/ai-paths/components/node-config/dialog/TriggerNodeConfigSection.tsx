@@ -9,7 +9,7 @@ import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { SelectSimple, Card, FormField } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 const triggerButtonsQueryKey = QUERY_KEYS.ai.aiPaths.triggerButtons();
 
@@ -38,7 +38,8 @@ const useTriggerButtonsQuery = (): UseQueryResult<AiTriggerButtonRecord[], Error
 };
 
 export function TriggerNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
   const triggerButtonsQuery = useTriggerButtonsQuery();
   const selectedTriggerEvent = selectedNode?.config?.trigger?.event?.trim() ?? '';
 

@@ -137,10 +137,44 @@ Resolver behavior:
     - `resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment(nodeEnv?)`
     - `bootstrapPortablePathEnvelopeVerificationAuditSinks({ profile?, ... })`
     - `bootstrapPortablePathEnvelopeVerificationAuditSinksWithStartupHealthChecks({ profile?, healthChecks?, ... })`
+    - `bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment({ env?, emitSystemLog? })`
   - Boot-time health diagnostics:
     - `runStartupHealthChecks({ policy: "off" | "warn" | "error", timeoutMs?, emitSystemLog? })`
     - Per-sink diagnostics include `healthy` / `failed` / `skipped` with duration and error.
     - `policy: "warn"` reports degraded startup without blocking; `policy: "error"` fails fast and rolls back sink registration.
+  - Environment bootstrap controls:
+    - `PORTABLE_PATH_AUDIT_SINK_BOOTSTRAP_ENABLED` (`true`/`false`)
+    - `PORTABLE_PATH_AUDIT_SINK_PROFILE` (`dev`/`staging`/`prod`)
+    - `PORTABLE_PATH_AUDIT_SINK_HEALTH_POLICY` (`off`/`warn`/`error`)
+    - `PORTABLE_PATH_AUDIT_SINK_HEALTH_TIMEOUT_MS` (milliseconds)
+  - Signing-policy + sink-health trend reporters:
+    - `createPortablePathSigningPolicyTrendReporter({ ... })`
+    - `bootstrapPortablePathSigningPolicyTrendReporterFromEnvironment({ startupHealthSummary? })`
+    - Reporter logs trend snapshots and emits alerts for:
+      - unexpected signing profile/surface drift
+      - increasing envelope verification sink write failures
+      - degraded/failed sink startup health summaries
+  - Trend reporter environment controls:
+    - `PORTABLE_PATH_SIGNING_POLICY_TREND_REPORTER_ENABLED` (`true`/`false`)
+    - `PORTABLE_PATH_SIGNING_POLICY_TREND_REPORT_EVERY_USES` (minimum usage delta before report)
+    - `PORTABLE_PATH_SIGNING_POLICY_TREND_PERSISTENCE_ENABLED` (`true`/`false`)
+    - `PORTABLE_PATH_SIGNING_POLICY_TREND_PERSISTENCE_MAX_SNAPSHOTS` (capped retained history)
+    - `PORTABLE_PATH_SIGNING_POLICY_DRIFT_ALERT_LEVEL` (`off`/`warn`/`error`)
+    - `PORTABLE_PATH_AUDIT_SINK_FAILURE_ALERT_LEVEL` (`off`/`warn`/`error`)
+    - `PORTABLE_PATH_SIGNING_POLICY_ALLOWED_PROFILES_BY_SURFACE` (JSON map for per-surface profile allowlist)
+  - Snapshot persistence APIs:
+    - `loadPortablePathSigningPolicyTrendSnapshots({ maxSnapshots? })`
+    - `appendPortablePathSigningPolicyTrendSnapshot(snapshot, { maxSnapshots? })`
+    - Snapshots are stored in `settings` under key `ai_paths_portable_signing_policy_trend_history_v1`.
+  - Startup health auto-remediation APIs:
+    - `loadPortablePathAuditSinkStartupHealthState()`
+    - `savePortablePathAuditSinkStartupHealthState(state)`
+    - `runPortablePathAuditSinkAutoRemediation(summary, { ... })`
+    - Repeated `degraded`/`failed` startup health outcomes can trigger `unregister_all` remediation.
+  - Auto-remediation environment controls:
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_ENABLED` (`true`/`false`)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_THRESHOLD` (consecutive degraded/failed startups before remediation)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_STRATEGY` (`none` | `unregister_all` | `degrade_to_log_only`)
   - Built-in server sink factories:
     - `createPortablePathEnvelopeVerificationLogForwardingSink(...)`
     - `createPortablePathEnvelopeVerificationPrismaSink(...)`
@@ -190,12 +224,29 @@ These allow stable package integrity tagging across copy/paste surfaces.
 - Optional query: `kind=all|portable_envelope|portable_package|semantic_canvas|path_config` (default `all`)
 - Diff API: `GET /api/ai-paths/portable-engine/schema/diff`
 - Diff query: `kind=all|portable_envelope|portable_package|semantic_canvas|path_config` (default `all`)
+- Trend snapshot API: `GET /api/ai-paths/portable-engine/trend-snapshots`
+- Trend snapshot query:
+  - `limit=1..500` (default `50`)
+  - `trigger=manual|threshold` (optional)
+  - `from=<ISO timestamp>` (optional)
+  - `to=<ISO timestamp>` (optional)
+- Trend snapshot response includes:
+  - persisted signing-policy trend snapshots
+  - aggregate drift/sink-failure summary
+  - applied filter metadata + matched snapshot count
+  - auto-remediation runtime config + persisted remediation state
 - Cache support: deterministic `ETag` + `If-None-Match` (`304 Not Modified`) with private SWR cache headers.
 - CI guardrail: `npm run ai-paths:check:portable-schema-diff -- --strict`
   - Uses `scripts/ai-paths/portable-schema-diff-allowlist.json`.
   - Unallowlisted schema hash changes are treated as breaking until reviewed.
+  - Strict mode requires governance metadata on active allowlist entries:
+    - `governance.owner`
+    - `governance.ticket`
+    - `governance.approvedAt` (ISO date)
+  - Placeholder governance values (for example `TODO:*`) are treated as missing in strict mode.
 - Pre-commit helper: `npm run ai-paths:check:portable-schema-diff:suggest`
   - Prints auto-generated allowlist entry suggestions for unexpected schema hash changes.
+  - Suggestions include governance scaffolding placeholders that must be replaced before strict CI passes.
   - Suggestions default to `breakRisk: "breaking"` and require explicit human review before merge.
 
 Response includes canonical JSON Schema (Draft 2020-12) generated from runtime Zod contracts, suitable for external editor validation.
@@ -258,8 +309,32 @@ await bootstrapPortablePathEnvelopeVerificationAuditSinksWithStartupHealthChecks
 });
 ```
 
+Server sink environment bootstrap example:
+
+```ts
+import {
+  bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment,
+} from '@/shared/lib/ai-paths/portable-engine/server';
+
+await bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment();
+```
+
+Server trend reporter bootstrap example:
+
+```ts
+import {
+  bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment,
+  bootstrapPortablePathSigningPolicyTrendReporterFromEnvironment,
+} from '@/shared/lib/ai-paths/portable-engine/server';
+
+const sinkBootstrap = await bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment();
+await bootstrapPortablePathSigningPolicyTrendReporterFromEnvironment({
+  startupHealthSummary: sinkBootstrap.startupHealthSummary,
+});
+```
+
 ## Next Hardening Steps
 
-1. Add bootstrap wiring in runtime entrypoint so sink startup health policy is environment-configurable without custom glue code.
-2. Add governance metadata to allowlist suggestions (ticket/link ownership) and enforce it in strict mode.
-3. Add trend reporters for signing policy usage snapshots to detect unexpected surface/profile drift over time.
+1. Add alert fan-out integrations (webhook/email) for auto-remediation trigger events.
+2. Add per-strategy cooldown/rate limiting to prevent repeated remediation flapping during unstable startups.
+3. Add trend snapshot cursor pagination for large historical windows beyond single-request cap.

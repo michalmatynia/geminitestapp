@@ -116,6 +116,16 @@ export async function registerNodeInstrumentation() {
   const { initializeQueues } = await import('@/features/jobs/queue-init');
   initializeQueues();
 
+  const {
+    bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment,
+    bootstrapPortablePathSigningPolicyTrendReporterFromEnvironment,
+  } = await import('@/shared/lib/ai-paths/portable-engine/server');
+  const sinkBootstrapResult =
+    await bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment();
+  await bootstrapPortablePathSigningPolicyTrendReporterFromEnvironment({
+    startupHealthSummary: sinkBootstrapResult.startupHealthSummary,
+  });
+
   if (globalScope.__cmsProcessHandlersRegistered) {
     return;
   }

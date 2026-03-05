@@ -21,7 +21,13 @@ import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 
-import { useAiPathConfig } from '../components/AiPathConfigContext';
+import {
+  useAiPathGraph,
+  useAiPathOrchestrator,
+  useAiPathPresets,
+  useAiPathRuntime,
+  useAiPathSelection,
+} from '../components/AiPathConfigContext';
 import { extractCodeSnippets } from '../components/node-config/database/database-constructor-tab-helpers';
 
 import { useDatabaseQueryExecution } from './database-node/useDatabaseQueryExecution';
@@ -66,20 +72,12 @@ const mapOperationFromActionCategory = (
 };
 
 export function useDatabaseNodeConfigState() {
-  const {
-    selectedNode: contextSelectedNode,
-    nodes,
-    edges,
-    runtimeState,
-    updateSelectedNodeConfig,
-    toast,
-    pathDebugSnapshot,
-    dbQueryPresets,
-    setDbQueryPresets,
-    saveDbQueryPresets,
-    updaterSamples,
-    handleFetchUpdaterSample,
-  } = useAiPathConfig();
+  const { selectedNode: contextSelectedNode } = useAiPathSelection();
+  const { nodes, edges } = useAiPathGraph();
+  const { runtimeState, pathDebugSnapshot, updaterSamples, handleFetchUpdaterSample } =
+    useAiPathRuntime();
+  const { updateSelectedNodeConfig, toast } = useAiPathOrchestrator();
+  const { dbQueryPresets, setDbQueryPresets, saveDbQueryPresets } = useAiPathPresets();
 
   const selectedNodeId = contextSelectedNode?.id ?? '';
   const appDbProvider: 'prisma' | 'mongodb' = 'mongodb';

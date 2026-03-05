@@ -7,23 +7,21 @@ import { stableStringify } from '@/shared/lib/ai-paths';
 import { Button, Tabs, TabsContent, TabsList, TabsTrigger, ConfirmModal } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
-import { AiPathConfigProviderWithContext, useAiPathConfig } from './AiPathConfigContext';
+import {
+  AiPathConfigProviderWithContext,
+  useAiPathGraph,
+  useAiPathOrchestrator,
+  useAiPathSelection,
+} from './AiPathConfigContext';
 import { NodeHistoryTab } from './node-config/dialog/NodeHistoryTab';
 import { NodeNotesTab } from './node-config/dialog/NodeNotesTab';
 import { NodeConfigurationSections } from './NodeConfigurationSections';
 import { useSelectionActions } from '../context';
 
 function NodeConfigDialogContent(): React.JSX.Element | null {
-  const {
-    configOpen,
-    setConfigOpen,
-    selectedNode,
-    nodes,
-    isPathLocked,
-    updateSelectedNode,
-    toast,
-    savePathConfig,
-  } = useAiPathConfig();
+  const { configOpen, setConfigOpen, selectedNode } = useAiPathSelection();
+  const { nodes, isPathLocked } = useAiPathGraph();
+  const { updateSelectedNode, toast, savePathConfig } = useAiPathOrchestrator();
 
   const { setNodeConfigDraft, setNodeConfigDirty } = useSelectionActions();
   const hasSelectedNode = selectedNode !== null;

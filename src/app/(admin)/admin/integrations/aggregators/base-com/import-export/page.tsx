@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { ImportsPage } from '@/features/data-import-export/public';
+import { ImportsPage } from '@/features/data-import-export/';
 
 export default function Page(): JSX.Element {
   return (

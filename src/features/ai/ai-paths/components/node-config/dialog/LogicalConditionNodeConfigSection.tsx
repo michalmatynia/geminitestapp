@@ -9,7 +9,7 @@ import type {
 } from '@/shared/lib/ai-paths';
 import { Button, FormField, Input, Label, SelectSimple } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 const operatorOptions = [
   { value: 'truthy', label: 'Truthy' },
@@ -56,7 +56,8 @@ function generateConditionId(): string {
 }
 
 export function LogicalConditionNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (selectedNode?.type !== 'logical_condition') return null;
 

@@ -15,12 +15,19 @@ import {
 export const DEFAULT_PORTABLE_SCHEMA_DIFF_ALLOWLIST_RELATIVE_PATH =
   'scripts/ai-paths/portable-schema-diff-allowlist.json';
 
+export type PortableSchemaDiffAllowlistGovernance = {
+  owner: string;
+  ticket: string;
+  approvedAt: string;
+};
+
 export type PortableSchemaDiffAllowlistEntry = {
   kind: PortablePathJsonSchemaKind;
   vNextHash: string;
   breakRisk: 'non_breaking' | 'breaking';
   reason?: string;
   expiresAt?: string;
+  governance?: PortableSchemaDiffAllowlistGovernance;
 };
 
 export type PortableSchemaDiffAllowlist = {
@@ -35,12 +42,14 @@ export type PortableSchemaDiffClassificationEntry = {
   breakRisk: 'non_breaking' | 'breaking';
   reason: string;
   allowlisted: boolean;
+  governance: PortableSchemaDiffAllowlistGovernance | null;
 };
 
 export type PortableSchemaDiffClassificationReport = {
   expectedNonBreaking: PortableSchemaDiffClassificationEntry[];
   expectedBreaking: PortableSchemaDiffClassificationEntry[];
   unexpectedBreaking: PortableSchemaDiffClassificationEntry[];
+  missingGovernanceEntries: PortableSchemaDiffClassificationEntry[];
   expiredAllowlistEntries: PortableSchemaDiffAllowlistEntry[];
   staleAllowlistEntries: PortableSchemaDiffAllowlistEntry[];
 };
@@ -53,6 +62,8 @@ type PortableSchemaDiffCliArgs = {
 };
 
 const DEFAULT_ALLOWLIST_SUGGESTION_EXPIRY_DAYS = 14;
+const DEFAULT_ALLOWLIST_SUGGESTION_OWNER = 'TODO:owner';
+const DEFAULT_ALLOWLIST_SUGGESTION_TICKET = 'TODO:ticket';
 
 const parseCliArgs = (argv: string[]): PortableSchemaDiffCliArgs => {
   const parsed: PortableSchemaDiffCliArgs = {
@@ -93,6 +104,26 @@ const isPortableSchemaKind = (value: string): value is PortablePathJsonSchemaKin
   PORTABLE_PATH_JSON_SCHEMA_KINDS.includes(value as PortablePathJsonSchemaKind);
 
 const isValidIsoDate = (value: string): boolean => !Number.isNaN(Date.parse(value));
+const PORTABLE_SCHEMA_DIFF_GOVERNANCE_PLACEHOLDER_PATTERN = /^(todo|tbd|pending)(:|$)/i;
+
+const isPortableSchemaDiffGovernancePlaceholder = (value: string): boolean =>
+  PORTABLE_SCHEMA_DIFF_GOVERNANCE_PLACEHOLDER_PATTERN.test(value.trim());
+
+const hasValidPortableSchemaDiffGovernance = (
+  entry: PortableSchemaDiffAllowlistEntry
+): boolean => {
+  if (!entry.governance) return false;
+  if (entry.governance.owner.trim().length === 0 || entry.governance.ticket.trim().length === 0) {
+    return false;
+  }
+  if (
+    isPortableSchemaDiffGovernancePlaceholder(entry.governance.owner) ||
+    isPortableSchemaDiffGovernancePlaceholder(entry.governance.ticket)
+  ) {
+    return false;
+  }
+  return isValidIsoDate(entry.governance.approvedAt);
+};
 
 export const validatePortableSchemaDiffAllowlist = (
   value: unknown,
@@ -121,6 +152,7 @@ export const validatePortableSchemaDiffAllowlist = (
     const breakRisk = item['breakRisk'];
     const reason = item['reason'];
     const expiresAt = item['expiresAt'];
+    const governance = item['governance'];
     if (typeof kind !== 'string' || !isPortableSchemaKind(kind)) {
       throw new Error(
         `Allowlist entry ${index} in ${source} has invalid kind "${String(kind)}".`
@@ -146,6 +178,30 @@ export const validatePortableSchemaDiffAllowlist = (
         );
       }
     }
+    let normalizedGovernance: PortableSchemaDiffAllowlistGovernance | undefined;
+    if (governance !== undefined) {
+      if (!governance || typeof governance !== 'object' || Array.isArray(governance)) {
+        throw new Error(`Allowlist entry ${index} in ${source} has non-object governance metadata.`);
+      }
+      const governanceRecord = governance as Record<string, unknown>;
+      const owner = governanceRecord['owner'];
+      const ticket = governanceRecord['ticket'];
+      const approvedAt = governanceRecord['approvedAt'];
+      if (typeof owner !== 'string' || owner.trim().length === 0) {
+        throw new Error(`Allowlist entry ${index} in ${source} has invalid governance.owner.`);
+      }
+      if (typeof ticket !== 'string' || ticket.trim().length === 0) {
+        throw new Error(`Allowlist entry ${index} in ${source} has invalid governance.ticket.`);
+      }
+      if (typeof approvedAt !== 'string' || !isValidIsoDate(approvedAt)) {
+        throw new Error(`Allowlist entry ${index} in ${source} has invalid governance.approvedAt.`);
+      }
+      normalizedGovernance = {
+        owner: owner.trim(),
+        ticket: ticket.trim(),
+        approvedAt,
+      };
+    }
     const dedupeKey = `${kind}:${vNextHash}`;
     if (seen.has(dedupeKey)) {
       throw new Error(
@@ -159,6 +215,7 @@ export const validatePortableSchemaDiffAllowlist = (
       breakRisk,
       ...(reason ? { reason: reason.trim() } : {}),
       ...(expiresAt ? { expiresAt } : {}),
+      ...(normalizedGovernance ? { governance: normalizedGovernance } : {}),
     } satisfies PortableSchemaDiffAllowlistEntry;
   });
   return {
@@ -196,6 +253,7 @@ const createClassificationEntry = (
     breakRisk: 'non_breaking' | 'breaking';
     allowlisted: boolean;
     reason: string;
+    governance?: PortableSchemaDiffAllowlistGovernance | null;
   }
 ): PortableSchemaDiffClassificationEntry => ({
   kind: entry.kind,
@@ -204,6 +262,7 @@ const createClassificationEntry = (
   breakRisk: options.breakRisk,
   allowlisted: options.allowlisted,
   reason: options.reason,
+  governance: options.governance ?? null,
 });
 
 export const classifyPortableSchemaDiffChanges = (
@@ -221,6 +280,7 @@ export const classifyPortableSchemaDiffChanges = (
   const expectedNonBreaking: PortableSchemaDiffClassificationEntry[] = [];
   const expectedBreaking: PortableSchemaDiffClassificationEntry[] = [];
   const unexpectedBreaking: PortableSchemaDiffClassificationEntry[] = [];
+  const missingGovernanceEntries: PortableSchemaDiffClassificationEntry[] = [];
   const expiredAllowlistEntries: PortableSchemaDiffAllowlistEntry[] = [];
 
   for (const entry of changedEntries) {
@@ -233,6 +293,7 @@ export const classifyPortableSchemaDiffChanges = (
           allowlisted: false,
           reason:
             'Changed schema hash is not allowlisted. Treating as breaking until reviewed.',
+          governance: null,
         })
       );
       continue;
@@ -246,19 +307,23 @@ export const classifyPortableSchemaDiffChanges = (
           breakRisk: 'breaking',
           allowlisted: true,
           reason: `Allowlist entry expired at ${allowlisted.expiresAt}.`,
+          governance: allowlisted.governance ?? null,
         })
       );
       continue;
     }
 
     const bucket = allowlisted.breakRisk === 'breaking' ? expectedBreaking : expectedNonBreaking;
-    bucket.push(
-      createClassificationEntry(entry, {
-        breakRisk: allowlisted.breakRisk,
-        allowlisted: true,
-        reason: allowlisted.reason?.trim() || 'Allowlisted schema change.',
-      })
-    );
+    const classificationEntry = createClassificationEntry(entry, {
+      breakRisk: allowlisted.breakRisk,
+      allowlisted: true,
+      reason: allowlisted.reason?.trim() || 'Allowlisted schema change.',
+      governance: allowlisted.governance ?? null,
+    });
+    bucket.push(classificationEntry);
+    if (!hasValidPortableSchemaDiffGovernance(allowlisted)) {
+      missingGovernanceEntries.push(classificationEntry);
+    }
   }
 
   const staleAllowlistEntries = allowlist.entries.filter(
@@ -269,6 +334,7 @@ export const classifyPortableSchemaDiffChanges = (
     expectedNonBreaking,
     expectedBreaking,
     unexpectedBreaking,
+    missingGovernanceEntries,
     expiredAllowlistEntries,
     staleAllowlistEntries,
   };
@@ -294,6 +360,11 @@ export const buildPortableSchemaDiffAllowlistSuggestions = (
       breakRisk: 'breaking',
       reason: `TODO: review ${entry.kind} schema diff and set breakRisk when approved.`,
       expiresAt: toIsoDateWithOffsetDays(now, DEFAULT_ALLOWLIST_SUGGESTION_EXPIRY_DAYS),
+      governance: {
+        owner: DEFAULT_ALLOWLIST_SUGGESTION_OWNER,
+        ticket: DEFAULT_ALLOWLIST_SUGGESTION_TICKET,
+        approvedAt: now.toISOString(),
+      },
     });
   }
   return Array.from(suggestionsByKey.values()).sort((left, right) => {
@@ -310,6 +381,18 @@ type RunPortableSchemaDiffGuardrailOptions = {
   suggestAllowlist?: boolean;
   logger?: Pick<typeof console, 'log' | 'error'>;
 };
+
+export const evaluatePortableSchemaDiffStrictViolations = (
+  classification: PortableSchemaDiffClassificationReport
+): {
+  hasUnexpectedBreaking: boolean;
+  hasExpiredAllowlist: boolean;
+  hasMissingGovernance: boolean;
+} => ({
+  hasUnexpectedBreaking: classification.unexpectedBreaking.length > 0,
+  hasExpiredAllowlist: classification.expiredAllowlistEntries.length > 0,
+  hasMissingGovernance: classification.missingGovernanceEntries.length > 0,
+});
 
 export const runPortableSchemaDiffGuardrail = async (
   options: RunPortableSchemaDiffGuardrailOptions = {}
@@ -332,9 +415,12 @@ export const runPortableSchemaDiffGuardrail = async (
   const suggestedAllowlistEntries = options.suggestAllowlist
     ? buildPortableSchemaDiffAllowlistSuggestions(classification)
     : [];
-  const hasUnexpectedBreaking = classification.unexpectedBreaking.length > 0;
-  const hasExpiredAllowlist = classification.expiredAllowlistEntries.length > 0;
-  const ok = !strict || (!hasUnexpectedBreaking && !hasExpiredAllowlist);
+  const violations = evaluatePortableSchemaDiffStrictViolations(classification);
+  const ok =
+    !strict ||
+    (!violations.hasUnexpectedBreaking &&
+      !violations.hasExpiredAllowlist &&
+      !violations.hasMissingGovernance);
 
   const summaryPayload = {
     specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
@@ -345,6 +431,7 @@ export const runPortableSchemaDiffGuardrail = async (
       expectedNonBreaking: classification.expectedNonBreaking.length,
       expectedBreaking: classification.expectedBreaking.length,
       unexpectedBreaking: classification.unexpectedBreaking.length,
+      missingGovernanceEntries: classification.missingGovernanceEntries.length,
       expiredAllowlistEntries: classification.expiredAllowlistEntries.length,
       staleAllowlistEntries: classification.staleAllowlistEntries.length,
       suggestedAllowlistEntries: suggestedAllowlistEntries.length,
@@ -362,6 +449,13 @@ export const runPortableSchemaDiffGuardrail = async (
     logger.log(
       `[ai-paths:portable-schema-diff] expected_non_breaking=${classification.expectedNonBreaking.length} expected_breaking=${classification.expectedBreaking.length} unexpected_breaking=${classification.unexpectedBreaking.length}`
     );
+    if (classification.missingGovernanceEntries.length > 0) {
+      logger.error(
+        `[ai-paths:portable-schema-diff] allowlisted changes missing governance metadata: ${classification.missingGovernanceEntries
+          .map((entry) => `${entry.kind}@${entry.vNextHash}`)
+          .join(', ')}`
+      );
+    }
     if (classification.expiredAllowlistEntries.length > 0) {
       logger.error(
         `[ai-paths:portable-schema-diff] expired allowlist entries: ${classification.expiredAllowlistEntries

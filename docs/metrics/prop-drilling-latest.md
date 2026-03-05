@@ -1,16 +1,16 @@
 # Prop Drilling Scan
 
-Generated at: 2026-03-05T04:23:19.852Z
+Generated at: 2026-03-05T05:28:02.575Z
 
 ## Snapshot
 
-- Scanned source files: 3851
-- JSX files scanned: 1372
-- Components detected: 2114
+- Scanned source files: 3836
+- JSX files scanned: 1375
+- Components detected: 2119
 - Components forwarding parent props (hotspot threshold): 0
-- Components forwarding parent props (any): 0
-- Resolved forwarded transitions: 0
-- Candidate chains (depth >= 2): 0
+- Components forwarding parent props (any): 1
+- Resolved forwarded transitions: 1
+- Candidate chains (depth >= 2): 1
 - Candidate chains (depth >= 3): 0
 - High-priority chains (depth >= 4): 0
 - Unknown spread forwarding edges: 0
@@ -20,19 +20,19 @@ Generated at: 2026-03-05T04:23:19.852Z
 
 | Feature Scope | Forwarding Components |
 | --- | ---: |
-| _none_ | 0 |
+| `feature:ai` | 1 |
 
 ## Top Prop-Drilling Components
 
 | Rank | Component | File | Forwarded Props | Outgoing Transitions | Unknown Spread Forwarding | Hotspot |
 | ---: | --- | --- | ---: | ---: | --- | --- |
-| 1 | _none_ | _none_ | 0 | 0 | no | no |
+| 1 | `PortableEngineTrendSnapshotsPanel` | `src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx` | 1 | 1 | no | no |
 
 ## Prioritized Transition Backlog (Depth = 2)
 
 | Rank | Score | From | To | Fanout | Features | Prop Mapping | Location |
 | ---: | ---: | --- | --- | ---: | ---: | --- | --- |
-| 1 | 0 | _none_ | _none_ | 0 | 0 | _none_ | _none_ |
+| 1 | 50 | `PortableEngineTrendSnapshotsPanel` | `Card` | 1 | 2 | `className -> className` | `src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx:89` |
 
 ## Ranked Chain Backlog (Depth >= 3)
 
@@ -45,6 +45,13 @@ Generated at: 2026-03-05T04:23:19.852Z
 - No depth >= 3 chains were detected in this scan. Use the depth = 2 transition backlog for refactor wave planning.
 
 ## Top Transition Details (Depth = 2)
+
+### 1. PortableEngineTrendSnapshotsPanel -> Card
+
+- Score: 50
+- Root fanout: 1
+- Prop mapping: className -> className
+- Location: src/features/ai/ai-paths/components/PortableEngineTrendSnapshotsPanel.tsx:89
 
 ## Execution Notes
 

@@ -34,13 +34,22 @@ vi.mock('../AiPathConfigContext', () => ({
   }: {
     children: React.ReactNode;
   }): React.JSX.Element => <>{children}</>,
-  useAiPathConfig: () => ({
+  useAiPathSelection: () => ({
     configOpen: true,
     setConfigOpen: mockState.setConfigOpen,
     selectedNode: mockState.selectedNode,
+    onDirtyChange: vi.fn(),
+  }),
+  useAiPathGraph: () => ({
     nodes: [mockState.selectedNode],
+    edges: [],
+    activePathId: null,
     isPathLocked: false,
+  }),
+  useAiPathOrchestrator: () => ({
     updateSelectedNode: mockState.updateSelectedNode,
+    updateSelectedNodeConfig: vi.fn(),
+    clearNodeHistory: vi.fn(),
     toast: mockState.toast,
     savePathConfig: mockState.savePathConfig,
   }),

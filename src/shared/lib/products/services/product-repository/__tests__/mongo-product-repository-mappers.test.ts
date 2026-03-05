@@ -61,6 +61,35 @@ describe('mongo product repository mappers', () => {
     ]);
   });
 
+  it('normalizes duplicate parameter entries and allows explicit localized clears', () => {
+    const result = toProductResponse({
+      _id: 'product-params-2',
+      id: 'product-params-2',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      catalogId: 'catalog-1',
+      published: false,
+      parameters: [
+        {
+          parameterId: 'name',
+          value: 'Nowy',
+          valuesByLanguage: { en: 'Nowy' },
+        },
+        {
+          parameterId: 'name',
+          value: '',
+        },
+      ],
+    } as unknown as WithId<ProductDocument>);
+
+    expect(result.parameters).toEqual([
+      {
+        parameterId: 'name',
+        value: '',
+      },
+    ]);
+  });
+
   it('rejects legacy nested localized objects', () => {
     expect(() =>
       toProductResponse({

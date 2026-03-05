@@ -22,7 +22,7 @@ import {
   FormField,
 } from '@/shared/ui';
 
-import { useAiPathConfig } from '../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../AiPathConfigContext';
 
 function pruneLargeFields(value: unknown, seen: Set<object> = new Set<object>()): unknown {
   if (!value || typeof value !== 'object') return value;
@@ -47,7 +47,9 @@ function sanitizePayload(value: unknown, hideLargeFields: boolean): unknown {
 }
 
 export function ContextNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, runtimeState, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { runtimeState } = useAiPathRuntime();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
   const [hideLargeFields, setHideLargeFields] = React.useState(true);
   const [showDiff, setShowDiff] = React.useState(true);
   const [diffOnlyChanges, setDiffOnlyChanges] = React.useState(true);

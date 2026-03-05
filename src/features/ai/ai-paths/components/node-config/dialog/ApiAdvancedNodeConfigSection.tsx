@@ -3,7 +3,7 @@
 import type { AdvancedApiConfig } from '@/shared/lib/ai-paths';
 import { Input, SelectSimple, Textarea, ToggleRow, FormField } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 const methodOptions = [
   { value: 'GET', label: 'GET' },
@@ -130,7 +130,8 @@ const parseOptionalFloat = (value: string): number | undefined => {
 };
 
 export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (selectedNode?.type !== 'api_advanced') return null;
 

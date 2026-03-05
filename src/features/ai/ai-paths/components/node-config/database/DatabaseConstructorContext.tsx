@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import type {
   DatabaseConfig,
@@ -55,9 +55,37 @@ export type DatabaseConstructorContextValue = {
   insertAiPromptPlaceholder: (placeholder: string) => void;
 };
 
-const DatabaseConstructorContext = React.createContext<DatabaseConstructorContextValue | null>(
-  null
-);
+type DatabaseConstructorActionKey =
+  | 'setPendingAiQuery'
+  | 'setAiQueries'
+  | 'setSelectedAiQueryId'
+  | 'applyDatabasePreset'
+  | 'openSaveQueryPresetModal'
+  | 'updateQueryConfig'
+  | 'onSyncSchema'
+  | 'mapInputsToTargets'
+  | 'updateMapping'
+  | 'removeMapping'
+  | 'addMapping'
+  | 'setSelectedSnippetIndex'
+  | 'insertTemplateSnippet'
+  | 'applyQueryTemplateUpdate'
+  | 'insertQueryPlaceholder'
+  | 'insertAiPromptPlaceholder';
+
+export type DatabaseConstructorStateContextValue = Omit<
+  DatabaseConstructorContextValue,
+  DatabaseConstructorActionKey
+>;
+export type DatabaseConstructorActionsContextValue = Pick<
+  DatabaseConstructorContextValue,
+  DatabaseConstructorActionKey
+>;
+
+const DatabaseConstructorStateContext =
+  React.createContext<DatabaseConstructorStateContextValue | null>(null);
+const DatabaseConstructorActionsContext =
+  React.createContext<DatabaseConstructorActionsContextValue | null>(null);
 
 export function DatabaseConstructorContextProvider({
   value,
@@ -66,19 +94,177 @@ export function DatabaseConstructorContextProvider({
   value: DatabaseConstructorContextValue;
   children: React.ReactNode;
 }): React.JSX.Element {
+  const {
+    pendingAiQuery,
+    aiQueries,
+    selectedAiQueryId,
+    presetOptions,
+    databaseConfig,
+    queryConfig,
+    resolvedProvider,
+    operation,
+    queryTemplateValue,
+    queryTemplateRef,
+    sampleState,
+    parsedSampleError,
+    connectedPlaceholders,
+    hasSchemaConnection,
+    fetchedDbSchema,
+    schemaMatrix,
+    schemaSyncing,
+    schemaLoading,
+    bundleKeys,
+    aiPromptRef,
+    mappings,
+    availablePorts,
+    uniqueTargetPathOptions,
+    codeSnippets,
+    selectedSnippetIndex,
+    setPendingAiQuery,
+    setAiQueries,
+    setSelectedAiQueryId,
+    applyDatabasePreset,
+    openSaveQueryPresetModal,
+    updateQueryConfig,
+    onSyncSchema,
+    mapInputsToTargets,
+    updateMapping,
+    removeMapping,
+    addMapping,
+    setSelectedSnippetIndex,
+    insertTemplateSnippet,
+    applyQueryTemplateUpdate,
+    insertQueryPlaceholder,
+    insertAiPromptPlaceholder,
+  } = value;
+
+  const stateValue = useMemo<DatabaseConstructorStateContextValue>(
+    () => ({
+      pendingAiQuery,
+      aiQueries,
+      selectedAiQueryId,
+      presetOptions,
+      databaseConfig,
+      queryConfig,
+      resolvedProvider,
+      operation,
+      queryTemplateValue,
+      queryTemplateRef,
+      sampleState,
+      parsedSampleError,
+      connectedPlaceholders,
+      hasSchemaConnection,
+      fetchedDbSchema,
+      schemaMatrix,
+      schemaSyncing,
+      schemaLoading,
+      bundleKeys,
+      aiPromptRef,
+      mappings,
+      availablePorts,
+      uniqueTargetPathOptions,
+      codeSnippets,
+      selectedSnippetIndex,
+    }),
+    [
+      pendingAiQuery,
+      aiQueries,
+      selectedAiQueryId,
+      presetOptions,
+      databaseConfig,
+      queryConfig,
+      resolvedProvider,
+      operation,
+      queryTemplateValue,
+      queryTemplateRef,
+      sampleState,
+      parsedSampleError,
+      connectedPlaceholders,
+      hasSchemaConnection,
+      fetchedDbSchema,
+      schemaMatrix,
+      schemaSyncing,
+      schemaLoading,
+      bundleKeys,
+      aiPromptRef,
+      mappings,
+      availablePorts,
+      uniqueTargetPathOptions,
+      codeSnippets,
+      selectedSnippetIndex,
+    ]
+  );
+
+  const actionsValue = useMemo<DatabaseConstructorActionsContextValue>(
+    () => ({
+      setPendingAiQuery,
+      setAiQueries,
+      setSelectedAiQueryId,
+      applyDatabasePreset,
+      openSaveQueryPresetModal,
+      updateQueryConfig,
+      onSyncSchema,
+      mapInputsToTargets,
+      updateMapping,
+      removeMapping,
+      addMapping,
+      setSelectedSnippetIndex,
+      insertTemplateSnippet,
+      applyQueryTemplateUpdate,
+      insertQueryPlaceholder,
+      insertAiPromptPlaceholder,
+    }),
+    [
+      setPendingAiQuery,
+      setAiQueries,
+      setSelectedAiQueryId,
+      applyDatabasePreset,
+      openSaveQueryPresetModal,
+      updateQueryConfig,
+      onSyncSchema,
+      mapInputsToTargets,
+      updateMapping,
+      removeMapping,
+      addMapping,
+      setSelectedSnippetIndex,
+      insertTemplateSnippet,
+      applyQueryTemplateUpdate,
+      insertQueryPlaceholder,
+      insertAiPromptPlaceholder,
+    ]
+  );
+
   return (
-    <DatabaseConstructorContext.Provider value={value}>
-      {children}
-    </DatabaseConstructorContext.Provider>
+    <DatabaseConstructorActionsContext.Provider value={actionsValue}>
+      <DatabaseConstructorStateContext.Provider value={stateValue}>
+        {children}
+      </DatabaseConstructorStateContext.Provider>
+    </DatabaseConstructorActionsContext.Provider>
   );
 }
 
-export function useDatabaseConstructorContext(): DatabaseConstructorContextValue {
-  const context = React.useContext(DatabaseConstructorContext);
+export function useDatabaseConstructorStateContext(): DatabaseConstructorStateContextValue {
+  const context = React.useContext(DatabaseConstructorStateContext);
   if (!context) {
     throw new Error(
-      'useDatabaseConstructorContext must be used within DatabaseConstructorContextProvider'
+      'useDatabaseConstructorStateContext must be used within DatabaseConstructorContextProvider'
     );
   }
   return context;
+}
+
+export function useDatabaseConstructorActionsContext(): DatabaseConstructorActionsContextValue {
+  const context = React.useContext(DatabaseConstructorActionsContext);
+  if (!context) {
+    throw new Error(
+      'useDatabaseConstructorActionsContext must be used within DatabaseConstructorContextProvider'
+    );
+  }
+  return context;
+}
+
+export function useDatabaseConstructorContext(): DatabaseConstructorContextValue {
+  const state = useDatabaseConstructorStateContext();
+  const actions = useDatabaseConstructorActionsContext();
+  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
 }

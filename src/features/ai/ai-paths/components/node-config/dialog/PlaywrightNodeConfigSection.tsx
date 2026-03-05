@@ -18,7 +18,7 @@ import { usePlaywrightPersonas } from '@/features/playwright/hooks/usePlaywright
 import { playwrightSettingsSchema } from '@/shared/contracts/playwright';
 import { Button, Input, LoadingState, SelectSimple, Textarea, FormField } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 const RUNTIME_PERSONA_VALUE = '__runtime__';
 
@@ -75,7 +75,8 @@ const parseJsonObject = (value: string): Record<string, unknown> | null => {
 };
 
 export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
   const personasQuery = usePlaywrightPersonas();
   const defaultPlaywrightConfig = useMemo(() => createDefaultPlaywrightConfig(), []);
 

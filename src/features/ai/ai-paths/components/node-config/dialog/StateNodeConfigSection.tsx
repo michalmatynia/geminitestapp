@@ -14,7 +14,7 @@ import {
   Input,
 } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 type StateExpectedType = NonNullable<StateConfig['expectedType']>;
 
@@ -32,7 +32,8 @@ const normalizeStateExpectedType = (value: string): StateExpectedType | undefine
 };
 
 export function StateNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (selectedNode?.type !== 'state') return null;
 

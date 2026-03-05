@@ -11,7 +11,7 @@ import { RuleItem } from './RuleItem';
 import { usePromptEngine } from '../context/PromptEngineContext';
 import { type RuleDraft } from '../context/prompt-engine-context-utils';
 
-import type { PromptValidationRule } from '../settings';
+import type { PromptValidationRule } from '@/shared/lib/prompt-engine/settings';
 
 type SequenceGroupView = {
   id: string;

@@ -5,7 +5,10 @@ import React from 'react';
 import type { DatabaseAction, DatabaseActionCategory } from '@/shared/lib/ai-paths';
 import { Button, Textarea, SelectSimple } from '@/shared/ui';
 
-import { useDatabaseQueryInputControlsContext } from './DatabaseQueryInputControlsContext';
+import {
+  useDatabaseQueryInputControlsActionsContext,
+  useDatabaseQueryInputControlsStateContext,
+} from './DatabaseQueryInputControlsContext';
 
 export function DatabaseQueryInputControls(): React.JSX.Element {
   const {
@@ -20,14 +23,16 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
     showFilterInput,
     filterTemplateValue,
     filterPlaceholder,
-    onFilterChange,
     runDry,
-    onToggleRunDry,
     queryValidation,
     queryFormatterEnabled,
     queryValidatorEnabled,
     testQueryLoading,
     queryTemplateRef,
+  } = useDatabaseQueryInputControlsStateContext();
+  const {
+    onFilterChange,
+    onToggleRunDry,
     onActionCategoryChange,
     onActionChange,
     onProviderChange,
@@ -38,7 +43,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
     onQueryChange,
     onQueryFocus,
     onFilterFocus,
-  } = useDatabaseQueryInputControlsContext();
+  } = useDatabaseQueryInputControlsActionsContext();
   const isPrismaProvider = provider === 'prisma';
   const filterLabel = isPrismaProvider ? 'Where' : 'Filter';
   const filterHint = isPrismaProvider ? 'Matches records' : 'Matches documents';

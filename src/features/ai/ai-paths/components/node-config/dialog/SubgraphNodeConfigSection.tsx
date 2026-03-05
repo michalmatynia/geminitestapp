@@ -5,10 +5,12 @@ import React from 'react';
 import type { SubgraphConfig } from '@/shared/lib/ai-paths';
 import { Label, Input, Textarea } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathGraph, useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 export function SubgraphNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig, activePathId } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { activePathId } = useAiPathGraph();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (selectedNode?.type !== 'subgraph') return null;
 

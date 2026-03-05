@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { useAiPathConfig } from './AiPathConfigContext';
+import { useAiPathSelection } from './AiPathConfigContext';
 import { ContextNodeConfigSection } from './node-config/ContextNodeConfigSection';
 import { DatabaseNodeConfigSection } from './node-config/DatabaseNodeConfigSection';
 import { DbSchemaNodeConfigSection } from './node-config/DbSchemaNodeConfigSection';
@@ -48,7 +48,7 @@ import { ViewerNodeConfigSection } from './node-config/dialog/ViewerNodeConfigSe
 import { ParserNodeConfigSection } from './node-config/ParserNodeConfigSection';
 
 export function NodeConfigurationSections(): React.JSX.Element | null {
-  const { selectedNode } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
   if (!selectedNode) return null;
 
   return (

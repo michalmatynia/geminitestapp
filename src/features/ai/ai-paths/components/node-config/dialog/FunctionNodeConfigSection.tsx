@@ -5,7 +5,7 @@ import React from 'react';
 import type { FunctionConfig } from '@/shared/lib/ai-paths';
 import { Textarea, Label, Input, SelectSimple } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 type FunctionExpectedType = NonNullable<FunctionConfig['expectedType']>;
 
@@ -23,7 +23,8 @@ const normalizeFunctionExpectedType = (value: string): FunctionExpectedType | un
 };
 
 export function FunctionNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (selectedNode?.type !== 'function') return null;
 

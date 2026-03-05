@@ -2,7 +2,7 @@ import type {
   PromptAutofixOperation,
   PromptValidationRule,
   PromptValidationSimilarPattern,
-} from '../settings';
+} from '@/shared/lib/prompt-engine/settings';
 
 type PatchRule = (patch: Partial<PromptValidationRule>) => void;
 

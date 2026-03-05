@@ -3,12 +3,26 @@
 import { cn } from '@/shared/utils';
 
 import { CenterPreview } from './CenterPreview';
+import { ImageStudioPageSkeleton } from './ImageStudioPageSkeleton';
 import { LeftSidebar } from './LeftSidebar';
 import { RightSidebar } from './RightSidebar';
+import { useProjectsState } from '../context/ProjectsContext';
+import { useSlotsState } from '../context/SlotsContext';
 import { useUiLayoutState } from '../context/UiContext';
 
 export function StudioMainContent(): React.JSX.Element {
   const { isFocusMode } = useUiLayoutState();
+  const { projectId, projectsQuery } = useProjectsState();
+  const { isLoading: slotsLoading } = useSlotsState();
+  const normalizedProjectId = projectId.trim();
+  const hasProjects = (projectsQuery.data?.length ?? 0) > 0;
+  const isProjectSelectionPending = !normalizedProjectId && hasProjects;
+  const isStudioBootstrapping =
+    projectsQuery.isLoading || isProjectSelectionPending || (Boolean(normalizedProjectId) && slotsLoading);
+
+  if (isStudioBootstrapping) {
+    return <ImageStudioPageSkeleton />;
+  }
 
   return (
     <div className='relative flex h-full min-h-0 min-w-0 flex-1 overflow-hidden'>

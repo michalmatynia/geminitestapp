@@ -132,27 +132,6 @@ export interface AiPathConfigData
     AiPathPresetsData,
     AiPathOrchestratorData {}
 
-const AiPathConfigContext = createContext<AiPathConfigData | null>(null);
-
-export function useAiPathConfig(): AiPathConfigData {
-  const selection = useAiPathSelection();
-  const graph = useAiPathGraph();
-  const runtime = useAiPathRuntime();
-  const presets = useAiPathPresets();
-  const orchestrator = useAiPathOrchestrator();
-
-  return useMemo(
-    () => ({
-      ...selection,
-      ...graph,
-      ...runtime,
-      ...presets,
-      ...orchestrator,
-    }),
-    [selection, graph, runtime, presets, orchestrator]
-  );
-}
-
 const useAiPathConfigDefaults = () => {
   const orchestrator = useAiPathsSettingsOrchestrator();
   const { toast } = useToast();
@@ -274,9 +253,7 @@ export function AiPathConfigProvider({
       <AiPathGraphContext.Provider value={value}>
         <AiPathRuntimeContext.Provider value={value}>
           <AiPathPresetsContext.Provider value={value}>
-            <AiPathOrchestratorContext.Provider value={value}>
-              <AiPathConfigContext.Provider value={value}>{children}</AiPathConfigContext.Provider>
-            </AiPathOrchestratorContext.Provider>
+            <AiPathOrchestratorContext.Provider value={value}>{children}</AiPathOrchestratorContext.Provider>
           </AiPathPresetsContext.Provider>
         </AiPathRuntimeContext.Provider>
       </AiPathGraphContext.Provider>
@@ -317,26 +294,13 @@ export function AiPathConfigProviderWithContext({
     [orchestratorValue, overrides]
   );
 
-  const aggregatedValue = useMemo<AiPathConfigData>(
-    () => ({
-      ...selection,
-      ...graph,
-      ...runtime,
-      ...presets,
-      ...orchestrator,
-    }),
-    [selection, graph, runtime, presets, orchestrator]
-  );
-
   return (
     <AiPathSelectionContext.Provider value={selection}>
       <AiPathGraphContext.Provider value={graph}>
         <AiPathRuntimeContext.Provider value={runtime}>
           <AiPathPresetsContext.Provider value={presets}>
             <AiPathOrchestratorContext.Provider value={orchestrator}>
-              <AiPathConfigContext.Provider value={aggregatedValue}>
-                {children}
-              </AiPathConfigContext.Provider>
+              {children}
             </AiPathOrchestratorContext.Provider>
           </AiPathPresetsContext.Provider>
         </AiPathRuntimeContext.Provider>

@@ -7,7 +7,7 @@ import { createParserMappings, formatRuntimeValue } from '@/shared/lib/ai-paths'
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Button, Label, Textarea } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathGraph, useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../../AiPathConfigContext';
 import {
   PlaceholderMatrixDialog,
   type PlaceholderGroup,
@@ -15,7 +15,10 @@ import {
 } from '../database/PlaceholderMatrixDialog';
 
 export function TemplateNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, nodes, edges, runtimeState, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { nodes, edges } = useAiPathGraph();
+  const { runtimeState } = useAiPathRuntime();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (selectedNode?.type !== 'template') return null;
 

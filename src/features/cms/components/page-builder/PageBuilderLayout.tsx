@@ -7,8 +7,11 @@ import { useAdminLayoutActions } from '@/features/admin/context/AdminLayoutConte
 import { Button } from '@/shared/ui';
 
 import { PagePreviewPanel } from './PagePreviewPanel';
+import { PageBuilderPageSkeleton } from './PageBuilderPageSkeleton';
 import { ThemeSettingsProvider } from './ThemeSettingsContext';
 import { useBuilderKeyboardShortcuts } from '../../hooks/useBuilderKeyboardShortcuts';
+import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
+import { useCmsPage, useCmsPages } from '../../hooks/useCmsQueries';
 import { DragStateProvider } from '../../hooks/useDragStateContext';
 import { PageBuilderProvider, usePageBuilder } from '../../hooks/usePageBuilderContext';
 
@@ -20,6 +23,13 @@ import type { PageBuilderState } from '../../types/page-builder';
 function PageBuilderInner(): React.JSX.Element {
   const { state, dispatch } = usePageBuilder();
   const { setIsProgrammaticallyCollapsed } = useAdminLayoutActions();
+  const { activeDomainId, isLoading: domainSelectionLoading } = useCmsDomainSelection();
+  const pagesQuery = useCmsPages(activeDomainId);
+  const initialPageId = React.useMemo((): string => {
+    if (state.currentPage?.id) return state.currentPage.id;
+    return pagesQuery.data?.[0]?.id ?? '';
+  }, [pagesQuery.data, state.currentPage?.id]);
+  const pageQuery = useCmsPage(initialPageId || undefined);
   useBuilderKeyboardShortcuts();
 
   const isViewing = state.leftPanelCollapsed && state.rightPanelCollapsed;
@@ -63,6 +73,14 @@ function PageBuilderInner(): React.JSX.Element {
       media.removeEventListener('change', handler);
     };
   }, [dispatch, state.rightPanelCollapsed]);
+
+  const isBuilderBootstrapping =
+    !state.currentPage &&
+    (domainSelectionLoading || pagesQuery.isLoading || pageQuery.isLoading);
+
+  if (isBuilderBootstrapping) {
+    return <PageBuilderPageSkeleton />;
+  }
 
   return (
     <div className='flex h-[calc(100vh-64px)] flex-col bg-background text-white'>

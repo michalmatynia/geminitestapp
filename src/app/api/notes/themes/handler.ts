@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { themeCreateSchema } from '@/features/notesapp/public';
+import { themeCreateSchema } from '@/features/notesapp';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ThemeCreateInput } from '@/shared/contracts/notes';

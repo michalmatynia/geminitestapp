@@ -6,7 +6,7 @@ import { useAgentPersonas } from '@/features/ai/agentcreator/hooks/useAgentPerso
 import type { AgentConfig } from '@/shared/lib/ai-paths';
 import { Button, SelectSimple, Textarea, LoadingState, FormField } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 const DEFAULT_AGENT_CONFIG: AgentConfig = {
   personaId: '',
@@ -17,7 +17,8 @@ const DEFAULT_AGENT_CONFIG: AgentConfig = {
 const RUNTIME_PERSONA_VALUE = '__runtime__';
 
 export function AgentNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
   const personasQuery = useAgentPersonas();
 
   if (selectedNode?.type !== 'agent') return null;

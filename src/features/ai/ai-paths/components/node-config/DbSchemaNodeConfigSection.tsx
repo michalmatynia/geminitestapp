@@ -10,7 +10,7 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Button, Label, SelectSimple, SearchInput, Pagination, Card, Hint } from '@/shared/ui';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
-import { useAiPathConfig } from '../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../AiPathConfigContext';
 
 const isCollectionSchema = (value: unknown): value is CollectionSchema =>
   isObjectRecord(value) && typeof value['name'] === 'string' && Array.isArray(value['fields']);
@@ -93,7 +93,8 @@ const normalizeSchemaProvider = (value: unknown): SchemaConfig['provider'] =>
   value === 'mongodb' || value === 'prisma' || value === 'auto' ? value : 'auto';
 
 export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (!selectedNode) return null;
 

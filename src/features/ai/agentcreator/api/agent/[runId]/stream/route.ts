@@ -6,7 +6,7 @@ import {
   type ApiHandlerContext as _ApiHandlerContext,
 } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
-import { startIntervalTask } from '@/shared/lib/timers';
+import { startIntervalTask, type IntervalTaskHandle } from '@/shared/lib/timers';
 
 export const runtime = 'nodejs';
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
@@ -20,7 +20,7 @@ async function GET_handler(
   }
   const { runId } = await params;
   const encoder = new TextEncoder();
-  let timer: NodeJS.Timeout | null = null;
+  let timer: IntervalTaskHandle | null = null;
 
   const stream = new ReadableStream({
     async start(controller: ReadableStreamDefaultController) {
@@ -64,7 +64,7 @@ async function GET_handler(
 
       req.signal.addEventListener('abort', () => {
         if (timer) {
-          clearInterval(timer);
+          timer.cancel();
         }
         controller.close();
       });

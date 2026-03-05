@@ -10,7 +10,7 @@ import type {
   PromptValidationLaunchScopeBehavior,
   PromptValidationLaunchOperator,
   PromptValidationScope,
-} from '../../settings';
+} from '@/shared/lib/prompt-engine/settings';
 
 export function RuleItemExecutionSettings(): React.JSX.Element | null {
   const { rule, patchRule } = useRuleItemContext();

@@ -1,0 +1,169 @@
+'use client';
+
+import { RefreshCcwIcon } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
+import { Badge, Button, Card, Skeleton } from '@/shared/ui';
+
+type TrendSnapshot = {
+  at: string;
+  trigger: 'manual' | 'threshold';
+  usageTotals: { uses: number };
+  sinkTotals: { writesFailed: number; writesAttempted: number };
+  driftAlerts: Array<unknown>;
+};
+
+type TrendSnapshotsPayload = {
+  snapshotCount: number;
+  summary: {
+    latestSnapshotAt: string | null;
+    driftAlertsTotal: number;
+    sinkWritesFailedTotal: number;
+  };
+  autoRemediation: {
+    enabled: boolean;
+    strategy: 'none' | 'unregister_all' | 'degrade_to_log_only';
+    threshold: number;
+    state: {
+      consecutiveFailureCount: number;
+      remediationCount: number;
+      lastStatus: string | null;
+      lastRemediatedAt: string | null;
+    };
+  };
+  snapshots: TrendSnapshot[];
+};
+
+const TREND_SNAPSHOT_LIMIT = 12;
+
+const formatTimestamp = (value: string | null): string => {
+  if (!value) return 'n/a';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString();
+};
+
+export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
+  const [data, setData] = useState<TrendSnapshotsPayload | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadSnapshots = useCallback(async (): Promise<void> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/ai-paths/portable-engine/trend-snapshots?limit=${TREND_SNAPSHOT_LIMIT}`,
+        {
+          method: 'GET',
+          cache: 'no-store',
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to load trend snapshots (${response.status}).`);
+      }
+      const payload = (await response.json()) as TrendSnapshotsPayload;
+      setData(payload);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to load trend snapshots.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadSnapshots();
+  }, [loadSnapshots]);
+
+  const latestSnapshots = useMemo(
+    () => (data?.snapshots ?? []).slice(-6).reverse(),
+    [data]
+  );
+
+  return (
+    <Card variant='subtle' className='border-border/60 bg-card/40 p-3 sm:p-4'>
+      <div className='mb-3 flex flex-wrap items-center justify-between gap-2'>
+        <div>
+          <p className='text-sm font-semibold text-gray-100'>Portable Engine Trend Snapshots</p>
+          <p className='text-xs text-gray-400'>
+            Signing policy drift, sink failures, and auto-remediation state.
+          </p>
+        </div>
+        <Button
+          size='xs'
+          variant='outline'
+          onClick={() => {
+            void loadSnapshots();
+          }}
+          disabled={isLoading}
+        >
+          <RefreshCcwIcon className='mr-1.5 size-3.5' />
+          Refresh
+        </Button>
+      </div>
+
+      {isLoading && !data ? (
+        <div className='space-y-2'>
+          <Skeleton className='h-4 w-2/3' />
+          <Skeleton className='h-4 w-full' />
+          <Skeleton className='h-4 w-5/6' />
+        </div>
+      ) : null}
+
+      {error ? (
+        <div className='rounded-md border border-rose-500/20 bg-rose-500/5 px-3 py-2 text-xs text-rose-200'>
+          {error}
+        </div>
+      ) : null}
+
+      {data ? (
+        <div className='space-y-3'>
+          <div className='flex flex-wrap gap-2'>
+            <Badge variant='outline' className='border-white/10 text-gray-300'>
+              snapshots {data.snapshotCount}
+            </Badge>
+            <Badge variant='outline' className='border-white/10 text-gray-300'>
+              drift alerts {data.summary.driftAlertsTotal}
+            </Badge>
+            <Badge variant='outline' className='border-white/10 text-gray-300'>
+              sink failures {data.summary.sinkWritesFailedTotal}
+            </Badge>
+            <Badge
+              variant={data.autoRemediation.enabled ? 'success' : 'outline'}
+              className={data.autoRemediation.enabled ? '' : 'border-white/10 text-gray-300'}
+            >
+              remediation {data.autoRemediation.enabled ? 'on' : 'off'}
+            </Badge>
+          </div>
+
+          <div className='rounded-md border border-border/60 bg-black/20 p-2 text-xs text-gray-300'>
+            Latest snapshot: {formatTimestamp(data.summary.latestSnapshotAt)} | consecutive failures:{' '}
+            {data.autoRemediation.state.consecutiveFailureCount} | remediations:{' '}
+            {data.autoRemediation.state.remediationCount} | threshold:{' '}
+            {data.autoRemediation.threshold} | strategy: {data.autoRemediation.strategy}
+          </div>
+
+          {latestSnapshots.length === 0 ? (
+            <p className='text-xs text-gray-400'>No snapshots captured yet.</p>
+          ) : (
+            <div className='space-y-2'>
+              {latestSnapshots.map((snapshot) => (
+                <div
+                  key={`${snapshot.at}-${snapshot.trigger}`}
+                  className='rounded-md border border-border/50 bg-black/20 px-3 py-2 text-xs text-gray-300'
+                >
+                  <div className='font-medium text-gray-200'>{formatTimestamp(snapshot.at)}</div>
+                  <div className='mt-1 text-gray-400'>
+                    trigger={snapshot.trigger} uses={snapshot.usageTotals.uses} driftAlerts=
+                    {snapshot.driftAlerts.length} sinkFailed={snapshot.sinkTotals.writesFailed}/
+                    {snapshot.sinkTotals.writesAttempted}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : null}
+    </Card>
+  );
+}

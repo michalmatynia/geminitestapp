@@ -2,8 +2,11 @@ import React from 'react';
 
 import { Button, Label } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
-import { useDatabaseConstructorContext } from './DatabaseConstructorContext';
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import {
+  useDatabaseConstructorActionsContext,
+  useDatabaseConstructorStateContext,
+} from './DatabaseConstructorContext';
+import { useAiPathOrchestrator } from '../../AiPathConfigContext';
 
 type TemplateSnippet = { label: string; value: string };
 type ReadQuerySnippet = {
@@ -47,10 +50,11 @@ export function DatabaseTemplateSnippetsDialog(
     projectionPresets,
   } = props;
 
-  const { setSelectedAiQueryId, updateQueryConfig, insertTemplateSnippet, resolvedProvider } =
-    useDatabaseConstructorContext();
+  const { resolvedProvider } = useDatabaseConstructorStateContext();
+  const { setSelectedAiQueryId, updateQueryConfig, insertTemplateSnippet } =
+    useDatabaseConstructorActionsContext();
 
-  const { toast } = useAiPathConfig();
+  const { toast } = useAiPathOrchestrator();
 
   const isPrismaProvider = resolvedProvider === 'prisma';
 

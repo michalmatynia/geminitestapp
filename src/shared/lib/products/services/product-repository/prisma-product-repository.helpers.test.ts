@@ -25,4 +25,25 @@ describe('prisma normalizeProductParameterValues', () => {
       },
     ]);
   });
+
+  it('allows clearing stale localized values when latest duplicate entry omits language map', () => {
+    const normalized = normalizeProductParameterValues([
+      {
+        parameterId: 'name',
+        value: 'Nowy',
+        valuesByLanguage: { en: 'Nowy' },
+      },
+      {
+        parameterId: 'name',
+        value: '',
+      },
+    ]);
+
+    expect(normalized).toEqual([
+      {
+        parameterId: 'name',
+        value: '',
+      },
+    ]);
+  });
 });

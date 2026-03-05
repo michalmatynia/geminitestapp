@@ -28,7 +28,10 @@ import {
 } from './database-constructor-tab-helpers';
 import { DatabaseAiPromptConnectionStatus } from './DatabaseAiPromptConnectionStatus';
 import { DatabaseAiQueryReviewSection } from './DatabaseAiQueryReviewSection';
-import { useDatabaseConstructorContext } from './DatabaseConstructorContext';
+import {
+  useDatabaseConstructorActionsContext,
+  useDatabaseConstructorStateContext,
+} from './DatabaseConstructorContext';
 import { DatabaseQueryInputControls } from './DatabaseQueryInputControls';
 import { DatabaseTemplateSnippetsDialog } from './DatabaseTemplateSnippetsDialog';
 import {
@@ -37,13 +40,15 @@ import {
   type PlaceholderTarget,
   type PlaceholderEntry,
 } from './PlaceholderMatrixDialog';
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import {
+  useAiPathOrchestrator,
+  useAiPathRuntime,
+  useAiPathSelection,
+} from '../../AiPathConfigContext';
 import { type UpdaterSampleState } from '@/shared/lib/ai-paths';
 
 export function DatabaseConstructorTab(): React.JSX.Element | null {
   const {
-    setSelectedAiQueryId,
-    openSaveQueryPresetModal,
     databaseConfig,
     queryConfig,
     resolvedProvider,
@@ -52,24 +57,27 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
     hasSchemaConnection,
     fetchedDbSchema,
     schemaMatrix,
-    onSyncSchema,
     schemaSyncing,
     schemaLoading,
+    sampleState,
+  } = useDatabaseConstructorStateContext();
+  const {
+    setSelectedAiQueryId,
+    openSaveQueryPresetModal,
+    onSyncSchema,
     insertQueryPlaceholder,
     insertAiPromptPlaceholder,
-    sampleState,
-  } = useDatabaseConstructorContext();
+  } = useDatabaseConstructorActionsContext();
 
+  const { selectedNode } = useAiPathSelection();
   const {
     setUpdaterSamples,
     handleFetchUpdaterSample: onFetchUpdaterSample,
-    updateSelectedNodeConfig,
-    selectedNode,
     onSendToAi,
     sendingToAi,
     updaterSampleLoading,
-    toast,
-  } = useAiPathConfig();
+  } = useAiPathRuntime();
+  const { updateSelectedNodeConfig, toast } = useAiPathOrchestrator();
 
   // State for template snippets modal
   const [snippetsModalOpen, setSnippetsModalOpen] = React.useState<boolean>(false);

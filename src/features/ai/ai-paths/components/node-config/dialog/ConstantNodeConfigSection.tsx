@@ -3,7 +3,7 @@
 import type { ConstantConfig } from '@/shared/lib/ai-paths';
 import { Input, Label, SelectSimple, Textarea } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 const valueTypeOptions = [
   { value: 'string', label: 'String' },
@@ -13,7 +13,8 @@ const valueTypeOptions = [
 ];
 
 export function ConstantNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (selectedNode?.type !== 'constant') return null;
 

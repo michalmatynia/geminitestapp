@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { categoryUpdateSchema } from '@/features/notesapp/public';
+import { categoryUpdateSchema } from '@/features/notesapp';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { CategoryUpdateInput } from '@/shared/contracts/notes';

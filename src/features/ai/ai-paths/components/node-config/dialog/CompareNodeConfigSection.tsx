@@ -3,7 +3,7 @@
 import type { CompareConfig } from '@/shared/lib/ai-paths';
 import { Button, Input, SelectSimple, FormField } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 const operatorOptions = [
   { value: 'eq', label: 'Equals' },
@@ -20,7 +20,8 @@ const operatorOptions = [
 ];
 
 export function CompareNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (selectedNode?.type !== 'compare') return null;
 

@@ -6,7 +6,7 @@ import {
   ensureAiPathsPermission,
   requireAiPathsAccessOrInternal,
 } from '@/features/ai/ai-paths/server';
-import { noteUpdateSchema } from '@/features/notesapp/public';
+import { noteUpdateSchema } from '@/features/notesapp';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
 import { productUpdateSchema } from '@/features/products/server';

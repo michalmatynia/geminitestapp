@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 
 import { Checkbox, FormField, Input, Label, Textarea } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 const DEFAULT_NOTE_COLOR = '#f5e7c3';
 const NOTE_COLOR_SWATCHES = [
@@ -25,7 +25,8 @@ const resolveColor = (value?: string | null): string => {
 };
 
 export function NodeNotesTab(): React.JSX.Element | null {
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
   if (!selectedNode) return null;
 
   const notes = selectedNode.config?.notes ?? {};

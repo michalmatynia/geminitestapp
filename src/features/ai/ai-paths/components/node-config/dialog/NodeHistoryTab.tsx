@@ -2,11 +2,13 @@
 import { RunHistoryEntries } from '@/features/ai/ai-paths/components/RunHistoryEntries';
 import { Button } from '@/shared/ui';
 
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../../AiPathConfigContext';
 import { useRunHistoryActions } from '../../../context';
 
 export function NodeHistoryTab(): React.JSX.Element | null {
-  const { selectedNode, runtimeState, clearNodeHistory } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { runtimeState } = useAiPathRuntime();
+  const { clearNodeHistory } = useAiPathOrchestrator();
   const { resumeRun } = useRunHistoryActions();
   if (!selectedNode) return null;
 

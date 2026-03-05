@@ -7,8 +7,8 @@ import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Button, Input, Label, SelectSimple, FormField } from '@/shared/ui';
 
-import { useDatabaseConstructorContext } from './DatabaseConstructorContext';
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useDatabaseConstructorStateContext } from './DatabaseConstructorContext';
+import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 const CANONICAL_PARAMETER_INFERENCE_TARGET_PATH = 'parameters';
 
@@ -22,8 +22,9 @@ const normalizeParameterInferenceTargetPath = (value: unknown): string | undefin
 };
 
 export function DatabaseSettingsTab(): React.JSX.Element | null {
-  const { availablePorts, bundleKeys, operation } = useDatabaseConstructorContext();
-  const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
+  const { availablePorts, bundleKeys, operation } = useDatabaseConstructorStateContext();
+  const { selectedNode } = useAiPathSelection();
+  const { updateSelectedNodeConfig } = useAiPathOrchestrator();
   if (!selectedNode) return null;
   const databaseConfig: DatabaseConfig = (selectedNode.config?.database as DatabaseConfig) ?? {
     operation: 'query',

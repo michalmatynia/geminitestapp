@@ -6,7 +6,7 @@ import type {
   PromptValidationRule,
   PromptValidationSimilarPattern,
   PromptAutofixOperation,
-} from '../../settings';
+} from '@/shared/lib/prompt-engine/settings';
 import {
   updateSimilarInRule,
   removeSimilarFromRule,

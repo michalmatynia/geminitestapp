@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { tagCreateSchema } from '@/features/notesapp/public';
+import { tagCreateSchema } from '@/features/notesapp';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { TagCreateInput } from '@/shared/contracts/notes';

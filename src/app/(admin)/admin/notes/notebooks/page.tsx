@@ -1,6 +1,6 @@
 import { JSX, Suspense } from 'react';
 
-import { AdminNotesNotebooksPage } from '@/features/notesapp/public';
+import { AdminNotesNotebooksPage } from '@/features/notesapp/';
 
 export const dynamic = 'force-dynamic';
 

@@ -3,23 +3,24 @@ import React from 'react';
 
 import type { AiQuery } from '@/shared/contracts/database';
 import { Button } from '@/shared/ui';
-import { useDatabaseConstructorContext } from './DatabaseConstructorContext';
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import {
+  useDatabaseConstructorActionsContext,
+  useDatabaseConstructorStateContext,
+} from './DatabaseConstructorContext';
+import { useAiPathOrchestrator } from '../../AiPathConfigContext';
 
 export function DatabaseAiQueryReviewSection(): React.JSX.Element | null {
   const {
     pendingAiQuery,
-    setPendingAiQuery,
     codeSnippets,
     selectedSnippetIndex,
-    setSelectedSnippetIndex,
-    setAiQueries,
-    setSelectedAiQueryId,
     databaseConfig,
     queryConfig,
-  } = useDatabaseConstructorContext();
+  } = useDatabaseConstructorStateContext();
+  const { setPendingAiQuery, setSelectedSnippetIndex, setAiQueries, setSelectedAiQueryId } =
+    useDatabaseConstructorActionsContext();
 
-  const { updateSelectedNodeConfig, toast } = useAiPathConfig();
+  const { updateSelectedNodeConfig, toast } = useAiPathOrchestrator();
 
   if (!pendingAiQuery) {
     return null;

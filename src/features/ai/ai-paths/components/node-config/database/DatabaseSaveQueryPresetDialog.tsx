@@ -3,18 +3,16 @@
 import { Input, Textarea, FormField, FormActions } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
-import { useDatabaseSaveQueryPresetDialogContext } from './DatabaseSaveQueryPresetDialogContext';
+import {
+  useDatabaseSaveQueryPresetDialogActionsContext,
+  useDatabaseSaveQueryPresetDialogStateContext,
+} from './DatabaseSaveQueryPresetDialogContext';
 
 export function DatabaseSaveQueryPresetDialog(): React.JSX.Element {
-  const {
-    open,
-    onOpenChange,
-    newQueryPresetName,
-    setNewQueryPresetName,
-    queryTemplateValue,
-    onCancel,
-    onSave,
-  } = useDatabaseSaveQueryPresetDialogContext();
+  const { open, newQueryPresetName, queryTemplateValue } =
+    useDatabaseSaveQueryPresetDialogStateContext();
+  const { onOpenChange, setNewQueryPresetName, onCancel, onSave } =
+    useDatabaseSaveQueryPresetDialogActionsContext();
   return (
     <DetailModal
       isOpen={open}

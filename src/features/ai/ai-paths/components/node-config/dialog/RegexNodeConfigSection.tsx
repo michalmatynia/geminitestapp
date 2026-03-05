@@ -31,7 +31,7 @@ import {
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { RegexPendingAiProposal } from './RegexPendingAiProposal';
 import { RegexTemplatesTabContent } from './RegexTemplatesTabContent';
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathGraph, useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../../AiPathConfigContext';
 
 import { RegexConfigBasicTab } from './regex/RegexConfigBasicTab';
 import { RegexAiProposalSection } from './regex/RegexAiProposalSection';
@@ -39,16 +39,10 @@ import { RegexPreviewSection } from './regex/RegexPreviewSection';
 import { RegexAiPromptSection } from './regex/RegexAiPromptSection';
 
 export function RegexNodeConfigSection(): React.JSX.Element | null {
-  const {
-    selectedNode,
-    nodes,
-    edges,
-    runtimeState,
-    updateSelectedNodeConfig,
-    onSendToAi,
-    sendingToAi,
-    toast,
-  } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { nodes, edges } = useAiPathGraph();
+  const { runtimeState, onSendToAi, sendingToAi } = useAiPathRuntime();
+  const { updateSelectedNodeConfig, toast } = useAiPathOrchestrator();
   const brainModel = useBrainModelOptions({
     capability: 'ai_paths.model',
     enabled: selectedNode?.type === 'regex',

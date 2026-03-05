@@ -5,7 +5,11 @@ import { Button } from '@/shared/ui';
 
 import { useDatabaseQueryValidatorPanelContext } from './DatabaseQueryValidatorPanelContext';
 import { convertMongoToPrismaQuery } from './query-utils';
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import {
+  useAiPathGraph,
+  useAiPathOrchestrator,
+  useAiPathSelection,
+} from '../../AiPathConfigContext';
 
 export function DatabaseQueryValidatorPanel(): React.JSX.Element | null {
   const {
@@ -16,7 +20,9 @@ export function DatabaseQueryValidatorPanel(): React.JSX.Element | null {
     queryTemplateValue,
     databaseConfig,
   } = useDatabaseQueryValidatorPanelContext();
-  const { selectedNode, nodes, edges, updateSelectedNodeConfig, toast } = useAiPathConfig();
+  const { selectedNode } = useAiPathSelection();
+  const { nodes, edges } = useAiPathGraph();
+  const { updateSelectedNodeConfig, toast } = useAiPathOrchestrator();
   if (!selectedNode) return null;
   const effectiveProvider =
     resolvedProvider ?? (queryConfig.provider === 'prisma' ? 'prisma' : 'mongodb');

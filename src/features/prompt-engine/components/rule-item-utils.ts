@@ -9,7 +9,7 @@ import {
   type PromptValidationScope,
   type PromptValidationSeverity,
   type PromptValidationLaunchOperator,
-} from '../settings';
+} from '@/shared/lib/prompt-engine/settings';
 
 export const formatSeverityLabel = (severity: PromptValidationSeverity): string => {
   if (severity === 'error') return 'Error';

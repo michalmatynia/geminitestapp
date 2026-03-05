@@ -6,10 +6,10 @@ import type { ColorScheme, ThemeSettings } from '@/shared/contracts/cms-theme';
 import type { SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { ThemeSettingsFieldsSection } from './ThemeSettingsFieldsSection';
-import { useThemeSettings } from '../ThemeSettingsContext';
+import { useThemeSettingsValue } from '../ThemeSettingsContext';
 
 export function ThemeProductCardsSection(): React.JSX.Element {
-  const { theme } = useThemeSettings();
+  const theme = useThemeSettingsValue();
 
   const fields: SettingsField<ThemeSettings>[] = [
     {
@@ -140,7 +140,7 @@ export function ThemeProductCardsSection(): React.JSX.Element {
 }
 
 export function ThemeCollectionCardsSection(): React.JSX.Element {
-  const { theme } = useThemeSettings();
+  const theme = useThemeSettingsValue();
 
   const fields: SettingsField<ThemeSettings>[] = [
     {
@@ -262,7 +262,7 @@ export function ThemeCollectionCardsSection(): React.JSX.Element {
 }
 
 export function ThemeBlogCardsSection(): React.JSX.Element {
-  const { theme } = useThemeSettings();
+  const theme = useThemeSettingsValue();
 
   const fields: SettingsField<ThemeSettings>[] = [
     {

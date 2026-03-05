@@ -14,7 +14,7 @@ import { MediaLibraryPanel } from './MediaLibraryPanel';
 import { PageSelectorBar } from './PageSelectorBar';
 import { PreviewEditorProvider } from './preview/context/PreviewEditorContext';
 import { PreviewSection, type MediaReplaceTarget } from './PreviewBlock';
-import { useThemeSettings } from './ThemeSettingsContext';
+import { useThemeSettingsValue } from './ThemeSettingsContext';
 import { VectorOverlay } from './VectorOverlay';
 import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
 import { useCmsSlugs, useUpdatePage } from '../../hooks/useCmsQueries';
@@ -45,7 +45,7 @@ export function PagePreviewPanel(): React.ReactNode {
   const state = usePageBuilderState();
   const dispatch = usePageBuilderDispatch();
   const { vectorOverlay, closeVectorOverlay } = useVectorOverlay();
-  const { theme } = useThemeSettings();
+  const theme = useThemeSettingsValue();
   const { activeDomainId, activeDomain } = useCmsDomainSelection();
   const slugsQuery = useCmsSlugs(activeDomainId);
   const updatePage = useUpdatePage();

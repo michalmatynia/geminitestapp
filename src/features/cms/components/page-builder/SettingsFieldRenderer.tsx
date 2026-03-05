@@ -16,7 +16,7 @@ import {
   ImagePickerField,
   Asset3DPickerField,
 } from './shared-fields';
-import { useThemeSettings } from './ThemeSettingsContext';
+import { useThemeSettingsValue } from './ThemeSettingsContext';
 
 import {
   FONT_FAMILY_OPTIONS,
@@ -63,7 +63,7 @@ export function SettingsFieldRenderer(props: {
   const value = propValue !== undefined ? propValue : context?.values[field.key];
   const onChange = propOnChange || context?.onChange;
 
-  const { theme } = useThemeSettings();
+  const theme = useThemeSettingsValue();
   const isDisabled = Boolean(field.disabled);
   const colorSchemeOptions = useMemo<SettingsFieldOption[]>((): SettingsFieldOption[] => {
     const baseOptions =

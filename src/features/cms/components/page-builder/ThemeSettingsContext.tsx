@@ -20,13 +20,23 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
-interface ThemeSettingsContextValue {
+interface ThemeSettingsStateContextValue {
   theme: ThemeSettings;
+}
+
+interface ThemeSettingsActionsContextValue {
   setTheme: React.Dispatch<React.SetStateAction<ThemeSettings>>;
   update: <K extends keyof ThemeSettings>(key: K, value: ThemeSettings[K]) => void;
 }
 
-const ThemeSettingsContext = createContext<ThemeSettingsContextValue | undefined>(undefined);
+type ThemeSettingsContextValue = ThemeSettingsStateContextValue & ThemeSettingsActionsContextValue;
+
+const ThemeSettingsStateContext = createContext<ThemeSettingsStateContextValue | undefined>(
+  undefined
+);
+const ThemeSettingsActionsContext = createContext<ThemeSettingsActionsContextValue | undefined>(
+  undefined
+);
 
 export function ThemeSettingsProvider({
   children,
@@ -96,16 +106,47 @@ export function ThemeSettingsProvider({
   );
 
   const value = useMemo(
-    () => ({ theme, setTheme: setThemeProxy, update }),
-    [theme, update, setThemeProxy]
+    (): ThemeSettingsStateContextValue => ({ theme }),
+    [theme]
   );
-  return <ThemeSettingsContext.Provider value={value}>{children}</ThemeSettingsContext.Provider>;
+  const actions = useMemo(
+    (): ThemeSettingsActionsContextValue => ({
+      setTheme: setThemeProxy,
+      update,
+    }),
+    [setThemeProxy, update]
+  );
+
+  return (
+    <ThemeSettingsActionsContext.Provider value={actions}>
+      <ThemeSettingsStateContext.Provider value={value}>
+        {children}
+      </ThemeSettingsStateContext.Provider>
+    </ThemeSettingsActionsContext.Provider>
+  );
+}
+
+export function useThemeSettingsValue(): ThemeSettings {
+  const ctx = useContext(ThemeSettingsStateContext);
+  if (!ctx) {
+    throw new Error('useThemeSettingsValue must be used within ThemeSettingsProvider');
+  }
+  return ctx.theme;
+}
+
+export function useThemeSettingsActions(): ThemeSettingsActionsContextValue {
+  const ctx = useContext(ThemeSettingsActionsContext);
+  if (!ctx) {
+    throw new Error('useThemeSettingsActions must be used within ThemeSettingsProvider');
+  }
+  return ctx;
 }
 
 export function useThemeSettings(): ThemeSettingsContextValue {
-  const ctx = useContext(ThemeSettingsContext);
-  if (!ctx) {
-    throw new Error('useThemeSettings must be used within ThemeSettingsProvider');
-  }
-  return ctx;
+  const theme = useThemeSettingsValue();
+  const { setTheme, update } = useThemeSettingsActions();
+  return useMemo(
+    (): ThemeSettingsContextValue => ({ theme, setTheme, update }),
+    [theme, setTheme, update]
+  );
 }

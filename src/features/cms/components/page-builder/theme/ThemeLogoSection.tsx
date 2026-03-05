@@ -4,14 +4,12 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Card, Hint, Button, FileUploadTrigger, FileUploadButton } from '@/shared/ui';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
-import { useThemeSettings } from '../ThemeSettingsContext';
 
 type LogoWidthSettings = {
   logoWidth: number;
 };
 
 export function ThemeLogoSection(): React.JSX.Element {
-  useThemeSettings();
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
   const [logoWidth, setLogoWidth] = useState<number>(180);

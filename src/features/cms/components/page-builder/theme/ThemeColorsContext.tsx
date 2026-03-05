@@ -11,7 +11,7 @@ import { useToast } from '@/shared/ui';
 
 import { DEFAULT_SCHEME_COLORS } from './theme-constants';
 import { parseColorSchemeFromText } from './theme-utils';
-import { useThemeSettings } from '../ThemeSettingsContext';
+import { useThemeSettingsActions, useThemeSettingsValue } from '../ThemeSettingsContext';
 
 interface ThemeColorsContextValue {
   schemeView: 'list' | 'edit';
@@ -48,7 +48,8 @@ export function ThemeColorsProvider({
 }: {
   children: React.ReactNode;
 }): React.JSX.Element {
-  const { theme, setTheme } = useThemeSettings();
+  const theme = useThemeSettingsValue();
+  const { setTheme } = useThemeSettingsActions();
   const { toast } = useToast();
 
   const [schemeView, setSchemeView] = useState<'list' | 'edit'>('list');

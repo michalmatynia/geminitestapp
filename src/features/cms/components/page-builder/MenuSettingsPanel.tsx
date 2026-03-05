@@ -21,7 +21,7 @@ import { Input, SelectSimple, Button, SectionHeader, FormSection } from '@/share
 import { SettingsField, SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
-import { useThemeSettings } from './ThemeSettingsContext';
+import { useThemeSettingsValue } from './ThemeSettingsContext';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -84,7 +84,7 @@ export function MenuSettingsPanel({
   showHeader = true,
 }: { showHeader?: boolean } = {}): React.JSX.Element {
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
-  const { theme } = useThemeSettings();
+  const theme = useThemeSettingsValue();
   const { domains, activeDomainId, zoningEnabled } = useCmsDomainSelection();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();

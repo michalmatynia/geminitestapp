@@ -8,7 +8,7 @@ import {
   type SettingsField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
-import { useThemeSettings } from '../ThemeSettingsContext';
+import { useThemeSettingsActions, useThemeSettingsValue } from '../ThemeSettingsContext';
 
 interface ThemeSettingsFieldsSectionProps {
   fields: SettingsField<ThemeSettings>[];
@@ -17,7 +17,8 @@ interface ThemeSettingsFieldsSectionProps {
 export function ThemeSettingsFieldsSection({
   fields,
 }: ThemeSettingsFieldsSectionProps): React.JSX.Element {
-  const { theme, update } = useThemeSettings();
+  const theme = useThemeSettingsValue();
+  const { update } = useThemeSettingsActions();
   const rendererFields = React.useMemo(() => fields, [fields]);
 
   const handleChange = React.useCallback(

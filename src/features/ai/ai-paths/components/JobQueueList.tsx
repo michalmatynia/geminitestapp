@@ -2,15 +2,15 @@
 
 import React, { useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useJobQueueContext } from './JobQueueContext';
+import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
 import { JobQueueRunCard } from './job-queue-run-card';
 import { Pagination, Alert } from '@/shared/ui';
 
 const PAGE_SIZES = [10, 25, 50];
 
 export function JobQueueList(): React.JSX.Element {
-  const { runs, total, page, setPage, pageSize, setPageSize, runsQueryError } =
-    useJobQueueContext();
+  const { runs, total, page, pageSize, runsQueryError } = useJobQueueState();
+  const { setPage, setPageSize } = useJobQueueActions();
 
   const parentRef = useRef<HTMLDivElement>(null);
 

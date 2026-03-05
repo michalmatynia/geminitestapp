@@ -321,6 +321,144 @@ describe('canvas connection preview', () => {
     expect(setPinnedConnectorKey).not.toHaveBeenCalled();
   });
 
+  it('freezes connector hover payload updates while a connector is pinned', () => {
+    const node = buildNode();
+    const onConnectorHover = vi.fn();
+    const { container } = render(
+      <svg>
+        <CanvasSvgNodePorts
+          node={node}
+          incomingEdgePortSet={new Set<string>()}
+          hoveredConnectorKey={null}
+          pinnedConnectorKey='output:node-preview:result'
+          connectorHitRadius={16}
+          showPortLabels={false}
+          buildConnectorKey={(
+            direction: 'input' | 'output',
+            nodeId: string,
+            port: string
+          ): string => `${direction}:${nodeId}:${port}`}
+          onReconnectInput={vi.fn()}
+          onCompleteConnection={vi.fn()}
+          onDisconnectPort={vi.fn()}
+          onStartConnection={vi.fn()}
+          setHoveredConnectorKey={vi.fn()}
+          onConnectorHover={onConnectorHover}
+          onConnectorLeave={vi.fn()}
+          getConnectorInfo={vi.fn(() => ({
+            direction: 'output' as 'output' | 'input',
+            nodeId: node.id,
+            port: 'result',
+            expectedTypes: ['string'] as PortDataType[],
+            expectedLabel: 'string',
+            rawValue: 'ok',
+            value: 'ok',
+            isHistory: false,
+            historyLength: 0,
+            actualType: 'string',
+            runtimeMismatch: false,
+            connectionMismatches: [],
+            hasMismatch: false,
+            nodeInputs: {},
+            nodeOutputs: { result: 'ok' },
+          }))}
+          setPinnedConnectorKey={vi.fn()}
+        />
+      </svg>
+    );
+
+    const outputPort = container.querySelector('circle[data-port="output"]');
+    expect(outputPort).toBeTruthy();
+    if (!outputPort) return;
+
+    fireEvent.pointerEnter(outputPort, {
+      pointerId: 23,
+      clientX: 240,
+      clientY: 180,
+      button: 0,
+      buttons: 0,
+    });
+    fireEvent.pointerMove(outputPort, {
+      pointerId: 23,
+      clientX: 268,
+      clientY: 208,
+      button: 0,
+      buttons: 0,
+    });
+
+    expect(onConnectorHover).not.toHaveBeenCalled();
+  });
+
+  it('captures a fresh tooltip payload when tapping a new connector while another is pinned', () => {
+    const node = buildNode();
+    const onConnectorHover = vi.fn();
+    const setPinnedConnectorKey = vi.fn();
+    const { container } = render(
+      <svg>
+        <CanvasSvgNodePorts
+          node={node}
+          incomingEdgePortSet={new Set<string>()}
+          hoveredConnectorKey={null}
+          pinnedConnectorKey='output:node-other:result'
+          connectorHitRadius={16}
+          showPortLabels={false}
+          buildConnectorKey={(
+            direction: 'input' | 'output',
+            nodeId: string,
+            port: string
+          ): string => `${direction}:${nodeId}:${port}`}
+          onReconnectInput={vi.fn()}
+          onCompleteConnection={vi.fn()}
+          onDisconnectPort={vi.fn()}
+          onStartConnection={vi.fn()}
+          setHoveredConnectorKey={vi.fn()}
+          onConnectorHover={onConnectorHover}
+          onConnectorLeave={vi.fn()}
+          getConnectorInfo={vi.fn(() => ({
+            direction: 'output' as 'output' | 'input',
+            nodeId: node.id,
+            port: 'result',
+            expectedTypes: ['string'] as PortDataType[],
+            expectedLabel: 'string',
+            rawValue: 'ok',
+            value: 'ok',
+            isHistory: false,
+            historyLength: 0,
+            actualType: 'string',
+            runtimeMismatch: false,
+            connectionMismatches: [],
+            hasMismatch: false,
+            nodeInputs: {},
+            nodeOutputs: { result: 'ok' },
+          }))}
+          setPinnedConnectorKey={setPinnedConnectorKey}
+        />
+      </svg>
+    );
+
+    const outputPort = container.querySelector('circle[data-port="output"]');
+    expect(outputPort).toBeTruthy();
+    if (!outputPort) return;
+
+    fireEvent.pointerDown(outputPort, {
+      pointerId: 24,
+      clientX: 240,
+      clientY: 180,
+      button: 0,
+      buttons: 1,
+    });
+    fireEvent.pointerUp(outputPort, {
+      pointerId: 24,
+      clientX: 240,
+      clientY: 180,
+      button: 0,
+      buttons: 0,
+    });
+
+    expect(onConnectorHover).toHaveBeenCalledTimes(1);
+    expect(setPinnedConnectorKey).toHaveBeenCalledWith('output:node-preview:result');
+  });
+
   it('renders wire flow when the target node is in running status', () => {
     const sourceNode = buildNode({
       id: 'node-running-source',

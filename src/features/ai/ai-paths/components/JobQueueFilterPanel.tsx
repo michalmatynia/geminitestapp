@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { useJobQueueContext } from './JobQueueContext';
+import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
 import { FilterPanel } from '@/shared/ui';
 import type { FilterField } from '@/shared/ui/templates/panels';
 
@@ -18,16 +18,8 @@ const STATUS_FILTERS = [
 ];
 
 export function JobQueueFilterPanel(): React.JSX.Element {
-  const {
-    pathFilter,
-    setPathFilter,
-    statusFilter,
-    setStatusFilter,
-    pageSize,
-    setPageSize,
-    searchQuery,
-    setSearchQuery,
-  } = useJobQueueContext();
+  const { pathFilter, statusFilter, pageSize, searchQuery } = useJobQueueState();
+  const { setPathFilter, setStatusFilter, setPageSize, setSearchQuery } = useJobQueueActions();
 
   const filterConfig = useMemo<FilterField[]>(
     () => [

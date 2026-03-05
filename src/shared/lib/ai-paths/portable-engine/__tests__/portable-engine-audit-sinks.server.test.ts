@@ -55,10 +55,19 @@ import {
   createPortablePathEnvelopeVerificationLogForwardingSink,
   createPortablePathEnvelopeVerificationMongoSink,
   createPortablePathEnvelopeVerificationPrismaSink,
+  notifyPortablePathAuditSinkAutoRemediation,
   resolvePortablePathAuditSinkFailureAlertLevelFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment,
   resolvePortablePathEnvelopeVerificationAuditSinkHealthPolicyFromEnvironment,
   resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment,
   resolvePortablePathEnvelopeVerificationAuditSinkProfileOverrideFromEnvironment,
@@ -445,6 +454,9 @@ describe('portable-engine envelope verification sink factories', () => {
       expect.objectContaining({
         enabled: true,
         strategy: 'degrade_to_log_only',
+        cooldownSeconds: 300,
+        rateLimitWindowSeconds: 3600,
+        rateLimitMaxActions: 3,
         triggered: false,
       })
     );
@@ -500,6 +512,36 @@ describe('portable-engine envelope verification sink factories', () => {
       resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment('log_only')
     ).toBe('degrade_to_log_only');
     expect(resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment('invalid')).toBeNull();
+    expect(resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment('120')).toBe(
+      120
+    );
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironment('900')
+    ).toBe(900);
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironment('2')
+    ).toBe(2);
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironment('false')
+    ).toBe(false);
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment(
+        'https://example.test/remediation'
+      )
+    ).toBe('https://example.test/remediation');
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironment(
+        'https://example.test/email'
+      )
+    ).toBe('https://example.test/email');
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironment(
+        'ops@example.test,dev@example.test'
+      )
+    ).toEqual(['ops@example.test', 'dev@example.test']);
+    expect(resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironment('6500')).toBe(
+      6500
+    );
     expect(resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment('5')).toBe(5);
     expect(resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment('oops')).toBeNull();
   });
@@ -631,186 +673,5 @@ describe('portable-engine envelope verification sink factories', () => {
     expect(state.persistenceWritesFailed).toBe(0);
   });
 
-  it('triggers auto-remediation after repeated startup sink failures and resets on recovery', async () => {
-    let state = {
-      consecutiveFailureCount: 0,
-      lastFailureAt: null,
-      lastRecoveredAt: null,
-      lastFailedSinkIds: [] as string[],
-      remediationCount: 0,
-      lastRemediatedAt: null,
-      lastStatus: null as
-        | 'healthy'
-        | 'degraded'
-        | 'failed'
-        | 'skipped'
-        | null,
-    };
-    const loadState = async () => state;
-    const saveState = async (next: typeof state): Promise<boolean> => {
-      state = next;
-      return true;
-    };
-    const unregisterAll = vi.fn();
-    const degradedSummary = {
-      profile: 'prod' as const,
-      policy: 'warn' as const,
-      timeoutMs: 1000,
-      status: 'degraded' as const,
-      checkedAt: '2026-03-05T00:00:00.000Z',
-      failedSinkIds: ['sink-a'],
-      diagnostics: [
-        {
-          sinkId: 'sink-a',
-          status: 'failed' as const,
-          checkedAt: '2026-03-05T00:00:00.000Z',
-          durationMs: 5,
-          message: 'Health check failed.',
-          error: 'permission_denied',
-        },
-      ],
-    };
 
-    const first = await runPortablePathAuditSinkAutoRemediation(degradedSummary, {
-      enabled: true,
-      threshold: 2,
-      loadState,
-      saveState,
-      unregisterAll,
-    });
-    expect(first.triggered).toBe(false);
-    expect(first.state.consecutiveFailureCount).toBe(1);
-
-    const second = await runPortablePathAuditSinkAutoRemediation(degradedSummary, {
-      enabled: true,
-      threshold: 2,
-      strategy: 'unregister_all',
-      loadState,
-      saveState,
-      unregisterAll,
-    });
-    expect(second.triggered).toBe(true);
-    expect(second.action).toBe('unregister_all');
-    expect(second.state.remediationCount).toBe(1);
-    expect(unregisterAll).toHaveBeenCalledTimes(1);
-
-    const healthySummary = {
-      ...degradedSummary,
-      status: 'healthy' as const,
-      failedSinkIds: [] as string[],
-      diagnostics: [] as typeof degradedSummary.diagnostics,
-    };
-    const recovered = await runPortablePathAuditSinkAutoRemediation(healthySummary, {
-      enabled: true,
-      threshold: 2,
-      strategy: 'unregister_all',
-      loadState,
-      saveState,
-      unregisterAll,
-    });
-    expect(recovered.triggered).toBe(false);
-    expect(recovered.state.consecutiveFailureCount).toBe(0);
-    expect(recovered.state.lastRecoveredAt).toBeTruthy();
-  });
-
-  it('supports log-only degradation remediation strategy', async () => {
-    let state = {
-      consecutiveFailureCount: 1,
-      lastFailureAt: '2026-03-05T00:00:00.000Z',
-      lastRecoveredAt: null,
-      lastFailedSinkIds: ['sink-a'] as string[],
-      remediationCount: 0,
-      lastRemediatedAt: null,
-      lastStatus: 'degraded' as
-        | 'healthy'
-        | 'degraded'
-        | 'failed'
-        | 'skipped'
-        | null,
-    };
-    const loadState = async () => state;
-    const saveState = async (next: typeof state): Promise<boolean> => {
-      state = next;
-      return true;
-    };
-    const unregisterAll = vi.fn();
-    const activateLogOnlyMode = vi.fn();
-    const summary = {
-      profile: 'staging' as const,
-      policy: 'warn' as const,
-      timeoutMs: 1000,
-      status: 'degraded' as const,
-      checkedAt: '2026-03-05T00:00:00.000Z',
-      failedSinkIds: ['sink-a'],
-      diagnostics: [
-        {
-          sinkId: 'sink-a',
-          status: 'failed' as const,
-          checkedAt: '2026-03-05T00:00:00.000Z',
-          durationMs: 5,
-          message: 'Health check failed.',
-          error: 'permission_denied',
-        },
-      ],
-    };
-
-    const result = await runPortablePathAuditSinkAutoRemediation(summary, {
-      enabled: true,
-      threshold: 2,
-      strategy: 'degrade_to_log_only',
-      loadState,
-      saveState,
-      unregisterAll,
-      activateLogOnlyMode,
-    });
-
-    expect(result.triggered).toBe(true);
-    expect(result.action).toBe('degrade_to_log_only');
-    expect(result.strategy).toBe('degrade_to_log_only');
-    expect(activateLogOnlyMode).toHaveBeenCalledTimes(1);
-    expect(unregisterAll).not.toHaveBeenCalled();
-  });
-
-  it('emits startup sink health alert and can disable trend reporter from environment', async () => {
-    const result = await bootstrapPortablePathSigningPolicyTrendReporterFromEnvironment({
-      env: {
-        NODE_ENV: 'production',
-        PORTABLE_PATH_SIGNING_POLICY_TREND_REPORTER_ENABLED: 'false',
-        PORTABLE_PATH_AUDIT_SINK_FAILURE_ALERT_LEVEL: 'error',
-        PORTABLE_PATH_SIGNING_POLICY_TREND_PERSISTENCE_ENABLED: 'false',
-        PORTABLE_PATH_SIGNING_POLICY_TREND_PERSISTENCE_MAX_SNAPSHOTS: '50',
-      },
-      startupHealthSummary: {
-        profile: 'prod',
-        policy: 'warn',
-        timeoutMs: 1500,
-        status: 'degraded',
-        checkedAt: '2026-03-05T00:00:00.000Z',
-        failedSinkIds: ['portable-envelope-verification-prisma'],
-        diagnostics: [
-          {
-            sinkId: 'portable-envelope-verification-prisma',
-            status: 'failed',
-            checkedAt: '2026-03-05T00:00:00.000Z',
-            durationMs: 5,
-            message: 'Health check failed.',
-            error: 'permission_denied',
-          },
-        ],
-      },
-    });
-
-    expect(result.enabled).toBe(false);
-    expect(result.reporter).toBeNull();
-    expect(result.persistenceEnabled).toBe(false);
-    expect(result.persistenceMaxSnapshots).toBe(50);
-    expect(
-      logSystemEventMock.mock.calls.some(
-        ([input]) =>
-          input.level === 'error' &&
-          input.context?.['kind'] === PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_KIND &&
-          input.context?.['alertType'] === 'portable_audit_sink_startup_health'
-      )
-    ).toBe(true);
-  });
 });

@@ -1,5 +1,3 @@
-'use client';
-
 export type FolderTreeRuntimeInstanceInfo = {
   id: string;
   getNodeCount: () => number;

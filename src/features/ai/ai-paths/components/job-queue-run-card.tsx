@@ -38,7 +38,7 @@ import {
 import { RunningIndicator } from './job-queue-running-indicator';
 import { extractPlaywrightArtifactsFromNode } from './playwright-artifacts';
 import { RunHistoryEntries } from './RunHistoryEntries';
-import { useJobQueueContext } from './JobQueueContext';
+import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
 import { buildHistoryNodeOptions } from './run-history-utils';
 
 type HistoryOption = {
@@ -61,14 +61,16 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
     streamStatuses,
     isCancelingRun,
     isDeletingRun,
+    historySelection,
+  } = useJobQueueState();
+  const {
     toggleRun,
     toggleStream,
     loadRunDetail,
     handleCancelRun,
     setRunToDelete,
-    historySelection,
     setHistorySelection,
-  } = useJobQueueContext();
+  } = useJobQueueActions();
 
   const isExpanded = expandedRunIds.has(runId);
   const detail = normalizeRunDetail(runDetails[runId]);

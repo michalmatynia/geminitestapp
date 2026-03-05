@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-03-05T05:38:57.351Z",
+  "generatedAt": "2026-03-05T05:33:07.969Z",
   "source": {
-    "totalFiles": 4192,
-    "totalLines": 672871,
+    "totalFiles": 4194,
+    "totalLines": 672460,
     "useClientFiles": 1310,
-    "filesOver800": 54,
-    "filesOver1000": 10,
+    "filesOver800": 55,
+    "filesOver1000": 11,
     "filesOver1500": 2,
     "largestFile": {
       "path": "src/shared/lib/ai-paths/portable-engine/index.ts",
@@ -220,8 +220,8 @@
     "featureSizeByLines": [
       {
         "feature": "ai",
-        "files": 835,
-        "lines": 172222
+        "files": 836,
+        "lines": 172036
       },
       {
         "feature": "case-resolver",
@@ -256,7 +256,7 @@
       {
         "feature": "foldertree",
         "files": 77,
-        "lines": 9482
+        "lines": 9484
       },
       {
         "feature": "filemaker",
@@ -335,8 +335,8 @@
       },
       {
         "feature": "jobs",
-        "files": 4,
-        "lines": 477
+        "files": 5,
+        "lines": 479
       },
       {
         "feature": "gsap",
@@ -366,7 +366,7 @@
       },
       {
         "path": "src/shared/lib/ai-paths/portable-engine/sinks.server.ts",
-        "lines": 2844
+        "lines": 2820
       },
       {
         "path": "src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts",
@@ -401,12 +401,12 @@
         "lines": 1052
       },
       {
-        "path": "src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts",
-        "lines": 986
+        "path": "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine-audit-sinks.server.test.ts",
+        "lines": 1049
       },
       {
-        "path": "src/features/ai/ai-paths/components/JobQueueContext.tsx",
-        "lines": 933
+        "path": "src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts",
+        "lines": 986
       },
       {
         "path": "src/app/api/image-studio/slots/[slotId]/autoscale/handler.test.ts",

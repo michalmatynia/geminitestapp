@@ -175,6 +175,17 @@ Resolver behavior:
     - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_ENABLED` (`true`/`false`)
     - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_THRESHOLD` (consecutive degraded/failed startups before remediation)
     - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_STRATEGY` (`none` | `unregister_all` | `degrade_to_log_only`)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_COOLDOWN_SECONDS` (minimum seconds between remediation actions)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_RATE_LIMIT_WINDOW_SECONDS` (rolling window length for remediation rate limiting)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_RATE_LIMIT_MAX_ACTIONS` (max remediation actions per window)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_NOTIFICATIONS_ENABLED` (`true`/`false`)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_WEBHOOK_URL` (JSON webhook for remediation alerts)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_EMAIL_WEBHOOK_URL` (email-relay webhook endpoint)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_EMAIL_RECIPIENTS` (comma-delimited recipients)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_NOTIFICATION_TIMEOUT_MS` (notification webhook timeout)
+  - Auto-remediation fan-out API:
+    - `notifyPortablePathAuditSinkAutoRemediation(input, { ... })`
+    - Supports webhook and email-relay webhook channels with retry/circuit protection.
   - Built-in server sink factories:
     - `createPortablePathEnvelopeVerificationLogForwardingSink(...)`
     - `createPortablePathEnvelopeVerificationPrismaSink(...)`
@@ -234,7 +245,7 @@ These allow stable package integrity tagging across copy/paste surfaces.
   - persisted signing-policy trend snapshots
   - aggregate drift/sink-failure summary
   - applied filter metadata + matched snapshot count
-  - auto-remediation runtime config + persisted remediation state
+  - auto-remediation runtime config (strategy/cooldown/rate-limit/notification channels) + persisted remediation state
 - Cache support: deterministic `ETag` + `If-None-Match` (`304 Not Modified`) with private SWR cache headers.
 - CI guardrail: `npm run ai-paths:check:portable-schema-diff -- --strict`
   - Uses `scripts/ai-paths/portable-schema-diff-allowlist.json`.
@@ -335,6 +346,6 @@ await bootstrapPortablePathSigningPolicyTrendReporterFromEnvironment({
 
 ## Next Hardening Steps
 
-1. Add alert fan-out integrations (webhook/email) for auto-remediation trigger events.
-2. Add per-strategy cooldown/rate limiting to prevent repeated remediation flapping during unstable startups.
+1. Add delivery receipts and dead-letter persistence for failed remediation notifications.
+2. Add signed webhook payload support (HMAC) for remediation fan-out endpoints.
 3. Add trend snapshot cursor pagination for large historical windows beyond single-request cap.

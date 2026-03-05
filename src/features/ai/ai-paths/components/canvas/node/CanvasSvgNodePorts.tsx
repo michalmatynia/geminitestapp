@@ -137,8 +137,10 @@ export function CanvasSvgNodePorts({
       direction: 'input' | 'output',
       nodeId: string,
       portName: string,
-      key: string
+      key: string,
+      options?: { force?: boolean }
     ): void => {
+      if (pinnedConnectorKey && !options?.force) return;
       setHoveredConnectorKey(key);
       onConnectorHover?.({
         clientX: event.clientX,
@@ -146,7 +148,24 @@ export function CanvasSvgNodePorts({
         info: getConnectorInfo(direction, nodeId, portName),
       });
     },
-    [getConnectorInfo, onConnectorHover, setHoveredConnectorKey]
+    [getConnectorInfo, onConnectorHover, pinnedConnectorKey, setHoveredConnectorKey]
+  );
+
+  const handleConnectorTap = React.useCallback(
+    (
+      event: React.PointerEvent<SVGCircleElement>,
+      direction: 'input' | 'output',
+      nodeId: string,
+      portName: string,
+      key: string,
+      isPinned: boolean
+    ): void => {
+      if (!isPinned) {
+        updateConnectorHover(event, direction, nodeId, portName, key, { force: true });
+      }
+      togglePinnedConnector(key, isPinned);
+    },
+    [togglePinnedConnector, updateConnectorHover]
   );
 
   React.useEffect(() => {
@@ -199,7 +218,7 @@ export function CanvasSvgNodePorts({
                 const isConnectorTap = consumeConnectorTap(event, key);
                 void onCompleteConnection(event, node, port);
                 if (isConnectorTap) {
-                  togglePinnedConnector(key, isPinned);
+                  handleConnectorTap(event, 'input', node.id, port, key, isPinned);
                 }
               }}
               onPointerMove={(event: React.PointerEvent<SVGCircleElement>) => {
@@ -242,7 +261,7 @@ export function CanvasSvgNodePorts({
                 const isConnectorTap = consumeConnectorTap(event, key);
                 void onCompleteConnection(event, node, port);
                 if (isConnectorTap) {
-                  togglePinnedConnector(key, isPinned);
+                  handleConnectorTap(event, 'input', node.id, port, key, isPinned);
                 }
               }}
               onPointerMove={(event: React.PointerEvent<SVGCircleElement>) => {
@@ -304,7 +323,7 @@ export function CanvasSvgNodePorts({
                 const isConnectorTap = consumeConnectorTap(event, key);
                 void onCompleteConnection(event, node, port);
                 if (isConnectorTap) {
-                  togglePinnedConnector(key, isPinned);
+                  handleConnectorTap(event, 'output', node.id, port, key, isPinned);
                 }
               }}
               onContextMenu={(event: React.MouseEvent<SVGCircleElement>) => {
@@ -347,7 +366,7 @@ export function CanvasSvgNodePorts({
                 const isConnectorTap = consumeConnectorTap(event, key);
                 void onCompleteConnection(event, node, port);
                 if (isConnectorTap) {
-                  togglePinnedConnector(key, isPinned);
+                  handleConnectorTap(event, 'output', node.id, port, key, isPinned);
                 }
               }}
               onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {

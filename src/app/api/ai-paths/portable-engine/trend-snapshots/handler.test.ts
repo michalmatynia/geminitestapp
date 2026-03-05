@@ -132,6 +132,10 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       lastFailedSinkIds: [],
       remediationCount: 1,
       lastRemediatedAt: '2026-03-04T23:00:00.000Z',
+      remediationWindowStartedAt: '2026-03-04T23:00:00.000Z',
+      remediationWindowActionCount: 1,
+      lastRemediationSkippedAt: null,
+      lastRemediationSkippedReason: null,
       lastStatus: 'healthy',
     });
     resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironmentMock

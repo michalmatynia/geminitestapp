@@ -6,7 +6,6 @@ import {
   getCaseResolverWorkspaceLatestTimestampMs,
   hasCaseResolverWorkspaceFilesArray,
   parseCaseResolverWorkspace,
-  parseNodeFileSnapshot,
 } from '@/features/case-resolver/settings';
 import {
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,

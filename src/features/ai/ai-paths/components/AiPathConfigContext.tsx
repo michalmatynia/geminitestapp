@@ -123,14 +123,11 @@ export const useAiPathOrchestrator = (): AiPathOrchestratorData => {
   return context;
 };
 
-// --- Aggregated Interface ---
-export interface AiPathConfigData
-  extends
-    AiPathSelectionData,
-    AiPathGraphData,
-    AiPathRuntimeData,
-    AiPathPresetsData,
-    AiPathOrchestratorData {}
+type AiPathConfigValue = AiPathSelectionData &
+  AiPathGraphData &
+  AiPathRuntimeData &
+  AiPathPresetsData &
+  AiPathOrchestratorData;
 
 const useAiPathConfigDefaults = () => {
   const orchestrator = useAiPathsSettingsOrchestrator();
@@ -241,7 +238,7 @@ const useAiPathConfigDefaults = () => {
 
 type AiPathConfigProviderProps = {
   children: React.ReactNode;
-  value: AiPathConfigData;
+  value: AiPathConfigValue;
 };
 
 export function AiPathConfigProvider({
@@ -263,7 +260,13 @@ export function AiPathConfigProvider({
 
 type AiPathConfigProviderWithContextProps = {
   children: React.ReactNode;
-  overrides?: Partial<AiPathConfigData>;
+  overrides?: {
+    selection?: Partial<AiPathSelectionData>;
+    graph?: Partial<AiPathGraphData>;
+    runtime?: Partial<AiPathRuntimeData>;
+    presets?: Partial<AiPathPresetsData>;
+    orchestrator?: Partial<AiPathOrchestratorData>;
+  };
 };
 
 export function AiPathConfigProviderWithContext({
@@ -272,26 +275,34 @@ export function AiPathConfigProviderWithContext({
 }: AiPathConfigProviderWithContextProps): React.ReactNode {
   const { selectionValue, graphValue, runtimeValue, presetsValue, orchestratorValue } =
     useAiPathConfigDefaults();
+  const selectionOverrides = overrides?.selection;
+  const graphOverrides = overrides?.graph;
+  const runtimeOverrides = overrides?.runtime;
+  const presetsOverrides = overrides?.presets;
+  const orchestratorOverrides = overrides?.orchestrator;
 
   const selection = useMemo(
-    () => (overrides ? { ...selectionValue, ...overrides } : selectionValue),
-    [selectionValue, overrides]
+    () => (selectionOverrides ? { ...selectionValue, ...selectionOverrides } : selectionValue),
+    [selectionValue, selectionOverrides]
   );
   const graph = useMemo(
-    () => (overrides ? { ...graphValue, ...overrides } : graphValue),
-    [graphValue, overrides]
+    () => (graphOverrides ? { ...graphValue, ...graphOverrides } : graphValue),
+    [graphValue, graphOverrides]
   );
   const runtime = useMemo(
-    () => (overrides ? { ...runtimeValue, ...overrides } : runtimeValue),
-    [runtimeValue, overrides]
+    () => (runtimeOverrides ? { ...runtimeValue, ...runtimeOverrides } : runtimeValue),
+    [runtimeValue, runtimeOverrides]
   );
   const presets = useMemo(
-    () => (overrides ? { ...presetsValue, ...overrides } : presetsValue),
-    [presetsValue, overrides]
+    () => (presetsOverrides ? { ...presetsValue, ...presetsOverrides } : presetsValue),
+    [presetsValue, presetsOverrides]
   );
   const orchestrator = useMemo(
-    () => (overrides ? { ...orchestratorValue, ...overrides } : orchestratorValue),
-    [orchestratorValue, overrides]
+    () =>
+      orchestratorOverrides
+        ? { ...orchestratorValue, ...orchestratorOverrides }
+        : orchestratorValue,
+    [orchestratorValue, orchestratorOverrides]
   );
 
   return (

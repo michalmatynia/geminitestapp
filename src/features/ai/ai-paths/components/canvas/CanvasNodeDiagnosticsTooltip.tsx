@@ -20,7 +20,7 @@ export function CanvasNodeDiagnosticsTooltip({
 }: CanvasNodeDiagnosticsTooltipProps): React.JSX.Element {
   return (
     <div
-      className='fixed z-[100] pointer-events-none transition-transform duration-75'
+      className='absolute z-[100] pointer-events-none transition-transform duration-75'
       style={{
         left: position.left,
         top: position.top,

@@ -24,6 +24,16 @@ type TrendSnapshotsPayload = {
     enabled: boolean;
     strategy: 'none' | 'unregister_all' | 'degrade_to_log_only';
     threshold: number;
+    cooldownSeconds: number;
+    rateLimitWindowSeconds: number;
+    rateLimitMaxActions: number;
+    notifications: {
+      enabled: boolean;
+      webhookConfigured: boolean;
+      emailWebhookConfigured: boolean;
+      emailRecipients: string[];
+      timeoutMs: number;
+    };
     state: {
       consecutiveFailureCount: number;
       remediationCount: number;
@@ -140,7 +150,14 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
             Latest snapshot: {formatTimestamp(data.summary.latestSnapshotAt)} | consecutive failures:{' '}
             {data.autoRemediation.state.consecutiveFailureCount} | remediations:{' '}
             {data.autoRemediation.state.remediationCount} | threshold:{' '}
-            {data.autoRemediation.threshold} | strategy: {data.autoRemediation.strategy}
+            {data.autoRemediation.threshold} | strategy: {data.autoRemediation.strategy} |
+            cooldown: {data.autoRemediation.cooldownSeconds}s | rate limit:{' '}
+            {data.autoRemediation.rateLimitMaxActions}/
+            {data.autoRemediation.rateLimitWindowSeconds}s
+            {' | '}notify:{' '}
+            {data.autoRemediation.notifications.enabled
+              ? `on (webhook=${data.autoRemediation.notifications.webhookConfigured ? 'yes' : 'no'}, email=${data.autoRemediation.notifications.emailWebhookConfigured ? 'yes' : 'no'})`
+              : 'off'}
           </div>
 
           {latestSnapshots.length === 0 ? (

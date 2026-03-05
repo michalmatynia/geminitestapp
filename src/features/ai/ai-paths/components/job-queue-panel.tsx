@@ -3,7 +3,7 @@
 import React from 'react';
 import { ConfirmModal } from '@/shared/ui';
 import type { AiPathRunVisibility } from '@/shared/lib/ai-paths';
-import { JobQueueProvider, useJobQueueContext } from './JobQueueContext';
+import { JobQueueProvider, useJobQueueActions, useJobQueueState } from './JobQueueContext';
 import { JobQueueControls } from './JobQueueControls';
 import { JobQueueOverview } from './job-queue-overview';
 import { JobQueueFilterPanel } from './JobQueueFilterPanel';
@@ -17,18 +17,20 @@ function JobQueuePanelInner(): React.JSX.Element {
     autoRefreshEnabled,
     autoRefreshInterval,
     showMetricsPanel,
-    setShowMetricsPanel,
-    setQueueHistory,
     clearScope,
-    setClearScope,
-    handleClearRuns,
-    isClearingRuns,
     runToDelete,
-    setRunToDelete,
-    handleDeleteRun,
     isDeletingRun,
     isLoadingQueueStatus,
-  } = useJobQueueContext();
+    isClearingRuns,
+  } = useJobQueueState();
+  const {
+    setShowMetricsPanel,
+    setQueueHistory,
+    setClearScope,
+    handleClearRuns,
+    setRunToDelete,
+    handleDeleteRun,
+  } = useJobQueueActions();
 
   return (
     <div className='space-y-4'>

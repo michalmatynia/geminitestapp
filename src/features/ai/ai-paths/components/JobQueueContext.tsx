@@ -107,6 +107,32 @@ export type JobQueueContextValue = {
   loadRunDetail: (runId: string) => Promise<void>;
 };
 
+type JobQueueActionKey =
+  | 'setPathFilter'
+  | 'setSearchQuery'
+  | 'setStatusFilter'
+  | 'setPageSize'
+  | 'setPage'
+  | 'toggleRun'
+  | 'setHistorySelection'
+  | 'toggleStream'
+  | 'pauseAllStreams'
+  | 'resumeAllStreams'
+  | 'setAutoRefreshEnabled'
+  | 'setAutoRefreshInterval'
+  | 'setShowMetricsPanel'
+  | 'setQueueHistory'
+  | 'setClearScope'
+  | 'setRunToDelete'
+  | 'refetchQueueData'
+  | 'handleClearRuns'
+  | 'handleCancelRun'
+  | 'handleDeleteRun'
+  | 'loadRunDetail';
+
+export type JobQueueActionsValue = Pick<JobQueueContextValue, JobQueueActionKey>;
+export type JobQueueStateValue = Omit<JobQueueContextValue, JobQueueActionKey>;
+
 // ─── constants ────────────────────────────────────────────────────────────────
 
 const AUTO_REFRESH_ENABLED_KEY = 'ai-paths-job-queue-auto-refresh-enabled';
@@ -120,7 +146,8 @@ const BURST_REFRESH_WINDOW_MS = 15_000;
 const QUEUE_LAG_THRESHOLD_KEY = 'ai_paths_queue_lag_threshold_ms';
 const AI_PATH_RUN_QUEUE_CHANNEL = 'ai-path-queue';
 
-const JobQueueContext = createContext<JobQueueContextValue | null>(null);
+const JobQueueStateContext = createContext<JobQueueStateValue | null>(null);
+const JobQueueActionsContext = createContext<JobQueueActionsValue | null>(null);
 
 export function JobQueueProvider({
   children,
@@ -718,45 +745,68 @@ export function JobQueueProvider({
     });
   }, [expandedRunIds, pausedStreams, runDetails]);
 
-  const value: JobQueueContextValue = useMemo(
-    (): JobQueueContextValue => ({
+  const toggleRun = useCallback(
+    (runId: string): void => {
+      void handleToggleRun(runId);
+    },
+    [handleToggleRun]
+  );
+  const setHistorySelectionForRun = useCallback(
+    (runId: string, nodeId: string): void => {
+      setHistorySelection((prev) => ({ ...prev, [runId]: nodeId }));
+    },
+    []
+  );
+  const isCancelingRun = useCallback(
+    (id: string): boolean => cancelRunMutation.isPending && cancelRunMutation.variables === id,
+    [cancelRunMutation.isPending, cancelRunMutation.variables]
+  );
+  const isDeletingRun = useCallback(
+    (id: string): boolean => deleteRunMutation.isPending && deleteRunMutation.variables === id,
+    [deleteRunMutation.isPending, deleteRunMutation.variables]
+  );
+  const refetchQueueDataAction = useCallback((): void => {
+    refetchQueueData({ fresh: true, markBurst: true });
+  }, [refetchQueueData]);
+  const handleClearRuns = useCallback(
+    async (scope: 'terminal' | 'all'): Promise<void> => {
+      await clearRunsMutation.mutateAsync(scope);
+    },
+    [clearRunsMutation.mutateAsync]
+  );
+  const handleCancelRun = useCallback(
+    async (id: string): Promise<void> => {
+      await cancelRunMutation.mutateAsync(id);
+    },
+    [cancelRunMutation.mutateAsync]
+  );
+  const handleDeleteRun = useCallback(
+    async (id: string): Promise<void> => {
+      await deleteRunMutation.mutateAsync(id);
+    },
+    [deleteRunMutation.mutateAsync]
+  );
+
+  const stateValue: JobQueueStateValue = useMemo(
+    (): JobQueueStateValue => ({
       pathFilter,
-      setPathFilter,
       searchQuery,
-      setSearchQuery,
       statusFilter,
-      setStatusFilter,
       pageSize,
-      setPageSize,
       page,
-      setPage,
       expandedRunIds,
-      toggleRun: (runId: string) => {
-        void handleToggleRun(runId);
-      },
       runDetails,
       runDetailLoading,
       runDetailErrors,
       historySelection,
-      setHistorySelection: (runId: string, nodeId: string) =>
-        setHistorySelection((prev) => ({ ...prev, [runId]: nodeId })),
       streamStatuses,
       pausedStreams,
-      toggleStream: handleToggleStream,
-      pauseAllStreams,
-      resumeAllStreams,
       autoRefreshEnabled,
-      setAutoRefreshEnabled,
       autoRefreshInterval,
-      setAutoRefreshInterval,
       showMetricsPanel,
-      setShowMetricsPanel,
       queueHistory,
-      setQueueHistory,
       clearScope,
-      setClearScope,
       runToDelete,
-      setRunToDelete,
       panelLabel: getPanelLabel(sourceFilter, sourceMode),
       panelDescription: getPanelDescription(sourceFilter, sourceMode),
       lagThresholdMs: Number(heavyMap.get(QUEUE_LAG_THRESHOLD_KEY)) || 60000,
@@ -768,23 +818,8 @@ export function JobQueueProvider({
       isLoadingQueueStatus: queueStatusQuery.isLoading,
       runsQueryError: runsQuery.error,
       isClearingRuns: clearRunsMutation.isPending,
-      isCancelingRun: (id: string) =>
-        cancelRunMutation.isPending && cancelRunMutation.variables === id,
-      isDeletingRun: (id: string) =>
-        deleteRunMutation.isPending && deleteRunMutation.variables === id,
-      refetchQueueData: () => {
-        refetchQueueData({ fresh: true, markBurst: true });
-      },
-      handleClearRuns: async (scope: 'terminal' | 'all') => {
-        await clearRunsMutation.mutateAsync(scope);
-      },
-      handleCancelRun: async (id: string) => {
-        await cancelRunMutation.mutateAsync(id);
-      },
-      handleDeleteRun: async (id: string) => {
-        await deleteRunMutation.mutateAsync(id);
-      },
-      loadRunDetail,
+      isCancelingRun,
+      isDeletingRun,
     }),
     [
       pathFilter,
@@ -801,7 +836,6 @@ export function JobQueueProvider({
       pausedStreams,
       autoRefreshEnabled,
       autoRefreshInterval,
-      setAutoRefreshInterval,
       showMetricsPanel,
       queueHistory,
       clearScope,
@@ -816,23 +850,77 @@ export function JobQueueProvider({
       queueStatusQuery.data,
       queueStatusQuery.isLoading,
       clearRunsMutation.isPending,
-      cancelRunMutation.isPending,
-      cancelRunMutation.variables,
-      deleteRunMutation.isPending,
-      deleteRunMutation.variables,
-      refetchQueueData,
-      clearRunsMutation.mutateAsync,
-      cancelRunMutation.mutateAsync,
-      deleteRunMutation.mutateAsync,
+      isCancelingRun,
+      isDeletingRun,
+    ]
+  );
+
+  const actionsValue: JobQueueActionsValue = useMemo(
+    (): JobQueueActionsValue => ({
+      setPathFilter,
+      setSearchQuery,
+      setStatusFilter,
+      setPageSize,
+      setPage,
+      toggleRun,
+      setHistorySelection: setHistorySelectionForRun,
+      toggleStream: handleToggleStream,
+      pauseAllStreams,
+      resumeAllStreams,
+      setAutoRefreshEnabled,
+      setAutoRefreshInterval,
+      setShowMetricsPanel,
+      setQueueHistory,
+      setClearScope,
+      setRunToDelete,
+      refetchQueueData: refetchQueueDataAction,
+      handleClearRuns,
+      handleCancelRun,
+      handleDeleteRun,
+      loadRunDetail,
+    }),
+    [
+      setPathFilter,
+      setSearchQuery,
+      setStatusFilter,
+      setPageSize,
+      setPage,
+      toggleRun,
+      setHistorySelectionForRun,
+      handleToggleStream,
+      pauseAllStreams,
+      resumeAllStreams,
+      setAutoRefreshEnabled,
+      setAutoRefreshInterval,
+      setShowMetricsPanel,
+      setQueueHistory,
+      setClearScope,
+      setRunToDelete,
+      refetchQueueDataAction,
+      handleClearRuns,
+      handleCancelRun,
+      handleDeleteRun,
       loadRunDetail,
     ]
   );
 
-  return <JobQueueContext.Provider value={value}>{children}</JobQueueContext.Provider>;
+  return (
+    <JobQueueStateContext.Provider value={stateValue}>
+      <JobQueueActionsContext.Provider value={actionsValue}>
+        {children}
+      </JobQueueActionsContext.Provider>
+    </JobQueueStateContext.Provider>
+  );
 }
 
-export function useJobQueueContext() {
-  const ctx = useContext(JobQueueContext);
-  if (!ctx) throw internalError('useJobQueueContext must be used within JobQueueProvider');
+export function useJobQueueState(): JobQueueStateValue {
+  const ctx = useContext(JobQueueStateContext);
+  if (!ctx) throw internalError('useJobQueueState must be used within JobQueueProvider');
+  return ctx;
+}
+
+export function useJobQueueActions(): JobQueueActionsValue {
+  const ctx = useContext(JobQueueActionsContext);
+  if (!ctx) throw internalError('useJobQueueActions must be used within JobQueueProvider');
   return ctx;
 }

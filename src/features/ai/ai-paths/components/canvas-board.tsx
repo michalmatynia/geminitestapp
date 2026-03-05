@@ -22,7 +22,8 @@ import {
 import type { ConnectorInfo } from './canvas-board-connectors';
 
 const CONNECTOR_HIT_TARGET_PX = 14;
-const CONNECTOR_TOOLTIP_POINTER_OFFSET_PX = 6;
+const CONNECTOR_TOOLTIP_POINTER_OFFSET_PX = 0;
+const NODE_DIAGNOSTICS_TOOLTIP_POINTER_OFFSET_PX = 2;
 
 const shouldIgnoreCanvasPanStart = (target: EventTarget | null): boolean => {
   if (!(target instanceof Element)) return false;
@@ -368,6 +369,24 @@ export function CanvasBoard({
     );
   }, [resolveConnectorTooltip, state.nodeById, svgConnectorTooltip]);
 
+  const resolveTooltipPosition = React.useCallback(
+    (clientX: number, clientY: number, offsetPx: number): { left: number; top: number } => {
+      const canvasRect = canvasRef.current?.getBoundingClientRect();
+      if (!canvasRect) {
+        return {
+          left: clientX + offsetPx,
+          top: clientY + offsetPx,
+        };
+      }
+
+      return {
+        left: clientX - canvasRect.left + offsetPx,
+        top: clientY - canvasRect.top + offsetPx,
+      };
+    },
+    [canvasRef]
+  );
+
   return (
     <CanvasBoardUIProvider value={canvasInteractions}>
       <div
@@ -446,20 +465,22 @@ export function CanvasBoard({
             {svgConnectorTooltip && (
               <CanvasConnectorTooltip
                 tooltip={svgConnectorTooltip}
-                position={{
-                  left: svgConnectorTooltip.clientX + CONNECTOR_TOOLTIP_POINTER_OFFSET_PX,
-                  top: svgConnectorTooltip.clientY + CONNECTOR_TOOLTIP_POINTER_OFFSET_PX,
-                }}
+                position={resolveTooltipPosition(
+                  svgConnectorTooltip.clientX,
+                  svgConnectorTooltip.clientY,
+                  CONNECTOR_TOOLTIP_POINTER_OFFSET_PX
+                )}
                 override={connectorTooltipOverride}
               />
             )}
             {svgNodeDiagnosticsTooltip && (
               <CanvasNodeDiagnosticsTooltip
                 tooltip={svgNodeDiagnosticsTooltip}
-                position={{
-                  left: svgNodeDiagnosticsTooltip.clientX + 12,
-                  top: svgNodeDiagnosticsTooltip.clientY + 12,
-                }}
+                position={resolveTooltipPosition(
+                  svgNodeDiagnosticsTooltip.clientX,
+                  svgNodeDiagnosticsTooltip.clientY,
+                  NODE_DIAGNOSTICS_TOOLTIP_POINTER_OFFSET_PX
+                )}
                 nodeTitle={
                   state.nodeById.get(svgNodeDiagnosticsTooltip.nodeId)?.title ||
                   svgNodeDiagnosticsTooltip.nodeId

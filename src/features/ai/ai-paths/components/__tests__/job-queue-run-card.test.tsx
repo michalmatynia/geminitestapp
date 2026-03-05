@@ -2,15 +2,21 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { JobQueueContextValue } from '@/features/ai/ai-paths/components/JobQueueContext';
+import type {
+  JobQueueActionsValue,
+  JobQueueContextValue,
+  JobQueueStateValue,
+} from '@/features/ai/ai-paths/components/JobQueueContext';
 import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
 
-const { useJobQueueContextMock } = vi.hoisted(() => ({
-  useJobQueueContextMock: vi.fn(),
+const { useJobQueueStateMock, useJobQueueActionsMock } = vi.hoisted(() => ({
+  useJobQueueStateMock: vi.fn(),
+  useJobQueueActionsMock: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/components/JobQueueContext', () => ({
-  useJobQueueContext: (...args: unknown[]) => useJobQueueContextMock(...args),
+  useJobQueueState: (...args: unknown[]) => useJobQueueStateMock(...args),
+  useJobQueueActions: (...args: unknown[]) => useJobQueueActionsMock(...args),
 }));
 
 import { JobQueueRunCard } from '../job-queue-run-card';
@@ -82,10 +88,65 @@ const buildContextValue = (): JobQueueContextValue =>
     loadRunDetail: async () => {},
   }) as JobQueueContextValue;
 
+const toActionsValue = (value: JobQueueContextValue): JobQueueActionsValue => ({
+  setPathFilter: value.setPathFilter,
+  setSearchQuery: value.setSearchQuery,
+  setStatusFilter: value.setStatusFilter,
+  setPageSize: value.setPageSize,
+  setPage: value.setPage,
+  toggleRun: value.toggleRun,
+  setHistorySelection: value.setHistorySelection,
+  toggleStream: value.toggleStream,
+  pauseAllStreams: value.pauseAllStreams,
+  resumeAllStreams: value.resumeAllStreams,
+  setAutoRefreshEnabled: value.setAutoRefreshEnabled,
+  setAutoRefreshInterval: value.setAutoRefreshInterval,
+  setShowMetricsPanel: value.setShowMetricsPanel,
+  setQueueHistory: value.setQueueHistory,
+  setClearScope: value.setClearScope,
+  setRunToDelete: value.setRunToDelete,
+  refetchQueueData: value.refetchQueueData,
+  handleClearRuns: value.handleClearRuns,
+  handleCancelRun: value.handleCancelRun,
+  handleDeleteRun: value.handleDeleteRun,
+  loadRunDetail: value.loadRunDetail,
+});
+
+const toStateValue = (value: JobQueueContextValue): JobQueueStateValue => {
+  const {
+    setPathFilter: _setPathFilter,
+    setSearchQuery: _setSearchQuery,
+    setStatusFilter: _setStatusFilter,
+    setPageSize: _setPageSize,
+    setPage: _setPage,
+    toggleRun: _toggleRun,
+    setHistorySelection: _setHistorySelection,
+    toggleStream: _toggleStream,
+    pauseAllStreams: _pauseAllStreams,
+    resumeAllStreams: _resumeAllStreams,
+    setAutoRefreshEnabled: _setAutoRefreshEnabled,
+    setAutoRefreshInterval: _setAutoRefreshInterval,
+    setShowMetricsPanel: _setShowMetricsPanel,
+    setQueueHistory: _setQueueHistory,
+    setClearScope: _setClearScope,
+    setRunToDelete: _setRunToDelete,
+    refetchQueueData: _refetchQueueData,
+    handleClearRuns: _handleClearRuns,
+    handleCancelRun: _handleCancelRun,
+    handleDeleteRun: _handleDeleteRun,
+    loadRunDetail: _loadRunDetail,
+    ...state
+  } = value;
+  return state;
+};
+
 describe('JobQueueRunCard status pills', () => {
   beforeEach(() => {
-    useJobQueueContextMock.mockReset();
-    useJobQueueContextMock.mockReturnValue(buildContextValue());
+    const contextValue = buildContextValue();
+    useJobQueueStateMock.mockReset();
+    useJobQueueActionsMock.mockReset();
+    useJobQueueStateMock.mockReturnValue(toStateValue(contextValue));
+    useJobQueueActionsMock.mockReturnValue(toActionsValue(contextValue));
   });
 
   it('renders only dotted running indicator for running runs', () => {

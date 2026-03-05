@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Trash2 } from 'lucide-react';
-import { useJobQueueContext } from './JobQueueContext';
+import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
 import { JOB_QUEUE_AUTO_REFRESH_INTERVAL_OPTIONS } from './job-queue-auto-refresh';
 import { Button, Hint, Label, SelectSimple } from '@/shared/ui';
 
@@ -10,18 +10,20 @@ export function JobQueueControls(): React.JSX.Element {
   const {
     panelLabel,
     panelDescription,
-    refetchQueueData,
     isLoadingRuns,
-    setClearScope,
     isClearingRuns,
     autoRefreshEnabled,
-    setAutoRefreshEnabled,
     autoRefreshInterval,
+    expandedRunIds,
+  } = useJobQueueState();
+  const {
+    refetchQueueData,
+    setClearScope,
+    setAutoRefreshEnabled,
     setAutoRefreshInterval,
     pauseAllStreams,
     resumeAllStreams,
-    expandedRunIds,
-  } = useJobQueueContext();
+  } = useJobQueueActions();
 
   return (
     <div className='space-y-4'>

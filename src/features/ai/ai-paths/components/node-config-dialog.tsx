@@ -136,10 +136,16 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
   );
   const configContextOverrides = useMemo(
     () => ({
-      selectedNode: draftSelectedNode,
-      nodes: nodesForConfig,
-      updateSelectedNode: updateDraftNode,
-      updateSelectedNodeConfig: updateDraftConfig,
+      selection: {
+        selectedNode: draftSelectedNode,
+      },
+      graph: {
+        nodes: nodesForConfig,
+      },
+      orchestrator: {
+        updateSelectedNode: updateDraftNode,
+        updateSelectedNodeConfig: updateDraftConfig,
+      },
     }),
     [draftSelectedNode, nodesForConfig, updateDraftNode, updateDraftConfig]
   );

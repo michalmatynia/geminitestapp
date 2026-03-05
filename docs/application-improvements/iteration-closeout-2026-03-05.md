@@ -28,6 +28,7 @@ Date: 2026-03-05
 22. CI trend-index artifact summary links (Step 22) - completed
 23. Weekly duration recalibration automation (Step 23) - completed
 24. Lint-domain full test-tree support (Step 24) - completed
+25. Accessibility warning-budget enforcement decision (Step 25) - completed
 
 ## Gate Status Snapshot
 
@@ -53,6 +54,7 @@ Date: 2026-03-05
 - CI trend-index summary links: PASS (weekly workflow publishes direct artifact links in job summary)
 - Weekly duration recalibration report: PENDING (`0/12` checks ready; insufficient history for budget deltas)
 - Lint-domain full test-tree mode: PARTIAL (`2/5` pass; parser/config support complete, remaining failures are lint debt)
+- Accessibility warning-budget enforcement mode: PASS (telemetry default + opt-in strict fail-on-exceed)
 
 ## Current Risks Captured by Baseline
 
@@ -67,4 +69,3 @@ Date: 2026-03-05
 
 1. Apply weekly duration budget updates once recalibration status reaches `ready` (>=8 pass samples per check).
 2. Stabilize lint-domain full test-tree mode to `5/5` pass before promoting it to strict CI gating.
-3. Decide whether accessibility warning budget should eventually become fail-on-exceed in strict mode.

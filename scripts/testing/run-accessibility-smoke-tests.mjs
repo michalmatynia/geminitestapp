@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process';
 
 const args = new Set(process.argv.slice(2));
 const strictMode = args.has('--strict');
+const failOnWarningBudgetExceed = args.has('--fail-on-warning-budget-exceed');
 const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
 const warningBudgetArg = [...args].find((arg) => arg.startsWith('--warning-budget='));
 const warningBudget = Number.parseInt(warningBudgetArg?.split('=')[1] ?? '10', 10);
@@ -123,6 +124,7 @@ const toMarkdown = (payload) => {
   lines.push(`- React act warnings: ${payload.summary.actWarnings}`);
   lines.push(`- Warning budget: ${payload.summary.warningBudget}`);
   lines.push(`- Warning budget status: ${payload.summary.warningBudgetStatus}`);
+  lines.push(`- Warning budget enforcement: ${payload.summary.warningBudgetEnforcement}`);
   lines.push('');
   lines.push('## Suite Status');
   lines.push('');
@@ -146,7 +148,7 @@ const toMarkdown = (payload) => {
   lines.push('');
   lines.push('- This smoke suite tracks keyboard/focus/label accessibility checks across critical user flows.');
   lines.push('- Run `npm run test:accessibility-smoke` before UI-facing changes.');
-  lines.push('- React act warnings are tracked as non-failing telemetry for accessibility test hygiene.');
+  lines.push('- Use `--fail-on-warning-budget-exceed` in strict mode to fail when warning budget is exceeded.');
   return `${lines.join('\n')}\n`;
 };
 
@@ -167,6 +169,7 @@ const run = async () => {
     actWarnings: results.reduce((acc, result) => acc + (result.actWarnings ?? 0), 0),
     warningBudget: Number.isFinite(warningBudget) ? warningBudget : 10,
     warningBudgetStatus: 'ok',
+    warningBudgetEnforcement: failOnWarningBudgetExceed ? 'fail-on-exceed' : 'telemetry-only',
   };
   summary.warningBudgetStatus =
     summary.actWarnings <= summary.warningBudget ? 'ok' : 'exceeded';
@@ -174,6 +177,7 @@ const run = async () => {
   const payload = {
     generatedAt: new Date().toISOString(),
     strictMode,
+    failOnWarningBudgetExceed,
     summary,
     results,
   };
@@ -205,6 +209,10 @@ const run = async () => {
   }
 
   if (strictMode && summary.failed > 0) {
+    process.exit(1);
+  }
+
+  if (strictMode && failOnWarningBudgetExceed && summary.warningBudgetStatus === 'exceeded') {
     process.exit(1);
   }
 };

@@ -1,9 +1,28 @@
 'use client';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { Button } from '@/shared/ui/button';
+
+const AdminErrorResetContext = React.createContext<(() => void) | null>(null);
+
+function useAdminErrorReset(): () => void {
+  const reset = React.useContext(AdminErrorResetContext);
+  if (!reset) {
+    throw new Error('useAdminErrorReset must be used within AdminErrorResetContext.Provider');
+  }
+  return reset;
+}
+
+function AdminErrorTryAgainButton(): React.JSX.Element {
+  const reset = useAdminErrorReset();
+  return (
+    <Button onClick={reset} className='bg-blue-600 text-white hover:bg-blue-700'>
+      Try Again
+    </Button>
+  );
+}
 
 export default function AdminError({
   error,
@@ -25,9 +44,9 @@ export default function AdminError({
         {error.message || 'Something went wrong while loading this admin page.'}
       </p>
       <div className='flex flex-wrap items-center justify-center gap-3'>
-        <Button onClick={() => reset()} className='bg-blue-600 text-white hover:bg-blue-700'>
-          Try Again
-        </Button>
+        <AdminErrorResetContext.Provider value={reset}>
+          <AdminErrorTryAgainButton />
+        </AdminErrorResetContext.Provider>
         <Button
           asChild
           variant='outline'

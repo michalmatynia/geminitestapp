@@ -1,9 +1,28 @@
 'use client';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { Button } from '@/shared/ui/button';
+
+const GlobalErrorResetContext = React.createContext<(() => void) | null>(null);
+
+function useGlobalErrorReset(): () => void {
+  const reset = React.useContext(GlobalErrorResetContext);
+  if (!reset) {
+    throw new Error('useGlobalErrorReset must be used within GlobalErrorResetContext.Provider');
+  }
+  return reset;
+}
+
+function GlobalErrorTryAgainButton(): React.JSX.Element {
+  const reset = useGlobalErrorReset();
+  return (
+    <Button onClick={reset} className='bg-blue-600 text-white hover:bg-blue-700'>
+      Try Again
+    </Button>
+  );
+}
 
 export default function GlobalError({
   error,
@@ -25,9 +44,9 @@ export default function GlobalError({
         {error.message || 'An unexpected error occurred. Please try again.'}
       </p>
       <div className='flex flex-wrap items-center justify-center gap-3'>
-        <Button onClick={() => reset()} className='bg-blue-600 text-white hover:bg-blue-700'>
-          Try Again
-        </Button>
+        <GlobalErrorResetContext.Provider value={reset}>
+          <GlobalErrorTryAgainButton />
+        </GlobalErrorResetContext.Provider>
         <Button
           asChild
           variant='outline'

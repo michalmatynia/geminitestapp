@@ -1,9 +1,28 @@
 'use client';
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { Button } from '@/shared/ui/button';
+
+const NotesErrorResetContext = React.createContext<(() => void) | null>(null);
+
+function useNotesErrorReset(): () => void {
+  const reset = React.useContext(NotesErrorResetContext);
+  if (!reset) {
+    throw new Error('useNotesErrorReset must be used within NotesErrorResetContext.Provider');
+  }
+  return reset;
+}
+
+function NotesErrorTryAgainButton(): React.JSX.Element {
+  const reset = useNotesErrorReset();
+  return (
+    <Button onClick={reset} className='bg-blue-600 hover:bg-blue-700 text-white'>
+      Try Again
+    </Button>
+  );
+}
 
 export default function NotesError({
   error,
@@ -33,9 +52,9 @@ export default function NotesError({
         >
           Reload Page
         </Button>
-        <Button onClick={() => reset()} className='bg-blue-600 hover:bg-blue-700 text-white'>
-          Try Again
-        </Button>
+        <NotesErrorResetContext.Provider value={reset}>
+          <NotesErrorTryAgainButton />
+        </NotesErrorResetContext.Provider>
       </div>
     </div>
   );

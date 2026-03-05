@@ -1,10 +1,29 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { Button } from '@/shared/ui/button';
+
+const FrontendErrorResetContext = React.createContext<(() => void) | null>(null);
+
+function useFrontendErrorReset(): () => void {
+  const reset = React.useContext(FrontendErrorResetContext);
+  if (!reset) {
+    throw new Error('useFrontendErrorReset must be used within FrontendErrorResetContext.Provider');
+  }
+  return reset;
+}
+
+function FrontendErrorTryAgainButton(): React.JSX.Element {
+  const reset = useFrontendErrorReset();
+  return (
+    <Button onClick={reset} className='bg-blue-600 text-white hover:bg-blue-700'>
+      Try Again
+    </Button>
+  );
+}
 
 export default function FrontendError({
   error,
@@ -27,9 +46,9 @@ export default function FrontendError({
         {error.message || 'We hit a snag while loading this page.'}
       </p>
       <div className='flex flex-wrap items-center justify-center gap-3'>
-        <Button onClick={() => reset()} className='bg-blue-600 text-white hover:bg-blue-700'>
-          Try Again
-        </Button>
+        <FrontendErrorResetContext.Provider value={reset}>
+          <FrontendErrorTryAgainButton />
+        </FrontendErrorResetContext.Provider>
         <Button
           asChild
           variant='outline'

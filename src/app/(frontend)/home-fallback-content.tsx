@@ -1,5 +1,6 @@
 import { Facebook, Instagram, Linkedin, Twitter, Youtube } from 'lucide-react';
 import Link from 'next/link';
+import React from 'react';
 
 import { ProductCard } from '@/features/products/public';
 import type { ProductWithImages } from '@/features/products/public';
@@ -24,6 +25,18 @@ type SocialLink = {
   Icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   fallback: string;
 };
+
+const HomeFallbackSocialThemeContext = React.createContext<SocialThemeSettings | null>(null);
+
+function useHomeFallbackSocialTheme(): SocialThemeSettings {
+  const theme = React.useContext(HomeFallbackSocialThemeContext);
+  if (!theme) {
+    throw new Error(
+      'useHomeFallbackSocialTheme must be used within HomeFallbackSocialThemeContext.Provider'
+    );
+  }
+  return theme;
+}
 
 const normalizeSocialUrl = (value?: string | null): string | null => {
   if (!value) return null;
@@ -109,7 +122,8 @@ const buildSocialLinks = (theme: SocialThemeSettings | null | undefined): Social
   return links;
 };
 
-function SocialLinks({ theme }: { theme: SocialThemeSettings | null | undefined }) {
+function SocialLinks(): React.JSX.Element | null {
+  const theme = useHomeFallbackSocialTheme();
   const links = buildSocialLinks(theme);
   if (!links.length) return null;
 
@@ -170,61 +184,63 @@ export function HomeFallbackContent({
   themeSettings: SocialThemeSettings;
 }): React.JSX.Element {
   return (
-    <div className='flex min-h-screen flex-col'>
-      {showFallbackHeader ? (
-        <header className='flex h-14 items-center px-4 lg:px-6'>
-          <Link href='#' className='flex items-center justify-center' prefetch={false}>
-            <MountainIcon className='size-6' />
-            <span className='sr-only'>Acme Inc</span>
-          </Link>
-          <nav className='ml-auto flex gap-4 sm:gap-6'>
-            <Link
-              href='/admin'
-              className='text-sm font-medium underline-offset-4 hover:underline'
-              prefetch={false}
-            >
-              Admin
+    <HomeFallbackSocialThemeContext.Provider value={themeSettings}>
+      <div className='flex min-h-screen flex-col'>
+        {showFallbackHeader ? (
+          <header className='flex h-14 items-center px-4 lg:px-6'>
+            <Link href='#' className='flex items-center justify-center' prefetch={false}>
+              <MountainIcon className='size-6' />
+              <span className='sr-only'>Acme Inc</span>
             </Link>
-          </nav>
-        </header>
-      ) : null}
-
-      <div className='flex-1'>
-        <section className='w-full py-12'>
-          <div className='container px-4 md:px-6'>
-            <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-              {products.map((product: ProductWithImages) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </div>
-        </section>
-      </div>
-
-      {showFallbackHeader ? (
-        <footer className='flex w-full shrink-0 flex-col items-center gap-3 border-t border-gray-800 px-4 py-6 sm:flex-row md:px-6'>
-          <p className='text-xs text-gray-400'>&copy; 2024 Acme Inc. All rights reserved.</p>
-          <div className='flex flex-col items-center gap-3 sm:ml-auto sm:flex-row sm:items-center'>
-            <nav className='flex gap-4 sm:gap-6'>
+            <nav className='ml-auto flex gap-4 sm:gap-6'>
               <Link
-                href='#'
-                className='text-xs underline-offset-4 hover:underline'
+                href='/admin'
+                className='text-sm font-medium underline-offset-4 hover:underline'
                 prefetch={false}
               >
-                Terms of Service
-              </Link>
-              <Link
-                href='#'
-                className='text-xs underline-offset-4 hover:underline'
-                prefetch={false}
-              >
-                Privacy
+                Admin
               </Link>
             </nav>
-            <SocialLinks theme={themeSettings} />
-          </div>
-        </footer>
-      ) : null}
-    </div>
+          </header>
+        ) : null}
+
+        <div className='flex-1'>
+          <section className='w-full py-12'>
+            <div className='container px-4 md:px-6'>
+              <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+                {products.map((product: ProductWithImages) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </div>
+          </section>
+        </div>
+
+        {showFallbackHeader ? (
+          <footer className='flex w-full shrink-0 flex-col items-center gap-3 border-t border-gray-800 px-4 py-6 sm:flex-row md:px-6'>
+            <p className='text-xs text-gray-400'>&copy; 2024 Acme Inc. All rights reserved.</p>
+            <div className='flex flex-col items-center gap-3 sm:ml-auto sm:flex-row sm:items-center'>
+              <nav className='flex gap-4 sm:gap-6'>
+                <Link
+                  href='#'
+                  className='text-xs underline-offset-4 hover:underline'
+                  prefetch={false}
+                >
+                  Terms of Service
+                </Link>
+                <Link
+                  href='#'
+                  className='text-xs underline-offset-4 hover:underline'
+                  prefetch={false}
+                >
+                  Privacy
+                </Link>
+              </nav>
+              <SocialLinks />
+            </div>
+          </footer>
+        ) : null}
+      </div>
+    </HomeFallbackSocialThemeContext.Provider>
   );
 }

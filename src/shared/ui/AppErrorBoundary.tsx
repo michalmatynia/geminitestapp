@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertCircle, RefreshCcw, Info } from 'lucide-react';
+import React from 'react';
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary';
 
 import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
@@ -8,6 +9,28 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { getLastUserAction } from '@/shared/utils/observability/user-action-tracker';
 
 import { Button } from './button';
+
+const AppErrorFallbackResetContext = React.createContext<(() => void) | null>(null);
+
+function useAppErrorFallbackReset(): () => void {
+  const resetErrorBoundary = React.useContext(AppErrorFallbackResetContext);
+  if (!resetErrorBoundary) {
+    throw new Error(
+      'useAppErrorFallbackReset must be used within AppErrorFallbackResetContext.Provider'
+    );
+  }
+  return resetErrorBoundary;
+}
+
+function AppErrorFallbackTryAgainButton(): React.JSX.Element {
+  const resetErrorBoundary = useAppErrorFallbackReset();
+  return (
+    <Button onClick={resetErrorBoundary} variant='default' className='flex items-center gap-2'>
+      <RefreshCcw className='h-4 w-4' />
+      Try again
+    </Button>
+  );
+}
 
 export function AppErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   const category = classifyError(error);
@@ -44,14 +67,9 @@ export function AppErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
         )}
 
         <div className='flex flex-col gap-3 sm:flex-row'>
-          <Button
-            onClick={resetErrorBoundary}
-            variant='default'
-            className='flex items-center gap-2'
-          >
-            <RefreshCcw className='h-4 w-4' />
-            Try again
-          </Button>
+          <AppErrorFallbackResetContext.Provider value={resetErrorBoundary}>
+            <AppErrorFallbackTryAgainButton />
+          </AppErrorFallbackResetContext.Provider>
           <Button variant='outline' onClick={() => window.location.reload()}>
             Reload page
           </Button>

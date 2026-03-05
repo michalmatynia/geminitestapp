@@ -94,6 +94,7 @@ export interface LocalExecutionArgs {
   onCanonicalEdgesDetected?: (edges: Edge[]) => void;
   pathName: string;
   pathDescription: string;
+  runtimeKernelConfig?: Record<string, unknown> | undefined;
   parserSamples: Record<string, ParserSampleState>;
   updaterSamples: Record<string, UpdaterSampleState>;
   sessionUser: { id: string; name: string | null; email: string | null } | null;

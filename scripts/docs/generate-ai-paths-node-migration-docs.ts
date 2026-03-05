@@ -4,6 +4,13 @@ import path from 'node:path';
 import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
 import { NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
 import { resolveDocsGeneratedAt } from './docs-generated-at';
+import {
+  type NodeMigrationReadiness,
+  type NodeMigrationReadinessBlockerCode,
+  type NodeMigrationReadinessStage,
+  computeNodeMigrationReadiness,
+  summarizeNodeMigrationReadiness,
+} from './node-migration-readiness';
 
 type SemanticNodeIndexRow = {
   nodeType: string;
@@ -64,10 +71,11 @@ type NodeMigrationIndexRow = {
     dualRunParityValidated: boolean;
     rolloutApproved: boolean;
   };
+  migrationReadiness: NodeMigrationReadiness;
 };
 
 type NodeMigrationIndexPayload = {
-  schemaVersion: 'ai-paths.node-migration-doc-index.v1';
+  schemaVersion: 'ai-paths.node-migration-doc-index.v2';
   generatedAt: string;
   totalNodes: number;
   pilotNodeTypes: string[];
@@ -76,6 +84,14 @@ type NodeMigrationIndexPayload = {
     code_object_v3: number;
   };
   v3ContractsHash: string | null;
+  readiness: {
+    averageScore: number;
+    totalsByStage: Record<NodeMigrationReadinessStage, number>;
+    topBlockers: Array<{
+      code: NodeMigrationReadinessBlockerCode;
+      count: number;
+    }>;
+  };
   familyTotals: Array<{
     nodeFamily: string;
     total: number;
@@ -223,6 +239,22 @@ const rows: NodeMigrationIndexRow[] = [...AI_PATHS_NODE_DOCS]
     const semanticNodeHash = semanticHashByNodeType.get(nodeType) ?? null;
     const migrationDocFile = `docs/ai-paths/node-code-objects-v3/nodes/${nodeType}.md`;
     const v3Entry = v3IndexEntryByNodeType.get(nodeType);
+    const v2ObjectFile = v2Info?.objectFile ?? `docs/ai-paths/node-code-objects-v2/${nodeType}.json`;
+    const hasV2ObjectContract = fs.existsSync(path.join(workspaceRoot, v2ObjectFile));
+    const migrationChecklistTemplate = {
+      semanticContractReviewed: Boolean(semanticNodeFile),
+      v3CodeObjectAuthored: isPilot && Boolean(scaffoldFile),
+      dualRunParityValidated: false,
+      rolloutApproved: false,
+    } as const;
+    const migrationReadiness = computeNodeMigrationReadiness({
+      runtimeStrategy,
+      hasSemanticContractHash: Boolean(semanticNodeHash),
+      hasV2ObjectContract,
+      hasV3Scaffold: Boolean(scaffoldFile),
+      hasV3ObjectArtifacts: Boolean(v3Entry?.objectId && v3Entry.objectHash),
+      checklist: migrationChecklistTemplate,
+    });
 
     return {
       nodeType,
@@ -239,18 +271,14 @@ const rows: NodeMigrationIndexRow[] = [...AI_PATHS_NODE_DOCS]
       docs: {
         semanticNodeFile,
         semanticNodeHash,
-        v2ObjectFile: v2Info?.objectFile ?? `docs/ai-paths/node-code-objects-v2/${nodeType}.json`,
+        v2ObjectFile,
         v3ScaffoldFile: scaffoldFile,
         v3ObjectId: isPilot ? v3Entry?.objectId ?? null : null,
         v3ObjectHash: isPilot ? v3Entry?.objectHash ?? null : null,
         migrationDocFile,
       },
-      migrationChecklistTemplate: {
-        semanticContractReviewed: Boolean(semanticNodeFile),
-        v3CodeObjectAuthored: isPilot && Boolean(scaffoldFile),
-        dualRunParityValidated: false,
-        rolloutApproved: false,
-      },
+      migrationChecklistTemplate,
+      migrationReadiness,
     };
   });
 
@@ -294,14 +322,22 @@ const familyTotals = Array.from(familyTotalMap.entries())
   .sort((left, right) => left.nodeFamily.localeCompare(right.nodeFamily));
 
 const generatedAt = resolveDocsGeneratedAt();
+const readinessSummary = summarizeNodeMigrationReadiness(
+  rows.map((row) => row.migrationReadiness)
+);
 
 const payload: NodeMigrationIndexPayload = {
-  schemaVersion: 'ai-paths.node-migration-doc-index.v1',
+  schemaVersion: 'ai-paths.node-migration-doc-index.v2',
   generatedAt,
   totalNodes: rows.length,
   pilotNodeTypes,
   strategyTotals,
   v3ContractsHash,
+  readiness: {
+    averageScore: readinessSummary.averageScore,
+    totalsByStage: readinessSummary.totalsByStage,
+    topBlockers: readinessSummary.blockers,
+  },
   familyTotals,
   nodes: rows,
 };
@@ -333,6 +369,13 @@ for (const row of rows) {
     `- Runtime strategy: \`${row.runtimeStrategy}\``,
     `- Migration wave: \`${row.migrationWave}\``,
     `- Code object ID: ${row.codeObjectId ? `\`${row.codeObjectId}\`` : '`not_assigned`'}`,
+    `- Readiness stage: \`${row.migrationReadiness.stage}\``,
+    `- Readiness score: ${row.migrationReadiness.score}/100`,
+    `- Readiness blockers: ${
+      row.migrationReadiness.blockers.length > 0
+        ? row.migrationReadiness.blockers.map((blocker) => `\`${blocker}\``).join(', ')
+        : '`none`'
+    }`,
     `- Config field count: ${row.configFieldCount}`,
     '',
     '## Node Contract Files',
@@ -394,6 +437,23 @@ const nodeTableLines = [
   }),
 ];
 
+const readinessTableLines = [
+  '| Stage | Nodes |',
+  '| --- | ---: |',
+  ...Object.entries(readinessSummary.totalsByStage).map(
+    ([stage, count]) => `| \`${stage}\` | ${count} |`
+  ),
+];
+
+const blockerTableLines =
+  readinessSummary.blockers.length > 0
+    ? [
+        '| Blocker | Nodes |',
+        '| --- | ---: |',
+        ...readinessSummary.blockers.map((entry) => `| \`${entry.code}\` | ${entry.count} |`),
+      ]
+    : ['No migration blockers detected.'];
+
 const guideLines = [
   '# Node Migration Guide (Semantic Portable Engine)',
   '',
@@ -425,6 +485,16 @@ const guideLines = [
   `- \`legacy_adapter\`: ${payload.strategyTotals.legacy_adapter}`,
   `- \`code_object_v3\`: ${payload.strategyTotals.code_object_v3}`,
   `- v3 contracts hash: ${payload.v3ContractsHash ? `\`${payload.v3ContractsHash}\`` : '`missing`'}`,
+  '',
+  '## Readiness Scorecard',
+  '',
+  `- Average readiness score: ${payload.readiness.averageScore}/100`,
+  '',
+  ...readinessTableLines,
+  '',
+  'Top blockers:',
+  '',
+  ...blockerTableLines,
   '',
   '## Family Coverage',
   '',

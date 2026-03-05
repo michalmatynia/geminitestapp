@@ -3,6 +3,11 @@ import path from 'node:path';
 
 import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
 import { NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
+import {
+  type NodeMigrationReadiness,
+  type NodeMigrationReadinessBlockerCode,
+  type NodeMigrationReadinessStage,
+} from './node-migration-readiness';
 
 type NodeMigrationIndexRow = {
   nodeType: string;
@@ -31,6 +36,7 @@ type NodeMigrationIndexRow = {
     dualRunParityValidated: boolean;
     rolloutApproved: boolean;
   };
+  migrationReadiness: NodeMigrationReadiness;
 };
 
 type NodeMigrationIndexPayload = {
@@ -43,6 +49,14 @@ type NodeMigrationIndexPayload = {
     code_object_v3: number;
   };
   v3ContractsHash?: string | null;
+  readiness: {
+    averageScore: number;
+    totalsByStage: Record<NodeMigrationReadinessStage, number>;
+    topBlockers: Array<{
+      code: NodeMigrationReadinessBlockerCode;
+      count: number;
+    }>;
+  };
   familyTotals: Array<{
     nodeFamily: string;
     total: number;
@@ -194,8 +208,8 @@ try {
 
 const errors: string[] = [];
 
-if (indexPayload.schemaVersion !== 'ai-paths.node-migration-doc-index.v1') {
-  errors.push('migration-index.json schemaVersion must be "ai-paths.node-migration-doc-index.v1".');
+if (indexPayload.schemaVersion !== 'ai-paths.node-migration-doc-index.v2') {
+  errors.push('migration-index.json schemaVersion must be "ai-paths.node-migration-doc-index.v2".');
 }
 
 if (!Array.isArray(indexPayload.nodes)) {
@@ -411,6 +425,9 @@ for (const row of rows) {
     if (!migrationDocRaw.includes(`- Runtime strategy: \`${row.runtimeStrategy}\``)) {
       errors.push(`${nodeType}: migration sheet runtime strategy line mismatch.`);
     }
+    if (!migrationDocRaw.includes(`- Readiness stage: \`${row.migrationReadiness.stage}\``)) {
+      errors.push(`${nodeType}: migration sheet readiness stage line mismatch.`);
+    }
     const expectedV3ObjectIdLine = `- v3 object id: ${row.docs.v3ObjectId ? `\`${row.docs.v3ObjectId}\`` : '`missing`'}`;
     if (!migrationDocRaw.includes(expectedV3ObjectIdLine)) {
       errors.push(`${nodeType}: migration sheet v3 object id line mismatch.`);
@@ -433,6 +450,64 @@ for (const row of rows) {
   if (typeof row.nodeFamily !== 'string' || row.nodeFamily.trim().length === 0) {
     errors.push(`${nodeType}: nodeFamily must be non-empty.`);
   }
+
+  if (
+    typeof row.migrationChecklistTemplate?.semanticContractReviewed !== 'boolean' ||
+    typeof row.migrationChecklistTemplate?.v3CodeObjectAuthored !== 'boolean' ||
+    typeof row.migrationChecklistTemplate?.dualRunParityValidated !== 'boolean' ||
+    typeof row.migrationChecklistTemplate?.rolloutApproved !== 'boolean'
+  ) {
+    errors.push(`${nodeType}: migrationChecklistTemplate must contain boolean fields.`);
+  }
+
+  const declaredReadiness = row.migrationReadiness;
+  const normalizedReadinessStage = toSafeString(declaredReadiness?.stage) as NodeMigrationReadinessStage;
+  const declaredReadinessScore = Number(declaredReadiness?.score);
+  const declaredReadinessBlockers = Array.isArray(declaredReadiness?.blockers)
+    ? declaredReadiness.blockers.map((entry) => toSafeString(entry)).filter(Boolean)
+    : [];
+
+  if (!NODE_MIGRATION_READINESS_STAGES.includes(normalizedReadinessStage)) {
+    errors.push(`${nodeType}: migrationReadiness.stage is invalid (${String(declaredReadiness?.stage)}).`);
+  }
+  if (!Number.isInteger(declaredReadinessScore) || declaredReadinessScore < 0 || declaredReadinessScore > 100) {
+    errors.push(`${nodeType}: migrationReadiness.score must be an integer between 0 and 100.`);
+  }
+  for (const blocker of declaredReadinessBlockers) {
+    if (!NODE_MIGRATION_READINESS_BLOCKER_CODES.includes(blocker as NodeMigrationReadinessBlockerCode)) {
+      errors.push(`${nodeType}: migrationReadiness.blockers contains unknown code ${blocker}.`);
+    }
+  }
+
+  const expectedReadiness = computeNodeMigrationReadiness({
+    runtimeStrategy: row.runtimeStrategy,
+    hasSemanticContractHash: Boolean(normalizedSemanticHash),
+    hasV2ObjectContract: Boolean(v2ObjectFile && fs.existsSync(v2ObjectPath)),
+    hasV3Scaffold: Boolean(row.docs?.v3ScaffoldFile),
+    hasV3ObjectArtifacts: Boolean(normalizedV3ObjectId && normalizedV3ObjectHash),
+    checklist: row.migrationChecklistTemplate,
+  });
+
+  const normalizedDeclaredReadinessBlockers = [...declaredReadinessBlockers].sort((left, right) =>
+    left.localeCompare(right)
+  );
+  if (normalizedReadinessStage !== expectedReadiness.stage) {
+    errors.push(
+      `${nodeType}: migrationReadiness.stage mismatch (expected ${expectedReadiness.stage}, got ${normalizedReadinessStage || 'empty'}).`
+    );
+  }
+  if (declaredReadinessScore !== expectedReadiness.score) {
+    errors.push(
+      `${nodeType}: migrationReadiness.score mismatch (expected ${expectedReadiness.score}, got ${declaredReadinessScore}).`
+    );
+  }
+  if (JSON.stringify(normalizedDeclaredReadinessBlockers) !== JSON.stringify(expectedReadiness.blockers)) {
+    errors.push(
+      `${nodeType}: migrationReadiness.blockers mismatch (expected ${JSON.stringify(expectedReadiness.blockers)}, got ${JSON.stringify(normalizedDeclaredReadinessBlockers)}).`
+    );
+  }
+
+  declaredReadinessList.push(expectedReadiness);
 }
 
 const missingNodeTypes = [...expectedNodeTypes].filter((nodeType) => !seenNodeTypes.has(nodeType));
@@ -455,6 +530,50 @@ if (
   );
 }
 
+const readinessSummary = summarizeNodeMigrationReadiness(declaredReadinessList);
+if (!indexPayload.readiness || typeof indexPayload.readiness !== 'object') {
+  errors.push('migration-index.json readiness summary is missing.');
+} else {
+  if (indexPayload.readiness.averageScore !== readinessSummary.averageScore) {
+    errors.push(
+      `migration-index.json readiness.averageScore mismatch (declared=${indexPayload.readiness.averageScore}, expected=${readinessSummary.averageScore}).`
+    );
+  }
+
+  for (const stage of NODE_MIGRATION_READINESS_STAGES) {
+    const declared = indexPayload.readiness.totalsByStage?.[stage];
+    const expected = readinessSummary.totalsByStage[stage];
+    if (declared !== expected) {
+      errors.push(
+        `migration-index.json readiness.totalsByStage.${stage} mismatch (declared=${declared}, expected=${expected}).`
+      );
+    }
+  }
+
+  const declaredTopBlockers = Array.isArray(indexPayload.readiness.topBlockers)
+    ? indexPayload.readiness.topBlockers.map((entry) => ({
+        code: toSafeString(entry?.code),
+        count: Number(entry?.count),
+      }))
+    : [];
+
+  if (declaredTopBlockers.length !== readinessSummary.blockers.length) {
+    errors.push(
+      `migration-index.json readiness.topBlockers length mismatch (declared=${declaredTopBlockers.length}, expected=${readinessSummary.blockers.length}).`
+    );
+  } else {
+    for (let index = 0; index < declaredTopBlockers.length; index += 1) {
+      const declared = declaredTopBlockers[index];
+      const expected = readinessSummary.blockers[index];
+      if (declared.code !== expected.code || declared.count !== expected.count) {
+        errors.push(
+          `migration-index.json readiness.topBlockers[${index}] mismatch (declared=${JSON.stringify(declared)}, expected=${JSON.stringify(expected)}).`
+        );
+      }
+    }
+  }
+}
+
 const declaredPilotTypes = new Set<string>((indexPayload.pilotNodeTypes ?? []).map(toSafeString).filter(Boolean));
 for (const pilotNodeType of pilotNodeTypeSet) {
   if (!declaredPilotTypes.has(pilotNodeType)) {
@@ -473,6 +592,9 @@ if (!guideRaw.includes('# Node Migration Guide (Semantic Portable Engine)')) {
 }
 if (!guideRaw.includes('## Node Coverage Matrix')) {
   errors.push('MIGRATION_GUIDE.md is missing the "Node Coverage Matrix" section.');
+}
+if (!guideRaw.includes('## Readiness Scorecard')) {
+  errors.push('MIGRATION_GUIDE.md is missing the "Readiness Scorecard" section.');
 }
 if (!guideRaw.includes('## Per-Node Sheets')) {
   errors.push('MIGRATION_GUIDE.md is missing the "Per-Node Sheets" section.');

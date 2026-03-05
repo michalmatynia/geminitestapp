@@ -7,6 +7,9 @@ Generated at: 2026-03-05T00:00:00.000Z
 - Runtime strategy: `code_object_v3`
 - Migration wave: `pilot`
 - Code object ID: `ai-paths.node-code-object.constant.v3`
+- Readiness stage: `pilot_indexed`
+- Readiness score: 80/100
+- Readiness blockers: `parity_not_validated`
 - Config field count: 5
 
 ## Node Contract Files

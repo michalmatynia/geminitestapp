@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "ai-paths.node-migration-doc-index.v1",
+  "schemaVersion": "ai-paths.node-migration-doc-index.v2",
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "totalNodes": 36,
   "pilotNodeTypes": [
@@ -12,6 +12,31 @@
     "code_object_v3": 3
   },
   "v3ContractsHash": "275c095242cb2f6b8c1e27c56c0e19a4b5689a4fa62f57e57e192dc8246c8ad8",
+  "readiness": {
+    "averageScore": 39,
+    "totalsByStage": {
+      "not_ready": 0,
+      "cataloged": 33,
+      "scaffolded": 0,
+      "pilot_indexed": 3,
+      "rollout_candidate": 0,
+      "rollout_approved": 0
+    },
+    "topBlockers": [
+      {
+        "code": "missing_v3_scaffold",
+        "count": 33
+      },
+      {
+        "code": "not_in_v3_pilot",
+        "count": 33
+      },
+      {
+        "code": "parity_not_validated",
+        "count": 3
+      }
+    ]
+  },
   "familyTotals": [
     {
       "nodeFamily": "ai-generation",
@@ -85,6 +110,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -119,6 +152,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -162,6 +203,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -202,6 +251,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -240,6 +297,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -276,6 +341,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -310,6 +383,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -340,6 +421,13 @@
         "v3CodeObjectAuthored": true,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "pilot_indexed",
+        "score": 80,
+        "blockers": [
+          "parity_not_validated"
+        ]
       }
     },
     {
@@ -375,6 +463,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -421,6 +517,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -452,6 +556,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -486,6 +598,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -519,6 +639,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -558,6 +686,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -594,6 +730,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -630,6 +774,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -667,6 +819,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -702,6 +862,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -738,6 +906,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -770,6 +946,13 @@
         "v3CodeObjectAuthored": true,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "pilot_indexed",
+        "score": 80,
+        "blockers": [
+          "parity_not_validated"
+        ]
       }
     },
     {
@@ -804,6 +987,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -836,6 +1027,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -868,6 +1067,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -904,6 +1111,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -941,6 +1156,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -981,6 +1204,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -1018,6 +1249,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -1055,6 +1294,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -1089,6 +1336,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -1124,6 +1379,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -1158,6 +1421,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -1192,6 +1463,13 @@
         "v3CodeObjectAuthored": true,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "pilot_indexed",
+        "score": 80,
+        "blockers": [
+          "parity_not_validated"
+        ]
       }
     },
     {
@@ -1223,6 +1501,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -1263,6 +1549,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -1297,6 +1591,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     },
     {
@@ -1361,6 +1663,14 @@
         "v3CodeObjectAuthored": false,
         "dualRunParityValidated": false,
         "rolloutApproved": false
+      },
+      "migrationReadiness": {
+        "stage": "cataloged",
+        "score": 35,
+        "blockers": [
+          "missing_v3_scaffold",
+          "not_in_v3_pilot"
+        ]
       }
     }
   ]

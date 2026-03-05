@@ -29,6 +29,27 @@ Generated at: 2026-03-05T00:00:00.000Z
 - `code_object_v3`: 3
 - v3 contracts hash: `275c095242cb2f6b8c1e27c56c0e19a4b5689a4fa62f57e57e192dc8246c8ad8`
 
+## Readiness Scorecard
+
+- Average readiness score: 39/100
+
+| Stage | Nodes |
+| --- | ---: |
+| `not_ready` | 0 |
+| `cataloged` | 33 |
+| `scaffolded` | 0 |
+| `pilot_indexed` | 3 |
+| `rollout_candidate` | 0 |
+| `rollout_approved` | 0 |
+
+Top blockers:
+
+| Blocker | Nodes |
+| --- | ---: |
+| `missing_v3_scaffold` | 33 |
+| `not_in_v3_pilot` | 33 |
+| `parity_not_validated` | 3 |
+
 ## Family Coverage
 
 | Node Family | Total | `legacy_adapter` | `code_object_v3` |

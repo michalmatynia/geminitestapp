@@ -6,7 +6,7 @@
   "title": "JSON Mapper",
   "runtimeKernel": {
     "strategy": "code_object_v3",
-    "executionAdapter": "legacy_handler_bridge",
+    "executionAdapter": "native_handler_registry",
     "legacyHandlerKey": "mapper",
     "codeObjectId": "ai-paths.node-code-object.mapper.v3"
   },
@@ -62,5 +62,5 @@
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_mapper_portable_v3",
   "objectHashAlgorithm": "sha256",
-  "objectHash": "418bee8d6f699d37a707364dc3bf9af3a2720f8ede7432ee0a1de3d3bc357975"
+  "objectHash": "b5d41c750522b971eb7bd7d852f8502d89002b6fb202af30456f598fa38e93bf"
 }

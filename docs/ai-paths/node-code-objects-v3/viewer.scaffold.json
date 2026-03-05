@@ -6,7 +6,7 @@
   "title": "Result Viewer",
   "runtimeKernel": {
     "strategy": "code_object_v3",
-    "executionAdapter": "legacy_handler_bridge",
+    "executionAdapter": "native_handler_registry",
     "legacyHandlerKey": "viewer",
     "codeObjectId": "ai-paths.node-code-object.viewer.v3"
   },
@@ -115,5 +115,5 @@
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_viewer_portable_v3",
   "objectHashAlgorithm": "sha256",
-  "objectHash": "f80f84c6cea20cbeb318a99c0501ae0fa516141199d7d06584ba9b0746aa984c"
+  "objectHash": "e05a8a71e2a778b49351aff81d30d9c767ed59ab4b57c3a0c0aa4b96c08c82f9"
 }

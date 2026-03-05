@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v3",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "nodeType": "prompt",
+  "title": "Prompt",
+  "runtimeKernel": {
+    "strategy": "code_object_v3",
+    "executionAdapter": "native_handler_registry",
+    "legacyHandlerKey": "prompt",
+    "codeObjectId": "ai-paths.node-code-object.prompt.v3"
+  },
+  "runtimeSemantics": {
+    "processing": "pulse_node_only",
+    "waiting": "freeze_consumed_inputs_and_outputs",
+    "success": "animate_outgoing_on_emit",
+    "error": "animate_error_routes_on_emit"
+  },
+  "ports": {
+    "inputs": [
+      "bundle",
+      "title",
+      "images",
+      "result",
+      "entityId"
+    ],
+    "outputs": [
+      "prompt",
+      "images"
+    ]
+  },
+  "copyPaste": {
+    "fullNode": {
+      "id": "node_prompt_example",
+      "type": "prompt",
+      "title": "Prompt",
+      "description": "Formats text with placeholders.",
+      "position": {
+        "x": 2040,
+        "y": 60
+      },
+      "inputs": [
+        "bundle",
+        "title",
+        "images",
+        "result",
+        "entityId"
+      ],
+      "outputs": [
+        "prompt",
+        "images"
+      ],
+      "config": {
+        "prompt": {
+          "template": "prompt={{result}}"
+        }
+      }
+    }
+  },
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "id": "node_obj_prompt_portable_v3",
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "23711dacb5763f7eebf19f39d9c1155d0da28b71f215990ef3e835745a7fb1bc"
+}

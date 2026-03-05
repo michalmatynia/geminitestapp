@@ -1,9 +1,9 @@
 {
   "summary": {
-    "generatedAt": "2026-03-05T13:15:32.605Z",
-    "scannedSourceFiles": 3904,
-    "scannedJsxFiles": 1417,
-    "componentCount": 2192,
+    "generatedAt": "2026-03-05T15:25:23.969Z",
+    "scannedSourceFiles": 3915,
+    "scannedJsxFiles": 1413,
+    "componentCount": 2193,
     "componentsWithForwarding": 1,
     "componentsWithAnyForwarding": 4,
     "resolvedTransitionCount": 5,
@@ -25,11 +25,11 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/legacy/components/lessons/AddingBallGame.jsx#CompleteEquation",
-      "sinkComponentId": "src/features/kangur/legacy/components/lessons/AddingBallGame.jsx#SlotZone",
+      "rootComponentId": "src/features/kangur/ui/components/AddingBallGame.tsx#CompleteEquation",
+      "sinkComponentId": "src/features/kangur/ui/components/AddingBallGame.tsx#SlotZone",
       "componentPath": [
-        "src/features/kangur/legacy/components/lessons/AddingBallGame.jsx#CompleteEquation",
-        "src/features/kangur/legacy/components/lessons/AddingBallGame.jsx#SlotZone"
+        "src/features/kangur/ui/components/AddingBallGame.tsx#CompleteEquation",
+        "src/features/kangur/ui/components/AddingBallGame.tsx#SlotZone"
       ],
       "propPath": [
         "round",
@@ -37,12 +37,12 @@
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/kangur/legacy/components/lessons/AddingBallGame.jsx#CompleteEquation",
-          "toComponentId": "src/features/kangur/legacy/components/lessons/AddingBallGame.jsx#SlotZone",
+          "fromComponentId": "src/features/kangur/ui/components/AddingBallGame.tsx#CompleteEquation",
+          "toComponentId": "src/features/kangur/ui/components/AddingBallGame.tsx#SlotZone",
           "sourceProp": "round",
           "targetProp": "label",
-          "relativePath": "src/features/kangur/legacy/components/lessons/AddingBallGame.jsx",
-          "line": 119
+          "relativePath": "src/features/kangur/ui/components/AddingBallGame.tsx",
+          "line": 231
         }
       ]
     },
@@ -51,11 +51,11 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/legacy/components/lessons/CalendarLessson.jsx#CalendarLesson",
-      "sinkComponentId": "src/features/kangur/legacy/components/lessons/CalendarInteractiveGame.jsx#CalendarInteractiveGame",
+      "rootComponentId": "src/features/kangur/ui/components/CalendarLesson.tsx#CalendarLesson",
+      "sinkComponentId": "src/features/kangur/ui/components/CalendarInteractiveGame.tsx#CalendarInteractiveGame",
       "componentPath": [
-        "src/features/kangur/legacy/components/lessons/CalendarLessson.jsx#CalendarLesson",
-        "src/features/kangur/legacy/components/lessons/CalendarInteractiveGame.jsx#CalendarInteractiveGame"
+        "src/features/kangur/ui/components/CalendarLesson.tsx#CalendarLesson",
+        "src/features/kangur/ui/components/CalendarInteractiveGame.tsx#CalendarInteractiveGame"
       ],
       "propPath": [
         "onBack",
@@ -63,12 +63,12 @@
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/kangur/legacy/components/lessons/CalendarLessson.jsx#CalendarLesson",
-          "toComponentId": "src/features/kangur/legacy/components/lessons/CalendarInteractiveGame.jsx#CalendarInteractiveGame",
+          "fromComponentId": "src/features/kangur/ui/components/CalendarLesson.tsx#CalendarLesson",
+          "toComponentId": "src/features/kangur/ui/components/CalendarInteractiveGame.tsx#CalendarInteractiveGame",
           "sourceProp": "onBack",
           "targetProp": "onFinish",
-          "relativePath": "src/features/kangur/legacy/components/lessons/CalendarLessson.jsx",
-          "line": 277
+          "relativePath": "src/features/kangur/ui/components/CalendarLesson.tsx",
+          "line": 302
         }
       ]
     },
@@ -77,11 +77,11 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/legacy/components/lessons/ClockLesson.jsx#ClockLesson",
-      "sinkComponentId": "src/features/kangur/legacy/components/lessons/ClockTrainingGame.jsx#ClockTrainingGame",
+      "rootComponentId": "src/features/kangur/ui/components/ClockLesson.tsx#ClockLesson",
+      "sinkComponentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
       "componentPath": [
-        "src/features/kangur/legacy/components/lessons/ClockLesson.jsx#ClockLesson",
-        "src/features/kangur/legacy/components/lessons/ClockTrainingGame.jsx#ClockTrainingGame"
+        "src/features/kangur/ui/components/ClockLesson.tsx#ClockLesson",
+        "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame"
       ],
       "propPath": [
         "onBack",
@@ -89,12 +89,12 @@
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/kangur/legacy/components/lessons/ClockLesson.jsx#ClockLesson",
-          "toComponentId": "src/features/kangur/legacy/components/lessons/ClockTrainingGame.jsx#ClockTrainingGame",
+          "fromComponentId": "src/features/kangur/ui/components/ClockLesson.tsx#ClockLesson",
+          "toComponentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
           "sourceProp": "onBack",
           "targetProp": "onFinish",
-          "relativePath": "src/features/kangur/legacy/components/lessons/ClockLesson.jsx",
-          "line": 271
+          "relativePath": "src/features/kangur/ui/components/ClockLesson.tsx",
+          "line": 296
         }
       ]
     },
@@ -103,11 +103,11 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/legacy/components/kangur/KangurGame.jsx#KangurGame",
-      "sinkComponentId": "src/features/kangur/legacy/components/kangur/KangurGameContext.jsx#KangurGameProvider",
+      "rootComponentId": "src/features/kangur/ui/components/KangurGame.tsx#KangurGame",
+      "sinkComponentId": "src/features/kangur/ui/context/KangurGameContext.tsx#KangurGameProvider",
       "componentPath": [
-        "src/features/kangur/legacy/components/kangur/KangurGame.jsx#KangurGame",
-        "src/features/kangur/legacy/components/kangur/KangurGameContext.jsx#KangurGameProvider"
+        "src/features/kangur/ui/components/KangurGame.tsx#KangurGame",
+        "src/features/kangur/ui/context/KangurGameContext.tsx#KangurGameProvider"
       ],
       "propPath": [
         "mode",
@@ -115,12 +115,12 @@
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/kangur/legacy/components/kangur/KangurGame.jsx#KangurGame",
-          "toComponentId": "src/features/kangur/legacy/components/kangur/KangurGameContext.jsx#KangurGameProvider",
+          "fromComponentId": "src/features/kangur/ui/components/KangurGame.tsx#KangurGame",
+          "toComponentId": "src/features/kangur/ui/context/KangurGameContext.tsx#KangurGameProvider",
           "sourceProp": "mode",
           "targetProp": "mode",
-          "relativePath": "src/features/kangur/legacy/components/kangur/KangurGame.jsx",
-          "line": 284
+          "relativePath": "src/features/kangur/ui/components/KangurGame.tsx",
+          "line": 315
         }
       ]
     },
@@ -129,11 +129,11 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/legacy/components/kangur/KangurGame.jsx#KangurGame",
-      "sinkComponentId": "src/features/kangur/legacy/components/kangur/KangurGameContext.jsx#KangurGameProvider",
+      "rootComponentId": "src/features/kangur/ui/components/KangurGame.tsx#KangurGame",
+      "sinkComponentId": "src/features/kangur/ui/context/KangurGameContext.tsx#KangurGameProvider",
       "componentPath": [
-        "src/features/kangur/legacy/components/kangur/KangurGame.jsx#KangurGame",
-        "src/features/kangur/legacy/components/kangur/KangurGameContext.jsx#KangurGameProvider"
+        "src/features/kangur/ui/components/KangurGame.tsx#KangurGame",
+        "src/features/kangur/ui/context/KangurGameContext.tsx#KangurGameProvider"
       ],
       "propPath": [
         "onBack",
@@ -141,21 +141,21 @@
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/kangur/legacy/components/kangur/KangurGame.jsx#KangurGame",
-          "toComponentId": "src/features/kangur/legacy/components/kangur/KangurGameContext.jsx#KangurGameProvider",
+          "fromComponentId": "src/features/kangur/ui/components/KangurGame.tsx#KangurGame",
+          "toComponentId": "src/features/kangur/ui/context/KangurGameContext.tsx#KangurGameProvider",
           "sourceProp": "onBack",
           "targetProp": "onBack",
-          "relativePath": "src/features/kangur/legacy/components/kangur/KangurGame.jsx",
-          "line": 284
+          "relativePath": "src/features/kangur/ui/components/KangurGame.tsx",
+          "line": 315
         }
       ]
     }
   ],
   "componentBacklog": [
     {
-      "componentId": "src/features/kangur/legacy/components/kangur/KangurGame.jsx#KangurGame",
+      "componentId": "src/features/kangur/ui/components/KangurGame.tsx#KangurGame",
       "name": "KangurGame",
-      "relativePath": "src/features/kangur/legacy/components/kangur/KangurGame.jsx",
+      "relativePath": "src/features/kangur/ui/components/KangurGame.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 2,
       "outgoingTransitionCount": 2,
@@ -164,36 +164,36 @@
   ],
   "forwardingComponentBacklog": [
     {
-      "componentId": "src/features/kangur/legacy/components/kangur/KangurGame.jsx#KangurGame",
+      "componentId": "src/features/kangur/ui/components/KangurGame.tsx#KangurGame",
       "name": "KangurGame",
-      "relativePath": "src/features/kangur/legacy/components/kangur/KangurGame.jsx",
+      "relativePath": "src/features/kangur/ui/components/KangurGame.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 2,
       "outgoingTransitionCount": 2,
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/legacy/components/lessons/AddingBallGame.jsx#CompleteEquation",
+      "componentId": "src/features/kangur/ui/components/AddingBallGame.tsx#CompleteEquation",
       "name": "CompleteEquation",
-      "relativePath": "src/features/kangur/legacy/components/lessons/AddingBallGame.jsx",
+      "relativePath": "src/features/kangur/ui/components/AddingBallGame.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 1,
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/legacy/components/lessons/CalendarLessson.jsx#CalendarLesson",
+      "componentId": "src/features/kangur/ui/components/CalendarLesson.tsx#CalendarLesson",
       "name": "CalendarLesson",
-      "relativePath": "src/features/kangur/legacy/components/lessons/CalendarLessson.jsx",
+      "relativePath": "src/features/kangur/ui/components/CalendarLesson.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 1,
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/legacy/components/lessons/ClockLesson.jsx#ClockLesson",
+      "componentId": "src/features/kangur/ui/components/ClockLesson.tsx#ClockLesson",
       "name": "ClockLesson",
-      "relativePath": "src/features/kangur/legacy/components/lessons/ClockLesson.jsx",
+      "relativePath": "src/features/kangur/ui/components/ClockLesson.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 1,

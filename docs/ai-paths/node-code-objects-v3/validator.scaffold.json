@@ -6,7 +6,7 @@
   "title": "Validator",
   "runtimeKernel": {
     "strategy": "code_object_v3",
-    "executionAdapter": "legacy_handler_bridge",
+    "executionAdapter": "native_handler_registry",
     "legacyHandlerKey": "validator",
     "codeObjectId": "ai-paths.node-code-object.validator.v3"
   },
@@ -57,5 +57,5 @@
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_validator_portable_v3",
   "objectHashAlgorithm": "sha256",
-  "objectHash": "e81c532abb19cc9abc59e7296aa5fdac4b6fe9055bba72779a2f1bfd6730f35a"
+  "objectHash": "81f650d8c5f96b78f2e0635bf418536071d8df90e8a02fb0e74be9e9cb1db6c6"
 }

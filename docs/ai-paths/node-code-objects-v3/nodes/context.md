@@ -11,6 +11,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - Readiness score: 90/100
 - Readiness blockers: `rollout_not_approved`
 - Parity evidence suite IDs: `v3-pilot-parity-core`
+- Rollout approved: `no` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 11
 
 ## Node Contract Files
@@ -20,7 +21,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/context.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/context.scaffold.json`
 - v3 object id: `node_obj_context_portable_v3`
-- v3 object hash: `c227b30bb2d8955dc3d44284afadfd04eb50b2b7a31a844225e82805285183d5`
+- v3 object hash: `051a0edf561bf0f1456a9358738790b6e931aaa38b85884528dc623f5a6ecf65`
 
 ## Ports
 

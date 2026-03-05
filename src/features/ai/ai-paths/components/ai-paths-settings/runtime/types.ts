@@ -36,6 +36,7 @@ export interface ServerExecutionArgs {
   activePathId: string | null;
   pathName: string;
   pathDescription: string;
+  runtimeKernelConfig?: Record<string, unknown> | undefined;
   activeTrigger: string;
   executionMode: PathExecutionMode;
   runMode: PathRunMode;
@@ -147,6 +148,7 @@ export interface UseAiPathsRuntimeArgs {
   activePathId: string | null;
   pathName: string;
   pathDescription: string;
+  runtimeKernelConfig?: Record<string, unknown> | undefined;
   activeTab: string;
   activeTrigger: string;
   executionMode: PathExecutionMode;

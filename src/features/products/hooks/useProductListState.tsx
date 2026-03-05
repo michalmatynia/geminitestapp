@@ -82,11 +82,6 @@ export function useProductListState(): ProductListContextType & {
     });
 
   const filters = useProductListFilters({
-    initialCatalogFilter: preferences.catalogFilter,
-    initialPageSize: preferences.pageSize,
-    initialAppliedAdvancedFilter: preferences.appliedAdvancedFilter,
-    initialAppliedAdvancedFilterPresetId: preferences.appliedAdvancedFilterPresetId,
-    preferencesLoaded: !preferencesLoading,
     updatePageSize,
     persistAppliedAdvancedFilterState,
   });

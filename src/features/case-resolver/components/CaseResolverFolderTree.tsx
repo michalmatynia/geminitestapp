@@ -320,7 +320,11 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
       bodyClassName='flex min-h-0 flex-1 flex-col'
       masterInstance='case_resolver'
       header={
-        <CaseResolverTreeHeader searchQuery={treeSearchQuery} onSearchChange={setTreeSearchQuery} />
+        <CaseResolverTreeHeader
+          searchQuery={treeSearchQuery}
+          onSearchChange={setTreeSearchQuery}
+          searchEnabled={capabilities.search.enabled}
+        />
       }
     >
       <div className='min-h-0 flex-1 overflow-auto p-2'>

@@ -37,17 +37,7 @@ export function reduceBlockActions(
       if (!newBlock) return state;
       const updatedSections = state.sections.map((s: SectionInstance) => {
         if (s.id !== action.sectionId) return s;
-        const blockToInsert =
-          s.type === 'Grid' && newBlock.type === 'ImageElement'
-            ? {
-              ...newBlock,
-              settings: {
-                ...newBlock.settings,
-                backgroundTarget: 'grid',
-              },
-            }
-            : newBlock;
-        return { ...s, blocks: [...s.blocks, blockToInsert] };
+        return { ...s, blocks: [...s.blocks, newBlock] };
       });
       return {
         ...state,

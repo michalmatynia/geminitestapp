@@ -51,17 +51,6 @@ export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element 
   const isDragging = draggedMasterSectionId === section.id;
   const isHidden = isCmsSectionHidden(section.settings?.['isHidden']);
   const draggedSectionId = drag.section.id ?? draggedMasterSectionId;
-  const draggedSection = allSections.find((candidate) => candidate.id === draggedSectionId);
-  const isNestedSameParent = draggedSection?.parentSectionId === section.id;
-  const isNestingDescendant =
-    draggedSectionId !== null && draggedSectionId !== undefined
-      ? isDescendant(allSections, draggedSectionId, section.id)
-      : false;
-  const canShowInsideDrop =
-    Boolean(draggedSectionId) &&
-    draggedSectionId !== section.id &&
-    !isNestedSameParent &&
-    !isNestingDescendant;
 
   const resolveInsideDropSectionId = React.useCallback(
     (dataTransfer: DataTransfer): string | null => {
@@ -91,6 +80,8 @@ export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element 
 
   const SectionIcon: LucideIcon = Box;
   const rootRows = section.blocks.filter((block) => block.type === 'Row');
+  const hasRowBlocks = rootRows.length > 0;
+  const showSectionLevelBlockPicker = section.type !== 'Grid' && !hasRowBlocks;
   const rowIndexById = new Map<string, number>();
   rootRows.forEach((row, index) => {
     rowIndexById.set(row.id, index);
@@ -152,6 +143,49 @@ export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element 
     }
   }, [isExpanded, isRowExpanded, isTreeExpanded, section.id, toggleExpand, toggleTreeExpand]);
 
+  const handleSectionRowDragOver = React.useCallback(
+    (event: React.DragEvent): void => {
+      const dragSectionId = resolveInsideDropSectionId(event.dataTransfer);
+      if (!dragSectionId) return;
+      event.preventDefault();
+      event.stopPropagation();
+      setIsInsideDropOver(true);
+    },
+    [resolveInsideDropSectionId]
+  );
+
+  const handleSectionRowDragLeave = React.useCallback((event: React.DragEvent): void => {
+    if (event.currentTarget.contains(event.relatedTarget as Node)) return;
+    setIsInsideDropOver(false);
+  }, []);
+
+  const handleSectionRowDrop = React.useCallback(
+    (event: React.DragEvent): void => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const dragSectionId = resolveInsideDropSectionId(event.dataTransfer);
+      if (!dragSectionId) {
+        setIsInsideDropOver(false);
+        return;
+      }
+
+      setIsInsideDropOver(false);
+
+      void moveSectionByMaster(dragSectionId, section.zone, childSectionCount, section.id).finally(() => {
+        endSectionDrag();
+      });
+    },
+    [
+      childSectionCount,
+      endSectionDrag,
+      moveSectionByMaster,
+      resolveInsideDropSectionId,
+      section.id,
+      section.zone,
+    ]
+  );
+
   return (
     <TreeSectionProvider sectionId={section.id}>
       <div
@@ -178,6 +212,9 @@ export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element 
           }}
           onDragStart={handleSectionDragStart}
           onDragEnd={handleSectionDragEnd}
+          onDragOver={handleSectionRowDragOver}
+          onDragLeave={handleSectionRowDragLeave}
+          onDrop={handleSectionRowDrop}
         >
           <TreeCaret
             isOpen={isRowExpanded}
@@ -261,48 +298,6 @@ export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element 
             </Button>
           </div>
         </div>
-        {canShowInsideDrop ? (
-          <div
-            data-cms-section-drop-target='inside'
-            data-cms-section-parent-id={section.id}
-            onDragOver={(event: React.DragEvent): void => {
-              const dragSectionId = resolveInsideDropSectionId(event.dataTransfer);
-              if (!dragSectionId) return;
-              event.preventDefault();
-              event.stopPropagation();
-              setIsInsideDropOver(true);
-            }}
-            onDragLeave={(event: React.DragEvent): void => {
-              if (event.currentTarget.contains(event.relatedTarget as Node)) return;
-              setIsInsideDropOver(false);
-            }}
-            onDrop={(event: React.DragEvent): void => {
-              event.preventDefault();
-              event.stopPropagation();
-              setIsInsideDropOver(false);
-
-              const dragSectionId = resolveInsideDropSectionId(event.dataTransfer);
-              if (!dragSectionId) return;
-
-              void moveSectionByMaster(
-                dragSectionId,
-                section.zone,
-                childSectionCount,
-                section.id
-              ).finally(() => {
-                endSectionDrag();
-              });
-            }}
-            className={cn(
-              'mt-1 rounded border border-dashed px-2 py-1 text-[10px] font-medium uppercase tracking-wide transition',
-              isInsideDropOver
-                ? 'border-emerald-500/70 bg-emerald-500/10 text-emerald-300'
-                : 'border-border/40 text-gray-500'
-            )}
-          >
-            {isInsideDropOver ? 'Release to nest section' : 'Drop inside to nest'}
-          </div>
-        ) : null}
 
         {isExpanded && (
           <div className='ml-4 mt-1 border-l-2 border-border/20 pl-2'>
@@ -328,14 +323,16 @@ export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element 
                 return <BlockNodeItem key={block.id} block={block} index={idx} />;
               })}
             </div>
-            <div className='mt-2'>
-              <TreeSectionPicker
-                disabled={false}
-                variant='blocks'
-                sectionType={section.type}
-                onSelect={(blockType: string) => blockActions.add(section.id, blockType)}
-              />
-            </div>
+            {showSectionLevelBlockPicker ? (
+              <div className='mt-2'>
+                <TreeSectionPicker
+                  disabled={false}
+                  variant='blocks'
+                  sectionType={section.type}
+                  onSelect={(blockType: string) => blockActions.add(section.id, blockType)}
+                />
+              </div>
+            ) : null}
           </div>
         )}
       </div>

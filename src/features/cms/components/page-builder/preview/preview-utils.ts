@@ -1,4 +1,3 @@
-import type { BlockInstance } from '../../../types/page-builder';
 import type React from 'react';
 
 export type MediaReplaceTarget = {
@@ -114,31 +113,3 @@ export const shouldShowSectionDivider = (settings: Record<string, unknown>): boo
   const mb = getSpacingValue(settings['marginBottom']);
   return mt === 0 && mb === 0;
 };
-
-// Helper to check if an ImageElement is in background mode for a specific target
-export function isBackgroundModeImage(
-  block: BlockInstance,
-  target: 'grid' | 'row' | 'column'
-): boolean {
-  if (block.type !== 'ImageElement') return false;
-  const backgroundTarget = (block.settings?.['backgroundTarget'] as string) || 'none';
-  return backgroundTarget === target;
-}
-
-// Collect all ImageElements from a block tree that have a specific background target
-export function collectBackgroundImages(
-  blocks: BlockInstance[],
-  target: 'grid' | 'row' | 'column'
-): BlockInstance[] {
-  const result: BlockInstance[] = [];
-  for (const block of blocks) {
-    if (isBackgroundModeImage(block, target)) {
-      result.push(block);
-    }
-    // Also check children for grid backgrounds (they could be nested in rows/columns)
-    if (target === 'grid' && block.blocks) {
-      result.push(...collectBackgroundImages(block.blocks, target));
-    }
-  }
-  return result;
-}

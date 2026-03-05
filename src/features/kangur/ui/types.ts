@@ -55,6 +55,7 @@ export type KangurProgressState = {
   perfectGames: number;
   lessonsCompleted: number;
   clockPerfect: number;
+  calendarPerfect: number;
   badges: string[];
   operationsPlayed: string[];
 };

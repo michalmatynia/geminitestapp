@@ -39,17 +39,66 @@ describe('node-runtime-kernel', () => {
     expect(runtimeKernel.resolveHandler('template')).toBe(templateHandler);
   });
 
-  it('keeps non-pilot node types on legacy_adapter strategy', () => {
-    const databaseHandler = buildHandler('database');
+  it('prefers direct code-object handlers for pilot node types when provided', () => {
+    const legacyConstantHandler = buildHandler('legacy-constant');
+    const v3ConstantHandler = buildHandler('v3-constant');
+    const resolveCodeObjectHandler = vi.fn(({ nodeType, codeObjectId }: { nodeType: string; codeObjectId: string }) =>
+      nodeType === 'constant' && codeObjectId === 'ai-paths.node-code-object.constant.v3'
+        ? v3ConstantHandler
+        : null
+    );
+
     const runtimeKernel = createNodeRuntimeKernel({
-      resolveLegacyHandler: (nodeType: string) => (nodeType === 'database' ? databaseHandler : null),
+      resolveLegacyHandler: (nodeType: string) =>
+        nodeType === 'constant' ? legacyConstantHandler : null,
+      resolveCodeObjectHandler,
     });
 
-    const descriptor = runtimeKernel.resolveDescriptor('database');
+    const descriptor = runtimeKernel.resolveDescriptor('constant');
+    expect(descriptor.strategy).toBe('code_object_v3');
+    expect(descriptor.source).toBe('registry');
+    expect(descriptor.handler).toBe(v3ConstantHandler);
+    expect(runtimeKernel.resolveHandler('constant')).toBe(v3ConstantHandler);
+    expect(resolveCodeObjectHandler).toHaveBeenCalledWith({
+      nodeType: 'constant',
+      codeObjectId: 'ai-paths.node-code-object.constant.v3',
+    });
+  });
+
+  it('falls back to legacy handlers when direct code-object handler is unavailable', () => {
+    const legacyMathHandler = buildHandler('legacy-math');
+    const resolveCodeObjectHandler = vi.fn(() => null);
+
+    const runtimeKernel = createNodeRuntimeKernel({
+      resolveLegacyHandler: (nodeType: string) =>
+        nodeType === 'math' ? legacyMathHandler : null,
+      resolveCodeObjectHandler,
+      v3PilotNodeTypes: ['math'],
+    });
+
+    const descriptor = runtimeKernel.resolveDescriptor('math');
+    expect(descriptor.strategy).toBe('code_object_v3');
+    expect(descriptor.source).toBe('registry');
+    expect(descriptor.handler).toBe(legacyMathHandler);
+    expect(runtimeKernel.resolveHandler('math')).toBe(legacyMathHandler);
+    expect(resolveCodeObjectHandler).toHaveBeenCalledWith({
+      nodeType: 'math',
+      codeObjectId: 'ai-paths.node-code-object.math.v3',
+    });
+  });
+
+  it('keeps non-pilot node types on legacy_adapter strategy', () => {
+    const legacyCustomHandler = buildHandler('legacy_custom');
+    const runtimeKernel = createNodeRuntimeKernel({
+      resolveLegacyHandler: (nodeType: string) =>
+        nodeType === 'legacy_custom' ? legacyCustomHandler : null,
+    });
+
+    const descriptor = runtimeKernel.resolveDescriptor('legacy_custom');
     expect(descriptor.strategy).toBe('legacy_adapter');
     expect(descriptor.source).toBe('registry');
     expect(descriptor.codeObjectId).toBeNull();
-    expect(descriptor.handler).toBe(databaseHandler);
+    expect(descriptor.handler).toBe(legacyCustomHandler);
   });
 
   it('prefers override handlers before legacy registry handlers', () => {
@@ -95,22 +144,8 @@ describe('node-runtime-kernel', () => {
     expect(descriptor.handler).toBe(databaseHandler);
   });
 
-  it('supports legacy_only mode as a rollout kill switch', () => {
-    const constantHandler = buildHandler('constant');
-    const runtimeKernel = createNodeRuntimeKernel({
-      resolveLegacyHandler: (nodeType: string) => (nodeType === 'constant' ? constantHandler : null),
-      mode: 'legacy_only',
-    });
-
-    const descriptor = runtimeKernel.resolveDescriptor('constant');
-    expect(descriptor.strategy).toBe('legacy_adapter');
-    expect(descriptor.codeObjectId).toBeNull();
-    expect(descriptor.handler).toBe(constantHandler);
-  });
-
   it('normalizes unknown runtime kernel mode to auto', () => {
     expect(resolveNodeRuntimeKernelMode('auto')).toBe('auto');
-    expect(resolveNodeRuntimeKernelMode('legacy_only')).toBe('legacy_only');
     expect(resolveNodeRuntimeKernelMode('unexpected_mode')).toBe('auto');
     expect(resolveNodeRuntimeKernelMode(undefined)).toBe('auto');
   });

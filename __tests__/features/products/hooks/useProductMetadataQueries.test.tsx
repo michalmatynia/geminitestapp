@@ -106,7 +106,7 @@ describe('useProductMetadataQueries invalidation', () => {
     });
   });
 
-  it('useParameters requests a fresh parameter list for the selected catalog', async () => {
+  it('useParameters requests a parameter list for the selected catalog', async () => {
     vi.mocked(api.get).mockResolvedValue([
       {
         id: 'param-1',
@@ -123,7 +123,6 @@ describe('useProductMetadataQueries invalidation', () => {
       expect.objectContaining({
         params: {
           catalogId: 'catalog-1',
-          fresh: 1,
         },
         cache: 'no-store',
       })

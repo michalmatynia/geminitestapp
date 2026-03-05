@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiPathRunRecord, RuntimeState } from '@/shared/contracts/ai-paths';
 import {
+  AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
   AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
   AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
   createDefaultPathConfig,
@@ -133,6 +134,7 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     vi.clearAllMocks();
     delete process.env['AI_PATHS_RUNTIME_KERNEL_MODE'];
     delete process.env['AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES'];
+    delete process.env['AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS'];
 
     evaluateGraphWithIteratorAutoContinueMock.mockResolvedValue(RUNTIME_STATE_IDLE);
     listAiPathsSettingsMock.mockResolvedValue([]);
@@ -167,6 +169,7 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     listAiPathsSettingsMock.mockResolvedValue([
       { key: AI_PATHS_RUNTIME_KERNEL_MODE_KEY, value: 'auto' },
       { key: AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY, value: 'constant, math' },
+      { key: AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY, value: 'resolver.primary' },
     ]);
     const run = buildRunRecord();
     const { executePathRun } = await loadModule();
@@ -175,6 +178,7 @@ describe('path-run-executor runtime-kernel settings integration', () => {
 
     expect(evaluateGraphWithIteratorAutoContinueMock).toHaveBeenCalledTimes(1);
     expect(listAiPathsSettingsMock).toHaveBeenCalledWith([
+      AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
       AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
       AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
     ]);
@@ -185,14 +189,19 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     if (args?.['runtimeKernelPilotNodeTypes'] !== undefined) {
       expect(args?.['runtimeKernelPilotNodeTypes']).toEqual(['constant', 'math']);
     }
+    if (args?.['runtimeKernelCodeObjectResolverIds'] !== undefined) {
+      expect(args?.['runtimeKernelCodeObjectResolverIds']).toEqual(['resolver.primary']);
+    }
   });
 
-  it('applies env kill switch over persisted runtime-kernel settings', async () => {
-    process.env['AI_PATHS_RUNTIME_KERNEL_MODE'] = 'legacy_only';
+  it('applies env mode and keeps env pilot-node override precedence', async () => {
+    process.env['AI_PATHS_RUNTIME_KERNEL_MODE'] = 'auto';
     process.env['AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES'] = 'template';
+    process.env['AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS'] = 'resolver.env';
     listAiPathsSettingsMock.mockResolvedValue([
       { key: AI_PATHS_RUNTIME_KERNEL_MODE_KEY, value: 'auto' },
       { key: AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY, value: 'constant, math' },
+      { key: AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY, value: 'resolver.settings' },
     ]);
     const run = buildRunRecord();
     const { executePathRun } = await loadModule();
@@ -203,8 +212,82 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     const args = evaluateGraphWithIteratorAutoContinueMock.mock.calls[0]?.[0] as
       | Record<string, unknown>
       | undefined;
-    expect(args?.['runtimeKernelMode']).toBe('legacy_only');
-    expect(args?.['runtimeKernelPilotNodeTypes']).toBeUndefined();
+    expect(args?.['runtimeKernelMode']).toBe('auto');
+    expect(args?.['runtimeKernelPilotNodeTypes']).toEqual(['template']);
+    expect(args?.['runtimeKernelCodeObjectResolverIds']).toEqual(['resolver.env']);
+  });
+
+  it('applies path runtime-kernel config from run meta before global settings', async () => {
+    listAiPathsSettingsMock.mockResolvedValue([
+      { key: AI_PATHS_RUNTIME_KERNEL_MODE_KEY, value: 'auto' },
+      { key: AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY, value: 'constant, math' },
+      { key: AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY, value: 'resolver.settings' },
+    ]);
+    const run = buildRunRecord();
+    run.meta = {
+      runtimeKernelConfig: {
+        mode: 'auto',
+        pilotNodeTypes: ['template'],
+        codeObjectResolverIds: ['resolver.path'],
+      },
+    };
+    const { executePathRun } = await loadModule();
+
+    await executePathRun(run);
+
+    expect(evaluateGraphWithIteratorAutoContinueMock).toHaveBeenCalledTimes(1);
+    const args = evaluateGraphWithIteratorAutoContinueMock.mock.calls[0]?.[0] as
+      | Record<string, unknown>
+      | undefined;
+    expect(args?.['runtimeKernelMode']).toBe('auto');
+    expect(args?.['runtimeKernelPilotNodeTypes']).toEqual(['template']);
+    expect(args?.['runtimeKernelCodeObjectResolverIds']).toEqual(['resolver.path']);
+
+    const finalUpdatePayload = updateRunIfStatusMock.mock.calls
+      .map((call) => call[2] as Record<string, unknown>)
+      .find((payload) => payload['status'] === 'completed');
+    expect(finalUpdatePayload?.['meta']).toEqual(
+      expect.objectContaining({
+        runtimeKernel: expect.objectContaining({
+          runtimeKernelModeSource: 'path',
+          runtimeKernelPilotNodeTypesSource: 'path',
+          runtimeKernelCodeObjectResolverIdsSource: 'path',
+        }),
+      })
+    );
+  });
+
+  it('emits a warning event when configured resolver ids are not registered', async () => {
+    listAiPathsSettingsMock.mockResolvedValue([
+      { key: AI_PATHS_RUNTIME_KERNEL_MODE_KEY, value: 'auto' },
+      { key: AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY, value: 'constant' },
+      {
+        key: AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
+        value: 'resolver.missing',
+      },
+    ]);
+    const run = buildRunRecord();
+    const { executePathRun } = await loadModule();
+
+    await executePathRun(run);
+
+    const warningEventPayload = createRunEventMock.mock.calls
+      .map((call) => call[0] as Record<string, unknown>)
+      .find(
+        (payload) =>
+          payload['level'] === 'warn' &&
+          typeof payload['message'] === 'string' &&
+          String(payload['message']).includes('code-object resolver ids include unknown entries')
+      );
+
+    expect(warningEventPayload).toMatchObject({
+      runId: run.id,
+      level: 'warn',
+      metadata: expect.objectContaining({
+        runtimeKernelCodeObjectResolverIds: ['resolver.missing'],
+        runtimeKernelCodeObjectResolverIdsMissing: ['resolver.missing'],
+      }),
+    });
   });
 
   it('wires runtime validation middleware according to preflight policy', async () => {
@@ -242,6 +325,10 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     listAiPathsSettingsMock.mockResolvedValue([
       { key: AI_PATHS_RUNTIME_KERNEL_MODE_KEY, value: 'auto' },
       { key: AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY, value: 'constant, template' },
+      {
+        key: AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
+        value: 'resolver.primary, resolver.fallback',
+      },
     ]);
     const run = buildRunRecord();
     const node = run.graph?.nodes?.[0];
@@ -306,6 +393,8 @@ describe('path-run-executor runtime-kernel settings integration', () => {
         runtimeKernelModeSource: 'settings',
         runtimeKernelPilotNodeTypes: ['constant', 'template'],
         runtimeKernelPilotNodeTypesSource: 'settings',
+        runtimeKernelCodeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
+        runtimeKernelCodeObjectResolverIdsSource: 'settings',
         runtimeStrategy: 'code_object_v3',
         runtimeResolutionSource: 'override',
         runtimeCodeObjectId: 'ai-paths.node-code-object.constant.v3',
@@ -323,6 +412,8 @@ describe('path-run-executor runtime-kernel settings integration', () => {
           runtimeKernelModeSource: 'settings',
           runtimeKernelPilotNodeTypes: ['constant', 'template'],
           runtimeKernelPilotNodeTypesSource: 'settings',
+          runtimeKernelCodeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
+          runtimeKernelCodeObjectResolverIdsSource: 'settings',
         },
         runtimeTrace: expect.objectContaining({
           kernelParity: {

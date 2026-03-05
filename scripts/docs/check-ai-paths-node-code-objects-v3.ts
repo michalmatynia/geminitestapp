@@ -98,6 +98,10 @@ const isSha256Hex = (value: string): boolean => /^[a-f0-9]{64}$/i.test(value);
 
 const toSafeString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
+const ALLOWED_EXECUTION_ADAPTERS = new Set<string>([
+  'legacy_handler_bridge',
+  'native_handler_registry',
+]);
 
 const pilotNodeTypes = Array.from(
   new Set(
@@ -109,6 +113,7 @@ const pilotNodeTypes = Array.from(
 const pilotNodeTypeSet = new Set<string>(pilotNodeTypes);
 
 const errors: string[] = [];
+const legacyAdapterNodeTypes: string[] = [];
 
 const unexpectedScaffoldFiles = listUnexpectedFilesBySuffix({
   directoryPath: outputDir,
@@ -350,6 +355,12 @@ for (const row of indexRows) {
   }
   if (!executionAdapter) {
     errors.push(`${nodeType}: scaffold runtimeKernel.executionAdapter must be non-empty.`);
+  } else if (!ALLOWED_EXECUTION_ADAPTERS.has(executionAdapter)) {
+    errors.push(
+      `${nodeType}: scaffold runtimeKernel.executionAdapter must be one of ${Array.from(ALLOWED_EXECUTION_ADAPTERS).join(', ')}.`
+    );
+  } else if (executionAdapter === 'legacy_handler_bridge') {
+    legacyAdapterNodeTypes.push(nodeType);
   }
   if (legacyHandlerKey !== nodeType) {
     errors.push(`${nodeType}: scaffold runtimeKernel.legacyHandlerKey must match nodeType.`);
@@ -374,6 +385,15 @@ for (const row of indexRows) {
   }
   if (contractEntry.runtimeStrategy !== 'code_object_v3') {
     errors.push(`${nodeType}: contracts.json runtimeStrategy must be "code_object_v3".`);
+  }
+  const contractExecutionAdapter = toSafeString(contractEntry.executionAdapter);
+  if (!ALLOWED_EXECUTION_ADAPTERS.has(contractExecutionAdapter)) {
+    errors.push(
+      `${nodeType}: contracts.json executionAdapter must be one of ${Array.from(ALLOWED_EXECUTION_ADAPTERS).join(', ')}.`
+    );
+  }
+  if (contractExecutionAdapter !== executionAdapter) {
+    errors.push(`${nodeType}: contracts.json executionAdapter mismatch.`);
   }
   if (toSafeString(contractEntry.legacyHandlerKey) !== nodeType) {
     errors.push(`${nodeType}: contracts.json legacyHandlerKey must match nodeType.`);
@@ -404,6 +424,13 @@ for (const pilotNodeType of pilotNodeTypes) {
 if (unexpectedScaffoldFiles.length > 0) {
   errors.push(
     `Unexpected scaffold files in docs/ai-paths/node-code-objects-v3: ${unexpectedScaffoldFiles.join(', ')}`
+  );
+}
+if (legacyAdapterNodeTypes.length > 0) {
+  errors.push(
+    `All v3 pilot node contracts must use native_handler_registry. Legacy adapters found for: ${legacyAdapterNodeTypes
+      .sort((left, right) => left.localeCompare(right))
+      .join(', ')}`
   );
 }
 

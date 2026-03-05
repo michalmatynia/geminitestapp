@@ -6,25 +6,37 @@ import type {
 } from '@/shared/contracts/ai-paths-runtime';
 
 export const NODE_RUNTIME_KERNEL_STRATEGIES = ['legacy_adapter', 'code_object_v3'] as const;
-export const NODE_RUNTIME_KERNEL_MODES = ['auto', 'legacy_only'] as const;
+export const NODE_RUNTIME_KERNEL_MODES = ['auto'] as const;
 export type NodeRuntimeKernelMode = (typeof NODE_RUNTIME_KERNEL_MODES)[number];
 
 export const NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES = [
+  'agent',
+  'api_advanced',
+  'audio_oscillator',
+  'audio_speaker',
   'constant',
   'context',
   'bundle',
   'compare',
+  'database',
   'delay',
   'db_schema',
   'description_updater',
+  'ai_description',
   'fetcher',
   'gate',
+  'http',
   'iterator',
+  'learner_agent',
   'mapper',
   'math',
+  'model',
   'mutator',
   'notification',
   'parser',
+  'playwright',
+  'poll',
+  'prompt',
   'regex',
   'router',
   'simulation',
@@ -49,8 +61,14 @@ export type NodeRuntimeKernel = {
   resolveHandler: (nodeType: string) => NodeHandler | null;
 };
 
+export type ResolveCodeObjectHandlerArgs = {
+  nodeType: string;
+  codeObjectId: string;
+};
+
 export type CreateNodeRuntimeKernelArgs = {
   resolveLegacyHandler: (nodeType: string) => NodeHandler | null;
+  resolveCodeObjectHandler?: ((args: ResolveCodeObjectHandlerArgs) => NodeHandler | null) | undefined;
   resolveOverrideHandler?: ((nodeType: string) => NodeHandler | null) | undefined;
   v3PilotNodeTypes?: readonly string[] | undefined;
   mode?: NodeRuntimeKernelMode | undefined;
@@ -61,8 +79,7 @@ const normalizeNodeType = (nodeType: string): string =>
 
 const buildV3CodeObjectId = (nodeType: string): string => `ai-paths.node-code-object.${nodeType}.v3`;
 
-export const resolveNodeRuntimeKernelMode = (mode: unknown): NodeRuntimeKernelMode =>
-  mode === 'legacy_only' ? 'legacy_only' : 'auto';
+export const resolveNodeRuntimeKernelMode = (_mode: unknown): NodeRuntimeKernelMode => 'auto';
 
 export const isNodeRuntimeKernelV3PilotType = ({
   nodeType,
@@ -75,32 +92,26 @@ export const isNodeRuntimeKernelV3PilotType = ({
 const resolveStrategy = ({
   nodeType,
   v3PilotNodeTypes,
-  mode,
 }: {
   nodeType: string;
   v3PilotNodeTypes: Set<string>;
-  mode: NodeRuntimeKernelMode;
 }): NodeRuntimeResolutionStrategy =>
-  mode === 'legacy_only'
-    ? 'legacy_adapter'
-    : isNodeRuntimeKernelV3PilotType({ nodeType, v3PilotNodeTypes })
-      ? 'code_object_v3'
-      : 'legacy_adapter';
+  isNodeRuntimeKernelV3PilotType({ nodeType, v3PilotNodeTypes })
+    ? 'code_object_v3'
+    : 'legacy_adapter';
 
 const buildDescriptor = ({
   nodeType,
   handler,
   source,
   v3PilotNodeTypes,
-  mode,
 }: {
   nodeType: string;
   handler: NodeHandler | null;
   source: NodeRuntimeResolutionSource;
   v3PilotNodeTypes: Set<string>;
-  mode: NodeRuntimeKernelMode;
 }): NodeRuntimeKernelDescriptor => {
-  const strategy = resolveStrategy({ nodeType, v3PilotNodeTypes, mode });
+  const strategy = resolveStrategy({ nodeType, v3PilotNodeTypes });
   return {
     nodeType,
     strategy,
@@ -120,11 +131,13 @@ export const toNodeRuntimeResolutionTelemetry = (
 
 export const createNodeRuntimeKernel = ({
   resolveLegacyHandler,
+  resolveCodeObjectHandler,
   resolveOverrideHandler,
   v3PilotNodeTypes,
   mode,
 }: CreateNodeRuntimeKernelArgs): NodeRuntimeKernel => {
-  const resolvedMode = resolveNodeRuntimeKernelMode(mode);
+  // Accept deprecated mode inputs for compatibility, but runtime behavior is always auto.
+  resolveNodeRuntimeKernelMode(mode);
   const resolvedPilotNodeTypes = new Set<string>(
     (v3PilotNodeTypes ?? NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES)
       .map((entry: string): string => normalizeNodeType(entry))
@@ -139,7 +152,6 @@ export const createNodeRuntimeKernel = ({
         handler: null,
         source: 'missing',
         v3PilotNodeTypes: resolvedPilotNodeTypes,
-        mode: resolvedMode,
       });
     }
 
@@ -151,7 +163,26 @@ export const createNodeRuntimeKernel = ({
           handler: override,
           source: 'override',
           v3PilotNodeTypes: resolvedPilotNodeTypes,
-          mode: resolvedMode,
+        });
+      }
+    }
+
+    const strategy = resolveStrategy({
+      nodeType,
+      v3PilotNodeTypes: resolvedPilotNodeTypes,
+    });
+    if (strategy === 'code_object_v3' && typeof resolveCodeObjectHandler === 'function') {
+      const codeObjectId = buildV3CodeObjectId(nodeType);
+      const codeObjectHandler = resolveCodeObjectHandler({
+        nodeType,
+        codeObjectId,
+      });
+      if (codeObjectHandler) {
+        return buildDescriptor({
+          nodeType,
+          handler: codeObjectHandler,
+          source: 'registry',
+          v3PilotNodeTypes: resolvedPilotNodeTypes,
         });
       }
     }
@@ -162,7 +193,6 @@ export const createNodeRuntimeKernel = ({
       handler,
       source: handler ? 'registry' : 'missing',
       v3PilotNodeTypes: resolvedPilotNodeTypes,
-      mode: resolvedMode,
     });
   };
 

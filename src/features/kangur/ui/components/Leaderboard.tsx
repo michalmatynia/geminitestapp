@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Trophy, User, Ghost } from 'lucide-react';
 
+import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
 
@@ -26,6 +27,11 @@ const OPERATION_LABELS: Record<string, OperationLabel> = {
 
 const MEDALS = ['🥇', '🥈', '🥉'] as const;
 const kangurPlatform = getKangurPlatform();
+const isStatusError = (value: unknown): value is { status: number } =>
+  typeof value === 'object' &&
+  value !== null &&
+  'status' in value &&
+  typeof (value as { status?: unknown }).status === 'number';
 
 export default function Leaderboard(): React.JSX.Element {
   const [scores, setScores] = useState<KangurScoreRecord[]>([]);
@@ -51,12 +57,25 @@ export default function Leaderboard(): React.JSX.Element {
         if (userResult.status === 'fulfilled') {
           setCurrentUser(userResult.value);
         } else {
+          if (
+            !isStatusError(userResult.reason) ||
+            (userResult.reason.status !== 401 && userResult.reason.status !== 403)
+          ) {
+            logKangurClientError(userResult.reason, {
+              source: 'KangurLeaderboard',
+              action: 'loadCurrentUser',
+            });
+          }
           setCurrentUser(null);
         }
 
         if (scoreRows.status === 'fulfilled') {
           setScores(scoreRows.value);
         } else {
+          logKangurClientError(scoreRows.reason, {
+            source: 'KangurLeaderboard',
+            action: 'loadScores',
+          });
           setScores([]);
         }
       } finally {

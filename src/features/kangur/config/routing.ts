@@ -21,17 +21,45 @@ const toKebabCase = (value: string): string =>
     .replace(/[\s_]+/g, '-')
     .toLowerCase();
 
-export const normalizeKangurRequestedPath = (slugSegments: readonly string[] = []): string => {
-  if (slugSegments.length === 0) {
+export const normalizeKangurBasePath = (basePath: string | null | undefined): string => {
+  if (typeof basePath !== 'string') {
     return KANGUR_BASE_PATH;
   }
-  return `${KANGUR_BASE_PATH}/${slugSegments.join('/')}`;
+
+  const trimmed = basePath.trim();
+  if (trimmed.length === 0) {
+    return KANGUR_BASE_PATH;
+  }
+
+  const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  const withoutTrailingSlashes = withLeadingSlash.replace(/\/+$/, '');
+  return withoutTrailingSlashes.length > 0 ? withoutTrailingSlashes : '/';
 };
 
-export const getKangurPageHref = (pageName: string): string => {
+const joinKangurPath = (basePath: string, suffix: string): string => {
+  const normalizedBasePath = normalizeKangurBasePath(basePath);
+  const normalizedSuffix = suffix.replace(/^\/+/, '');
+  if (normalizedBasePath === '/') {
+    return `/${normalizedSuffix}`;
+  }
+  return `${normalizedBasePath}/${normalizedSuffix}`;
+};
+
+export const normalizeKangurRequestedPath = (
+  slugSegments: readonly string[] = [],
+  basePath: string = KANGUR_BASE_PATH
+): string => {
+  const normalizedBasePath = normalizeKangurBasePath(basePath);
+  if (slugSegments.length === 0) {
+    return normalizedBasePath;
+  }
+  return joinKangurPath(normalizedBasePath, slugSegments.join('/'));
+};
+
+export const getKangurPageHref = (pageName: string, basePath: string = KANGUR_BASE_PATH): string => {
   const mappedSlug = KANGUR_PAGE_TO_SLUG[pageName];
   const slug = mappedSlug ?? toKebabCase(pageName);
-  return `${KANGUR_BASE_PATH}/${slug}`;
+  return joinKangurPath(basePath, slug);
 };
 
 export const resolveKangurPageKeyFromSlug = (slug: string | null | undefined): string | null => {

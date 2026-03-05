@@ -419,6 +419,335 @@ const buildTransformPilotNodes = (title: string): AiNode[] => [
     position: { x: 1950, y: 180 },
   } as AiNode,
   {
+    id: 'node-poll',
+    type: 'poll',
+    title: 'Poll Job',
+    description: '',
+    inputs: ['jobId', 'query', 'value', 'entityId', 'productId', 'bundle'],
+    outputs: ['result', 'status', 'jobId', 'bundle'],
+    config: {
+      poll: {
+        mode: 'job',
+        intervalMs: 2000,
+        maxAttempts: 30,
+        dbQuery: {
+          provider: 'mongodb',
+          collection: 'products',
+          mode: 'preset',
+          preset: 'by_id',
+          field: '_id',
+          idType: 'string',
+          queryTemplate: '{...}',
+          limit: 20,
+          sort: '',
+          projection: '',
+          single: false,
+        },
+        successPath: 'status',
+        successOperator: 'equals',
+        successValue: 'completed',
+        resultPath: 'result',
+      },
+    },
+    position: { x: 2040, y: 180 },
+  } as AiNode,
+  {
+    id: 'node-prompt',
+    type: 'prompt',
+    title: 'Prompt',
+    description: '',
+    inputs: ['bundle', 'title', 'images', 'result', 'entityId'],
+    outputs: ['prompt', 'images'],
+    config: {
+      prompt: {
+        template: 'prompt={{result}}',
+      },
+      runtime: {
+        inputContracts: {
+          bundle: { required: false },
+          title: { required: false },
+          images: { required: false },
+          result: { required: true },
+          entityId: { required: false },
+        },
+      },
+    },
+    position: { x: 2130, y: 60 },
+  } as AiNode,
+  {
+    id: 'node-agent',
+    type: 'agent',
+    title: 'Reasoning Agent',
+    description: '',
+    inputs: ['prompt', 'bundle', 'context', 'entityJson'],
+    outputs: ['result', 'jobId'],
+    config: {
+      agent: {
+        personaId: '',
+        promptTemplate: '',
+        waitForResult: true,
+      },
+      runtime: {
+        inputContracts: {
+          prompt: { required: true },
+          bundle: { required: false },
+          context: { required: false },
+          entityJson: { required: false },
+        },
+      },
+    },
+    position: { x: 2220, y: 60 },
+  } as AiNode,
+  {
+    id: 'node-model',
+    type: 'model',
+    title: 'Model',
+    description: '',
+    inputs: ['prompt', 'images'],
+    outputs: ['result', 'jobId'],
+    config: {
+      model: {
+        modelId: '',
+        temperature: 0.7,
+        maxTokens: 800,
+        systemPrompt: '',
+        vision: false,
+        waitForResult: true,
+      },
+    },
+    position: { x: 2310, y: 60 },
+  } as AiNode,
+  {
+    id: 'node-http',
+    type: 'http',
+    title: 'HTTP Fetch',
+    description: '',
+    inputs: ['url', 'body', 'headers', 'bundle'],
+    outputs: ['value', 'bundle'],
+    config: {
+      http: {
+        url: 'https://example.com/api',
+        method: 'POST',
+        headers: '{"content-type":"application/json"}',
+        bodyTemplate: '',
+        responseMode: 'json',
+        responsePath: '',
+      },
+      runtime: {
+        inputContracts: {
+          url: { required: false },
+          body: { required: true },
+          headers: { required: false },
+          bundle: { required: false },
+        },
+      },
+    },
+    position: { x: 2400, y: 60 },
+  } as AiNode,
+  {
+    id: 'node-database',
+    type: 'database',
+    title: 'Database Query',
+    description: '',
+    inputs: [
+      'entityId',
+      'entityType',
+      'productId',
+      'context',
+      'query',
+      'value',
+      'bundle',
+      'result',
+      'content_en',
+      'queryCallback',
+      'schema',
+      'aiQuery',
+    ],
+    outputs: ['result', 'bundle', 'content_en', 'aiPrompt'],
+    config: {
+      database: {
+        operation: 'query',
+        entityType: 'product',
+        idField: '_id',
+        query: {
+          provider: 'mongodb',
+          collection: 'products',
+          mode: 'preset',
+          preset: 'by_id',
+          field: '_id',
+          idType: 'string',
+          queryTemplate: '{...}',
+          limit: 20,
+          sort: '',
+          projection: '',
+          single: false,
+        },
+      },
+      runtime: {
+        inputContracts: {
+          query: { required: true },
+          schema: { required: false },
+        },
+      },
+    },
+    position: { x: 2490, y: 0 },
+  } as AiNode,
+  {
+    id: 'node-api-advanced',
+    type: 'api_advanced',
+    title: 'API Operation (Advanced)',
+    description: '',
+    inputs: ['url', 'body', 'headers', 'params', 'bundle'],
+    outputs: ['value', 'bundle', 'status', 'headers', 'items', 'route', 'error', 'success'],
+    config: {
+      apiAdvanced: {
+        url: 'https://example.com/advanced',
+        method: 'POST',
+        pathParamsJson: {},
+        queryParamsJson: {},
+        headersJson: {},
+        authMode: 'none',
+        responseMode: 'json',
+        responsePath: '',
+        outputMappingsJson: {},
+        retryEnabled: true,
+        retryAttempts: 2,
+        retryOnStatusJson: [429, 500, 502, 503, 504],
+        paginationMode: 'none',
+        errorRoutesJson: [],
+      },
+      runtime: {
+        inputContracts: {
+          url: { required: false },
+          body: { required: false },
+          headers: { required: false },
+          params: { required: false },
+          bundle: { required: false },
+        },
+      },
+    },
+    position: { x: 2580, y: 0 },
+  } as AiNode,
+  {
+    id: 'node-audio-oscillator',
+    type: 'audio_oscillator',
+    title: 'Audio Oscillator',
+    description: '',
+    inputs: ['frequency', 'waveform', 'gain', 'durationMs', 'trigger'],
+    outputs: ['audioSignal', 'frequency', 'waveform', 'gain', 'durationMs'],
+    config: {
+      audioOscillator: {
+        waveform: 'sine',
+        frequencyHz: 440,
+        gain: 0.25,
+        durationMs: 400,
+      },
+      runtime: {
+        inputContracts: {
+          frequency: { required: false },
+          waveform: { required: false },
+          gain: { required: false },
+          durationMs: { required: false },
+          trigger: { required: false },
+        },
+      },
+    },
+    position: { x: 2670, y: 120 },
+  } as AiNode,
+  {
+    id: 'node-audio-speaker',
+    type: 'audio_speaker',
+    title: 'Audio Speaker (Mono)',
+    description: '',
+    inputs: ['audioSignal', 'frequency', 'waveform', 'gain', 'durationMs', 'trigger'],
+    outputs: ['status', 'audioSignal'],
+    config: {
+      audioSpeaker: {
+        enabled: true,
+        autoPlay: true,
+        gain: 1,
+        stopPrevious: true,
+      },
+      runtime: {
+        inputContracts: {
+          audioSignal: { required: true },
+          frequency: { required: false },
+          waveform: { required: false },
+          gain: { required: false },
+          durationMs: { required: false },
+          trigger: { required: false },
+        },
+      },
+    },
+    position: { x: 2760, y: 120 },
+  } as AiNode,
+  {
+    id: 'node-learner-agent',
+    type: 'learner_agent',
+    title: 'Learner Agent',
+    description: '',
+    inputs: ['prompt', 'bundle'],
+    outputs: ['result', 'jobId', 'sources'],
+    config: {
+      learnerAgent: {
+        agentId: '',
+        promptTemplate: '',
+        includeSources: true,
+      },
+      runtime: {
+        inputContracts: {
+          prompt: { required: true },
+          bundle: { required: false },
+        },
+      },
+    },
+    position: { x: 2220, y: 180 },
+  } as AiNode,
+  {
+    id: 'node-playwright',
+    type: 'playwright',
+    title: 'Playwright',
+    description: '',
+    inputs: ['url', 'bundle', 'context'],
+    outputs: ['result', 'jobId', 'screenshot', 'html'],
+    config: {
+      playwright: {
+        mode: 'scrape',
+        url: 'https://example.com/path',
+      },
+      runtime: {
+        inputContracts: {
+          url: { required: false },
+          bundle: { required: false },
+          context: { required: false },
+        },
+      },
+    },
+    position: { x: 2850, y: 0 },
+  } as AiNode,
+  {
+    id: 'node-ai-description',
+    type: 'ai_description',
+    title: 'AI Description Generator',
+    description: '',
+    inputs: ['entityJson', 'images', 'title'],
+    outputs: ['description_en'],
+    config: {
+      description: {
+        visionOutputEnabled: true,
+        generationOutputEnabled: true,
+      },
+      runtime: {
+        inputContracts: {
+          entityJson: { required: false },
+          images: { required: false },
+          title: { required: false },
+        },
+      },
+    },
+    position: { x: 2490, y: 120 },
+  } as AiNode,
+  {
     id: 'node-description-updater',
     type: 'description_updater',
     title: 'Description Updater (Deprecated)',
@@ -647,11 +976,109 @@ const buildTransformPilotEdges = (): Edge[] => [
     toPort: 'value',
   },
   {
-    id: 'edge-template-description-updater',
+    id: 'edge-template-prompt',
     from: 'node-template',
+    to: 'node-poll',
+    fromPort: 'prompt',
+    toPort: 'value',
+  },
+  {
+    id: 'edge-poll-prompt',
+    from: 'node-poll',
+    to: 'node-prompt',
+    fromPort: 'result',
+    toPort: 'result',
+  },
+  {
+    id: 'edge-prompt-description-updater',
+    from: 'node-prompt',
     to: 'node-description-updater',
     fromPort: 'prompt',
     toPort: 'description_en',
+  },
+  {
+    id: 'edge-prompt-agent',
+    from: 'node-prompt',
+    to: 'node-agent',
+    fromPort: 'prompt',
+    toPort: 'prompt',
+  },
+  {
+    id: 'edge-prompt-learner-agent',
+    from: 'node-prompt',
+    to: 'node-learner-agent',
+    fromPort: 'prompt',
+    toPort: 'prompt',
+  },
+  {
+    id: 'edge-prompt-model',
+    from: 'node-prompt',
+    to: 'node-model',
+    fromPort: 'prompt',
+    toPort: 'prompt',
+  },
+  {
+    id: 'edge-prompt-model-images',
+    from: 'node-prompt',
+    to: 'node-model',
+    fromPort: 'images',
+    toPort: 'images',
+  },
+  {
+    id: 'edge-model-http',
+    from: 'node-model',
+    to: 'node-http',
+    fromPort: 'result',
+    toPort: 'body',
+  },
+  {
+    id: 'edge-db-schema-database',
+    from: 'node-db-schema',
+    to: 'node-database',
+    fromPort: 'schema',
+    toPort: 'schema',
+  },
+  {
+    id: 'edge-http-database',
+    from: 'node-http',
+    to: 'node-database',
+    fromPort: 'value',
+    toPort: 'query',
+  },
+  {
+    id: 'edge-http-api-advanced-body',
+    from: 'node-http',
+    to: 'node-api-advanced',
+    fromPort: 'value',
+    toPort: 'body',
+  },
+  {
+    id: 'edge-http-api-advanced-url',
+    from: 'node-http',
+    to: 'node-api-advanced',
+    fromPort: 'value',
+    toPort: 'url',
+  },
+  {
+    id: 'edge-http-playwright-url',
+    from: 'node-http',
+    to: 'node-playwright',
+    fromPort: 'value',
+    toPort: 'url',
+  },
+  {
+    id: 'edge-context-playwright-context',
+    from: 'node-context',
+    to: 'node-playwright',
+    fromPort: 'context',
+    toPort: 'context',
+  },
+  {
+    id: 'edge-audio-oscillator-audio-speaker',
+    from: 'node-audio-oscillator',
+    to: 'node-audio-speaker',
+    fromPort: 'audioSignal',
+    toPort: 'audioSignal',
   },
   {
     id: 'edge-simulation-description-updater',
@@ -666,6 +1093,83 @@ const buildTransformPilotEdges = (): Edge[] => [
     to: 'node-viewer',
     fromPort: 'description_en',
     toPort: 'description_en',
+  },
+  {
+    id: 'edge-model-viewer',
+    from: 'node-model',
+    to: 'node-viewer',
+    fromPort: 'result',
+    toPort: 'result',
+  },
+  {
+    id: 'edge-http-viewer',
+    from: 'node-http',
+    to: 'node-viewer',
+    fromPort: 'value',
+    toPort: 'value',
+  },
+  {
+    id: 'edge-database-viewer',
+    from: 'node-database',
+    to: 'node-viewer',
+    fromPort: 'aiPrompt',
+    toPort: 'aiPrompt',
+  },
+  {
+    id: 'edge-api-advanced-viewer',
+    from: 'node-api-advanced',
+    to: 'node-viewer',
+    fromPort: 'value',
+    toPort: 'value',
+  },
+  {
+    id: 'edge-learner-agent-viewer-result',
+    from: 'node-learner-agent',
+    to: 'node-viewer',
+    fromPort: 'result',
+    toPort: 'result',
+  },
+  {
+    id: 'edge-learner-agent-viewer-sources',
+    from: 'node-learner-agent',
+    to: 'node-viewer',
+    fromPort: 'sources',
+    toPort: 'sources',
+  },
+  {
+    id: 'edge-playwright-viewer-result',
+    from: 'node-playwright',
+    to: 'node-viewer',
+    fromPort: 'result',
+    toPort: 'result',
+  },
+  {
+    id: 'edge-playwright-viewer-job-id',
+    from: 'node-playwright',
+    to: 'node-viewer',
+    fromPort: 'jobId',
+    toPort: 'jobId',
+  },
+  {
+    id: 'edge-audio-speaker-viewer-audio-signal',
+    from: 'node-audio-speaker',
+    to: 'node-viewer',
+    fromPort: 'audioSignal',
+    toPort: 'audioSignal',
+  },
+  {
+    id: 'edge-audio-speaker-viewer-status',
+    from: 'node-audio-speaker',
+    to: 'node-viewer',
+    fromPort: 'status',
+    toPort: 'status',
+  },
+  {
+    id: 'edge-ai-description-viewer',
+    from: 'node-ai-description',
+    to: 'node-viewer',
+    fromPort: 'description_en',
+    toPort: 'description',
   },
   {
     id: 'edge-template-viewer',
@@ -1013,6 +1517,133 @@ const pilotHandlers: Record<string, NodeHandler> = {
     const rendered = template.replace(/{{\s*value\s*}}/g, String(nodeInputs['value'] ?? ''));
     return { prompt: rendered };
   },
+  poll: ({ nodeInputs }) => {
+    const result = nodeInputs['result'] ?? nodeInputs['value'] ?? nodeInputs['query'] ?? null;
+    const jobIdInput = nodeInputs['jobId'];
+    const jobId =
+      typeof jobIdInput === 'string' && jobIdInput.trim().length > 0
+        ? jobIdInput
+        : 'job-poll-wave-a';
+    const bundle = asRecord(nodeInputs['bundle']);
+    return {
+      result,
+      status: 'completed',
+      jobId,
+      bundle,
+    };
+  },
+  prompt: ({ node, nodeInputs }) => {
+    const template = String(node.config?.prompt?.template ?? '{{result}}');
+    const rendered = template.replace(/{{\s*result\s*}}/g, String(nodeInputs['result'] ?? ''));
+    return {
+      prompt: rendered,
+      images: Array.isArray(nodeInputs['images']) ? nodeInputs['images'] : [],
+    };
+  },
+  agent: ({ nodeInputs }) => ({
+    result: `agent:${String(nodeInputs['prompt'] ?? '')}`,
+    jobId: 'job-agent-wave-a',
+  }),
+  learner_agent: ({ nodeInputs }) => ({
+    result: `learner:${String(nodeInputs['prompt'] ?? '')}`,
+    jobId: 'job-learner-agent-wave-a',
+    sources: [
+      {
+        id: 'source-wave-a',
+        score: 1,
+      },
+    ],
+  }),
+  model: ({ nodeInputs }) => ({
+    result: String(nodeInputs['prompt'] ?? ''),
+    jobId: 'job-model-wave-a',
+  }),
+  playwright: ({ nodeInputs }) => {
+    const url = String(nodeInputs['url'] ?? 'https://example.com/path');
+    return {
+      result: `playwright:${url}`,
+      jobId: 'job-playwright-wave-a',
+      screenshot: `screenshot:${url}`,
+      html: `<html><body>${url}</body></html>`,
+    };
+  },
+  audio_oscillator: ({ node, nodeInputs }) => {
+    const config = asRecord(node.config?.audioOscillator);
+    const frequency = Number(nodeInputs['frequency'] ?? config['frequencyHz'] ?? 440);
+    const waveform = String(nodeInputs['waveform'] ?? config['waveform'] ?? 'sine');
+    const gain = Number(nodeInputs['gain'] ?? config['gain'] ?? 0.25);
+    const durationMs = Number(nodeInputs['durationMs'] ?? config['durationMs'] ?? 400);
+    const audioSignal = {
+      source: 'oscillator',
+      waveform,
+      frequency,
+      gain,
+      durationMs,
+    };
+    return {
+      audioSignal,
+      frequency,
+      waveform,
+      gain,
+      durationMs,
+    };
+  },
+  audio_speaker: ({ nodeInputs }) => {
+    const signal = nodeInputs['audioSignal'];
+    return {
+      status: 'completed',
+      audioSignal: signal && typeof signal === 'object' ? signal : { source: 'speaker', signal: 'none' },
+    };
+  },
+  ai_description: ({ nodeInputs }) => {
+    const title = String(nodeInputs['title'] ?? '');
+    const imageCount = Array.isArray(nodeInputs['images']) ? nodeInputs['images'].length : 0;
+    return {
+      description_en: `ai-description:${title || 'untitled'}:${imageCount}`,
+    };
+  },
+  http: ({ node, nodeInputs }) => {
+    const body = nodeInputs['body'] ?? nodeInputs['url'] ?? '';
+    const bundle = asRecord(nodeInputs['bundle']);
+    const config = asRecord(node.config?.http);
+    const method = String(config['method'] ?? 'GET');
+    return {
+      value: `http:${method}:${String(body)}`,
+      bundle,
+    };
+  },
+  database: ({ nodeInputs }) => {
+    const queryInput = nodeInputs['query'] ?? nodeInputs['value'] ?? nodeInputs['result'] ?? '';
+    const schema = asRecord(nodeInputs['schema']);
+    const bundle = asRecord(nodeInputs['bundle']);
+    const query = String(queryInput ?? '');
+    const schemaProvider = String(schema['provider'] ?? 'unknown');
+    return {
+      result: {
+        query,
+        schemaProvider,
+      },
+      bundle,
+      content_en: query,
+      aiPrompt: `db:${schemaProvider}:${query}`,
+    };
+  },
+  api_advanced: ({ node, nodeInputs }) => {
+    const body = String(nodeInputs['body'] ?? '');
+    const bundle = asRecord(nodeInputs['bundle']);
+    const config = asRecord(node.config?.apiAdvanced);
+    const method = String(config['method'] ?? 'GET');
+    return {
+      value: `api_advanced:${method}:${body}`,
+      bundle,
+      status: 200,
+      headers: {},
+      items: [body],
+      route: 'success',
+      error: null,
+      success: true,
+    };
+  },
   description_updater: ({ nodeInputs }) => ({
     description_en: String(nodeInputs['description_en'] ?? ''),
   }),
@@ -1085,7 +1716,7 @@ const runTransformPilotPath = async (mode: RuntimeMode, title: string) => {
 
   const result = await evaluateGraphInternal(nodes, edges, {
     runId: `run-transform-${mode}`,
-    maxIterations: 30,
+    maxIterations: 90,
     resolveHandler: runtimeKernel.resolveHandler,
     resolveHandlerTelemetry: (type: string) =>
       toNodeRuntimeResolutionTelemetry(runtimeKernel.resolveDescriptor(type)),
@@ -1185,8 +1816,8 @@ describe('engine-core v3 pilot dual-run parity', () => {
         typeof event['nodeId'] === 'string'
     );
 
-    expect(legacyNodeEvents).toHaveLength(23);
-    expect(v3NodeEvents).toHaveLength(23);
+    expect(legacyNodeEvents).toHaveLength(35);
+    expect(v3NodeEvents).toHaveLength(35);
 
     legacyNodeEvents.forEach((event) => {
       expect(event['runtimeStrategy']).toBe('legacy_adapter');

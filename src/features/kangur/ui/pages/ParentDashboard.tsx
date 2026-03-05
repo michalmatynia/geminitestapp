@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, BarChart2, BookOpen, ClipboardList, Eye, EyeOff } from 'lucide-react';
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import Link from 'next/link';
 import { AssignmentPanel, ProgressOverview, ScoreHistory } from '@/features/kangur/ui/components/dashboard';
 import { loadProgress } from '@/features/kangur/ui/services/progress';
@@ -23,6 +24,7 @@ const TABS: ParentDashboardTab[] = [
 const PIN = '1234';
 
 export default function ParentDashboard() {
+  const { basePath } = useKangurRouting();
   const [unlocked, setUnlocked] = useState(false);
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState(false);
@@ -95,7 +97,7 @@ export default function ParentDashboard() {
           </motion.button>
 
           <Link
-            href={createPageUrl('Game')}
+            href={createPageUrl('Game', basePath)}
             className='text-sm text-gray-400 hover:text-gray-600 transition flex items-center gap-1'
           >
             <ArrowLeft className='w-4 h-4' /> Wróć do gry
@@ -110,7 +112,7 @@ export default function ParentDashboard() {
       {/* Top bar */}
       <div className='w-full bg-white/80 backdrop-blur border-b border-slate-200 px-4 py-3 flex items-center justify-between'>
         <Link
-          href={createPageUrl('Game')}
+          href={createPageUrl('Game', basePath)}
           className='inline-flex items-center gap-2 text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
         >
           <ArrowLeft className='w-4 h-4' /> Wróć do gry

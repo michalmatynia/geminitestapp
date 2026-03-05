@@ -4,6 +4,8 @@ import React from 'react';
 
 import { cn } from '@/shared/utils';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
+import { resolveFolderTreeSearchConfig } from '@/shared/utils/folder-tree-profiles-v2';
 
 import type {
   DocumentRelationFileTypeFilter,
@@ -53,8 +55,19 @@ function DocumentRelationSearchInner(): React.JSX.Element {
     isLocked,
     documentSearchQuery,
   } = useDocumentRelationSearchStateContext();
-  const { toggleFileSelection, onLinkFile, setPreviewFileId } =
+  const { toggleFileSelection, onLinkFile, setPreviewFileId, setDocumentSearchQuery } =
     useDocumentRelationSearchActionsContext();
+  const relationTreeProfile = useFolderTreeProfile(relationTreeInstance);
+  const relationTreeSearchEnabled = React.useMemo(
+    (): boolean => resolveFolderTreeSearchConfig(relationTreeProfile).enabled,
+    [relationTreeProfile]
+  );
+
+  React.useEffect((): void => {
+    if (relationTreeSearchEnabled) return;
+    if (documentSearchQuery.length === 0) return;
+    setDocumentSearchQuery('');
+  }, [documentSearchQuery, relationTreeSearchEnabled, setDocumentSearchQuery]);
 
   return (
     <>
@@ -63,7 +76,7 @@ function DocumentRelationSearchInner(): React.JSX.Element {
 
         {showFiltersBar && <FilterBar />}
 
-        <SearchBar />
+        <SearchBar searchEnabled={relationTreeSearchEnabled} />
 
         <BulkActionBar />
 
@@ -82,7 +95,7 @@ function DocumentRelationSearchInner(): React.JSX.Element {
             onPreviewFile={(fileId): void => {
               setPreviewFileId(fileId);
             }}
-            searchQuery={documentSearchQuery}
+            searchQuery={relationTreeSearchEnabled ? documentSearchQuery : ''}
             emptyLabel='No matching files'
           />
         </div>

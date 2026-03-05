@@ -201,7 +201,6 @@ export function useParameters(catalogId?: string): ListQuery<ProductParameter> {
       return await api.get<ProductParameter[]>('/api/v2/products/parameters', {
         params: {
           catalogId,
-          fresh: 1,
         },
         cache: 'no-store',
       });

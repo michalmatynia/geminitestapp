@@ -6,7 +6,7 @@
   "title": "Math",
   "runtimeKernel": {
     "strategy": "code_object_v3",
-    "executionAdapter": "legacy_handler_bridge",
+    "executionAdapter": "native_handler_registry",
     "legacyHandlerKey": "math",
     "codeObjectId": "ai-paths.node-code-object.math.v3"
   },
@@ -51,5 +51,5 @@
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_math_portable_v3",
   "objectHashAlgorithm": "sha256",
-  "objectHash": "617cca2fcff9a80cf354ad125bcdb7efc3387fa9fb1e2dfb45b53cf5388ad1c2"
+  "objectHash": "c70779a2aab2367a9808d19b34ce4ed47d62d5d81603d531fbed1fa332ea898f"
 }

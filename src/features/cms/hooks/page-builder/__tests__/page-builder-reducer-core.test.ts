@@ -162,6 +162,34 @@ describe('reducePageBuilderStateCore section hierarchy actions', () => {
     });
   });
 
+  it('adds grid sections with compact transparent defaults and rows without forced min height', () => {
+    const next = reducePageBuilderStateCore(createState([]), {
+      type: 'ADD_SECTION',
+      sectionType: 'Grid',
+      zone: 'template',
+    });
+
+    expect(next.sections).toHaveLength(1);
+    const added = next.sections[0];
+    expect(added?.type).toBe('Grid');
+    expect(added?.settings).toMatchObject({
+      rows: 1,
+      columns: 2,
+      paddingTop: 16,
+      paddingBottom: 16,
+      colorScheme: 'none',
+    });
+
+    expect(added?.blocks).toHaveLength(1);
+    const row = added?.blocks[0];
+    expect(row?.type).toBe('Row');
+    expect(row?.settings['minHeight']).toBe(0);
+
+    const columns = (row?.blocks ?? []).filter((block) => block.type === 'Column');
+    expect(columns).toHaveLength(2);
+    expect(columns[0]?.settings['colorScheme']).toBe('none');
+  });
+
   it('hydrates sections from canonical page components without legacy parent normalization', () => {
     const page = createPage([
       {
@@ -214,7 +242,7 @@ describe('reducePageBuilderStateCore section hierarchy actions', () => {
     ]);
   });
 
-  it('adds grid root image blocks with canonical background target', () => {
+  it('adds grid root image blocks as regular image elements', () => {
     const state = createState([
       createSection({
         id: 'grid-1',
@@ -233,7 +261,7 @@ describe('reducePageBuilderStateCore section hierarchy actions', () => {
     const imageBlock = gridSection?.blocks.find((block) => block.type === 'ImageElement');
 
     expect(imageBlock).toBeDefined();
-    expect(imageBlock?.settings['backgroundTarget']).toBe('grid');
+    expect(imageBlock?.settings['backgroundTarget']).toBeUndefined();
   });
 
   it('does not auto-migrate legacy grid structures during runtime actions', () => {
@@ -256,5 +284,90 @@ describe('reducePageBuilderStateCore section hierarchy actions', () => {
     expect(gridSection).toBeDefined();
     expect(gridSection?.blocks).toEqual(state.sections[0]?.blocks);
     expect(gridSection?.settings).toEqual(state.sections[0]?.settings);
+  });
+
+  it('moves a block into a row parent block when MOVE_BLOCK_TO_ROW specifies toParentBlockId', () => {
+    const state = createState([
+      createSection({
+        id: 'grid-1',
+        type: 'Grid',
+        blocks: [
+          {
+            id: 'move-me',
+            type: 'TextElement',
+            settings: { label: 'Move me' },
+          },
+          {
+            id: 'row-1',
+            type: 'Row',
+            settings: {},
+            blocks: [
+              {
+                id: 'parent-block',
+                type: 'Block',
+                settings: { label: 'Parent' },
+                blocks: [],
+              },
+            ],
+          },
+        ],
+      }),
+    ]);
+
+    const next = reducePageBuilderStateCore(state, {
+      type: 'MOVE_BLOCK_TO_ROW',
+      blockId: 'move-me',
+      fromSectionId: 'grid-1',
+      toSectionId: 'grid-1',
+      toRowId: 'row-1',
+      toParentBlockId: 'parent-block',
+      toIndex: 0,
+    });
+
+    const gridSection = next.sections.find((section) => section.id === 'grid-1');
+    expect(gridSection).toBeDefined();
+    expect(gridSection?.blocks.some((block) => block.id === 'move-me')).toBe(false);
+
+    const row = gridSection?.blocks.find((block) => block.id === 'row-1');
+    const parentBlock = row?.blocks?.find((block) => block.id === 'parent-block');
+    expect(parentBlock?.blocks?.map((block) => block.id)).toEqual(['move-me']);
+  });
+
+  it('moves a block into a section parent block when MOVE_BLOCK_TO_SECTION specifies toParentBlockId', () => {
+    const state = createState([
+      createSection({
+        id: 'section-1',
+        type: 'Block',
+        blocks: [
+          {
+            id: 'move-me',
+            type: 'TextElement',
+            settings: { label: 'Move me' },
+          },
+          {
+            id: 'parent-block',
+            type: 'Block',
+            settings: { label: 'Parent' },
+            blocks: [],
+          },
+        ],
+      }),
+    ]);
+
+    const next = reducePageBuilderStateCore(state, {
+      type: 'MOVE_BLOCK_TO_SECTION',
+      blockId: 'move-me',
+      fromSectionId: 'section-1',
+      toSectionId: 'section-1',
+      toParentBlockId: 'parent-block',
+      toIndex: 0,
+    });
+
+    const section = next.sections.find((item) => item.id === 'section-1');
+    expect(section).toBeDefined();
+    expect(section?.blocks.some((block) => block.id === 'move-me')).toBe(false);
+
+    const parentBlock = section?.blocks.find((block) => block.id === 'parent-block');
+    expect(parentBlock?.blocks?.map((block) => block.id)).toEqual(['move-me']);
   });
 });

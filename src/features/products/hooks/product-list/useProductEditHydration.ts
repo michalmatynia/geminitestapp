@@ -24,6 +24,8 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
 
 const PRODUCT_DETAIL_TIMEOUT_MS = 60_000;
+const PRODUCT_DETAIL_PREFETCH_DEBOUNCE_MS = 120;
+const PRODUCT_DETAIL_PREFETCH_STALE_MS = 20_000;
 
 export const shouldAdoptIncomingEditProductDetail = (input: {
   currentProduct: ProductWithImages;
@@ -59,6 +61,8 @@ export function useProductEditHydration({
   const [isEditHydrating, setIsEditHydrating] = useState(false);
   const editOpenRequestTokenRef = useRef(0);
   const openingProductFromQueryRef = useRef<string | null>(null);
+  const prefetchTimerRef = useRef<number | null>(null);
+  const pendingPrefetchProductIdRef = useRef<string | null>(null);
 
   const editingProductDetailQuery = createSingleQueryV2<ProductWithImages>({
     id: editingProduct?.id,
@@ -86,29 +90,60 @@ export function useProductEditHydration({
 
   const prefetchProductDetail = useCallback(
     (productId: string) => {
-      const queryKey = normalizeQueryKey(getProductDetailQueryKey(productId));
-      void prefetchQueryV2(queryClient, {
-        queryKey,
-        queryFn: ({ signal }) =>
-          api.get<ProductWithImages>(`/api/v2/products/${encodeURIComponent(productId)}?fresh=1`, {
-            signal,
-            cache: 'no-store',
-            logError: false,
-            timeout: PRODUCT_DETAIL_TIMEOUT_MS,
-          }),
-        staleTime: 20_000,
-        meta: {
-          source: 'products.hooks.useProductEditHydration.prefetchProductDetail',
-          operation: 'detail',
-          resource: 'products.detail',
-          domain: 'products',
+      const normalizedProductId = productId.trim();
+      if (!normalizedProductId) return;
+
+      pendingPrefetchProductIdRef.current = normalizedProductId;
+
+      if (prefetchTimerRef.current !== null) {
+        window.clearTimeout(prefetchTimerRef.current);
+      }
+
+      prefetchTimerRef.current = window.setTimeout(() => {
+        prefetchTimerRef.current = null;
+        const queuedProductId = pendingPrefetchProductIdRef.current;
+        if (!queuedProductId) return;
+
+        const queryKey = normalizeQueryKey(getProductDetailQueryKey(queuedProductId));
+        const existingState = queryClient.getQueryState<ProductWithImages>(queryKey);
+        if (
+          typeof existingState?.dataUpdatedAt === 'number' &&
+          Date.now() - existingState.dataUpdatedAt < PRODUCT_DETAIL_PREFETCH_STALE_MS
+        ) {
+          return;
+        }
+
+        void prefetchQueryV2(queryClient, {
           queryKey,
-          tags: ['products', 'detail', 'prefetch'],
-        },
-      })();
+          queryFn: ({ signal }) =>
+            api.get<ProductWithImages>(`/api/v2/products/${encodeURIComponent(queuedProductId)}`, {
+              signal,
+              cache: 'no-store',
+              logError: false,
+              timeout: PRODUCT_DETAIL_TIMEOUT_MS,
+            }),
+          staleTime: PRODUCT_DETAIL_PREFETCH_STALE_MS,
+          meta: {
+            source: 'products.hooks.useProductEditHydration.prefetchProductDetail',
+            operation: 'detail',
+            resource: 'products.detail',
+            domain: 'products',
+            queryKey,
+            tags: ['products', 'detail', 'prefetch'],
+          },
+        })();
+      }, PRODUCT_DETAIL_PREFETCH_DEBOUNCE_MS);
     },
     [queryClient]
   );
+
+  useEffect(() => {
+    return () => {
+      if (prefetchTimerRef.current !== null) {
+        window.clearTimeout(prefetchTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleOpenEditModal = useCallback(
     (product: ProductWithImages) => {

@@ -386,7 +386,53 @@ export function ProductListProvider({
       baseExported: value.baseExported,
       setBaseExported: value.setBaseExported,
     }),
-    [value]
+    [
+      value.page,
+      value.totalPages,
+      value.setPage,
+      value.pageSize,
+      value.setPageSize,
+      value.nameLocale,
+      value.setNameLocale,
+      value.languageOptions,
+      value.currencyCode,
+      value.setCurrencyCode,
+      value.currencyOptions,
+      value.filtersCollapsedByDefault,
+      value.catalogFilter,
+      value.setCatalogFilter,
+      value.catalogs,
+      value.search,
+      value.setSearch,
+      value.productId,
+      value.setProductId,
+      value.idMatchMode,
+      value.setIdMatchMode,
+      value.sku,
+      value.setSku,
+      value.description,
+      value.setDescription,
+      value.categoryId,
+      value.setCategoryId,
+      value.minPrice,
+      value.setMinPrice,
+      value.maxPrice,
+      value.setMaxPrice,
+      value.stockValue,
+      value.setStockValue,
+      value.stockOperator,
+      value.setStockOperator,
+      value.startDate,
+      value.setStartDate,
+      value.endDate,
+      value.setEndDate,
+      value.advancedFilter,
+      value.activeAdvancedFilterPresetId,
+      value.setAdvancedFilter,
+      value.setAdvancedFilterState,
+      value.baseExported,
+      value.setBaseExported,
+    ]
   );
 
   const selectionValue = useMemo<ProductListSelectionContextType>(
@@ -399,7 +445,15 @@ export function ProductListProvider({
       onDeleteSelected: value.onDeleteSelected,
       onAddToMarketplace: value.onAddToMarketplace,
     }),
-    [value]
+    [
+      value.data,
+      value.rowSelection,
+      value.setRowSelection,
+      value.onSelectAllGlobal,
+      value.loadingGlobal,
+      value.onDeleteSelected,
+      value.onAddToMarketplace,
+    ]
   );
 
   const tableValue = useMemo<ProductListTableContextType>(
@@ -422,7 +476,25 @@ export function ProductListProvider({
       maxHeight: value.maxHeight,
       stickyHeader: value.stickyHeader,
     }),
-    [value]
+    [
+      value.loadError,
+      value.actionError,
+      value.onDismissActionError,
+      value.data,
+      value.rowSelection,
+      value.setRowSelection,
+      value.handleProductsTableRender,
+      value.isPromptOpen,
+      value.setIsPromptOpen,
+      value.handleConfirmSku,
+      value.tableColumns,
+      value.getRowClassName,
+      value.getRowId,
+      value.isLoading,
+      value.skeletonRows,
+      value.maxHeight,
+      value.stickyHeader,
+    ]
   );
 
   const actionsValue = useMemo<ProductListActionsContextType>(
@@ -450,7 +522,30 @@ export function ProductListProvider({
       thumbnailSource: value.thumbnailSource,
       imageExternalBaseUrl: value.imageExternalBaseUrl,
     }),
-    [value]
+    [
+      value.onCreateProduct,
+      value.onCreateFromDraft,
+      value.activeDrafts,
+      value.setRefreshTrigger,
+      value.productNameKey,
+      value.priceGroups,
+      value.currencyCode,
+      value.onPrefetchProductDetail,
+      value.onProductNameClick,
+      value.onProductEditClick,
+      value.onProductDeleteClick,
+      value.onDuplicateProduct,
+      value.onIntegrationsClick,
+      value.onExportSettingsClick,
+      value.integrationBadgeIds,
+      value.integrationBadgeStatuses,
+      value.traderaBadgeIds,
+      value.traderaBadgeStatuses,
+      value.queuedProductIds,
+      value.categoryNameById,
+      value.thumbnailSource,
+      value.imageExternalBaseUrl,
+    ]
   );
 
   const modalsValue = useMemo<ProductListModalsContextType>(
@@ -487,7 +582,39 @@ export function ProductListProvider({
       onCloseIntegrationModal: value.onCloseIntegrationModal,
       onSelectIntegrationFromModal: value.onSelectIntegrationFromModal,
     }),
-    [value]
+    [
+      value.isCreateOpen,
+      value.isPromptOpen,
+      value.setIsPromptOpen,
+      value.handleConfirmSku,
+      value.initialSku,
+      value.createDraft,
+      value.initialCatalogId,
+      value.onCloseCreate,
+      value.onCreateSuccess,
+      value.editingProduct,
+      value.isEditHydrating,
+      value.onCloseEdit,
+      value.onEditSuccess,
+      value.onEditSave,
+      value.integrationsProduct,
+      value.onCloseIntegrations,
+      value.onStartListing,
+      value.showListProductModal,
+      value.onCloseListProduct,
+      value.onListProductSuccess,
+      value.listProductPreset,
+      value.exportSettingsProduct,
+      value.onCloseExportSettings,
+      value.onListingsUpdated,
+      value.massListIntegration,
+      value.massListProductIds,
+      value.onCloseMassList,
+      value.onMassListSuccess,
+      value.showIntegrationModal,
+      value.onCloseIntegrationModal,
+      value.onSelectIntegrationFromModal,
+    ]
   );
 
   return (

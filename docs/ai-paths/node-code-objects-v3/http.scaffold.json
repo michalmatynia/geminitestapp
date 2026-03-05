@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v3",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "nodeType": "http",
+  "title": "HTTP Fetch",
+  "runtimeKernel": {
+    "strategy": "code_object_v3",
+    "executionAdapter": "native_handler_registry",
+    "legacyHandlerKey": "http",
+    "codeObjectId": "ai-paths.node-code-object.http.v3"
+  },
+  "runtimeSemantics": {
+    "processing": "pulse_node_only",
+    "waiting": "freeze_consumed_inputs_and_outputs",
+    "success": "animate_outgoing_on_emit",
+    "error": "animate_error_routes_on_emit"
+  },
+  "ports": {
+    "inputs": [
+      "url",
+      "body",
+      "headers",
+      "bundle"
+    ],
+    "outputs": [
+      "value",
+      "bundle"
+    ]
+  },
+  "copyPaste": {
+    "fullNode": {
+      "id": "node_http_example",
+      "type": "http",
+      "title": "HTTP Fetch",
+      "description": "Call external APIs with templated inputs.",
+      "position": {
+        "x": 2310,
+        "y": 60
+      },
+      "inputs": [
+        "url",
+        "body",
+        "headers",
+        "bundle"
+      ],
+      "outputs": [
+        "value",
+        "bundle"
+      ],
+      "config": {
+        "http": {
+          "url": "https://example.com/api",
+          "method": "POST",
+          "headers": "{\"content-type\":\"application/json\"}",
+          "bodyTemplate": "",
+          "responseMode": "json",
+          "responsePath": ""
+        }
+      }
+    }
+  },
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "id": "node_obj_http_portable_v3",
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "d04742150b2ce59424ebefa3cb2708ef329f8f10b63808192cfda7767fb3e272"
+}

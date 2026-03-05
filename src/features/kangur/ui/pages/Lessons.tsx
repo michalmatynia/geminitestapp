@@ -10,6 +10,7 @@ import {
   MultiplicationLesson,
   SubtractingLesson,
 } from '@/features/kangur/ui/components/lessons';
+import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import Link from 'next/link';
 
 type LessonId = 'clock' | 'calendar' | 'adding' | 'subtracting' | 'multiplication' | 'division';
@@ -75,6 +76,7 @@ const LESSONS: LessonCard[] = [
 ];
 
 export default function Lessons() {
+  const { basePath } = useKangurRouting();
   const [activeLesson, setActiveLesson] = useState<LessonId | null>(null);
   const activeIdx = LESSONS.findIndex((l) => l.id === activeLesson);
 
@@ -87,7 +89,7 @@ export default function Lessons() {
       <div className='w-full bg-white/70 backdrop-blur border-b border-indigo-100 px-4 py-2 flex flex-col gap-2'>
         <div className='flex items-center justify-between'>
           <Link
-            href={createPageUrl('Game')}
+            href={createPageUrl('Game', basePath)}
             className='inline-flex items-center gap-2 text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
           >
             <ArrowLeft className='w-4 h-4' /> Strona główna

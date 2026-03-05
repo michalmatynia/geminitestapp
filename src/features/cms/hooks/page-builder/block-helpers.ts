@@ -176,14 +176,6 @@ export function createColumnBlock(): BlockInstance {
 export function createRowBlock(columnCount: number): BlockInstance {
   const rowDef = getBlockDefinition('Row');
   const defaultSettings = rowDef ? { ...rowDef.defaultSettings } : {};
-  const minHeight =
-    typeof defaultSettings['minHeight'] === 'number' &&
-    Number.isFinite(defaultSettings['minHeight'])
-      ? defaultSettings['minHeight']
-      : 0;
-  if (minHeight <= 0) {
-    defaultSettings['minHeight'] = 120;
-  }
   return {
     id: uid(),
     type: 'Row',

@@ -1,12 +1,13 @@
 'use client';
 
-import { Upload, FolderOpen } from 'lucide-react';
-import NextImage from 'next/image';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
+import ProductImageManager from '@/features/products/components/ProductImageManager';
 import { Viewer3D } from '@/features/viewer3d';
 import { Asset3DPreviewModal } from '@/features/viewer3d';
 import { useAsset3DById } from '@/features/viewer3d/hooks/useAsset3dQueries';
+import type { ManagedImageSlot } from '@/shared/contracts/image-slots';
+import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import {
   Input,
@@ -14,10 +15,7 @@ import {
   Checkbox,
   Button,
   useToast,
-  FileUploadButton,
   FormField,
-  LoadingState,
-  type FileUploadHelpers,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -38,100 +36,118 @@ export function ImagePickerField(props: FieldProps<string>): React.JSX.Element {
   const { label, value, onChange, disabled } = props;
 
   const [open, setOpen] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const uploadMutation = useUploadCmsMedia();
   const { toast } = useToast();
 
-  const handleFileUpload = async (files: File[], helpers?: FileUploadHelpers): Promise<void> => {
-    const file = files[0];
-    if (!file) return;
+  const managedSlot = useMemo<ManagedImageSlot>(() => {
+    const src = value.trim();
+    if (!src) return null;
+    return {
+      type: 'existing',
+      data: {
+        id: 'cms-image-slot-source',
+        filepath: src,
+      },
+      previewUrl: src,
+      slotId: 'cms-image-slot-0',
+    };
+  }, [value]);
 
-    try {
-      const result = await uploadMutation.mutateAsync({
-        file,
-        onProgress: (loaded: number, total?: number) => {
-          helpers?.reportProgress(loaded, total);
-        },
-      });
-      if (result.filepath) {
+  const uploadSingleFile = useCallback(
+    async (file: File): Promise<void> => {
+      if (disabled) return;
+      try {
+        setUploadError(null);
+        const result = await uploadMutation.mutateAsync({ file });
+        if (!result.filepath) {
+          setUploadError('Upload completed without a media path.');
+          toast('Upload completed without a media path.', { variant: 'error' });
+          return;
+        }
         onChange(result.filepath);
         toast('Image uploaded successfully.', { variant: 'success' });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Upload failed';
+        setUploadError(message);
+        toast(message, { variant: 'error' });
       }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Upload failed';
-      toast(message, { variant: 'error' });
-    }
-  };
+    },
+    [disabled, onChange, toast, uploadMutation]
+  );
 
-  const isUploading = uploadMutation.isPending;
+  const controller = useMemo<ProductImageManagerController>(
+    () => ({
+      imageSlots: [managedSlot],
+      imageLinks: [value],
+      imageBase64s: [''],
+      setImageLinkAt: (index: number, nextValue: string): void => {
+        if (index !== 0 || disabled || uploadMutation.isPending) return;
+        setUploadError(null);
+        onChange(nextValue);
+      },
+      setImageBase64At: (): void => {
+        // Base64 editing is not used in CMS field mode.
+      },
+      handleSlotImageChange: (file: File | null, index: number): void => {
+        if (index !== 0 || disabled || uploadMutation.isPending || !file) return;
+        void uploadSingleFile(file);
+      },
+      handleSlotDisconnectImage: async (index: number): Promise<void> => {
+        if (index !== 0 || disabled || uploadMutation.isPending) return;
+        setUploadError(null);
+        onChange('');
+      },
+      setShowFileManager: (show: boolean): void => {
+        if (!show || disabled || uploadMutation.isPending) return;
+        setOpen(true);
+      },
+      setShowFileManagerForSlot: (index: number): void => {
+        if (index !== 0 || disabled || uploadMutation.isPending) return;
+        setOpen(true);
+      },
+      swapImageSlots: (): void => {
+        // Single-slot picker: no reordering.
+      },
+      setImagesReordering: (): void => {
+        // Single-slot picker: no reordering.
+      },
+      slotLabels: [''],
+      uploadError,
+      isSlotImageLocked: (): boolean => Boolean(disabled || uploadMutation.isPending),
+      slotImageLockedReason: disabled
+        ? 'Image field is disabled.'
+        : 'Image upload is in progress.',
+    }),
+    [
+      disabled,
+      managedSlot,
+      onChange,
+      uploadError,
+      uploadMutation.isPending,
+      uploadSingleFile,
+      value,
+    ]
+  );
 
   return (
     <FormField label={label}>
       <div className='space-y-2 mt-1'>
-        <div className='relative flex h-28 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-card/30'>
-          {value ? (
-            <NextImage
-              src={value}
-              alt='Selected'
-              fill
-              sizes='320px'
-              className='object-cover'
-              unoptimized
-            />
-          ) : (
-            <span className='text-xs text-gray-500'>No image</span>
-          )}
-          {isUploading && (
-            <LoadingState message='Uploading...' className='absolute inset-0 bg-black/50' />
-          )}
-        </div>
-        <div className='grid grid-cols-2 gap-2'>
-          <FileUploadButton
-            size='sm'
-            variant='outline'
-            className='text-xs'
-            accept='image/*'
-            disabled={disabled || isUploading}
-            onFilesSelected={(files: File[], helpers?: FileUploadHelpers) =>
-              handleFileUpload(files, helpers)
-            }
-          >
-            <Upload className='mr-1.5 size-3' />
-            {value ? 'Replace' : 'Upload'}
-          </FileUploadButton>
-          <Button
-            type='button'
-            size='sm'
-            variant='outline'
-            className='text-xs'
-            onClick={(): void => setOpen(true)}
-            disabled={disabled || isUploading}
-          >
-            <FolderOpen className='mr-1.5 size-3' />
-            Browse
-          </Button>
-        </div>
-        {value ? (
-          <Button
-            type='button'
-            size='sm'
-            variant='ghost'
-            className='w-full text-xs text-gray-400 hover:text-gray-200'
-            onClick={(): void => onChange('')}
-            disabled={disabled || isUploading}
-          >
-            Clear image
-          </Button>
-        ) : null}
+        <ProductImageManager
+          controller={controller}
+          minimalUi
+          showDragHandle={false}
+          minimalSingleSlotAlign='left'
+        />
         <MediaLibraryPanel
           open={open}
           onOpenChange={setOpen}
           selectionMode='single'
-          onSelect={(filepaths: string[]): void => onChange(filepaths[0] ?? '')}
-          {...(handleFileUpload && {
-            onFilesSelected: async (files: File[], helpers?: FileUploadHelpers): Promise<void> => {
-              if (files.length > 0) await handleFileUpload(files, helpers);
-            },
-          })}
+          onSelect={(filepaths: string[]): void => {
+            if (disabled || uploadMutation.isPending) return;
+            setUploadError(null);
+            onChange(filepaths[0] ?? '');
+          }}
         />
       </div>
     </FormField>

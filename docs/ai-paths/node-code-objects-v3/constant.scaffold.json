@@ -6,7 +6,7 @@
   "title": "Constant",
   "runtimeKernel": {
     "strategy": "code_object_v3",
-    "executionAdapter": "legacy_handler_bridge",
+    "executionAdapter": "native_handler_registry",
     "legacyHandlerKey": "constant",
     "codeObjectId": "ai-paths.node-code-object.constant.v3"
   },
@@ -47,5 +47,5 @@
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_constant_portable_v3",
   "objectHashAlgorithm": "sha256",
-  "objectHash": "37e4ab41ceac45282a65a532f566b9d8bf253ab37adb3c9a9ca97e37d8fb62e7"
+  "objectHash": "8cd7a6fc31db0a9a50f42231ebc8e006471e9d59ee046723b9f4b344a3c54ff0"
 }

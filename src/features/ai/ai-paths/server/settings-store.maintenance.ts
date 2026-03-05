@@ -8,12 +8,125 @@ import {
   type AiPathsMaintenanceReport,
   type AiPathsSettingRecord,
 } from './settings-store.constants';
+import {
+  AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
+  AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
+  AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
+} from '@/shared/lib/ai-paths/core/constants';
 import { compactPathConfigValue } from './settings-store.compaction';
 import { parsePathMetas } from './settings-store.parsing';
 import {
   countPendingStarterWorkflowDefaults,
   ensureStarterWorkflowDefaults,
 } from './starter-workflows-settings';
+
+const LEGACY_RUNTIME_KERNEL_MODE = 'legacy_only';
+const CANONICAL_RUNTIME_KERNEL_MODE = 'auto';
+
+const normalizeRuntimeKernelModeValue = (value: string | undefined): string =>
+  typeof value === 'string' ? value.trim().toLowerCase() : '';
+
+const normalizeRuntimeKernelPilotNodeTypeToken = (value: string): string =>
+  value.trim().toLowerCase().replace(/\s+/g, '_');
+
+const normalizeRuntimeKernelResolverIdToken = (value: string): string => value.trim();
+
+const parseRuntimeKernelListValue = ({
+  value,
+  normalizeToken,
+}: {
+  value: string | undefined;
+  normalizeToken: (token: string) => string;
+}): string[] | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(trimmed) as unknown;
+      if (Array.isArray(parsed)) {
+        const normalized = Array.from(
+          new Set(
+            parsed
+              .filter((entry): entry is string => typeof entry === 'string')
+              .map((entry: string): string => normalizeToken(entry))
+              .filter(Boolean)
+          )
+        );
+        return normalized.length > 0 ? normalized : undefined;
+      }
+    } catch {
+      // Fall through to tokenized parsing.
+    }
+  }
+
+  const normalized = Array.from(
+    new Set(
+      trimmed
+        .split(/[,\n]/g)
+        .map((entry: string): string => normalizeToken(entry))
+        .filter(Boolean)
+    )
+  );
+  return normalized.length > 0 ? normalized : undefined;
+};
+
+const toCanonicalRuntimeKernelModeSettingValue = (
+  value: string | undefined
+): string | undefined => {
+  if (typeof value !== 'string') return value;
+  const normalized = normalizeRuntimeKernelModeValue(value);
+  if (
+    normalized === LEGACY_RUNTIME_KERNEL_MODE ||
+    normalized === CANONICAL_RUNTIME_KERNEL_MODE
+  ) {
+    return CANONICAL_RUNTIME_KERNEL_MODE;
+  }
+  return value;
+};
+
+const toCanonicalRuntimeKernelListSettingValue = ({
+  value,
+  normalizeToken,
+}: {
+  value: string | undefined;
+  normalizeToken: (token: string) => string;
+}): string | undefined => {
+  if (typeof value !== 'string') return value;
+  const parsed = parseRuntimeKernelListValue({ value, normalizeToken });
+  return parsed ? parsed.join(', ') : '';
+};
+
+const toCanonicalRuntimeKernelSettingEntryValue = (
+  entry: AiPathsSettingRecord
+): string | undefined | null => {
+  if (entry.key === AI_PATHS_RUNTIME_KERNEL_MODE_KEY) {
+    return toCanonicalRuntimeKernelModeSettingValue(entry.value);
+  }
+  if (entry.key === AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY) {
+    return toCanonicalRuntimeKernelListSettingValue({
+      value: entry.value,
+      normalizeToken: normalizeRuntimeKernelPilotNodeTypeToken,
+    });
+  }
+  if (entry.key === AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY) {
+    return toCanonicalRuntimeKernelListSettingValue({
+      value: entry.value,
+      normalizeToken: normalizeRuntimeKernelResolverIdToken,
+    });
+  }
+  return null;
+};
+
+export const countPendingRuntimeKernelModeNormalizations = (
+  records: AiPathsSettingRecord[]
+): number =>
+  records.reduce((count: number, entry: AiPathsSettingRecord): number => {
+    const nextValue = toCanonicalRuntimeKernelSettingEntryValue(entry);
+    if (nextValue === null || nextValue === entry.value) return count;
+    return count + 1;
+  }, 0);
 
 export const countPendingPathConfigCompactions = (records: AiPathsSettingRecord[]): number => {
   if (records.length === 0) return 0;
@@ -124,6 +237,19 @@ export const buildAiPathsMaintenanceReport = (
     });
   }
 
+  const runtimeKernelModeNormalizationCount = countPendingRuntimeKernelModeNormalizations(records);
+  if (runtimeKernelModeNormalizationCount > 0) {
+    actions.push({
+      id: 'normalize_runtime_kernel_mode',
+      title: 'Normalize Runtime Kernel Settings',
+      description:
+        'Replace deprecated runtime-kernel mode values with canonical auto mode and normalize runtime-kernel list settings for forward-compatible execution.',
+      blocking: false,
+      status: 'pending',
+      affectedRecords: runtimeKernelModeNormalizationCount,
+    });
+  }
+
   return {
     scannedAt: new Date().toISOString(),
     pendingActions: actions.length,
@@ -189,6 +315,22 @@ export const runMaintenanceAction = (args: {
       break;
     }
 
+    case 'normalize_runtime_kernel_mode': {
+      args.records.forEach((entry: AiPathsSettingRecord) => {
+        const nextValue = toCanonicalRuntimeKernelSettingEntryValue(entry);
+        if (nextValue === null || nextValue === entry.value) {
+          nextRecords.push(entry);
+          return;
+        }
+        nextRecords.push({
+          ...entry,
+          value: nextValue ?? '',
+        });
+        affectedCount += 1;
+      });
+      break;
+    }
+
     default:
       throw new Error(`Unknown AI Paths maintenance action: ${args.actionId}`);
   }
@@ -211,6 +353,7 @@ export const runFullMaintenance = (records: AiPathsSettingRecord[]): AiPathsMain
       'compact_oversized_configs',
       'repair_path_index',
       'ensure_starter_workflow_defaults',
+      'normalize_runtime_kernel_mode',
     ] as AiPathsMaintenanceActionId[]
   ).forEach((actionId: AiPathsMaintenanceActionId) => {
     const report = runMaintenanceAction({ actionId, records: currentRecords });

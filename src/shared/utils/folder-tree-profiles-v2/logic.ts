@@ -197,6 +197,15 @@ export const toCanonicalProfileV2 = ({
       ? (candidate as Record<string, unknown>)
       : null;
   const hasInteractionSettings = Boolean(sourceRecord && 'interactions' in sourceRecord);
+  const hasSearchSettings = Boolean(sourceRecord && 'search' in sourceRecord);
+  const mergedSearch = hasSearchSettings
+    ? {
+      ...(fallback.search ?? {}),
+      ...(parsed.search ?? {}),
+    }
+    : fallback.search
+      ? { ...fallback.search }
+      : undefined;
 
   return {
     version: 2,
@@ -236,7 +245,12 @@ export const toCanonicalProfileV2 = ({
     badges: parsed.badges,
     keyboard: parsed.keyboard,
     multiSelect: parsed.multiSelect,
-    search: parsed.search,
+    search: mergedSearch
+      ? {
+        ...mergedSearch,
+        matchFields: mergedSearch.matchFields ? [...mergedSearch.matchFields] : undefined,
+      }
+      : undefined,
     statusIcons: parsed.statusIcons,
   };
 };

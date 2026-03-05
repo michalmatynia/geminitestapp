@@ -6,6 +6,7 @@ import { useCompositeFieldContext } from '../CompositeFieldContext';
 import { BG_TYPE_OPTIONS, GRADIENT_DIRECTION_OPTIONS } from '../settings-field-constants';
 import type { SettingsFieldOption } from '@/shared/contracts/cms';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+import { ImagePickerField } from '../../../shared-fields';
 
 export function BackgroundField(): React.ReactNode {
   const { value, onChange } = useCompositeFieldContext();
@@ -163,13 +164,10 @@ export function BackgroundField(): React.ReactNode {
       )}
 
       {bgType === 'image' && (
-        <Input
+        <ImagePickerField
+          label={undefined}
           value={(bg['imageUrl'] as string) ?? ''}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-            update('imageUrl', e.target.value)
-          }
-          placeholder='Image URL...'
-          className='text-xs'
+          onChange={(nextValue: string): void => update('imageUrl', nextValue)}
         />
       )}
     </div>

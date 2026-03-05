@@ -149,6 +149,9 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
 
   if (reviewing !== null) {
     const question = questions[reviewing];
+    if (!question) {
+      return <div className='w-full text-center text-sm text-gray-500'>Brak pytania do podglądu.</div>;
+    }
     const userAnswer = answers[question.id];
     const Illustration = ILLUSTRATIONS[question.id];
 

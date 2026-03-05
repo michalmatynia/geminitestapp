@@ -6,7 +6,7 @@
   "title": "Description Updater (Deprecated)",
   "runtimeKernel": {
     "strategy": "code_object_v3",
-    "executionAdapter": "legacy_handler_bridge",
+    "executionAdapter": "native_handler_registry",
     "legacyHandlerKey": "description_updater",
     "codeObjectId": "ai-paths.node-code-object.description_updater.v3"
   },
@@ -48,5 +48,5 @@
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_description_updater_portable_v3",
   "objectHashAlgorithm": "sha256",
-  "objectHash": "036b75287b8b567ce566c659ad29e542decd3fdf4efcd3015c7a933e488dc346"
+  "objectHash": "4706503301a91755619235ae20e8440314dbd609b5e1085744ef7c0c57dac051"
 }

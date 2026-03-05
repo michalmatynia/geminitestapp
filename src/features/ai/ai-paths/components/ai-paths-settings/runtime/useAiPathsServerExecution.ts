@@ -297,6 +297,13 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             ? { updaterSamples: args.updaterSamples }
             : {}),
         },
+        ...(isObjectRecord(args.runtimeKernelConfig)
+          ? {
+            runtimeKernelConfig: {
+              ...args.runtimeKernelConfig,
+            },
+          }
+          : {}),
         ...(args.aiPathsValidation ? { aiPathsValidation: args.aiPathsValidation } : {}),
       };
       const enqueuePayload = {

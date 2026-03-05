@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { CachedProductService } from '@/features/products/performance';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { productService } from '@/shared/lib/products/services/productService';
 import type { ProductFiltersParsed } from '@/shared/lib/products/validations';
@@ -36,8 +37,11 @@ const attachTimingHeaders = (
 export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number | null | undefined> = {};
   const filters = ctx.query as ProductFiltersParsed;
+  const forceFresh = _req.nextUrl?.searchParams.get('fresh') === '1';
   const serviceStart = performance.now();
-  const result = await productService.getProductsWithCount(filters);
+  const result = forceFresh
+    ? await productService.getProductsWithCount(filters)
+    : await CachedProductService.getProductsWithCount(filters);
   timings['service'] = performance.now() - serviceStart;
   timings['total'] = ctx.getElapsedMs();
 

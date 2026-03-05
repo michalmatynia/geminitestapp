@@ -27,7 +27,6 @@ import {
   getGapStyle,
   resolveJustifyContent,
   resolveAlignItems,
-  collectBackgroundImages,
   getBlockMinHeight,
 } from '@/features/cms/components/page-builder/preview/preview-utils';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
@@ -56,9 +55,6 @@ export function PreviewGridSection() {
 
   const rowBlocks = section.blocks.filter((b: BlockInstance) => b.type === 'Row');
 
-  // Collect all ImageElements with backgroundTarget: "grid" from entire block tree.
-  const gridBackgroundModeImages = collectBackgroundImages(section.blocks, 'grid');
-
   const sectionGap = (section.settings['gap'] as string) || 'medium';
   const rowGapSetting = section.settings['rowGap'] as string | undefined;
   const columnGapSetting = section.settings['columnGap'] as string | undefined;
@@ -76,8 +72,7 @@ export function PreviewGridSection() {
     | Record<string, unknown>
     | undefined;
   const hasGridBackgroundSetting = Boolean((gridBackgroundSettings?.['src'] as string) || '');
-  const hasGridBackgroundLayers = gridBackgroundModeImages.length > 0;
-  const hasGridBackground = hasGridBackgroundSetting || hasGridBackgroundLayers;
+  const hasGridBackground = hasGridBackgroundSetting;
 
   const rowCount = rowBlocks.length;
   const canRemoveRow = rowCount > 1;
@@ -142,11 +137,6 @@ export function PreviewGridSection() {
       {renderSectionActions()}
       {divider}
       <div className={`relative ${hasGridBackground ? 'overflow-hidden' : ''}`}>
-        {gridBackgroundModeImages.map((block: BlockInstance) => (
-          <React.Fragment key={`grid-bg-mode-${block.id}`}>
-            {renderBackgroundImageLayer(block.settings, mediaStyles)}
-          </React.Fragment>
-        ))}
         {hasGridBackgroundSetting &&
           renderBackgroundImageLayer(gridBackgroundSettings, mediaStyles)}
 
@@ -201,15 +191,13 @@ export function PreviewGridSection() {
                     rowSelector
                   );
 
-                  const rowBackgroundModeImages = collectBackgroundImages(row.blocks ?? [], 'row');
                   const rowBackgroundSettings = row.settings?.['backgroundImage'] as
                     | Record<string, unknown>
                     | undefined;
                   const hasRowBackgroundSetting = Boolean(
                     (rowBackgroundSettings?.['src'] as string) || ''
                   );
-                  const hasRowBackground =
-                    hasRowBackgroundSetting || rowBackgroundModeImages.length > 0;
+                  const hasRowBackground = hasRowBackgroundSetting;
 
                   return (
                     <div key={row.id}>
@@ -234,11 +222,6 @@ export function PreviewGridSection() {
                         {rowCustomCss ? (
                           <style data-cms-custom-css={row.id}>{rowCustomCss}</style>
                         ) : null}
-                        {rowBackgroundModeImages.map((block: BlockInstance) => (
-                          <React.Fragment key={`row-bg-mode-${block.id}`}>
-                            {renderBackgroundImageLayer(block.settings, mediaStyles)}
-                          </React.Fragment>
-                        ))}
                         {hasRowBackgroundSetting &&
                           renderBackgroundImageLayer(rowBackgroundSettings, mediaStyles)}
 
@@ -308,18 +291,13 @@ export function PreviewGridSection() {
                             }
 
                             const columnBlocks = column.blocks ?? [];
-                            const columnBackgroundModeImages = collectBackgroundImages(
-                              columnBlocks,
-                              'column'
-                            );
                             const columnBackgroundSettings = column.settings?.[
                               'backgroundImage'
                             ] as Record<string, unknown> | undefined;
                             const hasColumnBackgroundSetting = Boolean(
                               (columnBackgroundSettings?.['src'] as string) || ''
                             );
-                            const hasColumnBackground =
-                              hasColumnBackgroundSetting || columnBackgroundModeImages.length > 0;
+                            const hasColumnBackground = hasColumnBackgroundSetting;
 
                             const columnTooltip = (
                               <InspectorTooltip
@@ -385,11 +363,6 @@ export function PreviewGridSection() {
                                   {columnCustomCss ? (
                                     <style data-cms-custom-css={column.id}>{columnCustomCss}</style>
                                   ) : null}
-                                  {columnBackgroundModeImages.map((block: BlockInstance) => (
-                                    <React.Fragment key={`col-bg-mode-${block.id}`}>
-                                      {renderBackgroundImageLayer(block.settings, mediaStyles)}
-                                    </React.Fragment>
-                                  ))}
                                   {hasColumnBackgroundSetting &&
                                     renderBackgroundImageLayer(
                                       columnBackgroundSettings,
@@ -398,15 +371,7 @@ export function PreviewGridSection() {
 
                                   {(column.blocks ?? []).length > 0 ? (
                                     ((): React.ReactNode => {
-                                      const contentBlocks = columnBlocks.filter(
-                                        (b: BlockInstance) => {
-                                          if (b.type !== 'ImageElement') return true;
-                                          return (
-                                            ((b.settings?.['backgroundTarget'] as string) ||
-                                              'none') === 'none'
-                                          );
-                                        }
-                                      );
+                                      const contentBlocks = columnBlocks;
                                       if (contentBlocks.length === 0 && showEditorChrome) {
                                         return (
                                           <div className='flex h-full items-center justify-center p-4'>

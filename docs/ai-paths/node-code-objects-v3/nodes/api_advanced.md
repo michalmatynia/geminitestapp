@@ -4,13 +4,14 @@ Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
-- Runtime strategy: `legacy_adapter`
-- Migration wave: `backlog`
-- Code object ID: `not_assigned`
-- Readiness stage: `cataloged`
-- Readiness score: 35/100
-- Readiness blockers: `missing_v3_scaffold`, `not_in_v3_pilot`
-- Parity evidence suite IDs: `none`
+- Runtime strategy: `code_object_v3`
+- Migration wave: `pilot`
+- Code object ID: `ai-paths.node-code-object.api_advanced.v3`
+- Readiness stage: `rollout_candidate`
+- Readiness score: 90/100
+- Readiness blockers: `rollout_not_approved`
+- Parity evidence suite IDs: `v3-pilot-parity-core`
+- Rollout approved: `no` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 17
 
 ## Node Contract Files
@@ -18,9 +19,9 @@ Generated at: 2026-03-05T00:00:00.000Z
 - Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/api_advanced.json`
 - Semantic hash: `37b85ffa57728292544aa9cd66b45bbf4e5bbf9dafc436d4b5819340e52277b1`
 - v2 code object: `docs/ai-paths/node-code-objects-v2/api_advanced.json`
-- v3 scaffold: `missing`
-- v3 object id: `missing`
-- v3 object hash: `missing`
+- v3 scaffold: `docs/ai-paths/node-code-objects-v3/api_advanced.scaffold.json`
+- v3 object id: `node_obj_api_advanced_portable_v3`
+- v3 object hash: `77838bc67f8604217d9f1c75cab0b355213b8d25f9a624cd27932c321f4f5041`
 
 ## Ports
 

@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import type { PageZone } from '@/shared/contracts/cms';
-import { cn } from '@/shared/utils';
 import {
   useComponentTreePanelActions,
   useComponentTreePanelState,
@@ -40,7 +39,6 @@ export function SectionDropTarget({
     canDropSectionsAtRoot,
     canDropBlocksAtRoot,
     treePlaceholderClasses,
-    treeInlineDropLabel,
     draggedMasterSectionId,
   } = useComponentTreePanelState();
   const { moveSectionByMaster } = useComponentTreePanelActions();
@@ -185,10 +183,10 @@ export function SectionDropTarget({
           isOver
             ? canPromoteBlock
               ? 'border-emerald-500 bg-emerald-600/40 h-6'
-              : `${treePlaceholderClasses.rootActive} h-6`
+              : `${treePlaceholderClasses.rootActive} h-4`
             : canPromoteBlock
               ? 'border-emerald-500/50 bg-emerald-600/20 h-5'
-              : `${treePlaceholderClasses.rootIdle} h-5`
+              : `${treePlaceholderClasses.rootIdle} h-3`
         }`}
       >
         {canPromoteBlock ? (
@@ -196,16 +194,6 @@ export function SectionDropTarget({
             className={`text-[9px] font-medium ${isOver ? 'text-emerald-200' : 'text-emerald-400'}`}
           >
             {isOver ? 'Release to extract' : 'Drop here to extract'}
-          </span>
-        ) : null}
-        {shouldRenderSectionTarget && !canPromoteBlock ? (
-          <span
-            className={cn(
-              'text-[9px] font-medium',
-              isOver ? treePlaceholderClasses.badgeActive : treePlaceholderClasses.badgeIdle
-            )}
-          >
-            {isOver ? 'Release to move' : treeInlineDropLabel}
           </span>
         ) : null}
       </div>

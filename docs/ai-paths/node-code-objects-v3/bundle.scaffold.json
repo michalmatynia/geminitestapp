@@ -6,7 +6,7 @@
   "title": "Bundle",
   "runtimeKernel": {
     "strategy": "code_object_v3",
-    "executionAdapter": "legacy_handler_bridge",
+    "executionAdapter": "native_handler_registry",
     "legacyHandlerKey": "bundle",
     "codeObjectId": "ai-paths.node-code-object.bundle.v3"
   },
@@ -60,5 +60,5 @@
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_bundle_portable_v3",
   "objectHashAlgorithm": "sha256",
-  "objectHash": "efd212bb912876b826edc314d235b8d6bb4f943c34eaf55991a6ecf99706c976"
+  "objectHash": "128dc8b581e6fa336c213a421a0863032cb065d373fd9e2c5d99557f6b8fca75"
 }

@@ -14,8 +14,10 @@ import { KangurGame, KangurGameProvider, KangurSetup } from '@/features/kangur/u
 import { CalendarTrainingGame } from '@/features/kangur/ui/components/lessons';
 import { PlayerProgressCard, XpToast } from '@/features/kangur/ui/components/progress';
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurPlatform, KangurUser } from '@/features/kangur/services/ports';
+import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   DIFFICULTY_CONFIG,
   generateQuestions,
@@ -35,8 +37,14 @@ import type {
 
 const TOTAL_QUESTIONS = 10;
 const kangurPlatform: KangurPlatform = getKangurPlatform();
+const isStatusError = (value: unknown): value is { status: number } =>
+  typeof value === 'object' &&
+  value !== null &&
+  'status' in value &&
+  typeof (value as { status?: unknown }).status === 'number';
 
 export default function Game() {
+  const { basePath } = useKangurRouting();
   const [screen, setScreen] = useState<KangurGameScreen>('home');
   const [user, setUser] = useState<KangurUser | null>(null);
   const [userLoading, setUserLoading] = useState(true);
@@ -67,7 +75,15 @@ export default function Game() {
         setUser(u);
         if (u?.full_name) setPlayerName(u.full_name);
       })
-      .catch(() => {})
+      .catch((error: unknown) => {
+        if (isStatusError(error) && (error.status === 401 || error.status === 403)) {
+          return;
+        }
+        logKangurClientError(error, {
+          source: 'KangurGamePage',
+          action: 'loadCurrentUser',
+        });
+      })
       .finally(() => setUserLoading(false));
   }, []);
 
@@ -76,7 +92,12 @@ export default function Game() {
   };
 
   const handleLogout = (): void => {
-    void kangurPlatform.auth.logout();
+    void kangurPlatform.auth.logout().catch((error: unknown) => {
+      logKangurClientError(error, {
+        source: 'KangurGamePage',
+        action: 'logout',
+      });
+    });
   };
 
   const handleStartGame = (): void => setScreen('operation');
@@ -182,13 +203,13 @@ export default function Game() {
         </div>
         <div className='flex items-center gap-3'>
           <Link
-            href={createPageUrl('Lessons')}
+            href={createPageUrl('Lessons', basePath)}
             className='inline-flex items-center gap-1.5 text-sm text-purple-500 hover:text-purple-700 font-semibold transition'
           >
             <BookOpen className='w-4 h-4' /> Lekcje
           </Link>
           <Link
-            href={createPageUrl('ParentDashboard')}
+            href={createPageUrl('ParentDashboard', basePath)}
             className='inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 font-semibold transition'
           >
             <LayoutDashboard className='w-4 h-4' /> Rodzic
@@ -247,7 +268,7 @@ export default function Game() {
                     <p className='text-gray-400 text-sm text-center'>
                       Jesteś zalogowany/a. Twoje wyniki będą zapisane na tablicy!
                     </p>
-                    <Link href={createPageUrl('Lessons')} className='w-full'>
+                    <Link href={createPageUrl('Lessons', basePath)} className='w-full'>
                       <motion.div
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.97 }}
@@ -296,7 +317,7 @@ export default function Game() {
                     <p className='text-xs text-gray-400 text-center'>
                       Zaloguj się, aby Twój wynik pojawił się na tablicy!
                     </p>
-                    <Link href={createPageUrl('Lessons')} className='w-full'>
+                    <Link href={createPageUrl('Lessons', basePath)} className='w-full'>
                       <motion.div
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.97 }}

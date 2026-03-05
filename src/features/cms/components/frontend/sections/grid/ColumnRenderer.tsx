@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Fragment } from 'react';
+import React from 'react';
 import { GsapAnimationWrapper } from '../../GsapAnimationWrapper';
 import { CssAnimationWrapper } from '../../CssAnimationWrapper';
 import { FrontendBlockRenderer, BlockSettingsContext } from '../FrontendBlockRenderer';
@@ -17,7 +17,6 @@ import {
   resolveGapValue,
   resolveJustifyContent,
   resolveAlignItems,
-  isBackgroundModeImage,
 } from './frontend-grid-utils';
 import { BackgroundImageLayer } from './BackgroundImageLayer';
 import { SectionBlockRenderer } from './SectionBlockRenderer';
@@ -28,14 +27,7 @@ export function ColumnRenderer({ column }: { column: BlockInstance }): React.Rea
   const { colorSchemes } = useSectionData();
   const { rowHeightMode, rowHeight } = useSectionLayout();
 
-  const columnBackgroundModeImages = children.filter((b: BlockInstance) =>
-    isBackgroundModeImage(b, 'column')
-  );
-  const contentChildren = children.filter((b: BlockInstance) => {
-    if (b.type !== 'ImageElement') return true;
-    const bgTarget = (b.settings?.['backgroundTarget'] as string) || 'none';
-    return bgTarget === 'none';
-  });
+  const contentChildren = children;
 
   const isSingleBlock = contentChildren.length === 1;
   const columnHeightMode = (column.settings['heightMode'] as string) || 'inherit';
@@ -46,8 +38,7 @@ export function ColumnRenderer({ column }: { column: BlockInstance }): React.Rea
     | Record<string, unknown>
     | undefined;
   const hasColumnBackgroundSetting = Boolean((columnBackgroundSettings?.['src'] as string) || '');
-  const hasColumnBackgroundMode = columnBackgroundModeImages.length > 0;
-  const hasColumnBackground = hasColumnBackgroundSetting || hasColumnBackgroundMode;
+  const hasColumnBackground = hasColumnBackgroundSetting;
   const columnGapValue = resolveGapValue(column.settings?.['gap'], 'medium');
   const columnGapClass = shouldStretch ? '' : getGapClass(columnGapValue);
   const columnGapStyle = shouldStretch ? undefined : getGapStyle(column.settings?.['gapPx']);
@@ -80,11 +71,6 @@ export function ColumnRenderer({ column }: { column: BlockInstance }): React.Rea
               {columnCustomCss ? (
                 <style data-cms-custom-css={column.id}>{columnCustomCss}</style>
               ) : null}
-              {columnBackgroundModeImages.map((block: BlockInstance) => (
-                <Fragment key={`col-bg-mode-${block.id}`}>
-                  <BackgroundImageLayer settings={block.settings} />
-                </Fragment>
-              ))}
               {hasColumnBackgroundSetting && (
                 <BackgroundImageLayer settings={columnBackgroundSettings} />
               )}

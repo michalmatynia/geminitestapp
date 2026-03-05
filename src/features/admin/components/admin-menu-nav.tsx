@@ -1,6 +1,7 @@
 import {
   PackageIcon,
   BookOpenIcon,
+  GraduationCapIcon,
   SettingsIcon,
   MessageCircleIcon,
   StickyNoteIcon,
@@ -38,6 +39,13 @@ export const buildAdminNav = (handlers: {
     icon: <AppWindow className='size-4' />,
     children: [
       { id: 'workspace/front-manage', label: 'Front Manage', href: '/admin/front-manage' },
+      {
+        id: 'workspace/kangur',
+        label: 'Kangur',
+        href: '/admin/kangur',
+        icon: <GraduationCapIcon className='size-4' />,
+        keywords: ['math', 'education', 'training', 'game', 'competition'],
+      },
       { id: 'workspace/import', label: 'Import', href: '/admin/import' },
       { id: 'workspace/files', label: 'Files', href: '/admin/files' },
       {

@@ -14,10 +14,10 @@ import type {
   MasterTreeNode,
 } from '@/shared/utils/master-folder-tree-contract';
 import {
-  defaultFolderTreeProfilesV2,
   resolveFolderTreeMultiSelectConfig,
   resolveFolderTreeSearchConfig,
 } from '@/shared/utils/folder-tree-profiles-v2';
+import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
 
 import { logCaseResolverWorkspaceEvent } from '../../workspace-persistence';
 import { RelationTreeNodeItem } from './RelationTreeNodeItem';
@@ -69,7 +69,7 @@ export function RelationTreeBrowser(props: RelationTreeBrowserProps): React.JSX.
     emptyLabel = 'No files found',
   } = props;
 
-  const profile = useMemo(() => defaultFolderTreeProfilesV2[instance], [instance]);
+  const profile = useFolderTreeProfile(instance);
   const searchConfig = useMemo(() => resolveFolderTreeSearchConfig(profile), [profile]);
   const multiSelectConfig = useMemo(() => resolveFolderTreeMultiSelectConfig(profile), [profile]);
   const runtime = useSharedMasterFolderTreeRuntime({ bindWindowKeydown: false });

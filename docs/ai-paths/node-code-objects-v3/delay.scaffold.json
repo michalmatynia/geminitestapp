@@ -6,7 +6,7 @@
   "title": "Delay",
   "runtimeKernel": {
     "strategy": "code_object_v3",
-    "executionAdapter": "legacy_handler_bridge",
+    "executionAdapter": "native_handler_registry",
     "legacyHandlerKey": "delay",
     "codeObjectId": "ai-paths.node-code-object.delay.v3"
   },
@@ -54,5 +54,5 @@
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_delay_portable_v3",
   "objectHashAlgorithm": "sha256",
-  "objectHash": "1f0b26b2c3deff73dbf90d4b173edb547e1821a940d48a5a477f8d23b6246711"
+  "objectHash": "b0e3ddc142991c5842e6f96f6b3b736ecf709ec85f61a2da89e620389e5dc1ce"
 }

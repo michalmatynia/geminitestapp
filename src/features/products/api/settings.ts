@@ -92,7 +92,7 @@ export async function getCategories(
 ): Promise<ProductCategoryWithChildren[]> {
   try {
     return await api.get<ProductCategoryWithChildren[]>('/api/v2/products/categories/tree', {
-      params: { catalogId: catalogId || undefined, fresh: 1 },
+      params: { catalogId: catalogId || undefined },
       cache: 'no-store',
     });
   } catch (error) {
@@ -106,7 +106,7 @@ export async function getCategories(
 export async function getCategoriesFlat(catalogId: string | null): Promise<ProductCategory[]> {
   try {
     return await api.get<ProductCategory[]>('/api/v2/products/categories', {
-      params: { catalogId: catalogId || undefined, fresh: 1 },
+      params: { catalogId: catalogId || undefined },
       cache: 'no-store',
     });
   } catch (error) {
@@ -156,7 +156,7 @@ export async function deleteTag(id: string): Promise<void> {
 
 export async function getParameters(catalogId: string | null): Promise<ProductParameter[]> {
   return api.get<ProductParameter[]>('/api/v2/products/parameters', {
-    params: { catalogId: catalogId || undefined, fresh: 1 },
+    params: { catalogId: catalogId || undefined },
     cache: 'no-store',
   });
 }

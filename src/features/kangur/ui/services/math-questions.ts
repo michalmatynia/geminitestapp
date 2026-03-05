@@ -108,7 +108,7 @@ function generateQuestion(operation: KangurOperation, range: number): KangurQues
   } else if (operation === 'clock') {
     const minuteOptions = [0, 15, 30, 45];
     const hours = randInt(1, 12);
-    const minutes = minuteOptions[randInt(0, minuteOptions.length - 1)];
+    const minutes = minuteOptions[randInt(0, minuteOptions.length - 1)] ?? 0;
     const pad = (value: number): string => value.toString().padStart(2, '0');
     answer = `${hours}:${pad(minutes)}`;
     question = `CLOCK:${hours}:${pad(minutes)}`;
@@ -116,7 +116,7 @@ function generateQuestion(operation: KangurOperation, range: number): KangurQues
 
     while (wrongChoices.size < 4) {
       const wrongHour = randInt(1, 12);
-      const wrongMinutes = minuteOptions[randInt(0, minuteOptions.length - 1)];
+      const wrongMinutes = minuteOptions[randInt(0, minuteOptions.length - 1)] ?? 0;
       wrongChoices.add(`${wrongHour}:${pad(wrongMinutes)}`);
     }
 
@@ -131,7 +131,8 @@ function generateQuestion(operation: KangurOperation, range: number): KangurQues
     const extraOperations: KangurOperation[] =
       range <= 10 ? [] : range <= 50 ? ['decimals'] : ['decimals', 'powers', 'roots'];
     const operationPool = [...baseOperations, ...extraOperations];
-    return generateQuestion(operationPool[randInt(0, operationPool.length - 1)], range);
+    const randomOperation = operationPool[randInt(0, operationPool.length - 1)] ?? 'addition';
+    return generateQuestion(randomOperation, range);
   } else {
     return generateQuestion('addition', range);
   }
@@ -150,7 +151,7 @@ export const generateQuestions = (
   operation: KangurOperation,
   difficulty?: KangurDifficulty,
   count?: number
-) => {
+): KangurQuestion[] => {
   const selectedDifficulty = difficulty ?? 'medium';
   const questionCount = count ?? 10;
   const range = DIFFICULTY_CONFIG[selectedDifficulty].range;
@@ -161,12 +162,14 @@ export const generateTrainingQuestions = (
   categories: KangurOperation[],
   difficulty?: KangurDifficulty,
   count?: number
-) => {
+): KangurQuestion[] => {
   const selectedDifficulty = difficulty ?? 'medium';
   const questionCount = count ?? 10;
   const range = DIFFICULTY_CONFIG[selectedDifficulty].range;
+  const resolvedCategories: KangurOperation[] = categories.length > 0 ? categories : ['addition'];
   return Array.from({ length: questionCount }, (_, index) => {
-    const operation = categories[index % categories.length];
+    const operation: KangurOperation =
+      resolvedCategories[index % resolvedCategories.length] ?? 'addition';
     return { ...generateQuestion(operation, range), category: operation };
   });
 };

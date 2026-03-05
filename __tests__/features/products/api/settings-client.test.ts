@@ -17,7 +17,7 @@ describe('product settings api client', () => {
     vi.clearAllMocks();
   });
 
-  it('requests fresh category trees and flat category lists for settings edits', async () => {
+  it('requests category trees and flat category lists scoped to the selected catalog', async () => {
     vi.mocked(api.get).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
 
     await getCategories('catalog-1');
@@ -29,7 +29,6 @@ describe('product settings api client', () => {
       expect.objectContaining({
         params: {
           catalogId: 'catalog-1',
-          fresh: 1,
         },
         cache: 'no-store',
       })
@@ -41,14 +40,13 @@ describe('product settings api client', () => {
       expect.objectContaining({
         params: {
           catalogId: 'catalog-1',
-          fresh: 1,
         },
         cache: 'no-store',
       })
     );
   });
 
-  it('requests fresh parameter lists so new parameters appear in draft and product forms', async () => {
+  it('requests parameter lists scoped to the selected catalog', async () => {
     vi.mocked(api.get).mockResolvedValueOnce([]);
 
     await getParameters('catalog-1');
@@ -58,7 +56,6 @@ describe('product settings api client', () => {
       expect.objectContaining({
         params: {
           catalogId: 'catalog-1',
-          fresh: 1,
         },
         cache: 'no-store',
       })

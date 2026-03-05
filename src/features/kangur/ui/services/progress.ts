@@ -23,6 +23,7 @@ const DEFAULT_PROGRESS: KangurProgressState = {
   perfectGames: 0,
   lessonsCompleted: 0,
   clockPerfect: 0,
+  calendarPerfect: 0,
   badges: [],
   operationsPlayed: [],
 };
@@ -106,6 +107,13 @@ export const BADGES: KangurBadge[] = [
   },
 ];
 
+const FALLBACK_LEVEL: KangurProgressLevel = {
+  level: 1,
+  minXp: 0,
+  title: 'Raczkujacy 🐣',
+  color: 'text-gray-500',
+};
+
 export function loadProgress(): KangurProgressState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -131,7 +139,7 @@ export function saveProgress(progress: KangurProgressState): void {
 }
 
 export function getCurrentLevel(totalXp: number): KangurProgressLevel {
-  let currentLevel = LEVELS[0];
+  let currentLevel = LEVELS[0] ?? FALLBACK_LEVEL;
   for (const level of LEVELS) {
     if (totalXp >= level.minXp) {
       currentLevel = level;

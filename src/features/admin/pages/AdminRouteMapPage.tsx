@@ -52,6 +52,8 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   '/admin/case-resolver/capture':
     'Configure Case Resolver Capture role mappings and Filemaker auto-matching rules.',
   '/admin/case-resolver/settings': 'Configure Case Resolver OCR model settings.',
+  '/admin/kangur':
+    'Open the Kangur learning and competition workspace for math training and score tracking.',
   '/admin/filemaker':
     'Manage persons, organizations, events, and emails used as addresser/addressee data in Case Resolver documents.',
   '/admin/filemaker/persons': 'Search and review Filemaker persons.',

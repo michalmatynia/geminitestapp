@@ -33,21 +33,20 @@ describe('ProductFormFooter', () => {
   it('renders inline product id with copy icon and copies id on click', async () => {
     render(<ProductFormFooter entityId='product-123' />);
 
-    expect(screen.getByText('Product ID:')).toBeTruthy();
     expect(screen.getByText('product-123')).toBeTruthy();
     expect(screen.getByTestId('copy-icon')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Copy product ID' })).toHaveAttribute(
-      'type',
-      'button'
-    );
+    const copyButton = screen.getByRole('button', { name: 'Copy product ID' });
+    expect(copyButton).toHaveAttribute('type', 'button');
+    expect(copyButton).toHaveAttribute('aria-pressed', 'false');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Copy product ID' }));
+    fireEvent.click(copyButton);
 
     await waitFor(() => {
       expect(writeTextMock).toHaveBeenCalledWith('product-123');
       expect(toastMock).toHaveBeenCalledWith('Product ID copied to clipboard.', {
         variant: 'success',
       });
+      expect(copyButton).toHaveAttribute('aria-pressed', 'true');
     });
   });
 

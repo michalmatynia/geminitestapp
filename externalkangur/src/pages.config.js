@@ -53,12 +53,12 @@ import ParentDashboard from './pages/ParentDashboard';
 
 
 export const PAGES = {
-    "Game": Game,
-    "Lessons": Lessons,
-    "ParentDashboard": ParentDashboard,
-}
+  'Game': Game,
+  'Lessons': Lessons,
+  'ParentDashboard': ParentDashboard,
+};
 
 export const pagesConfig = {
-    mainPage: "Game",
-    Pages: PAGES,
+  mainPage: 'Game',
+  Pages: PAGES,
 };

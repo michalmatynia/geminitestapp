@@ -442,6 +442,7 @@ export const pageBuilderActionSchema = z.discriminatedUnion('type', [
     fromParentBlockId: z.string().optional(),
     toSectionId: z.string(),
     toRowId: z.string(),
+    toParentBlockId: z.string().optional(),
     toIndex: z.number(),
   }),
   z.object({
@@ -451,6 +452,7 @@ export const pageBuilderActionSchema = z.discriminatedUnion('type', [
     fromColumnId: z.string().optional(),
     fromParentBlockId: z.string().optional(),
     toSectionId: z.string(),
+    toParentBlockId: z.string().optional(),
     toIndex: z.number(),
   }),
   z.object({

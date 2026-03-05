@@ -6,7 +6,7 @@
   "title": "Validation Pattern",
   "runtimeKernel": {
     "strategy": "code_object_v3",
-    "executionAdapter": "legacy_handler_bridge",
+    "executionAdapter": "native_handler_registry",
     "legacyHandlerKey": "validation_pattern",
     "codeObjectId": "ai-paths.node-code-object.validation_pattern.v3"
   },
@@ -76,5 +76,5 @@
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_validation_pattern_portable_v3",
   "objectHashAlgorithm": "sha256",
-  "objectHash": "87ede3561620dfc8eb2564de91d3b5f96544aba2977455a73a84d2faeffae378"
+  "objectHash": "0d8be52647277ec06255ed22dab15637e06837fdb792d1197c5ec440eb09311c"
 }

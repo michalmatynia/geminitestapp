@@ -1,5 +1,4 @@
 import React from 'react';
-import type { BlockInstance } from '../../../../types/page-builder';
 
 export const SECTION_BLOCK_TYPES = new Set([
   'ImageWithText',
@@ -131,29 +130,4 @@ export const buildTransparencyMaskStyles = (
     WebkitMaskImage: gradient,
     maskImage: gradient,
   };
-};
-
-export const isBackgroundModeImage = (
-  block: BlockInstance,
-  target: 'grid' | 'row' | 'column'
-): boolean => {
-  if (block.type !== 'ImageElement') return false;
-  const backgroundTarget = (block.settings?.['backgroundTarget'] as string) || 'none';
-  return backgroundTarget === target;
-};
-
-export const collectBackgroundImages = (
-  blocks: BlockInstance[],
-  target: 'grid' | 'row' | 'column'
-): BlockInstance[] => {
-  const result: BlockInstance[] = [];
-  for (const block of blocks) {
-    if (isBackgroundModeImage(block, target)) {
-      result.push(block);
-    }
-    if (target === 'grid' && block.blocks) {
-      result.push(...collectBackgroundImages(block.blocks, target));
-    }
-  }
-  return result;
 };

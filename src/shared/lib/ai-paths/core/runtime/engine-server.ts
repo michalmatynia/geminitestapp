@@ -4,7 +4,9 @@ import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import type { NodeHandler, RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 import { evaluateGraphInternal } from './engine-core';
+import { resolveAiPathsRuntimeCodeObjectHandler } from './code-object-resolver-registry';
 import { createNodeRuntimeKernel, toNodeRuntimeResolutionTelemetry } from './node-runtime-kernel';
+import { createNodeCodeObjectV3ContractResolver } from './node-code-object-v3-legacy-bridge';
 
 import { type EvaluateGraphArgs, type EvaluateGraphOptions } from './engine-modules/engine-types';
 
@@ -17,6 +19,7 @@ import {
   handleBoundsNormalizer,
   handleCanvasOutput,
   handleBundle,
+  handleCompare,
   handleLogicalCondition,
   handleConstant,
   handleContext,
@@ -68,6 +71,7 @@ const HANDLERS: Record<string, NodeHandler> = {
   parser: handleParser,
   mapper: handleMapper,
   math: handleMath,
+  compare: handleCompare,
   regex: handleRegex,
   logical_condition: handleLogicalCondition,
   constant: handleConstant,
@@ -93,6 +97,7 @@ const HANDLERS: Record<string, NodeHandler> = {
   validator: handleValidator,
   db_schema: handleDbSchema,
   poll: handlePoll,
+  api_advanced: handleAdvancedApi,
   advanced_api: handleAdvancedApi,
   validation_pattern: handleValidationPattern,
   string_mutator: handleStringMutator,
@@ -108,6 +113,58 @@ const HANDLERS: Record<string, NodeHandler> = {
 const resolveLegacyHandler = (type: string): NodeHandler | null => {
   return HANDLERS[type] || null;
 };
+const NATIVE_CODE_OBJECT_HANDLERS: Record<string, NodeHandler> = {
+  'ai-paths.node-code-object.agent.v3': handleAgent,
+  'ai-paths.node-code-object.ai_description.v3': handleAiDescription,
+  'ai-paths.node-code-object.api_advanced.v3': handleAdvancedApi,
+  'ai-paths.node-code-object.audio_oscillator.v3': handleAudioOscillator,
+  'ai-paths.node-code-object.audio_speaker.v3': handleAudioSpeaker,
+  'ai-paths.node-code-object.bundle.v3': handleBundle,
+  'ai-paths.node-code-object.compare.v3': handleCompare,
+  'ai-paths.node-code-object.constant.v3': handleConstant,
+  'ai-paths.node-code-object.context.v3': handleContext,
+  'ai-paths.node-code-object.database.v3': handleDatabase,
+  'ai-paths.node-code-object.delay.v3': handleDelay,
+  'ai-paths.node-code-object.db_schema.v3': handleDbSchema,
+  'ai-paths.node-code-object.description_updater.v3': handleDescriptionUpdater,
+  'ai-paths.node-code-object.fetcher.v3': handleFetcher,
+  'ai-paths.node-code-object.gate.v3': handleGate,
+  'ai-paths.node-code-object.http.v3': handleHttp,
+  'ai-paths.node-code-object.iterator.v3': handleIterator,
+  'ai-paths.node-code-object.learner_agent.v3': handleLearnerAgent,
+  'ai-paths.node-code-object.mapper.v3': handleMapper,
+  'ai-paths.node-code-object.math.v3': handleMath,
+  'ai-paths.node-code-object.model.v3': handleModel,
+  'ai-paths.node-code-object.mutator.v3': handleMutator,
+  'ai-paths.node-code-object.notification.v3': handleNotification,
+  'ai-paths.node-code-object.parser.v3': handleParser,
+  'ai-paths.node-code-object.playwright.v3': handlePlaywright,
+  'ai-paths.node-code-object.poll.v3': handlePoll,
+  'ai-paths.node-code-object.prompt.v3': handlePrompt,
+  'ai-paths.node-code-object.regex.v3': handleRegex,
+  'ai-paths.node-code-object.router.v3': handleRouter,
+  'ai-paths.node-code-object.simulation.v3': handleSimulation,
+  'ai-paths.node-code-object.string_mutator.v3': handleStringMutator,
+  'ai-paths.node-code-object.template.v3': handleTemplate,
+  'ai-paths.node-code-object.trigger.v3': handleTrigger,
+  'ai-paths.node-code-object.validation_pattern.v3': handleValidationPattern,
+  'ai-paths.node-code-object.validator.v3': handleValidator,
+  'ai-paths.node-code-object.viewer.v3': handleViewer,
+};
+export const SERVER_NATIVE_CODE_OBJECT_HANDLER_IDS: readonly string[] = Object.freeze(
+  Object.keys(NATIVE_CODE_OBJECT_HANDLERS).sort()
+);
+const resolveNativeCodeObjectHandler = ({
+  nodeType: _nodeType,
+  codeObjectId,
+}: {
+  nodeType: string;
+  codeObjectId: string;
+}): NodeHandler | null => NATIVE_CODE_OBJECT_HANDLERS[codeObjectId] ?? null;
+const defaultResolveCodeObjectHandler = createNodeCodeObjectV3ContractResolver({
+  resolveLegacyHandler,
+  resolveNativeCodeObjectHandler,
+});
 
 let processStartedAtMs: number | null = null;
 
@@ -153,6 +210,12 @@ export async function evaluateGraphServer(
 
   const runtimeKernel = createNodeRuntimeKernel({
     resolveLegacyHandler,
+    resolveCodeObjectHandler: (args) =>
+      resolvedOptions.resolveCodeObjectHandler?.(args) ??
+      resolveAiPathsRuntimeCodeObjectHandler(args, {
+        resolverIds: resolvedOptions.runtimeKernelCodeObjectResolverIds,
+      }) ??
+      defaultResolveCodeObjectHandler(args),
     resolveOverrideHandler: resolvedOptions.resolveHandler,
     mode: resolvedOptions.runtimeKernelMode,
     v3PilotNodeTypes: resolvedOptions.runtimeKernelPilotNodeTypes,

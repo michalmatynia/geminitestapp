@@ -6,7 +6,7 @@
   "title": "Compare",
   "runtimeKernel": {
     "strategy": "code_object_v3",
-    "executionAdapter": "legacy_handler_bridge",
+    "executionAdapter": "native_handler_registry",
     "legacyHandlerKey": "compare",
     "codeObjectId": "ai-paths.node-code-object.compare.v3"
   },
@@ -57,5 +57,5 @@
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_compare_portable_v3",
   "objectHashAlgorithm": "sha256",
-  "objectHash": "23313b4478cf5494b15d3fed3e3a3770e3e666e5a6ff42db1280b8cdc5ca44ae"
+  "objectHash": "27cd022de9a91da8088d4845d0bcc7da25818e41ca6ab312523b59477a9e6265"
 }

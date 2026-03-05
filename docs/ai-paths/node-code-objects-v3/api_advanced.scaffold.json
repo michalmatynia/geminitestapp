@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v3",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "nodeType": "api_advanced",
+  "title": "API Operation (Advanced)",
+  "runtimeKernel": {
+    "strategy": "code_object_v3",
+    "executionAdapter": "native_handler_registry",
+    "legacyHandlerKey": "api_advanced",
+    "codeObjectId": "ai-paths.node-code-object.api_advanced.v3"
+  },
+  "runtimeSemantics": {
+    "processing": "pulse_node_only",
+    "waiting": "freeze_consumed_inputs_and_outputs",
+    "success": "animate_outgoing_on_emit",
+    "error": "animate_error_routes_on_emit"
+  },
+  "ports": {
+    "inputs": [
+      "url",
+      "body",
+      "headers",
+      "params",
+      "bundle"
+    ],
+    "outputs": [
+      "value",
+      "bundle",
+      "status",
+      "headers",
+      "items",
+      "route",
+      "error",
+      "success"
+    ]
+  },
+  "copyPaste": {
+    "fullNode": {
+      "id": "node_api_advanced_example",
+      "type": "api_advanced",
+      "title": "API Operation (Advanced)",
+      "description": "Advanced API node with auth, retries, pagination, and error routing.",
+      "position": {
+        "x": 2580,
+        "y": 0
+      },
+      "inputs": [
+        "url",
+        "body",
+        "headers",
+        "params",
+        "bundle"
+      ],
+      "outputs": [
+        "value",
+        "bundle",
+        "status",
+        "headers",
+        "items",
+        "route",
+        "error",
+        "success"
+      ],
+      "config": {
+        "apiAdvanced": {
+          "url": "https://example.com/advanced",
+          "method": "POST",
+          "pathParamsJson": {},
+          "queryParamsJson": {},
+          "headersJson": {},
+          "authMode": "none",
+          "responseMode": "json",
+          "responsePath": "",
+          "outputMappingsJson": {},
+          "retryEnabled": true,
+          "retryAttempts": 2,
+          "retryOnStatusJson": [
+            429,
+            500,
+            502,
+            503,
+            504
+          ],
+          "paginationMode": "none",
+          "errorRoutesJson": []
+        }
+      }
+    }
+  },
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "id": "node_obj_api_advanced_portable_v3",
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "77838bc67f8604217d9f1c75cab0b355213b8d25f9a624cd27932c321f4f5041"
+}

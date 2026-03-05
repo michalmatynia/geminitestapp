@@ -1,6 +1,7 @@
 import 'server-only';
 
 import {
+  AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
   AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
   AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
   cloneJsonSafe,
@@ -8,6 +9,7 @@ import {
   sanitizeEdges,
 } from '@/shared/lib/ai-paths';
 import { resolveAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine';
+import { listAiPathsRuntimeCodeObjectResolverIds } from '@/shared/lib/ai-paths/core/runtime/code-object-resolver-registry';
 import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
 import { GraphExecutionCancelled } from '@/shared/lib/ai-paths/core/runtime/engine-core';
 import { listAiPathsSettings } from '@/features/ai/ai-paths/server/settings-store';
@@ -162,7 +164,24 @@ export const executePathRun = async (
   const triggerNodeId =
     resolveTriggerNodeId(nodes, edges, run.triggerEvent, run.triggerNodeId) ?? null;
   const runtimeState = parseRuntimeState(run.runtimeState);
+  const runMetaRecord =
+    run.meta && typeof run.meta === 'object' && !Array.isArray(run.meta)
+      ? (run.meta as Record<string, unknown>)
+      : null;
+  const runMetaRuntimeKernelConfigRecord =
+    runMetaRecord &&
+    typeof runMetaRecord['runtimeKernelConfig'] === 'object' &&
+    runMetaRecord['runtimeKernelConfig'] !== null &&
+    !Array.isArray(runMetaRecord['runtimeKernelConfig'])
+      ? (runMetaRecord['runtimeKernelConfig'] as Record<string, unknown>)
+      : null;
+  const runMetaRuntimeKernelMode = runMetaRuntimeKernelConfigRecord?.['mode'];
+  const runMetaRuntimeKernelPilotNodeTypes = runMetaRuntimeKernelConfigRecord?.['pilotNodeTypes'];
+  const runMetaRuntimeKernelResolverIds =
+    runMetaRuntimeKernelConfigRecord?.['codeObjectResolverIds'] ??
+    runMetaRuntimeKernelConfigRecord?.['resolverIds'];
   const runtimeKernelSettings = await listAiPathsSettings([
+    AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
     AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
     AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
   ]).catch((error: unknown) => {
@@ -178,14 +197,29 @@ export const executePathRun = async (
   );
   const runtimeKernelConfig = resolveRuntimeKernelConfigForRun({
     envMode: process.env['AI_PATHS_RUNTIME_KERNEL_MODE'],
+    pathMode: runMetaRuntimeKernelMode,
     settingMode: runtimeKernelSettingsMap.get(AI_PATHS_RUNTIME_KERNEL_MODE_KEY),
     envPilotNodeTypes: process.env['AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES'],
+    pathPilotNodeTypes: runMetaRuntimeKernelPilotNodeTypes,
     settingPilotNodeTypes: runtimeKernelSettingsMap.get(
       AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY
+    ),
+    envResolverIds: process.env['AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS'],
+    pathResolverIds: runMetaRuntimeKernelResolverIds,
+    settingResolverIds: runtimeKernelSettingsMap.get(
+      AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY
     ),
   });
   const runtimeKernelMode = runtimeKernelConfig.mode;
   const runtimeKernelPilotNodeTypes = runtimeKernelConfig.pilotNodeTypes;
+  const runtimeKernelCodeObjectResolverIds = runtimeKernelConfig.resolverIds;
+  const registeredRuntimeKernelCodeObjectResolverIds = listAiPathsRuntimeCodeObjectResolverIds();
+  const registeredRuntimeKernelCodeObjectResolverIdSet = new Set(
+    registeredRuntimeKernelCodeObjectResolverIds
+  );
+  const runtimeKernelMissingCodeObjectResolverIds = (runtimeKernelCodeObjectResolverIds ?? []).filter(
+    (resolverId: string): boolean => !registeredRuntimeKernelCodeObjectResolverIdSet.has(resolverId)
+  );
   const runtimeKernelExecutionTelemetry = toRuntimeKernelExecutionTelemetry(runtimeKernelConfig);
   const toRunEventRuntimeKernelMetadata = (input?: {
     runtimeStrategy?: unknown;
@@ -284,7 +318,6 @@ export const executePathRun = async (
     await saveIntermediateState();
   };
 
-  const runMetaRecord = run.meta && typeof run.meta === 'object' ? run.meta : null;
   const runMetaWithRuntimeFingerprint = withRuntimeFingerprintMeta(runMetaRecord);
   const runMetaRuntimeKernelRecord =
     runMetaRecord &&
@@ -305,8 +338,16 @@ export const executePathRun = async (
       (entry: unknown): entry is string => typeof entry === 'string'
     ) &&
     (runMetaRuntimeKernelRecord?.['runtimeKernelPilotNodeTypes'] as string[]).join('|') ===
-      runtimeKernelExecutionTelemetry.runtimeKernelPilotNodeTypes.join('|');
-  const runMetaWithRuntimeContext = {
+      runtimeKernelExecutionTelemetry.runtimeKernelPilotNodeTypes.join('|') &&
+    runMetaRuntimeKernelRecord?.['runtimeKernelCodeObjectResolverIdsSource'] ===
+      runtimeKernelExecutionTelemetry.runtimeKernelCodeObjectResolverIdsSource &&
+    Array.isArray(runMetaRuntimeKernelRecord?.['runtimeKernelCodeObjectResolverIds']) &&
+    (runMetaRuntimeKernelRecord?.['runtimeKernelCodeObjectResolverIds'] as unknown[]).every(
+      (entry: unknown): entry is string => typeof entry === 'string'
+    ) &&
+    (runMetaRuntimeKernelRecord?.['runtimeKernelCodeObjectResolverIds'] as string[]).join('|') ===
+      runtimeKernelExecutionTelemetry.runtimeKernelCodeObjectResolverIds.join('|');
+  const runMetaWithRuntimeContext: Record<string, unknown> = {
     ...runMetaWithRuntimeFingerprint,
     runtimeKernel: runtimeKernelExecutionTelemetry,
   };
@@ -421,6 +462,20 @@ export const executePathRun = async (
         meta: runMetaWithRuntimeContext,
       });
     }
+    if (runtimeKernelMissingCodeObjectResolverIds.length > 0) {
+      await repo.createRunEvent({
+        runId: run.id,
+        level: 'warn',
+        message:
+          'Runtime kernel code-object resolver ids include unknown entries. Falling back to default resolver chain.',
+        metadata: {
+          traceId,
+          ...runtimeKernelExecutionTelemetry,
+          runtimeKernelCodeObjectResolverIdsMissing: runtimeKernelMissingCodeObjectResolverIds,
+          runtimeKernelRegisteredCodeObjectResolverIds: registeredRuntimeKernelCodeObjectResolverIds,
+        },
+      });
+    }
 
     const preflight = await runExecutorPreflight({
       run,
@@ -490,6 +545,7 @@ export const executePathRun = async (
       },
       runtimeKernelMode,
       runtimeKernelPilotNodeTypes,
+      runtimeKernelCodeObjectResolverIds,
       validationMiddleware: runtimeValidationMiddleware,
       onRuntimeValidation: async ({
         node,

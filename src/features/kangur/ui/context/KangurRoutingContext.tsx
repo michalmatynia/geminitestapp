@@ -2,9 +2,12 @@
 
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
+import { KANGUR_BASE_PATH, normalizeKangurBasePath } from '@/features/kangur/config/routing';
+
 type KangurRoutingContextValue = {
   pageKey?: string | null;
   requestedPath?: string;
+  basePath: string;
 };
 
 const KangurRoutingContext = createContext<KangurRoutingContextValue | null>(null);
@@ -12,20 +15,24 @@ const KangurRoutingContext = createContext<KangurRoutingContextValue | null>(nul
 type KangurRoutingProviderProps = {
   pageKey?: string | null;
   requestedPath?: string;
+  basePath?: string;
   children: ReactNode;
 };
 
 export const KangurRoutingProvider = ({
   pageKey,
   requestedPath,
+  basePath = KANGUR_BASE_PATH,
   children,
 }: KangurRoutingProviderProps): React.JSX.Element => {
+  const resolvedBasePath = normalizeKangurBasePath(basePath);
   const value = useMemo(
     () => ({
       pageKey,
       requestedPath,
+      basePath: resolvedBasePath,
     }),
-    [pageKey, requestedPath]
+    [pageKey, requestedPath, resolvedBasePath]
   );
 
   return <KangurRoutingContext.Provider value={value}>{children}</KangurRoutingContext.Provider>;

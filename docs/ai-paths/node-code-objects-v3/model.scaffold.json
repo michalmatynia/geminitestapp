@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v3",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "nodeType": "model",
+  "title": "Model",
+  "runtimeKernel": {
+    "strategy": "code_object_v3",
+    "executionAdapter": "native_handler_registry",
+    "legacyHandlerKey": "model",
+    "codeObjectId": "ai-paths.node-code-object.model.v3"
+  },
+  "runtimeSemantics": {
+    "processing": "pulse_node_only",
+    "waiting": "freeze_consumed_inputs_and_outputs",
+    "success": "animate_outgoing_on_emit",
+    "error": "animate_error_routes_on_emit"
+  },
+  "ports": {
+    "inputs": [
+      "prompt",
+      "images"
+    ],
+    "outputs": [
+      "result",
+      "jobId"
+    ]
+  },
+  "copyPaste": {
+    "fullNode": {
+      "id": "node_model_example",
+      "type": "model",
+      "title": "Model",
+      "description": "Runs a selected model.",
+      "position": {
+        "x": 2130,
+        "y": 60
+      },
+      "inputs": [
+        "prompt",
+        "images"
+      ],
+      "outputs": [
+        "result",
+        "jobId"
+      ],
+      "config": {
+        "model": {
+          "modelId": "",
+          "temperature": 0.7,
+          "maxTokens": 800,
+          "systemPrompt": "",
+          "vision": false,
+          "waitForResult": true
+        }
+      }
+    }
+  },
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "id": "node_obj_model_portable_v3",
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "4dad6cd6dc5826ea8b9af205b8c52264da0e6d56da5471632967a10e1f9a0158"
+}

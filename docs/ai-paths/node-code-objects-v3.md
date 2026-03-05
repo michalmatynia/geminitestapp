@@ -19,21 +19,33 @@ Runtime now includes a kernel adapter (`node-runtime-kernel`) with two strategie
 
 Current pilot set:
 
+- `agent`
+- `api_advanced`
+- `audio_oscillator`
+- `audio_speaker`
 - `constant`
 - `context`
 - `bundle`
 - `compare`
+- `database`
 - `delay`
 - `db_schema`
 - `description_updater`
+- `ai_description`
 - `fetcher`
 - `gate`
+- `http`
 - `iterator`
+- `learner_agent`
 - `mapper`
 - `math`
+- `model`
 - `mutator`
 - `notification`
 - `parser`
+- `playwright`
+- `poll`
+- `prompt`
 - `regex`
 - `router`
 - `simulation`
@@ -45,6 +57,11 @@ Current pilot set:
 - `viewer`
 
 In this phase, pilot nodes still execute through legacy handlers, but their runtime strategy is tagged as `code_object_v3` for staged rollout.
+Server runtime now resolves `code_object_v3` handlers through `docs/ai-paths/node-code-objects-v3/contracts.json`.
+Supported adapters:
+- `legacy_handler_bridge`
+- `native_handler_registry` (current pilot: `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`)
+For `native_handler_registry`, runtime falls back to legacy bridge when a native registry mapping is unavailable.
 
 Rollout control:
 
@@ -56,7 +73,7 @@ Rollout control:
 - Admin UI control is available in AI-Paths Canvas action bar under `Runtime Kernel`.
 - server env overrides persisted settings:
   - `AI_PATHS_RUNTIME_KERNEL_MODE=legacy_only`
-  - `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES=constant,context,bundle,compare,delay,db_schema,description_updater,fetcher,gate,iterator,mapper,math,mutator,notification,parser,regex,router,simulation,string_mutator,template,trigger,validation_pattern,validator,viewer`
+- `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES=agent,api_advanced,audio_oscillator,audio_speaker,constant,context,bundle,compare,database,delay,db_schema,description_updater,ai_description,fetcher,gate,http,iterator,learner_agent,mapper,math,model,mutator,notification,parser,playwright,poll,prompt,regex,router,simulation,string_mutator,template,trigger,validation_pattern,validator,viewer`
 
 ## Directory
 
@@ -64,7 +81,8 @@ Rollout control:
 - `docs/ai-paths/node-code-objects-v3/index.json` (generated pilot v3 index + hashes)
 - `docs/ai-paths/node-code-objects-v3/contracts.json` (generated pilot v3 contracts hash catalog)
 - `docs/ai-paths/node-code-objects-v3/parity-evidence.json` (test-backed dual-run parity evidence)
-- `docs/ai-paths/node-code-objects-v3/{constant,context,bundle,compare,delay,db_schema,description_updater,fetcher,gate,iterator,mapper,math,mutator,notification,parser,regex,router,simulation,string_mutator,template,trigger,validation_pattern,validator,viewer}.scaffold.json`
+- `docs/ai-paths/node-code-objects-v3/rollout-approvals.json` (manual rollout approval source)
+- `docs/ai-paths/node-code-objects-v3/{agent,api_advanced,audio_oscillator,audio_speaker,constant,context,bundle,compare,database,delay,db_schema,description_updater,ai_description,fetcher,gate,http,iterator,learner_agent,mapper,math,model,mutator,notification,parser,playwright,poll,prompt,regex,router,simulation,string_mutator,template,trigger,validation_pattern,validator,viewer}.scaffold.json`
 - `docs/ai-paths/node-code-objects-v3/migration-index.json` (generated full-node migration matrix)
 - `docs/ai-paths/node-code-objects-v3/MIGRATION_GUIDE.md` (generated workflow and coverage guide)
 - `docs/ai-paths/node-code-objects-v3/nodes/<nodeType>.md` (generated per-node migration sheets)
@@ -134,6 +152,21 @@ Pilot parity-evidence coverage regression suite:
 npm run test:ai-paths:node-migration-parity-evidence
 ```
 
+Rollout approvals workflow:
+
+1. Edit `docs/ai-paths/node-code-objects-v3/rollout-approvals.json` and add node types to `approvedNodeTypes`.
+2. Regenerate docs/artifacts:
+
+```bash
+npm run docs:ai-paths:node-migration:generate
+```
+
+3. Validate with canonical checks:
+
+```bash
+npm run ai-paths:check:canonical
+```
+
 This check is also part of:
 
 ```bash
@@ -149,6 +182,6 @@ npm run docs:ai-paths:node-docs:check
 ## Next Steps
 
 1. Extend scaffold contracts to all node types with deterministic hashes.
-2. Add runtime resolver that loads executable behavior from v3 contracts.
-3. Add dual-run parity checks (`legacy` vs `code_object_v3`) in CI for pilot paths.
+2. Evolve runtime resolver from legacy-handler bridge to native code-object executors.
+3. Extend dual-run parity checks (`legacy` vs `code_object_v3`) beyond pilot unit coverage.
 4. Move node types from backlog to pilot list in waves with observability sign-off.

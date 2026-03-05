@@ -237,7 +237,6 @@ export function SectionBlockNodeItem(props: SectionBlockNodeItemProps): React.Re
           />
           <Icon className='size-3.5 shrink-0' />
           <span className='flex-1 truncate text-left'>{blockLabel}</span>
-          {isDragOver && <span className='text-[10px] text-emerald-300'>Drop here</span>}
           {!isTextAtom && (
             <TreeActionSlot show='always' align='inline'>
               <div draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>

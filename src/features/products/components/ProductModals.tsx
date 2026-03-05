@@ -9,14 +9,13 @@ import { ProductListingsModal } from '@/features/integrations/components/listing
 import { ProductFormProvider } from '@/features/products/context/ProductFormContext';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
-import { isEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import { useProductListModalsContext } from '@/features/products/context/ProductListContext';
+import { isEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductDraft, ProductWithImages } from '@/shared/contracts/products';
 import { FormModal, Skeleton } from '@/shared/ui';
 
 import ProductForm from './ProductForm';
-import { ProductFormModal } from './modals/ProductFormModal';
 
 const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
   ssr: false,
@@ -29,20 +28,16 @@ const SelectIntegrationModal = dynamic(
   }
 );
 
-// ─── Form bridge ────────────────────────────────────────────────────────────
-// Rendered inside ProductFormProvider; syncs form state into refs/setState
-// owned by the outer EditProductModal so the shared FormModal shell can react.
+type ProductFormScope = 'draft_template' | 'product_create' | 'product_edit';
 
-function ProductFormEditBridge(props: {
-  onIsSavingChange: (v: boolean) => void;
-  onHasUnsavedChangesChange: (v: boolean) => void;
+function ProductFormModalBridge(props: {
+  onIsSavingChange: (value: boolean) => void;
+  onHasUnsavedChangesChange: (value: boolean) => void;
   submitRef: React.MutableRefObject<(() => void) | null>;
 }): null {
   const { onIsSavingChange, onHasUnsavedChangesChange, submitRef } = props;
-
   const { handleSubmit, uploading, hasUnsavedChanges } = useProductFormCore();
 
-  // Keep submit ref always fresh (no deps needed — render-time assignment is fine for refs)
   submitRef.current = () => {
     void handleSubmit();
   };
@@ -58,25 +53,21 @@ function ProductFormEditBridge(props: {
   return null;
 }
 
-// ─── Form body content ───────────────────────────────────────────────────────
-// Extracted from ProductFormModalInner so it can live inside the shared
-// FormModal shell without nesting a second Dialog.
-
-function ProductFormEditBody(props: {
+function ProductFormModalBody(props: {
   submitButtonText: string;
-  validationInstanceScopeOverride?: 'draft_template' | 'product_create' | 'product_edit';
+  validationInstanceScopeOverride?: ProductFormScope;
 }): React.JSX.Element {
   const { submitButtonText, validationInstanceScopeOverride } = props;
 
-  const { product, getValues } = useProductFormCore();
+  const { product, draft, getValues } = useProductFormCore();
   const { showFileManager, handleMultiFileSelect } = useProductFormImages();
-  const formInstanceKey = product?.id?.trim() || 'product-edit';
+  const formInstanceKey = product?.id?.trim() || draft?.id?.trim() || 'product-form';
 
   const getEntityJson = useCallback((): Record<string, unknown> => {
     const values = getValues() as unknown as Record<string, unknown>;
-    const base = (product ?? {}) as unknown as Record<string, unknown>;
+    const base = (product ?? draft ?? {}) as unknown as Record<string, unknown>;
     return { ...base, ...values, ...(product?.id ? { id: product.id } : {}) };
-  }, [getValues, product]);
+  }, [getValues, product, draft]);
 
   return (
     <>
@@ -101,8 +92,6 @@ function ProductFormEditBody(props: {
   );
 }
 
-// ─── Skeleton content ─────────────────────────────────────────────────────────
-
 function EditProductSkeletonContent(): React.JSX.Element {
   return (
     <div className='space-y-6 py-2'>
@@ -126,36 +115,55 @@ function EditProductSkeletonContent(): React.JSX.Element {
   );
 }
 
-// ─── Unified edit modal ───────────────────────────────────────────────────────
-// One <FormModal> (one <Dialog>) for the entire edit flow: skeleton → form.
-// The Dialog never unmounts between states so only one open animation plays.
-
-function EditProductModal(props: {
-  editingProduct: ProductWithImages | null;
-  isEditHydrating: boolean;
-  onCloseEdit: () => void;
-  onEditSuccess: () => void;
+type ProductEditorModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  subtitle?: string;
+  saveText: string;
+  submitButtonText: string;
+  providerKey: string;
+  product?: ProductWithImages;
+  draft?: ProductDraft | null;
+  onSuccess: (info?: { queued?: boolean }) => void;
   onEditSave?: (saved: ProductWithImages) => void;
-}): React.JSX.Element | null {
-  const { editingProduct, isEditHydrating, onCloseEdit, onEditSuccess, onEditSave } = props;
+  initialSku?: string;
+  initialCatalogId?: string;
+  requireHydratedEditProduct?: boolean;
+  showSkeleton?: boolean;
+  validationInstanceScopeOverride?: ProductFormScope;
+};
+
+function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element | null {
+  const {
+    isOpen,
+    onClose,
+    title,
+    subtitle,
+    saveText,
+    submitButtonText,
+    providerKey,
+    product,
+    draft,
+    onSuccess,
+    onEditSave,
+    initialSku,
+    initialCatalogId,
+    requireHydratedEditProduct = false,
+    showSkeleton = false,
+    validationInstanceScopeOverride,
+  } = props;
 
   const [formIsSaving, setFormIsSaving] = useState(false);
   const [formHasUnsavedChanges, setFormHasUnsavedChanges] = useState(false);
   const formSubmitRef = useRef<(() => void) | null>(null);
 
-  const onIsSavingChange = useCallback((v: boolean) => setFormIsSaving(v), []);
-  const onHasUnsavedChangesChange = useCallback((v: boolean) => setFormHasUnsavedChanges(v), []);
+  const onIsSavingChange = useCallback((value: boolean) => setFormIsSaving(value), []);
+  const onHasUnsavedChangesChange = useCallback(
+    (value: boolean) => setFormHasUnsavedChanges(value),
+    []
+  );
 
-  const hydratedEditingProduct =
-    editingProduct && isEditingProductHydrated(editingProduct) ? editingProduct : null;
-  const showSkeleton = isEditHydrating || (Boolean(editingProduct) && !hydratedEditingProduct);
-  const isOpen = showSkeleton || Boolean(hydratedEditingProduct);
-
-  const editProviderKey = hydratedEditingProduct
-    ? [hydratedEditingProduct.id, 'hydrated', hydratedEditingProduct.updatedAt ?? ''].join(':')
-    : null;
-
-  // Reset bridge state when skeleton is showing (form is no longer mounted)
   useEffect(() => {
     if (showSkeleton) {
       setFormIsSaving(false);
@@ -168,45 +176,46 @@ function EditProductModal(props: {
   return (
     <FormModal
       open
-      onClose={onCloseEdit}
-      title='Edit Product'
-      subtitle={showSkeleton ? 'Loading full product details before editing.' : undefined}
+      onClose={onClose}
+      title={title}
+      subtitle={subtitle}
       onSave={() => formSubmitRef.current?.()}
       isSaving={formIsSaving}
       disableCloseWhileSaving
       isSaveDisabled={showSkeleton || formIsSaving}
       hasUnsavedChanges={formHasUnsavedChanges}
-      saveText='Update'
+      saveText={saveText}
       cancelText='Close'
       size='xl'
       className='md:min-w-[63rem] max-w-[66rem]'
     >
       {showSkeleton ? (
         <EditProductSkeletonContent />
-      ) : hydratedEditingProduct && editProviderKey ? (
+      ) : (
         <ProductFormProvider
-          key={editProviderKey}
-          product={hydratedEditingProduct}
-          onSuccess={onEditSuccess}
+          key={providerKey}
+          product={product}
+          draft={draft ?? undefined}
+          onSuccess={onSuccess}
           onEditSave={onEditSave}
-          requireHydratedEditProduct
+          initialSku={initialSku}
+          initialCatalogId={initialCatalogId}
+          requireHydratedEditProduct={requireHydratedEditProduct}
         >
-          <ProductFormEditBridge
+          <ProductFormModalBridge
             onIsSavingChange={onIsSavingChange}
             onHasUnsavedChangesChange={onHasUnsavedChangesChange}
             submitRef={formSubmitRef}
           />
-          <ProductFormEditBody
-            submitButtonText='Update'
-            validationInstanceScopeOverride='product_edit'
+          <ProductFormModalBody
+            submitButtonText={submitButtonText}
+            validationInstanceScopeOverride={validationInstanceScopeOverride}
           />
         </ProductFormProvider>
-      ) : null}
+      )}
     </FormModal>
   );
 }
-
-// ─── Main export ─────────────────────────────────────────────────────────────
 
 export function ProductModals(): React.JSX.Element {
   const {
@@ -240,32 +249,49 @@ export function ProductModals(): React.JSX.Element {
     onSelectIntegrationFromModal,
   } = useProductListModalsContext();
 
+  const hydratedEditingProduct =
+    editingProduct && isEditingProductHydrated(editingProduct) ? editingProduct : null;
+  const showEditSkeleton = isEditHydrating || (Boolean(editingProduct) && !hydratedEditingProduct);
+  const isEditOpen = showEditSkeleton || Boolean(hydratedEditingProduct);
+
+  const createProviderKey = createDraft
+    ? ['create', createDraft.id, createDraft.updatedAt ?? ''].join(':')
+    : 'create';
+  const editProviderKey = hydratedEditingProduct
+    ? [hydratedEditingProduct.id, 'hydrated', hydratedEditingProduct.updatedAt ?? ''].join(':')
+    : 'edit';
+
   return (
     <>
-      {isCreateOpen && (
-        <ProductFormProvider
-          key={createDraft?.id ?? 'create'}
-          onSuccess={onCreateSuccess}
-          initialSku={initialSku}
-          initialCatalogId={initialCatalogId ?? undefined}
-          draft={createDraft ?? undefined}
-        >
-          <ProductFormModal
-            isOpen={isCreateOpen}
-            onClose={onCloseCreate}
-            title='Create Product'
-            submitButtonText='Create'
-            validationInstanceScopeOverride={createDraft?.id ? 'draft_template' : 'product_create'}
-          />
-        </ProductFormProvider>
-      )}
+      <ProductEditorModal
+        isOpen={isCreateOpen}
+        onClose={onCloseCreate}
+        title='Create Product'
+        subtitle={createDraft ? `Using draft template: ${createDraft.name}` : undefined}
+        saveText='Create'
+        submitButtonText='Create'
+        providerKey={createProviderKey}
+        draft={createDraft}
+        onSuccess={onCreateSuccess}
+        initialSku={initialSku}
+        initialCatalogId={initialCatalogId ?? undefined}
+        validationInstanceScopeOverride={createDraft?.id ? 'draft_template' : 'product_create'}
+      />
 
-      <EditProductModal
-        editingProduct={editingProduct}
-        isEditHydrating={isEditHydrating}
-        onCloseEdit={onCloseEdit}
-        onEditSuccess={onEditSuccess}
+      <ProductEditorModal
+        isOpen={isEditOpen}
+        onClose={onCloseEdit}
+        title='Edit Product'
+        subtitle={showEditSkeleton ? 'Loading full product details before editing.' : undefined}
+        saveText='Update'
+        submitButtonText='Update'
+        providerKey={editProviderKey}
+        product={hydratedEditingProduct ?? undefined}
+        onSuccess={onEditSuccess}
         onEditSave={onEditSave}
+        requireHydratedEditProduct
+        validationInstanceScopeOverride='product_edit'
+        showSkeleton={showEditSkeleton}
       />
 
       {integrationsProduct && !showListProductModal && (

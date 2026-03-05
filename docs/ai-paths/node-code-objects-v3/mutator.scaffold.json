@@ -6,7 +6,7 @@
   "title": "Mutator",
   "runtimeKernel": {
     "strategy": "code_object_v3",
-    "executionAdapter": "legacy_handler_bridge",
+    "executionAdapter": "native_handler_registry",
     "legacyHandlerKey": "mutator",
     "codeObjectId": "ai-paths.node-code-object.mutator.v3"
   },
@@ -51,5 +51,5 @@
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_mutator_portable_v3",
   "objectHashAlgorithm": "sha256",
-  "objectHash": "dcf613da31f587da3f31f4215765bec00e72357a1a32aad9759d0c683626fc1d"
+  "objectHash": "905d2aef2e7ac39d6af1759e2cce1a94fd6ecfa39b551303f010aee9d85a6d5b"
 }

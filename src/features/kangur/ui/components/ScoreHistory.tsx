@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
 
@@ -50,10 +51,15 @@ export default function ScoreHistory({ playerName }: ScoreHistoryProps): React.J
           return;
         }
         setScores(data);
-      } catch {
+      } catch (error: unknown) {
         if (!isActive) {
           return;
         }
+        logKangurClientError(error, {
+          source: 'KangurScoreHistory',
+          action: 'loadScores',
+          playerNameProvided: Boolean(playerName),
+        });
         setScores([]);
       } finally {
         if (isActive) {

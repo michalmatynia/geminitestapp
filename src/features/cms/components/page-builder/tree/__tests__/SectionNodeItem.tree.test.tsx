@@ -235,43 +235,7 @@ describe('SectionNodeItem tree behavior', () => {
     expect(screen.getByTestId('block-leaf-1')).toBeInTheDocument();
   });
 
-  it('nests dropped sections through inside-drop only', async () => {
-    const targetSection = createSection({ id: 'target-section', zone: 'header' });
-    const sourceSection = createSection({ id: 'source-section', zone: 'template' });
-    pageBuilderStateRef.current.sections = [targetSection, sourceSection];
-    dragStateRef.current.section = {
-      id: 'source-section',
-      type: 'Hero',
-      zone: 'template',
-      index: 0,
-    };
-
-    render(<SectionNodeItem section={targetSection} sectionIndex={0} />);
-
-    const dataTransfer = createDataTransferStub();
-    setSectionDragData(dataTransfer, {
-      id: 'source-section',
-      type: 'Hero',
-      zone: 'template',
-      index: 0,
-    });
-
-    const insideDropTarget = screen.getByText('Drop inside to nest');
-    fireEvent.dragOver(insideDropTarget, { dataTransfer });
-    fireEvent.drop(insideDropTarget, { dataTransfer });
-
-    expect(moveSectionByMasterMock).toHaveBeenCalledWith(
-      'source-section',
-      'header',
-      0,
-      'target-section'
-    );
-    await waitFor(() => {
-      expect(endSectionDragMock).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  it('does not nest when dropping on the section row', () => {
+  it('nests dropped sections when dropped on the section row', async () => {
     const targetSection = createSection({ id: 'target-section', zone: 'header' });
     const sourceSection = createSection({ id: 'source-section', zone: 'template' });
     pageBuilderStateRef.current.sections = [targetSection, sourceSection];
@@ -294,6 +258,97 @@ describe('SectionNodeItem tree behavior', () => {
 
     const sectionRow = container.querySelector('[data-cms-section-row="true"]');
     expect(sectionRow).not.toBeNull();
+
+    fireEvent.dragOver(sectionRow as Element, { dataTransfer });
+    fireEvent.drop(sectionRow as Element, { dataTransfer });
+
+    expect(moveSectionByMasterMock).toHaveBeenCalledWith(
+      'source-section',
+      'header',
+      0,
+      'target-section'
+    );
+    await waitFor(() => {
+      expect(endSectionDragMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('does not render standalone inside-drop placeholder', () => {
+    const targetSection = createSection({ id: 'target-section', zone: 'header' });
+    const sourceSection = createSection({ id: 'source-section', zone: 'template' });
+    pageBuilderStateRef.current.sections = [targetSection, sourceSection];
+    dragStateRef.current.section = {
+      id: 'source-section',
+      type: 'Hero',
+      zone: 'template',
+      index: 0,
+    };
+
+    render(<SectionNodeItem section={targetSection} sectionIndex={0} />);
+
+    expect(screen.queryByText('Drop inside to nest')).toBeNull();
+    expect(screen.queryByText('Release to nest section')).toBeNull();
+  });
+
+  it('ignores row drop when dragged section is already a child of target', () => {
+    const targetSection = createSection({ id: 'target-section', zone: 'header' });
+    const sourceSection = createSection({
+      id: 'source-section',
+      zone: 'header',
+      parentSectionId: 'target-section',
+    });
+    pageBuilderStateRef.current.sections = [targetSection, sourceSection];
+    dragStateRef.current.section = {
+      id: 'source-section',
+      type: 'Hero',
+      zone: 'header',
+      index: 0,
+    };
+
+    const { container } = render(<SectionNodeItem section={targetSection} sectionIndex={0} />);
+    const sectionRow = container.querySelector('[data-cms-section-row="true"]');
+    expect(sectionRow).not.toBeNull();
+
+    const dataTransfer = createDataTransferStub();
+    setSectionDragData(dataTransfer, {
+      id: 'source-section',
+      type: 'Hero',
+      zone: 'header',
+      index: 0,
+    });
+
+    fireEvent.dragOver(sectionRow as Element, { dataTransfer });
+    fireEvent.drop(sectionRow as Element, { dataTransfer });
+
+    expect(moveSectionByMasterMock).not.toHaveBeenCalled();
+  });
+
+  it('ignores row drop when dragging ancestor section onto descendant target', () => {
+    const parentSection = createSection({ id: 'parent-section', zone: 'header' });
+    const childSection = createSection({
+      id: 'child-section',
+      zone: 'header',
+      parentSectionId: 'parent-section',
+    });
+    pageBuilderStateRef.current.sections = [parentSection, childSection];
+    dragStateRef.current.section = {
+      id: 'parent-section',
+      type: 'Hero',
+      zone: 'header',
+      index: 0,
+    };
+
+    const { container } = render(<SectionNodeItem section={childSection} sectionIndex={0} />);
+    const sectionRow = container.querySelector('[data-cms-section-row="true"]');
+    expect(sectionRow).not.toBeNull();
+
+    const dataTransfer = createDataTransferStub();
+    setSectionDragData(dataTransfer, {
+      id: 'parent-section',
+      type: 'Hero',
+      zone: 'header',
+      index: 0,
+    });
 
     fireEvent.dragOver(sectionRow as Element, { dataTransfer });
     fireEvent.drop(sectionRow as Element, { dataTransfer });

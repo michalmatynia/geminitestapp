@@ -4,13 +4,14 @@ Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
-- Runtime strategy: `legacy_adapter`
-- Migration wave: `backlog`
-- Code object ID: `not_assigned`
-- Readiness stage: `cataloged`
-- Readiness score: 35/100
-- Readiness blockers: `missing_v3_scaffold`, `not_in_v3_pilot`
-- Parity evidence suite IDs: `none`
+- Runtime strategy: `code_object_v3`
+- Migration wave: `pilot`
+- Code object ID: `ai-paths.node-code-object.audio_oscillator.v3`
+- Readiness stage: `rollout_candidate`
+- Readiness score: 90/100
+- Readiness blockers: `rollout_not_approved`
+- Parity evidence suite IDs: `v3-pilot-parity-core`
+- Rollout approved: `no` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 7
 
 ## Node Contract Files
@@ -18,9 +19,9 @@ Generated at: 2026-03-05T00:00:00.000Z
 - Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/audio_oscillator.json`
 - Semantic hash: `7baab1b01ab357f02eee514fc42f17c000caaa5d51e5610ca9197cbe0a9f8224`
 - v2 code object: `docs/ai-paths/node-code-objects-v2/audio_oscillator.json`
-- v3 scaffold: `missing`
-- v3 object id: `missing`
-- v3 object hash: `missing`
+- v3 scaffold: `docs/ai-paths/node-code-objects-v3/audio_oscillator.scaffold.json`
+- v3 object id: `node_obj_audio_oscillator_portable_v3`
+- v3 object hash: `9580ebad3164c3d5af98cd622a957bbc3941e4b3d69827407a11c6b21cad6fbf`
 
 ## Ports
 

@@ -20,6 +20,7 @@ import {
 type CaseResolverTreeHeaderProps = {
   searchQuery: string;
   onSearchChange: (q: string) => void;
+  searchEnabled?: boolean | undefined;
 };
 
 type CaseResolverTreeSearchRuntimeValue = {
@@ -50,6 +51,7 @@ function CaseResolverTreeSearchBar(): React.JSX.Element {
 export function CaseResolverTreeHeader({
   searchQuery,
   onSearchChange,
+  searchEnabled = true,
 }: CaseResolverTreeHeaderProps): React.JSX.Element {
   const router = useRouter();
   const {
@@ -188,9 +190,11 @@ export function CaseResolverTreeHeader({
           {createContextTooltip}
         </div>
       ) : null}
-      <CaseResolverTreeSearchRuntimeContext.Provider value={searchRuntimeValue}>
-        <CaseResolverTreeSearchBar />
-      </CaseResolverTreeSearchRuntimeContext.Provider>
+      {searchEnabled ? (
+        <CaseResolverTreeSearchRuntimeContext.Provider value={searchRuntimeValue}>
+          <CaseResolverTreeSearchBar />
+        </CaseResolverTreeSearchRuntimeContext.Provider>
+      ) : null}
       <div className='flex flex-wrap items-center gap-1'>
         <Button
           type='button'

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { CachedProductService } from '@/features/products/performance/cached-service';
 import { getParameterRepository } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
@@ -97,6 +98,8 @@ export async function PUT_handler(
     ...(data.optionLabels !== undefined && { optionLabels: nextOptionLabels }),
   });
 
+  CachedProductService.invalidateAll();
+
   return NextResponse.json(parameter);
 }
 
@@ -111,5 +114,6 @@ export async function DELETE_handler(
 ): Promise<Response> {
   const repository = await getParameterRepository();
   await repository.deleteParameter(params.id);
+  CachedProductService.invalidateAll();
   return NextResponse.json({ success: true });
 }

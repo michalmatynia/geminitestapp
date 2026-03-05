@@ -6,6 +6,8 @@ import React, { useCallback } from 'react';
 import { FolderTreeSearchBar } from '@/features/foldertree/v2/search';
 import { Button, SelectSimple, SegmentedControl } from '@/shared/ui';
 import type { AiNode, CaseResolverFile } from '@/shared/contracts/case-resolver';
+import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
+import { resolveFolderTreeSearchConfig } from '@/shared/utils/folder-tree-profiles-v2';
 
 import { buildNode, createNodeId } from './case-resolver-canvas-utils';
 import {
@@ -38,6 +40,11 @@ export function NodeFileDocumentSearchPanel(
   } = useNodeFileWorkspaceStateContext();
   const { setDocumentSearchScope, setDocumentSearchQuery, addNode, setNodeFileMeta } =
     useNodeFileWorkspaceActionsContext();
+  const relationTreeProfile = useFolderTreeProfile('case_resolver_nodefile_relations');
+  const relationTreeSearchEnabled = React.useMemo(
+    (): boolean => resolveFolderTreeSearchConfig(relationTreeProfile).enabled,
+    [relationTreeProfile]
+  );
   const resolvedRelationTreeNodes = relationTreeNodes ?? [];
   const resolvedRelationTreeLookup: RelationTreeLookup = relationTreeLookup ?? {
     fileRowByNodeId: new Map(),
@@ -81,6 +88,12 @@ export function NodeFileDocumentSearchPanel(
     },
     [addNode, resolveCanvasCenter, setNodeFileMeta]
   );
+
+  React.useEffect((): void => {
+    if (relationTreeSearchEnabled) return;
+    if (documentSearchQuery.length === 0) return;
+    setDocumentSearchQuery('');
+  }, [documentSearchQuery, relationTreeSearchEnabled, setDocumentSearchQuery]);
 
   return (
     <div className='shrink-0 border-b border-border/60 bg-card/30'>
@@ -126,11 +139,17 @@ export function NodeFileDocumentSearchPanel(
 
       <div className='flex items-center gap-2 border-t border-border/40 px-3 py-1.5'>
         <div className='min-w-0 flex-1'>
-          <FolderTreeSearchBar
-            value={documentSearchQuery}
-            onChange={setDocumentSearchQuery}
-            placeholder='Search catalogs & documents…'
-          />
+          {relationTreeSearchEnabled ? (
+            <FolderTreeSearchBar
+              value={documentSearchQuery}
+              onChange={setDocumentSearchQuery}
+              placeholder='Search catalogs & documents…'
+            />
+          ) : (
+            <div className='text-xs text-muted-foreground/80'>
+              Tree search disabled for this profile.
+            </div>
+          )}
         </div>
         <span className='shrink-0 text-xs text-gray-500'>
           {visibleDocumentSearchRows.length} doc
@@ -151,7 +170,7 @@ export function NodeFileDocumentSearchPanel(
             if (!row) return;
             addDocumentToCanvas(row.file);
           }}
-          searchQuery={documentSearchQuery}
+          searchQuery={relationTreeSearchEnabled ? documentSearchQuery : ''}
           emptyLabel='No matching documents'
         />
       </div>

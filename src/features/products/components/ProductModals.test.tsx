@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 
 import { markEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductDraft, ProductWithImages } from '@/shared/contracts/products';
 
 const { useProductListModalsContextMock } = vi.hoisted(() => ({
   useProductListModalsContextMock: vi.fn(),
@@ -34,10 +34,6 @@ vi.mock('@/features/products/context/ProductFormImageContext', () => ({
     showFileManager: false,
     handleMultiFileSelect: vi.fn(),
   }),
-}));
-
-vi.mock('@/features/products/components/modals/ProductFormModal', () => ({
-  ProductFormModal: () => <div data-testid='product-form-modal'>product-form-modal</div>,
 }));
 
 vi.mock('@/shared/ui', () => ({
@@ -130,6 +126,15 @@ const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithI
     updatedAt: '2026-01-01T00:00:00.000Z',
     ...overrides,
   }) as ProductWithImages;
+
+const createDraft = (overrides: Partial<ProductDraft> = {}): ProductDraft =>
+  ({
+    id: 'draft-1',
+    name: 'Draft Template',
+    createdAt: '2026-01-02T00:00:00.000Z',
+    updatedAt: '2026-01-02T00:00:00.000Z',
+    ...overrides,
+  }) as ProductDraft;
 
 const buildContext = (overrides: Record<string, unknown> = {}) => ({
   isCreateOpen: false,
@@ -225,5 +230,38 @@ describe('ProductModals edit hydration guard', () => {
     expect(screen.getByTestId('product-form')).toBeInTheDocument();
     // Save button is enabled when form is loaded
     expect(screen.getByRole('button', { name: 'Update' })).not.toBeDisabled();
+  });
+});
+
+describe('ProductModals create flows use unified modal shell', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('renders create product inside the shared FormModal + ProductFormProvider path', () => {
+    useProductListModalsContextMock.mockReturnValue(buildContext({ isCreateOpen: true }));
+
+    render(<ProductModals />);
+
+    expect(screen.getByTestId('loading-form-modal')).toBeInTheDocument();
+    expect(screen.getByTestId('product-form-provider')).toBeInTheDocument();
+    expect(screen.getByTestId('product-form')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create' })).toBeInTheDocument();
+  });
+
+  it('renders create-from-draft inside the same shared shell', () => {
+    useProductListModalsContextMock.mockReturnValue(
+      buildContext({
+        isCreateOpen: true,
+        createDraft: createDraft(),
+      })
+    );
+
+    render(<ProductModals />);
+
+    expect(screen.getByTestId('loading-form-modal')).toBeInTheDocument();
+    expect(screen.getByTestId('product-form-provider')).toBeInTheDocument();
+    expect(screen.getByTestId('product-form')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create' })).toBeInTheDocument();
   });
 });

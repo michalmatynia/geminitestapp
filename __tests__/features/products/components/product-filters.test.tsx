@@ -130,7 +130,7 @@ describe('ProductFilters Component', () => {
     expect(screen.getByPlaceholderText('Search by product name...')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Search by product ID...')).toBeInTheDocument();
     expect(screen.getByLabelText('ID Match')).toBeInTheDocument();
-    expect(screen.getByText('Exact')).toBeInTheDocument();
+    expect(screen.getByText('Choose match mode')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Search by SKU...')).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/min price/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/max price/i)).toBeInTheDocument();
@@ -163,6 +163,17 @@ describe('ProductFilters Component', () => {
     await waitFor(() => expect(mockContextValue.setSku).toHaveBeenCalledWith('ABC'), {
       timeout: 1000,
     });
+  });
+
+  it('does not count default ID match mode as an active filter when Product ID is empty', () => {
+    renderWithProviders({
+      ...mockContextValue,
+      productId: '',
+      idMatchMode: 'exact',
+    });
+
+    expect(screen.getByRole('button', { name: /^Hide Filters$/i })).toBeInTheDocument();
+    expect(screen.queryByText(/filter active/i)).not.toBeInTheDocument();
   });
 
   it('shows active preset pill and clears it on close click', () => {

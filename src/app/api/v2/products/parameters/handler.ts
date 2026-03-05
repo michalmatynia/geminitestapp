@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { CachedProductService } from '@/features/products/performance/cached-service';
 import { getParameterRepository } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
@@ -75,8 +76,13 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     throw badRequestError('catalogId query parameter is required');
   }
 
-  const repository = await getParameterRepository();
-  const parameters = await repository.listParameters({ catalogId });
+  const forceFresh = new URL(req.url).searchParams.get('fresh') === '1';
+  const parameters = forceFresh
+    ? await (async () => {
+      const repository = await getParameterRepository();
+      return repository.listParameters({ catalogId });
+    })()
+    : await CachedProductService.listParameters({ catalogId });
 
   return NextResponse.json(parameters);
 }
@@ -108,6 +114,8 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     selectorType: data.selectorType,
     optionLabels: normalizeOptionLabels(data.optionLabels),
   });
+
+  CachedProductService.invalidateAll();
 
   return NextResponse.json(parameter, { status: 201 });
 }

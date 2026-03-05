@@ -2,8 +2,28 @@
   "schemaVersion": "ai-paths.node-code-object-index.v3-scaffold",
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "strategy": "code_object_v3",
-  "totalObjects": 23,
+  "totalObjects": 36,
   "objects": [
+    {
+      "nodeType": "agent",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/agent.scaffold.json"
+    },
+    {
+      "nodeType": "ai_description",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/ai_description.scaffold.json"
+    },
+    {
+      "nodeType": "api_advanced",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/api_advanced.scaffold.json"
+    },
+    {
+      "nodeType": "audio_oscillator",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/audio_oscillator.scaffold.json"
+    },
+    {
+      "nodeType": "audio_speaker",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/audio_speaker.scaffold.json"
+    },
     {
       "nodeType": "bundle",
       "objectFile": "docs/ai-paths/node-code-objects-v3/bundle.scaffold.json"
@@ -19,6 +39,14 @@
     {
       "nodeType": "context",
       "objectFile": "docs/ai-paths/node-code-objects-v3/context.scaffold.json"
+    },
+    {
+      "nodeType": "database",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/database.scaffold.json"
+    },
+    {
+      "nodeType": "db_schema",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/db_schema.scaffold.json"
     },
     {
       "nodeType": "delay",
@@ -37,8 +65,16 @@
       "objectFile": "docs/ai-paths/node-code-objects-v3/gate.scaffold.json"
     },
     {
+      "nodeType": "http",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/http.scaffold.json"
+    },
+    {
       "nodeType": "iterator",
       "objectFile": "docs/ai-paths/node-code-objects-v3/iterator.scaffold.json"
+    },
+    {
+      "nodeType": "learner_agent",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/learner_agent.scaffold.json"
     },
     {
       "nodeType": "mapper",
@@ -47,6 +83,10 @@
     {
       "nodeType": "math",
       "objectFile": "docs/ai-paths/node-code-objects-v3/math.scaffold.json"
+    },
+    {
+      "nodeType": "model",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/model.scaffold.json"
     },
     {
       "nodeType": "mutator",
@@ -59,6 +99,18 @@
     {
       "nodeType": "parser",
       "objectFile": "docs/ai-paths/node-code-objects-v3/parser.scaffold.json"
+    },
+    {
+      "nodeType": "playwright",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/playwright.scaffold.json"
+    },
+    {
+      "nodeType": "poll",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/poll.scaffold.json"
+    },
+    {
+      "nodeType": "prompt",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/prompt.scaffold.json"
     },
     {
       "nodeType": "regex",

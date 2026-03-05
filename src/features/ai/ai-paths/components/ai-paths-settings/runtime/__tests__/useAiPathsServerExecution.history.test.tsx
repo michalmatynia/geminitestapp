@@ -179,6 +179,11 @@ describe('useAiPathsServerExecution history streaming', () => {
           activePathId: 'path-main',
           pathName: 'Main Path',
           pathDescription: '',
+          runtimeKernelConfig: {
+            mode: 'auto',
+            pilotNodeTypes: ['template'],
+            codeObjectResolverIds: ['resolver.path'],
+          },
           activeTrigger: 'manual',
           executionMode: 'server',
           runMode: 'manual',
@@ -215,6 +220,17 @@ describe('useAiPathsServerExecution history streaming', () => {
     await act(async () => {
       await result.current.runServerStream(triggerNode, 'manual', {});
     });
+    expect(enqueueAiPathRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        meta: expect.objectContaining({
+          runtimeKernelConfig: {
+            mode: 'auto',
+            pilotNodeTypes: ['template'],
+            codeObjectResolverIds: ['resolver.path'],
+          },
+        }),
+      })
+    );
 
     const nodePayload = [
       {

@@ -38,9 +38,6 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
       transparencyDirection: 'bottom',
       transparencyStrength: 0,
       imageShadow: { x: 0, y: 0, blur: 0, spread: 0, color: '#00000000' },
-      // Background mode settings
-      backgroundMode: 'none',
-      backgroundTarget: 'none',
     },
     settingsSchema: [
       { key: 'src', label: 'Image', type: 'image' },

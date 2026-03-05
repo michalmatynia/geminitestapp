@@ -4,6 +4,7 @@ import {
   buildTextAtomLetterBlocks,
   removeBlockFromColumnBlocks,
   insertBlockIntoColumnBlocks,
+  updateSectionNestedBlocks,
   findBlock,
   TEXT_ATOM_BLOCK_TYPE,
 } from './block-helpers';
@@ -100,15 +101,41 @@ export function reducePageBuilderMoveActions(
       // Insert into target (column direct or inside a parent block in a column)
       const sectionsAfterInsert = removal.sections.map((s: SectionInstance) => {
         if (s.id !== action.toSectionId) return s;
-        return {
-          ...s,
-          blocks: insertBlockIntoColumnBlocks(
+        const insertInRequestedTarget = (): BlockInstance[] =>
+          insertBlockIntoColumnBlocks(
             s.blocks,
             action.toColumnId,
             removal.moved!,
             action.toIndex,
             action.toParentBlockId
-          ),
+          );
+        const hasMovedBlock = (blocks: BlockInstance[]): boolean =>
+          Boolean(
+            findBlock(
+              [
+                {
+                  ...s,
+                  blocks,
+                },
+              ],
+              removal.moved!.id
+            )
+          );
+        const requestedBlocks = insertInRequestedTarget();
+        if (action.toParentBlockId && !hasMovedBlock(requestedBlocks)) {
+          return {
+            ...s,
+            blocks: insertBlockIntoColumnBlocks(
+              s.blocks,
+              action.toColumnId,
+              removal.moved!,
+              action.toIndex
+            ),
+          };
+        }
+        return {
+          ...s,
+          blocks: requestedBlocks,
         };
       });
       return { ...state, sections: sectionsAfterInsert };
@@ -188,9 +215,25 @@ export function reducePageBuilderMoveActions(
       // Insert into target row
       const sectionsAfterInsert = removal.sections.map((s: SectionInstance) => {
         if (s.id !== action.toSectionId) return s;
+        let nestedInserted = false;
         const insertIntoRow = (blocks: BlockInstance[]): BlockInstance[] => {
           return blocks.map((b: BlockInstance) => {
             if (b.id === action.toRowId && b.type === 'Row') {
+              if (action.toParentBlockId) {
+                const updatedRowBlocks = updateSectionNestedBlocks(
+                  b.blocks ?? [],
+                  action.toParentBlockId,
+                  (parent: BlockInstance) => {
+                    nestedInserted = true;
+                    const nextBlocks = [...(parent.blocks ?? [])];
+                    nextBlocks.splice(action.toIndex, 0, removal.moved!);
+                    return { ...parent, blocks: nextBlocks };
+                  }
+                );
+                if (nestedInserted) {
+                  return { ...b, blocks: updatedRowBlocks };
+                }
+              }
               const nextBlocks = [...(b.blocks ?? [])];
               nextBlocks.splice(action.toIndex, 0, removal.moved!);
               return { ...b, blocks: nextBlocks };
@@ -277,6 +320,22 @@ export function reducePageBuilderMoveActions(
       if (!removal.moved) return state;
       const sectionsAfterInsert = removal.sections.map((s: SectionInstance) => {
         if (s.id !== action.toSectionId) return s;
+        if (action.toParentBlockId) {
+          let nestedInserted = false;
+          const nextBlocks = updateSectionNestedBlocks(
+            s.blocks,
+            action.toParentBlockId,
+            (parent: BlockInstance) => {
+              nestedInserted = true;
+              const childBlocks = [...(parent.blocks ?? [])];
+              childBlocks.splice(action.toIndex, 0, removal.moved!);
+              return { ...parent, blocks: childBlocks };
+            }
+          );
+          if (nestedInserted) {
+            return { ...s, blocks: nextBlocks };
+          }
+        }
         const nextBlocks = [...s.blocks];
         nextBlocks.splice(action.toIndex, 0, removal.moved!);
         return { ...s, blocks: nextBlocks };

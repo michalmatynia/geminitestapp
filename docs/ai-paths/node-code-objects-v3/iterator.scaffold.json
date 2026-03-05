@@ -6,7 +6,7 @@
   "title": "Iterator",
   "runtimeKernel": {
     "strategy": "code_object_v3",
-    "executionAdapter": "legacy_handler_bridge",
+    "executionAdapter": "native_handler_registry",
     "legacyHandlerKey": "iterator",
     "codeObjectId": "ai-paths.node-code-object.iterator.v3"
   },
@@ -61,5 +61,5 @@
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_iterator_portable_v3",
   "objectHashAlgorithm": "sha256",
-  "objectHash": "6491b4a9cb98f5e8ef6ba30fe0bbdf1b31107495d61bbf266c0632ed12bdede3"
+  "objectHash": "dae944bf214f313dc1c11d5892dee04fcdcd353a7b2ed71f83d6f3b6ad3feff0"
 }

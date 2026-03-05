@@ -265,9 +265,11 @@ export function RowNodeItem(props: RowNodeItemProps): React.ReactNode {
             }
             // Render direct element children (non-Column blocks in the Row)
             return (
-              <TreeParentBlockProvider key={child.id} parentBlockId={row.id}>
-                <BlockNodeItem block={child} index={childIndex} />
-              </TreeParentBlockProvider>
+              <TreeRowProvider key={child.id} rowId={row.id}>
+                <TreeParentBlockProvider parentBlockId={row.id}>
+                  <BlockNodeItem block={child} index={childIndex} />
+                </TreeParentBlockProvider>
+              </TreeRowProvider>
             );
           })}
         </div>

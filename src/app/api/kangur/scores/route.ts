@@ -7,8 +7,12 @@ import { getKangurScoresHandler, postKangurScoresHandler } from './handler';
 
 export const GET = apiHandler(getKangurScoresHandler, {
   source: 'kangur.scores.GET',
+  service: 'kangur.api',
+  successLogging: 'all',
 });
 
 export const POST = apiHandler(postKangurScoresHandler, {
   source: 'kangur.scores.POST',
+  service: 'kangur.api',
+  successLogging: 'all',
 });

@@ -45,6 +45,7 @@ import { useAiPathsRuntimeManagement } from './hooks/useAiPathsRuntimeManagement
 import { usePaletteWithTriggerButtons } from './hooks/usePaletteWithTriggerButtons';
 import { useAiPathsSettingsDerivedState } from './hooks/useAiPathsSettingsDerivedState';
 import { useAiPathsErrorState } from './hooks/useAiPathsErrorState';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 type AiPathsSettingsStateOptions = {
   activeTab: 'canvas' | 'paths' | 'docs';
@@ -306,11 +307,19 @@ export function useAiPathsSettingsState({
     },
     [setEdgesAction]
   );
+  const runtimeKernelConfig = useMemo((): Record<string, unknown> | undefined => {
+    if (!activePathId) return undefined;
+    const activeConfig = pathConfigs[activePathId];
+    if (!activeConfig || !isObjectRecord(activeConfig.extensions)) return undefined;
+    const raw = activeConfig.extensions['runtimeKernel'];
+    return isObjectRecord(raw) ? raw : undefined;
+  }, [activePathId, pathConfigs]);
 
   const runtime = useAiPathsRuntime({
     activePathId,
     pathName,
     pathDescription,
+    runtimeKernelConfig,
     activeTab,
     activeTrigger,
     executionMode,

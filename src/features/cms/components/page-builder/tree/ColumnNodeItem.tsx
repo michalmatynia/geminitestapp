@@ -206,7 +206,6 @@ export function ColumnNodeItem(props: ColumnNodeItemProps): React.ReactNode {
             />
             <Columns className='size-3.5 shrink-0' />
             <span className='flex-1 truncate text-left'>{columnLabel}</span>
-            {isDragOver && <span className='text-[10px] text-emerald-300'>Drop here</span>}
             <TreeActionSlot show='always' align='inline'>
               <TreeActionButton
                 tone='danger'

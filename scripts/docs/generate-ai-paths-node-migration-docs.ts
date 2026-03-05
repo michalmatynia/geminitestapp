@@ -5,6 +5,7 @@ import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
 import { NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
 import { resolveDocsGeneratedAt } from './docs-generated-at';
 import { loadNodeMigrationParityEvidenceSummary } from './node-migration-parity-evidence';
+import { loadNodeMigrationRolloutApprovalsSummary } from './node-migration-rollout-approvals';
 import {
   type NodeMigrationReadiness,
   type NodeMigrationReadinessBlockerCode,
@@ -101,6 +102,13 @@ type NodeMigrationIndexPayload = {
     suiteCount: number;
     suiteIds: string[];
     validatedNodeTypes: string[];
+  };
+  rolloutApprovals: {
+    sourceFile: string;
+    schemaVersion: string | null;
+    generatedAt: string | null;
+    approvedNodeTypes: string[];
+    approvedCount: number;
   };
   familyTotals: Array<{
     nodeFamily: string;
@@ -226,7 +234,8 @@ const pilotNodeTypes = Array.from(
 ).sort((left, right) => left.localeCompare(right));
 const pilotNodeTypeSet = new Set<string>(pilotNodeTypes);
 const parityEvidenceSummary = loadNodeMigrationParityEvidenceSummary({ workspaceRoot });
-const parityValidatedNodeTypeSet = new Set<string>(parityEvidenceSummary.validatedNodeTypes);
+const rolloutApprovalsSummary = loadNodeMigrationRolloutApprovalsSummary({ workspaceRoot });
+const rolloutApprovedNodeTypeSet = new Set<string>(rolloutApprovalsSummary.approvedNodeTypes);
 
 const rows: NodeMigrationIndexRow[] = [...AI_PATHS_NODE_DOCS]
   .sort((left, right) => left.type.localeCompare(right.type))
@@ -254,11 +263,12 @@ const rows: NodeMigrationIndexRow[] = [...AI_PATHS_NODE_DOCS]
     const v2ObjectFile = v2Info?.objectFile ?? `docs/ai-paths/node-code-objects-v2/${nodeType}.json`;
     const hasV2ObjectContract = fs.existsSync(path.join(workspaceRoot, v2ObjectFile));
     const parityEvidenceSuiteIds = parityEvidenceSummary.suiteIdsByNodeType[nodeType] ?? [];
+    const rolloutApproved = isPilot && rolloutApprovedNodeTypeSet.has(nodeType);
     const migrationChecklistTemplate = {
       semanticContractReviewed: Boolean(semanticNodeFile),
       v3CodeObjectAuthored: isPilot && Boolean(scaffoldFile),
       dualRunParityValidated: parityEvidenceSuiteIds.length > 0,
-      rolloutApproved: false,
+      rolloutApproved,
     } as const;
     const migrationReadiness = computeNodeMigrationReadiness({
       runtimeStrategy,
@@ -360,6 +370,13 @@ const payload: NodeMigrationIndexPayload = {
     suiteIds: parityEvidenceSummary.suiteIds,
     validatedNodeTypes: parityEvidenceSummary.validatedNodeTypes,
   },
+  rolloutApprovals: {
+    sourceFile: rolloutApprovalsSummary.sourceFile,
+    schemaVersion: rolloutApprovalsSummary.schemaVersion,
+    generatedAt: rolloutApprovalsSummary.generatedAt,
+    approvedNodeTypes: rolloutApprovalsSummary.approvedNodeTypes,
+    approvedCount: rolloutApprovalsSummary.approvedNodeTypes.length,
+  },
   familyTotals,
   nodes: rows,
 };
@@ -403,6 +420,7 @@ for (const row of rows) {
         ? row.parityEvidenceSuiteIds.map((suiteId) => `\`${suiteId}\``).join(', ')
         : '`none`'
     }`,
+    `- Rollout approved: ${row.migrationChecklistTemplate.rolloutApproved ? '`yes`' : '`no`'} (source: \`${payload.rolloutApprovals.sourceFile}\`)`,
     `- Config field count: ${row.configFieldCount}`,
     '',
     '## Node Contract Files',
@@ -497,6 +515,7 @@ const guideLines = [
   '- `docs/ai-paths/node-code-objects-v3/index.scaffold.json` (available v3 scaffolds)',
   '- `docs/ai-paths/node-code-objects-v3/index.json` + `contracts.json` (pilot v3 object hashes)',
   '- `docs/ai-paths/node-code-objects-v3/parity-evidence.json` (dual-run parity evidence)',
+  '- `docs/ai-paths/node-code-objects-v3/rollout-approvals.json` (manual rollout approvals)',
   '',
   '## Migration Workflow',
   '',
@@ -529,6 +548,17 @@ const guideLines = [
   `- Validated node types: ${
     payload.parityEvidence.validatedNodeTypes.length > 0
       ? payload.parityEvidence.validatedNodeTypes.map((nodeType) => `\`${nodeType}\``).join(', ')
+      : '`none`'
+  }`,
+  '',
+  '## Rollout Approvals',
+  '',
+  `- Source file: \`${payload.rolloutApprovals.sourceFile}\``,
+  `- Schema version: ${payload.rolloutApprovals.schemaVersion ? `\`${payload.rolloutApprovals.schemaVersion}\`` : '`missing`'}`,
+  `- Generated at: ${payload.rolloutApprovals.generatedAt ? `\`${payload.rolloutApprovals.generatedAt}\`` : '`missing`'}`,
+  `- Approved node types: ${
+    payload.rolloutApprovals.approvedNodeTypes.length > 0
+      ? payload.rolloutApprovals.approvedNodeTypes.map((nodeType) => `\`${nodeType}\``).join(', ')
       : '`none`'
   }`,
   '',

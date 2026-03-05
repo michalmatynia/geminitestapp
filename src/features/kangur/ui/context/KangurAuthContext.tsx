@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurUser } from '@/features/kangur/services/ports';
+import { logKangurClientError } from '@/features/kangur/observability/client';
 
 type KangurAuthError = {
   type: 'unknown' | 'auth_required' | 'user_not_registered';
@@ -62,6 +63,11 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
         // Anonymous mode is allowed; authentication is optional.
         setAuthError(null);
       } else {
+        logKangurClientError(error, {
+          source: 'KangurAuthContext',
+          action: 'checkAppState',
+          stage: 'auth.me',
+        });
         setAuthError({
           type: 'unknown',
           message: resolveErrorMessage(error),
@@ -81,10 +87,22 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
     setIsAuthenticated(false);
 
     if (shouldRedirect) {
-      void kangurPlatform.auth.logout(window.location.href);
+      void kangurPlatform.auth.logout(window.location.href).catch((error: unknown) => {
+        logKangurClientError(error, {
+          source: 'KangurAuthContext',
+          action: 'logout',
+          shouldRedirect: true,
+        });
+      });
       return;
     }
-    void kangurPlatform.auth.logout();
+    void kangurPlatform.auth.logout().catch((error: unknown) => {
+      logKangurClientError(error, {
+        source: 'KangurAuthContext',
+        action: 'logout',
+        shouldRedirect: false,
+      });
+    });
   };
 
   const navigateToLogin = (): void => {

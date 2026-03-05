@@ -26,9 +26,13 @@ import { SettingsActionsContext, type SettingsActions } from './settings/Setting
 
 import { useSettingsDataImpl } from './settings/useSettingsDataImpl';
 import { useSettingsActionsImpl } from './settings/useSettingsActionsImpl';
-import { useLibraryState } from './hooks/useLibrary';
-import { useDocumentPrompt } from './hooks/useDocument';
+import {
+  parsePromptExploderSegmentationLibrary,
+  PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY,
+  sortPromptExploderSegmentationRecordsByCapturedAt,
+} from '../segmentation-library';
 import type { PromptValidationOrchestrationResult } from '../prompt-validation-orchestrator';
+import type { PromptExploderSegmentationLibraryState } from '@/shared/contracts/prompt-exploder';
 
 export type { LearningDraft, SettingsActions };
 export { SettingsActionsContext };
@@ -56,8 +60,24 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     settingsMap,
   });
 
-  const { segmentationLibraryState } = useLibraryState();
-  const { returnTarget } = useDocumentPrompt();
+  const rawSegmentationLibrary = settingsMap.get(PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY) ?? null;
+  const parsedSegmentationLibraryState = useMemo(
+    () => parsePromptExploderSegmentationLibrary(rawSegmentationLibrary),
+    [rawSegmentationLibrary]
+  );
+  const segmentationLibraryState = useMemo<PromptExploderSegmentationLibraryState>(() => {
+    const records = sortPromptExploderSegmentationRecordsByCapturedAt(
+      parsedSegmentationLibraryState.records
+    );
+    return {
+      records,
+      lastCapturedAt: records[0]?.capturedAt ?? null,
+      totalCaptured: parsedSegmentationLibraryState.records.length,
+      version: parsedSegmentationLibraryState.version ?? 1,
+    };
+  }, [parsedSegmentationLibraryState.records, parsedSegmentationLibraryState.version]);
+
+  const returnTarget = data.incomingBridgeSource === 'case-resolver' ? 'case-resolver' : 'image-studio';
 
   const actions = useSettingsActionsImpl({
     settingsMap,

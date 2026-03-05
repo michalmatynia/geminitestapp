@@ -6,7 +6,7 @@
   "title": "Toast Notification",
   "runtimeKernel": {
     "strategy": "code_object_v3",
-    "executionAdapter": "legacy_handler_bridge",
+    "executionAdapter": "native_handler_registry",
     "legacyHandlerKey": "notification",
     "codeObjectId": "ai-paths.node-code-object.notification.v3"
   },
@@ -46,5 +46,5 @@
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_notification_portable_v3",
   "objectHashAlgorithm": "sha256",
-  "objectHash": "76a46d4366b86fcca6a4fc5d95d33c4708a67b8a14fab29d83a1228b2b670018"
+  "objectHash": "ba8a2a6ef746ce80c6a7f1c12dd913262b29fb2381c7d28d5379992f0d348302"
 }

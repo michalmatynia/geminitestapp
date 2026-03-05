@@ -23,7 +23,7 @@ type InsightListResponse = { insights?: AiInsightRecord[] };
 const INSIGHTS_LIMIT = 5;
 
 const normalizeInsightList = (payload: InsightListResponse | null | undefined): AiInsightRecord[] =>
-  Array.isArray(payload?.insights) ? (payload?.insights as AiInsightRecord[]) : [];
+  Array.isArray(payload?.insights) ? (payload?.insights) : [];
 
 export async function fetchBrainInsightsSnapshot(): Promise<InsightsSnapshot> {
   const runtimeInsightsPromise = api

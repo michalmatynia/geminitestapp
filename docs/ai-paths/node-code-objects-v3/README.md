@@ -9,12 +9,17 @@ Schema target:
 - `kind: "path_node_code_object"`
 - `runtimeKernel.strategy: "code_object_v3"`
 
-Current runtime scope is pilot-only (`constant`, `context`, `bundle`, `compare`, `delay`, `description_updater`, `fetcher`, `gate`, `iterator`, `mapper`, `math`, `mutator`, `notification`, `parser`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`) and intentionally partial.
+Current runtime scope is pilot-only (`agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`) and intentionally partial.
 
 Runtime rollout controls:
 
 - `runtimeKernelMode: "legacy_only"` disables pilot strategy at execution time.
 - `runtimeKernelPilotNodeTypes` allows scoped pilot overrides for parity/canary runs.
+- Server runtime resolves pilot `code_object_v3` handlers through `contracts.json`.
+- Supported execution adapters:
+  - `legacy_handler_bridge`
+  - `native_handler_registry` (current pilot: `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`)
+- Native adapter path falls back to legacy bridge when native registry mapping is unavailable.
 - Product/server runs can also read persisted global settings:
   - `ai_paths_runtime_kernel_mode`: `auto | legacy_only`
   - `ai_paths_runtime_kernel_pilot_node_types`: JSON array or comma-delimited node types
@@ -32,10 +37,11 @@ Generated migration documentation:
 Scaffold contracts:
 
 - `index.scaffold.json`
-- `{constant,context,bundle,compare,delay,description_updater,fetcher,gate,iterator,mapper,math,mutator,notification,parser,regex,router,simulation,string_mutator,template,trigger,validation_pattern,validator,viewer}.scaffold.json`
+- `{agent,ai_description,api_advanced,audio_oscillator,audio_speaker,bundle,compare,constant,context,database,db_schema,delay,description_updater,fetcher,gate,http,iterator,learner_agent,mapper,math,model,mutator,notification,parser,playwright,poll,prompt,regex,router,simulation,string_mutator,template,trigger,validation_pattern,validator,viewer}.scaffold.json`
 - `index.json` (pilot v3 object index with hashes)
 - `contracts.json` (pilot v3 contract hash catalog)
 - `parity-evidence.json` (dual-run parity evidence by node type)
+- `rollout-approvals.json` (manual rollout approval source)
 
 Regenerate migration docs:
 
@@ -96,6 +102,12 @@ Run pilot parity-evidence coverage regression:
 ```bash
 npm run test:ai-paths:node-migration-parity-evidence
 ```
+
+Rollout approvals:
+
+1. Update `rollout-approvals.json` by adding node types to `approvedNodeTypes`.
+2. Run `npm run docs:ai-paths:node-migration:generate`.
+3. Run `npm run ai-paths:check:canonical`.
 
 CI integration:
 

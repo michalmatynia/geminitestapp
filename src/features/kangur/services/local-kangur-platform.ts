@@ -11,6 +11,7 @@ import type {
   KangurScoreRecord,
   KangurUser,
 } from '@/features/kangur/services/ports';
+import { logKangurClientError } from '@/features/kangur/observability/client';
 
 const KANGUR_SCORES_ENDPOINT = '/api/kangur/scores';
 const DEFAULT_SCORE_LIMIT = 100;
@@ -66,44 +67,97 @@ const buildScoresUrl = (params: {
 };
 
 const requestScoresFromApi = async (url: string): Promise<KangurScoreRecord[]> => {
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: withCsrfHeaders(),
-    credentials: 'same-origin',
-  });
-  if (!response.ok) {
-    throw new Error(`Kangur score list request failed with ${response.status}`);
-  }
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: withCsrfHeaders(),
+      credentials: 'same-origin',
+    });
+    if (!response.ok) {
+      const requestError = new Error(`Kangur score list request failed with ${response.status}`);
+      logKangurClientError(requestError, {
+        source: 'kangur.local-platform',
+        action: 'score.list',
+        method: 'GET',
+        endpoint: url,
+        statusCode: response.status,
+      });
+      throw requestError;
+    }
 
-  const payload = (await response.json()) as unknown;
-  const parsed = scoreListSchema.safeParse(payload);
-  if (!parsed.success) {
-    throw new Error('Kangur score list payload validation failed.');
-  }
+    const payload = (await response.json()) as unknown;
+    const parsed = scoreListSchema.safeParse(payload);
+    if (!parsed.success) {
+      const payloadError = new Error('Kangur score list payload validation failed.');
+      logKangurClientError(payloadError, {
+        source: 'kangur.local-platform',
+        action: 'score.list',
+        method: 'GET',
+        endpoint: url,
+      });
+      throw payloadError;
+    }
 
-  return parsed.data;
+    return parsed.data;
+  } catch (error: unknown) {
+    logKangurClientError(error, {
+      source: 'kangur.local-platform',
+      action: 'score.list',
+      method: 'GET',
+      endpoint: url,
+    });
+    throw error;
+  }
 };
 
 const createScoreViaApi = async (input: KangurScoreCreateInput): Promise<KangurScoreRecord> => {
-  const response = await fetch(KANGUR_SCORES_ENDPOINT, {
-    method: 'POST',
-    headers: withCsrfHeaders({
-      'Content-Type': 'application/json',
-    }),
-    credentials: 'same-origin',
-    body: JSON.stringify(input),
-  });
+  try {
+    const response = await fetch(KANGUR_SCORES_ENDPOINT, {
+      method: 'POST',
+      headers: withCsrfHeaders({
+        'Content-Type': 'application/json',
+      }),
+      credentials: 'same-origin',
+      body: JSON.stringify(input),
+    });
 
-  if (!response.ok) {
-    throw new Error(`Kangur score create request failed with ${response.status}`);
-  }
+    if (!response.ok) {
+      const requestError = new Error(`Kangur score create request failed with ${response.status}`);
+      logKangurClientError(requestError, {
+        source: 'kangur.local-platform',
+        action: 'score.create',
+        method: 'POST',
+        endpoint: KANGUR_SCORES_ENDPOINT,
+        statusCode: response.status,
+        operation: input.operation,
+      });
+      throw requestError;
+    }
 
-  const payload = (await response.json()) as unknown;
-  const parsed = kangurScoreSchema.safeParse(payload);
-  if (!parsed.success) {
-    throw new Error('Kangur score create payload validation failed.');
+    const payload = (await response.json()) as unknown;
+    const parsed = kangurScoreSchema.safeParse(payload);
+    if (!parsed.success) {
+      const payloadError = new Error('Kangur score create payload validation failed.');
+      logKangurClientError(payloadError, {
+        source: 'kangur.local-platform',
+        action: 'score.create',
+        method: 'POST',
+        endpoint: KANGUR_SCORES_ENDPOINT,
+        operation: input.operation,
+      });
+      throw payloadError;
+    }
+    return parsed.data;
+  } catch (error: unknown) {
+    logKangurClientError(error, {
+      source: 'kangur.local-platform',
+      action: 'score.create',
+      method: 'POST',
+      endpoint: KANGUR_SCORES_ENDPOINT,
+      operation: input.operation,
+    });
+    throw error;
   }
-  return parsed.data;
 };
 
 export const createLocalKangurPlatform = (): KangurPlatform => {

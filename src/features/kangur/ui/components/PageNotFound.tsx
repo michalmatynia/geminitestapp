@@ -7,7 +7,6 @@ import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-const FALLBACK_HOME = '/kangur';
 const kangurPlatform = getKangurPlatform();
 
 type PageNotFoundAuthState = {
@@ -16,14 +15,18 @@ type PageNotFoundAuthState = {
 };
 
 export function PageNotFound(): React.JSX.Element {
-  const { requestedPath } = useKangurRouting();
+  const { requestedPath, basePath } = useKangurRouting();
 
   const pageName = useMemo(() => {
     if (!requestedPath || requestedPath.length === 0) {
       return 'unknown';
     }
-    return requestedPath.replace(/^\/kangur\/?/, '') || 'unknown';
-  }, [requestedPath]);
+    if (!requestedPath.startsWith(basePath)) {
+      return requestedPath.replace(/^\/+/, '') || 'unknown';
+    }
+    const suffix = requestedPath.slice(basePath.length).replace(/^\/+/, '');
+    return suffix || 'unknown';
+  }, [basePath, requestedPath]);
 
   const { data: authData, isFetched } = useQuery<PageNotFoundAuthState>({
     queryKey: QUERY_KEYS.auth.user(),
@@ -73,7 +76,7 @@ export function PageNotFound(): React.JSX.Element {
           <div className='pt-6'>
             <button
               onClick={() => {
-                window.location.href = FALLBACK_HOME;
+                window.location.href = basePath;
               }}
               className='inline-flex items-center px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500'
             >

@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Trash2, Lock, GripVertical } from 'lucide-react';
+import { Box, Trash2, GripVertical } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import {
@@ -15,6 +15,7 @@ import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 import { BLOCK_ICONS, resolveBlockLabel } from './tree-constants';
 import { useOptionalTreeColumnId } from './TreeColumnContext';
 import { useOptionalTreeParentBlockId } from './TreeParentBlockContext';
+import { useOptionalTreeRowId } from './TreeRowContext';
 import { useTreeSectionId } from './TreeSectionContext';
 import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
 import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
@@ -28,6 +29,7 @@ export function BlockNodeItem(props: BlockNodeItemProps): React.ReactNode {
 
   const sectionId = useTreeSectionId();
   const columnId = useOptionalTreeColumnId();
+  const rowId = useOptionalTreeRowId();
   const resolvedParentBlockId = useOptionalTreeParentBlockId();
   const { state: pbState } = usePageBuilder();
   const { selectNode, blockActions } = useTreeActions();
@@ -49,13 +51,9 @@ export function BlockNodeItem(props: BlockNodeItemProps): React.ReactNode {
   const [isDragOver, setIsDragOver] = useState(false);
   const isDragging = draggedBlockId === block.id;
   const blockLabel = resolveBlockLabel(block, block.type);
+  const canNestOnDrop = Array.isArray(block.blocks);
 
-  // Check if this is an ImageElement in background mode (locked/immovable)
-  const isBackgroundMode =
-    block.type === 'ImageElement' &&
-    ((block.settings?.['backgroundTarget'] as string) || 'none') !== 'none';
-  const backgroundTarget = (block.settings?.['backgroundTarget'] as string) || 'none';
-  const canDrag = !disableDrag && !isBackgroundMode;
+  const canDrag = !disableDrag;
 
   const blockMenuItems: TreeContextMenuItem[] = useMemo(
     () => [
@@ -64,14 +62,12 @@ export function BlockNodeItem(props: BlockNodeItemProps): React.ReactNode {
         label: 'Remove block',
         icon: <Trash2 className='size-3.5' />,
         tone: 'danger',
-        disabled: isBackgroundMode,
         onSelect: (): void => {
-          if (!isBackgroundMode)
-            blockActions.remove(sectionId, block.id, columnId, resolvedParentBlockId);
+          blockActions.remove(sectionId, block.id, columnId, resolvedParentBlockId);
         },
       },
     ],
-    [isBackgroundMode, blockActions, sectionId, block.id, columnId, resolvedParentBlockId]
+    [blockActions, sectionId, block.id, columnId, resolvedParentBlockId]
   );
 
   return (
@@ -157,30 +153,40 @@ export function BlockNodeItem(props: BlockNodeItemProps): React.ReactNode {
               fromColumn || undefined,
               sectionId,
               columnId,
-              index,
+              canNestOnDrop ? (block.blocks ?? []).length : index,
               fromParent || undefined,
-              resolvedParentBlockId
+              canNestOnDrop ? block.id : resolvedParentBlockId
             );
             endBlockDrag();
             return;
           }
           if (!fromSection) return;
-          if (fromColumn || fromParent) {
+          if (rowId) {
+            blockActions.dropToRow(
+              dragId,
+              fromSection,
+              fromColumn || undefined,
+              sectionId,
+              rowId,
+              canNestOnDrop ? (block.blocks ?? []).length : index,
+              fromParent || undefined,
+              canNestOnDrop ? block.id : undefined
+            );
+          } else {
             blockActions.dropToSection(
               dragId,
               fromSection,
               fromColumn || undefined,
               sectionId,
-              index,
-              fromParent || undefined
+              canNestOnDrop ? (block.blocks ?? []).length : index,
+              fromParent || undefined,
+              canNestOnDrop ? block.id : undefined
             );
-          } else {
-            blockActions.drop(dragId, fromSection, sectionId, index);
           }
           endBlockDrag();
         }}
         className={`group flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-sm transition ${
-          isBackgroundMode ? 'cursor-not-allowed' : 'cursor-pointer'
+          'cursor-pointer'
         } ${
           isDragOver
             ? 'bg-emerald-600/30 text-emerald-200 ring-1 ring-emerald-500/50'
@@ -188,9 +194,7 @@ export function BlockNodeItem(props: BlockNodeItemProps): React.ReactNode {
               ? 'bg-blue-600/80 text-white'
               : isDragging
                 ? 'opacity-40 text-gray-400'
-                : isBackgroundMode
-                  ? 'text-gray-500 hover:bg-muted/20'
-                  : 'text-gray-400 hover:bg-muted/40 hover:text-gray-300'
+                : 'text-gray-400 hover:bg-muted/40 hover:text-gray-300'
         }`}
       >
         {canDrag ? (
@@ -233,17 +237,8 @@ export function BlockNodeItem(props: BlockNodeItemProps): React.ReactNode {
         )}
         <Icon className='size-3.5 shrink-0' />
         <span className='flex-1 truncate'>{blockLabel}</span>
-        {isBackgroundMode && (
-          <span title={`Locked as ${backgroundTarget} background`}>
-            <Lock className='size-3 shrink-0 text-amber-500' />
-          </span>
-        )}
-        {isBackgroundMode && (
-          <span className='text-[9px] text-amber-500/70 uppercase'>{backgroundTarget} bg</span>
-        )}
-        {isDragOver && <span className='text-[10px] text-emerald-300'>Insert here</span>}
         {/* Delete button - visible on hover when selected or always visible on hover */}
-        {!isDragOver && !isBackgroundMode && (
+        {!isDragOver && (
           <TreeActionSlot show='hover' align='end'>
             <TreeActionButton
               tone='danger'

@@ -2,7 +2,7 @@ import 'server-only';
 
 import { productService } from '@/shared/lib/products/services/productService';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductParameter, ProductWithImages } from '@/shared/contracts/products';
 import type { ProductFilters } from '@/shared/contracts/products';
 
 import { withQueryCache, ProductCacheHelpers, queryCache } from './query-cache';
@@ -142,6 +142,25 @@ export class CachedProductService {
       }
     );
 
+  // Get paged products (items + total) with caching
+  static getProductsWithCount: (filters?: ProductFilterInput) => Promise<{
+    products: ProductWithImages[];
+    total: number;
+  }> = withQueryCache(
+      async (filters: ProductFilterInput = {}) => {
+        return productService.getProductsWithCount(normalizeFilters(filters));
+      },
+      {
+        keyGenerator: (filters: ProductFilterInput = {}) =>
+          `products:paged:${JSON.stringify(filters)}`,
+        ttl: 180000, // 3 minutes
+        tags: (filters: ProductFilterInput = {}) => [
+          'products:paged',
+          ...ProductCacheHelpers.getTags.productList(filters),
+        ],
+      }
+    );
+
   // Get product count with caching
   static getProductCount: (filters?: ProductFilterInput) => Promise<number> = withQueryCache(
     async (filters: ProductFilterInput = {}) => {
@@ -237,6 +256,26 @@ export class CachedProductService {
     }
   );
 
+  // List parameters with caching
+  static listParameters: (filters: { catalogId: string }) => Promise<ProductParameter[]> =
+    withQueryCache(
+      async (filters: { catalogId: string }) => {
+        const primaryProvider = await getProductDataProvider();
+        const repository = await import(
+          '@/shared/lib/products/services/parameter-repository'
+        ).then((m) => m.getParameterRepository(primaryProvider));
+        return repository.listParameters(filters);
+      },
+      {
+        keyGenerator: (filters: { catalogId: string }) => `parameters:list:${filters.catalogId}`,
+        ttl: 300000, // 5 minutes
+        tags: (filters: { catalogId: string }) => [
+          `parameters:list:${filters.catalogId}`,
+          'parameters:list',
+        ],
+      }
+    );
+
   // Get category tree with caching
   static getCategoryTree: (catalogId: string) => Promise<unknown[]> = withQueryCache(
     async (catalogId: string) => {
@@ -266,6 +305,8 @@ export class CachedProductService {
     ProductCacheHelpers.invalidateAll();
     queryCache.invalidateByTag('categories:list');
     queryCache.invalidateByPattern(/^categories:/);
+    queryCache.invalidateByTag('parameters:list');
+    queryCache.invalidateByPattern(/^parameters:/);
   }
 }
 

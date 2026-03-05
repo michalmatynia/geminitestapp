@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v3",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "nodeType": "learner_agent",
+  "title": "Learner Agent",
+  "runtimeKernel": {
+    "strategy": "code_object_v3",
+    "executionAdapter": "native_handler_registry",
+    "legacyHandlerKey": "learner_agent",
+    "codeObjectId": "ai-paths.node-code-object.learner_agent.v3"
+  },
+  "runtimeSemantics": {
+    "processing": "pulse_node_only",
+    "waiting": "freeze_consumed_inputs_and_outputs",
+    "success": "animate_outgoing_on_emit",
+    "error": "animate_error_routes_on_emit"
+  },
+  "ports": {
+    "inputs": [
+      "prompt",
+      "bundle"
+    ],
+    "outputs": [
+      "result",
+      "jobId",
+      "sources"
+    ]
+  },
+  "copyPaste": {
+    "fullNode": {
+      "id": "node_learner_agent_example",
+      "type": "learner_agent",
+      "title": "Learner Agent",
+      "description": "Answer using connected embedding collections (RAG).",
+      "position": {
+        "x": 2220,
+        "y": 180
+      },
+      "inputs": [
+        "prompt",
+        "bundle"
+      ],
+      "outputs": [
+        "result",
+        "jobId",
+        "sources"
+      ],
+      "config": {
+        "learnerAgent": {
+          "agentId": "",
+          "promptTemplate": "",
+          "includeSources": true
+        }
+      }
+    }
+  },
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "id": "node_obj_learner_agent_portable_v3",
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "07ac3c2ba602a5997d4181fb6a4c5937dabce6d6cc26f55dc104e7354cea4c80"
+}

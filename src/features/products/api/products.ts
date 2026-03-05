@@ -11,18 +11,19 @@ const PRODUCT_WRITE_TIMEOUT_MS = 60_000;
 // This function fetches a list of products from the API.
 export async function getProducts(
   filters: ProductFilter,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  requestOptions?: { fresh?: boolean }
 ): Promise<ProductWithImages[]> {
-  const options: ApiClientOptions = {
+  const apiOptions: ApiClientOptions = {
     params: {
-      fresh: 1,
+      ...(requestOptions?.fresh ? { fresh: 1 } : {}),
       ...filters,
     },
     cache: 'no-store',
   };
-  if (signal) options.signal = signal;
-  options.timeout = PRODUCT_READ_TIMEOUT_MS;
-  return api.get<ProductWithImages[]>('/api/v2/products', options);
+  if (signal) apiOptions.signal = signal;
+  apiOptions.timeout = PRODUCT_READ_TIMEOUT_MS;
+  return api.get<ProductWithImages[]>('/api/v2/products', apiOptions);
 }
 
 export async function countProducts(filters: ProductFilter, signal?: AbortSignal): Promise<number> {
@@ -48,18 +49,19 @@ export async function countProducts(filters: ProductFilter, signal?: AbortSignal
  */
 export async function getProductsWithCount(
   filters: ProductFilter,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  requestOptions?: { fresh?: boolean }
 ): Promise<ProductsPagedResult> {
-  const options: ApiClientOptions = {
+  const apiOptions: ApiClientOptions = {
     params: {
-      fresh: 1,
+      ...(requestOptions?.fresh ? { fresh: 1 } : {}),
       ...filters,
     },
     cache: 'no-store',
   };
-  if (signal) options.signal = signal;
-  options.timeout = PRODUCT_READ_TIMEOUT_MS;
-  return api.get<ProductsPagedResult>('/api/v2/products/paged', options);
+  if (signal) apiOptions.signal = signal;
+  apiOptions.timeout = PRODUCT_READ_TIMEOUT_MS;
+  return api.get<ProductsPagedResult>('/api/v2/products/paged', apiOptions);
 }
 
 export async function createProduct(formData: FormData): Promise<ProductWithImages> {

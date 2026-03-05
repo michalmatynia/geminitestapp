@@ -180,9 +180,14 @@ export type EvaluateGraphOptions = {
   reportAiPathsError: (error: unknown, context: Record<string, unknown>, summary?: string) => void;
   // Handler Resolution
   resolveHandler?: (type: string) => NodeHandler | null;
+  resolveCodeObjectHandler?: ((args: {
+    nodeType: string;
+    codeObjectId: string;
+  }) => NodeHandler | null) | undefined;
   resolveHandlerTelemetry?: (type: string) => RuntimeNodeResolutionTelemetry | null;
-  runtimeKernelMode?: 'auto' | 'legacy_only' | undefined;
+  runtimeKernelMode?: 'auto' | undefined;
   runtimeKernelPilotNodeTypes?: string[] | undefined;
+  runtimeKernelCodeObjectResolverIds?: string[] | undefined;
   // Services
   fetchEntityByType?: (type: string, id: string) => Promise<Record<string, unknown> | null>;
   fetchEntityCached?: (type: string, id: string) => Promise<Record<string, unknown> | null>;

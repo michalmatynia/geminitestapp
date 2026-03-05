@@ -352,6 +352,52 @@ describe('folder-tree-profiles-v2', () => {
     });
   });
 
+  it('inherits fallback search config when payload omits search section for case resolver', () => {
+    const { search: _ignored, ...candidateWithoutSearch } = defaultFolderTreeProfilesV2.case_resolver;
+    const profile = parseFolderTreeProfileV2Strict(
+      candidateWithoutSearch,
+      defaultFolderTreeProfilesV2.case_resolver
+    );
+
+    expect(profile.search).toEqual(defaultFolderTreeProfilesV2.case_resolver.search);
+    expect(resolveFolderTreeSearchConfig(profile)).toEqual({
+      enabled: true,
+      debounceMs: 120,
+      filterMode: 'filter_tree',
+      matchFields: ['name', 'path', 'metadata'],
+      minQueryLength: 1,
+    });
+  });
+
+  it('merges partial search overrides with fallback instance defaults', () => {
+    const { search: _ignored, ...candidateWithoutSearch } = defaultFolderTreeProfilesV2.case_resolver;
+    const profile = parseFolderTreeProfileV2Strict(
+      {
+        ...candidateWithoutSearch,
+        search: {
+          debounceMs: 400,
+          minQueryLength: 3,
+        },
+      },
+      defaultFolderTreeProfilesV2.case_resolver
+    );
+
+    expect(profile.search).toEqual({
+      enabled: true,
+      debounceMs: 400,
+      filterMode: 'filter_tree',
+      matchFields: ['name', 'path', 'metadata'],
+      minQueryLength: 3,
+    });
+    expect(resolveFolderTreeSearchConfig(profile)).toEqual({
+      enabled: true,
+      debounceMs: 400,
+      filterMode: 'filter_tree',
+      matchFields: ['name', 'path', 'metadata'],
+      minQueryLength: 3,
+    });
+  });
+
   it('keeps explicit capability overrides in resolved configs', () => {
     const profile = parseFolderTreeProfileV2Strict(
       {

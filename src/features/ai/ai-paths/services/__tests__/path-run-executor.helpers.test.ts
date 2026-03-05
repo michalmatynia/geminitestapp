@@ -3,6 +3,7 @@ import type { RuntimeState } from '@/shared/contracts/ai-paths';
 
 import {
   EMPTY_RUNTIME_STATE,
+  parseRuntimeKernelCodeObjectResolverIds,
   parseRuntimeState,
   parseRuntimeKernelPilotNodeTypes,
   resolveRuntimeKernelConfigForRun,
@@ -166,20 +167,47 @@ describe('parseRuntimeKernelPilotNodeTypes', () => {
   });
 });
 
+describe('parseRuntimeKernelCodeObjectResolverIds', () => {
+  it('parses comma-delimited resolver ids', () => {
+    expect(
+      parseRuntimeKernelCodeObjectResolverIds(' resolver.primary ,resolver.fallback ')
+    ).toEqual(['resolver.primary', 'resolver.fallback']);
+  });
+
+  it('parses JSON arrays and trims values', () => {
+    expect(
+      parseRuntimeKernelCodeObjectResolverIds('["resolver.alpha"," resolver.beta ",""]')
+    ).toEqual(['resolver.alpha', 'resolver.beta']);
+  });
+
+  it('returns undefined for empty or invalid inputs', () => {
+    expect(parseRuntimeKernelCodeObjectResolverIds('')).toBeUndefined();
+    expect(parseRuntimeKernelCodeObjectResolverIds('[]')).toBeUndefined();
+    expect(parseRuntimeKernelCodeObjectResolverIds(null)).toBeUndefined();
+  });
+});
+
 describe('resolveRuntimeKernelConfigForRun', () => {
-  it('prefers env mode over settings mode', () => {
+  it('prefers valid env mode over settings mode', () => {
     expect(
       resolveRuntimeKernelConfigForRun({
-        envMode: 'legacy_only',
-        settingMode: 'auto',
+        envMode: 'auto',
+        pathMode: undefined,
+        settingMode: 'invalid',
         envPilotNodeTypes: 'constant',
+        pathPilotNodeTypes: undefined,
         settingPilotNodeTypes: 'math',
+        envResolverIds: 'resolver.primary',
+        pathResolverIds: undefined,
+        settingResolverIds: 'resolver.secondary',
       })
     ).toMatchObject({
-      mode: 'legacy_only',
+      mode: 'auto',
       modeSource: 'env',
-      pilotNodeTypes: undefined,
-      pilotSource: 'default',
+      pilotNodeTypes: ['constant'],
+      pilotSource: 'env',
+      resolverIds: ['resolver.primary'],
+      resolverSource: 'env',
     });
   });
 
@@ -187,12 +215,38 @@ describe('resolveRuntimeKernelConfigForRun', () => {
     expect(
       resolveRuntimeKernelConfigForRun({
         envMode: undefined,
-        settingMode: 'legacy_only',
+        pathMode: undefined,
+        settingMode: 'auto',
         envPilotNodeTypes: undefined,
+        pathPilotNodeTypes: undefined,
         settingPilotNodeTypes: undefined,
+        envResolverIds: undefined,
+        pathResolverIds: undefined,
+        settingResolverIds: undefined,
       })
     ).toMatchObject({
-      mode: 'legacy_only',
+      mode: 'auto',
+      modeSource: 'settings',
+      resolverIds: undefined,
+      resolverSource: 'default',
+    });
+  });
+
+  it('maps deprecated legacy_only mode to canonical auto mode', () => {
+    expect(
+      resolveRuntimeKernelConfigForRun({
+        envMode: undefined,
+        pathMode: undefined,
+        settingMode: 'legacy_only',
+        envPilotNodeTypes: undefined,
+        pathPilotNodeTypes: undefined,
+        settingPilotNodeTypes: undefined,
+        envResolverIds: undefined,
+        pathResolverIds: undefined,
+        settingResolverIds: undefined,
+      })
+    ).toMatchObject({
+      mode: 'auto',
       modeSource: 'settings',
     });
   });
@@ -201,15 +255,45 @@ describe('resolveRuntimeKernelConfigForRun', () => {
     expect(
       resolveRuntimeKernelConfigForRun({
         envMode: 'invalid',
+        pathMode: 'invalid',
         settingMode: 'invalid',
         envPilotNodeTypes: '',
+        pathPilotNodeTypes: '',
         settingPilotNodeTypes: 'constant, math',
+        envResolverIds: '',
+        pathResolverIds: '',
+        settingResolverIds: 'resolver.primary, resolver.secondary',
       })
     ).toMatchObject({
       mode: 'auto',
       modeSource: 'default',
       pilotNodeTypes: ['constant', 'math'],
       pilotSource: 'settings',
+      resolverIds: ['resolver.primary', 'resolver.secondary'],
+      resolverSource: 'settings',
+    });
+  });
+
+  it('prefers path runtime-kernel config over global settings when env is unset', () => {
+    expect(
+      resolveRuntimeKernelConfigForRun({
+        envMode: undefined,
+        pathMode: 'auto',
+        settingMode: 'auto',
+        envPilotNodeTypes: undefined,
+        pathPilotNodeTypes: 'template',
+        settingPilotNodeTypes: 'constant, math',
+        envResolverIds: undefined,
+        pathResolverIds: 'resolver.path',
+        settingResolverIds: 'resolver.settings',
+      })
+    ).toMatchObject({
+      mode: 'auto',
+      modeSource: 'path',
+      pilotNodeTypes: ['template'],
+      pilotSource: 'path',
+      resolverIds: ['resolver.path'],
+      resolverSource: 'path',
     });
   });
 });
@@ -222,12 +306,16 @@ describe('runtime kernel telemetry helpers', () => {
         modeSource: 'settings',
         pilotNodeTypes: ['constant', 'template'],
         pilotSource: 'env',
+        resolverIds: ['resolver.primary'],
+        resolverSource: 'settings',
       })
     ).toEqual({
       runtimeKernelMode: 'auto',
       runtimeKernelModeSource: 'settings',
       runtimeKernelPilotNodeTypes: ['constant', 'template'],
       runtimeKernelPilotNodeTypesSource: 'env',
+      runtimeKernelCodeObjectResolverIds: ['resolver.primary'],
+      runtimeKernelCodeObjectResolverIdsSource: 'settings',
     });
   });
 

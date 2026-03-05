@@ -4,7 +4,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 
 import {
-  AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
+  AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
   AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
 } from '@/shared/lib/ai-paths';
 import {
@@ -24,23 +24,26 @@ import { RuntimeEventLogPanel } from '../../runtime-event-log-panel';
 import { AiPathsRuntimeAnalysis } from '../panels/AiPathsRuntimeAnalysis';
 import { AiPathsLiveLog } from './AiPathsLiveLog';
 
-type RuntimeKernelMode = 'auto' | 'legacy_only';
-
-const normalizeRuntimeKernelMode = (value: unknown): RuntimeKernelMode =>
-  value === 'legacy_only' ? 'legacy_only' : 'auto';
-
 const normalizeRuntimeKernelPilotNodeTypeToken = (value: string): string =>
   value.trim().toLowerCase().replace(/\s+/g, '_');
 
-const normalizeRuntimeKernelPilotNodeTypes = (values: string[]): string[] =>
-  Array.from(
-    new Set(values.map(normalizeRuntimeKernelPilotNodeTypeToken).filter(Boolean))
-  );
+const normalizeRuntimeKernelResolverIdToken = (value: string): string => value.trim();
 
-const parseRuntimeKernelPilotNodeTypes = (value: unknown): string[] => {
+const parseRuntimeKernelListValue = ({
+  value,
+  normalizeToken,
+}: {
+  value: unknown;
+  normalizeToken: (token: string) => string;
+}): string[] => {
   if (Array.isArray(value)) {
-    return normalizeRuntimeKernelPilotNodeTypes(
-      value.filter((entry): entry is string => typeof entry === 'string')
+    return Array.from(
+      new Set(
+        value
+          .filter((entry): entry is string => typeof entry === 'string')
+          .map((entry: string): string => normalizeToken(entry))
+          .filter(Boolean)
+      )
     );
   }
   if (typeof value !== 'string') return [];
@@ -50,16 +53,40 @@ const parseRuntimeKernelPilotNodeTypes = (value: unknown): string[] => {
     try {
       const parsed = JSON.parse(trimmed) as unknown;
       if (Array.isArray(parsed)) {
-        return normalizeRuntimeKernelPilotNodeTypes(
-          parsed.filter((entry): entry is string => typeof entry === 'string')
+        return Array.from(
+          new Set(
+            parsed
+              .filter((entry): entry is string => typeof entry === 'string')
+              .map((entry: string): string => normalizeToken(entry))
+              .filter(Boolean)
+          )
         );
       }
     } catch {
       // Fall through to tokenized parsing.
     }
   }
-  return normalizeRuntimeKernelPilotNodeTypes(trimmed.split(/[,\n]/g));
+  return Array.from(
+    new Set(
+      trimmed
+        .split(/[,\n]/g)
+        .map((entry: string): string => normalizeToken(entry))
+        .filter(Boolean)
+    )
+  );
 };
+
+const parseRuntimeKernelPilotNodeTypes = (value: unknown): string[] =>
+  parseRuntimeKernelListValue({
+    value,
+    normalizeToken: normalizeRuntimeKernelPilotNodeTypeToken,
+  });
+
+const parseRuntimeKernelCodeObjectResolverIds = (value: unknown): string[] =>
+  parseRuntimeKernelListValue({
+    value,
+    normalizeToken: normalizeRuntimeKernelResolverIdToken,
+  });
 
 export function AiPathsCanvasView(): React.JSX.Element | null {
   const {
@@ -151,13 +178,13 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
   const pathOptions = Array.isArray(pathSwitchOptions) ? pathSwitchOptions : [];
   const nodeDiagnosticsById = dataContractReport?.byNodeId ?? {};
   const focusDataContractNode = setDataContractInspectorNodeId ?? (() => undefined);
-  const [runtimeKernelModeDraft, setRuntimeKernelModeDraft] =
-    React.useState<RuntimeKernelMode>('auto');
   const [runtimeKernelPilotNodeTypesDraft, setRuntimeKernelPilotNodeTypesDraft] =
     React.useState<string>('');
-  const [runtimeKernelPersistedMode, setRuntimeKernelPersistedMode] =
-    React.useState<RuntimeKernelMode>('auto');
   const [runtimeKernelPersistedPilotNodeTypes, setRuntimeKernelPersistedPilotNodeTypes] =
+    React.useState<string[]>([]);
+  const [runtimeKernelResolverIdsDraft, setRuntimeKernelResolverIdsDraft] =
+    React.useState<string>('');
+  const [runtimeKernelPersistedResolverIds, setRuntimeKernelPersistedResolverIds] =
     React.useState<string[]>([]);
   const [runtimeKernelLoading, setRuntimeKernelLoading] = React.useState(true);
   const [runtimeKernelSaving, setRuntimeKernelSaving] = React.useState(false);
@@ -166,18 +193,23 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     setRuntimeKernelLoading(true);
     try {
       const records = await fetchAiPathsSettingsByKeysCached(
-        [AI_PATHS_RUNTIME_KERNEL_MODE_KEY, AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY],
+        [
+          AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
+          AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
+        ],
         { timeoutMs: 8_000, bypassCache: true }
       );
       const settingsMap = new Map(records.map((record) => [record.key, record.value]));
-      const mode = normalizeRuntimeKernelMode(settingsMap.get(AI_PATHS_RUNTIME_KERNEL_MODE_KEY));
       const pilotNodeTypes = parseRuntimeKernelPilotNodeTypes(
         settingsMap.get(AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY)
       );
-      setRuntimeKernelPersistedMode(mode);
+      const resolverIds = parseRuntimeKernelCodeObjectResolverIds(
+        settingsMap.get(AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY)
+      );
       setRuntimeKernelPersistedPilotNodeTypes(pilotNodeTypes);
-      setRuntimeKernelModeDraft(mode);
       setRuntimeKernelPilotNodeTypesDraft(pilotNodeTypes.join(', '));
+      setRuntimeKernelPersistedResolverIds(resolverIds);
+      setRuntimeKernelResolverIdsDraft(resolverIds.join(', '));
     } catch {
       // Non-fatal: keep defaults and let run-time env/settings resolver stay authoritative.
     } finally {
@@ -193,9 +225,13 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     () => parseRuntimeKernelPilotNodeTypes(runtimeKernelPilotNodeTypesDraft),
     [runtimeKernelPilotNodeTypesDraft]
   );
+  const runtimeKernelDraftResolverIds = React.useMemo(
+    () => parseRuntimeKernelCodeObjectResolverIds(runtimeKernelResolverIdsDraft),
+    [runtimeKernelResolverIdsDraft]
+  );
   const runtimeKernelSettingsDirty =
-    runtimeKernelModeDraft !== runtimeKernelPersistedMode ||
-    runtimeKernelDraftPilotNodeTypes.join(',') !== runtimeKernelPersistedPilotNodeTypes.join(',');
+    runtimeKernelDraftPilotNodeTypes.join(',') !== runtimeKernelPersistedPilotNodeTypes.join(',') ||
+    runtimeKernelDraftResolverIds.join(',') !== runtimeKernelPersistedResolverIds.join(',');
 
   const saveRuntimeKernelSettings = React.useCallback(async (): Promise<void> => {
     if (!runtimeKernelSettingsDirty || runtimeKernelSaving) return;
@@ -203,21 +239,25 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     try {
       await updateAiPathsSettingsBulk([
         {
-          key: AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
-          value: runtimeKernelModeDraft,
-        },
-        {
           key: AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
           value:
             runtimeKernelDraftPilotNodeTypes.length > 0
               ? JSON.stringify(runtimeKernelDraftPilotNodeTypes)
               : '',
         },
+        {
+          key: AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
+          value:
+            runtimeKernelDraftResolverIds.length > 0
+              ? JSON.stringify(runtimeKernelDraftResolverIds)
+              : '',
+        },
       ]);
       invalidateAiPathsSettingsCache();
-      setRuntimeKernelPersistedMode(runtimeKernelModeDraft);
       setRuntimeKernelPersistedPilotNodeTypes(runtimeKernelDraftPilotNodeTypes);
       setRuntimeKernelPilotNodeTypesDraft(runtimeKernelDraftPilotNodeTypes.join(', '));
+      setRuntimeKernelPersistedResolverIds(runtimeKernelDraftResolverIds);
+      setRuntimeKernelResolverIdsDraft(runtimeKernelDraftResolverIds.join(', '));
       notify('Runtime kernel settings saved.', { variant: 'success' });
     } catch (error) {
       const message =
@@ -228,8 +268,9 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     }
   }, [
     notify,
+    runtimeKernelDraftResolverIds,
     runtimeKernelDraftPilotNodeTypes,
-    runtimeKernelModeDraft,
+    runtimeKernelPersistedResolverIds,
     runtimeKernelSaving,
     runtimeKernelSettingsDirty,
   ]);
@@ -381,20 +422,11 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     <span className='text-[10px] uppercase tracking-wide text-cyan-100'>
                       Runtime Kernel
                     </span>
-                    <SelectSimple
-                      dataDocId='canvas_runtime_kernel_mode'
+                    <StatusBadge
+                      status='Mode: Auto'
+                      variant='neutral'
                       size='sm'
-                      value={runtimeKernelModeDraft}
-                      onValueChange={(value: string): void => {
-                        setRuntimeKernelModeDraft(normalizeRuntimeKernelMode(value));
-                      }}
-                      options={[
-                        { value: 'auto', label: 'Mode: Auto' },
-                        { value: 'legacy_only', label: 'Mode: Legacy Only' },
-                      ]}
-                      className='w-[170px]'
-                      triggerClassName='h-8 border-cyan-500/50 bg-card/60 px-2 text-[11px] text-cyan-100'
-                      disabled={runtimeKernelLoading || runtimeKernelSaving}
+                      className='h-8 border border-cyan-500/50 bg-card/60 px-2 text-[11px] text-cyan-100'
                     />
                     <input
                       data-doc-id='canvas_runtime_kernel_pilot_nodes'
@@ -404,12 +436,19 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                         setRuntimeKernelPilotNodeTypesDraft(event.target.value);
                       }}
                       placeholder='pilot nodes: constant, math'
-                      disabled={
-                        runtimeKernelLoading ||
-                        runtimeKernelSaving ||
-                        runtimeKernelModeDraft === 'legacy_only'
-                      }
+                      disabled={runtimeKernelLoading || runtimeKernelSaving}
                       className='h-8 w-[220px] rounded-md border border-cyan-500/40 bg-card/60 px-2 text-[11px] text-cyan-50 outline-none ring-offset-background placeholder:text-cyan-200/50 focus-visible:ring-2 focus-visible:ring-cyan-500/60 focus-visible:ring-offset-2'
+                    />
+                    <input
+                      data-doc-id='canvas_runtime_kernel_resolver_ids'
+                      type='text'
+                      value={runtimeKernelResolverIdsDraft}
+                      onChange={(event) => {
+                        setRuntimeKernelResolverIdsDraft(event.target.value);
+                      }}
+                      placeholder='resolvers: kernel.primary, kernel.fallback'
+                      disabled={runtimeKernelLoading || runtimeKernelSaving}
+                      className='h-8 w-[260px] rounded-md border border-cyan-500/40 bg-card/60 px-2 text-[11px] text-cyan-50 outline-none ring-offset-background placeholder:text-cyan-200/50 focus-visible:ring-2 focus-visible:ring-cyan-500/60 focus-visible:ring-offset-2'
                     />
                     <Button
                       data-doc-id='canvas_runtime_kernel_apply'

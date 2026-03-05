@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v3",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "nodeType": "ai_description",
+  "title": "AI Description Generator",
+  "runtimeKernel": {
+    "strategy": "code_object_v3",
+    "executionAdapter": "native_handler_registry",
+    "legacyHandlerKey": "ai_description",
+    "codeObjectId": "ai-paths.node-code-object.ai_description.v3"
+  },
+  "runtimeSemantics": {
+    "processing": "pulse_node_only",
+    "waiting": "freeze_consumed_inputs_and_outputs",
+    "success": "animate_outgoing_on_emit",
+    "error": "animate_error_routes_on_emit"
+  },
+  "ports": {
+    "inputs": [
+      "entityJson",
+      "images",
+      "title"
+    ],
+    "outputs": [
+      "description_en"
+    ]
+  },
+  "copyPaste": {
+    "fullNode": {
+      "id": "node_ai_description_example",
+      "type": "ai_description",
+      "title": "AI Description Generator",
+      "description": "Runs the AI Description pipeline to produce description_en.",
+      "position": {
+        "x": 2400,
+        "y": 120
+      },
+      "inputs": [
+        "entityJson",
+        "images",
+        "title"
+      ],
+      "outputs": [
+        "description_en"
+      ],
+      "config": {
+        "description": {
+          "visionOutputEnabled": true,
+          "generationOutputEnabled": true
+        }
+      }
+    }
+  },
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "id": "node_obj_ai_description_portable_v3",
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "061517ae24c85f7985d79ed4f5fb8615e57cbfcfffbb05bcc22d3781898daf0d"
+}

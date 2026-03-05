@@ -46,25 +46,29 @@ export const RUNTIME_PROFILE_SLOW_NODE_MS = Math.max(
 const normalizeRuntimeKernelModeValue = (value: unknown): NodeRuntimeKernelMode | null => {
   if (typeof value !== 'string') return null;
   const normalized = value.trim().toLowerCase();
-  if (normalized === 'auto' || normalized === 'legacy_only') {
-    return normalized;
-  }
-  return null;
+  return normalized === 'auto' || normalized === 'legacy_only' ? 'auto' : null;
 };
 
 const normalizeRuntimeKernelPilotNodeTypeToken = (value: string): string =>
   value.trim().toLowerCase().replace(/\s+/g, '_');
 
-const normalizeRuntimeKernelPilotNodeTypes = (values: string[]): string[] | undefined => {
-  const normalized = Array.from(
-    new Set(values.map(normalizeRuntimeKernelPilotNodeTypeToken).filter(Boolean))
-  );
-  return normalized.length > 0 ? normalized : undefined;
-};
-
-export const parseRuntimeKernelPilotNodeTypes = (value: unknown): string[] | undefined => {
+const parseRuntimeKernelListValue = ({
+  value,
+  normalizeToken,
+}: {
+  value: unknown;
+  normalizeToken: (token: string) => string;
+}): string[] | undefined => {
   if (Array.isArray(value)) {
-    return normalizeRuntimeKernelPilotNodeTypes(value.filter((entry): entry is string => typeof entry === 'string'));
+    const normalized = Array.from(
+      new Set(
+        value
+          .filter((entry): entry is string => typeof entry === 'string')
+          .map((entry: string): string => normalizeToken(entry))
+          .filter(Boolean)
+      )
+    );
+    return normalized.length > 0 ? normalized : undefined;
   }
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
@@ -74,74 +78,142 @@ export const parseRuntimeKernelPilotNodeTypes = (value: unknown): string[] | und
     try {
       const parsed = JSON.parse(trimmed) as unknown;
       if (Array.isArray(parsed)) {
-        return normalizeRuntimeKernelPilotNodeTypes(
-          parsed.filter((entry): entry is string => typeof entry === 'string')
+        const normalized = Array.from(
+          new Set(
+            parsed
+              .filter((entry): entry is string => typeof entry === 'string')
+              .map((entry: string): string => normalizeToken(entry))
+              .filter(Boolean)
+          )
         );
+        return normalized.length > 0 ? normalized : undefined;
       }
     } catch {
       // Fall through to tokenized parsing.
     }
   }
 
-  return normalizeRuntimeKernelPilotNodeTypes(trimmed.split(/[,\n]/g));
+  const normalized = Array.from(
+    new Set(
+      trimmed
+        .split(/[,\n]/g)
+        .map((entry: string): string => normalizeToken(entry))
+        .filter(Boolean)
+    )
+  );
+  return normalized.length > 0 ? normalized : undefined;
+};
+
+export const parseRuntimeKernelPilotNodeTypes = (value: unknown): string[] | undefined =>
+  parseRuntimeKernelListValue({
+    value,
+    normalizeToken: normalizeRuntimeKernelPilotNodeTypeToken,
+  });
+
+const normalizeRuntimeKernelResolverIdToken = (value: string): string => value.trim();
+
+export const parseRuntimeKernelCodeObjectResolverIds = (value: unknown): string[] | undefined =>
+  parseRuntimeKernelListValue({
+    value,
+    normalizeToken: normalizeRuntimeKernelResolverIdToken,
+  });
+
+export const normalizeRuntimeKernelCodeObjectResolverIds = (
+  values: string[] | undefined
+): string[] | undefined => {
+  if (!Array.isArray(values)) return undefined;
+  const normalized = Array.from(
+    new Set(values.map(normalizeRuntimeKernelResolverIdToken).filter(Boolean))
+  );
+  return normalized.length > 0 ? normalized : undefined;
 };
 
 export const resolveRuntimeKernelConfigForRun = (input: {
   envMode: unknown;
+  pathMode: unknown;
   settingMode: unknown;
   envPilotNodeTypes: unknown;
+  pathPilotNodeTypes: unknown;
   settingPilotNodeTypes: unknown;
+  envResolverIds: unknown;
+  pathResolverIds: unknown;
+  settingResolverIds: unknown;
 }): {
   mode: NodeRuntimeKernelMode;
-  modeSource: 'env' | 'settings' | 'default';
+  modeSource: 'env' | 'path' | 'settings' | 'default';
   pilotNodeTypes: string[] | undefined;
-  pilotSource: 'env' | 'settings' | 'default';
+  pilotSource: 'env' | 'path' | 'settings' | 'default';
+  resolverIds: string[] | undefined;
+  resolverSource: 'env' | 'path' | 'settings' | 'default';
 } => {
   const envMode = normalizeRuntimeKernelModeValue(input.envMode);
+  const pathMode = normalizeRuntimeKernelModeValue(input.pathMode);
   const settingMode = normalizeRuntimeKernelModeValue(input.settingMode);
-  const mode: NodeRuntimeKernelMode = envMode ?? settingMode ?? 'auto';
-  const modeSource: 'env' | 'settings' | 'default' = envMode
+  const mode: NodeRuntimeKernelMode = envMode ?? pathMode ?? settingMode ?? 'auto';
+  const modeSource: 'env' | 'path' | 'settings' | 'default' = envMode
     ? 'env'
-    : settingMode
+    : pathMode
+      ? 'path'
+      : settingMode
       ? 'settings'
       : 'default';
 
   const envPilotNodeTypes = parseRuntimeKernelPilotNodeTypes(input.envPilotNodeTypes);
+  const pathPilotNodeTypes = parseRuntimeKernelPilotNodeTypes(input.pathPilotNodeTypes);
   const settingsPilotNodeTypes = parseRuntimeKernelPilotNodeTypes(input.settingPilotNodeTypes);
-  const pilotNodeTypes = mode === 'legacy_only' ? undefined : (envPilotNodeTypes ?? settingsPilotNodeTypes);
-  const pilotSource: 'env' | 'settings' | 'default' = mode === 'legacy_only'
-    ? 'default'
-    : envPilotNodeTypes
-      ? 'env'
+  const pilotNodeTypes = envPilotNodeTypes ?? pathPilotNodeTypes ?? settingsPilotNodeTypes;
+  const pilotSource: 'env' | 'path' | 'settings' | 'default' = envPilotNodeTypes
+    ? 'env'
+    : pathPilotNodeTypes
+      ? 'path'
       : settingsPilotNodeTypes
-        ? 'settings'
-        : 'default';
+      ? 'settings'
+      : 'default';
+  const envResolverIds = parseRuntimeKernelCodeObjectResolverIds(input.envResolverIds);
+  const pathResolverIds = parseRuntimeKernelCodeObjectResolverIds(input.pathResolverIds);
+  const settingsResolverIds = parseRuntimeKernelCodeObjectResolverIds(input.settingResolverIds);
+  const resolverIds = envResolverIds ?? pathResolverIds ?? settingsResolverIds;
+  const resolverSource: 'env' | 'path' | 'settings' | 'default' = envResolverIds
+    ? 'env'
+    : pathResolverIds
+      ? 'path'
+      : settingsResolverIds
+      ? 'settings'
+      : 'default';
 
   return {
     mode,
     modeSource,
     pilotNodeTypes,
     pilotSource,
+    resolverIds,
+    resolverSource,
   };
 };
 
 export type RuntimeKernelExecutionTelemetry = {
   runtimeKernelMode: NodeRuntimeKernelMode;
-  runtimeKernelModeSource: 'env' | 'settings' | 'default';
+  runtimeKernelModeSource: 'env' | 'path' | 'settings' | 'default';
   runtimeKernelPilotNodeTypes: string[];
-  runtimeKernelPilotNodeTypesSource: 'env' | 'settings' | 'default';
+  runtimeKernelPilotNodeTypesSource: 'env' | 'path' | 'settings' | 'default';
+  runtimeKernelCodeObjectResolverIds: string[];
+  runtimeKernelCodeObjectResolverIdsSource: 'env' | 'path' | 'settings' | 'default';
 };
 
 export const toRuntimeKernelExecutionTelemetry = (input: {
   mode: NodeRuntimeKernelMode;
-  modeSource: 'env' | 'settings' | 'default';
+  modeSource: 'env' | 'path' | 'settings' | 'default';
   pilotNodeTypes: string[] | undefined;
-  pilotSource: 'env' | 'settings' | 'default';
+  pilotSource: 'env' | 'path' | 'settings' | 'default';
+  resolverIds: string[] | undefined;
+  resolverSource: 'env' | 'path' | 'settings' | 'default';
 }): RuntimeKernelExecutionTelemetry => ({
   runtimeKernelMode: input.mode,
   runtimeKernelModeSource: input.modeSource,
   runtimeKernelPilotNodeTypes: input.pilotNodeTypes ?? [],
   runtimeKernelPilotNodeTypesSource: input.pilotSource,
+  runtimeKernelCodeObjectResolverIds: input.resolverIds ?? [],
+  runtimeKernelCodeObjectResolverIdsSource: input.resolverSource,
 });
 
 const normalizeRuntimeStrategy = (value: unknown): 'legacy_adapter' | 'code_object_v3' | null => {

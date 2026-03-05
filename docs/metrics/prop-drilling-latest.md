@@ -1,12 +1,12 @@
 # Prop Drilling Scan
 
-Generated at: 2026-03-05T13:15:32.605Z
+Generated at: 2026-03-05T15:25:23.969Z
 
 ## Snapshot
 
-- Scanned source files: 3904
-- JSX files scanned: 1417
-- Components detected: 2192
+- Scanned source files: 3915
+- JSX files scanned: 1413
+- Components detected: 2193
 - Components forwarding parent props (hotspot threshold): 1
 - Components forwarding parent props (any): 4
 - Resolved forwarded transitions: 5
@@ -26,20 +26,20 @@ Generated at: 2026-03-05T13:15:32.605Z
 
 | Rank | Component | File | Forwarded Props | Outgoing Transitions | Unknown Spread Forwarding | Hotspot |
 | ---: | --- | --- | ---: | ---: | --- | --- |
-| 1 | `KangurGame` | `src/features/kangur/legacy/components/kangur/KangurGame.jsx` | 2 | 2 | no | yes |
-| 2 | `CompleteEquation` | `src/features/kangur/legacy/components/lessons/AddingBallGame.jsx` | 1 | 1 | no | no |
-| 3 | `CalendarLesson` | `src/features/kangur/legacy/components/lessons/CalendarLessson.jsx` | 1 | 1 | no | no |
-| 4 | `ClockLesson` | `src/features/kangur/legacy/components/lessons/ClockLesson.jsx` | 1 | 1 | no | no |
+| 1 | `KangurGame` | `src/features/kangur/ui/components/KangurGame.tsx` | 2 | 2 | no | yes |
+| 2 | `CompleteEquation` | `src/features/kangur/ui/components/AddingBallGame.tsx` | 1 | 1 | no | no |
+| 3 | `CalendarLesson` | `src/features/kangur/ui/components/CalendarLesson.tsx` | 1 | 1 | no | no |
+| 4 | `ClockLesson` | `src/features/kangur/ui/components/ClockLesson.tsx` | 1 | 1 | no | no |
 
 ## Prioritized Transition Backlog (Depth = 2)
 
 | Rank | Score | From | To | Fanout | Features | Prop Mapping | Location |
 | ---: | ---: | --- | --- | ---: | ---: | --- | --- |
-| 1 | 52 | `CompleteEquation` | `SlotZone` | 1 | 1 | `round -> label` | `src/features/kangur/legacy/components/lessons/AddingBallGame.jsx:119` |
-| 2 | 52 | `CalendarLesson` | `CalendarInteractiveGame` | 1 | 1 | `onBack -> onFinish` | `src/features/kangur/legacy/components/lessons/CalendarLessson.jsx:277` |
-| 3 | 52 | `ClockLesson` | `ClockTrainingGame` | 1 | 1 | `onBack -> onFinish` | `src/features/kangur/legacy/components/lessons/ClockLesson.jsx:271` |
-| 4 | 44 | `KangurGame` | `KangurGameProvider` | 1 | 1 | `mode -> mode` | `src/features/kangur/legacy/components/kangur/KangurGame.jsx:284` |
-| 5 | 44 | `KangurGame` | `KangurGameProvider` | 1 | 1 | `onBack -> onBack` | `src/features/kangur/legacy/components/kangur/KangurGame.jsx:284` |
+| 1 | 52 | `CompleteEquation` | `SlotZone` | 1 | 1 | `round -> label` | `src/features/kangur/ui/components/AddingBallGame.tsx:231` |
+| 2 | 52 | `CalendarLesson` | `CalendarInteractiveGame` | 1 | 1 | `onBack -> onFinish` | `src/features/kangur/ui/components/CalendarLesson.tsx:302` |
+| 3 | 52 | `ClockLesson` | `ClockTrainingGame` | 1 | 1 | `onBack -> onFinish` | `src/features/kangur/ui/components/ClockLesson.tsx:296` |
+| 4 | 44 | `KangurGame` | `KangurGameProvider` | 1 | 1 | `mode -> mode` | `src/features/kangur/ui/components/KangurGame.tsx:315` |
+| 5 | 44 | `KangurGame` | `KangurGameProvider` | 1 | 1 | `onBack -> onBack` | `src/features/kangur/ui/components/KangurGame.tsx:315` |
 
 ## Ranked Chain Backlog (Depth >= 3)
 
@@ -58,35 +58,35 @@ Generated at: 2026-03-05T13:15:32.605Z
 - Score: 52
 - Root fanout: 1
 - Prop mapping: round -> label
-- Location: src/features/kangur/legacy/components/lessons/AddingBallGame.jsx:119
+- Location: src/features/kangur/ui/components/AddingBallGame.tsx:231
 
 ### 2. CalendarLesson -> CalendarInteractiveGame
 
 - Score: 52
 - Root fanout: 1
 - Prop mapping: onBack -> onFinish
-- Location: src/features/kangur/legacy/components/lessons/CalendarLessson.jsx:277
+- Location: src/features/kangur/ui/components/CalendarLesson.tsx:302
 
 ### 3. ClockLesson -> ClockTrainingGame
 
 - Score: 52
 - Root fanout: 1
 - Prop mapping: onBack -> onFinish
-- Location: src/features/kangur/legacy/components/lessons/ClockLesson.jsx:271
+- Location: src/features/kangur/ui/components/ClockLesson.tsx:296
 
 ### 4. KangurGame -> KangurGameProvider
 
 - Score: 44
 - Root fanout: 1
 - Prop mapping: mode -> mode
-- Location: src/features/kangur/legacy/components/kangur/KangurGame.jsx:284
+- Location: src/features/kangur/ui/components/KangurGame.tsx:315
 
 ### 5. KangurGame -> KangurGameProvider
 
 - Score: 44
 - Root fanout: 1
 - Prop mapping: onBack -> onBack
-- Location: src/features/kangur/legacy/components/kangur/KangurGame.jsx:284
+- Location: src/features/kangur/ui/components/KangurGame.tsx:315
 
 ## Execution Notes
 

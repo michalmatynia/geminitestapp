@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Fragment } from 'react';
+import React from 'react';
 
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
@@ -24,7 +24,6 @@ import {
   resolveGapValue,
   resolveJustifyContent,
   resolveAlignItems,
-  collectBackgroundImages,
 } from './grid/frontend-grid-utils';
 import { BackgroundImageLayer } from './grid/BackgroundImageLayer';
 import { ColumnRenderer } from './grid/ColumnRenderer';
@@ -37,7 +36,6 @@ export function FrontendGridSection(): React.ReactNode {
   const sectionSelector = sectionId ? getCustomCssSelector(sectionId) : null;
   const sectionCustomCss = buildScopedCustomCss(settings['customCss'], sectionSelector);
   const rowBlocks = blocks.filter((b: BlockInstance) => b.type === 'Row');
-  const gridBackgroundModeImages = collectBackgroundImages(blocks, 'grid');
   const sectionGap = (settings['gap'] as string) || 'medium';
   const rowGapSetting = settings['rowGap'] as string | undefined;
   const columnGapSetting = settings['columnGap'] as string | undefined;
@@ -51,8 +49,7 @@ export function FrontendGridSection(): React.ReactNode {
       : 0;
   const gridBackgroundSettings = settings['backgroundImage'] as Record<string, unknown> | undefined;
   const hasGridBackgroundSetting = Boolean((gridBackgroundSettings?.['src'] as string) || '');
-  const hasGridBackgroundLayers = gridBackgroundModeImages.length > 0;
-  const hasGridBackground = hasGridBackgroundSetting || hasGridBackgroundLayers;
+  const hasGridBackground = hasGridBackgroundSetting;
 
   const rowsToRender: BlockInstance[] = rowBlocks;
 
@@ -79,11 +76,6 @@ export function FrontendGridSection(): React.ReactNode {
               {sectionCustomCss ? (
                 <style data-cms-custom-css={sectionId}>{sectionCustomCss}</style>
               ) : null}
-              {gridBackgroundModeImages.map((block: BlockInstance) => (
-                <Fragment key={`grid-bg-mode-${block.id}`}>
-                  <BackgroundImageLayer settings={block.settings} />
-                </Fragment>
-              ))}
               {hasGridBackgroundSetting && (
                 <BackgroundImageLayer settings={gridBackgroundSettings} />
               )}
@@ -93,7 +85,6 @@ export function FrontendGridSection(): React.ReactNode {
                     {rowsToRender.map((row: BlockInstance, rowIndex: number) => {
                       const rowChildren = row.blocks ?? [];
                       if (rowChildren.length === 0) return null;
-                      const rowBackgroundModeImages = collectBackgroundImages(rowChildren, 'row');
                       const rowGapValue = resolveGapValue(row.settings?.['gap'], columnGapValue);
                       const rowGapClass = getGapClass(rowGapValue);
                       const rowGapPxRaw = row.settings?.['gapPx'];
@@ -120,8 +111,7 @@ export function FrontendGridSection(): React.ReactNode {
                       const hasRowBackgroundSetting = Boolean(
                         (rowBackgroundSettings?.['src'] as string) || ''
                       );
-                      const hasRowBackgroundMode = rowBackgroundModeImages.length > 0;
-                      const hasRowBackground = hasRowBackgroundSetting || hasRowBackgroundMode;
+                      const hasRowBackground = hasRowBackgroundSetting;
                       const rowSelector = getCustomCssSelector(row.id);
                       const rowCustomCss = buildScopedCustomCss(
                         row.settings?.['customCss'],
@@ -151,11 +141,6 @@ export function FrontendGridSection(): React.ReactNode {
                                 {rowCustomCss ? (
                                   <style data-cms-custom-css={row.id}>{rowCustomCss}</style>
                                 ) : null}
-                                {rowBackgroundModeImages.map((block: BlockInstance) => (
-                                  <Fragment key={`row-bg-mode-${block.id}`}>
-                                    <BackgroundImageLayer settings={block.settings} />
-                                  </Fragment>
-                                ))}
                                 {hasRowBackgroundSetting && (
                                   <BackgroundImageLayer settings={rowBackgroundSettings} />
                                 )}
@@ -171,12 +156,6 @@ export function FrontendGridSection(): React.ReactNode {
                                   }}
                                 >
                                   {rowChildren.map((child: BlockInstance) => {
-                                    if (child.type === 'ImageElement') {
-                                      const bgTarget =
-                                        (child.settings?.['backgroundTarget'] as string) || 'none';
-                                      if (bgTarget === 'grid' || bgTarget === 'row') return null;
-                                    }
-
                                     if (child.type === 'Column') {
                                       return (
                                         <div

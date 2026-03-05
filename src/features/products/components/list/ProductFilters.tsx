@@ -224,7 +224,7 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
   const filterValues = useMemo(
     () => ({
       productId,
-      idMatchMode,
+      idMatchMode: productId.trim() ? idMatchMode : '',
       sku,
       description,
       categoryId,

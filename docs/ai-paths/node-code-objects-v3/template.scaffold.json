@@ -6,7 +6,7 @@
   "title": "Template",
   "runtimeKernel": {
     "strategy": "code_object_v3",
-    "executionAdapter": "legacy_handler_bridge",
+    "executionAdapter": "native_handler_registry",
     "legacyHandlerKey": "template",
     "codeObjectId": "ai-paths.node-code-object.template.v3"
   },
@@ -54,5 +54,5 @@
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_template_portable_v3",
   "objectHashAlgorithm": "sha256",
-  "objectHash": "818d7ec5fca3d3ae120198a3418831ed55f1d54d0f7aafce0ff969a6408d02bf"
+  "objectHash": "661cd86e53a179505bc2d9d7561e6b7bc1462db9440f4500b95209b2e211762b"
 }

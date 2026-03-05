@@ -60,7 +60,8 @@ export interface TreeActionsContextValue {
       fromColumnId: string | undefined,
       toSectionId: string,
       toIndex: number,
-      fromParentBlockId?: string
+      fromParentBlockId?: string,
+      toParentBlockId?: string
     ) => void;
     dropToRow: (
       blockId: string,
@@ -69,7 +70,8 @@ export interface TreeActionsContextValue {
       toSectionId: string,
       toRowId: string,
       toIndex: number,
-      fromParentBlockId?: string
+      fromParentBlockId?: string,
+      toParentBlockId?: string
     ) => void;
     dropToSlideshowFrame: (
       blockId: string,
@@ -249,7 +251,8 @@ export function TreeActionsProvider({
       fromColumnId: string | undefined,
       toSectionId: string,
       toIndex: number,
-      fromParentBlockId?: string
+      fromParentBlockId?: string,
+      toParentBlockId?: string
     ) => {
       dispatch({
         type: 'MOVE_BLOCK_TO_SECTION',
@@ -258,9 +261,10 @@ export function TreeActionsProvider({
         ...(fromColumnId && { fromColumnId }),
         ...(fromParentBlockId && { fromParentBlockId }),
         toSectionId,
+        ...(toParentBlockId && { toParentBlockId }),
         toIndex,
       });
-      autoExpand(toSectionId);
+      autoExpand(toSectionId, toParentBlockId);
     },
     [dispatch, autoExpand]
   );
@@ -273,7 +277,8 @@ export function TreeActionsProvider({
       toSectionId: string,
       toRowId: string,
       toIndex: number,
-      fromParentBlockId?: string
+      fromParentBlockId?: string,
+      toParentBlockId?: string
     ) => {
       dispatch({
         type: 'MOVE_BLOCK_TO_ROW',
@@ -283,9 +288,10 @@ export function TreeActionsProvider({
         ...(fromParentBlockId && { fromParentBlockId }),
         toSectionId,
         toRowId,
+        ...(toParentBlockId && { toParentBlockId }),
         toIndex,
       });
-      autoExpand(toSectionId, toRowId);
+      autoExpand(toSectionId, toRowId, toParentBlockId);
     },
     [dispatch, autoExpand]
   );

@@ -9,6 +9,7 @@ import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
   AiPathRuntimeEvent,
+  RuntimeHistoryEntry,
 } from '@/shared/lib/ai-paths';
 import {
   enqueueAiPathRun,
@@ -20,6 +21,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import {
   invalidateAiPathQueue,
+  invalidateAiPathRuns,
   notifyAiPathRunEnqueued,
   optimisticallyInsertAiPathRunInQueueCache,
 } from '@/shared/lib/query-invalidation';
@@ -193,6 +195,14 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
       args.resetRuntimeNodeStatuses({});
       const runtimeNodeById = new Map<string, AiNode>(
         args.normalizedNodes.map((node: AiNode): [string, AiNode] => [node.id, node])
+      );
+      const historyLimit = Math.max(
+        1,
+        Math.trunc(
+          typeof args.historyRetentionPasses === 'number'
+            ? args.historyRetentionPasses
+            : 20
+        )
       );
       const entityId = resolveEntityIdFromContext(triggerContext);
       const entityType = resolveEntityTypeFromContext(triggerContext, entityId);
@@ -408,6 +418,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
         };
         optimisticallyInsertAiPathRunInQueueCache(queryClient, queuedRunForCache);
         void invalidateAiPathQueue(queryClient);
+        void invalidateAiPathRuns(queryClient);
         notifyAiPathRunEnqueued(runId, {
           entityId,
           entityType,
@@ -538,6 +549,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             args.currentRunStartedAtRef.current = null;
           }
           args.setCurrentRunId?.(null);
+          void invalidateAiPathRuns(queryClient);
           if (terminalStatus === 'completed') {
             args.openRunDetail?.(runId);
           }
@@ -626,6 +638,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
               if (!status) return;
               const runtimeNode = runtimeNodeById.get(nodeId);
               const nodeTitle = runtimeNode?.title ?? nodeUpdate.nodeTitle ?? nodeId;
+              const nodeType = runtimeNode?.type ?? nodeUpdate.nodeType ?? 'unknown';
               const errorMessage = asString(nodeUpdate.errorMessage) ?? asString(nodeUpdate.error);
               const runStartedAtForNode =
                 asString(nodeUpdate.startedAt) ??
@@ -639,7 +652,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                 nodeId,
                 status,
                 source: 'server',
-                nodeType: runtimeNode?.type ?? nodeUpdate.nodeType,
+                nodeType,
                 nodeTitle: nodeTitle ?? null,
                 iteration: iteration ?? undefined,
                 kind: isFailed ? 'node_failed' : 'node_status',
@@ -675,6 +688,26 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                   status: 'running',
                   startedAt: runStartedAtForNode ?? prev.currentRun?.startedAt ?? null,
                 } as AiPathRunRecord;
+                const previousHistory = prev.history ?? {};
+                const previousNodeHistory = Array.isArray(previousHistory[nodeId])
+                  ? previousHistory[nodeId]
+                  : [];
+                const historyEntry: RuntimeHistoryEntry = {
+                  timestamp: new Date().toISOString(),
+                  pathId: args.activePathId ?? null,
+                  pathName: args.pathName ?? null,
+                  nodeId,
+                  nodeType,
+                  nodeTitle: nodeTitle ?? null,
+                  status,
+                  iteration: iteration ?? previousNodeHistory.length + 1,
+                  inputs: nodeInputs ? { ...nodeInputs } : {},
+                  outputs: { ...mergedNodeOutputs },
+                  inputHash: null,
+                  inputsFrom: [],
+                  outputsTo: [],
+                };
+                const nextNodeHistory = [...previousNodeHistory, historyEntry].slice(-historyLimit);
                 const next = {
                   ...prev,
                   currentRun: nextCurrentRun,
@@ -682,6 +715,10 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                   outputs: {
                     ...(prev.outputs ?? {}),
                     [nodeId]: mergedNodeOutputs,
+                  },
+                  history: {
+                    ...previousHistory,
+                    [nodeId]: nextNodeHistory,
                   },
                 };
                 args.runtimeStateRef.current = next;

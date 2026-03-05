@@ -158,6 +158,7 @@ export const executePathRun = async (
     {},
     runtimeState.outputs ?? {}
   );
+  let latestRuntimeStateSnapshot: RuntimeState | null = null;
 
   let resolvedRunStartedAt = runStartedAt;
 
@@ -175,13 +176,29 @@ export const executePathRun = async (
       status: 'running' as const,
       startedAt: resolvedRunStartedAt,
     };
+    const statusFromLatest = latestRuntimeStateSnapshot?.status ?? runtimeState.status;
+    const nodeStatusesFromLatest =
+      latestRuntimeStateSnapshot?.nodeStatuses ?? runtimeState.nodeStatuses;
+    const nodeOutputsFromLatest =
+      latestRuntimeStateSnapshot?.nodeOutputs ?? runtimeState.nodeOutputs;
+    const historyFromLatest = latestRuntimeStateSnapshot?.history ?? runtimeState.history;
+    const hashesFromLatest = latestRuntimeStateSnapshot?.hashes ?? runtimeState.hashes;
+    const hashTimestampsFromLatest =
+      latestRuntimeStateSnapshot?.hashTimestamps ?? runtimeState.hashTimestamps;
+    const nodeDurationsFromLatest =
+      latestRuntimeStateSnapshot?.nodeDurations ?? runtimeState.nodeDurations;
     const candidate: RuntimeState = {
       ...EMPTY_RUNTIME_STATE,
-      status: 'running',
+      status: statusFromLatest ?? 'running',
       currentRun,
       inputs: accInputs,
       outputs: accOutputs,
-      nodeOutputs: accOutputs,
+      nodeOutputs: nodeOutputsFromLatest ?? accOutputs,
+      ...(nodeStatusesFromLatest ? { nodeStatuses: nodeStatusesFromLatest } : {}),
+      ...(historyFromLatest ? { history: historyFromLatest } : {}),
+      ...(hashesFromLatest ? { hashes: hashesFromLatest } : {}),
+      ...(hashTimestampsFromLatest ? { hashTimestamps: hashTimestampsFromLatest } : {}),
+      ...(nodeDurationsFromLatest ? { nodeDurations: nodeDurationsFromLatest } : {}),
     };
     const repaired = repairRuntimeStatePorts({
       runtimeState: candidate,
@@ -294,7 +311,7 @@ export const executePathRun = async (
       | 'failed'
       | 'canceled'
       | null = null;
-    await evaluateGraphWithIteratorAutoContinue({
+    latestRuntimeStateSnapshot = await evaluateGraphWithIteratorAutoContinue({
       nodes,
       edges,
       activePathId: run.pathId ?? null,

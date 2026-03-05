@@ -33,6 +33,98 @@ type UseAiPathsRunHistoryArgs = {
   toast: ToastFn;
 };
 
+const RUN_STATUS_ALIASES: Record<string, AiPathRunRecord['status']> = {
+  queued: 'queued',
+  queue: 'queued',
+  running: 'running',
+  paused: 'paused',
+  completed: 'completed',
+  complete: 'completed',
+  success: 'completed',
+  failed: 'failed',
+  failure: 'failed',
+  error: 'failed',
+  canceled: 'canceled',
+  cancelled: 'canceled',
+  dead_lettered: 'dead_lettered',
+  deadlettered: 'dead_lettered',
+};
+
+const asTrimmedString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const asIsoTimestamp = (value: unknown): string | null => {
+  if (typeof value === 'string') {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  }
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value.toISOString();
+  }
+  return null;
+};
+
+const normalizeRunStatus = (value: unknown): AiPathRunRecord['status'] | null => {
+  const normalized = asTrimmedString(value)?.toLowerCase();
+  if (!normalized) return null;
+  return RUN_STATUS_ALIASES[normalized] ?? null;
+};
+
+const coerceRunRecord = (value: unknown): AiPathRunRecord | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const raw = value as Record<string, unknown>;
+  const id = asTrimmedString(raw['id']) ?? asTrimmedString(raw['_id']);
+  const status = normalizeRunStatus(raw['status']);
+  if (!id || !status) return null;
+
+  const createdAt =
+    asIsoTimestamp(raw['createdAt']) ??
+    asIsoTimestamp(raw['startedAt']) ??
+    asIsoTimestamp(raw['updatedAt']) ??
+    new Date().toISOString();
+  const updatedAt =
+    asIsoTimestamp(raw['updatedAt']) ??
+    asIsoTimestamp(raw['finishedAt']) ??
+    asIsoTimestamp(raw['startedAt']) ??
+    null;
+
+  const candidate: Record<string, unknown> = {
+    id,
+    status,
+    createdAt,
+    updatedAt,
+    pathId: asTrimmedString(raw['pathId']),
+    pathName: asTrimmedString(raw['pathName']),
+    triggerEvent: asTrimmedString(raw['triggerEvent']),
+    triggerNodeId: asTrimmedString(raw['triggerNodeId']),
+    startedAt: asIsoTimestamp(raw['startedAt']),
+    finishedAt: asIsoTimestamp(raw['finishedAt']),
+    errorMessage: asTrimmedString(raw['errorMessage']) ?? asTrimmedString(raw['error']),
+    entityId: asTrimmedString(raw['entityId']),
+    entityType: asTrimmedString(raw['entityType']),
+    retryCount:
+      typeof raw['retryCount'] === 'number' && Number.isFinite(raw['retryCount'])
+        ? raw['retryCount']
+        : null,
+    maxAttempts:
+      typeof raw['maxAttempts'] === 'number' && Number.isFinite(raw['maxAttempts'])
+        ? raw['maxAttempts']
+        : null,
+    nextRetryAt: asIsoTimestamp(raw['nextRetryAt']),
+    deadLetteredAt: asIsoTimestamp(raw['deadLetteredAt']),
+    meta: raw['meta'],
+    graph: raw['graph'],
+    runtimeState: raw['runtimeState'],
+    triggerContext: raw['triggerContext'],
+  };
+
+  const parsed = aiPathRunRecordSchema.safeParse(candidate);
+  return parsed.success ? parsed.data : null;
+};
+
 function isSameRunList(prev: AiPathRunRecord[], next: AiPathRunRecord[]): boolean {
   if (prev === next) return true;
   if (prev.length !== next.length) return false;
@@ -63,7 +155,9 @@ function normalizeRunListResponse(response: Awaited<ReturnType<typeof listAiPath
   const runs = Array.isArray(response.data.runs)
     ? response.data.runs.flatMap((run): AiPathRunRecord[] => {
       const parsed = aiPathRunRecordSchema.safeParse(run);
-      return parsed.success ? [parsed.data] : [];
+      if (parsed.success) return [parsed.data];
+      const coerced = coerceRunRecord(run);
+      return coerced ? [coerced] : [];
     })
     : [];
   return {

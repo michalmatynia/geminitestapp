@@ -42,6 +42,7 @@ export interface ServerExecutionArgs {
   strictFlowMode: boolean;
   blockedRunPolicy: PathBlockedRunPolicy;
   aiPathsValidation?: AiPathsValidationConfig | undefined;
+  historyRetentionPasses?: number;
   normalizedNodes: AiNode[];
   sanitizedEdges: Edge[];
   parserSamples: Record<string, ParserSampleState>;

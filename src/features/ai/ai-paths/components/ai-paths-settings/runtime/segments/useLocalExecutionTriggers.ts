@@ -679,7 +679,7 @@ export function useLocalExecutionTriggers(
           },
           inputs: {},
           outputs: nextOutputs,
-          history: {},
+          history: previousState.history ?? {},
           hashes: {},
           hashTimestamps: {},
           nodeOutputs: {},

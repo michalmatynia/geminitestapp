@@ -25,7 +25,12 @@ jobs:
       - name: Run weekly quality report
         run: npm run quality:weekly-report:strict -- --ci
 
+      - name: Generate trend index snapshot
+        if: always()
+        run: node scripts/quality/generate-trend-index.mjs --ci --no-history
+
       - name: Upload weekly quality artifacts
+        id: upload_weekly_quality_artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -34,3 +39,50 @@ jobs:
           path: |
             docs/metrics/weekly-quality-latest.json
             docs/metrics/weekly-quality-latest.md
+
+      - name: Upload trend index artifacts
+        id: upload_trend_index_artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trend-index-report
+          if-no-files-found: warn
+          path: |
+            docs/metrics/trend-index-latest.json
+            docs/metrics/trend-index-latest.md
+            docs/metrics/weekly-quality-trend-latest.json
+            docs/metrics/weekly-quality-trend-latest.md
+            docs/metrics/unit-domain-timings-trend-latest.json
+            docs/metrics/unit-domain-timings-trend-latest.md
+            docs/metrics/lint-domain-checks-trend-latest.json
+            docs/metrics/lint-domain-checks-trend-latest.md
+
+      - name: Publish trend artifact links
+        if: always()
+        env:
+          WEEKLY_ARTIFACT_ID: ${{ steps.upload_weekly_quality_artifacts.outputs.artifact-id }}
+          TREND_ARTIFACT_ID: ${{ steps.upload_trend_index_artifacts.outputs.artifact-id }}
+          RUN_ARTIFACTS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts
+        run: |
+          {
+            echo "## Weekly Quality Artifacts"
+            echo
+            if [ -n "$WEEKLY_ARTIFACT_ID" ]; then
+              echo "- [Weekly quality report artifact](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/$WEEKLY_ARTIFACT_ID)"
+            else
+              echo "- Weekly quality report artifact: unavailable"
+            fi
+            if [ -n "$TREND_ARTIFACT_ID" ]; then
+              echo "- [Trend index artifact](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/$TREND_ARTIFACT_ID)"
+            else
+              echo "- Trend index artifact: unavailable"
+            fi
+            echo "- [All run artifacts]($RUN_ARTIFACTS_URL)"
+            echo
+            echo "### Trend Index Files"
+            echo "- \`docs/metrics/trend-index-latest.md\`"
+            echo "- \`docs/metrics/trend-index-latest.json\`"
+            echo "- \`docs/metrics/weekly-quality-trend-latest.md\`"
+            echo "- \`docs/metrics/unit-domain-timings-trend-latest.md\`"
+            echo "- \`docs/metrics/lint-domain-checks-trend-latest.md\`"
+          } >> "$GITHUB_STEP_SUMMARY"

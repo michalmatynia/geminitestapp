@@ -41,7 +41,40 @@ interface ThemeColorsContextValue {
   handleCancelSchemeAi: () => void;
 }
 
-const ThemeColorsContext = createContext<ThemeColorsContextValue | undefined>(undefined);
+type ThemeColorsStateContextValue = Omit<
+  ThemeColorsContextValue,
+  | 'setSchemeView'
+  | 'setEditingSchemeId'
+  | 'startAddScheme'
+  | 'startEditScheme'
+  | 'handleSaveScheme'
+  | 'setNewSchemeName'
+  | 'updateSchemeColor'
+  | 'toggleGlobalPalette'
+  | 'setSchemeAiPrompt'
+  | 'handleGenerateScheme'
+  | 'handleCancelSchemeAi'
+>;
+
+type ThemeColorsActionsContextValue = Pick<
+  ThemeColorsContextValue,
+  | 'setSchemeView'
+  | 'setEditingSchemeId'
+  | 'startAddScheme'
+  | 'startEditScheme'
+  | 'handleSaveScheme'
+  | 'setNewSchemeName'
+  | 'updateSchemeColor'
+  | 'toggleGlobalPalette'
+  | 'setSchemeAiPrompt'
+  | 'handleGenerateScheme'
+  | 'handleCancelSchemeAi'
+>;
+
+const ThemeColorsStateContext = createContext<ThemeColorsStateContextValue | undefined>(undefined);
+const ThemeColorsActionsContext = createContext<ThemeColorsActionsContextValue | undefined>(
+  undefined
+);
 
 export function ThemeColorsProvider({
   children,
@@ -392,24 +425,15 @@ ${schemeContext}`;
     }
   }, []);
 
-  const value = useMemo(
-    (): ThemeColorsContextValue => ({
+  const stateValue = useMemo(
+    (): ThemeColorsStateContextValue => ({
       schemeView,
-      setSchemeView,
       editingSchemeId,
-      setEditingSchemeId,
       activeScheme,
-      startAddScheme,
-      startEditScheme,
-      handleSaveScheme,
       newSchemeName,
-      setNewSchemeName,
       newSchemeColors,
-      updateSchemeColor,
       isGlobalPaletteOpen,
-      toggleGlobalPalette,
       schemeAiPrompt,
-      setSchemeAiPrompt,
       schemeAiLoading,
       schemeAiError,
       schemeAiOutput,
@@ -417,21 +441,14 @@ ${schemeContext}`;
       brainAiProvider,
       brainAiModelId,
       brainAiAgentId,
-      handleGenerateScheme,
-      handleCancelSchemeAi,
     }),
     [
       schemeView,
       editingSchemeId,
       activeScheme,
-      startAddScheme,
-      startEditScheme,
-      handleSaveScheme,
       newSchemeName,
       newSchemeColors,
-      updateSchemeColor,
       isGlobalPaletteOpen,
-      toggleGlobalPalette,
       schemeAiPrompt,
       schemeAiLoading,
       schemeAiError,
@@ -440,18 +457,58 @@ ${schemeContext}`;
       brainAiProvider,
       brainAiModelId,
       brainAiAgentId,
+    ]
+  );
+  const actionsValue = useMemo(
+    (): ThemeColorsActionsContextValue => ({
+      setSchemeView,
+      setEditingSchemeId,
+      startAddScheme,
+      startEditScheme,
+      handleSaveScheme,
+      setNewSchemeName,
+      updateSchemeColor,
+      toggleGlobalPalette,
+      setSchemeAiPrompt,
+      handleGenerateScheme,
+      handleCancelSchemeAi,
+    }),
+    [
+      setSchemeView,
+      setEditingSchemeId,
+      startAddScheme,
+      startEditScheme,
+      handleSaveScheme,
+      setNewSchemeName,
+      updateSchemeColor,
+      toggleGlobalPalette,
+      setSchemeAiPrompt,
       handleGenerateScheme,
       handleCancelSchemeAi,
     ]
   );
 
-  return <ThemeColorsContext.Provider value={value}>{children}</ThemeColorsContext.Provider>;
+  return (
+    <ThemeColorsActionsContext.Provider value={actionsValue}>
+      <ThemeColorsStateContext.Provider value={stateValue}>
+        {children}
+      </ThemeColorsStateContext.Provider>
+    </ThemeColorsActionsContext.Provider>
+  );
 }
 
-export function useThemeColors(): ThemeColorsContextValue {
-  const context = useContext(ThemeColorsContext);
+export function useThemeColorsState(): ThemeColorsStateContextValue {
+  const context = useContext(ThemeColorsStateContext);
   if (context === undefined) {
-    throw new Error('useThemeColors must be used within a ThemeColorsProvider');
+    throw new Error('useThemeColorsState must be used within a ThemeColorsProvider');
+  }
+  return context;
+}
+
+export function useThemeColorsActions(): ThemeColorsActionsContextValue {
+  const context = useContext(ThemeColorsActionsContext);
+  if (context === undefined) {
+    throw new Error('useThemeColorsActions must be used within a ThemeColorsProvider');
   }
   return context;
 }

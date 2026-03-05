@@ -5,12 +5,11 @@ import React from 'react';
 import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
 import { Button, Label, Textarea, Input, Hint } from '@/shared/ui';
 
-import { useThemeColors } from './ThemeColorsContext';
+import { useThemeColorsActions, useThemeColorsState } from './ThemeColorsContext';
 
 export function ThemeAiSection(): React.JSX.Element {
   const {
     schemeAiPrompt,
-    setSchemeAiPrompt,
     schemeAiLoading,
     schemeAiError,
     schemeAiOutput,
@@ -19,9 +18,12 @@ export function ThemeAiSection(): React.JSX.Element {
     brainAiModelId,
     brainAiAgentId,
     newSchemeColors,
+  } = useThemeColorsState();
+  const {
+    setSchemeAiPrompt,
     handleGenerateScheme,
     handleCancelSchemeAi,
-  } = useThemeColors();
+  } = useThemeColorsActions();
 
   return (
     <div className='rounded border border-border/40 bg-gray-900/40 p-3 space-y-3'>

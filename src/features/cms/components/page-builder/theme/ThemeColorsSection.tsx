@@ -6,7 +6,7 @@ import React, { useCallback } from 'react';
 import type { ColorScheme, ThemeSettings } from '@/shared/contracts/cms-theme';
 import { Button, Badge, Card, Hint } from '@/shared/ui';
 
-import { useThemeColors } from './ThemeColorsContext';
+import { useThemeColorsActions, useThemeColorsState } from './ThemeColorsContext';
 import { ColorField, TextField } from '../shared-fields';
 import { useThemeSettingsActions, useThemeSettingsValue } from '../ThemeSettingsContext';
 import { ThemeAiSection } from './ThemeAiSection';
@@ -16,20 +16,22 @@ export function ThemeColorsSection(): React.JSX.Element {
   const { update } = useThemeSettingsActions();
   const {
     schemeView,
-    setSchemeView,
     editingSchemeId,
-    setEditingSchemeId,
     activeScheme,
+    newSchemeName,
+    newSchemeColors,
+    isGlobalPaletteOpen,
+  } = useThemeColorsState();
+  const {
+    setSchemeView,
+    setEditingSchemeId,
     startAddScheme,
     startEditScheme,
     handleSaveScheme,
-    newSchemeName,
     setNewSchemeName,
-    newSchemeColors,
     updateSchemeColor,
-    isGlobalPaletteOpen,
     toggleGlobalPalette,
-  } = useThemeColors();
+  } = useThemeColorsActions();
 
   const updateSetting = useCallback(
     <K extends keyof ThemeSettings>(key: K) =>

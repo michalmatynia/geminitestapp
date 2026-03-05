@@ -126,6 +126,9 @@ export type PortablePathEnvelopeSignatureVerificationMode = PortablePathFingerpr
 export const PORTABLE_PATH_SIGNING_POLICY_PROFILES = ['dev', 'staging', 'prod'] as const;
 export type PortablePathSigningPolicyProfile =
   (typeof PORTABLE_PATH_SIGNING_POLICY_PROFILES)[number];
+export const PORTABLE_PATH_SIGNING_POLICY_SURFACES = ['canvas', 'product', 'api'] as const;
+export type PortablePathSigningPolicySurface =
+  (typeof PORTABLE_PATH_SIGNING_POLICY_SURFACES)[number];
 export type PortablePathSigningPolicy = {
   profile: PortablePathSigningPolicyProfile;
   fingerprintVerificationMode: PortablePathFingerprintVerificationMode;
@@ -184,6 +187,7 @@ export const DEFAULT_PORTABLE_PAYLOAD_LIMITS: PortablePayloadLimits = {
 
 export type ResolvePortablePathInputOptions = {
   signingPolicyProfile?: PortablePathSigningPolicyProfile;
+  signingPolicyTelemetrySurface?: PortablePathSigningPolicySurface;
   repairIdentities?: boolean;
   includeConnections?: boolean;
   enforcePayloadLimits?: boolean;
@@ -194,6 +198,10 @@ export type ResolvePortablePathInputOptions = {
   envelopeSignatureSecretsByKeyId?: Record<string, string>;
   envelopeSignatureFallbackSecrets?: string[];
   envelopeSignatureKeyResolver?: PortablePathEnvelopeSignatureKeyResolver;
+};
+
+type ResolvePortablePathInputInternalOptions = ResolvePortablePathInputOptions & {
+  __skipSigningPolicyUsageTelemetry?: boolean;
 };
 
 export type PortablePathMigrationWarningCode =
@@ -214,10 +222,13 @@ export type PortablePathMigrationWarningCode =
   | 'package_fingerprint_async_required'
   | 'package_fingerprint_verification_unavailable';
 
-export type PortablePathMigrationWarning = {
-  code: PortablePathMigrationWarningCode;
+type PortablePathDiagnosticMessage<TCode extends string> = {
+  code: TCode;
   message: string;
 };
+
+export type PortablePathMigrationWarning =
+  PortablePathDiagnosticMessage<PortablePathMigrationWarningCode>;
 
 export type ResolvedPortablePathInput = {
   source: PortablePathInputSource;
@@ -282,6 +293,7 @@ export type PortablePathRunOptions = Omit<EvaluateGraphOptions, 'reportAiPathsEr
   validationMode?: PortablePathValidationMode;
   validationTriggerNodeId?: string | null;
   signingPolicyProfile?: PortablePathSigningPolicyProfile;
+  signingPolicyTelemetrySurface?: PortablePathSigningPolicySurface;
   repairIdentities?: boolean;
   enforcePayloadLimits?: boolean;
   limits?: Partial<PortablePayloadLimits>;
@@ -364,6 +376,37 @@ export type PortablePathMigratorObservabilityEvent =
 export type PortablePathMigratorObservabilityHook = (
   event: PortablePathMigratorObservabilityEvent,
   snapshot: PortablePathMigratorObservabilitySnapshot
+) => void;
+
+export type PortablePathSigningPolicyUsageEvent = {
+  at: string;
+  profile: PortablePathSigningPolicyProfile;
+  surface: PortablePathSigningPolicySurface;
+  fingerprintVerificationMode: PortablePathFingerprintVerificationMode;
+  envelopeSignatureVerificationMode: PortablePathEnvelopeSignatureVerificationMode;
+};
+
+export type PortablePathSigningPolicyUsageByProfile = {
+  uses: number;
+  bySurface: Record<PortablePathSigningPolicySurface, number>;
+  fingerprintModeCounts: Record<PortablePathFingerprintVerificationMode, number>;
+  envelopeModeCounts: Record<PortablePathEnvelopeSignatureVerificationMode, number>;
+  lastUsedAt: string | null;
+  lastSurface: PortablePathSigningPolicySurface | null;
+};
+
+export type PortablePathSigningPolicyUsageSnapshot = {
+  totals: {
+    uses: number;
+  };
+  byProfile: Record<PortablePathSigningPolicyProfile, PortablePathSigningPolicyUsageByProfile>;
+  bySurface: Record<PortablePathSigningPolicySurface, number>;
+  recentEvents: PortablePathSigningPolicyUsageEvent[];
+};
+
+export type PortablePathSigningPolicyUsageHook = (
+  event: PortablePathSigningPolicyUsageEvent,
+  snapshot: PortablePathSigningPolicyUsageSnapshot
 ) => void;
 
 export type PortablePathEnvelopeVerificationOutcome =
@@ -515,6 +558,7 @@ const BUILTIN_PORTABLE_PATH_MIGRATOR_VERSIONS = new Set<string>([
 ]);
 
 const MAX_PORTABLE_PATH_MIGRATOR_FAILURE_EVENTS = 25;
+const MAX_PORTABLE_PATH_SIGNING_POLICY_USAGE_EVENTS = 100;
 const MAX_PORTABLE_PATH_ENVELOPE_VERIFICATION_EVENTS = 100;
 const MAX_PORTABLE_PATH_ENVELOPE_VERIFICATION_SINK_FAILURE_EVENTS = 50;
 const PORTABLE_PATH_ENVELOPE_KEY_ID_UNSPECIFIED = '(none)';
@@ -524,6 +568,63 @@ const createEmptyPortablePathSourceCounts = (): Record<PortablePathInputSource, 
   portable_envelope: 0,
   semantic_canvas: 0,
   path_config: 0,
+});
+
+const createEmptyPortablePathSigningPolicySurfaceCounts = (): Record<
+  PortablePathSigningPolicySurface,
+  number
+> => ({
+  canvas: 0,
+  product: 0,
+  api: 0,
+});
+
+const createEmptyPortablePathFingerprintVerificationModeCounts = (): Record<
+  PortablePathFingerprintVerificationMode,
+  number
+> => ({
+  off: 0,
+  warn: 0,
+  strict: 0,
+});
+
+const createEmptyPortablePathEnvelopeSignatureVerificationModeCounts = (): Record<
+  PortablePathEnvelopeSignatureVerificationMode,
+  number
+> => ({
+  off: 0,
+  warn: 0,
+  strict: 0,
+});
+
+const createEmptyPortablePathSigningPolicyByProfile = (): Record<
+  PortablePathSigningPolicyProfile,
+  PortablePathSigningPolicyUsageByProfile
+> => ({
+  dev: {
+    uses: 0,
+    bySurface: createEmptyPortablePathSigningPolicySurfaceCounts(),
+    fingerprintModeCounts: createEmptyPortablePathFingerprintVerificationModeCounts(),
+    envelopeModeCounts: createEmptyPortablePathEnvelopeSignatureVerificationModeCounts(),
+    lastUsedAt: null,
+    lastSurface: null,
+  },
+  staging: {
+    uses: 0,
+    bySurface: createEmptyPortablePathSigningPolicySurfaceCounts(),
+    fingerprintModeCounts: createEmptyPortablePathFingerprintVerificationModeCounts(),
+    envelopeModeCounts: createEmptyPortablePathEnvelopeSignatureVerificationModeCounts(),
+    lastUsedAt: null,
+    lastSurface: null,
+  },
+  prod: {
+    uses: 0,
+    bySurface: createEmptyPortablePathSigningPolicySurfaceCounts(),
+    fingerprintModeCounts: createEmptyPortablePathFingerprintVerificationModeCounts(),
+    envelopeModeCounts: createEmptyPortablePathEnvelopeSignatureVerificationModeCounts(),
+    lastUsedAt: null,
+    lastSurface: null,
+  },
 });
 
 const createEmptyPortablePathMigratorObservabilityState =
@@ -633,6 +734,106 @@ export const getPortablePathMigratorObservabilitySnapshot =
 
 export const resetPortablePathMigratorObservabilitySnapshot = (): void => {
   portablePathMigratorObservabilityState = createEmptyPortablePathMigratorObservabilityState();
+};
+
+const createEmptyPortablePathSigningPolicyUsageState =
+  (): PortablePathSigningPolicyUsageSnapshot => ({
+    totals: {
+      uses: 0,
+    },
+    byProfile: createEmptyPortablePathSigningPolicyByProfile(),
+    bySurface: createEmptyPortablePathSigningPolicySurfaceCounts(),
+    recentEvents: [],
+  });
+
+let portablePathSigningPolicyUsageState = createEmptyPortablePathSigningPolicyUsageState();
+const portablePathSigningPolicyUsageHooks = new Set<PortablePathSigningPolicyUsageHook>();
+
+const clonePortablePathSigningPolicyUsageSnapshot = (
+  snapshot: PortablePathSigningPolicyUsageSnapshot
+): PortablePathSigningPolicyUsageSnapshot => ({
+  totals: { ...snapshot.totals },
+  byProfile: {
+    dev: {
+      ...snapshot.byProfile.dev,
+      bySurface: { ...snapshot.byProfile.dev.bySurface },
+      fingerprintModeCounts: { ...snapshot.byProfile.dev.fingerprintModeCounts },
+      envelopeModeCounts: { ...snapshot.byProfile.dev.envelopeModeCounts },
+    },
+    staging: {
+      ...snapshot.byProfile.staging,
+      bySurface: { ...snapshot.byProfile.staging.bySurface },
+      fingerprintModeCounts: { ...snapshot.byProfile.staging.fingerprintModeCounts },
+      envelopeModeCounts: { ...snapshot.byProfile.staging.envelopeModeCounts },
+    },
+    prod: {
+      ...snapshot.byProfile.prod,
+      bySurface: { ...snapshot.byProfile.prod.bySurface },
+      fingerprintModeCounts: { ...snapshot.byProfile.prod.fingerprintModeCounts },
+      envelopeModeCounts: { ...snapshot.byProfile.prod.envelopeModeCounts },
+    },
+  },
+  bySurface: { ...snapshot.bySurface },
+  recentEvents: snapshot.recentEvents.map((event) => ({ ...event })),
+});
+
+const emitPortablePathSigningPolicyUsageEvent = (
+  event: PortablePathSigningPolicyUsageEvent
+): void => {
+  if (portablePathSigningPolicyUsageHooks.size === 0) return;
+  const snapshot = clonePortablePathSigningPolicyUsageSnapshot(portablePathSigningPolicyUsageState);
+  for (const hook of portablePathSigningPolicyUsageHooks) {
+    try {
+      hook(event, snapshot);
+    } catch {
+      // Observability hooks must not break portable path resolution flow.
+    }
+  }
+};
+
+const recordPortablePathSigningPolicyUsage = (input: {
+  profile: PortablePathSigningPolicyProfile;
+  surface: PortablePathSigningPolicySurface;
+  fingerprintVerificationMode: PortablePathFingerprintVerificationMode;
+  envelopeSignatureVerificationMode: PortablePathEnvelopeSignatureVerificationMode;
+}): void => {
+  const event: PortablePathSigningPolicyUsageEvent = {
+    at: new Date().toISOString(),
+    profile: input.profile,
+    surface: input.surface,
+    fingerprintVerificationMode: input.fingerprintVerificationMode,
+    envelopeSignatureVerificationMode: input.envelopeSignatureVerificationMode,
+  };
+  portablePathSigningPolicyUsageState.totals.uses += 1;
+  portablePathSigningPolicyUsageState.bySurface[input.surface] += 1;
+  const profileStats = portablePathSigningPolicyUsageState.byProfile[input.profile];
+  profileStats.uses += 1;
+  profileStats.bySurface[input.surface] += 1;
+  profileStats.fingerprintModeCounts[input.fingerprintVerificationMode] += 1;
+  profileStats.envelopeModeCounts[input.envelopeSignatureVerificationMode] += 1;
+  profileStats.lastUsedAt = event.at;
+  profileStats.lastSurface = input.surface;
+  portablePathSigningPolicyUsageState.recentEvents.push(event);
+  if (portablePathSigningPolicyUsageState.recentEvents.length > MAX_PORTABLE_PATH_SIGNING_POLICY_USAGE_EVENTS) {
+    portablePathSigningPolicyUsageState.recentEvents.shift();
+  }
+  emitPortablePathSigningPolicyUsageEvent(event);
+};
+
+export const registerPortablePathSigningPolicyUsageHook = (
+  hook: PortablePathSigningPolicyUsageHook
+): (() => void) => {
+  portablePathSigningPolicyUsageHooks.add(hook);
+  return () => {
+    portablePathSigningPolicyUsageHooks.delete(hook);
+  };
+};
+
+export const getPortablePathSigningPolicyUsageSnapshot = (): PortablePathSigningPolicyUsageSnapshot =>
+  clonePortablePathSigningPolicyUsageSnapshot(portablePathSigningPolicyUsageState);
+
+export const resetPortablePathSigningPolicyUsageSnapshot = (): void => {
+  portablePathSigningPolicyUsageState = createEmptyPortablePathSigningPolicyUsageState();
 };
 
 const createEmptyPortablePathEnvelopeVerificationObservabilityState =
@@ -1012,24 +1213,46 @@ export const getPortablePathSigningPolicy = (
   profile: PortablePathSigningPolicyProfile = 'dev'
 ): PortablePathSigningPolicy => PORTABLE_PATH_SIGNING_POLICY_BY_PROFILE[profile];
 
+const normalizePortablePathSigningPolicySurface = (
+  surface: PortablePathSigningPolicySurface | undefined
+): PortablePathSigningPolicySurface => surface ?? 'api';
+
+type ResolvePortablePathVerificationModesOptions = {
+  skipUsageTelemetry?: boolean;
+};
+
 const resolvePortablePathVerificationModes = (
   options?: Pick<
     ResolvePortablePathInputOptions,
-    'signingPolicyProfile' | 'fingerprintVerificationMode' | 'envelopeSignatureVerificationMode'
-  >
+    | 'signingPolicyProfile'
+    | 'signingPolicyTelemetrySurface'
+    | 'fingerprintVerificationMode'
+    | 'envelopeSignatureVerificationMode'
+  >,
+  modeOptions?: ResolvePortablePathVerificationModesOptions
 ): {
   signingPolicy: PortablePathSigningPolicy;
   fingerprintVerificationMode: PortablePathFingerprintVerificationMode;
   envelopeSignatureVerificationMode: PortablePathEnvelopeSignatureVerificationMode;
 } => {
   const signingPolicy = getPortablePathSigningPolicy(options?.signingPolicyProfile ?? 'dev');
+  const fingerprintVerificationMode =
+    options?.fingerprintVerificationMode ?? signingPolicy.fingerprintVerificationMode;
+  const envelopeSignatureVerificationMode =
+    options?.envelopeSignatureVerificationMode ??
+    signingPolicy.envelopeSignatureVerificationMode;
+  if (!modeOptions?.skipUsageTelemetry) {
+    recordPortablePathSigningPolicyUsage({
+      profile: signingPolicy.profile,
+      surface: normalizePortablePathSigningPolicySurface(options?.signingPolicyTelemetrySurface),
+      fingerprintVerificationMode,
+      envelopeSignatureVerificationMode,
+    });
+  }
   return {
     signingPolicy,
-    fingerprintVerificationMode:
-      options?.fingerprintVerificationMode ?? signingPolicy.fingerprintVerificationMode,
-    envelopeSignatureVerificationMode:
-      options?.envelopeSignatureVerificationMode ??
-      signingPolicy.envelopeSignatureVerificationMode,
+    fingerprintVerificationMode,
+    envelopeSignatureVerificationMode,
   };
 };
 
@@ -1409,7 +1632,10 @@ export const resolvePortablePathInput = (
   input: unknown,
   options?: ResolvePortablePathInputOptions
 ): ResolvePortablePathInputResult => {
-  const verificationModes = resolvePortablePathVerificationModes(options);
+  const internalOptions = options as ResolvePortablePathInputInternalOptions | undefined;
+  const verificationModes = resolvePortablePathVerificationModes(options, {
+    skipUsageTelemetry: internalOptions?.__skipSigningPolicyUsageTelemetry === true,
+  });
   const limits = resolvePayloadLimits(options?.limits);
   const decoded = decodePortablePayload(input);
   if (!decoded.ok) return decoded;
@@ -1532,7 +1758,8 @@ export const resolvePortablePathInputAsync = async (
     ...options,
     envelopeSignatureVerificationMode: 'off',
     fingerprintVerificationMode: 'off',
-  });
+    __skipSigningPolicyUsageTelemetry: true,
+  } as ResolvePortablePathInputInternalOptions);
   if (!resolved.ok) return resolved;
 
   const migrationWarnings = [...resolved.value.migrationWarnings];
@@ -2646,6 +2873,7 @@ export const runPortablePathClient = async (
     validationMode = 'standard',
     validationTriggerNodeId = null,
     signingPolicyProfile,
+    signingPolicyTelemetrySurface = 'canvas',
     repairIdentities = true,
     enforcePayloadLimits = true,
     limits,
@@ -2661,6 +2889,7 @@ export const runPortablePathClient = async (
 
   const resolved = await resolvePortablePathInputAsync(input, {
     signingPolicyProfile,
+    signingPolicyTelemetrySurface,
     repairIdentities,
     includeConnections: false,
     enforcePayloadLimits,

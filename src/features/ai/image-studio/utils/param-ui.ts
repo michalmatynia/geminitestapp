@@ -30,7 +30,7 @@ const PARAM_UI_CONTROLS: ParamUiControl[] = [
 export const isParamUiControl = (value: unknown): value is ParamUiControl =>
   typeof value === 'string' && PARAM_UI_CONTROLS.includes(value as ParamUiControl);
 
-export type ParamUiRecommendation = {
+type ParamUiRecommendation = {
   baseKind: ParamSpecKind;
   recommended: Exclude<ParamUiControl, 'auto'>;
   options: ParamUiControl[];

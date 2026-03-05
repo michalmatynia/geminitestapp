@@ -165,6 +165,7 @@ export function useAiPathsSettingsPathActions({
       const resolved = resolvePortablePathInput(payload, {
         repairIdentities: true,
         includeConnections: false,
+        signingPolicyTelemetrySurface: 'canvas',
       });
       if (!resolved.ok) {
         throw new Error(resolved.error);

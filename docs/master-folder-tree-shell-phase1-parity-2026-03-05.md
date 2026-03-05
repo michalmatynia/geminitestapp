@@ -66,7 +66,7 @@ Lock behavior parity before pure-shell runtime extraction by:
 
 ## Remaining Risks (For Phase 2/3)
 
-1. Cross-route churn is now covered by dedicated runtime-lifecycle tests in Phase 2 (`shell-runtime-route-churn.test.tsx`), but real browser tab suspension/resume still depends on manual smoke until Playwright lifecycle coverage lands.
+1. Cross-route churn is covered by Phase 2 runtime tests and browser lifecycle stress is covered by Phase 3 (`e2e/features/foldertree/foldertree-runtime-lifecycle.spec.ts`); remaining lifecycle risk is cross-browser (WebKit/Firefox) parity.
 
 ## Verification Gate For Phase 1
 

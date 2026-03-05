@@ -1,4 +1,4 @@
-import { stableStringify } from '../../ai/ai-paths/lib';
+import { stableStringify } from '@/shared/lib/ai-paths';
 
 export {
   buildCaseResolverDraftCanonicalState,

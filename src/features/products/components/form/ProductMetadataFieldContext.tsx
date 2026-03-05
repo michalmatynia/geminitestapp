@@ -28,9 +28,25 @@ export type ProductMetadataFieldContextValue = {
   producersLoading?: boolean;
 };
 
-const ProductMetadataFieldContext = React.createContext<ProductMetadataFieldContextValue | null>(
-  null
-);
+type ProductMetadataFieldActionKey =
+  | 'onCatalogsChange'
+  | 'onCategoryChange'
+  | 'onTagsChange'
+  | 'onProducersChange';
+
+export type ProductMetadataFieldStateContextValue = Omit<
+  ProductMetadataFieldContextValue,
+  ProductMetadataFieldActionKey
+>;
+export type ProductMetadataFieldActionsContextValue = Pick<
+  ProductMetadataFieldContextValue,
+  ProductMetadataFieldActionKey
+>;
+
+const ProductMetadataFieldStateContext =
+  React.createContext<ProductMetadataFieldStateContextValue | null>(null);
+const ProductMetadataFieldActionsContext =
+  React.createContext<ProductMetadataFieldActionsContextValue | null>(null);
 
 export function ProductMetadataFieldProvider({
   value,
@@ -39,13 +55,73 @@ export function ProductMetadataFieldProvider({
   value: ProductMetadataFieldContextValue;
   children: React.ReactNode;
 }): React.JSX.Element {
+  const {
+    catalogs,
+    selectedCatalogIds,
+    catalogsLoading,
+    categories,
+    selectedCategoryId,
+    categoriesLoading,
+    tags,
+    selectedTagIds,
+    tagsLoading,
+    producers,
+    selectedProducerIds,
+    producersLoading,
+    onCatalogsChange,
+    onCategoryChange,
+    onTagsChange,
+    onProducersChange,
+  } = value;
+
+  const stateValue: ProductMetadataFieldStateContextValue = {
+    catalogs,
+    selectedCatalogIds,
+    catalogsLoading,
+    categories,
+    selectedCategoryId,
+    categoriesLoading,
+    tags,
+    selectedTagIds,
+    tagsLoading,
+    producers,
+    selectedProducerIds,
+    producersLoading,
+  };
+
+  const actionsValue: ProductMetadataFieldActionsContextValue = {
+    onCatalogsChange,
+    onCategoryChange,
+    onTagsChange,
+    onProducersChange,
+  };
+
   return (
-    <ProductMetadataFieldContext.Provider value={value}>
-      {children}
-    </ProductMetadataFieldContext.Provider>
+    <ProductMetadataFieldActionsContext.Provider value={actionsValue}>
+      <ProductMetadataFieldStateContext.Provider value={stateValue}>
+        {children}
+      </ProductMetadataFieldStateContext.Provider>
+    </ProductMetadataFieldActionsContext.Provider>
   );
 }
 
+export function useOptionalProductMetadataFieldStateContext():
+  | ProductMetadataFieldStateContextValue
+  | null {
+  return React.useContext(ProductMetadataFieldStateContext);
+}
+
+export function useOptionalProductMetadataFieldActionsContext():
+  | ProductMetadataFieldActionsContextValue
+  | null {
+  return React.useContext(ProductMetadataFieldActionsContext);
+}
+
 export function useOptionalProductMetadataFieldContext(): ProductMetadataFieldContextValue | null {
-  return React.useContext(ProductMetadataFieldContext);
+  const state = useOptionalProductMetadataFieldStateContext();
+  const actions = useOptionalProductMetadataFieldActionsContext();
+  if (!state || !actions) {
+    return null;
+  }
+  return { ...state, ...actions };
 }

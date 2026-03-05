@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -78,5 +79,60 @@ describe('AiPathsRuntimeAnalysis', () => {
     expect(useAiPathRuntimeAnalyticsMock).toHaveBeenCalledWith('24h', false);
     expect(screen.getByText(/Runtime analytics is disabled in AI Brain/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Disabled' })).toBeDisabled();
+  });
+
+  it('supports keyboard focus and enter activation on refresh when runtime analytics is enabled', async () => {
+    const user = userEvent.setup();
+    const refetchMock = vi.fn().mockResolvedValue(undefined);
+
+    useAiPathsSettingsOrchestratorMock.mockReturnValue({
+      runtimeRunStatus: 'idle',
+      runtimeNodeStatuses: {},
+      activePathId: null,
+      nodes: [],
+      reportAiPathsError: vi.fn(),
+    });
+    useRunHistoryActionsMock.mockReturnValue({
+      setRunHistoryNodeId: vi.fn(),
+      setRunFilter: vi.fn(),
+      openRunDetail: vi.fn(),
+    });
+    useBrainAssignmentMock.mockImplementation(() => ({
+      assignment: {
+        enabled: true,
+      },
+      effectiveModelId: '',
+    }));
+    useAiPathRuntimeAnalyticsMock.mockReturnValue({
+      data: {
+        storage: 'redis',
+        runs: {
+          total: 4,
+          successRate: 100,
+          avgDurationMs: 120,
+          p95DurationMs: 240,
+        },
+        traces: {
+          sampledRuns: 1,
+          sampledSpans: 1,
+          avgDurationMs: 50,
+          p95DurationMs: 50,
+          slowestSpan: null,
+          topSlowNodes: [],
+          topFailedNodes: [],
+        },
+      },
+      isFetching: false,
+      refetch: refetchMock,
+    });
+
+    render(<AiPathsRuntimeAnalysis />);
+
+    expect(useAiPathRuntimeAnalyticsMock).toHaveBeenCalledWith('24h', true);
+    const refreshButton = screen.getByRole('button', { name: 'Refresh' });
+    await user.tab();
+    expect(refreshButton).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(refetchMock).toHaveBeenCalledTimes(1);
   });
 });

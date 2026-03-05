@@ -6,7 +6,7 @@ import {
   evaluateAiPathsValidationPreflight,
   listAiPathRuns,
   normalizeAiPathsValidationConfig,
-} from '../../lib';
+} from '@/shared/lib/ai-paths';
 import { buildSwitchPathOptions, sortPathMetas } from './ai-paths-settings-view-utils';
 import { useAiPathsDocsTooltips } from '@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips';
 import { useRunHistoryActions } from '@/features/ai/ai-paths/context';

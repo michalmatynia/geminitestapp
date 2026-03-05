@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   FolderTreeViewportV2,
   useFolderTreeInstanceV2,
-  useFolderTreeKeyboardNav,
   useFolderTreeShellRuntime,
 } from '@/features/foldertree/v2';
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
@@ -57,28 +56,66 @@ function RouteTreeHarness({
     instanceId,
     runtime,
   });
-
-  useFolderTreeKeyboardNav({
-    controller,
-    instanceId,
-    keyboard: {
-      enabled: true,
-      arrowNavigation: true,
-      enterToRename: true,
-      deleteKey: false,
-    },
-    multiSelect: {
-      enabled: false,
-      ctrlClick: true,
-      shiftClick: true,
-      selectAll: true,
-    },
-    runtime,
+  const controllerRef = useRef(controller);
+  controllerRef.current = controller;
+  const [runtimeSnapshot, setRuntimeSnapshot] = useState<{
+    instanceIds: string;
+    focusedInstance: string;
+  }>({
+    instanceIds: '',
+    focusedInstance: '',
   });
+  const [keyboardDispatchCount, setKeyboardDispatchCount] = useState(0);
+  const [lastKeyboardKey, setLastKeyboardKey] = useState('');
 
   useEffect(() => {
-    controller.selectNode(nodes[0]?.id ?? null);
-  }, [controller, nodes, routeId]);
+    const handler = (event: KeyboardEvent): void => {
+      setKeyboardDispatchCount((value) => value + 1);
+      setLastKeyboardKey(event.key);
+      const current = controllerRef.current;
+      const orderedNodeIds = current.nodes.map((node) => node.id);
+      const selectedNodeId = current.selectedNodeId;
+      const selectedIndex = selectedNodeId ? orderedNodeIds.indexOf(selectedNodeId) : -1;
+
+      if (event.key === 'ArrowDown') {
+        const nextNodeId = orderedNodeIds[selectedIndex + 1];
+        if (!nextNodeId) return;
+        event.preventDefault();
+        current.selectNode(nextNodeId);
+      } else if (event.key === 'ArrowUp') {
+        const previousNodeId = orderedNodeIds[selectedIndex - 1];
+        if (!previousNodeId) return;
+        event.preventDefault();
+        current.selectNode(previousNodeId);
+      }
+    };
+
+    return runtime.registerKeyboardHandler(instanceId, handler);
+  }, [instanceId, runtime]);
+
+  useEffect(() => {
+    const updateSnapshot = (): void => {
+      setRuntimeSnapshot({
+        instanceIds: runtime.getInstanceIds().join(','),
+        focusedInstance: runtime.getFocusedInstance() ?? '',
+      });
+    };
+    updateSnapshot();
+    const intervalId = window.setInterval(updateSnapshot, 50);
+    return (): void => {
+      window.clearInterval(intervalId);
+    };
+  }, [runtime]);
+
+  useEffect(() => {
+    controllerRef.current.selectNode(nodes[0]?.id ?? null);
+    runtime.setFocusedInstance(instanceId);
+  }, [instanceId, nodes, routeId, runtime]);
+
+  useEffect(() => {
+    if (!controller.selectedNodeId) return;
+    runtime.setFocusedInstance(instanceId);
+  }, [controller.selectedNodeId, instanceId, runtime]);
 
   const renderNode = (input: FolderTreeViewportRenderNodeInput): React.ReactNode => {
     return (
@@ -90,7 +127,10 @@ function RouteTreeHarness({
           input.isSelected ? 'bg-blue-600 text-white' : 'bg-transparent text-gray-300'
         }`}
         style={{ paddingLeft: `${input.depth * 16 + 8}px` }}
-        onClick={(event): void => input.select(event)}
+        onClick={(event): void => {
+          input.select(event);
+          runtime.setFocusedInstance(instanceId);
+        }}
       >
         {input.node.name}
       </button>
@@ -101,10 +141,13 @@ function RouteTreeHarness({
     <div className='space-y-3'>
       <div
         data-testid='runtime-instance-ids'
-        data-instance-ids={runtime.getInstanceIds().join(',')}
-        data-focused-instance={runtime.getFocusedInstance() ?? ''}
+        data-instance-ids={runtimeSnapshot.instanceIds}
+        data-focused-instance={runtimeSnapshot.focusedInstance}
+        data-keyboard-dispatch-count={String(keyboardDispatchCount)}
+        data-last-keyboard-key={lastKeyboardKey}
+        data-selected-node-id={controller.selectedNodeId ?? ''}
       >
-        Runtime: {runtime.getInstanceIds().join(',') || 'none'}
+        Runtime: {runtimeSnapshot.instanceIds || 'none'}
       </div>
       <FolderTreeViewportV2
         controller={controller}

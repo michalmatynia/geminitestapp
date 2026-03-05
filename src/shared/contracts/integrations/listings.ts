@@ -6,6 +6,7 @@ import {
   type ProductCategory,
   type ProductTag,
 } from '../products';
+import { type RecursiveTreeNode } from '../tree';
 
 export const productListingExportEventSchema = z.object({
   exportedAt: z.string(),
@@ -200,9 +201,7 @@ export interface ExternalCategory {
   updatedAt?: string | null;
 }
 
-export interface ExternalCategoryWithChildren extends ExternalCategory {
-  children: ExternalCategoryWithChildren[];
-}
+export type ExternalCategoryWithChildren = RecursiveTreeNode<ExternalCategory>;
 
 export const externalCategoryWithChildrenSchema: z.ZodType<ExternalCategoryWithChildren> =
   externalCategorySchema.extend({

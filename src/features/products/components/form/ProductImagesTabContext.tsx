@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 
 import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';
 import type { ImageFileSelection } from '@/shared/contracts/files';
@@ -18,7 +18,21 @@ export type ProductImagesTabContextValue = {
   chooseButtonAriaLabel?: string;
 };
 
-const ProductImagesTabContext = createContext<ProductImagesTabContextValue | null>(null);
+type ProductImagesTabActionKey = 'onShowFileManager' | 'onSelectFiles';
+
+export type ProductImagesTabStateContextValue = Omit<
+  ProductImagesTabContextValue,
+  ProductImagesTabActionKey
+>;
+export type ProductImagesTabActionsContextValue = Pick<
+  ProductImagesTabContextValue,
+  ProductImagesTabActionKey
+>;
+
+const ProductImagesTabStateContext = createContext<ProductImagesTabStateContextValue | null>(null);
+const ProductImagesTabActionsContext = createContext<ProductImagesTabActionsContextValue | null>(
+  null
+);
 
 type ProductImagesTabProviderProps = {
   value: ProductImagesTabContextValue;
@@ -29,19 +43,101 @@ export function ProductImagesTabProvider({
   value,
   children,
 }: ProductImagesTabProviderProps): React.JSX.Element {
+  const {
+    showFileManager,
+    imageManagerController,
+    inlineFileManager,
+    sectionTitle,
+    sectionDescription,
+    chooseButtonLabel,
+    chooseButtonAriaLabel,
+    onShowFileManager,
+    onSelectFiles,
+  } = value;
+
+  const stateValue = useMemo<ProductImagesTabStateContextValue>(
+    () => ({
+      showFileManager,
+      imageManagerController,
+      inlineFileManager,
+      sectionTitle,
+      sectionDescription,
+      chooseButtonLabel,
+      chooseButtonAriaLabel,
+    }),
+    [
+      showFileManager,
+      imageManagerController,
+      inlineFileManager,
+      sectionTitle,
+      sectionDescription,
+      chooseButtonLabel,
+      chooseButtonAriaLabel,
+    ]
+  );
+
+  const actionsValue = useMemo<ProductImagesTabActionsContextValue>(
+    () => ({
+      onShowFileManager,
+      onSelectFiles,
+    }),
+    [onShowFileManager, onSelectFiles]
+  );
+
   return (
-    <ProductImagesTabContext.Provider value={value}>{children}</ProductImagesTabContext.Provider>
+    <ProductImagesTabActionsContext.Provider value={actionsValue}>
+      <ProductImagesTabStateContext.Provider value={stateValue}>
+        {children}
+      </ProductImagesTabStateContext.Provider>
+    </ProductImagesTabActionsContext.Provider>
   );
 }
 
+export function useOptionalProductImagesTabStateContext(): ProductImagesTabStateContextValue | null {
+  return useContext(ProductImagesTabStateContext);
+}
+
+export function useProductImagesTabStateContext(): ProductImagesTabStateContextValue {
+  const context = useContext(ProductImagesTabStateContext);
+  if (!context) {
+    throw internalError(
+      'useProductImagesTabStateContext must be used within ProductImagesTabProvider'
+    );
+  }
+  return context;
+}
+
+export function useOptionalProductImagesTabActionsContext():
+  | ProductImagesTabActionsContextValue
+  | null {
+  return useContext(ProductImagesTabActionsContext);
+}
+
+export function useProductImagesTabActionsContext(): ProductImagesTabActionsContextValue {
+  const context = useContext(ProductImagesTabActionsContext);
+  if (!context) {
+    throw internalError(
+      'useProductImagesTabActionsContext must be used within ProductImagesTabProvider'
+    );
+  }
+  return context;
+}
+
 export function useOptionalProductImagesTabContext(): ProductImagesTabContextValue | null {
-  return useContext(ProductImagesTabContext);
+  const state = useOptionalProductImagesTabStateContext();
+  const actions = useOptionalProductImagesTabActionsContext();
+
+  return useMemo(() => {
+    if (!state || !actions) {
+      return null;
+    }
+    return { ...state, ...actions };
+  }, [actions, state]);
 }
 
 export function useProductImagesTabContext(): ProductImagesTabContextValue {
-  const context = useContext(ProductImagesTabContext);
-  if (!context) {
-    throw internalError('useProductImagesTabContext must be used within ProductImagesTabProvider');
-  }
-  return context;
+  const state = useProductImagesTabStateContext();
+  const actions = useProductImagesTabActionsContext();
+
+  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
 }

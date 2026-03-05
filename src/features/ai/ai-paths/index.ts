@@ -1,5 +1,5 @@
 // Auto-generated public API for feature. Edit with care.
-export * from './lib';
+export * from '@/shared/lib/ai-paths';
 export * from './pages/AdminAiPathsDeadLetterPage';
 export * from './pages/AdminAiPathsPage';
 export * from './pages/AdminAiPathsQueuePage';

@@ -1,6 +1,6 @@
 import { JSX, Suspense } from 'react';
 
-import { MarketplacesPage } from '@/features/integrations/public';
+import { MarketplacesPage } from '@/features/integrations';
 
 export const dynamic = 'force-dynamic';
 

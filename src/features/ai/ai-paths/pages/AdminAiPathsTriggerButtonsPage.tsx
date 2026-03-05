@@ -132,6 +132,7 @@ const extractTriggerButtonPathUsageMap = (
     const resolvedConfig = resolvePortablePathInput(value, {
       repairIdentities: true,
       includeConnections: false,
+      signingPolicyTelemetrySurface: 'canvas',
     });
     if (!resolvedConfig.ok) {
       return;

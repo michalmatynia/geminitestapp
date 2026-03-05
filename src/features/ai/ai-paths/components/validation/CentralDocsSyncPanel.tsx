@@ -4,7 +4,7 @@ import React from 'react';
 import { Badge, Button, Card, Hint, SelectSimple, StatusBadge } from '@/shared/ui';
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 import { getCandidateTags } from '../../pages/AdminAiPathsValidationUtils';
-import { AiPathsValidationRule } from '../../lib';
+import { AiPathsValidationRule } from '@/shared/lib/ai-paths';
 
 export function CentralDocsSyncPanel(): React.JSX.Element {
   const {

@@ -59,9 +59,8 @@ export function useCanvasEventHandlers(args: {
   );
 
   const isWheelLikelyZoomGesture = useCallback((event: WheelLikeEvent): boolean => {
-    // Allow normal wheel/trackpad scroll to bubble so the page can scroll vertically.
-    // We only treat wheel as canvas zoom for explicit modifier pinch gestures or
-    // Safari gesture continuations that were started via gesture events.
+    // Classify the wheel source for gesture continuity tracking.
+    // Unmodified in-canvas wheel is also treated as zoom by handleWheelLike.
     if (event.ctrlKey || event.metaKey) return true;
     if (performance.now() >= wheelGestureActiveUntilRef.current) return false;
     return wheelGestureSourceRef.current === 'safari';
@@ -69,26 +68,22 @@ export function useCanvasEventHandlers(args: {
 
   const applyWheelZoomFromEvent = useCallback(
     (event: WheelLikeEvent): void => {
-      const zoomFactor = 1 - event.deltaY * 0.0015;
-      const targetScale = clampScale(latestScaleRef.current * zoomFactor);
       const hasFiniteClient = Number.isFinite(event.clientX) && Number.isFinite(event.clientY);
-      const anchor =
-        resolveViewportPointFromClient(
-          hasFiniteClient ? event.clientX : (resolveViewportCenter()?.x ?? 0),
-          hasFiniteClient ? event.clientY : (resolveViewportCenter()?.y ?? 0)
-        ) ?? null;
-      const targetView = nav.getZoomTargetView(targetScale, anchor);
-      nav.setViewClamped(targetView);
-      if (hasFiniteClient && anchor) {
-        updateLastPointerCanvasPosFromClient(event.clientX, event.clientY);
-      }
+      const anchorClient = hasFiniteClient
+        ? { x: event.clientX, y: event.clientY }
+        : resolveViewportCenter();
+      if (!anchorClient) return;
+      nav.applyWheelZoom(
+        event.deltaY,
+        anchorClient.x,
+        anchorClient.y,
+        event.deltaMode,
+        event.ctrlKey,
+        event.metaKey,
+        event.deltaX
+      );
     },
-    [
-      nav,
-      resolveViewportCenter,
-      resolveViewportPointFromClient,
-      updateLastPointerCanvasPosFromClient,
-    ]
+    [nav, resolveViewportCenter]
   );
 
   const handleWheelLike = useCallback(
@@ -98,11 +93,9 @@ export function useCanvasEventHandlers(args: {
       const insideByPoint = isPointInsideCanvas(event.clientX, event.clientY);
       if (!insideByPoint) return;
       const likelyZoomGesture = isWheelLikelyZoomGesture(event);
-      const withinActiveGestureWindow = now < wheelGestureActiveUntilRef.current;
-      if (!likelyZoomGesture && !withinActiveGestureWindow) return;
-      if (!likelyZoomGesture) return;
 
-      wheelGestureSourceRef.current = event.ctrlKey || event.metaKey ? 'wheel-modifier' : 'safari';
+      wheelGestureSourceRef.current =
+        event.ctrlKey || event.metaKey ? 'wheel-modifier' : likelyZoomGesture ? 'safari' : null;
       wheelGestureActiveUntilRef.current = now + 1800;
       event.preventDefault();
       event.stopPropagation?.();

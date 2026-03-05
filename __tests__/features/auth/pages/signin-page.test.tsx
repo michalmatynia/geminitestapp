@@ -192,6 +192,22 @@ describe('SignInPage', () => {
 
     expect(await screen.findByText('Invalid credentials.')).toBeInTheDocument();
   });
+
+  it('supports keyboard tab order across sign-in controls', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    const emailInput = await screen.findByLabelText(/email/i);
+    const passwordInput = screen.getByLabelText(/password/i);
+    const submitButton = screen.getByRole('button', { name: /sign in/i });
+
+    await user.tab();
+    expect(emailInput).toHaveFocus();
+    await user.tab();
+    expect(passwordInput).toHaveFocus();
+    await user.tab();
+    expect(submitButton).toHaveFocus();
+  });
 });
 
 describe('resolveSignInCallbackNavigation', () => {

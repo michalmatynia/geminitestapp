@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { AllegroShippingPriceManagementPage } from '@/features/integrations/public';
+import { AllegroShippingPriceManagementPage } from '@/features/integrations';
 
 export default function Page(): JSX.Element {
   return <AllegroShippingPriceManagementPage />;

@@ -48,13 +48,17 @@ export type PortableSchemaDiffClassificationReport = {
 type PortableSchemaDiffCliArgs = {
   strict: boolean;
   json: boolean;
+  suggestAllowlist: boolean;
   allowlistRelativePath: string;
 };
+
+const DEFAULT_ALLOWLIST_SUGGESTION_EXPIRY_DAYS = 14;
 
 const parseCliArgs = (argv: string[]): PortableSchemaDiffCliArgs => {
   const parsed: PortableSchemaDiffCliArgs = {
     strict: false,
     json: false,
+    suggestAllowlist: false,
     allowlistRelativePath: DEFAULT_PORTABLE_SCHEMA_DIFF_ALLOWLIST_RELATIVE_PATH,
   };
   for (let index = 0; index < argv.length; index += 1) {
@@ -65,6 +69,10 @@ const parseCliArgs = (argv: string[]): PortableSchemaDiffCliArgs => {
     }
     if (token === '--json') {
       parsed.json = true;
+      continue;
+    }
+    if (token === '--suggest-allowlist') {
+      parsed.suggestAllowlist = true;
       continue;
     }
     if (token === '--allowlist') {
@@ -266,11 +274,40 @@ export const classifyPortableSchemaDiffChanges = (
   };
 };
 
+const toIsoDateWithOffsetDays = (base: Date, days: number): string => {
+  const value = new Date(base.getTime());
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString();
+};
+
+export const buildPortableSchemaDiffAllowlistSuggestions = (
+  classification: PortableSchemaDiffClassificationReport,
+  now = new Date()
+): PortableSchemaDiffAllowlistEntry[] => {
+  const suggestionsByKey = new Map<string, PortableSchemaDiffAllowlistEntry>();
+  for (const entry of classification.unexpectedBreaking) {
+    const dedupeKey = `${entry.kind}:${entry.vNextHash}`;
+    if (suggestionsByKey.has(dedupeKey)) continue;
+    suggestionsByKey.set(dedupeKey, {
+      kind: entry.kind,
+      vNextHash: entry.vNextHash,
+      breakRisk: 'breaking',
+      reason: `TODO: review ${entry.kind} schema diff and set breakRisk when approved.`,
+      expiresAt: toIsoDateWithOffsetDays(now, DEFAULT_ALLOWLIST_SUGGESTION_EXPIRY_DAYS),
+    });
+  }
+  return Array.from(suggestionsByKey.values()).sort((left, right) => {
+    if (left.kind === right.kind) return left.vNextHash.localeCompare(right.vNextHash);
+    return left.kind.localeCompare(right.kind);
+  });
+};
+
 type RunPortableSchemaDiffGuardrailOptions = {
   root?: string;
   allowlistRelativePath?: string;
   strict?: boolean;
   json?: boolean;
+  suggestAllowlist?: boolean;
   logger?: Pick<typeof console, 'log' | 'error'>;
 };
 
@@ -281,6 +318,7 @@ export const runPortableSchemaDiffGuardrail = async (
   strict: boolean;
   diff: PortablePathJsonSchemaDiffReport;
   classification: PortableSchemaDiffClassificationReport;
+  suggestedAllowlistEntries: PortableSchemaDiffAllowlistEntry[];
 }> => {
   const root = options.root ?? process.cwd();
   const logger = options.logger ?? console;
@@ -291,6 +329,9 @@ export const runPortableSchemaDiffGuardrail = async (
     options.allowlistRelativePath
   );
   const classification = classifyPortableSchemaDiffChanges(diff, allowlist);
+  const suggestedAllowlistEntries = options.suggestAllowlist
+    ? buildPortableSchemaDiffAllowlistSuggestions(classification)
+    : [];
   const hasUnexpectedBreaking = classification.unexpectedBreaking.length > 0;
   const hasExpiredAllowlist = classification.expiredAllowlistEntries.length > 0;
   const ok = !strict || (!hasUnexpectedBreaking && !hasExpiredAllowlist);
@@ -306,8 +347,10 @@ export const runPortableSchemaDiffGuardrail = async (
       unexpectedBreaking: classification.unexpectedBreaking.length,
       expiredAllowlistEntries: classification.expiredAllowlistEntries.length,
       staleAllowlistEntries: classification.staleAllowlistEntries.length,
+      suggestedAllowlistEntries: suggestedAllowlistEntries.length,
     },
     classification,
+    suggestedAllowlistEntries,
   };
 
   if (options.json) {
@@ -340,6 +383,10 @@ export const runPortableSchemaDiffGuardrail = async (
         );
       }
     }
+    if (suggestedAllowlistEntries.length > 0) {
+      logger.log('[ai-paths:portable-schema-diff] suggested allowlist entries (review before merge):');
+      logger.log(JSON.stringify(suggestedAllowlistEntries, null, 2));
+    }
     if (ok) {
       logger.log('[ai-paths:portable-schema-diff] guardrail passed');
     } else {
@@ -352,6 +399,7 @@ export const runPortableSchemaDiffGuardrail = async (
     strict,
     diff,
     classification,
+    suggestedAllowlistEntries,
   };
 };
 
@@ -360,6 +408,7 @@ const runCli = async (): Promise<void> => {
   const result = await runPortableSchemaDiffGuardrail({
     strict: args.strict,
     json: args.json,
+    suggestAllowlist: args.suggestAllowlist,
     allowlistRelativePath: args.allowlistRelativePath,
   });
   if (!result.ok) {

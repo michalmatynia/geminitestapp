@@ -33,6 +33,6 @@ Run:
 4. `npx vitest run src/features/foldertree/v2/__tests__/useFolderTreeUiState.metrics.test.tsx`
 5. `npx vitest run src/features/foldertree/v2/components/__tests__/FolderTreeViewportV2.metrics.test.tsx`
 
-## Remaining Risk (For Phase 3)
+## Remaining Risk (Post-Phase 2)
 
-1. Browser-level tab suspension/resume behavior (background tab throttling + resume) is still validated via manual smoke rather than a dedicated Playwright lifecycle stress flow.
+1. Browser-level tab suspension/resume coverage required a dedicated Playwright lifecycle stress flow (implemented in Phase 3).

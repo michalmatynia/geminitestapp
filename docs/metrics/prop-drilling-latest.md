@@ -1,12 +1,12 @@
 # Prop Drilling Scan
 
-Generated at: 2026-03-05T04:08:06.412Z
+Generated at: 2026-03-05T04:23:19.852Z
 
 ## Snapshot
 
-- Scanned source files: 3849
-- JSX files scanned: 1371
-- Components detected: 2112
+- Scanned source files: 3851
+- JSX files scanned: 1372
+- Components detected: 2114
 - Components forwarding parent props (hotspot threshold): 0
 - Components forwarding parent props (any): 0
 - Resolved forwarded transitions: 0

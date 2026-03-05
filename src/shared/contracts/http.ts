@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { type ApiEnvelopeDto } from './api-envelope';
 
 /**
  * HTTP and API Envelope DTOs
@@ -11,12 +12,7 @@ export const apiEnvelopeSchema = z.object({
   message: z.string().optional(),
 });
 
-export type ApiEnvelope<T = unknown> = {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-};
+export type ApiEnvelope<T = unknown> = ApiEnvelopeDto<T, string>;
 
 export const httpResultSchema = z.discriminatedUnion('ok', [
   z.object({ ok: z.literal(true), data: z.unknown() }),

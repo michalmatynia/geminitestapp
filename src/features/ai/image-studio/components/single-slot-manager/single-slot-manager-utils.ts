@@ -14,12 +14,6 @@ export type UploadedAsset = {
   height?: number | null;
 };
 
-export type EnsureSlotFromUploadResponse = {
-  slot?: ImageStudioSlotRecord;
-  created?: boolean;
-  action?: 'reused_existing' | 'reused_selected_slot' | 'created' | 'reused_deterministic';
-};
-
 export function toManagedSlot(slot: ImageStudioSlotRecord | null): ProductImageSlot {
   if (!slot?.imageFileId) return null;
   const previewPath = slot.imageFile?.url || slot.imageUrl || null;

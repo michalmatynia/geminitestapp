@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CaseResolverTreeHeader } from '@/features/case-resolver/components/CaseResolverTreeHeader';
@@ -169,5 +170,18 @@ describe('CaseResolverTreeHeader', () => {
     expect(onCreateScanFileMock).toHaveBeenCalledWith(null);
     expect(onCreateImageAssetMock).toHaveBeenCalledWith(null);
     expect(onCreateNodeFileMock).toHaveBeenCalledWith(null);
+  });
+
+  it('supports keyboard tab order between primary case actions', async () => {
+    const user = userEvent.setup();
+    render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} />);
+
+    const allCasesButton = screen.getByRole('button', { name: 'ALL CASES' });
+    const nestedSwitch = screen.getByLabelText('Show nested folders and files');
+
+    allCasesButton.focus();
+    expect(allCasesButton).toHaveFocus();
+    await user.tab();
+    expect(nestedSwitch).toHaveFocus();
   });
 });

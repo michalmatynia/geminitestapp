@@ -7,6 +7,7 @@ import {
   type PortablePathJsonSchemaKind,
 } from '../../../src/shared/lib/ai-paths/portable-engine';
 import {
+  buildPortableSchemaDiffAllowlistSuggestions,
   classifyPortableSchemaDiffChanges,
   validatePortableSchemaDiffAllowlist,
 } from '../../../scripts/ai-paths/check-portable-schema-diff';
@@ -124,5 +125,66 @@ describe('check-portable-schema-diff', () => {
     expect(classified.unexpectedBreaking).toHaveLength(1);
     expect(classified.expiredAllowlistEntries).toHaveLength(1);
     expect(classified.expiredAllowlistEntries[0]?.kind).toBe('portable_envelope');
+  });
+
+  it('builds allowlist suggestions for unexpected breaking changes', () => {
+    const diff = createSchemaDiffReport({
+      portable_package: 'next-portable-package-hash',
+      semantic_canvas: 'next-semantic-canvas-hash',
+    });
+    const allowlist = validatePortableSchemaDiffAllowlist(
+      {
+        version: 'ai-paths.portable-schema-diff-allowlist.v1',
+        entries: [],
+      },
+      'inline'
+    );
+    const classified = classifyPortableSchemaDiffChanges(
+      diff,
+      allowlist,
+      new Date('2026-03-05T00:00:00.000Z')
+    );
+    const suggestions = buildPortableSchemaDiffAllowlistSuggestions(
+      classified,
+      new Date('2026-03-05T00:00:00.000Z')
+    );
+    expect(suggestions).toEqual([
+      expect.objectContaining({
+        kind: 'portable_package',
+        vNextHash: 'next-portable-package-hash',
+        breakRisk: 'breaking',
+      }),
+      expect.objectContaining({
+        kind: 'semantic_canvas',
+        vNextHash: 'next-semantic-canvas-hash',
+        breakRisk: 'breaking',
+      }),
+    ]);
+    expect(suggestions[0]?.expiresAt).toBe('2026-03-19T00:00:00.000Z');
+  });
+
+  it('returns no suggestions when all changed hashes are allowlisted', () => {
+    const diff = createSchemaDiffReport({
+      portable_envelope: 'next-portable-envelope-hash',
+    });
+    const allowlist = validatePortableSchemaDiffAllowlist(
+      {
+        version: 'ai-paths.portable-schema-diff-allowlist.v1',
+        entries: [
+          {
+            kind: 'portable_envelope',
+            vNextHash: 'next-portable-envelope-hash',
+            breakRisk: 'breaking',
+          },
+        ],
+      },
+      'inline'
+    );
+    const classified = classifyPortableSchemaDiffChanges(
+      diff,
+      allowlist,
+      new Date('2026-03-05T00:00:00.000Z')
+    );
+    expect(buildPortableSchemaDiffAllowlistSuggestions(classified)).toEqual([]);
   });
 });

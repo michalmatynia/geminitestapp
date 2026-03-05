@@ -4,6 +4,7 @@ import {
   getCaseResolverWorkspaceRevision,
   safeParseJson,
 } from './utils/workspace-persistence-utils';
+import { type CaseResolverWorkspaceDetachedPayload } from './workspace-persistence-detached.types';
 
 export const CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA_V2 =
   'case_resolver_workspace_detached_documents_v2';
@@ -25,12 +26,10 @@ type CaseResolverWorkspaceDetachedDocumentsFileEntry = {
   scanSlots?: CaseResolverWorkspace['files'][number]['scanSlots'];
 };
 
-export type CaseResolverWorkspaceDetachedDocumentsPayload = {
-  schema: typeof CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA;
-  workspaceRevision: number;
-  lastMutationId: string | null;
-  files: CaseResolverWorkspaceDetachedDocumentsFileEntry[];
-};
+export type CaseResolverWorkspaceDetachedDocumentsPayload = CaseResolverWorkspaceDetachedPayload<
+  typeof CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA,
+  CaseResolverWorkspaceDetachedDocumentsFileEntry
+>;
 
 const truncate = (value: string, maxChars: number): string =>
   value.length > maxChars ? value.slice(0, maxChars) : value;

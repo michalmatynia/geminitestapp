@@ -8,7 +8,10 @@ import { useProductFormImages } from '@/features/products/context/ProductFormIma
 import { internalError } from '@/shared/errors/app-error';
 import { Button, FormSection } from '@/shared/ui';
 
-import { useOptionalProductImagesTabContext } from './ProductImagesTabContext';
+import {
+  useOptionalProductImagesTabActionsContext,
+  useOptionalProductImagesTabStateContext,
+} from './ProductImagesTabContext';
 
 const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
   ssr: false,
@@ -16,20 +19,24 @@ const FileManager = dynamic(() => import('@/features/files/components/FileManage
 
 export function ProductImagesTabContent(): React.JSX.Element {
   const formImages = useProductFormImages();
-  const imagesTabContext = useOptionalProductImagesTabContext();
-  const showFileManager = imagesTabContext?.showFileManager ?? formImages?.showFileManager ?? false;
+  const imagesTabStateContext = useOptionalProductImagesTabStateContext();
+  const imagesTabActionsContext = useOptionalProductImagesTabActionsContext();
+  const showFileManager =
+    imagesTabStateContext?.showFileManager ?? formImages?.showFileManager ?? false;
   const onShowFileManager =
-    imagesTabContext?.onShowFileManager ?? formImages?.setShowFileManager ?? null;
-  const resolvedOnSelectFiles = imagesTabContext?.onSelectFiles;
-  const resolvedImageManagerController = imagesTabContext?.imageManagerController;
-  const inlineFileManager = imagesTabContext?.inlineFileManager ?? false;
-  const sectionTitle = imagesTabContext?.sectionTitle ?? 'Image Source';
+    imagesTabActionsContext?.onShowFileManager ?? formImages?.setShowFileManager ?? null;
+  const resolvedOnSelectFiles = imagesTabActionsContext?.onSelectFiles;
+  const resolvedImageManagerController = imagesTabStateContext?.imageManagerController;
+  const inlineFileManager = imagesTabStateContext?.inlineFileManager ?? false;
+  const sectionTitle = imagesTabStateContext?.sectionTitle ?? 'Image Source';
   const sectionDescription =
-    imagesTabContext?.sectionDescription ??
+    imagesTabStateContext?.sectionDescription ??
     'Upload directly from any slot (single or multi-select), or pick existing files from the platform library.';
-  const chooseButtonLabel = imagesTabContext?.chooseButtonLabel ?? 'Choose from File Manager';
+  const chooseButtonLabel =
+    imagesTabStateContext?.chooseButtonLabel ?? 'Choose from File Manager';
   const chooseButtonAriaLabel =
-    imagesTabContext?.chooseButtonAriaLabel ?? 'Choose multiple existing images for the product';
+    imagesTabStateContext?.chooseButtonAriaLabel ??
+    'Choose multiple existing images for the product';
 
   if (!onShowFileManager) {
     throw internalError(

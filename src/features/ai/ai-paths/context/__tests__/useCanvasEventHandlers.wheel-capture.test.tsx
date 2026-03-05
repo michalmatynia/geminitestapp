@@ -38,21 +38,19 @@ describe('useCanvasEventHandlers wheel capture boundaries', () => {
     vi.restoreAllMocks();
   });
 
-  it('does not hijack unmodified wheel scrolling inside canvas bounds', () => {
+  it('treats unmodified in-canvas wheel as zoom', () => {
     const viewportElement = document.createElement('div');
     Object.defineProperty(viewportElement, 'getBoundingClientRect', {
       value: (): DOMRect => buildViewportRect(),
     });
 
     const viewportRef = { current: viewportElement } as React.RefObject<HTMLDivElement>;
-    const setViewClamped = vi.fn();
-    const getZoomTargetView = vi.fn((scale: number) => ({ x: 0, y: 0, scale }));
+    const applyWheelZoom = vi.fn();
     const updateLastPointerCanvasPosFromClient = vi.fn();
     const resolveViewportPointFromClient = vi.fn((x: number, y: number) => ({ x, y }));
 
     const nav = {
-      getZoomTargetView,
-      setViewClamped,
+      applyWheelZoom,
     } as unknown as UseCanvasInteractionsNavigationValue;
 
     const { unmount } = renderHook(() =>
@@ -76,8 +74,9 @@ describe('useCanvasEventHandlers wheel capture boundaries', () => {
       });
     });
 
-    expect(insideScroll?.defaultPrevented).toBe(false);
-    expect(setViewClamped).not.toHaveBeenCalled();
+    expect(insideScroll?.defaultPrevented).toBe(true);
+    expect(applyWheelZoom).toHaveBeenCalledTimes(1);
+    expect(applyWheelZoom).toHaveBeenCalledWith(80, 260, 240, WheelEvent.DOM_DELTA_PIXEL, false, false, 0);
 
     unmount();
   });
@@ -89,8 +88,7 @@ describe('useCanvasEventHandlers wheel capture boundaries', () => {
     });
 
     const viewportRef = { current: viewportElement } as React.RefObject<HTMLDivElement>;
-    const setViewClamped = vi.fn();
-    const getZoomTargetView = vi.fn((scale: number) => ({ x: 0, y: 0, scale }));
+    const applyWheelZoom = vi.fn();
     const updateLastPointerCanvasPosFromClient = vi.fn();
     const resolveViewportPointFromClient = vi.fn((x: number, y: number) => ({ x, y }));
 
@@ -98,8 +96,7 @@ describe('useCanvasEventHandlers wheel capture boundaries', () => {
     vi.spyOn(performance, 'now').mockImplementation(() => now);
 
     const nav = {
-      getZoomTargetView,
-      setViewClamped,
+      applyWheelZoom,
     } as unknown as UseCanvasInteractionsNavigationValue;
 
     const { unmount } = renderHook(() =>
@@ -122,7 +119,7 @@ describe('useCanvasEventHandlers wheel capture boundaries', () => {
       });
     });
     expect(insideZoom?.defaultPrevented).toBe(true);
-    expect(setViewClamped).toHaveBeenCalledTimes(1);
+    expect(applyWheelZoom).toHaveBeenCalledTimes(1);
 
     now = 200;
     let outsideScroll: WheelEvent | null = null;
@@ -134,20 +131,19 @@ describe('useCanvasEventHandlers wheel capture boundaries', () => {
       });
     });
     expect(outsideScroll?.defaultPrevented).toBe(false);
-    expect(setViewClamped).toHaveBeenCalledTimes(1);
+    expect(applyWheelZoom).toHaveBeenCalledTimes(1);
 
     unmount();
   });
 
-  it('does not keep hijacking in-canvas wheel scrolling after ctrl+wheel zoom completes', () => {
+  it('keeps in-canvas wheel zoom enabled after ctrl+wheel zoom starts', () => {
     const viewportElement = document.createElement('div');
     Object.defineProperty(viewportElement, 'getBoundingClientRect', {
       value: (): DOMRect => buildViewportRect(),
     });
 
     const viewportRef = { current: viewportElement } as React.RefObject<HTMLDivElement>;
-    const setViewClamped = vi.fn();
-    const getZoomTargetView = vi.fn((scale: number) => ({ x: 0, y: 0, scale }));
+    const applyWheelZoom = vi.fn();
     const updateLastPointerCanvasPosFromClient = vi.fn();
     const resolveViewportPointFromClient = vi.fn((x: number, y: number) => ({ x, y }));
 
@@ -155,8 +151,7 @@ describe('useCanvasEventHandlers wheel capture boundaries', () => {
     vi.spyOn(performance, 'now').mockImplementation(() => now);
 
     const nav = {
-      getZoomTargetView,
-      setViewClamped,
+      applyWheelZoom,
     } as unknown as UseCanvasInteractionsNavigationValue;
 
     const { unmount } = renderHook(() =>
@@ -179,12 +174,12 @@ describe('useCanvasEventHandlers wheel capture boundaries', () => {
       });
     });
     expect(insideZoom?.defaultPrevented).toBe(true);
-    expect(setViewClamped).toHaveBeenCalledTimes(1);
+    expect(applyWheelZoom).toHaveBeenCalledTimes(1);
 
     now = 140;
-    let insideScroll: WheelEvent | null = null;
+    let insideZoomAfterCtrl: WheelEvent | null = null;
     act(() => {
-      insideScroll = dispatchWheel({
+      insideZoomAfterCtrl = dispatchWheel({
         clientX: 285,
         clientY: 268,
         deltaY: 120,
@@ -193,8 +188,8 @@ describe('useCanvasEventHandlers wheel capture boundaries', () => {
       });
     });
 
-    expect(insideScroll?.defaultPrevented).toBe(false);
-    expect(setViewClamped).toHaveBeenCalledTimes(1);
+    expect(insideZoomAfterCtrl?.defaultPrevented).toBe(true);
+    expect(applyWheelZoom).toHaveBeenCalledTimes(2);
 
     unmount();
   });

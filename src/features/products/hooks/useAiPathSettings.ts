@@ -386,6 +386,7 @@ export async function fetchPathSettings(
         const resolvedConfig = resolvePortablePathInput(configRaw, {
           repairIdentities: true,
           includeConnections: false,
+          signingPolicyTelemetrySurface: 'product',
         });
         if (!resolvedConfig.ok) {
           throw validationError('Invalid AI Paths path config payload.', {

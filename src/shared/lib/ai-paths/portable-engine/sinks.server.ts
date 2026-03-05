@@ -168,9 +168,9 @@ const toPortablePathEnvelopeVerificationSystemLogInput = (
   level: getSinkLevel(event),
   source: options?.source ?? PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SOURCE,
   service: options?.service ?? PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
-  category: options?.category ?? PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_CATEGORY,
   message: buildPortablePathEnvelopeVerificationMessage(event),
   context: {
+    category: options?.category ?? PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_CATEGORY,
     kind: PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_KIND,
     event,
     ...(options?.includeSnapshot === false

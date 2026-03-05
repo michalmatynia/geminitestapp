@@ -1,5 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -203,6 +204,21 @@ describe('ImageStudioAnalysisTab apply intent routing', () => {
     expect(mocks.setSelectedSlotId).toHaveBeenCalledWith('slot-2');
     expect(mocks.setWorkingSlotId).toHaveBeenCalledWith('slot-2');
     expect(mocks.switchToControls).toHaveBeenCalledTimes(1);
+  });
+
+  it('supports keyboard focus on apply intent action', async () => {
+    const user = userEvent.setup();
+    const slot2Url = 'https://example.test/slot-2.png';
+    saveImageStudioAnalysisPlanSnapshot(
+      'project-alpha',
+      createSnapshot('slot-2', createSlotSourceSignature('slot-2', slot2Url))
+    );
+
+    render(<ImageStudioAnalysisTab />);
+
+    const applyButton = await screen.findByRole('button', { name: 'Apply To Auto Scaler' });
+    await user.tab();
+    expect(applyButton).toHaveFocus();
   });
 
   it('blocks apply when slot selection is locked', async () => {

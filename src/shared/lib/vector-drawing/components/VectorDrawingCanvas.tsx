@@ -4,7 +4,10 @@ import React from 'react';
 
 import { VectorCanvas, type VectorCanvasProps } from '@/shared/ui';
 
-import { useOptionalVectorDrawing } from '../context/VectorDrawingContext';
+import {
+  useOptionalVectorDrawingActions,
+  useOptionalVectorDrawingState,
+} from '../context/VectorDrawingContext';
 
 export type { VectorCanvasProps } from '@/shared/ui';
 
@@ -43,20 +46,21 @@ export function VectorDrawingCanvas(props: Partial<VectorCanvasProps>): React.JS
     className,
   } = props;
 
-  const context = useOptionalVectorDrawing();
+  const stateContext = useOptionalVectorDrawingState();
+  const actionsContext = useOptionalVectorDrawingActions();
 
-  const shapes = propShapes ?? context?.shapes;
-  const tool = propTool ?? context?.tool;
-  const activeShapeId = propActiveShapeId ?? context?.activeShapeId;
-  const selectedPointIndex = propSelectedPointIndex ?? context?.selectedPointIndex;
-  const onChange = propOnChange ?? context?.setShapes;
-  const onSelectShape = propOnSelectShape ?? context?.setActiveShapeId;
-  const onSelectPoint = propOnSelectPoint ?? context?.setSelectedPointIndex;
-  const brushRadius = propBrushRadius ?? context?.brushRadius;
-  const src = propSrc ?? context?.imageSrc;
-  const allowWithoutImage = propAllowWithoutImage ?? context?.allowWithoutImage;
-  const showEmptyState = propShowEmptyState ?? context?.showEmptyState;
-  const emptyStateLabel = propEmptyStateLabel ?? context?.emptyStateLabel;
+  const shapes = propShapes ?? stateContext?.shapes;
+  const tool = propTool ?? stateContext?.tool;
+  const activeShapeId = propActiveShapeId ?? stateContext?.activeShapeId;
+  const selectedPointIndex = propSelectedPointIndex ?? stateContext?.selectedPointIndex;
+  const onChange = propOnChange ?? actionsContext?.setShapes;
+  const onSelectShape = propOnSelectShape ?? actionsContext?.setActiveShapeId;
+  const onSelectPoint = propOnSelectPoint ?? actionsContext?.setSelectedPointIndex;
+  const brushRadius = propBrushRadius ?? stateContext?.brushRadius;
+  const src = propSrc ?? stateContext?.imageSrc;
+  const allowWithoutImage = propAllowWithoutImage ?? stateContext?.allowWithoutImage;
+  const showEmptyState = propShowEmptyState ?? stateContext?.showEmptyState;
+  const emptyStateLabel = propEmptyStateLabel ?? stateContext?.emptyStateLabel;
   const showCanvasGrid = propShowCanvasGrid;
 
   if (

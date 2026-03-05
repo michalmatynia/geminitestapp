@@ -7,7 +7,10 @@ import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { MultiSelect } from '@/shared/ui';
 
-import { useOptionalProductMetadataFieldContext } from './ProductMetadataFieldContext';
+import {
+  useOptionalProductMetadataFieldActionsContext,
+  useOptionalProductMetadataFieldStateContext,
+} from './ProductMetadataFieldContext';
 
 type MetadataItem = {
   id: string;
@@ -224,7 +227,8 @@ export function ProductMetadataMultiSelectField({
   single = false,
 }: ProductMetadataMultiSelectFieldProps): React.JSX.Element {
   const formMetadataContext = useContext(ProductFormMetadataContext);
-  const metadataContext = useOptionalProductMetadataFieldContext();
+  const metadataStateContext = useOptionalProductMetadataFieldStateContext();
+  const metadataActionsContext = useOptionalProductMetadataFieldActionsContext();
 
   const contextItems = (() => {
     if (!formMetadataContext) return [];
@@ -244,7 +248,7 @@ export function ProductMetadataMultiSelectField({
 
   const items =
     itemsProp ??
-    (metadataContext?.[contextItemsKey] as MetadataItem[]) ??
+    (metadataStateContext?.[contextItemsKey] as MetadataItem[]) ??
     (contextItems as MetadataItem[]);
 
   // Handle both single string/null and string[]
@@ -266,7 +270,7 @@ export function ProductMetadataMultiSelectField({
 
   const rawSelected =
     selectedIdsProp ??
-    (metadataContext?.[contextSelectedKey] as string[] | string | null) ??
+    (metadataStateContext?.[contextSelectedKey] as string[] | string | null) ??
     contextSelected;
 
   const selectedIds = Array.isArray(rawSelected) ? rawSelected : rawSelected ? [rawSelected] : [];
@@ -289,10 +293,10 @@ export function ProductMetadataMultiSelectField({
 
   const resolvedLoading = itemsProp
     ? loading
-    : ((metadataContext?.[contextLoadingKey] as boolean) ?? contextLoading);
+    : ((metadataStateContext?.[contextLoadingKey] as boolean) ?? contextLoading);
 
   const resolveSingleChangeHandler = (): ((id: string | null) => void) | null => {
-    const metadataHandler = metadataContext?.[contextOnChangeKey];
+    const metadataHandler = metadataActionsContext?.[contextOnChangeKey];
     if (typeof metadataHandler === 'function') {
       return metadataHandler as (id: string | null) => void;
     }
@@ -362,7 +366,7 @@ export function ProductMetadataMultiSelectField({
           singleHandler(nextIds[0] || null);
         };
       })()
-      : ((metadataContext?.[contextOnChangeKey] as (nextIds: string[]) => void) ??
+      : ((metadataActionsContext?.[contextOnChangeKey] as (nextIds: string[]) => void) ??
         resolveFormContextMultiHandler());
 
   if (!resolvedOnChange) {

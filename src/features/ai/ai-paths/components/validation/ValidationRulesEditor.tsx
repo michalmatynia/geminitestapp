@@ -3,7 +3,7 @@
 import React from 'react';
 import { Badge, Button, Card, Input, Label, StatusBadge, Textarea } from '@/shared/ui';
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
-import { AiPathsValidationRule } from '../../lib';
+import { AiPathsValidationRule } from '@/shared/lib/ai-paths';
 
 export function ValidationRulesEditor(): React.JSX.Element {
   const {

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { namedDtoSchema } from '../base';
+import { type RecursiveTreeNode } from '../tree';
 
 /**
  * Product Category Contract
@@ -19,9 +20,7 @@ export type ProductCategory = z.infer<typeof productCategorySchema>;
 /**
  * Product Category With Children Contract
  */
-export interface ProductCategoryWithChildren extends ProductCategory {
-  children: ProductCategoryWithChildren[];
-}
+export type ProductCategoryWithChildren = RecursiveTreeNode<ProductCategory>;
 
 export const productCategoryWithChildrenSchema: z.ZodType<ProductCategoryWithChildren> =
   productCategorySchema.extend({

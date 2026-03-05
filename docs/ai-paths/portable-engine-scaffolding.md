@@ -106,6 +106,11 @@ Resolver behavior:
     - `staging`: fingerprint `warn`, envelope `warn`
     - `prod`: fingerprint `strict`, envelope `strict`
   - Explicit mode options still override profile defaults for controlled rollouts.
+- Exposes signing policy usage observability APIs:
+  - `getPortablePathSigningPolicyUsageSnapshot()`
+  - `resetPortablePathSigningPolicyUsageSnapshot()`
+  - `registerPortablePathSigningPolicyUsageHook(hook)` (returns unsubscribe)
+  - Snapshot includes per-profile and per-surface (`canvas`/`product`/`api`) usage counters.
 - Uses a migration registry keyed by portable package spec version (currently `v1` + `v2` compatibility shim).
 - Exposes custom migration registry APIs:
   - `registerPortablePathPackageMigrator(specVersion, migrator)`
@@ -189,6 +194,9 @@ These allow stable package integrity tagging across copy/paste surfaces.
 - CI guardrail: `npm run ai-paths:check:portable-schema-diff -- --strict`
   - Uses `scripts/ai-paths/portable-schema-diff-allowlist.json`.
   - Unallowlisted schema hash changes are treated as breaking until reviewed.
+- Pre-commit helper: `npm run ai-paths:check:portable-schema-diff:suggest`
+  - Prints auto-generated allowlist entry suggestions for unexpected schema hash changes.
+  - Suggestions default to `breakRisk: "breaking"` and require explicit human review before merge.
 
 Response includes canonical JSON Schema (Draft 2020-12) generated from runtime Zod contracts, suitable for external editor validation.
 Diff response includes per-kind deterministic schema hashes (`current` vs `vnext_preview`) to support tooling upgrade checks.
@@ -252,6 +260,6 @@ await bootstrapPortablePathEnvelopeVerificationAuditSinksWithStartupHealthChecks
 
 ## Next Hardening Steps
 
-1. Add pre-commit helper to auto-suggest allowlist entries for intentional schema updates.
-2. Add per-surface telemetry tags (`canvas`/`product`/`api`) to signing policy usage snapshots.
-3. Add bootstrap wiring in runtime entrypoint so sink startup health policy is environment-configurable without custom glue code.
+1. Add bootstrap wiring in runtime entrypoint so sink startup health policy is environment-configurable without custom glue code.
+2. Add governance metadata to allowlist suggestions (ticket/link ownership) and enforce it in strict mode.
+3. Add trend reporters for signing policy usage snapshots to detect unexpected surface/profile drift over time.

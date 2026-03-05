@@ -139,4 +139,17 @@ describe('EditProductForm', () => {
       expect(updateButton).toBeEnabled();
     });
   }, 15000);
+
+  it('supports keyboard tab order across product tabs', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<EditProductPage product={mockProduct} />);
+
+    const generalTab = await screen.findByRole('tab', { name: /General/i });
+    const otherTab = screen.getByRole('tab', { name: /Other/i });
+
+    generalTab.focus();
+    expect(generalTab).toHaveFocus();
+    await user.tab();
+    expect(otherTab).toHaveFocus();
+  });
 });

@@ -138,6 +138,7 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
       const resolved = resolvePortablePathInput(payload, {
         repairIdentities: true,
         includeConnections: false,
+        signingPolicyTelemetrySurface: 'canvas',
       });
       if (!resolved.ok) {
         orchestrator.toast(`Invalid path JSON: ${resolved.error}`, { variant: 'error' });

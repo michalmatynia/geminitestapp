@@ -24,12 +24,12 @@ const suites = [
   {
     id: 'image-studio-a11y',
     name: 'Image Studio UI Accessibility',
-    tests: ['src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisSummaryChip.test.tsx'],
+    tests: ['src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx'],
   },
   {
     id: 'ai-paths-a11y',
     name: 'AI Paths Canvas Accessibility',
-    tests: ['src/features/ai/ai-paths/components/__tests__/canvas-connector-tooltip.test.tsx'],
+    tests: ['src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx'],
   },
   {
     id: 'case-resolver-a11y',

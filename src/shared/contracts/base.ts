@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { type ApiEnvelopeDto } from './api-envelope';
 
 /**
  * Foundation schemas used across all contracts
@@ -158,12 +159,7 @@ export const apiResponseSchema = z.object({
   message: z.string().optional(),
 });
 
-export type ApiResponseDto<T = unknown> = {
-  success: boolean;
-  data?: T;
-  error?: ApiErrorDto;
-  message?: string;
-};
+export type ApiResponseDto<T = unknown> = ApiEnvelopeDto<T, ApiErrorDto>;
 export type ApiResponse<T> = ApiResponseDto<T>;
 
 /**

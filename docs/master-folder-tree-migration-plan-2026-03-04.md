@@ -69,6 +69,10 @@ Completed in codebase:
 11. Added Phase 2 route-lifecycle churn hardening suite for providerless shell runtime:
    - `src/features/foldertree/v2/__tests__/shell-runtime-route-churn.test.tsx`
    - Locks shared-runtime identity stability, stale registration cleanup, focused-instance reassignment, and keyboard-handler non-leakage across repeated route remount.
+12. Added Phase 3 browser lifecycle coverage:
+   - Browser harness route: `src/app/(frontend)/preview/foldertree-shell-runtime/page.tsx`
+   - Playwright lifecycle stress spec: `e2e/features/foldertree/foldertree-runtime-lifecycle.spec.ts`
+   - Validates runtime keyboard continuity after background/foreground tab switch and route remount churn in a real browser session.
 
 ## Canonical Target (Newest Form)
 

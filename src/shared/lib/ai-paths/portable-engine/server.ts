@@ -23,6 +23,7 @@ export const runPortablePathServer = async (
     validationMode = 'standard',
     validationTriggerNodeId = null,
     signingPolicyProfile,
+    signingPolicyTelemetrySurface = 'api',
     repairIdentities = true,
     enforcePayloadLimits = true,
     limits,
@@ -37,6 +38,7 @@ export const runPortablePathServer = async (
   } = options;
   const resolved = await resolvePortablePathInputAsync(input, {
     signingPolicyProfile,
+    signingPolicyTelemetrySurface,
     repairIdentities,
     includeConnections: false,
     enforcePayloadLimits,

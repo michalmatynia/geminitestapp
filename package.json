@@ -74,6 +74,7 @@
     "check:factory-meta": "node scripts/query/check-factory-meta.cjs",
     "check:factory-meta:strict": "CHECK_FACTORY_META_STRICT_ALIAS=1 node scripts/query/check-factory-meta.cjs",
     "ai-paths:check:portable-schema-diff": "node --import tsx scripts/ai-paths/check-portable-schema-diff.ts",
+    "ai-paths:check:portable-schema-diff:suggest": "node --import tsx scripts/ai-paths/check-portable-schema-diff.ts --strict --suggest-allowlist",
     "ai-paths:check:canonical": "node scripts/ai-paths/check-canonical.mjs && node --import tsx scripts/ai-paths/check-portable-schema-diff.ts --strict",
     "ai-paths:bulk-prune:scan": "node scripts/ai-paths/bulk-prune.mjs --mode scan",
     "ai-paths:bulk-prune:report": "node scripts/ai-paths/bulk-prune.mjs --mode scan --write-report docs/metrics/ai-paths-bulk-prune-latest.json",

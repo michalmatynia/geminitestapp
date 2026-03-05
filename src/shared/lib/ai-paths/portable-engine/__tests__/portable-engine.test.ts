@@ -18,6 +18,7 @@ import {
   getPortablePathEnvelopeVerificationAuditSinkSnapshot,
   getPortablePathEnvelopeVerificationObservabilitySnapshot,
   getPortablePathSigningPolicy,
+  getPortablePathSigningPolicyUsageSnapshot,
   getPortablePathMigratorObservabilitySnapshot,
   listPortablePathEnvelopeVerificationAuditSinkIds,
   listPortablePathPackageMigratorVersions,
@@ -25,9 +26,11 @@ import {
   registerPortablePathEnvelopeVerificationAuditSink,
   registerPortablePathEnvelopeVerificationObservabilityHook,
   registerPortablePathMigratorObservabilityHook,
+  registerPortablePathSigningPolicyUsageHook,
   registerPortablePathPackageMigrator,
   resetPortablePathEnvelopeVerificationAuditSinkSnapshot,
   resetPortablePathEnvelopeVerificationObservabilitySnapshot,
+  resetPortablePathSigningPolicyUsageSnapshot,
   resetPortablePathMigratorObservabilitySnapshot,
   resolvePortablePathInput,
   resolvePortablePathInputAsync,
@@ -117,6 +120,7 @@ describe('portable AI-path engine scaffold', () => {
     mockedEvaluateGraphClient.mockReset();
     resetPortablePathMigratorObservabilitySnapshot();
     resetPortablePathEnvelopeVerificationObservabilitySnapshot();
+    resetPortablePathSigningPolicyUsageSnapshot();
     resetPortablePathEnvelopeVerificationAuditSinkSnapshot({
       clearRegisteredSinks: true,
     });
@@ -865,6 +869,56 @@ describe('portable AI-path engine scaffold', () => {
       fingerprintVerificationMode: 'strict',
       envelopeSignatureVerificationMode: 'strict',
     });
+  });
+
+  it('records signing policy usage snapshot with per-surface counters', async () => {
+    const pathConfig = createDefaultPathConfig('path_portable_signing_surface_counters');
+    const hookEvents: Array<{ profile: string; surface: string }> = [];
+    const unsubscribe = registerPortablePathSigningPolicyUsageHook((event) => {
+      hookEvents.push({
+        profile: event.profile,
+        surface: event.surface,
+      });
+    });
+    try {
+      const canvasResolved = resolvePortablePathInput(pathConfig, {
+        signingPolicyProfile: 'dev',
+        signingPolicyTelemetrySurface: 'canvas',
+      });
+      expect(canvasResolved.ok).toBe(true);
+
+      const productResolved = resolvePortablePathInput(pathConfig, {
+        signingPolicyProfile: 'staging',
+        signingPolicyTelemetrySurface: 'product',
+      });
+      expect(productResolved.ok).toBe(true);
+
+      const apiResolved = await resolvePortablePathInputAsync(pathConfig, {
+        signingPolicyProfile: 'prod',
+        signingPolicyTelemetrySurface: 'api',
+      });
+      expect(apiResolved.ok).toBe(true);
+    } finally {
+      unsubscribe();
+    }
+
+    const snapshot = getPortablePathSigningPolicyUsageSnapshot();
+    expect(snapshot.totals.uses).toBe(3);
+    expect(snapshot.bySurface.canvas).toBe(1);
+    expect(snapshot.bySurface.product).toBe(1);
+    expect(snapshot.bySurface.api).toBe(1);
+    expect(snapshot.byProfile.dev.bySurface.canvas).toBe(1);
+    expect(snapshot.byProfile.staging.bySurface.product).toBe(1);
+    expect(snapshot.byProfile.prod.bySurface.api).toBe(1);
+    expect(snapshot.byProfile.dev.envelopeModeCounts.off).toBe(1);
+    expect(snapshot.byProfile.staging.envelopeModeCounts.warn).toBe(1);
+    expect(snapshot.byProfile.prod.envelopeModeCounts.strict).toBe(1);
+    expect(snapshot.recentEvents).toHaveLength(3);
+    expect(hookEvents).toEqual([
+      { profile: 'dev', surface: 'canvas' },
+      { profile: 'staging', surface: 'product' },
+      { profile: 'prod', surface: 'api' },
+    ]);
   });
 
   it('enforces strict envelope verification with prod signing policy profile', async () => {

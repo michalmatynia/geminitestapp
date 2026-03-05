@@ -165,7 +165,7 @@ describe('AiPathsCanvasView switch guard', () => {
     });
   });
 
-  it('shows path strict-native-registry override above global settings', async () => {
+  it('shows path strict-native-registry override above global settings (including legacy alias)', async () => {
     mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([
       { key: AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY, value: 'true' },
     ]);
@@ -237,7 +237,7 @@ describe('AiPathsCanvasView switch guard', () => {
           id: 'path-main',
           extensions: {
             runtimeKernel: {
-              strictNativeRegistry: false,
+              strictCodeObjectRegistry: false,
             },
           },
         },
@@ -391,7 +391,11 @@ describe('AiPathsCanvasView switch guard', () => {
           updatedAt: '2026-03-05T10:00:00.000Z',
           nodes: [],
           edges: [],
-          extensions: {},
+          extensions: {
+            runtimeKernel: {
+              strictNativeRegistry: true,
+            },
+          },
         },
       },
       persistPathSettings: persistPathSettingsMock,
@@ -416,6 +420,7 @@ describe('AiPathsCanvasView switch guard', () => {
     expect(runtimeKernel).toEqual({
       pilotNodeTypes: ['template', 'parser'],
       codeObjectResolverIds: ['resolver.path'],
+      strictNativeRegistry: true,
     });
   });
 });

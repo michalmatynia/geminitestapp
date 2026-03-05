@@ -366,7 +366,8 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
       runtimeKernelRecord?.['codeObjectResolverIds'] ?? runtimeKernelRecord?.['resolverIds']
     );
     const strictNativeRegistry = parseRuntimeKernelStrictNativeRegistryValue(
-      runtimeKernelRecord?.['strictNativeRegistry']
+      runtimeKernelRecord?.['strictNativeRegistry'] ??
+      runtimeKernelRecord?.['strictCodeObjectRegistry']
     );
     const strictNativeRegistryDraft: PathRuntimeKernelStrictDraft =
       strictNativeRegistry === undefined ? 'inherit' : strictNativeRegistry ? 'true' : 'false';

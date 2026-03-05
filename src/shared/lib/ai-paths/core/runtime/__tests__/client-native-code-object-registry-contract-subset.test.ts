@@ -60,6 +60,17 @@ const readNativeContractCodeObjectIdByNodeType = (): Map<string, string> => {
   return new Map(entries);
 };
 
+const buildUnsupportedModelNode = (): AiNode => ({
+  id: 'node-model',
+  type: 'model',
+  title: 'Model',
+  description: '',
+  inputs: [],
+  outputs: ['result'],
+  config: {},
+  position: { x: 0, y: 0 },
+});
+
 const buildPromptNode = (): AiNode => ({
   id: 'node-prompt',
   type: 'prompt',
@@ -69,7 +80,22 @@ const buildPromptNode = (): AiNode => ({
   outputs: ['prompt'],
   config: {
     prompt: {
-      template: 'client-unsupported',
+      template: 'hello-from-prompt',
+    },
+  },
+  position: { x: 0, y: 0 },
+});
+
+const buildTriggerNode = (): AiNode => ({
+  id: 'node-trigger',
+  type: 'trigger',
+  title: 'Trigger',
+  description: '',
+  inputs: [],
+  outputs: ['trigger', 'triggerName', 'context', 'entityJson'],
+  config: {
+    trigger: {
+      event: 'manual',
     },
   },
   position: { x: 0, y: 0 },
@@ -97,14 +123,65 @@ describe('client native code-object registry contract subset', () => {
     expect(missingNodeTypes).toEqual([]);
   });
 
+  it('tracks remaining server-only native node-type asymmetries explicitly', () => {
+    const byNodeType = readNativeContractCodeObjectIdByNodeType();
+    const clientNativeIdSet = new Set<string>(CLIENT_NATIVE_CODE_OBJECT_HANDLER_IDS);
+
+    const unsupportedOnClientNodeTypes = Array.from(byNodeType.entries())
+      .filter(([, codeObjectId]: [string, string]) => !clientNativeIdSet.has(codeObjectId))
+      .map(([nodeType]: [string, string]) => nodeType)
+      .sort();
+
+    expect(unsupportedOnClientNodeTypes).toEqual([
+      'agent',
+      'ai_description',
+      'api_advanced',
+      'audio_oscillator',
+      'audio_speaker',
+      'database',
+      'db_schema',
+      'description_updater',
+      'fetcher',
+      'http',
+      'learner_agent',
+      'model',
+      'playwright',
+      'poll',
+      'simulation',
+    ]);
+  });
+
+  it('executes prompt nodes through client native contract resolver mapping', async () => {
+    const result = await evaluateGraphClient({
+      nodes: [buildPromptNode()],
+      edges: [],
+      runtimeKernelPilotNodeTypes: ['prompt'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(result.outputs?.['node-prompt']?.['prompt']).toBe('hello-from-prompt');
+  });
+
+  it('executes trigger nodes through client native contract resolver mapping', async () => {
+    const result = await evaluateGraphClient({
+      nodes: [buildTriggerNode()],
+      edges: [],
+      runtimeKernelPilotNodeTypes: ['trigger'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(result.outputs?.['node-trigger']?.['trigger']).toBe(true);
+    expect(result.outputs?.['node-trigger']?.['triggerName']).toBe('manual');
+  });
+
   it('keeps unsupported server-only nodes blocked in client execution', async () => {
     await expect(
       evaluateGraphClient({
-        nodes: [buildPromptNode()],
+        nodes: [buildUnsupportedModelNode()],
         edges: [],
-        runtimeKernelPilotNodeTypes: ['prompt'],
+        runtimeKernelPilotNodeTypes: ['model'],
         reportAiPathsError: (): void => {},
       })
-    ).rejects.toThrow(`Node type 'prompt' is not supported in client-side execution. Use Server execution.`);
+    ).rejects.toThrow(`Node type 'model' is not supported in client-side execution. Use Server execution.`);
   });
 });

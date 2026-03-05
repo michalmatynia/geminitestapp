@@ -1,12 +1,19 @@
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
-import type { RuntimeState, NodeHandler } from '@/shared/contracts/ai-paths-runtime';
+import type {
+  RuntimeState,
+  NodeHandler,
+  NodeHandlerContext,
+  RuntimePortValues,
+} from '@/shared/contracts/ai-paths-runtime';
 
 import { evaluateGraphInternal } from './engine-core';
 import { resolveAiPathsRuntimeCodeObjectHandler } from './code-object-resolver-registry';
 import { createNodeRuntimeKernel, toNodeRuntimeResolutionTelemetry } from './node-runtime-kernel';
 import { createNodeCodeObjectV3ContractResolver } from './node-code-object-v3-legacy-bridge';
+import { buildPromptOutput } from './utils';
 
 import { type EvaluateGraphArgs, type EvaluateGraphOptions } from './engine-modules/engine-types';
+import { coerceInput, formatRuntimeValue, renderTemplate } from '../utils';
 
 import {
   handleConstant,
@@ -33,11 +40,42 @@ import {
   handleIterator,
   handleContext,
 } from './handlers/transform';
+import { handleNotification as handleIntegrationNotification } from './handlers/integration-notification-handler';
+import { handleTrigger as handleIntegrationTrigger } from './handlers/integration-trigger-handler';
 
 // Re-export types from core
 export * from './engine-core';
 
+const handlePrompt: NodeHandler = ({
+  node,
+  nodeInputs,
+}: NodeHandlerContext): RuntimePortValues => {
+  const { promptOutput, imagesValue } = buildPromptOutput(node.config?.prompt, nodeInputs);
+  return imagesValue !== undefined
+    ? { prompt: promptOutput, images: imagesValue }
+    : { prompt: promptOutput };
+};
+
+const handleTemplate: NodeHandler = ({
+  node,
+  nodeInputs,
+}: NodeHandlerContext): RuntimePortValues => {
+  const templateConfig = node.config?.template ?? { template: '' };
+  const data = { ...nodeInputs };
+  const currentValue = coerceInput(nodeInputs['value']) ?? '';
+  const prompt = templateConfig.template
+    ? renderTemplate(templateConfig.template, data, currentValue)
+    : Object.entries(data)
+        .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
+        .join('\n');
+  return { prompt: prompt || 'Prompt: (no template)' };
+};
+
 const CLIENT_HANDLERS: Record<string, NodeHandler> = {
+  prompt: handlePrompt,
+  template: handleTemplate,
+  trigger: handleIntegrationTrigger,
+  notification: handleIntegrationNotification,
   constant: handleConstant,
   math: handleMath,
   compare: handleCompare,
@@ -86,10 +124,14 @@ const NATIVE_CODE_OBJECT_HANDLERS: Record<string, NodeHandler> = {
   'ai-paths.node-code-object.mapper.v3': handleMapper,
   'ai-paths.node-code-object.math.v3': handleMath,
   'ai-paths.node-code-object.mutator.v3': handleMutator,
+  'ai-paths.node-code-object.notification.v3': handleIntegrationNotification,
   'ai-paths.node-code-object.parser.v3': handleParser,
+  'ai-paths.node-code-object.prompt.v3': handlePrompt,
   'ai-paths.node-code-object.regex.v3': handleRegex,
   'ai-paths.node-code-object.router.v3': handleRouter,
   'ai-paths.node-code-object.string_mutator.v3': handleStringMutator,
+  'ai-paths.node-code-object.template.v3': handleTemplate,
+  'ai-paths.node-code-object.trigger.v3': handleIntegrationTrigger,
   'ai-paths.node-code-object.validation_pattern.v3': handleValidationPattern,
   'ai-paths.node-code-object.validator.v3': handleValidator,
   'ai-paths.node-code-object.viewer.v3': handleViewer,

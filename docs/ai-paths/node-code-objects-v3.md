@@ -62,8 +62,8 @@ Supported adapters:
 - `legacy_handler_bridge`
 - `native_handler_registry` (current pilot: `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`)
 For `native_handler_registry`, runtime falls back to legacy bridge when a native registry mapping is unavailable.
-Client runtime now supports native execution for a broader local subset (`bundle`, `compare`, `constant`, `context`, `delay`, `fetcher`, `gate`, `iterator`, `mapper`, `math`, `mutator`, `notification`, `parser`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`).
-Remaining server-only native node families are tracked explicitly in runtime guardrails (`agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `database`, `db_schema`, `description_updater`, `http`, `learner_agent`, `model`, `playwright`, `poll`).
+Client runtime now supports native execution for a broader local subset (`audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `delay`, `fetcher`, `gate`, `iterator`, `mapper`, `math`, `mutator`, `notification`, `parser`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`).
+Remaining server-only native node families are tracked explicitly in runtime guardrails (`agent`, `ai_description`, `api_advanced`, `database`, `db_schema`, `description_updater`, `http`, `learner_agent`, `model`, `playwright`, `poll`).
 
 Rollout control:
 

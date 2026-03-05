@@ -26,6 +26,7 @@ import {
   handleDelay,
   handleViewer,
 } from './handlers/common';
+import { handleAudioOscillator, handleAudioSpeaker } from './handlers/audio';
 
 import {
   handleBoundsNormalizer,
@@ -80,6 +81,8 @@ const CLIENT_HANDLERS: Record<string, NodeHandler> = {
   notification: handleIntegrationNotification,
   fetcher: handleIntegrationFetcher,
   simulation: handleIntegrationSimulation,
+  audio_oscillator: handleAudioOscillator,
+  audio_speaker: handleAudioSpeaker,
   constant: handleConstant,
   math: handleMath,
   compare: handleCompare,
@@ -130,6 +133,8 @@ const NATIVE_CODE_OBJECT_HANDLERS: Record<string, NodeHandler> = {
   'ai-paths.node-code-object.mutator.v3': handleMutator,
   'ai-paths.node-code-object.notification.v3': handleIntegrationNotification,
   'ai-paths.node-code-object.fetcher.v3': handleIntegrationFetcher,
+  'ai-paths.node-code-object.audio_oscillator.v3': handleAudioOscillator,
+  'ai-paths.node-code-object.audio_speaker.v3': handleAudioSpeaker,
   'ai-paths.node-code-object.parser.v3': handleParser,
   'ai-paths.node-code-object.prompt.v3': handlePrompt,
   'ai-paths.node-code-object.regex.v3': handleRegex,

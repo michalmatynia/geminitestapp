@@ -127,6 +127,42 @@ const buildFetcherNode = (): AiNode => ({
   position: { x: 120, y: 0 },
 });
 
+const buildAudioOscillatorNode = (): AiNode => ({
+  id: 'node-audio-oscillator',
+  type: 'audio_oscillator',
+  title: 'Audio Oscillator',
+  description: '',
+  inputs: ['trigger', 'frequency', 'waveform', 'gain', 'durationMs'],
+  outputs: ['audioSignal', 'frequency', 'waveform', 'gain', 'durationMs', 'status'],
+  config: {
+    audioOscillator: {
+      waveform: 'triangle',
+      frequencyHz: 512,
+      gain: 0.3,
+      durationMs: 640,
+    },
+  },
+  position: { x: 240, y: 0 },
+});
+
+const buildAudioSpeakerNode = (): AiNode => ({
+  id: 'node-audio-speaker',
+  type: 'audio_speaker',
+  title: 'Audio Speaker',
+  description: '',
+  inputs: ['audioSignal', 'trigger'],
+  outputs: ['status', 'audioSignal', 'frequency', 'waveform', 'gain', 'durationMs'],
+  config: {
+    audioSpeaker: {
+      enabled: true,
+      autoPlay: true,
+      gain: 0.8,
+      stopPrevious: true,
+    },
+  },
+  position: { x: 360, y: 0 },
+});
+
 describe('client native code-object registry contract subset', () => {
   it('only contains codeObjectIds that exist in native contracts', () => {
     const nativeContractIds = readNativeContractCodeObjectIdSet();
@@ -162,8 +198,6 @@ describe('client native code-object registry contract subset', () => {
       'agent',
       'ai_description',
       'api_advanced',
-      'audio_oscillator',
-      'audio_speaker',
       'database',
       'db_schema',
       'description_updater',
@@ -237,6 +271,47 @@ describe('client native code-object registry contract subset', () => {
     });
     expect(result.outputs?.['node-fetcher']?.['meta']).toMatchObject({
       fetcherResolvedSource: 'live_context',
+    });
+  });
+
+  it('executes audio oscillator nodes through client native contract resolver mapping', async () => {
+    const result = await evaluateGraphClient({
+      nodes: [buildAudioOscillatorNode()],
+      edges: [],
+      runtimeKernelPilotNodeTypes: ['audio_oscillator'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(result.outputs?.['node-audio-oscillator']?.['status']).toBe('ready');
+    expect(result.outputs?.['node-audio-oscillator']?.['audioSignal']).toMatchObject({
+      kind: 'oscillator',
+      waveform: 'triangle',
+      frequencyHz: 512,
+    });
+  });
+
+  it('executes audio speaker nodes through client native contract resolver mapping', async () => {
+    const result = await evaluateGraphClient({
+      nodes: [buildAudioOscillatorNode(), buildAudioSpeakerNode()],
+      edges: [
+        {
+          id: 'edge-osc-speaker-audio-signal',
+          from: 'node-audio-oscillator',
+          to: 'node-audio-speaker',
+          fromPort: 'audioSignal',
+          toPort: 'audioSignal',
+          kind: 'value',
+        },
+      ],
+      runtimeKernelPilotNodeTypes: ['audio_oscillator', 'audio_speaker'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(result.outputs?.['node-audio-speaker']?.['status']).toBe('unsupported_environment');
+    expect(result.outputs?.['node-audio-speaker']?.['audioSignal']).toMatchObject({
+      kind: 'oscillator',
+      waveform: 'triangle',
+      frequencyHz: 512,
     });
   });
 

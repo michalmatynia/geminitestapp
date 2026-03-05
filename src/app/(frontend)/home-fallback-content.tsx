@@ -110,38 +110,6 @@ const buildSocialLinks = (theme: SocialThemeSettings | null | undefined): Social
   return links;
 };
 
-function SocialLinks({ theme }: { theme: SocialThemeSettings }): React.JSX.Element | null {
-  const links = buildSocialLinks(theme);
-  if (!links.length) return null;
-
-  return (
-    <nav className='flex items-center gap-2' aria-label='Social media'>
-      {links.map((link) => {
-        const Icon = link.Icon;
-        return (
-          <a
-            key={link.id}
-            href={link.href}
-            className='inline-flex size-8 items-center justify-center rounded-full border border-gray-800 text-gray-400 transition hover:border-gray-600 hover:text-gray-100'
-            target='_blank'
-            rel='noreferrer'
-            aria-label={link.label}
-          >
-            {Icon ? (
-              <Icon className='size-4' aria-hidden='true' />
-            ) : (
-              <span className='text-[10px] font-semibold' aria-hidden='true'>
-                {link.fallback}
-              </span>
-            )}
-            <span className='sr-only'>{link.label}</span>
-          </a>
-        );
-      })}
-    </nav>
-  );
-}
-
 function MountainIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
@@ -170,6 +138,8 @@ export function HomeFallbackContent({
   products: ProductWithImages[];
   themeSettings: SocialThemeSettings;
 }): React.JSX.Element {
+  const socialLinks = React.useMemo(() => buildSocialLinks(themeSettings), [themeSettings]);
+
   return (
     <div className='flex min-h-screen flex-col'>
       {showFallbackHeader ? (
@@ -190,17 +160,17 @@ export function HomeFallbackContent({
         </header>
       ) : null}
 
-        <div className='flex-1'>
-          <section className='w-full py-12'>
-            <div className='container px-4 md:px-6'>
-              <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-                {products.map((product: ProductWithImages) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
+      <div className='flex-1'>
+        <section className='w-full py-12'>
+          <div className='container px-4 md:px-6'>
+            <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+              {products.map((product: ProductWithImages) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
             </div>
-          </section>
-        </div>
+          </div>
+        </section>
+      </div>
 
       {showFallbackHeader ? (
         <footer className='flex w-full shrink-0 flex-col items-center gap-3 border-t border-gray-800 px-4 py-6 sm:flex-row md:px-6'>
@@ -214,7 +184,32 @@ export function HomeFallbackContent({
                 Privacy
               </Link>
             </nav>
-            <SocialLinks theme={themeSettings} />
+            {socialLinks.length ? (
+              <nav className='flex items-center gap-2' aria-label='Social media'>
+                {socialLinks.map((link) => {
+                  const Icon = link.Icon;
+                  return (
+                    <a
+                      key={link.id}
+                      href={link.href}
+                      className='inline-flex size-8 items-center justify-center rounded-full border border-gray-800 text-gray-400 transition hover:border-gray-600 hover:text-gray-100'
+                      target='_blank'
+                      rel='noreferrer'
+                      aria-label={link.label}
+                    >
+                      {Icon ? (
+                        <Icon className='size-4' aria-hidden='true' />
+                      ) : (
+                        <span className='text-[10px] font-semibold' aria-hidden='true'>
+                          {link.fallback}
+                        </span>
+                      )}
+                      <span className='sr-only'>{link.label}</span>
+                    </a>
+                  );
+                })}
+              </nav>
+            ) : null}
           </div>
         </footer>
       ) : null}

@@ -3,7 +3,7 @@
   "wave": "wave1-data-canonicalization-verification",
   "reportMode": "write-executed",
   "environment": "local",
-  "generatedAt": "2026-03-05T00:42:25.547Z",
+  "generatedAt": "2026-03-05T01:22:18.186Z",
   "commandTimeoutMs": 120000,
   "aggregate": {
     "total": 10,
@@ -22,9 +22,9 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-05T00:42:06.382Z",
-      "finishedAt": "2026-03-05T00:42:08.166Z",
-      "durationMs": 1784,
+      "startedAt": "2026-03-05T01:22:02.829Z",
+      "finishedAt": "2026-03-05T01:22:04.628Z",
+      "durationMs": 1799,
       "parsedSummary": {
         "mode": "write",
         "scanned": 351,
@@ -52,9 +52,9 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-05T00:42:08.167Z",
-      "finishedAt": "2026-03-05T00:42:14.091Z",
-      "durationMs": 5924,
+      "startedAt": "2026-03-05T01:22:04.629Z",
+      "finishedAt": "2026-03-05T01:22:06.617Z",
+      "durationMs": 1988,
       "parsedSummary": {
         "mode": "write",
         "pathFilter": "all",
@@ -80,9 +80,9 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-05T00:42:14.091Z",
-      "finishedAt": "2026-03-05T00:42:15.541Z",
-      "durationMs": 1450,
+      "startedAt": "2026-03-05T01:22:06.617Z",
+      "finishedAt": "2026-03-05T01:22:07.995Z",
+      "durationMs": 1378,
       "parsedSummary": {
         "mode": "write",
         "providers": [
@@ -132,9 +132,9 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-05T00:42:15.541Z",
-      "finishedAt": "2026-03-05T00:42:16.942Z",
-      "durationMs": 1401,
+      "startedAt": "2026-03-05T01:22:07.996Z",
+      "finishedAt": "2026-03-05T01:22:09.567Z",
+      "durationMs": 1571,
       "parsedSummary": {
         "mode": "write",
         "providers": [
@@ -180,27 +180,25 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-05T00:42:16.942Z",
-      "finishedAt": "2026-03-05T00:42:18.328Z",
-      "durationMs": 1386,
+      "startedAt": "2026-03-05T01:22:09.567Z",
+      "finishedAt": "2026-03-05T01:22:10.942Z",
+      "durationMs": 1375,
       "parsedSummary": {
         "mode": "write",
         "providers": [
           {
             "provider": "prisma",
             "configured": true,
-            "changed": false,
-            "writesApplied": 0,
-            "baseIntegrationCount": 0,
-            "baseConnectionCount": 0,
-            "connectionsScanned": 0,
+            "changed": true,
+            "writesApplied": 1,
+            "baseIntegrationCount": 1,
+            "baseConnectionCount": 1,
+            "connectionsScanned": 1,
             "connectionsWithBaseApiToken": 0,
-            "connectionsWithLegacyPasswordOnly": 0,
-            "connectionsBackfilled": 0,
+            "connectionsWithLegacyPasswordOnly": 1,
+            "connectionsBackfilled": 1,
             "connectionsStillMissingToken": 0,
-            "warnings": [
-              "No Base integrations found."
-            ],
+            "warnings": [],
             "error": null
           },
           {
@@ -222,7 +220,7 @@
           }
         ]
       },
-      "stdout": "\n> libapp2@0.1.0 migrate:base-connection-token-storage:v2\n> cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-base-connection-token-storage-v2.ts --write\n\n[migrate-base-connection-token-storage-v2] Summary\n{\n  \"mode\": \"write\",\n  \"providers\": [\n    {\n      \"provider\": \"prisma\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"baseIntegrationCount\": 0,\n      \"baseConnectionCount\": 0,\n      \"connectionsScanned\": 0,\n      \"connectionsWithBaseApiToken\": 0,\n      \"connectionsWithLegacyPasswordOnly\": 0,\n      \"connectionsBackfilled\": 0,\n      \"connectionsStillMissingToken\": 0,\n      \"warnings\": [\n        \"No Base integrations found.\"\n      ],\n      \"error\": null\n    },\n    {\n      \"provider\": \"mongodb\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"baseIntegrationCount\": 0,\n      \"baseConnectionCount\": 0,\n      \"connectionsScanned\": 0,\n      \"connectionsWithBaseApiToken\": 0,\n      \"connectionsWithLegacyPasswordOnly\": 0,\n      \"connectionsBackfilled\": 0,\n      \"connectionsStillMissingToken\": 0,\n      \"warnings\": [\n        \"No Base integrations found.\"\n      ],\n      \"error\": null\n    }\n  ]\n}\n",
+      "stdout": "\n> libapp2@0.1.0 migrate:base-connection-token-storage:v2\n> cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-base-connection-token-storage-v2.ts --write\n\n[migrate-base-connection-token-storage-v2] Summary\n{\n  \"mode\": \"write\",\n  \"providers\": [\n    {\n      \"provider\": \"prisma\",\n      \"configured\": true,\n      \"changed\": true,\n      \"writesApplied\": 1,\n      \"baseIntegrationCount\": 1,\n      \"baseConnectionCount\": 1,\n      \"connectionsScanned\": 1,\n      \"connectionsWithBaseApiToken\": 0,\n      \"connectionsWithLegacyPasswordOnly\": 1,\n      \"connectionsBackfilled\": 1,\n      \"connectionsStillMissingToken\": 0,\n      \"warnings\": [],\n      \"error\": null\n    },\n    {\n      \"provider\": \"mongodb\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"baseIntegrationCount\": 0,\n      \"baseConnectionCount\": 0,\n      \"connectionsScanned\": 0,\n      \"connectionsWithBaseApiToken\": 0,\n      \"connectionsWithLegacyPasswordOnly\": 0,\n      \"connectionsBackfilled\": 0,\n      \"connectionsStillMissingToken\": 0,\n      \"warnings\": [\n        \"No Base integrations found.\"\n      ],\n      \"error\": null\n    }\n  ]\n}\n",
       "stderr": ""
     },
     {
@@ -234,26 +232,24 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-05T00:42:18.328Z",
-      "finishedAt": "2026-03-05T00:42:19.737Z",
-      "durationMs": 1409,
+      "startedAt": "2026-03-05T01:22:10.942Z",
+      "finishedAt": "2026-03-05T01:22:12.340Z",
+      "durationMs": 1398,
       "parsedSummary": {
         "mode": "write",
         "providers": [
           {
             "provider": "prisma",
             "configured": true,
-            "changed": false,
-            "writesApplied": 0,
-            "baseIntegrationCount": 0,
-            "baseConnectionCount": 0,
-            "connectionsScanned": 0,
+            "changed": true,
+            "writesApplied": 1,
+            "baseIntegrationCount": 1,
+            "baseConnectionCount": 1,
+            "connectionsScanned": 1,
             "connectionsAlreadyEncrypted": 0,
-            "connectionsEncryptedByMigration": 0,
+            "connectionsEncryptedByMigration": 1,
             "connectionsStillMissingToken": 0,
-            "warnings": [
-              "No Base integrations found."
-            ],
+            "warnings": [],
             "error": null
           },
           {
@@ -274,7 +270,7 @@
           }
         ]
       },
-      "stdout": "\n> libapp2@0.1.0 migrate:base-token-encryption:v2\n> cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-base-token-encryption-v2.ts --write\n\n{\n  \"mode\": \"write\",\n  \"providers\": [\n    {\n      \"provider\": \"prisma\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"baseIntegrationCount\": 0,\n      \"baseConnectionCount\": 0,\n      \"connectionsScanned\": 0,\n      \"connectionsAlreadyEncrypted\": 0,\n      \"connectionsEncryptedByMigration\": 0,\n      \"connectionsStillMissingToken\": 0,\n      \"warnings\": [\n        \"No Base integrations found.\"\n      ],\n      \"error\": null\n    },\n    {\n      \"provider\": \"mongodb\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"baseIntegrationCount\": 0,\n      \"baseConnectionCount\": 0,\n      \"connectionsScanned\": 0,\n      \"connectionsAlreadyEncrypted\": 0,\n      \"connectionsEncryptedByMigration\": 0,\n      \"connectionsStillMissingToken\": 0,\n      \"warnings\": [\n        \"No Base integrations found.\"\n      ],\n      \"error\": null\n    }\n  ]\n}\n",
+      "stdout": "\n> libapp2@0.1.0 migrate:base-token-encryption:v2\n> cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-base-token-encryption-v2.ts --write\n\n{\n  \"mode\": \"write\",\n  \"providers\": [\n    {\n      \"provider\": \"prisma\",\n      \"configured\": true,\n      \"changed\": true,\n      \"writesApplied\": 1,\n      \"baseIntegrationCount\": 1,\n      \"baseConnectionCount\": 1,\n      \"connectionsScanned\": 1,\n      \"connectionsAlreadyEncrypted\": 0,\n      \"connectionsEncryptedByMigration\": 1,\n      \"connectionsStillMissingToken\": 0,\n      \"warnings\": [],\n      \"error\": null\n    },\n    {\n      \"provider\": \"mongodb\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"baseIntegrationCount\": 0,\n      \"baseConnectionCount\": 0,\n      \"connectionsScanned\": 0,\n      \"connectionsAlreadyEncrypted\": 0,\n      \"connectionsEncryptedByMigration\": 0,\n      \"connectionsStillMissingToken\": 0,\n      \"warnings\": [\n        \"No Base integrations found.\"\n      ],\n      \"error\": null\n    }\n  ]\n}\n",
       "stderr": ""
     },
     {
@@ -286,9 +282,9 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-05T00:42:19.737Z",
-      "finishedAt": "2026-03-05T00:42:21.074Z",
-      "durationMs": 1337,
+      "startedAt": "2026-03-05T01:22:12.340Z",
+      "finishedAt": "2026-03-05T01:22:13.772Z",
+      "durationMs": 1432,
       "parsedSummary": {
         "mode": "write",
         "providers": [
@@ -340,9 +336,9 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-05T00:42:21.074Z",
-      "finishedAt": "2026-03-05T00:42:22.449Z",
-      "durationMs": 1375,
+      "startedAt": "2026-03-05T01:22:13.772Z",
+      "finishedAt": "2026-03-05T01:22:15.165Z",
+      "durationMs": 1393,
       "parsedSummary": {
         "mode": "write",
         "providers": [
@@ -394,9 +390,9 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-05T00:42:22.449Z",
-      "finishedAt": "2026-03-05T00:42:23.984Z",
-      "durationMs": 1535,
+      "startedAt": "2026-03-05T01:22:15.165Z",
+      "finishedAt": "2026-03-05T01:22:16.719Z",
+      "durationMs": 1554,
       "parsedSummary": {
         "mode": "write",
         "providers": [
@@ -486,9 +482,9 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-05T00:42:23.984Z",
-      "finishedAt": "2026-03-05T00:42:25.546Z",
-      "durationMs": 1562,
+      "startedAt": "2026-03-05T01:22:16.719Z",
+      "finishedAt": "2026-03-05T01:22:18.186Z",
+      "durationMs": 1467,
       "parsedSummary": {
         "mode": "write",
         "providers": [

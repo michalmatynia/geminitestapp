@@ -1,35 +1,39 @@
 {
   "summary": {
-    "generatedAt": "2026-03-05T01:54:34.269Z",
-    "scannedSourceFiles": 3893,
-    "scannedJsxFiles": 1394,
-    "componentCount": 2112,
+    "generatedAt": "2026-03-05T01:34:39.723Z",
+    "scannedSourceFiles": 3892,
+    "scannedJsxFiles": 1393,
+    "componentCount": 2099,
     "componentsWithForwarding": 0,
-    "componentsWithAnyForwarding": 27,
-    "resolvedTransitionCount": 27,
-    "depth2CandidateChainCount": 27,
+    "componentsWithAnyForwarding": 41,
+    "resolvedTransitionCount": 41,
+    "depth2CandidateChainCount": 41,
     "candidateChainCount": 0,
     "highPriorityChainCount": 0,
     "unknownSpreadForwardingCount": 0,
     "topFeatureScopes": [
       {
         "scope": "feature:cms",
-        "count": 14
+        "count": 16
       },
       {
         "scope": "shared-ui",
-        "count": 5
+        "count": 7
       },
       {
         "scope": "feature:ai",
-        "count": 2
+        "count": 4
       },
       {
-        "scope": "feature:case-resolver",
-        "count": 2
+        "scope": "feature:products",
+        "count": 4
       },
       {
         "scope": "shared-lib",
+        "count": 4
+      },
+      {
+        "scope": "feature:case-resolver",
         "count": 2
       },
       {
@@ -37,13 +41,255 @@
         "count": 1
       },
       {
-        "scope": "feature:products",
+        "scope": "feature:integrations",
+        "count": 1
+      },
+      {
+        "scope": "feature:notesapp",
+        "count": 1
+      },
+      {
+        "scope": "feature:viewer3d",
         "count": 1
       }
     ]
   },
   "backlog": [],
   "transitionBacklog": [
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/cms/pages/pages/EditPagePage.tsx#EditPageContent",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/cms/pages/pages/EditPagePage.tsx#EditPageContent",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "id",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/pages/pages/EditPagePage.tsx#EditPageContent",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "id",
+          "targetProp": "onClick",
+          "relativePath": "src/features/cms/pages/pages/EditPagePage.tsx",
+          "line": 301
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperNameCell.tsx#CategoryMapperNameCell",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperNameCell.tsx#CategoryMapperNameCell",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "onToggleExpand",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperNameCell.tsx#CategoryMapperNameCell",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "onToggleExpand",
+          "targetProp": "onClick",
+          "relativePath": "src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperNameCell.tsx",
+          "line": 34
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/notesapp/components/tree/NotesAppTreeHeader.tsx#NotesAppTreeHeader",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/notesapp/components/tree/NotesAppTreeHeader.tsx#NotesAppTreeHeader",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "controller",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/notesapp/components/tree/NotesAppTreeHeader.tsx#NotesAppTreeHeader",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "controller",
+          "targetProp": "onClick",
+          "relativePath": "src/features/notesapp/components/tree/NotesAppTreeHeader.tsx",
+          "line": 159
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/products/components/EditableCell.tsx#EditableCell",
+      "sinkComponentId": "src/shared/ui/input.tsx#Input",
+      "componentPath": [
+        "src/features/products/components/EditableCell.tsx#EditableCell",
+        "src/shared/ui/input.tsx#Input"
+      ],
+      "propPath": [
+        "field",
+        "step"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/products/components/EditableCell.tsx#EditableCell",
+          "toComponentId": "src/shared/ui/input.tsx#Input",
+          "sourceProp": "field",
+          "targetProp": "step",
+          "relativePath": "src/features/products/components/EditableCell.tsx",
+          "line": 93
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/products/components/ProductCard.tsx#ProductCard",
+      "sinkComponentId": "src/shared/ui/ResourceCard.tsx#ResourceCard",
+      "componentPath": [
+        "src/features/products/components/ProductCard.tsx#ProductCard",
+        "src/shared/ui/ResourceCard.tsx#ResourceCard"
+      ],
+      "propPath": [
+        "product",
+        "footer"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/products/components/ProductCard.tsx#ProductCard",
+          "toComponentId": "src/shared/ui/ResourceCard.tsx#ResourceCard",
+          "sourceProp": "product",
+          "targetProp": "footer",
+          "relativePath": "src/features/products/components/ProductCard.tsx",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/products/components/settings/validator-settings/ValidatorPatternImportModal.tsx#ValidatorPatternImportModal",
+      "sinkComponentId": "src/shared/ui/templates/modals/JSONImportModal.tsx#JSONImportModal",
+      "componentPath": [
+        "src/features/products/components/settings/validator-settings/ValidatorPatternImportModal.tsx#ValidatorPatternImportModal",
+        "src/shared/ui/templates/modals/JSONImportModal.tsx#JSONImportModal"
+      ],
+      "propPath": [
+        "open",
+        "isOpen"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/products/components/settings/validator-settings/ValidatorPatternImportModal.tsx#ValidatorPatternImportModal",
+          "toComponentId": "src/shared/ui/templates/modals/JSONImportModal.tsx#JSONImportModal",
+          "sourceProp": "open",
+          "targetProp": "isOpen",
+          "relativePath": "src/features/products/components/settings/validator-settings/ValidatorPatternImportModal.tsx",
+          "line": 147
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/viewer3d/components/Asset3DUploader.tsx#Asset3DUploader",
+      "sinkComponentId": "src/shared/ui/FormActions.tsx#FormActions",
+      "componentPath": [
+        "src/features/viewer3d/components/Asset3DUploader.tsx#Asset3DUploader",
+        "src/shared/ui/FormActions.tsx#FormActions"
+      ],
+      "propPath": [
+        "className",
+        "saveIcon"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/viewer3d/components/Asset3DUploader.tsx#Asset3DUploader",
+          "toComponentId": "src/shared/ui/FormActions.tsx#FormActions",
+          "sourceProp": "className",
+          "targetProp": "saveIcon",
+          "relativePath": "src/features/viewer3d/components/Asset3DUploader.tsx",
+          "line": 324
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/shared/lib/ai-brain/components/BrainCatalogTree.tsx#BrainCatalogTree",
+      "sinkComponentId": "src/features/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+      "componentPath": [
+        "src/shared/lib/ai-brain/components/BrainCatalogTree.tsx#BrainCatalogTree",
+        "src/features/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2"
+      ],
+      "propPath": [
+        "isPending",
+        "enableDnd"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/lib/ai-brain/components/BrainCatalogTree.tsx#BrainCatalogTree",
+          "toComponentId": "src/features/foldertree/v2/components/FolderTreeViewportV2.tsx#FolderTreeViewportV2",
+          "sourceProp": "isPending",
+          "targetProp": "enableDnd",
+          "relativePath": "src/shared/lib/ai-brain/components/BrainCatalogTree.tsx",
+          "line": 97
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx#TriggerButtonBar",
+      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+      "componentPath": [
+        "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx#TriggerButtonBar",
+        "src/shared/ui/toggle-row.tsx#ToggleRow"
+      ],
+      "propPath": [
+        "className",
+        "icon"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx#TriggerButtonBar",
+          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+          "sourceProp": "className",
+          "targetProp": "icon",
+          "relativePath": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx",
+          "line": 72
+        }
+      ]
+    },
     {
       "score": 52,
       "depth": 2,
@@ -275,6 +521,188 @@
           "targetProp": "value",
           "relativePath": "src/shared/lib/analytics/components/AnalyticsEventDetails.tsx",
           "line": 28
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/AppErrorBoundary.tsx#AppErrorFallback",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/shared/ui/AppErrorBoundary.tsx#AppErrorFallback",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "resetErrorBoundary",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/AppErrorBoundary.tsx#AppErrorFallback",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "resetErrorBoundary",
+          "targetProp": "onClick",
+          "relativePath": "src/shared/ui/AppErrorBoundary.tsx",
+          "line": 47
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/app-modal.tsx#AppModal",
+      "sinkComponentId": "src/shared/ui/dialog.tsx#DialogContent",
+      "componentPath": [
+        "src/shared/ui/app-modal.tsx#AppModal",
+        "src/shared/ui/dialog.tsx#DialogContent"
+      ],
+      "propPath": [
+        "contentClassName",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/app-modal.tsx#AppModal",
+          "toComponentId": "src/shared/ui/dialog.tsx#DialogContent",
+          "sourceProp": "contentClassName",
+          "targetProp": "className",
+          "relativePath": "src/shared/ui/app-modal.tsx",
+          "line": 196
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/metadata-item.tsx#MetadataItem",
+      "sinkComponentId": "src/shared/ui/label.tsx#Label",
+      "componentPath": [
+        "src/shared/ui/metadata-item.tsx#MetadataItem",
+        "src/shared/ui/label.tsx#Label"
+      ],
+      "propPath": [
+        "labelClassName",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/metadata-item.tsx#MetadataItem",
+          "toComponentId": "src/shared/ui/label.tsx#Label",
+          "sourceProp": "labelClassName",
+          "targetProp": "className",
+          "relativePath": "src/shared/ui/metadata-item.tsx",
+          "line": 45
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/templates/modals/ConfirmModal.tsx#ConfirmModal",
+      "sinkComponentId": "src/shared/ui/alert-dialog.tsx#AlertDialogDescription",
+      "componentPath": [
+        "src/shared/ui/templates/modals/ConfirmModal.tsx#ConfirmModal",
+        "src/shared/ui/alert-dialog.tsx#AlertDialogDescription"
+      ],
+      "propPath": [
+        "subtitle",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/templates/modals/ConfirmModal.tsx#ConfirmModal",
+          "toComponentId": "src/shared/ui/alert-dialog.tsx#AlertDialogDescription",
+          "sourceProp": "subtitle",
+          "targetProp": "className",
+          "relativePath": "src/shared/ui/templates/modals/ConfirmModal.tsx",
+          "line": 187
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/image-studio/components/StudioCard.tsx#StudioCard",
+      "sinkComponentId": "src/shared/ui/card.tsx#Card",
+      "componentPath": [
+        "src/features/ai/image-studio/components/StudioCard.tsx#StudioCard",
+        "src/shared/ui/card.tsx#Card"
+      ],
+      "propPath": [
+        "className",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/image-studio/components/StudioCard.tsx#StudioCard",
+          "toComponentId": "src/shared/ui/card.tsx#Card",
+          "sourceProp": "className",
+          "targetProp": "className",
+          "relativePath": "src/features/ai/image-studio/components/StudioCard.tsx",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/ai/image-studio/pages/AdminImageStudioValidationPatternsPage.tsx#AdminImageStudioValidationPatternsPage",
+      "sinkComponentId": "src/features/prompt-engine/pages/AdminPromptEngineValidationPatternsPage.tsx#AdminPromptEngineValidationPatternsPage",
+      "componentPath": [
+        "src/features/ai/image-studio/pages/AdminImageStudioValidationPatternsPage.tsx#AdminImageStudioValidationPatternsPage",
+        "src/features/prompt-engine/pages/AdminPromptEngineValidationPatternsPage.tsx#AdminPromptEngineValidationPatternsPage"
+      ],
+      "propPath": [
+        "embedded",
+        "embedded"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/ai/image-studio/pages/AdminImageStudioValidationPatternsPage.tsx#AdminImageStudioValidationPatternsPage",
+          "toComponentId": "src/features/prompt-engine/pages/AdminPromptEngineValidationPatternsPage.tsx#AdminPromptEngineValidationPatternsPage",
+          "sourceProp": "embedded",
+          "targetProp": "embedded",
+          "relativePath": "src/features/ai/image-studio/pages/AdminImageStudioValidationPatternsPage.tsx",
+          "line": 17
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/cms/components/CmsDomainSelector.tsx#CmsDomainSelector",
+      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+      "componentPath": [
+        "src/features/cms/components/CmsDomainSelector.tsx#CmsDomainSelector",
+        "src/shared/ui/select-simple.tsx#SelectSimple"
+      ],
+      "propPath": [
+        "triggerClassName",
+        "triggerClassName"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/CmsDomainSelector.tsx#CmsDomainSelector",
+          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+          "sourceProp": "triggerClassName",
+          "targetProp": "triggerClassName",
+          "relativePath": "src/features/cms/components/CmsDomainSelector.tsx",
+          "line": 63
         }
       ]
     },
@@ -621,32 +1049,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/app-modal.tsx#AppModal",
-      "sinkComponentId": "src/shared/ui/app-modal.tsx#AppModalDialogContentShell",
-      "componentPath": [
-        "src/shared/ui/app-modal.tsx#AppModal",
-        "src/shared/ui/app-modal.tsx#AppModalDialogContentShell"
-      ],
-      "propPath": [
-        "title",
-        "title"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/app-modal.tsx#AppModal",
-          "toComponentId": "src/shared/ui/app-modal.tsx#AppModalDialogContentShell",
-          "sourceProp": "title",
-          "targetProp": "title",
-          "relativePath": "src/shared/ui/app-modal.tsx",
-          "line": 243
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/shared/ui/data-table.tsx#DataTableSortableHeader",
       "sinkComponentId": "src/shared/ui/button.tsx#Button",
       "componentPath": [
@@ -665,32 +1067,6 @@
           "targetProp": "className",
           "relativePath": "src/shared/ui/data-table.tsx",
           "line": 67
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/ui/metadata-item.tsx#MetadataItemLabel",
-      "sinkComponentId": "src/shared/ui/label.tsx#Label",
-      "componentPath": [
-        "src/shared/ui/metadata-item.tsx#MetadataItemLabel",
-        "src/shared/ui/label.tsx#Label"
-      ],
-      "propPath": [
-        "className",
-        "className"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/metadata-item.tsx#MetadataItemLabel",
-          "toComponentId": "src/shared/ui/label.tsx#Label",
-          "sourceProp": "className",
-          "targetProp": "className",
-          "relativePath": "src/shared/ui/metadata-item.tsx",
-          "line": 48
         }
       ]
     },
@@ -777,6 +1153,24 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/ai/image-studio/components/StudioCard.tsx#StudioCard",
+      "name": "StudioCard",
+      "relativePath": "src/features/ai/image-studio/components/StudioCard.tsx",
+      "feature": "feature:ai",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/ai/image-studio/pages/AdminImageStudioValidationPatternsPage.tsx#AdminImageStudioValidationPatternsPage",
+      "name": "AdminImageStudioValidationPatternsPage",
+      "relativePath": "src/features/ai/image-studio/pages/AdminImageStudioValidationPatternsPage.tsx",
+      "feature": "feature:ai",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/case-resolver/components/CaseResolverRelationsWorkspace.tsx#CaseResolverRelationsWorkspace",
       "name": "CaseResolverRelationsWorkspace",
       "relativePath": "src/features/case-resolver/components/CaseResolverRelationsWorkspace.tsx",
@@ -790,6 +1184,15 @@
       "name": "CaseTreeRenderer",
       "relativePath": "src/features/case-resolver/components/CaseTreeRenderer.tsx",
       "feature": "feature:case-resolver",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/cms/components/CmsDomainSelector.tsx#CmsDomainSelector",
+      "name": "CmsDomainSelector",
+      "relativePath": "src/features/cms/components/CmsDomainSelector.tsx",
+      "feature": "feature:cms",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 1,
       "hasUnknownSpreadForwarding": false
@@ -903,6 +1306,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/cms/pages/pages/EditPagePage.tsx#EditPageContent",
+      "name": "EditPageContent",
+      "relativePath": "src/features/cms/pages/pages/EditPagePage.tsx",
+      "feature": "feature:cms",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/cms/pages/slugs/EditSlugPage.tsx#EditSlugForm",
       "name": "EditSlugForm",
       "relativePath": "src/features/cms/pages/slugs/EditSlugPage.tsx",
@@ -921,10 +1333,82 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperNameCell.tsx#CategoryMapperNameCell",
+      "name": "CategoryMapperNameCell",
+      "relativePath": "src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperNameCell.tsx",
+      "feature": "feature:integrations",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/notesapp/components/tree/NotesAppTreeHeader.tsx#NotesAppTreeHeader",
+      "name": "NotesAppTreeHeader",
+      "relativePath": "src/features/notesapp/components/tree/NotesAppTreeHeader.tsx",
+      "feature": "feature:notesapp",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/products/components/EditableCell.tsx#EditableCell",
+      "name": "EditableCell",
+      "relativePath": "src/features/products/components/EditableCell.tsx",
+      "feature": "feature:products",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/products/components/ProductCard.tsx#ProductCard",
+      "name": "ProductCard",
+      "relativePath": "src/features/products/components/ProductCard.tsx",
+      "feature": "feature:products",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/products/components/settings/validator-settings/ValidatorDocsTooltips.tsx#ValidatorDocTooltip",
       "name": "ValidatorDocTooltip",
       "relativePath": "src/features/products/components/settings/validator-settings/ValidatorDocsTooltips.tsx",
       "feature": "feature:products",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/products/components/settings/validator-settings/ValidatorPatternImportModal.tsx#ValidatorPatternImportModal",
+      "name": "ValidatorPatternImportModal",
+      "relativePath": "src/features/products/components/settings/validator-settings/ValidatorPatternImportModal.tsx",
+      "feature": "feature:products",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/viewer3d/components/Asset3DUploader.tsx#Asset3DUploader",
+      "name": "Asset3DUploader",
+      "relativePath": "src/features/viewer3d/components/Asset3DUploader.tsx",
+      "feature": "feature:viewer3d",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/shared/lib/ai-brain/components/BrainCatalogTree.tsx#BrainCatalogTree",
+      "name": "BrainCatalogTree",
+      "relativePath": "src/shared/lib/ai-brain/components/BrainCatalogTree.tsx",
+      "feature": "shared-lib",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx#TriggerButtonBar",
+      "name": "TriggerButtonBar",
+      "relativePath": "src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx",
+      "feature": "shared-lib",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 1,
       "hasUnknownSpreadForwarding": false
@@ -948,6 +1432,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/shared/ui/AppErrorBoundary.tsx#AppErrorFallback",
+      "name": "AppErrorFallback",
+      "relativePath": "src/shared/ui/AppErrorBoundary.tsx",
+      "feature": "shared-ui",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/shared/ui/app-modal.tsx#AppModal",
       "name": "AppModal",
       "relativePath": "src/shared/ui/app-modal.tsx",
@@ -966,9 +1459,18 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/shared/ui/metadata-item.tsx#MetadataItemLabel",
-      "name": "MetadataItemLabel",
+      "componentId": "src/shared/ui/metadata-item.tsx#MetadataItem",
+      "name": "MetadataItem",
       "relativePath": "src/shared/ui/metadata-item.tsx",
+      "feature": "shared-ui",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/shared/ui/templates/modals/ConfirmModal.tsx#ConfirmModal",
+      "name": "ConfirmModal",
+      "relativePath": "src/shared/ui/templates/modals/ConfirmModal.tsx",
       "feature": "shared-ui",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 1,

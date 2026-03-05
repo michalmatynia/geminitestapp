@@ -52,3 +52,13 @@ When `resolveAiPathsNodeExecutionConfig` fails for AI Paths jobs, runtime falls 
    - `npm run test:unit`
    - `npm run canonical:check:sitewide`
    - `npm run ai-paths:check:canonical`
+
+## Verification Snapshot (2026-03-05)
+
+1. Runtime fallback branch is absent in:
+   - `src/features/products/workers/product-ai-processors.ts`
+2. Targeted test passed:
+   - `npx vitest run src/features/products/workers/__tests__/product-ai-processors.graph-model.test.ts`
+3. Canonical guardrails passed:
+   - `npm run canonical:check:sitewide`
+   - `npm run ai-paths:check:canonical`

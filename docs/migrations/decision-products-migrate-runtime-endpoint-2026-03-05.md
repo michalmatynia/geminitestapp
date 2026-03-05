@@ -54,3 +54,14 @@ This endpoint performs batch migration and can trigger full database backup beha
 3. API tests and canonical checks pass after route removal:
    - `npm run test:unit`
    - `npm run canonical:check:sitewide`
+
+## Verification Snapshot (2026-03-05)
+
+1. Runtime route files are absent:
+   - `src/app/api/v2/products/migrate/route.ts`
+   - `src/app/api/v2/products/migrate/handler.ts`
+2. Endpoint-removal regression test passed:
+   - `npx vitest run __tests__/api/products/migration.test.ts`
+3. Canonical guardrails passed:
+   - `npm run canonical:check:sitewide`
+   - `npm run ai-paths:check:canonical`

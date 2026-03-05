@@ -38,6 +38,10 @@ Verification runner status:
 1. `npm run wave1:verify:prepare` -> success.
 2. `npm run wave1:verify:dry-run` -> success (`10/10`).
 3. `npm run wave1:verify:write` -> success (`10/10`).
+4. Post-hard-cut rerun (same date) confirmed unchanged pass state:
+   - `npm run wave1:verify:prepare` -> success (`pending=10` pre-run baseline).
+   - `npm run wave1:verify:dry-run` -> success (`10/10`).
+   - `npm run wave1:verify:write` -> success (`10/10`).
 
 Execution note:
 
@@ -111,12 +115,23 @@ Completed:
 3. Removed products migration runtime endpoint surface:
    - `src/app/api/v2/products/migrate/handler.ts`
    - `src/app/api/v2/products/migrate/route.ts`
+4. Added regression guard test to keep endpoint removed:
    - `__tests__/api/products/migration.test.ts`
+5. Additional verification gates executed on current baseline:
+   - `npm run test:unit` passed (`738` files, `3703` tests).
+   - `npm run typecheck` passed.
+   - `npm run test:integration:prisma` passed (`20` files, `162` tests).
+   - `npm run test:integration:mongo` passed (`9` files + `1` skipped guard file).
+   - `npm run test:integration:mongo:canonical-shape-guard` passed (`1/1`).
+   - `npm run test:ai-paths:signal-flow-regression` passed (`4` files, `22` tests).
+6. Full CI-equivalent aggregate gate passed:
+   - `npm run test:ci` passed (`test:unit` reported `741` files, `3710` tests in this run).
 
 ## Wave F
 
-Not closed today:
+In progress:
 
-1. Requires stabilization observation window before final closeout.
-2. Closeout target artifact remains planned:
+1. Stabilization observation window is required before final closeout.
+2. Closeout draft artifact created:
    - `docs/canonical-closeout-2026-04-17.md`
+3. Final publication remains targeted for 2026-04-17.

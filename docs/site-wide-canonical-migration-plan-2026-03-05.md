@@ -11,8 +11,8 @@ Complete migration to canonical runtime and persistence contracts, remove remain
 ## Current Baseline (Re-verified 2026-03-05)
 
 1. Canonical guardrails are green:
-   - `npm run canonical:check:sitewide` passed (`3848` runtime source files, `4` required docs).
-   - `npm run ai-paths:check:canonical` passed (`4241` source files under `src/`).
+   - `npm run canonical:check:sitewide` passed (`3847` runtime source files, `4` required docs).
+   - `npm run ai-paths:check:canonical` passed (`4245` source files under `src/`).
    - `npm run observability:check` passed (`legacyCompatViolations=0`, `runtimeErrors=0`).
 2. Exception register posture is strict:
    - `docs/legacy-compatibility-exception-register-2026-03-05.json` contains `0` active exceptions.
@@ -22,6 +22,11 @@ Complete migration to canonical runtime and persistence contracts, remove remain
    - `products-ai-worker-model-fallback` resolved (hard-cut fallback removal).
    - `filemaker-normalizer-compat-options` resolved (runtime options removed, persistence strip explicit).
    - `products-migrate-runtime-endpoint` resolved (runtime endpoint removed).
+5. Validation gates are green on current baseline:
+   - `npm run test:unit`, `npm run typecheck`
+   - `npm run test:integration:prisma`, `npm run test:integration:mongo`, `npm run test:integration:mongo:canonical-shape-guard`
+   - `npm run test:ai-paths:signal-flow-regression`
+   - `npm run test:ci`
 
 ## Canonical End State
 
@@ -36,7 +41,7 @@ Complete migration to canonical runtime and persistence contracts, remove remain
 | --- | --- | --- | --- | --- |
 | `products-ai-worker-model-fallback` | Products | `src/features/products/workers/product-ai-processors.ts` | high | Removed fallback; AI Brain config errors fail fast |
 | `filemaker-normalizer-compat-options` | Filemaker | `src/features/filemaker/filemaker-settings.database.ts` | high | Removed runtime option flags; strict canonical behavior enforced |
-| `products-migrate-runtime-endpoint` | Products | `src/app/api/v2/products/migrate/handler.ts` | medium | Removed runtime endpoint and route test; script-only operations retained |
+| `products-migrate-runtime-endpoint` | Products | `src/app/api/v2/products/migrate/handler.ts` | medium | Removed runtime endpoint; regression test now asserts route remains absent; script-only operations retained |
 
 ## Execution Plan
 
@@ -90,6 +95,8 @@ Then run final wave verification sequence:
 ### Phase 4: Stabilization and Closeout (2026-04-01 to 2026-04-17)
 
 1. Hold a 14-day stabilization window on `main` with zero canonical guardrail regressions.
+   - Track daily evidence in `docs/migrations/stabilization-window-2026-04-17.md`.
+   - Use `npm run canonical:stabilization:check` as daily gate.
 2. Review `retain-breakglass` scripts in `docs/migrations/script-lifecycle-register-2026-03-05.md` and reclassify each to:
    - `retain-breakglass` (with renewed expiry), or
    - `archive-history`, or

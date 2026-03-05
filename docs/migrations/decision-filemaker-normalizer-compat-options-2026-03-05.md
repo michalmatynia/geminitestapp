@@ -58,3 +58,14 @@ The options increase behavioral variance and preserve a compatibility control su
 4. Filemaker unit tests and canonical checks pass:
    - `npm run test:unit`
    - `npm run canonical:check:sitewide`
+
+## Verification Snapshot (2026-03-05)
+
+1. Runtime API is canonical-only in:
+   - `src/features/filemaker/filemaker-settings.database.ts`
+   - `src/features/filemaker/settings/database-getters.ts`
+2. Targeted test passed:
+   - `npx vitest run src/features/filemaker/__tests__/settings.test.ts`
+3. Canonical guardrails passed:
+   - `npm run canonical:check:sitewide`
+   - `npm run observability:check`

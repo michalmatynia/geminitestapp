@@ -9,31 +9,6 @@ interface ProductCardProps {
   product: ProductWithImages;
 }
 
-type ProductCardDisplayProps = {
-  name: string;
-  imageUrl: string | null;
-  price: number | null;
-};
-
-function ProductCardResource({ name, imageUrl, price }: ProductCardDisplayProps): React.JSX.Element {
-  return (
-    <ResourceCard
-      title={name}
-      className='h-full'
-      media={
-        <div className='relative h-48 w-full'>
-          {imageUrl ? (
-            <Image src={imageUrl} alt={name} fill className='rounded-md object-cover' />
-          ) : (
-            <MissingImagePlaceholder className='h-full w-full rounded-md' />
-          )}
-        </div>
-      }
-      footer={<p className='text-lg font-semibold'>${price}</p>}
-    />
-  );
-}
-
 export default function ProductCard({ product }: ProductCardProps): React.JSX.Element {
   const imageUrl =
     Array.isArray(product.images) && product.images.length > 0
@@ -46,7 +21,20 @@ export default function ProductCard({ product }: ProductCardProps): React.JSX.El
 
   return (
     <Link href={`/products/${product.id}`} className='block h-full'>
-      <ProductCardResource name={name} imageUrl={imageUrl} price={price} />
+      <ResourceCard
+        title={name}
+        className='h-full'
+        media={
+          <div className='relative h-48 w-full'>
+            {imageUrl ? (
+              <Image src={imageUrl} alt={name} fill className='rounded-md object-cover' />
+            ) : (
+              <MissingImagePlaceholder className='h-full w-full rounded-md' />
+            )}
+          </div>
+        }
+        footer={<p className='text-lg font-semibold'>${price}</p>}
+      />
     </Link>
   );
 }

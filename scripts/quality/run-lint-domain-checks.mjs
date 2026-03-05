@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process';
 
 const args = new Set(process.argv.slice(2));
 const strictMode = args.has('--strict');
+const includeTestProbes = args.has('--include-test-probes');
 const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
 
 const root = process.cwd();
@@ -17,26 +18,31 @@ const domains = [
     id: 'auth',
     name: 'Auth',
     targets: ['src/features/auth', 'src/app/api/auth'],
+    testProbes: ['__tests__/features/auth/pages/signin-page.test.tsx'],
   },
   {
     id: 'products',
     name: 'Products',
     targets: ['src/features/products', 'src/app/api/v2/products'],
+    testProbes: ['__tests__/features/products/pages/product-edit-page.test.tsx'],
   },
   {
     id: 'ai-paths',
     name: 'AI Paths',
     targets: ['src/features/ai/ai-paths', 'src/app/api/ai-paths'],
+    testProbes: ['src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx'],
   },
   {
     id: 'image-studio',
     name: 'Image Studio',
     targets: ['src/features/ai/image-studio', 'src/app/api/image-studio'],
+    testProbes: ['src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx'],
   },
   {
     id: 'case-resolver',
     name: 'Case Resolver',
     targets: ['src/features/case-resolver', 'src/features/case-resolver-capture', 'src/app/api/case-resolver'],
+    testProbes: ['src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx'],
   },
 ];
 
@@ -69,12 +75,17 @@ const existingTargets = async (targets) => {
 
 const runLintDomain = async (domain) => {
   const targets = await existingTargets(domain.targets);
-  if (targets.length === 0) {
+  const testProbeTargets = includeTestProbes
+    ? await existingTargets(Array.isArray(domain.testProbes) ? domain.testProbes : [])
+    : [];
+  const commandTargets = [...targets, ...testProbeTargets];
+  if (commandTargets.length === 0) {
     return {
       id: domain.id,
       name: domain.name,
       targets: domain.targets,
       resolvedTargets: [],
+      resolvedTestProbes: [],
       command: null,
       status: 'skipped',
       exitCode: null,
@@ -86,7 +97,7 @@ const runLintDomain = async (domain) => {
   return new Promise((resolve) => {
     const startedAt = Date.now();
     const command = 'npx';
-    const commandArgs = ['eslint', ...targets];
+    const commandArgs = ['eslint', '--no-warn-ignored', ...commandTargets];
     const child = spawn(command, commandArgs, {
       cwd: root,
       env: {
@@ -129,6 +140,7 @@ const runLintDomain = async (domain) => {
         name: domain.name,
         targets: domain.targets,
         resolvedTargets: targets,
+        resolvedTestProbes: testProbeTargets,
         command: [command, ...commandArgs].join(' '),
         status: 'fail',
         exitCode: null,
@@ -146,6 +158,7 @@ const runLintDomain = async (domain) => {
         name: domain.name,
         targets: domain.targets,
         resolvedTargets: targets,
+        resolvedTestProbes: testProbeTargets,
         command: [command, ...commandArgs].join(' '),
         status: timedOut ? 'timeout' : exitCode === 0 ? 'pass' : 'fail',
         exitCode,
@@ -170,14 +183,15 @@ const toMarkdown = (payload) => {
   lines.push(`- Timed out: ${payload.summary.timedOut}`);
   lines.push(`- Skipped: ${payload.summary.skipped}`);
   lines.push(`- Total duration: ${formatDuration(payload.summary.totalDurationMs)}`);
+  lines.push(`- Include test probes: ${payload.includeTestProbes ? 'yes' : 'no'}`);
   lines.push('');
   lines.push('## Domain Status');
   lines.push('');
-  lines.push('| Domain | Status | Duration | Exit | Targets |');
-  lines.push('| --- | --- | ---: | ---: | --- |');
+  lines.push('| Domain | Status | Duration | Exit | Targets | Test Probes |');
+  lines.push('| --- | --- | ---: | ---: | --- | --- |');
   for (const result of payload.results) {
     lines.push(
-      `| ${result.name} | ${result.status.toUpperCase()} | ${formatDuration(result.durationMs)} | ${result.exitCode ?? '-'} | ${result.resolvedTargets.map((target) => `\`${target}\``).join(', ') || '-' } |`
+      `| ${result.name} | ${result.status.toUpperCase()} | ${formatDuration(result.durationMs)} | ${result.exitCode ?? '-'} | ${result.resolvedTargets.map((target) => `\`${target}\``).join(', ') || '-' } | ${result.resolvedTestProbes.map((target) => `\`${target}\``).join(', ') || '-'} |`
     );
   }
   lines.push('');
@@ -185,6 +199,7 @@ const toMarkdown = (payload) => {
   lines.push('');
   lines.push('- Chunked lint checks reduce long single-run bottlenecks and isolate failing domains.');
   lines.push('- Run `node scripts/quality/run-lint-domain-checks.mjs --strict` in CI-style enforcement mode.');
+  lines.push('- Test probes run with `--no-warn-ignored`; if a probe is ignored by ESLint config, it will not emit lint signal.');
   return `${lines.join('\n')}\n`;
 };
 
@@ -210,6 +225,7 @@ const run = async () => {
   const payload = {
     generatedAt: new Date().toISOString(),
     strictMode,
+    includeTestProbes,
     summary,
     results,
   };

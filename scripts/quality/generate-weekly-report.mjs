@@ -86,6 +86,16 @@ const formatDuration = (ms) => {
   return `${minutes.toFixed(1)}m`;
 };
 
+const formatDelta = (deltaMs) => {
+  if (!Number.isFinite(deltaMs)) {
+    return 'n/a';
+  }
+  if (deltaMs === 0) {
+    return '0ms';
+  }
+  return `${deltaMs > 0 ? '+' : '-'}${formatDuration(Math.abs(deltaMs))}`;
+};
+
 const truncateOutput = (value) => {
   if (!value) {
     return '';
@@ -94,6 +104,42 @@ const truncateOutput = (value) => {
     return value;
   }
   return value.slice(-MAX_OUTPUT_BYTES);
+};
+
+const readJsonIfExists = async (relativePath) => {
+  const absolutePath = path.join(root, relativePath);
+  try {
+    const raw = await fs.readFile(absolutePath, 'utf8');
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
+const summarizeTrend = (payload) => {
+  if (!payload || !Array.isArray(payload.runs)) {
+    return null;
+  }
+  const runs = payload.runs;
+  if (runs.length === 0) {
+    return {
+      runCount: 0,
+      oldest: null,
+      newest: null,
+      totalDurationDeltaMs: null,
+    };
+  }
+  const newest = runs[runs.length - 1];
+  const previous = runs.length > 1 ? runs[runs.length - 2] : null;
+  return {
+    runCount: runs.length,
+    oldest: runs[0]?.generatedAt ?? null,
+    newest: newest?.generatedAt ?? null,
+    totalDurationDeltaMs:
+      previous && Number.isFinite(newest?.totalDurationMs) && Number.isFinite(previous?.totalDurationMs)
+        ? newest.totalDurationMs - previous.totalDurationMs
+        : null,
+  };
 };
 
 const listProcessCommands = async () => {
@@ -347,6 +393,34 @@ const toMarkdown = (report) => {
   lines.push('## Guardrail Snapshot');
   lines.push('');
 
+  lines.push('## Trend Snapshot');
+  lines.push('');
+  if (report.trends.weeklyLane) {
+    const trend = report.trends.weeklyLane;
+    lines.push(
+      `- Weekly lane trend: runs=${trend.runCount}, window=${trend.oldest ?? '-'} -> ${trend.newest ?? '-'}, delta=${trend.totalDurationDeltaMs === null ? 'n/a' : formatDelta(trend.totalDurationDeltaMs)}`
+    );
+  } else {
+    lines.push('- Weekly lane trend: unavailable');
+  }
+  if (report.trends.unitDomains) {
+    const trend = report.trends.unitDomains;
+    lines.push(
+      `- Unit-domain trend: runs=${trend.runCount}, window=${trend.oldest ?? '-'} -> ${trend.newest ?? '-'}, delta=${trend.totalDurationDeltaMs === null ? 'n/a' : formatDelta(trend.totalDurationDeltaMs)}`
+    );
+  } else {
+    lines.push('- Unit-domain trend: unavailable');
+  }
+  if (report.trends.lintDomains) {
+    const trend = report.trends.lintDomains;
+    lines.push(
+      `- Lint-domain trend: runs=${trend.runCount}, window=${trend.oldest ?? '-'} -> ${trend.newest ?? '-'}, delta=${trend.totalDurationDeltaMs === null ? 'n/a' : formatDelta(trend.totalDurationDeltaMs)}`
+    );
+  } else {
+    lines.push('- Lint-domain trend: unavailable');
+  }
+  lines.push('');
+
   lines.push('## Duration Budget Alerts');
   lines.push('');
   if (report.durationAlerts.length === 0) {
@@ -573,6 +647,11 @@ const run = async () => {
     parseScannerSummary('scripts/architecture/scan-prop-drilling.mjs'),
     parseScannerSummary('scripts/architecture/scan-ui-consolidation.mjs'),
   ]);
+  const [weeklyLaneTrendRaw, unitDomainTrendRaw, lintDomainTrendRaw] = await Promise.all([
+    readJsonIfExists('docs/metrics/weekly-quality-trend-latest.json'),
+    readJsonIfExists('docs/metrics/unit-domain-timings-trend-latest.json'),
+    readJsonIfExists('docs/metrics/lint-domain-checks-trend-latest.json'),
+  ]);
 
   const summary = {
     totalChecks: checkResults.length,
@@ -624,6 +703,11 @@ const run = async () => {
     metricsError,
     propDrilling,
     uiConsolidation,
+    trends: {
+      weeklyLane: summarizeTrend(weeklyLaneTrendRaw),
+      unitDomains: summarizeTrend(unitDomainTrendRaw),
+      lintDomains: summarizeTrend(lintDomainTrendRaw),
+    },
     criticalFlows,
   };
 

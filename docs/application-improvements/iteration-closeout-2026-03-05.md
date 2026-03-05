@@ -18,6 +18,7 @@ Date: 2026-03-05
 12. Weekly lane trend report rollout (Step 12) - completed
 13. Unit/lint domain trend reports with rolling deltas (Step 13) - completed
 14. Weekly check duration budgets and strict alerts (Step 14) - completed
+15. Weekly report trend snapshot integration (Step 15) - completed
 
 ## Gate Status Snapshot
 
@@ -33,6 +34,7 @@ Date: 2026-03-05
 - Unit-domain trend report: PASS (rolling delta active)
 - Lint-domain trend report: PASS (rolling delta active)
 - Weekly duration budgets: PASS (strict-mode alert enforcement active)
+- Weekly trend snapshot integration: PASS (weekly report now embeds trend deltas)
 
 ## Current Risks Captured by Baseline
 
@@ -45,6 +47,6 @@ Date: 2026-03-05
 
 1. Add one accessibility smoke test per critical-flow page for keyboard tab-order and visible focus state.
 2. Expand critical-path budgets with route-handler branch-complexity heuristics (not only LOC).
-3. Add trend summaries into weekly report output to reduce context switching across metric files.
-4. Evaluate optional inclusion of `__tests__` trees in lint-domain reporting without destabilizing current ESLint config.
-5. Recalibrate weekly duration budgets after 7-10 more runs to reduce false positives.
+3. Evaluate optional inclusion of `__tests__` trees in lint-domain reporting without destabilizing current ESLint config.
+4. Recalibrate weekly duration budgets after 7-10 more runs to reduce false positives.
+5. Add CI artifact links/indexing for trend reports to simplify PR-level observability review.

@@ -9,25 +9,32 @@ Date: 2026-03-05
 3. UX and accessibility improvements (Step 3) - completed
 4. Performance optimization guardrails (Step 4) - completed
 5. Security and operational readiness (Step 5) - completed
+6. Weekly lane build-lock stabilization - completed
+7. Accessibility smoke gate rollout (Step 7) - completed
+8. Unit-domain timing split (Step 8) - completed
+9. Products domain stabilization for unit-domain gate (Step 9) - completed
+10. Weekly quality lane unit-domain gate integration (Step 10) - completed
 
 ## Gate Status Snapshot
 
 - Critical flow regression gate: PASS (`5/5`)
 - Critical path performance budgets: PASS (`5/5`)
 - Security smoke gate: PASS (`5/5`)
+- Accessibility smoke gate: PASS (`5/5`)
+- Unit-domain gate: PASS (`5/5`)
 - Architecture guardrails: PASS
 - UI consolidation guardrail: PASS
 
 ## Current Risks Captured by Baseline
 
-- Build check currently fails in weekly baseline when `.next/lock` is present.
-- Repository-wide lint currently fails in existing feature code outside this execution scope.
-- Full unit run is still high-latency in the baseline lane; targeted critical/security suites are stable.
+- Repository-wide lint still requires a stable chunked execution strategy in this environment (full sweep timed out during this run).
+- Full unit lane remains high-latency compared with domain-split gate runs.
+- Weekly lane has expanded checks; runtime cost needs periodic review to prevent CI slowdown.
 
 ## Next Iteration Backlog (Priority)
 
-1. Stabilize `npm run build` in baseline lane by handling stale `.next/lock` preflight safely.
-2. Burn down known lint debt in active feature branches (starting with image-studio center preview files).
-3. Split long-running unit lanes into smaller deterministic suites with per-domain timings.
-4. Add one accessibility smoke test per critical flow page for keyboard/focus behavior.
-5. Expand performance guardrails from page LOC budgets to selected API route complexity budgets.
+1. Add a chunked lint runner/report (`by-domain` or `by-directory`) so lint debt is measurable without long single-process timeouts.
+2. Track weekly-lane wall-clock duration trend and set timeout budgets per check to avoid hidden CI regressions.
+3. Add a historical `unit-domain-timings` trend report (rolling 7-day deltas) to surface slowdowns early.
+4. Expand accessibility smoke coverage with keyboard tab-order assertions on one additional page per critical flow.
+5. Expand critical-path budgets with route-handler branch-complexity heuristics (not only LOC).

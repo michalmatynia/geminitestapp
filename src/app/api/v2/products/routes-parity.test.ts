@@ -106,7 +106,6 @@ describe('v2 products route migration', () => {
       'images/base64/all/route.ts',
       'images/base64/route.ts',
       'images/upload/route.ts',
-      'migrate/route.ts',
       'paged/route.ts',
       'parameters/[id]/route.ts',
       'parameters/route.ts',

@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import {
   evaluateLegacyPruneManifest,
   loadLegacyPruneManifest,
-} from '../../../../scripts/ai-paths/legacy-prune-manifest-utils.mjs';
+} from '../../../scripts/ai-paths/legacy-prune-manifest-utils.mjs';
 
 const makeTempRoot = () => fs.mkdtempSync(path.join(os.tmpdir(), 'ai-paths-manifest-utils-'));
 

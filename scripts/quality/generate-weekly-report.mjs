@@ -16,6 +16,7 @@ const strictMode = args.has('--strict');
 const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
 
 const MAX_OUTPUT_BYTES = 160_000;
+const BUILD_LOCK_PATH = path.join(root, '.next', 'lock');
 
 const criticalFlows = [
   {
@@ -78,6 +79,68 @@ const truncateOutput = (value) => {
     return value;
   }
   return value.slice(-MAX_OUTPUT_BYTES);
+};
+
+const listProcessCommands = async () => {
+  const { stdout } = await execFile('ps', ['-Ao', 'pid,command'], {
+    cwd: root,
+    maxBuffer: 4 * 1024 * 1024,
+  });
+
+  return stdout
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+};
+
+const findActiveRepoBuildProcesses = (processLines) =>
+  processLines.filter((line) => {
+    if (!line.includes('next build')) return false;
+    if (!line.includes(root)) return false;
+    return true;
+  });
+
+const createCheckResult = ({
+  id,
+  label,
+  command,
+  status,
+  output,
+}) => ({
+  id,
+  label,
+  command,
+  status,
+  exitCode: null,
+  signal: null,
+  durationMs: 0,
+  output,
+});
+
+const preflightBuildLock = async () => {
+  try {
+    await fs.access(BUILD_LOCK_PATH);
+  } catch {
+    return {
+      action: 'none',
+      message: 'No .next/lock detected.',
+    };
+  }
+
+  const processLines = await listProcessCommands();
+  const activeBuilds = findActiveRepoBuildProcesses(processLines);
+  if (activeBuilds.length > 0) {
+    return {
+      action: 'skip',
+      message: `Skipping build because an active next build process is already running for this workspace (${activeBuilds.length} detected).`,
+    };
+  }
+
+  await fs.unlink(BUILD_LOCK_PATH);
+  return {
+    action: 'removed',
+    message: 'Removed stale .next/lock before running build check.',
+  };
 };
 
 const runCommandCheck = ({ id, label, command, commandArgs, timeoutMs, enabled = true }) => {
@@ -229,6 +292,11 @@ const toMarkdown = (report) => {
   lines.push('## Baseline Status');
   lines.push('');
   lines.push(`- Build pass rate: ${report.passRates.build ?? 'n/a'}%`);
+  if (report.buildPreflight?.action && report.buildPreflight.action !== 'none') {
+    lines.push(
+      `- Build preflight: ${report.buildPreflight.action} (${report.buildPreflight.message})`
+    );
+  }
   lines.push(`- Lint pass rate: ${report.passRates.lint ?? 'n/a'}%`);
   lines.push(`- Typecheck pass rate: ${report.passRates.typecheck ?? 'n/a'}%`);
   lines.push(`- Unit test pass rate: ${report.passRates.unit ?? 'n/a'}%`);
@@ -312,6 +380,21 @@ const toMarkdown = (report) => {
 };
 
 const run = async () => {
+  let buildPreflight = {
+    action: 'none',
+    message: 'Build preflight not executed.',
+  };
+
+  try {
+    buildPreflight = await preflightBuildLock();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    buildPreflight = {
+      action: 'error',
+      message: `Build preflight failed: ${message}`,
+    };
+  }
+
   const checks = [
     {
       id: 'build',
@@ -374,7 +457,32 @@ const run = async () => {
 
   const checkResults = [];
   for (const check of checks) {
+    if (check.id === 'build' && buildPreflight.action === 'skip') {
+      const result = createCheckResult({
+        id: check.id,
+        label: check.label,
+        command: [check.command, ...check.commandArgs].join(' '),
+        status: 'skipped',
+        output: buildPreflight.message,
+      });
+      checkResults.push(result);
+      console.log(
+        `[weekly-quality] ${check.label.padEnd(30, ' ')} ${result.status.toUpperCase().padEnd(7, ' ')} ${formatDuration(result.durationMs)}`
+      );
+      continue;
+    }
+
     const result = await runCommandCheck(check);
+    if (check.id === 'build' && buildPreflight.action === 'removed') {
+      result.output = truncateOutput(
+        [`[build-preflight] ${buildPreflight.message}`, result.output].filter(Boolean).join('\n')
+      );
+    }
+    if (check.id === 'build' && buildPreflight.action === 'error') {
+      result.output = truncateOutput(
+        [`[build-preflight] ${buildPreflight.message}`, result.output].filter(Boolean).join('\n')
+      );
+    }
     checkResults.push(result);
     const statusLabel = result.status.toUpperCase();
     console.log(
@@ -419,6 +527,7 @@ const run = async () => {
       e2e: getPassRate(findCheck('e2e')),
     },
     checks: checkResults,
+    buildPreflight,
     metrics,
     metricsError,
     propDrilling,

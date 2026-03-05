@@ -144,6 +144,34 @@ jobs:
       - name: Run unit test project
         run: npm run test:unit
 
+  unit-domain-timings:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit domain timing suite
+        run: npm run test:unit:domains:strict -- --ci
+
+      - name: Upload unit domain timing report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-domain-timings-report
+          if-no-files-found: warn
+          path: |
+            docs/metrics/unit-domain-timings-latest.json
+            docs/metrics/unit-domain-timings-latest.md
+
   critical-flows:
     runs-on: ubuntu-latest
     steps:

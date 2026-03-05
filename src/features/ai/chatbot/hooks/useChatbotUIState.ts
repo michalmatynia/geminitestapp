@@ -1,14 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import type { ChatbotDebugStateDto as ChatbotDebugState } from '@/shared/contracts/chatbot';
+import type {
+  ChatbotDebugStateDto as ChatbotDebugState,
+  ChatbotUIData as UseChatbotUIStateReturn,
+} from '@/shared/contracts/chatbot';
 
-export interface UseChatbotUIStateReturn {
-  debugState: ChatbotDebugState;
-  setDebugState: React.Dispatch<React.SetStateAction<ChatbotDebugState>>;
-  latestAgentRunId: string | null;
-  setLatestAgentRunId: React.Dispatch<React.SetStateAction<string | null>>;
-}
+export type { UseChatbotUIStateReturn };
 
 export function useChatbotUIState(): UseChatbotUIStateReturn {
   const [latestAgentRunId, setLatestAgentRunId] = useState<string | null>(null);

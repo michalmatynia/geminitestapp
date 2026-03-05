@@ -1,4 +1,5 @@
 import type { ProductCategoryWithChildren } from '@/shared/contracts/products';
+import type { DecodedMasterTreeNode as SharedDecodedMasterTreeNode } from '@/shared/contracts/master-folder-tree';
 import type {
   MasterTreeDropPosition,
   MasterTreeNode,
@@ -6,11 +7,9 @@ import type {
 
 const CATEGORY_NODE_PREFIX = 'category:';
 
-export type CategoryMasterNodeRef = {
-  entity: 'category';
-  id: string;
-  nodeId: string;
-};
+type CategoryMasterNodeRef = SharedDecodedMasterTreeNode<'category'>;
+
+export type { CategoryMasterNodeRef };
 
 export type CategoryDropTarget = {
   parentId: string | null;

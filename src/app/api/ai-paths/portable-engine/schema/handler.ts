@@ -9,7 +9,6 @@ import { getQueryParams } from '@/shared/lib/api/api-handler';
 import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
   PORTABLE_PATH_JSON_SCHEMA_KINDS,
-  type PortablePathJsonSchemaKind,
   buildPortablePathJsonSchemaCatalog,
 } from '@/shared/lib/ai-paths/portable-engine';
 

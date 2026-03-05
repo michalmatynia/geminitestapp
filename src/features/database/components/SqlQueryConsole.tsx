@@ -7,7 +7,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import type { DatabaseType, SqlQueryResult } from '@/shared/contracts/database';
 import { Button, Textarea, SelectSimple, StandardDataTablePanel, Alert, Card } from '@/shared/ui';
 
-import { useDatabase } from '../context/DatabaseContext';
+import { useDatabaseConfig } from '../context/DatabaseContext';
 import { useSqlQueryMutation } from '../hooks/useDatabaseQueries';
 import { SqlHistoryDropdown } from './sql/SqlHistoryDropdown';
 
@@ -47,9 +47,8 @@ export function SqlQueryConsole({
   defaultDbType?: DatabaseType;
   initialSql?: string;
 }): React.JSX.Element {
-  const context = useDatabase();
-  const dbType = defaultDbType ?? context.dbType;
-  const setDbType = context.setDbType;
+  const { dbType: contextDbType, setDbType } = useDatabaseConfig();
+  const dbType = defaultDbType ?? contextDbType;
 
   const [sql, setSql] = useState(initialSql);
   const [result, setResult] = useState<SqlQueryResult | null>(null);

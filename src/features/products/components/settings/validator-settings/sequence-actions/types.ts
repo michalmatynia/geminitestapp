@@ -2,7 +2,11 @@ import type {
   CreateValidationPatternPayload,
   UpdateValidationPatternPayload,
 } from '@/features/products/api/settings';
-import { ProductValidationPattern, SequenceGroupDraft } from '@/shared/contracts/products';
+import {
+  ProductValidationPattern,
+  SequenceGroupDraft,
+  SequenceGroupView,
+} from '@/shared/contracts/products';
 import { QueryClient } from '@tanstack/react-query';
 
 type ValidationPatternMutation<TPayload> = {
@@ -18,12 +22,9 @@ type UpdatePatternMutation = ValidationPatternMutation<{
 
 export type { CreatePatternMutation, UpdatePatternMutation };
 
-export type SequenceGroup = {
-  id: string;
-  label: string;
-  debounceMs: number;
-  patternIds: string[];
-};
+type SequenceGroup = SequenceGroupView;
+
+export type { SequenceGroup };
 
 export type SequenceActionInput = {
   patterns: ProductValidationPattern[];

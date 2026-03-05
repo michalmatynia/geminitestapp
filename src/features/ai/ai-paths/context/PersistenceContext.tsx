@@ -10,8 +10,8 @@ import {
   type ReactNode,
 } from 'react';
 
-import type { AiNode, Edge } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import type { PathSaveOptions as SavePathConfigOptions } from '../components/ai-paths-settings/useAiPathsPersistence.types';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -19,15 +19,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 export type AutoSaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
-export interface SavePathConfigOptions {
-  silent?: boolean | undefined;
-  includeNodeConfig?: boolean | undefined;
-  force?: boolean | undefined;
-  pathNameOverride?: string | undefined;
-  nodesOverride?: AiNode[] | undefined;
-  nodeOverride?: AiNode | undefined;
-  edgesOverride?: Edge[] | undefined;
-}
+export type { SavePathConfigOptions };
 
 export interface PersistenceOperationHandlers {
   savePathConfig?: (options?: SavePathConfigOptions) => Promise<boolean>;

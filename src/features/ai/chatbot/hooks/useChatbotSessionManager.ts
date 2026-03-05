@@ -3,22 +3,18 @@
 import { useSearchParams } from 'next/navigation';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 
-import type { ChatbotSessionDto as ChatSession } from '@/shared/contracts/chatbot';
+import type {
+  ChatbotSessionDto as ChatSession,
+  ChatbotSessionListItem,
+  ChatbotSessionsData as UseChatbotSessionManagerReturn,
+} from '@/shared/contracts/chatbot';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useChatbotSessions } from './useChatbotQueries';
 import { useCreateChatbotSession, useDeleteChatbotSession } from './useChatbotMutations';
 
-export interface UseChatbotSessionManagerReturn {
-  sessions: ChatSession[];
-  currentSessionId: string | null;
-  sessionId: string | null;
-  sessionsLoading: boolean;
-  createNewSession: (initialSettings?: Partial<ChatSession['settings']>) => Promise<void>;
-  deleteSession: (id: string) => Promise<void>;
-  selectSession: React.Dispatch<React.SetStateAction<string | null>>;
-}
+export type { UseChatbotSessionManagerReturn };
 
 export function useChatbotSessionManager(): UseChatbotSessionManagerReturn {
   const { toast } = useToast();
@@ -29,7 +25,7 @@ export function useChatbotSessionManager(): UseChatbotSessionManagerReturn {
   const createMutation = useCreateChatbotSession();
   const deleteMutation = useDeleteChatbotSession();
 
-  const sessions = (sessionsQuery.data ?? []) as unknown as ChatSession[];
+  const sessions = sessionsQuery.data ?? ([] as ChatbotSessionListItem[]);
   const sessionsLoading = sessionsQuery.isLoading;
 
   const sessionId = useMemo((): string | null => {

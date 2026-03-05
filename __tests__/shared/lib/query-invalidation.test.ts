@@ -278,6 +278,16 @@ describe('query-invalidation helpers', () => {
       window.removeEventListener('ai-path-run-enqueued', listener as EventListener);
     });
 
+    it('does not emit removed legacy product-run queued browser event', () => {
+      const legacyListener = vi.fn();
+      window.addEventListener('ai-path-product-run-queued', legacyListener as EventListener);
+
+      helpers.notifyAiPathRunEnqueued('run-123', { entityType: 'product', entityId: 'product-1' });
+
+      expect(legacyListener).not.toHaveBeenCalled();
+      window.removeEventListener('ai-path-product-run-queued', legacyListener as EventListener);
+    });
+
     it('invalidates queue and queue-status using prefix keys', async () => {
       await helpers.invalidateAiPathQueue(queryClient);
 

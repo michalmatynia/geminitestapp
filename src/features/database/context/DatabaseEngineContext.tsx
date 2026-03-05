@@ -2,11 +2,39 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 
-import { useDatabaseEngineState } from '../hooks/useDatabaseEngineState';
+import {
+  useDatabaseEngineState,
+  type UseDatabaseEngineStateReturn,
+} from '../hooks/useDatabaseEngineState';
 
-type DatabaseEngineContextValue = ReturnType<typeof useDatabaseEngineState>;
+type DatabaseEngineContextValue = UseDatabaseEngineStateReturn;
 
-const DatabaseEngineContext = createContext<DatabaseEngineContextValue | null>(null);
+export type DatabaseEngineStateContextValue = Omit<
+  DatabaseEngineContextValue,
+  | 'setActiveView'
+  | 'updatePolicy'
+  | 'updateServiceRoute'
+  | 'updateCollectionRoute'
+  | 'updateBackupSchedule'
+  | 'updateOperationControls'
+  | 'saveSettings'
+  | 'refetchAll'
+>;
+
+export type DatabaseEngineActionsContextValue = Pick<
+  DatabaseEngineContextValue,
+  | 'setActiveView'
+  | 'updatePolicy'
+  | 'updateServiceRoute'
+  | 'updateCollectionRoute'
+  | 'updateBackupSchedule'
+  | 'updateOperationControls'
+  | 'saveSettings'
+  | 'refetchAll'
+>;
+
+const DatabaseEngineStateContext = createContext<DatabaseEngineStateContextValue | null>(null);
+const DatabaseEngineActionsContext = createContext<DatabaseEngineActionsContextValue | null>(null);
 
 export function DatabaseEngineProvider({
   children,
@@ -14,15 +42,59 @@ export function DatabaseEngineProvider({
   children: React.ReactNode;
 }): React.JSX.Element {
   const state = useDatabaseEngineState();
-  const value = useMemo(() => state, [state]);
 
-  return <DatabaseEngineContext.Provider value={value}>{children}</DatabaseEngineContext.Provider>;
+  const {
+    setActiveView,
+    updatePolicy,
+    updateServiceRoute,
+    updateCollectionRoute,
+    updateBackupSchedule,
+    updateOperationControls,
+    saveSettings,
+    refetchAll,
+    ...stateValue
+  } = state;
+
+  const actionsValue: DatabaseEngineActionsContextValue = {
+    setActiveView,
+    updatePolicy,
+    updateServiceRoute,
+    updateCollectionRoute,
+    updateBackupSchedule,
+    updateOperationControls,
+    saveSettings,
+    refetchAll,
+  };
+
+  return (
+    <DatabaseEngineActionsContext.Provider value={actionsValue}>
+      <DatabaseEngineStateContext.Provider value={stateValue}>
+        {children}
+      </DatabaseEngineStateContext.Provider>
+    </DatabaseEngineActionsContext.Provider>
+  );
+}
+
+export function useDatabaseEngineStateContext(): DatabaseEngineStateContextValue {
+  const context = useContext(DatabaseEngineStateContext);
+  if (!context) {
+    throw new Error('useDatabaseEngineStateContext must be used within a DatabaseEngineProvider');
+  }
+  return context;
+}
+
+export function useDatabaseEngineActionsContext(): DatabaseEngineActionsContextValue {
+  const context = useContext(DatabaseEngineActionsContext);
+  if (!context) {
+    throw new Error(
+      'useDatabaseEngineActionsContext must be used within a DatabaseEngineProvider'
+    );
+  }
+  return context;
 }
 
 export function useDatabaseEngineContext(): DatabaseEngineContextValue {
-  const context = useContext(DatabaseEngineContext);
-  if (!context) {
-    throw new Error('useDatabaseEngineContext must be used within a DatabaseEngineProvider');
-  }
-  return context;
+  const state = useDatabaseEngineStateContext();
+  const actions = useDatabaseEngineActionsContext();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

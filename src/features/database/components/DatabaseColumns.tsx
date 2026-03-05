@@ -10,7 +10,10 @@ import {
   DropdownMenuSeparator,
 } from '@/shared/ui';
 
-import { useDatabaseBackupsContext } from '../context/DatabaseBackupsContext';
+import {
+  useDatabaseBackupsActionsContext,
+  useDatabaseBackupsStateContext,
+} from '../context/DatabaseBackupsContext';
 
 import type { ColumnDef, Row } from '@tanstack/react-table';
 
@@ -89,8 +92,9 @@ function DatabaseActionsDeleteItem(): React.JSX.Element {
 }
 
 function DatabaseActionsCell({ backup }: { backup: DatabaseInfo }): React.JSX.Element {
-  const { handlePreview, handleRestoreRequest, handleDeleteRequest, backupMaintenanceAllowed } =
-    useDatabaseBackupsContext();
+  const { backupMaintenanceAllowed } = useDatabaseBackupsStateContext();
+  const { handlePreview, handleRestoreRequest, handleDeleteRequest } =
+    useDatabaseBackupsActionsContext();
 
   const runtimeValue = React.useMemo<DatabaseActionsRuntimeValue>(
     () => ({

@@ -35,7 +35,8 @@ export const promptExploderLearnedTemplateSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-export type PromptExploderLearnedTemplate = z.infer<typeof promptExploderLearnedTemplateSchema>;
+type PromptExploderLearnedTemplate = z.infer<typeof promptExploderLearnedTemplateSchema>;
+export type { PromptExploderLearnedTemplate };
 
 export const promptExploderPatternSnapshotSchema = z.object({
   id: z.string(),

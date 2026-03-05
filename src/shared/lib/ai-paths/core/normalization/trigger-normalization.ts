@@ -76,7 +76,7 @@ export const resolveHistoryRetentionPasses = (
   return normalizeHistoryRetentionPasses(raw);
 };
 
-const assertNoDeprecatedTriggerDatabaseConfig = (node: AiNode): void => {
+const assertNoUnsupportedTriggerDatabaseConfig = (node: AiNode): void => {
   if (node.type !== 'database' || !node.config || typeof node.config !== 'object') return;
   const configRecord = node.config as Record<string, unknown>;
   const databaseConfig =
@@ -113,7 +113,7 @@ const assertNoDeprecatedTriggerDatabaseConfig = (node: AiNode): void => {
 export const sanitizeTriggerPathConfig = (config: PathConfig): PathConfig => {
   const graphNodes = (Array.isArray(config.nodes) ? config.nodes : []).map(
     (node: AiNode, index: number): AiNode => {
-      assertNoDeprecatedTriggerDatabaseConfig(node);
+      assertNoUnsupportedTriggerDatabaseConfig(node);
       const parsedNode = aiNodeSchema.safeParse(node);
       if (!parsedNode.success) {
         throw validationError('Invalid AI Path trigger node payload.', {

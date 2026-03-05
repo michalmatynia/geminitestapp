@@ -606,7 +606,8 @@ export type ImageStudioProjectRecord = ImageStudioProject;
 
 export const imageStudioRunDispatchModeSchema = z.enum(['queued', 'inline']);
 export type ImageStudioRunDispatchMode = z.infer<typeof imageStudioRunDispatchModeSchema>;
-export type ImageStudioRunDispatchModeDto = ImageStudioRunDispatchMode;
+type ImageStudioRunDispatchModeDto = ImageStudioRunDispatchMode;
+export type { ImageStudioRunDispatchModeDto };
 
 export const studioProjectsResponseSchema = z.object({
   projects: z.array(imageStudioProjectSchema),
@@ -1055,7 +1056,8 @@ export type ImageStudioSequenceRunStatus =
   | 'failed'
   | 'cancelled';
 
-export type ImageStudioSequenceRunDispatchMode = ImageStudioRunDispatchMode;
+type ImageStudioSequenceRunDispatchMode = ImageStudioRunDispatchMode;
+export type { ImageStudioSequenceRunDispatchMode };
 
 export type ImageStudioSequenceRunHistoryEventSource =
   | 'api'

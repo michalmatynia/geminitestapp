@@ -1,13 +1,9 @@
 import React from 'react';
 
 import { SearchableSelect } from '@/shared/ui';
+import type { GenericMapperExternalCellProps as CategoryMapperSelectCellProps } from '@/shared/ui/templates/mappers/GenericMapperExternalCell';
 
-export type CategoryMapperSelectCellProps = {
-  value: string | null;
-  onChange: (value: string | null) => void;
-  options: Array<{ value: string; label: string }>;
-  disabled: boolean;
-};
+export type { CategoryMapperSelectCellProps };
 
 export function CategoryMapperSelectCell(
   props: CategoryMapperSelectCellProps

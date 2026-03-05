@@ -55,7 +55,7 @@ describe('useProductAiPathsRunSync', () => {
     expect(removeQueuedProductIdMock).not.toHaveBeenCalled();
   });
 
-  it('still supports legacy ai-path-product-run-queued events', () => {
+  it('ignores removed legacy ai-path-product-run-queued events', () => {
     renderHook(() => useProductAiPathsRunSync());
 
     window.dispatchEvent(
@@ -64,8 +64,8 @@ describe('useProductAiPathsRunSync', () => {
       })
     );
 
-    expect(addQueuedProductIdMock).toHaveBeenCalledWith('product-legacy');
+    expect(addQueuedProductIdMock).not.toHaveBeenCalled();
     vi.advanceTimersByTime(30_000);
-    expect(removeQueuedProductIdMock).toHaveBeenCalledWith('product-legacy');
+    expect(removeQueuedProductIdMock).not.toHaveBeenCalled();
   });
 });

@@ -2,10 +2,11 @@ import { callBaseApi, callBaseApiRaw, BaseApiRawResult } from './core';
 import { dedupeCategories, fetchBaseCategoriesFromPayload } from '../base-client-parsers';
 import { BaseCategory, BaseInventory } from '@/shared/contracts/integrations';
 import { fetchBaseInventories } from './inventory';
+import type { BaseInventoryScopeOptions } from './config';
 
-export type FetchBaseCategoriesOptions = {
-  inventoryId?: string | null;
-};
+type FetchBaseCategoriesOptions = BaseInventoryScopeOptions;
+
+export type { FetchBaseCategoriesOptions };
 
 export const hasCategoryHierarchy = (categories: BaseCategory[]): boolean =>
   categories.some((category: BaseCategory): boolean => Boolean(category.parentId));

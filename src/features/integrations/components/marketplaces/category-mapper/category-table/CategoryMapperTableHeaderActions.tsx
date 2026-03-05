@@ -1,14 +1,9 @@
 import React from 'react';
 import { Download, Save } from 'lucide-react';
 import { Button } from '@/shared/ui';
+import type { GenericMapperHeaderActionsProps as CategoryMapperTableHeaderActionsProps } from '@/shared/ui/templates/mappers/GenericMapperHeaderActions';
 
-export type CategoryMapperTableHeaderActionsProps = {
-  onFetch: () => void;
-  isFetching: boolean;
-  onSave: () => void;
-  isSaving: boolean;
-  pendingCount: number;
-};
+export type { CategoryMapperTableHeaderActionsProps };
 
 export function CategoryMapperTableHeaderActions(
   props: CategoryMapperTableHeaderActionsProps

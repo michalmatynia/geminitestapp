@@ -53,6 +53,12 @@ Completed in codebase:
    - `useMasterFolderTreeShell`
    - `FolderTreeViewportV2`
 5. Migrated `RelationTreeBrowser` to a self-contained shared runtime coordinator (no hard provider dependency for tree runtime behavior) and updated related tests to run without `MasterFolderTreeRuntimeProvider`.
+6. Started layout-level runtime-provider unwind:
+   - Removed global `MasterFolderTreeRuntimeProvider` wrapping from `src/app/layout.tsx`.
+   - Removed admin `MasterFolderTreeRuntimeProvider` wrapping from `src/app/(admin)/layout.tsx`.
+7. Added shared shell runtime fallback for provider-less execution:
+   - `useFolderTreeShellRuntime` now resolves to a shared runtime bus singleton when context runtime is absent.
+8. Removed additional provider wrappers from folder-tree viewport search/multi-select tests by injecting runtime directly.
 
 ## Canonical Target (Newest Form)
 

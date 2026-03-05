@@ -3,7 +3,7 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { FolderTreeViewportV2 } from '@/features/foldertree/v2/components/FolderTreeViewportV2';
-import { MasterFolderTreeRuntimeProvider } from '@/features/foldertree/v2/runtime/MasterFolderTreeRuntimeProvider';
+import { createMasterFolderTreeRuntimeBus } from '@/features/foldertree/v2/runtime/createMasterFolderTreeRuntimeBus';
 import type { MasterFolderTreeSearchState } from '@/features/foldertree/v2/search';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
@@ -119,27 +119,27 @@ const buildSearchState = (
 
 describe('FolderTreeViewportV2 search rendering', () => {
   it('keeps full tree visible in highlight mode and marks matching rows', () => {
+    const runtime = createMasterFolderTreeRuntimeBus({ bindWindowKeydown: false });
     const controller = createController({
       nodes,
       expandedNodeIds: ['root', 'folder-a'],
     });
 
     render(
-      <MasterFolderTreeRuntimeProvider>
-        <FolderTreeViewportV2
-          controller={controller}
-          enableDnd={false}
-          searchState={buildSearchState({
-            config: {
-              enabled: true,
-              debounceMs: 0,
-              filterMode: 'highlight',
-              matchFields: ['name'],
-              minQueryLength: 1,
-            },
-          })}
-        />
-      </MasterFolderTreeRuntimeProvider>
+      <FolderTreeViewportV2
+        controller={controller}
+        enableDnd={false}
+        runtime={runtime}
+        searchState={buildSearchState({
+          config: {
+            enabled: true,
+            debounceMs: 0,
+            filterMode: 'highlight',
+            matchFields: ['name'],
+            minQueryLength: 1,
+          },
+        })}
+      />
     );
 
     expect(screen.getByText('Root')).toBeInTheDocument();
@@ -149,69 +149,72 @@ describe('FolderTreeViewportV2 search rendering', () => {
 
     const matchButton = screen.getByRole('button', { name: /Document Match/i });
     expect(matchButton.className).toContain('ring-blue-500/30');
+    runtime.dispose();
   });
 
   it('shows only matched branches and ancestors in filter_tree mode', () => {
+    const runtime = createMasterFolderTreeRuntimeBus({ bindWindowKeydown: false });
     const controller = createController({
       nodes,
       expandedNodeIds: ['root', 'folder-a'],
     });
 
     render(
-      <MasterFolderTreeRuntimeProvider>
-        <FolderTreeViewportV2
-          controller={controller}
-          enableDnd={false}
-          searchState={buildSearchState({
-            config: {
-              enabled: true,
-              debounceMs: 0,
-              filterMode: 'filter_tree',
-              matchFields: ['name'],
-              minQueryLength: 1,
-            },
-            filteredNodes: nodes.filter((node) => node.id !== 'file-other'),
-            filteredExpandedNodeIds: ['root', 'folder-a'],
-          })}
-        />
-      </MasterFolderTreeRuntimeProvider>
+      <FolderTreeViewportV2
+        controller={controller}
+        enableDnd={false}
+        runtime={runtime}
+        searchState={buildSearchState({
+          config: {
+            enabled: true,
+            debounceMs: 0,
+            filterMode: 'filter_tree',
+            matchFields: ['name'],
+            minQueryLength: 1,
+          },
+          filteredNodes: nodes.filter((node) => node.id !== 'file-other'),
+          filteredExpandedNodeIds: ['root', 'folder-a'],
+        })}
+      />
     );
 
     expect(screen.getByText('Root')).toBeInTheDocument();
     expect(screen.getByText('Alpha')).toBeInTheDocument();
     expect(screen.getByText('Document Match')).toBeInTheDocument();
     expect(screen.queryByText('Outside Node')).not.toBeInTheDocument();
+    runtime.dispose();
   });
 
   it('shows empty search state when filter_tree has no matches', () => {
+    const runtime = createMasterFolderTreeRuntimeBus({ bindWindowKeydown: false });
     const controller = createController({
       nodes,
       expandedNodeIds: ['root', 'folder-a'],
     });
 
     render(
-      <MasterFolderTreeRuntimeProvider>
-        <FolderTreeViewportV2
-          controller={controller}
-          enableDnd={false}
-          searchState={buildSearchState({
-            query: 'zzz',
-            effectiveQuery: 'zzz',
-            config: {
-              enabled: true,
-              debounceMs: 0,
-              filterMode: 'filter_tree',
-              matchFields: ['name'],
-              minQueryLength: 1,
-            },
-            matchNodeIds: new Set<string>(),
-            filteredNodes: [],
-            filteredExpandedNodeIds: [],
-          })}
-        />
-      </MasterFolderTreeRuntimeProvider>
+      <FolderTreeViewportV2
+        controller={controller}
+        enableDnd={false}
+        runtime={runtime}
+        searchState={buildSearchState({
+          query: 'zzz',
+          effectiveQuery: 'zzz',
+          config: {
+            enabled: true,
+            debounceMs: 0,
+            filterMode: 'filter_tree',
+            matchFields: ['name'],
+            minQueryLength: 1,
+          },
+          matchNodeIds: new Set<string>(),
+          filteredNodes: [],
+          filteredExpandedNodeIds: [],
+        })}
+      />
     );
 
     expect(screen.getByText('No results for "zzz"')).toBeInTheDocument();
+    runtime.dispose();
   });
 });

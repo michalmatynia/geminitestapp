@@ -4,14 +4,14 @@ import type {
   ImageStudioAnalysisMode,
 } from '../../contracts/analysis';
 import type {
-  ImageStudioCenterDetectionMode,
-  ImageStudioCenterShadowPolicy,
+  ImageStudioCenterDetectionMode as DetectionMode,
+  ImageStudioCenterShadowPolicy as ShadowPolicy,
 } from '../../contracts/center';
+
+export type { DetectionMode, ShadowPolicy };
 
 export type AnalysisStatus = 'idle' | 'resolving' | 'processing';
 export type AnalysisMode = ImageStudioAnalysisMode;
-export type ShadowPolicy = ImageStudioCenterShadowPolicy;
-export type DetectionMode = ImageStudioCenterDetectionMode;
 export type AnalysisResult = ImageStudioAnalysisSummary &
   Pick<ImageStudioAnalysisResponse, 'effectiveMode' | 'authoritativeSource'>;
 

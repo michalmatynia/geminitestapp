@@ -5,7 +5,7 @@ import type {
   PromptValidationSeverity,
 } from '@/shared/contracts/prompt-engine';
 
-import { extractParamsFromPrompt } from './prompt-params';
+import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
 
 export type PromptValidationSuggestion = {
   suggestion: string;

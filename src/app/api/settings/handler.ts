@@ -6,7 +6,7 @@ import { upsertAiPathsSetting } from '@/features/ai/ai-paths/server';
 import {
   FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
   FILE_STORAGE_SOURCE_SETTING_KEY,
-} from '@/features/files/constants/storage-settings';
+} from '@/shared/lib/files/constants';
 import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/constants/tradera';
 import { invalidateFileStorageSettingsCache } from '@/shared/lib/files/services/storage/file-storage-service';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

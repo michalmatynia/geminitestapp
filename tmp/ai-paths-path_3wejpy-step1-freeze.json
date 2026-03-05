@@ -1,0 +1,30 @@
+{
+  "capturedAt": "2026-03-05T03:21:59.649Z",
+  "pathId": "path_3wejpy",
+  "freezeAction": "cancel_queued_runs",
+  "before": {
+    "queuedTotal": 2,
+    "queuedRunIds": [
+      "fb552a99-8774-4189-8b6b-23da378e8fdd",
+      "0f55c463-2fb5-4724-93c3-32a2790d18a8"
+    ]
+  },
+  "canceled": [
+    {
+      "runId": "fb552a99-8774-4189-8b6b-23da378e8fdd",
+      "beforeStatus": "queued",
+      "afterStatus": "canceled"
+    },
+    {
+      "runId": "0f55c463-2fb5-4724-93c3-32a2790d18a8",
+      "beforeStatus": "queued",
+      "afterStatus": "canceled"
+    }
+  ],
+  "after": {
+    "queuedTotal": 0,
+    "queuedRunIds": [],
+    "runningTotal": 0,
+    "pausedTotal": 0
+  }
+}

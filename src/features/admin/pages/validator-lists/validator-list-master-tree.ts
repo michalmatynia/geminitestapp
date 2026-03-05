@@ -1,4 +1,5 @@
 import type { ValidatorPatternList } from '@/shared/contracts/admin';
+import type { ValidatorListNodeMetadata as SharedValidatorListNodeMetadata } from '@/shared/contracts/validator';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -18,13 +19,9 @@ export const fromValidatorListNodeId = (nodeId: string): string | null => {
 
 // ─── Metadata type ────────────────────────────────────────────────────────────
 
-export type ValidatorListNodeMetadata = {
-  listId: string;
-  scope: string;
-  deletionLocked: boolean;
-  description: string;
-  updatedAt: string | null;
-};
+type ValidatorListNodeMetadata = SharedValidatorListNodeMetadata;
+
+export type { ValidatorListNodeMetadata };
 
 // ─── Build: domain → MasterTreeNode[] ────────────────────────────────────────
 

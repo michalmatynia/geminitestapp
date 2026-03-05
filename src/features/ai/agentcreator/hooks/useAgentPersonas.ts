@@ -2,7 +2,7 @@
 
 import { type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
 
-import { AGENT_PERSONA_SETTINGS_KEY } from '@/features/ai/agentcreator/constants/personas';
+import { AGENT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/agents';
 import { fetchAgentPersonas } from '@/features/ai/agentcreator/utils/personas';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { AgentPersona } from '@/shared/contracts/agents';

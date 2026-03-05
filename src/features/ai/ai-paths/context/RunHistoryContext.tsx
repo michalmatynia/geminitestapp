@@ -12,9 +12,12 @@ import {
 
 import type {
   AiPathRunRecord,
-  AiPathRunNodeRecord,
   AiPathRunEventRecord,
 } from '@/shared/lib/ai-paths';
+import type {
+  RunDetail as RunDetailData,
+  StreamConnectionStatus as RunStreamStatus,
+} from '../components/job-queue-panel-utils';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -29,13 +32,7 @@ export type RunHistoryFilter =
   | 'running'
   | 'queued';
 
-export type RunStreamStatus = 'connecting' | 'live' | 'stopped' | 'paused';
-
-export interface RunDetailData {
-  run: AiPathRunRecord;
-  nodes: AiPathRunNodeRecord[];
-  events: AiPathRunEventRecord[];
-}
+export type { RunDetailData, RunStreamStatus };
 
 export interface RunHistoryOperationHandlers {
   refreshRuns?: (() => Promise<void> | void) | undefined;

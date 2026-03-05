@@ -25,7 +25,8 @@ import { LogModal } from './LogModal';
 import { RestoreModal } from './RestoreModal';
 import {
   DatabaseBackupsProvider,
-  useDatabaseBackupsContext,
+  useDatabaseBackupsActionsContext,
+  useDatabaseBackupsStateContext,
 } from '../context/DatabaseBackupsContext';
 
 type BackupDatabaseOption = {
@@ -56,15 +57,11 @@ const BACKUP_DATABASE_OPTIONS: BackupDatabaseOption[] = [
 function DatabaseBackupsPanelInner(): React.JSX.Element {
   const {
     activeTab,
-    setActiveTab,
     isLogModalOpen,
     logModalContent,
     isRestoreModalOpen,
     selectedBackupForRestore,
     backupToDelete,
-    setBackupToDelete,
-    setIsRestoreModalOpen,
-    setSelectedBackupForRestore,
     data,
     isLoading,
     isProd,
@@ -81,6 +78,12 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
     activeTargetKey,
     isBackupScheduleSaving,
     settingsValidationErrors,
+  } = useDatabaseBackupsStateContext();
+  const {
+    setActiveTab,
+    setBackupToDelete,
+    setIsRestoreModalOpen,
+    setSelectedBackupForRestore,
     closeLogModal,
     handleBackup,
     handleUpload,
@@ -92,7 +95,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
     handleActiveTargetEnabledDraftChange,
     handleActiveTargetTimeLocalChange,
     saveDailySchedule,
-  } = useDatabaseBackupsContext();
+  } = useDatabaseBackupsActionsContext();
 
   const selectedDatabase =
     BACKUP_DATABASE_OPTIONS.find((option) => option.value === activeTab) ??

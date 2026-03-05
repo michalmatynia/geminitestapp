@@ -1488,6 +1488,73 @@ Progress (2026-03-04):
       2. `npm run ai-paths:bulk-prune:scan` -> passed (`57` rules across `82` targets).
       3. `npm run ai-paths:check:canonical` -> passed (`4217` files scanned).
       4. `npm run typecheck` -> failed with current repository typing drift at `src/features/cms/components/frontend/blocks/BlockContext.tsx:3` (`TS6133: 'React' is declared but its value is never read.`).
+66. Continued Phase 3 stable-hash seed contract hardening in seam 196:
+   1. Expanded manifest coverage for deterministic node-id hash seed continuity channels:
+      1. `scripts/ai-paths/legacy-prune-manifest.json`
+      2. added rule family:
+         1. `node_identity_stable_hash_legacy_seed_contract`
+      3. rule requires intentional stable hash-seed keys in runtime:
+         1. `src/shared/lib/ai-paths/core/utils/factory.ts` -> `legacyId: sourceId,`
+         2. `src/shared/lib/ai-paths/core/utils/node-identity.ts` -> `legacyNodeTypeId: ...` and `legacyId: ...`
+      4. bulk-prune manifest now covers `58` rules across `84` targets.
+   2. Validation:
+      1. `npm run ai-paths:bulk-prune:scan` -> passed (`58` rules across `84` targets).
+      2. `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` -> passed.
+      3. `npm run ai-paths:check:canonical` -> passed (`4217` files scanned).
+      4. `npm run ai-paths:bulk-prune:report` -> passed (report refreshed).
+      5. `npm run canonical:check:sitewide` -> passed (`3816` runtime source files, `4` docs artifacts).
+      6. `npm run typecheck` -> passed.
+67. Continued Phase 3 trigger database-guard naming canonicalization in seam 197:
+   1. Canonicalized trigger normalization guard helper naming from deprecated to unsupported channel:
+      1. `src/shared/lib/ai-paths/core/normalization/trigger-normalization.ts`
+      2. renamed:
+         1. `assertNoDeprecatedTriggerDatabaseConfig` -> `assertNoUnsupportedTriggerDatabaseConfig`
+      3. updated sanitize flow callsite to use canonical helper name.
+   2. Extended AI Paths and site-wide guardrails for this naming channel:
+      1. `scripts/ai-paths/legacy-prune-manifest.json`
+      2. added rule family:
+         1. `trigger_database_guard_unsupported_naming`
+      3. `scripts/canonical/check-sitewide.mjs`
+      4. added forbidden token:
+         1. `assertNoDeprecatedTriggerDatabaseConfig`
+      5. bulk-prune manifest now covers `59` rules across `85` targets.
+   3. Validation:
+      1. `npm run ai-paths:bulk-prune:scan` -> passed (`59` rules across `85` targets).
+      2. `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` -> passed.
+      3. `npm run ai-paths:check:canonical` -> passed (`4220` files scanned).
+      4. `npm run ai-paths:bulk-prune:report` -> passed (report refreshed).
+      5. `npm run canonical:check:sitewide` -> passed (`3818` runtime source files, `4` docs artifacts).
+      6. `npm run typecheck` -> failed with current repository typing drift:
+         1. `src/features/ai/ai-paths/context/PersistenceContext.tsx:13` (`TS6192: All imports in import declaration are unused.`)
+         2. `src/features/ai/ai-paths/context/RunHistoryContext.tsx:15` (`TS6196: 'AiPathRunNodeRecord' is declared but never used.`)
+         3. `src/features/ai/image-studio/server/autoscale-service.ts:23` (`TS6133: 'getImageStudioSlotById' is declared but its value is never read.`)
+68. Continued Phase 3 run-enqueued event contract hard-cut in seam 198:
+   1. Removed legacy product-run browser event channel and productId detail fallback from runtime listeners:
+      1. `src/shared/lib/query-invalidation.ts`
+      2. removed legacy `ai-path-product-run-queued` dispatch branch.
+      3. `src/features/products/hooks/useProductAiPathsRunSync.ts`
+      4. removed `detail['productId']` fallback resolution and removed `ai-path-product-run-queued` listener.
+   2. Updated regression tests for canonical event-only behavior:
+      1. `src/features/products/hooks/useProductAiPathsRunSync.test.tsx`
+      2. renamed legacy support assertion to enforce ignored legacy event.
+      3. `__tests__/shared/lib/query-invalidation.test.ts`
+      4. added test asserting `notifyAiPathRunEnqueued` does not emit legacy `ai-path-product-run-queued`.
+   3. Extended AI Paths and site-wide guardrails for this event-contract channel:
+      1. `scripts/ai-paths/legacy-prune-manifest.json`
+      2. added rule family:
+         1. `run_enqueued_event_contract`
+      3. `scripts/canonical/check-sitewide.mjs`
+      4. added forbidden token:
+         1. `ai-path-product-run-queued`
+      5. bulk-prune manifest now covers `60` rules across `87` targets.
+   4. Validation:
+      1. `npx vitest run src/features/products/hooks/useProductAiPathsRunSync.test.tsx __tests__/shared/lib/query-invalidation.test.ts` -> passed (`20` tests).
+      2. `npm run ai-paths:bulk-prune:scan` -> passed (`60` rules across `87` targets).
+      3. `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` -> passed.
+      4. `npm run ai-paths:check:canonical` -> passed (`4214` files scanned).
+      5. `npm run ai-paths:bulk-prune:report` -> passed (report refreshed).
+      6. `npm run canonical:check:sitewide` -> passed (`3812` runtime source files, `4` docs artifacts).
+      7. `npm run typecheck` -> terminated in this environment without diagnostics (`exit code 137`; log contains only `tsc --noEmit --incremental false` startup line).
 
 ## Deprecation map
 

@@ -4,6 +4,10 @@ export const DEFAULT_BASE_API_PRODUCT_WRITE_TIMEOUT_MS = 30000;
 export const DEFAULT_BASE_API_IMAGE_TIMEOUT_MS = 90000;
 export const DEFAULT_BASE_API_LARGE_PAYLOAD_BYTES = 250_000;
 
+export type BaseInventoryScopeOptions = {
+  inventoryId?: string | null;
+};
+
 export const toPositiveIntOrFallback = (raw: string | undefined, fallback: number): number => {
   if (!raw) return fallback;
   const parsed = Number.parseInt(raw, 10);

@@ -4,27 +4,17 @@ import { useState, useMemo, useCallback, useRef } from 'react';
 
 import type { DatabaseTableDetail, DatabaseTablePreviewData } from '@/shared/contracts/database';
 
-import { useDatabase } from '../context/DatabaseContext';
+import {
+  useDatabaseConfig,
+  useDatabaseData,
+  useDatabasePagination,
+} from '../context/DatabaseContext';
 
 export function useDatabasePreviewState() {
-  const database = useDatabase();
-  const {
-    dbType,
-    tableDetails,
-    groups,
-    tables,
-    tableRows,
-    enums,
-    databaseSize,
-    isLoading,
-    error,
-    mode,
-    backupName,
-    page,
-    setPage,
-    pageSize,
-    setPageSize,
-  } = database;
+  const { dbType, mode, backupName } = useDatabaseConfig();
+  const { tableDetails, groups, tables, tableRows, enums, databaseSize, isLoading, error } =
+    useDatabaseData();
+  const { page, setPage, pageSize, setPageSize } = useDatabasePagination();
 
   const [groupQuery, setGroupQuery] = useState('');
   const [tableQuery, setTableQuery] = useState('');

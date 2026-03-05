@@ -1,0 +1,22 @@
+{
+  "pathId": "path_3wejpy",
+  "changedAt": "2026-03-05T03:29:13.754Z",
+  "promptRuntimeBefore": null,
+  "promptRuntimeAfter": {
+    "waitForInputs": true,
+    "inputContracts": {
+      "bundle": {
+        "required": true
+      },
+      "result": {
+        "required": true
+      }
+    }
+  },
+  "dbWriteOutcomePolicyBefore": {
+    "onZeroAffected": "fail"
+  },
+  "dbWriteOutcomePolicyAfter": {
+    "onZeroAffected": "warn"
+  }
+}

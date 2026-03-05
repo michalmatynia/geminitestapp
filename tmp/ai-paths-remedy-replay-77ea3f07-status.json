@@ -1,0 +1,163 @@
+{
+  "found": true,
+  "run": {
+    "id": "77ea3f07-1e19-4e9d-82a1-3040723076e3",
+    "status": "running",
+    "errorMessage": null,
+    "pathId": "path_3wejpy",
+    "pathName": "Parameter Inference v2 No Param Add",
+    "createdAt": "2026-03-05T03:33:07.085Z",
+    "startedAt": "2026-03-05T03:33:07.395Z",
+    "finishedAt": null
+  },
+  "nodeSummary": {
+    "total": 8,
+    "completed": 5,
+    "failed": 0,
+    "running": 1,
+    "waiting": 2
+  },
+  "failedNodes": [],
+  "tailEvents": [
+    {
+      "createdAt": "2026-03-05T03:33:07.697Z",
+      "level": "info",
+      "message": "Node Fetcher: Trigger Context waiting: Upstream waiting diagnostics: Upstream status for trigger: Trigger: Infer Params (pending)",
+      "nodeId": null,
+      "metaNodeId": "node-33bfbdadf03c3696f6f8a365"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:07.698Z",
+      "level": "info",
+      "message": "Node Model waiting: Upstream waiting diagnostics: Upstream status for prompt: Prompt (waiting_callback)",
+      "nodeId": null,
+      "metaNodeId": "node-3628ee5e2e20596ff490d856"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:07.698Z",
+      "level": "info",
+      "message": "Node Prompt waiting: Upstream waiting diagnostics: Upstream status for bundle: JSON Parser (waiting_callback); Upstream status for result: Database Query (waiting_callback)",
+      "nodeId": null,
+      "metaNodeId": "node-686d00ed20bfe13ac69c3da5"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:07.698Z",
+      "level": "info",
+      "message": "Node Database Query waiting: Upstream waiting diagnostics: Upstream status for bundle: JSON Parser (waiting_callback)",
+      "nodeId": null,
+      "metaNodeId": "node-48304219e73a55d4b0240dc1"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:07.699Z",
+      "level": "info",
+      "message": "Node Regex JSON Extract waiting: Upstream waiting diagnostics: Upstream status for value: Model (waiting_callback)",
+      "nodeId": null,
+      "metaNodeId": "node-ce8908c527e33afe5155aa8d"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:07.699Z",
+      "level": "info",
+      "message": "Node Database Query waiting: Upstream waiting diagnostics: Upstream status for value: Regex JSON Extract (waiting_callback)",
+      "nodeId": null,
+      "metaNodeId": "node-9a24cf46edc9eecd87d162ee"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:07.875Z",
+      "level": "info",
+      "message": "Node Trigger: Infer Params finished with status: completed.",
+      "nodeId": null,
+      "metaNodeId": "node-1718344d30e6b74e7b69bf05"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:07.935Z",
+      "level": "info",
+      "message": "Node Trigger: Infer Params finished with status: completed.",
+      "nodeId": null,
+      "metaNodeId": "node-1718344d30e6b74e7b69bf05"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:08.031Z",
+      "level": "info",
+      "message": "Node Fetcher: Trigger Context finished with status: completed.",
+      "nodeId": null,
+      "metaNodeId": "node-33bfbdadf03c3696f6f8a365"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:08.045Z",
+      "level": "info",
+      "message": "Node Fetcher: Trigger Context finished with status: completed.",
+      "nodeId": null,
+      "metaNodeId": "node-33bfbdadf03c3696f6f8a365"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:08.155Z",
+      "level": "info",
+      "message": "Node JSON Parser finished with status: completed.",
+      "nodeId": null,
+      "metaNodeId": "node-a962a8c406a6d8d90b78f3fc"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:08.163Z",
+      "level": "info",
+      "message": "Node JSON Parser finished with status: completed.",
+      "nodeId": null,
+      "metaNodeId": "node-a962a8c406a6d8d90b78f3fc"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:08.214Z",
+      "level": "info",
+      "message": "Node Prompt waiting: Upstream waiting diagnostics: Upstream status for result: Database Query (waiting_callback)",
+      "nodeId": null,
+      "metaNodeId": "node-686d00ed20bfe13ac69c3da5"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:08.214Z",
+      "level": "info",
+      "message": "Node Model waiting: Upstream waiting diagnostics: Upstream status for prompt: Prompt (waiting_callback)",
+      "nodeId": null,
+      "metaNodeId": "node-3628ee5e2e20596ff490d856"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:08.226Z",
+      "level": "info",
+      "message": "Node Prompt waiting: Upstream waiting diagnostics: Upstream status for result: Database Query (waiting_callback)",
+      "nodeId": null,
+      "metaNodeId": "node-686d00ed20bfe13ac69c3da5"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:08.227Z",
+      "level": "info",
+      "message": "Node Model waiting: Upstream waiting diagnostics: Upstream status for prompt: Prompt (waiting_callback)",
+      "nodeId": null,
+      "metaNodeId": "node-3628ee5e2e20596ff490d856"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:08.438Z",
+      "level": "info",
+      "message": "Node Database Query finished with status: completed.",
+      "nodeId": null,
+      "metaNodeId": "node-48304219e73a55d4b0240dc1"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:08.447Z",
+      "level": "info",
+      "message": "Node Database Query finished with status: completed.",
+      "nodeId": null,
+      "metaNodeId": "node-48304219e73a55d4b0240dc1"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:08.554Z",
+      "level": "info",
+      "message": "Node Prompt finished with status: completed.",
+      "nodeId": null,
+      "metaNodeId": "node-686d00ed20bfe13ac69c3da5"
+    },
+    {
+      "createdAt": "2026-03-05T03:33:08.557Z",
+      "level": "info",
+      "message": "Node Prompt finished with status: completed.",
+      "nodeId": null,
+      "metaNodeId": "node-686d00ed20bfe13ac69c3da5"
+    }
+  ]
+}

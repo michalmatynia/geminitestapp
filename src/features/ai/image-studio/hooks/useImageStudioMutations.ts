@@ -54,17 +54,17 @@ const isDeleteTimeoutError = (error: unknown): boolean => {
   return msg.includes('timeout') || msg.includes('deadline');
 };
 
-export type ResizeStudioProjectCanvasPayload = {
+type StudioProjectCanvasPayload = {
   projectId: string;
   canvasWidthPx?: number;
   canvasHeightPx?: number;
 };
 
-export type CreateStudioProjectPayload = {
-  projectId: string;
-  canvasWidthPx?: number;
-  canvasHeightPx?: number;
-};
+type ResizeStudioProjectCanvasPayload = StudioProjectCanvasPayload;
+
+type CreateStudioProjectPayload = StudioProjectCanvasPayload;
+
+export type { CreateStudioProjectPayload, ResizeStudioProjectCanvasPayload };
 
 export type CreateStudioProjectResult = {
   projectId: string;

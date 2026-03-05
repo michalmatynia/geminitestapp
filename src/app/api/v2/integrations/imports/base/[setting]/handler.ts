@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 
 import type { ApiHandlerContext, ApiRouteHandler } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
+import type { SettingParams } from '@/app/api/v2/integrations/base/setting-params';
 
 import {
   GET_handler as getActiveTemplateHandler,
@@ -12,7 +13,7 @@ import {
   POST_handler as postLastTemplateHandler,
 } from '@/app/api/v2/integrations/imports/base/last-template/handler';
 
-export type SettingParams = { setting: string };
+export type { SettingParams };
 
 type RouteHandlers = {
   GET: ApiRouteHandler;

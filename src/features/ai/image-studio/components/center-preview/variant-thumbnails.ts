@@ -1,4 +1,4 @@
-import { estimateGenerationCost } from '@/features/ai/image-studio/generation-cost';
+import { estimateGenerationCost } from '@/features/ai/image-studio/utils/generation-cost';
 import {
   getImageStudioSlotImageSrc,
   isLikelyImageStudioErrorText,

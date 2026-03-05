@@ -21,7 +21,11 @@ import { cn } from '@/shared/utils';
 
 import { CrudPanel } from './CrudPanel';
 import { SqlQueryConsole } from './SqlQueryConsole';
-import { DatabaseProvider, useDatabase } from '../context/DatabaseContext';
+import {
+  DatabaseProvider,
+  useDatabaseConfig,
+  useDatabaseData,
+} from '../context/DatabaseContext';
 
 const DATABASE_OPTIONS: Array<{
   value: DatabaseType;
@@ -41,7 +45,8 @@ const DATABASE_OPTIONS: Array<{
 ];
 
 function DatabaseOperationsPanelContent(): React.JSX.Element {
-  const { dbType, setDbType, tableDetails, isLoading: previewLoading } = useDatabase();
+  const { dbType, setDbType } = useDatabaseConfig();
+  const { tableDetails, isLoading: previewLoading } = useDatabaseData();
   const isProduction = process.env['NODE_ENV'] === 'production';
   const selectedDatabase =
     DATABASE_OPTIONS.find((option) => option.value === dbType) ?? DATABASE_OPTIONS[0]!;

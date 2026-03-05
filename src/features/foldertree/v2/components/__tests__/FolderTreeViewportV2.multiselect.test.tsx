@@ -3,7 +3,7 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { FolderTreeViewportV2 } from '@/features/foldertree/v2/components/FolderTreeViewportV2';
-import { MasterFolderTreeRuntimeProvider } from '@/features/foldertree/v2/runtime/MasterFolderTreeRuntimeProvider';
+import { createMasterFolderTreeRuntimeBus } from '@/features/foldertree/v2/runtime/createMasterFolderTreeRuntimeBus';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
@@ -103,21 +103,26 @@ const renderViewport = (
     shiftClick: boolean;
     selectAll: boolean;
   }
-) =>
-  render(
-    <MasterFolderTreeRuntimeProvider>
-      <FolderTreeViewportV2
-        controller={controller}
-        enableDnd={false}
-        multiSelectConfig={multiSelectConfig}
-      />
-    </MasterFolderTreeRuntimeProvider>
+) => {
+  const runtime = createMasterFolderTreeRuntimeBus({ bindWindowKeydown: false });
+  const rendered = render(
+    <FolderTreeViewportV2
+      controller={controller}
+      enableDnd={false}
+      runtime={runtime}
+      multiSelectConfig={multiSelectConfig}
+    />
   );
+  return {
+    ...rendered,
+    disposeRuntime: () => runtime.dispose(),
+  };
+};
 
 describe('FolderTreeViewportV2 multi-select pointer behavior', () => {
   it('keeps single-select behavior when multi-select is disabled', () => {
     const controller = createController();
-    renderViewport(controller, {
+    const { disposeRuntime } = renderViewport(controller, {
       enabled: false,
       ctrlClick: true,
       shiftClick: true,
@@ -127,11 +132,12 @@ describe('FolderTreeViewportV2 multi-select pointer behavior', () => {
     fireEvent.click(screen.getByRole('button', { name: /Beta/i }));
 
     expect(controller.setSelectedNodeIds).toHaveBeenLastCalledWith(['b']);
+    disposeRuntime();
   });
 
   it('supports ctrl/cmd toggle when enabled', () => {
     const controller = createController({ selectedNodeId: 'a', selectedNodeIds: ['a'] });
-    renderViewport(controller, {
+    const { disposeRuntime } = renderViewport(controller, {
       enabled: true,
       ctrlClick: true,
       shiftClick: true,
@@ -143,11 +149,12 @@ describe('FolderTreeViewportV2 multi-select pointer behavior', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Alpha/i }), { metaKey: true });
     expect(controller.setSelectedNodeIds).toHaveBeenLastCalledWith(['b']);
+    disposeRuntime();
   });
 
   it('supports shift range selection when enabled', () => {
     const controller = createController();
-    renderViewport(controller, {
+    const { disposeRuntime } = renderViewport(controller, {
       enabled: true,
       ctrlClick: true,
       shiftClick: true,
@@ -158,11 +165,12 @@ describe('FolderTreeViewportV2 multi-select pointer behavior', () => {
     fireEvent.click(screen.getByRole('button', { name: /Gamma/i }), { shiftKey: true });
 
     expect(controller.setSelectedNodeIds).toHaveBeenLastCalledWith(['a', 'b', 'c']);
+    disposeRuntime();
   });
 
   it('blocks ctrl toggle when ctrlClick flag is disabled', () => {
     const controller = createController({ selectedNodeId: 'a', selectedNodeIds: ['a'] });
-    renderViewport(controller, {
+    const { disposeRuntime } = renderViewport(controller, {
       enabled: true,
       ctrlClick: false,
       shiftClick: true,
@@ -171,11 +179,12 @@ describe('FolderTreeViewportV2 multi-select pointer behavior', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Beta/i }), { ctrlKey: true });
     expect(controller.setSelectedNodeIds).toHaveBeenLastCalledWith(['b']);
+    disposeRuntime();
   });
 
   it('blocks shift range when shiftClick flag is disabled', () => {
     const controller = createController();
-    renderViewport(controller, {
+    const { disposeRuntime } = renderViewport(controller, {
       enabled: true,
       ctrlClick: true,
       shiftClick: false,
@@ -186,5 +195,6 @@ describe('FolderTreeViewportV2 multi-select pointer behavior', () => {
     fireEvent.click(screen.getByRole('button', { name: /Gamma/i }), { shiftKey: true });
 
     expect(controller.setSelectedNodeIds).toHaveBeenLastCalledWith(['c']);
+    disposeRuntime();
   });
 });

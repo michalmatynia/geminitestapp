@@ -27,23 +27,19 @@ import {
 
 import { DatabaseBackupsPanel } from '../components/DatabaseBackupsPanel';
 import { DatabaseOperationsPanel } from '../components/DatabaseOperationsPanel';
-import { DatabaseEngineProvider, useDatabaseEngineContext } from '../context/DatabaseEngineContext';
+import {
+  DatabaseEngineProvider,
+  useDatabaseEngineActionsContext,
+  useDatabaseEngineStateContext,
+} from '../context/DatabaseEngineContext';
 import { type DatabaseCollectionRow } from '../hooks/useDatabaseEngineState';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
 function DatabaseEngineSettingsTab(): React.JSX.Element {
-  const {
-    policy,
-    updatePolicy,
-    collectionRouteMap,
-    updateCollectionRoute,
-    rows,
-    isLoading,
-    engineStatus,
-    operationsJobs,
-    redisOverview,
-  } = useDatabaseEngineContext();
+  const { policy, collectionRouteMap, rows, isLoading, engineStatus, operationsJobs, redisOverview } =
+    useDatabaseEngineStateContext();
+  const { updatePolicy, updateCollectionRoute } = useDatabaseEngineActionsContext();
 
   const collectionColumns = useMemo<ColumnDef<DatabaseCollectionRow>[]>(
     () => [
@@ -261,15 +257,8 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
 }
 
 function DatabaseEngineContent(): React.JSX.Element {
-  const {
-    activeView,
-    setActiveView,
-    validationErrors,
-    saveSettings,
-    isLoading,
-    refetchAll,
-    isSaving,
-  } = useDatabaseEngineContext();
+  const { activeView, validationErrors, isLoading, isSaving } = useDatabaseEngineStateContext();
+  const { setActiveView, saveSettings, refetchAll } = useDatabaseEngineActionsContext();
 
   const activeViewLabel =
     activeView === 'engine'

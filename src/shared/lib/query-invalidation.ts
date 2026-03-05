@@ -637,17 +637,6 @@ export const notifyAiPathRunEnqueued = (
   };
 
   window.dispatchEvent(new CustomEvent('ai-path-run-enqueued', { detail: payload }));
-  if (normalizedEntityType === 'product' && normalizedEntityId) {
-    window.dispatchEvent(
-      new CustomEvent('ai-path-product-run-queued', {
-        detail: {
-          productId: normalizedEntityId,
-          runId: normalizedRunId,
-          at: payload.at,
-        },
-      })
-    );
-  }
 
   if (typeof BroadcastChannel === 'undefined') return;
   try {

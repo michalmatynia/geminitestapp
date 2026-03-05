@@ -27,6 +27,9 @@ export const runPortablePathServer = async (
     fingerprintVerificationMode = 'off',
     envelopeSignatureVerificationMode = 'off',
     envelopeSignatureSecret,
+    envelopeSignatureSecretsByKeyId,
+    envelopeSignatureFallbackSecrets,
+    envelopeSignatureKeyResolver,
     reportAiPathsError,
     ...engineOptions
   } = options;
@@ -38,6 +41,9 @@ export const runPortablePathServer = async (
     fingerprintVerificationMode,
     envelopeSignatureVerificationMode,
     envelopeSignatureSecret,
+    envelopeSignatureSecretsByKeyId,
+    envelopeSignatureFallbackSecrets,
+    envelopeSignatureKeyResolver,
   });
   if (!resolved.ok) {
     throw new Error(`Invalid AI-Path payload: ${resolved.error}`);

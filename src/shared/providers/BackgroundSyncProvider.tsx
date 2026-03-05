@@ -14,7 +14,11 @@ type BackgroundSyncContextValue = {
   forceSync: () => void;
 };
 
-const BackgroundSyncContext = createContext<BackgroundSyncContextValue | null>(null);
+type BackgroundSyncStateContextValue = Omit<BackgroundSyncContextValue, 'forceSync'>;
+type BackgroundSyncActionsContextValue = Pick<BackgroundSyncContextValue, 'forceSync'>;
+
+const BackgroundSyncStateContext = createContext<BackgroundSyncStateContextValue | null>(null);
+const BackgroundSyncActionsContext = createContext<BackgroundSyncActionsContextValue | null>(null);
 
 const BACKGROUND_SYNC_KEYS = {
   enabled: 'background_sync_enabled',
@@ -61,34 +65,50 @@ export function BackgroundSyncProvider({
 
   useEffect(() => {}, [isOnline, lastSync]);
 
-  const value = useMemo(
+  const stateValue = useMemo(
     () => ({
       enabled: resolvedSettings.enabled,
       intervalSeconds: resolvedSettings.intervalSeconds,
       isOnline,
       lastSync,
-      forceSync,
     }),
-    [resolvedSettings.enabled, resolvedSettings.intervalSeconds, isOnline, lastSync, forceSync]
+    [resolvedSettings.enabled, resolvedSettings.intervalSeconds, isOnline, lastSync]
   );
+  const actionsValue = useMemo(() => ({ forceSync }), [forceSync]);
 
   return (
-    <BackgroundSyncContext.Provider value={value}>
-      {children}
-      <QueryDevPanel
-        isOnline={isOnline}
-        lastSync={lastSync}
-        enabled={resolvedSettings.queryPanelEnabled}
-        open={resolvedSettings.queryPanelOpen}
-      />
-    </BackgroundSyncContext.Provider>
+    <BackgroundSyncActionsContext.Provider value={actionsValue}>
+      <BackgroundSyncStateContext.Provider value={stateValue}>
+        {children}
+        <QueryDevPanel
+          isOnline={isOnline}
+          lastSync={lastSync}
+          enabled={resolvedSettings.queryPanelEnabled}
+          open={resolvedSettings.queryPanelOpen}
+        />
+      </BackgroundSyncStateContext.Provider>
+    </BackgroundSyncActionsContext.Provider>
   );
 }
 
-export function useBackgroundSyncStatus(): BackgroundSyncContextValue {
-  const context = useContext(BackgroundSyncContext);
+export function useBackgroundSyncState(): BackgroundSyncStateContextValue {
+  const context = useContext(BackgroundSyncStateContext);
   if (!context) {
-    throw new Error('useBackgroundSyncStatus must be used within BackgroundSyncProvider');
+    throw new Error('useBackgroundSyncState must be used within BackgroundSyncProvider');
   }
   return context;
+}
+
+export function useBackgroundSyncActions(): BackgroundSyncActionsContextValue {
+  const context = useContext(BackgroundSyncActionsContext);
+  if (!context) {
+    throw new Error('useBackgroundSyncActions must be used within BackgroundSyncProvider');
+  }
+  return context;
+}
+
+export function useBackgroundSyncStatus(): BackgroundSyncContextValue {
+  const state = useBackgroundSyncState();
+  const actions = useBackgroundSyncActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

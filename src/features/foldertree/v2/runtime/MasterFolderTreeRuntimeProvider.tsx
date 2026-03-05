@@ -27,7 +27,7 @@ export function MasterFolderTreeRuntimeProvider({
   );
 }
 
-const fallbackRuntimeBus: FolderTreeRuntimeBus = {
+export const masterFolderTreeRuntimeFallbackBus: FolderTreeRuntimeBus = {
   registerInstance: () => (): void => {
     // no-op
   },
@@ -50,4 +50,4 @@ const fallbackRuntimeBus: FolderTreeRuntimeBus = {
 };
 
 export const useMasterFolderTreeRuntime = (): FolderTreeRuntimeBus =>
-  useContext(FolderTreeRuntimeContext) ?? fallbackRuntimeBus;
+  useContext(FolderTreeRuntimeContext) ?? masterFolderTreeRuntimeFallbackBus;

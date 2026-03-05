@@ -26,7 +26,7 @@ import {
 import {
   estimateGenerationCost,
   type GenerationCostEstimate,
-} from '@/features/ai/image-studio/generation-cost';
+} from '@/features/ai/image-studio/utils/generation-cost';
 import { parsePersistedImageStudioSettings } from '@/features/ai/image-studio/studio-settings';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { isObjectRecord } from '@/shared/utils/object-utils';

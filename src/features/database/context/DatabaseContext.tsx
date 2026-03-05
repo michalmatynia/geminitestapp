@@ -40,8 +40,6 @@ export const useDatabasePagination = () => {
 
 interface DatabaseContextType extends DatabaseUiConfig, DatabaseData, DatabasePagination {}
 
-const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined);
-
 export function DatabaseProvider({
   children,
   defaultDbType = 'postgresql',
@@ -110,30 +108,18 @@ export function DatabaseProvider({
     [page, pageSize]
   );
 
-  const aggregatedValue = useMemo<DatabaseContextType>(
-    () => ({
-      ...configValue,
-      ...dataValue,
-      ...paginationValue,
-    }),
-    [configValue, dataValue, paginationValue]
-  );
-
   return (
     <ConfigContext.Provider value={configValue}>
       <DataContext.Provider value={dataValue}>
-        <PaginationContext.Provider value={paginationValue}>
-          <DatabaseContext.Provider value={aggregatedValue}>{children}</DatabaseContext.Provider>
-        </PaginationContext.Provider>
+        <PaginationContext.Provider value={paginationValue}>{children}</PaginationContext.Provider>
       </DataContext.Provider>
     </ConfigContext.Provider>
   );
 }
 
 export function useDatabase(): DatabaseContextType {
-  const context = useContext(DatabaseContext);
-  if (context === undefined) {
-    throw internalError('useDatabase must be used within a DatabaseProvider');
-  }
-  return context;
+  const config = useDatabaseConfig();
+  const data = useDatabaseData();
+  const pagination = useDatabasePagination();
+  return useMemo(() => ({ ...config, ...data, ...pagination }), [config, data, pagination]);
 }

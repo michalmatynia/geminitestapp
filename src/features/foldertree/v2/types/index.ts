@@ -2,13 +2,13 @@ import type {
   MasterFolderTreeActionResult,
   MasterFolderTreeError,
   MasterFolderTreePersistOperation,
-  MasterTreeCanDropResultDto,
   MasterFolderTreeUndoEntry,
   MasterFolderTreeTransaction,
   MasterFolderTreeAppliedTransaction,
   MasterFolderTreePreparedTransaction,
   MasterFolderTreeAdapterV3,
 } from '@/shared/contracts/master-folder-tree';
+import type { MasterTreeCanDropResult as FolderTreeDropCheck } from '@/shared/utils/master-folder-tree-engine';
 import type {
   MasterTreeDropPosition,
   MasterTreeId,
@@ -54,7 +54,7 @@ export type FolderTreeNodeView = {
   isExpanded: boolean;
 };
 
-export type FolderTreeDropCheck = MasterTreeCanDropResultDto;
+export type { FolderTreeDropCheck };
 
 export type FolderTreeStoreSnapshot = {
   state: FolderTreeState;

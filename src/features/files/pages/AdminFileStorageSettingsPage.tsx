@@ -6,11 +6,11 @@ import {
   FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
   FILE_STORAGE_SOURCE_SETTING_KEY,
   fileStorageSourceValues,
-} from '@/features/files/constants/storage-settings';
+} from '@/shared/lib/files/constants';
 import type {
   FastCometStorageConfig,
   FileStorageSource,
-} from '@/features/files/constants/storage-settings';
+} from '@/shared/lib/files/constants';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {

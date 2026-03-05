@@ -1,11 +1,10 @@
+import type { ActiveTemplateScopeInput as ParameterLinkScopeInput } from '../../active-template-preference';
+
 const PARAMETER_LINK_SCOPE_SEPARATOR = '::';
 
 export { PARAMETER_LINK_SCOPE_SEPARATOR };
 
-export type ParameterLinkScopeInput = {
-  connectionId?: string | null;
-  inventoryId?: string | null;
-};
+export type { ParameterLinkScopeInput };
 
 export type CatalogParameterLinkMap = Record<string, Record<string, string>>;
 

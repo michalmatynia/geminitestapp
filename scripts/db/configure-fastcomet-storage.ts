@@ -3,11 +3,11 @@ import 'dotenv/config';
 import {
   FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
   FILE_STORAGE_SOURCE_SETTING_KEY,
-} from '@/features/files/constants/storage-settings';
+} from '@/shared/lib/files/constants';
 import type {
   FastCometStorageConfig,
   FileStorageSource,
-} from '@/features/files/constants/storage-settings';
+} from '@/shared/lib/files/constants';
 import { invalidateFileStorageSettingsCache } from '@/shared/lib/files/services/storage/file-storage-service';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoClient, getMongoDb } from '@/shared/lib/db/mongo-client';

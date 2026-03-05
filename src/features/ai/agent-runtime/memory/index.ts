@@ -7,10 +7,11 @@ import {
 } from '@/shared/lib/ai-brain/server-runtime-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import prisma from '@/shared/lib/db/prisma';
+import type { MemoryScope } from '@/shared/contracts/agent-runtime';
 
 import type { Prisma } from '@prisma/client';
 
-export type MemoryScope = 'session' | 'longterm';
+export type { MemoryScope };
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 const parseJsonObject = (raw: string): unknown => {

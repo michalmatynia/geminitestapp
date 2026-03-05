@@ -20,7 +20,6 @@ import {
   validateAutoScalerOutputDimensions,
   validateAutoScalerSourceDimensions,
 } from '@/features/ai/image-studio/server/auto-scaler-utils';
-import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
 import {
   loadSourceBufferFromSlot,
   parseImageDataUrl,
@@ -30,13 +29,14 @@ import {
   isClientAutoScaleMode,
   isServerAutoScaleMode,
 } from './image-handler-utils';
+import type { StudioSlotRecord } from './upscale/types';
 
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
 const STRICT_SERVER_AUTOSCALER_ENABLED =
   process.env['IMAGE_STUDIO_AUTOSCALER_SERVER_AUTHORITATIVE'] !== 'false';
 
-export type StudioSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
 export type { UploadedClientAutoScaleImage };
+export type { StudioSlotRecord };
 
 export type AutoScaleLayoutMetadata = {
   paddingPercent: number;

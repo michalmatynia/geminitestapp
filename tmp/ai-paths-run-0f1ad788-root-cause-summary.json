@@ -1,0 +1,41 @@
+{
+  "runId": "0f1ad788-5f8b-4f27-87f7-cc8e5a4368e1",
+  "failure": "Database write affected 0 records for update (updateOne).",
+  "timeline": {
+    "promptCompletedAt": [
+      "2026-03-05T03:01:56.034Z",
+      "2026-03-05T03:01:56.287Z"
+    ],
+    "definitionsDbCompletedAt": [
+      "2026-03-05T03:01:56.159Z"
+    ]
+  },
+  "modelInputPromptContainsDefinitions": false,
+  "modelOutputRaw": "[{\"parameterId\":\"274\",\"value\":\"13 cm\"},{\"parameterId\":\"288\",\"value\":\"Faux Leather\"}]",
+  "extractedParameterIds": [
+    "274",
+    "288"
+  ],
+  "availableDefinitionIdCount": 6,
+  "missingFromDefinitions": [
+    "274",
+    "288"
+  ],
+  "writeOutcome": {
+    "status": "failed",
+    "code": "zero_affected",
+    "message": "Database write affected 0 records for update (updateOne).",
+    "policyOnZeroAffected": "fail",
+    "zeroAffected": true,
+    "operation": "update",
+    "action": "updateOne",
+    "affectedCount": 0,
+    "matchedCount": 1,
+    "modifiedCount": 0
+  },
+  "inference": [
+    "Prompt completed before definitions query and again after it; model consumed a prompt variant without injected definitions.",
+    "Model produced numeric parameter IDs not present in available definition IDs.",
+    "Database write outcome failed on zero affected with policy fail."
+  ]
+}

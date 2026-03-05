@@ -15,7 +15,8 @@ import { LogModal } from '../components/LogModal';
 import { RestoreModal } from '../components/RestoreModal';
 import {
   DatabaseBackupsProvider,
-  useDatabaseBackupsContext,
+  useDatabaseBackupsActionsContext,
+  useDatabaseBackupsStateContext,
 } from '../context/DatabaseBackupsContext';
 import { DatabaseProvider } from '../context/DatabaseContext';
 
@@ -24,25 +25,27 @@ import type { DatabaseType } from '@/shared/contracts/database';
 function DatabasesContentInner(): React.JSX.Element {
   const {
     activeTab,
-    setActiveTab,
     isLogModalOpen,
     logModalContent,
     isRestoreModalOpen,
     selectedBackupForRestore,
     backupToDelete,
-    setBackupToDelete,
-    setIsRestoreModalOpen,
-    setSelectedBackupForRestore,
     data,
     isLoading,
     isProd,
+  } = useDatabaseBackupsStateContext();
+  const {
+    setActiveTab,
+    setBackupToDelete,
+    setIsRestoreModalOpen,
+    setSelectedBackupForRestore,
     closeLogModal,
     handleBackup,
     handleUpload,
     handleRestoreConfirm,
     handleConfirmDelete,
     handlePreviewCurrent,
-  } = useDatabaseBackupsContext();
+  } = useDatabaseBackupsActionsContext();
 
   return (
     <PageLayout

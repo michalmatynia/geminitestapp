@@ -7,10 +7,11 @@ import {
 } from '../base-client-parsers';
 import { BaseProducer, BaseInventory, BaseTag } from '@/shared/contracts/integrations';
 import { fetchBaseInventories } from './inventory';
+import type { BaseInventoryScopeOptions } from './config';
 
-export type FetchBaseProducersOptions = {
-  inventoryId?: string | null;
-};
+type FetchBaseProducersOptions = BaseInventoryScopeOptions;
+
+export type { FetchBaseProducersOptions };
 
 export async function fetchBaseProducers(
   token: string,
@@ -89,9 +90,9 @@ export async function fetchBaseProducers(
   return [];
 }
 
-export type FetchBaseTagsOptions = {
-  inventoryId?: string | null;
-};
+type FetchBaseTagsOptions = BaseInventoryScopeOptions;
+
+export type { FetchBaseTagsOptions };
 
 export async function fetchBaseTags(
   token: string,

@@ -3,6 +3,7 @@ import type {
   CaseResolverFile,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
+import type { DecodedMasterTreeNode as SharedDecodedMasterTreeNode } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const FOLDER_NODE_PREFIX = 'folder:';
@@ -18,11 +19,9 @@ export type CaseResolverMasterNodeRef =
   | { entity: 'file'; id: string; nodeId: string }
   | { entity: 'asset'; id: string; nodeId: string };
 
-export type CaseResolverCaseMasterNodeRef = {
-  entity: 'case';
-  id: string;
-  nodeId: string;
-};
+type CaseResolverCaseMasterNodeRef = SharedDecodedMasterTreeNode<'case'>;
+
+export type { CaseResolverCaseMasterNodeRef };
 
 export type CaseResolverCaseContentFolderMasterNodeRef = {
   entity: 'case_content_folder';

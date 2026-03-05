@@ -2,16 +2,12 @@
 
 import type { ClusterPreset } from '@/shared/lib/ai-paths';
 import { Button, Input, Label, Textarea, SimpleSettingsList, Card } from '@/shared/ui';
+import type { ClusterPresetDraft } from '../context/PresetsContext';
 
 import { usePresetsState, usePresetsActions } from '../context';
 import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 
-export type ClusterPresetDraft = {
-  name: string;
-  description: string;
-  bundlePorts: string;
-  template: string;
-};
+export type { ClusterPresetDraft };
 
 export function ClusterPresetsPanel(): React.JSX.Element {
   // --- Context Hooks ---

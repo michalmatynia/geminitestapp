@@ -1,0 +1,58 @@
+{
+  "capturedAt": "2026-03-05T03:22:35.893Z",
+  "runId": "0f1ad788-5f8b-4f27-87f7-cc8e5a4368e1",
+  "pathId": "path_3wejpy",
+  "nodeId": "node-9a24cf46edc9eecd87d162ee",
+  "collection": "products",
+  "operation": "update",
+  "action": "updateOne",
+  "queryTemplate": "{\n  \"id\": \"{{entityId}}\"\n}",
+  "updateTemplate": "{\n  \"$set\": {\n    \"parameters\": {{value}}\n  }\n}",
+  "resolvedFilter": {
+    "id": "d227a595-25b6-43b3-8bfc-c2beb41d5c03"
+  },
+  "resolvedUpdate": {
+    "$set": {
+      "parameters": [
+        {
+          "parameterId": "274",
+          "value": "13 cm"
+        },
+        {
+          "parameterId": "288",
+          "value": "Faux Leather"
+        }
+      ]
+    }
+  },
+  "writeOutcome": {
+    "status": "failed",
+    "code": "zero_affected",
+    "message": "Database write affected 0 records for update (updateOne).",
+    "policyOnZeroAffected": "fail",
+    "zeroAffected": true,
+    "operation": "update",
+    "action": "updateOne",
+    "affectedCount": 0,
+    "matchedCount": 1,
+    "modifiedCount": 0
+  },
+  "sourceInputs": {
+    "entityId": "d227a595-25b6-43b3-8bfc-c2beb41d5c03",
+    "entityType": "product",
+    "value": [
+      {
+        "parameterId": "274",
+        "value": "13 cm"
+      },
+      {
+        "parameterId": "288",
+        "value": "Faux Leather"
+      }
+    ]
+  },
+  "notes": [
+    "resolvedFilter/resolvedUpdate are derived from node templates + captured runtime inputs",
+    "writeOutcome is captured from runtime event metadata"
+  ]
+}

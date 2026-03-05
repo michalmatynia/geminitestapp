@@ -2,24 +2,17 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
+import type {
+  ChatMessageDto as ChatMessage,
+  ChatbotMessagesData as UseChatbotMessagesStateReturn,
+} from '@/shared/contracts/chatbot';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useChatbotSession } from './useChatbotQueries';
 import { useSendChatMessage } from './useChatbotMutations';
 
-export interface UseChatbotMessagesStateReturn {
-  messages: ChatMessage[];
-  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
-  input: string;
-  setInput: React.Dispatch<React.SetStateAction<string>>;
-  sendMessage: () => Promise<void>;
-  attachments: File[];
-  setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
-  isSending: boolean;
-  setIsSending: React.Dispatch<React.SetStateAction<boolean>>;
-}
+export type { UseChatbotMessagesStateReturn };
 
 export function useChatbotMessagesState(
   sessionId: string | null

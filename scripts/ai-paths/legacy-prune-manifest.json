@@ -1620,6 +1620,94 @@
           ]
         }
       ]
+    },
+    {
+      "id": "node_identity_stable_hash_legacy_seed_contract",
+      "description": "Node identity/factory stable hash seeding must preserve legacy-named object keys for deterministic id continuity.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/utils/factory.ts",
+          "forbiddenSnippets": [],
+          "requiredSnippets": [
+            "legacyId: sourceId,"
+          ]
+        },
+        {
+          "file": "src/shared/lib/ai-paths/core/utils/node-identity.ts",
+          "forbiddenSnippets": [],
+          "requiredSnippets": [
+            "legacyNodeTypeId: asTrimmedString(args.sourceNodeTypeId ?? ''),",
+            "legacyId: asTrimmedString(args.sourceId) || 'missing',"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trigger_database_guard_unsupported_naming",
+      "description": "Trigger normalization database-config guard helper must remain on canonical unsupported naming channel.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/normalization/trigger-normalization.ts",
+          "forbiddenSnippets": [
+            "assertNoDeprecatedTriggerDatabaseConfig"
+          ],
+          "requiredSnippets": [
+            "assertNoUnsupportedTriggerDatabaseConfig",
+            "assertNoUnsupportedTriggerDatabaseConfig(node);"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "run_enqueued_event_contract",
+      "description": "Run-enqueued browser notification must stay on canonical ai-path-run-enqueued + entityType/entityId payload contract.",
+      "targets": [
+        {
+          "file": "src/shared/lib/query-invalidation.ts",
+          "forbiddenSnippets": [
+            "ai-path-product-run-queued",
+            "productId: normalizedEntityId,"
+          ],
+          "requiredSnippets": [
+            "new CustomEvent('ai-path-run-enqueued', { detail: payload })",
+            "entityId: normalizedEntityId,",
+            "entityType: normalizedEntityType,"
+          ]
+        },
+        {
+          "file": "src/features/products/hooks/useProductAiPathsRunSync.ts",
+          "forbiddenSnippets": [
+            "detail['productId']",
+            "ai-path-product-run-queued"
+          ],
+          "requiredSnippets": [
+            "window.addEventListener('ai-path-run-enqueued', handler);",
+            "const entityType = detail['entityType'];",
+            "const entityId = detail['entityId'];"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "portable_engine_path_config_edge_alias_hard_cut",
+      "description": "Portable-engine path_config edge normalization must not reintroduce source/target/sourceHandle/targetHandle alias upgrade fallback.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/portable-engine/index.ts",
+          "forbiddenSnippets": [
+            "asTrimmedString(edge.from) ?? asTrimmedString(edge.source)",
+            "asTrimmedString(edge.to) ?? asTrimmedString(edge.target)",
+            "resolveEdgePort(edge, 'fromPort', 'sourceHandle')",
+            "resolveEdgePort(edge, 'toPort', 'targetHandle')"
+          ],
+          "requiredSnippets": [
+            "const resolvedFrom = asTrimmedString(edge.from);",
+            "const resolvedTo = asTrimmedString(edge.to);",
+            "const resolvedFromPort = resolveEdgePort(edge, 'fromPort');",
+            "const resolvedToPort = resolveEdgePort(edge, 'toPort');"
+          ]
+        }
+      ]
     }
   ]
 }

@@ -13,10 +13,14 @@ import {
   buildPortablePathPackageEnvelope,
   buildPortablePathPackage,
   buildPortablePathJsonSchemaCatalog,
+  buildPortablePathJsonSchemaDiffReport,
   computePortablePathFingerprintSync,
+  getPortablePathMigratorObservabilitySnapshot,
   listPortablePathPackageMigratorVersions,
   migratePortablePathInput,
+  registerPortablePathMigratorObservabilityHook,
   registerPortablePathPackageMigrator,
+  resetPortablePathMigratorObservabilitySnapshot,
   resolvePortablePathInput,
   resolvePortablePathInputAsync,
   runPortablePathClient,
@@ -102,6 +106,7 @@ const buildInvalidCompilePath = (): PathConfig => {
 describe('portable AI-path engine scaffold', () => {
   beforeEach(() => {
     mockedEvaluateGraphClient.mockReset();
+    resetPortablePathMigratorObservabilitySnapshot();
     mockedEvaluateGraphClient.mockResolvedValue({
       status: 'completed',
       nodeStatuses: {},
@@ -148,7 +153,7 @@ describe('portable AI-path engine scaffold', () => {
     expect(parsed.value.pathConfig.edges.length).toBe(pathConfig.edges.length);
   });
 
-  it('normalizes path-config edge aliases when resolving raw path payloads', () => {
+  it('keeps alias-only path-config edge fields unresolved when resolving raw payloads', () => {
     const pathConfig = createDefaultPathConfig('path_portable_alias_edges');
     const fromNode = pathConfig.nodes[0]!;
     const toNode = pathConfig.nodes[1]!;
@@ -168,10 +173,14 @@ describe('portable AI-path engine scaffold', () => {
 
     const edge = parsed.value.pathConfig.edges[0];
     expect(parsed.value.source).toBe('path_config');
-    expect(edge?.from).toBe(fromNode.id);
-    expect(edge?.to).toBe(toNode.id);
-    expect(edge?.fromPort).toBe('context');
-    expect(edge?.toPort).toBe('context');
+    expect(edge?.from).toBe('');
+    expect(edge?.to).toBe('');
+    expect(edge?.fromPort).toBeUndefined();
+    expect(edge?.toPort).toBeUndefined();
+    expect(edge?.source).toBeUndefined();
+    expect(edge?.target).toBeUndefined();
+    expect(edge?.sourceHandle).toBeUndefined();
+    expect(edge?.targetHandle).toBeUndefined();
   });
 
   it('returns compile findings for invalid path payloads', () => {
@@ -334,6 +343,80 @@ describe('portable AI-path engine scaffold', () => {
     expect(() => unregisterPortablePathPackageMigrator(AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION)).toThrow(
       'Cannot unregister built-in portable package migrator'
     );
+  });
+
+  it('captures migrator observability snapshot across source paths and version failures', () => {
+    const pathConfig = createDefaultPathConfig('path_portable_observability_snapshot');
+    const v1Package = buildPortablePathPackage(pathConfig);
+
+    const pathConfigMigrated = migratePortablePathInput(pathConfig);
+    expect(pathConfigMigrated.ok).toBe(true);
+
+    const v2Migrated = migratePortablePathInput({
+      ...v1Package,
+      specVersion: 'ai-paths.portable-engine.v2',
+    });
+    expect(v2Migrated.ok).toBe(true);
+
+    const v99Migrated = migratePortablePathInput({
+      ...v1Package,
+      specVersion: 'ai-paths.portable-engine.v99',
+    });
+    expect(v99Migrated.ok).toBe(false);
+
+    const snapshot = getPortablePathMigratorObservabilitySnapshot();
+    expect(snapshot.totals.migrationAttempts).toBe(2);
+    expect(snapshot.totals.migrationSuccesses).toBe(1);
+    expect(snapshot.totals.migrationFailures).toBe(1);
+    expect(snapshot.sourceCounts.path_config).toBe(1);
+    expect(snapshot.sourceCounts.portable_package).toBe(1);
+    expect(snapshot.bySpecVersion['ai-paths.portable-engine.v2']?.successes).toBe(1);
+    expect(snapshot.bySpecVersion['ai-paths.portable-engine.v99']?.failures).toBe(1);
+    expect(snapshot.recentFailures[0]?.reason).toBe('missing_migrator');
+  });
+
+  it('emits migrator observability hook events for register/failure/unregister flow', () => {
+    const customVersion = 'ai-paths.portable-engine.v17';
+    const pathConfig = createDefaultPathConfig('path_portable_observability_events');
+    const v1Package = buildPortablePathPackage(pathConfig);
+    const events: Array<{ type: string; specVersion?: string; reason?: string }> = [];
+    const unsubscribe = registerPortablePathMigratorObservabilityHook((event) => {
+      events.push({
+        type: event.type,
+        ...('specVersion' in event ? { specVersion: event.specVersion } : {}),
+        ...('reason' in event ? { reason: event.reason } : {}),
+      });
+    });
+
+    registerPortablePathPackageMigrator(customVersion, () => ({
+      ok: false,
+      error: 'v17 custom failure',
+    }));
+    try {
+      const migrated = migratePortablePathInput({
+        ...v1Package,
+        specVersion: customVersion,
+      });
+      expect(migrated.ok).toBe(false);
+    } finally {
+      unregisterPortablePathPackageMigrator(customVersion);
+      unsubscribe();
+    }
+
+    expect(
+      events.some((event) => event.type === 'migrator_registered' && event.specVersion === customVersion)
+    ).toBe(true);
+    expect(
+      events.some(
+        (event) =>
+          event.type === 'migration_failed' &&
+          event.specVersion === customVersion &&
+          event.reason === 'migrator_error'
+      )
+    ).toBe(true);
+    expect(
+      events.some((event) => event.type === 'migrator_unregistered' && event.specVersion === customVersion)
+    ).toBe(true);
   });
 
   it('warns on missing portable package fingerprint in warn mode', () => {
@@ -552,12 +635,77 @@ describe('portable AI-path engine scaffold', () => {
     }
   });
 
+  it('verifies async strict envelope signatures via key-id secret map', async () => {
+    const restoreCrypto = ensureCryptoSubtleDigestForTest();
+    try {
+      const pathConfig = createDefaultPathConfig('path_portable_envelope_key_map');
+      const portablePackage = buildPortablePathPackage(pathConfig);
+      const signedEnvelope = await buildPortablePathPackageEnvelope(portablePackage, {
+        secret: 'portable-key-secret-v2',
+        keyId: 'rotating-key-v2',
+      });
+      const parsed = await resolvePortablePathInputAsync(signedEnvelope, {
+        envelopeSignatureVerificationMode: 'strict',
+        envelopeSignatureSecretsByKeyId: {
+          'rotating-key-v1': 'portable-key-secret-v1',
+          'rotating-key-v2': 'portable-key-secret-v2',
+        },
+      });
+      expect(parsed.ok).toBe(true);
+      if (!parsed.ok) return;
+      expect(parsed.value.portableEnvelope?.signature.keyId).toBe('rotating-key-v2');
+    } finally {
+      restoreCrypto();
+    }
+  });
+
+  it('verifies async strict envelope signatures via pluggable key resolver rotation', async () => {
+    const restoreCrypto = ensureCryptoSubtleDigestForTest();
+    try {
+      const pathConfig = createDefaultPathConfig('path_portable_envelope_key_resolver');
+      const portablePackage = buildPortablePathPackage(pathConfig);
+      const signedEnvelope = await buildPortablePathPackageEnvelope(portablePackage, {
+        secret: 'portable-key-secret-current',
+        keyId: 'rotating-key-current',
+      });
+      const resolverCalls: Array<{ keyId: string | null; algorithm: string; phase: string }> = [];
+      const parsed = await resolvePortablePathInputAsync(signedEnvelope, {
+        envelopeSignatureVerificationMode: 'strict',
+        envelopeSignatureKeyResolver: (context) => {
+          resolverCalls.push({
+            keyId: context.keyId,
+            algorithm: context.algorithm,
+            phase: context.phase,
+          });
+          return ['portable-key-secret-old', 'portable-key-secret-current'];
+        },
+      });
+      expect(parsed.ok).toBe(true);
+      if (!parsed.ok) return;
+      expect(resolverCalls.length).toBeGreaterThan(0);
+      expect(resolverCalls[0]?.keyId).toBe('rotating-key-current');
+      expect(resolverCalls[0]?.algorithm).toBe('hmac_sha256');
+      expect(resolverCalls[0]?.phase).toBe('async');
+    } finally {
+      restoreCrypto();
+    }
+  });
+
   it('publishes json schema catalog for portable contracts', () => {
     const catalog = buildPortablePathJsonSchemaCatalog();
     expect(catalog.portable_envelope['type']).toBe('object');
     expect(catalog.portable_package['type']).toBe('object');
     expect(catalog.semantic_canvas['type']).toBe('object');
     expect(catalog.path_config['type']).toBe('object');
+  });
+
+  it('publishes schema diff report for current vs vnext preview', () => {
+    const report = buildPortablePathJsonSchemaDiffReport();
+    expect(report.baseline).toBe('current');
+    expect(report.target).toBe('vnext_preview');
+    expect(report.entries.length).toBeGreaterThan(0);
+    expect(report.entries.every((entry) => typeof entry.currentHash === 'string')).toBe(true);
+    expect(report.entries.every((entry) => typeof entry.vNextHash === 'string')).toBe(true);
   });
 
   it('rejects payloads that exceed graph limits', () => {

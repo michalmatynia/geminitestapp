@@ -1,6 +1,8 @@
+import type { AiPathsCollectionMap as ExportWarehouseByInventoryMap } from '@/shared/lib/ai-paths/core/utils/collection-mapping';
+
 export const EXPORT_WAREHOUSE_SKIP_VALUE = '__skip__';
 
-export type ExportWarehouseByInventoryMap = Record<string, string>;
+export type { ExportWarehouseByInventoryMap };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);

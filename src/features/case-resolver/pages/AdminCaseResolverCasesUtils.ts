@@ -1,4 +1,9 @@
-import type { CaseResolverFile, CaseSearchScope } from '@/shared/contracts/case-resolver';
+import type {
+  CaseResolverFile,
+  CaseSearchScope,
+  CaseSortKey as SharedCaseSortKey,
+  CaseSortOrder as SharedCaseSortOrder,
+} from '@/shared/contracts/case-resolver';
 export type { CaseSearchScope };
 
 export type CaseTreeNode = {
@@ -6,16 +11,10 @@ export type CaseTreeNode = {
   children: CaseTreeNode[];
 };
 
-export type CaseSortKey =
-  | 'updated'
-  | 'created'
-  | 'happeningDate'
-  | 'name'
-  | 'status'
-  | 'signature'
-  | 'locked'
-  | 'sent';
-export type CaseSortOrder = 'asc' | 'desc';
+type CaseSortKey = SharedCaseSortKey;
+type CaseSortOrder = SharedCaseSortOrder;
+
+export type { CaseSortKey, CaseSortOrder };
 export type CaseViewMode = 'hierarchy' | 'list';
 export type CaseFileTypeFilter = 'all' | 'case';
 

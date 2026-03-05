@@ -204,6 +204,30 @@ const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
     reason: 'ai-paths portable-engine legacy path-config migration warning message reintroduced',
   },
   {
+    token: 'assertNoDeprecatedTriggerDatabaseConfig',
+    reason: 'ai-paths trigger database-guard deprecated naming channel reintroduced',
+  },
+  {
+    token: 'ai-path-product-run-queued',
+    reason: 'ai-paths legacy product-run queued browser event channel reintroduced',
+  },
+  {
+    token: "asTrimmedString(edge.from) ?? asTrimmedString(edge.source)",
+    reason: 'ai-paths portable-engine path_config edge source alias-upgrade fallback reintroduced',
+  },
+  {
+    token: "asTrimmedString(edge.to) ?? asTrimmedString(edge.target)",
+    reason: 'ai-paths portable-engine path_config edge target alias-upgrade fallback reintroduced',
+  },
+  {
+    token: "resolveEdgePort(edge, 'fromPort', 'sourceHandle')",
+    reason: 'ai-paths portable-engine path_config sourceHandle alias-upgrade fallback reintroduced',
+  },
+  {
+    token: "resolveEdgePort(edge, 'toPort', 'targetHandle')",
+    reason: 'ai-paths portable-engine path_config targetHandle alias-upgrade fallback reintroduced',
+  },
+  {
     token: '[chatbot][chat] Ignored legacy requested model in favor of Brain',
     reason: 'chatbot legacy model-override compatibility channel reintroduced',
   },

@@ -6,8 +6,8 @@ import path from 'path';
 import {
   FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
   FILE_STORAGE_SOURCE_SETTING_KEY,
-} from '@/features/files/constants/storage-settings';
-import type { FastCometStorageConfig } from '@/features/files/constants/storage-settings';
+} from '@/shared/lib/files/constants';
+import type { FastCometStorageConfig } from '@/shared/lib/files/constants';
 import {
   getFileStorageSettings,
   getPublicPathFromStoredPath,

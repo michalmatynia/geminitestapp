@@ -100,11 +100,17 @@ Resolver behavior:
   - `envelopeSignatureVerificationMode: "warn"` emits signature warnings and continues.
   - `envelopeSignatureVerificationMode: "strict"` blocks import on missing/mismatched/unsupported signatures.
   - For `hmac_sha256` envelope signatures in strict mode, use the async resolver path and pass `envelopeSignatureSecret`.
+  - Key-id routing and rotation are supported via `envelopeSignatureSecretsByKeyId`, `envelopeSignatureFallbackSecrets`, and `envelopeSignatureKeyResolver`.
 - Uses a migration registry keyed by portable package spec version (currently `v1` + `v2` compatibility shim).
 - Exposes custom migration registry APIs:
   - `registerPortablePathPackageMigrator(specVersion, migrator)`
   - `unregisterPortablePathPackageMigrator(specVersion)` (built-ins protected)
   - `listPortablePathPackageMigratorVersions()`
+- Exposes migrator observability APIs:
+  - `getPortablePathMigratorObservabilitySnapshot()`
+  - `resetPortablePathMigratorObservabilitySnapshot()`
+  - `registerPortablePathMigratorObservabilityHook(hook)` (returns unsubscribe)
+  - Snapshot includes version-level attempts/success/failure counts, source-path counts, and recent failure telemetry.
 
 ### Validate
 
@@ -131,7 +137,10 @@ Both run methods support:
 - `limits` / `enforcePayloadLimits`
 - `fingerprintVerificationMode` (`off` | `warn` | `strict`)
 - `envelopeSignatureVerificationMode` (`off` | `warn` | `strict`)
-- `envelopeSignatureSecret` (required for strict `hmac_sha256` envelope verification)
+- `envelopeSignatureSecret` (base secret for strict `hmac_sha256` envelope verification)
+- `envelopeSignatureSecretsByKeyId` (key-id to secret map for routed verification)
+- `envelopeSignatureFallbackSecrets` (ordered fallback secrets for key rotation overlap)
+- `envelopeSignatureKeyResolver` (custom resolver callback for dynamic key lookup)
 
 ### Fingerprinting
 
@@ -143,11 +152,13 @@ These allow stable package integrity tagging across copy/paste surfaces.
 ### Schema Publishing
 
 - API: `GET /api/ai-paths/portable-engine/schema`
-- Optional query: `kind=all|portable_package|semantic_canvas|path_config` (default `all`)
 - Optional query: `kind=all|portable_envelope|portable_package|semantic_canvas|path_config` (default `all`)
+- Diff API: `GET /api/ai-paths/portable-engine/schema/diff`
+- Diff query: `kind=all|portable_envelope|portable_package|semantic_canvas|path_config` (default `all`)
 - Cache support: deterministic `ETag` + `If-None-Match` (`304 Not Modified`) with private SWR cache headers.
 
 Response includes canonical JSON Schema (Draft 2020-12) generated from runtime Zod contracts, suitable for external editor validation.
+Diff response includes per-kind deterministic schema hashes (`current` vs `vnext_preview`) to support tooling upgrade checks.
 
 ## Example Usage
 
@@ -179,6 +190,6 @@ import { runPortablePathServer } from '@/shared/lib/ai-paths/portable-engine/ser
 
 ## Next Hardening Steps
 
-1. Add optional schema-diff endpoint (`current` vs `vNext`) for tooling upgrades.
-2. Add custom migrator observability hooks (version/path counts + failure telemetry).
-3. Add pluggable envelope key resolver strategy (rotation + key-id routing).
+1. Add CI guardrail that fails when schema diff report includes unexpected breaking changes.
+2. Add optional signing policy profiles (dev/staging/prod) to enforce envelope verification defaults per surface.
+3. Add audit log stream for envelope verification outcomes by key id to support rotation cutovers.

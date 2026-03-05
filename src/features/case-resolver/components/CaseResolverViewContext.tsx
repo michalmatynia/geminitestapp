@@ -11,6 +11,7 @@ import type {
   CaseResolverDocumentHistoryEntry,
   CaseResolverFile,
   CaseMetadataDraft,
+  WorkspaceView as CaseResolverWorkspaceView,
 } from '@/shared/contracts/case-resolver';
 import type {
   CaseResolverCaptureProposalState,
@@ -19,7 +20,9 @@ import type {
 import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
 export type { EditorDetailsTab };
 
-export type WorkspaceView = 'document' | 'relations';
+type WorkspaceView = CaseResolverWorkspaceView;
+
+export type { WorkspaceView };
 
 export type SelectOption = {
   value: string;

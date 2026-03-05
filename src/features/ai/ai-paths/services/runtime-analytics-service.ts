@@ -12,6 +12,7 @@ import type {
   AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
 import { getRedisConnection } from '@/shared/lib/queue';
+import type { RuntimeAnalyticsAvailability } from '@/shared/lib/ai-paths/services/runtime-analytics/availability';
 
 const KEY_PREFIX = 'ai_paths:runtime:analytics:v1';
 const RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
@@ -76,10 +77,7 @@ type SummaryCacheEntry = {
   expiresAt: number;
 };
 
-export type RuntimeAnalyticsAvailability = {
-  enabled: boolean;
-  storage: 'redis' | 'disabled';
-};
+export type { RuntimeAnalyticsAvailability };
 
 const summaryCache = new Map<string, SummaryCacheEntry>();
 const summaryInFlight = new Map<string, Promise<AiPathRuntimeAnalyticsSummary>>();

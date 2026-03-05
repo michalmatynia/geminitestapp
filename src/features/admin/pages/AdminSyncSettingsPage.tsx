@@ -6,7 +6,10 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { useOfflineQueueStatus } from '@/shared/hooks/offline';
 import { useOfflineSync } from '@/shared/hooks/offline/useOfflineMutation';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { useBackgroundSyncStatus } from '@/shared/providers/BackgroundSyncProvider';
+import {
+  useBackgroundSyncActions,
+  useBackgroundSyncState,
+} from '@/shared/providers/BackgroundSyncProvider';
 import {
   Button,
   Input,
@@ -45,7 +48,8 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();
   const updateSettingsBulk = useUpdateSettingsBulk();
-  const syncStatus = useBackgroundSyncStatus();
+  const { intervalSeconds: syncIntervalSeconds, isOnline, lastSync } = useBackgroundSyncState();
+  const { forceSync } = useBackgroundSyncActions();
   const { processQueue } = useOfflineSync();
   const offlineQueue = useOfflineQueueStatus();
 
@@ -91,7 +95,7 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
   };
 
   const handleForceSync = (): void => {
-    syncStatus.forceSync();
+    forceSync();
     toast('Sync triggered', { variant: 'success' });
   };
 
@@ -191,18 +195,18 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
           >
             <MetadataItem
               label='Status'
-              value={syncStatus.isOnline ? 'Online' : 'Offline'}
-              valueClassName={syncStatus.isOnline ? 'text-emerald-300' : 'text-rose-300'}
+              value={isOnline ? 'Online' : 'Offline'}
+              valueClassName={isOnline ? 'text-emerald-300' : 'text-rose-300'}
               variant='minimal'
             />
             <MetadataItem
               label='Last sync'
-              value={syncStatus.lastSync ? syncStatus.lastSync.toLocaleTimeString() : 'Never'}
+              value={lastSync ? lastSync.toLocaleTimeString() : 'Never'}
               variant='minimal'
             />
             <MetadataItem
               label='Active interval'
-              value={`${syncStatus.intervalSeconds}s`}
+              value={`${syncIntervalSeconds}s`}
               variant='minimal'
             />
           </Card>

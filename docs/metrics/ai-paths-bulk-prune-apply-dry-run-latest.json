@@ -1,12 +1,12 @@
 {
   "summary": {
-    "generatedAt": "2026-03-05T03:05:53.952Z",
+    "generatedAt": "2026-03-05T03:37:51.265Z",
     "mode": "apply",
     "dryRun": true,
     "manifestPath": "scripts/ai-paths/legacy-prune-manifest.json",
     "manifestVersion": "phase2-2026-03-05",
-    "ruleCount": 57,
-    "targetCount": 82,
+    "ruleCount": 61,
+    "targetCount": 88,
     "changedFileCount": 0,
     "replacedSnippetCount": 0,
     "findingCount": 0,
@@ -1255,7 +1255,7 @@
         "changed": false,
         "replacementCount": 0,
         "replacements": [],
-        "scannedFileCount": 3815
+        "scannedFileCount": 3802
       },
       {
         "ruleId": "legacy_index_key_runtime_source_scan",
@@ -1266,7 +1266,7 @@
         "changed": false,
         "replacementCount": 0,
         "replacements": [],
-        "scannedFileCount": 3815
+        "scannedFileCount": 3802
       },
       {
         "ruleId": "forbidden_maintenance_action_ids_runtime_source_scan",
@@ -1277,7 +1277,7 @@
         "changed": false,
         "replacementCount": 0,
         "replacements": [],
-        "scannedFileCount": 3815
+        "scannedFileCount": 3802
       },
       {
         "ruleId": "trigger_fetcher_migration_module_removed",
@@ -1298,7 +1298,7 @@
         "changed": false,
         "replacementCount": 0,
         "replacements": [],
-        "scannedFileCount": 3815
+        "scannedFileCount": 3802
       },
       {
         "ruleId": "legacy_dbquery_provider_migration_tokens_runtime_source_scan",
@@ -1309,7 +1309,7 @@
         "changed": false,
         "replacementCount": 0,
         "replacements": [],
-        "scannedFileCount": 3815
+        "scannedFileCount": 3802
       },
       {
         "ruleId": "feature_run_sources_duplicate_module_removed",
@@ -1406,6 +1406,66 @@
         "mode": "const_array",
         "expectedState": "present",
         "file": "src/shared/contracts/ai-paths.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "node_identity_stable_hash_legacy_seed_contract",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/shared/lib/ai-paths/core/utils/factory.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "node_identity_stable_hash_legacy_seed_contract",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/shared/lib/ai-paths/core/utils/node-identity.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "trigger_database_guard_unsupported_naming",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/shared/lib/ai-paths/core/normalization/trigger-normalization.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "run_enqueued_event_contract",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/shared/lib/query-invalidation.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "run_enqueued_event_contract",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/features/products/hooks/useProductAiPathsRunSync.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "portable_engine_path_config_edge_alias_hard_cut",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/shared/lib/ai-paths/portable-engine/index.ts",
         "missingTargetFile": false,
         "changed": false,
         "replacementCount": 0,

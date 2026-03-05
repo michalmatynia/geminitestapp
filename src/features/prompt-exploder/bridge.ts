@@ -10,6 +10,7 @@ import {
   type PromptExploderCaseResolverPartyBundle,
   type PromptExploderCaseResolverPartyCandidate,
   type PromptExploderCaseResolverPartyKind,
+  type PromptExploderCaseResolverPartyRole as SharedPromptExploderCaseResolverPartyRole,
   type PromptExploderCaseResolverPlaceDate,
   type PromptExploderBridgePayloadSnapshot,
   type PromptExploderBridgeSaveOptions,
@@ -34,12 +35,9 @@ export type {
   PromptExploderBridgeSaveOptions,
 };
 
-export type PromptExploderCaseResolverPartyRole =
-  | 'addresser'
-  | 'addressee'
-  | 'subject'
-  | 'reference'
-  | 'other';
+type PromptExploderCaseResolverPartyRole = SharedPromptExploderCaseResolverPartyRole;
+
+export type { PromptExploderCaseResolverPartyRole };
 
 const hasWindow = (): boolean => typeof window !== 'undefined';
 type BridgeStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;

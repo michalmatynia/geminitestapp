@@ -123,6 +123,15 @@ export type PortablePathInputSource =
 export type PortablePathValidationMode = 'standard' | 'strict';
 export type PortablePathFingerprintVerificationMode = 'off' | 'warn' | 'strict';
 export type PortablePathEnvelopeSignatureVerificationMode = 'off' | 'warn' | 'strict';
+export type PortablePathEnvelopeSignatureKeyResolverContext = {
+  phase: 'sync' | 'async';
+  mode: PortablePathEnvelopeSignatureVerificationMode;
+  algorithm: string;
+  keyId: string | null;
+};
+export type PortablePathEnvelopeSignatureKeyResolver = (
+  context: PortablePathEnvelopeSignatureKeyResolverContext
+) => string | string[] | null | undefined;
 export const PORTABLE_PATH_JSON_SCHEMA_KINDS = [
   'portable_envelope',
   'portable_package',
@@ -131,6 +140,19 @@ export const PORTABLE_PATH_JSON_SCHEMA_KINDS = [
 ] as const;
 export type PortablePathJsonSchemaKind = (typeof PORTABLE_PATH_JSON_SCHEMA_KINDS)[number];
 export type PortablePathJsonSchemaCatalog = Record<PortablePathJsonSchemaKind, Record<string, unknown>>;
+export type PortablePathJsonSchemaDiffEntry = {
+  kind: PortablePathJsonSchemaKind;
+  changed: boolean;
+  currentHash: string;
+  vNextHash: string;
+};
+export type PortablePathJsonSchemaDiffReport = {
+  baseline: 'current';
+  target: 'vnext_preview';
+  hasChanges: boolean;
+  changedKinds: PortablePathJsonSchemaKind[];
+  entries: PortablePathJsonSchemaDiffEntry[];
+};
 
 export type PortablePayloadLimits = {
   maxPayloadBytes: number;
@@ -160,6 +182,9 @@ export type ResolvePortablePathInputOptions = {
   fingerprintVerificationMode?: PortablePathFingerprintVerificationMode;
   envelopeSignatureVerificationMode?: PortablePathEnvelopeSignatureVerificationMode;
   envelopeSignatureSecret?: string;
+  envelopeSignatureSecretsByKeyId?: Record<string, string>;
+  envelopeSignatureFallbackSecrets?: string[];
+  envelopeSignatureKeyResolver?: PortablePathEnvelopeSignatureKeyResolver;
 };
 
 export type PortablePathMigrationWarningCode =
@@ -253,6 +278,9 @@ export type PortablePathRunOptions = Omit<EvaluateGraphOptions, 'reportAiPathsEr
   fingerprintVerificationMode?: PortablePathFingerprintVerificationMode;
   envelopeSignatureVerificationMode?: PortablePathEnvelopeSignatureVerificationMode;
   envelopeSignatureSecret?: string;
+  envelopeSignatureSecretsByKeyId?: Record<string, string>;
+  envelopeSignatureFallbackSecrets?: string[];
+  envelopeSignatureKeyResolver?: PortablePathEnvelopeSignatureKeyResolver;
   reportAiPathsError?: EvaluateGraphOptions['reportAiPathsError'];
 };
 
@@ -280,6 +308,53 @@ type PortablePathPackageMigrationResult =
 export type PortablePathPackageMigrator = (
   input: AiPathPortablePackageVersioned
 ) => PortablePathPackageMigrationResult;
+
+export type PortablePathMigratorFailureReason = 'missing_migrator' | 'migrator_error';
+
+export type PortablePathMigratorObservabilityByVersion = {
+  attempts: number;
+  successes: number;
+  failures: number;
+  lastError: string | null;
+  lastMigratedAt: string | null;
+};
+
+export type PortablePathMigratorFailureTelemetry = {
+  specVersion: string;
+  reason: PortablePathMigratorFailureReason;
+  error: string;
+  at: string;
+};
+
+export type PortablePathMigratorObservabilitySnapshot = {
+  totals: {
+    registrationCount: number;
+    unregistrationCount: number;
+    migrationAttempts: number;
+    migrationSuccesses: number;
+    migrationFailures: number;
+  };
+  sourceCounts: Record<PortablePathInputSource, number>;
+  bySpecVersion: Record<string, PortablePathMigratorObservabilityByVersion>;
+  recentFailures: PortablePathMigratorFailureTelemetry[];
+};
+
+export type PortablePathMigratorObservabilityEvent =
+  | { type: 'migrator_registered'; specVersion: string }
+  | { type: 'migrator_unregistered'; specVersion: string }
+  | { type: 'migration_succeeded'; specVersion: string; warningCount: number }
+  | {
+      type: 'migration_failed';
+      specVersion: string;
+      reason: PortablePathMigratorFailureReason;
+      error: string;
+    }
+  | { type: 'source_migrated'; source: PortablePathInputSource };
+
+export type PortablePathMigratorObservabilityHook = (
+  event: PortablePathMigratorObservabilityEvent,
+  snapshot: PortablePathMigratorObservabilitySnapshot
+) => void;
 
 const UNSAFE_OBJECT_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
 
@@ -345,6 +420,124 @@ const BUILTIN_PORTABLE_PATH_MIGRATOR_VERSIONS = new Set<string>([
   PORTABLE_PACKAGE_SPEC_V2,
 ]);
 
+const MAX_PORTABLE_PATH_MIGRATOR_FAILURE_EVENTS = 25;
+
+const createEmptyPortablePathSourceCounts = (): Record<PortablePathInputSource, number> => ({
+  portable_package: 0,
+  portable_envelope: 0,
+  semantic_canvas: 0,
+  path_config: 0,
+});
+
+const createEmptyPortablePathMigratorObservabilityState =
+  (): PortablePathMigratorObservabilitySnapshot => ({
+    totals: {
+      registrationCount: 0,
+      unregistrationCount: 0,
+      migrationAttempts: 0,
+      migrationSuccesses: 0,
+      migrationFailures: 0,
+    },
+    sourceCounts: createEmptyPortablePathSourceCounts(),
+    bySpecVersion: {},
+    recentFailures: [],
+  });
+
+let portablePathMigratorObservabilityState = createEmptyPortablePathMigratorObservabilityState();
+const portablePathMigratorObservabilityHooks = new Set<PortablePathMigratorObservabilityHook>();
+
+const clonePortablePathMigratorObservabilitySnapshot = (
+  snapshot: PortablePathMigratorObservabilitySnapshot
+): PortablePathMigratorObservabilitySnapshot => ({
+  totals: { ...snapshot.totals },
+  sourceCounts: { ...snapshot.sourceCounts },
+  bySpecVersion: Object.fromEntries(
+    Object.entries(snapshot.bySpecVersion).map(([specVersion, stats]) => [specVersion, { ...stats }])
+  ),
+  recentFailures: snapshot.recentFailures.map((failure) => ({ ...failure })),
+});
+
+const emitPortablePathMigratorObservabilityEvent = (
+  event: PortablePathMigratorObservabilityEvent
+): void => {
+  if (portablePathMigratorObservabilityHooks.size === 0) return;
+  const snapshot = clonePortablePathMigratorObservabilitySnapshot(portablePathMigratorObservabilityState);
+  for (const hook of portablePathMigratorObservabilityHooks) {
+    try {
+      hook(event, snapshot);
+    } catch {
+      // Observability hooks must not break migration flow.
+    }
+  }
+};
+
+const ensurePortablePathMigratorVersionStats = (
+  specVersion: string
+): PortablePathMigratorObservabilityByVersion => {
+  if (!portablePathMigratorObservabilityState.bySpecVersion[specVersion]) {
+    portablePathMigratorObservabilityState.bySpecVersion[specVersion] = {
+      attempts: 0,
+      successes: 0,
+      failures: 0,
+      lastError: null,
+      lastMigratedAt: null,
+    };
+  }
+  return portablePathMigratorObservabilityState.bySpecVersion[specVersion]!;
+};
+
+const recordPortablePathMigratorSource = (source: PortablePathInputSource): void => {
+  portablePathMigratorObservabilityState.sourceCounts[source] += 1;
+  emitPortablePathMigratorObservabilityEvent({
+    type: 'source_migrated',
+    source,
+  });
+};
+
+const recordPortablePathMigratorFailure = (
+  specVersion: string,
+  reason: PortablePathMigratorFailureReason,
+  error: string
+): void => {
+  portablePathMigratorObservabilityState.totals.migrationFailures += 1;
+  const stats = ensurePortablePathMigratorVersionStats(specVersion);
+  stats.failures += 1;
+  stats.lastError = error;
+  const telemetry: PortablePathMigratorFailureTelemetry = {
+    specVersion,
+    reason,
+    error,
+    at: new Date().toISOString(),
+  };
+  portablePathMigratorObservabilityState.recentFailures.push(telemetry);
+  if (portablePathMigratorObservabilityState.recentFailures.length > MAX_PORTABLE_PATH_MIGRATOR_FAILURE_EVENTS) {
+    portablePathMigratorObservabilityState.recentFailures.shift();
+  }
+  emitPortablePathMigratorObservabilityEvent({
+    type: 'migration_failed',
+    specVersion,
+    reason,
+    error,
+  });
+};
+
+export const registerPortablePathMigratorObservabilityHook = (
+  hook: PortablePathMigratorObservabilityHook
+): (() => void) => {
+  portablePathMigratorObservabilityHooks.add(hook);
+  return () => {
+    portablePathMigratorObservabilityHooks.delete(hook);
+  };
+};
+
+export const getPortablePathMigratorObservabilitySnapshot =
+  (): PortablePathMigratorObservabilitySnapshot =>
+    clonePortablePathMigratorObservabilitySnapshot(portablePathMigratorObservabilityState);
+
+export const resetPortablePathMigratorObservabilitySnapshot = (): void => {
+  portablePathMigratorObservabilityState = createEmptyPortablePathMigratorObservabilityState();
+};
+
 const normalizePortablePathMigratorSpecVersion = (specVersion: string): string => {
   const normalized = specVersion.trim();
   const parsed = portablePathPackageVersionedSpecVersionSchema.safeParse(normalized);
@@ -360,6 +553,12 @@ export const registerPortablePathPackageMigrator = (
 ): void => {
   const normalizedVersion = normalizePortablePathMigratorSpecVersion(specVersion);
   portablePathPackageMigrationRegistry.set(normalizedVersion, migrator);
+  portablePathMigratorObservabilityState.totals.registrationCount += 1;
+  ensurePortablePathMigratorVersionStats(normalizedVersion);
+  emitPortablePathMigratorObservabilityEvent({
+    type: 'migrator_registered',
+    specVersion: normalizedVersion,
+  });
 };
 
 export const listPortablePathPackageMigratorVersions = (): string[] =>
@@ -370,7 +569,15 @@ export const unregisterPortablePathPackageMigrator = (specVersion: string): bool
   if (BUILTIN_PORTABLE_PATH_MIGRATOR_VERSIONS.has(normalizedVersion)) {
     throw new Error(`Cannot unregister built-in portable package migrator "${normalizedVersion}".`);
   }
-  return portablePathPackageMigrationRegistry.delete(normalizedVersion);
+  const deleted = portablePathPackageMigrationRegistry.delete(normalizedVersion);
+  if (deleted) {
+    portablePathMigratorObservabilityState.totals.unregistrationCount += 1;
+    emitPortablePathMigratorObservabilityEvent({
+      type: 'migrator_unregistered',
+      specVersion: normalizedVersion,
+    });
+  }
+  return deleted;
 };
 
 const formatZodError = (error: z.ZodError): string =>
@@ -505,26 +712,23 @@ const coerceSampleStateMap = <T>(value: unknown): Record<string, T> | null => {
 
 const resolveEdgePort = (
   edge: Edge,
-  canonicalKey: 'fromPort' | 'toPort',
-  aliasKey: 'sourceHandle' | 'targetHandle'
+  canonicalKey: 'fromPort' | 'toPort'
 ): string | null | undefined => {
   const canonicalValue = edge[canonicalKey];
-  const aliasValue = edge[aliasKey];
-  const candidate = canonicalValue !== undefined ? canonicalValue : aliasValue;
-  if (candidate === undefined) return undefined;
-  if (candidate === null) return null;
-  if (typeof candidate !== 'string') return null;
-  const trimmed = candidate.trim();
+  if (canonicalValue === undefined) return undefined;
+  if (canonicalValue === null) return null;
+  if (typeof canonicalValue !== 'string') return null;
+  const trimmed = canonicalValue.trim();
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const normalizePathConfigEdgeAliases = (pathConfig: PathConfig): PathConfig => {
+const normalizePathConfigEdges = (pathConfig: PathConfig): PathConfig => {
   let changed = false;
   const nextEdges = (pathConfig.edges ?? []).map((edge: Edge): Edge => {
-    const resolvedFrom = asTrimmedString(edge.from) ?? asTrimmedString(edge.source);
-    const resolvedTo = asTrimmedString(edge.to) ?? asTrimmedString(edge.target);
-    const resolvedFromPort = resolveEdgePort(edge, 'fromPort', 'sourceHandle');
-    const resolvedToPort = resolveEdgePort(edge, 'toPort', 'targetHandle');
+    const resolvedFrom = asTrimmedString(edge.from);
+    const resolvedTo = asTrimmedString(edge.to);
+    const resolvedFromPort = resolveEdgePort(edge, 'fromPort');
+    const resolvedToPort = resolveEdgePort(edge, 'toPort');
 
     const edgeChanged =
       (resolvedFrom !== undefined && resolvedFrom !== edge.from) ||
@@ -585,20 +789,31 @@ export const migratePortablePathInput = (
 ): MigratePortablePathInputResult => {
   const packageParsed = aiPathPortablePackageVersionedSchema.safeParse(input);
   if (packageParsed.success) {
-    const migrator = portablePathPackageMigrationRegistry.get(packageParsed.data.specVersion);
+    const specVersion = packageParsed.data.specVersion;
+    portablePathMigratorObservabilityState.totals.migrationAttempts += 1;
+    const versionStats = ensurePortablePathMigratorVersionStats(specVersion);
+    versionStats.attempts += 1;
+    const migrator = portablePathPackageMigrationRegistry.get(specVersion);
     if (!migrator) {
+      const error = `Unsupported portable package spec version "${specVersion}". Supported versions: ${listPortablePathPackageMigratorVersions().join(', ')}`;
+      recordPortablePathMigratorFailure(specVersion, 'missing_migrator', error);
       return {
         ok: false,
-        error: `Unsupported portable package spec version "${packageParsed.data.specVersion}". Supported versions: ${listPortablePathPackageMigratorVersions().join(', ')}`,
+        error,
       };
     }
     const migratedPackage = migrator(packageParsed.data);
     if (!migratedPackage.ok) {
+      recordPortablePathMigratorFailure(specVersion, 'migrator_error', migratedPackage.error);
       return {
         ok: false,
         error: migratedPackage.error,
       };
     }
+    portablePathMigratorObservabilityState.totals.migrationSuccesses += 1;
+    versionStats.successes += 1;
+    versionStats.lastError = null;
+    versionStats.lastMigratedAt = new Date().toISOString();
 
     const migrationWarnings: PortablePathMigrationWarning[] = [
       ...migratedPackage.value.migrationWarnings,
@@ -620,6 +835,12 @@ export const migratePortablePathInput = (
         message: `Portable package name "${packageName}" differs from document path name "${documentName}". Document name is used.`,
       });
     }
+    recordPortablePathMigratorSource('portable_package');
+    emitPortablePathMigratorObservabilityEvent({
+      type: 'migration_succeeded',
+      specVersion,
+      warningCount: migrationWarnings.length,
+    });
     return {
       ok: true,
       value: {
@@ -632,6 +853,7 @@ export const migratePortablePathInput = (
 
   const semanticParsed = parseAndDeserializeSemanticCanvas(input);
   if (semanticParsed.ok) {
+    recordPortablePathMigratorSource('semantic_canvas');
     return {
       ok: true,
       value: {
@@ -649,7 +871,8 @@ export const migratePortablePathInput = (
 
   const pathConfigParsed = pathConfigSchema.safeParse(input);
   if (pathConfigParsed.success) {
-    const normalizedPathConfig = normalizePathConfigEdgeAliases(pathConfigParsed.data);
+    const normalizedPathConfig = normalizePathConfigEdges(pathConfigParsed.data);
+    recordPortablePathMigratorSource('path_config');
     return {
       ok: true,
       value: {
@@ -694,7 +917,7 @@ const finalizeResolvedPath = ({
   payloadByteSize: number | null;
 }): ResolvePortablePathInputResult => {
   const limits = resolvePayloadLimits(options?.limits);
-  const normalizedPath = normalizePathConfigEdgeAliases(pathConfig);
+  const normalizedPath = normalizePathConfigEdges(pathConfig);
   const repaired =
     options?.repairIdentities === false
       ? { config: normalizedPath, changed: false, warnings: [] as PathIdentityRepairWarning[] }
@@ -781,6 +1004,9 @@ export const resolvePortablePathInput = (
       envelopeSignatureVerificationMode,
       {
         envelopeSignatureSecret: options?.envelopeSignatureSecret,
+        envelopeSignatureSecretsByKeyId: options?.envelopeSignatureSecretsByKeyId,
+        envelopeSignatureFallbackSecrets: options?.envelopeSignatureFallbackSecrets,
+        envelopeSignatureKeyResolver: options?.envelopeSignatureKeyResolver,
       }
     );
     envelopeWarnings.push(...envelopeVerification.warnings);
@@ -872,6 +1098,9 @@ export const resolvePortablePathInputAsync = async (
         envelopeSignatureVerificationMode,
         {
           envelopeSignatureSecret: options?.envelopeSignatureSecret,
+          envelopeSignatureSecretsByKeyId: options?.envelopeSignatureSecretsByKeyId,
+          envelopeSignatureFallbackSecrets: options?.envelopeSignatureFallbackSecrets,
+          envelopeSignatureKeyResolver: options?.envelopeSignatureKeyResolver,
         }
       );
       if (!verification.ok) {
@@ -956,6 +1185,9 @@ export const buildPortablePathJsonSchemaCatalog = (): PortablePathJsonSchemaCata
   path_config: toJsonSchemaRecord(pathConfigSchema),
 });
 
+export const buildPortablePathJsonSchemaCatalogVNextPreview = (): PortablePathJsonSchemaCatalog =>
+  buildPortablePathJsonSchemaCatalog();
+
 const createStableHashHex = (value: string): string =>
   [
     hashString(value),
@@ -964,10 +1196,78 @@ const createStableHashHex = (value: string): string =>
     hashString(`c:${value}`),
   ].join('');
 
+const buildPortablePathJsonSchemaHash = (schema: Record<string, unknown>): string =>
+  createStableHashHex(stableStringify(schema));
+
+export const buildPortablePathJsonSchemaDiffReport = (): PortablePathJsonSchemaDiffReport => {
+  const currentCatalog = buildPortablePathJsonSchemaCatalog();
+  const vNextCatalog = buildPortablePathJsonSchemaCatalogVNextPreview();
+  const entries: PortablePathJsonSchemaDiffEntry[] = PORTABLE_PATH_JSON_SCHEMA_KINDS.map((kind) => {
+    const currentSchema = currentCatalog[kind];
+    const vNextSchema = vNextCatalog[kind];
+    const currentHash = buildPortablePathJsonSchemaHash(currentSchema);
+    const vNextHash = buildPortablePathJsonSchemaHash(vNextSchema);
+    return {
+      kind,
+      changed: currentHash !== vNextHash,
+      currentHash,
+      vNextHash,
+    };
+  });
+  const changedKinds = entries.filter((entry) => entry.changed).map((entry) => entry.kind);
+  return {
+    baseline: 'current',
+    target: 'vnext_preview',
+    hasChanges: changedKinds.length > 0,
+    changedKinds,
+    entries,
+  };
+};
+
 const normalizeOptionalSecret = (value: string | undefined): string | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+};
+
+const normalizeOptionalSecretList = (value: string[] | undefined): string[] => {
+  if (!Array.isArray(value) || value.length === 0) return [];
+  return value
+    .map((item) => normalizeOptionalSecret(item))
+    .filter((item): item is string => item !== null);
+};
+
+type PortablePathEnvelopeSignatureVerificationOptions = Pick<
+  ResolvePortablePathInputOptions,
+  | 'envelopeSignatureSecret'
+  | 'envelopeSignatureSecretsByKeyId'
+  | 'envelopeSignatureFallbackSecrets'
+  | 'envelopeSignatureKeyResolver'
+>;
+
+const resolveEnvelopeSignatureSecrets = (
+  options: PortablePathEnvelopeSignatureVerificationOptions | undefined,
+  context: PortablePathEnvelopeSignatureKeyResolverContext
+): string[] => {
+  const candidates: string[] = [];
+  if (options?.envelopeSignatureKeyResolver) {
+    const resolverResult = options.envelopeSignatureKeyResolver(context);
+    if (typeof resolverResult === 'string') {
+      const normalized = normalizeOptionalSecret(resolverResult);
+      if (normalized) candidates.push(normalized);
+    } else if (Array.isArray(resolverResult)) {
+      candidates.push(...normalizeOptionalSecretList(resolverResult));
+    }
+  }
+  const keyId = context.keyId ?? undefined;
+  if (keyId && options?.envelopeSignatureSecretsByKeyId && typeof options.envelopeSignatureSecretsByKeyId[keyId] === 'string') {
+    const normalized = normalizeOptionalSecret(options.envelopeSignatureSecretsByKeyId[keyId]);
+    if (normalized) candidates.push(normalized);
+  }
+  const primarySecret = normalizeOptionalSecret(options?.envelopeSignatureSecret);
+  if (primarySecret) candidates.push(primarySecret);
+  candidates.push(...normalizeOptionalSecretList(options?.envelopeSignatureFallbackSecrets));
+  return Array.from(new Set(candidates));
 };
 
 const removeTopLevelFingerprint = (input: unknown): unknown => {
@@ -1125,7 +1425,7 @@ export const computePortablePathFingerprint = async (
 export const verifyPortablePathPackageEnvelopeSignature = (
   portableEnvelope: AiPathPortablePackageEnvelopeVersioned,
   mode: PortablePathEnvelopeSignatureVerificationMode,
-  options?: Pick<ResolvePortablePathInputOptions, 'envelopeSignatureSecret'>
+  options?: PortablePathEnvelopeSignatureVerificationOptions
 ):
   | { ok: true; warnings: PortablePathMigrationWarning[] }
   | { ok: false; error: string; warnings: PortablePathMigrationWarning[] } => {
@@ -1150,12 +1450,17 @@ export const verifyPortablePathPackageEnvelopeSignature = (
   }
 
   if (signature.algorithm === 'hmac_sha256') {
-    const secret = normalizeOptionalSecret(options?.envelopeSignatureSecret);
-    if (!secret) {
+    const candidateSecrets = resolveEnvelopeSignatureSecrets(options, {
+      phase: 'sync',
+      mode,
+      algorithm: signature.algorithm,
+      keyId: signature.keyId ?? null,
+    });
+    if (candidateSecrets.length === 0) {
       const warning: PortablePathMigrationWarning = {
         code: 'package_envelope_signature_key_missing',
         message:
-          'Portable package envelope hmac signature requires a verification secret. Provide envelopeSignatureSecret.',
+          'Portable package envelope hmac signature requires a verification secret/key. Provide envelopeSignatureSecret, envelopeSignatureSecretsByKeyId, envelopeSignatureFallbackSecrets, or envelopeSignatureKeyResolver.',
       };
       if (mode === 'strict') {
         return {
@@ -1197,7 +1502,12 @@ export const verifyPortablePathPackageEnvelopeSignature = (
   }
 
   const expectedSignature = computePortablePathEnvelopeSignatureSync(portableEnvelope, {
-    secret: options?.envelopeSignatureSecret,
+    secret: resolveEnvelopeSignatureSecrets(options, {
+      phase: 'sync',
+      mode,
+      algorithm: signature.algorithm,
+      keyId: signature.keyId ?? null,
+    })[0],
     keyId: signature.keyId,
   });
   if (signature.value !== expectedSignature.value) {
@@ -1221,7 +1531,7 @@ export const verifyPortablePathPackageEnvelopeSignature = (
 export const verifyPortablePathPackageEnvelopeSignatureAsync = async (
   portableEnvelope: AiPathPortablePackageEnvelopeVersioned,
   mode: PortablePathEnvelopeSignatureVerificationMode,
-  options?: Pick<ResolvePortablePathInputOptions, 'envelopeSignatureSecret'>
+  options?: PortablePathEnvelopeSignatureVerificationOptions
 ):
   Promise<
     | { ok: true; warnings: PortablePathMigrationWarning[] }
@@ -1249,7 +1559,12 @@ export const verifyPortablePathPackageEnvelopeSignatureAsync = async (
 
   if (signature.algorithm === 'stable_hash_v1') {
     const expectedSignature = computePortablePathEnvelopeSignatureSync(portableEnvelope, {
-      secret: options?.envelopeSignatureSecret,
+      secret: resolveEnvelopeSignatureSecrets(options, {
+        phase: 'async',
+        mode,
+        algorithm: signature.algorithm,
+        keyId: signature.keyId ?? null,
+      })[0],
       keyId: signature.keyId,
     });
     if (signature.value !== expectedSignature.value) {
@@ -1270,12 +1585,17 @@ export const verifyPortablePathPackageEnvelopeSignatureAsync = async (
   }
 
   if (signature.algorithm === 'hmac_sha256') {
-    const secret = normalizeOptionalSecret(options?.envelopeSignatureSecret);
-    if (!secret) {
+    const candidateSecrets = resolveEnvelopeSignatureSecrets(options, {
+      phase: 'async',
+      mode,
+      algorithm: signature.algorithm,
+      keyId: signature.keyId ?? null,
+    });
+    if (candidateSecrets.length === 0) {
       const warning: PortablePathMigrationWarning = {
         code: 'package_envelope_signature_key_missing',
         message:
-          'Portable package envelope hmac signature requires a verification secret. Provide envelopeSignatureSecret.',
+          'Portable package envelope hmac signature requires a verification secret/key. Provide envelopeSignatureSecret, envelopeSignatureSecretsByKeyId, envelopeSignatureFallbackSecrets, or envelopeSignatureKeyResolver.',
       };
       if (mode === 'strict') {
         return {
@@ -1287,8 +1607,18 @@ export const verifyPortablePathPackageEnvelopeSignatureAsync = async (
       return { ok: true, warnings: [warning] };
     }
     const normalized = stableStringify(normalizePortableEnvelopeSignatureInput(portableEnvelope));
-    const hmac = await computeHmacSha256Hex(normalized, secret);
-    if (!hmac) {
+    let hasRuntimeVerification = false;
+    let isMatch = false;
+    for (const secret of candidateSecrets) {
+      const hmac = await computeHmacSha256Hex(normalized, secret);
+      if (!hmac) continue;
+      hasRuntimeVerification = true;
+      if (hmac === signature.value) {
+        isMatch = true;
+        break;
+      }
+    }
+    if (!hasRuntimeVerification) {
       const warning: PortablePathMigrationWarning = {
         code: 'package_envelope_signature_verification_unavailable',
         message:
@@ -1303,7 +1633,7 @@ export const verifyPortablePathPackageEnvelopeSignatureAsync = async (
       }
       return { ok: true, warnings: [warning] };
     }
-    if (hmac !== signature.value) {
+    if (!isMatch) {
       const warning: PortablePathMigrationWarning = {
         code: 'package_envelope_signature_mismatch',
         message: 'Portable package envelope signature does not match envelope contents.',
@@ -1620,6 +1950,9 @@ export const runPortablePathClient = async (
     fingerprintVerificationMode = 'off',
     envelopeSignatureVerificationMode = 'off',
     envelopeSignatureSecret,
+    envelopeSignatureSecretsByKeyId,
+    envelopeSignatureFallbackSecrets,
+    envelopeSignatureKeyResolver,
     reportAiPathsError,
     ...engineOptions
   } = options;
@@ -1632,6 +1965,9 @@ export const runPortablePathClient = async (
     fingerprintVerificationMode,
     envelopeSignatureVerificationMode,
     envelopeSignatureSecret,
+    envelopeSignatureSecretsByKeyId,
+    envelopeSignatureFallbackSecrets,
+    envelopeSignatureKeyResolver,
   });
   if (!resolved.ok) {
     throw new Error(`Invalid AI-Path payload: ${resolved.error}`);

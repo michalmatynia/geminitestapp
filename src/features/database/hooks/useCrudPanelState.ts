@@ -16,7 +16,7 @@ import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { executeSqlQuery } from '../api';
-import { useDatabase } from '../context/DatabaseContext';
+import { useDatabaseConfig, useDatabaseData } from '../context/DatabaseContext';
 import { useCrudMutation } from '../hooks/useDatabaseQueries';
 
 type CrudRowsResult = {
@@ -63,9 +63,10 @@ export function useCrudPanelState(props: {
   dbType?: DatabaseType;
 }): UseCrudPanelStateReturn {
   const dbKeys = QUERY_KEYS.system.databases;
-  const context = useDatabase();
-  const dbType = props.dbType ?? context.dbType;
-  const tableDetails = props.tableDetails ?? context.tableDetails;
+  const { dbType: contextDbType } = useDatabaseConfig();
+  const { tableDetails: contextTableDetails } = useDatabaseData();
+  const dbType = props.dbType ?? contextDbType;
+  const tableDetails = props.tableDetails ?? contextTableDetails;
 
   const [selectedTable, setSelectedTable] = useState(props.defaultTable ?? '');
   const [page, setPage] = useState(1);

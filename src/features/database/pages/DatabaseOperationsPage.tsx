@@ -20,10 +20,15 @@ import {
 
 import { CrudPanel } from '../components/CrudPanel';
 import { SqlQueryConsole } from '../components/SqlQueryConsole';
-import { DatabaseProvider, useDatabase } from '../context/DatabaseContext';
+import {
+  DatabaseProvider,
+  useDatabaseConfig,
+  useDatabaseData,
+} from '../context/DatabaseContext';
 
 function DatabaseOperationsContent(): React.JSX.Element {
-  const { dbType, setDbType, tableDetails, isLoading: previewLoading } = useDatabase();
+  const { dbType, setDbType } = useDatabaseConfig();
+  const { tableDetails, isLoading: previewLoading } = useDatabaseData();
   const isProduction = process.env['NODE_ENV'] === 'production';
 
   return (

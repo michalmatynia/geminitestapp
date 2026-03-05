@@ -1,11 +1,11 @@
 {
   "summary": {
-    "generatedAt": "2026-03-05T03:05:53.770Z",
+    "generatedAt": "2026-03-05T03:38:03.460Z",
     "mode": "scan",
     "manifestPath": "scripts/ai-paths/legacy-prune-manifest.json",
     "manifestVersion": "phase2-2026-03-05",
-    "ruleCount": 57,
-    "targetCount": 82,
+    "ruleCount": 61,
+    "targetCount": 88,
     "findingCount": 0,
     "findingsByRule": []
   },

@@ -1,0 +1,779 @@
+{
+  "capturedAt": "2026-03-05T03:17:58.718Z",
+  "run": {
+    "id": "0f1ad788-5f8b-4f27-87f7-cc8e5a4368e1",
+    "status": "failed",
+    "pathId": "path_3wejpy",
+    "pathName": "Parameter Inference v2 No Param Add",
+    "errorMessage": "Database write affected 0 records for update (updateOne).",
+    "retryCount": 0,
+    "maxAttempts": 3,
+    "nextRetryAt": null,
+    "deadLetteredAt": null,
+    "createdAt": "2026-03-05T03:01:54.694Z",
+    "startedAt": "2026-03-05T03:01:55.129Z",
+    "finishedAt": null
+  },
+  "failedNodeRecord": {
+    "id": "dc2514cc-cb03-4d25-872a-1f220eb6a512",
+    "runId": "0f1ad788-5f8b-4f27-87f7-cc8e5a4368e1",
+    "nodeId": "node-9a24cf46edc9eecd87d162ee",
+    "nodeType": "database",
+    "nodeTitle": "Database Query",
+    "status": "failed",
+    "attempt": 1,
+    "inputs": {
+      "result": [
+        {
+          "_id": "ab9d7dc2-632c-4b35-89fc-c6d44752b52e",
+          "id": "ab9d7dc2-632c-4b35-89fc-c6d44752b52e",
+          "catalogId": "cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10",
+          "name_en": "Tags",
+          "name_pl": "Tagi",
+          "name_de": null,
+          "createdAt": "2026-01-23T19:18:36.366Z",
+          "updatedAt": "2026-01-24T02:29:15.431Z"
+        },
+        {
+          "_id": "0a92f045-7c01-4b06-a0df-ebdf6ab9c24a",
+          "id": "0a92f045-7c01-4b06-a0df-ebdf6ab9c24a",
+          "catalogId": "cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10",
+          "name_en": "Model Name",
+          "name_pl": "Nazwa modelu",
+          "name_de": null,
+          "createdAt": "2026-01-24T02:29:05.627Z",
+          "updatedAt": "2026-01-24T02:29:05.627Z"
+        },
+        {
+          "_id": "64a58022-5c7c-46e8-9d07-53c75a94c7dc",
+          "id": "64a58022-5c7c-46e8-9d07-53c75a94c7dc",
+          "catalogId": "cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10",
+          "name_en": "Material",
+          "name_pl": "Materiał",
+          "name_de": null,
+          "createdAt": "2026-01-24T02:29:31.977Z",
+          "updatedAt": "2026-01-24T02:29:31.977Z"
+        },
+        {
+          "_id": "0eadf821-34ff-49bf-8ba7-84f797359f43",
+          "id": "0eadf821-34ff-49bf-8ba7-84f797359f43",
+          "catalogId": "cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10",
+          "name_en": "Model Number",
+          "name_pl": "Numer Modelu",
+          "name_de": null,
+          "createdAt": "2026-01-24T02:29:52.102Z",
+          "updatedAt": "2026-01-24T02:29:52.102Z"
+        },
+        {
+          "_id": "8cb8f430-d6c6-4b53-a529-eb3cfaa63d0e",
+          "id": "8cb8f430-d6c6-4b53-a529-eb3cfaa63d0e",
+          "catalogId": "cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10",
+          "name_en": "Colour",
+          "name_pl": "Kolor",
+          "name_de": null,
+          "createdAt": "2026-01-24T02:30:14.333Z",
+          "updatedAt": "2026-01-24T02:30:14.333Z"
+        },
+        {
+          "_id": "9c80ceb6-b8ed-47e8-ba07-cbdb602045d5",
+          "id": "9c80ceb6-b8ed-47e8-ba07-cbdb602045d5",
+          "catalogId": "cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10",
+          "name_en": "Attributes unbranded (Amazon)",
+          "name_pl": "Atrybuty niemarkowe (Amazon)",
+          "name_de": null,
+          "createdAt": "2026-01-24T02:30:56.488Z",
+          "updatedAt": "2026-02-28T04:54:08.127Z",
+          "optionLabels": [],
+          "selectorType": "text"
+        },
+        {
+          "_id": "69a26f6c293c269f59d98d44",
+          "name_en": "Condition",
+          "name_pl": "Stan",
+          "name_de": null,
+          "selectorType": "text",
+          "optionLabels": [],
+          "catalogId": "cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10",
+          "createdAt": "2026-02-28T04:30:36.441Z",
+          "updatedAt": "2026-02-28T04:30:36.441Z"
+        }
+      ],
+      "entityId": "d227a595-25b6-43b3-8bfc-c2beb41d5c03",
+      "value": [
+        {
+          "parameterId": "274",
+          "value": "13 cm"
+        },
+        {
+          "parameterId": "288",
+          "value": "Faux Leather"
+        }
+      ],
+      "entityType": "product"
+    },
+    "errorMessage": null,
+    "createdAt": "2026-03-05T03:01:54.796Z",
+    "updatedAt": "2026-03-05T03:04:21.804Z",
+    "startedAt": "2026-03-05T03:04:20.341Z",
+    "finishedAt": "2026-03-05T03:04:21.737Z"
+  },
+  "failedGraphNode": {
+    "id": "node-9a24cf46edc9eecd87d162ee",
+    "type": "database",
+    "nodeTypeId": "nt-f7befc175d4c62aadb0b3b3f",
+    "instanceId": "node-9a24cf46edc9eecd87d162ee",
+    "title": "Database Query",
+    "description": "Update product parameters with inferred values.",
+    "position": {
+      "x": 2494.111356185965,
+      "y": 486.4442410881643
+    },
+    "inputs": [
+      "entityId",
+      "entityType",
+      "productId",
+      "context",
+      "query",
+      "value",
+      "bundle",
+      "result",
+      "content_en",
+      "queryCallback",
+      "schema",
+      "aiQuery"
+    ],
+    "outputs": [
+      "result",
+      "bundle",
+      "content_en",
+      "aiPrompt"
+    ],
+    "config": {
+      "database": {
+        "operation": "update",
+        "entityType": "product",
+        "idField": "entityId",
+        "mode": "replace",
+        "updateStrategy": "one",
+        "updatePayloadMode": "custom",
+        "useMongoActions": true,
+        "actionCategory": "update",
+        "action": "updateOne",
+        "distinctField": "",
+        "updateTemplate": "{\n  \"$set\": {\n    \"parameters\": {{value}}\n  }\n}",
+        "mappings": [
+          {
+            "targetPath": "parameters",
+            "sourcePort": "value"
+          }
+        ],
+        "query": {
+          "provider": "mongodb",
+          "collection": "products",
+          "mode": "custom",
+          "preset": "by_id",
+          "field": "_id",
+          "idType": "string",
+          "queryTemplate": "{\n  \"id\": \"{{entityId}}\"\n}",
+          "limit": 1,
+          "sort": "",
+          "projection": "",
+          "single": true
+        },
+        "writeSource": "bundle",
+        "writeSourcePath": "",
+        "dryRun": false,
+        "skipEmpty": true,
+        "trimStrings": false,
+        "aiPrompt": "",
+        "writeOutcomePolicy": {
+          "onZeroAffected": "fail"
+        },
+        "validationRuleIds": [],
+        "parameterInferenceGuard": {
+          "enabled": true,
+          "targetPath": "parameters",
+          "definitionsPort": "result",
+          "definitionsPath": "",
+          "enforceOptionLabels": false,
+          "allowUnknownParameterIds": false
+        }
+      },
+      "runtime": {
+        "waitForInputs": true
+      }
+    },
+    "inputContracts": {
+      "aiQuery": {
+        "required": false
+      },
+      "bundle": {
+        "required": false
+      },
+      "content_en": {
+        "required": false
+      },
+      "context": {
+        "required": false
+      },
+      "entityId": {
+        "required": false
+      },
+      "entityType": {
+        "required": false
+      },
+      "productId": {
+        "required": false
+      },
+      "query": {
+        "required": false
+      },
+      "queryCallback": {
+        "required": false
+      },
+      "result": {
+        "required": false
+      },
+      "schema": {
+        "required": false
+      },
+      "value": {
+        "required": false
+      }
+    },
+    "createdAt": "2026-03-01T23:00:28.994Z",
+    "updatedAt": null
+  },
+  "incomingEdges": [
+    {
+      "id": "edge-params-17",
+      "from": "node-48304219e73a55d4b0240dc1",
+      "to": "node-9a24cf46edc9eecd87d162ee",
+      "source": "node-48304219e73a55d4b0240dc1",
+      "target": "node-9a24cf46edc9eecd87d162ee",
+      "fromPort": "result",
+      "toPort": "result",
+      "sourceHandle": "result",
+      "targetHandle": "result"
+    },
+    {
+      "id": "edge-5mmin2",
+      "from": "node-33bfbdadf03c3696f6f8a365",
+      "to": "node-9a24cf46edc9eecd87d162ee",
+      "source": "node-33bfbdadf03c3696f6f8a365",
+      "target": "node-9a24cf46edc9eecd87d162ee",
+      "fromPort": "entityId",
+      "toPort": "entityId",
+      "sourceHandle": "entityId",
+      "targetHandle": "entityId"
+    },
+    {
+      "id": "edge-golcu8",
+      "from": "node-ce8908c527e33afe5155aa8d",
+      "to": "node-9a24cf46edc9eecd87d162ee",
+      "source": "node-ce8908c527e33afe5155aa8d",
+      "target": "node-9a24cf46edc9eecd87d162ee",
+      "fromPort": "value",
+      "toPort": "value",
+      "sourceHandle": "value",
+      "targetHandle": "value"
+    }
+  ],
+  "upstreamNodes": [
+    {
+      "id": "node-48304219e73a55d4b0240dc1",
+      "type": "database",
+      "nodeTypeId": "nt-f7befc175d4c62aadb0b3b3f",
+      "instanceId": "node-48304219e73a55d4b0240dc1",
+      "title": "Database Query",
+      "description": "Load available parameters for product catalog (with fallback by product parameter IDs).",
+      "position": {
+        "x": 535.8332936467201,
+        "y": 215.6884217096072
+      },
+      "inputs": [
+        "entityId",
+        "entityType",
+        "productId",
+        "context",
+        "query",
+        "value",
+        "bundle",
+        "result",
+        "content_en",
+        "queryCallback",
+        "schema",
+        "aiQuery"
+      ],
+      "outputs": [
+        "result",
+        "bundle",
+        "aiPrompt",
+        "content_en"
+      ],
+      "config": {
+        "database": {
+          "operation": "query",
+          "entityType": "product",
+          "idField": "entityId",
+          "mode": "replace",
+          "updateStrategy": "one",
+          "updatePayloadMode": "custom",
+          "useMongoActions": false,
+          "actionCategory": "read",
+          "action": "find",
+          "distinctField": "",
+          "updateTemplate": "",
+          "mappings": [],
+          "query": {
+            "provider": "mongodb",
+            "collection": "product_parameters",
+            "mode": "custom",
+            "preset": "by_id",
+            "field": "id",
+            "idType": "string",
+            "queryTemplate": "{\n  \"catalogId\": \"{{bundle.catalogId}}\"\n}",
+            "limit": 200,
+            "sort": "",
+            "projection": "",
+            "single": false
+          },
+          "writeSource": "bundle",
+          "writeSourcePath": "",
+          "dryRun": false,
+          "skipEmpty": true,
+          "trimStrings": false,
+          "aiPrompt": "",
+          "writeOutcomePolicy": {
+            "onZeroAffected": "fail"
+          },
+          "validationRuleIds": []
+        },
+        "runtime": {
+          "waitForInputs": true
+        },
+        "notes": {
+          "text": "Grabs the catalog ID For given product",
+          "showOnCanvas": true
+        }
+      },
+      "inputContracts": {
+        "aiQuery": {
+          "required": false
+        },
+        "bundle": {
+          "required": false
+        },
+        "content_en": {
+          "required": false
+        },
+        "context": {
+          "required": false
+        },
+        "entityId": {
+          "required": false
+        },
+        "entityType": {
+          "required": false
+        },
+        "productId": {
+          "required": false
+        },
+        "query": {
+          "required": false
+        },
+        "queryCallback": {
+          "required": false
+        },
+        "result": {
+          "required": false
+        },
+        "schema": {
+          "required": false
+        },
+        "value": {
+          "required": false
+        }
+      },
+      "createdAt": "2026-03-01T23:00:28.994Z",
+      "updatedAt": null
+    },
+    {
+      "id": "node-ce8908c527e33afe5155aa8d",
+      "type": "regex",
+      "nodeTypeId": "nt-e9289ad2fa6d1d93fc221dfa",
+      "instanceId": "node-ce8908c527e33afe5155aa8d",
+      "title": "Regex JSON Extract",
+      "description": "Extract JSON array from model response.",
+      "position": {
+        "x": 2000.3425946673356,
+        "y": 560.0238541906575
+      },
+      "inputs": [
+        "value",
+        "prompt",
+        "regexCallback"
+      ],
+      "outputs": [
+        "grouped",
+        "matches",
+        "value",
+        "aiPrompt"
+      ],
+      "config": {
+        "regex": {
+          "pattern": "\\[[\\s\\S]*\\]",
+          "flags": "",
+          "mode": "extract_json",
+          "matchMode": "first_overall",
+          "groupBy": "match",
+          "outputMode": "object",
+          "includeUnmatched": false,
+          "unmatchedKey": "__unmatched__",
+          "splitLines": false,
+          "sampleText": "",
+          "aiPrompt": "",
+          "aiAutoRun": false,
+          "activeVariant": "manual",
+          "jsonIntegrityPolicy": "repair"
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "inputContracts": {
+        "prompt": {
+          "required": false
+        },
+        "regexCallback": {
+          "required": false
+        },
+        "value": {
+          "required": false
+        }
+      },
+      "createdAt": "2026-03-01T23:00:28.994Z",
+      "updatedAt": null
+    },
+    {
+      "id": "node-33bfbdadf03c3696f6f8a365",
+      "type": "fetcher",
+      "nodeTypeId": "nt-3bbfe935aaaf54a0c63ad75d",
+      "instanceId": "node-33bfbdadf03c3696f6f8a365",
+      "title": "Fetcher: Trigger Context",
+      "description": "Resolve live trigger context or fetch simulated entity by ID.",
+      "position": {
+        "x": 308.70250971030606,
+        "y": 537.8349197663142
+      },
+      "inputs": [
+        "trigger",
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "outputs": [
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "config": {
+        "fetcher": {
+          "sourceMode": "live_context",
+          "entityType": "products",
+          "entityId": "d6407d4c-ffde-4397-909a-3bd0a61c3710",
+          "productId": "d6407d4c-ffde-4397-909a-3bd0a61c3710"
+        },
+        "runtime": {
+          "inputContracts": {
+            "context": {
+              "required": false
+            },
+            "entityId": {
+              "required": false
+            },
+            "entityType": {
+              "required": false
+            },
+            "meta": {
+              "required": false
+            },
+            "trigger": {
+              "required": true
+            }
+          },
+          "waitForInputs": true
+        }
+      },
+      "data": {},
+      "inputContracts": {
+        "context": {
+          "required": false
+        },
+        "entityId": {
+          "required": false
+        },
+        "entityType": {
+          "required": false
+        },
+        "meta": {
+          "required": false
+        },
+        "trigger": {
+          "required": true
+        }
+      },
+      "createdAt": "2026-02-23T16:36:58.644Z",
+      "updatedAt": null
+    }
+  ],
+  "failedNodeEvents": [
+    {
+      "id": "f63c4e23-b9bf-470a-ae8e-f34c21260383",
+      "runId": "0f1ad788-5f8b-4f27-87f7-cc8e5a4368e1",
+      "nodeId": null,
+      "nodeType": null,
+      "nodeTitle": null,
+      "status": null,
+      "iteration": null,
+      "level": "info",
+      "message": "Node Database Query waiting: Upstream waiting diagnostics: Upstream status for value: Regex JSON Extract (waiting_callback)",
+      "metadata": {
+        "runId": "0f1ad788-5f8b-4f27-87f7-cc8e5a4368e1",
+        "nodeId": "node-9a24cf46edc9eecd87d162ee",
+        "nodeType": "database",
+        "attempt": 0,
+        "reason": "missing_inputs",
+        "status": "waiting_callback",
+        "waitingOnPorts": [
+          "value"
+        ]
+      },
+      "createdAt": "2026-03-05T03:01:55.406Z",
+      "updatedAt": null
+    },
+    {
+      "id": "34d2ae52-a803-4490-b63b-c3b449315ab8",
+      "runId": "0f1ad788-5f8b-4f27-87f7-cc8e5a4368e1",
+      "nodeId": null,
+      "nodeType": null,
+      "nodeTitle": null,
+      "status": null,
+      "iteration": null,
+      "level": "error",
+      "message": "Node Database Query failed: Database write affected 0 records for update (updateOne).",
+      "metadata": {
+        "traceId": "0f1ad788-5f8b-4f27-87f7-cc8e5a4368e1",
+        "spanId": "node-9a24cf46edc9eecd87d162ee:1:7",
+        "nodeId": "node-9a24cf46edc9eecd87d162ee",
+        "nodeType": "database",
+        "iteration": 7,
+        "attempt": 1,
+        "error": "Database write affected 0 records for update (updateOne)."
+      },
+      "createdAt": "2026-03-05T03:04:21.805Z",
+      "updatedAt": null
+    },
+    {
+      "id": "38f0a13d-496e-4c82-9265-b49c89b1749d",
+      "runId": "0f1ad788-5f8b-4f27-87f7-cc8e5a4368e1",
+      "nodeId": null,
+      "nodeType": null,
+      "nodeTitle": null,
+      "status": null,
+      "iteration": null,
+      "level": "error",
+      "message": "Database update failed:",
+      "metadata": {
+        "error": "Database write affected 0 records for update (updateOne).",
+        "runStartedAt": "2026-03-05T03:01:55.129Z",
+        "runtimeFingerprint": "ai-paths-runtime|app:0.1.0|node:22.22.0",
+        "traceId": "0f1ad788-5f8b-4f27-87f7-cc8e5a4368e1",
+        "action": "dbWriteOutcome",
+        "collection": "products",
+        "nodeId": "node-9a24cf46edc9eecd87d162ee",
+        "writeOutcome": {
+          "status": "failed",
+          "code": "zero_affected",
+          "message": "Database write affected 0 records for update (updateOne).",
+          "policyOnZeroAffected": "fail",
+          "zeroAffected": true,
+          "operation": "update",
+          "action": "updateOne",
+          "affectedCount": 0,
+          "matchedCount": 1,
+          "modifiedCount": 0
+        }
+      },
+      "createdAt": "2026-03-05T03:04:21.955Z",
+      "updatedAt": null
+    },
+    {
+      "id": "e13a189f-79ea-424a-a004-fd0b8be1901c",
+      "runId": "0f1ad788-5f8b-4f27-87f7-cc8e5a4368e1",
+      "nodeId": null,
+      "nodeType": null,
+      "nodeTitle": null,
+      "status": null,
+      "iteration": null,
+      "level": "error",
+      "message": "Unexpected database node failure:",
+      "metadata": {
+        "error": "Database write affected 0 records for update (updateOne).",
+        "runStartedAt": "2026-03-05T03:01:55.129Z",
+        "runtimeFingerprint": "ai-paths-runtime|app:0.1.0|node:22.22.0",
+        "traceId": "0f1ad788-5f8b-4f27-87f7-cc8e5a4368e1",
+        "action": "handleDatabase",
+        "nodeId": "node-9a24cf46edc9eecd87d162ee"
+      },
+      "createdAt": "2026-03-05T03:04:21.961Z",
+      "updatedAt": null
+    }
+  ],
+  "dbUpdateFailedEvent": {
+    "id": "38f0a13d-496e-4c82-9265-b49c89b1749d",
+    "runId": "0f1ad788-5f8b-4f27-87f7-cc8e5a4368e1",
+    "nodeId": null,
+    "nodeType": null,
+    "nodeTitle": null,
+    "status": null,
+    "iteration": null,
+    "level": "error",
+    "message": "Database update failed:",
+    "metadata": {
+      "error": "Database write affected 0 records for update (updateOne).",
+      "runStartedAt": "2026-03-05T03:01:55.129Z",
+      "runtimeFingerprint": "ai-paths-runtime|app:0.1.0|node:22.22.0",
+      "traceId": "0f1ad788-5f8b-4f27-87f7-cc8e5a4368e1",
+      "action": "dbWriteOutcome",
+      "collection": "products",
+      "nodeId": "node-9a24cf46edc9eecd87d162ee",
+      "writeOutcome": {
+        "status": "failed",
+        "code": "zero_affected",
+        "message": "Database write affected 0 records for update (updateOne).",
+        "policyOnZeroAffected": "fail",
+        "zeroAffected": true,
+        "operation": "update",
+        "action": "updateOne",
+        "affectedCount": 0,
+        "matchedCount": 1,
+        "modifiedCount": 0
+      }
+    },
+    "createdAt": "2026-03-05T03:04:21.955Z",
+    "updatedAt": null
+  },
+  "runtimeFailedNodeInputs": {
+    "result": [
+      {
+        "_id": "ab9d7dc2-632c-4b35-89fc-c6d44752b52e",
+        "id": "ab9d7dc2-632c-4b35-89fc-c6d44752b52e",
+        "catalogId": "cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10",
+        "name_en": "Tags",
+        "name_pl": "Tagi",
+        "name_de": null,
+        "createdAt": "2026-01-23T19:18:36.366Z",
+        "updatedAt": "2026-01-24T02:29:15.431Z"
+      },
+      {
+        "_id": "0a92f045-7c01-4b06-a0df-ebdf6ab9c24a",
+        "id": "0a92f045-7c01-4b06-a0df-ebdf6ab9c24a",
+        "catalogId": "cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10",
+        "name_en": "Model Name",
+        "name_pl": "Nazwa modelu",
+        "name_de": null,
+        "createdAt": "2026-01-24T02:29:05.627Z",
+        "updatedAt": "2026-01-24T02:29:05.627Z"
+      },
+      {
+        "_id": "64a58022-5c7c-46e8-9d07-53c75a94c7dc",
+        "id": "64a58022-5c7c-46e8-9d07-53c75a94c7dc",
+        "catalogId": "cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10",
+        "name_en": "Material",
+        "name_pl": "Materiał",
+        "name_de": null,
+        "createdAt": "2026-01-24T02:29:31.977Z",
+        "updatedAt": "2026-01-24T02:29:31.977Z"
+      },
+      {
+        "_id": "0eadf821-34ff-49bf-8ba7-84f797359f43",
+        "id": "0eadf821-34ff-49bf-8ba7-84f797359f43",
+        "catalogId": "cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10",
+        "name_en": "Model Number",
+        "name_pl": "Numer Modelu",
+        "name_de": null,
+        "createdAt": "2026-01-24T02:29:52.102Z",
+        "updatedAt": "2026-01-24T02:29:52.102Z"
+      },
+      {
+        "_id": "8cb8f430-d6c6-4b53-a529-eb3cfaa63d0e",
+        "id": "8cb8f430-d6c6-4b53-a529-eb3cfaa63d0e",
+        "catalogId": "cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10",
+        "name_en": "Colour",
+        "name_pl": "Kolor",
+        "name_de": null,
+        "createdAt": "2026-01-24T02:30:14.333Z",
+        "updatedAt": "2026-01-24T02:30:14.333Z"
+      },
+      {
+        "_id": "9c80ceb6-b8ed-47e8-ba07-cbdb602045d5",
+        "id": "9c80ceb6-b8ed-47e8-ba07-cbdb602045d5",
+        "catalogId": "cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10",
+        "name_en": "Attributes unbranded (Amazon)",
+        "name_pl": "Atrybuty niemarkowe (Amazon)",
+        "name_de": null,
+        "createdAt": "2026-01-24T02:30:56.488Z",
+        "updatedAt": "2026-02-28T04:54:08.127Z",
+        "optionLabels": [],
+        "selectorType": "text"
+      },
+      {
+        "_id": "69a26f6c293c269f59d98d44",
+        "name_en": "Condition",
+        "name_pl": "Stan",
+        "name_de": null,
+        "selectorType": "text",
+        "optionLabels": [],
+        "catalogId": "cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10",
+        "createdAt": "2026-02-28T04:30:36.441Z",
+        "updatedAt": "2026-02-28T04:30:36.441Z"
+      }
+    ],
+    "entityId": "d227a595-25b6-43b3-8bfc-c2beb41d5c03",
+    "value": [
+      {
+        "parameterId": "274",
+        "value": "13 cm"
+      },
+      {
+        "parameterId": "288",
+        "value": "Faux Leather"
+      }
+    ],
+    "entityType": "product"
+  },
+  "runtimeFailedNodeOutputs": {
+    "status": "failed",
+    "waitingOnDetails": [
+      {
+        "port": "value",
+        "upstream": [
+          {
+            "nodeId": "node-ce8908c527e33afe5155aa8d",
+            "nodeType": "regex",
+            "nodeTitle": "Regex JSON Extract",
+            "sourcePort": "value",
+            "status": "waiting_callback",
+            "blockedReason": "missing_inputs",
+            "waitingOnPorts": [
+              "value"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

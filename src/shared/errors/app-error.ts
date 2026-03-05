@@ -1,16 +1,13 @@
-// Consolidated core types for the application
-export type AppErrorCode = string;
+import type {
+  AppErrorCode as ContractAppErrorCode,
+  AppErrorOptions as ContractAppErrorOptions,
+} from '@/shared/contracts/base';
 
-export type AppErrorOptions = {
-  code: string;
-  httpStatus: number;
-  meta?: Record<string, unknown> | undefined;
-  expected?: boolean | undefined;
-  critical?: boolean | undefined;
-  retryable?: boolean | undefined;
-  retryAfterMs?: number | undefined;
-  cause?: unknown;
-};
+// Consolidated core types for the application
+type AppErrorCode = ContractAppErrorCode;
+type AppErrorOptions = ContractAppErrorOptions;
+
+export type { AppErrorCode, AppErrorOptions };
 
 export const AppErrorCodes = {
   // Client Errors

@@ -7,6 +7,10 @@ import {
   type NodeMigrationReadiness,
   type NodeMigrationReadinessBlockerCode,
   type NodeMigrationReadinessStage,
+  NODE_MIGRATION_READINESS_BLOCKER_CODES,
+  NODE_MIGRATION_READINESS_STAGES,
+  computeNodeMigrationReadiness,
+  summarizeNodeMigrationReadiness,
 } from './node-migration-readiness';
 
 type NodeMigrationIndexRow = {
@@ -234,6 +238,7 @@ const countedStrategies = {
   legacy_adapter: 0,
   code_object_v3: 0,
 };
+const declaredReadinessList: NodeMigrationReadiness[] = [];
 const expectedMigrationDocFiles = new Set<string>();
 
 const buildCodeObjectId = (nodeType: string): string => `ai-paths.node-code-object.${nodeType}.v3`;

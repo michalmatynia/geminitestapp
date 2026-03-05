@@ -1,0 +1,76 @@
+{
+  "generatedAt": "2026-03-05T00:52:14.924Z",
+  "strictMode": true,
+  "summary": {
+    "total": 5,
+    "passed": 5,
+    "failed": 0
+  },
+  "results": [
+    {
+      "id": "auth-session",
+      "name": "Authentication + Session Bootstrap",
+      "kpi": "Successful sign-in completion rate",
+      "tests": [
+        "__tests__/features/auth/pages/signin-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3333,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (8 tests) 566ms\n\n Test Files  1 passed (1)\n      Tests  8 passed (8)\n   Start at  01:52:05\n   Duration  2.42s (transform 700ms, setup 234ms, import 998ms, tests 566ms, environment 510ms)"
+    },
+    {
+      "id": "products-core-crud",
+      "name": "Products CRUD + Listing Refresh",
+      "kpi": "Create/edit success rate without retries",
+      "tests": [
+        "__tests__/features/products/services/getSettingValue.test.ts"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/products/services/getSettingValue.test.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 1286,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/products/services/getSettingValue.test.ts (5 tests) 6ms\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n   Start at  01:52:08\n   Duration  622ms (transform 113ms, setup 161ms, import 84ms, tests 6ms, environment 270ms)"
+    },
+    {
+      "id": "image-studio-generate",
+      "name": "Image Studio Generate + Preview",
+      "kpi": "Generation completion under timeout budget",
+      "tests": [
+        "src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 1279,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts (11 tests) 16ms\n\n Test Files  1 passed (1)\n      Tests  11 passed (11)\n   Start at  01:52:09\n   Duration  610ms (transform 99ms, setup 164ms, import 57ms, tests 16ms, environment 270ms)"
+    },
+    {
+      "id": "ai-paths-runtime",
+      "name": "AI Paths Run Execution",
+      "kpi": "Run completion without fallback/error path",
+      "tests": [
+        "__tests__/features/ai/ai-paths/services/path-run-executor.test.ts"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/ai/ai-paths/services/path-run-executor.test.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 2692,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/ai/ai-paths/services/path-run-executor.test.ts (17 tests) 128ms\n\n Test Files  1 passed (1)\n      Tests  17 passed (17)\n   Start at  01:52:11\n   Duration  2.04s (transform 929ms, setup 160ms, import 1.39s, tests 128ms, environment 268ms)"
+    },
+    {
+      "id": "case-resolver-capture",
+      "name": "Case Resolver OCR + Capture Mapping",
+      "kpi": "Queue-to-review completion without manual recovery",
+      "tests": [
+        "src/features/case-resolver/__tests__/workspace-persistence.test.ts"
+      ],
+      "command": "npx vitest run --project unit src/features/case-resolver/__tests__/workspace-persistence.test.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 1681,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/workspace-persistence.test.ts (35 tests) 63ms\n\n Test Files  1 passed (1)\n      Tests  35 passed (35)\n   Start at  01:52:13\n   Duration  1.04s (transform 385ms, setup 164ms, import 439ms, tests 63ms, environment 269ms)"
+    }
+  ]
+}

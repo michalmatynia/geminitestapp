@@ -78,6 +78,8 @@
     "debug": "tsx scripts/debug/debug-script.ts",
     "test": "npm run test:unit",
     "test:unit": "vitest run --project unit",
+    "test:critical-flows": "node scripts/testing/run-critical-flow-tests.mjs",
+    "test:critical-flows:strict": "node scripts/testing/run-critical-flow-tests.mjs --strict",
     "test:integration:prisma": "npm run test:preflight:prisma && vitest run --project integration-prisma",
     "test:integration:mongo": "vitest run --project integration-mongo",
     "test:integration:mongo:canonical-shape-guard": "cross-env RUN_MONGO_PRODUCT_CANONICAL_SHAPE_GUARD=1 vitest run --project integration-mongo __tests__/features/products/services/mongo-product-canonical-shape-guard.test.ts",

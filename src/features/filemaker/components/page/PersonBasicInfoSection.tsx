@@ -2,10 +2,14 @@
 
 import React from 'react';
 import { FormSection, FormField, Input } from '@/shared/ui';
-import { useAdminFilemakerPersonEditPageContext } from '../../context/AdminFilemakerPersonEditPageContext';
+import {
+  useAdminFilemakerPersonEditPageActionsContext,
+  useAdminFilemakerPersonEditPageStateContext,
+} from '../../context/AdminFilemakerPersonEditPageContext';
 
 export function PersonBasicInfoSection(): React.JSX.Element {
-  const { personDraft, setPersonDraft } = useAdminFilemakerPersonEditPageContext();
+  const { personDraft } = useAdminFilemakerPersonEditPageStateContext();
+  const { setPersonDraft } = useAdminFilemakerPersonEditPageActionsContext();
 
   return (
     <FormSection title='Basic Information' className='space-y-4 p-4'>

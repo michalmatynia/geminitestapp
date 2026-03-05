@@ -1,13 +1,13 @@
 # Type Cluster Scanner Report
 
-Generated at: 2026-03-05T04:01:54.168Z
+Generated at: 2026-03-05T04:02:37.910Z
 Status: ok
 
 ## Summary
 
 - Files scanned: 4205
-- Exported declarations scanned: 3326
-- Candidate declarations scanned: 3297
+- Exported declarations scanned: 3329
+- Candidate declarations scanned: 3300
 - Exact-shape clusters: 0
 - Near-shape clusters: 18
 - Clusters after filters: 18

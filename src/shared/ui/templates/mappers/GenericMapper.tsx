@@ -57,7 +57,7 @@ export interface GenericItemMapperConfig<TInternal, TExternal, TMapping> {
   isSaving?: boolean;
 }
 
-export interface GenericItemMapperProps<TInternal, TExternal, TMapping> {
+interface GenericItemMapperProps<TInternal, TExternal, TMapping> {
   config: GenericItemMapperConfig<TInternal, TExternal, TMapping>;
 }
 

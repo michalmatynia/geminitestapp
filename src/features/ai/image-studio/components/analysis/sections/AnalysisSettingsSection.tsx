@@ -56,7 +56,7 @@ export interface AnalysisSettingsSectionConfig {
   sanitizeThresholdInput: (v: string) => string;
 }
 
-export interface AnalysisSettingsSectionProps {
+interface AnalysisSettingsSectionProps {
   config: AnalysisSettingsSectionConfig;
 }
 

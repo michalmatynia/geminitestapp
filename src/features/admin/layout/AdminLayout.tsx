@@ -8,7 +8,11 @@ import { useCallback, useEffect, useRef } from 'react';
 import { AiInsightsNotificationsDrawer } from '@/features/admin/components/AiInsightsNotificationsDrawer';
 import Menu from '@/features/admin/components/Menu';
 import { UserNav } from '@/features/admin/components/UserNav';
-import { AdminLayoutProvider, useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
+import {
+  AdminLayoutProvider,
+  useAdminLayoutActions,
+  useAdminLayoutState,
+} from '@/features/admin/context/AdminLayoutContext';
 import { AuthProvider } from '@/features/auth';
 import {
   useUserPreferences,
@@ -26,13 +30,11 @@ const ADMIN_MENU_COLLAPSED_STORAGE_KEY = 'adminMenuCollapsed';
 const ADMIN_MENU_COLLAPSED_COOKIE_KEY = 'admin_menu_collapsed';
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }): React.ReactNode {
+  const { isMenuCollapsed, isMenuHidden, isProgrammaticallyCollapsed } = useAdminLayoutState();
   const {
-    isMenuCollapsed,
-    isMenuHidden,
     setIsMenuCollapsed,
-    isProgrammaticallyCollapsed,
     setIsProgrammaticallyCollapsed,
-  } = useAdminLayout();
+  } = useAdminLayoutActions();
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const didUserToggleRef = useRef(false);

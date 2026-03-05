@@ -20,7 +20,7 @@ export type ProductImagesTabContextValue = {
 
 const ProductImagesTabContext = createContext<ProductImagesTabContextValue | null>(null);
 
-export type ProductImagesTabProviderProps = {
+type ProductImagesTabProviderProps = {
   value: ProductImagesTabContextValue;
   children: React.ReactNode;
 };

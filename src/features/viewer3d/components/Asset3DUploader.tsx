@@ -23,7 +23,7 @@ import {
   SUPPORTED_3D_FORMATS,
 } from '@/features/viewer3d/utils/validateAsset3d';
 
-export interface Asset3DUploaderProps {
+interface Asset3DUploaderProps {
   className?: string;
 }
 

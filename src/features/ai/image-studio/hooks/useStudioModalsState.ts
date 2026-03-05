@@ -26,8 +26,8 @@ import type {
 import { mapLinkedGeneratedVariants } from '../components/studio-modals/slot-inline-edit-utils';
 import type {
   PromptExtractHistoryEntry,
-  PromptExtractValidationIssue,
 } from '../components/studio-modals/prompt-extract-utils';
+import type { PromptValidationIssue } from '@/shared/contracts/prompt-engine';
 import type { ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
 
 export function useStudioModalsState() {
@@ -69,8 +69,8 @@ export function useStudioModalsState() {
   const [previewParams] = useState<Record<string, unknown> | null>(null);
   const [previewControls] = useState<Record<string, ParamUiControl>>({});
   const [previewValidation] = useState<{
-    before: PromptExtractValidationIssue[];
-    after: PromptExtractValidationIssue[];
+    before: PromptValidationIssue[];
+    after: PromptValidationIssue[];
   } | null>(null);
   const [extractHistory, setExtractHistory] = useState<PromptExtractHistoryEntry[]>([]);
   const [selectedExtractHistoryId, setSelectedExtractHistoryId] = useState<string | null>(null);

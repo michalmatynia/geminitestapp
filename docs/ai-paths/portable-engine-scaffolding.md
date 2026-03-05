@@ -128,6 +128,14 @@ Resolver behavior:
   - `getPortablePathEnvelopeVerificationAuditSinkSnapshot()`
   - `resetPortablePathEnvelopeVerificationAuditSinkSnapshot({ clearRegisteredSinks })`
   - Sink writes are failure-isolated and do not block path import/verification flow.
+  - One-call bootstrap helpers:
+    - `resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment(nodeEnv?)`
+    - `bootstrapPortablePathEnvelopeVerificationAuditSinks({ profile?, ... })`
+    - `bootstrapPortablePathEnvelopeVerificationAuditSinksWithStartupHealthChecks({ profile?, healthChecks?, ... })`
+  - Boot-time health diagnostics:
+    - `runStartupHealthChecks({ policy: "off" | "warn" | "error", timeoutMs?, emitSystemLog? })`
+    - Per-sink diagnostics include `healthy` / `failed` / `skipped` with duration and error.
+    - `policy: "warn"` reports degraded startup without blocking; `policy: "error"` fails fast and rolls back sink registration.
   - Built-in server sink factories:
     - `createPortablePathEnvelopeVerificationLogForwardingSink(...)`
     - `createPortablePathEnvelopeVerificationPrismaSink(...)`
@@ -226,8 +234,24 @@ registerPortablePathEnvelopeVerificationAuditSink(
 );
 ```
 
+Server sink bootstrap example:
+
+```ts
+import {
+  bootstrapPortablePathEnvelopeVerificationAuditSinksWithStartupHealthChecks,
+} from '@/shared/lib/ai-paths/portable-engine/server';
+
+await bootstrapPortablePathEnvelopeVerificationAuditSinksWithStartupHealthChecks({
+  // defaults from NODE_ENV when omitted
+  profile: 'staging',
+  healthChecks: {
+    policy: 'error',
+  },
+});
+```
+
 ## Next Hardening Steps
 
-1. Add bootstrap helpers to register sink profiles per environment (`dev/staging/prod`) with one call.
-2. Add pre-commit helper to auto-suggest allowlist entries for intentional schema updates.
-3. Add per-surface telemetry tags (`canvas`/`product`/`api`) to signing policy usage snapshots.
+1. Add pre-commit helper to auto-suggest allowlist entries for intentional schema updates.
+2. Add per-surface telemetry tags (`canvas`/`product`/`api`) to signing policy usage snapshots.
+3. Add bootstrap wiring in runtime entrypoint so sink startup health policy is environment-configurable without custom glue code.

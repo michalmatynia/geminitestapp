@@ -3,7 +3,10 @@
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
+import {
+  useAdminLayoutActions,
+  useAdminLayoutState,
+} from '@/features/admin/context/AdminLayoutContext';
 import {
   CASE_RESOLVER_CAPTURE_SETTINGS_KEY,
   parseCaseResolverCaptureSettings,
@@ -94,7 +97,8 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
   const { PromptInputModal } = usePrompt();
-  const { isMenuCollapsed, setIsMenuCollapsed } = useAdminLayout();
+  const { isMenuCollapsed } = useAdminLayoutState();
+  const { setIsMenuCollapsed } = useAdminLayoutActions();
   const searchParams = useSearchParams();
   const requestedFileIdRaw = searchParams.get('fileId');
   const requestedFileId = useMemo((): string | null => {

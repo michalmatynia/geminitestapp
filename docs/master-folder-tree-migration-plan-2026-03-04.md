@@ -66,6 +66,9 @@ Completed in codebase:
 10. Added deterministic shell-runtime hardening tests:
    - `frame_budget_miss` metric assertion for drag-frame budget overruns (`FolderTreeViewportV2.metrics.test.tsx`).
    - repeated mount/unmount runtime-registration churn cleanup assertion (`useFolderTreeInstanceV2.external-sync.test.tsx`).
+11. Added Phase 2 route-lifecycle churn hardening suite for providerless shell runtime:
+   - `src/features/foldertree/v2/__tests__/shell-runtime-route-churn.test.tsx`
+   - Locks shared-runtime identity stability, stale registration cleanup, focused-instance reassignment, and keyboard-handler non-leakage across repeated route remount.
 
 ## Canonical Target (Newest Form)
 

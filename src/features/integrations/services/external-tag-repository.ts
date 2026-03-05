@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import type { BaseTag, ExternalTag, ExternalTagSyncInput } from '@/shared/contracts/integrations';
 import prisma from '@/shared/lib/db/prisma';
 
-export type ExternalTagRepository = {
+type ExternalTagRepository = {
   syncFromBase: (connectionId: string, tags: BaseTag[]) => Promise<number>;
   listByConnection: (connectionId: string) => Promise<ExternalTag[]>;
   getById: (id: string) => Promise<ExternalTag | null>;

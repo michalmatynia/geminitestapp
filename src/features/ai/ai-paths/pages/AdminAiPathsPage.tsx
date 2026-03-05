@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
+import { useAdminLayoutActions } from '@/features/admin/context/AdminLayoutContext';
 import { Tabs, TabsList, TabsTrigger, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -13,7 +13,7 @@ export function AdminAiPathsPage(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<'canvas' | 'paths' | 'docs'>('canvas');
   const [mounted, setMounted] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
-  const { setIsMenuHidden } = useAdminLayout();
+  const { setIsMenuHidden } = useAdminLayoutActions();
 
   useEffect((): void | (() => void) => {
     const id = requestAnimationFrame(() => setMounted(true));

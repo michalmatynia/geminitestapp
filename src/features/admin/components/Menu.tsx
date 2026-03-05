@@ -12,7 +12,10 @@ import {
   parseAdminMenuBoolean,
   parseAdminMenuJson,
 } from '@/features/admin/constants/admin-menu-settings';
-import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
+import {
+  useAdminLayoutActions,
+  useAdminLayoutState,
+} from '@/features/admin/context/AdminLayoutContext';
 import { useCreateChatbotSession } from '@/features/ai/chatbot/hooks/useChatbotMutations';
 import { useChatbotSessions } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import type { AdminMenuCustomNode, AdminMenuColorOption } from '@/shared/contracts/admin';
@@ -118,7 +121,8 @@ export const ADMIN_MENU_COLOR_MAP: Record<string, AdminMenuColorOption> = Object
 const OPEN_KEY = 'adminMenuOpenIds.v2';
 
 export default function Menu(): React.ReactNode {
-  const { isMenuCollapsed, setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayout();
+  const { isMenuCollapsed } = useAdminLayoutState();
+  const { setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayoutActions();
   const router = useRouter();
   const pathname = usePathname();
   const shouldPrefetchChatbotSessions = pathname.startsWith('/admin/chatbot');

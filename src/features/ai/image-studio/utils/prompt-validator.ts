@@ -1,4 +1,6 @@
 import type {
+  PromptValidationIssue,
+  PromptValidationSuggestion,
   PromptValidationSimilar as PromptValidationSimilarPattern,
   PromptValidationRule,
   PromptValidationSettings,
@@ -6,20 +8,6 @@ import type {
 } from '@/shared/contracts/prompt-engine';
 
 import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
-
-export type PromptValidationSuggestion = {
-  suggestion: string;
-  found?: string;
-  comment?: string | null;
-};
-
-export type PromptValidationIssue = {
-  ruleId: string;
-  severity: PromptValidationSeverity;
-  title: string;
-  message: string;
-  suggestions: PromptValidationSuggestion[];
-};
 
 function compileRegex(pattern: string, flags: string | undefined): RegExp | null {
   try {

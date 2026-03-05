@@ -3,7 +3,7 @@
 import { LogOut, LogIn, SparklesIcon } from 'lucide-react';
 import { signIn, signOut, useSession } from 'next-auth/react';
 
-import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
+import { useAdminLayoutActions } from '@/features/admin/context/AdminLayoutContext';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
@@ -23,7 +23,7 @@ import {
 
 export function UserNav(): React.ReactNode {
   const { data: session } = useSession();
-  const { setAiDrawerOpen } = useAdminLayout();
+  const { setAiDrawerOpen } = useAdminLayoutActions();
   const settingsStore = useSettingsStore();
   const updateSettings = useUpdateSettingsBulk();
 

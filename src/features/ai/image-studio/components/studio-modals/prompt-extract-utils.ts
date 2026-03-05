@@ -2,6 +2,7 @@ import {
   recommendParamUiControl,
   type ParamUiControl,
 } from '@/features/ai/image-studio/utils/param-ui';
+import type { PromptValidationIssue } from '@/shared/contracts/prompt-engine';
 import { flattenParams } from '@/shared/utils/prompt-params';
 import { type ParamSpec } from '@/shared/contracts/prompt-engine';
 
@@ -12,18 +13,6 @@ export type UiExtractorSuggestion = {
   control: ParamUiControl;
 };
 
-export type PromptExtractValidationIssue = {
-  ruleId?: string;
-  severity?: string;
-  title?: string;
-  message?: string;
-  suggestions?: Array<{
-    suggestion?: string;
-    found?: string;
-    comment?: string | null;
-  }>;
-};
-
 export type PromptExtractApiResponse = {
   params?: Record<string, unknown>;
   source?: 'programmatic' | 'programmatic_autofix' | 'gpt';
@@ -31,8 +20,8 @@ export type PromptExtractApiResponse = {
   fallbackUsed?: boolean;
   formattedPrompt?: string | null;
   validation?: {
-    before?: PromptExtractValidationIssue[];
-    after?: PromptExtractValidationIssue[];
+    before?: PromptValidationIssue[];
+    after?: PromptValidationIssue[];
   };
   diagnostics?: {
     programmaticError?: string | null;

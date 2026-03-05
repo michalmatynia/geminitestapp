@@ -66,7 +66,7 @@ Lock behavior parity before pure-shell runtime extraction by:
 
 ## Remaining Risks (For Phase 2/3)
 
-1. Cross-route, real browser tab-lifecycle churn (navigation + suspended tabs) is still validated primarily by integration/manual smoke rather than a dedicated browser-driven stress suite.
+1. Cross-route churn is now covered by dedicated runtime-lifecycle tests in Phase 2 (`shell-runtime-route-churn.test.tsx`), but real browser tab suspension/resume still depends on manual smoke until Playwright lifecycle coverage lands.
 
 ## Verification Gate For Phase 1
 

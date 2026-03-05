@@ -5,7 +5,10 @@ import { memo, useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
-import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
+import {
+  useAdminLayoutActions,
+  useAdminLayoutState,
+} from '@/features/admin/context/AdminLayoutContext';
 import { PRODUCT_PAGE_SIZE_OPTIONS } from '@/shared/lib/products/constants';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import {
@@ -35,7 +38,8 @@ export const ProductListHeader = memo(function ProductListHeader({
   showHeader = true,
   filtersContent,
 }: ProductListHeaderProps) {
-  const { isMenuHidden, setIsMenuHidden } = useAdminLayout();
+  const { isMenuHidden } = useAdminLayoutState();
+  const { setIsMenuHidden } = useAdminLayoutActions();
   const { onCreateProduct, onCreateFromDraft, activeDrafts } = useProductListActionsContext();
   const {
     page,

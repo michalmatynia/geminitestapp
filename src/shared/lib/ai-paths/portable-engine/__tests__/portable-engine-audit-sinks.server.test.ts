@@ -4,6 +4,10 @@ import type {
   PortablePathEnvelopeVerificationAuditEvent,
   PortablePathEnvelopeVerificationObservabilitySnapshot,
 } from '../index';
+import {
+  listPortablePathEnvelopeVerificationAuditSinkIds,
+  resetPortablePathEnvelopeVerificationAuditSinkSnapshot,
+} from '../index';
 
 const { logSystemEventMock } = vi.hoisted(() => ({
   logSystemEventMock: vi.fn(),
@@ -34,9 +38,12 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
 }));
 
 import {
+  bootstrapPortablePathEnvelopeVerificationAuditSinks,
+  bootstrapPortablePathEnvelopeVerificationAuditSinksWithStartupHealthChecks,
   createPortablePathEnvelopeVerificationLogForwardingSink,
   createPortablePathEnvelopeVerificationMongoSink,
   createPortablePathEnvelopeVerificationPrismaSink,
+  resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment,
 } from '../sinks.server';
 
 const createEvent = (
@@ -82,6 +89,9 @@ describe('portable-engine envelope verification sink factories', () => {
     logSystemEventMock.mockReset().mockResolvedValue(undefined);
     prismaSystemLogCreateMock.mockReset().mockResolvedValue({});
     getMongoDbMock.mockReset();
+    resetPortablePathEnvelopeVerificationAuditSinkSnapshot({
+      clearRegisteredSinks: true,
+    });
   });
 
   it('forwards sink events via logSystemEvent transport', async () => {
@@ -98,9 +108,7 @@ describe('portable-engine envelope verification sink factories', () => {
       expect.objectContaining({
         level: 'info',
         source: 'ai-paths.portable-engine.envelope-verification',
-        context: expect.objectContaining({
-          category: 'ai_path_portable_envelope_verification_audit',
-        }),
+        category: 'ai_path_portable_envelope_verification_audit',
       })
     );
   });
@@ -159,5 +167,137 @@ describe('portable-engine envelope verification sink factories', () => {
         kind: 'ai-paths.portable-envelope-verification-audit.v1',
       })
     );
+  });
+
+  it('resolves sink profile defaults from NODE_ENV', () => {
+    expect(
+      resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment('production')
+    ).toBe('prod');
+    expect(
+      resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment('staging')
+    ).toBe('staging');
+    expect(
+      resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment('development')
+    ).toBe('dev');
+  });
+
+  it('bootstraps sink profile with one call and supports cleanup', () => {
+    const result = bootstrapPortablePathEnvelopeVerificationAuditSinks({
+      profile: 'dev',
+    });
+    expect(result.profile).toBe('dev');
+    expect(result.registeredSinkIds).toEqual([
+      'portable-envelope-verification-log-forwarding',
+    ]);
+    expect(listPortablePathEnvelopeVerificationAuditSinkIds()).toEqual([
+      'portable-envelope-verification-log-forwarding',
+    ]);
+    result.unregisterAll();
+    expect(listPortablePathEnvelopeVerificationAuditSinkIds()).toEqual([]);
+  });
+
+  it('bootstraps custom sink inclusion for staging profile', () => {
+    const result = bootstrapPortablePathEnvelopeVerificationAuditSinks({
+      profile: 'staging',
+      includeLogForwarding: false,
+      includeMongo: true,
+      mongo: {
+        id: 'custom-mongo-sink',
+      },
+      prisma: {
+        id: 'custom-prisma-sink',
+      },
+    });
+    expect(result.profile).toBe('staging');
+    expect(result.registeredSinkIds).toEqual([
+      'custom-prisma-sink',
+      'custom-mongo-sink',
+    ]);
+    expect(listPortablePathEnvelopeVerificationAuditSinkIds()).toEqual([
+      'custom-mongo-sink',
+      'custom-prisma-sink',
+    ]);
+    result.unregisterAll();
+    expect(listPortablePathEnvelopeVerificationAuditSinkIds()).toEqual([]);
+  });
+
+  it('runs startup health checks for bootstrapped sinks', async () => {
+    const result = bootstrapPortablePathEnvelopeVerificationAuditSinks({
+      profile: 'dev',
+    });
+
+    const summary = await result.runStartupHealthChecks({
+      policy: 'warn',
+      emitSystemLog: false,
+    });
+
+    expect(summary.status).toBe('healthy');
+    expect(summary.failedSinkIds).toEqual([]);
+    expect(summary.diagnostics).toEqual([
+      expect.objectContaining({
+        sinkId: 'portable-envelope-verification-log-forwarding',
+        status: 'healthy',
+      }),
+    ]);
+    expect(logSystemEventMock).toHaveBeenCalledTimes(1);
+    result.unregisterAll();
+  });
+
+  it('degrades startup health in warn mode when a sink check fails', async () => {
+    const failingPrismaCreate = vi.fn().mockRejectedValue(new Error('permission_denied'));
+    const result = bootstrapPortablePathEnvelopeVerificationAuditSinks({
+      profile: 'staging',
+      includeLogForwarding: false,
+      prisma: {
+        id: 'failing-prisma-sink',
+        prismaClient: {
+          systemLog: {
+            create: failingPrismaCreate,
+          },
+        },
+      },
+    });
+
+    const summary = await result.runStartupHealthChecks({
+      policy: 'warn',
+      emitSystemLog: false,
+    });
+
+    expect(summary.status).toBe('degraded');
+    expect(summary.failedSinkIds).toEqual(['failing-prisma-sink']);
+    expect(summary.diagnostics).toEqual([
+      expect.objectContaining({
+        sinkId: 'failing-prisma-sink',
+        status: 'failed',
+        error: 'permission_denied',
+      }),
+    ]);
+    result.unregisterAll();
+  });
+
+  it('rolls back registered sinks when strict startup health checks fail', async () => {
+    const failingPrismaCreate = vi.fn().mockRejectedValue(new Error('permission_denied'));
+
+    await expect(
+      bootstrapPortablePathEnvelopeVerificationAuditSinksWithStartupHealthChecks({
+        profile: 'staging',
+        includeLogForwarding: false,
+        prisma: {
+          id: 'failing-prisma-sink',
+          prismaClient: {
+            systemLog: {
+              create: failingPrismaCreate,
+            },
+          },
+        },
+        healthChecks: {
+          policy: 'error',
+          emitSystemLog: false,
+        },
+      })
+    ).rejects.toThrow(
+      'Portable envelope verification audit sink startup health checks failed for sinks: failing-prisma-sink.'
+    );
+    expect(listPortablePathEnvelopeVerificationAuditSinkIds()).toEqual([]);
   });
 });

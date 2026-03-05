@@ -3,15 +3,17 @@
 import React from 'react';
 
 import {
+  useAdminFilemakerPersonEditPageActionsContext,
   AdminFilemakerPersonEditPageProvider,
-  useAdminFilemakerPersonEditPageContext,
+  useAdminFilemakerPersonEditPageStateContext,
 } from '../context/AdminFilemakerPersonEditPageContext';
 import { PersonBasicInfoSection } from '../components/page/PersonBasicInfoSection';
 import { PersonEmailsSection } from '../components/page/PersonEmailsSection';
 import { FilemakerPartyEditPageLayout } from '../components/shared/FilemakerPartyEditPageLayout';
 
 function AdminFilemakerPersonEditPageInner(): React.JSX.Element {
-  const { person, handleSave, updateSetting, router } = useAdminFilemakerPersonEditPageContext();
+  const { person, updateSetting, router } = useAdminFilemakerPersonEditPageStateContext();
+  const { handleSave } = useAdminFilemakerPersonEditPageActionsContext();
 
   return (
     <FilemakerPartyEditPageLayout

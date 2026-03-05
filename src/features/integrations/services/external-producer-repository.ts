@@ -12,7 +12,7 @@ import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
-export type ExternalProducerRepository = {
+type ExternalProducerRepository = {
   syncFromBase: (connectionId: string, producers: BaseProducer[]) => Promise<number>;
   listByConnection: (connectionId: string) => Promise<ExternalProducer[]>;
   getById: (id: string) => Promise<ExternalProducer | null>;

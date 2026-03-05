@@ -3,16 +3,17 @@
 import React from 'react';
 
 import { FilemakerLinkedEmailsSection } from '../shared/FilemakerLinkedEmailsSection';
-import { useAdminFilemakerPersonEditPageContext } from '../../context/AdminFilemakerPersonEditPageContext';
+import {
+  useAdminFilemakerPersonEditPageActionsContext,
+  useAdminFilemakerPersonEditPageStateContext,
+} from '../../context/AdminFilemakerPersonEditPageContext';
 
 export function PersonEmailsSection(): React.JSX.Element {
+  const { emails, emailExtractionText, updateSetting } = useAdminFilemakerPersonEditPageStateContext();
   const {
-    emails,
-    emailExtractionText,
     setEmailExtractionText,
     handleExtractEmails,
-    updateSetting,
-  } = useAdminFilemakerPersonEditPageContext();
+  } = useAdminFilemakerPersonEditPageActionsContext();
 
   return (
     <FilemakerLinkedEmailsSection

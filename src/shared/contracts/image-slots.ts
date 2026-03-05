@@ -26,7 +26,7 @@ export const managedImageSlotSchema = z
   .union([managedImageSlotFileSchema, managedImageSlotExistingSchema])
   .nullable();
 
-export interface ManagedImageSlotFile {
+interface ManagedImageSlotFile {
   type: 'file';
   data: unknown; // Browser File object
   previewUrl: string;
@@ -34,7 +34,7 @@ export interface ManagedImageSlotFile {
   originalIndex?: number;
 }
 
-export interface ManagedImageSlotExisting {
+interface ManagedImageSlotExisting {
   type: 'existing';
   data: ImageFileSelection;
   previewUrl: string;

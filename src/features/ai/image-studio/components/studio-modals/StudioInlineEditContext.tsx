@@ -27,7 +27,6 @@ import {
   buildPromptDiffLines,
   type PromptDiffLine,
   type PromptExtractHistoryEntry,
-  type PromptExtractValidationIssue,
 } from './prompt-extract-utils';
 import {
   EMPTY_ENVIRONMENT_REFERENCE_DRAFT,
@@ -59,7 +58,7 @@ import { useSlotsActions, useSlotsState } from '../../context/SlotsContext';
 import { studioKeys } from '../../hooks/useImageStudioQueries';
 import { type ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
 import { flattenParams } from '@/shared/utils/prompt-params';
-import type { ParamSpec } from '@/shared/contracts/prompt-engine';
+import type { ParamSpec, PromptValidationIssue } from '@/shared/contracts/prompt-engine';
 
 import type {
   CompositeTabImageViewModel as CompositeTabImage,
@@ -96,8 +95,8 @@ export interface StudioInlineEditContextValue {
   extractReviewOpen: boolean;
   previewParams: Record<string, unknown> | null;
   previewValidation: {
-    before: PromptExtractValidationIssue[];
-    after: PromptExtractValidationIssue[];
+    before: PromptValidationIssue[];
+    after: PromptValidationIssue[];
   } | null;
   previewLeaves: Array<{ path: string; value: unknown }>;
   previewControls: Record<string, ParamUiControl>;
@@ -224,8 +223,8 @@ export function StudioInlineEditProvider({
   const [previewSpecs, setPreviewSpecs] = useState<Record<string, ParamSpec> | null>(null);
   const [previewControls, setPreviewControls] = useState<Record<string, ParamUiControl>>({});
   const [previewValidation, setPreviewValidation] = useState<{
-    before: PromptExtractValidationIssue[];
-    after: PromptExtractValidationIssue[];
+    before: PromptValidationIssue[];
+    after: PromptValidationIssue[];
   } | null>(null);
   const [extractHistory, setExtractHistory] = useState<PromptExtractHistoryEntry[]>([]);
   const [selectedExtractHistoryId, setSelectedExtractHistoryId] = useState<string | null>(null);

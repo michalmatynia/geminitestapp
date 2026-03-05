@@ -5,7 +5,7 @@ import { ChevronRightIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
+import { useAdminLayoutState } from '@/features/admin/context/AdminLayoutContext';
 
 interface CollapsibleMenuProps {
   title: string;
@@ -21,7 +21,7 @@ export default function CollapsibleMenu({
   href,
 }: CollapsibleMenuProps): React.ReactNode {
   const [isOpen, setIsOpen] = useState(false);
-  const { isMenuCollapsed } = useAdminLayout();
+  const { isMenuCollapsed } = useAdminLayoutState();
   const router = useRouter();
 
   return (

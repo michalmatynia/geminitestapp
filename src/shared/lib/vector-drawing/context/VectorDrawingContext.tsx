@@ -44,7 +44,7 @@ export const {
   displayName: 'VectorDrawingContext',
 });
 
-export interface VectorDrawingProviderProps {
+interface VectorDrawingProviderProps {
   children: React.ReactNode;
   value: VectorDrawingContextValue;
 }

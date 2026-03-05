@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-03-05T04:09:19.637Z",
+  "summary": {
+    "runCount": 1,
+    "oldestRun": "2026-03-05T00:31:37.152Z",
+    "newestRun": "2026-03-05T00:31:37.152Z"
+  },
+  "runs": [
+    {
+      "sourceFile": "weekly-quality-2026-03-05T00-31-37-152Z.json",
+      "generatedAt": "2026-03-05T00:31:37.152Z",
+      "summary": {
+        "totalChecks": 8,
+        "passed": 4,
+        "failed": 3,
+        "timedOut": 0,
+        "skipped": 1
+      },
+      "passRates": {
+        "build": 0,
+        "lint": 0,
+        "typecheck": 100,
+        "unit": 0,
+        "e2e": null
+      },
+      "totalDurationMs": 715229,
+      "checks": {
+        "build": {
+          "status": "fail",
+          "durationMs": 3747,
+          "exitCode": 1
+        },
+        "lint": {
+          "status": "fail",
+          "durationMs": 117828,
+          "exitCode": 1
+        },
+        "lintDomains": null,
+        "typecheck": {
+          "status": "pass",
+          "durationMs": 40220,
+          "exitCode": 0
+        },
+        "criticalFlows": null,
+        "securitySmoke": null,
+        "unitDomains": null,
+        "fullUnit": null,
+        "e2e": {
+          "status": "skipped",
+          "durationMs": 0,
+          "exitCode": null
+        },
+        "guardrails": {
+          "status": "pass",
+          "durationMs": 2691,
+          "exitCode": 0
+        },
+        "uiConsolidation": {
+          "status": "pass",
+          "durationMs": 2110,
+          "exitCode": 0
+        },
+        "observability": {
+          "status": "pass",
+          "durationMs": 548,
+          "exitCode": 0
+        }
+      }
+    }
+  ]
+}

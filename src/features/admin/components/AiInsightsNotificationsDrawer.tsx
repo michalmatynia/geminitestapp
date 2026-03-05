@@ -1,6 +1,9 @@
 'use client';
 
-import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
+import {
+  useAdminLayoutActions,
+  useAdminLayoutState,
+} from '@/features/admin/context/AdminLayoutContext';
 import {
   useAiInsightsNotifications,
   useClearAiInsightsNotifications,
@@ -17,7 +20,8 @@ import {
 import { useToast } from '@/shared/ui';
 
 export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
-  const { aiDrawerOpen: open, setAiDrawerOpen } = useAdminLayout();
+  const { aiDrawerOpen: open } = useAdminLayoutState();
+  const { setAiDrawerOpen } = useAdminLayoutActions();
   const onClose = () => setAiDrawerOpen(false);
   const { toast } = useToast();
   const notificationsQuery = useAiInsightsNotifications({ enabled: open });

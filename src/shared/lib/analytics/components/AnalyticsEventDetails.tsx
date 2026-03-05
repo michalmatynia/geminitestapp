@@ -5,7 +5,7 @@ import type { AnalyticsSummary } from '@/shared/contracts';
 
 type AnalyticsEvent = NonNullable<AnalyticsSummary['recent']>[number];
 
-export type AnalyticsEventDetailsProps = {
+type AnalyticsEventDetailsProps = {
   event: AnalyticsEvent;
 };
 

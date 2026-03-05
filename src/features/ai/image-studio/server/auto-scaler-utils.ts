@@ -47,7 +47,7 @@ export type ImageStudioAutoScalerResult = {
   objectAreaPercentAfter: number;
 };
 
-export type ImageStudioAnalysisSummary = {
+type ImageStudioAnalysisSummary = {
   width: number;
   height: number;
   sourceObjectBounds: ImageStudioCenterObjectBounds;

@@ -3,16 +3,17 @@
 import React from 'react';
 
 import {
+  useAdminFilemakerOrganizationEditPageActionsContext,
   AdminFilemakerOrganizationEditPageProvider,
-  useAdminFilemakerOrganizationEditPageContext,
+  useAdminFilemakerOrganizationEditPageStateContext,
 } from '../context/AdminFilemakerOrganizationEditPageContext';
 import { OrganizationBasicInfoSection } from '../components/page/OrganizationBasicInfoSection';
 import { OrganizationEmailsSection } from '../components/page/OrganizationEmailsSection';
 import { FilemakerPartyEditPageLayout } from '../components/shared/FilemakerPartyEditPageLayout';
 
 function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
-  const { organization, handleSave, updateSetting, router } =
-    useAdminFilemakerOrganizationEditPageContext();
+  const { organization, updateSetting, router } = useAdminFilemakerOrganizationEditPageStateContext();
+  const { handleSave } = useAdminFilemakerOrganizationEditPageActionsContext();
 
   return (
     <FilemakerPartyEditPageLayout

@@ -2,11 +2,15 @@
 
 import React from 'react';
 import { FormSection, FormField, Input } from '@/shared/ui';
-import { useAdminFilemakerOrganizationEditPageContext } from '../../context/AdminFilemakerOrganizationEditPageContext';
+import {
+  useAdminFilemakerOrganizationEditPageActionsContext,
+  useAdminFilemakerOrganizationEditPageStateContext,
+} from '../../context/AdminFilemakerOrganizationEditPageContext';
 import type { FilemakerOrganization } from '../../types';
 
 export function OrganizationBasicInfoSection(): React.JSX.Element {
-  const { orgDraft, setOrgDraft } = useAdminFilemakerOrganizationEditPageContext();
+  const { orgDraft } = useAdminFilemakerOrganizationEditPageStateContext();
+  const { setOrgDraft } = useAdminFilemakerOrganizationEditPageActionsContext();
 
   return (
     <FormSection title='Basic Information' className='space-y-4 p-4'>

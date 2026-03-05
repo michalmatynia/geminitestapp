@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
-import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
+import { useAdminLayoutActions } from '@/features/admin/context/AdminLayoutContext';
 import {
   ClientOnly,
   Tabs,
@@ -56,7 +56,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<StudioTab>('studio');
   const { isFocusMode, previewCanvasSize } = useUiState();
   const { setPreviewCanvasSize } = useUiActions();
-  const { setIsMenuHidden } = useAdminLayout();
+  const { setIsMenuHidden } = useAdminLayoutActions();
   const hideTopBar = activeTab === 'studio' && isFocusMode;
   const requestedSlotId = searchParams?.get('slotId')?.trim() ?? '';
   const returnToPath = normalizeReturnToPath(searchParams?.get('returnTo'));

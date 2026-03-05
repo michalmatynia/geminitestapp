@@ -6,12 +6,11 @@ import {
   type PromptDiffLine,
   type PromptExtractApiResponse,
   type PromptExtractHistoryEntry,
-  type PromptExtractValidationIssue,
   type UiExtractorSuggestion,
 } from './prompt-extract-utils';
 import { isParamUiControl, type ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
 import { flattenParams, inferParamSpecs } from '@/shared/utils/prompt-params';
-import { type ParamSpec } from '@/shared/contracts/prompt-engine';
+import { type ParamSpec, type PromptValidationIssue } from '@/shared/contracts/prompt-engine';
 
 import type { Dispatch, SetStateAction } from 'react';
 
@@ -46,8 +45,8 @@ type PromptExtractionHandlersDeps = {
   setPreviewSpecs: (value: Record<string, ParamSpec> | null) => void;
   setPreviewValidation: (
     value: {
-      before: PromptExtractValidationIssue[];
-      after: PromptExtractValidationIssue[];
+      before: PromptValidationIssue[];
+      after: PromptValidationIssue[];
     } | null
   ) => void;
   setPromptText: (prompt: string) => void;

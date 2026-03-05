@@ -36,7 +36,7 @@ export const namedDtoSchema = dtoBaseSchema.extend({
   description: z.string().nullable().optional(),
 });
 
-export interface NamedFields {
+interface NamedFields {
   name: string;
   description?: string | null;
 }
@@ -201,7 +201,7 @@ export type UpdateDto<T extends DtoBase> = Partial<CreateDto<T>>;
 /**
  * Payload for save operations (create or update)
  */
-export interface SavePayloadDto<T extends DtoBase> {
+interface SavePayloadDto<T extends DtoBase> {
   id?: string;
   data: Partial<CreateDto<T>>;
 }
@@ -216,7 +216,7 @@ export type CreatePayload<T extends DtoBase> = CreatePayloadDto<T>;
 /**
  * Payload for update operations
  */
-export interface UpdatePayloadDto<T extends DtoBase> {
+interface UpdatePayloadDto<T extends DtoBase> {
   id: string;
   data: Partial<CreateDto<T>>;
 }
@@ -225,7 +225,7 @@ export type UpdatePayload<T extends DtoBase> = UpdatePayloadDto<T>;
 /**
  * Base interface for all entities in the system.
  */
-export interface BaseEntity {
+interface BaseEntity {
   id: string;
   createdAt: string | Date;
   updatedAt: string | Date | null;
@@ -241,4 +241,3 @@ export interface NamedEntity extends BaseEntity, NamedFields {}
  */
 export type MongoSettingRecord = { _id: string; key: string; value: string };
 export type MongoDocument<T> = T & { _id: string };
-export type ApiParams = { id: string };

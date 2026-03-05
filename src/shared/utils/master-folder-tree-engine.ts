@@ -45,7 +45,7 @@ export type BuildMasterTreeOptions = {
   strict?: boolean | undefined;
 };
 
-export type CanDropMasterTreeNodeInput = {
+type CanDropMasterTreeNodeInput = {
   nodes: MasterTreeNode[];
   nodeId: MasterTreeId;
   targetId: MasterTreeId | null;
@@ -61,7 +61,7 @@ export type MoveMasterTreeNodeInput = {
   profile?: FolderTreeProfileV2 | undefined;
 };
 
-export type ReorderMasterTreeNodeInput = {
+type ReorderMasterTreeNodeInput = {
   nodes: MasterTreeNode[];
   nodeId: MasterTreeId;
   targetId: MasterTreeId;

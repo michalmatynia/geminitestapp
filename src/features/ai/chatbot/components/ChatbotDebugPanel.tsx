@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+
 import { LogList, JsonViewer } from '@/shared/ui';
 
 import { useChatbotUI } from '../context/ChatbotContext';
@@ -15,10 +17,38 @@ interface ChatbotDebugPanelProps {
   agentRunLogs?: LogEntry[];
 }
 
+const ChatbotDebugLogsContext = React.createContext<LogEntry[] | null>(null);
+
+function useChatbotDebugLogs(): LogEntry[] {
+  const logs = React.useContext(ChatbotDebugLogsContext);
+  if (!logs) {
+    throw new Error('useChatbotDebugLogs must be used within ChatbotDebugLogsContext.Provider');
+  }
+  return logs;
+}
+
+function ChatbotDebugAgentLogs(): React.JSX.Element {
+  const agentRunLogs = useChatbotDebugLogs();
+
+  return (
+    <LogList
+      logs={agentRunLogs.map((log) => ({
+        id: log.id,
+        timestamp: log.createdAt,
+        level: log.level,
+        message: log.message,
+      }))}
+      maxHeight='240px'
+      className='rounded border border-border/40 bg-black/40 p-2'
+    />
+  );
+}
+
 export function ChatbotDebugPanel({
   agentRunLogs = [],
 }: ChatbotDebugPanelProps): React.JSX.Element {
   const { debugState } = useChatbotUI();
+  const contextValue = React.useMemo<LogEntry[]>(() => agentRunLogs, [agentRunLogs]);
 
   return (
     <div className='h-full overflow-y-auto bg-card p-4 text-xs text-gray-300'>
@@ -38,16 +68,9 @@ export function ChatbotDebugPanel({
         />
         <div>
           <h4 className='mb-1 font-medium text-gray-400'>Agent Logs</h4>
-          <LogList
-            logs={agentRunLogs.map((log) => ({
-              id: log.id,
-              timestamp: log.createdAt,
-              level: log.level,
-              message: log.message,
-            }))}
-            maxHeight='240px'
-            className='rounded border border-border/40 bg-black/40 p-2'
-          />
+          <ChatbotDebugLogsContext.Provider value={contextValue}>
+            <ChatbotDebugAgentLogs />
+          </ChatbotDebugLogsContext.Provider>
         </div>
       </div>
     </div>

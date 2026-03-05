@@ -22,6 +22,7 @@ type CaseListHeaderProps = {
 };
 
 type CaseListHeaderRuntimeValue = {
+  onCreateCase: () => void;
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
@@ -69,6 +70,15 @@ function CaseListHeaderSearchBar(): React.JSX.Element | null {
   );
 }
 
+function CaseListHeaderCreateButton(): React.JSX.Element {
+  const { onCreateCase } = useCaseListHeaderRuntime();
+  return (
+    <Button onClick={onCreateCase} size='icon-lg' variant='outline' aria-label='Create new case'>
+      <PlusIcon className='h-6 w-6' />
+    </Button>
+  );
+}
+
 export const CaseListHeader = memo(function CaseListHeader({
   filtersContent,
   onCreateCase,
@@ -84,6 +94,7 @@ export const CaseListHeader = memo(function CaseListHeader({
 }: CaseListHeaderProps): React.JSX.Element {
   const runtimeValue = useMemo(
     () => ({
+      onCreateCase,
       page,
       totalPages,
       onPageChange,
@@ -92,14 +103,21 @@ export const CaseListHeader = memo(function CaseListHeader({
       searchQuery: searchQuery ?? '',
       onSearchChange,
     }),
-    [onPageChange, onPageSizeChange, onSearchChange, page, pageSize, searchQuery, totalPages]
+    [
+      onCreateCase,
+      onPageChange,
+      onPageSizeChange,
+      onSearchChange,
+      page,
+      pageSize,
+      searchQuery,
+      totalPages,
+    ]
   );
 
   const renderCreateActions = (): React.JSX.Element => (
     <div className='flex flex-wrap items-center gap-2'>
-      <Button onClick={onCreateCase} size='icon-lg' variant='outline' aria-label='Create new case'>
-        <PlusIcon className='h-6 w-6' />
-      </Button>
+      <CaseListHeaderCreateButton />
       <span className='text-xs text-muted-foreground'>
         {filteredCount} matches / {totalCount} total
       </span>

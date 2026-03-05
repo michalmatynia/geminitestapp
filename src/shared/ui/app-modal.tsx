@@ -46,6 +46,12 @@ type AppModalDefaultHeaderRuntimeValue = {
   handleClose: () => void;
 };
 
+type AppModalDialogContentRuntimeValue = {
+  modalContentClassName?: string;
+  handleInteractOutside: (event: Event) => void;
+  handleEscapeKeyDown: (event: KeyboardEvent) => void;
+};
+
 const {
   Context: AppModalDefaultHeaderRuntimeContext,
   useStrictContext: useAppModalDefaultHeaderRuntime,
@@ -53,6 +59,15 @@ const {
   hookName: 'useAppModalDefaultHeaderRuntime',
   providerName: 'AppModalDefaultHeaderRuntimeProvider',
   displayName: 'AppModalDefaultHeaderRuntimeContext',
+});
+
+const {
+  Context: AppModalDialogContentRuntimeContext,
+  useStrictContext: useAppModalDialogContentRuntime,
+} = createStrictContext<AppModalDialogContentRuntimeValue>({
+  hookName: 'useAppModalDialogContentRuntime',
+  providerName: 'AppModalDialogContentRuntimeProvider',
+  displayName: 'AppModalDialogContentRuntimeContext',
 });
 
 type AppModalDefaultHeaderRuntimeProviderProps = {
@@ -100,6 +115,29 @@ function AppModalDefaultHeader(): React.JSX.Element {
   );
 }
 
+function AppModalDialogContentShell({
+  title,
+  dialogDescription,
+  children,
+}: {
+  title: React.ReactNode;
+  dialogDescription: React.ReactNode;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  const runtime = useAppModalDialogContentRuntime();
+  return (
+    <DialogContent
+      className={cn('max-w-none w-auto p-0 border-none bg-transparent shadow-none', runtime.modalContentClassName ?? '')}
+      onInteractOutside={runtime.handleInteractOutside}
+      onEscapeKeyDown={runtime.handleEscapeKeyDown}
+    >
+      <DialogTitle className='sr-only'>{title}</DialogTitle>
+      <DialogDescription className='sr-only'>{dialogDescription}</DialogDescription>
+      {children}
+    </DialogContent>
+  );
+}
+
 const sizeClasses = {
   sm: 'max-w-lg md:min-w-[420px]',
   md: 'max-w-2xl md:min-w-[640px]',
@@ -130,7 +168,7 @@ export function AppModal({
   onEscapeKeyDown,
   children,
   className,
-  contentClassName,
+  contentClassName: modalContentClassName,
   bodyClassName,
 }: AppModalProps): React.JSX.Element {
   const isCurrentlyOpen = isOpen ?? open ?? false;
@@ -190,56 +228,57 @@ export function AppModal({
     }),
     [title, subtitle, titleHidden, headerActions, showClose, canClose, handleOpenChange]
   );
+  const dialogContentRuntimeValue = React.useMemo<AppModalDialogContentRuntimeValue>(
+    () => ({
+      modalContentClassName,
+      handleInteractOutside,
+      handleEscapeKeyDown,
+    }),
+    [modalContentClassName, handleInteractOutside, handleEscapeKeyDown]
+  );
 
   return (
     <Dialog open={isCurrentlyOpen} onOpenChange={handleOpenChange}>
-      <DialogContent
-        className={cn(
-          'max-w-none w-auto p-0 border-none bg-transparent shadow-none',
-          contentClassName ?? ''
-        )}
-        onInteractOutside={handleInteractOutside}
-        onEscapeKeyDown={handleEscapeKeyDown}
-      >
-        <DialogTitle className='sr-only'>{title}</DialogTitle>
-        <DialogDescription className='sr-only'>{dialogDescription}</DialogDescription>
-        <div
-          className={cn(
-            'pointer-events-auto w-full rounded-lg border flex flex-col',
-            isGlass ? 'bg-card/40 backdrop-blur-md border-white/10' : 'bg-card border-border',
-            sizeClasses[size],
-            className
-          )}
-        >
-          {/* Header */}
-          <div className='p-6 pb-4 border-b border-white/5'>
-            {header ? (
-              header
-            ) : (
-              <AppModalDefaultHeaderRuntimeProvider value={defaultHeaderRuntimeValue}>
-                <AppModalDefaultHeader />
-              </AppModalDefaultHeaderRuntimeProvider>
-            )}
-          </div>
-
-          {/* Body */}
+      <AppModalDialogContentRuntimeContext.Provider value={dialogContentRuntimeValue}>
+        <AppModalDialogContentShell title={title} dialogDescription={dialogDescription}>
           <div
             className={cn(
-              bodyHeightClass,
-              'overflow-y-auto',
-              padding === 'default' && 'p-6',
-              bodyClassName ?? ''
+              'pointer-events-auto w-full rounded-lg border flex flex-col',
+              isGlass ? 'bg-card/40 backdrop-blur-md border-white/10' : 'bg-card border-border',
+              sizeClasses[size],
+              className
             )}
           >
-            {children}
-          </div>
+            {/* Header */}
+            <div className='p-6 pb-4 border-b border-white/5'>
+              {header ? (
+                header
+              ) : (
+                <AppModalDefaultHeaderRuntimeProvider value={defaultHeaderRuntimeValue}>
+                  <AppModalDefaultHeader />
+                </AppModalDefaultHeaderRuntimeProvider>
+              )}
+            </div>
 
-          {/* Footer */}
-          {footer ? (
-            <div className='p-6 pt-4 border-t border-white/5 flex justify-end gap-2'>{footer}</div>
-          ) : null}
-        </div>
-      </DialogContent>
+            {/* Body */}
+            <div
+              className={cn(
+                bodyHeightClass,
+                'overflow-y-auto',
+                padding === 'default' && 'p-6',
+                bodyClassName ?? ''
+              )}
+            >
+              {children}
+            </div>
+
+            {/* Footer */}
+            {footer ? (
+              <div className='p-6 pt-4 border-t border-white/5 flex justify-end gap-2'>{footer}</div>
+            ) : null}
+          </div>
+        </AppModalDialogContentShell>
+      </AppModalDialogContentRuntimeContext.Provider>
     </Dialog>
   );
 }

@@ -49,6 +49,8 @@ type ConfirmModalRuntimeValue = {
   onConfirmPasswordChange?: (value: string) => void;
   confirmPassword?: string;
   confirmPasswordLabel: string;
+  resolvedDescription: string;
+  hasSubtitle: boolean;
 };
 
 const { Context: ConfirmModalRuntimeContext, useStrictContext: useConfirmModalRuntime } =
@@ -103,6 +105,15 @@ function ConfirmModalFooterActions(): React.JSX.Element {
   );
 }
 
+function ConfirmModalDescription(): React.JSX.Element {
+  const runtime = useConfirmModalRuntime();
+  return (
+    <AlertDialogDescription className={runtime.hasSubtitle ? undefined : 'sr-only'}>
+      {runtime.resolvedDescription}
+    </AlertDialogDescription>
+  );
+}
+
 /**
  * Reusable modal template for confirmation dialogs.
  * Refactored to leverage AlertDialog primitive for better accessibility.
@@ -113,7 +124,7 @@ export function ConfirmModal({
   onClose,
   onConfirm,
   title,
-  subtitle,
+  subtitle: modalSubtitle,
   message,
   confirmText = 'Confirm',
   cancelText = 'Cancel',
@@ -139,7 +150,7 @@ export function ConfirmModal({
   const isConfirmDisabled =
     loading || (onConfirmPasswordChange !== undefined && !confirmPassword?.trim());
   const resolvedDescription =
-    subtitle ??
+    modalSubtitle ??
     (typeof message === 'string' && message.trim().length > 0 ? message : 'Confirm this action.');
 
   const sizeClasses = {
@@ -163,6 +174,8 @@ export function ConfirmModal({
       onConfirmPasswordChange,
       confirmPassword,
       confirmPasswordLabel,
+      resolvedDescription,
+      hasSubtitle: Boolean(modalSubtitle),
     }),
     [
       loading,
@@ -175,6 +188,8 @@ export function ConfirmModal({
       onConfirmPasswordChange,
       confirmPassword,
       confirmPasswordLabel,
+      resolvedDescription,
+      modalSubtitle,
     ]
   );
 
@@ -184,9 +199,7 @@ export function ConfirmModal({
         <AlertDialogContent className={cn(sizeClasses)}>
           <AlertDialogHeader>
             <AlertDialogTitle>{title}</AlertDialogTitle>
-            <AlertDialogDescription className={subtitle ? undefined : 'sr-only'}>
-              {resolvedDescription}
-            </AlertDialogDescription>
+            <ConfirmModalDescription />
           </AlertDialogHeader>
 
           <div className='py-4 space-y-4'>

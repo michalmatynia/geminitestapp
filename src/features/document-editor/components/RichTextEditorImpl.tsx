@@ -333,6 +333,20 @@ export default function RichTextEditorImpl({
     [normalizedFontFamilyOptions]
   );
 
+  if (!editor) {
+    return (
+      <div
+        className={cn(
+          'rounded border border-border/60 bg-card/40 p-3 text-xs text-gray-400',
+          surfaceClassName
+        )}
+        style={surfaceStyle}
+      >
+        {loadingLabel}
+      </div>
+    );
+  }
+
   const FontFamilySelect = (): React.JSX.Element | null => {
     const toolbarVariant = React.useContext(ToolbarVariantContext);
     if (!allowFontFamily) return null;
@@ -361,20 +375,6 @@ export default function RichTextEditorImpl({
       />
     );
   };
-
-  if (!editor) {
-    return (
-      <div
-        className={cn(
-          'rounded border border-border/60 bg-card/40 p-3 text-xs text-gray-400',
-          surfaceClassName
-        )}
-        style={surfaceStyle}
-      >
-        {loadingLabel}
-      </div>
-    );
-  }
 
   return (
     <div className={cn('space-y-2', containerClassName)}>

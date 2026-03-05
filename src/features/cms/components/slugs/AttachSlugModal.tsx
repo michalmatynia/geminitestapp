@@ -11,6 +11,42 @@ interface AttachSlugModalProps extends EntityModalProps<Slug, Slug> {
   alreadyAssignedIds: Set<string>;
 }
 
+type AttachSlugModalRuntimeValue = {
+  isOpen: boolean;
+  handleClose: () => void;
+  handleAttach: () => Promise<void>;
+  selectedCount: number;
+  isAttaching: boolean;
+};
+
+const AttachSlugModalRuntimeContext = React.createContext<AttachSlugModalRuntimeValue | null>(null);
+
+function useAttachSlugModalRuntime(): AttachSlugModalRuntimeValue {
+  const runtime = React.useContext(AttachSlugModalRuntimeContext);
+  if (!runtime) {
+    throw new Error('useAttachSlugModalRuntime must be used within AttachSlugModalRuntimeContext.Provider');
+  }
+  return runtime;
+}
+
+function AttachSlugFormModal({ children }: { children: React.ReactNode }): React.JSX.Element {
+  const { isOpen, handleClose, handleAttach, selectedCount, isAttaching } = useAttachSlugModalRuntime();
+  return (
+    <FormModal
+      open={isOpen}
+      onClose={handleClose}
+      title='Attach Existing Slug'
+      onSave={() => void handleAttach()}
+      isSaving={isAttaching}
+      saveText={`Attach ${selectedCount > 0 ? `(${selectedCount})` : ''}`}
+      isSaveDisabled={selectedCount === 0}
+      size='md'
+    >
+      {children}
+    </FormModal>
+  );
+}
+
 export function AttachSlugModal({
   isOpen,
   onClose,
@@ -66,64 +102,68 @@ export function AttachSlugModal({
     onClose();
   };
 
+  const runtimeValue = useMemo<AttachSlugModalRuntimeValue>(
+    () => ({
+      isOpen,
+      handleClose,
+      handleAttach,
+      selectedCount: selectedIds.length,
+      isAttaching,
+    }),
+    [isOpen, handleClose, handleAttach, selectedIds.length, isAttaching]
+  );
+
   return (
-    <FormModal
-      open={isOpen}
-      onClose={handleClose}
-      title='Attach Existing Slug'
-      onSave={() => void handleAttach()}
-      isSaving={isAttaching}
-      saveText={`Attach ${selectedIds.length > 0 ? `(${selectedIds.length})` : ''}`}
-      isSaveDisabled={selectedIds.length === 0}
-      size='md'
-    >
-      <div className='space-y-4'>
-        <FormField
-          label='Route Assignment'
-          description='Select global routes that are not yet assigned to this zone.'
-        >
-          {loading ? (
-            <LoadingState message='Fetching global slug index...' className='py-8' size='sm' />
-          ) : (
-            <SearchableList
-              items={availableSlugs}
-              selectedIds={selectedIds}
-              onToggle={toggleSelection}
-              getId={(s) => s.id}
-              getLabel={(s) => s.slug}
-              searchPlaceholder='Filter slugs...'
-              maxHeight='max-h-60'
-              extraActions={
-                <div className='flex items-center gap-3 text-[10px] uppercase font-bold'>
-                  <Button
-                    variant='link'
-                    className='h-auto p-0 text-[10px] uppercase font-bold text-primary hover:text-primary/80 transition-colors'
-                    onClick={selectAllVisible}
-                  >
-                    Select All
-                  </Button>
-                  <Button
-                    variant='link'
-                    className='h-auto p-0 text-[10px] uppercase font-bold text-muted-foreground hover:text-foreground transition-colors'
-                    onClick={clearSelection}
-                  >
-                    Clear
-                  </Button>
-                </div>
-              }
-              renderItem={(slug) => (
-                <div className='flex flex-col'>
-                  <span className='text-sm font-medium text-gray-200 group-hover:text-white transition-colors'>
-                    /{slug.slug}
-                  </span>
-                  <span className='text-[10px] text-muted-foreground font-mono'>{slug.id}</span>
-                </div>
-              )}
-            />
-          )}
-        </FormField>
-        {error && <p className='text-xs text-destructive font-medium px-1'>{error}</p>}
-      </div>
-    </FormModal>
+    <AttachSlugModalRuntimeContext.Provider value={runtimeValue}>
+      <AttachSlugFormModal>
+        <div className='space-y-4'>
+          <FormField
+            label='Route Assignment'
+            description='Select global routes that are not yet assigned to this zone.'
+          >
+            {loading ? (
+              <LoadingState message='Fetching global slug index...' className='py-8' size='sm' />
+            ) : (
+              <SearchableList
+                items={availableSlugs}
+                selectedIds={selectedIds}
+                onToggle={toggleSelection}
+                getId={(s) => s.id}
+                getLabel={(s) => s.slug}
+                searchPlaceholder='Filter slugs...'
+                maxHeight='max-h-60'
+                extraActions={
+                  <div className='flex items-center gap-3 text-[10px] uppercase font-bold'>
+                    <Button
+                      variant='link'
+                      className='h-auto p-0 text-[10px] uppercase font-bold text-primary hover:text-primary/80 transition-colors'
+                      onClick={selectAllVisible}
+                    >
+                      Select All
+                    </Button>
+                    <Button
+                      variant='link'
+                      className='h-auto p-0 text-[10px] uppercase font-bold text-muted-foreground hover:text-foreground transition-colors'
+                      onClick={clearSelection}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                }
+                renderItem={(slug) => (
+                  <div className='flex flex-col'>
+                    <span className='text-sm font-medium text-gray-200 group-hover:text-white transition-colors'>
+                      /{slug.slug}
+                    </span>
+                    <span className='text-[10px] text-muted-foreground font-mono'>{slug.id}</span>
+                  </div>
+                )}
+              />
+            )}
+          </FormField>
+          {error && <p className='text-xs text-destructive font-medium px-1'>{error}</p>}
+        </div>
+      </AttachSlugFormModal>
+    </AttachSlugModalRuntimeContext.Provider>
   );
 }

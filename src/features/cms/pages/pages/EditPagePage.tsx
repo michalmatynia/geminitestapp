@@ -79,7 +79,7 @@ export default function EditPagePageLoader(): React.JSX.Element {
     );
   }
 
-  return <EditPageContent key={pageQuery.data.id} initialPage={pageQuery.data} id={pageId} />;
+  return <EditPageContent key={pageQuery.data.id} initialPage={pageQuery.data} pageId={pageId} />;
 }
 
 type EditPageRouteListRuntimeValue = {
@@ -122,10 +122,10 @@ function EditPageRouteList(): React.JSX.Element {
 
 function EditPageContent({
   initialPage,
-  id,
+  pageId,
 }: {
   initialPage: Page;
-  id: string;
+  pageId: string;
 }): React.JSX.Element {
   const page = initialPage;
   const { activeDomainId } = useCmsDomainSelection();
@@ -222,7 +222,7 @@ function EditPageContent({
 
     setError(null);
     await updatePage.mutateAsync({
-      id,
+      id: pageId,
       input: validation.data as Page & { slugIds?: string[] },
     });
     router.push('/admin/cms/pages');

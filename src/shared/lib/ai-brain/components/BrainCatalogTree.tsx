@@ -7,6 +7,7 @@ import {
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
+  type FolderTreeViewportV2Props,
 } from '@/features/foldertree/v2';
 
 import type { AiBrainCatalogEntry } from '../settings';
@@ -23,6 +24,41 @@ export interface BrainCatalogTreeProps {
   onEdit: (entry: AiBrainCatalogEntry) => void;
   onRemove: (entry: AiBrainCatalogEntry) => void;
   isPending?: boolean;
+}
+
+type BrainCatalogTreeViewportRuntimeValue = Pick<
+  FolderTreeViewportV2Props,
+  'controller' | 'scrollToNodeRef' | 'rootDropUi' | 'renderNode'
+> & {
+  isPending: boolean;
+};
+
+const BrainCatalogTreeViewportRuntimeContext =
+  React.createContext<BrainCatalogTreeViewportRuntimeValue | null>(null);
+
+function useBrainCatalogTreeViewportRuntime(): BrainCatalogTreeViewportRuntimeValue {
+  const runtime = React.useContext(BrainCatalogTreeViewportRuntimeContext);
+  if (!runtime) {
+    throw new Error(
+      'useBrainCatalogTreeViewportRuntime must be used within BrainCatalogTreeViewportRuntimeContext.Provider'
+    );
+  }
+  return runtime;
+}
+
+function BrainCatalogTreeViewport(): React.JSX.Element {
+  const { controller, scrollToNodeRef, rootDropUi, renderNode, isPending } =
+    useBrainCatalogTreeViewportRuntime();
+  return (
+    <FolderTreeViewportV2
+      controller={controller}
+      scrollToNodeRef={scrollToNodeRef}
+      rootDropUi={rootDropUi}
+      renderNode={renderNode}
+      enableDnd={!isPending}
+      emptyLabel='No catalog entries'
+    />
+  );
 }
 
 export function BrainCatalogTree({
@@ -91,17 +127,22 @@ export function BrainCatalogTree({
     }),
     [isPending, onEdit, onRemove]
   );
+  const viewportRuntimeValue = useMemo<BrainCatalogTreeViewportRuntimeValue>(
+    () => ({
+      controller,
+      scrollToNodeRef,
+      rootDropUi,
+      renderNode,
+      isPending,
+    }),
+    [controller, scrollToNodeRef, rootDropUi, renderNode, isPending]
+  );
 
   return (
     <BrainCatalogNodeItemRuntimeContext.Provider value={nodeItemRuntimeValue}>
-      <FolderTreeViewportV2
-        controller={controller}
-        scrollToNodeRef={scrollToNodeRef}
-        rootDropUi={rootDropUi}
-        renderNode={renderNode}
-        enableDnd={!isPending}
-        emptyLabel='No catalog entries'
-      />
+      <BrainCatalogTreeViewportRuntimeContext.Provider value={viewportRuntimeValue}>
+        <BrainCatalogTreeViewport />
+      </BrainCatalogTreeViewportRuntimeContext.Provider>
     </BrainCatalogNodeItemRuntimeContext.Provider>
   );
 }

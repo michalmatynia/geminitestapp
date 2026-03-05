@@ -17,6 +17,78 @@ const INLINE_PREVIEW_ZOOM_STEP = 0.15;
 const clampInlinePreviewZoom = (value: number): number =>
   Math.min(INLINE_PREVIEW_ZOOM_MAX, Math.max(INLINE_PREVIEW_ZOOM_MIN, Number(value.toFixed(3))));
 
+type InlinePreviewControlsRuntimeValue = {
+  hasImage: boolean;
+  zoom: number;
+  applyZoomDelta: (delta: number) => void;
+  resetViewport: () => void;
+};
+
+const InlinePreviewControlsRuntimeContext =
+  React.createContext<InlinePreviewControlsRuntimeValue | null>(null);
+
+function useInlinePreviewControlsRuntime(): InlinePreviewControlsRuntimeValue {
+  const runtime = React.useContext(InlinePreviewControlsRuntimeContext);
+  if (!runtime) {
+    throw new Error(
+      'useInlinePreviewControlsRuntime must be used within InlinePreviewControlsRuntimeContext.Provider'
+    );
+  }
+  return runtime;
+}
+
+function InlineImagePreviewControls(): React.JSX.Element {
+  const { hasImage, zoom, applyZoomDelta, resetViewport } = useInlinePreviewControlsRuntime();
+
+  return (
+    <div
+      data-inline-preview-controls='true'
+      className='absolute right-2 top-2 z-10 flex items-center gap-1 rounded border border-border/60 bg-black/65 px-1 py-1 backdrop-blur'
+      onPointerDown={(event): void => {
+        event.stopPropagation();
+      }}
+    >
+      <Button
+        size='xs'
+        type='button'
+        variant='outline'
+        className='h-6 w-6 px-0'
+        onClick={() => applyZoomDelta(-INLINE_PREVIEW_ZOOM_STEP)}
+        disabled={!hasImage}
+        title='Zoom out'
+        aria-label='Zoom out image preview'
+      >
+        -
+      </Button>
+      <div className='min-w-10 text-center text-[10px] text-gray-200'>{Math.round(zoom * 100)}%</div>
+      <Button
+        size='xs'
+        type='button'
+        variant='outline'
+        className='h-6 w-6 px-0'
+        onClick={() => applyZoomDelta(INLINE_PREVIEW_ZOOM_STEP)}
+        disabled={!hasImage}
+        title='Zoom in'
+        aria-label='Zoom in image preview'
+      >
+        +
+      </Button>
+      <Button
+        size='xs'
+        type='button'
+        variant='outline'
+        className='h-6 px-2 text-[10px]'
+        onClick={resetViewport}
+        disabled={!hasImage}
+        title='Reset viewport'
+        aria-label='Reset image viewport'
+      >
+        Reset
+      </Button>
+    </div>
+  );
+}
+
 export function InlineImagePreviewCanvas({
   imageSrc,
   imageAlt,
@@ -90,6 +162,16 @@ export function InlineImagePreviewCanvas({
     setIsDragging(false);
   };
 
+  const controlsRuntimeValue = React.useMemo<InlinePreviewControlsRuntimeValue>(
+    () => ({
+      hasImage: Boolean(imageSrc),
+      zoom,
+      applyZoomDelta,
+      resetViewport,
+    }),
+    [imageSrc, zoom, applyZoomDelta, resetViewport]
+  );
+
   return (
     <div
       className={cn(
@@ -102,53 +184,9 @@ export function InlineImagePreviewCanvas({
       onPointerCancel={handlePointerRelease}
       style={{ cursor: imageSrc ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
     >
-      <div
-        data-inline-preview-controls='true'
-        className='absolute right-2 top-2 z-10 flex items-center gap-1 rounded border border-border/60 bg-black/65 px-1 py-1 backdrop-blur'
-        onPointerDown={(event): void => {
-          event.stopPropagation();
-        }}
-      >
-        <Button
-          size='xs'
-          type='button'
-          variant='outline'
-          className='h-6 w-6 px-0'
-          onClick={() => applyZoomDelta(-INLINE_PREVIEW_ZOOM_STEP)}
-          disabled={!imageSrc}
-          title='Zoom out'
-          aria-label='Zoom out image preview'
-        >
-          -
-        </Button>
-        <div className='min-w-10 text-center text-[10px] text-gray-200'>
-          {Math.round(zoom * 100)}%
-        </div>
-        <Button
-          size='xs'
-          type='button'
-          variant='outline'
-          className='h-6 w-6 px-0'
-          onClick={() => applyZoomDelta(INLINE_PREVIEW_ZOOM_STEP)}
-          disabled={!imageSrc}
-          title='Zoom in'
-          aria-label='Zoom in image preview'
-        >
-          +
-        </Button>
-        <Button
-          size='xs'
-          type='button'
-          variant='outline'
-          className='h-6 px-2 text-[10px]'
-          onClick={resetViewport}
-          disabled={!imageSrc}
-          title='Reset viewport'
-          aria-label='Reset image viewport'
-        >
-          Reset
-        </Button>
-      </div>
+      <InlinePreviewControlsRuntimeContext.Provider value={controlsRuntimeValue}>
+        <InlineImagePreviewControls />
+      </InlinePreviewControlsRuntimeContext.Provider>
 
       {imageSrc ? (
         <>

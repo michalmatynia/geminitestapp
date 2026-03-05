@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, KeyboardEvent, memo } from 'react';
+import React, { useState, useEffect, useRef, KeyboardEvent, memo } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useUpdateProductField } from '@/features/products/hooks/useProductsMutations';
@@ -12,6 +12,50 @@ type EditableCellProps = {
   field: 'price' | 'stock';
   onUpdate: (nextValue: number) => void;
 };
+
+type EditableCellInputRuntimeValue = {
+  field: 'price' | 'stock';
+  editValue: string;
+  isSaving: boolean;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  setEditValue: (next: string) => void;
+  handleKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
+  handleBlur: () => void;
+};
+
+const EditableCellInputRuntimeContext = React.createContext<EditableCellInputRuntimeValue | null>(
+  null
+);
+
+function useEditableCellInputRuntime(): EditableCellInputRuntimeValue {
+  const runtime = React.useContext(EditableCellInputRuntimeContext);
+  if (!runtime) {
+    throw new Error(
+      'useEditableCellInputRuntime must be used within EditableCellInputRuntimeContext.Provider'
+    );
+  }
+  return runtime;
+}
+
+function EditableCellInput(): React.JSX.Element {
+  const { field, editValue, isSaving, inputRef, setEditValue, handleKeyDown, handleBlur } =
+    useEditableCellInputRuntime();
+
+  return (
+    <Input
+      ref={inputRef}
+      type='number'
+      step={field === 'price' ? '0.01' : '1'}
+      min='0'
+      value={editValue}
+      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditValue(e.target.value)}
+      onKeyDown={handleKeyDown}
+      onBlur={handleBlur}
+      disabled={isSaving}
+      className='h-8 w-24 text-sm'
+    />
+  );
+}
 
 export const EditableCell = memo(
   function EditableCell({
@@ -89,19 +133,20 @@ export const EditableCell = memo(
     };
 
     if (isEditing) {
+      const inputRuntimeValue: EditableCellInputRuntimeValue = {
+        field,
+        editValue,
+        isSaving,
+        inputRef,
+        setEditValue: (next: string): void => setEditValue(next),
+        handleKeyDown,
+        handleBlur,
+      };
+
       return (
-        <Input
-          ref={inputRef}
-          type='number'
-          step={field === 'price' ? '0.01' : '1'}
-          min='0'
-          value={editValue}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onBlur={handleBlur}
-          disabled={isSaving}
-          className='h-8 w-24 text-sm'
-        />
+        <EditableCellInputRuntimeContext.Provider value={inputRuntimeValue}>
+          <EditableCellInput />
+        </EditableCellInputRuntimeContext.Provider>
       );
     }
 

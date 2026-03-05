@@ -1,9 +1,36 @@
+import React from 'react';
+
 import type { UnifiedCollection } from '@/shared/contracts/database';
 import { Button, StatusBadge, DataTableSortableHeader, SelectSimple } from '@/shared/ui';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
 export type UnifiedCollectionRow = UnifiedCollection;
+
+type ProviderBadgeRuntimeValue = {
+  count: number | null;
+};
+
+const ProviderBadgeRuntimeContext = React.createContext<ProviderBadgeRuntimeValue | null>(null);
+
+function useProviderBadgeRuntime(): ProviderBadgeRuntimeValue {
+  const runtime = React.useContext(ProviderBadgeRuntimeContext);
+  if (!runtime) {
+    throw new Error('useProviderBadgeRuntime must be used within ProviderBadgeRuntimeContext.Provider');
+  }
+  return runtime;
+}
+
+function ProviderBadgeStatus(): React.JSX.Element {
+  const { count } = useProviderBadgeRuntime();
+  return (
+    <StatusBadge
+      status={count !== null ? count.toLocaleString() : '?'}
+      variant='success'
+      size='sm'
+    />
+  );
+}
 
 const ProviderBadge = ({
   exists,
@@ -16,11 +43,9 @@ const ProviderBadge = ({
     return <span className='text-xs text-gray-500'>--</span>;
   }
   return (
-    <StatusBadge
-      status={count !== null ? count.toLocaleString() : '?'}
-      variant='success'
-      size='sm'
-    />
+    <ProviderBadgeRuntimeContext.Provider value={{ count }}>
+      <ProviderBadgeStatus />
+    </ProviderBadgeRuntimeContext.Provider>
   );
 };
 

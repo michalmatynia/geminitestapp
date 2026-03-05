@@ -1,7 +1,7 @@
 'use client';
 
 import { Upload, Plus, X } from 'lucide-react';
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
@@ -27,6 +27,40 @@ export interface Asset3DUploaderProps {
   className?: string;
 }
 
+type Asset3DUploaderActionsRuntimeValue = {
+  onSave: () => void;
+  onCancel: () => void;
+  isUploading: boolean;
+};
+
+const Asset3DUploaderActionsRuntimeContext =
+  React.createContext<Asset3DUploaderActionsRuntimeValue | null>(null);
+
+function useAsset3DUploaderActionsRuntime(): Asset3DUploaderActionsRuntimeValue {
+  const runtime = React.useContext(Asset3DUploaderActionsRuntimeContext);
+  if (!runtime) {
+    throw new Error(
+      'useAsset3DUploaderActionsRuntime must be used within Asset3DUploaderActionsRuntimeContext.Provider'
+    );
+  }
+  return runtime;
+}
+
+function Asset3DUploaderFormActions(): React.JSX.Element {
+  const { onSave, onCancel, isUploading } = useAsset3DUploaderActionsRuntime();
+  return (
+    <FormActions
+      onSave={onSave}
+      onCancel={onCancel}
+      saveText='Upload Asset'
+      saveIcon={<Upload className='h-4 w-4' />}
+      isSaving={isUploading}
+      cancelVariant='ghost'
+      className='mt-4'
+    />
+  );
+}
+
 export function Asset3DUploader({ className }: Asset3DUploaderProps): React.JSX.Element {
   const {
     handleUpload: onUpload,
@@ -36,6 +70,9 @@ export function Asset3DUploader({ className }: Asset3DUploaderProps): React.JSX.
   } = useAdmin3DAssetsContext();
 
   const onCancel = () => setShowUploader(false);
+  const onSave = (): void => {
+    void handleUpload();
+  };
 
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState('');
@@ -321,15 +358,15 @@ export function Asset3DUploader({ className }: Asset3DUploaderProps): React.JSX.
 
       {/* Actions */}
       {file && (
-        <FormActions
-          onSave={() => void handleUpload()}
-          onCancel={onCancel}
-          saveText='Upload Asset'
-          saveIcon={<Upload className='h-4 w-4' />}
-          isSaving={isUploading}
-          cancelVariant='ghost'
-          className='mt-4'
-        />
+        <Asset3DUploaderActionsRuntimeContext.Provider
+          value={{
+            onSave,
+            onCancel,
+            isUploading,
+          }}
+        >
+          <Asset3DUploaderFormActions />
+        </Asset3DUploaderActionsRuntimeContext.Provider>
       )}
     </div>
   );

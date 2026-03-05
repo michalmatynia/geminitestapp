@@ -21,6 +21,33 @@ type PromptExtractionHistoryPanelProps = {
   onClearHistory: () => void;
 };
 
+const PromptExtractionHistoryResetContext = React.createContext<(() => void) | null>(null);
+
+function usePromptExtractionHistoryReset(): () => void {
+  const onClearHistory = React.useContext(PromptExtractionHistoryResetContext);
+  if (!onClearHistory) {
+    throw new Error(
+      'usePromptExtractionHistoryReset must be used within PromptExtractionHistoryResetContext.Provider'
+    );
+  }
+  return onClearHistory;
+}
+
+function PromptExtractionClearHistoryButton(): React.JSX.Element {
+  const onClearHistory = usePromptExtractionHistoryReset();
+  return (
+    <Button
+      size='xs'
+      type='button'
+      variant='ghost'
+      className='h-7 px-2 text-xs text-indigo-100 hover:bg-indigo-500/20'
+      onClick={onClearHistory}
+    >
+      Clear History
+    </Button>
+  );
+}
+
 export function PromptExtractionHistoryPanel({
   extractHistory,
   selectedExtractHistory,
@@ -33,15 +60,9 @@ export function PromptExtractionHistoryPanel({
     <div className='space-y-2 rounded border border-indigo-500/30 bg-indigo-500/5 p-3'>
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <div className='text-xs font-semibold text-indigo-100'>Extraction History</div>
-        <Button
-          size='xs'
-          type='button'
-          variant='ghost'
-          className='h-7 px-2 text-xs text-indigo-100 hover:bg-indigo-500/20'
-          onClick={onClearHistory}
-        >
-          Clear History
-        </Button>
+        <PromptExtractionHistoryResetContext.Provider value={onClearHistory}>
+          <PromptExtractionClearHistoryButton />
+        </PromptExtractionHistoryResetContext.Provider>
       </div>
       <div className='grid gap-3 md:grid-cols-[220px_minmax(0,1fr)]'>
         <div className='max-h-60 space-y-1 overflow-auto pr-1'>

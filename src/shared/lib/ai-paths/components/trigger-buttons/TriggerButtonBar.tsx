@@ -21,6 +21,56 @@ type TriggerButtonBarProps = {
   className?: string;
 };
 
+type TriggerButtonToggleRuntimeValue = {
+  label: string;
+  showLabel: boolean;
+  isRunning: boolean;
+  progress: number;
+  checked: boolean;
+  iconNode: React.ReactNode;
+  onCheckedChange: (nextChecked: boolean) => void;
+};
+
+const TriggerButtonToggleRuntimeContext =
+  React.createContext<TriggerButtonToggleRuntimeValue | null>(null);
+
+function useTriggerButtonToggleRuntime(): TriggerButtonToggleRuntimeValue {
+  const runtime = React.useContext(TriggerButtonToggleRuntimeContext);
+  if (!runtime) {
+    throw new Error(
+      'useTriggerButtonToggleRuntime must be used within TriggerButtonToggleRuntimeContext.Provider'
+    );
+  }
+  return runtime;
+}
+
+function TriggerButtonToggleControl(): React.JSX.Element {
+  const { label, showLabel, isRunning, progress, checked, iconNode, onCheckedChange } =
+    useTriggerButtonToggleRuntime();
+  return (
+    <div className={cn('relative overflow-hidden rounded-lg', isRunning ? 'cursor-wait' : null)}>
+      {isRunning ? (
+        <span
+          aria-hidden
+          className='pointer-events-none absolute inset-0 z-0 origin-left bg-emerald-500/10 transition-transform duration-200 ease-linear'
+          style={{
+            transform: `scaleX(${Math.max(0.02, progress)})`,
+            pointerEvents: 'none',
+          }}
+        />
+      ) : null}
+      <ToggleRow
+        label={showLabel ? label : ''}
+        icon={iconNode}
+        checked={checked}
+        disabled={isRunning}
+        onCheckedChange={onCheckedChange}
+        className='relative z-10 border-border bg-card/40 px-2 py-1'
+      />
+    </div>
+  );
+}
+
 export function TriggerButtonBar({
   location,
   entityType,
@@ -48,44 +98,31 @@ export function TriggerButtonBar({
         const hasSucceeded = Boolean(successMap[button.id]);
         const baseOpacity = hasSucceeded ? 1 : 0.7;
         const textOpacity = isRunning ? baseOpacity + (1 - baseOpacity) * progress : baseOpacity;
+        const iconNode = Icon ? (
+          <Icon className='size-4 text-gray-200' style={{ opacity: textOpacity }} />
+        ) : (
+          <Settings2 className='size-4 text-gray-500' style={{ opacity: textOpacity }} />
+        );
 
         if (button.mode === 'toggle') {
           const checked = Boolean(toggleMap[button.id]);
           const toggleControl = (
-            <div
+            <TriggerButtonToggleRuntimeContext.Provider
               key={button.id}
-              className={cn(
-                'relative overflow-hidden rounded-lg',
-                isRunning ? 'cursor-wait' : null
-              )}
-            >
-              {isRunning ? (
-                <span
-                  aria-hidden
-                  className='pointer-events-none absolute inset-0 z-0 origin-left bg-emerald-500/10 transition-transform duration-200 ease-linear'
-                  style={{
-                    transform: `scaleX(${Math.max(0.02, progress)})`,
-                    pointerEvents: 'none',
-                  }}
-                />
-              ) : null}
-              <ToggleRow
-                label={showLabel ? button.name : ''}
-                icon={
-                  Icon ? (
-                    <Icon className='size-4 text-gray-200' style={{ opacity: textOpacity }} />
-                  ) : (
-                    <Settings2 className='size-4 text-gray-500' style={{ opacity: textOpacity }} />
-                  )
-                }
-                checked={checked}
-                disabled={isRunning}
-                onCheckedChange={(nextChecked: boolean) => {
+              value={{
+                label: button.name,
+                showLabel,
+                isRunning,
+                progress,
+                checked,
+                iconNode,
+                onCheckedChange: (nextChecked: boolean) => {
                   void handleTrigger(button, { mode: 'toggle', checked: nextChecked });
-                }}
-                className='relative z-10 border-border bg-card/40 px-2 py-1'
-              />
-            </div>
+                },
+              }}
+            >
+              <TriggerButtonToggleControl />
+            </TriggerButtonToggleRuntimeContext.Provider>
           );
 
           if (!showLabel) {

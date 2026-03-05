@@ -10,7 +10,12 @@ import type {
   AiPathRunRecord,
   AiPathRuntimeEvent,
 } from '@/shared/lib/ai-paths';
-import { enqueueAiPathRun, streamAiPathRun, aiPathRunNodeSchema } from '@/shared/lib/ai-paths';
+import {
+  enqueueAiPathRun,
+  streamAiPathRun,
+  aiPathRunNodeSchema,
+  resolveAiPathRunFromEnqueueResponseData,
+} from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import {
@@ -374,11 +379,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           return;
         }
 
-        const runPayload =
-          isObjectRecord(enqueueResult.data) && isObjectRecord(enqueueResult.data['run'])
-            ? (enqueueResult.data['run'] as AiPathRunRecord)
-            : null;
-        const runId = runPayload && typeof runPayload.id === 'string' ? runPayload.id : null;
+        const { runId, runRecord } = resolveAiPathRunFromEnqueueResponseData(enqueueResult.data);
 
         if (!runId) {
           const message = 'Server run was enqueued without a run id.';
@@ -395,12 +396,25 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           return;
         }
 
-        optimisticallyInsertAiPathRunInQueueCache(queryClient, runPayload);
+        const queuedRunForCache = runRecord ?? {
+          id: runId,
+          pathId: args.activePathId,
+          pathName: args.pathName ?? null,
+          status: 'queued',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          entityId,
+          entityType,
+        };
+        optimisticallyInsertAiPathRunInQueueCache(queryClient, queuedRunForCache);
         void invalidateAiPathQueue(queryClient);
-        notifyAiPathRunEnqueued(runId);
+        notifyAiPathRunEnqueued(runId, {
+          entityId,
+          entityType,
+        });
 
         const runStartedAt =
-          (runPayload ? resolveRunStartedAt(runPayload, args.runtimeStateRef.current) : null) ??
+          (runRecord ? resolveRunStartedAt(runRecord, args.runtimeStateRef.current) : null) ??
           new Date().toISOString();
 
         if (args.currentRunIdRef) {
@@ -428,9 +442,9 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           message: `Node ${triggerNode.title ?? triggerNode.id} completed.`,
         });
 
-        if (runPayload?.runtimeState) {
-          const initialState = parseRuntimeState(runPayload.runtimeState);
-          args.setRuntimeState((prev) => mergeRuntimeStateSnapshot(prev, initialState, runPayload));
+        if (runRecord?.runtimeState) {
+          const initialState = parseRuntimeState(runRecord.runtimeState);
+          args.setRuntimeState((prev) => mergeRuntimeStateSnapshot(prev, initialState, runRecord));
         }
 
         let terminalHandled = false;

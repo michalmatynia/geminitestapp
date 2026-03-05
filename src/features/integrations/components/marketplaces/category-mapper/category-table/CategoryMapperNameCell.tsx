@@ -13,6 +13,39 @@ export type CategoryMapperNameCellProps = {
   hasPendingChange: boolean;
 };
 
+type CategoryMapperExpandRuntimeValue = {
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+};
+
+const CategoryMapperExpandRuntimeContext = React.createContext<CategoryMapperExpandRuntimeValue | null>(
+  null
+);
+
+function useCategoryMapperExpandRuntime(): CategoryMapperExpandRuntimeValue {
+  const runtime = React.useContext(CategoryMapperExpandRuntimeContext);
+  if (!runtime) {
+    throw new Error(
+      'useCategoryMapperExpandRuntime must be used within CategoryMapperExpandRuntimeContext.Provider'
+    );
+  }
+  return runtime;
+}
+
+function CategoryMapperExpandButton(): React.JSX.Element {
+  const { isExpanded, onToggleExpand } = useCategoryMapperExpandRuntime();
+  return (
+    <Button
+      variant='ghost'
+      size='xs'
+      onClick={onToggleExpand}
+      className='mr-2 p-0.5 text-gray-400 hover:text-white h-6 w-6'
+    >
+      {isExpanded ? <ChevronDown className='h-4 w-4' /> : <ChevronRight className='h-4 w-4' />}
+    </Button>
+  );
+}
+
 export function CategoryMapperNameCell({
   name,
   depth,
@@ -22,6 +55,11 @@ export function CategoryMapperNameCell({
   isMapped,
   hasPendingChange,
 }: CategoryMapperNameCellProps): React.JSX.Element {
+  const expandRuntimeValue = React.useMemo(
+    () => ({ isExpanded, onToggleExpand }),
+    [isExpanded, onToggleExpand]
+  );
+
   return (
     <div
       className={cn(
@@ -31,18 +69,9 @@ export function CategoryMapperNameCell({
     >
       <div style={{ paddingLeft: `${depth * 20}px` }} className='flex items-center'>
         {canExpand ? (
-          <Button
-            variant='ghost'
-            size='xs'
-            onClick={onToggleExpand}
-            className='mr-2 p-0.5 text-gray-400 hover:text-white h-6 w-6'
-          >
-            {isExpanded ? (
-              <ChevronDown className='h-4 w-4' />
-            ) : (
-              <ChevronRight className='h-4 w-4' />
-            )}
-          </Button>
+          <CategoryMapperExpandRuntimeContext.Provider value={expandRuntimeValue}>
+            <CategoryMapperExpandButton />
+          </CategoryMapperExpandRuntimeContext.Provider>
         ) : (
           <span className='mr-2 w-6 inline-block' />
         )}

@@ -20,6 +20,18 @@ export interface AiPathAnalysisTriggerSectionProps {
   analysis: UseAiPathsObjectAnalysisReturn;
 }
 
+const AiPathAnalysisTriggerContext = React.createContext<UseAiPathsObjectAnalysisReturn | null>(null);
+
+function useAiPathAnalysisTriggerContext(): UseAiPathsObjectAnalysisReturn {
+  const value = React.useContext(AiPathAnalysisTriggerContext);
+  if (!value) {
+    throw new Error(
+      'useAiPathAnalysisTriggerContext must be used within AiPathAnalysisTriggerContext.Provider'
+    );
+  }
+  return value;
+}
+
 // ---------------------------------------------------------------------------
 // Status display helpers
 // ---------------------------------------------------------------------------
@@ -93,11 +105,8 @@ function FieldMappingRow({
 // Full variant — shown in the Analysis tab
 // ---------------------------------------------------------------------------
 
-function AiPathAnalysisTriggerFull({
-  analysis,
-}: {
-  analysis: UseAiPathsObjectAnalysisReturn;
-}): React.JSX.Element {
+function AiPathAnalysisTriggerFull(): React.JSX.Element {
+  const analysis = useAiPathAnalysisTriggerContext();
   const [fieldMappingOpen, setFieldMappingOpen] = useState(false);
   const {
     status,
@@ -405,11 +414,8 @@ function AiPathAnalysisTriggerFull({
 // Compact variant — shown in the Controls tab
 // ---------------------------------------------------------------------------
 
-function AiPathAnalysisTriggerCompact({
-  analysis,
-}: {
-  analysis: UseAiPathsObjectAnalysisReturn;
-}): React.JSX.Element {
+function AiPathAnalysisTriggerCompact(): React.JSX.Element {
+  const analysis = useAiPathAnalysisTriggerContext();
   const {
     status,
     config,
@@ -488,12 +494,20 @@ export function AiPathAnalysisTriggerSection({
   variant,
   analysis,
 }: AiPathAnalysisTriggerSectionProps): React.JSX.Element {
+  const contextValue = useMemo(() => analysis, [analysis]);
+
   if (variant === 'compact') {
-    return <AiPathAnalysisTriggerCompact analysis={analysis} />;
+    return (
+      <AiPathAnalysisTriggerContext.Provider value={contextValue}>
+        <AiPathAnalysisTriggerCompact />
+      </AiPathAnalysisTriggerContext.Provider>
+    );
   }
   return (
-    <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
-      <AiPathAnalysisTriggerFull analysis={analysis} />
-    </Card>
+    <AiPathAnalysisTriggerContext.Provider value={contextValue}>
+      <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
+        <AiPathAnalysisTriggerFull />
+      </Card>
+    </AiPathAnalysisTriggerContext.Provider>
   );
 }

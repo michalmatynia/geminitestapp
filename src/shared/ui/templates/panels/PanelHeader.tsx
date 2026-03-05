@@ -21,6 +21,72 @@ interface PanelHeaderProps {
   compact?: boolean;
 }
 
+type PanelHeaderRuntimeValue = {
+  actions: PanelAction[];
+  isRefreshing: boolean;
+  refreshable: boolean;
+  onRefresh?: () => void | Promise<void>;
+};
+
+const PanelHeaderRuntimeContext = React.createContext<PanelHeaderRuntimeValue | null>(null);
+
+function usePanelHeaderRuntime(): PanelHeaderRuntimeValue {
+  const runtime = React.useContext(PanelHeaderRuntimeContext);
+  if (!runtime) {
+    throw new Error('usePanelHeaderRuntime must be used within PanelHeaderRuntimeContext.Provider');
+  }
+  return runtime;
+}
+
+function PanelHeaderStandardActions(): React.JSX.Element | null {
+  const { actions, isRefreshing } = usePanelHeaderRuntime();
+  if (actions.length === 0) return null;
+
+  return (
+    <>
+      {actions.map((action) => (
+        <Button
+          key={action.key}
+          variant={action.variant || 'outline'}
+          size='sm'
+          onClick={() => {
+            void action.onClick();
+          }}
+          disabled={action.disabled || isRefreshing}
+          title={action.tooltip}
+          className='h-8'
+        >
+          {action.icon && <span className='mr-1'>{action.icon}</span>}
+          {action.label}
+        </Button>
+      ))}
+    </>
+  );
+}
+
+function PanelHeaderRefreshAction(): React.JSX.Element | null {
+  const { refreshable, onRefresh, isRefreshing } = usePanelHeaderRuntime();
+  if (!refreshable || !onRefresh) return null;
+
+  const handleRefresh = async (): Promise<void> => {
+    try {
+      await onRefresh();
+    } catch (error) {
+      console.error('Refresh failed:', error);
+    }
+  };
+
+  return (
+    <RefreshButton
+      onRefresh={() => void handleRefresh()}
+      isRefreshing={isRefreshing}
+      label=''
+      size='icon'
+      className='h-8 w-8'
+    />
+  );
+}
+
 /**
  * PanelHeader - Renders panel header with title, description, and action buttons.
  * Refactored to leverage centralized RefreshButton and consistent action styling.
@@ -38,15 +104,10 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
   className,
   compact = false,
 }) => {
-  const handleRefresh = async () => {
-    if (onRefresh) {
-      try {
-        await onRefresh();
-      } catch (error) {
-        console.error('Refresh failed:', error);
-      }
-    }
-  };
+  const runtimeValue = React.useMemo(
+    () => ({ actions, isRefreshing, refreshable, onRefresh }),
+    [actions, isRefreshing, refreshable, onRefresh]
+  );
 
   return (
     <div
@@ -81,37 +142,16 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
       {/* Actions Section */}
       {(actions.length > 0 || refreshable || customActions) && (
         <div className='flex flex-wrap items-center gap-2 pt-2 border-t border-border/50'>
-          {/* Custom Actions Slot */}
-          {customActions}
+          <PanelHeaderRuntimeContext.Provider value={runtimeValue}>
+            {/* Custom Actions Slot */}
+            {customActions}
 
-          {/* Standard Actions */}
-          {actions.map((action) => (
-            <Button
-              key={action.key}
-              variant={action.variant || 'outline'}
-              size='sm'
-              onClick={() => {
-                void action.onClick();
-              }}
-              disabled={action.disabled || isRefreshing}
-              title={action.tooltip}
-              className='h-8'
-            >
-              {action.icon && <span className='mr-1'>{action.icon}</span>}
-              {action.label}
-            </Button>
-          ))}
+            {/* Standard Actions */}
+            <PanelHeaderStandardActions />
 
-          {/* Refresh Button */}
-          {refreshable && onRefresh && (
-            <RefreshButton
-              onRefresh={() => void handleRefresh()}
-              isRefreshing={isRefreshing}
-              label=''
-              size='icon'
-              className='h-8 w-8'
-            />
-          )}
+            {/* Refresh Button */}
+            <PanelHeaderRefreshAction />
+          </PanelHeaderRuntimeContext.Provider>
         </div>
       )}
     </div>

@@ -13,6 +13,19 @@ const formatDate = (value: string | Date | null | undefined): string => {
   return date.toLocaleString();
 };
 
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
+const getRuntimeKernelRisk = (metadata: unknown): string => {
+  const record = asRecord(metadata);
+  const raw = record?.['runtimeKernelParityRiskLevel'];
+  if (typeof raw !== 'string') return '';
+  const normalized = raw.trim().toLowerCase();
+  return normalized ? normalized.toUpperCase() : '';
+};
+
 export function BrainStateOverview(): React.JSX.Element {
   const brain = useBrain();
   const settingsQuery = useSettingsMap();
@@ -20,6 +33,21 @@ export function BrainStateOverview(): React.JSX.Element {
   const insightsData = brain.insightsQuery.data;
   const latestLogsInsight = insightsData?.logs?.[0];
   const latestAnalyticsInsight = insightsData?.analytics?.[0];
+  const latestRuntimeInsight = insightsData?.runtimeAnalytics?.[0];
+  const latestInsight = [latestRuntimeInsight, latestLogsInsight, latestAnalyticsInsight]
+    .filter(
+      (
+        insight
+      ): insight is NonNullable<
+        typeof latestRuntimeInsight | typeof latestLogsInsight | typeof latestAnalyticsInsight
+      > => Boolean(insight)
+    )
+    .sort((left, right) => {
+      const leftTime = new Date(left.createdAt || 0).getTime();
+      const rightTime = new Date(right.createdAt || 0).getTime();
+      return rightTime - leftTime;
+    })[0];
+  const runtimeRisk = latestRuntimeInsight ? getRuntimeKernelRisk(latestRuntimeInsight.metadata) : '';
 
   const brainConfigured = settingsQuery.data?.get(AI_BRAIN_SETTINGS_KEY);
   const hasCustomRouting =
@@ -65,11 +93,16 @@ export function BrainStateOverview(): React.JSX.Element {
         <div>
           <div className='text-[11px] uppercase tracking-wide text-blue-300'>Latest insight</div>
           <div className='mt-1 text-gray-200'>
-            {latestLogsInsight ? formatDate(latestLogsInsight.createdAt) : 'No insight runs yet'}
+            {latestInsight ? formatDate(latestInsight.createdAt) : 'No insight runs yet'}
           </div>
-          {latestAnalyticsInsight ? (
+          {latestInsight ? (
             <div className='mt-1 text-[11px] text-gray-300 line-clamp-1'>
-              {latestAnalyticsInsight.summary}
+              {latestInsight.summary}
+            </div>
+          ) : null}
+          {runtimeRisk ? (
+            <div className='mt-1 text-[10px] uppercase tracking-wide text-amber-300'>
+              Runtime kernel risk: {runtimeRisk}
             </div>
           ) : null}
         </div>

@@ -265,6 +265,7 @@ export const QUERY_KEYS = {
       all: ['ai', 'insights'] as const,
       lists: () => [...QUERY_KEYS.ai.insights.all, 'list'] as const,
       analytics: () => [...QUERY_KEYS.ai.insights.lists(), 'analytics'] as const,
+      runtimeAnalytics: () => [...QUERY_KEYS.ai.insights.lists(), 'runtime-analytics'] as const,
       logs: () => [...QUERY_KEYS.ai.insights.lists(), 'logs'] as const,
       notifications: () => [...QUERY_KEYS.ai.insights.lists(), 'notifications'] as const,
     },

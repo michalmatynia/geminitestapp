@@ -1,0 +1,119 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v3",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "nodeType": "viewer",
+  "title": "Result Viewer",
+  "runtimeKernel": {
+    "strategy": "code_object_v3",
+    "executionAdapter": "legacy_handler_bridge",
+    "legacyHandlerKey": "viewer",
+    "codeObjectId": "ai-paths.node-code-object.viewer.v3"
+  },
+  "runtimeSemantics": {
+    "processing": "pulse_node_only",
+    "waiting": "freeze_consumed_inputs_and_outputs",
+    "success": "animate_outgoing_on_emit",
+    "error": "animate_error_routes_on_emit"
+  },
+  "ports": {
+    "inputs": [
+      "result",
+      "sources",
+      "grouped",
+      "matches",
+      "index",
+      "total",
+      "done",
+      "analysis",
+      "description",
+      "description_en",
+      "prompt",
+      "images",
+      "title",
+      "productId",
+      "content_en",
+      "context",
+      "meta",
+      "trigger",
+      "triggerName",
+      "jobId",
+      "status",
+      "entityId",
+      "entityType",
+      "entityJson",
+      "bundle",
+      "valid",
+      "errors",
+      "value",
+      "audioSignal",
+      "frequency",
+      "waveform",
+      "gain",
+      "durationMs",
+      "queryCallback",
+      "aiPrompt"
+    ],
+    "outputs": []
+  },
+  "copyPaste": {
+    "fullNode": {
+      "id": "node_viewer_example",
+      "type": "viewer",
+      "title": "Result Viewer",
+      "description": "Preview outputs connected from other nodes.",
+      "position": {
+        "x": 2040,
+        "y": 300
+      },
+      "inputs": [
+        "result",
+        "sources",
+        "grouped",
+        "matches",
+        "index",
+        "total",
+        "done",
+        "analysis",
+        "description",
+        "description_en",
+        "prompt",
+        "images",
+        "title",
+        "productId",
+        "content_en",
+        "context",
+        "meta",
+        "trigger",
+        "triggerName",
+        "jobId",
+        "status",
+        "entityId",
+        "entityType",
+        "entityJson",
+        "bundle",
+        "valid",
+        "errors",
+        "value",
+        "audioSignal",
+        "frequency",
+        "waveform",
+        "gain",
+        "durationMs",
+        "queryCallback",
+        "aiPrompt"
+      ],
+      "outputs": [],
+      "config": {
+        "viewer": {
+          "outputs": {},
+          "showImagesAsJson": false
+        }
+      }
+    }
+  },
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "id": "node_obj_viewer_portable_v3",
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "f80f84c6cea20cbeb318a99c0501ae0fa516141199d7d06584ba9b0746aa984c"
+}

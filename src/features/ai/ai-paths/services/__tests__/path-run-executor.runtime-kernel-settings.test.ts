@@ -238,6 +238,113 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     expect(disabledArgs?.['validationMiddleware']).toBeUndefined();
   });
 
+  it('persists runtime-kernel context and parity telemetry in events and final meta', async () => {
+    listAiPathsSettingsMock.mockResolvedValue([
+      { key: AI_PATHS_RUNTIME_KERNEL_MODE_KEY, value: 'auto' },
+      { key: AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY, value: 'constant, template' },
+    ]);
+    const run = buildRunRecord();
+    const node = run.graph?.nodes?.[0];
+    evaluateGraphWithIteratorAutoContinueMock.mockImplementationOnce(
+      async (args: Record<string, unknown>) => {
+        const onNodeFinish = args['onNodeFinish'] as
+          | ((
+              event: Record<string, unknown>
+            ) => void | Promise<void>)
+          | undefined;
+        await onNodeFinish?.({
+          runId: run.id,
+          runStartedAt: '2026-03-05T10:01:00.000Z',
+          node: node ?? null,
+          nodeInputs: {},
+          prevOutputs: null,
+          nextOutputs: {
+            status: 'completed',
+            value: 'ok',
+          },
+          changed: true,
+          iteration: 1,
+          runtimeStrategy: 'code_object_v3',
+          runtimeResolutionSource: 'override',
+          runtimeCodeObjectId: 'ai-paths.node-code-object.constant.v3',
+        });
+        return {
+          ...RUNTIME_STATE_IDLE,
+          history: {
+            [node?.id ?? 'node-1']: [
+              {
+                runtimeStrategy: 'code_object_v3',
+                runtimeResolutionSource: 'override',
+                runtimeCodeObjectId: 'ai-paths.node-code-object.constant.v3',
+              },
+              {
+                runtimeStrategy: 'legacy_adapter',
+                runtimeResolutionSource: 'registry',
+                runtimeCodeObjectId: null,
+              },
+            ],
+          },
+        } as RuntimeState;
+      }
+    );
+
+    const { executePathRun } = await loadModule();
+    await executePathRun(run);
+
+    const nodeFinishEventPayload = createRunEventMock.mock.calls
+      .map((call) => call[0] as Record<string, unknown>)
+      .find(
+        (payload) =>
+          typeof payload['message'] === 'string' &&
+          String(payload['message']).includes('finished with status: completed')
+      );
+    expect(nodeFinishEventPayload).toMatchObject({
+      runId: run.id,
+      level: 'info',
+      metadata: expect.objectContaining({
+        runtimeKernelMode: 'auto',
+        runtimeKernelModeSource: 'settings',
+        runtimeKernelPilotNodeTypes: ['constant', 'template'],
+        runtimeKernelPilotNodeTypesSource: 'settings',
+        runtimeStrategy: 'code_object_v3',
+        runtimeResolutionSource: 'override',
+        runtimeCodeObjectId: 'ai-paths.node-code-object.constant.v3',
+      }),
+    });
+
+    const finalUpdatePayload = updateRunIfStatusMock.mock.calls
+      .map((call) => call[2] as Record<string, unknown>)
+      .find((payload) => payload['status'] === 'completed');
+    expect(finalUpdatePayload).toBeDefined();
+    expect(finalUpdatePayload?.['meta']).toEqual(
+      expect.objectContaining({
+        runtimeKernel: {
+          runtimeKernelMode: 'auto',
+          runtimeKernelModeSource: 'settings',
+          runtimeKernelPilotNodeTypes: ['constant', 'template'],
+          runtimeKernelPilotNodeTypesSource: 'settings',
+        },
+        runtimeTrace: expect.objectContaining({
+          kernelParity: {
+            sampledHistoryEntries: 2,
+            strategyCounts: {
+              legacy_adapter: 1,
+              code_object_v3: 1,
+              unknown: 0,
+            },
+            resolutionSourceCounts: {
+              override: 1,
+              registry: 1,
+              missing: 0,
+              unknown: 0,
+            },
+            codeObjectIds: ['ai-paths.node-code-object.constant.v3'],
+          },
+        }),
+      })
+    );
+  });
+
   it('persists runtime validation findings through run events', async () => {
     const run = buildRunRecord();
     const warningNode = run.graph?.nodes?.[0];

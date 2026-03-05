@@ -4,13 +4,13 @@ Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
-- Runtime strategy: `legacy_adapter`
-- Migration wave: `backlog`
-- Code object ID: `not_assigned`
-- Readiness stage: `cataloged`
-- Readiness score: 35/100
-- Readiness blockers: `missing_v3_scaffold`, `not_in_v3_pilot`
-- Parity evidence suite IDs: `none`
+- Runtime strategy: `code_object_v3`
+- Migration wave: `pilot`
+- Code object ID: `ai-paths.node-code-object.gate.v3`
+- Readiness stage: `rollout_candidate`
+- Readiness score: 90/100
+- Readiness blockers: `rollout_not_approved`
+- Parity evidence suite IDs: `v3-pilot-parity-core`
 - Config field count: 5
 
 ## Node Contract Files
@@ -18,9 +18,9 @@ Generated at: 2026-03-05T00:00:00.000Z
 - Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/gate.json`
 - Semantic hash: `c49aeec3b3e821c7acbe9f9602a3ab9d27933ddede848c552a4e728011e39425`
 - v2 code object: `docs/ai-paths/node-code-objects-v2/gate.json`
-- v3 scaffold: `missing`
-- v3 object id: `missing`
-- v3 object hash: `missing`
+- v3 scaffold: `docs/ai-paths/node-code-objects-v3/gate.scaffold.json`
+- v3 object id: `node_obj_gate_portable_v3`
+- v3 object hash: `0b3b771d323546d821f16eab553099cbf76f81f8961ceda2fc0ee7b67a63e253`
 
 ## Ports
 

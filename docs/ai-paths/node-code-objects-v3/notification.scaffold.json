@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v3",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "nodeType": "notification",
+  "title": "Toast Notification",
+  "runtimeKernel": {
+    "strategy": "code_object_v3",
+    "executionAdapter": "legacy_handler_bridge",
+    "legacyHandlerKey": "notification",
+    "codeObjectId": "ai-paths.node-code-object.notification.v3"
+  },
+  "runtimeSemantics": {
+    "processing": "pulse_node_only",
+    "waiting": "freeze_consumed_inputs_and_outputs",
+    "success": "animate_outgoing_on_emit",
+    "error": "animate_error_routes_on_emit"
+  },
+  "ports": {
+    "inputs": [
+      "value",
+      "bundle",
+      "title"
+    ],
+    "outputs": []
+  },
+  "copyPaste": {
+    "fullNode": {
+      "id": "node_notification_example",
+      "type": "notification",
+      "title": "Toast Notification",
+      "description": "Display an instant toast from incoming results.",
+      "position": {
+        "x": 2130,
+        "y": 180
+      },
+      "inputs": [
+        "value",
+        "bundle",
+        "title"
+      ],
+      "outputs": [],
+      "config": {}
+    }
+  },
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "id": "node_obj_notification_portable_v3",
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "76a46d4366b86fcca6a4fc5d95d33c4708a67b8a14fab29d83a1228b2b670018"
+}

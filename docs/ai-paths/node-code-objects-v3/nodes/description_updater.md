@@ -4,13 +4,13 @@ Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
-- Runtime strategy: `legacy_adapter`
-- Migration wave: `backlog`
-- Code object ID: `not_assigned`
-- Readiness stage: `cataloged`
-- Readiness score: 35/100
-- Readiness blockers: `missing_v3_scaffold`, `not_in_v3_pilot`
-- Parity evidence suite IDs: `none`
+- Runtime strategy: `code_object_v3`
+- Migration wave: `pilot`
+- Code object ID: `ai-paths.node-code-object.description_updater.v3`
+- Readiness stage: `rollout_candidate`
+- Readiness score: 90/100
+- Readiness blockers: `rollout_not_approved`
+- Parity evidence suite IDs: `v3-pilot-parity-core`
 - Config field count: 3
 
 ## Node Contract Files
@@ -18,9 +18,9 @@ Generated at: 2026-03-05T00:00:00.000Z
 - Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/description_updater.json`
 - Semantic hash: `0140c1929e747f53a5f4f60043595787d367bdd869350012552e7cc185c69588`
 - v2 code object: `docs/ai-paths/node-code-objects-v2/description_updater.json`
-- v3 scaffold: `missing`
-- v3 object id: `missing`
-- v3 object hash: `missing`
+- v3 scaffold: `docs/ai-paths/node-code-objects-v3/description_updater.scaffold.json`
+- v3 object id: `node_obj_description_updater_portable_v3`
+- v3 object hash: `036b75287b8b567ce566c659ad29e542decd3fdf4efcd3015c7a933e488dc346`
 
 ## Ports
 

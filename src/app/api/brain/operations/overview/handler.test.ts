@@ -7,11 +7,13 @@ const {
   chatbotFindAllMock,
   listImageStudioRunsMock,
   agentFindManyMock,
+  listAiInsightsMock,
 } = vi.hoisted(() => ({
   getAiPathRunQueueStatusMock: vi.fn(),
   chatbotFindAllMock: vi.fn(),
   listImageStudioRunsMock: vi.fn(),
   agentFindManyMock: vi.fn(),
+  listAiInsightsMock: vi.fn(),
 }));
 
 vi.mock('@/features/jobs/server', () => ({
@@ -34,6 +36,10 @@ vi.mock('@/shared/lib/db/prisma', () => ({
       findMany: agentFindManyMock,
     },
   },
+}));
+
+vi.mock('@/features/ai/insights/repository', () => ({
+  listAiInsights: listAiInsightsMock,
 }));
 
 import { GET_handler } from './handler';
@@ -116,6 +122,7 @@ describe('brain operations overview handler', () => {
         updatedAt: new Date('2026-03-01T00:03:00.000Z'),
       },
     ]);
+    listAiInsightsMock.mockResolvedValue([]);
   });
 
   it('returns a payload that matches the operations overview contract', async () => {
@@ -284,6 +291,140 @@ describe('brain operations overview handler', () => {
       expect.arrayContaining([
         expect.objectContaining({ key: 'runtime_analytics', value: 'disabled' }),
         expect.objectContaining({ key: 'brain_reports_24h', value: 'disabled' }),
+        expect.objectContaining({ key: 'runtime_kernel_risk', value: 'disabled' }),
+        expect.objectContaining({ key: 'runtime_risk_events_current', value: 'disabled' }),
+      ])
+    );
+  });
+
+  it('downgrades AI Paths healthy state when latest runtime insight reports high risk', async () => {
+    listAiInsightsMock.mockResolvedValueOnce([
+      {
+        id: 'insight-runtime-1',
+        type: 'runtime_analytics',
+        status: 'warning',
+        source: 'scheduled_job',
+        score: 0,
+        name: 'runtime insight',
+        content: {},
+        createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+        updatedAt: null,
+        metadata: {
+          runtimeKernelParityRiskLevel: 'high',
+        },
+      },
+    ]);
+
+    const response = await GET_handler(
+      new Request('http://localhost/api/brain/operations/overview') as Parameters<
+        typeof GET_handler
+      >[0],
+      {} as Parameters<typeof GET_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as {
+      domains: {
+        ai_paths: {
+          state: string;
+          message?: string;
+          metrics: Array<{ key: string; value: string | number | boolean }>;
+        };
+      };
+    };
+
+    expect(listAiInsightsMock).toHaveBeenCalledWith('runtime_analytics', 25);
+    expect(payload.domains.ai_paths.state).toBe('warning');
+    expect(payload.domains.ai_paths.message).toContain('Latest runtime kernel parity risk: HIGH');
+    expect(payload.domains.ai_paths.metrics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'runtime_kernel_risk', value: 'HIGH' }),
+        expect.objectContaining({ key: 'runtime_audit_age_min', value: expect.any(Number) }),
+      ])
+    );
+  });
+
+  it('computes AI Paths trend and recent events from runtime insight history', async () => {
+    const now = Date.now();
+    const inCurrentWindow = new Date(now - 5 * 60 * 1000).toISOString();
+    const inPreviousWindow = new Date(now - 20 * 60 * 1000).toISOString();
+
+    listAiInsightsMock.mockResolvedValueOnce([
+      {
+        id: 'insight-runtime-current-high',
+        type: 'runtime_analytics',
+        status: 'warning',
+        source: 'scheduled_job',
+        score: 0,
+        name: 'runtime insight current high',
+        content: {},
+        createdAt: inCurrentWindow,
+        updatedAt: null,
+        metadata: {
+          runtimeKernelParityRiskLevel: 'high',
+        },
+      },
+      {
+        id: 'insight-runtime-current-low',
+        type: 'runtime_analytics',
+        status: 'ok',
+        source: 'scheduled_job',
+        score: 0,
+        name: 'runtime insight current low',
+        content: {},
+        createdAt: new Date(now - 3 * 60 * 1000).toISOString(),
+        updatedAt: null,
+        metadata: {
+          runtimeKernelParityRiskLevel: 'low',
+        },
+      },
+      {
+        id: 'insight-runtime-previous-medium',
+        type: 'runtime_analytics',
+        status: 'warning',
+        source: 'scheduled_job',
+        score: 0,
+        name: 'runtime insight previous medium',
+        content: {},
+        createdAt: inPreviousWindow,
+        updatedAt: null,
+        metadata: {
+          runtimeKernelParityRiskLevel: 'medium',
+        },
+      },
+    ]);
+
+    const response = await GET_handler(
+      new Request('http://localhost/api/brain/operations/overview?range=15m') as Parameters<
+        typeof GET_handler
+      >[0],
+      {} as Parameters<typeof GET_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as {
+      domains: {
+        ai_paths: {
+          trend?: { label?: string; current?: number; previous?: number };
+          metrics: Array<{ key: string; value: string | number | boolean }>;
+          recentEvents: Array<{ status: string }>;
+        };
+      };
+    };
+
+    expect(payload.domains.ai_paths.trend?.label).toContain('Risky runtime insights vs previous 15m');
+    expect(payload.domains.ai_paths.trend?.current).toBe(1);
+    expect(payload.domains.ai_paths.trend?.previous).toBe(1);
+    expect(payload.domains.ai_paths.metrics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'runtime_risk_events_current', value: 1 }),
+        expect.objectContaining({ key: 'runtime_risk_events_previous', value: 1 }),
+      ])
+    );
+    expect(payload.domains.ai_paths.recentEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ status: 'runtime_kernel_high' }),
+        expect.objectContaining({ status: 'runtime_kernel_low' }),
       ])
     );
   });

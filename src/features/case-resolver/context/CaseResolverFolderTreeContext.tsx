@@ -92,20 +92,27 @@ export interface CaseResolverFolderTreeDataContextValue {
   selectedFolderForFolderCreate: string | null;
 }
 
-export interface CaseResolverFolderTreeUiContextValue {
+export interface CaseResolverFolderTreeUiStateContextValue {
   showChildCaseFolders: boolean;
-  setShowChildCaseFolders: React.Dispatch<React.SetStateAction<boolean>>;
   highlightedNodeFileAssetIds: string[];
-  setHighlightedNodeFileAssetIds: React.Dispatch<React.SetStateAction<string[]>>;
   highlightedNodeFileAssetIdSet: Set<string>;
   highlightedFolderAncestorNodeIds: string[];
 }
 
+export interface CaseResolverFolderTreeUiActionsContextValue {
+  setShowChildCaseFolders: React.Dispatch<React.SetStateAction<boolean>>;
+  setHighlightedNodeFileAssetIds: React.Dispatch<React.SetStateAction<string[]>>;
+}
+
+export type CaseResolverFolderTreeUiContextValue = CaseResolverFolderTreeUiStateContextValue &
+  CaseResolverFolderTreeUiActionsContextValue;
+
 const CaseResolverFolderTreeDataContext =
   createContext<CaseResolverFolderTreeDataContextValue | null>(null);
-const CaseResolverFolderTreeUiContext = createContext<CaseResolverFolderTreeUiContextValue | null>(
-  null
-);
+const CaseResolverFolderTreeUiStateContext =
+  createContext<CaseResolverFolderTreeUiStateContextValue | null>(null);
+const CaseResolverFolderTreeUiActionsContext =
+  createContext<CaseResolverFolderTreeUiActionsContextValue | null>(null);
 
 export function useCaseResolverFolderTreeDataContext(): CaseResolverFolderTreeDataContextValue {
   const context = useContext(CaseResolverFolderTreeDataContext);
@@ -117,14 +124,30 @@ export function useCaseResolverFolderTreeDataContext(): CaseResolverFolderTreeDa
   return context;
 }
 
-export function useCaseResolverFolderTreeUiContext(): CaseResolverFolderTreeUiContextValue {
-  const context = useContext(CaseResolverFolderTreeUiContext);
+export function useCaseResolverFolderTreeUiStateContext(): CaseResolverFolderTreeUiStateContextValue {
+  const context = useContext(CaseResolverFolderTreeUiStateContext);
   if (!context) {
     throw new Error(
-      'useCaseResolverFolderTreeUiContext must be used within CaseResolverFolderTreeProvider'
+      'useCaseResolverFolderTreeUiStateContext must be used within CaseResolverFolderTreeProvider'
     );
   }
   return context;
+}
+
+export function useCaseResolverFolderTreeUiActionsContext(): CaseResolverFolderTreeUiActionsContextValue {
+  const context = useContext(CaseResolverFolderTreeUiActionsContext);
+  if (!context) {
+    throw new Error(
+      'useCaseResolverFolderTreeUiActionsContext must be used within CaseResolverFolderTreeProvider'
+    );
+  }
+  return context;
+}
+
+export function useCaseResolverFolderTreeUiContext(): CaseResolverFolderTreeUiContextValue {
+  const state = useCaseResolverFolderTreeUiStateContext();
+  const actions = useCaseResolverFolderTreeUiActionsContext();
+  return { ...state, ...actions };
 }
 
 const resolveFolderAncestorNodeIds = (folderPath: string): string[] => {
@@ -794,30 +817,36 @@ export function CaseResolverFolderTreeProvider({
     ]
   );
 
-  const uiValue = useMemo(
-    (): CaseResolverFolderTreeUiContextValue => ({
+  const uiStateValue = useMemo(
+    (): CaseResolverFolderTreeUiStateContextValue => ({
       showChildCaseFolders,
-      setShowChildCaseFolders,
       highlightedNodeFileAssetIds,
-      setHighlightedNodeFileAssetIds,
       highlightedNodeFileAssetIdSet,
       highlightedFolderAncestorNodeIds,
     }),
     [
       showChildCaseFolders,
-      setShowChildCaseFolders,
       highlightedNodeFileAssetIds,
-      setHighlightedNodeFileAssetIds,
       highlightedNodeFileAssetIdSet,
       highlightedFolderAncestorNodeIds,
     ]
   );
 
+  const uiActionsValue = useMemo(
+    (): CaseResolverFolderTreeUiActionsContextValue => ({
+      setShowChildCaseFolders,
+      setHighlightedNodeFileAssetIds,
+    }),
+    [setShowChildCaseFolders, setHighlightedNodeFileAssetIds]
+  );
+
   return (
     <CaseResolverFolderTreeDataContext.Provider value={dataValue}>
-      <CaseResolverFolderTreeUiContext.Provider value={uiValue}>
-        {children}
-      </CaseResolverFolderTreeUiContext.Provider>
+      <CaseResolverFolderTreeUiStateContext.Provider value={uiStateValue}>
+        <CaseResolverFolderTreeUiActionsContext.Provider value={uiActionsValue}>
+          {children}
+        </CaseResolverFolderTreeUiActionsContext.Provider>
+      </CaseResolverFolderTreeUiStateContext.Provider>
     </CaseResolverFolderTreeDataContext.Provider>
   );
 }

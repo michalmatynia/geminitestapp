@@ -659,7 +659,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
     handleCreateFolder: creationActions.handleCreateFolder,
     handleCreateFile: creationActions.handleCreateFile,
     handleCreateScanFile: assetActions.handleCreateScanFile,
-    handleCreateNodeFile: assetActions.handleCreateNodeFile,
+    handleCreateNodeFile: creationActions.handleCreateNodeFile,
     handleCreateImageAsset: assetActions.handleCreateImageAsset,
     handleCreateDocumentFromText: assetActions.handleCreateDocumentFromText,
     handleUploadScanFiles: assetActions.handleUploadScanFiles,

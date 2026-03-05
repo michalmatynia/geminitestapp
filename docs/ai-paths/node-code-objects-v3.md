@@ -21,13 +21,28 @@ Current pilot set:
 
 - `constant`
 - `context`
+- `bundle`
+- `compare`
+- `delay`
+- `db_schema`
+- `description_updater`
+- `fetcher`
+- `gate`
+- `iterator`
 - `mapper`
 - `math`
 - `mutator`
+- `notification`
 - `parser`
 - `regex`
+- `router`
+- `simulation`
 - `string_mutator`
 - `template`
+- `trigger`
+- `validation_pattern`
+- `validator`
+- `viewer`
 
 In this phase, pilot nodes still execute through legacy handlers, but their runtime strategy is tagged as `code_object_v3` for staged rollout.
 
@@ -41,7 +56,7 @@ Rollout control:
 - Admin UI control is available in AI-Paths Canvas action bar under `Runtime Kernel`.
 - server env overrides persisted settings:
   - `AI_PATHS_RUNTIME_KERNEL_MODE=legacy_only`
-  - `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES=constant,context,mapper,math,mutator,parser,regex,string_mutator,template`
+  - `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES=constant,context,bundle,compare,delay,db_schema,description_updater,fetcher,gate,iterator,mapper,math,mutator,notification,parser,regex,router,simulation,string_mutator,template,trigger,validation_pattern,validator,viewer`
 
 ## Directory
 
@@ -49,7 +64,7 @@ Rollout control:
 - `docs/ai-paths/node-code-objects-v3/index.json` (generated pilot v3 index + hashes)
 - `docs/ai-paths/node-code-objects-v3/contracts.json` (generated pilot v3 contracts hash catalog)
 - `docs/ai-paths/node-code-objects-v3/parity-evidence.json` (test-backed dual-run parity evidence)
-- `docs/ai-paths/node-code-objects-v3/{constant,context,mapper,math,mutator,parser,regex,string_mutator,template}.scaffold.json`
+- `docs/ai-paths/node-code-objects-v3/{constant,context,bundle,compare,delay,db_schema,description_updater,fetcher,gate,iterator,mapper,math,mutator,notification,parser,regex,router,simulation,string_mutator,template,trigger,validation_pattern,validator,viewer}.scaffold.json`
 - `docs/ai-paths/node-code-objects-v3/migration-index.json` (generated full-node migration matrix)
 - `docs/ai-paths/node-code-objects-v3/MIGRATION_GUIDE.md` (generated workflow and coverage guide)
 - `docs/ai-paths/node-code-objects-v3/nodes/<nodeType>.md` (generated per-node migration sheets)

@@ -1,0 +1,44 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
+import { generateRuntimeAnalyticsInsight } from '@/features/ai/insights/generator';
+import { listAiInsights } from '@/features/ai/insights/repository';
+import { startAiInsightsQueue } from '@/features/jobs/server';
+import type { AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { getQueryParams } from '@/shared/lib/api/api-handler';
+
+const RANGE_VALUES: readonly AiPathRuntimeAnalyticsRange[] = ['1h', '24h', '7d', '30d'];
+
+const listSchema = z.object({
+  limit: z.coerce.number().int().positive().max(50).optional(),
+  range: z.string().optional(),
+});
+
+const resolveRange = (rangeRaw: string | undefined): AiPathRuntimeAnalyticsRange => {
+  const value = (rangeRaw ?? '24h') as AiPathRuntimeAnalyticsRange;
+  if (!RANGE_VALUES.includes(value)) return '24h';
+  return value;
+};
+
+export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await requireAiPathsAccess();
+  startAiInsightsQueue();
+
+  const parsed = listSchema.parse(Object.fromEntries(getQueryParams(req).entries()));
+  const insights = await listAiInsights('runtime_analytics', parsed.limit ?? 10);
+  return NextResponse.json({ insights });
+}
+
+export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  await requireAiPathsAccess();
+  startAiInsightsQueue();
+
+  const parsed = listSchema.parse(Object.fromEntries(getQueryParams(req).entries()));
+  const insight = await generateRuntimeAnalyticsInsight({
+    source: 'user_triggered',
+    range: resolveRange(parsed.range),
+  });
+  return NextResponse.json({ insight });
+}

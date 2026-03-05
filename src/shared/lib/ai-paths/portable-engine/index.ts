@@ -18,7 +18,7 @@ import {
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { evaluateGraphClient } from '@/shared/lib/ai-paths/core/runtime/engine-client';
 import type { EvaluateGraphOptions } from '@/shared/lib/ai-paths/core/runtime/engine-modules/engine-types';
-import { createAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine';
+import { resolveAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine';
 import {
   parseAndDeserializeSemanticCanvas,
   serializePathConfigToSemanticCanvas,
@@ -435,10 +435,6 @@ export type PortablePathRunResult = {
   validation: PortablePathValidationReport | null;
   runtimeState: RuntimeState;
 };
-
-const isRuntimeValidationMiddleware = (
-  value: unknown
-): value is NonNullable<EvaluateGraphOptions['validationMiddleware']> => typeof value === 'function';
 
 export type MigratePortablePathInputResult =
   | {
@@ -2336,17 +2332,14 @@ export const runPortablePathClient = async (
     throw validationError;
   }
 
-  const runtimeValidationMiddlewareOverride: EvaluateGraphOptions['validationMiddleware'] =
-    isRuntimeValidationMiddleware(validationMiddleware) ? validationMiddleware : undefined;
   const runtimeValidationMiddleware: EvaluateGraphOptions['validationMiddleware'] =
-    runtimeValidationMiddlewareOverride ??
-    (runtimeValidationEnabled
-      ? createAiPathsRuntimeValidationMiddleware({
-        config: runtimeValidationConfig ?? resolved.value.pathConfig.aiPathsValidation ?? null,
-        nodes: resolved.value.pathConfig.nodes,
-        edges: resolved.value.pathConfig.edges,
-      })
-      : undefined);
+    resolveAiPathsRuntimeValidationMiddleware({
+      validationMiddleware,
+      runtimeValidationEnabled,
+      runtimeValidationConfig: runtimeValidationConfig ?? resolved.value.pathConfig.aiPathsValidation ?? null,
+      nodes: resolved.value.pathConfig.nodes,
+      edges: resolved.value.pathConfig.edges,
+    });
 
   let runtimeState: RuntimeState;
   try {

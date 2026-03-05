@@ -2,8 +2,28 @@
   "schemaVersion": "ai-paths.node-code-object-contracts.v3",
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "specVersion": "ai-paths.portable-engine.v1",
-  "totalContracts": 9,
+  "totalContracts": 23,
   "contracts": {
+    "bundle": {
+      "objectId": "node_obj_bundle_portable_v3",
+      "title": "Bundle",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "efd212bb912876b826edc314d235b8d6bb4f943c34eaf55991a6ecf99706c976",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "bundle",
+      "codeObjectId": "ai-paths.node-code-object.bundle.v3"
+    },
+    "compare": {
+      "objectId": "node_obj_compare_portable_v3",
+      "title": "Compare",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "23313b4478cf5494b15d3fed3e3a3770e3e666e5a6ff42db1280b8cdc5ca44ae",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "compare",
+      "codeObjectId": "ai-paths.node-code-object.compare.v3"
+    },
     "constant": {
       "objectId": "node_obj_constant_portable_v3",
       "title": "Constant",
@@ -23,6 +43,56 @@
       "executionAdapter": "legacy_handler_bridge",
       "legacyHandlerKey": "context",
       "codeObjectId": "ai-paths.node-code-object.context.v3"
+    },
+    "delay": {
+      "objectId": "node_obj_delay_portable_v3",
+      "title": "Delay",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "1f0b26b2c3deff73dbf90d4b173edb547e1821a940d48a5a477f8d23b6246711",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "delay",
+      "codeObjectId": "ai-paths.node-code-object.delay.v3"
+    },
+    "description_updater": {
+      "objectId": "node_obj_description_updater_portable_v3",
+      "title": "Description Updater (Deprecated)",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "036b75287b8b567ce566c659ad29e542decd3fdf4efcd3015c7a933e488dc346",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "description_updater",
+      "codeObjectId": "ai-paths.node-code-object.description_updater.v3"
+    },
+    "fetcher": {
+      "objectId": "node_obj_fetcher_portable_v3",
+      "title": "Fetcher: Trigger Context",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "fcc70313d66490ac6d0c94f9e3a2040828e7d228b938cac4b314fa792be8b44a",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "fetcher",
+      "codeObjectId": "ai-paths.node-code-object.fetcher.v3"
+    },
+    "gate": {
+      "objectId": "node_obj_gate_portable_v3",
+      "title": "Gate",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "0b3b771d323546d821f16eab553099cbf76f81f8961ceda2fc0ee7b67a63e253",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "gate",
+      "codeObjectId": "ai-paths.node-code-object.gate.v3"
+    },
+    "iterator": {
+      "objectId": "node_obj_iterator_portable_v3",
+      "title": "Iterator",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "6491b4a9cb98f5e8ef6ba30fe0bbdf1b31107495d61bbf266c0632ed12bdede3",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "iterator",
+      "codeObjectId": "ai-paths.node-code-object.iterator.v3"
     },
     "mapper": {
       "objectId": "node_obj_mapper_portable_v3",
@@ -54,6 +124,16 @@
       "legacyHandlerKey": "mutator",
       "codeObjectId": "ai-paths.node-code-object.mutator.v3"
     },
+    "notification": {
+      "objectId": "node_obj_notification_portable_v3",
+      "title": "Toast Notification",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "76a46d4366b86fcca6a4fc5d95d33c4708a67b8a14fab29d83a1228b2b670018",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "notification",
+      "codeObjectId": "ai-paths.node-code-object.notification.v3"
+    },
     "parser": {
       "objectId": "node_obj_parser_portable_v3",
       "title": "JSON Parser",
@@ -74,6 +154,26 @@
       "legacyHandlerKey": "regex",
       "codeObjectId": "ai-paths.node-code-object.regex.v3"
     },
+    "router": {
+      "objectId": "node_obj_router_portable_v3",
+      "title": "Router",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "35c0e41b00ab2cbce2ee142a6c4edec2d23e29aaf054f17ee7f5b16629d5593f",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "router",
+      "codeObjectId": "ai-paths.node-code-object.router.v3"
+    },
+    "simulation": {
+      "objectId": "node_obj_simulation_portable_v3",
+      "title": "Simulation: Entity Modal",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "260264a220a38e7a06ba60e09ea48e5cb1f24cf7a0410b703d144f10b8baf906",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "simulation",
+      "codeObjectId": "ai-paths.node-code-object.simulation.v3"
+    },
     "string_mutator": {
       "objectId": "node_obj_string_mutator_portable_v3",
       "title": "String Mutator",
@@ -93,8 +193,48 @@
       "executionAdapter": "legacy_handler_bridge",
       "legacyHandlerKey": "template",
       "codeObjectId": "ai-paths.node-code-object.template.v3"
+    },
+    "trigger": {
+      "objectId": "node_obj_trigger_portable_v3",
+      "title": "Trigger: Image Studio Analysis",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "a4d688101f3f7a130ada35fe80325d4f04989dee0db5896291183c677a327e24",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "trigger",
+      "codeObjectId": "ai-paths.node-code-object.trigger.v3"
+    },
+    "validation_pattern": {
+      "objectId": "node_obj_validation_pattern_portable_v3",
+      "title": "Validation Pattern",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "87ede3561620dfc8eb2564de91d3b5f96544aba2977455a73a84d2faeffae378",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "validation_pattern",
+      "codeObjectId": "ai-paths.node-code-object.validation_pattern.v3"
+    },
+    "validator": {
+      "objectId": "node_obj_validator_portable_v3",
+      "title": "Validator",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "e81c532abb19cc9abc59e7296aa5fdac4b6fe9055bba72779a2f1bfd6730f35a",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "validator",
+      "codeObjectId": "ai-paths.node-code-object.validator.v3"
+    },
+    "viewer": {
+      "objectId": "node_obj_viewer_portable_v3",
+      "title": "Result Viewer",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "f80f84c6cea20cbeb318a99c0501ae0fa516141199d7d06584ba9b0746aa984c",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "viewer",
+      "codeObjectId": "ai-paths.node-code-object.viewer.v3"
     }
   },
   "contractsHashAlgorithm": "sha256",
-  "contractsHash": "820609a0b3ea69b4aae4d3a42eff70dcc0f6aadc30fe09008fde25dff6521001"
+  "contractsHash": "957d1f29e4cd6506009a23dc3449914be77a2177112edf7bf833745a56e12a98"
 }

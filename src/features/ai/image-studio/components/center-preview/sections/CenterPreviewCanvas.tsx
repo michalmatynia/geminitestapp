@@ -50,7 +50,7 @@ export function CenterPreviewCanvas(): React.JSX.Element {
   const { maskInvert, maskFeather } = useMaskingState();
   const { compositeLoading } = useVersionGraphState();
 
-  const previewCanvasClassName = cn('h-full', 'bg-slate-900');
+  const previewCanvasClassName = cn('h-full', 'bg-slate-900', 'overscroll-contain');
   const baseCanvasWidthPx = projectCanvasSize?.width ?? 1024;
   const baseCanvasHeightPx = projectCanvasSize?.height ?? 1024;
   const imageMoveEnabled = imageTransformMode === 'move';

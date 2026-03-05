@@ -7,7 +7,7 @@ import {
   normalizeNodes,
   sanitizeEdges,
 } from '@/shared/lib/ai-paths';
-import { createAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine';
+import { resolveAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine';
 import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
 import { GraphExecutionCancelled } from '@/shared/lib/ai-paths/core/runtime/engine-core';
 import { listAiPathsSettings } from '@/features/ai/ai-paths/server/settings-store';
@@ -44,6 +44,9 @@ import {
   parseRuntimeState,
   resolveRuntimeKernelConfigForRun,
   resolveCancellationPollIntervalMs,
+  summarizeRuntimeKernelParityFromHistory,
+  toRuntimeKernelExecutionTelemetry,
+  toRuntimeNodeResolutionTelemetry,
 } from '../path-run-executor.helpers';
 import { fetchEntityByType } from '../path-run-executor.entities';
 import {
@@ -183,6 +186,19 @@ export const executePathRun = async (
   });
   const runtimeKernelMode = runtimeKernelConfig.mode;
   const runtimeKernelPilotNodeTypes = runtimeKernelConfig.pilotNodeTypes;
+  const runtimeKernelExecutionTelemetry = toRuntimeKernelExecutionTelemetry(runtimeKernelConfig);
+  const toRunEventRuntimeKernelMetadata = (input?: {
+    runtimeStrategy?: unknown;
+    runtimeResolutionSource?: unknown;
+    runtimeCodeObjectId?: unknown;
+  }): Record<string, unknown> => ({
+    ...runtimeKernelExecutionTelemetry,
+    ...toRuntimeNodeResolutionTelemetry({
+      runtimeStrategy: input?.runtimeStrategy,
+      runtimeResolutionSource: input?.runtimeResolutionSource,
+      runtimeCodeObjectId: input?.runtimeCodeObjectId,
+    }),
+  });
 
   const accInputs: Record<string, RuntimePortValues> = mergeRuntimePortMaps(
     {},
@@ -270,6 +286,30 @@ export const executePathRun = async (
 
   const runMetaRecord = run.meta && typeof run.meta === 'object' ? run.meta : null;
   const runMetaWithRuntimeFingerprint = withRuntimeFingerprintMeta(runMetaRecord);
+  const runMetaRuntimeKernelRecord =
+    runMetaRecord &&
+    typeof runMetaRecord['runtimeKernel'] === 'object' &&
+    runMetaRecord['runtimeKernel'] !== null &&
+    !Array.isArray(runMetaRecord['runtimeKernel'])
+      ? (runMetaRecord['runtimeKernel'] as Record<string, unknown>)
+      : null;
+  const runMetaRuntimeKernelTelemetryMatches =
+    runMetaRuntimeKernelRecord?.['runtimeKernelMode'] ===
+      runtimeKernelExecutionTelemetry.runtimeKernelMode &&
+    runMetaRuntimeKernelRecord?.['runtimeKernelModeSource'] ===
+      runtimeKernelExecutionTelemetry.runtimeKernelModeSource &&
+    runMetaRuntimeKernelRecord?.['runtimeKernelPilotNodeTypesSource'] ===
+      runtimeKernelExecutionTelemetry.runtimeKernelPilotNodeTypesSource &&
+    Array.isArray(runMetaRuntimeKernelRecord?.['runtimeKernelPilotNodeTypes']) &&
+    (runMetaRuntimeKernelRecord?.['runtimeKernelPilotNodeTypes'] as unknown[]).every(
+      (entry: unknown): entry is string => typeof entry === 'string'
+    ) &&
+    (runMetaRuntimeKernelRecord?.['runtimeKernelPilotNodeTypes'] as string[]).join('|') ===
+      runtimeKernelExecutionTelemetry.runtimeKernelPilotNodeTypes.join('|');
+  const runMetaWithRuntimeContext = {
+    ...runMetaWithRuntimeFingerprint,
+    runtimeKernel: runtimeKernelExecutionTelemetry,
+  };
 
   const nodeRecords = await repo.listRunNodes(run.id);
   const nodeStatusMap = new Map<string, string>(
@@ -350,6 +390,7 @@ export const executePathRun = async (
           runStartedAt,
           runtimeFingerprint,
           traceId,
+          ...runtimeKernelExecutionTelemetry,
           ...meta,
           error: errorReport.message,
           errorCode: errorReport.code,
@@ -372,9 +413,12 @@ export const executePathRun = async (
   const toast = (): void => {};
 
   try {
-    if (runMetaRecord?.['runtimeFingerprint'] !== runtimeFingerprint) {
+    if (
+      runMetaRecord?.['runtimeFingerprint'] !== runtimeFingerprint ||
+      !runMetaRuntimeKernelTelemetryMatches
+    ) {
       await updateRunSnapshot({
-        meta: runMetaWithRuntimeFingerprint,
+        meta: runMetaWithRuntimeContext,
       });
     }
 
@@ -391,13 +435,12 @@ export const executePathRun = async (
 
     const { validationConfig, strictFlowMode, nodeValidationEnabled, requiredProcessingNodeIds } =
       preflight;
-    const runtimeValidationMiddleware = nodeValidationEnabled
-      ? createAiPathsRuntimeValidationMiddleware({
-        config: validationConfig,
-        nodes,
-        edges,
-      })
-      : undefined;
+    const runtimeValidationMiddleware = resolveAiPathsRuntimeValidationMiddleware({
+      runtimeValidationEnabled: nodeValidationEnabled,
+      runtimeValidationConfig: validationConfig,
+      nodes,
+      edges,
+    });
 
     const canceledBeforeExecution = await monitor.start();
     if (canceledBeforeExecution) {
@@ -474,9 +517,11 @@ export const executePathRun = async (
               nodeTitle: node?.title ?? null,
               issueCount: issues.length,
               issues: issues.slice(0, 5),
-              ...(runtimeStrategy ? { runtimeStrategy } : {}),
-              ...(runtimeResolutionSource ? { runtimeResolutionSource } : {}),
-              ...(runtimeCodeObjectId ? { runtimeCodeObjectId } : {}),
+              ...toRunEventRuntimeKernelMetadata({
+                runtimeStrategy,
+                runtimeResolutionSource,
+                runtimeCodeObjectId,
+              }),
             },
           });
         } catch (error) {
@@ -569,9 +614,11 @@ export const executePathRun = async (
                       nodeType: node.type,
                       iteration,
                       attempt: nextAttempt,
-                      ...(runtimeStrategy ? { runtimeStrategy } : {}),
-                      ...(runtimeResolutionSource ? { runtimeResolutionSource } : {}),
-                      ...(runtimeCodeObjectId ? { runtimeCodeObjectId } : {}),
+                      ...toRunEventRuntimeKernelMetadata({
+                        runtimeStrategy,
+                        runtimeResolutionSource,
+                        runtimeCodeObjectId,
+                      }),
                     },
                   })
                   .catch(() => {}),
@@ -660,9 +707,11 @@ export const executePathRun = async (
                   iteration,
                   attempt,
                   cached,
-                  ...(runtimeStrategy ? { runtimeStrategy } : {}),
-                  ...(runtimeResolutionSource ? { runtimeResolutionSource } : {}),
-                  ...(runtimeCodeObjectId ? { runtimeCodeObjectId } : {}),
+                  ...toRunEventRuntimeKernelMetadata({
+                    runtimeStrategy,
+                    runtimeResolutionSource,
+                    runtimeCodeObjectId,
+                  }),
                   ...(metadata ? { nodeMetadata: metadata } : {}),
                 },
               })
@@ -740,9 +789,11 @@ export const executePathRun = async (
                   attempt,
                   reason,
                   status: runtimeStatus,
-                  ...(runtimeStrategy ? { runtimeStrategy } : {}),
-                  ...(runtimeResolutionSource ? { runtimeResolutionSource } : {}),
-                  ...(runtimeCodeObjectId ? { runtimeCodeObjectId } : {}),
+                  ...toRunEventRuntimeKernelMetadata({
+                    runtimeStrategy,
+                    runtimeResolutionSource,
+                    runtimeCodeObjectId,
+                  }),
                   ...(waitingOnPorts ? { waitingOnPorts } : {}),
                 },
               })
@@ -855,9 +906,11 @@ export const executePathRun = async (
                   iteration,
                   attempt,
                   error: message,
-                  ...(runtimeStrategy ? { runtimeStrategy } : {}),
-                  ...(runtimeResolutionSource ? { runtimeResolutionSource } : {}),
-                  ...(runtimeCodeObjectId ? { runtimeCodeObjectId } : {}),
+                  ...toRunEventRuntimeKernelMetadata({
+                    runtimeStrategy,
+                    runtimeResolutionSource,
+                    runtimeCodeObjectId,
+                  }),
                   errorCode: errorReport.code,
                   errorCategory: errorReport.category,
                   errorScope: errorReport.scope,
@@ -928,17 +981,26 @@ export const executePathRun = async (
     });
 
     const finalRuntimeState = await buildCurrentRuntimeStateSnapshot();
+    const runtimeTraceRecord =
+      runMetaWithRuntimeContext['runtimeTrace'] &&
+      typeof runMetaWithRuntimeContext['runtimeTrace'] === 'object' &&
+      !Array.isArray(runMetaWithRuntimeContext['runtimeTrace'])
+        ? (runMetaWithRuntimeContext['runtimeTrace'] as Record<string, unknown>)
+        : {};
+    const runtimeKernelParity = summarizeRuntimeKernelParityFromHistory(finalRuntimeState.history);
 
     await updateRunSnapshot({
       status: finalStatus,
       runtimeState: finalRuntimeState,
       errorMessage: finalError,
       meta: {
-        ...(run.meta ?? {}),
+        ...runMetaWithRuntimeContext,
         finishedAt,
         durationMs: computeDurationMs(runStartedAt, finishedAt),
         runtimeTrace: {
+          ...runtimeTraceRecord,
           profile: profileSnapshot,
+          kernelParity: runtimeKernelParity,
         },
       },
     });
@@ -963,7 +1025,7 @@ export const executePathRun = async (
       runtimeState: finalRuntimeState,
       errorMessage,
       meta: {
-        ...(run.meta ?? {}),
+        ...runMetaWithRuntimeContext,
         finishedAt,
         durationMs: computeDurationMs(runStartedAt, finishedAt),
       },

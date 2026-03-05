@@ -50,6 +50,13 @@ export interface UseVectorCanvasInteractionsProps {
   syncCanvasSize: () => void;
 }
 
+type WheelLikeEvent = {
+  deltaY: number;
+  deltaMode: number;
+  preventDefault: () => void;
+  stopPropagation?: () => void;
+};
+
 export function useVectorCanvasInteractions({
   containerRef,
   viewportRef: _viewportRef,
@@ -391,17 +398,18 @@ export function useVectorCanvasInteractions({
     [getInteractionRect, shapes]
   );
 
-  const handleWheel = useCallback(
-    (event: React.WheelEvent): void => {
-      event.preventDefault();
-      const zoomFactor = 1 - event.deltaY * 0.001;
-      const nextScale = Math.min(8, Math.max(0.25, viewTransform.scale * zoomFactor));
-      if (nextScale !== viewTransform.scale) {
-        setViewTransform((prev) => ({ ...prev, scale: nextScale }));
-      }
-    },
-    [viewTransform.scale]
-  );
+  const handleWheel = useCallback((event: WheelLikeEvent): void => {
+    event.preventDefault();
+    event.stopPropagation?.();
+
+    const normalizedDeltaY =
+      event.deltaMode === 1 ? event.deltaY * 16 : event.deltaMode === 2 ? event.deltaY * 240 : event.deltaY;
+    const currentScale = viewTransformRef.current.scale;
+    const zoomFactor = 1 - normalizedDeltaY * 0.001;
+    const nextScale = Math.min(8, Math.max(0.25, currentScale * zoomFactor));
+    if (nextScale === currentScale) return;
+    setViewTransform((prev) => ({ ...prev, scale: nextScale }));
+  }, []);
 
   const handleMouseDown = useCallback(
     (event: React.MouseEvent): void => {

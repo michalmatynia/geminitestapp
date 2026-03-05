@@ -125,6 +125,137 @@ export const resolveRuntimeKernelConfigForRun = (input: {
   };
 };
 
+export type RuntimeKernelExecutionTelemetry = {
+  runtimeKernelMode: NodeRuntimeKernelMode;
+  runtimeKernelModeSource: 'env' | 'settings' | 'default';
+  runtimeKernelPilotNodeTypes: string[];
+  runtimeKernelPilotNodeTypesSource: 'env' | 'settings' | 'default';
+};
+
+export const toRuntimeKernelExecutionTelemetry = (input: {
+  mode: NodeRuntimeKernelMode;
+  modeSource: 'env' | 'settings' | 'default';
+  pilotNodeTypes: string[] | undefined;
+  pilotSource: 'env' | 'settings' | 'default';
+}): RuntimeKernelExecutionTelemetry => ({
+  runtimeKernelMode: input.mode,
+  runtimeKernelModeSource: input.modeSource,
+  runtimeKernelPilotNodeTypes: input.pilotNodeTypes ?? [],
+  runtimeKernelPilotNodeTypesSource: input.pilotSource,
+});
+
+const normalizeRuntimeStrategy = (value: unknown): 'legacy_adapter' | 'code_object_v3' | null => {
+  if (value === 'legacy_adapter' || value === 'code_object_v3') {
+    return value;
+  }
+  return null;
+};
+
+const normalizeRuntimeResolutionSource = (
+  value: unknown
+): 'override' | 'registry' | 'missing' | null => {
+  if (value === 'override' || value === 'registry' || value === 'missing') {
+    return value;
+  }
+  return null;
+};
+
+export const toRuntimeNodeResolutionTelemetry = (input: {
+  runtimeStrategy?: unknown;
+  runtimeResolutionSource?: unknown;
+  runtimeCodeObjectId?: unknown;
+}): {
+  runtimeStrategy?: 'legacy_adapter' | 'code_object_v3';
+  runtimeResolutionSource?: 'override' | 'registry' | 'missing';
+  runtimeCodeObjectId?: string | null;
+} => {
+  const runtimeStrategy = normalizeRuntimeStrategy(input.runtimeStrategy);
+  const runtimeResolutionSource = normalizeRuntimeResolutionSource(input.runtimeResolutionSource);
+  const runtimeCodeObjectId =
+    input.runtimeCodeObjectId === null
+      ? null
+      : typeof input.runtimeCodeObjectId === 'string' && input.runtimeCodeObjectId.trim().length > 0
+        ? input.runtimeCodeObjectId.trim()
+        : undefined;
+
+  return {
+    ...(runtimeStrategy ? { runtimeStrategy } : {}),
+    ...(runtimeResolutionSource ? { runtimeResolutionSource } : {}),
+    ...(runtimeCodeObjectId !== undefined ? { runtimeCodeObjectId } : {}),
+  };
+};
+
+export type RuntimeKernelParitySummary = {
+  sampledHistoryEntries: number;
+  strategyCounts: {
+    legacy_adapter: number;
+    code_object_v3: number;
+    unknown: number;
+  };
+  resolutionSourceCounts: {
+    override: number;
+    registry: number;
+    missing: number;
+    unknown: number;
+  };
+  codeObjectIds: string[];
+};
+
+export const summarizeRuntimeKernelParityFromHistory = (
+  history: RuntimeState['history'] | null | undefined
+): RuntimeKernelParitySummary => {
+  const summary: RuntimeKernelParitySummary = {
+    sampledHistoryEntries: 0,
+    strategyCounts: {
+      legacy_adapter: 0,
+      code_object_v3: 0,
+      unknown: 0,
+    },
+    resolutionSourceCounts: {
+      override: 0,
+      registry: 0,
+      missing: 0,
+      unknown: 0,
+    },
+    codeObjectIds: [],
+  };
+  if (!history || typeof history !== 'object' || Array.isArray(history)) {
+    return summary;
+  }
+
+  const codeObjectIdSet = new Set<string>();
+  Object.values(history).forEach((entries: unknown): void => {
+    if (!Array.isArray(entries)) return;
+    entries.forEach((entry: unknown): void => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+      summary.sampledHistoryEntries += 1;
+      const record = entry as Record<string, unknown>;
+
+      const strategy = normalizeRuntimeStrategy(record['runtimeStrategy']);
+      if (strategy) {
+        summary.strategyCounts[strategy] += 1;
+      } else {
+        summary.strategyCounts.unknown += 1;
+      }
+
+      const resolutionSource = normalizeRuntimeResolutionSource(record['runtimeResolutionSource']);
+      if (resolutionSource) {
+        summary.resolutionSourceCounts[resolutionSource] += 1;
+      } else {
+        summary.resolutionSourceCounts.unknown += 1;
+      }
+
+      const codeObjectId = record['runtimeCodeObjectId'];
+      if (typeof codeObjectId === 'string' && codeObjectId.trim().length > 0) {
+        codeObjectIdSet.add(codeObjectId.trim());
+      }
+    });
+  });
+
+  summary.codeObjectIds = Array.from(codeObjectIdSet).slice(0, 25);
+  return summary;
+};
+
 export const resolveCancellationPollIntervalMs = (): number => {
   const parsed = Number.parseInt(process.env['AI_PATHS_CANCEL_POLL_INTERVAL_MS'] ?? '', 10);
   if (!Number.isFinite(parsed)) return 750;

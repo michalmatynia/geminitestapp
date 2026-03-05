@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import type {
+  CaseResolverAssetFile,
   CaseResolverFile,
   CaseResolverFolderRecord,
   CaseResolverWorkspace,
@@ -19,10 +20,43 @@ import {
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
 } from '../workspace-persistence';
-import { createCaseResolverFile, normalizeFolderPaths } from '../settings';
+import {
+  createCaseResolverAssetFile,
+  createCaseResolverFile,
+  normalizeFolderPaths,
+} from '../settings';
 
 import { type SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 import { type Toast } from '@/shared/contracts/ui';
+
+const createUniqueAssetName = ({
+  assets,
+  folder,
+  baseName,
+}: {
+  assets: CaseResolverAssetFile[];
+  folder: string;
+  baseName: string;
+}): string => {
+  const normalizedBaseName = baseName.trim() || 'New Asset';
+  const existingNames = new Set(
+    assets
+      .filter((asset: CaseResolverAssetFile): boolean => asset.folder === folder)
+      .map((asset: CaseResolverAssetFile): string => asset.name.trim().toLowerCase())
+  );
+  if (!existingNames.has(normalizedBaseName.toLowerCase())) {
+    return normalizedBaseName;
+  }
+  let index = 2;
+  while (index < 10000) {
+    const candidate = `${normalizedBaseName} ${index}`;
+    if (!existingNames.has(candidate.toLowerCase())) {
+      return candidate;
+    }
+    index += 1;
+  }
+  return `${normalizedBaseName} ${Date.now()}`;
+};
 
 export function useCaseResolverStateCreationActions({
   workspace: _workspace,
@@ -242,6 +276,59 @@ export function useCaseResolverStateCreationActions({
     ]
   );
 
+  const createNodeFileForCase = useCallback(
+    ({
+      ownerCaseId,
+      targetFolderPath,
+    }: {
+      ownerCaseId: string;
+      targetFolderPath: string | null;
+    }): void => {
+      let createdAssetId: string | null = null;
+      updateWorkspace(
+        (current) => {
+          const folder = resolveCaseScopedFolderTarget({
+            targetFolderPath,
+            ownerCaseId,
+            folderRecords: current.folderRecords,
+          });
+          const asset = createCaseResolverAssetFile({
+            id: createId('asset'),
+            workspaceId: current.id,
+            name: createUniqueAssetName({
+              assets: current.assets,
+              folder,
+              baseName: 'New Node File',
+            }),
+            folder,
+            kind: 'node_file',
+            metadata: {
+              ownerCaseId,
+            },
+          });
+          createdAssetId = asset.id;
+          return {
+            ...current,
+            assets: [...current.assets, asset],
+            folders: normalizeFolderPaths([...current.folders, folder]),
+            folderRecords: appendOwnedFolderRecords({
+              records: current.folderRecords,
+              folderPath: folder,
+              ownerCaseId,
+            }),
+          };
+        },
+        { persistToast: 'Case Resolver tree changes saved.' }
+      );
+      setSelectedFileId(null);
+      setSelectedFolderPath(null);
+      if (createdAssetId) {
+        setSelectedAssetId(createdAssetId);
+      }
+    },
+    [setSelectedAssetId, setSelectedFileId, setSelectedFolderPath, updateWorkspace]
+  );
+
   const handleCreateFolder = useCallback(
     (targetFolderPath: string | null): void => {
       if (activeCaseId && canCreateInActiveCase) {
@@ -344,9 +431,65 @@ export function useCaseResolverStateCreationActions({
     ]
   );
 
+  const handleCreateNodeFile = useCallback(
+    (targetFolderPath: string | null): void => {
+      if (activeCaseId && canCreateInActiveCase) {
+        createNodeFileForCase({
+          ownerCaseId: activeCaseId,
+          targetFolderPath,
+        });
+        return;
+      }
+      if (requestedCaseStatus === 'loading' || createContextRecoveryInFlightRef.current) {
+        toast('Case context is still loading. Please wait.', { variant: 'warning' });
+        return;
+      }
+      if (requestedFileId) {
+        setRequestedCaseStatus('loading');
+        void (async (): Promise<void> => {
+          const recoveredCaseId = await recoverCreateContextCaseId(
+            'case_view_create_node_file_recover'
+          );
+          if (recoveredCaseId) {
+            createNodeFileForCase({
+              ownerCaseId: recoveredCaseId,
+              targetFolderPath,
+            });
+            return;
+          }
+          setRequestedCaseStatus('missing');
+          logCaseResolverWorkspaceEvent({
+            source: 'case_view',
+            action: 'create_node_file_blocked',
+            message: 'No active case context is available after refresh.',
+          });
+          toast('Cannot create node file without a selected case.', { variant: 'warning' });
+        })();
+        return;
+      }
+      logCaseResolverWorkspaceEvent({
+        source: 'case_view',
+        action: 'create_node_file_blocked',
+        message: 'No active case context is available.',
+      });
+      toast('Cannot create node file without a selected case.', { variant: 'warning' });
+    },
+    [
+      activeCaseId,
+      canCreateInActiveCase,
+      createNodeFileForCase,
+      recoverCreateContextCaseId,
+      requestedCaseStatus,
+      requestedFileId,
+      setRequestedCaseStatus,
+      toast,
+    ]
+  );
+
   return {
     handleCreateFolder,
     handleCreateFile,
+    handleCreateNodeFile,
     recoverCreateContextCaseId,
   };
 }

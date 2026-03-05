@@ -35,6 +35,33 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
   const runtimeAnalyticsQuery = useAiPathRuntimeAnalytics('24h', runtimeAnalyticsEnabled);
   const portableEngineAnalytics = runtimeAnalyticsQuery.data?.portableEngine;
   const latestPortableEngineFailure = portableEngineAnalytics?.recentFailures[0] ?? null;
+  const runtimeKernelParity = runtimeAnalyticsQuery.data?.traces.kernelParity;
+  const runtimeKernelSampledRuns = runtimeKernelParity?.sampledRuns ?? 0;
+  const runtimeKernelRunsWithParity = runtimeKernelParity?.runsWithKernelParity ?? 0;
+  const runtimeKernelSampledHistoryEntries = runtimeKernelParity?.sampledHistoryEntries ?? 0;
+  const runtimeKernelV3Entries = runtimeKernelParity?.strategyCounts.code_object_v3 ?? 0;
+  const runtimeKernelLegacyEntries = runtimeKernelParity?.strategyCounts.legacy_adapter ?? 0;
+  const runtimeKernelUnknownEntries = runtimeKernelParity?.strategyCounts.unknown ?? 0;
+  const runtimeKernelResolutionOverride = runtimeKernelParity?.resolutionSourceCounts.override ?? 0;
+  const runtimeKernelResolutionRegistry = runtimeKernelParity?.resolutionSourceCounts.registry ?? 0;
+  const runtimeKernelResolutionMissing = runtimeKernelParity?.resolutionSourceCounts.missing ?? 0;
+  const runtimeKernelResolutionUnknown = runtimeKernelParity?.resolutionSourceCounts.unknown ?? 0;
+  const runtimeKernelCodeObjectIds = runtimeKernelParity?.codeObjectIds ?? [];
+
+  const runtimeKernelRunsCoverageRate =
+    runtimeKernelSampledRuns > 0 ? (runtimeKernelRunsWithParity / runtimeKernelSampledRuns) * 100 : 0;
+  const runtimeKernelV3Rate =
+    runtimeKernelSampledHistoryEntries > 0
+      ? (runtimeKernelV3Entries / runtimeKernelSampledHistoryEntries) * 100
+      : 0;
+  const runtimeKernelLegacyRate =
+    runtimeKernelSampledHistoryEntries > 0
+      ? (runtimeKernelLegacyEntries / runtimeKernelSampledHistoryEntries) * 100
+      : 0;
+  const runtimeKernelUnknownRate =
+    runtimeKernelSampledHistoryEntries > 0
+      ? (runtimeKernelUnknownEntries / runtimeKernelSampledHistoryEntries) * 100
+      : 0;
 
   const nodeTitleById = useMemo((): Map<string, string> => {
     const map = new Map<string, string>();
@@ -239,7 +266,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
           24h runtime summaries and trace samples are not queried.
         </Card>
       ) : (
-        <div className='grid gap-2 sm:grid-cols-3'>
+        <div className='grid gap-2 sm:grid-cols-4'>
           <Card
             variant='subtle-compact'
             padding='sm'
@@ -348,6 +375,63 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
                         {entry.nodeId} ({entry.failedCount}/{entry.spanCount})
                       </button>
                     ))}
+                </div>
+              </div>
+            ) : null}
+          </Card>
+          <Card
+            variant='subtle-compact'
+            padding='sm'
+            className='border-border/60 bg-card/60 text-[11px] text-gray-300'
+          >
+            <div className='text-[10px] uppercase text-gray-500'>Kernel parity (24h)</div>
+            <div className='mt-1 text-gray-200'>
+              Coverage {runtimeKernelRunsWithParity}/{runtimeKernelSampledRuns} (
+              {formatPercent(runtimeKernelRunsCoverageRate)})
+            </div>
+            <div className='mt-1 text-gray-400'>
+              History entries {runtimeKernelSampledHistoryEntries}
+            </div>
+            <div className='mt-2 text-gray-200'>
+              v3 {formatPercent(runtimeKernelV3Rate)} · legacy{' '}
+              {formatPercent(runtimeKernelLegacyRate)} · unknown{' '}
+              {formatPercent(runtimeKernelUnknownRate)}
+            </div>
+            <div className='mt-1 flex h-2 overflow-hidden rounded bg-card/80 ring-1 ring-border/30'>
+              <div
+                className='bg-emerald-400/70'
+                style={{ width: `${Math.max(0, Math.min(100, runtimeKernelV3Rate))}%` }}
+                aria-hidden
+              />
+              <div
+                className='bg-amber-400/70'
+                style={{ width: `${Math.max(0, Math.min(100, runtimeKernelLegacyRate))}%` }}
+                aria-hidden
+              />
+              <div
+                className='bg-slate-500/70'
+                style={{ width: `${Math.max(0, Math.min(100, runtimeKernelUnknownRate))}%` }}
+                aria-hidden
+              />
+            </div>
+            <div className='mt-2 text-gray-400'>
+              Resolution O/R/M/U: {runtimeKernelResolutionOverride}/
+              {runtimeKernelResolutionRegistry}/{runtimeKernelResolutionMissing}/
+              {runtimeKernelResolutionUnknown}
+            </div>
+            {runtimeKernelCodeObjectIds.length > 0 ? (
+              <div className='mt-2 text-gray-500'>
+                <div>Top code objects:</div>
+                <div className='mt-1 flex flex-wrap gap-1'>
+                  {runtimeKernelCodeObjectIds.slice(0, 3).map((codeObjectId: string) => (
+                    <span
+                      key={codeObjectId}
+                      className='rounded border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-100'
+                      title={codeObjectId}
+                    >
+                      {codeObjectId}
+                    </span>
+                  ))}
                 </div>
               </div>
             ) : null}

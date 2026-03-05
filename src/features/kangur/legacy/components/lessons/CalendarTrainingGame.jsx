@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
-import { addXp, XP_REWARDS, loadProgress } from '@/features/kangur/legacy/components/progress/progressSystem';
+import { addXp, XP_REWARDS, loadProgress } from '@/features/kangur/ui/services/progress';
 
 const MONTHS = [
   'Styczeń',

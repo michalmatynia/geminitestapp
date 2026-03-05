@@ -1,4 +1,5 @@
 import type {
+  CaseResolverAssetFile,
   CaseResolverFile,
   CaseResolverFolderRecord,
   CaseResolverWorkspace,
@@ -128,12 +129,33 @@ export const resolveScopedCaseResolverWorkspaceWithIndexes = ({
     });
   });
 
-  const scopedAssets = workspace.assets.filter((asset): boolean =>
-    Boolean(
-      (asset.sourceFileId && scopedFileIdSet.has(asset.sourceFileId)) ||
-      (asset.kind === 'node_file' && scopedNodeFileAssetIds.has(asset.id))
-    )
-  );
+  const isStandaloneNodeFileInScope = (asset: CaseResolverAssetFile): boolean => {
+    if (asset.kind !== 'node_file') return false;
+    if (scopedNodeFileAssetIds.has(asset.id)) return true;
+
+    const metadataOwnerCaseId =
+      asset.metadata &&
+      typeof asset.metadata === 'object' &&
+      typeof asset.metadata['ownerCaseId'] === 'string'
+        ? asset.metadata['ownerCaseId'].trim()
+        : '';
+    if (metadataOwnerCaseId.length > 0) {
+      return scopedCaseIds.has(metadataOwnerCaseId);
+    }
+
+    const normalizedFolderPath = asset.folder.trim();
+    if (normalizedFolderPath.length === 0) return false;
+    const folderOwnerCaseIds = indexes.folderOwnerCaseIdsByPath.get(normalizedFolderPath) ?? [];
+    if (folderOwnerCaseIds.length === 0) return false;
+    return folderOwnerCaseIds.every((ownerCaseId: string): boolean =>
+      scopedCaseIds.has(ownerCaseId)
+    );
+  };
+
+  const scopedAssets = workspace.assets.filter((asset: CaseResolverAssetFile): boolean => {
+    if (asset.sourceFileId && scopedFileIdSet.has(asset.sourceFileId)) return true;
+    return isStandaloneNodeFileInScope(asset);
+  });
 
   const scopedFolderRecords = (workspace.folderRecords ?? []).filter(
     (folderRecord: CaseResolverFolderRecord): boolean =>

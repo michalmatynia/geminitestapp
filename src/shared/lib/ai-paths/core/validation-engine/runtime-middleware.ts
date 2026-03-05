@@ -21,6 +21,15 @@ export type CreateAiPathsRuntimeValidationMiddlewareInput = {
   maxIssuesPerDecision?: number | undefined;
 };
 
+export type ResolveAiPathsRuntimeValidationMiddlewareInput = {
+  validationMiddleware?: RuntimeValidationMiddleware | null | undefined;
+  runtimeValidationEnabled?: boolean | undefined;
+  runtimeValidationConfig?: AiPathsValidationConfig | null | undefined;
+  nodes: AiNode[];
+  edges: Edge[];
+  maxIssuesPerDecision?: number | undefined;
+};
+
 const DEFAULT_MAX_ISSUES_PER_DECISION = 10;
 
 const buildStageLabel = (stage: RuntimeValidationStage): string => {
@@ -133,4 +142,22 @@ export const createAiPathsRuntimeValidationMiddleware = ({
       issues,
     };
   };
+};
+
+export const resolveAiPathsRuntimeValidationMiddleware = (
+  input: ResolveAiPathsRuntimeValidationMiddlewareInput
+): RuntimeValidationMiddleware | undefined => {
+  const override = input.validationMiddleware;
+  if (typeof override === 'function') {
+    return override;
+  }
+  if (input.runtimeValidationEnabled === false) {
+    return undefined;
+  }
+  return createAiPathsRuntimeValidationMiddleware({
+    config: input.runtimeValidationConfig ?? null,
+    nodes: input.nodes,
+    edges: input.edges,
+    maxIssuesPerDecision: input.maxIssuesPerDecision,
+  });
 };

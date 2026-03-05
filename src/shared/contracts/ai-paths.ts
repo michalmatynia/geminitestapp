@@ -319,6 +319,40 @@ export const aiPathRuntimeTraceFailedNodeSchema = z.object({
 
 export type AiPathRuntimeTraceFailedNode = z.infer<typeof aiPathRuntimeTraceFailedNodeSchema>;
 
+export const aiPathRuntimeKernelStrategyCountsSchema = z.object({
+  legacy_adapter: z.number(),
+  code_object_v3: z.number(),
+  unknown: z.number(),
+});
+
+export type AiPathRuntimeKernelStrategyCounts = z.infer<
+  typeof aiPathRuntimeKernelStrategyCountsSchema
+>;
+
+export const aiPathRuntimeKernelResolutionSourceCountsSchema = z.object({
+  override: z.number(),
+  registry: z.number(),
+  missing: z.number(),
+  unknown: z.number(),
+});
+
+export type AiPathRuntimeKernelResolutionSourceCounts = z.infer<
+  typeof aiPathRuntimeKernelResolutionSourceCountsSchema
+>;
+
+export const aiPathRuntimeKernelParityAnalyticsSchema = z.object({
+  sampledRuns: z.number(),
+  runsWithKernelParity: z.number(),
+  sampledHistoryEntries: z.number(),
+  strategyCounts: aiPathRuntimeKernelStrategyCountsSchema,
+  resolutionSourceCounts: aiPathRuntimeKernelResolutionSourceCountsSchema,
+  codeObjectIds: z.array(z.string()),
+});
+
+export type AiPathRuntimeKernelParityAnalytics = z.infer<
+  typeof aiPathRuntimeKernelParityAnalyticsSchema
+>;
+
 export const aiPathRuntimeTraceAnalyticsSchema = z.object({
   source: z.enum(['none', 'db_sample']),
   sampledRuns: z.number(),
@@ -331,6 +365,7 @@ export const aiPathRuntimeTraceAnalyticsSchema = z.object({
   slowestSpan: aiPathRuntimeAnalyticsSlowestSpanSchema.nullable(),
   topSlowNodes: z.array(aiPathRuntimeTraceSlowNodeSchema),
   topFailedNodes: z.array(aiPathRuntimeTraceFailedNodeSchema),
+  kernelParity: aiPathRuntimeKernelParityAnalyticsSchema,
   truncated: z.boolean(),
 });
 

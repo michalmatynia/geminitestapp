@@ -9,7 +9,8 @@ import type {
 } from '@/features/case-resolver/context/CaseResolverPageContext';
 import type {
   CaseResolverFolderTreeDataContextValue,
-  CaseResolverFolderTreeUiContextValue,
+  CaseResolverFolderTreeUiActionsContextValue,
+  CaseResolverFolderTreeUiStateContextValue,
 } from '@/features/case-resolver/context/CaseResolverFolderTreeContext';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
@@ -52,14 +53,17 @@ const folderTreeDataContext = {
   selectedFolderForCreate: null,
 } as unknown as CaseResolverFolderTreeDataContextValue;
 
-const folderTreeUiContext = {
+const folderTreeUiStateContext = {
   showChildCaseFolders: true,
-  setShowChildCaseFolders: setShowChildCaseFoldersMock,
   highlightedNodeFileAssetIds: [],
-  setHighlightedNodeFileAssetIds: vi.fn(),
   highlightedNodeFileAssetIdSet: new Set<string>(),
   highlightedFolderAncestorNodeIds: [],
-} as unknown as CaseResolverFolderTreeUiContextValue;
+} as unknown as CaseResolverFolderTreeUiStateContextValue;
+
+const folderTreeUiActionsContext = {
+  setShowChildCaseFolders: setShowChildCaseFoldersMock,
+  setHighlightedNodeFileAssetIds: vi.fn(),
+} as unknown as CaseResolverFolderTreeUiActionsContextValue;
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -74,7 +78,8 @@ vi.mock('@/features/case-resolver/context/CaseResolverPageContext', () => ({
 
 vi.mock('@/features/case-resolver/context/CaseResolverFolderTreeContext', () => ({
   useCaseResolverFolderTreeDataContext: () => folderTreeDataContext,
-  useCaseResolverFolderTreeUiContext: () => folderTreeUiContext,
+  useCaseResolverFolderTreeUiStateContext: () => folderTreeUiStateContext,
+  useCaseResolverFolderTreeUiActionsContext: () => folderTreeUiActionsContext,
 }));
 
 describe('CaseResolverTreeHeader', () => {
@@ -98,7 +103,7 @@ describe('CaseResolverTreeHeader', () => {
       caseIdentifierId: null,
     } as unknown as CaseResolverFile;
     folderTreeDataContext.activeCaseChildCount = 2;
-    folderTreeUiContext.showChildCaseFolders = true;
+    folderTreeUiStateContext.showChildCaseFolders = true;
   });
 
   it('shows nested folders/files switch in active case and toggles child scope visibility', () => {

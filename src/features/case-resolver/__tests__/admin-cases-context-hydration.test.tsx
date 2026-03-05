@@ -4,7 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   AdminCaseResolverCasesProvider,
-  useAdminCaseResolverCases,
+  useAdminCaseResolverCasesActionsContext,
+  useAdminCaseResolverCasesStateContext,
 } from '@/features/case-resolver/context/AdminCaseResolverCasesContext';
 import {
   CASE_RESOLVER_WORKSPACE_KEY,
@@ -102,8 +103,8 @@ const buildNoRecordResult = (message: string): CaseResolverWorkspaceRecordFetchR
 });
 
 function ContextProbe(): React.JSX.Element {
-  const { workspace, casesLoadState, casesLoadMessage, handleRefreshWorkspace } =
-    useAdminCaseResolverCases();
+  const { workspace, casesLoadState, casesLoadMessage } = useAdminCaseResolverCasesStateContext();
+  const { handleRefreshWorkspace } = useAdminCaseResolverCasesActionsContext();
   const caseCount = workspace.files.filter((file) => file.fileType === 'case').length;
 
   return (

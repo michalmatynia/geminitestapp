@@ -6,6 +6,7 @@ import { Button, SectionHeader } from '@/shared/ui';
 
 import { AnalyticsInsightsPanel } from '../components/AnalyticsInsightsPanel';
 import { LogInsightsPanel } from '../components/LogInsightsPanel';
+import { RuntimeAnalyticsInsightsPanel } from '../components/RuntimeAnalyticsInsightsPanel';
 import { InsightsProvider } from '../context/InsightsContext';
 
 function AdminAiInsightsPageContent(): React.JSX.Element {
@@ -13,7 +14,7 @@ function AdminAiInsightsPageContent(): React.JSX.Element {
     <div className='container mx-auto py-10'>
       <SectionHeader
         title='AI Insights'
-        description='Aggregated AI summaries for analytics and system logs.'
+        description='Aggregated AI summaries for analytics, runtime telemetry, and system logs.'
         className='mb-6'
         actions={
           <Button
@@ -26,8 +27,9 @@ function AdminAiInsightsPageContent(): React.JSX.Element {
         }
       />
 
-      <div className='grid gap-6 lg:grid-cols-2'>
+      <div className='grid gap-6 xl:grid-cols-3'>
         <AnalyticsInsightsPanel />
+        <RuntimeAnalyticsInsightsPanel />
         <LogInsightsPanel />
       </div>
     </div>

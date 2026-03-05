@@ -35,6 +35,11 @@ import {
   parseNumberSetting,
 } from './generator/settings-service';
 import {
+  assessRuntimeKernelParityRisk,
+  buildRuntimeKernelParityMetadata,
+  buildRuntimeKernelParityPrompt,
+} from './generator/runtime-analytics-prompt';
+import {
   getClient,
   isAnthropicModel,
   isGeminiModel,
@@ -179,6 +184,8 @@ export async function generateAiInsightByType(
   let systemPrompt = '';
   let userPrompt = '';
   const source: AiInsightSource = options?.source ?? 'manual';
+  let insightName = `${type.replace('_', ' ')} Insight - ${new Date().toLocaleDateString()}`;
+  let insightMetadata: Record<string, unknown> | undefined;
 
   const now = new Date();
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -220,13 +227,20 @@ Identify any patterns or critical issues.`;
     const range = options?.range ?? '24h';
     const window = resolveRuntimeAnalyticsRangeWindow(range);
     const summary = await getRuntimeAnalyticsSummary(window);
+    const kernelParityAssessment = assessRuntimeKernelParityRisk(summary);
+    const kernelParityPrompt = buildRuntimeKernelParityPrompt(summary, kernelParityAssessment);
+    insightName = `${type.replace('_', ' ')} Insight [${kernelParityAssessment.riskLevel.toUpperCase()} risk] - ${now.toLocaleDateString()}`;
+    insightMetadata = buildRuntimeKernelParityMetadata(summary, kernelParityAssessment);
     systemPrompt =
       (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsPromptSystem)) ||
       DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT;
     userPrompt = `AI Path Runtime Analytics Summary (${range}):
 ${JSON.stringify(summary, null, 2)}
 
-Analyze the performance and success rates of AI Path executions.`;
+Kernel Runtime Parity Snapshot:
+${kernelParityPrompt}
+
+Analyze performance and success rates of AI Path executions. Include migration risk commentary using kernel parity distribution and the computed parity risk level. Recommend rollout/rollback actions when parity coverage or v3 share is weak.`;
   }
 
   const messages: ChatMessage[] = [
@@ -249,11 +263,12 @@ Analyze the performance and success rates of AI Path executions.`;
   try {
     const content = await callChatModel({ model: modelId, apiKey, messages });
     const insight = await appendAiInsight(type, {
-      name: `${type.replace('_', ' ')} Insight - ${now.toLocaleDateString()}`,
+      name: insightName,
       source,
       content: { text: stripCodeFence(content) },
       status: 'new',
       score: 0,
+      metadata: insightMetadata,
     });
 
     if (type === 'runtime_analytics') {

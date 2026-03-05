@@ -18,6 +18,37 @@ import { brainKeys } from '@/shared/lib/query-key-exports';
 export { brainKeys };
 export type { BrainModelsResponse, InsightsSnapshot, BrainOperationsOverviewResponse };
 
+type InsightListResponse = { insights?: AiInsightRecord[] };
+
+const INSIGHTS_LIMIT = 5;
+
+const normalizeInsightList = (payload: InsightListResponse | null | undefined): AiInsightRecord[] =>
+  Array.isArray(payload?.insights) ? (payload?.insights as AiInsightRecord[]) : [];
+
+export async function fetchBrainInsightsSnapshot(): Promise<InsightsSnapshot> {
+  const runtimeInsightsPromise = api
+    .get<InsightListResponse>('/api/ai-paths/runtime-analytics/insights', {
+      params: { limit: INSIGHTS_LIMIT },
+    })
+    .catch(() => ({ insights: [] } satisfies InsightListResponse));
+
+  const [analyticsData, logsData, runtimeData] = await Promise.all([
+    api.get<InsightListResponse>('/api/analytics/insights', {
+      params: { limit: INSIGHTS_LIMIT },
+    }),
+    api.get<InsightListResponse>('/api/system/logs/insights', {
+      params: { limit: INSIGHTS_LIMIT },
+    }),
+    runtimeInsightsPromise,
+  ]);
+
+  return {
+    analytics: normalizeInsightList(analyticsData),
+    runtimeAnalytics: normalizeInsightList(runtimeData),
+    logs: normalizeInsightList(logsData),
+  };
+}
+
 export function useBrainModels(options?: {
   enabled?: boolean;
   staleTime?: number;
@@ -115,20 +146,7 @@ export function useBrainInsights(): SingleQuery<InsightsSnapshot> {
   const queryKey = brainKeys.insights();
   return createSingleQueryV2<InsightsSnapshot>({
     queryKey,
-    queryFn: async (): Promise<InsightsSnapshot> => {
-      const [analyticsData, logsData] = await Promise.all([
-        api.get<{ insights?: AiInsightRecord[] }>('/api/analytics/insights', {
-          params: { limit: 5 },
-        }),
-        api.get<{ insights?: AiInsightRecord[] }>('/api/system/logs/insights', {
-          params: { limit: 5 },
-        }),
-      ]);
-      return {
-        analytics: (analyticsData.insights as AiInsightRecord[]) ?? [],
-        logs: (logsData.insights as AiInsightRecord[]) ?? [],
-      };
-    },
+    queryFn: fetchBrainInsightsSnapshot,
     id: 'insights',
     refetchInterval: 30_000,
     meta: {

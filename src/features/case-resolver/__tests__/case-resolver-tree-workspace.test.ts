@@ -402,6 +402,79 @@ describe('resolveCaseResolverTreeWorkspace', () => {
     );
   });
 
+  it('includes standalone node files when metadata owner points to the active scoped case', () => {
+    const workspace = buildWorkspaceFixture();
+    const ownedNodeFileAsset = createCaseResolverAssetFile({
+      id: 'asset-node-root-a',
+      name: 'Owned Node Root A',
+      folder: '',
+      kind: 'node_file',
+      sourceFileId: null,
+      textContent: '{}',
+      metadata: { ownerCaseId: 'case-a' },
+    });
+    const otherCaseNodeFileAsset = createCaseResolverAssetFile({
+      id: 'asset-node-root-b',
+      name: 'Owned Node Root B',
+      folder: '',
+      kind: 'node_file',
+      sourceFileId: null,
+      textContent: '{}',
+      metadata: { ownerCaseId: 'case-b' },
+    });
+
+    const scoped = resolveCaseResolverTreeWorkspace({
+      selectedFileId: 'case-a',
+      requestedFileId: null,
+      workspace: {
+        ...workspace,
+        assets: [...workspace.assets, ownedNodeFileAsset, otherCaseNodeFileAsset],
+      },
+    });
+
+    const scopedAssetIds = scoped.assets.map((asset: CaseResolverAssetFile) => asset.id);
+    expect(scopedAssetIds).toContain('asset-node-root-a');
+    expect(scopedAssetIds).not.toContain('asset-node-root-b');
+  });
+
+  it('includes standalone node files by folder ownership only when folder ownership stays in scoped cases', () => {
+    const workspace = buildWorkspaceFixture();
+    const scopedOwnedFolderNodeFile = createCaseResolverAssetFile({
+      id: 'asset-node-old-folder',
+      name: 'Owned Folder Node',
+      folder: 'old-folder',
+      kind: 'node_file',
+      sourceFileId: null,
+      textContent: '{}',
+    });
+    const ambiguousFolderNodeFile = createCaseResolverAssetFile({
+      id: 'asset-node-shared-folder',
+      name: 'Shared Folder Node',
+      folder: 'shared-folder',
+      kind: 'node_file',
+      sourceFileId: null,
+      textContent: '{}',
+    });
+
+    const scoped = resolveCaseResolverTreeWorkspace({
+      selectedFileId: 'case-a',
+      requestedFileId: null,
+      workspace: {
+        ...workspace,
+        folderRecords: [
+          ...(workspace.folderRecords ?? []),
+          { path: 'shared-folder', ownerCaseId: 'case-a' },
+          { path: 'shared-folder', ownerCaseId: 'case-b' },
+        ],
+        assets: [...workspace.assets, scopedOwnedFolderNodeFile, ambiguousFolderNodeFile],
+      },
+    });
+
+    const scopedAssetIds = scoped.assets.map((asset: CaseResolverAssetFile) => asset.id);
+    expect(scopedAssetIds).toContain('asset-node-old-folder');
+    expect(scopedAssetIds).not.toContain('asset-node-shared-folder');
+  });
+
   it('includes unresolved documents in scoped case when related links point into scope', () => {
     const workspace = buildWorkspaceFixture();
     const unresolvedRelatedDoc = createCaseResolverFile({

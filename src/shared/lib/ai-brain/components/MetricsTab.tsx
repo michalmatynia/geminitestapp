@@ -40,6 +40,20 @@ const formatPercent = (value: number | null | undefined): string => {
   return `${value.toFixed(1)}%`;
 };
 
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
+const getRuntimeKernelRisk = (metadata: unknown): string => {
+  const record = asRecord(metadata);
+  const raw = record?.['runtimeKernelParityRiskLevel'];
+  if (typeof raw !== 'string') return '—';
+  const normalized = raw.trim().toLowerCase();
+  if (!normalized) return '—';
+  return normalized.toUpperCase();
+};
+
 export function MetricsTab(): React.JSX.Element {
   const {
     analyticsSummaryQuery,
@@ -52,6 +66,7 @@ export function MetricsTab(): React.JSX.Element {
   const insightsData = insightsQuery.data;
 
   const latestAnalyticsInsight = insightsData?.analytics?.[0];
+  const latestRuntimeInsight = insightsData?.runtimeAnalytics?.[0];
 
   const latestLogsInsight = insightsData?.logs?.[0];
 
@@ -139,7 +154,7 @@ export function MetricsTab(): React.JSX.Element {
         title='AI Insight Runs'
         description='Recent results from scheduled Brain audits.'
       >
-        <div className='grid gap-4 md:grid-cols-2 mt-2'>
+        <div className='grid gap-4 md:grid-cols-3 mt-2'>
           <Card variant='subtle-compact' padding='md' className='bg-card/30 border-border/40'>
             <div className='flex items-center justify-between'>
               <span className='text-[11px] font-medium text-emerald-300 uppercase'>
@@ -159,6 +174,37 @@ export function MetricsTab(): React.JSX.Element {
                 {latestAnalyticsInsight
                   ? latestAnalyticsInsight.summary
                   : 'No analytics audits found in history.'}
+              </div>
+            </div>
+          </Card>
+
+          <Card variant='subtle-compact' padding='md' className='bg-card/30 border-border/40'>
+            <div className='flex items-center justify-between'>
+              <span className='text-[11px] font-medium text-amber-300 uppercase'>
+                Latest Runtime Audit
+              </span>
+              <StatusBadge
+                status={latestRuntimeInsight ? latestRuntimeInsight.status : 'none'}
+                label={latestRuntimeInsight ? latestRuntimeInsight.status : 'never'}
+              />
+            </div>
+            <div className='mt-3 space-y-2'>
+              <MetadataItem
+                label='Generated'
+                value={latestRuntimeInsight ? formatDate(latestRuntimeInsight.createdAt) : '—'}
+              />
+              <MetadataItem
+                label='Kernel parity risk'
+                value={
+                  latestRuntimeInsight
+                    ? getRuntimeKernelRisk(latestRuntimeInsight.metadata)
+                    : '—'
+                }
+              />
+              <div className='text-[11px] text-gray-400 line-clamp-2 mt-1'>
+                {latestRuntimeInsight
+                  ? latestRuntimeInsight.summary
+                  : 'No runtime analytics audits found in history.'}
               </div>
             </div>
           </Card>
@@ -202,6 +248,30 @@ export function MetricsTab(): React.JSX.Element {
           <div className='py-8 text-center text-xs text-gray-500'>Loading runtime analytics...</div>
         ) : runtimeAnalyticsQuery.data ? (
           <div className='grid grid-cols-2 gap-4 md:grid-cols-4 mt-2'>
+            {(() => {
+              const kernelParity = runtimeAnalyticsQuery.data?.traces.kernelParity;
+              const sampledRuns = kernelParity?.sampledRuns ?? 0;
+              const runsWithKernelParity = kernelParity?.runsWithKernelParity ?? 0;
+              const sampledHistoryEntries = kernelParity?.sampledHistoryEntries ?? 0;
+              const v3Entries = kernelParity?.strategyCounts.code_object_v3 ?? 0;
+              const kernelCoverage =
+                sampledRuns > 0 ? (runsWithKernelParity / sampledRuns) * 100 : 0;
+              const v3Share =
+                sampledHistoryEntries > 0 ? (v3Entries / sampledHistoryEntries) * 100 : 0;
+
+              return (
+                <>
+                  <MetadataItem
+                    label='Kernel Coverage'
+                    value={`${runsWithKernelParity}/${sampledRuns} (${formatPercent(kernelCoverage)})`}
+                  />
+                  <MetadataItem
+                    label='Kernel v3 Share'
+                    value={formatPercent(v3Share)}
+                  />
+                </>
+              );
+            })()}
             {}
             <MetadataItem
               label='Total Runs'

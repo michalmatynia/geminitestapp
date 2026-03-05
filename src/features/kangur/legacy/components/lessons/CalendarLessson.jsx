@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Volume2, VolumeX } from 'lucide-react';
 import CalendarInteractiveGame from './CalendarInteractiveGame';
-import { addXp, XP_REWARDS, loadProgress } from '@/features/kangur/legacy/components/progress/progressSystem';
+import { addXp, XP_REWARDS, loadProgress } from '@/features/kangur/ui/services/progress';
 
 const MONTHS = [
   { name: 'Styczeń', days: 31, num: 1 },

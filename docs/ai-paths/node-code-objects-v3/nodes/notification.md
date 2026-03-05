@@ -4,13 +4,13 @@ Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
-- Runtime strategy: `legacy_adapter`
-- Migration wave: `backlog`
-- Code object ID: `not_assigned`
-- Readiness stage: `cataloged`
-- Readiness score: 35/100
-- Readiness blockers: `missing_v3_scaffold`, `not_in_v3_pilot`
-- Parity evidence suite IDs: `none`
+- Runtime strategy: `code_object_v3`
+- Migration wave: `pilot`
+- Code object ID: `ai-paths.node-code-object.notification.v3`
+- Readiness stage: `rollout_candidate`
+- Readiness score: 90/100
+- Readiness blockers: `rollout_not_approved`
+- Parity evidence suite IDs: `v3-pilot-parity-core`
 - Config field count: 3
 
 ## Node Contract Files
@@ -18,9 +18,9 @@ Generated at: 2026-03-05T00:00:00.000Z
 - Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/notification.json`
 - Semantic hash: `171fd2da082697571cfa13252042393d4b5069c0befbda30b6f1e508d64d37d1`
 - v2 code object: `docs/ai-paths/node-code-objects-v2/notification.json`
-- v3 scaffold: `missing`
-- v3 object id: `missing`
-- v3 object hash: `missing`
+- v3 scaffold: `docs/ai-paths/node-code-objects-v3/notification.scaffold.json`
+- v3 object id: `node_obj_notification_portable_v3`
+- v3 object hash: `76a46d4366b86fcca6a4fc5d95d33c4708a67b8a14fab29d83a1228b2b670018`
 
 ## Ports
 

@@ -19,6 +19,14 @@ import {
   useAdminCaseResolverPageStateContext,
 } from '@/features/case-resolver/context/AdminCaseResolverPageContext';
 import {
+  useAdminCaseResolverCasesActionsContext,
+  useAdminCaseResolverCasesStateContext,
+} from '@/features/case-resolver/context/AdminCaseResolverCasesContext';
+import {
+  useCaseResolverFolderTreeUiActionsContext,
+  useCaseResolverFolderTreeUiStateContext,
+} from '@/features/case-resolver/context/CaseResolverFolderTreeContext';
+import {
   useDocumentRelationSearchActionsContext,
   useDocumentRelationSearchStateContext,
 } from '@/features/case-resolver/relation-search/context/DocumentRelationSearchContext';
@@ -61,6 +69,26 @@ function AdminCaseResolverPageStateConsumer(): React.JSX.Element {
 
 function AdminCaseResolverPageActionsConsumer(): React.JSX.Element {
   useAdminCaseResolverPageActionsContext();
+  return <div>ok</div>;
+}
+
+function AdminCaseResolverCasesStateConsumer(): React.JSX.Element {
+  useAdminCaseResolverCasesStateContext();
+  return <div>ok</div>;
+}
+
+function AdminCaseResolverCasesActionsConsumer(): React.JSX.Element {
+  useAdminCaseResolverCasesActionsContext();
+  return <div>ok</div>;
+}
+
+function CaseResolverFolderTreeUiStateConsumer(): React.JSX.Element {
+  useCaseResolverFolderTreeUiStateContext();
+  return <div>ok</div>;
+}
+
+function CaseResolverFolderTreeUiActionsConsumer(): React.JSX.Element {
+  useCaseResolverFolderTreeUiActionsContext();
   return <div>ok</div>;
 }
 
@@ -140,6 +168,30 @@ describe('prop-drilling runtime contexts', () => {
   it('throws when AdminCaseResolverPage actions context is missing', () => {
     expect(() => render(<AdminCaseResolverPageActionsConsumer />)).toThrow(
       'useAdminCaseResolverPageActionsContext must be used within AdminCaseResolverPageProvider'
+    );
+  });
+
+  it('throws when AdminCaseResolverCases state context is missing', () => {
+    expect(() => render(<AdminCaseResolverCasesStateConsumer />)).toThrow(
+      'useAdminCaseResolverCasesStateContext must be used within AdminCaseResolverCasesProvider'
+    );
+  });
+
+  it('throws when AdminCaseResolverCases actions context is missing', () => {
+    expect(() => render(<AdminCaseResolverCasesActionsConsumer />)).toThrow(
+      'useAdminCaseResolverCasesActionsContext must be used within AdminCaseResolverCasesProvider'
+    );
+  });
+
+  it('throws when CaseResolverFolderTreeUi state context is missing', () => {
+    expect(() => render(<CaseResolverFolderTreeUiStateConsumer />)).toThrow(
+      'useCaseResolverFolderTreeUiStateContext must be used within CaseResolverFolderTreeProvider'
+    );
+  });
+
+  it('throws when CaseResolverFolderTreeUi actions context is missing', () => {
+    expect(() => render(<CaseResolverFolderTreeUiActionsConsumer />)).toThrow(
+      'useCaseResolverFolderTreeUiActionsContext must be used within CaseResolverFolderTreeProvider'
     );
   });
 

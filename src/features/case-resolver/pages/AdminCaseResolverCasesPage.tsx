@@ -12,28 +12,32 @@ import {
 import { CaseListPanel } from '../components/CaseListPanel';
 import {
   AdminCaseResolverCasesProvider,
-  useAdminCaseResolverCases,
+  useAdminCaseResolverCasesActionsContext,
+  useAdminCaseResolverCasesStateContext,
 } from '../context/AdminCaseResolverCasesContext';
 
 function AdminCaseResolverCasesInner(): React.JSX.Element {
   const {
     isCreateCaseModalOpen,
-    setIsCreateCaseModalOpen,
     caseDraft,
-    setCaseDraft,
     editingCaseId,
-    setEditingCaseId,
-    handleSaveCaseDraft,
     isCreatingCase,
     confirmation,
-    setConfirmation,
     parentCaseOptions,
     caseReferenceOptions,
     caseResolverTagOptions,
     caseIdentifierOptions,
     caseResolverCategoryOptions,
     folderOptions,
-  } = useAdminCaseResolverCases();
+  } = useAdminCaseResolverCasesStateContext();
+
+  const {
+    setIsCreateCaseModalOpen,
+    setCaseDraft,
+    setEditingCaseId,
+    handleSaveCaseDraft,
+    setConfirmation,
+  } = useAdminCaseResolverCasesActionsContext();
 
   const createCaseFields = useMemo(
     (): SettingsField<Partial<CaseResolverFile>>[] => [

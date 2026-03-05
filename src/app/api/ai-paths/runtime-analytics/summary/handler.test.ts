@@ -121,6 +121,23 @@ describe('ai-paths runtime analytics summary handler', () => {
         slowestSpan: null,
         topSlowNodes: [],
         topFailedNodes: [],
+        kernelParity: {
+          sampledRuns: 0,
+          runsWithKernelParity: 0,
+          sampledHistoryEntries: 0,
+          strategyCounts: {
+            legacy_adapter: 0,
+            code_object_v3: 0,
+            unknown: 0,
+          },
+          resolutionSourceCounts: {
+            override: 0,
+            registry: 0,
+            missing: 0,
+            unknown: 0,
+          },
+          codeObjectIds: [],
+        },
         truncated: false,
       },
       portableEngine: {

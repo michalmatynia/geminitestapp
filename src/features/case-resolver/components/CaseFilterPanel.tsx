@@ -3,7 +3,8 @@
 import React, { useMemo } from 'react';
 import {
   type CaseHierarchyFilter,
-  useAdminCaseResolverCases,
+  useAdminCaseResolverCasesActionsContext,
+  useAdminCaseResolverCasesStateContext,
   type CaseLockedFilter,
   type CaseFileTypeFilter,
   type CaseReferencesFilter,
@@ -18,31 +19,34 @@ import type { FilterField } from '@/shared/ui/templates/panels';
 export function CaseFilterPanel(): React.JSX.Element {
   const {
     caseSearchQuery,
-    setCaseSearchQuery,
     caseFileTypeFilter,
-    setCaseFileTypeFilter,
     caseFilterFolder,
-    setCaseFilterFolder,
     caseFilterTagIds,
-    setCaseFilterTagIds,
     caseFilterCaseIdentifierIds,
-    setCaseFilterCaseIdentifierIds,
     caseFilterCategoryIds,
-    setCaseFilterCategoryIds,
     caseFilterStatus,
-    setCaseFilterStatus,
     caseFilterLocked,
-    setCaseFilterLocked,
     caseFilterSent,
-    setCaseFilterSent,
     caseFilterHierarchy,
-    setCaseFilterHierarchy,
     caseFilterReferences,
-    setCaseFilterReferences,
     caseSearchScope,
-    setCaseSearchScope,
     caseFilterPanelDefaultExpanded,
-  } = useAdminCaseResolverCases();
+  } = useAdminCaseResolverCasesStateContext();
+
+  const {
+    setCaseSearchQuery,
+    setCaseFileTypeFilter,
+    setCaseFilterFolder,
+    setCaseFilterTagIds,
+    setCaseFilterCaseIdentifierIds,
+    setCaseFilterCategoryIds,
+    setCaseFilterStatus,
+    setCaseFilterLocked,
+    setCaseFilterSent,
+    setCaseFilterHierarchy,
+    setCaseFilterReferences,
+    setCaseSearchScope,
+  } = useAdminCaseResolverCasesActionsContext();
 
   const {
     folderFilterOptions,

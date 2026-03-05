@@ -68,7 +68,71 @@ export type {
   AdminCaseResolverCasesContextValue,
 };
 
-const AdminCaseResolverCasesContext = createContext<AdminCaseResolverCasesContextValue | null>(
+const _ADMIN_CASE_RESOLVER_CASES_ACTION_KEYS = [
+  'setWorkspace',
+  'setCaseDraft',
+  'setIsCreateCaseModalOpen',
+  'setEditingCaseId',
+  'setEditingCaseName',
+  'setEditingCaseParentId',
+  'setEditingCaseReferenceCaseIds',
+  'setEditingCaseTagId',
+  'setEditingCaseCaseIdentifierId',
+  'setEditingCaseCategoryId',
+  'setPendingCaseIdentifierIds',
+  'setCollapsedCaseIds',
+  'setHeldCaseId',
+  'setCaseSearchQuery',
+  'setCaseSearchScope',
+  'setCaseFileTypeFilter',
+  'setCaseFilterTagIds',
+  'setCaseFilterCaseIdentifierIds',
+  'setCaseFilterCategoryIds',
+  'setCaseFilterFolder',
+  'setCaseFilterStatus',
+  'setCaseFilterLocked',
+  'setCaseFilterSent',
+  'setCaseFilterHierarchy',
+  'setCaseFilterReferences',
+  'setCaseSortBy',
+  'setCaseSortOrder',
+  'setCaseViewMode',
+  'setCaseShowNestedContent',
+  'setCaseFilterPanelDefaultExpanded',
+  'setConfirmation',
+  'handleCreateCase',
+  'handleUpdateCase',
+  'handleDeleteCase',
+  'handleToggleCaseCollapse',
+  'handleToggleHeldCase',
+  'handleClearHeldCase',
+  'handleMoveCase',
+  'handleReorderCase',
+  'handleRenameCase',
+  'handleToggleCaseStatus',
+  'handleSaveCaseDraft',
+  'handleRefreshWorkspace',
+  'handleSaveListViewDefaults',
+] as const;
+
+export type AdminCaseResolverCasesActionKey =
+  (typeof _ADMIN_CASE_RESOLVER_CASES_ACTION_KEYS)[number];
+
+export type AdminCaseResolverCasesActionsValue = Pick<
+  AdminCaseResolverCasesContextValue,
+  AdminCaseResolverCasesActionKey
+>;
+
+export type AdminCaseResolverCasesStateValue = Omit<
+  AdminCaseResolverCasesContextValue,
+  AdminCaseResolverCasesActionKey
+>;
+
+const AdminCaseResolverCasesStateContext = createContext<AdminCaseResolverCasesStateValue | null>(
+  null
+);
+
+const AdminCaseResolverCasesActionsContext = createContext<AdminCaseResolverCasesActionsValue | null>(
   null
 );
 
@@ -581,8 +645,8 @@ export function AdminCaseResolverCasesProvider({
     updatePreferencesMutation,
   ]);
 
-  const value = useMemo(
-    (): AdminCaseResolverCasesContextValue => ({
+  const stateValue = useMemo(
+    (): AdminCaseResolverCasesStateValue => ({
       workspace,
       caseDraft,
       isCreatingCase,
@@ -616,50 +680,6 @@ export function AdminCaseResolverCasesProvider({
       caseFilterPanelDefaultExpanded,
       didHydrateCaseListViewDefaults,
       confirmation,
-      setWorkspace,
-      setCaseDraft,
-      setIsCreateCaseModalOpen,
-      setEditingCaseId,
-      setEditingCaseName,
-      setEditingCaseParentId,
-      setEditingCaseReferenceCaseIds,
-      setEditingCaseTagId,
-      setEditingCaseCaseIdentifierId,
-      setEditingCaseCategoryId,
-      setPendingCaseIdentifierIds,
-      setCollapsedCaseIds,
-      setHeldCaseId,
-      setCaseSearchQuery,
-      setCaseSearchScope,
-      setCaseFileTypeFilter,
-      setCaseFilterTagIds,
-      setCaseFilterCaseIdentifierIds,
-      setCaseFilterCategoryIds,
-      setCaseFilterFolder,
-      setCaseFilterStatus,
-      setCaseFilterLocked,
-      setCaseFilterSent,
-      setCaseFilterHierarchy,
-      setCaseFilterReferences,
-      setCaseSortBy,
-      setCaseSortOrder,
-      setCaseViewMode,
-      setCaseShowNestedContent,
-      setCaseFilterPanelDefaultExpanded,
-      setConfirmation,
-      handleCreateCase: actions.handleCreateCase,
-      handleUpdateCase: actions.handleUpdateCase,
-      handleDeleteCase: actions.handleDeleteCase,
-      handleToggleCaseCollapse,
-      handleToggleHeldCase,
-      handleClearHeldCase,
-      handleMoveCase: actions.handleMoveCase,
-      handleReorderCase: actions.handleReorderCase,
-      handleRenameCase: actions.handleRenameCase,
-      handleToggleCaseStatus: actions.handleToggleCaseStatus,
-      handleSaveCaseDraft: actions.handleSaveCaseDraft,
-      handleRefreshWorkspace,
-      handleSaveListViewDefaults,
       caseResolverTags,
       caseResolverIdentifiers,
       caseResolverCategories,
@@ -707,6 +727,69 @@ export function AdminCaseResolverCasesProvider({
       caseFilterPanelDefaultExpanded,
       didHydrateCaseListViewDefaults,
       confirmation,
+      caseResolverTags,
+      caseResolverIdentifiers,
+      caseResolverCategories,
+      caseResolverTagOptions,
+      caseResolverCategoryOptions,
+      parentCaseOptions,
+      caseReferenceOptions,
+      caseIdentifierOptions,
+      folderOptions,
+      isLoading,
+      casesLoadState,
+      casesLoadMessage,
+    ]
+  );
+
+  const actionsValue = useMemo(
+    (): AdminCaseResolverCasesActionsValue => ({
+      setWorkspace,
+      setCaseDraft,
+      setIsCreateCaseModalOpen,
+      setEditingCaseId,
+      setEditingCaseName,
+      setEditingCaseParentId,
+      setEditingCaseReferenceCaseIds,
+      setEditingCaseTagId,
+      setEditingCaseCaseIdentifierId,
+      setEditingCaseCategoryId,
+      setPendingCaseIdentifierIds,
+      setCollapsedCaseIds,
+      setHeldCaseId,
+      setCaseSearchQuery,
+      setCaseSearchScope,
+      setCaseFileTypeFilter,
+      setCaseFilterTagIds,
+      setCaseFilterCaseIdentifierIds,
+      setCaseFilterCategoryIds,
+      setCaseFilterFolder,
+      setCaseFilterStatus,
+      setCaseFilterLocked,
+      setCaseFilterSent,
+      setCaseFilterHierarchy,
+      setCaseFilterReferences,
+      setCaseSortBy,
+      setCaseSortOrder,
+      setCaseViewMode,
+      setCaseShowNestedContent,
+      setCaseFilterPanelDefaultExpanded,
+      setConfirmation,
+      handleCreateCase: actions.handleCreateCase,
+      handleUpdateCase: actions.handleUpdateCase,
+      handleDeleteCase: actions.handleDeleteCase,
+      handleToggleCaseCollapse,
+      handleToggleHeldCase,
+      handleClearHeldCase,
+      handleMoveCase: actions.handleMoveCase,
+      handleReorderCase: actions.handleReorderCase,
+      handleRenameCase: actions.handleRenameCase,
+      handleToggleCaseStatus: actions.handleToggleCaseStatus,
+      handleSaveCaseDraft: actions.handleSaveCaseDraft,
+      handleRefreshWorkspace,
+      handleSaveListViewDefaults,
+    }),
+    [
       setWorkspace,
       setCaseDraft,
       setIsCreateCaseModalOpen,
@@ -751,34 +834,40 @@ export function AdminCaseResolverCasesProvider({
       handleClearHeldCase,
       handleRefreshWorkspace,
       handleSaveListViewDefaults,
-      caseResolverTags,
-      caseResolverIdentifiers,
-      caseResolverCategories,
-      caseResolverTagOptions,
-      caseResolverCategoryOptions,
-      parentCaseOptions,
-      caseReferenceOptions,
-      caseIdentifierOptions,
-      folderOptions,
-      isLoading,
-      casesLoadState,
-      casesLoadMessage,
     ]
   );
 
   return (
-    <AdminCaseResolverCasesContext.Provider value={value}>
-      {children}
-    </AdminCaseResolverCasesContext.Provider>
+    <AdminCaseResolverCasesStateContext.Provider value={stateValue}>
+      <AdminCaseResolverCasesActionsContext.Provider value={actionsValue}>
+        {children}
+      </AdminCaseResolverCasesActionsContext.Provider>
+    </AdminCaseResolverCasesStateContext.Provider>
   );
 }
 
-export function useAdminCaseResolverCases(): AdminCaseResolverCasesContextValue {
-  const context = useContext(AdminCaseResolverCasesContext);
+export function useAdminCaseResolverCasesStateContext(): AdminCaseResolverCasesStateValue {
+  const context = useContext(AdminCaseResolverCasesStateContext);
   if (!context) {
     throw internalError(
-      'useAdminCaseResolverCases must be used within AdminCaseResolverCasesProvider'
+      'useAdminCaseResolverCasesStateContext must be used within AdminCaseResolverCasesProvider'
     );
   }
   return context;
+}
+
+export function useAdminCaseResolverCasesActionsContext(): AdminCaseResolverCasesActionsValue {
+  const context = useContext(AdminCaseResolverCasesActionsContext);
+  if (!context) {
+    throw internalError(
+      'useAdminCaseResolverCasesActionsContext must be used within AdminCaseResolverCasesProvider'
+    );
+  }
+  return context;
+}
+
+export function useAdminCaseResolverCases(): AdminCaseResolverCasesContextValue {
+  const state = useAdminCaseResolverCasesStateContext();
+  const actions = useAdminCaseResolverCasesActionsContext();
+  return { ...state, ...actions };
 }

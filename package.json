@@ -81,7 +81,7 @@
     "docs:ai-paths:node-migration:check": "npm run docs:ai-paths:node-code-v3:check && tsx scripts/docs/check-ai-paths-node-migration-docs.ts",
     "docs:ai-paths:kernel-transition:check": "node --import tsx scripts/docs/check-ai-paths-kernel-transition-readiness.ts",
     "docs:ai-paths:node-docs:generate": "npm run docs:ai-paths:semantic:generate && npm run docs:ai-paths:node-code:generate && npm run docs:ai-paths:node-migration:generate",
-    "docs:ai-paths:node-docs:check": "npm run docs:ai-paths:semantic:check && npm run docs:ai-paths:node-code:check && npm run docs:ai-paths:node-migration:check",
+    "docs:ai-paths:node-docs:check": "npm run docs:ai-paths:semantic:check && npm run docs:ai-paths:node-code:check && npm run docs:ai-paths:node-migration:check && npm run test:ai-paths:node-migration-parity-evidence",
     "docs:ai-paths:node-docs:verify": "node scripts/docs/verify-ai-paths-node-docs.mjs",
     "docs:ai-paths:node-docs:ci": "npm run docs:ai-paths:node-docs:verify && npm run docs:ai-paths:tooltip:check",
     "docs:ai-paths:tooltip:generate": "tsx scripts/docs/generate-ai-paths-tooltip-catalog.ts",

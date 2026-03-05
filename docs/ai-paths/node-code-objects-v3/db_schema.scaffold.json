@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v3",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "nodeType": "db_schema",
+  "title": "Database Schema",
+  "runtimeKernel": {
+    "strategy": "code_object_v3",
+    "executionAdapter": "legacy_handler_bridge",
+    "legacyHandlerKey": "db_schema",
+    "codeObjectId": "ai-paths.node-code-object.db_schema.v3"
+  },
+  "runtimeSemantics": {
+    "processing": "pulse_node_only",
+    "waiting": "freeze_consumed_inputs_and_outputs",
+    "success": "animate_outgoing_on_emit",
+    "error": "animate_error_routes_on_emit"
+  },
+  "ports": {
+    "inputs": [],
+    "outputs": [
+      "schema",
+      "context"
+    ]
+  },
+  "copyPaste": {
+    "fullNode": {
+      "id": "node_db_schema_example",
+      "type": "db_schema",
+      "title": "Database Schema",
+      "description": "Provides live database structure as context for AI.",
+      "position": {
+        "x": 720,
+        "y": -60
+      },
+      "inputs": [],
+      "outputs": [
+        "schema",
+        "context"
+      ],
+      "config": {
+        "db_schema": {
+          "provider": "all",
+          "mode": "all",
+          "collections": [],
+          "includeFields": true,
+          "includeRelations": false,
+          "formatAs": "json"
+        }
+      }
+    }
+  }
+}

@@ -13,7 +13,8 @@ import {
 } from '../context/CaseResolverPageContext';
 import {
   useCaseResolverFolderTreeDataContext,
-  useCaseResolverFolderTreeUiContext,
+  useCaseResolverFolderTreeUiActionsContext,
+  useCaseResolverFolderTreeUiStateContext,
 } from '../context/CaseResolverFolderTreeContext';
 
 type CaseResolverTreeHeaderProps = {
@@ -75,7 +76,8 @@ export function CaseResolverTreeHeader({
     selectedFolderForCreate,
   } = useCaseResolverFolderTreeDataContext();
 
-  const { showChildCaseFolders, setShowChildCaseFolders } = useCaseResolverFolderTreeUiContext();
+  const { showChildCaseFolders } = useCaseResolverFolderTreeUiStateContext();
+  const { setShowChildCaseFolders } = useCaseResolverFolderTreeUiActionsContext();
 
   const hasCaseContext = Boolean(activeCaseId || activeCaseFile);
 

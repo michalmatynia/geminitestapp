@@ -108,6 +108,20 @@ const buildTransformPilotNodes = (title: string): AiNode[] => [
     position: { x: 180, y: 180 },
   } as AiNode,
   {
+    id: 'node-bundle',
+    type: 'bundle',
+    title: 'Bundle',
+    description: '',
+    inputs: ['value', 'productId', 'content_en', 'images', 'title'],
+    outputs: ['bundle'],
+    config: {
+      bundle: {
+        includePorts: ['value'],
+      },
+    },
+    position: { x: 300, y: 180 },
+  } as AiNode,
+  {
     id: 'node-mapper',
     type: 'mapper',
     title: 'JSON Mapper',
@@ -122,7 +136,7 @@ const buildTransformPilotNodes = (title: string): AiNode[] => [
         },
       },
     },
-    position: { x: 360, y: 180 },
+    position: { x: 420, y: 180 },
   } as AiNode,
   {
     id: 'node-context',
@@ -139,7 +153,114 @@ const buildTransformPilotNodes = (title: string): AiNode[] => [
         scopeTarget: 'entity',
       },
     },
-    position: { x: 480, y: 180 },
+    position: { x: 540, y: 180 },
+  } as AiNode,
+  {
+    id: 'node-trigger',
+    type: 'trigger',
+    title: 'Trigger: Image Studio Analysis',
+    description: '',
+    inputs: [],
+    outputs: ['trigger', 'triggerName'],
+    config: {
+      trigger: {
+        event: 'manual',
+        contextMode: 'trigger_only',
+      },
+    },
+    position: { x: 600, y: 60 },
+  } as AiNode,
+  {
+    id: 'node-db-schema',
+    type: 'db_schema',
+    title: 'Database Schema',
+    description: '',
+    inputs: [],
+    outputs: ['schema', 'context'],
+    config: {
+      db_schema: {
+        provider: 'all',
+        mode: 'all',
+        collections: [],
+        includeFields: true,
+        includeRelations: false,
+        formatAs: 'json',
+      },
+    },
+    position: { x: 720, y: -60 },
+  } as AiNode,
+  {
+    id: 'node-simulation',
+    type: 'simulation',
+    title: 'Simulation: Entity Modal',
+    description: '',
+    inputs: ['trigger'],
+    outputs: ['context', 'entityId', 'entityType', 'productId'],
+    config: {
+      simulation: {
+        entityType: 'product',
+        entityId: 'sim-wave-a',
+        productId: 'sim-wave-a',
+        runBehavior: 'before_connected_trigger',
+      },
+    },
+    position: { x: 720, y: 60 },
+  } as AiNode,
+  {
+    id: 'node-fetcher',
+    type: 'fetcher',
+    title: 'Fetcher: Trigger Context',
+    description: '',
+    inputs: ['trigger', 'context', 'meta', 'entityId', 'entityType'],
+    outputs: ['context', 'meta', 'entityId', 'entityType'],
+    config: {
+      fetcher: {
+        sourceMode: 'live_context',
+        entityType: 'product',
+        entityId: '',
+        productId: '',
+      },
+      runtime: {
+        inputContracts: {
+          trigger: { required: true },
+          context: { required: true },
+          meta: { required: false },
+          entityId: { required: false },
+          entityType: { required: false },
+        },
+      },
+    },
+    position: { x: 600, y: 180 },
+  } as AiNode,
+  {
+    id: 'node-validator',
+    type: 'validator',
+    title: 'Validator',
+    description: '',
+    inputs: ['context'],
+    outputs: ['context', 'valid', 'errors'],
+    config: {
+      validator: {
+        requiredPaths: ['value'],
+        mode: 'all',
+      },
+    },
+    position: { x: 660, y: 180 },
+  } as AiNode,
+  {
+    id: 'node-gate',
+    type: 'gate',
+    title: 'Gate',
+    description: '',
+    inputs: ['context', 'valid', 'errors'],
+    outputs: ['context', 'valid', 'errors'],
+    config: {
+      gate: {
+        mode: 'block',
+        failMessage: 'Gate blocked',
+      },
+    },
+    position: { x: 780, y: 180 },
   } as AiNode,
   {
     id: 'node-mutator',
@@ -153,7 +274,53 @@ const buildTransformPilotNodes = (title: string): AiNode[] => [
         suffix: '-mutated',
       },
     },
-    position: { x: 600, y: 180 },
+    position: { x: 900, y: 180 },
+  } as AiNode,
+  {
+    id: 'node-compare',
+    type: 'compare',
+    title: 'Compare',
+    description: '',
+    inputs: ['value'],
+    outputs: ['value', 'valid', 'errors'],
+    config: {
+      compare: {
+        operator: 'notEmpty',
+        compareTo: '',
+        caseSensitive: false,
+        message: 'Comparison failed',
+      },
+    },
+    position: { x: 1020, y: 180 },
+  } as AiNode,
+  {
+    id: 'node-delay',
+    type: 'delay',
+    title: 'Delay',
+    description: '',
+    inputs: ['value', 'bundle'],
+    outputs: ['value', 'bundle'],
+    config: {
+      delay: {
+        ms: 0,
+      },
+    },
+    position: { x: 1110, y: 180 },
+  } as AiNode,
+  {
+    id: 'node-iterator',
+    type: 'iterator',
+    title: 'Iterator',
+    description: '',
+    inputs: ['value', 'callback'],
+    outputs: ['value', 'index', 'total', 'done', 'status'],
+    config: {
+      iterator: {
+        autoContinue: true,
+        maxSteps: 50,
+      },
+    },
+    position: { x: 1200, y: 180 },
   } as AiNode,
   {
     id: 'node-regex',
@@ -168,7 +335,31 @@ const buildTransformPilotNodes = (title: string): AiNode[] => [
         flags: 'g',
       },
     },
-    position: { x: 780, y: 180 },
+    position: { x: 1320, y: 180 },
+  } as AiNode,
+  {
+    id: 'node-validation-pattern',
+    type: 'validation_pattern',
+    title: 'Validation Pattern',
+    description: '',
+    inputs: ['value', 'prompt', 'result', 'context'],
+    outputs: ['value', 'result', 'context', 'valid', 'errors', 'bundle'],
+    config: {
+      validationPattern: {
+        source: 'global_stack',
+        scope: 'global',
+        runtimeMode: 'validate_only',
+        failPolicy: 'block_on_error',
+        inputPort: 'auto',
+        outputPort: 'value',
+        maxAutofixPasses: 1,
+        includeRuleIds: [],
+        rules: [],
+        learnedRules: [],
+        stackId: '',
+      },
+    },
+    position: { x: 1410, y: 180 },
   } as AiNode,
   {
     id: 'node-string-mutator',
@@ -195,7 +386,23 @@ const buildTransformPilotNodes = (title: string): AiNode[] => [
         ],
       },
     },
-    position: { x: 960, y: 240 },
+    position: { x: 1590, y: 240 },
+  } as AiNode,
+  {
+    id: 'node-router',
+    type: 'router',
+    title: 'Router',
+    description: '',
+    inputs: ['value', 'bundle'],
+    outputs: ['value', 'bundle'],
+    config: {
+      router: {
+        mode: 'value',
+        matchMode: 'truthy',
+        compareTo: '',
+      },
+    },
+    position: { x: 1770, y: 180 },
   } as AiNode,
   {
     id: 'node-template',
@@ -209,7 +416,78 @@ const buildTransformPilotNodes = (title: string): AiNode[] => [
         template: 'out={{value}}',
       },
     },
-    position: { x: 1140, y: 180 },
+    position: { x: 1950, y: 180 },
+  } as AiNode,
+  {
+    id: 'node-description-updater',
+    type: 'description_updater',
+    title: 'Description Updater (Deprecated)',
+    description: '',
+    inputs: ['productId', 'description_en'],
+    outputs: ['description_en'],
+    config: {},
+    position: { x: 2040, y: 120 },
+  } as AiNode,
+  {
+    id: 'node-viewer',
+    type: 'viewer',
+    title: 'Result Viewer',
+    description: '',
+    inputs: [
+      'result',
+      'sources',
+      'grouped',
+      'matches',
+      'index',
+      'total',
+      'done',
+      'analysis',
+      'description',
+      'description_en',
+      'prompt',
+      'images',
+      'title',
+      'productId',
+      'content_en',
+      'context',
+      'meta',
+      'trigger',
+      'triggerName',
+      'jobId',
+      'status',
+      'entityId',
+      'entityType',
+      'entityJson',
+      'bundle',
+      'valid',
+      'errors',
+      'value',
+      'audioSignal',
+      'frequency',
+      'waveform',
+      'gain',
+      'durationMs',
+      'queryCallback',
+      'aiPrompt',
+    ],
+    outputs: [],
+    config: {
+      viewer: {
+        outputs: {},
+        showImagesAsJson: false,
+      },
+    },
+    position: { x: 2040, y: 300 },
+  } as AiNode,
+  {
+    id: 'node-notification',
+    type: 'notification',
+    title: 'Toast Notification',
+    description: '',
+    inputs: ['value', 'bundle', 'title'],
+    outputs: [],
+    config: {},
+    position: { x: 2130, y: 180 },
   } as AiNode,
 ];
 
@@ -220,6 +498,20 @@ const buildTransformPilotEdges = (): Edge[] => [
     to: 'node-parser',
     fromPort: 'entityJson',
     toPort: 'entityJson',
+  },
+  {
+    id: 'edge-parser-bundle',
+    from: 'node-parser',
+    to: 'node-bundle',
+    fromPort: 'value',
+    toPort: 'value',
+  },
+  {
+    id: 'edge-bundle-mapper',
+    from: 'node-bundle',
+    to: 'node-mapper',
+    fromPort: 'bundle',
+    toPort: 'bundle',
   },
   {
     id: 'edge-parser-mapper',
@@ -236,32 +528,151 @@ const buildTransformPilotEdges = (): Edge[] => [
     toPort: 'context',
   },
   {
-    id: 'edge-context-mutator',
+    id: 'edge-context-fetcher',
     from: 'node-context',
+    to: 'node-fetcher',
+    fromPort: 'context',
+    toPort: 'context',
+  },
+  {
+    id: 'edge-trigger-fetcher',
+    from: 'node-trigger',
+    to: 'node-fetcher',
+    fromPort: 'trigger',
+    toPort: 'trigger',
+  },
+  {
+    id: 'edge-trigger-simulation',
+    from: 'node-trigger',
+    to: 'node-simulation',
+    fromPort: 'trigger',
+    toPort: 'trigger',
+  },
+  {
+    id: 'edge-fetcher-validator',
+    from: 'node-fetcher',
+    to: 'node-validator',
+    fromPort: 'context',
+    toPort: 'context',
+  },
+  {
+    id: 'edge-validator-gate-context',
+    from: 'node-validator',
+    to: 'node-gate',
+    fromPort: 'context',
+    toPort: 'context',
+  },
+  {
+    id: 'edge-validator-gate-valid',
+    from: 'node-validator',
+    to: 'node-gate',
+    fromPort: 'valid',
+    toPort: 'valid',
+  },
+  {
+    id: 'edge-validator-gate-errors',
+    from: 'node-validator',
+    to: 'node-gate',
+    fromPort: 'errors',
+    toPort: 'errors',
+  },
+  {
+    id: 'edge-gate-mutator',
+    from: 'node-gate',
     to: 'node-mutator',
     fromPort: 'context',
     toPort: 'context',
   },
   {
-    id: 'edge-mutator-regex',
+    id: 'edge-mutator-compare',
     from: 'node-mutator',
+    to: 'node-compare',
+    fromPort: 'value',
+    toPort: 'value',
+  },
+  {
+    id: 'edge-compare-delay',
+    from: 'node-compare',
+    to: 'node-delay',
+    fromPort: 'value',
+    toPort: 'value',
+  },
+  {
+    id: 'edge-delay-iterator',
+    from: 'node-delay',
+    to: 'node-iterator',
+    fromPort: 'value',
+    toPort: 'value',
+  },
+  {
+    id: 'edge-iterator-regex',
+    from: 'node-iterator',
     to: 'node-regex',
     fromPort: 'value',
     toPort: 'value',
   },
   {
-    id: 'edge-regex-string-mutator',
+    id: 'edge-regex-validation-pattern',
     from: 'node-regex',
+    to: 'node-validation-pattern',
+    fromPort: 'value',
+    toPort: 'value',
+  },
+  {
+    id: 'edge-validation-pattern-string-mutator',
+    from: 'node-validation-pattern',
     to: 'node-string-mutator',
     fromPort: 'value',
     toPort: 'value',
   },
   {
-    id: 'edge-string-mutator-template',
+    id: 'edge-string-mutator-router',
     from: 'node-string-mutator',
+    to: 'node-router',
+    fromPort: 'value',
+    toPort: 'value',
+  },
+  {
+    id: 'edge-router-template',
+    from: 'node-router',
     to: 'node-template',
     fromPort: 'value',
     toPort: 'value',
+  },
+  {
+    id: 'edge-template-notification',
+    from: 'node-template',
+    to: 'node-notification',
+    fromPort: 'prompt',
+    toPort: 'value',
+  },
+  {
+    id: 'edge-template-description-updater',
+    from: 'node-template',
+    to: 'node-description-updater',
+    fromPort: 'prompt',
+    toPort: 'description_en',
+  },
+  {
+    id: 'edge-simulation-description-updater',
+    from: 'node-simulation',
+    to: 'node-description-updater',
+    fromPort: 'productId',
+    toPort: 'productId',
+  },
+  {
+    id: 'edge-description-updater-viewer',
+    from: 'node-description-updater',
+    to: 'node-viewer',
+    fromPort: 'description_en',
+    toPort: 'description_en',
+  },
+  {
+    id: 'edge-template-viewer',
+    from: 'node-template',
+    to: 'node-viewer',
+    fromPort: 'prompt',
+    toPort: 'prompt',
   },
 ];
 
@@ -323,6 +734,21 @@ const pilotHandlers: Record<string, NodeHandler> = {
       result: value,
     };
   },
+  bundle: ({ node, nodeInputs }) => {
+    const config = asRecord(node.config?.bundle);
+    const includePorts = Array.isArray(config['includePorts'])
+      ? (config['includePorts'] as unknown[])
+          .map((entry: unknown): string => String(entry ?? '').trim())
+          .filter((entry: string): boolean => entry.length > 0)
+      : node.inputs;
+    const bundle = includePorts.reduce<Record<string, unknown>>((acc, port) => {
+      if (nodeInputs[port] !== undefined) {
+        acc[port] = nodeInputs[port];
+      }
+      return acc;
+    }, {});
+    return { bundle };
+  },
   mutator: ({ node, nodeInputs }) => {
     const inputContext = asRecord(nodeInputs['context']);
     const input = String(inputContext['value'] ?? '');
@@ -346,6 +772,157 @@ const pilotHandlers: Record<string, NodeHandler> = {
       entityJson,
     };
   },
+  trigger: () => ({
+    trigger: true,
+    triggerName: 'manual',
+  }),
+  db_schema: () => ({
+    schema: {
+      provider: 'all',
+      collections: [],
+    },
+    context: {
+      source: 'db_schema',
+    },
+  }),
+  simulation: ({ node }) => {
+    const simulationConfig = asRecord(node.config?.simulation);
+    const entityId = String(simulationConfig['entityId'] ?? simulationConfig['productId'] ?? 'sim-wave-a');
+    const entityType = String(simulationConfig['entityType'] ?? 'product');
+    return {
+      context: {
+        source: 'simulation',
+        entityId,
+        entityType,
+        value: entityId,
+      },
+      entityId,
+      entityType,
+      productId: entityId,
+    };
+  },
+  fetcher: ({ nodeInputs }) => {
+    const context = asRecord(nodeInputs['context']);
+    const meta = asRecord(nodeInputs['meta']);
+    const entityId =
+      typeof nodeInputs['entityId'] === 'string'
+        ? nodeInputs['entityId']
+        : typeof context['entityId'] === 'string'
+          ? context['entityId']
+          : '';
+    const entityType =
+      typeof nodeInputs['entityType'] === 'string'
+        ? nodeInputs['entityType']
+        : typeof context['entityType'] === 'string'
+          ? context['entityType']
+          : 'product';
+    return {
+      context,
+      meta,
+      entityId,
+      entityType,
+    };
+  },
+  validator: ({ node, nodeInputs }) => {
+    const contextValue = asRecord(nodeInputs['context']);
+    const config = asRecord(node.config?.validator);
+    const requiredPaths = Array.isArray(config['requiredPaths'])
+      ? (config['requiredPaths'] as unknown[])
+          .map((entry: unknown): string => String(entry ?? '').trim())
+          .filter((entry: string): boolean => entry.length > 0)
+      : [];
+    const mode = String(config['mode'] ?? 'all');
+    const missing = requiredPaths.filter((pathValue: string): boolean => {
+      const value = contextValue[pathValue];
+      if (value === undefined || value === null) return true;
+      if (typeof value === 'string' && value.trim().length === 0) return true;
+      return false;
+    });
+    const valid = mode === 'any' ? missing.length < requiredPaths.length : missing.length === 0;
+    return {
+      context: contextValue,
+      valid,
+      errors: missing,
+    };
+  },
+  gate: ({ node, nodeInputs }) => {
+    const contextValue = asRecord(nodeInputs['context']);
+    const validInput = nodeInputs['valid'];
+    const errorsInput = Array.isArray(nodeInputs['errors'])
+      ? nodeInputs['errors'].map((entry: unknown) => String(entry ?? ''))
+      : [];
+    const config = asRecord(node.config?.gate);
+    const mode = String(config['mode'] ?? 'block');
+    const failMessage = String(config['failMessage'] ?? 'Gate blocked');
+    const isValid = typeof validInput === 'boolean' ? validInput : Boolean(validInput);
+
+    if (!isValid && mode === 'block') {
+      return {
+        context: null,
+        valid: false,
+        errors: errorsInput.length > 0 ? errorsInput : [failMessage],
+      };
+    }
+
+    return {
+      context: contextValue,
+      valid: isValid,
+      errors: errorsInput,
+    };
+  },
+  compare: ({ node, nodeInputs }) => {
+    const config = asRecord(node.config?.compare);
+    const operator = String(config['operator'] ?? 'eq');
+    const compareTo = String(config['compareTo'] ?? '');
+    const caseSensitive = Boolean(config['caseSensitive']);
+    const message = String(config['message'] ?? 'Comparison failed');
+    const currentValue = nodeInputs['value'];
+    const base = String(currentValue ?? '');
+    const value = caseSensitive ? base : base.toLowerCase();
+    const target = caseSensitive ? compareTo : compareTo.toLowerCase();
+    const valid = (() => {
+      if (operator === 'eq') return value === target;
+      if (operator === 'neq') return value !== target;
+      if (operator === 'gt') return Number(value) > Number(target);
+      if (operator === 'gte') return Number(value) >= Number(target);
+      if (operator === 'lt') return Number(value) < Number(target);
+      if (operator === 'lte') return Number(value) <= Number(target);
+      if (operator === 'contains') return value.includes(target);
+      if (operator === 'startsWith') return value.startsWith(target);
+      if (operator === 'endsWith') return value.endsWith(target);
+      if (operator === 'isEmpty') return value.trim() === '';
+      if (operator === 'notEmpty') return value.trim() !== '';
+      return false;
+    })();
+
+    return {
+      value: currentValue,
+      valid,
+      errors: valid ? [] : [message],
+    };
+  },
+  delay: ({ nodeInputs }) => {
+    const delayed: Record<string, unknown> = {};
+    if (nodeInputs['value'] !== undefined) {
+      delayed['value'] = nodeInputs['value'];
+    }
+    if (nodeInputs['bundle'] !== undefined) {
+      delayed['bundle'] = nodeInputs['bundle'];
+    }
+    return delayed;
+  },
+  iterator: ({ nodeInputs }) => {
+    const raw = nodeInputs['value'];
+    const values = Array.isArray(raw) ? raw : [raw];
+    const value = values.length > 0 ? values[0] : null;
+    return {
+      value,
+      index: values.length > 0 ? 0 : -1,
+      total: values.length,
+      done: true,
+      status: 'completed',
+    };
+  },
   regex: ({ node, nodeInputs }) => {
     const input = String(nodeInputs['value'] ?? '');
     const pattern = String(node.config?.regex?.pattern ?? '\\s+');
@@ -363,6 +940,48 @@ const pilotHandlers: Record<string, NodeHandler> = {
       value: transformed,
       aiPrompt: '',
     };
+  },
+  validation_pattern: ({ nodeInputs }) => {
+    const rawInput = nodeInputs['value'] ?? nodeInputs['prompt'] ?? nodeInputs['result'] ?? '';
+    const text = String(rawInput ?? '');
+    return {
+      value: text,
+      result: text,
+      context: nodeInputs['context'] ?? null,
+      valid: true,
+      errors: [],
+      bundle: {
+        source: 'global_stack',
+        issueCount: 0,
+      },
+    };
+  },
+  router: ({ node, nodeInputs }) => {
+    const config = asRecord(node.config?.router);
+    const mode = String(config['mode'] ?? 'valid');
+    const matchMode = String(config['matchMode'] ?? 'truthy');
+    const compareTo = String(config['compareTo'] ?? '');
+    const valueCandidate = mode === 'valid' ? nodeInputs['valid'] : nodeInputs['value'];
+    const asString = String(valueCandidate ?? '');
+    const shouldPass = (() => {
+      if (matchMode === 'falsy') return !valueCandidate;
+      if (matchMode === 'equals') return asString === compareTo;
+      if (matchMode === 'contains') return asString.includes(compareTo);
+      return Boolean(valueCandidate);
+    })();
+
+    if (!shouldPass) {
+      return {};
+    }
+
+    const next: Record<string, unknown> = {};
+    if (nodeInputs['value'] !== undefined) {
+      next['value'] = nodeInputs['value'];
+    }
+    if (nodeInputs['bundle'] !== undefined) {
+      next['bundle'] = nodeInputs['bundle'];
+    }
+    return next;
   },
   string_mutator: ({ node, nodeInputs }) => {
     const rawInput = String(nodeInputs['value'] ?? nodeInputs['prompt'] ?? nodeInputs['result'] ?? '');
@@ -394,6 +1013,11 @@ const pilotHandlers: Record<string, NodeHandler> = {
     const rendered = template.replace(/{{\s*value\s*}}/g, String(nodeInputs['value'] ?? ''));
     return { prompt: rendered };
   },
+  description_updater: ({ nodeInputs }) => ({
+    description_en: String(nodeInputs['description_en'] ?? ''),
+  }),
+  viewer: () => ({}),
+  notification: () => ({}),
 };
 
 const stripRuntimeTelemetry = (
@@ -461,6 +1085,7 @@ const runTransformPilotPath = async (mode: RuntimeMode, title: string) => {
 
   const result = await evaluateGraphInternal(nodes, edges, {
     runId: `run-transform-${mode}`,
+    maxIterations: 30,
     resolveHandler: runtimeKernel.resolveHandler,
     resolveHandlerTelemetry: (type: string) =>
       toNodeRuntimeResolutionTelemetry(runtimeKernel.resolveDescriptor(type)),
@@ -560,8 +1185,8 @@ describe('engine-core v3 pilot dual-run parity', () => {
         typeof event['nodeId'] === 'string'
     );
 
-    expect(legacyNodeEvents).toHaveLength(8);
-    expect(v3NodeEvents).toHaveLength(8);
+    expect(legacyNodeEvents).toHaveLength(23);
+    expect(v3NodeEvents).toHaveLength(23);
 
     legacyNodeEvents.forEach((event) => {
       expect(event['runtimeStrategy']).toBe('legacy_adapter');

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v3",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "nodeType": "trigger",
+  "title": "Trigger: Image Studio Analysis",
+  "runtimeKernel": {
+    "strategy": "code_object_v3",
+    "executionAdapter": "legacy_handler_bridge",
+    "legacyHandlerKey": "trigger",
+    "codeObjectId": "ai-paths.node-code-object.trigger.v3"
+  },
+  "runtimeSemantics": {
+    "processing": "pulse_node_only",
+    "waiting": "freeze_consumed_inputs_and_outputs",
+    "success": "animate_outgoing_on_emit",
+    "error": "animate_error_routes_on_emit"
+  },
+  "ports": {
+    "inputs": [],
+    "outputs": [
+      "trigger",
+      "triggerName"
+    ]
+  },
+  "copyPaste": {
+    "fullNode": {
+      "id": "node_trigger_example",
+      "type": "trigger",
+      "title": "Trigger: Image Studio Analysis",
+      "description": "Entry point for Image Studio object analysis.",
+      "position": {
+        "x": 600,
+        "y": 60
+      },
+      "inputs": [],
+      "outputs": [
+        "trigger",
+        "triggerName"
+      ],
+      "config": {
+        "trigger": {
+          "event": "manual",
+          "contextMode": "trigger_only"
+        }
+      }
+    }
+  },
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "id": "node_obj_trigger_portable_v3",
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "a4d688101f3f7a130ada35fe80325d4f04989dee0db5896291183c677a327e24"
+}

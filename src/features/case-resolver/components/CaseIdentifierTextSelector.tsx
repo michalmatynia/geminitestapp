@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { useAdminCaseResolverCases } from '../context/AdminCaseResolverCasesContext';
+import { useAdminCaseResolverCasesStateContext } from '../context/AdminCaseResolverCasesContext';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { MultiSelect } from '@/shared/ui';
 
@@ -30,7 +30,7 @@ const {
 
 function CaseIdentifierTextSelectorRuntime(): React.JSX.Element {
   const { value, onChange, placeholder, className } = useCaseIdentifierTextSelectorRuntime();
-  const { caseIdentifierOptions } = useAdminCaseResolverCases();
+  const { caseIdentifierOptions } = useAdminCaseResolverCasesStateContext();
   return (
     <MultiSelect
       selected={value}

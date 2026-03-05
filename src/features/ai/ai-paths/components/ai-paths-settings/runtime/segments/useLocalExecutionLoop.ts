@@ -6,7 +6,7 @@ import {
   GraphExecutionCancelled,
 } from '@/shared/lib/ai-paths';
 import {
-  createAiPathsRuntimeValidationMiddleware,
+  resolveAiPathsRuntimeValidationMiddleware,
 } from '@/shared/lib/ai-paths/core/validation-engine/runtime-middleware';
 
 import {
@@ -42,15 +42,41 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
           args.pauseRequestedRef.current = false;
         }
         args.setRunStatus(mode === 'step' ? 'stepping' : 'running');
-        const runtimeValidationMiddleware =
-          args.aiPathsValidation?.enabled !== false
-            ? createAiPathsRuntimeValidationMiddleware({
-              config: args.aiPathsValidation,
-              nodes: args.normalizedNodes,
-              edges: args.sanitizedEdges,
-              maxIssuesPerDecision: 5,
-            })
-            : undefined;
+        const runtimeValidationMiddleware = resolveAiPathsRuntimeValidationMiddleware({
+          runtimeValidationEnabled: args.aiPathsValidation?.enabled !== false,
+          runtimeValidationConfig: args.aiPathsValidation,
+          nodes: args.normalizedNodes,
+          edges: args.sanitizedEdges,
+          maxIssuesPerDecision: 5,
+        });
+        const toRuntimeResolutionMetadata = (input: {
+          runtimeStrategy?: unknown;
+          runtimeResolutionSource?: unknown;
+          runtimeCodeObjectId?: unknown;
+        }): Record<string, unknown> => {
+          const runtimeStrategy =
+            input.runtimeStrategy === 'legacy_adapter' || input.runtimeStrategy === 'code_object_v3'
+              ? input.runtimeStrategy
+              : null;
+          const runtimeResolutionSource =
+            input.runtimeResolutionSource === 'override' ||
+            input.runtimeResolutionSource === 'registry' ||
+            input.runtimeResolutionSource === 'missing'
+              ? input.runtimeResolutionSource
+              : null;
+          const runtimeCodeObjectId =
+            input.runtimeCodeObjectId === null
+              ? null
+              : typeof input.runtimeCodeObjectId === 'string' &&
+                  input.runtimeCodeObjectId.trim().length > 0
+                ? input.runtimeCodeObjectId.trim()
+                : undefined;
+          return {
+            ...(runtimeStrategy ? { runtimeStrategy } : {}),
+            ...(runtimeResolutionSource ? { runtimeResolutionSource } : {}),
+            ...(runtimeCodeObjectId !== undefined ? { runtimeCodeObjectId } : {}),
+          };
+        };
         let state = args.runtimeStateRef.current;
         while (true) {
           const runId = args.currentRunIdRef.current ?? state.currentRun?.id ?? createRunId();
@@ -105,13 +131,24 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               node,
               nodeInputs,
               iteration,
+              runtimeStrategy,
+              runtimeResolutionSource,
+              runtimeCodeObjectId,
             }: {
               runId: string;
               runStartedAt: string;
               node: AiNode;
               nodeInputs: RuntimePortValues;
               iteration: number;
+              runtimeStrategy?: 'legacy_adapter' | 'code_object_v3';
+              runtimeResolutionSource?: 'override' | 'registry' | 'missing';
+              runtimeCodeObjectId?: string | null;
             }) => {
+              const runtimeResolutionMetadata = toRuntimeResolutionMetadata({
+                runtimeStrategy,
+                runtimeResolutionSource,
+                runtimeCodeObjectId,
+              });
               args.setNodeStatus({
                 nodeId: node.id,
                 status: 'running',
@@ -122,6 +159,9 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
                 kind: 'node_started',
                 level: 'info',
                 message: `Node ${node.title ?? node.id} started.`,
+                ...(Object.keys(runtimeResolutionMetadata).length > 0
+                  ? { metadata: runtimeResolutionMetadata }
+                  : {}),
               });
               args.setRuntimeState((prev: RuntimeState): RuntimeState => {
                 const prevInputs = prev.inputs ?? {};
@@ -159,6 +199,9 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               nextOutputs,
               cached,
               iteration,
+              runtimeStrategy,
+              runtimeResolutionSource,
+              runtimeCodeObjectId,
             }: {
               runId: string;
               runStartedAt: string;
@@ -167,6 +210,9 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               nextOutputs: RuntimePortValues;
               cached?: boolean;
               iteration: number;
+              runtimeStrategy?: 'legacy_adapter' | 'code_object_v3';
+              runtimeResolutionSource?: 'override' | 'registry' | 'missing';
+              runtimeCodeObjectId?: string | null;
             }) => {
               const rawStatus = nextOutputs['status'] as string | undefined;
               const normalizedStatus =
@@ -178,6 +224,15 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               if (!displayStatus) return;
               const metadata =
                 node.type === 'database' ? extractDatabaseRuntimeMetadata(nextOutputs) : null;
+              const runtimeResolutionMetadata = toRuntimeResolutionMetadata({
+                runtimeStrategy,
+                runtimeResolutionSource,
+                runtimeCodeObjectId,
+              });
+              const statusMetadata = {
+                ...(metadata ? metadata : {}),
+                ...runtimeResolutionMetadata,
+              };
               args.setNodeStatus({
                 nodeId: node.id,
                 status: displayStatus,
@@ -191,7 +246,9 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
                   displayStatus === 'cached'
                     ? `Node ${node.title ?? node.id} reused cached outputs.`
                     : `Node ${node.title ?? node.id} ${args.formatStatusLabel(displayStatus)}.`,
-                ...(metadata ? { metadata } : {}),
+                ...(Object.keys(statusMetadata).length > 0
+                  ? { metadata: statusMetadata }
+                  : {}),
               });
               args.setRuntimeState((prev: RuntimeState): RuntimeState => {
                 const nextOutput = mergeRuntimeNodeOutputsForStatus({
@@ -228,6 +285,9 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               prevOutputs,
               error,
               iteration,
+              runtimeStrategy,
+              runtimeResolutionSource,
+              runtimeCodeObjectId,
             }: {
               runId: string;
               runStartedAt: string;
@@ -236,8 +296,16 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               prevOutputs: RuntimePortValues | null;
               error: unknown;
               iteration: number;
+              runtimeStrategy?: 'legacy_adapter' | 'code_object_v3';
+              runtimeResolutionSource?: 'override' | 'registry' | 'missing';
+              runtimeCodeObjectId?: string | null;
             }) => {
               const message = error instanceof Error ? error.message : String(error);
+              const runtimeResolutionMetadata = toRuntimeResolutionMetadata({
+                runtimeStrategy,
+                runtimeResolutionSource,
+                runtimeCodeObjectId,
+              });
               args.setNodeStatus({
                 nodeId: node.id,
                 status: 'failed',
@@ -248,7 +316,10 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
                 kind: 'node_failed',
                 level: 'error',
                 message: `Node ${node.title ?? node.id} failed: ${message}`,
-                metadata: { error: message },
+                metadata: {
+                  error: message,
+                  ...runtimeResolutionMetadata,
+                },
               });
               args.setRuntimeState((prev: RuntimeState): RuntimeState => {
                 const nextOutput = mergeRuntimeNodeOutputsForStatus({
@@ -288,6 +359,9 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               waitingOnDetails,
               message,
               runId: callbackRunId,
+              runtimeStrategy,
+              runtimeResolutionSource,
+              runtimeCodeObjectId,
             }: {
               node: AiNode;
               reason: 'missing_inputs' | 'flow_control' | 'validation' | 'error';
@@ -296,6 +370,9 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               waitingOnDetails?: Array<Record<string, unknown>>;
               message?: string;
               runId: string;
+              runtimeStrategy?: 'legacy_adapter' | 'code_object_v3';
+              runtimeResolutionSource?: 'override' | 'registry' | 'missing';
+              runtimeCodeObjectId?: string | null;
             }) => {
               const nodeStatus = resolveRuntimeNodeDisplayStatus({
                 status: status === 'waiting_callback' ? 'waiting_callback' : 'blocked',
@@ -305,6 +382,11 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
                 },
               });
               if (!nodeStatus) return;
+              const runtimeResolutionMetadata = toRuntimeResolutionMetadata({
+                runtimeStrategy,
+                runtimeResolutionSource,
+                runtimeCodeObjectId,
+              });
               args.setNodeStatus({
                 nodeId: node.id,
                 status: nodeStatus,
@@ -322,6 +404,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
                   reason,
                   ...(waitingOnPorts ? { waitingOnPorts } : {}),
                   ...(waitingOnDetails ? { waitingOnDetails } : {}),
+                  ...runtimeResolutionMetadata,
                 },
               });
               args.setRuntimeState((prev: RuntimeState): RuntimeState => {
@@ -357,7 +440,22 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
             fetchEntityByType: args.fetchEntityByType,
             reportAiPathsError: args.reportAiPathsError,
             validationMiddleware: runtimeValidationMiddleware,
-            onRuntimeValidation: ({ node, stage, decision, message, iteration, issues }) => {
+            onRuntimeValidation: ({
+              node,
+              stage,
+              decision,
+              message,
+              iteration,
+              issues,
+              runtimeStrategy,
+              runtimeResolutionSource,
+              runtimeCodeObjectId,
+            }) => {
+              const runtimeResolutionMetadata = toRuntimeResolutionMetadata({
+                runtimeStrategy,
+                runtimeResolutionSource,
+                runtimeCodeObjectId,
+              });
               args.appendRuntimeEvent({
                 source: 'local',
                 kind:
@@ -376,6 +474,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
                   decision,
                   issueCount: issues.length,
                   issues: issues.slice(0, 3),
+                  ...runtimeResolutionMetadata,
                 },
               });
             },

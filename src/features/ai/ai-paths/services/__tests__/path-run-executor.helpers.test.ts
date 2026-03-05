@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import type { RuntimeState } from '@/shared/contracts/ai-paths';
 
 import {
   EMPTY_RUNTIME_STATE,
   parseRuntimeState,
   parseRuntimeKernelPilotNodeTypes,
   resolveRuntimeKernelConfigForRun,
+  summarizeRuntimeKernelParityFromHistory,
+  toRuntimeKernelExecutionTelemetry,
+  toRuntimeNodeResolutionTelemetry,
 } from '../path-run-executor.helpers';
 
 describe('parseRuntimeState', () => {
@@ -206,6 +210,90 @@ describe('resolveRuntimeKernelConfigForRun', () => {
       modeSource: 'default',
       pilotNodeTypes: ['constant', 'math'],
       pilotSource: 'settings',
+    });
+  });
+});
+
+describe('runtime kernel telemetry helpers', () => {
+  it('serializes runtime kernel execution telemetry context', () => {
+    expect(
+      toRuntimeKernelExecutionTelemetry({
+        mode: 'auto',
+        modeSource: 'settings',
+        pilotNodeTypes: ['constant', 'template'],
+        pilotSource: 'env',
+      })
+    ).toEqual({
+      runtimeKernelMode: 'auto',
+      runtimeKernelModeSource: 'settings',
+      runtimeKernelPilotNodeTypes: ['constant', 'template'],
+      runtimeKernelPilotNodeTypesSource: 'env',
+    });
+  });
+
+  it('normalizes runtime node resolution telemetry payloads', () => {
+    expect(
+      toRuntimeNodeResolutionTelemetry({
+        runtimeStrategy: 'code_object_v3',
+        runtimeResolutionSource: 'override',
+        runtimeCodeObjectId: ' ai-paths.node-code-object.template.v3 ',
+      })
+    ).toEqual({
+      runtimeStrategy: 'code_object_v3',
+      runtimeResolutionSource: 'override',
+      runtimeCodeObjectId: 'ai-paths.node-code-object.template.v3',
+    });
+
+    expect(
+      toRuntimeNodeResolutionTelemetry({
+        runtimeStrategy: 'unsupported',
+        runtimeResolutionSource: 'invalid',
+        runtimeCodeObjectId: '',
+      })
+    ).toEqual({});
+  });
+
+  it('summarizes runtime kernel parity from runtime history entries', () => {
+    const summary = summarizeRuntimeKernelParityFromHistory({
+      'node-template': [
+        {
+          runtimeStrategy: 'code_object_v3',
+          runtimeResolutionSource: 'override',
+          runtimeCodeObjectId: 'ai-paths.node-code-object.template.v3',
+        },
+        {
+          runtimeStrategy: 'legacy_adapter',
+          runtimeResolutionSource: 'registry',
+          runtimeCodeObjectId: null,
+        },
+      ],
+      'node-math': [
+        {
+          runtimeStrategy: 'legacy_adapter',
+          runtimeResolutionSource: 'missing',
+          runtimeCodeObjectId: '',
+        },
+        {
+          runtimeStrategy: 'invalid',
+          runtimeResolutionSource: 'invalid',
+        },
+      ],
+    } as RuntimeState['history']);
+
+    expect(summary).toEqual({
+      sampledHistoryEntries: 4,
+      strategyCounts: {
+        legacy_adapter: 2,
+        code_object_v3: 1,
+        unknown: 1,
+      },
+      resolutionSourceCounts: {
+        override: 1,
+        registry: 1,
+        missing: 1,
+        unknown: 1,
+      },
+      codeObjectIds: ['ai-paths.node-code-object.template.v3'],
     });
   });
 });

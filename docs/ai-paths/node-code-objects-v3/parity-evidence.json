@@ -10,15 +10,30 @@
         "code_object_v3"
       ],
       "nodeTypes": [
+        "bundle",
+        "compare",
         "constant",
         "context",
+        "delay",
+        "db_schema",
+        "description_updater",
+        "fetcher",
+        "gate",
+        "iterator",
         "mapper",
         "math",
         "mutator",
+        "notification",
         "parser",
         "regex",
+        "router",
+        "simulation",
         "string_mutator",
-        "template"
+        "template",
+        "trigger",
+        "validation_pattern",
+        "validator",
+        "viewer"
       ],
       "notes": "Core dual-run parity for active v3 pilot transform/math nodes."
     }

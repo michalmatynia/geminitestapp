@@ -27,7 +27,10 @@ import {
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { buildCaseResolverCaseHref } from './list/case-list-utils';
-import { useAdminCaseResolverCases } from '../context/AdminCaseResolverCasesContext';
+import {
+  useAdminCaseResolverCasesActionsContext,
+  useAdminCaseResolverCasesStateContext,
+} from '../context/AdminCaseResolverCasesContext';
 import { useAdminCaseResolverCasesState } from '../hooks/useAdminCaseResolverCasesState';
 import { CaseTreeNode } from '../pages/AdminCaseResolverCasesUtils';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
@@ -44,15 +47,21 @@ export function CaseTreeRenderer({
   const { toast } = useToast();
   const {
     collapsedCaseIds,
-    handleToggleCaseCollapse,
     editingCaseId,
     editingCaseName,
-    setEditingCaseName,
     editingCaseTagId,
-    setEditingCaseTagId,
     editingCaseCategoryId,
-    setEditingCaseCategoryId,
     editingCaseParentId,
+    caseResolverTagOptions,
+    caseResolverCategoryOptions,
+    parentCaseOptions,
+  } = useAdminCaseResolverCasesStateContext();
+
+  const {
+    handleToggleCaseCollapse,
+    setEditingCaseName,
+    setEditingCaseTagId,
+    setEditingCaseCategoryId,
     setEditingCaseParentId,
     setEditingCaseReferenceCaseIds,
     setEditingCaseCaseIdentifierId,
@@ -63,10 +72,7 @@ export function CaseTreeRenderer({
     setCaseDraft,
     setCaseFilterCaseIdentifierIds,
     setCaseFilterPanelDefaultExpanded,
-    caseResolverTagOptions,
-    caseResolverCategoryOptions,
-    parentCaseOptions,
-  } = useAdminCaseResolverCases();
+  } = useAdminCaseResolverCasesActionsContext();
 
   const {
     caseIdentifierPathById,

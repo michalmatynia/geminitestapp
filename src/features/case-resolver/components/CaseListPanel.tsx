@@ -31,7 +31,10 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 
-import { useAdminCaseResolverCases } from '../context/AdminCaseResolverCasesContext';
+import {
+  useAdminCaseResolverCasesActionsContext,
+  useAdminCaseResolverCasesStateContext,
+} from '../context/AdminCaseResolverCasesContext';
 import { useAdminCaseResolverCasesState } from '../hooks/useAdminCaseResolverCasesState';
 import { CaseFilterPanel } from './CaseFilterPanel';
 import { CaseListHeader } from './list/CaseListHeader';
@@ -82,6 +85,12 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     isLoading,
     casesLoadState,
     casesLoadMessage,
+    heldCaseId,
+    caseSortBy,
+    caseSortOrder,
+    caseShowNestedContent,
+  } = useAdminCaseResolverCasesStateContext();
+  const {
     setIsCreateCaseModalOpen,
     setCaseDraft,
     setEditingCaseId,
@@ -90,19 +99,15 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     handleReorderCase,
     handleRenameCase,
     handleToggleCaseStatus,
-    heldCaseId,
     setHeldCaseId,
     handleToggleHeldCase,
     handleClearHeldCase,
-    caseSortBy,
-    caseSortOrder,
     setCaseSortBy,
     setCaseSortOrder,
-    caseShowNestedContent,
     setCaseShowNestedContent,
     handleSaveListViewDefaults,
     handleRefreshWorkspace,
-  } = useAdminCaseResolverCases();
+  } = useAdminCaseResolverCasesActionsContext();
   const {
     files,
     filesById,

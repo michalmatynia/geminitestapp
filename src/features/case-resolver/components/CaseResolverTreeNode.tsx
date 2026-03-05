@@ -7,7 +7,7 @@ import type { FolderTreeViewportRenderNodeInput as CaseResolverTreeNodeProps } f
 import { useCaseResolverPageActions } from '../context/CaseResolverPageContext';
 import {
   useCaseResolverFolderTreeDataContext,
-  useCaseResolverFolderTreeUiContext,
+  useCaseResolverFolderTreeUiStateContext,
   isCaseResolverVirtualSectionNode,
   isUnassignedNode as isCaseResolverUnassignedNode,
 } from '../context/CaseResolverFolderTreeContext';
@@ -77,7 +77,7 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
     fileOwnerCaseIdById,
     assetOwnerCaseIdById,
   } = useCaseResolverFolderTreeDataContext();
-  const { highlightedNodeFileAssetIdSet } = useCaseResolverFolderTreeUiContext();
+  const { highlightedNodeFileAssetIdSet } = useCaseResolverFolderTreeUiStateContext();
 
   const folderPath = fromCaseResolverFolderNodeId(node.id);
   const fileId = fromCaseResolverFileNodeId(node.id);

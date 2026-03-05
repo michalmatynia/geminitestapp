@@ -194,15 +194,27 @@ export function VectorCanvas(props: VectorCanvasProps): React.JSX.Element {
 
   const showViewTransformHud = true;
 
+  useEffect((): (() => void) | void => {
+    const containerElement = containerRef.current;
+    if (!containerElement) return;
+    const handleNativeWheel = (event: WheelEvent): void => {
+      handleWheel(event);
+    };
+    containerElement.addEventListener('wheel', handleNativeWheel, { passive: false });
+    return (): void => {
+      containerElement.removeEventListener('wheel', handleNativeWheel);
+    };
+  }, [handleWheel]);
+
   return (
     <div
       ref={containerRef}
+      data-vector-canvas-root='true'
       className={cn(
-        'relative flex h-full w-full items-center justify-center overflow-hidden rounded border border-border bg-black/20',
+        'relative flex h-full w-full items-center justify-center overflow-hidden overscroll-contain rounded border border-border bg-black/20',
         className
       )}
       style={enableTwoFingerRotate ? { touchAction: 'none' } : undefined}
-      onWheel={handleWheel}
     >
       <div
         ref={viewportRef}

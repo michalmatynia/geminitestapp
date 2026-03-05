@@ -209,10 +209,20 @@ module.exports = tseslint.config(
             {
               group: [
                 '@/features/kangur/legacy/components/ui/*',
+                '@/features/kangur/legacy/components/dashboard/*',
+                '@/features/kangur/legacy/components/progress/*',
+                '@/features/kangur/legacy/components/game/*',
+                '@/features/kangur/legacy/components/game/mathQuestions',
+                '@/features/kangur/legacy/components/kangur/kangurQuestions',
+                '@/features/kangur/legacy/components/kangur/KangurSetup',
+                '@/features/kangur/legacy/components/UserNotRegisteredError',
                 '@/features/kangur/legacy/lib/utils',
+                '@/features/kangur/legacy/lib/*',
+                '@/features/kangur/legacy/pages/*',
+                '@/features/kangur/legacy/utils/*',
               ],
               message:
-                'Kangur legacy UI/utils paths were pruned. Use canonical shared UI and utilities instead.',
+                'Kangur legacy UI/lib/page/utils paths were pruned. Use canonical feature/shared modules instead.',
             },
           ],
         },
@@ -690,6 +700,23 @@ module.exports = tseslint.config(
     rules: {
       // Allow dynamic key composition in query utility helpers.
       'no-restricted-syntax': 'off',
+    },
+  },
+  {
+    files: ['src/features/kangur/ui/pages/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/features/kangur/legacy/components/*', '@/features/kangur/legacy/utils/*'],
+              message:
+                'Kangur UI pages should depend on canonical ui/components and ui/services modules.',
+            },
+          ],
+        },
+      ],
     },
   },
   {

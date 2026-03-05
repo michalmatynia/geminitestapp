@@ -280,6 +280,7 @@ export type BrainOperationsOverviewResponse = z.infer<typeof brainOperationsOver
 
 export const insightsSnapshotSchema = z.object({
   analytics: z.array(aiInsightRecordSchema).default([]),
+  runtimeAnalytics: z.array(aiInsightRecordSchema).default([]),
   logs: z.array(aiInsightRecordSchema).default([]),
 });
 

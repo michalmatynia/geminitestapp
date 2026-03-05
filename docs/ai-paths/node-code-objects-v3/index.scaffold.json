@@ -2,8 +2,16 @@
   "schemaVersion": "ai-paths.node-code-object-index.v3-scaffold",
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "strategy": "code_object_v3",
-  "totalObjects": 9,
+  "totalObjects": 23,
   "objects": [
+    {
+      "nodeType": "bundle",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/bundle.scaffold.json"
+    },
+    {
+      "nodeType": "compare",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/compare.scaffold.json"
+    },
     {
       "nodeType": "constant",
       "objectFile": "docs/ai-paths/node-code-objects-v3/constant.scaffold.json"
@@ -11,6 +19,26 @@
     {
       "nodeType": "context",
       "objectFile": "docs/ai-paths/node-code-objects-v3/context.scaffold.json"
+    },
+    {
+      "nodeType": "delay",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/delay.scaffold.json"
+    },
+    {
+      "nodeType": "description_updater",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/description_updater.scaffold.json"
+    },
+    {
+      "nodeType": "fetcher",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/fetcher.scaffold.json"
+    },
+    {
+      "nodeType": "gate",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/gate.scaffold.json"
+    },
+    {
+      "nodeType": "iterator",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/iterator.scaffold.json"
     },
     {
       "nodeType": "mapper",
@@ -25,6 +53,10 @@
       "objectFile": "docs/ai-paths/node-code-objects-v3/mutator.scaffold.json"
     },
     {
+      "nodeType": "notification",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/notification.scaffold.json"
+    },
+    {
       "nodeType": "parser",
       "objectFile": "docs/ai-paths/node-code-objects-v3/parser.scaffold.json"
     },
@@ -33,12 +65,36 @@
       "objectFile": "docs/ai-paths/node-code-objects-v3/regex.scaffold.json"
     },
     {
+      "nodeType": "router",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/router.scaffold.json"
+    },
+    {
+      "nodeType": "simulation",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/simulation.scaffold.json"
+    },
+    {
       "nodeType": "string_mutator",
       "objectFile": "docs/ai-paths/node-code-objects-v3/string_mutator.scaffold.json"
     },
     {
       "nodeType": "template",
       "objectFile": "docs/ai-paths/node-code-objects-v3/template.scaffold.json"
+    },
+    {
+      "nodeType": "trigger",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/trigger.scaffold.json"
+    },
+    {
+      "nodeType": "validation_pattern",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/validation_pattern.scaffold.json"
+    },
+    {
+      "nodeType": "validator",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/validator.scaffold.json"
+    },
+    {
+      "nodeType": "viewer",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/viewer.scaffold.json"
     }
   ]
 }

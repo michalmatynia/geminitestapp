@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v3",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "nodeType": "iterator",
+  "title": "Iterator",
+  "runtimeKernel": {
+    "strategy": "code_object_v3",
+    "executionAdapter": "legacy_handler_bridge",
+    "legacyHandlerKey": "iterator",
+    "codeObjectId": "ai-paths.node-code-object.iterator.v3"
+  },
+  "runtimeSemantics": {
+    "processing": "pulse_node_only",
+    "waiting": "freeze_consumed_inputs_and_outputs",
+    "success": "animate_outgoing_on_emit",
+    "error": "animate_error_routes_on_emit"
+  },
+  "ports": {
+    "inputs": [
+      "value",
+      "callback"
+    ],
+    "outputs": [
+      "value",
+      "index",
+      "total",
+      "done",
+      "status"
+    ]
+  },
+  "copyPaste": {
+    "fullNode": {
+      "id": "node_iterator_example",
+      "type": "iterator",
+      "title": "Iterator",
+      "description": "Iterate over an array and emit one item at a time (advance on callback).",
+      "position": {
+        "x": 1200,
+        "y": 180
+      },
+      "inputs": [
+        "value",
+        "callback"
+      ],
+      "outputs": [
+        "value",
+        "index",
+        "total",
+        "done",
+        "status"
+      ],
+      "config": {
+        "iterator": {
+          "autoContinue": true,
+          "maxSteps": 50
+        }
+      }
+    }
+  },
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "id": "node_obj_iterator_portable_v3",
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "6491b4a9cb98f5e8ef6ba30fe0bbdf1b31107495d61bbf266c0632ed12bdede3"
+}

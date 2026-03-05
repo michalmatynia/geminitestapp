@@ -36,13 +36,25 @@ describe('OperationsTab', () => {
               state: 'healthy',
               sampleSize: 20,
               updatedAt: '2026-03-01T00:00:00.000Z',
-              metrics: [{ key: 'queued', label: 'Queued', value: 2 }],
+              metrics: [
+                { key: 'queued', label: 'Queued', value: 2 },
+                { key: 'runtime_kernel_risk', label: 'Kernel parity risk', value: 'HIGH' },
+                { key: 'runtime_audit_age_min', label: 'Runtime audit age (min)', value: 185 },
+                { key: 'runtime_risk_events_current', label: 'Risk events (1h)', value: 3 },
+                { key: 'runtime_risk_events_previous', label: 'Risk events (prev)', value: 1 },
+              ],
               trend: {
                 direction: 'unknown',
                 delta: 0,
                 label: 'Trend unavailable for 1h queue snapshot.',
               },
-              recentEvents: [],
+              recentEvents: [
+                {
+                  id: 'runtime-event-1',
+                  status: 'runtime_kernel_high',
+                  timestamp: '2026-03-01T00:00:00.000Z',
+                },
+              ],
               links: [{ label: 'Queue', href: '/admin/ai-paths/queue' }],
             },
             chatbot: {
@@ -127,10 +139,19 @@ describe('OperationsTab', () => {
       'href',
       '/admin/image-studio'
     );
+    expect(screen.getByTestId('operations-runtime-risk-ai_paths')).toHaveTextContent(
+      'Kernel parity risk: HIGH'
+    );
+    expect(screen.getByTestId('operations-runtime-risk-summary-ai_paths')).toHaveTextContent(
+      'Runtime risk events: 3 current / 1 previous'
+    );
 
     expect(screen.getAllByText('Failed vs previous 1h').length).toBeGreaterThan(0);
 
     const detailButtons = screen.getAllByRole('button', { name: /Details/i });
+    await userEvent.click(detailButtons[0] as HTMLElement);
+    expect(screen.getByText('Runtime Kernel High')).toBeInTheDocument();
+
     await userEvent.click(detailButtons[1] as HTMLElement);
 
     expect(screen.getByText('failed_event')).toBeInTheDocument();
@@ -229,5 +250,101 @@ describe('OperationsTab', () => {
 
     expect(screen.getByText('Collector timeout.')).toBeInTheDocument();
     expect(screen.getByText('UNKNOWN')).toBeInTheDocument();
+  });
+
+  it('does not render runtime risk badge when runtime metric is disabled', () => {
+    vi.mocked(useBrain).mockReturnValue({
+      operationsRange: '1h',
+      setOperationsRange: vi.fn(),
+      operationsOverviewQuery: {
+        isLoading: false,
+        error: null,
+        data: {
+          range: '1h',
+          generatedAt: '2026-03-01T00:00:00.000Z',
+          window: {
+            currentStart: '2026-02-29T23:00:00.000Z',
+            currentEnd: '2026-03-01T00:00:00.000Z',
+            previousStart: '2026-02-29T22:00:00.000Z',
+            previousEnd: '2026-02-29T23:00:00.000Z',
+          },
+          domains: {
+            ai_paths: {
+              key: 'ai_paths',
+              label: 'AI Paths',
+              state: 'healthy',
+              sampleSize: 0,
+              updatedAt: '2026-03-01T00:00:00.000Z',
+              metrics: [
+                { key: 'runtime_kernel_risk', label: 'Kernel parity risk', value: 'disabled' },
+              ],
+              trend: {
+                direction: 'unknown',
+                delta: 0,
+                label: 'Trend unavailable.',
+              },
+              recentEvents: [],
+              links: [],
+            },
+            chatbot: {
+              key: 'chatbot',
+              label: 'Chatbot',
+              state: 'healthy',
+              sampleSize: 0,
+              updatedAt: '2026-03-01T00:00:00.000Z',
+              metrics: [],
+              trend: {
+                direction: 'flat',
+                delta: 0,
+                label: 'Failed vs previous 1h',
+                current: 0,
+                previous: 0,
+              },
+              recentEvents: [],
+              links: [],
+            },
+            agent_runtime: {
+              key: 'agent_runtime',
+              label: 'Agent Runtime',
+              state: 'healthy',
+              sampleSize: 0,
+              updatedAt: '2026-03-01T00:00:00.000Z',
+              metrics: [],
+              trend: {
+                direction: 'flat',
+                delta: 0,
+                label: 'Failed vs previous 1h',
+                current: 0,
+                previous: 0,
+              },
+              recentEvents: [],
+              links: [],
+            },
+            image_studio: {
+              key: 'image_studio',
+              label: 'Image Studio',
+              state: 'healthy',
+              sampleSize: 0,
+              updatedAt: '2026-03-01T00:00:00.000Z',
+              metrics: [],
+              trend: {
+                direction: 'flat',
+                delta: 0,
+                label: 'Failed vs previous 1h',
+                current: 0,
+                previous: 0,
+              },
+              recentEvents: [],
+              links: [],
+            },
+          },
+        },
+      },
+    } as unknown as ReturnType<typeof useBrain>);
+
+    render(<OperationsTab />);
+
+    expect(screen.queryByTestId('operations-runtime-risk-ai_paths')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('operations-runtime-risk-summary-ai_paths')).not.toBeInTheDocument();
   });
 });

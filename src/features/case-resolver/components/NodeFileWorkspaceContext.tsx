@@ -94,11 +94,27 @@ export type NodeFileWorkspaceContextValue = {
   hasPendingSnapshotChanges?: boolean;
 };
 
-type FunctionKey<T> = {
-  [K in keyof T]-?: T[K] extends (...args: infer _Args) => infer _Return ? K : never;
-}[keyof T];
-
-type NodeFileWorkspaceActionKey = FunctionKey<NodeFileWorkspaceContextValue>;
+type NodeFileWorkspaceActionKey =
+  | 'setNewNodeType'
+  | 'setIsSidePanelVisible'
+  | 'setIsNodeInspectorOpen'
+  | 'setIsLinkedPreviewOpen'
+  | 'setShowNodeSelectorUnderCanvas'
+  | 'setDocumentSearchScope'
+  | 'setDocumentSearchQuery'
+  | 'handleManualSave'
+  | 'selectNode'
+  | 'setConfigOpen'
+  | 'addNode'
+  | 'updateNode'
+  | 'setNodeFileMeta'
+  | 'setNodes'
+  | 'setEdges'
+  | 'setView'
+  | 'onSelectFile'
+  | 'updateSelectedPromptTemplate'
+  | 'updateSelectedNodeMeta'
+  | 'updateSelectedEdgeMeta';
 
 export type NodeFileWorkspaceActionsValue = Pick<
   NodeFileWorkspaceContextValue,

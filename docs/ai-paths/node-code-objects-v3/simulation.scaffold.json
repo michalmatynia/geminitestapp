@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v3",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "nodeType": "simulation",
+  "title": "Simulation: Entity Modal",
+  "runtimeKernel": {
+    "strategy": "code_object_v3",
+    "executionAdapter": "legacy_handler_bridge",
+    "legacyHandlerKey": "simulation",
+    "codeObjectId": "ai-paths.node-code-object.simulation.v3"
+  },
+  "runtimeSemantics": {
+    "processing": "pulse_node_only",
+    "waiting": "freeze_consumed_inputs_and_outputs",
+    "success": "animate_outgoing_on_emit",
+    "error": "animate_error_routes_on_emit"
+  },
+  "ports": {
+    "inputs": [
+      "trigger"
+    ],
+    "outputs": [
+      "context",
+      "entityId",
+      "entityType",
+      "productId"
+    ]
+  },
+  "copyPaste": {
+    "fullNode": {
+      "id": "node_simulation_example",
+      "type": "simulation",
+      "title": "Simulation: Entity Modal",
+      "description": "Simulate a modal action by Entity ID.",
+      "position": {
+        "x": 720,
+        "y": 60
+      },
+      "inputs": [
+        "trigger"
+      ],
+      "outputs": [
+        "context",
+        "entityId",
+        "entityType",
+        "productId"
+      ],
+      "config": {
+        "simulation": {
+          "entityType": "product",
+          "entityId": "sim-wave-a",
+          "productId": "sim-wave-a",
+          "runBehavior": "before_connected_trigger"
+        }
+      }
+    }
+  },
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "id": "node_obj_simulation_portable_v3",
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "260264a220a38e7a06ba60e09ea48e5cb1f24cf7a0410b703d144f10b8baf906"
+}

@@ -46,6 +46,25 @@ export function useLogInsightsQuery(): ListQuery<AiInsightRecord, InsightRespons
   });
 }
 
+export function useRuntimeAnalyticsInsightsQuery(): ListQuery<AiInsightRecord, InsightResponse> {
+  const queryKey = QUERY_KEYS.ai.insights.runtimeAnalytics();
+  return createListQueryV2<AiInsightRecord, InsightResponse>({
+    queryKey,
+    queryFn: () =>
+      api.get<InsightResponse>('/api/ai-paths/runtime-analytics/insights', {
+        params: { limit: 10 },
+      }),
+    meta: {
+      source: 'insights.hooks.useRuntimeAnalyticsInsightsQuery',
+      operation: 'list',
+      resource: 'ai.insights.runtime-analytics',
+      domain: 'analytics',
+      queryKey,
+      tags: ['ai', 'insights', 'runtime-analytics'],
+    },
+  });
+}
+
 export function useRunAnalyticsInsightMutation(): MutationResult<AiInsightRecord | null, void> {
   const mutationKey = QUERY_KEYS.ai.insights.analytics();
   return createCreateMutationV2<AiInsightRecord | null, void>({
@@ -83,5 +102,31 @@ export function useRunLogInsightMutation(): MutationResult<AiInsightRecord | nul
       tags: ['ai', 'insights', 'logs', 'run'],
     },
     invalidateKeys: [QUERY_KEYS.ai.insights.logs()],
+  });
+}
+
+export function useRunRuntimeAnalyticsInsightMutation(): MutationResult<
+  AiInsightRecord | null,
+  void
+> {
+  const mutationKey = QUERY_KEYS.ai.insights.runtimeAnalytics();
+  return createCreateMutationV2<AiInsightRecord | null, void>({
+    mutationFn: async () => {
+      const data = await api.post<{ insight?: AiInsightRecord }>(
+        '/api/ai-paths/runtime-analytics/insights',
+        {}
+      );
+      return data?.insight ?? null;
+    },
+    mutationKey,
+    meta: {
+      source: 'insights.hooks.useRunRuntimeAnalyticsInsightMutation',
+      operation: 'create',
+      resource: 'ai.insights.runtime-analytics',
+      domain: 'analytics',
+      mutationKey,
+      tags: ['ai', 'insights', 'runtime-analytics', 'run'],
+    },
+    invalidateKeys: [QUERY_KEYS.ai.insights.runtimeAnalytics()],
   });
 }

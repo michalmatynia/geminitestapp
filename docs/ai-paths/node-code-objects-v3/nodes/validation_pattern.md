@@ -4,13 +4,13 @@ Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
-- Runtime strategy: `legacy_adapter`
-- Migration wave: `backlog`
-- Code object ID: `not_assigned`
-- Readiness stage: `cataloged`
-- Readiness score: 35/100
-- Readiness blockers: `missing_v3_scaffold`, `not_in_v3_pilot`
-- Parity evidence suite IDs: `none`
+- Runtime strategy: `code_object_v3`
+- Migration wave: `pilot`
+- Code object ID: `ai-paths.node-code-object.validation_pattern.v3`
+- Readiness stage: `rollout_candidate`
+- Readiness score: 90/100
+- Readiness blockers: `rollout_not_approved`
+- Parity evidence suite IDs: `v3-pilot-parity-core`
 - Config field count: 14
 
 ## Node Contract Files
@@ -18,9 +18,9 @@ Generated at: 2026-03-05T00:00:00.000Z
 - Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/validation_pattern.json`
 - Semantic hash: `e64e35e2fd1184b3b984c4645f0778f6bd2c5a415224fbc949e5418eb706978f`
 - v2 code object: `docs/ai-paths/node-code-objects-v2/validation_pattern.json`
-- v3 scaffold: `missing`
-- v3 object id: `missing`
-- v3 object hash: `missing`
+- v3 scaffold: `docs/ai-paths/node-code-objects-v3/validation_pattern.scaffold.json`
+- v3 object id: `node_obj_validation_pattern_portable_v3`
+- v3 object hash: `87ede3561620dfc8eb2564de91d3b5f96544aba2977455a73a84d2faeffae378`
 
 ## Ports
 

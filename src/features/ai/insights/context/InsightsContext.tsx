@@ -6,22 +6,29 @@ import { useToast } from '@/shared/ui';
 
 import {
   useAnalyticsInsightsQuery,
+  useRuntimeAnalyticsInsightsQuery,
   useLogInsightsQuery,
   useRunAnalyticsInsightMutation,
+  useRunRuntimeAnalyticsInsightMutation,
   useRunLogInsightMutation,
 } from '../hooks/useInsightQueries';
 
 interface InsightsContextValue {
   analyticsQuery: ReturnType<typeof useAnalyticsInsightsQuery>;
+  runtimeAnalyticsQuery: ReturnType<typeof useRuntimeAnalyticsInsightsQuery>;
   logsQuery: ReturnType<typeof useLogInsightsQuery>;
   runAnalyticsMutation: ReturnType<typeof useRunAnalyticsInsightMutation>;
+  runRuntimeAnalyticsMutation: ReturnType<typeof useRunRuntimeAnalyticsInsightMutation>;
   runLogsMutation: ReturnType<typeof useRunLogInsightMutation>;
 }
 
-type InsightsStateContextValue = Pick<InsightsContextValue, 'analyticsQuery' | 'logsQuery'>;
+type InsightsStateContextValue = Pick<
+  InsightsContextValue,
+  'analyticsQuery' | 'runtimeAnalyticsQuery' | 'logsQuery'
+>;
 type InsightsActionsContextValue = Pick<
   InsightsContextValue,
-  'runAnalyticsMutation' | 'runLogsMutation'
+  'runAnalyticsMutation' | 'runRuntimeAnalyticsMutation' | 'runLogsMutation'
 >;
 
 const InsightsStateContext = createContext<InsightsStateContextValue | undefined>(undefined);
@@ -47,9 +54,11 @@ export function InsightsProvider({ children }: { children: React.ReactNode }): R
   const { toast } = useToast();
 
   const analyticsQuery = useAnalyticsInsightsQuery();
+  const runtimeAnalyticsQuery = useRuntimeAnalyticsInsightsQuery();
   const logsQuery = useLogInsightsQuery();
 
   const runAnalyticsMutation = useRunAnalyticsInsightMutation();
+  const runRuntimeAnalyticsMutation = useRunRuntimeAnalyticsInsightMutation();
   const runLogsMutation = useRunLogInsightMutation();
 
   // Handle toast notifications via useEffect for mutations
@@ -77,12 +86,26 @@ export function InsightsProvider({ children }: { children: React.ReactNode }): R
     }
   }, [runLogsMutation.isError, runLogsMutation.error, toast]);
 
+  React.useEffect(() => {
+    if (runRuntimeAnalyticsMutation.isSuccess) {
+      toast('AI runtime analytics insight generated.', { variant: 'success' });
+    }
+  }, [runRuntimeAnalyticsMutation.isSuccess, toast]);
+
+  React.useEffect(() => {
+    if (runRuntimeAnalyticsMutation.isError) {
+      toast(runRuntimeAnalyticsMutation.error.message, { variant: 'error' });
+    }
+  }, [runRuntimeAnalyticsMutation.isError, runRuntimeAnalyticsMutation.error, toast]);
+
   const stateValue: InsightsStateContextValue = {
     analyticsQuery,
+    runtimeAnalyticsQuery,
     logsQuery,
   };
   const actionsValue: InsightsActionsContextValue = {
     runAnalyticsMutation,
+    runRuntimeAnalyticsMutation,
     runLogsMutation,
   };
 

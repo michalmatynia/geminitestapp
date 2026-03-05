@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeAll, afterAll } from 'vitest';
 
 import { VectorCanvas } from '@/shared/ui/vector-canvas';
@@ -105,5 +105,45 @@ describe('VectorCanvas interactions', () => {
     expect(queryByTestId('vector-canvas-center-guides')).not.toBeNull();
     expect(queryByTestId('vector-canvas-center-guides-vertical')).not.toBeNull();
     expect(queryByTestId('vector-canvas-center-guides-horizontal')).not.toBeNull();
+  });
+
+  it('captures wheel events to prevent parent scroll chaining while zooming', () => {
+    const { container } = render(
+      <div data-testid='wheel-parent' style={{ width: 800, height: 600 }}>
+        <VectorCanvas
+          src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='
+          tool='select'
+          selectionEnabled={false}
+          shapes={[]}
+          activeShapeId={null}
+          selectedPointIndex={null}
+          onChange={vi.fn()}
+          onSelectShape={vi.fn()}
+          brushRadius={16}
+          allowWithoutImage
+        />
+      </div>
+    );
+
+    const wheelParent = container.querySelector('[data-testid="wheel-parent"]') as HTMLDivElement;
+    const wheelParentListener = vi.fn();
+    wheelParent.addEventListener('wheel', wheelParentListener);
+
+    const canvasRoot = container.querySelector('[data-vector-canvas-root="true"]');
+    expect(canvasRoot).not.toBeNull();
+
+    const wheelEvent = new WheelEvent('wheel', {
+      bubbles: true,
+      cancelable: true,
+      deltaY: 120,
+      deltaMode: 0,
+    });
+
+    act(() => {
+      canvasRoot?.dispatchEvent(wheelEvent);
+    });
+
+    expect(wheelEvent.defaultPrevented).toBe(true);
+    expect(wheelParentListener).not.toHaveBeenCalled();
   });
 });

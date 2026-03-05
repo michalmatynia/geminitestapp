@@ -6,7 +6,7 @@ import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 import {
   type CaseSortKey,
-  useAdminCaseResolverCases,
+  useAdminCaseResolverCasesStateContext,
 } from '../context/AdminCaseResolverCasesContext';
 import { buildPathLabelMap } from '../pages/AdminCaseResolverCasesUtils';
 import { useCaseResolverCaseSearchIndex } from './useCaseResolverCaseSearchIndex';
@@ -124,7 +124,7 @@ const compareCaseRows = (
 };
 
 export function useAdminCaseResolverCasesState() {
-  const context = useAdminCaseResolverCases();
+  const context = useAdminCaseResolverCasesStateContext();
   const {
     workspace,
     caseResolverTags,

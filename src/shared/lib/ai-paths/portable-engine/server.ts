@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { evaluateGraphServer } from '@/shared/lib/ai-paths/core/runtime/engine-server';
-import { createAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine';
+import { resolveAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine';
 import type { EvaluateGraphOptions } from '@/shared/lib/ai-paths/core/runtime/engine-modules/engine-types';
 
 import {
@@ -20,10 +20,6 @@ import {
 
 export { runPortablePathClient };
 export * from './sinks.server';
-
-const isRuntimeValidationMiddleware = (
-  value: unknown
-): value is NonNullable<EvaluateGraphOptions['validationMiddleware']> => typeof value === 'function';
 
 export const runPortablePathServer = async (
   input: unknown,
@@ -112,17 +108,14 @@ export const runPortablePathServer = async (
     throw validationError;
   }
 
-  const runtimeValidationMiddlewareOverride: EvaluateGraphOptions['validationMiddleware'] =
-    isRuntimeValidationMiddleware(validationMiddleware) ? validationMiddleware : undefined;
   const runtimeValidationMiddleware: EvaluateGraphOptions['validationMiddleware'] =
-    runtimeValidationMiddlewareOverride ??
-    (runtimeValidationEnabled
-      ? createAiPathsRuntimeValidationMiddleware({
-        config: runtimeValidationConfig ?? resolved.value.pathConfig.aiPathsValidation ?? null,
-        nodes: resolved.value.pathConfig.nodes,
-        edges: resolved.value.pathConfig.edges,
-      })
-      : undefined);
+    resolveAiPathsRuntimeValidationMiddleware({
+      validationMiddleware,
+      runtimeValidationEnabled,
+      runtimeValidationConfig: runtimeValidationConfig ?? resolved.value.pathConfig.aiPathsValidation ?? null,
+      nodes: resolved.value.pathConfig.nodes,
+      edges: resolved.value.pathConfig.edges,
+    });
 
   let runtimeState: PortablePathRunResult['runtimeState'];
   try {

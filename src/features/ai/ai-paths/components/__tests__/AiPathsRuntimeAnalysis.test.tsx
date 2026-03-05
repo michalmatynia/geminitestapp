@@ -120,6 +120,23 @@ describe('AiPathsRuntimeAnalysis', () => {
           slowestSpan: null,
           topSlowNodes: [],
           topFailedNodes: [],
+          kernelParity: {
+            sampledRuns: 1,
+            runsWithKernelParity: 1,
+            sampledHistoryEntries: 2,
+            strategyCounts: {
+              legacy_adapter: 1,
+              code_object_v3: 1,
+              unknown: 0,
+            },
+            resolutionSourceCounts: {
+              override: 1,
+              registry: 1,
+              missing: 0,
+              unknown: 0,
+            },
+            codeObjectIds: [],
+          },
         },
       },
       isFetching: false,
@@ -172,6 +189,26 @@ describe('AiPathsRuntimeAnalysis', () => {
           slowestSpan: null,
           topSlowNodes: [],
           topFailedNodes: [],
+          kernelParity: {
+            sampledRuns: 2,
+            runsWithKernelParity: 2,
+            sampledHistoryEntries: 5,
+            strategyCounts: {
+              legacy_adapter: 2,
+              code_object_v3: 3,
+              unknown: 0,
+            },
+            resolutionSourceCounts: {
+              override: 3,
+              registry: 2,
+              missing: 0,
+              unknown: 0,
+            },
+            codeObjectIds: [
+              'ai-paths.node-code-object.constant.v3',
+              'ai-paths.node-code-object.template.v3',
+            ],
+          },
         },
         portableEngine: {
           source: 'in_memory',
@@ -228,5 +265,10 @@ describe('AiPathsRuntimeAnalysis', () => {
     expect(screen.getByText(/Attempts 12/i)).toBeInTheDocument();
     expect(screen.getByText(/Failures 3 \(R 1 · V 1 · RT 1\)/i)).toBeInTheDocument();
     expect(screen.getByText(/Latest client runtime · canvas/i)).toBeInTheDocument();
+    expect(screen.getByText('Kernel parity (24h)')).toBeInTheDocument();
+    expect(screen.getByText(/Coverage 2\/2 \(100.0%\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/History entries 5/i)).toBeInTheDocument();
+    expect(screen.getByText(/Resolution O\/R\/M\/U: 3\/2\/0\/0/i)).toBeInTheDocument();
+    expect(screen.getByText('ai-paths.node-code-object.constant.v3')).toBeInTheDocument();
   });
 });

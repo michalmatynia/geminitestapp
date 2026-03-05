@@ -217,6 +217,109 @@ describe('runtime analytics service', () => {
     expect(summary.traces.avgDurationMs).toBe(1800);
   });
 
+  it('aggregates runtime kernel parity telemetry from run trace meta', async () => {
+    mockCapabilities(true, true);
+    const { redis } = createRedisMock();
+    const listRunsMock = vi.fn().mockResolvedValue({
+      runs: [
+        {
+          id: 'run-1',
+          meta: {
+            runtimeTrace: {
+              profile: {
+                nodeSpans: [],
+              },
+              kernelParity: {
+                sampledHistoryEntries: 3,
+                strategyCounts: {
+                  legacy_adapter: 2,
+                  code_object_v3: 1,
+                  unknown: 0,
+                },
+                resolutionSourceCounts: {
+                  override: 1,
+                  registry: 2,
+                  missing: 0,
+                  unknown: 0,
+                },
+                codeObjectIds: ['ai-paths.node-code-object.constant.v3'],
+              },
+            },
+          },
+        },
+        {
+          id: 'run-2',
+          meta: {
+            runtimeTrace: {
+              profile: {
+                nodeSpans: [],
+              },
+              kernelParity: {
+                sampledHistoryEntries: 2,
+                strategyCounts: {
+                  legacy_adapter: 0,
+                  code_object_v3: 2,
+                  unknown: 0,
+                },
+                resolutionSourceCounts: {
+                  override: 2,
+                  registry: 0,
+                  missing: 0,
+                  unknown: 0,
+                },
+                codeObjectIds: ['ai-paths.node-code-object.template.v3'],
+              },
+            },
+          },
+        },
+        {
+          id: 'run-3',
+          meta: {
+            runtimeTrace: {
+              profile: {
+                nodeSpans: [],
+              },
+            },
+          },
+        },
+      ],
+      total: 3,
+    });
+
+    getRedisConnectionMock.mockReturnValue(redis);
+    getPathRunRepositoryMock.mockResolvedValue({
+      listRuns: listRunsMock,
+    });
+
+    const { getRuntimeAnalyticsSummary } = await loadModule();
+    const summary = await getRuntimeAnalyticsSummary({
+      from: new Date('2026-03-01T00:00:00.000Z'),
+      to: new Date('2026-03-02T00:00:00.000Z'),
+      range: '24h',
+    });
+
+    expect(summary.traces.kernelParity).toEqual({
+      sampledRuns: 3,
+      runsWithKernelParity: 2,
+      sampledHistoryEntries: 5,
+      strategyCounts: {
+        legacy_adapter: 2,
+        code_object_v3: 3,
+        unknown: 0,
+      },
+      resolutionSourceCounts: {
+        override: 3,
+        registry: 2,
+        missing: 0,
+        unknown: 0,
+      },
+      codeObjectIds: [
+        'ai-paths.node-code-object.constant.v3',
+        'ai-paths.node-code-object.template.v3',
+      ],
+    });
+  });
+
   it('includes portable engine runtime analytics snapshot details', async () => {
     mockCapabilities(true, true);
     const { redis } = createRedisMock();

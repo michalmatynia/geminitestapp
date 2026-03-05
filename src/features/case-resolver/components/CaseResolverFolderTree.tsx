@@ -24,7 +24,8 @@ import {
 import {
   CaseResolverFolderTreeProvider,
   useCaseResolverFolderTreeDataContext,
-  useCaseResolverFolderTreeUiContext,
+  useCaseResolverFolderTreeUiActionsContext,
+  useCaseResolverFolderTreeUiStateContext,
   isCaseResolverVirtualSectionNode,
 } from '../context/CaseResolverFolderTreeContext';
 import {
@@ -73,8 +74,8 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
     isNodeFileCanvasActive,
     adapter,
   } = useCaseResolverFolderTreeDataContext();
-  const { highlightedFolderAncestorNodeIds, setHighlightedNodeFileAssetIds } =
-    useCaseResolverFolderTreeUiContext();
+  const { highlightedFolderAncestorNodeIds } = useCaseResolverFolderTreeUiStateContext();
+  const { setHighlightedNodeFileAssetIds } = useCaseResolverFolderTreeUiActionsContext();
 
   const { ConfirmationModal } = useConfirm();
   const [pendingNodeCanvasAction, setPendingNodeCanvasAction] =

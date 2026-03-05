@@ -250,6 +250,9 @@ export function useCaseResolverAssetFactoryActions({
             }),
             folder,
             kind: 'node_file',
+            metadata: {
+              ownerCaseId: activeCaseId,
+            },
           });
           createdAssetId = asset.id;
           return {

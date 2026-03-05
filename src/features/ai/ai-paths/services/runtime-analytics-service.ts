@@ -270,6 +270,23 @@ const emptyTraceAnalytics = (): AiPathRuntimeTraceAnalytics => ({
   slowestSpan: null,
   topSlowNodes: [],
   topFailedNodes: [],
+  kernelParity: {
+    sampledRuns: 0,
+    runsWithKernelParity: 0,
+    sampledHistoryEntries: 0,
+    strategyCounts: {
+      legacy_adapter: 0,
+      code_object_v3: 0,
+      unknown: 0,
+    },
+    resolutionSourceCounts: {
+      override: 0,
+      registry: 0,
+      missing: 0,
+      unknown: 0,
+    },
+    codeObjectIds: [],
+  },
   truncated: false,
 });
 
@@ -378,6 +395,47 @@ const extractRuntimeTraceNodeSpans = (run: AiPathRunRecord): unknown[] => {
   return Array.isArray(nodeSpans) ? nodeSpans : [];
 };
 
+const normalizeNonNegativeInteger = (value: unknown): number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0 ? Math.round(value) : 0;
+
+const extractRuntimeTraceKernelParity = (
+  run: AiPathRunRecord
+): AiPathRuntimeTraceAnalytics['kernelParity'] | null => {
+  const meta = asRecord(run.meta);
+  if (!meta) return null;
+  const runtimeTrace = asRecord(meta['runtimeTrace']);
+  if (!runtimeTrace) return null;
+  const kernelParity = asRecord(runtimeTrace['kernelParity']);
+  if (!kernelParity) return null;
+
+  const strategyCounts = asRecord(kernelParity['strategyCounts']);
+  const resolutionSourceCounts = asRecord(kernelParity['resolutionSourceCounts']);
+  const rawCodeObjectIds = Array.isArray(kernelParity['codeObjectIds'])
+    ? kernelParity['codeObjectIds']
+    : [];
+
+  return {
+    sampledRuns: 0,
+    runsWithKernelParity: 0,
+    sampledHistoryEntries: normalizeNonNegativeInteger(kernelParity['sampledHistoryEntries']),
+    strategyCounts: {
+      legacy_adapter: normalizeNonNegativeInteger(strategyCounts?.['legacy_adapter']),
+      code_object_v3: normalizeNonNegativeInteger(strategyCounts?.['code_object_v3']),
+      unknown: normalizeNonNegativeInteger(strategyCounts?.['unknown']),
+    },
+    resolutionSourceCounts: {
+      override: normalizeNonNegativeInteger(resolutionSourceCounts?.['override']),
+      registry: normalizeNonNegativeInteger(resolutionSourceCounts?.['registry']),
+      missing: normalizeNonNegativeInteger(resolutionSourceCounts?.['missing']),
+      unknown: normalizeNonNegativeInteger(resolutionSourceCounts?.['unknown']),
+    },
+    codeObjectIds: rawCodeObjectIds
+      .filter((entry: unknown): entry is string => typeof entry === 'string' && entry.trim().length > 0)
+      .map((entry: string) => entry.trim())
+      .slice(0, 25),
+  };
+};
+
 const toNonEmptyString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -422,8 +480,42 @@ export const summarizeRuntimeTraceAnalytics = (input: {
   let failedSpans = 0;
   let cachedSpans = 0;
   let slowestSpan: AiPathRuntimeTraceAnalytics['slowestSpan'] = null;
+  const kernelParity: AiPathRuntimeTraceAnalytics['kernelParity'] = {
+    sampledRuns: runs.length,
+    runsWithKernelParity: 0,
+    sampledHistoryEntries: 0,
+    strategyCounts: {
+      legacy_adapter: 0,
+      code_object_v3: 0,
+      unknown: 0,
+    },
+    resolutionSourceCounts: {
+      override: 0,
+      registry: 0,
+      missing: 0,
+      unknown: 0,
+    },
+    codeObjectIds: [],
+  };
+  const codeObjectIdSet = new Set<string>();
 
   runs.forEach((run: AiPathRunRecord): void => {
+    const parity = extractRuntimeTraceKernelParity(run);
+    if (parity) {
+      kernelParity.runsWithKernelParity += 1;
+      kernelParity.sampledHistoryEntries += parity.sampledHistoryEntries;
+      kernelParity.strategyCounts.legacy_adapter += parity.strategyCounts.legacy_adapter;
+      kernelParity.strategyCounts.code_object_v3 += parity.strategyCounts.code_object_v3;
+      kernelParity.strategyCounts.unknown += parity.strategyCounts.unknown;
+      kernelParity.resolutionSourceCounts.override += parity.resolutionSourceCounts.override;
+      kernelParity.resolutionSourceCounts.registry += parity.resolutionSourceCounts.registry;
+      kernelParity.resolutionSourceCounts.missing += parity.resolutionSourceCounts.missing;
+      kernelParity.resolutionSourceCounts.unknown += parity.resolutionSourceCounts.unknown;
+      parity.codeObjectIds.forEach((codeObjectId: string) => {
+        codeObjectIdSet.add(codeObjectId);
+      });
+    }
+
     const spans = extractRuntimeTraceNodeSpans(run);
     spans.forEach((spanValue: unknown): void => {
       const span = asRecord(spanValue);
@@ -525,6 +617,7 @@ export const summarizeRuntimeTraceAnalytics = (input: {
 
   const total = typeof input.total === 'number' ? Math.max(0, input.total) : runs.length;
   const sampledRuns = runs.length;
+  kernelParity.codeObjectIds = Array.from(codeObjectIdSet).slice(0, 25);
   return {
     source: 'db_sample',
     sampledRuns,
@@ -537,6 +630,7 @@ export const summarizeRuntimeTraceAnalytics = (input: {
     slowestSpan,
     topSlowNodes,
     topFailedNodes,
+    kernelParity,
     truncated: total > sampledRuns,
   };
 };

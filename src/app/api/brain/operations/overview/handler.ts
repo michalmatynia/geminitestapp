@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import { listImageStudioRuns } from '@/features/ai/image-studio/server/run-repository';
+import { listAiInsights } from '@/features/ai/insights/repository';
 import { getAiPathRunQueueStatus } from '@/features/jobs/server';
 import type {
   BrainOperationsDomainKey,
@@ -200,29 +201,212 @@ const mapAiPathsState = (overall: 'ok' | 'warning' | 'critical'): BrainOperation
   return 'critical';
 };
 
-const collectAiPathsDomain = async (
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
+type RuntimeKernelRiskLevel = 'low' | 'medium' | 'high' | 'unknown';
+
+const parseRuntimeKernelRiskLevel = (value: unknown): RuntimeKernelRiskLevel => {
+  if (typeof value !== 'string') return 'unknown';
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'low' || normalized === 'medium' || normalized === 'high') {
+    return normalized;
+  }
+  return 'unknown';
+};
+
+type RuntimeInsightSnapshot = {
+  riskLevel: RuntimeKernelRiskLevel;
+  createdAt: string | null;
+  ageMinutes: number | null;
+};
+
+type RuntimeInsightRiskRecord = {
+  id?: string;
+  riskLevel: RuntimeKernelRiskLevel;
+  timestampMs: number;
+};
+
+type RuntimeInsightTelemetry = {
+  latest: RuntimeInsightSnapshot;
+  trend: BrainOperationsTrend;
+  recentEvents: BrainOperationsRecentEvent[];
+  sampledInsights: number;
+  currentRiskEvents: number;
+  previousRiskEvents: number;
+};
+
+const buildUnknownRuntimeInsightTelemetry = (
   range: BrainOperationsRange
+): RuntimeInsightTelemetry => ({
+  latest: {
+    riskLevel: 'unknown',
+    createdAt: null,
+    ageMinutes: null,
+  },
+  trend: {
+    direction: 'unknown',
+    delta: 0,
+    label: `Trend unavailable for ${RANGE_LABELS[range]} runtime insights.`,
+  },
+  recentEvents: [],
+  sampledInsights: 0,
+  currentRiskEvents: 0,
+  previousRiskEvents: 0,
+});
+
+const isRiskyRuntimeInsight = (riskLevel: RuntimeKernelRiskLevel): boolean =>
+  riskLevel === 'medium' || riskLevel === 'high';
+
+const collectRuntimeInsightTelemetry = async (
+  window: WindowBounds,
+  range: BrainOperationsRange,
+  nowMs: number
+): Promise<RuntimeInsightTelemetry> => {
+  const fallback = buildUnknownRuntimeInsightTelemetry(range);
+
+  try {
+    const insights = await listAiInsights('runtime_analytics', 25);
+    const [latestInsight] = insights;
+    if (!latestInsight) {
+      return fallback;
+    }
+
+    const records: RuntimeInsightRiskRecord[] = insights.flatMap((insight) => {
+      const timestampMs = parseTimestampMs(insight.createdAt);
+      if (timestampMs === null) return [];
+      const metadata = asRecord(insight.metadata);
+      return [
+        {
+          id: insight.id,
+          riskLevel: parseRuntimeKernelRiskLevel(metadata?.['runtimeKernelParityRiskLevel']),
+          timestampMs,
+        },
+      ];
+    });
+
+    const latestRecord = records[0];
+    if (!latestRecord) return fallback;
+
+    const ageMinutes =
+      Math.max(0, Math.round((nowMs - latestRecord.timestampMs) / 60_000));
+
+    const currentRiskEvents = records.filter(
+      (record) =>
+        isRiskyRuntimeInsight(record.riskLevel) &&
+        isWithinWindow(record.timestampMs, window.currentStartMs, window.currentEndMs)
+    ).length;
+    const previousRiskEvents = records.filter(
+      (record) =>
+        isRiskyRuntimeInsight(record.riskLevel) &&
+        isWithinWindow(record.timestampMs, window.previousStartMs, window.previousEndMs)
+    ).length;
+
+    const delta = currentRiskEvents - previousRiskEvents;
+    const direction = delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat';
+    const trend: BrainOperationsTrend = {
+      direction,
+      delta,
+      label: `Risky runtime insights vs previous ${RANGE_LABELS[range]}`,
+      current: currentRiskEvents,
+      previous: previousRiskEvents,
+    };
+
+    const currentWindowRecords = records.filter((record) =>
+      isWithinWindow(record.timestampMs, window.currentStartMs, window.currentEndMs)
+    );
+    const source = currentWindowRecords.length > 0 ? currentWindowRecords : records;
+    const recentEvents: BrainOperationsRecentEvent[] = source
+      .slice()
+      .sort((left, right) => right.timestampMs - left.timestampMs)
+      .slice(0, RECENT_EVENTS_LIMIT)
+      .map((record) => ({
+        id: record.id,
+        status: `runtime_kernel_${record.riskLevel}`,
+        timestamp: new Date(record.timestampMs).toISOString(),
+      }));
+
+    return {
+      latest: {
+        riskLevel: latestRecord.riskLevel,
+        createdAt: new Date(latestRecord.timestampMs).toISOString(),
+        ageMinutes,
+      },
+      trend,
+      recentEvents,
+      sampledInsights: records.length,
+      currentRiskEvents,
+      previousRiskEvents,
+    };
+  } catch {
+    return fallback;
+  }
+};
+
+const collectAiPathsDomain = async (
+  window: WindowBounds,
+  range: BrainOperationsRange,
+  nowMs: number
 ): Promise<BrainOperationsDomainOverview> => {
   const status = await getAiPathRunQueueStatus();
-  const overall = status.slo.overall;
-  const state = mapAiPathsState(overall);
   const runtimeAnalyticsEnabled = status.runtimeAnalytics?.enabled ?? false;
-  const message =
-    state === 'healthy'
+  const runtimeTelemetry = runtimeAnalyticsEnabled
+    ? await collectRuntimeInsightTelemetry(window, range, nowMs)
+    : null;
+  const runtimeInsight: RuntimeInsightSnapshot = runtimeTelemetry?.latest ?? {
+    riskLevel: 'unknown',
+    createdAt: null,
+    ageMinutes: null,
+  };
+  const riskLevelLabel =
+    runtimeInsight.riskLevel === 'unknown' ? 'n/a' : runtimeInsight.riskLevel.toUpperCase();
+  let state = mapAiPathsState(status.slo.overall);
+  if (
+    runtimeAnalyticsEnabled &&
+    state === 'healthy' &&
+    (runtimeInsight.riskLevel === 'medium' || runtimeInsight.riskLevel === 'high')
+  ) {
+    state = 'warning';
+  }
+  const baseMessage =
+    mapAiPathsState(status.slo.overall) === 'healthy'
       ? runtimeAnalyticsEnabled
         ? 'Queue and SLO are healthy.'
         : 'Queue is healthy. Runtime analytics telemetry is disabled.'
       : (status.slo.breaches[0]?.message ?? 'AI Paths queue reported degraded health.');
+  const runtimeMessage =
+    runtimeAnalyticsEnabled && runtimeInsight.riskLevel !== 'unknown'
+      ? `Latest runtime kernel parity risk: ${riskLevelLabel}.`
+      : runtimeAnalyticsEnabled
+        ? 'Runtime kernel parity risk is unavailable.'
+        : '';
+  const runtimeAgeMessage =
+    runtimeAnalyticsEnabled && runtimeInsight.ageMinutes !== null
+      ? `Runtime audit age: ${runtimeInsight.ageMinutes}m.`
+      : '';
+  const message = [baseMessage, runtimeMessage, runtimeAgeMessage]
+    .filter((part) => part.length > 0)
+    .join(' ');
   const updatedAt =
     status.lastPollTime > 0 ? new Date(status.lastPollTime).toISOString() : nowIso();
   const queueLagValue = status.queueLagMs === null ? 'n/a' : status.queueLagMs;
+  const runtimeAuditTimestampValue = runtimeInsight.createdAt ?? 'n/a';
+  const runtimeAuditAgeValue =
+    runtimeInsight.ageMinutes === null ? 'n/a' : runtimeInsight.ageMinutes;
+  const runtimeRiskEventsCurrent = runtimeTelemetry?.currentRiskEvents ?? 'n/a';
+  const runtimeRiskEventsPrevious = runtimeTelemetry?.previousRiskEvents ?? 'n/a';
+  const runtimeInsightSampleSize = runtimeTelemetry?.sampledInsights ?? 0;
 
   return {
     key: 'ai_paths',
     label: DOMAIN_CONFIG.ai_paths.label,
     state,
     message,
-    sampleSize: runtimeAnalyticsEnabled ? status.brainAnalytics24h.totalReports : 0,
+    sampleSize: runtimeAnalyticsEnabled
+      ? Math.max(status.brainAnalytics24h.totalReports, runtimeInsightSampleSize)
+      : 0,
     updatedAt,
     metrics: [
       { key: 'queued_count', label: 'Queued', value: status.queuedCount },
@@ -250,13 +434,38 @@ const collectAiPathsDomain = async (
         label: 'Brain error reports (24h)',
         value: runtimeAnalyticsEnabled ? status.brainAnalytics24h.errorReports : 'disabled',
       },
+      {
+        key: 'runtime_kernel_risk',
+        label: 'Kernel parity risk',
+        value: runtimeAnalyticsEnabled ? riskLevelLabel : 'disabled',
+      },
+      {
+        key: 'runtime_audit_age_min',
+        label: 'Runtime audit age (min)',
+        value: runtimeAnalyticsEnabled ? runtimeAuditAgeValue : 'disabled',
+      },
+      {
+        key: 'runtime_audit_at',
+        label: 'Runtime audit at',
+        value: runtimeAnalyticsEnabled ? runtimeAuditTimestampValue : 'disabled',
+      },
+      {
+        key: 'runtime_risk_events_current',
+        label: `Risk events (${RANGE_LABELS[range]})`,
+        value: runtimeAnalyticsEnabled ? runtimeRiskEventsCurrent : 'disabled',
+      },
+      {
+        key: 'runtime_risk_events_previous',
+        label: 'Risk events (prev)',
+        value: runtimeAnalyticsEnabled ? runtimeRiskEventsPrevious : 'disabled',
+      },
     ],
-    trend: {
+    trend: runtimeTelemetry?.trend ?? {
       direction: 'unknown',
       delta: 0,
       label: `Trend unavailable for ${RANGE_LABELS[range]} queue snapshot.`,
     },
-    recentEvents: [],
+    recentEvents: runtimeTelemetry?.recentEvents ?? [],
     links: DOMAIN_CONFIG.ai_paths.links,
   };
 };
@@ -489,7 +698,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const generatedAt = new Date(windowBounds.currentEndMs).toISOString();
 
   const tasks: Record<BrainOperationsDomainKey, Promise<BrainOperationsDomainOverview>> = {
-    ai_paths: collectAiPathsDomain(range),
+    ai_paths: collectAiPathsDomain(windowBounds, range, nowMs),
     chatbot: collectChatbotDomain(windowBounds, range),
     agent_runtime: collectAgentRuntimeDomain(windowBounds, range),
     image_studio: collectImageStudioDomain(windowBounds, range),

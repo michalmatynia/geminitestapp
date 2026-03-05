@@ -2,19 +2,57 @@
   "schemaVersion": "ai-paths.node-code-object-index.v3",
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "specVersion": "ai-paths.portable-engine.v1",
-  "totalObjects": 9,
+  "totalObjects": 23,
   "pilotNodeTypes": [
+    "bundle",
+    "compare",
     "constant",
     "context",
+    "delay",
+    "description_updater",
+    "fetcher",
+    "gate",
+    "iterator",
     "mapper",
     "math",
     "mutator",
+    "notification",
     "parser",
     "regex",
+    "router",
+    "simulation",
     "string_mutator",
-    "template"
+    "template",
+    "trigger",
+    "validation_pattern",
+    "validator",
+    "viewer"
   ],
   "objects": [
+    {
+      "id": "node_obj_bundle_portable_v3",
+      "nodeType": "bundle",
+      "title": "Bundle",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/bundle.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "efd212bb912876b826edc314d235b8d6bb4f943c34eaf55991a6ecf99706c976",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "bundle",
+      "codeObjectId": "ai-paths.node-code-object.bundle.v3"
+    },
+    {
+      "id": "node_obj_compare_portable_v3",
+      "nodeType": "compare",
+      "title": "Compare",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/compare.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "23313b4478cf5494b15d3fed3e3a3770e3e666e5a6ff42db1280b8cdc5ca44ae",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "compare",
+      "codeObjectId": "ai-paths.node-code-object.compare.v3"
+    },
     {
       "id": "node_obj_constant_portable_v3",
       "nodeType": "constant",
@@ -38,6 +76,66 @@
       "executionAdapter": "legacy_handler_bridge",
       "legacyHandlerKey": "context",
       "codeObjectId": "ai-paths.node-code-object.context.v3"
+    },
+    {
+      "id": "node_obj_delay_portable_v3",
+      "nodeType": "delay",
+      "title": "Delay",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/delay.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "1f0b26b2c3deff73dbf90d4b173edb547e1821a940d48a5a477f8d23b6246711",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "delay",
+      "codeObjectId": "ai-paths.node-code-object.delay.v3"
+    },
+    {
+      "id": "node_obj_description_updater_portable_v3",
+      "nodeType": "description_updater",
+      "title": "Description Updater (Deprecated)",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/description_updater.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "036b75287b8b567ce566c659ad29e542decd3fdf4efcd3015c7a933e488dc346",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "description_updater",
+      "codeObjectId": "ai-paths.node-code-object.description_updater.v3"
+    },
+    {
+      "id": "node_obj_fetcher_portable_v3",
+      "nodeType": "fetcher",
+      "title": "Fetcher: Trigger Context",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/fetcher.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "fcc70313d66490ac6d0c94f9e3a2040828e7d228b938cac4b314fa792be8b44a",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "fetcher",
+      "codeObjectId": "ai-paths.node-code-object.fetcher.v3"
+    },
+    {
+      "id": "node_obj_gate_portable_v3",
+      "nodeType": "gate",
+      "title": "Gate",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/gate.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "0b3b771d323546d821f16eab553099cbf76f81f8961ceda2fc0ee7b67a63e253",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "gate",
+      "codeObjectId": "ai-paths.node-code-object.gate.v3"
+    },
+    {
+      "id": "node_obj_iterator_portable_v3",
+      "nodeType": "iterator",
+      "title": "Iterator",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/iterator.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "6491b4a9cb98f5e8ef6ba30fe0bbdf1b31107495d61bbf266c0632ed12bdede3",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "iterator",
+      "codeObjectId": "ai-paths.node-code-object.iterator.v3"
     },
     {
       "id": "node_obj_mapper_portable_v3",
@@ -76,6 +174,18 @@
       "codeObjectId": "ai-paths.node-code-object.mutator.v3"
     },
     {
+      "id": "node_obj_notification_portable_v3",
+      "nodeType": "notification",
+      "title": "Toast Notification",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/notification.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "76a46d4366b86fcca6a4fc5d95d33c4708a67b8a14fab29d83a1228b2b670018",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "notification",
+      "codeObjectId": "ai-paths.node-code-object.notification.v3"
+    },
+    {
       "id": "node_obj_parser_portable_v3",
       "nodeType": "parser",
       "title": "JSON Parser",
@@ -100,6 +210,30 @@
       "codeObjectId": "ai-paths.node-code-object.regex.v3"
     },
     {
+      "id": "node_obj_router_portable_v3",
+      "nodeType": "router",
+      "title": "Router",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/router.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "35c0e41b00ab2cbce2ee142a6c4edec2d23e29aaf054f17ee7f5b16629d5593f",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "router",
+      "codeObjectId": "ai-paths.node-code-object.router.v3"
+    },
+    {
+      "id": "node_obj_simulation_portable_v3",
+      "nodeType": "simulation",
+      "title": "Simulation: Entity Modal",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/simulation.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "260264a220a38e7a06ba60e09ea48e5cb1f24cf7a0410b703d144f10b8baf906",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "simulation",
+      "codeObjectId": "ai-paths.node-code-object.simulation.v3"
+    },
+    {
       "id": "node_obj_string_mutator_portable_v3",
       "nodeType": "string_mutator",
       "title": "String Mutator",
@@ -122,6 +256,54 @@
       "executionAdapter": "legacy_handler_bridge",
       "legacyHandlerKey": "template",
       "codeObjectId": "ai-paths.node-code-object.template.v3"
+    },
+    {
+      "id": "node_obj_trigger_portable_v3",
+      "nodeType": "trigger",
+      "title": "Trigger: Image Studio Analysis",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/trigger.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "a4d688101f3f7a130ada35fe80325d4f04989dee0db5896291183c677a327e24",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "trigger",
+      "codeObjectId": "ai-paths.node-code-object.trigger.v3"
+    },
+    {
+      "id": "node_obj_validation_pattern_portable_v3",
+      "nodeType": "validation_pattern",
+      "title": "Validation Pattern",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/validation_pattern.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "87ede3561620dfc8eb2564de91d3b5f96544aba2977455a73a84d2faeffae378",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "validation_pattern",
+      "codeObjectId": "ai-paths.node-code-object.validation_pattern.v3"
+    },
+    {
+      "id": "node_obj_validator_portable_v3",
+      "nodeType": "validator",
+      "title": "Validator",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/validator.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "e81c532abb19cc9abc59e7296aa5fdac4b6fe9055bba72779a2f1bfd6730f35a",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "validator",
+      "codeObjectId": "ai-paths.node-code-object.validator.v3"
+    },
+    {
+      "id": "node_obj_viewer_portable_v3",
+      "nodeType": "viewer",
+      "title": "Result Viewer",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/viewer.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "f80f84c6cea20cbeb318a99c0501ae0fa516141199d7d06584ba9b0746aa984c",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "viewer",
+      "codeObjectId": "ai-paths.node-code-object.viewer.v3"
     }
   ]
 }

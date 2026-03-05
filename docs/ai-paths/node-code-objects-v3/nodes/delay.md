@@ -4,13 +4,13 @@ Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
-- Runtime strategy: `legacy_adapter`
-- Migration wave: `backlog`
-- Code object ID: `not_assigned`
-- Readiness stage: `cataloged`
-- Readiness score: 35/100
-- Readiness blockers: `missing_v3_scaffold`, `not_in_v3_pilot`
-- Parity evidence suite IDs: `none`
+- Runtime strategy: `code_object_v3`
+- Migration wave: `pilot`
+- Code object ID: `ai-paths.node-code-object.delay.v3`
+- Readiness stage: `rollout_candidate`
+- Readiness score: 90/100
+- Readiness blockers: `rollout_not_approved`
+- Parity evidence suite IDs: `v3-pilot-parity-core`
 - Config field count: 4
 
 ## Node Contract Files
@@ -18,9 +18,9 @@ Generated at: 2026-03-05T00:00:00.000Z
 - Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/delay.json`
 - Semantic hash: `fa631c84b720f9f975e8da3f24935e4d1b5d36ff103e58319691af9d07f5bd30`
 - v2 code object: `docs/ai-paths/node-code-objects-v2/delay.json`
-- v3 scaffold: `missing`
-- v3 object id: `missing`
-- v3 object hash: `missing`
+- v3 scaffold: `docs/ai-paths/node-code-objects-v3/delay.scaffold.json`
+- v3 object id: `node_obj_delay_portable_v3`
+- v3 object hash: `1f0b26b2c3deff73dbf90d4b173edb547e1821a940d48a5a477f8d23b6246711`
 
 ## Ports
 

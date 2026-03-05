@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v3",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "nodeType": "bundle",
+  "title": "Bundle",
+  "runtimeKernel": {
+    "strategy": "code_object_v3",
+    "executionAdapter": "legacy_handler_bridge",
+    "legacyHandlerKey": "bundle",
+    "codeObjectId": "ai-paths.node-code-object.bundle.v3"
+  },
+  "runtimeSemantics": {
+    "processing": "pulse_node_only",
+    "waiting": "freeze_consumed_inputs_and_outputs",
+    "success": "animate_outgoing_on_emit",
+    "error": "animate_error_routes_on_emit"
+  },
+  "ports": {
+    "inputs": [
+      "value",
+      "productId",
+      "content_en",
+      "images",
+      "title"
+    ],
+    "outputs": [
+      "bundle"
+    ]
+  },
+  "copyPaste": {
+    "fullNode": {
+      "id": "node_bundle_example",
+      "type": "bundle",
+      "title": "Bundle",
+      "description": "Cluster inputs into a single bundle output.",
+      "position": {
+        "x": 300,
+        "y": 180
+      },
+      "inputs": [
+        "value",
+        "productId",
+        "content_en",
+        "images",
+        "title"
+      ],
+      "outputs": [
+        "bundle"
+      ],
+      "config": {
+        "bundle": {
+          "includePorts": [
+            "value"
+          ]
+        }
+      }
+    }
+  },
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "id": "node_obj_bundle_portable_v3",
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "efd212bb912876b826edc314d235b8d6bb4f943c34eaf55991a6ecf99706c976"
+}

@@ -12,13 +12,28 @@ export type NodeRuntimeKernelMode = (typeof NODE_RUNTIME_KERNEL_MODES)[number];
 export const NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES = [
   'constant',
   'context',
+  'bundle',
+  'compare',
+  'delay',
+  'db_schema',
+  'description_updater',
+  'fetcher',
+  'gate',
+  'iterator',
   'mapper',
   'math',
   'mutator',
+  'notification',
   'parser',
   'regex',
+  'router',
+  'simulation',
   'string_mutator',
   'template',
+  'trigger',
+  'validation_pattern',
+  'validator',
+  'viewer',
 ] as const;
 
 export type NodeRuntimeKernelDescriptor = {

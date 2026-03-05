@@ -1669,7 +1669,7 @@
             "productId: normalizedEntityId,"
           ],
           "requiredSnippets": [
-            "new CustomEvent('ai-path-run-enqueued', { detail: payload })",
+            "new CustomEvent(AI_PATH_RUN_ENQUEUED_EVENT_NAME, { detail: payload })",
             "entityId: normalizedEntityId,",
             "entityType: normalizedEntityType,"
           ]
@@ -1681,9 +1681,9 @@
             "ai-path-product-run-queued"
           ],
           "requiredSnippets": [
-            "window.addEventListener('ai-path-run-enqueued', handler);",
-            "const entityType = detail['entityType'];",
-            "const entityId = detail['entityId'];"
+            "parseAiPathRunEnqueuedEventPayload(detail);",
+            "if (payload.entityType !== 'product') return null;",
+            "window.addEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, handler);"
           ]
         }
       ]

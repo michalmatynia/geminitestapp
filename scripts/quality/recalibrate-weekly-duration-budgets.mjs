@@ -492,6 +492,16 @@ const run = async () => {
       applicationStatus: application.status,
     },
     application,
+    supplemental: {
+      enabled: supplemental.enabled,
+      totalSamples: supplemental.totalSamples,
+      byCheck: Object.fromEntries(
+        Object.entries(supplemental.byCheck ?? {}).map(([checkId, samples]) => [
+          checkId,
+          Array.isArray(samples) ? samples.length : 0,
+        ])
+      ),
+    },
     recommendations: analysis.entries,
     runs: runs.map((runEntry) => ({
       sourceFile: runEntry.sourceFile,
@@ -518,6 +528,9 @@ const run = async () => {
   );
   console.log(
     `[weekly-duration-recalibration] changed=${payload.summary.checksChanged} pending=${payload.summary.checksPending} status=${payload.summary.status}`
+  );
+  console.log(
+    `[weekly-duration-recalibration] samples weekly=${payload.summary.samplesWeekly} supplemental=${payload.summary.samplesSupplemental} total=${payload.summary.samplesTotal}`
   );
   console.log(
     `[weekly-duration-recalibration] apply=${application.status} changedChecks=${application.changedChecks.length}`

@@ -92,6 +92,22 @@ const buildPromptNode = (): AiNode => ({
   position: { x: 0, y: 240 },
 });
 
+const buildFunctionNode = (): AiNode => ({
+  id: 'node-function',
+  type: 'function',
+  title: 'Function',
+  description: '',
+  inputs: [],
+  outputs: ['value'],
+  config: {
+    function: {
+      script: 'return { value: "ok" };',
+      safeMode: true,
+    },
+  },
+  position: { x: 0, y: 300 },
+});
+
 const buildAudioOscillatorNode = (): AiNode => ({
   id: 'node-audio-osc',
   type: 'audio_oscillator',
@@ -222,6 +238,27 @@ describe('engine-server runtime-kernel resolver wiring', () => {
     expect(getMongoClientMock).toHaveBeenCalledTimes(1);
     expect(result.outputs?.['node-compare']?.['valid']).toBe(true);
     expect(result.outputs?.['node-compare']?.['value']).toBe('legacy');
+  });
+
+  it('fails fast on unresolved code-object handlers when strict native registry mode is enabled', async () => {
+    const resolveCodeObjectHandler = vi.fn(() => null);
+
+    await expect(
+      evaluateGraphServer({
+        nodes: [buildFunctionNode()],
+        edges: [],
+        runtimeKernelPilotNodeTypes: ['function'],
+        runtimeKernelStrictNativeRegistry: true,
+        resolveCodeObjectHandler,
+        reportAiPathsError: (): void => {},
+      })
+    ).rejects.toThrow('No handler found for node type: function');
+
+    expect(getMongoClientMock).toHaveBeenCalledTimes(1);
+    expect(resolveCodeObjectHandler).toHaveBeenCalledWith({
+      nodeType: 'function',
+      codeObjectId: 'ai-paths.node-code-object.function.v3',
+    });
   });
 
   it('executes trigger nodes through default contract resolver bridge', async () => {

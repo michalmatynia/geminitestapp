@@ -108,6 +108,11 @@ const defaultResolveCodeObjectHandler = createNodeCodeObjectV3ContractResolver({
   resolveLegacyHandler,
   resolveNativeCodeObjectHandler,
 });
+const strictDefaultResolveCodeObjectHandler = createNodeCodeObjectV3ContractResolver({
+  resolveLegacyHandler,
+  resolveNativeCodeObjectHandler,
+  strictNativeRegistry: true,
+});
 
 export async function evaluateGraphClient(
   argsOrNodes: EvaluateGraphArgs | AiNode[],
@@ -135,9 +140,12 @@ export async function evaluateGraphClient(
       resolveAiPathsRuntimeCodeObjectHandler(args, {
         resolverIds: resolvedOptions.runtimeKernelCodeObjectResolverIds,
       }) ??
-      defaultResolveCodeObjectHandler(args),
+      (resolvedOptions.runtimeKernelStrictNativeRegistry
+        ? strictDefaultResolveCodeObjectHandler(args)
+        : defaultResolveCodeObjectHandler(args)),
     mode: resolvedOptions.runtimeKernelMode,
     v3PilotNodeTypes: resolvedOptions.runtimeKernelPilotNodeTypes,
+    runtimeKernelStrictNativeRegistry: resolvedOptions.runtimeKernelStrictNativeRegistry,
   });
 
   return evaluateGraphInternal(nodes, resolvedEdges, {

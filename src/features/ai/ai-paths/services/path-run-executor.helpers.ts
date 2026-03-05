@@ -118,6 +118,17 @@ export const parseRuntimeKernelCodeObjectResolverIds = (value: unknown): string[
     normalizeToken: normalizeRuntimeKernelResolverIdToken,
   });
 
+const parseRuntimeKernelStrictNativeRegistry = (value: unknown): boolean | undefined => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on')
+    return true;
+  if (normalized === 'false' || normalized === '0' || normalized === 'no' || normalized === 'off')
+    return false;
+  return undefined;
+};
+
 export const normalizeRuntimeKernelCodeObjectResolverIds = (
   values: string[] | undefined
 ): string[] | undefined => {
@@ -138,6 +149,9 @@ export const resolveRuntimeKernelConfigForRun = (input: {
   envResolverIds: unknown;
   pathResolverIds: unknown;
   settingResolverIds: unknown;
+  envStrictNativeRegistry: unknown;
+  pathStrictNativeRegistry: unknown;
+  settingStrictNativeRegistry: unknown;
 }): {
   mode: NodeRuntimeKernelMode;
   modeSource: 'env' | 'path' | 'settings' | 'default';
@@ -145,6 +159,8 @@ export const resolveRuntimeKernelConfigForRun = (input: {
   pilotSource: 'env' | 'path' | 'settings' | 'default';
   resolverIds: string[] | undefined;
   resolverSource: 'env' | 'path' | 'settings' | 'default';
+  strictNativeRegistry: boolean;
+  strictNativeRegistrySource: 'env' | 'path' | 'settings' | 'default';
 } => {
   const envMode = normalizeRuntimeKernelModeValue(input.envMode);
   const pathMode = normalizeRuntimeKernelModeValue(input.pathMode);
@@ -180,6 +196,25 @@ export const resolveRuntimeKernelConfigForRun = (input: {
       : settingsResolverIds
       ? 'settings'
       : 'default';
+  const envStrictNativeRegistry = parseRuntimeKernelStrictNativeRegistry(
+    input.envStrictNativeRegistry
+  );
+  const pathStrictNativeRegistry = parseRuntimeKernelStrictNativeRegistry(
+    input.pathStrictNativeRegistry
+  );
+  const settingsStrictNativeRegistry = parseRuntimeKernelStrictNativeRegistry(
+    input.settingStrictNativeRegistry
+  );
+  const strictNativeRegistry =
+    envStrictNativeRegistry ?? pathStrictNativeRegistry ?? settingsStrictNativeRegistry ?? false;
+  const strictNativeRegistrySource: 'env' | 'path' | 'settings' | 'default' =
+    envStrictNativeRegistry !== undefined
+      ? 'env'
+      : pathStrictNativeRegistry !== undefined
+        ? 'path'
+        : settingsStrictNativeRegistry !== undefined
+          ? 'settings'
+          : 'default';
 
   return {
     mode,
@@ -188,6 +223,8 @@ export const resolveRuntimeKernelConfigForRun = (input: {
     pilotSource,
     resolverIds,
     resolverSource,
+    strictNativeRegistry,
+    strictNativeRegistrySource,
   };
 };
 
@@ -198,6 +235,8 @@ export type RuntimeKernelExecutionTelemetry = {
   runtimeKernelPilotNodeTypesSource: 'env' | 'path' | 'settings' | 'default';
   runtimeKernelCodeObjectResolverIds: string[];
   runtimeKernelCodeObjectResolverIdsSource: 'env' | 'path' | 'settings' | 'default';
+  runtimeKernelStrictNativeRegistry: boolean;
+  runtimeKernelStrictNativeRegistrySource: 'env' | 'path' | 'settings' | 'default';
 };
 
 export const toRuntimeKernelExecutionTelemetry = (input: {
@@ -207,6 +246,8 @@ export const toRuntimeKernelExecutionTelemetry = (input: {
   pilotSource: 'env' | 'path' | 'settings' | 'default';
   resolverIds: string[] | undefined;
   resolverSource: 'env' | 'path' | 'settings' | 'default';
+  strictNativeRegistry: boolean;
+  strictNativeRegistrySource: 'env' | 'path' | 'settings' | 'default';
 }): RuntimeKernelExecutionTelemetry => ({
   runtimeKernelMode: input.mode,
   runtimeKernelModeSource: input.modeSource,
@@ -214,6 +255,8 @@ export const toRuntimeKernelExecutionTelemetry = (input: {
   runtimeKernelPilotNodeTypesSource: input.pilotSource,
   runtimeKernelCodeObjectResolverIds: input.resolverIds ?? [],
   runtimeKernelCodeObjectResolverIdsSource: input.resolverSource,
+  runtimeKernelStrictNativeRegistry: input.strictNativeRegistry,
+  runtimeKernelStrictNativeRegistrySource: input.strictNativeRegistrySource,
 });
 
 const normalizeRuntimeStrategy = (value: unknown): 'legacy_adapter' | 'code_object_v3' | null => {

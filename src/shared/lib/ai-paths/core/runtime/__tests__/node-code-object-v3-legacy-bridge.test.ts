@@ -100,6 +100,29 @@ describe('node-code-object-v3 legacy bridge', () => {
     expect(resolveLegacyHandler).toHaveBeenCalledWith('constant');
   });
 
+  it('does not fall back to legacy bridge when strict native registry mode is enabled', () => {
+    const resolveLegacyHandler = vi.fn(() => buildHandler('legacy-unused'));
+    const resolveNativeCodeObjectHandler = vi.fn(() => null);
+
+    const resolver = createNodeCodeObjectV3ContractResolver({
+      resolveLegacyHandler,
+      resolveNativeCodeObjectHandler,
+      strictNativeRegistry: true,
+    });
+
+    const resolved = resolver({
+      nodeType: 'constant',
+      codeObjectId: 'ai-paths.node-code-object.constant.v3',
+    });
+
+    expect(resolved).toBeNull();
+    expect(resolveNativeCodeObjectHandler).toHaveBeenCalledWith({
+      nodeType: 'constant',
+      codeObjectId: 'ai-paths.node-code-object.constant.v3',
+    });
+    expect(resolveLegacyHandler).not.toHaveBeenCalled();
+  });
+
   it('routes promoted model contract entries through native registry first', () => {
     const nativeModelHandler = buildHandler('native-model');
     const resolveLegacyHandler = vi.fn(() => buildHandler('legacy-unused'));

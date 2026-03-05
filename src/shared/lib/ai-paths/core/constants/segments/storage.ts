@@ -18,6 +18,8 @@ export const AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY =
   'ai_paths_runtime_kernel_pilot_node_types';
 export const AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY =
   'ai_paths_runtime_kernel_code_object_resolver_ids';
+export const AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY =
+  'ai_paths_runtime_kernel_strict_native_registry';
 export const AI_PATHS_HISTORY_RETENTION_MIN = 1;
 export const AI_PATHS_HISTORY_RETENTION_MAX = 50;
 export const AI_PATHS_HISTORY_RETENTION_DEFAULT = 3;

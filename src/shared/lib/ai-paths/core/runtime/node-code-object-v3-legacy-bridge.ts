@@ -91,6 +91,7 @@ export type CreateNodeCodeObjectV3ContractResolverArgs = {
   resolveNativeCodeObjectHandler?:
     | ((args: ResolveCodeObjectHandlerArgs) => NodeHandler | null)
     | undefined;
+  strictNativeRegistry?: boolean | undefined;
 };
 
 const resolveViaLegacyBridge = ({
@@ -120,6 +121,7 @@ const resolveViaNativeRegistry = ({
 export const createNodeCodeObjectV3ContractResolver = ({
   resolveLegacyHandler,
   resolveNativeCodeObjectHandler,
+  strictNativeRegistry,
 }: CreateNodeCodeObjectV3ContractResolverArgs): ((args: ResolveCodeObjectHandlerArgs) => NodeHandler | null) => {
   return ({ nodeType: nodeTypeInput, codeObjectId: codeObjectIdInput }: ResolveCodeObjectHandlerArgs) => {
     const nodeType = normalizeNodeType(nodeTypeInput);
@@ -141,6 +143,9 @@ export const createNodeCodeObjectV3ContractResolver = ({
       });
       if (nativeHandler) {
         return nativeHandler;
+      }
+      if (strictNativeRegistry) {
+        return null;
       }
       return resolveViaLegacyBridge({
         contract,

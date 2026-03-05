@@ -161,9 +161,25 @@ const resolveNativeCodeObjectHandler = ({
   nodeType: string;
   codeObjectId: string;
 }): NodeHandler | null => NATIVE_CODE_OBJECT_HANDLERS[codeObjectId] ?? null;
+const parseBooleanRuntimeFlag = (value: unknown): boolean | undefined => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on')
+    return true;
+  if (normalized === 'false' || normalized === '0' || normalized === 'no' || normalized === 'off')
+    return false;
+  return undefined;
+};
+
 const defaultResolveCodeObjectHandler = createNodeCodeObjectV3ContractResolver({
   resolveLegacyHandler,
   resolveNativeCodeObjectHandler,
+});
+const strictDefaultResolveCodeObjectHandler = createNodeCodeObjectV3ContractResolver({
+  resolveLegacyHandler,
+  resolveNativeCodeObjectHandler,
+  strictNativeRegistry: true,
 });
 
 let processStartedAtMs: number | null = null;
@@ -208,6 +224,10 @@ export async function evaluateGraphServer(
     });
   }
 
+  const runtimeKernelStrictNativeRegistry =
+    resolvedOptions.runtimeKernelStrictNativeRegistry ??
+    parseBooleanRuntimeFlag(process.env['AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY']) ??
+    false;
   const runtimeKernel = createNodeRuntimeKernel({
     resolveLegacyHandler,
     resolveCodeObjectHandler: (args) =>
@@ -215,10 +235,13 @@ export async function evaluateGraphServer(
       resolveAiPathsRuntimeCodeObjectHandler(args, {
         resolverIds: resolvedOptions.runtimeKernelCodeObjectResolverIds,
       }) ??
-      defaultResolveCodeObjectHandler(args),
+      (runtimeKernelStrictNativeRegistry
+        ? strictDefaultResolveCodeObjectHandler(args)
+        : defaultResolveCodeObjectHandler(args)),
     resolveOverrideHandler: resolvedOptions.resolveHandler,
     mode: resolvedOptions.runtimeKernelMode,
     v3PilotNodeTypes: resolvedOptions.runtimeKernelPilotNodeTypes,
+    runtimeKernelStrictNativeRegistry,
   });
 
   const result = await evaluateGraphInternal(nodes, resolvedEdges, {

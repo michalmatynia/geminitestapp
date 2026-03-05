@@ -87,6 +87,29 @@ describe('node-runtime-kernel', () => {
     });
   });
 
+  it('keeps missing descriptor when strict native registry mode is enabled', () => {
+    const legacyMathHandler = buildHandler('legacy-math');
+    const resolveCodeObjectHandler = vi.fn(() => null);
+
+    const runtimeKernel = createNodeRuntimeKernel({
+      resolveLegacyHandler: (nodeType: string) =>
+        nodeType === 'math' ? legacyMathHandler : null,
+      resolveCodeObjectHandler,
+      v3PilotNodeTypes: ['math'],
+      runtimeKernelStrictNativeRegistry: true,
+    });
+
+    const descriptor = runtimeKernel.resolveDescriptor('math');
+    expect(descriptor.strategy).toBe('code_object_v3');
+    expect(descriptor.source).toBe('missing');
+    expect(descriptor.handler).toBeNull();
+    expect(runtimeKernel.resolveHandler('math')).toBeNull();
+    expect(resolveCodeObjectHandler).toHaveBeenCalledWith({
+      nodeType: 'math',
+      codeObjectId: 'ai-paths.node-code-object.math.v3',
+    });
+  });
+
   it('keeps non-pilot node types on legacy_adapter strategy', () => {
     const legacyCustomHandler = buildHandler('legacy_custom');
     const runtimeKernel = createNodeRuntimeKernel({

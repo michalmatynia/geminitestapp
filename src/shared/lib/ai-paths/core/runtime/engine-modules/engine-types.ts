@@ -188,6 +188,7 @@ export type EvaluateGraphOptions = {
   runtimeKernelMode?: 'auto' | undefined;
   runtimeKernelPilotNodeTypes?: string[] | undefined;
   runtimeKernelCodeObjectResolverIds?: string[] | undefined;
+  runtimeKernelStrictNativeRegistry?: boolean | undefined;
   // Services
   fetchEntityByType?: (type: string, id: string) => Promise<Record<string, unknown> | null>;
   fetchEntityCached?: (type: string, id: string) => Promise<Record<string, unknown> | null>;

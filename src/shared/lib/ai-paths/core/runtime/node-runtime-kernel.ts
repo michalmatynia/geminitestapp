@@ -72,6 +72,7 @@ export type CreateNodeRuntimeKernelArgs = {
   resolveOverrideHandler?: ((nodeType: string) => NodeHandler | null) | undefined;
   v3PilotNodeTypes?: readonly string[] | undefined;
   mode?: NodeRuntimeKernelMode | undefined;
+  runtimeKernelStrictNativeRegistry?: boolean | undefined;
 };
 
 const normalizeNodeType = (nodeType: string): string =>
@@ -135,6 +136,7 @@ export const createNodeRuntimeKernel = ({
   resolveOverrideHandler,
   v3PilotNodeTypes,
   mode,
+  runtimeKernelStrictNativeRegistry,
 }: CreateNodeRuntimeKernelArgs): NodeRuntimeKernel => {
   // Accept deprecated mode inputs for compatibility, but runtime behavior is always auto.
   resolveNodeRuntimeKernelMode(mode);
@@ -182,6 +184,14 @@ export const createNodeRuntimeKernel = ({
           nodeType,
           handler: codeObjectHandler,
           source: 'registry',
+          v3PilotNodeTypes: resolvedPilotNodeTypes,
+        });
+      }
+      if (runtimeKernelStrictNativeRegistry) {
+        return buildDescriptor({
+          nodeType,
+          handler: null,
+          source: 'missing',
           v3PilotNodeTypes: resolvedPilotNodeTypes,
         });
       }

@@ -12,6 +12,7 @@ import {
   AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
   AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
   AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
+  AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
 } from '@/shared/lib/ai-paths/core/constants';
 import { compactPathConfigValue } from './settings-store.compaction';
 import { parsePathMetas } from './settings-store.parsing';
@@ -30,6 +31,17 @@ const normalizeRuntimeKernelPilotNodeTypeToken = (value: string): string =>
   value.trim().toLowerCase().replace(/\s+/g, '_');
 
 const normalizeRuntimeKernelResolverIdToken = (value: string): string => value.trim();
+const normalizeRuntimeKernelStrictNativeRegistryValue = (
+  value: string | undefined
+): boolean | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on')
+    return true;
+  if (normalized === 'false' || normalized === '0' || normalized === 'no' || normalized === 'off')
+    return false;
+  return undefined;
+};
 
 const parseRuntimeKernelListValue = ({
   value,
@@ -115,6 +127,10 @@ const toCanonicalRuntimeKernelSettingEntryValue = (
       value: entry.value,
       normalizeToken: normalizeRuntimeKernelResolverIdToken,
     });
+  }
+  if (entry.key === AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY) {
+    const normalized = normalizeRuntimeKernelStrictNativeRegistryValue(entry.value);
+    return normalized === undefined ? entry.value : normalized ? 'true' : 'false';
   }
   return null;
 };

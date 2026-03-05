@@ -200,6 +200,9 @@ describe('resolveRuntimeKernelConfigForRun', () => {
         envResolverIds: 'resolver.primary',
         pathResolverIds: undefined,
         settingResolverIds: 'resolver.secondary',
+        envStrictNativeRegistry: undefined,
+        pathStrictNativeRegistry: undefined,
+        settingStrictNativeRegistry: undefined,
       })
     ).toMatchObject({
       mode: 'auto',
@@ -208,6 +211,8 @@ describe('resolveRuntimeKernelConfigForRun', () => {
       pilotSource: 'env',
       resolverIds: ['resolver.primary'],
       resolverSource: 'env',
+      strictNativeRegistry: false,
+      strictNativeRegistrySource: 'default',
     });
   });
 
@@ -223,12 +228,17 @@ describe('resolveRuntimeKernelConfigForRun', () => {
         envResolverIds: undefined,
         pathResolverIds: undefined,
         settingResolverIds: undefined,
+        envStrictNativeRegistry: undefined,
+        pathStrictNativeRegistry: undefined,
+        settingStrictNativeRegistry: undefined,
       })
     ).toMatchObject({
       mode: 'auto',
       modeSource: 'settings',
       resolverIds: undefined,
       resolverSource: 'default',
+      strictNativeRegistry: false,
+      strictNativeRegistrySource: 'default',
     });
   });
 
@@ -244,6 +254,9 @@ describe('resolveRuntimeKernelConfigForRun', () => {
         envResolverIds: undefined,
         pathResolverIds: undefined,
         settingResolverIds: undefined,
+        envStrictNativeRegistry: undefined,
+        pathStrictNativeRegistry: undefined,
+        settingStrictNativeRegistry: undefined,
       })
     ).toMatchObject({
       mode: 'auto',
@@ -263,6 +276,9 @@ describe('resolveRuntimeKernelConfigForRun', () => {
         envResolverIds: '',
         pathResolverIds: '',
         settingResolverIds: 'resolver.primary, resolver.secondary',
+        envStrictNativeRegistry: '',
+        pathStrictNativeRegistry: '',
+        settingStrictNativeRegistry: 'true',
       })
     ).toMatchObject({
       mode: 'auto',
@@ -271,6 +287,8 @@ describe('resolveRuntimeKernelConfigForRun', () => {
       pilotSource: 'settings',
       resolverIds: ['resolver.primary', 'resolver.secondary'],
       resolverSource: 'settings',
+      strictNativeRegistry: true,
+      strictNativeRegistrySource: 'settings',
     });
   });
 
@@ -286,6 +304,9 @@ describe('resolveRuntimeKernelConfigForRun', () => {
         envResolverIds: undefined,
         pathResolverIds: 'resolver.path',
         settingResolverIds: 'resolver.settings',
+        envStrictNativeRegistry: undefined,
+        pathStrictNativeRegistry: 'false',
+        settingStrictNativeRegistry: 'true',
       })
     ).toMatchObject({
       mode: 'auto',
@@ -294,6 +315,8 @@ describe('resolveRuntimeKernelConfigForRun', () => {
       pilotSource: 'path',
       resolverIds: ['resolver.path'],
       resolverSource: 'path',
+      strictNativeRegistry: false,
+      strictNativeRegistrySource: 'path',
     });
   });
 });
@@ -308,6 +331,8 @@ describe('runtime kernel telemetry helpers', () => {
         pilotSource: 'env',
         resolverIds: ['resolver.primary'],
         resolverSource: 'settings',
+        strictNativeRegistry: true,
+        strictNativeRegistrySource: 'env',
       })
     ).toEqual({
       runtimeKernelMode: 'auto',
@@ -316,6 +341,8 @@ describe('runtime kernel telemetry helpers', () => {
       runtimeKernelPilotNodeTypesSource: 'env',
       runtimeKernelCodeObjectResolverIds: ['resolver.primary'],
       runtimeKernelCodeObjectResolverIdsSource: 'settings',
+      runtimeKernelStrictNativeRegistry: true,
+      runtimeKernelStrictNativeRegistrySource: 'env',
     });
   });
 

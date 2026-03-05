@@ -60,6 +60,8 @@
     "metrics:guardrails": "node scripts/architecture/check-guardrails.mjs",
     "metrics:guardrails:update": "node scripts/architecture/check-guardrails.mjs --update-baseline",
     "metrics:hotspots": "node scripts/perf/route-hotspots.mjs",
+    "metrics:critical-paths": "node scripts/perf/check-critical-path-performance.mjs",
+    "metrics:critical-paths:check": "node scripts/perf/check-critical-path-performance.mjs --strict",
     "metrics:all": "npm run metrics:collect && npm run metrics:hotspots && npm run metrics:guardrails",
     "quality:weekly-report": "node scripts/quality/generate-weekly-report.mjs",
     "quality:weekly-report:strict": "node scripts/quality/generate-weekly-report.mjs --strict",

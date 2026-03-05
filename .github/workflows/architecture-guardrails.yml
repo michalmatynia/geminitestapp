@@ -29,5 +29,8 @@ jobs:
       - name: Generate route hotspot report
         run: npm run metrics:hotspots
 
+      - name: Enforce critical path performance budgets
+        run: npm run metrics:critical-paths:check -- --ci
+
       - name: Enforce guardrails
         run: npm run metrics:guardrails

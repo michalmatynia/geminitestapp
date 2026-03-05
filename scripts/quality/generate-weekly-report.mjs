@@ -12,6 +12,7 @@ const root = process.cwd();
 const outDir = path.join(root, 'docs', 'metrics');
 
 const includeE2E = args.has('--include-e2e');
+const includeFullUnit = args.has('--include-full-unit');
 const strictMode = args.has('--strict');
 const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
 
@@ -299,9 +300,17 @@ const toMarkdown = (report) => {
   }
   lines.push(`- Lint pass rate: ${report.passRates.lint ?? 'n/a'}%`);
   lines.push(`- Typecheck pass rate: ${report.passRates.typecheck ?? 'n/a'}%`);
-  lines.push(`- Unit test pass rate: ${report.passRates.unit ?? 'n/a'}%`);
+  lines.push(`- Critical-flow gate pass rate: ${report.passRates.criticalFlows ?? 'n/a'}%`);
+  lines.push(`- Security smoke gate pass rate: ${report.passRates.securitySmoke ?? 'n/a'}%`);
+  lines.push(`- Full unit pass rate: ${report.passRates.fullUnit ?? 'n/a'}%`);
   lines.push(`- E2E test pass rate: ${report.passRates.e2e ?? 'n/a'}%`);
   lines.push('');
+  if (!includeFullUnit) {
+    lines.push(
+      'Full unit suite was skipped in this run. Use `--include-full-unit` to include full unit coverage in baseline.'
+    );
+    lines.push('');
+  }
   if (!includeE2E) {
     lines.push('E2E tests were skipped in this run. Use `--include-e2e` for full end-to-end baseline.');
     lines.push('');
@@ -418,11 +427,26 @@ const run = async () => {
       timeoutMs: 20 * 60 * 1000,
     },
     {
-      id: 'unit',
-      label: 'Unit Tests',
+      id: 'criticalFlows',
+      label: 'Critical Flow Gate',
+      command: 'npm',
+      commandArgs: ['run', 'test:critical-flows:strict', '--', '--ci', '--no-history'],
+      timeoutMs: 20 * 60 * 1000,
+    },
+    {
+      id: 'securitySmoke',
+      label: 'Security Smoke Gate',
+      command: 'npm',
+      commandArgs: ['run', 'test:security-smoke:strict', '--', '--ci', '--no-history'],
+      timeoutMs: 20 * 60 * 1000,
+    },
+    {
+      id: 'fullUnit',
+      label: 'Full Unit Tests',
       command: 'npm',
       commandArgs: ['run', 'test:unit'],
       timeoutMs: 25 * 60 * 1000,
+      enabled: includeFullUnit,
     },
     {
       id: 'e2e',
@@ -523,7 +547,9 @@ const run = async () => {
       build: getPassRate(findCheck('build')),
       lint: getPassRate(findCheck('lint')),
       typecheck: getPassRate(findCheck('typecheck')),
-      unit: getPassRate(findCheck('unit')),
+      criticalFlows: getPassRate(findCheck('criticalFlows')),
+      securitySmoke: getPassRate(findCheck('securitySmoke')),
+      fullUnit: getPassRate(findCheck('fullUnit')),
       e2e: getPassRate(findCheck('e2e')),
     },
     checks: checkResults,

@@ -1,23 +1,28 @@
 # Weekly Quality Report
 
-Generated at: 2026-03-05T00:31:37.152Z
+Generated at: 2026-03-05T03:11:43.736Z
 Node: v22.13.0
 
 ## Quality Check Summary
 
-- Total checks: 8
+- Total checks: 10
 - Passed: 4
-- Failed: 3
+- Failed: 4
 - Timed out: 0
-- Skipped: 1
+- Skipped: 2
 
 ## Baseline Status
 
 - Build pass rate: 0%
+- Build preflight: removed (Removed stale .next/lock before running build check.)
 - Lint pass rate: 0%
-- Typecheck pass rate: 100%
-- Unit test pass rate: 0%
+- Typecheck pass rate: 0%
+- Critical-flow gate pass rate: 100%
+- Security smoke gate pass rate: 100%
+- Full unit pass rate: n/a%
 - E2E test pass rate: n/a%
+
+Full unit suite was skipped in this run. Use `--include-full-unit` to include full unit coverage in baseline.
 
 E2E tests were skipped in this run. Use `--include-e2e` for full end-to-end baseline.
 
@@ -25,14 +30,16 @@ E2E tests were skipped in this run. Use `--include-e2e` for full end-to-end base
 
 | Check | Status | Duration | Exit | Command |
 | --- | --- | ---: | ---: | --- |
-| Build | FAIL | 3.7s | 1 | `npm run build` |
+| Build | FAIL | 1.6m | 1 | `npm run build` |
 | Lint | FAIL | 2.0m | 1 | `npm run lint` |
-| Typecheck | PASS | 40.2s | 0 | `npm run typecheck` |
-| Unit Tests | FAIL | 9.1m | - | `npm run test:unit` |
+| Typecheck | FAIL | 38.3s | 2 | `npm run typecheck` |
+| Critical Flow Gate | PASS | 12.6s | 0 | `npm run test:critical-flows:strict -- --ci --no-history` |
+| Security Smoke Gate | PASS | 8.6s | 0 | `npm run test:security-smoke:strict -- --ci --no-history` |
+| Full Unit Tests | SKIPPED | 0ms | - | `npm run test:unit` |
 | E2E Tests | SKIPPED | 0ms | - | `npm run test:e2e` |
-| Architecture Guardrails | PASS | 2.7s | 0 | `node scripts/architecture/check-guardrails.mjs` |
-| UI Consolidation Guardrail | PASS | 2.1s | 0 | `node scripts/architecture/check-ui-consolidation.mjs` |
-| Observability Check | PASS | 548ms | 0 | `npm run observability:check` |
+| Architecture Guardrails | FAIL | 4.4s | 1 | `node scripts/architecture/check-guardrails.mjs` |
+| UI Consolidation Guardrail | PASS | 3.2s | 0 | `node scripts/architecture/check-ui-consolidation.mjs` |
+| Observability Check | PASS | 717ms | 0 | `npm run observability:check` |
 
 ## Guardrail Snapshot
 
@@ -44,13 +51,13 @@ E2E tests were skipped in this run. Use `--include-e2e` for full end-to-end base
 
 ## Architecture and Performance Snapshot
 
-- Source files: 4250
-- Source lines: 659211
+- Source files: 4217
+- Source lines: 664571
 - API routes: 307
 - Cross-feature edge pairs: 71
 - Shared->features imports: 11
 - Largest file: `src/features/case-resolver/__tests__/workspace.test.ts` (1802 LOC)
-- use client files: 1317
+- use client files: 1306
 - setInterval occurrences: 22
 
 ## Top 5 Critical User Flows (Priority Order)

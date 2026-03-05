@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-03-05T04:29:37.055Z",
+  "entries": [
+    {
+      "id": "weekly-lane",
+      "label": "Weekly Lane Trend",
+      "latestJson": "weekly-quality-trend-latest.json",
+      "latestMd": "weekly-quality-trend-latest.md",
+      "status": "ready",
+      "latestRun": "2026-03-05T00:31:37.152Z",
+      "runCount": 1,
+      "deltaText": null
+    },
+    {
+      "id": "unit-domains",
+      "label": "Unit Domain Trend",
+      "latestJson": "unit-domain-timings-trend-latest.json",
+      "latestMd": "unit-domain-timings-trend-latest.md",
+      "status": "ready",
+      "latestRun": "2026-03-05T03:49:28.650Z",
+      "runCount": 2,
+      "deltaText": "+5.3s"
+    },
+    {
+      "id": "lint-domains",
+      "label": "Lint Domain Trend",
+      "latestJson": "lint-domain-checks-trend-latest.json",
+      "latestMd": "lint-domain-checks-trend-latest.md",
+      "status": "ready",
+      "latestRun": "2026-03-05T04:06:33.027Z",
+      "runCount": 2,
+      "deltaText": "+1.6m"
+    }
+  ]
+}

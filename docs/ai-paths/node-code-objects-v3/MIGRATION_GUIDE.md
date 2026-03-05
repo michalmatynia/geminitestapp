@@ -25,20 +25,20 @@ Generated at: 2026-03-05T00:00:00.000Z
 ## Strategy Totals
 
 - Total node types: 36
-- `legacy_adapter`: 33
-- `code_object_v3`: 3
-- v3 contracts hash: `275c095242cb2f6b8c1e27c56c0e19a4b5689a4fa62f57e57e192dc8246c8ad8`
+- `legacy_adapter`: 29
+- `code_object_v3`: 7
+- v3 contracts hash: `d0454cbcd30fab1edd0daa6adff3dbebca6a752d920b6953dfe7dca04c376435`
 
 ## Readiness Scorecard
 
-- Average readiness score: 39/100
+- Average readiness score: 44/100
 
 | Stage | Nodes |
 | --- | ---: |
 | `not_ready` | 0 |
-| `cataloged` | 33 |
+| `cataloged` | 29 |
 | `scaffolded` | 0 |
-| `pilot_indexed` | 3 |
+| `pilot_indexed` | 7 |
 | `rollout_candidate` | 0 |
 | `rollout_approved` | 0 |
 
@@ -46,9 +46,9 @@ Top blockers:
 
 | Blocker | Nodes |
 | --- | ---: |
-| `missing_v3_scaffold` | 33 |
-| `not_in_v3_pilot` | 33 |
-| `parity_not_validated` | 3 |
+| `missing_v3_scaffold` | 29 |
+| `not_in_v3_pilot` | 29 |
+| `parity_not_validated` | 7 |
 
 ## Family Coverage
 
@@ -59,7 +59,7 @@ Top blockers:
 | general | 1 | 1 | 0 |
 | integration | 7 | 7 | 0 |
 | orchestration | 9 | 9 | 0 |
-| transform | 12 | 9 | 3 |
+| transform | 12 | 5 | 7 |
 
 ## Node Coverage Matrix
 
@@ -83,16 +83,16 @@ Top blockers:
 | `http` | integration | `legacy_adapter` | 4/2 | `no` | [sheet](./nodes/http.md) | `19960ba99dd5...` | `n/a` |
 | `iterator` | orchestration | `legacy_adapter` | 2/5 | `no` | [sheet](./nodes/iterator.md) | `80ba1661cabb...` | `n/a` |
 | `learner_agent` | ai-generation | `legacy_adapter` | 2/3 | `no` | [sheet](./nodes/learner_agent.md) | `5009d070f150...` | `n/a` |
-| `mapper` | transform | `legacy_adapter` | 4/2 | `no` | [sheet](./nodes/mapper.md) | `4fe386d977d5...` | `n/a` |
+| `mapper` | transform | `code_object_v3` | 4/2 | `yes` | [sheet](./nodes/mapper.md) | `4fe386d977d5...` | `418bee8d6f69...` |
 | `math` | transform | `code_object_v3` | 1/1 | `yes` | [sheet](./nodes/math.md) | `d5cf086af127...` | `617cca2fcff9...` |
 | `model` | ai-generation | `legacy_adapter` | 2/2 | `no` | [sheet](./nodes/model.md) | `694291717483...` | `n/a` |
-| `mutator` | transform | `legacy_adapter` | 1/1 | `no` | [sheet](./nodes/mutator.md) | `86dc18244f71...` | `n/a` |
+| `mutator` | transform | `code_object_v3` | 1/1 | `yes` | [sheet](./nodes/mutator.md) | `86dc18244f71...` | `dcf613da31f5...` |
 | `notification` | integration | `legacy_adapter` | 3/0 | `no` | [sheet](./nodes/notification.md) | `171fd2da0826...` | `n/a` |
-| `parser` | transform | `legacy_adapter` | 2/4 | `no` | [sheet](./nodes/parser.md) | `f4efe5d4248e...` | `n/a` |
+| `parser` | transform | `code_object_v3` | 2/4 | `yes` | [sheet](./nodes/parser.md) | `f4efe5d4248e...` | `83efe93a40ad...` |
 | `playwright` | integration | `legacy_adapter` | 3/4 | `no` | [sheet](./nodes/playwright.md) | `7fe5f58cbada...` | `n/a` |
 | `poll` | orchestration | `legacy_adapter` | 6/4 | `no` | [sheet](./nodes/poll.md) | `86f5979ebe33...` | `n/a` |
 | `prompt` | ai-generation | `legacy_adapter` | 5/2 | `no` | [sheet](./nodes/prompt.md) | `98e6f0ffd5cb...` | `n/a` |
-| `regex` | transform | `legacy_adapter` | 3/4 | `no` | [sheet](./nodes/regex.md) | `119b8b6056ec...` | `n/a` |
+| `regex` | transform | `code_object_v3` | 3/4 | `yes` | [sheet](./nodes/regex.md) | `119b8b6056ec...` | `22fd3b408e83...` |
 | `router` | orchestration | `legacy_adapter` | 2/2 | `no` | [sheet](./nodes/router.md) | `82e9ef3cc91b...` | `n/a` |
 | `simulation` | orchestration | `legacy_adapter` | 1/4 | `no` | [sheet](./nodes/simulation.md) | `cce9b04665f1...` | `n/a` |
 | `string_mutator` | transform | `legacy_adapter` | 3/1 | `no` | [sheet](./nodes/string_mutator.md) | `b4a7a5bd6daf...` | `n/a` |

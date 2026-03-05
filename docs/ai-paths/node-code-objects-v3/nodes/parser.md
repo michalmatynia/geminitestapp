@@ -4,12 +4,12 @@ Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
-- Runtime strategy: `legacy_adapter`
-- Migration wave: `backlog`
-- Code object ID: `not_assigned`
-- Readiness stage: `cataloged`
-- Readiness score: 35/100
-- Readiness blockers: `missing_v3_scaffold`, `not_in_v3_pilot`
+- Runtime strategy: `code_object_v3`
+- Migration wave: `pilot`
+- Code object ID: `ai-paths.node-code-object.parser.v3`
+- Readiness stage: `pilot_indexed`
+- Readiness score: 80/100
+- Readiness blockers: `parity_not_validated`
 - Config field count: 6
 
 ## Node Contract Files
@@ -17,9 +17,9 @@ Generated at: 2026-03-05T00:00:00.000Z
 - Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/parser.json`
 - Semantic hash: `f4efe5d4248e963cb61027db51299b57b9d7fb3bbb1beba1a260c8e531493771`
 - v2 code object: `docs/ai-paths/node-code-objects-v2/parser.json`
-- v3 scaffold: `missing`
-- v3 object id: `missing`
-- v3 object hash: `missing`
+- v3 scaffold: `docs/ai-paths/node-code-objects-v3/parser.scaffold.json`
+- v3 object id: `node_obj_parser_portable_v3`
+- v3 object hash: `83efe93a40ada920ed7c4feff0c841eb18caf7710804975dc8ad160834c0fd5a`
 
 ## Ports
 

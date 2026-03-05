@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object-contracts.v3",
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "specVersion": "ai-paths.portable-engine.v1",
-  "totalContracts": 3,
+  "totalContracts": 7,
   "contracts": {
     "constant": {
       "objectId": "node_obj_constant_portable_v3",
@@ -14,6 +14,16 @@
       "legacyHandlerKey": "constant",
       "codeObjectId": "ai-paths.node-code-object.constant.v3"
     },
+    "mapper": {
+      "objectId": "node_obj_mapper_portable_v3",
+      "title": "JSON Mapper",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "418bee8d6f699d37a707364dc3bf9af3a2720f8ede7432ee0a1de3d3bc357975",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "mapper",
+      "codeObjectId": "ai-paths.node-code-object.mapper.v3"
+    },
     "math": {
       "objectId": "node_obj_math_portable_v3",
       "title": "Math",
@@ -23,6 +33,36 @@
       "executionAdapter": "legacy_handler_bridge",
       "legacyHandlerKey": "math",
       "codeObjectId": "ai-paths.node-code-object.math.v3"
+    },
+    "mutator": {
+      "objectId": "node_obj_mutator_portable_v3",
+      "title": "Mutator",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "dcf613da31f587da3f31f4215765bec00e72357a1a32aad9759d0c683626fc1d",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "mutator",
+      "codeObjectId": "ai-paths.node-code-object.mutator.v3"
+    },
+    "parser": {
+      "objectId": "node_obj_parser_portable_v3",
+      "title": "JSON Parser",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "83efe93a40ada920ed7c4feff0c841eb18caf7710804975dc8ad160834c0fd5a",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "parser",
+      "codeObjectId": "ai-paths.node-code-object.parser.v3"
+    },
+    "regex": {
+      "objectId": "node_obj_regex_portable_v3",
+      "title": "Regex Grouper",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "22fd3b408e83ff49aa0a347b291f262f41bdbb55bf9ed853bfd563ecc14cb492",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "regex",
+      "codeObjectId": "ai-paths.node-code-object.regex.v3"
     },
     "template": {
       "objectId": "node_obj_template_portable_v3",
@@ -36,5 +76,5 @@
     }
   },
   "contractsHashAlgorithm": "sha256",
-  "contractsHash": "275c095242cb2f6b8c1e27c56c0e19a4b5689a4fa62f57e57e192dc8246c8ad8"
+  "contractsHash": "d0454cbcd30fab1edd0daa6adff3dbebca6a752d920b6953dfe7dca04c376435"
 }

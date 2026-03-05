@@ -2,10 +2,14 @@
   "schemaVersion": "ai-paths.node-code-object-index.v3",
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "specVersion": "ai-paths.portable-engine.v1",
-  "totalObjects": 3,
+  "totalObjects": 7,
   "pilotNodeTypes": [
     "constant",
+    "mapper",
     "math",
+    "mutator",
+    "parser",
+    "regex",
     "template"
   ],
   "objects": [
@@ -22,6 +26,18 @@
       "codeObjectId": "ai-paths.node-code-object.constant.v3"
     },
     {
+      "id": "node_obj_mapper_portable_v3",
+      "nodeType": "mapper",
+      "title": "JSON Mapper",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/mapper.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "418bee8d6f699d37a707364dc3bf9af3a2720f8ede7432ee0a1de3d3bc357975",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "mapper",
+      "codeObjectId": "ai-paths.node-code-object.mapper.v3"
+    },
+    {
       "id": "node_obj_math_portable_v3",
       "nodeType": "math",
       "title": "Math",
@@ -32,6 +48,42 @@
       "executionAdapter": "legacy_handler_bridge",
       "legacyHandlerKey": "math",
       "codeObjectId": "ai-paths.node-code-object.math.v3"
+    },
+    {
+      "id": "node_obj_mutator_portable_v3",
+      "nodeType": "mutator",
+      "title": "Mutator",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/mutator.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "dcf613da31f587da3f31f4215765bec00e72357a1a32aad9759d0c683626fc1d",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "mutator",
+      "codeObjectId": "ai-paths.node-code-object.mutator.v3"
+    },
+    {
+      "id": "node_obj_parser_portable_v3",
+      "nodeType": "parser",
+      "title": "JSON Parser",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/parser.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "83efe93a40ada920ed7c4feff0c841eb18caf7710804975dc8ad160834c0fd5a",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "parser",
+      "codeObjectId": "ai-paths.node-code-object.parser.v3"
+    },
+    {
+      "id": "node_obj_regex_portable_v3",
+      "nodeType": "regex",
+      "title": "Regex Grouper",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/regex.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "22fd3b408e83ff49aa0a347b291f262f41bdbb55bf9ed853bfd563ecc14cb492",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "regex",
+      "codeObjectId": "ai-paths.node-code-object.regex.v3"
     },
     {
       "id": "node_obj_template_portable_v3",

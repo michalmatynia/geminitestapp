@@ -2,15 +2,31 @@
   "schemaVersion": "ai-paths.node-code-object-index.v3-scaffold",
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "strategy": "code_object_v3",
-  "totalObjects": 3,
+  "totalObjects": 7,
   "objects": [
     {
       "nodeType": "constant",
       "objectFile": "docs/ai-paths/node-code-objects-v3/constant.scaffold.json"
     },
     {
+      "nodeType": "mapper",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/mapper.scaffold.json"
+    },
+    {
       "nodeType": "math",
       "objectFile": "docs/ai-paths/node-code-objects-v3/math.scaffold.json"
+    },
+    {
+      "nodeType": "mutator",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/mutator.scaffold.json"
+    },
+    {
+      "nodeType": "parser",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/parser.scaffold.json"
+    },
+    {
+      "nodeType": "regex",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/regex.scaffold.json"
     },
     {
       "nodeType": "template",

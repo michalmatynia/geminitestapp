@@ -4,12 +4,12 @@ Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
-- Runtime strategy: `legacy_adapter`
-- Migration wave: `backlog`
-- Code object ID: `not_assigned`
-- Readiness stage: `cataloged`
-- Readiness score: 35/100
-- Readiness blockers: `missing_v3_scaffold`, `not_in_v3_pilot`
+- Runtime strategy: `code_object_v3`
+- Migration wave: `pilot`
+- Code object ID: `ai-paths.node-code-object.regex.v3`
+- Readiness stage: `pilot_indexed`
+- Readiness score: 80/100
+- Readiness blockers: `parity_not_validated`
 - Config field count: 15
 
 ## Node Contract Files
@@ -17,9 +17,9 @@ Generated at: 2026-03-05T00:00:00.000Z
 - Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/regex.json`
 - Semantic hash: `119b8b6056ec81cb38c9cbd2d5cc55c2353a94bf86fd0ad407fc9e9f06eb251e`
 - v2 code object: `docs/ai-paths/node-code-objects-v2/regex.json`
-- v3 scaffold: `missing`
-- v3 object id: `missing`
-- v3 object hash: `missing`
+- v3 scaffold: `docs/ai-paths/node-code-objects-v3/regex.scaffold.json`
+- v3 object id: `node_obj_regex_portable_v3`
+- v3 object hash: `22fd3b408e83ff49aa0a347b291f262f41bdbb55bf9ed853bfd563ecc14cb492`
 
 ## Ports
 

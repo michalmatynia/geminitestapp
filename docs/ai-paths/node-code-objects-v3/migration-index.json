@@ -4,36 +4,40 @@
   "totalNodes": 36,
   "pilotNodeTypes": [
     "constant",
+    "mapper",
     "math",
+    "mutator",
+    "parser",
+    "regex",
     "template"
   ],
   "strategyTotals": {
-    "legacy_adapter": 33,
-    "code_object_v3": 3
+    "legacy_adapter": 29,
+    "code_object_v3": 7
   },
-  "v3ContractsHash": "275c095242cb2f6b8c1e27c56c0e19a4b5689a4fa62f57e57e192dc8246c8ad8",
+  "v3ContractsHash": "d0454cbcd30fab1edd0daa6adff3dbebca6a752d920b6953dfe7dca04c376435",
   "readiness": {
-    "averageScore": 39,
+    "averageScore": 44,
     "totalsByStage": {
       "not_ready": 0,
-      "cataloged": 33,
+      "cataloged": 29,
       "scaffolded": 0,
-      "pilot_indexed": 3,
+      "pilot_indexed": 7,
       "rollout_candidate": 0,
       "rollout_approved": 0
     },
     "topBlockers": [
       {
         "code": "missing_v3_scaffold",
-        "count": 33
+        "count": 29
       },
       {
         "code": "not_in_v3_pilot",
-        "count": 33
+        "count": 29
       },
       {
         "code": "parity_not_validated",
-        "count": 3
+        "count": 7
       }
     ]
   },
@@ -71,8 +75,8 @@
     {
       "nodeFamily": "transform",
       "total": 12,
-      "legacy_adapter": 9,
-      "code_object_v3": 3
+      "legacy_adapter": 5,
+      "code_object_v3": 7
     }
   ],
   "nodes": [
@@ -876,9 +880,9 @@
       "nodeType": "mapper",
       "title": "JSON Mapper",
       "nodeFamily": "transform",
-      "runtimeStrategy": "legacy_adapter",
-      "migrationWave": "backlog",
-      "codeObjectId": null,
+      "runtimeStrategy": "code_object_v3",
+      "migrationWave": "pilot",
+      "codeObjectId": "ai-paths.node-code-object.mapper.v3",
       "ports": {
         "inputs": [
           "context",
@@ -896,23 +900,22 @@
         "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/mapper.json",
         "semanticNodeHash": "4fe386d977d549e3093ddd028db6ed2da07b6962e3f6c7f0f3e980e8a07ceba1",
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/mapper.json",
-        "v3ScaffoldFile": null,
-        "v3ObjectId": null,
-        "v3ObjectHash": null,
+        "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/mapper.scaffold.json",
+        "v3ObjectId": "node_obj_mapper_portable_v3",
+        "v3ObjectHash": "418bee8d6f699d37a707364dc3bf9af3a2720f8ede7432ee0a1de3d3bc357975",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/mapper.md"
       },
       "migrationChecklistTemplate": {
         "semanticContractReviewed": true,
-        "v3CodeObjectAuthored": false,
+        "v3CodeObjectAuthored": true,
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
       "migrationReadiness": {
-        "stage": "cataloged",
-        "score": 35,
+        "stage": "pilot_indexed",
+        "score": 80,
         "blockers": [
-          "missing_v3_scaffold",
-          "not_in_v3_pilot"
+          "parity_not_validated"
         ]
       }
     },
@@ -1001,9 +1004,9 @@
       "nodeType": "mutator",
       "title": "Mutator",
       "nodeFamily": "transform",
-      "runtimeStrategy": "legacy_adapter",
-      "migrationWave": "backlog",
-      "codeObjectId": null,
+      "runtimeStrategy": "code_object_v3",
+      "migrationWave": "pilot",
+      "codeObjectId": "ai-paths.node-code-object.mutator.v3",
       "ports": {
         "inputs": [
           "context"
@@ -1017,23 +1020,22 @@
         "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/mutator.json",
         "semanticNodeHash": "86dc18244f712290a2815cef8e22145b0cd058095cfd729b300b030b4eacfb4b",
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/mutator.json",
-        "v3ScaffoldFile": null,
-        "v3ObjectId": null,
-        "v3ObjectHash": null,
+        "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/mutator.scaffold.json",
+        "v3ObjectId": "node_obj_mutator_portable_v3",
+        "v3ObjectHash": "dcf613da31f587da3f31f4215765bec00e72357a1a32aad9759d0c683626fc1d",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/mutator.md"
       },
       "migrationChecklistTemplate": {
         "semanticContractReviewed": true,
-        "v3CodeObjectAuthored": false,
+        "v3CodeObjectAuthored": true,
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
       "migrationReadiness": {
-        "stage": "cataloged",
-        "score": 35,
+        "stage": "pilot_indexed",
+        "score": 80,
         "blockers": [
-          "missing_v3_scaffold",
-          "not_in_v3_pilot"
+          "parity_not_validated"
         ]
       }
     },
@@ -1081,9 +1083,9 @@
       "nodeType": "parser",
       "title": "JSON Parser",
       "nodeFamily": "transform",
-      "runtimeStrategy": "legacy_adapter",
-      "migrationWave": "backlog",
-      "codeObjectId": null,
+      "runtimeStrategy": "code_object_v3",
+      "migrationWave": "pilot",
+      "codeObjectId": "ai-paths.node-code-object.parser.v3",
       "ports": {
         "inputs": [
           "entityJson",
@@ -1101,23 +1103,22 @@
         "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/parser.json",
         "semanticNodeHash": "f4efe5d4248e963cb61027db51299b57b9d7fb3bbb1beba1a260c8e531493771",
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/parser.json",
-        "v3ScaffoldFile": null,
-        "v3ObjectId": null,
-        "v3ObjectHash": null,
+        "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/parser.scaffold.json",
+        "v3ObjectId": "node_obj_parser_portable_v3",
+        "v3ObjectHash": "83efe93a40ada920ed7c4feff0c841eb18caf7710804975dc8ad160834c0fd5a",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/parser.md"
       },
       "migrationChecklistTemplate": {
         "semanticContractReviewed": true,
-        "v3CodeObjectAuthored": false,
+        "v3CodeObjectAuthored": true,
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
       "migrationReadiness": {
-        "stage": "cataloged",
-        "score": 35,
+        "stage": "pilot_indexed",
+        "score": 80,
         "blockers": [
-          "missing_v3_scaffold",
-          "not_in_v3_pilot"
+          "parity_not_validated"
         ]
       }
     },
@@ -1263,9 +1264,9 @@
       "nodeType": "regex",
       "title": "Regex Grouper",
       "nodeFamily": "transform",
-      "runtimeStrategy": "legacy_adapter",
-      "migrationWave": "backlog",
-      "codeObjectId": null,
+      "runtimeStrategy": "code_object_v3",
+      "migrationWave": "pilot",
+      "codeObjectId": "ai-paths.node-code-object.regex.v3",
       "ports": {
         "inputs": [
           "value",
@@ -1284,23 +1285,22 @@
         "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/regex.json",
         "semanticNodeHash": "119b8b6056ec81cb38c9cbd2d5cc55c2353a94bf86fd0ad407fc9e9f06eb251e",
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/regex.json",
-        "v3ScaffoldFile": null,
-        "v3ObjectId": null,
-        "v3ObjectHash": null,
+        "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/regex.scaffold.json",
+        "v3ObjectId": "node_obj_regex_portable_v3",
+        "v3ObjectHash": "22fd3b408e83ff49aa0a347b291f262f41bdbb55bf9ed853bfd563ecc14cb492",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/regex.md"
       },
       "migrationChecklistTemplate": {
         "semanticContractReviewed": true,
-        "v3CodeObjectAuthored": false,
+        "v3CodeObjectAuthored": true,
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
       "migrationReadiness": {
-        "stage": "cataloged",
-        "score": 35,
+        "stage": "pilot_indexed",
+        "score": 80,
         "blockers": [
-          "missing_v3_scaffold",
-          "not_in_v3_pilot"
+          "parity_not_validated"
         ]
       }
     },

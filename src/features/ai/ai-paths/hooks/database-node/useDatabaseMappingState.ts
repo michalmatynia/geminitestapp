@@ -32,12 +32,17 @@ export function useDatabaseMappingState(args: {
   );
 
   const addMapping = useCallback(() => {
+    const defaultPort =
+      args.availablePorts.find((port) => port === 'value') ??
+      args.availablePorts.find((port) => port === 'result') ??
+      args.availablePorts[0] ??
+      'value';
     args.updateSelectedNodeConfig({
       database: {
         ...args.databaseConfig,
         mappings: [
           ...args.mappings,
-          { targetPath: '', sourcePort: args.availablePorts[0] ?? 'result', sourcePath: '' },
+          { targetPath: '', sourcePort: defaultPort, sourcePath: '' },
         ],
       },
     });

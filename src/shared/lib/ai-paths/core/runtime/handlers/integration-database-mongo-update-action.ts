@@ -111,8 +111,7 @@ export async function handleDatabaseMongoUpdateAction({
     };
   }
 
-  const updatePayloadMode =
-    dbConfig.updatePayloadMode ?? (dbConfig.mappings?.length ? 'mapping' : 'custom');
+  const updatePayloadMode = dbConfig.updatePayloadMode ?? 'custom';
 
   if (
     updatePayloadMode !== 'custom' &&

@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T07:53:41.543Z",
+  "generatedAt": "2026-03-05T08:08:34.185Z",
   "id": "node_obj_router_portable_v2",
   "nodeType": "router",
   "nodeDocVersion": "2026-02-20.v1",
@@ -258,5 +258,5 @@
     "semanticNodeHash": "9ef7e3acda01fcedf0a2581da7a5330add9bdc3047e9948cbeeca0d6efbfb7d2"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "44145a32e9d66731d4dd06283e9b69256c317686797bdcdef52182f04a38963b"
+  "objectHash": "8c6d46c9da0d60218e7ca804977c4941bafb7ddf696f541e87874f07547fca93"
 }

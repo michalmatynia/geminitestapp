@@ -243,7 +243,7 @@ describe('buildMongoUpdatePlan', () => {
     expect(toast).toHaveBeenCalled();
   });
 
-  it('falls back to sourcePath mappings when custom template guardrail fails', async () => {
+  it('does not fallback to mappings when custom template guardrail fails', async () => {
     const reportAiPathsError = vi.fn();
     const toast = vi.fn();
     const templateInputs = {
@@ -325,22 +325,20 @@ describe('buildMongoUpdatePlan', () => {
       aiPrompt: '',
     });
 
-    expect('plan' in result).toBe(true);
-    if (!('plan' in result)) {
-      throw new Error('Expected recovered mapping plan.');
+    expect('output' in result).toBe(true);
+    if (!('output' in result)) {
+      throw new Error('Expected guardrail output.');
     }
-    expect(result.plan.updates).toEqual({
-      description_pl: 'Opis',
-      parameters: [{ parameterId: 'param-1', value: 'Wartosc' }],
-    });
-    expect(result.plan.debugPayload['templateGuardrailFallback']).toEqual(
+    const outputBundle = result.output['bundle'] as Record<string, unknown>;
+    expect(outputBundle).toEqual(
       expect.objectContaining({
-        applied: true,
-        reason: 'write-template-values',
+        guardrail: 'write-template-values',
       })
     );
-    expect(reportAiPathsError).not.toHaveBeenCalled();
-    expect(toast).not.toHaveBeenCalled();
+    expect(reportAiPathsError).toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(expect.stringContaining('Database write blocked'), {
+      variant: 'error',
+    });
   });
 
   it('returns explicit guardrail output when update template ports are missing', async () => {

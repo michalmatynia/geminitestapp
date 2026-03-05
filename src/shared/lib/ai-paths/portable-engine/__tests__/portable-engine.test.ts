@@ -8,6 +8,7 @@ import { evaluateGraphClient } from '@/shared/lib/ai-paths/core/runtime/engine-c
 
 import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
+  PORTABLE_NODE_CODE_OBJECT_MANIFEST_METADATA_KEY,
   addPortablePathPackageFingerprint,
   buildPortablePathPackageEnvelope,
   buildPortablePathPackage,
@@ -146,6 +147,82 @@ describe('portable AI-path engine scaffold', () => {
     expect(parsed.value.source).toBe('portable_package');
     expect(parsed.value.pathConfig.id).toBe(pathConfig.id);
     expect(parsed.value.portablePackage?.metadata?.['sourceSurface']).toBe('Canvas');
+  });
+
+  it('embeds node code object manifest metadata when building portable package', () => {
+    const pathConfig = createDefaultPathConfig('path_portable_manifest_embed');
+    const portablePackage = buildPortablePathPackage(pathConfig);
+    const metadataRecord = portablePackage.metadata as Record<string, unknown> | undefined;
+    const manifest = metadataRecord?.[PORTABLE_NODE_CODE_OBJECT_MANIFEST_METADATA_KEY] as
+      | {
+          schemaVersion?: string;
+          entries?: Array<{ nodeType?: string; objectHash?: string }>;
+        }
+      | undefined;
+
+    expect(manifest?.schemaVersion).toBe('ai-paths.node-code-object-manifest.v1');
+    expect(Array.isArray(manifest?.entries)).toBe(true);
+    expect((manifest?.entries?.length ?? 0) > 0).toBe(true);
+  });
+
+  it('warns or blocks on node code object hash mismatch based on verification mode', () => {
+    const pathConfig = createDefaultPathConfig('path_portable_manifest_mismatch');
+    const portablePackage = buildPortablePathPackage(pathConfig);
+    const metadataRecord = (portablePackage.metadata ?? {}) as Record<string, unknown>;
+    const manifest = metadataRecord[PORTABLE_NODE_CODE_OBJECT_MANIFEST_METADATA_KEY] as
+      | {
+          schemaVersion?: string;
+          contractsSchemaVersion?: string;
+          contractsHashAlgorithm?: 'sha256';
+          contractsHash?: string;
+          generatedAt?: string;
+          entries?: Array<{ nodeType: string; objectHashAlgorithm: 'sha256'; objectHash: string }>;
+        }
+      | undefined;
+    const firstEntry = manifest?.entries?.[0];
+    expect(firstEntry).toBeTruthy();
+    if (!firstEntry || !manifest) return;
+    const mutatedHash = firstEntry.objectHash.startsWith('0')
+      ? `1${firstEntry.objectHash.slice(1)}`
+      : `0${firstEntry.objectHash.slice(1)}`;
+
+    const tamperedManifest = {
+      ...manifest,
+      entries: [
+        {
+          ...firstEntry,
+          objectHash: mutatedHash,
+        },
+        ...(manifest.entries?.slice(1) ?? []),
+      ],
+    };
+    const tamperedPackage = {
+      ...portablePackage,
+      metadata: {
+        ...metadataRecord,
+        [PORTABLE_NODE_CODE_OBJECT_MANIFEST_METADATA_KEY]: tamperedManifest,
+      },
+    };
+
+    const warnParsed = resolvePortablePathInput(tamperedPackage, {
+      nodeCodeObjectHashVerificationMode: 'warn',
+    });
+    expect(warnParsed.ok).toBe(true);
+    if (warnParsed.ok) {
+      expect(
+        warnParsed.value.migrationWarnings.some(
+          (warning) => warning.code === 'node_code_object_hash_mismatch'
+        )
+      ).toBe(true);
+    }
+
+    const strictParsed = resolvePortablePathInput(tamperedPackage, {
+      nodeCodeObjectHashVerificationMode: 'strict',
+    });
+    expect(strictParsed.ok).toBe(false);
+    if (!strictParsed.ok) {
+      expect(strictParsed.error.toLowerCase()).toContain('node code object');
+    }
   });
 
   it('resolves semantic canvas documents directly', () => {

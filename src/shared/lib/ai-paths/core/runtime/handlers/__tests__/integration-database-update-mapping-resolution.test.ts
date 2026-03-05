@@ -39,7 +39,7 @@ describe('resolveDatabaseUpdateMappings', () => {
     expect(result.unresolvedSourcePorts.size).toBe(0);
   });
 
-  it('falls back to alias source roots when sourcePort is unresolved', () => {
+  it('does not resolve aliases when sourcePort is unresolved', () => {
     const result = resolveDatabaseUpdateMappings({
       dbConfig: {
         mappings: [
@@ -59,9 +59,31 @@ describe('resolveDatabaseUpdateMappings', () => {
       parameterTargetPath: 'parameters',
     });
 
-    expect(result.updates).toEqual({
-      description_pl: 'Opis fallback',
+    expect(result.updates).toEqual({});
+    expect(Array.from(result.unresolvedSourcePorts)).toEqual(['value']);
+  });
+
+  it('marks mapping unresolved when source port is not part of node inputs', () => {
+    const result = resolveDatabaseUpdateMappings({
+      dbConfig: {
+        mappings: [
+          {
+            sourcePort: 'missingPort',
+            sourcePath: 'description_pl',
+            targetPath: 'description_pl',
+          },
+        ],
+      } as unknown as DatabaseConfig,
+      nodeInputPorts: ['value', 'result'],
+      resolvedInputs: {
+        missingPort: {
+          description_pl: 'Opis',
+        },
+      },
+      parameterTargetPath: 'parameters',
     });
-    expect(result.unresolvedSourcePorts.size).toBe(0);
+
+    expect(result.updates).toEqual({});
+    expect(Array.from(result.unresolvedSourcePorts)).toEqual(['missingPort']);
   });
 });

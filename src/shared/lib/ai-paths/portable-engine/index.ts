@@ -31,6 +31,11 @@ import {
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 import { hashString, stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import {
+  type PortableNodeCodeObjectHashVerificationMode,
+  verifyPortableNodeCodeObjectManifest,
+  withPortableNodeCodeObjectManifest,
+} from './node-code-objects-v2';
+import {
   beginPortablePathMigratorAttempt,
   getPortablePathEnvelopeVerificationAuditSinkSnapshot,
   getPortablePathEnvelopeVerificationObservabilitySnapshot,
@@ -98,6 +103,18 @@ export type {
   PortablePathSigningPolicyUsageHook,
   PortablePathSigningPolicyUsageSnapshot,
 } from './portable-engine-observability';
+export type {
+  PortableNodeCodeObjectHashVerificationMode,
+  PortableNodeCodeObjectManifest,
+  PortableNodeCodeObjectManifestEntry,
+  PortableNodeCodeObjectManifestWarning,
+  PortableNodeCodeObjectManifestWarningCode,
+} from './node-code-objects-v2';
+export {
+  PORTABLE_NODE_CODE_OBJECT_HASH_VERIFICATION_MODES,
+  PORTABLE_NODE_CODE_OBJECT_MANIFEST_METADATA_KEY,
+  PORTABLE_NODE_CODE_OBJECT_MANIFEST_SCHEMA_VERSION,
+} from './node-code-objects-v2';
 
 export const AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION = 'ai-paths.portable-engine.v1' as const;
 
@@ -191,6 +208,8 @@ export type PortablePathInputSource =
 export type PortablePathValidationMode = 'standard' | 'strict';
 export type PortablePathFingerprintVerificationMode = 'off' | 'warn' | 'strict';
 export type PortablePathEnvelopeSignatureVerificationMode = PortablePathFingerprintVerificationMode;
+export type PortablePathNodeCodeObjectHashVerificationMode =
+  PortableNodeCodeObjectHashVerificationMode;
 export const PORTABLE_PATH_SIGNING_POLICY_PROFILES = ['dev', 'staging', 'prod'] as const;
 export type PortablePathSigningPolicyProfile =
   (typeof PORTABLE_PATH_SIGNING_POLICY_PROFILES)[number];
@@ -262,6 +281,7 @@ export type ResolvePortablePathInputOptions = {
   limits?: Partial<PortablePayloadLimits>;
   fingerprintVerificationMode?: PortablePathFingerprintVerificationMode;
   envelopeSignatureVerificationMode?: PortablePathEnvelopeSignatureVerificationMode;
+  nodeCodeObjectHashVerificationMode?: PortablePathNodeCodeObjectHashVerificationMode;
   envelopeSignatureSecret?: string;
   envelopeSignatureSecretsByKeyId?: Record<string, string>;
   envelopeSignatureFallbackSecrets?: string[];
@@ -288,7 +308,11 @@ export type PortablePathMigrationWarningCode =
   | 'package_fingerprint_mismatch'
   | 'package_fingerprint_unsupported_algorithm'
   | 'package_fingerprint_async_required'
-  | 'package_fingerprint_verification_unavailable';
+  | 'package_fingerprint_verification_unavailable'
+  | 'node_code_object_manifest_invalid'
+  | 'node_code_object_hash_missing'
+  | 'node_code_object_hash_mismatch'
+  | 'node_code_object_hash_unknown_node_type';
 
 type PortablePathDiagnosticMessage<TCode extends string> = {
   code: TCode;
@@ -367,6 +391,7 @@ export type PortablePathRunOptions = Omit<EvaluateGraphOptions, 'reportAiPathsEr
   limits?: Partial<PortablePayloadLimits>;
   fingerprintVerificationMode?: PortablePathFingerprintVerificationMode;
   envelopeSignatureVerificationMode?: PortablePathEnvelopeSignatureVerificationMode;
+  nodeCodeObjectHashVerificationMode?: PortablePathNodeCodeObjectHashVerificationMode;
   envelopeSignatureSecret?: string;
   envelopeSignatureSecretsByKeyId?: Record<string, string>;
   envelopeSignatureFallbackSecrets?: string[];
@@ -942,6 +967,7 @@ export const resolvePortablePathInput = (
   const verificationModes = resolvePortablePathVerificationModes(options, {
     skipUsageTelemetry: internalOptions?.__skipSigningPolicyUsageTelemetry === true,
   });
+  const nodeCodeObjectHashVerificationMode = options?.nodeCodeObjectHashVerificationMode ?? 'warn';
   const limits = resolvePayloadLimits(options?.limits);
   const decoded = decodePortablePayload(input);
   if (!decoded.ok) return decoded;
@@ -1044,6 +1070,21 @@ export const resolvePortablePathInput = (
     };
   }
 
+  const nodeCodeObjectVerification = verifyPortableNodeCodeObjectManifest({
+    metadata:
+      migrated.value.portablePackage.metadata &&
+      typeof migrated.value.portablePackage.metadata === 'object' &&
+      !Array.isArray(migrated.value.portablePackage.metadata)
+        ? (migrated.value.portablePackage.metadata)
+        : undefined,
+    nodeTypes: (deserialized.value.nodes ?? []).map((node) => node.type),
+    mode: nodeCodeObjectHashVerificationMode,
+  });
+  migrationWarnings.push(...nodeCodeObjectVerification.warnings);
+  if (!nodeCodeObjectVerification.ok) {
+    return { ok: false, error: nodeCodeObjectVerification.error };
+  }
+
   return finalizeResolvedPath({
     source: resolvedSource,
     pathConfig: deserialized.value,
@@ -1136,6 +1177,10 @@ export const buildPortablePathPackage = (
   options?: BuildPortablePathPackageOptions
 ): AiPathPortablePackage => {
   const createdAt = options?.createdAt ?? new Date().toISOString();
+  const nodeTypes = (pathConfig.nodes ?? [])
+    .map((node) => (typeof node?.type === 'string' ? node.type.trim() : ''))
+    .filter((nodeType): nodeType is string => nodeType.length > 0);
+  const metadata = withPortableNodeCodeObjectManifest(options?.metadata, nodeTypes);
   const semanticDocument = serializePathConfigToSemanticCanvas(pathConfig, {
     includeConnections: options?.includeConnections !== false,
     exportedAt: createdAt,
@@ -1149,7 +1194,7 @@ export const buildPortablePathPackage = (
     pathId: pathConfig.id,
     name: pathConfig.name,
     document: semanticDocument,
-    ...(options?.metadata ? { metadata: options.metadata } : {}),
+    ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
   };
 };
 
@@ -2181,6 +2226,7 @@ export const runPortablePathClient = async (
     limits,
     fingerprintVerificationMode,
     envelopeSignatureVerificationMode,
+    nodeCodeObjectHashVerificationMode,
     envelopeSignatureSecret,
     envelopeSignatureSecretsByKeyId,
     envelopeSignatureFallbackSecrets,
@@ -2198,6 +2244,7 @@ export const runPortablePathClient = async (
     limits,
     fingerprintVerificationMode,
     envelopeSignatureVerificationMode,
+    nodeCodeObjectHashVerificationMode,
     envelopeSignatureSecret,
     envelopeSignatureSecretsByKeyId,
     envelopeSignatureFallbackSecrets,

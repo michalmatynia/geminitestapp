@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T07:53:41.543Z",
+  "generatedAt": "2026-03-05T08:08:34.185Z",
   "id": "node_obj_poll_portable_v2",
   "nodeType": "poll",
   "nodeDocVersion": "2026-02-20.v1",
@@ -346,5 +346,5 @@
     "semanticNodeHash": "6bed270f19afc27bb4ee9f42723aaae11c297d22ea4980626e95719cf8c6f293"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "73f1c00403b1530ecfa4ac514ffd425ceb85faa248f3f6a9029d42db98dc0738"
+  "objectHash": "d4864867b0c409dfa27a6b0d3daff8d439d299c7897759df9d93bcd3139d0cc9"
 }

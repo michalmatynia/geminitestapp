@@ -75,8 +75,7 @@ export async function buildMongoUpdatePlan({
   ensureExistingParameterTemplateContext,
   aiPrompt,
 }: BuildMongoUpdatePlanInput): Promise<BuildMongoUpdatePlanResult> {
-  const updatePayloadMode =
-    dbConfig.updatePayloadMode ?? (dbConfig.mappings?.length ? 'mapping' : 'custom');
+  const updatePayloadMode = dbConfig.updatePayloadMode ?? 'custom';
   const currentValueRaw: unknown = templateInputs['value'] ?? templateInputs['jobId'] ?? '';
   const currentValue = Array.isArray(currentValueRaw)
     ? (currentValueRaw as unknown[])[0]
@@ -126,7 +125,6 @@ export async function buildMongoUpdatePlan({
 
   let updates: Record<string, unknown> = {};
   let updateDoc: unknown = null;
-  let templateGuardrailFallbackMeta: Record<string, unknown> | null = null;
 
   if (updatePayloadMode === 'mapping') {
     const mappingResult = resolveDatabaseUpdateMappings({
@@ -183,68 +181,27 @@ export async function buildMongoUpdatePlan({
       currentValue,
     });
     if (!templateGuardrail.ok) {
-      const sourcePathMappings = (dbConfig.mappings ?? []).filter(
-        (mapping): boolean => normalizeNonEmptyString(mapping.sourcePath) !== null
+      const hasMappingConfig = Array.isArray(dbConfig.mappings) && dbConfig.mappings.length > 0;
+      const errorMessage = hasMappingConfig
+        ? `${templateGuardrail.message} Configure update payload mode as "mapping" to apply mapping rows from the node UI.`
+        : templateGuardrail.message;
+      reportAiPathsError(
+        new Error(errorMessage),
+        {
+          action: 'dbUpdateTemplate',
+          nodeId: node.id,
+          guardrailMeta: templateGuardrail.guardrailMeta,
+        },
+        'Database update blocked:'
       );
-      if (sourcePathMappings.length > 0) {
-        const mappingFallback = resolveDatabaseUpdateMappings({
-          dbConfig,
-          nodeInputPorts,
-          resolvedInputs,
-          parameterTargetPath,
-        });
-        if (Object.keys(mappingFallback.updates).length > 0) {
-          updates = mappingFallback.updates;
-          updateDoc = { $set: updates };
-          templateGuardrailFallbackMeta = {
-            applied: true,
-            reason: 'write-template-values',
-            message: templateGuardrail.message,
-            guardrailMeta: templateGuardrail.guardrailMeta,
-            updatePayloadMode: 'mapping_fallback',
-            sourcePathMappings: sourcePathMappings.length,
-            recoveredTargets: Object.keys(mappingFallback.updates),
-          };
-        } else {
-          const errorMessage = templateGuardrail.message;
-          reportAiPathsError(
-            new Error(errorMessage),
-            {
-              action: 'dbUpdateTemplate',
-              nodeId: node.id,
-              guardrailMeta: templateGuardrail.guardrailMeta,
-            },
-            'Database update blocked:'
-          );
-          toast(errorMessage, { variant: 'error' });
-          return {
-            output: createWriteTemplateGuardrailOutput({
-              aiPrompt,
-              message: errorMessage,
-              guardrailMeta: templateGuardrail.guardrailMeta,
-            }),
-          };
-        }
-      } else {
-        const errorMessage = templateGuardrail.message;
-        reportAiPathsError(
-          new Error(errorMessage),
-          {
-            action: 'dbUpdateTemplate',
-            nodeId: node.id,
-            guardrailMeta: templateGuardrail.guardrailMeta,
-          },
-          'Database update blocked:'
-        );
-        toast(errorMessage, { variant: 'error' });
-        return {
-          output: createWriteTemplateGuardrailOutput({
-            aiPrompt,
-            message: errorMessage,
-            guardrailMeta: templateGuardrail.guardrailMeta,
-          }),
-        };
-      }
+      toast(errorMessage, { variant: 'error' });
+      return {
+        output: createWriteTemplateGuardrailOutput({
+          aiPrompt,
+          message: errorMessage,
+          guardrailMeta: templateGuardrail.guardrailMeta,
+        }),
+      };
     }
 
     if (!updateDoc) {
@@ -288,9 +245,6 @@ export async function buildMongoUpdatePlan({
     idType,
     resolvedInputs,
   });
-  if (templateGuardrailFallbackMeta) {
-    debugPayload['templateGuardrailFallback'] = templateGuardrailFallbackMeta;
-  }
 
   if (!resolvedFilter || Object.keys(resolvedFilter).length === 0) {
     const error = 'No explicit update filter provided.';

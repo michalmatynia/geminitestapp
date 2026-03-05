@@ -51,6 +51,22 @@ Key sections:
 
 This is the canonical contract to keep signal-flow rendering consistent across all AI-Paths surfaces.
 
+## Import/Export Validation Integration
+
+Portable package export now embeds a node-code-object hash manifest in package metadata:
+
+- metadata key: `aiPathsNodeCodeObjectsV2`
+- schema: `ai-paths.node-code-object-manifest.v1`
+- source contract map: `docs/ai-paths/node-code-objects-v2/contracts.json`
+
+`resolvePortablePathInput` verifies this manifest during import:
+
+- mode: `off | warn | strict`
+- option: `nodeCodeObjectHashVerificationMode`
+- default: `warn`
+
+Direct UI paste in Paths tab uses `strict` mode.
+
 ## Copy/Paste Usage
 
 1. Open `docs/ai-paths/node-code-objects-v2/<nodeType>.json`.

@@ -188,9 +188,12 @@ export type DataContractIssueCode =
   | 'required_input_nullish'
   | 'required_input_empty'
   | 'database_template_token_missing'
+  | 'database_template_token_root_missing'
   | 'database_template_token_empty'
   | 'database_query_input_shape_mismatch'
-  | 'database_scalar_identity_expected';
+  | 'database_scalar_identity_expected'
+  | 'database_mapping_invalid'
+  | 'database_mapping_source_port_missing';
 
 export type DataContractPreflightIssue = {
   id: string;

@@ -7,7 +7,10 @@ import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Button, Input, Label, SelectSimple, FormField } from '@/shared/ui';
 
-import { useDatabaseConstructorStateContext } from './DatabaseConstructorContext';
+import {
+  useDatabaseConstructorActionsContext,
+  useDatabaseConstructorStateContext,
+} from './DatabaseConstructorContext';
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 const CANONICAL_PARAMETER_INFERENCE_TARGET_PATH = 'parameters';
@@ -22,7 +25,10 @@ const normalizeParameterInferenceTargetPath = (value: unknown): string | undefin
 };
 
 export function DatabaseSettingsTab(): React.JSX.Element | null {
-  const { availablePorts, bundleKeys, operation } = useDatabaseConstructorStateContext();
+  const { availablePorts, bundleKeys, mappings, uniqueTargetPathOptions, operation } =
+    useDatabaseConstructorStateContext();
+  const { updateMapping, removeMapping, addMapping, mapInputsToTargets } =
+    useDatabaseConstructorActionsContext();
   const { selectedNode } = useAiPathSelection();
   const { updateSelectedNodeConfig } = useAiPathOrchestrator();
   if (!selectedNode) return null;
@@ -31,6 +37,9 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
   };
   const writeSource = databaseConfig.writeSource ?? 'bundle';
   const onZeroAffectedPolicy = databaseConfig.writeOutcomePolicy?.onZeroAffected ?? 'fail';
+  const updatePayloadMode = databaseConfig.updatePayloadMode === 'mapping' ? 'mapping' : 'custom';
+  const targetPathSuggestions = uniqueTargetPathOptions.map((entry) => entry.value);
+  const targetPathDatalistId = `database-target-paths-${selectedNode.id}`;
   const guard = databaseConfig.parameterInferenceGuard ?? {};
   const updateGuard = useCallback(
     (patch: Partial<NonNullable<DatabaseConfig['parameterInferenceGuard']>>): void => {
@@ -78,6 +87,108 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
             ]}
           />
         </FormField>
+      )}
+
+      {operation === 'update' && (
+        <div className='space-y-3 rounded-md border border-border bg-card/30 p-3'>
+          <FormField
+            label='Update Payload Mode'
+            description='Custom mode uses the update template. Mapping mode writes fields from explicit source ports and paths.'
+          >
+            <SelectSimple
+              size='sm'
+              variant='subtle'
+              value={updatePayloadMode}
+              onValueChange={(value: string): void =>
+                updateSelectedNodeConfig({
+                  database: {
+                    ...databaseConfig,
+                    updatePayloadMode: value === 'mapping' ? 'mapping' : 'custom',
+                  },
+                })
+              }
+              options={[
+                { value: 'custom', label: 'Custom Template' },
+                { value: 'mapping', label: 'Field Mapping' },
+              ]}
+            />
+          </FormField>
+
+          {updatePayloadMode === 'mapping' && (
+            <div className='space-y-3'>
+              <div className='flex flex-wrap items-center gap-2'>
+                <Button type='button' variant='outline' size='xs' onClick={addMapping}>
+                  Add Mapping
+                </Button>
+                <Button type='button' variant='outline' size='xs' onClick={mapInputsToTargets}>
+                  Auto-map Inputs
+                </Button>
+              </div>
+
+              {mappings.length === 0 ? (
+                <p className='text-xs text-gray-400'>
+                  No mappings configured. Add at least one mapping to write updates.
+                </p>
+              ) : (
+                <div className='space-y-2'>
+                  {mappings.map((mapping, index) => (
+                    <div
+                      key={`${mapping.targetPath}:${mapping.sourcePort}:${index}`}
+                      className='grid gap-2 rounded-md border border-border bg-card/50 p-2 md:grid-cols-[1fr_180px_1fr_auto]'
+                    >
+                      <Input
+                        variant='subtle'
+                        size='sm'
+                        list={targetPathDatalistId}
+                        value={mapping.targetPath ?? ''}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                          updateMapping(index, { targetPath: event.target.value })
+                        }
+                        placeholder='Target path (e.g. description_pl)'
+                      />
+                      <SelectSimple
+                        size='sm'
+                        variant='subtle'
+                        value={mapping.sourcePort ?? availablePorts[0] ?? 'value'}
+                        onValueChange={(value: string): void => updateMapping(index, { sourcePort: value })}
+                        options={availablePorts.map((port: string) => ({
+                          value: port,
+                          label: formatPortLabel(port),
+                        }))}
+                        placeholder='Source port'
+                      />
+                      <Input
+                        variant='subtle'
+                        size='sm'
+                        value={mapping.sourcePath ?? ''}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                          updateMapping(index, { sourcePath: event.target.value })
+                        }
+                        placeholder='Source path (optional)'
+                      />
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='xs'
+                        onClick={(): void => removeMapping(index)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {targetPathSuggestions.length > 0 && (
+                <datalist id={targetPathDatalistId}>
+                  {targetPathSuggestions.map((path) => (
+                    <option key={path} value={path} />
+                  ))}
+                </datalist>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {operation === 'insert' && !databaseConfig.useMongoActions && (

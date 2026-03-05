@@ -303,8 +303,11 @@ const resolvePortRuntimeValue = (args: {
 const resolveTemplateTokenValue = (token: string, context: Record<string, unknown>): unknown => {
   const normalizedToken = token.trim();
   if (!normalizedToken) return undefined;
-  if (normalizedToken === 'value' || normalizedToken === 'current') {
-    return context[normalizedToken] ?? context['value'] ?? context['current'];
+  if (normalizedToken === 'value') {
+    return context['value'];
+  }
+  if (normalizedToken === 'current') {
+    return context['current'] ?? context['value'];
   }
   return getValueAtMappingPath(context, normalizedToken);
 };
@@ -344,12 +347,6 @@ const buildNodeTemplateContext = (args: {
     }
   });
 
-  if (context['value'] === undefined && context['result'] !== undefined) {
-    context['value'] = context['result'];
-  }
-  if (context['result'] === undefined && context['value'] !== undefined) {
-    context['result'] = context['value'];
-  }
   if (context['current'] === undefined && context['value'] !== undefined) {
     context['current'] = context['value'];
   }
@@ -359,8 +356,8 @@ const buildNodeTemplateContext = (args: {
 const resolveTokenRootCandidates = (token: string): string[] => {
   const root = normalizeTemplateRoot(token);
   if (!root) return [];
-  if (root === 'value' || root === 'current') {
-    return ['value', 'result', 'current'];
+  if (root === 'current') {
+    return ['current', 'value'];
   }
   return [root];
 };
@@ -409,6 +406,92 @@ const shouldDeferMissingTemplateTokenIssue = (args: {
   }
 
   return false;
+};
+
+const validateDatabaseMappingContract = (args: {
+  node: AiNode;
+  mode: DataContractPreflightMode;
+  databaseConfig: Record<string, unknown> | null;
+  issuesByKey: Map<string, DataContractPreflightIssue>;
+}): void => {
+  if (args.mode !== 'full' || !args.databaseConfig) return;
+  const updatePayloadMode = normalizeNonEmptyString(args.databaseConfig['updatePayloadMode']);
+  if (updatePayloadMode !== 'mapping') return;
+
+  const mappings = args.databaseConfig['mappings'];
+  if (!Array.isArray(mappings) || mappings.length === 0) {
+    pushIssue(args.issuesByKey, {
+      nodeId: args.node.id,
+      nodeType: args.node.type,
+      nodeTitle: resolveNodeLabel(args.node, args.node.id),
+      severity: 'error',
+      code: 'database_mapping_invalid',
+      message: 'Database mapping mode requires at least one mapping entry.',
+      recommendation:
+        'Add one or more mappings in the node config, or switch update payload mode to custom.',
+      metadata: {
+        updatePayloadMode,
+      },
+    });
+    return;
+  }
+
+  mappings.forEach((entry: unknown, index: number): void => {
+    if (!isObjectRecord(entry)) {
+      pushIssue(args.issuesByKey, {
+        nodeId: args.node.id,
+        nodeType: args.node.type,
+        nodeTitle: resolveNodeLabel(args.node, args.node.id),
+        severity: 'error',
+        code: 'database_mapping_invalid',
+        message: `Mapping #${index + 1} is invalid.`,
+        recommendation:
+          'Each mapping must define sourcePort and targetPath as non-empty strings.',
+        metadata: {
+          index,
+        },
+      });
+      return;
+    }
+
+    const sourcePort = normalizeNonEmptyString(entry['sourcePort']);
+    const targetPath = normalizeNonEmptyString(entry['targetPath']);
+    if (!sourcePort || !targetPath) {
+      pushIssue(args.issuesByKey, {
+        nodeId: args.node.id,
+        nodeType: args.node.type,
+        nodeTitle: resolveNodeLabel(args.node, args.node.id),
+        severity: 'error',
+        code: 'database_mapping_invalid',
+        message: `Mapping #${index + 1} is missing sourcePort or targetPath.`,
+        recommendation:
+          'Each mapping must define sourcePort and targetPath as non-empty strings.',
+        metadata: {
+          index,
+          sourcePort: sourcePort ?? null,
+          targetPath: targetPath ?? null,
+        },
+      });
+      return;
+    }
+
+    if (!hasNodeInputPort(args.node, sourcePort)) {
+      pushIssue(args.issuesByKey, {
+        nodeId: args.node.id,
+        nodeType: args.node.type,
+        nodeTitle: resolveNodeLabel(args.node, args.node.id),
+        severity: 'error',
+        code: 'database_mapping_source_port_missing',
+        port: sourcePort,
+        message: `Mapping #${index + 1} references source port "${sourcePort}", but the node does not expose that input.`,
+        recommendation: `Change sourcePort to a connected node input or add "${sourcePort}" to this node inputs.`,
+        metadata: {
+          index,
+          targetPath,
+        },
+      });
+    }
+  });
 };
 
 export const evaluateDataContractPreflight = (
@@ -588,6 +671,16 @@ export const evaluateDataContractPreflight = (
       return;
     }
 
+    const databaseConfig = isObjectRecord(node.config?.database)
+      ? (node.config?.database as Record<string, unknown>)
+      : null;
+    validateDatabaseMappingContract({
+      node,
+      mode,
+      databaseConfig,
+      issuesByKey,
+    });
+
     const nodeTemplateContext = buildNodeTemplateContext({
       node,
       runtimeState,
@@ -682,6 +775,28 @@ export const evaluateDataContractPreflight = (
     templateSources.forEach((source: { label: string; template: string }): void => {
       const tokens = extractTemplateTokens(source.template);
       tokens.forEach((token: string): void => {
+        const root = normalizeTemplateRoot(token);
+        if (
+          root &&
+          root !== 'current' &&
+          !hasNodeInputPort(node, root) &&
+          nodeTemplateContext[root] === undefined
+        ) {
+          pushIssue(issuesByKey, {
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: resolveNodeLabel(node, node.id),
+            severity: 'error',
+            code: 'database_template_token_root_missing',
+            port: root,
+            token,
+            message: `${source.label} token {{${token}}} references root "${root}" that is not available on this node.`,
+            recommendation:
+              'Use a token root that matches a connected node input (or switch the mapping/template to a valid root).',
+            metadata: { template: source.label },
+          });
+          return;
+        }
         const value = resolveTemplateTokenValue(token, nodeTemplateContext);
         if (value === undefined) {
           if (

@@ -17,11 +17,6 @@ export type ResolveDatabaseUpdateMappingsResult = {
   unresolvedSourcePorts: Set<string>;
 };
 
-const SOURCE_PORT_ALIASES: Record<string, string[]> = {
-  value: ['result'],
-  result: ['value'],
-};
-
 const normalizeSourcePath = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -31,28 +26,11 @@ const normalizeSourcePath = (value: unknown): string | null => {
 const buildSourcePathCandidates = (args: {
   sourcePath: string;
   sourcePort: string;
-  candidatePort: string;
 }): string[] => {
-  const { sourcePath, sourcePort, candidatePort } = args;
+  const { sourcePath, sourcePort } = args;
   const candidates = new Set<string>([sourcePath]);
   if (sourcePath.startsWith(`${sourcePort}.`)) {
     candidates.add(sourcePath.slice(sourcePort.length + 1));
-  }
-  if (sourcePath.startsWith(`${candidatePort}.`)) {
-    candidates.add(sourcePath.slice(candidatePort.length + 1));
-  }
-  const firstSegment = sourcePath.split('.')[0]?.trim().toLowerCase() ?? '';
-  if (
-    firstSegment === 'value' ||
-    firstSegment === 'result' ||
-    firstSegment === 'current' ||
-    firstSegment === 'bundle' ||
-    firstSegment === 'context'
-  ) {
-    const nested = sourcePath.slice(firstSegment.length + 1).trim();
-    if (nested.length > 0) {
-      candidates.add(nested);
-    }
   }
   return Array.from(candidates).filter((candidate) => candidate.length > 0);
 };
@@ -61,16 +39,14 @@ const resolveValueFromSource = (args: {
   sourceValue: unknown;
   sourcePath: string | null;
   sourcePort: string;
-  candidatePort: string;
 }): unknown => {
-  const { sourceValue, sourcePath, sourcePort, candidatePort } = args;
+  const { sourceValue, sourcePath, sourcePort } = args;
   if (sourcePath === null) {
     return sourceValue;
   }
   const pathCandidates = buildSourcePathCandidates({
     sourcePath,
     sourcePort,
-    candidatePort,
   });
   for (const path of pathCandidates) {
     const value = getValueAtMappingPath(sourceValue, path, {
@@ -85,6 +61,7 @@ const resolveValueFromSource = (args: {
 
 export function resolveDatabaseUpdateMappings({
   dbConfig,
+  nodeInputPorts,
   resolvedInputs,
   parameterTargetPath,
 }: ResolveDatabaseUpdateMappingsInput): ResolveDatabaseUpdateMappingsResult {
@@ -92,6 +69,7 @@ export function resolveDatabaseUpdateMappings({
   const updates: Record<string, unknown> = {};
   const requiredSourcePorts = new Set<string>();
   const unresolvedSourcePorts = new Set<string>();
+  const inputPorts = new Set(nodeInputPorts.map((port) => port.trim()).filter(Boolean));
 
   mappings.forEach((mapping) => {
     const sourcePort = mapping.sourcePort;
@@ -99,23 +77,21 @@ export function resolveDatabaseUpdateMappings({
     if (!sourcePort || !targetPath) return;
 
     requiredSourcePorts.add(sourcePort);
-    const sourcePath = normalizeSourcePath(mapping.sourcePath);
-    const candidatePorts = [sourcePort, ...(SOURCE_PORT_ALIASES[sourcePort] ?? [])];
-    let resolvedValue: unknown = undefined;
-    for (const candidatePort of candidatePorts) {
-      const sourceValue = resolvedInputs[candidatePort];
-      if (sourceValue === undefined) continue;
-      const valueAtSource = resolveValueFromSource({
-        sourceValue,
-        sourcePath,
-        sourcePort,
-        candidatePort,
-      });
-      if (valueAtSource !== undefined) {
-        resolvedValue = valueAtSource;
-        break;
-      }
+    if (!inputPorts.has(sourcePort)) {
+      unresolvedSourcePorts.add(sourcePort);
+      return;
     }
+    const sourcePath = normalizeSourcePath(mapping.sourcePath);
+    const sourceValue = resolvedInputs[sourcePort];
+    if (sourceValue === undefined) {
+      unresolvedSourcePorts.add(sourcePort);
+      return;
+    }
+    const resolvedValue = resolveValueFromSource({
+      sourceValue,
+      sourcePath,
+      sourcePort,
+    });
     if (resolvedValue === undefined) {
       unresolvedSourcePorts.add(sourcePort);
       return;

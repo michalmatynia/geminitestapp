@@ -276,6 +276,74 @@ describe('evaluateDataContractPreflight', () => {
     );
   });
 
+  it('flags template token root that is not exposed on database node inputs', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'db-1',
+        type: 'database',
+        inputs: ['value'],
+        outputs: ['result'],
+        config: {
+          database: {
+            operation: 'update',
+            updateTemplate: '{"$set":{"parameters":{{result.parameters}}}}',
+          },
+        },
+      }),
+    ];
+
+    const report = evaluateDataContractPreflight({
+      nodes,
+      edges: [],
+      runtimeState: buildRuntimeState({}),
+      mode: 'full',
+    });
+
+    expect(
+      report.issues.some(
+        (issue) =>
+          issue.code === 'database_template_token_root_missing' &&
+          issue.nodeId === 'db-1' &&
+          issue.token === 'result.parameters' &&
+          issue.port === 'result'
+      )
+    ).toBe(true);
+  });
+
+  it('flags mapping source ports that are not available on database node inputs', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'db-1',
+        type: 'database',
+        inputs: ['value'],
+        outputs: ['result'],
+        config: {
+          database: {
+            operation: 'update',
+            updatePayloadMode: 'mapping',
+            mappings: [{ sourcePort: 'result', targetPath: 'description_pl' }],
+          },
+        },
+      }),
+    ];
+
+    const report = evaluateDataContractPreflight({
+      nodes,
+      edges: [],
+      runtimeState: buildRuntimeState({}),
+      mode: 'full',
+    });
+
+    expect(
+      report.issues.some(
+        (issue) =>
+          issue.code === 'database_mapping_source_port_missing' &&
+          issue.nodeId === 'db-1' &&
+          issue.port === 'result'
+      )
+    ).toBe(true);
+  });
+
   it('flags runtime type mismatch on non-database connected inputs', () => {
     const nodes: AiNode[] = [
       buildNode({

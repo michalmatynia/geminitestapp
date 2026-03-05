@@ -106,6 +106,24 @@ type PortableNodeCodeObjectIndexRow = {
   configFieldCount: number;
 };
 
+type PortableNodeCodeObjectContractIndex = {
+  schemaVersion: 'ai-paths.node-code-object-contracts.v2';
+  generatedAt: string;
+  specVersion: string;
+  totalContracts: number;
+  contracts: Record<
+    string,
+    {
+      objectId: string;
+      title: string;
+      objectHashAlgorithm: 'sha256';
+      objectHash: string;
+    }
+  >;
+  contractsHashAlgorithm: 'sha256';
+  contractsHash: string;
+};
+
 const workspaceRoot = process.cwd();
 const semanticNodesDir = path.join(workspaceRoot, 'docs/ai-paths/semantic-grammar/nodes');
 const outputDir = path.join(workspaceRoot, 'docs/ai-paths/node-code-objects-v2');
@@ -329,6 +347,7 @@ const generatedAt = new Date().toISOString();
 fs.mkdirSync(outputDir, { recursive: true });
 
 const rows: PortableNodeCodeObjectIndexRow[] = [];
+const contractsByNodeType: PortableNodeCodeObjectContractIndex['contracts'] = {};
 
 const toFallbackSemanticDoc = (doc: NodeDocSource): SemanticNodeDoc => ({
   specVersion: 'ai-paths.semantic-grammar.v1',
@@ -457,6 +476,12 @@ for (const doc of [...AI_PATHS_NODE_DOCS].sort((left, right) => left.type.locale
     outputCount: payload.ports.outputs.length,
     configFieldCount: payload.configContract.fields.length,
   });
+  contractsByNodeType[payload.nodeType] = {
+    objectId: payload.id,
+    title: payload.title,
+    objectHashAlgorithm: payload.objectHashAlgorithm,
+    objectHash: payload.objectHash,
+  };
 }
 
 const sortedRows = rows.sort((left, right) => left.nodeType.localeCompare(right.nodeType));
@@ -468,6 +493,23 @@ const indexPayload = {
 };
 fs.writeFileSync(path.join(outputDir, 'index.json'), stableJson(indexPayload), 'utf8');
 
+const sortedContractEntries = Object.fromEntries(
+  Object.entries(contractsByNodeType).sort(([left], [right]) => left.localeCompare(right))
+);
+const contractsWithoutHash = {
+  schemaVersion: 'ai-paths.node-code-object-contracts.v2' as const,
+  generatedAt,
+  specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
+  totalContracts: sortedRows.length,
+  contracts: sortedContractEntries,
+  contractsHashAlgorithm: 'sha256' as const,
+};
+const contractsPayload: PortableNodeCodeObjectContractIndex = {
+  ...contractsWithoutHash,
+  contractsHash: computeHash(contractsWithoutHash),
+};
+fs.writeFileSync(path.join(outputDir, 'contracts.json'), stableJson(contractsPayload), 'utf8');
+
 const readmeLines = [
   '# AI-Paths Node Code Objects (v2)',
   '',
@@ -475,6 +517,7 @@ const readmeLines = [
   '',
   '- Source docs: `docs/ai-paths/semantic-grammar/nodes/*.json` + `AI_PATHS_NODE_DOCS` fallback',
   '- Index: `index.json`',
+  '- Contract hash map: `contracts.json`',
   '- One object per node type: `<nodeType>.json`',
   '- Integrity: deterministic `objectHash` (`sha256`)',
   '',

@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T07:53:41.543Z",
+  "generatedAt": "2026-03-05T08:08:34.185Z",
   "id": "node_obj_math_portable_v2",
   "nodeType": "math",
   "nodeDocVersion": "2026-02-20.v1",
@@ -203,5 +203,5 @@
     "semanticNodeHash": "9da335c327d81a23f10a890a37c7dbcdd8463900afbc4a8279ecd094b6bf9b0e"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "adb5c9609f3359b7a3cf00d6d9adf697c4822439b8b157f56c6fd3bfc2125179"
+  "objectHash": "939078212ce7059a75fafd287e2772c149103f8febe3670d4a3c26b48c9f1137"
 }

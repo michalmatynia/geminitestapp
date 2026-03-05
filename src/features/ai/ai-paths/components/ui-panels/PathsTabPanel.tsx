@@ -139,6 +139,7 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
         repairIdentities: true,
         includeConnections: false,
         signingPolicyTelemetrySurface: 'canvas',
+        nodeCodeObjectHashVerificationMode: 'strict',
       });
       if (!resolved.ok) {
         orchestrator.toast(`Invalid path JSON: ${resolved.error}`, { variant: 'error' });

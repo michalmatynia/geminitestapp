@@ -138,12 +138,6 @@ export function prepareDatabaseTemplateContext({
   const templateInputs: RuntimePortValues = {
     ...resolvedInputs,
   };
-  if (templateInputs['result'] === undefined && templateInputs['value'] !== undefined) {
-    templateInputs['result'] = templateInputs['value'];
-  }
-  if (templateInputs['value'] === undefined && templateInputs['result'] !== undefined) {
-    templateInputs['value'] = templateInputs['result'];
-  }
   const templateContext: Record<string, unknown> = {
     ...templateInputs,
     ...placeholderContext,

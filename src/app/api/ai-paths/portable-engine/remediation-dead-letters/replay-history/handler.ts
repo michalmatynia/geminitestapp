@@ -430,7 +430,7 @@ const maybeCompressReplayHistoryExportBody = (
   headers.set('x-ai-paths-export-size-compressed-bytes', String(compressed.byteLength));
   const start = compressed.byteOffset;
   const end = compressed.byteOffset + compressed.byteLength;
-  return compressed.buffer.slice(start, end) as ArrayBuffer;
+  return compressed.buffer.slice(start, end);
 };
 
 const escapeCsv = (value: string | number | boolean | null): string => {
@@ -582,12 +582,12 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const nextCursor =
     hasMore && selectedEntries.length > 0
       ? encodeReplayHistoryCursor({
-          version: REPLAY_HISTORY_CURSOR_VERSION,
-          beforeLoggedAt: selectedEntries[selectedEntries.length - 1]!.loggedAt,
-          beforeLogId: selectedEntries[selectedEntries.length - 1]!.logId,
-          from: from?.toISOString() ?? null,
-          to: to?.toISOString() ?? null,
-        })
+        version: REPLAY_HISTORY_CURSOR_VERSION,
+        beforeLoggedAt: selectedEntries[selectedEntries.length - 1]!.loggedAt,
+        beforeLogId: selectedEntries[selectedEntries.length - 1]!.logId,
+        from: from?.toISOString() ?? null,
+        to: to?.toISOString() ?? null,
+      })
       : null;
 
   const generatedAt = new Date().toISOString();

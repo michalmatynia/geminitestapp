@@ -16,6 +16,24 @@ type NodeObjectIndex = {
   }>;
 };
 
+type NodeObjectContracts = {
+  schemaVersion: string;
+  generatedAt: string;
+  specVersion: string;
+  totalContracts: number;
+  contracts: Record<
+    string,
+    {
+      objectId: string;
+      title: string;
+      objectHashAlgorithm: string;
+      objectHash: string;
+    }
+  >;
+  contractsHashAlgorithm: string;
+  contractsHash: string;
+};
+
 type PortableNodeObject = {
   schemaVersion: string;
   kind: string;
@@ -44,6 +62,7 @@ type PortableNodeObject = {
 const workspaceRoot = process.cwd();
 const objectsDir = path.join(workspaceRoot, 'docs/ai-paths/node-code-objects-v2');
 const indexPath = path.join(objectsDir, 'index.json');
+const contractsPath = path.join(objectsDir, 'contracts.json');
 
 const normalizeForHashing = (value: unknown): unknown => {
   if (Array.isArray(value)) {
@@ -70,6 +89,10 @@ if (!fs.existsSync(indexPath)) {
   console.error(`Missing node object index: ${path.relative(workspaceRoot, indexPath)}`);
   process.exit(1);
 }
+if (!fs.existsSync(contractsPath)) {
+  console.error(`Missing node object contracts: ${path.relative(workspaceRoot, contractsPath)}`);
+  process.exit(1);
+}
 
 let index: NodeObjectIndex;
 try {
@@ -79,9 +102,35 @@ try {
   process.exit(1);
 }
 
+let contracts: NodeObjectContracts;
+try {
+  contracts = JSON.parse(fs.readFileSync(contractsPath, 'utf8')) as NodeObjectContracts;
+} catch (error) {
+  console.error(`Failed to parse node object contracts: ${error instanceof Error ? error.message : 'unknown_error'}`);
+  process.exit(1);
+}
+
 if (index.schemaVersion !== 'ai-paths.node-code-object-index.v2') {
   errors.push('index.json schemaVersion must be "ai-paths.node-code-object-index.v2".');
 }
+if (contracts.schemaVersion !== 'ai-paths.node-code-object-contracts.v2') {
+  errors.push('contracts.json schemaVersion must be "ai-paths.node-code-object-contracts.v2".');
+}
+if (contracts.contractsHashAlgorithm !== 'sha256') {
+  errors.push('contracts.json contractsHashAlgorithm must be "sha256".');
+}
+if (!/^[a-f0-9]{64}$/i.test(contracts.contractsHash)) {
+  errors.push('contracts.json contractsHash must be a sha256 hex string.');
+} else {
+  const hashSource = { ...contracts } as Record<string, unknown>;
+  delete hashSource['contractsHash'];
+  const computed = computeHash(hashSource);
+  if (computed !== contracts.contractsHash) {
+    errors.push('contracts.json contractsHash mismatch.');
+  }
+}
+
+const expectedContractNodeTypes = new Set(Object.keys(contracts.contracts ?? {}));
 
 const seenNodeTypes = new Set<string>();
 for (const row of index.objects) {
@@ -150,6 +199,24 @@ for (const row of index.objects) {
   if (row.objectHash !== object.objectHash) {
     errors.push(`index.json row for ${nodeType}: objectHash mismatch.`);
   }
+
+  const contractEntry = contracts.contracts?.[nodeType];
+  if (!contractEntry) {
+    errors.push(`contracts.json missing contract entry for nodeType=${nodeType}.`);
+  } else {
+    if (contractEntry.objectHashAlgorithm !== 'sha256') {
+      errors.push(`contracts.json entry for ${nodeType}: objectHashAlgorithm must be "sha256".`);
+    }
+    if (contractEntry.objectHash !== object.objectHash) {
+      errors.push(`contracts.json entry for ${nodeType}: objectHash mismatch.`);
+    }
+    if (contractEntry.objectId !== object.id) {
+      errors.push(`contracts.json entry for ${nodeType}: objectId mismatch.`);
+    }
+    if (typeof contractEntry.title !== 'string' || contractEntry.title.trim().length === 0) {
+      errors.push(`contracts.json entry for ${nodeType}: title must be non-empty.`);
+    }
+  }
 }
 
 const missingInIndex = [...expectedNodeTypes].filter((type) => !seenNodeTypes.has(type));
@@ -166,6 +233,20 @@ if (index.totalObjects !== index.objects.length) {
   errors.push(
     `index.json totalObjects mismatch (declared=${index.totalObjects}, actual=${index.objects.length}).`
   );
+}
+if (contracts.totalContracts !== Object.keys(contracts.contracts ?? {}).length) {
+  errors.push(
+    `contracts.json totalContracts mismatch (declared=${contracts.totalContracts}, actual=${Object.keys(contracts.contracts ?? {}).length}).`
+  );
+}
+if (contracts.totalContracts !== index.totalObjects) {
+  errors.push(
+    `contracts.json totalContracts must match index totalObjects (contracts=${contracts.totalContracts}, index=${index.totalObjects}).`
+  );
+}
+const unexpectedContracts = [...expectedContractNodeTypes].filter((type) => !seenNodeTypes.has(type));
+if (unexpectedContracts.length > 0) {
+  errors.push(`Unexpected node types in contracts.json: ${unexpectedContracts.join(', ')}`);
 }
 
 if (errors.length > 0) {

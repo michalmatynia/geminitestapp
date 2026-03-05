@@ -200,6 +200,34 @@ jobs:
             docs/metrics/security-smoke-latest.json
             docs/metrics/security-smoke-latest.md
 
+  accessibility-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run accessibility smoke suite
+        run: npm run test:accessibility-smoke:strict -- --ci
+
+      - name: Upload accessibility smoke report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: accessibility-smoke-report
+          if-no-files-found: warn
+          path: |
+            docs/metrics/accessibility-smoke-latest.json
+            docs/metrics/accessibility-smoke-latest.md
+
   integration-prisma:
     runs-on: ubuntu-latest
     services:

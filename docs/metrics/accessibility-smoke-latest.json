@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-03-05T03:20:01.062Z",
+  "strictMode": true,
+  "summary": {
+    "total": 5,
+    "passed": 5,
+    "failed": 0
+  },
+  "results": [
+    {
+      "id": "auth-signin-a11y",
+      "name": "Auth Sign-In Accessibility",
+      "tests": [
+        "__tests__/features/auth/pages/signin-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3753,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (8 tests) 663ms\n\n Test Files  1 passed (1)\n      Tests  8 passed (8)\n   Start at  04:19:46\n   Duration  2.72s (transform 1.05s, setup 415ms, import 1.19s, tests 663ms, environment 313ms)"
+    },
+    {
+      "id": "products-edit-a11y",
+      "name": "Products Edit Form Accessibility",
+      "tests": [
+        "__tests__/features/products/pages/product-edit-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/products/pages/product-edit-page.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 4494,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/products/pages/product-edit-page.test.tsx (4 tests) 915ms\n     ✓ renders the form with product data in the General tab  387ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  04:19:49\n   Duration  3.72s (transform 1.56s, setup 345ms, import 1.96s, tests 915ms, environment 314ms)"
+    },
+    {
+      "id": "image-studio-a11y",
+      "name": "Image Studio UI Accessibility",
+      "tests": [
+        "src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisSummaryChip.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisSummaryChip.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 1421,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisSummaryChip.test.tsx (2 tests) 33ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  04:19:54\n   Duration  671ms (transform 88ms, setup 183ms, import 50ms, tests 33ms, environment 296ms)"
+    },
+    {
+      "id": "ai-paths-a11y",
+      "name": "AI Paths Canvas Accessibility",
+      "tests": [
+        "src/features/ai/ai-paths/components/__tests__/canvas-connector-tooltip.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/ai-paths/components/__tests__/canvas-connector-tooltip.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3521,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/ai-paths/components/__tests__/canvas-connector-tooltip.test.tsx (1 test) 37ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  04:19:55\n   Duration  2.77s (transform 1.62s, setup 262ms, import 2.02s, tests 37ms, environment 340ms)"
+    },
+    {
+      "id": "case-resolver-a11y",
+      "name": "Case Resolver Header Accessibility",
+      "tests": [
+        "src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 2545,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx (6 tests) 169ms\n\n Test Files  1 passed (1)\n      Tests  6 passed (6)\n   Start at  04:19:59\n   Duration  1.80s (transform 802ms, setup 191ms, import 1.04s, tests 169ms, environment 296ms)"
+    }
+  ]
+}

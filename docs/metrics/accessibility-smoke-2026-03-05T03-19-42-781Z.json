@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-03-05T03:19:42.781Z",
+  "strictMode": false,
+  "summary": {
+    "total": 5,
+    "passed": 5,
+    "failed": 0
+  },
+  "results": [
+    {
+      "id": "auth-signin-a11y",
+      "name": "Auth Sign-In Accessibility",
+      "tests": [
+        "__tests__/features/auth/pages/signin-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 5180,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (8 tests) 672ms\n\n Test Files  1 passed (1)\n      Tests  8 passed (8)\n   Start at  04:19:19\n   Duration  3.43s (transform 1.12s, setup 372ms, import 1.43s, tests 672ms, environment 813ms)"
+    },
+    {
+      "id": "products-edit-a11y",
+      "name": "Products Edit Form Accessibility",
+      "tests": [
+        "__tests__/features/products/pages/product-edit-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/products/pages/product-edit-page.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 9179,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/products/pages/product-edit-page.test.tsx (4 tests) 1462ms\n     ✓ renders the form with product data in the General tab  627ms\n     ✓ enables Update after SKU value changes  422ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  04:19:24\n   Duration  8.30s (transform 4.88s, setup 310ms, import 5.97s, tests 1.46s, environment 408ms)"
+    },
+    {
+      "id": "image-studio-a11y",
+      "name": "Image Studio UI Accessibility",
+      "tests": [
+        "src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisSummaryChip.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisSummaryChip.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 2118,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisSummaryChip.test.tsx (2 tests) 47ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  04:19:33\n   Duration  1.16s (transform 165ms, setup 452ms, import 90ms, tests 47ms, environment 405ms)"
+    },
+    {
+      "id": "ai-paths-a11y",
+      "name": "AI Paths Canvas Accessibility",
+      "tests": [
+        "src/features/ai/ai-paths/components/__tests__/canvas-connector-tooltip.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/ai-paths/components/__tests__/canvas-connector-tooltip.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 4813,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/ai-paths/components/__tests__/canvas-connector-tooltip.test.tsx (1 test) 44ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  04:19:35\n   Duration  3.77s (transform 1.97s, setup 453ms, import 2.52s, tests 44ms, environment 546ms)"
+    },
+    {
+      "id": "case-resolver-a11y",
+      "name": "Case Resolver Header Accessibility",
+      "tests": [
+        "src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3319,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx (6 tests) 213ms\n\n Test Files  1 passed (1)\n      Tests  6 passed (6)\n   Start at  04:19:40\n   Duration  2.42s (transform 1.17s, setup 238ms, import 1.49s, tests 213ms, environment 347ms)"
+    }
+  ]
+}

@@ -25,6 +25,7 @@ import type { AiNode, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
 import type { DatabaseOperation } from '@/shared/contracts/ai-paths-core';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { resolvePortablePathInput } from '@/shared/lib/ai-paths';
 
 import type { QueryClient } from '@tanstack/react-query';
 
@@ -382,17 +383,19 @@ export async function fetchPathSettings(
             pathId: meta.id,
           });
         }
-        let parsedConfig: PathConfig;
-        try {
-          parsedConfig = JSON.parse(configRaw) as PathConfig;
-        } catch (error) {
+        const resolvedConfig = resolvePortablePathInput(configRaw, {
+          repairIdentities: true,
+          includeConnections: false,
+        });
+        if (!resolvedConfig.ok) {
           throw validationError('Invalid AI Paths path config payload.', {
             source: 'ai_paths.path_settings',
-            reason: 'path_config_json_parse_failed',
+            reason: 'path_config_payload_invalid',
             pathId: meta.id,
-            cause: error instanceof Error ? error.message : 'unknown_error',
+            cause: resolvedConfig.error,
           });
         }
+        const parsedConfig = resolvedConfig.value.pathConfig;
         const mergedConfig: PathConfig = {
           ...createDefaultPathConfig(meta.id),
           ...parsedConfig,

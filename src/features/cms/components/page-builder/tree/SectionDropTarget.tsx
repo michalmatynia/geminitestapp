@@ -3,7 +3,10 @@
 import React, { useState } from 'react';
 import type { PageZone } from '@/shared/contracts/cms';
 import { cn } from '@/shared/utils';
-import { useComponentTreePanelContext } from './ComponentTreePanelContext';
+import {
+  useComponentTreePanelActions,
+  useComponentTreePanelState,
+} from './ComponentTreePanelContext';
 import { useDragState } from '../../../hooks/useDragStateContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
 import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
@@ -39,8 +42,8 @@ export function SectionDropTarget({
     treePlaceholderClasses,
     treeInlineDropLabel,
     draggedMasterSectionId,
-    moveSectionByMaster,
-  } = useComponentTreePanelContext();
+  } = useComponentTreePanelState();
+  const { moveSectionByMaster } = useComponentTreePanelActions();
   const [isOver, setIsOver] = useState(false);
   const { state: pbState } = usePageBuilder();
   const { state: dragState, endBlockDrag, endSectionDrag } = useDragState();

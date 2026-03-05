@@ -81,7 +81,7 @@ export const BUILTIN_FALLBACK_MANIFEST: AiPathsDocsManifest = {
     {
       id: 'docs-snippets',
       type: 'docs_snippet',
-      path: 'src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts',
+      path: 'src/shared/lib/ai-paths/core/definitions/docs-snippets.ts',
       enabled: true,
       priority: 90,
       tags: ['snippets', 'wiring'],

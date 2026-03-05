@@ -1,4 +1,5 @@
 import type * as React from 'react';
+import type { RuntimeRunStatus } from '@/shared/contracts/ai-paths';
 import type {
   AiNode,
   DataContractNodeIssueSummary,
@@ -24,7 +25,7 @@ import {
   type ConnectingState,
 } from '../context/CanvasContext';
 
-export type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping' | 'completed' | 'failed';
+export type { RuntimeRunStatus };
 
 export type TriggerPreflightHint = {
   blockedMessage: string;

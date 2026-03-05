@@ -1,10 +1,9 @@
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import prisma from '@/shared/lib/db/prisma';
+import type { AuditLevel } from '@/shared/contracts/agent-runtime';
 
 import type { Prisma } from '@prisma/client';
-
-export type AuditLevel = 'info' | 'warning' | 'error';
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 /**

@@ -6,14 +6,18 @@ import { Button, Checkbox, Input, Tooltip, FormSection, FormField } from '@/shar
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
-import { useAnimationConfigContext } from '../AnimationConfigContext';
+import {
+  useAnimationConfigActions,
+  useAnimationConfigState,
+} from '../AnimationConfigContext';
 import type { VectorOverlayResult } from '../../../../hooks/usePageBuilderContext';
 import { type VectorShape } from '@/shared/contracts/vector';
 
 const EMPTY_SHAPES: VectorShape[] = [];
 
 export function AdvancedMotionPathSection(): React.JSX.Element {
-  const { config, onChange, openVectorOverlay } = useAnimationConfigContext();
+  const { config } = useAnimationConfigState();
+  const { onChange, openVectorOverlay } = useAnimationConfigActions();
 
   const drawPathTooltip =
     getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.cms, 'animation_draw_path_canvas') ??

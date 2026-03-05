@@ -7,10 +7,10 @@ import {
   getDatabaseEngineServiceProvider,
   isPrimaryProviderConfigured,
 } from './database-engine-policy';
+import type { AppProviderValue as AppDbProvider } from '@/shared/contracts/system';
 
 export const APP_DB_PROVIDER_SETTING_KEY = 'app_db_provider';
-
-export type AppDbProvider = 'prisma' | 'mongodb';
+export type { AppDbProvider };
 
 const readPositiveIntegerEnv = (key: string, fallback: number): number => {
   const raw = process.env[key];

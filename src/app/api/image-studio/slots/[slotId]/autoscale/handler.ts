@@ -230,6 +230,7 @@ export async function postAutoScaleSlotHandler(
     if (processed.authoritativeSource === 'client_upload_fallback') {
       await logSystemEvent({
         level: 'info',
+        source: 'image-studio.slots.autoscale',
         message: 'Autoscale fallback to client upload',
         context: {
           slotId: sourceSlot.id,

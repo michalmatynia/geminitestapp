@@ -5,7 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAiPathsSettingsQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
-import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, triggerButtonsApi } from '@/shared/lib/ai-paths';
+import {
+  PATH_CONFIG_PREFIX,
+  PATH_INDEX_KEY,
+  resolvePortablePathInput,
+  triggerButtonsApi,
+} from '@/shared/lib/ai-paths';
 import {
   aiTriggerButtonCreateSchema,
   type AiTriggerButtonCreatePayload,
@@ -124,12 +129,14 @@ const extractTriggerButtonPathUsageMap = (
     const pathId = key.slice(PATH_CONFIG_PREFIX.length).trim();
     if (!pathId) return;
 
-    let parsedConfig: unknown;
-    try {
-      parsedConfig = JSON.parse(value);
-    } catch {
+    const resolvedConfig = resolvePortablePathInput(value, {
+      repairIdentities: true,
+      includeConnections: false,
+    });
+    if (!resolvedConfig.ok) {
       return;
     }
+    const parsedConfig = resolvedConfig.value.pathConfig;
     if (!parsedConfig || typeof parsedConfig !== 'object') return;
 
     const configNameRaw = (parsedConfig as { name?: unknown }).name;

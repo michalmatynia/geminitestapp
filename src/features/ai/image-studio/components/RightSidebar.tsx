@@ -37,8 +37,8 @@ import {
   cloneSerializableValue,
   type StudioActionHistorySnapshot,
 } from './right-sidebar/right-sidebar-utils';
-import { CanvasResizeModal } from './right-sidebar/CanvasResizeModal';
-import { ControlPromptModal } from './right-sidebar/ControlPromptModal';
+import { CanvasResizeModal } from './right-sidebar/CanvasResizeModalImpl';
+import { ControlPromptModal } from './right-sidebar/ControlPromptModalImpl';
 import { ParamRow } from './ParamRow';
 import { flattenParams } from '@/shared/lib/prompt-engine';
 import type { ParamSpec } from '@/shared/contracts/prompt-engine';

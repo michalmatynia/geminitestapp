@@ -3,6 +3,7 @@ import 'server-only';
 import fs from 'fs/promises';
 
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
+import type { UploadedImageBinaryDto as ParsedImageDataUrl } from '@/shared/contracts/image-studio';
 
 type SourceSlotLike = {
   imageBase64?: string | null;
@@ -13,10 +14,7 @@ type SourceSlotLike = {
   } | null;
 };
 
-export type ParsedImageDataUrl = {
-  buffer: Buffer;
-  mime: string;
-};
+export type { ParsedImageDataUrl };
 
 export type LoadedSourceBuffer = {
   buffer: Buffer;

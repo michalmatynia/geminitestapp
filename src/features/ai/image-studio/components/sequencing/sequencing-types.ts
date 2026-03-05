@@ -1,15 +1,14 @@
 import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
+import type {
+  ImageStudioSequenceRunStartResponse,
+  ImageStudioSequenceRunHistoryEvent,
+  ImageStudioSequenceRunStatus,
+  RunsTotalResponseDto,
+} from '@/shared/contracts/image-studio';
 
-export type SequenceRunStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+export type SequenceRunStatus = ImageStudioSequenceRunStatus;
 
-export type SequenceRunHistoryEvent = {
-  id: string;
-  type: string;
-  source: 'api' | 'queue' | 'worker' | 'stream' | 'client';
-  message: string;
-  at: string;
-  payload?: Record<string, unknown>;
-};
+export type SequenceRunHistoryEvent = ImageStudioSequenceRunHistoryEvent;
 
 export type SequenceRunRecord = {
   id: string;
@@ -27,10 +26,7 @@ export type SequenceRunRecord = {
   historyEvents: SequenceRunHistoryEvent[];
 };
 
-export type SequenceRunsListResponse = {
-  runs: SequenceRunRecord[];
-  total: number;
-};
+export type SequenceRunsListResponse = RunsTotalResponseDto<SequenceRunRecord>;
 
 export type SequenceRunDetailResponse = {
   run: SequenceRunRecord;
@@ -41,12 +37,6 @@ export type SequenceRunDetailResponse = {
   };
 };
 
-export type SequenceRunStartResponse = {
-  runId: string;
-  status: SequenceRunStatus;
-  dispatchMode: 'queued' | 'inline';
-  currentSlotId: string;
-  stepCount: number;
-};
+export type { ImageStudioSequenceRunStartResponse as SequenceRunStartResponse };
 
 export type SequencerDisplayState = 'idle' | 'running' | 'resolving_terminal_slot' | 'terminal';

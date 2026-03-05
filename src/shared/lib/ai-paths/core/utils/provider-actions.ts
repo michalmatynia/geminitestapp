@@ -1,12 +1,10 @@
 import type { DatabaseAction, DatabaseActionCategory } from '@/shared/contracts/ai-paths';
+import type { LabeledOptionDto } from '@/shared/contracts/ui';
 
 export type DbActionProvider = 'mongodb' | 'prisma';
 export type DbActionProviderSelection = 'auto' | DbActionProvider | undefined;
 
-export type ProviderActionOption = {
-  value: DatabaseAction;
-  label: string;
-};
+export type ProviderActionOption = LabeledOptionDto<DatabaseAction>;
 
 const ACTION_CATEGORY_BY_ACTION: Record<DatabaseAction, DatabaseActionCategory> = {
   insertOne: 'create',
@@ -27,7 +25,7 @@ const ACTION_CATEGORY_BY_ACTION: Record<DatabaseAction, DatabaseActionCategory> 
 
 const CATEGORY_OPTIONS_BY_PROVIDER: Record<
   DbActionProvider,
-  Array<{ value: DatabaseActionCategory; label: string }>
+  LabeledOptionDto<DatabaseActionCategory>[]
 > = {
   mongodb: [
     { value: 'create', label: 'Create' },
@@ -124,7 +122,7 @@ export const isProviderActionCategorySupported = (
 
 export const getProviderActionCategoryOptions = (
   provider: DbActionProvider
-): Array<{ value: DatabaseActionCategory; label: string }> =>
+): LabeledOptionDto<DatabaseActionCategory>[] =>
   CATEGORY_OPTIONS_BY_PROVIDER[provider];
 
 export const getProviderActionOptions = (

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { dtoBaseSchema } from '../base';
+import { dtoBaseSchema, type IdNameDto } from '../base';
 import {
   productCategorySchema,
   productTagSchema,
@@ -318,10 +318,7 @@ export interface TagMappingWithDetails extends TagMapping {
   internalTag: ProductTag | null;
 }
 
-export interface BaseTag {
-  id: string;
-  name: string;
-}
+export type { IdNameDto as BaseTag };
 
 export interface ExternalTagSyncInput {
   connectionId: string;

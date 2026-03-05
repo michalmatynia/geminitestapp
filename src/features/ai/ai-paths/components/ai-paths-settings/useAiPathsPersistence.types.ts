@@ -1,4 +1,5 @@
 import type {
+  AiPathsSettingRecordDto,
   AiNode,
   Edge,
   ParserSampleState,
@@ -62,7 +63,7 @@ export type UseAiPathsPersistenceArgs = {
   toast: ToastFn;
 };
 
-export type PersistSettingsPayload = Array<{ key: string; value: string }>;
+export type PersistSettingsPayload = AiPathsSettingRecordDto[];
 
 export type AiPathsUiState = {
   activePathId?: string | null;

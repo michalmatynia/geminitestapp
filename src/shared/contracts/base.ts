@@ -41,6 +41,12 @@ export interface NamedDto extends DtoBase {
   description?: string | null;
 }
 
+export interface IdNameDto {
+  id: string;
+  name: string;
+}
+export type IdName = IdNameDto;
+
 /**
  * Standard API error structure
  */

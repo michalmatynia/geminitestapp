@@ -12,7 +12,7 @@ import { ClusterPresetsPanel } from '../../cluster-presets-panel';
 import { GraphModelDebugPanel } from '../../graph-model-debug-panel';
 import { RunHistoryPanel } from '../../run-history-panel';
 import { RuntimeEventLogPanel } from '../../runtime-event-log-panel';
-import { AiPathsRuntimeAnalysis } from './AiPathsRuntimeAnalysis';
+import { AiPathsRuntimeAnalysis } from '../panels/AiPathsRuntimeAnalysis';
 import { AiPathsLiveLog } from './AiPathsLiveLog';
 
 export function AiPathsCanvasView(): React.JSX.Element | null {

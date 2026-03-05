@@ -2,7 +2,10 @@
 
 import React, { useState } from 'react';
 import type { PageZone } from '@/shared/contracts/cms';
-import { useComponentTreePanelContext } from './ComponentTreePanelContext';
+import {
+  useComponentTreePanelActions,
+  useComponentTreePanelState,
+} from './ComponentTreePanelContext';
 import { useDragState } from '../../../hooks/useDragStateContext';
 import { TreeSectionPicker } from './TreeSectionPicker';
 import { Button } from '@/shared/ui';
@@ -22,8 +25,8 @@ export function ZoneFooterNode({
     treePlaceholderClasses,
     treeRootDropLabel,
     draggedMasterSectionId,
-    moveSectionByMaster,
-  } = useComponentTreePanelContext();
+  } = useComponentTreePanelState();
+  const { moveSectionByMaster } = useComponentTreePanelActions();
   const { state: dragState, endSectionDrag } = useDragState();
   const [isDropTarget, setIsDropTarget] = useState(false);
 

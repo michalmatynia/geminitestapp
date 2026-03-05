@@ -7,7 +7,7 @@ import type { PreviewBlockItemProps, PreviewBlockProps } from '@/shared/contract
 import type { BlockInstance } from '@/shared/contracts/cms';
 
 import { BlockContextProvider, useBlockContext } from './context/BlockContext';
-import { usePreviewEditor } from './context/PreviewEditorContext';
+import { usePreviewEditorState } from './context/PreviewEditorContext';
 import { normalizeSlideshowAnimationType } from './preview-utils';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -68,7 +68,7 @@ export function PreviewCarouselBlock({
 }: PreviewBlockProps): React.ReactNode {
   const { stretch: contextStretch } = useBlockContext();
   const resolvedStretch = stretch ?? contextStretch ?? false;
-  const { inspectorSettings } = usePreviewEditor();
+  const { inspectorSettings } = usePreviewEditorState();
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const frames = (block.blocks ?? []).filter((b: BlockInstance) => b.type === 'CarouselFrame');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -257,7 +257,7 @@ export function PreviewSlideshowBlock({
 }: PreviewBlockProps): React.ReactNode {
   const { stretch: contextStretch } = useBlockContext();
   const resolvedStretch = stretch ?? contextStretch ?? false;
-  const { inspectorSettings, pauseSlideshowOnHoverInEditor } = usePreviewEditor();
+  const { inspectorSettings, pauseSlideshowOnHoverInEditor } = usePreviewEditorState();
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const transition = (block.settings['transition'] as string) || 'fade';
   const transitionDuration = (block.settings['transitionDuration'] as number) || 700;

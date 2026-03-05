@@ -1,0 +1,708 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-03-05T02:52:22.288Z",
+  "status": "ok",
+  "scanner": {
+    "name": "scan-type-clusters",
+    "version": "0.1.0",
+    "mode": "scan",
+    "scope": "src/**/*.{ts,tsx}"
+  },
+  "filters": {
+    "domains": [],
+    "minRisk": 12
+  },
+  "thresholds": {
+    "minClusterSize": 2
+  },
+  "summary": {
+    "filesScanned": 4216,
+    "exportedDeclarationsScanned": 3391,
+    "candidateDeclarationsScanned": 3363,
+    "exactShapeClusters": 94,
+    "nearShapeClusters": 32,
+    "clustersAfterFilters": 17,
+    "declarationsInClusters": 38,
+    "highestRiskScore": 18
+  },
+  "clusters": [
+    {
+      "clusterId": "near-0008",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 18,
+      "declarationCount": 2,
+      "domains": [
+        "feature:case-resolver",
+        "feature:foldertree"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "ae107052d9a6",
+        "memberCount": 5,
+        "preview": "prop:getSnapshot:() => CaseResolverRuntimeSnapshot; prop:getState:() => CaseResolverRuntimeState; prop:patchState:(updater: (current: CaseResolverRuntimeState) => CaseResolverRuntimeState) => void; prop:setState:(nextState: CaseResolverRuntimeState) => void; prop:subscribe:(listener: () => void) => () => void"
+      },
+      "declarations": [
+        {
+          "name": "FolderTreeStore",
+          "kind": "type",
+          "path": "src/features/foldertree/v2/store/createFolderTreeStore.ts",
+          "line": 3,
+          "domain": "feature:foldertree",
+          "usageCount": 6
+        },
+        {
+          "name": "CaseResolverRuntimeStore",
+          "kind": "type",
+          "path": "src/features/case-resolver/runtime/store.ts",
+          "line": 3,
+          "domain": "feature:case-resolver",
+          "usageCount": 2
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0086",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 17,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "b5ca4cba322d",
+        "memberCount": 1,
+        "preview": "z.infer<typeof updateNoteSchema>"
+      },
+      "declarations": [
+        {
+          "name": "NoteUpdateInput",
+          "kind": "type",
+          "path": "src/shared/contracts/notes.ts",
+          "line": 208,
+          "domain": "shared:contracts",
+          "usageCount": 8
+        },
+        {
+          "name": "NoteUpdateData",
+          "kind": "type",
+          "path": "src/shared/contracts/notes.ts",
+          "line": 209,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0007",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 16,
+      "declarationCount": 3,
+      "domains": [
+        "shared",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "8178e807ed1a",
+        "memberCount": 1,
+        "preview": "SettingRecord"
+      },
+      "declarations": [
+        {
+          "name": "SystemSetting",
+          "kind": "type",
+          "path": "src/shared/contracts/settings.ts",
+          "line": 12,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        },
+        {
+          "name": "AiPathsSettingRecord",
+          "kind": "type",
+          "path": "src/shared/lib/ai-paths/settings-store-client.ts",
+          "line": 12,
+          "domain": "shared",
+          "usageCount": 1
+        },
+        {
+          "name": "LiteSettingRecord",
+          "kind": "type",
+          "path": "src/shared/lib/settings-lite-server-cache.ts",
+          "line": 5,
+          "domain": "shared",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0003",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 14,
+      "declarationCount": 3,
+      "domains": [
+        "feature:case-resolver",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "c5c747bff975",
+        "memberCount": 1,
+        "preview": "'document' | 'relations' | 'metadata' | 'revisions'"
+      },
+      "declarations": [
+        {
+          "name": "EditorDetailsTab",
+          "kind": "type",
+          "path": "src/features/case-resolver/components/page/CaseResolverDocumentEditor.tsx",
+          "line": 55,
+          "domain": "feature:case-resolver",
+          "usageCount": 1
+        },
+        {
+          "name": "EditorDetailsTab",
+          "kind": "type",
+          "path": "src/features/case-resolver/components/CaseResolverViewContext.tsx",
+          "line": 21,
+          "domain": "feature:case-resolver",
+          "usageCount": 0
+        },
+        {
+          "name": "EditorDetailsTab",
+          "kind": "type",
+          "path": "src/shared/contracts/case-resolver/base.ts",
+          "line": 154,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0087",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 14,
+      "declarationCount": 2,
+      "domains": [
+        "shared",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "190fc37cd5e8",
+        "memberCount": 1,
+        "preview": "z.infer<typeof productFilterSchema>"
+      },
+      "declarations": [
+        {
+          "name": "ProductFilter",
+          "kind": "type",
+          "path": "src/shared/contracts/products/filters.ts",
+          "line": 466,
+          "domain": "shared:contracts",
+          "usageCount": 3
+        },
+        {
+          "name": "ProductFiltersParsed",
+          "kind": "type",
+          "path": "src/shared/lib/products/validations/schemas.ts",
+          "line": 16,
+          "domain": "shared",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0088",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 14,
+      "declarationCount": 2,
+      "domains": [
+        "shared",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "530ee91ff601",
+        "memberCount": 1,
+        "preview": "PromptExploderSegmentType"
+      },
+      "declarations": [
+        {
+          "name": "PromptExploderRuleSegmentType",
+          "kind": "type",
+          "path": "src/shared/contracts/prompt-engine.ts",
+          "line": 15,
+          "domain": "shared:contracts",
+          "usageCount": 4
+        },
+        {
+          "name": "PromptExploderRuleSegmentType",
+          "kind": "type",
+          "path": "src/shared/lib/prompt-engine/settings.ts",
+          "line": 42,
+          "domain": "shared",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0089",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 14,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "218ddeb009aa",
+        "memberCount": 1,
+        "preview": "z.infer<typeof promptExploderSegmentTypeSchema>"
+      },
+      "declarations": [
+        {
+          "name": "PromptExploderSegmentType",
+          "kind": "type",
+          "path": "src/shared/contracts/prompt-exploder/base.ts",
+          "line": 22,
+          "domain": "shared:contracts",
+          "usageCount": 5
+        },
+        {
+          "name": "PromptExploderSegmentType",
+          "kind": "type",
+          "path": "src/shared/contracts/prompt-exploder-core.ts",
+          "line": 22,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0004",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 13,
+      "declarationCount": 3,
+      "domains": [
+        "feature:case-resolver",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "f2728b1fe667",
+        "memberCount": 1,
+        "preview": "'all' | 'name' | 'folder' | 'content'"
+      },
+      "declarations": [
+        {
+          "name": "CaseSearchScope",
+          "kind": "type",
+          "path": "src/features/case-resolver/hooks/useCaseResolverCaseSearchIndex.ts",
+          "line": 16,
+          "domain": "feature:case-resolver",
+          "usageCount": 0
+        },
+        {
+          "name": "CaseSearchScope",
+          "kind": "type",
+          "path": "src/features/case-resolver/pages/AdminCaseResolverCasesUtils.ts",
+          "line": 19,
+          "domain": "feature:case-resolver",
+          "usageCount": 0
+        },
+        {
+          "name": "CaseSearchScope",
+          "kind": "type",
+          "path": "src/shared/contracts/case-resolver/base.ts",
+          "line": 122,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0006",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 13,
+      "declarationCount": 3,
+      "domains": [
+        "shared",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "9695ad8ff3a8",
+        "memberCount": 1,
+        "preview": "'mongodb' | 'prisma'"
+      },
+      "declarations": [
+        {
+          "name": "DraftProvider",
+          "kind": "type",
+          "path": "src/shared/contracts/products/drafts.ts",
+          "line": 387,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        },
+        {
+          "name": "DbActionProvider",
+          "kind": "type",
+          "path": "src/shared/lib/ai-paths/core/utils/provider-actions.ts",
+          "line": 4,
+          "domain": "shared",
+          "usageCount": 0
+        },
+        {
+          "name": "AuthDbProvider",
+          "kind": "type",
+          "path": "src/shared/lib/auth/services/auth-provider.ts",
+          "line": 15,
+          "domain": "shared",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0018",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 13,
+      "declarationCount": 2,
+      "domains": [
+        "feature:products"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "8797bd5e9c40",
+        "memberCount": 1,
+        "preview": "prop:mutateAsync:(payload: CreateValidationPatternPayload) => Promise<unknown>"
+      },
+      "declarations": [
+        {
+          "name": "CreatePatternMutation",
+          "kind": "type",
+          "path": "src/features/products/components/settings/validator-settings/sequence-actions/types.ts",
+          "line": 8,
+          "domain": "feature:products",
+          "usageCount": 3
+        },
+        {
+          "name": "UpdatePatternMutation",
+          "kind": "type",
+          "path": "src/features/products/components/settings/validator-settings/sequence-actions/types.ts",
+          "line": 12,
+          "domain": "feature:products",
+          "usageCount": 2
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0026",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 13,
+      "declarationCount": 2,
+      "domains": [
+        "shared",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "167b2bb54710",
+        "memberCount": 2,
+        "preview": "prop:content:string; prop:role:'user' | 'assistant' | 'system' | string"
+      },
+      "declarations": [
+        {
+          "name": "SimpleChatMessage",
+          "kind": "interface",
+          "path": "src/shared/contracts/chatbot.ts",
+          "line": 145,
+          "domain": "shared:contracts",
+          "usageCount": 2
+        },
+        {
+          "name": "BrainChatMessage",
+          "kind": "type",
+          "path": "src/shared/lib/ai-brain/server-runtime-client.ts",
+          "line": 19,
+          "domain": "shared",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0079",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 12,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "23b2ebc330fb",
+        "memberCount": 4,
+        "preview": "prop:flags?:string | null; prop:id:string; prop:pattern:string; prop:sequence?:number | null"
+      },
+      "declarations": [
+        {
+          "name": "FilemakerEmailParserRule",
+          "kind": "type",
+          "path": "src/shared/contracts/filemaker.ts",
+          "line": 195,
+          "domain": "shared:contracts",
+          "usageCount": 2
+        },
+        {
+          "name": "FilemakerPhoneValidationRule",
+          "kind": "type",
+          "path": "src/shared/contracts/filemaker.ts",
+          "line": 209,
+          "domain": "shared:contracts",
+          "usageCount": 2
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0010",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 12,
+      "declarationCount": 2,
+      "domains": [
+        "feature:cms",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "1ec82a8b59bb",
+        "memberCount": 3,
+        "preview": "prop:block:BlockInstance; prop:mediaStyles:React.CSSProperties | null; prop:stretch:boolean"
+      },
+      "declarations": [
+        {
+          "name": "PreviewBlockProps",
+          "kind": "interface",
+          "path": "src/shared/contracts/cms.ts",
+          "line": 195,
+          "domain": "shared:contracts",
+          "usageCount": 2
+        },
+        {
+          "name": "BlockRenderContextValue",
+          "kind": "interface",
+          "path": "src/features/cms/components/frontend/blocks/BlockContext.tsx",
+          "line": 7,
+          "domain": "feature:cms",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0014",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 12,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "294fbe8b0753",
+        "memberCount": 6,
+        "preview": "prop:_id:string | ObjectId; prop:createdAt:Date; prop:id:string; prop:name:string; prop:updatedAt:Date; prop:website?:string | null"
+      },
+      "declarations": [
+        {
+          "name": "MongoInternalProducerDoc",
+          "kind": "type",
+          "path": "src/features/integrations/services/producer-mapping-repository-mongo-utils.ts",
+          "line": 27,
+          "domain": "feature:integrations",
+          "usageCount": 1
+        },
+        {
+          "name": "MongoProducerDoc",
+          "kind": "interface",
+          "path": "src/shared/lib/db/services/database-sync-types.ts",
+          "line": 243,
+          "domain": "shared",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0015",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 12,
+      "declarationCount": 2,
+      "domains": [
+        "feature:observability",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "62b064e5be79",
+        "memberCount": 7,
+        "preview": "prop:contextRegistry:ContextRegistryDisplay | null; prop:createdAt:string | null; prop:fingerprint:string | null; prop:level:string | null; prop:logId:string | null; prop:message:string | null; prop:source:string | null"
+      },
+      "declarations": [
+        {
+          "name": "AlertEvidenceSampleDisplay",
+          "kind": "type",
+          "path": "src/features/observability/types.ts",
+          "line": 37,
+          "domain": "feature:observability",
+          "usageCount": 1
+        },
+        {
+          "name": "AlertEvidenceSample",
+          "kind": "type",
+          "path": "src/shared/lib/observability/workers/system-log-alerts/types.ts",
+          "line": 37,
+          "domain": "shared",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0016",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 12,
+      "declarationCount": 2,
+      "domains": [
+        "feature:observability",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "9d072c6361f1",
+        "memberCount": 6,
+        "preview": "prop:lastObservedLog:AlertEvidenceSampleDisplay | null; prop:matchedCount:number | null; prop:sampleSize:number | null; prop:samples:AlertEvidenceSampleDisplay[]; prop:windowEnd:string | null; prop:windowStart:string | null"
+      },
+      "declarations": [
+        {
+          "name": "AlertEvidenceDisplay",
+          "kind": "type",
+          "path": "src/features/observability/types.ts",
+          "line": 47,
+          "domain": "feature:observability",
+          "usageCount": 1
+        },
+        {
+          "name": "AlertEvidenceContext",
+          "kind": "type",
+          "path": "src/shared/lib/observability/workers/system-log-alerts/types.ts",
+          "line": 47,
+          "domain": "shared",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0029",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 12,
+      "declarationCount": 2,
+      "domains": [
+        "shared",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "b146a6c18baa",
+        "memberCount": 3,
+        "preview": "prop:path:string; prop:points:Array<{ shapeId: string; points: VectorPoint[] }>; prop:shapes:VectorShape[]"
+      },
+      "declarations": [
+        {
+          "name": "VectorOverlayResult",
+          "kind": "interface",
+          "path": "src/shared/contracts/vector.ts",
+          "line": 120,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        },
+        {
+          "name": "VectorDrawingOutput",
+          "kind": "type",
+          "path": "src/shared/lib/vector-drawing/hooks/useVectorDrawingState.ts",
+          "line": 9,
+          "domain": "shared",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    }
+  ],
+  "notes": [
+    "This is a scanner scaffold output. Risk and clustering heuristics are intentionally conservative.",
+    "Use clusters as review candidates before moving declarations to canonical DTO modules."
+  ]
+}

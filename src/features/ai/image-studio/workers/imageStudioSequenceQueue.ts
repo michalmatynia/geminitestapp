@@ -7,6 +7,7 @@ import {
 import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import {
   type ImageStudioSequenceMaskContext,
+  type ImageStudioSequenceRunDispatchMode,
   type ImageStudioSequenceRunRecord,
 } from '@/shared/contracts/image-studio';
 import {
@@ -24,7 +25,7 @@ type ImageStudioSequenceJobData = {
   runId: string;
 };
 
-export type ImageStudioSequenceDispatchMode = 'queued' | 'inline';
+export type ImageStudioSequenceDispatchMode = ImageStudioSequenceRunDispatchMode;
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 

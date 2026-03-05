@@ -1,21 +1,30 @@
 'use client';
 
 import { Lock, Edit, Copy, Trash2 } from 'lucide-react';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
-import type { PathMeta } from '@/shared/lib/ai-paths';
-import { PATH_TEMPLATES } from '@/shared/lib/ai-paths';
+import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
+import {
+  PATH_TEMPLATES,
+  buildPortablePathPackage,
+  createDefaultPathConfig,
+  createPathId,
+  resolvePortablePathInput,
+} from '@/shared/lib/ai-paths';
 import {
   ActionMenu,
+  AppModal,
   Button,
-  StandardDataTablePanel,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  StandardDataTablePanel,
+  Textarea,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { useGraphState } from '../../context';
+import { useGraphActions, useGraphState } from '../../context';
 import { useAiPathsSettingsOrchestrator } from '../ai-paths-settings/AiPathsSettingsOrchestratorContext';
+import { sanitizePathConfig } from '../AiPathsSettingsUtils';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -26,6 +35,10 @@ export type PathsTabPanelProps = {
 export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Element {
   const orchestrator = useAiPathsSettingsOrchestrator();
   const { paths: graphPaths, pathConfigs } = useGraphState();
+  const { setPaths, setPathConfigs } = useGraphActions();
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importPayload, setImportPayload] = useState('');
+  const [importing, setImporting] = useState(false);
 
   const resolvedPathFlagsById = useMemo(() => {
     const next: Record<
@@ -65,6 +78,118 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
   };
   const handleDuplicatePath = (pathId: string) => {
     orchestrator.handleDuplicatePath(pathId);
+  };
+  const handleCopyPathJson = async (pathId: string): Promise<void> => {
+    const pathConfig = pathConfigs[pathId];
+    if (!pathConfig) {
+      orchestrator.toast('Path config is not loaded. Open this path first, then retry.', {
+        variant: 'info',
+      });
+      return;
+    }
+
+    const payload = JSON.stringify(
+      buildPortablePathPackage(pathConfig, {
+        exporterVersion: 'ai-paths.paths-tab.v1',
+        workspace: 'admin-ai-paths',
+      }),
+      null,
+      2
+    );
+
+    if (typeof navigator === 'undefined' || !navigator.clipboard) {
+      orchestrator.toast('Clipboard API unavailable.', { variant: 'warning' });
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(payload);
+      orchestrator.toast('Path JSON copied.', { variant: 'success' });
+    } catch (error) {
+      orchestrator.reportAiPathsError(error, { action: 'copyPathJson', pathId }, 'Failed to copy path JSON:');
+      orchestrator.toast('Failed to copy path JSON.', { variant: 'error' });
+    }
+  };
+
+  const handleOpenImportModal = (): void => {
+    setImportModalOpen(true);
+    if (typeof navigator === 'undefined' || !navigator.clipboard) return;
+    void navigator.clipboard.readText().then(
+      (text) => {
+        if (typeof text === 'string' && text.trim().length > 0) {
+          setImportPayload(text);
+        }
+      },
+      () => {
+        // Ignore clipboard read errors; manual paste remains available.
+      }
+    );
+  };
+
+  const handleImportPathJson = async (): Promise<void> => {
+    const payload = importPayload.trim();
+    if (!payload) {
+      orchestrator.toast('Paste AI Path JSON first.', { variant: 'error' });
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const resolved = resolvePortablePathInput(payload, {
+        repairIdentities: true,
+        includeConnections: false,
+      });
+      if (!resolved.ok) {
+        orchestrator.toast(`Invalid path JSON: ${resolved.error}`, { variant: 'error' });
+        return;
+      }
+
+      const importedPathConfig = resolved.value.pathConfig;
+      const requestedPathId =
+        typeof importedPathConfig.id === 'string' && importedPathConfig.id.trim().length > 0
+          ? importedPathConfig.id.trim()
+          : createPathId();
+      const pathIdExists = graphPaths.some((path: PathMeta): boolean => path.id === requestedPathId);
+      const nextPathId = pathIdExists ? createPathId() : requestedPathId;
+      const baseConfig = createDefaultPathConfig(nextPathId);
+      const importedName =
+        typeof importedPathConfig.name === 'string' && importedPathConfig.name.trim().length > 0
+          ? importedPathConfig.name.trim()
+          : `Imported Path ${graphPaths.length + 1}`;
+      const nextConfig = sanitizePathConfig({
+        ...baseConfig,
+        ...importedPathConfig,
+        id: nextPathId,
+        name: pathIdExists ? `${importedName} (Imported)` : importedName,
+      } as PathConfig);
+      const now = new Date().toISOString();
+      const nextMeta: PathMeta = {
+        id: nextPathId,
+        name: nextConfig.name,
+        createdAt: now,
+        updatedAt:
+          typeof nextConfig.updatedAt === 'string' && nextConfig.updatedAt.trim().length > 0
+            ? nextConfig.updatedAt
+            : now,
+      };
+      const nextPaths = [...graphPaths.filter((path: PathMeta): boolean => path.id !== nextPathId), nextMeta];
+
+      await orchestrator.persistPathSettings(nextPaths, nextPathId, nextConfig);
+      setPaths(nextPaths);
+      setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
+        ...prev,
+        [nextPathId]: nextConfig,
+      }));
+      setImportModalOpen(false);
+      setImportPayload('');
+      orchestrator.toast('Path imported.', { variant: 'success' });
+      handleOpenPath(nextPathId);
+    } catch (error) {
+      orchestrator.reportAiPathsError(error, { action: 'importPathJson' }, 'Failed to import path JSON:');
+      orchestrator.toast('Failed to import path JSON.', { variant: 'error' });
+    } finally {
+      setImporting(false);
+    }
   };
 
   const columns = useMemo<ColumnDef<PathMeta>[]>(
@@ -141,6 +266,15 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
                 <Copy className='mr-2 size-3.5' />
                 Duplicate
               </DropdownMenuItem>
+              <DropdownMenuItem
+                className='text-indigo-300 focus:text-indigo-200'
+                onClick={() => {
+                  void handleCopyPathJson(row.original.id);
+                }}
+              >
+                <Copy className='mr-2 size-3.5' />
+                Copy JSON
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className='text-rose-400 focus:text-rose-300'
@@ -186,10 +320,59 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
           <Button variant='outline' size='sm' onClick={handleSaveList}>
             Save List
           </Button>
+          <Button variant='outline' size='sm' onClick={handleOpenImportModal}>
+            Import JSON
+          </Button>
         </div>
       </div>
 
       <StandardDataTablePanel columns={columns} data={graphPaths} variant='flat' />
+      <AppModal
+        open={importModalOpen}
+        onClose={() => {
+          if (!importing) {
+            setImportModalOpen(false);
+          }
+        }}
+        title='Import Path JSON'
+        size='xl'
+      >
+        <div className='space-y-3'>
+          <p className='text-xs text-gray-400'>
+            Paste portable package JSON, semantic canvas JSON, or raw path config JSON.
+          </p>
+          <Textarea
+            className='min-h-[260px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
+            value={importPayload}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+              setImportPayload(event.target.value)
+            }
+            placeholder='Paste AI Path JSON payload here...'
+          />
+          <div className='flex items-center justify-end gap-2'>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => {
+                setImportModalOpen(false);
+              }}
+              disabled={importing}
+            >
+              Cancel
+            </Button>
+            <Button
+              type='button'
+              variant='default'
+              onClick={() => {
+                void handleImportPathJson();
+              }}
+              disabled={importing}
+            >
+              {importing ? 'Importing...' : 'Import Path'}
+            </Button>
+          </div>
+        </div>
+      </AppModal>
     </div>
   );
 }

@@ -10,11 +10,15 @@ import {
 } from '@/features/cms/utils/event-effects';
 import { Input, Hint } from '@/shared/ui';
 
-import { useComponentSettingsContext } from '../context/ComponentSettingsContext';
+import {
+  useComponentSettingsActions,
+  useComponentSettingsState,
+} from '../context/ComponentSettingsContext';
 import { RangeField, SelectField } from '../shared-fields';
 
 function EventEffectsTab(): React.ReactNode {
-  const { eventConfig, selectedLabel, handleEventSettingChange } = useComponentSettingsContext();
+  const { eventConfig, selectedLabel } = useComponentSettingsState();
+  const { handleEventSettingChange } = useComponentSettingsActions();
 
   if (!eventConfig) {
     return (

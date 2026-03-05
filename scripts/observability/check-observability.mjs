@@ -252,6 +252,105 @@ const collectLoggerServiceViolations = (root, srcDir) => {
   return violations;
 };
 
+const collectLogSystemEventSourceViolations = (root, srcDir) => {
+  const srcRoot = path.join(root, srcDir);
+  const files = listFiles(
+    srcRoot,
+    (file) =>
+      /\.(ts|tsx|js|jsx)$/.test(file) &&
+      !/\.test\./.test(file) &&
+      !/\.spec\./.test(file) &&
+      !/__tests__/.test(file)
+  );
+  const violations = [];
+  const logSystemEventPattern = /logSystemEvent\s*\(/g;
+  const sourcePropertyPattern = /\bsource\s*:/;
+  const sourcePattern = /\bsource\s*:\s*([`'"])([\s\S]*?)\1/;
+  const messagePattern = /\bmessage\s*:\s*([`'"])([\s\S]*?)\1/m;
+  const canonicalMessagePrefixPattern = /^\[[A-Za-z0-9_./:-]+\](?:\[[A-Za-z0-9_./:-]+\])*/;
+  const sourceValuePattern = /^[A-Za-z0-9_$\[\]-]+(?:[./:-][A-Za-z0-9_$\[\]-]+)*$/;
+
+  for (const file of files) {
+    const relative = toRelative(root, file);
+    const text = fs.readFileSync(file, 'utf8');
+
+    let match = logSystemEventPattern.exec(text);
+    while (match) {
+      const callStart = match.index + match[0].length - 1;
+      const callExpr = extractCallExpression(text, callStart);
+
+      // Stage-3 enforcement focuses on direct object-literal calls.
+      if (!/^\(\s*\{/.test(callExpr)) {
+        match = logSystemEventPattern.exec(text);
+        continue;
+      }
+      if (/\.\.\./.test(callExpr)) {
+        match = logSystemEventPattern.exec(text);
+        continue;
+      }
+
+      const hasSourceProperty = sourcePropertyPattern.test(callExpr);
+      const sourceMatch = callExpr.match(sourcePattern);
+      const messageMatch = callExpr.match(messagePattern);
+      const messageValue = messageMatch?.[2]?.trim() ?? '';
+      const hasLegacyMessagePrefix = canonicalMessagePrefixPattern.test(messageValue);
+
+      if (!hasSourceProperty) {
+        if (!hasLegacyMessagePrefix) {
+          violations.push({
+            file: relative,
+            line: toLine(text, match.index),
+            message:
+              'logSystemEvent call is missing source (or a legacy [scope] message prefix during migration)',
+            call: callExpr.slice(0, 180).replace(/\s+/g, ' ').trim(),
+          });
+        }
+        match = logSystemEventPattern.exec(text);
+        continue;
+      }
+
+      if (!sourceMatch) {
+        match = logSystemEventPattern.exec(text);
+        continue;
+      }
+
+      const quote = sourceMatch[1];
+      const sourceValueRaw = sourceMatch[2];
+      const sourceValue = sourceValueRaw.trim();
+
+      if (sourceValue.length === 0) {
+        violations.push({
+          file: relative,
+          line: toLine(text, match.index),
+          message: 'logSystemEvent source cannot be empty',
+          call: callExpr.slice(0, 180).replace(/\s+/g, ' ').trim(),
+        });
+        match = logSystemEventPattern.exec(text);
+        continue;
+      }
+
+      if (quote === '`' && /\$\{/.test(sourceValueRaw)) {
+        match = logSystemEventPattern.exec(text);
+        continue;
+      }
+
+      if (!sourceValuePattern.test(sourceValue)) {
+        violations.push({
+          file: relative,
+          line: toLine(text, match.index),
+          message:
+            'logSystemEvent source has invalid format (expected segmented token like "service.domain.action")',
+          call: callExpr.slice(0, 180).replace(/\s+/g, ' ').trim(),
+        });
+      }
+
+      match = logSystemEventPattern.exec(text);
+    }
+  }
+
+  return violations;
+};
+
 const readFileIfExists = (file) => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null);
 
 const collectCoreContractViolations = (root, allowPartial) => {
@@ -687,6 +786,7 @@ const buildSummaryPayload = (report) => ({
   counters: {
     routes: report.routeCoverage,
     loggerViolations: report.logger.totalViolations,
+    eventSourceViolations: report.eventSource.totalViolations,
     coreViolations: report.core.totalViolations,
     legacyCompatibilityViolations: report.legacyCompatibility.totalViolations,
     runtimeErrors: report.runtimeLogs.totalErrors,
@@ -703,7 +803,7 @@ const buildSummaryPayload = (report) => ({
 });
 
 const buildSummaryLine = (report) =>
-  `[observability:v${LOG_SCHEMA_VERSION}:${report.status}] routes=${report.routeCoverage.totalRoutes} wrapped=${report.routeCoverage.wrappedRoutes} delegated=${report.routeCoverage.delegatedRoutes} uncovered=${report.routeCoverage.uncoveredRoutes} loggerViolations=${report.logger.totalViolations} coreViolations=${report.core.totalViolations} legacyCompatViolations=${report.legacyCompatibility.totalViolations} runtimeErrors=${report.runtimeLogs.totalErrors}`;
+  `[observability:v${LOG_SCHEMA_VERSION}:${report.status}] routes=${report.routeCoverage.totalRoutes} wrapped=${report.routeCoverage.wrappedRoutes} delegated=${report.routeCoverage.delegatedRoutes} uncovered=${report.routeCoverage.uncoveredRoutes} loggerViolations=${report.logger.totalViolations} eventSourceViolations=${report.eventSource.totalViolations} coreViolations=${report.core.totalViolations} legacyCompatViolations=${report.legacyCompatibility.totalViolations} runtimeErrors=${report.runtimeLogs.totalErrors}`;
 
 const buildErrorComment = (report, errorLogFile) => {
   if (report.runtimeLogs.totalErrors > 0) {
@@ -716,8 +816,12 @@ const buildErrorComment = (report, errorLogFile) => {
   if (report.legacyCompatibility.totalViolations > 0) {
     return `Error discovered in legacy compatibility guardrails: ${report.legacyCompatibility.totalViolations} violations. See ${errorLogFile}.`;
   }
-  if (report.logger.totalViolations > 0 || report.core.totalViolations > 0) {
-    return `Error discovered in observability contracts: logger violations=${report.logger.totalViolations}, core violations=${report.core.totalViolations}. See ${errorLogFile}.`;
+  if (
+    report.logger.totalViolations > 0 ||
+    report.eventSource.totalViolations > 0 ||
+    report.core.totalViolations > 0
+  ) {
+    return `Error discovered in observability contracts: logger violations=${report.logger.totalViolations}, event source violations=${report.eventSource.totalViolations}, core violations=${report.core.totalViolations}. See ${errorLogFile}.`;
   }
   return null;
 };
@@ -788,6 +892,7 @@ const persistReportLogs = (
         summary: summaryPayload,
         failures: {
           logger: report.logger.violations,
+          eventSource: report.eventSource.violations,
           core: report.core.violations,
           legacyCompatibility: report.legacyCompatibility.violations,
           runtimeLogErrors: report.runtimeLogs.errors,
@@ -838,6 +943,14 @@ const emitCiAnnotations = (report) => {
     });
   }
 
+  for (const violation of report.eventSource.violations.slice(0, 50)) {
+    emitGithubError({
+      file: violation.file,
+      line: violation.line,
+      message: `[observability.check] logSystemEvent source contract violation: ${violation.message}`,
+    });
+  }
+
   for (const violation of report.core.violations.slice(0, 50)) {
     emitGithubError({
       message: `[observability.check] core contract violation: ${violation.message}`,
@@ -885,6 +998,7 @@ export const runObservabilityCheck = ({
 
   const routeCoverage = collectRouteCoverage(root, apiDir);
   const loggerViolations = collectLoggerServiceViolations(root, srcDir);
+  const eventSourceViolations = collectLogSystemEventSourceViolations(root, srcDir);
   const coreViolations = collectCoreContractViolations(root, allowPartial);
   const legacyCompatibilityViolations = collectLegacyCompatibilityViolations(root, srcDir);
   const runtimeLogs = scanRuntimeLogs
@@ -905,6 +1019,7 @@ export const runObservabilityCheck = ({
 
   const hasBlockingViolations =
     loggerViolations.length > 0 ||
+    eventSourceViolations.length > 0 ||
     coreViolations.length > 0 ||
     legacyCompatibilityViolations.length > 0 ||
     runtimeLogs.totalErrors > 0;
@@ -917,6 +1032,10 @@ export const runObservabilityCheck = ({
     logger: {
       totalViolations: loggerViolations.length,
       violations: loggerViolations,
+    },
+    eventSource: {
+      totalViolations: eventSourceViolations.length,
+      violations: eventSourceViolations,
     },
     core: {
       totalViolations: coreViolations.length,

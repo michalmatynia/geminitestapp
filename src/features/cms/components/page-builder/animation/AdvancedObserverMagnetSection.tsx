@@ -12,7 +12,7 @@ import {
   SelectSimple,
   Tooltip,
 } from '@/shared/ui';
-import { useAnimationConfigContext } from './AnimationConfigContext';
+import { useAnimationConfigActions, useAnimationConfigState } from './AnimationConfigContext';
 
 const observerTypeIcons: Record<string, React.ReactNode> = {
   'wheel,touch': (
@@ -28,7 +28,8 @@ const observerTypeIcons: Record<string, React.ReactNode> = {
 };
 
 export function AdvancedObserverMagnetSection(): React.JSX.Element {
-  const { config, onChange } = useAnimationConfigContext();
+  const { config } = useAnimationConfigState();
+  const { onChange } = useAnimationConfigActions();
   const observerEnabledValue =
     config.observerEnabled ?? DEFAULT_ANIMATION_CONFIG.observerEnabled ?? false;
   const observerTypeValue =

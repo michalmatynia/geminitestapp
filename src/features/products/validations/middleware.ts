@@ -5,7 +5,7 @@ import {
   validateProductCreate,
   validateProductUpdate,
   type ValidationError,
-} from '@/features/products/validations/validators';
+} from '@/shared/lib/products/validations/validators';
 
 export type ValidationMiddlewareOptions = {
   skipValidation?: boolean;

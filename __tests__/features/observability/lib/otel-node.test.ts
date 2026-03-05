@@ -96,17 +96,31 @@ describe('otel-node', () => {
   });
 
   it('does not initialize when disabled and no endpoint is configured', async () => {
-    const { initializeNodeOtel } = await import('@/shared/lib/observability/otel-node');
+    const { initializeNodeOtel, getNodeOtelRuntimeStatus } = await import(
+      '@/shared/lib/observability/otel-node'
+    );
     await initializeNodeOtel();
 
     expect(nodeSdkConstructorMock).not.toHaveBeenCalled();
+    expect(getNodeOtelRuntimeStatus()).toEqual(
+      expect.objectContaining({
+        configured: false,
+        initialized: true,
+        active: false,
+        serviceName: 'geminitestapp',
+        traceEndpoint: null,
+        logsEndpoint: null,
+      })
+    );
   });
 
   it('initializes with OTLP endpoint and appends signal paths', async () => {
     process.env['OTEL_EXPORTER_OTLP_ENDPOINT'] = 'http://collector:4318';
     process.env['OTEL_SERVICE_VERSION'] = '1.2.3';
 
-    const { initializeNodeOtel } = await import('@/shared/lib/observability/otel-node');
+    const { initializeNodeOtel, getNodeOtelRuntimeStatus } = await import(
+      '@/shared/lib/observability/otel-node'
+    );
     await initializeNodeOtel();
 
     expect(traceExporterCtorMock).toHaveBeenCalledWith(
@@ -127,6 +141,15 @@ describe('otel-node', () => {
       })
     );
     expect(sdkStartMock).toHaveBeenCalledTimes(1);
+    expect(getNodeOtelRuntimeStatus()).toEqual(
+      expect.objectContaining({
+        configured: true,
+        initialized: true,
+        active: true,
+        traceEndpoint: 'http://collector:4318/v1/traces',
+        logsEndpoint: 'http://collector:4318/v1/logs',
+      })
+    );
   });
 
   it('is idempotent and starts NodeSDK only once', async () => {

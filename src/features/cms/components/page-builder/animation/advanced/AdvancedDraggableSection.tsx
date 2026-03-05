@@ -3,10 +3,11 @@
 import React from 'react';
 import { Input, Checkbox, SelectSimple, FormSection, FormField } from '@/shared/ui';
 import { DEFAULT_ANIMATION_CONFIG, DRAG_AXES, type DragAxis } from '@/features/gsap';
-import { useAnimationConfigContext } from '../AnimationConfigContext';
+import { useAnimationConfigActions, useAnimationConfigState } from '../AnimationConfigContext';
 
 export function AdvancedDraggableSection(): React.JSX.Element {
-  const { config, onChange } = useAnimationConfigContext();
+  const { config } = useAnimationConfigState();
+  const { onChange } = useAnimationConfigActions();
 
   const draggableEnabledValue =
     config.draggableEnabled ?? DEFAULT_ANIMATION_CONFIG.draggableEnabled ?? false;

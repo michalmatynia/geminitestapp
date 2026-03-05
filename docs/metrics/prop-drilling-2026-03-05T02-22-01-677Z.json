@@ -1,0 +1,99 @@
+{
+  "summary": {
+    "generatedAt": "2026-03-05T02:22:01.677Z",
+    "scannedSourceFiles": 3897,
+    "scannedJsxFiles": 1395,
+    "componentCount": 2111,
+    "componentsWithForwarding": 1,
+    "componentsWithAnyForwarding": 1,
+    "resolvedTransitionCount": 2,
+    "depth2CandidateChainCount": 2,
+    "candidateChainCount": 0,
+    "highPriorityChainCount": 0,
+    "unknownSpreadForwardingCount": 0,
+    "topFeatureScopes": [
+      {
+        "scope": "feature:internationalization",
+        "count": 1
+      }
+    ]
+  },
+  "backlog": [],
+  "transitionBacklog": [
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/internationalization/components/shared/SelectionChecklistGrid.tsx#SelectionChecklistGrid",
+      "sinkComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
+      "componentPath": [
+        "src/features/internationalization/components/shared/SelectionChecklistGrid.tsx#SelectionChecklistGrid",
+        "src/shared/ui/checkbox.tsx#Checkbox"
+      ],
+      "propPath": [
+        "selectedIds",
+        "checked"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/internationalization/components/shared/SelectionChecklistGrid.tsx#SelectionChecklistGrid",
+          "toComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
+          "sourceProp": "selectedIds",
+          "targetProp": "checked",
+          "relativePath": "src/features/internationalization/components/shared/SelectionChecklistGrid.tsx",
+          "line": 45
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/internationalization/components/shared/SelectionChecklistGrid.tsx#SelectionChecklistGrid",
+      "sinkComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
+      "componentPath": [
+        "src/features/internationalization/components/shared/SelectionChecklistGrid.tsx#SelectionChecklistGrid",
+        "src/shared/ui/checkbox.tsx#Checkbox"
+      ],
+      "propPath": [
+        "onToggle",
+        "onCheckedChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/internationalization/components/shared/SelectionChecklistGrid.tsx#SelectionChecklistGrid",
+          "toComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
+          "sourceProp": "onToggle",
+          "targetProp": "onCheckedChange",
+          "relativePath": "src/features/internationalization/components/shared/SelectionChecklistGrid.tsx",
+          "line": 45
+        }
+      ]
+    }
+  ],
+  "componentBacklog": [
+    {
+      "componentId": "src/features/internationalization/components/shared/SelectionChecklistGrid.tsx#SelectionChecklistGrid",
+      "name": "SelectionChecklistGrid",
+      "relativePath": "src/features/internationalization/components/shared/SelectionChecklistGrid.tsx",
+      "feature": "feature:internationalization",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    }
+  ],
+  "forwardingComponentBacklog": [
+    {
+      "componentId": "src/features/internationalization/components/shared/SelectionChecklistGrid.tsx#SelectionChecklistGrid",
+      "name": "SelectionChecklistGrid",
+      "relativePath": "src/features/internationalization/components/shared/SelectionChecklistGrid.tsx",
+      "feature": "feature:internationalization",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    }
+  ],
+  "chains": []
+}

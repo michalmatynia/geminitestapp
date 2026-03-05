@@ -22,12 +22,12 @@ import {
 } from '../section-template-store';
 import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates } from '../grid-templates';
 import { usePageBuilderSelection, usePageBuilderDispatch } from '../../../hooks/usePageBuilderContext';
-import { useComponentSettingsContext } from '../context/ComponentSettingsContext';
+import { useComponentSettingsActions } from '../context/ComponentSettingsContext';
 
 export function SectionSettingsTab(): React.JSX.Element | null {
   const dispatch = usePageBuilderDispatch();
   const { selectedSection } = usePageBuilderSelection();
-  const { handleSectionSettingChange } = useComponentSettingsContext();
+  const { handleSectionSettingChange } = useComponentSettingsActions();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();

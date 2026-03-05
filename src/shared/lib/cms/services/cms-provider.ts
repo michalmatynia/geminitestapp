@@ -7,8 +7,9 @@ import {
   getDatabaseEngineServiceProvider,
   isPrimaryProviderConfigured,
 } from '@/shared/lib/db/database-engine-policy';
+import type { AppProviderValue as CmsDbProvider } from '@/shared/contracts/system';
 
-export type CmsDbProvider = 'prisma' | 'mongodb';
+export type { CmsDbProvider };
 
 export const getCmsDataProvider = async (): Promise<CmsDbProvider> => {
   const policy = await getDatabaseEnginePolicy();

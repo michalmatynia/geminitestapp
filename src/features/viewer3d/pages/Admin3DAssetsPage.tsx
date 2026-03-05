@@ -22,8 +22,8 @@ import {
 } from '@/shared/ui';
 
 import { Asset3DCard } from '../components/Asset3DCard';
-import { Asset3DEditModal } from '../components/Asset3DEditModal';
-import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
+import { Asset3DEditModal } from '../components/Asset3DEditModalImpl';
+import { Asset3DPreviewModal } from '../components/Asset3DPreviewModalImpl';
 import { Asset3DUploader } from '../components/Asset3DUploader';
 import { Admin3DAssetsProvider, useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
 

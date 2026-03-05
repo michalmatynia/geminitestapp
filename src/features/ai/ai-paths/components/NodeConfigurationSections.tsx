@@ -11,8 +11,8 @@ import { AiDescriptionNodeConfigSection } from './node-config/dialog/AiDescripti
 import { ApiAdvancedNodeConfigSection } from './node-config/dialog/ApiAdvancedNodeConfigSection';
 import { AudioOscillatorNodeConfigSection } from './node-config/dialog/AudioOscillatorNodeConfigSection';
 import { AudioSpeakerNodeConfigSection } from './node-config/dialog/AudioSpeakerNodeConfigSection';
-import { BoundsNormalizerNodeConfigSection } from './node-config/dialog/BoundsNormalizerNodeConfigSection';
-import { CanvasOutputNodeConfigSection } from './node-config/dialog/CanvasOutputNodeConfigSection';
+import { BoundsNormalizerNodeConfigSection } from './node-config/dialog/BoundsNormalizerNodeConfigSectionImpl';
+import { CanvasOutputNodeConfigSection } from './node-config/dialog/CanvasOutputNodeConfigSectionImpl';
 import { BundleNodeConfigSection } from './node-config/dialog/BundleNodeConfigSection';
 import { CompareNodeConfigSection } from './node-config/dialog/CompareNodeConfigSection';
 import { LogicalConditionNodeConfigSection } from './node-config/dialog/LogicalConditionNodeConfigSection';

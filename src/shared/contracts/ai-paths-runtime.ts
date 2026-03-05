@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { dtoBaseSchema } from './base';
 import type { AiNode, Edge } from './ai-paths-core';
-import type { ToastOptions } from './ui';
+import type { Toast as ToastFn } from './ui';
 
 /**
  * AI Path Node Status
@@ -495,7 +495,7 @@ export const MAX_RUNTIME_EVENTS = 300;
 export const LOCAL_RUN_STEP_CHUNK = 5;
 export const AI_PATHS_ENTITY_STALE_MS = 30000;
 
-export type ToastFn = (message: string, options?: ToastOptions) => void;
+export type { ToastFn };
 
 /**
  * AI Path Execution Node Handler Types

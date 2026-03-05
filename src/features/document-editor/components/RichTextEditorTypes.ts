@@ -1,8 +1,10 @@
 import type { RichTextEditorVariant } from '../types';
+import type { LabelValueOptionDto as RichTextEditorFontOption } from '@/shared/contracts/ui';
+
+export type { RichTextEditorFontOption };
 
 export type HeadingLevel = 1 | 2 | 3;
 export type TextAlignOption = 'left' | 'center' | 'right' | 'justify';
-export type RichTextEditorFontOption = { value: string; label: string };
 
 export interface RichTextEditorProps {
   value: string;

@@ -1,4 +1,6 @@
-export type AuditLevel = 'info' | 'warning' | 'error';
+import type { AuditLevel } from '@/shared/contracts/agent-runtime';
+
+export type { AuditLevel };
 
 export async function logAgentAudit(
   runId: string | null,

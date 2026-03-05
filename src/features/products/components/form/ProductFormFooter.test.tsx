@@ -36,6 +36,10 @@ describe('ProductFormFooter', () => {
     expect(screen.getByText('Product ID:')).toBeTruthy();
     expect(screen.getByText('product-123')).toBeTruthy();
     expect(screen.getByTestId('copy-icon')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy product ID' })).toHaveAttribute(
+      'type',
+      'button'
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy product ID' }));
 
@@ -50,5 +54,21 @@ describe('ProductFormFooter', () => {
   it('does not render when product id is missing', () => {
     const { container } = render(<ProductFormFooter entityId={null} />);
     expect(container.firstChild).toBeNull();
+  });
+
+  it('does not submit parent form when copying product id', async () => {
+    const onSubmit = vi.fn((event: Event) => event.preventDefault());
+    render(
+      <form onSubmit={onSubmit}>
+        <ProductFormFooter entityId='product-123' />
+      </form>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy product ID' }));
+
+    await waitFor(() => {
+      expect(writeTextMock).toHaveBeenCalledWith('product-123');
+    });
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });

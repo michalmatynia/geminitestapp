@@ -206,7 +206,7 @@ export type NoteCreateData = z.infer<typeof createNoteSchema>;
 
 export const updateNoteSchema = createNoteSchema.partial();
 export type NoteUpdateInput = z.infer<typeof updateNoteSchema>;
-export type NoteUpdateData = z.infer<typeof updateNoteSchema>;
+export type { NoteUpdateInput as NoteUpdateData };
 
 /**
  * Note Relations

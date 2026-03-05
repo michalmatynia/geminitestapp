@@ -70,6 +70,13 @@ const envSchema = z.object({
   OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),
   OTEL_TRACES_SAMPLER: z.string().optional(),
   OTEL_TRACES_SAMPLER_ARG: z.string().optional(),
+  CENTRAL_LOG_WEBHOOK_URL: z.string().url().optional(),
+  QUERY_TELEMETRY_STORE_RAW_KEYS: z.coerce.boolean().optional(),
+  SYSTEM_LOG_ALERTS_ENABLED: z.coerce.boolean().optional(),
+  CRITICAL_ERROR_NOTIFICATIONS_ENABLED: z.coerce.boolean().optional(),
+  CRITICAL_ERROR_WEBHOOK_URL: z.string().url().optional(),
+  CRITICAL_ERROR_MIN_LEVEL: z.enum(['info', 'warn', 'error']).optional(),
+  CRITICAL_ERROR_THROTTLE_SECONDS: z.coerce.number().int().positive().optional(),
 });
 
 /**

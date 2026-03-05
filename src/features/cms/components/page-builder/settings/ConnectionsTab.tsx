@@ -4,11 +4,14 @@ import React from 'react';
 
 import { Input, Label, Checkbox } from '@/shared/ui';
 
-import { useComponentSettingsContext } from '../context/ComponentSettingsContext';
+import {
+  useComponentSettingsActions,
+  useComponentSettingsState,
+} from '../context/ComponentSettingsContext';
 
 function ConnectionsTab(): React.ReactNode {
-  const { hasSelection, selectedLabel, connectionSettings, updateConnectionSetting } =
-    useComponentSettingsContext();
+  const { hasSelection, selectedLabel, connectionSettings } = useComponentSettingsState();
+  const { updateConnectionSetting } = useComponentSettingsActions();
 
   if (!hasSelection) {
     return <div className='text-xs text-gray-500'>Select an element to configure connections.</div>;

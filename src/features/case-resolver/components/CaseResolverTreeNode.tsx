@@ -3,7 +3,7 @@
 import React from 'react';
 import { ChevronDown, ChevronRight, Lock, Unlock, Trash2, GitBranch } from 'lucide-react';
 
-import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
+import type { FolderTreeViewportRenderNodeInput as CaseResolverTreeNodeProps } from '@/features/foldertree/v2';
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
   useCaseResolverFolderTreeDataContext,
@@ -21,7 +21,7 @@ import { Button, Badge, Input } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { useCaseResolverTreeNodeRuntimeContext } from './CaseResolverTreeNodeRuntimeContext';
 
-export type CaseResolverTreeNodeProps = FolderTreeViewportRenderNodeInput;
+export type { CaseResolverTreeNodeProps };
 
 export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JSX.Element {
   const {

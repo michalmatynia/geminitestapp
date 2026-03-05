@@ -16,7 +16,7 @@ import {
   LoadingState,
 } from '@/shared/ui';
 
-import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
+import { Asset3DPreviewModal } from '../components/Asset3DPreviewModalImpl';
 import { useAsset3DListState } from '../hooks/useAsset3DListState';
 
 import type { ColumnDef } from '@tanstack/react-table';

@@ -1,6 +1,10 @@
 import { useCallback } from 'react';
 
-import { DOCS_DESCRIPTION_SNIPPET, DOCS_JOBS_SNIPPET, DOCS_WIRING_SNIPPET } from './docs-snippets';
+import {
+  DOCS_DESCRIPTION_SNIPPET,
+  DOCS_JOBS_SNIPPET,
+  DOCS_WIRING_SNIPPET,
+} from '@/shared/lib/ai-paths/core/definitions/docs-snippets';
 
 type ToastFn = (
   message: string,

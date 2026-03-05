@@ -7,7 +7,10 @@ import type { SettingsField, SettingsFieldOption } from '@/shared/contracts/cms'
 import type { ColorScheme } from '@/shared/contracts/cms-theme';
 import { Label, RadioGroup, RadioGroupItem, Button, SelectSimple } from '@/shared/ui';
 
-import { useOptionalSettingsForm } from './settings/SettingsFormContext';
+import {
+  useOptionalSettingsFormActions,
+  useOptionalSettingsFormState,
+} from './settings/SettingsFormContext';
 import {
   ColorField,
   NumberField,
@@ -58,10 +61,11 @@ export function SettingsFieldRenderer(props: {
 }): React.ReactNode {
   const { field, value: propValue, onChange: propOnChange } = props;
 
-  const context = useOptionalSettingsForm();
+  const contextState = useOptionalSettingsFormState();
+  const contextActions = useOptionalSettingsFormActions();
 
-  const value = propValue !== undefined ? propValue : context?.values[field.key];
-  const onChange = propOnChange || context?.onChange;
+  const value = propValue !== undefined ? propValue : contextState?.values[field.key];
+  const onChange = propOnChange || contextActions?.onChange;
 
   const theme = useThemeSettingsValue();
   const isDisabled = Boolean(field.disabled);

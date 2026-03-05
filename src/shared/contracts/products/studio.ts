@@ -98,6 +98,22 @@ export const DEFAULT_PRODUCT_STUDIO_SEQUENCE_READINESS: ProductStudioSequenceRea
   message: 'Loading...',
 };
 
+export type ProductStudioSequenceStepType =
+  | 'crop_center'
+  | 'mask'
+  | 'generate'
+  | 'regenerate'
+  | 'upscale';
+
+export type ProductStudioSequenceStepPlanEntry = {
+  index: number;
+  stepId: string;
+  stepType: ProductStudioSequenceStepType;
+  inputSource: 'previous' | 'source';
+  resolvedInput: 'previous' | 'source';
+  producesOutput: boolean;
+};
+
 export function normalizeProductStudioSequenceGenerationMode(
   value: unknown
 ): ProductStudioSequenceGenerationMode {

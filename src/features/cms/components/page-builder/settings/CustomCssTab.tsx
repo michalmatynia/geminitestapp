@@ -3,10 +3,14 @@
 import React from 'react';
 import { Textarea } from '@/shared/ui';
 import { CssAiSection } from './CssAiSection';
-import { useComponentSettingsContext } from '../context/ComponentSettingsContext';
+import {
+  useComponentSettingsActions,
+  useComponentSettingsState,
+} from '../context/ComponentSettingsContext';
 
 export function CustomCssTab(): React.JSX.Element {
-  const { customCssValue, handleCustomCssChange } = useComponentSettingsContext();
+  const { customCssValue } = useComponentSettingsState();
+  const { handleCustomCssChange } = useComponentSettingsActions();
 
   return (
     <div className='flex-1 overflow-y-auto p-4 mt-0 space-y-3'>

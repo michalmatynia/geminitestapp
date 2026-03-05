@@ -5,7 +5,11 @@ import {
   type VectorShapeType,
   type VectorToolMode,
 } from '@/shared/contracts/vector';
-import { type VectorViewTransform } from './vector-canvas.geometry';
+import {
+  type VectorCanvasImageContentFrame,
+  type VectorCanvasViewCropRect,
+  type VectorViewTransform,
+} from './vector-canvas.geometry';
 
 export interface UseVectorCanvasInteractionsProps {
   containerRef: React.RefObject<HTMLDivElement | null>;
@@ -33,10 +37,10 @@ export interface UseVectorCanvasInteractionsProps {
   baseCanvasWidthPx?: number | null;
   baseCanvasHeightPx?: number | null;
   onViewCropRectChange?: (
-    cropRect: { x: number; y: number; width: number; height: number } | null
+    cropRect: VectorCanvasViewCropRect | null
   ) => void;
   onImageContentFrameChange?: (
-    frame: { x: number; y: number; width: number; height: number } | null
+    frame: VectorCanvasImageContentFrame | null
   ) => void;
   imageMoveEnabled: boolean;
   onImageOffsetChange?: (offset: { x: number; y: number }) => void;

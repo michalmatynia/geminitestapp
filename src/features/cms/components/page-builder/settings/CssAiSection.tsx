@@ -15,7 +15,7 @@ import {
   FormField,
 } from '@/shared/ui';
 
-import { useInspectorAi } from '../context/InspectorAiContext';
+import { useInspectorAiActions, useInspectorAiState } from '../context/InspectorAiContext';
 import { buildDiffLines } from '@/features/cms/components/page-builder/utils/ai-helpers';
 
 // ---------------------------------------------------------------------------
@@ -29,28 +29,30 @@ function CssAiSection(): React.JSX.Element {
     cssAiError,
     cssAiLoading,
     cssAiAutoApply,
-    setCssAiAutoApply,
     cssAiAppend,
+    customCssAiConfig,
+    contextPreviewOpen,
+    contextPreviewTab,
+    contextPreviewFull,
+    pageContextPreview,
+    elementContextPreview,
+    brainAiProvider,
+    brainAiModelId,
+    brainAiAgentId,
+  } = useInspectorAiState();
+  const {
+    setCssAiAutoApply,
     setCssAiAppend,
     generateCss,
     cancelCss,
     applyCss,
-    customCssAiConfig,
     updateCustomCssAiConfig,
-    contextPreviewOpen,
     setContextPreviewOpen,
-    contextPreviewTab,
     setContextPreviewTab,
-    contextPreviewFull,
     setContextPreviewFull,
     setContextPreviewNonce,
-    pageContextPreview,
-    elementContextPreview,
     copyContext,
-    brainAiProvider,
-    brainAiModelId,
-    brainAiAgentId,
-  } = useInspectorAi();
+  } = useInspectorAiActions();
 
   const [cssAiDiffOnly, setCssAiDiffOnly] = useState<boolean>(true);
   const contextPlaceholder = '{{page_context}}\n{{element_context}}';

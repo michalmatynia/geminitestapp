@@ -1592,7 +1592,7 @@
       "targets": [
         {
           "mode": "const_array",
-          "file": "src/features/ai/ai-paths/server/settings-store.constants.ts",
+          "file": "src/shared/contracts/ai-paths.ts",
           "arrayName": "AI_PATHS_MAINTENANCE_ACTION_IDS",
           "expectedItems": [
             "compact_oversized_configs",

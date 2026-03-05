@@ -22,12 +22,15 @@ import { AnimationConfigProvider } from './animation/AnimationConfigContext';
 import { ParallaxSection } from './animation/ParallaxSection';
 import { TimelineSection } from './animation/TimelineSection';
 import { VisualEffectsSection } from './animation/VisualEffectsSection';
-import { useComponentSettingsContext } from './context/ComponentSettingsContext';
+import {
+  useComponentSettingsActions,
+  useComponentSettingsState,
+} from './context/ComponentSettingsContext';
 import { useVectorOverlay } from '../../hooks/usePageBuilderContext';
 
 export function AnimationConfigPanel(): React.JSX.Element {
-  const { currentAnimationConfig: config, handleAnimationChange: onChange } =
-    useComponentSettingsContext();
+  const { currentAnimationConfig: config } = useComponentSettingsState();
+  const { handleAnimationChange: onChange } = useComponentSettingsActions();
   const { openVectorOverlay } = useVectorOverlay();
   const isEnabled =
     config.preset !== 'none' ||

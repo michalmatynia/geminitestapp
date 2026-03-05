@@ -1,25 +1,15 @@
 import { z } from 'zod';
+import {
+  promptExploderSegmentTypeSchema,
+  type PromptExploderSegmentType,
+} from '../prompt-exploder-core';
 
 /**
  * Prompt Exploder Basic DTOs
  */
 
-export const promptExploderSegmentTypeSchema = z.enum([
-  'static',
-  'dynamic',
-  'conditional',
-  'list',
-  'parameter_block',
-  'metadata',
-  'sequence',
-  'qa_matrix',
-  'hierarchical_list',
-  'referential_list',
-  'conditional_list',
-  'assigned_text',
-  'prompt_exploder',
-]);
-export type PromptExploderSegmentType = z.infer<typeof promptExploderSegmentTypeSchema>;
+export { promptExploderSegmentTypeSchema };
+export type { PromptExploderSegmentType };
 
 /**
  * Prompt Exploder Logical DTOs

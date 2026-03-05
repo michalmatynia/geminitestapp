@@ -7,8 +7,9 @@ import {
   getDatabaseEngineServiceProvider,
   isPrimaryProviderConfigured,
 } from '@/shared/lib/db/database-engine-policy';
+import type { AppProviderValue as ProductDbProvider } from '@/shared/contracts/system';
 
-export type ProductDbProvider = 'prisma' | 'mongodb';
+export type { ProductDbProvider };
 
 const PRODUCT_PROVIDER_CACHE_TTL_MS = 10_000;
 let productProviderCache: { value: ProductDbProvider; ts: number } | null = null;

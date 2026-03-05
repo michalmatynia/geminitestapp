@@ -3,9 +3,13 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import type { LabelValueOptionDto as InspectorEntry } from '@/shared/contracts/ui';
 import { Card, Hint } from '@/shared/ui';
 
-import { useOptionalPreviewEditor } from './context/PreviewEditorContext';
+import {
+  useOptionalPreviewEditorActions,
+  useOptionalPreviewEditorState,
+} from './context/PreviewEditorContext';
 
 const INSPECTOR_TOOLTIP_DELAY_MS = 500;
 const INSPECTOR_TOOLTIP_WIDTH = 260;
@@ -41,7 +45,7 @@ export const formatSettingValue = (value: unknown): string => {
   }
 };
 
-export type InspectorEntry = { label: string; value: string };
+export type { InspectorEntry };
 export type InspectorSection = { title: string; entries: InspectorEntry[] };
 
 export const resolveNodeLabel = (fallback: string, value: unknown): string => {
@@ -131,11 +135,13 @@ export const InspectorHover = ({
   children: React.ReactNode;
   className?: string | undefined;
 }): React.ReactNode => {
-  const previewEditor = useOptionalPreviewEditor();
+  const previewEditorState = useOptionalPreviewEditorState();
+  const previewEditorActions = useOptionalPreviewEditorActions();
 
-  const enabled = propEnabled ?? previewEditor?.isInspecting ?? false;
-  const showTooltip = propShowTooltip ?? previewEditor?.inspectorSettings?.showTooltip ?? true;
-  const onHover = propOnHover ?? previewEditor?.onHoverNode;
+  const enabled = propEnabled ?? previewEditorState?.isInspecting ?? false;
+  const showTooltip =
+    propShowTooltip ?? previewEditorState?.inspectorSettings?.showTooltip ?? true;
+  const onHover = propOnHover ?? previewEditorActions?.onHoverNode;
 
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);

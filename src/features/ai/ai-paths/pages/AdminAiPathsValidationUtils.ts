@@ -1,4 +1,5 @@
 import type {
+  AiPathsSettingRecordDto,
   AiPathsValidationRule,
   PathConfig,
   PathMeta,
@@ -11,8 +12,6 @@ import { pathConfigSchema } from '@/shared/contracts/ai-paths';
 import { validationError } from '@/shared/errors/app-error';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
-
-export type SettingsRecord = { key: string; value: string };
 
 export type ParsedAiPathsSettings = {
   pathMetas: PathMeta[];
@@ -182,9 +181,11 @@ export const parsePathIndex = (raw: string | undefined): PathMeta[] => {
     .filter((entry: PathMeta | null): entry is PathMeta => Boolean(entry));
 };
 
-export const parseAiPathsSettings = (records: SettingsRecord[]): ParsedAiPathsSettings => {
+export const parseAiPathsSettings = (
+  records: AiPathsSettingRecordDto[]
+): ParsedAiPathsSettings => {
   const settingsMap = new Map<string, string>(
-    records.map((record: SettingsRecord): [string, string] => [record.key, record.value])
+    records.map((record: AiPathsSettingRecordDto): [string, string] => [record.key, record.value])
   );
   const configEntries = Array.from(settingsMap.entries()).filter(([key]: [string, string]) =>
     key.startsWith(PATH_CONFIG_PREFIX)

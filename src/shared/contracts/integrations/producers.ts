@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { dtoBaseSchema } from '../base';
+import { dtoBaseSchema, type IdNameDto } from '../base';
 import { producerSchema, type Producer } from '../products';
 
 export const externalProducerSchema = dtoBaseSchema.extend({
@@ -57,10 +57,7 @@ export const baseProducerFromApiSchema = z.object({
 
 export type BaseProducerFromApi = z.infer<typeof baseProducerFromApiSchema>;
 
-export interface BaseProducer {
-  id: string;
-  name: string;
-}
+export type { IdNameDto as BaseProducer };
 
 export interface ExternalProducerSyncInput {
   connectionId: string;

@@ -11,4 +11,4 @@ export * from '@/shared/contracts/products';
 export {
   productCreateSchema as productCreateInputSchemaV1,
   productUpdateSchema as productUpdateInputSchemaV1,
-} from './validations';
+} from '@/shared/lib/products/validations';

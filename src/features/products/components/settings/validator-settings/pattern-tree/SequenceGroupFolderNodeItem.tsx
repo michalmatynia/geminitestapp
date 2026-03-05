@@ -3,14 +3,14 @@
 import React from 'react';
 import { GripVertical, Layers } from 'lucide-react';
 
-import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
+import type { FolderTreeViewportRenderNodeInput as SequenceGroupFolderNodeItemProps } from '@/features/foldertree/v2';
 import { TreeCaret, TreeContextMenu, TreeRow, Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { fromSeqGroupMasterNodeId } from '../validator-pattern-master-tree';
 import { useValidatorPatternTreeContext } from '../ValidatorPatternTreeContext';
 
-export type SequenceGroupFolderNodeItemProps = FolderTreeViewportRenderNodeInput;
+export type { SequenceGroupFolderNodeItemProps };
 
 export function SequenceGroupFolderNodeItem(
   props: SequenceGroupFolderNodeItemProps

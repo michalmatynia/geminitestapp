@@ -565,8 +565,10 @@ export const imageStudioSlotSchema = dtoBaseSchema.extend({
 });
 
 export type ImageStudioSlot = z.infer<typeof imageStudioSlotSchema>;
-export type ImageStudioSlotRecord = ImageStudioSlot;
-export type ImageStudioSlotDto = ImageStudioSlot;
+export type {
+  ImageStudioSlot as ImageStudioSlotRecord,
+  ImageStudioSlot as ImageStudioSlotDto,
+};
 
 export const createImageStudioSlotSchema = z.object({
   name: z.string().nullable().optional(),
@@ -979,9 +981,14 @@ export const imageStudioAutoScalerResponseSchema = z.object({
 
 export type ImageStudioAutoScalerResponse = z.infer<typeof imageStudioAutoScalerResponseSchema>;
 
-export type UploadedClientCenterImage = {
+export type UploadedImageBinaryDto = {
   buffer: Buffer;
   mime: string;
+};
+export type {
+  UploadedImageBinaryDto as UploadedImageBinary,
+  UploadedImageBinaryDto as UploadedClientCenterImage,
+  UploadedImageBinaryDto as UploadedClientAutoScaleImage,
 };
 
 export type ImageStudioCenterMetadata = {
@@ -993,11 +1000,6 @@ export type ImageStudioCenterMetadata = {
   confidenceBefore?: number | null;
   detectionDetails?: ImageStudioDetectionDetails | null;
   scale?: number | null;
-};
-
-export type UploadedClientAutoScaleImage = {
-  buffer: Buffer;
-  mime: string;
 };
 
 export type ImageStudioAutoScaleMetadata = {
@@ -1053,7 +1055,7 @@ export type ImageStudioSequenceRunStatus =
   | 'failed'
   | 'cancelled';
 
-export type ImageStudioSequenceRunDispatchMode = 'queued' | 'inline';
+export type ImageStudioSequenceRunDispatchMode = ImageStudioRunDispatchMode;
 
 export type ImageStudioSequenceRunHistoryEventSource =
   | 'api'
@@ -1078,14 +1080,7 @@ export type ImageStudioSequenceRunRequest = {
   metadata: Record<string, unknown> | null;
 };
 
-export type ImageStudioSequenceRunHistoryEvent = {
-  id: string;
-  type: string;
-  source: ImageStudioSequenceRunHistoryEventSource;
-  message: string;
-  at: string;
-  payload?: Record<string, unknown>;
-};
+export type ImageStudioSequenceRunHistoryEvent = ImageStudioRunHistoryEvent;
 
 export type ImageStudioSequenceRunRecord = {
   id: string;
@@ -1108,6 +1103,15 @@ export type ImageStudioSequenceRunRecord = {
   historyEvents: ImageStudioSequenceRunHistoryEvent[];
 };
 
+export type ImageStudioSequenceRunStartResponseDto = {
+  runId: string;
+  status: ImageStudioSequenceRunStatus;
+  dispatchMode: ImageStudioSequenceRunDispatchMode;
+  currentSlotId: string;
+  stepCount: number;
+};
+export type ImageStudioSequenceRunStartResponse = ImageStudioSequenceRunStartResponseDto;
+
 export type RunStudioEnqueueResult = {
   ok: boolean;
   runId: string;
@@ -1116,10 +1120,13 @@ export type RunStudioEnqueueResult = {
   expectedOutputs: number;
 };
 
-export type ImageStudioRunsResponse = {
-  runs: ImageStudioRunRecord[];
+export type RunsTotalResponseDto<TRun> = {
+  runs: TRun[];
   total: number;
 };
+export type RunsTotalResponse<TRun> = RunsTotalResponseDto<TRun>;
+
+export type ImageStudioRunsResponse = RunsTotalResponseDto<ImageStudioRunRecord>;
 
 // --- Run Execution ---
 

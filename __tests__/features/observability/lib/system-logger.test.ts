@@ -8,6 +8,10 @@ vi.unmock('@/shared/lib/observability/system-logger');
 import { notifyCriticalError } from '@/shared/lib/observability/critical-error-notifier';
 import { REDACTED_VALUE } from '@/shared/lib/observability/log-redaction';
 import { emitOtelLogRecord } from '@/shared/lib/observability/otel-log-bridge';
+import {
+  loadCentralLogDeadLetters,
+  saveCentralLogDeadLetters,
+} from '@/shared/lib/observability/central-log-dead-letter-store';
 import { createSystemLog } from '@/shared/lib/observability/system-log-repository';
 import { hydrateLogRuntimeContext } from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
 import {
@@ -15,6 +19,7 @@ import {
   logSystemError,
   normalizeErrorInfo,
   buildErrorFingerprint,
+  getCentralLoggingRuntimeStats,
 } from '@/shared/lib/observability/system-logger';
 import { AppError, AppErrorCodes } from '@/shared/errors/app-error';
 
@@ -34,6 +39,11 @@ vi.mock('@/shared/lib/observability/otel-log-bridge', () => ({
   emitOtelLogRecord: vi.fn(),
 }));
 
+vi.mock('@/shared/lib/observability/central-log-dead-letter-store', () => ({
+  loadCentralLogDeadLetters: vi.fn().mockResolvedValue([]),
+  saveCentralLogDeadLetters: vi.fn().mockResolvedValue(true),
+}));
+
 describe('system-logger', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -41,6 +51,8 @@ describe('system-logger', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.mocked(hydrateLogRuntimeContext).mockImplementation(async (context) => context);
+    vi.mocked(loadCentralLogDeadLetters).mockResolvedValue([]);
+    vi.mocked(saveCentralLogDeadLetters).mockResolvedValue(true);
     vi.unstubAllGlobals();
     delete process.env['CENTRAL_LOG_WEBHOOK_URL'];
   });
@@ -340,6 +352,7 @@ describe('system-logger', () => {
       const fetchMock = vi.fn().mockResolvedValue({ ok: true });
       vi.stubGlobal('fetch', fetchMock);
       process.env['CENTRAL_LOG_WEBHOOK_URL'] = 'https://logs.example.test/webhook';
+      const beforeStats = getCentralLoggingRuntimeStats();
 
       vi.mocked(hydrateLogRuntimeContext).mockResolvedValue({
         runId: 'run-1',
@@ -369,6 +382,12 @@ describe('system-logger', () => {
         expect(createSystemLog).toHaveBeenCalledTimes(1);
       });
 
+      const afterStats = getCentralLoggingRuntimeStats();
+      expect(afterStats.configured).toBe(true);
+      expect(afterStats.webhookHost).toBe('logs.example.test');
+      expect(afterStats.attempts).toBeGreaterThanOrEqual(beforeStats.attempts + 1);
+      expect(afterStats.delivered).toBeGreaterThanOrEqual(beforeStats.delivered + 1);
+
       const fetchPayload = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body ?? '{}')) as {
         context?: Record<string, unknown>;
       };
@@ -392,6 +411,60 @@ describe('system-logger', () => {
           }),
         })
       );
+    });
+
+    it('should enqueue failed central deliveries into dead-letter backlog and replay after recovery', async () => {
+      const fetchMock = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('network outage 1'))
+        .mockRejectedValueOnce(new Error('network outage 2'))
+        .mockRejectedValueOnce(new Error('network outage 3'))
+        .mockResolvedValue({ ok: true })
+        .mockResolvedValue({ ok: true });
+      vi.stubGlobal('fetch', fetchMock);
+      process.env['CENTRAL_LOG_WEBHOOK_URL'] = 'https://logs.example.test/webhook';
+
+      const beforeStats = getCentralLoggingRuntimeStats();
+
+      await logSystemEvent({
+        message: 'Central sink down',
+        source: 'observability.test',
+        level: 'error',
+        context: { runId: 'run-down' },
+      });
+
+      await vi.waitFor(() => {
+        const failedStats = getCentralLoggingRuntimeStats();
+        expect(failedStats.failed).toBeGreaterThanOrEqual(beforeStats.failed + 1);
+        expect(failedStats.deadLetterBacklog).toBeGreaterThanOrEqual(1);
+        expect(failedStats.deadLetterPersisted).toBeGreaterThanOrEqual(
+          beforeStats.deadLetterPersisted + 1
+        );
+      });
+
+      const failedStats = getCentralLoggingRuntimeStats();
+
+      await logSystemEvent({
+        message: 'Central sink recovered',
+        source: 'observability.test',
+        level: 'error',
+        context: { runId: 'run-up' },
+      });
+
+      await vi.waitFor(() => {
+        const recoveredStats = getCentralLoggingRuntimeStats();
+        expect(recoveredStats.deadLetterBacklog).toBe(0);
+        expect(recoveredStats.deadLetterReplayed).toBeGreaterThanOrEqual(
+          failedStats.deadLetterReplayed + 1
+        );
+        expect(recoveredStats.replayDelivered).toBeGreaterThanOrEqual(
+          failedStats.replayDelivered + 1
+        );
+        expect(recoveredStats.deadLetterPersisted).toBeGreaterThanOrEqual(
+          failedStats.deadLetterPersisted + 1
+        );
+      });
+      expect(saveCentralLogDeadLetters).toHaveBeenCalled();
     });
 
     it('should skip runtime hydration in the browser path', async () => {

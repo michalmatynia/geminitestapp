@@ -12,11 +12,11 @@ import { ProductSyncSettings } from '@/features/product-sync/components/ProductS
 import { ParametersSettings } from '@/features/products/components/constructor/ParametersSettings';
 import { CatalogsSettings } from '@/features/products/components/settings/catalogs/CatalogsSettings';
 import { CategoriesSettings } from '@/features/products/components/settings/CategoriesSettings';
-import { CatalogModal } from '@/features/products/components/settings/modals/CatalogModal';
-import { CountryModal } from '@/features/products/components/settings/modals/CountryModal';
-import { CurrencyModal } from '@/features/products/components/settings/modals/CurrencyModal';
-import { LanguageModal } from '@/features/products/components/settings/modals/LanguageModal';
-import { PriceGroupModal } from '@/features/products/components/settings/modals/PriceGroupModal';
+import { CatalogModal } from '@/features/products/components/settings/modals/catalog-modal/CatalogModal';
+import { PriceGroupModal } from '@/features/products/components/settings/modals/price-group-modal/PriceGroupModal';
+import { CountryModal } from '@/features/internationalization/components/country-modal/CountryModal';
+import { CurrencyModal } from '@/features/internationalization/components/currency-modal/CurrencyModal';
+import { LanguageModal } from '@/features/internationalization/components/language-modal/LanguageModal';
 import { PriceGroupsSettings } from '@/features/products/components/settings/pricing/PriceGroupsSettings';
 import { ProductImageRoutingSettings } from '@/features/products/components/settings/ProductImageRoutingSettings';
 import { ProductSettingsProvider } from '@/features/products/components/settings/ProductSettingsContext';

@@ -20,7 +20,7 @@ import {
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-import { CaseResolverIdentifierModal } from '../components/modals/CaseResolverIdentifierModal';
+import { CaseResolverIdentifierModal } from '../components/modals/CaseResolverEntityModalVariants';
 import { CASE_RESOLVER_IDENTIFIERS_KEY, parseCaseResolverIdentifiers } from '../settings';
 
 type CaseIdentifierFormData = {

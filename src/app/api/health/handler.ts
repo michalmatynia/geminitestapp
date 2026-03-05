@@ -5,6 +5,8 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { configurationError } from '@/shared/errors/app-error';
 import { getAppDbProvider, type AppDbProvider } from '@/shared/lib/db/app-db-provider';
 import prisma from '@/shared/lib/db/prisma';
+import { getNodeOtelRuntimeStatus } from '@/shared/lib/observability/otel-node';
+import { getCentralLoggingRuntimeStats } from '@/shared/lib/observability/system-logger';
 import { getQueueHealth } from '@/shared/lib/queue/registry';
 import { getSystemLogAlertsQueueStatus } from '@/shared/lib/observability/workers/systemLogAlertsQueue';
 
@@ -59,6 +61,8 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   }
 
   const alertsState = getSystemLogAlertsQueueStatus();
+  const centralLogging = getCentralLoggingRuntimeStats();
+  const otel = getNodeOtelRuntimeStatus();
   let alertQueueHealth: Record<string, unknown> | null = null;
   try {
     const queueHealth = await getQueueHealth();
@@ -74,6 +78,8 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     logPersistencePath: provider,
     ingestionMode:
       process.env['QUERY_TELEMETRY_BLOCKING_INGESTION'] === 'true' ? 'blocking' : 'non-blocking',
+    otel,
+    centralizedLogging: centralLogging,
     alertWorker: {
       enabled: alertsState.enabled,
       workerStarted: alertsState.workerStarted,

@@ -16,19 +16,19 @@ interface MetadataItemProps {
   variant?: 'card' | 'minimal' | 'subtle' | undefined;
 }
 
-function MetadataItemLabel({
-  label,
-  labelClassName,
-  isStringLabel,
-  className,
-  withColon = false,
-}: {
+function MetadataItemLabel(props: {
   label: ReactNode;
   labelClassName?: string;
   isStringLabel: boolean;
   className: string;
   withColon?: boolean;
 }): React.JSX.Element {
+  const label = props.label;
+  const labelClassName = props.labelClassName;
+  const isStringLabel = props.isStringLabel;
+  const className = props.className;
+  const withColon = props.withColon ?? false;
+
   return (
     <Label className={cn(className, labelClassName)}>
       {label}
@@ -37,18 +37,18 @@ function MetadataItemLabel({
   );
 }
 
-export function MetadataItem({
-  label,
-  value,
-  children,
-  icon,
-  hint,
-  className,
-  labelClassName,
-  valueClassName,
-  mono = false,
-  variant = 'card',
-}: MetadataItemProps): React.JSX.Element {
+export function MetadataItem(props: MetadataItemProps): React.JSX.Element {
+  const label = props.label;
+  const value = props.value;
+  const children = props.children;
+  const icon = props.icon;
+  const hint = props.hint;
+  const className = props.className;
+  const labelClassName = props.labelClassName;
+  const valueClassName = props.valueClassName;
+  const mono = props.mono ?? false;
+  const variant = props.variant ?? 'card';
+
   const content = children ?? value ?? '—';
   const isStringLabel = typeof label === 'string';
 

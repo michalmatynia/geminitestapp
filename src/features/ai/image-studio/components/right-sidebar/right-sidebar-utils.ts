@@ -399,14 +399,6 @@ export type SequenceRequestPreview = {
   stepCount: number;
 };
 
-export type SequenceRunStartResponse = {
-  runId: string;
-  status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
-  dispatchMode: 'queued' | 'inline';
-  currentSlotId: string;
-  stepCount: number;
-};
-
 export const buildReferencePreviewImages = (
   slots: ImageStudioSlotRecord[],
   compositeAssetIds: string[]

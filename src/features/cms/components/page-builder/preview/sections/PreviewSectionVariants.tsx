@@ -11,7 +11,10 @@ import {
 } from '@/features/cms/components/frontend/theme-styles';
 import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';
 import { useMediaStyles } from '@/features/cms/components/frontend/media-styles-context';
-import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
+import {
+  usePreviewEditorActions,
+  usePreviewEditorState,
+} from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
 import { usePreviewSectionContext } from '@/features/cms/components/page-builder/preview/context/PreviewSectionContext';
 
 import { PreviewSectionBlocks } from './PreviewSectionBlocks';
@@ -30,7 +33,8 @@ export function PreviewHeroSection(): React.JSX.Element {
     handleSelect,
     PreviewBlockItem,
   } = usePreviewSectionContext();
-  const { inspectorSettings, onOpenMedia } = usePreviewEditor();
+  const { inspectorSettings } = usePreviewEditorState();
+  const { onOpenMedia } = usePreviewEditorActions();
 
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const sectionStyles = getSectionStyles(section.settings, colorSchemes);
@@ -109,7 +113,8 @@ export function PreviewImageWithTextSection(): React.JSX.Element {
     handleSelect,
     PreviewBlockItem,
   } = usePreviewSectionContext();
-  const { inspectorSettings, onOpenMedia } = usePreviewEditor();
+  const { inspectorSettings } = usePreviewEditorState();
+  const { onOpenMedia } = usePreviewEditorActions();
 
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const sectionStyles = getSectionStyles(section.settings, colorSchemes);
@@ -199,7 +204,8 @@ export function PreviewRichTextSection(): React.JSX.Element {
     handleSelect,
     PreviewBlockItem,
   } = usePreviewSectionContext();
-  const { inspectorSettings, onOpenMedia } = usePreviewEditor();
+  const { inspectorSettings } = usePreviewEditorState();
+  const { onOpenMedia } = usePreviewEditorActions();
 
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const sectionStyles = getSectionStyles(section.settings, colorSchemes);

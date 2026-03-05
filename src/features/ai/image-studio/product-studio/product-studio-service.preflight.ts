@@ -8,6 +8,7 @@ import {
   type ProductStudioSequenceGenerationMode,
   type ProductStudioSequencingConfig,
   type ProductStudioSequencingDiagnostics,
+  type ProductStudioSequenceStepPlanEntry,
   type ProductStudioSequenceReadiness,
 } from '@/shared/contracts/products';
 import type { ProductStudioConfig } from '@/shared/lib/products/services/product-studio-config';
@@ -17,7 +18,6 @@ import {
   buildSequenceStepPlanWarnings,
   resolvePostProductionRoute,
   resolveSequenceReadiness,
-  type ProductStudioSequenceStepPlanEntry,
 } from './product-studio-service.sequencing';
 import { resolveGenerationVariants } from './product-studio-service.analysis';
 import {

@@ -4,7 +4,7 @@ import { evaluateGraphServer } from '@/shared/lib/ai-paths/core/runtime/engine-s
 
 import {
   PortablePathValidationError,
-  resolvePortablePathInput,
+  resolvePortablePathInputAsync,
   runPortablePathClient,
   type PortablePathRunOptions,
   type PortablePathRunResult,
@@ -19,16 +19,32 @@ export const runPortablePathServer = async (
 ): Promise<PortablePathRunResult> => {
   const {
     validateBeforeRun = true,
+    validationMode = 'standard',
+    validationTriggerNodeId = null,
     repairIdentities = true,
+    enforcePayloadLimits = true,
+    limits,
+    fingerprintVerificationMode = 'off',
     reportAiPathsError,
     ...engineOptions
   } = options;
-  const resolved = resolvePortablePathInput(input, { repairIdentities });
+  const resolved = await resolvePortablePathInputAsync(input, {
+    repairIdentities,
+    includeConnections: false,
+    enforcePayloadLimits,
+    limits,
+    fingerprintVerificationMode,
+  });
   if (!resolved.ok) {
     throw new Error(`Invalid AI-Path payload: ${resolved.error}`);
   }
 
-  const validation = validateBeforeRun ? validatePortablePathConfig(resolved.value.pathConfig) : null;
+  const validation = validateBeforeRun
+    ? validatePortablePathConfig(resolved.value.pathConfig, {
+        mode: validationMode,
+        triggerNodeId: validationTriggerNodeId,
+      })
+    : null;
   if (validation && !validation.ok) {
     throw new PortablePathValidationError(validation);
   }

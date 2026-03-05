@@ -3,13 +3,10 @@ import type {
   ImageStudioSettings,
   ImageStudioSequenceOperation,
 } from '@/features/ai/image-studio/utils/studio-settings';
+import type { LabelValueOptionDto as SelectOption } from '@/shared/contracts/ui';
 
 export type StudioSettingsTab = 'prompt' | 'generation' | 'validation' | 'maintenance';
-
-export type SelectOption = {
-  value: string;
-  label: string;
-};
+export type { SelectOption };
 
 export type ModelCapabilities = {
   supportsUser: boolean;

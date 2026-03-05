@@ -7,7 +7,11 @@ export interface SettingsFormContextValue {
   onChange: (key: string, value: unknown) => void;
 }
 
-const SettingsFormContext = createContext<SettingsFormContextValue | null>(null);
+export type SettingsFormStateContextValue = Pick<SettingsFormContextValue, 'values'>;
+export type SettingsFormActionsContextValue = Pick<SettingsFormContextValue, 'onChange'>;
+
+const SettingsFormStateContext = createContext<SettingsFormStateContextValue | null>(null);
+const SettingsFormActionsContext = createContext<SettingsFormActionsContextValue | null>(null);
 
 export function SettingsFormProvider({
   values,
@@ -18,18 +22,50 @@ export function SettingsFormProvider({
   onChange: (key: string, value: unknown) => void;
   children: React.ReactNode;
 }) {
-  const value = useMemo(() => ({ values, onChange }), [values, onChange]);
-  return <SettingsFormContext.Provider value={value}>{children}</SettingsFormContext.Provider>;
+  const stateValue = useMemo((): SettingsFormStateContextValue => ({ values }), [values]);
+  const actionsValue = useMemo((): SettingsFormActionsContextValue => ({ onChange }), [onChange]);
+  return (
+    <SettingsFormActionsContext.Provider value={actionsValue}>
+      <SettingsFormStateContext.Provider value={stateValue}>
+        {children}
+      </SettingsFormStateContext.Provider>
+    </SettingsFormActionsContext.Provider>
+  );
 }
 
-export function useSettingsForm() {
-  const context = useContext(SettingsFormContext);
+export function useSettingsFormState(): SettingsFormStateContextValue {
+  const context = useContext(SettingsFormStateContext);
   if (!context) {
-    throw new Error('useSettingsForm must be used within a SettingsFormProvider');
+    throw new Error('useSettingsFormState must be used within a SettingsFormProvider');
   }
   return context;
 }
 
-export function useOptionalSettingsForm() {
-  return useContext(SettingsFormContext);
+export function useSettingsFormActions(): SettingsFormActionsContextValue {
+  const context = useContext(SettingsFormActionsContext);
+  if (!context) {
+    throw new Error('useSettingsFormActions must be used within a SettingsFormProvider');
+  }
+  return context;
+}
+
+export function useOptionalSettingsFormState(): SettingsFormStateContextValue | null {
+  return useContext(SettingsFormStateContext);
+}
+
+export function useOptionalSettingsFormActions(): SettingsFormActionsContextValue | null {
+  return useContext(SettingsFormActionsContext);
+}
+
+export function useSettingsForm(): SettingsFormContextValue {
+  const state = useSettingsFormState();
+  const actions = useSettingsFormActions();
+  return useMemo((): SettingsFormContextValue => ({ ...state, ...actions }), [state, actions]);
+}
+
+export function useOptionalSettingsForm(): SettingsFormContextValue | null {
+  const state = useOptionalSettingsFormState();
+  const actions = useOptionalSettingsFormActions();
+  if (!state || !actions) return null;
+  return { ...state, ...actions };
 }

@@ -4,14 +4,13 @@ import React from 'react';
 
 import { Button, Textarea, Input, FormSection, FormField } from '@/shared/ui';
 
-import { useComponentSettingsContext } from '../context/ComponentSettingsContext';
-import { useInspectorAi } from '../context/InspectorAiContext';
+import { useComponentSettingsState } from '../context/ComponentSettingsContext';
+import { useInspectorAiActions, useInspectorAiState } from '../context/InspectorAiContext';
 
 function ContentAiSection(): React.JSX.Element {
-  const { selectedLabel } = useComponentSettingsContext();
+  const { selectedLabel } = useComponentSettingsState();
   const {
     contentAiPrompt,
-    setContentAiPrompt,
     contentAiLoading,
     contentAiError,
     contentAiOutput,
@@ -20,10 +19,9 @@ function ContentAiSection(): React.JSX.Element {
     brainAiProvider,
     brainAiModelId,
     brainAiAgentId,
-    generateContent,
-    cancelContent,
-    applyContent,
-  } = useInspectorAi();
+  } = useInspectorAiState();
+  const { setContentAiPrompt, generateContent, cancelContent, applyContent } =
+    useInspectorAiActions();
 
   return (
     <div className='space-y-3'>

@@ -25,28 +25,7 @@ export type CenterMode =
   | 'client_white_bg_bbox';
 export type AutoScalerMode = 'client_auto_scaler' | 'server_auto_scaler';
 
-export type CropStatus =
-  | 'idle'
-  | 'resolving'
-  | 'preparing'
-  | 'uploading'
-  | 'processing'
-  | 'persisting';
-export type CenterStatus =
-  | 'idle'
-  | 'resolving'
-  | 'preparing'
-  | 'uploading'
-  | 'processing'
-  | 'persisting';
-export type UpscaleStatus =
-  | 'idle'
-  | 'resolving'
-  | 'preparing'
-  | 'uploading'
-  | 'processing'
-  | 'persisting';
-export type AutoScaleStatus =
+export type ImageStudioOperationStatus =
   | 'idle'
   | 'resolving'
   | 'preparing'
@@ -129,20 +108,20 @@ export interface GenerationToolbarContextValue {
   // Busy/Status State
   upscaleBusy: boolean;
   setUpscaleBusy: (val: boolean) => void;
-  upscaleStatus: UpscaleStatus;
-  setUpscaleStatus: (val: UpscaleStatus) => void;
+  upscaleStatus: ImageStudioOperationStatus;
+  setUpscaleStatus: (val: ImageStudioOperationStatus) => void;
   cropBusy: boolean;
   setCropBusy: (val: boolean) => void;
-  cropStatus: CropStatus;
-  setCropStatus: (val: CropStatus) => void;
+  cropStatus: ImageStudioOperationStatus;
+  setCropStatus: (val: ImageStudioOperationStatus) => void;
   centerBusy: boolean;
   setCenterBusy: (val: boolean) => void;
-  centerStatus: CenterStatus;
-  setCenterStatus: (val: CenterStatus) => void;
+  centerStatus: ImageStudioOperationStatus;
+  setCenterStatus: (val: ImageStudioOperationStatus) => void;
   autoScaleBusy: boolean;
   setAutoScaleBusy: (val: boolean) => void;
-  autoScaleStatus: AutoScaleStatus;
-  setAutoScaleStatus: (val: AutoScaleStatus) => void;
+  autoScaleStatus: ImageStudioOperationStatus;
+  setAutoScaleStatus: (val: ImageStudioOperationStatus) => void;
   analysisBusy: boolean;
   setAnalysisBusy: (val: boolean) => void;
   analysisStatus: AnalysisStatus;
@@ -202,13 +181,13 @@ export function GenerationToolbarProvider({
     useState<UpscaleSmoothingQuality>('high');
 
   const [upscaleBusy, setUpscaleBusy] = useState(false);
-  const [upscaleStatus, setUpscaleStatus] = useState<UpscaleStatus>('idle');
+  const [upscaleStatus, setUpscaleStatus] = useState<ImageStudioOperationStatus>('idle');
   const [cropBusy, setCropBusy] = useState(false);
-  const [cropStatus, setCropStatus] = useState<CropStatus>('idle');
+  const [cropStatus, setCropStatus] = useState<ImageStudioOperationStatus>('idle');
   const [centerBusy, setCenterBusy] = useState(false);
-  const [centerStatus, setCenterStatus] = useState<CenterStatus>('idle');
+  const [centerStatus, setCenterStatus] = useState<ImageStudioOperationStatus>('idle');
   const [autoScaleBusy, setAutoScaleBusy] = useState(false);
-  const [autoScaleStatus, setAutoScaleStatus] = useState<AutoScaleStatus>('idle');
+  const [autoScaleStatus, setAutoScaleStatus] = useState<ImageStudioOperationStatus>('idle');
   const [analysisBusy, setAnalysisBusy] = useState(false);
   const [analysisStatus, setAnalysisStatus] = useState<AnalysisStatus>('idle');
 

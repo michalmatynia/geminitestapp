@@ -9,6 +9,12 @@ import type {
   ImageStudioCenterObjectBounds,
   ImageStudioAutoScalePlan,
 } from '@/features/ai/image-studio/analysis/shared';
+import type {
+  PositiveRectBoundsDto as CropRect,
+  PositiveRectBoundsDto as ImageContentFrame,
+} from '@/shared/contracts/geometry';
+
+export type { CropRect, ImageContentFrame };
 
 export type UpscaleSmoothingQuality = 'low' | 'medium' | 'high';
 
@@ -23,26 +29,12 @@ export type UpscaleRequestStrategyPayload =
       targetHeight: number;
     };
 
-export type CropRect = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
 export type MaskShapeForExport = {
   id: string;
   type: string;
   points: Array<{ x: number; y: number }>;
   closed?: boolean;
   visible: boolean;
-};
-
-export type ImageContentFrame = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
 };
 
 export type CropCanvasContext = {

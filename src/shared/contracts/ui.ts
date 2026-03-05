@@ -67,6 +67,15 @@ export interface MultiSectionModalProps extends ModalStateProps {
   error?: string | null;
 }
 
+export type LabeledOptionDto<TValue = string> = {
+  label: string;
+  value: TValue;
+};
+export type LabeledOption<TValue = string> = LabeledOptionDto<TValue>;
+
+export type LabelValueOptionDto = LabeledOptionDto<string>;
+export type { LabelValueOptionDto as LabelValueOption };
+
 export type ExtractEntityType<T extends EntityModalProps<unknown, unknown>> =
   T extends EntityModalProps<infer E, unknown> ? E : never;
 export type ExtractListItemType<T extends EntityModalProps<unknown, unknown>> =
@@ -80,32 +89,42 @@ export type ListQuery<T, TResponse = T[]> = UseQueryResult<TResponse, Error>;
 export type SingleQuery<T> = UseQueryResult<T, Error>;
 export type PagedQuery<T> = UseQueryResult<ListResponse<T>, Error>;
 
-export type CreateMutation<
-  T,
-  TInput = Omit<T, 'id' | 'createdAt' | 'updatedAt'>,
-  TError = Error,
-> = UseMutationResult<T, TError, TInput>;
-export type UpdateMutation<
-  T,
-  TInput = { id: string; data: Partial<T> },
-  TError = Error,
-> = UseMutationResult<T, TError, TInput>;
-export type DeleteMutation<TResponse = void, TInput = string, TError = Error> = UseMutationResult<
-  TResponse,
-  TError,
-  TInput
->;
-export type SaveMutation<
-  T,
-  TInput = { id?: string; data: Partial<T> },
-  TError = Error,
-> = UseMutationResult<T, TError, TInput>;
 export type MutationResult<TResponse, TInput, TError = Error> = UseMutationResult<
   TResponse,
   TError,
   TInput
 >;
-export type VoidMutation<TInput, TError = Error> = UseMutationResult<void, TError, TInput>;
+
+type SemanticMutationResult<
+  TResponse,
+  TInput,
+  TKind extends 'create' | 'update' | 'save',
+  TError = Error,
+> = MutationResult<TResponse, TInput, TError> & {
+  readonly __mutationKind?: TKind;
+};
+
+export type CreateMutation<
+  T,
+  TInput = Omit<T, 'id' | 'createdAt' | 'updatedAt'>,
+  TError = Error,
+> = SemanticMutationResult<T, TInput, 'create', TError>;
+export type UpdateMutation<
+  T,
+  TInput = { id: string; data: Partial<T> },
+  TError = Error,
+> = SemanticMutationResult<T, TInput, 'update', TError>;
+export type DeleteMutation<TResponse = void, TInput = string, TError = Error> = MutationResult<
+  TResponse,
+  TInput,
+  TError
+>;
+export type SaveMutation<
+  T,
+  TInput = { id?: string; data: Partial<T> },
+  TError = Error,
+> = SemanticMutationResult<T, TInput, 'save', TError>;
+export type VoidMutation<TInput, TError = Error> = MutationResult<void, TInput, TError>;
 
 /**
  * API Handler Types
@@ -185,7 +204,7 @@ export interface FilterField {
     | 'checkbox'
     | 'number';
   placeholder?: string;
-  options?: Array<{ label: string; value: string }>;
+  options?: LabelValueOptionDto[];
   multi?: boolean;
   width?: string; // CSS width value
   className?: string;

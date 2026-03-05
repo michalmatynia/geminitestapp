@@ -24,7 +24,10 @@ import {
 import { useCmsPageContext } from '../frontend/CmsPageContext';
 import { useMediaStyles } from '../frontend/media-styles-context';
 import { BlockContextProvider, useBlockContext } from './preview/context/BlockContext';
-import { usePreviewEditor } from './preview/context/PreviewEditorContext';
+import {
+  usePreviewEditorActions,
+  usePreviewEditorState,
+} from './preview/context/PreviewEditorContext';
 import {
   InspectorTooltip,
   InspectorHover,
@@ -58,9 +61,11 @@ import {
   type PreviewSectionContextValue,
 } from './preview/context/PreviewSectionContext';
 import { PreviewGridSection } from './preview/sections/PreviewGridSection';
-import { PreviewHeroSection } from './preview/sections/PreviewHeroSection';
-import { PreviewImageWithTextSection } from './preview/sections/PreviewImageWithTextSection';
-import { PreviewRichTextSection } from './preview/sections/PreviewRichTextSection';
+import {
+  PreviewHeroSection,
+  PreviewImageWithTextSection,
+  PreviewRichTextSection,
+} from './preview/sections/PreviewSectionVariants';
 import { PreviewSlideshowSection } from './preview/sections/PreviewSlideshowSection';
 
 export type { MediaReplaceTarget };
@@ -119,15 +124,9 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
 
   const { colorSchemes, layout } = useCmsPageContext();
   const mediaStyles = useMediaStyles();
-  const {
-    selectedNodeId,
-    isInspecting = false,
-    inspectorSettings,
-    hoveredNodeId,
-    onSelect,
-    onRemoveSection,
-    onToggleSectionVisibility,
-  } = usePreviewEditor();
+  const { selectedNodeId, isInspecting = false, inspectorSettings, hoveredNodeId } =
+    usePreviewEditorState();
+  const { onSelect, onRemoveSection, onToggleSectionVisibility } = usePreviewEditorActions();
 
   const isSectionSelected = selectedNodeId === section.id;
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
@@ -478,14 +477,9 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
 function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
   const { block } = props;
 
-  const {
-    selectedNodeId,
-    isInspecting = false,
-    inspectorSettings,
-    hoveredNodeId,
-    onSelect,
-    onOpenMedia,
-  } = usePreviewEditor();
+  const { selectedNodeId, isInspecting = false, inspectorSettings, hoveredNodeId } =
+    usePreviewEditorState();
+  const { onSelect, onOpenMedia } = usePreviewEditorActions();
 
   const blockContext = useBlockContext();
   const { sectionId, columnId, parentBlockId, contained = false, stretch = false } = blockContext;

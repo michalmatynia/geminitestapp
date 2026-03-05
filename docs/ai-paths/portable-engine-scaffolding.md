@@ -30,6 +30,17 @@ This scaffold introduces a portable package wrapper around semantic canvas JSON 
 }
 ```
 
+Optional fingerprint:
+
+```json
+{
+  "fingerprint": {
+    "algorithm": "sha256",
+    "value": "..."
+  }
+}
+```
+
 ## Core APIs
 
 ### Build/Serialize
@@ -40,6 +51,8 @@ This scaffold introduces a portable package wrapper around semantic canvas JSON 
 ### Resolve/Import
 
 - `resolvePortablePathInput(payload, options)`
+- `resolvePortablePathInputAsync(payload, options)`
+- `migratePortablePathInput(payload, options)`
 
 Accepted payloads:
 
@@ -51,7 +64,17 @@ Resolver behavior:
 
 - Normalizes legacy edge aliases (`source`/`target`, `sourceHandle`/`targetHandle`)
 - Repairs canonical node identities by default
+- Applies payload safety guardrails (size, depth, key safety)
+- Rejects circular/non-serializable object payloads before migration
+- Applies graph limits (node/edge maximums)
+- Enforces `maxPayloadBytes` for both JSON-string inputs and object inputs
 - Emits a normalized semantic canvas document for downstream portability
+- Emits migration warnings when legacy formats are upgraded to package `v1`
+- Supports optional fingerprint verification on import:
+  - `fingerprintVerificationMode: "warn"` emits import warnings and continues.
+  - `fingerprintVerificationMode: "strict"` blocks import on missing/mismatched/unsupported fingerprints.
+  - For `sha256` fingerprints in strict mode, use the async resolver path for runtime-backed verification.
+- Uses a migration registry keyed by portable package spec version (currently `v1` + `v2` compatibility shim).
 
 ### Validate
 
@@ -62,6 +85,7 @@ Validation currently combines:
 
 - Canonical identity checks
 - Graph compile checks
+- Optional strict run preflight checks (`mode: "strict"`)
 
 ### Run
 
@@ -71,8 +95,25 @@ Validation currently combines:
 Both run methods support:
 
 - `validateBeforeRun` (default `true`)
+- `validationMode` (`standard` or `strict`)
 - `repairIdentities` (default `true`)
 - `reportAiPathsError`
+- `limits` / `enforcePayloadLimits`
+- `fingerprintVerificationMode` (`off` | `warn` | `strict`)
+
+### Fingerprinting
+
+- `computePortablePathFingerprint(payload)` (async)
+- `addPortablePathPackageFingerprint(package)` (async)
+
+These allow stable package integrity tagging across copy/paste surfaces.
+
+### Schema Publishing
+
+- API: `GET /api/ai-paths/portable-engine/schema`
+- Optional query: `kind=all|portable_package|semantic_canvas|path_config` (default `all`)
+
+Response includes canonical JSON Schema (Draft 2020-12) generated from runtime Zod contracts, suitable for external editor validation.
 
 ## Example Usage
 
@@ -104,6 +145,6 @@ import { runPortablePathServer } from '@/shared/lib/ai-paths/portable-engine/ser
 
 ## Next Hardening Steps
 
-1. Add optional runtime preflight (`evaluateRunPreflight`) behind a strict mode flag.
-2. Add JSON schema publish endpoint for external editors.
-3. Add migration registry for future portable package versions (`v2+`).
+1. Add schema endpoint caching headers / ETag for editor-side cache-friendly polling.
+2. Add signed package envelope option for tamper-evident cross-surface sharing.
+3. Add compatibility test matrix for custom registered migrators.

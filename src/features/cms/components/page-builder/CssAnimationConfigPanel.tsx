@@ -17,13 +17,16 @@ import {
   type SettingsField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
-import { useComponentSettingsContext } from './context/ComponentSettingsContext';
+import {
+  useComponentSettingsActions,
+  useComponentSettingsState,
+} from './context/ComponentSettingsContext';
 
 const easingValues = new Set(CSS_EASINGS.map((opt: { value: string }) => opt.value));
 
 export function CssAnimationConfigPanel(): React.ReactNode {
-  const { currentCssAnimationConfig: value, handleCssAnimationChange: onChange } =
-    useComponentSettingsContext();
+  const { currentCssAnimationConfig: value } = useComponentSettingsState();
+  const { handleCssAnimationChange: onChange } = useComponentSettingsActions();
   const config = useMemo(() => ({ ...DEFAULT_CSS_ANIMATION_CONFIG, ...(value ?? {}) }), [value]);
   const easingSelectValue = easingValues.has(config.easing ?? 'ease-out')
     ? config.easing

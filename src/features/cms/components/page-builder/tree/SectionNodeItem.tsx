@@ -11,7 +11,10 @@ import { cn } from '@/shared/utils';
 import { readSectionDragData, setSectionDragData } from '@/features/cms/utils/page-builder-dnd';
 import { isDescendant } from '@/features/cms/hooks/page-builder/section-hierarchy';
 import { BlockNodeItem } from './BlockNodeItem';
-import { useComponentTreePanelContext } from './ComponentTreePanelContext';
+import {
+  useComponentTreePanelActions,
+  useComponentTreePanelState,
+} from './ComponentTreePanelContext';
 import { RowNodeItem } from './RowNodeItem';
 import { SectionBlockNodeItem } from './SectionBlockNodeItem';
 import { SlideshowFrameNodeItem } from './SlideshowFrameNodeItem';
@@ -32,12 +35,9 @@ export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element 
     toggleTreeExpand,
   } = props;
 
-  const {
-    startSectionMasterDrag,
-    endSectionMasterDrag,
-    draggedMasterSectionId,
-    moveSectionByMaster,
-  } = useComponentTreePanelContext();
+  const { draggedMasterSectionId } = useComponentTreePanelState();
+  const { startSectionMasterDrag, endSectionMasterDrag, moveSectionByMaster } =
+    useComponentTreePanelActions();
   const { state: pbState } = usePageBuilder();
   const allSections = pbState.sections ?? [];
   const [isInsideDropOver, setIsInsideDropOver] = React.useState(false);

@@ -62,6 +62,72 @@ describe('runObservabilityCheck logger enforcement', () => {
     });
   });
 
+  it('fails when logSystemEvent object literal is missing source and message has no legacy prefix', () => {
+    const root = createTempRoot();
+    writeSource(
+      root,
+      'src/bad-event-source.ts',
+      "import { logSystemEvent } from '@/shared/lib/observability/system-logger';\nvoid logSystemEvent({ level: 'info', message: 'startup complete' });\n"
+    );
+
+    const report = runObservabilityCheck({
+      mode: 'check',
+      root,
+      srcDir: 'src',
+      apiDir: 'src/app/api',
+      allowPartial: true,
+    });
+
+    expect(report.status).toBe('failed');
+    expect(report.eventSource.totalViolations).toBe(1);
+    expect(report.eventSource.violations[0]).toMatchObject({
+      file: 'src/bad-event-source.ts',
+    });
+  });
+
+  it('passes staged source enforcement when message keeps canonical legacy [scope] prefix', () => {
+    const root = createTempRoot();
+    writeSource(
+      root,
+      'src/good-event-legacy-prefix.ts',
+      "import { logSystemEvent } from '@/shared/lib/observability/system-logger';\nvoid logSystemEvent({ level: 'info', message: '[chatbot.sessions] listed' });\n"
+    );
+
+    const report = runObservabilityCheck({
+      mode: 'check',
+      root,
+      srcDir: 'src',
+      apiDir: 'src/app/api',
+      allowPartial: true,
+    });
+
+    expect(report.status).toBe('passed');
+    expect(report.eventSource.totalViolations).toBe(0);
+  });
+
+  it('fails when logSystemEvent source has invalid taxonomy format', () => {
+    const root = createTempRoot();
+    writeSource(
+      root,
+      'src/bad-event-source-format.ts',
+      "import { logSystemEvent } from '@/shared/lib/observability/system-logger';\nvoid logSystemEvent({ level: 'info', source: 'chatbot sessions', message: '[chatbot] listed' });\n"
+    );
+
+    const report = runObservabilityCheck({
+      mode: 'check',
+      root,
+      srcDir: 'src',
+      apiDir: 'src/app/api',
+      allowPartial: true,
+    });
+
+    expect(report.status).toBe('failed');
+    expect(report.eventSource.totalViolations).toBe(1);
+    expect(report.eventSource.violations[0]).toMatchObject({
+      file: 'src/bad-event-source-format.ts',
+    });
+  });
+
   it('fails when legacy observability compatibility import is used', () => {
     const root = createTempRoot();
     writeSource(

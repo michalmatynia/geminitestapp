@@ -28,7 +28,7 @@ import {
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-import { CaseResolverCategoryModal } from '../components/modals/CaseResolverCategoryModal';
+import { CaseResolverCategoryModal } from '../components/modals/CaseResolverEntityModalVariants';
 import {
   CASE_RESOLVER_CATEGORIES_KEY,
   buildCaseResolverCategoryTree,

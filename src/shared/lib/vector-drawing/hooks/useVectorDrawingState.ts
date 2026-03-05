@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useShapeHistory } from '../useShapeHistory';
 import { smoothShape, simplifyShape } from '../geometry';
-import { vectorShapesToPath } from '../utils';
+import { vectorShapesToPath } from '@/shared/ui';
 import type { VectorShape, VectorToolMode } from '@/shared/contracts/vector';
 
 export type VectorDrawingOutput = {

@@ -2,15 +2,13 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/ui';
 import { Button, SelectSimple, EmptyState } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 export type PlaceholderTarget = 'query' | 'aiPrompt' | 'prompt' | 'template';
 
-export type PlaceholderTargetOption = {
-  value: PlaceholderTarget;
-  label: string;
-};
+export type PlaceholderTargetOption = LabeledOptionDto<PlaceholderTarget>;
 
 export type PlaceholderEntry = {
   id: string;

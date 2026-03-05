@@ -11,7 +11,10 @@ import {
 import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';
 import { useMediaStyles } from '@/features/cms/components/frontend/media-styles-context';
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
-import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
+import {
+  usePreviewEditorActions,
+  usePreviewEditorState,
+} from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
 import { usePreviewSectionContext } from '@/features/cms/components/page-builder/preview/context/PreviewSectionContext';
 import { renderBackgroundImageLayer } from '@/features/cms/components/page-builder/preview/image-utils';
 import {
@@ -44,14 +47,9 @@ export function PreviewGridSection() {
     PreviewBlockItem,
   } = usePreviewSectionContext();
 
-  const {
-    selectedNodeId,
-    isInspecting = false,
-    inspectorSettings,
-    hoveredNodeId,
-    onSelect,
-    onRemoveRow,
-  } = usePreviewEditor();
+  const { selectedNodeId, isInspecting = false, inspectorSettings, hoveredNodeId } =
+    usePreviewEditorState();
+  const { onSelect, onRemoveRow } = usePreviewEditorActions();
 
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const sectionStyles = getSectionStyles(section.settings, colorSchemes);

@@ -3,7 +3,7 @@ import 'server-only';
 import {
   type ImageStudioSequenceMaskContext,
   type ImageStudioSequenceRunRecord,
-  type ImageStudioSequenceRunStatus,
+  type ImageStudioSequenceRunStartResponse,
 } from '@/shared/contracts/image-studio';
 import {
   createImageStudioSequenceRun,
@@ -44,14 +44,6 @@ export type StartImageStudioSequenceInput = {
   steps?: unknown;
   presetId?: string | null;
   metadata?: Record<string, unknown> | null;
-};
-
-export type StartImageStudioSequenceResult = {
-  runId: string;
-  status: ImageStudioSequenceRunStatus;
-  dispatchMode: ImageStudioSequenceDispatchMode;
-  currentSlotId: string;
-  stepCount: number;
 };
 
 const asTrimmedString = (value: unknown): string | null => {
@@ -169,7 +161,7 @@ const resolveSequenceSteps = (params: {
 
 export async function startImageStudioSequenceRun(
   input: StartImageStudioSequenceInput
-): Promise<StartImageStudioSequenceResult> {
+): Promise<ImageStudioSequenceRunStartResponse> {
   const projectId = asTrimmedString(input.projectId);
   if (!projectId) {
     throw badRequestError('Project id is required.');

@@ -18,10 +18,11 @@ import {
 } from '@/shared/contracts/gsap';
 import { Checkbox, Input, SelectSimple, FormSection, FormField } from '@/shared/ui';
 
-import { useAnimationConfigContext } from './AnimationConfigContext';
+import { useAnimationConfigActions, useAnimationConfigState } from './AnimationConfigContext';
 
 export function ParallaxSection(): React.ReactNode {
-  const { config, onChange } = useAnimationConfigContext();
+  const { config } = useAnimationConfigState();
+  const { onChange } = useAnimationConfigActions();
   const parallaxPresetValue =
     config.parallaxPreset ?? DEFAULT_ANIMATION_CONFIG.parallaxPreset ?? 'none';
   const parallaxSelectorValue =

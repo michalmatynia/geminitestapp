@@ -1,5 +1,5 @@
 export * from '@/shared/contracts/vector';
-export * from './utils';
+export { DEFAULT_VECTOR_VIEWBOX, vectorShapeToPath, vectorShapesToPath } from '@/shared/ui';
 export * from './geometry';
 export * from './useShapeHistory';
 export * from './components/VectorDrawingCanvas';

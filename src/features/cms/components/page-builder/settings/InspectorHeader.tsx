@@ -7,13 +7,17 @@ import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import { usePageBuilderState } from '../../../hooks/page-builder/PageStateContext';
 import { usePageBuilderDispatch } from '../../../hooks/page-builder/PageDispatchContext';
-import { useComponentSettingsContext } from '../context/ComponentSettingsContext';
+import {
+  useComponentSettingsActions,
+  useComponentSettingsState,
+} from '../context/ComponentSettingsContext';
 import type { InspectorSettings } from '@/shared/contracts/cms';
 
 export function InspectorHeader(): React.JSX.Element {
   const state = usePageBuilderState();
   const dispatch = usePageBuilderDispatch();
-  const { selectedTitle, activeTab, setActiveTab } = useComponentSettingsContext();
+  const { selectedTitle, activeTab } = useComponentSettingsState();
+  const { setActiveTab } = useComponentSettingsActions();
 
   const inspectorSettings = state.inspectorSettings;
 

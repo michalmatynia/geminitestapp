@@ -3,10 +3,11 @@
 import React from 'react';
 import { Input, SelectSimple, FormSection, FormField } from '@/shared/ui';
 import { DEFAULT_ANIMATION_CONFIG, VELOCITY_EFFECTS, type VelocityEffect } from '@/features/gsap';
-import { useAnimationConfigContext } from '../AnimationConfigContext';
+import { useAnimationConfigActions, useAnimationConfigState } from '../AnimationConfigContext';
 
 export function AdvancedVelocitySection(): React.JSX.Element {
-  const { config, onChange } = useAnimationConfigContext();
+  const { config } = useAnimationConfigState();
+  const { onChange } = useAnimationConfigActions();
 
   const velocityEffectValue =
     config.velocityEffect ?? DEFAULT_ANIMATION_CONFIG.velocityEffect ?? 'none';

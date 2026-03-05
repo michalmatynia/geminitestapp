@@ -1,15 +1,14 @@
 import { toTrimmedString } from './template-helpers';
 
-export type ProducerNameLookup = Record<string, string> | Map<string, string> | null | undefined;
-export type ProducerExternalIdLookup =
-  | Record<string, string>
-  | Map<string, string>
-  | null
-  | undefined;
-export type ProducerLookup = ProducerNameLookup | ProducerExternalIdLookup;
-export type TagNameLookup = Record<string, string> | Map<string, string> | null | undefined;
-export type TagExternalIdLookup = Record<string, string> | Map<string, string> | null | undefined;
-export type TagLookup = TagNameLookup | TagExternalIdLookup;
+export type EntityNameLookup = Record<string, string> | Map<string, string> | null | undefined;
+export type {
+  EntityNameLookup as ProducerNameLookup,
+  EntityNameLookup as ProducerExternalIdLookup,
+  EntityNameLookup as TagNameLookup,
+  EntityNameLookup as TagExternalIdLookup,
+};
+export type ProducerLookup = EntityNameLookup;
+export type TagLookup = EntityNameLookup;
 export type EntityLookup = ProducerLookup | TagLookup;
 
 export const getLookupValue = (lookup: EntityLookup, key: string): string | null => {
@@ -44,32 +43,32 @@ export const getLookupEntries = (lookup: EntityLookup): Array<[string, string]> 
 
 export const getProducerNameFromLookup = (
   producerId: string,
-  producerNameById?: ProducerNameLookup
+  producerNameById?: EntityNameLookup
 ): string | null => {
   return getLookupValue(producerNameById, producerId);
 };
 
 export const getProducerExternalIdFromLookup = (
   internalProducerId: string,
-  producerExternalIdByInternalId?: ProducerExternalIdLookup
+  producerExternalIdByInternalId?: EntityNameLookup
 ): string | null => {
   return getLookupValue(producerExternalIdByInternalId, internalProducerId);
 };
 
-export const getTagNameFromLookup = (tagId: string, tagNameById?: TagNameLookup): string | null => {
+export const getTagNameFromLookup = (tagId: string, tagNameById?: EntityNameLookup): string | null => {
   return getLookupValue(tagNameById, tagId);
 };
 
 export const getTagExternalIdFromLookup = (
   internalTagId: string,
-  tagExternalIdByInternalId?: TagExternalIdLookup
+  tagExternalIdByInternalId?: EntityNameLookup
 ): string | null => {
   return getLookupValue(tagExternalIdByInternalId, internalTagId);
 };
 
 export const buildProducerNameToExternalIdLookup = (
-  producerNameById?: ProducerNameLookup,
-  producerExternalIdByInternalId?: ProducerExternalIdLookup
+  producerNameById?: EntityNameLookup,
+  producerExternalIdByInternalId?: EntityNameLookup
 ): Map<string, string> => {
   const result = new Map<string, string>();
   if (!producerNameById || !producerExternalIdByInternalId) return result;
@@ -89,8 +88,8 @@ export const buildProducerNameToExternalIdLookup = (
 };
 
 export const buildTagNameToExternalIdLookup = (
-  tagNameById?: TagNameLookup,
-  tagExternalIdByInternalId?: TagExternalIdLookup
+  tagNameById?: EntityNameLookup,
+  tagExternalIdByInternalId?: EntityNameLookup
 ): Map<string, string> => {
   const result = new Map<string, string>();
   if (!tagNameById || !tagExternalIdByInternalId) return result;

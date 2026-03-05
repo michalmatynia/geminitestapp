@@ -1,7 +1,7 @@
 {
   "summary": {
-    "generatedAt": "2026-03-04T23:55:36.075Z",
-    "scannedFileCount": 1118,
+    "generatedAt": "2026-03-05T02:19:35.305Z",
+    "scannedFileCount": 1122,
     "duplicateNameClusterCount": 0,
     "propSignatureClusterCount": 0,
     "tokenSimilarityClusterCount": 0,
@@ -11,7 +11,7 @@
     "familyCounts": [
       {
         "family": "Unknown",
-        "count": 559
+        "count": 562
       },
       {
         "family": "Section",
@@ -27,7 +27,7 @@
       },
       {
         "family": "Modal",
-        "count": 68
+        "count": 69
       },
       {
         "family": "Tab",
@@ -81,7 +81,7 @@
     "domainCounts": [
       {
         "domain": "feature",
-        "count": 805
+        "count": 809
       },
       {
         "domain": "app",
@@ -1229,7 +1229,7 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 42,
+      "lines": 61,
       "useClient": true,
       "imports": [
         "next/link",
@@ -1909,7 +1909,7 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 43,
+      "lines": 62,
       "useClient": true,
       "imports": [
         "react",
@@ -2707,7 +2707,7 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 44,
+      "lines": 63,
       "useClient": true,
       "imports": [
         "next/link",
@@ -2745,17 +2745,18 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 231,
+      "lines": 219,
       "useClient": false,
       "imports": [
         "lucide-react",
         "next/link",
+        "react",
         "@/features/products/public"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": null,
+      "propsSignature": "products|showFallbackHeader|themeSettings",
       "thinReExportWrapper": false
     },
     {
@@ -2921,7 +2922,7 @@
       "domain": "app",
       "scope": "app",
       "family": "Unknown",
-      "lines": 42,
+      "lines": 61,
       "useClient": true,
       "imports": [
         "next/link",
@@ -3162,7 +3163,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Form",
-      "lines": 115,
+      "lines": 126,
       "useClient": true,
       "imports": [
         "react",
@@ -3348,14 +3349,15 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 309,
+      "lines": 294,
       "useClient": false,
       "imports": [
         "react",
         "@/shared/lib/ai-paths",
         "@/shared/utils/object-utils",
         "./canvas-board-connectors",
-        "../context/hooks/useEdgePaths"
+        "../context/hooks/useEdgePaths",
+        "./canvas/signal-flow-visual-state"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -3411,7 +3413,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 582,
+      "lines": 584,
       "useClient": true,
       "imports": [
         "react",
@@ -3419,6 +3421,7 @@
         "@/shared/lib/ai-paths/core/constants",
         "./canvas-board-connectors",
         "./canvas/node/canvas-svg-node-utils",
+        "./canvas/signal-flow-visual-state",
         "./canvas/node/CanvasSvgNodePorts",
         "./CanvasBoardUIContext"
       ],
@@ -4065,7 +4068,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 470,
+      "lines": 476,
       "useClient": true,
       "imports": [
         "react",
@@ -4140,13 +4143,14 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 242,
+      "lines": 216,
       "useClient": true,
       "imports": [
         "react",
         "./CanvasBoardUIContext",
         "./SignalDots",
-        "./CanvasBoard.utils"
+        "./CanvasBoard.utils",
+        "./canvas/signal-flow-visual-state"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -4262,7 +4266,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 559,
+      "lines": 562,
       "useClient": false,
       "imports": [
         "react",
@@ -4287,7 +4291,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 20,
+      "lines": 46,
       "useClient": false,
       "imports": [
         "react",
@@ -5969,7 +5973,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Panel",
-      "lines": 196,
+      "lines": 379,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -5979,6 +5983,7 @@
         "@/shared/utils",
         "../../context",
         "../ai-paths-settings/AiPathsSettingsOrchestratorContext",
+        "../AiPathsSettingsUtils",
         "@tanstack/react-table"
       ],
       "templateImports": 0,
@@ -6209,9 +6214,10 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Panel",
-      "lines": 56,
+      "lines": 79,
       "useClient": true,
       "imports": [
+        "react",
         "@/shared/ui",
         "../context/ChatbotContext"
       ],
@@ -6297,7 +6303,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 818,
+      "lines": 823,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -6317,7 +6323,6 @@
         "./center-preview/VariantPanel",
         "./center-preview/VariantPanelContext",
         "./center-preview/VariantTooltipPortal",
-        "./VersionNodeDetailsModal",
         "../context/GenerationContext",
         "../context/MaskingContext",
         "../context/ProjectsContext",
@@ -6328,7 +6333,10 @@
         "./center-preview/preview-utils",
         "./center-preview/variant-thumbnails",
         "./center-preview/sections/CenterPreviewHeader",
-        "./center-preview/sections/CenterPreviewCanvas"
+        "./center-preview/sections/CenterPreviewCanvas",
+        "./center-preview/sections/CenterPreviewCanvasContext",
+        "./center-preview/sections/CenterPreviewHeaderContext",
+        "./center-preview/CenterPreviewDetailsModal"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -6847,7 +6855,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Card",
-      "lines": 33,
+      "lines": 58,
       "useClient": true,
       "imports": [
         "react",
@@ -6857,7 +6865,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "children|className|count|label",
+      "propsSignature": null,
       "thinReExportWrapper": false
     },
     {
@@ -7340,7 +7348,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 500,
+      "lines": 514,
       "useClient": true,
       "imports": [
         "react",
@@ -7435,18 +7443,44 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/ai/image-studio/components/center-preview/CenterPreviewDetailsModal.tsx",
+      "basename": "CenterPreviewDetailsModal.tsx",
+      "domain": "feature",
+      "scope": "feature:ai",
+      "family": "Modal",
+      "lines": 54,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/shared/providers/SettingsStoreProvider",
+        "@/features/ai/image-studio/utils/image-src",
+        "@/shared/contracts/image-studio",
+        "@/features/products/constants",
+        "./CenterPreviewContext",
+        "../../context/SlotsContext",
+        "./variant-thumbnails",
+        "../VersionNodeDetailsModal"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/ai/image-studio/components/center-preview/FocusModeTogglePortal.tsx",
       "basename": "FocusModeTogglePortal.tsx",
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 36,
+      "lines": 33,
       "useClient": false,
       "imports": [
         "lucide-react",
         "react",
         "react-dom",
-        "@/shared/ui"
+        "@/shared/ui",
+        "../../context/UiContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -7460,18 +7494,19 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 315,
+      "lines": 327,
       "useClient": true,
       "imports": [
         "react",
         "@/shared/ui",
         "./CenterPreviewContext",
+        "./sections/CenterPreviewCanvasContext",
         "./preview-utils"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "sourceSlotImageSrc|workingSlotImageSrc",
+      "propsSignature": null,
       "thinReExportWrapper": false
     },
     {
@@ -7486,7 +7521,8 @@
         "lucide-react",
         "react",
         "@/shared/ui",
-        "./CenterPreviewContext"
+        "./CenterPreviewContext",
+        "./sections/CenterPreviewCanvasContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -7540,18 +7576,19 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 62,
+      "lines": 63,
       "useClient": false,
       "imports": [
         "react",
         "react-dom",
         "@/shared/ui",
-        "./preview-utils"
+        "./preview-utils",
+        "./CenterPreviewContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "position|tooltip",
+      "propsSignature": null,
       "thinReExportWrapper": false
     },
     {
@@ -7560,7 +7597,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 193,
+      "lines": 145,
       "useClient": true,
       "imports": [
         "react",
@@ -7575,7 +7612,7 @@
         "../../../context/SlotsContext",
         "../../../context/VersionGraphContext",
         "../../../context/MaskingContext",
-        "@/shared/contracts/vector"
+        "./CenterPreviewCanvasContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -7584,12 +7621,32 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/ai/image-studio/components/center-preview/sections/CenterPreviewCanvasContext.tsx",
+      "basename": "CenterPreviewCanvasContext.tsx",
+      "domain": "feature",
+      "scope": "feature:ai",
+      "family": "Unknown",
+      "lines": 58,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/shared/lib/vector-drawing",
+        "@/shared/contracts/vector",
+        "../../../context/UiContext"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "children|value",
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/ai/image-studio/components/center-preview/sections/CenterPreviewHeader.tsx",
       "basename": "CenterPreviewHeader.tsx",
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Header",
-      "lines": 54,
+      "lines": 52,
       "useClient": true,
       "imports": [
         "react",
@@ -7597,12 +7654,30 @@
         "@/shared/ui",
         "../../ToggleButtonGroup",
         "../../../context/SlotsContext",
-        "../CenterPreviewContext"
+        "../CenterPreviewContext",
+        "./CenterPreviewHeaderContext"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
       "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
+      "path": "src/features/ai/image-studio/components/center-preview/sections/CenterPreviewHeaderContext.tsx",
+      "basename": "CenterPreviewHeaderContext.tsx",
+      "domain": "feature",
+      "scope": "feature:ai",
+      "family": "Unknown",
+      "lines": 32,
+      "useClient": true,
+      "imports": [
+        "react"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "children|value",
       "thinReExportWrapper": false
     },
     {
@@ -7786,12 +7861,13 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 220,
+      "lines": 218,
       "useClient": true,
       "imports": [
         "react",
         "@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip",
-        "@/shared/errors/app-error"
+        "@/shared/errors/app-error",
+        "@/shared/contracts/ui"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -8111,7 +8187,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Tab",
-      "lines": 425,
+      "lines": 464,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -8482,7 +8558,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 188,
+      "lines": 226,
       "useClient": false,
       "imports": [
         "react",
@@ -8501,7 +8577,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Panel",
-      "lines": 137,
+      "lines": 158,
       "useClient": true,
       "imports": [
         "react",
@@ -9237,7 +9313,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 499,
+      "lines": 501,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -9414,7 +9490,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Unknown",
-      "lines": 334,
+      "lines": 335,
       "useClient": true,
       "imports": [
         "react",
@@ -9531,7 +9607,7 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Header",
-      "lines": 159,
+      "lines": 177,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -10145,7 +10221,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 77,
+      "lines": 116,
       "useClient": true,
       "imports": [
         "react",
@@ -10663,7 +10739,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 102,
+      "lines": 104,
       "useClient": true,
       "imports": [
         "react",
@@ -11246,7 +11322,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 235,
+      "lines": 244,
       "useClient": true,
       "imports": [
         "react",
@@ -11307,7 +11383,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Panel",
-      "lines": 82,
+      "lines": 84,
       "useClient": true,
       "imports": [
         "next/link",
@@ -11353,12 +11429,11 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Picker",
-      "lines": 88,
+      "lines": 57,
       "useClient": true,
       "imports": [
         "react",
         "@/features/app-embeds/lib/constants",
-        "@/shared/lib/react/createStrictContext",
         "@/shared/contracts/ui",
         "@/shared/providers/SettingsStoreProvider",
         "@/shared/ui/templates/pickers",
@@ -11369,7 +11444,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": null,
+      "propsSignature": "onSelect|sectionType",
       "thinReExportWrapper": false
     },
     {
@@ -11378,12 +11453,11 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Picker",
-      "lines": 109,
+      "lines": 82,
       "useClient": true,
       "imports": [
         "react",
         "@/features/app-embeds/lib/constants",
-        "@/shared/lib/react/createStrictContext",
         "@/shared/contracts/ui",
         "@/shared/providers/SettingsStoreProvider",
         "@/shared/ui/templates/pickers",
@@ -11394,7 +11468,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": null,
+      "propsSignature": "allowedBlockTypes|onSelect",
       "thinReExportWrapper": false
     },
     {
@@ -11560,7 +11634,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 121,
+      "lines": 126,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -11739,7 +11813,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Picker",
-      "lines": 64,
+      "lines": 65,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -11838,7 +11912,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 112,
+      "lines": 153,
       "useClient": true,
       "imports": [
         "react",
@@ -11859,7 +11933,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Panel",
-      "lines": 239,
+      "lines": 242,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -12221,11 +12295,12 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 255,
+      "lines": 256,
       "useClient": true,
       "imports": [
         "react",
         "react-dom",
+        "@/shared/contracts/ui",
         "@/shared/ui",
         "./context/PreviewEditorContext"
       ],
@@ -12260,7 +12335,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 492,
+      "lines": 493,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -12284,11 +12359,12 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 304,
+      "lines": 309,
       "useClient": true,
       "imports": [
         "lucide-react",
         "next/image",
+        "react",
         "@/features/cms/utils/custom-css",
         "@/shared/contracts/cms",
         "@/shared/ui",
@@ -13158,7 +13234,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 130,
+      "lines": 131,
       "useClient": true,
       "imports": [
         "react",
@@ -13223,7 +13299,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 457,
+      "lines": 458,
       "useClient": true,
       "imports": [
         "react",
@@ -13249,7 +13325,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 325,
+      "lines": 326,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -13273,7 +13349,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 40,
+      "lines": 41,
       "useClient": true,
       "imports": [
         "react",
@@ -13313,14 +13389,13 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 115,
+      "lines": 113,
       "useClient": true,
       "imports": [
         "react",
         "next/image",
         "@/shared/ui",
-        "@/shared/ui/templates/SettingsPanelBuilder",
-        "../ThemeSettingsContext"
+        "@/shared/ui/templates/SettingsPanelBuilder"
       ],
       "templateImports": 1,
       "uiPrimitiveImports": 1,
@@ -13334,7 +13409,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 35,
+      "lines": 37,
       "useClient": true,
       "imports": [
         "react",
@@ -13744,13 +13819,14 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Picker",
-      "lines": 84,
+      "lines": 97,
       "useClient": true,
       "imports": [
         "react",
         "@/shared/lib/react/createStrictContext",
         "../BlockPicker",
         "../SectionPicker",
+        "../../../hooks/useTreeActionsContext",
         "../../../types/page-builder"
       ],
       "templateImports": 0,
@@ -13765,7 +13841,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 84,
+      "lines": 82,
       "useClient": true,
       "imports": [
         "react",
@@ -13774,8 +13850,7 @@
         "../../../hooks/useDragStateContext",
         "./TreeSectionPicker",
         "@/shared/ui",
-        "@/shared/utils",
-        "../../../hooks/useTreeActionsContext"
+        "@/shared/utils"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -13811,7 +13886,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Modal",
-      "lines": 130,
+      "lines": 170,
       "useClient": true,
       "imports": [
         "react",
@@ -13822,7 +13897,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "alreadyAssignedIds|isOpen|items|loading|onAttach|onClose",
+      "propsSignature": null,
       "thinReExportWrapper": false
     },
     {
@@ -14065,9 +14140,10 @@
       "domain": "feature",
       "scope": "feature:database",
       "family": "Unknown",
-      "lines": 115,
+      "lines": 140,
       "useClient": false,
       "imports": [
+        "react",
         "@/shared/contracts/database",
         "@/shared/ui",
         "@tanstack/react-table"
@@ -14134,9 +14210,10 @@
       "domain": "feature",
       "scope": "feature:database",
       "family": "Unknown",
-      "lines": 108,
+      "lines": 158,
       "useClient": true,
       "imports": [
+        "react",
         "@/shared/contracts/database",
         "@/shared/ui",
         "../context/DatabaseBackupsContext",
@@ -14360,7 +14437,7 @@
       "domain": "feature",
       "scope": "feature:document-editor",
       "family": "Unknown",
-      "lines": 631,
+      "lines": 617,
       "useClient": true,
       "imports": [
         "@tiptap/extension-image",
@@ -14394,7 +14471,7 @@
       "domain": "feature",
       "scope": "feature:document-editor",
       "family": "Toolbar",
-      "lines": 55,
+      "lines": 65,
       "useClient": true,
       "imports": [
         "react",
@@ -15135,7 +15212,7 @@
       "domain": "feature",
       "scope": "feature:foldertree",
       "family": "Unknown",
-      "lines": 671,
+      "lines": 676,
       "useClient": true,
       "imports": [
         "@tanstack/react-virtual",
@@ -15149,9 +15226,9 @@
         "../operations/node-status",
         "./FolderTreeContextMenu",
         "../core/engine",
-        "../runtime/MasterFolderTreeRuntimeProvider",
         "../operations/drag-data",
         "../search/useMasterFolderTreeSearch",
+        "../shell/useFolderTreeShellRuntime",
         "./DefaultRow",
         "./types",
         "../hooks/useFolderTreeViewportSelection",
@@ -16498,7 +16575,7 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Unknown",
-      "lines": 55,
+      "lines": 84,
       "useClient": false,
       "imports": [
         "react",
@@ -16664,7 +16741,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Card",
-      "lines": 147,
+      "lines": 143,
       "useClient": true,
       "imports": [
         "react",
@@ -16926,7 +17003,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Unknown",
-      "lines": 71,
+      "lines": 69,
       "useClient": true,
       "imports": [
         "react",
@@ -17009,7 +17086,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Unknown",
-      "lines": 56,
+      "lines": 54,
       "useClient": true,
       "imports": [
         "react",
@@ -17017,7 +17094,8 @@
         "@/shared/contracts/notes",
         "@/shared/ui",
         "@/shared/utils",
-        "../../utils"
+        "../../utils",
+        "./NoteCardHeader"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -17031,19 +17109,20 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Unknown",
-      "lines": 142,
+      "lines": 134,
       "useClient": true,
       "imports": [
         "react",
         "@/features/notesapp/hooks/NotesAppContext",
         "@/shared/contracts/notes",
         "@/shared/ui",
-        "../../utils"
+        "../../utils",
+        "./NoteCardHeader"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "backgroundColor|note|relatedNoteStyle",
+      "propsSignature": null,
       "thinReExportWrapper": false
     },
     {
@@ -17052,7 +17131,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Header",
-      "lines": 69,
+      "lines": 71,
       "useClient": true,
       "imports": [
         "react",
@@ -17074,7 +17153,7 @@
       "domain": "feature",
       "scope": "feature:notesapp",
       "family": "Header",
-      "lines": 207,
+      "lines": 227,
       "useClient": true,
       "imports": [
         "react",
@@ -17407,7 +17486,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 121,
+      "lines": 166,
       "useClient": true,
       "imports": [
         "react",
@@ -17427,11 +17506,12 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Card",
-      "lines": 39,
+      "lines": 41,
       "useClient": false,
       "imports": [
         "next/image",
         "next/link",
+        "react",
         "@/shared/contracts/products",
         "@/shared/ui"
       ],
@@ -17780,15 +17860,36 @@
       "thinReExportWrapper": false
     },
     {
+      "path": "src/features/products/components/form/ProductFormFooter.test.tsx",
+      "basename": "ProductFormFooter.test.tsx",
+      "domain": "feature",
+      "scope": "feature:products",
+      "family": "Unknown",
+      "lines": 75,
+      "useClient": false,
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "vitest",
+        "./ProductFormFooter"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null,
+      "thinReExportWrapper": false
+    },
+    {
       "path": "src/features/products/components/form/ProductFormFooter.tsx",
       "basename": "ProductFormFooter.tsx",
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 38,
+      "lines": 57,
       "useClient": true,
       "imports": [
         "react",
+        "lucide-react",
         "@/shared/ui"
       ],
       "templateImports": 0,
@@ -18197,13 +18298,13 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 134,
+      "lines": 166,
       "useClient": true,
       "imports": [
         "react",
+        "lucide-react",
         "@/shared/ui",
         "@/features/ai/image-studio/components/center-preview/SplitVariantPreview",
-        "@/features/ai/image-studio/components/center-preview/SplitViewControls",
         "@/features/ai/image-studio/components/center-preview/CenterPreviewContext",
         "../../../context/ProductStudioContext"
       ],
@@ -19055,7 +19156,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 78,
+      "lines": 79,
       "useClient": true,
       "imports": [
         "react",
@@ -19115,7 +19216,7 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Modal",
-      "lines": 240,
+      "lines": 324,
       "useClient": true,
       "imports": [
         "react",
@@ -19128,7 +19229,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "onClose|open",
+      "propsSignature": null,
       "thinReExportWrapper": false
     },
     {
@@ -20518,7 +20619,7 @@
       "domain": "feature",
       "scope": "feature:viewer3d",
       "family": "Unknown",
-      "lines": 337,
+      "lines": 374,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -20752,7 +20853,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 108,
+      "lines": 149,
       "useClient": true,
       "imports": [
         "react",
@@ -21027,7 +21128,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 160,
+      "lines": 197,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -21089,7 +21190,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Unknown",
-      "lines": 58,
+      "lines": 60,
       "useClient": true,
       "imports": [
         "react",
@@ -21125,7 +21226,7 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Card",
-      "lines": 53,
+      "lines": 55,
       "useClient": true,
       "imports": [
         "react",
@@ -21478,10 +21579,11 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 107,
+      "lines": 125,
       "useClient": true,
       "imports": [
         "lucide-react",
+        "react",
         "react-error-boundary",
         "@/shared/errors/error-classifier",
         "@/shared/utils/observability/client-error-logger",
@@ -21939,7 +22041,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 246,
+      "lines": 286,
       "useClient": true,
       "imports": [
         "react",
@@ -22157,7 +22259,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 333,
+      "lines": 334,
       "useClient": true,
       "imports": [
         "@tanstack/react-query",
@@ -22462,7 +22564,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 98,
+      "lines": 103,
       "useClient": false,
       "imports": [
         "react",
@@ -22472,7 +22574,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "children|className|hint|icon|label|labelClassName|mono|value|valueClassName|variant",
+      "propsSignature": null,
       "thinReExportWrapper": false
     },
     {
@@ -23141,7 +23243,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Modal",
-      "lines": 212,
+      "lines": 225,
       "useClient": true,
       "imports": [
         "react",
@@ -23183,7 +23285,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Section",
-      "lines": 36,
+      "lines": 42,
       "useClient": true,
       "imports": [
         "react",
@@ -23265,7 +23367,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 86,
+      "lines": 89,
       "useClient": true,
       "imports": [
         "react",
@@ -23311,7 +23413,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Header",
-      "lines": 122,
+      "lines": 162,
       "useClient": true,
       "imports": [
         "react",

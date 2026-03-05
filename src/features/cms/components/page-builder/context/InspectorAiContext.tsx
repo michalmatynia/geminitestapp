@@ -83,14 +83,67 @@ export interface InspectorAiContextValue {
   contentAiPlaceholder: string;
 }
 
-const InspectorAiContext = createContext<InspectorAiContextValue | null>(null);
+export type InspectorAiStateContextValue = Omit<
+  InspectorAiContextValue,
+  | 'setCssAiAppend'
+  | 'setCssAiAutoApply'
+  | 'generateCss'
+  | 'cancelCss'
+  | 'setContentAiPrompt'
+  | 'generateContent'
+  | 'cancelContent'
+  | 'applyContent'
+  | 'setContextPreviewOpen'
+  | 'setContextPreviewTab'
+  | 'setContextPreviewFull'
+  | 'setContextPreviewNonce'
+  | 'copyContext'
+  | 'updateCustomCssAiConfig'
+  | 'applyCss'
+>;
 
-export function useInspectorAi(): InspectorAiContextValue {
-  const context = useContext(InspectorAiContext);
+export type InspectorAiActionsContextValue = Pick<
+  InspectorAiContextValue,
+  | 'setCssAiAppend'
+  | 'setCssAiAutoApply'
+  | 'generateCss'
+  | 'cancelCss'
+  | 'setContentAiPrompt'
+  | 'generateContent'
+  | 'cancelContent'
+  | 'applyContent'
+  | 'setContextPreviewOpen'
+  | 'setContextPreviewTab'
+  | 'setContextPreviewFull'
+  | 'setContextPreviewNonce'
+  | 'copyContext'
+  | 'updateCustomCssAiConfig'
+  | 'applyCss'
+>;
+
+const InspectorAiStateContext = createContext<InspectorAiStateContextValue | null>(null);
+const InspectorAiActionsContext = createContext<InspectorAiActionsContextValue | null>(null);
+
+export function useInspectorAiState(): InspectorAiStateContextValue {
+  const context = useContext(InspectorAiStateContext);
   if (!context) {
-    throw internalError('useInspectorAi must be used within an InspectorAiProvider');
+    throw internalError('useInspectorAiState must be used within an InspectorAiProvider');
   }
   return context;
+}
+
+export function useInspectorAiActions(): InspectorAiActionsContextValue {
+  const context = useContext(InspectorAiActionsContext);
+  if (!context) {
+    throw internalError('useInspectorAiActions must be used within an InspectorAiProvider');
+  }
+  return context;
+}
+
+export function useInspectorAi(): InspectorAiContextValue {
+  const state = useInspectorAiState();
+  const actions = useInspectorAiActions();
+  return useMemo((): InspectorAiContextValue => ({ ...state, ...actions }), [state, actions]);
 }
 
 // ---------------------------------------------------------------------------
@@ -719,49 +772,102 @@ export function InspectorAiProvider({
     [cssAiOutput, customCssValue, onUpdateCss, toast]
   );
 
-  const value = {
-    cssAiLoading,
-    cssAiError,
-    cssAiOutput,
-    cssAiAppend,
-    setCssAiAppend,
-    cssAiAutoApply,
-    setCssAiAutoApply,
-    generateCss,
-    cancelCss,
+  const stateValue = useMemo(
+    (): InspectorAiStateContextValue => ({
+      cssAiLoading,
+      cssAiError,
+      cssAiOutput,
+      cssAiAppend,
+      cssAiAutoApply,
 
-    contentAiPrompt,
-    setContentAiPrompt,
-    contentAiLoading,
-    contentAiError,
-    contentAiOutput,
-    generateContent,
-    cancelContent,
-    applyContent,
+      contentAiPrompt,
+      contentAiLoading,
+      contentAiError,
+      contentAiOutput,
 
-    contextPreviewOpen,
-    setContextPreviewOpen,
-    contextPreviewTab,
-    setContextPreviewTab,
-    contextPreviewFull,
-    setContextPreviewFull,
-    contextPreviewNonce,
-    setContextPreviewNonce,
-    pageContextPreview,
-    elementContextPreview,
-    copyContext,
-    brainAiProvider,
-    brainAiModelId,
-    brainAiAgentId,
+      contextPreviewOpen,
+      contextPreviewTab,
+      contextPreviewFull,
+      contextPreviewNonce,
+      pageContextPreview,
+      elementContextPreview,
+      brainAiProvider,
+      brainAiModelId,
+      brainAiAgentId,
 
-    customCssValue,
-    customCssAiConfig,
-    updateCustomCssAiConfig: onUpdateCustomCssAiConfig,
-    applyCss,
+      customCssValue,
+      customCssAiConfig,
 
-    contentAiAllowedKeys,
-    contentAiPlaceholder,
-  };
+      contentAiAllowedKeys,
+      contentAiPlaceholder,
+    }),
+    [
+      cssAiLoading,
+      cssAiError,
+      cssAiOutput,
+      cssAiAppend,
+      cssAiAutoApply,
+      contentAiPrompt,
+      contentAiLoading,
+      contentAiError,
+      contentAiOutput,
+      contextPreviewOpen,
+      contextPreviewTab,
+      contextPreviewFull,
+      contextPreviewNonce,
+      pageContextPreview,
+      elementContextPreview,
+      brainAiProvider,
+      brainAiModelId,
+      brainAiAgentId,
+      customCssValue,
+      customCssAiConfig,
+      contentAiAllowedKeys,
+      contentAiPlaceholder,
+    ]
+  );
+  const actionsValue = useMemo(
+    (): InspectorAiActionsContextValue => ({
+      setCssAiAppend,
+      setCssAiAutoApply,
+      generateCss,
+      cancelCss,
+      setContentAiPrompt,
+      generateContent,
+      cancelContent,
+      applyContent,
+      setContextPreviewOpen,
+      setContextPreviewTab,
+      setContextPreviewFull,
+      setContextPreviewNonce,
+      copyContext,
+      updateCustomCssAiConfig: onUpdateCustomCssAiConfig,
+      applyCss,
+    }),
+    [
+      setCssAiAppend,
+      setCssAiAutoApply,
+      generateCss,
+      cancelCss,
+      setContentAiPrompt,
+      generateContent,
+      cancelContent,
+      applyContent,
+      setContextPreviewOpen,
+      setContextPreviewTab,
+      setContextPreviewFull,
+      setContextPreviewNonce,
+      copyContext,
+      onUpdateCustomCssAiConfig,
+      applyCss,
+    ]
+  );
 
-  return <InspectorAiContext.Provider value={value}>{children}</InspectorAiContext.Provider>;
+  return (
+    <InspectorAiActionsContext.Provider value={actionsValue}>
+      <InspectorAiStateContext.Provider value={stateValue}>
+        {children}
+      </InspectorAiStateContext.Provider>
+    </InspectorAiActionsContext.Provider>
+  );
 }

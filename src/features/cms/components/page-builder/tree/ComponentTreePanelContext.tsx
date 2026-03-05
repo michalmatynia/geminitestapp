@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 
 import type { FolderTreePlaceholderClassSet } from '@/shared/utils';
 import type { ClipboardData } from '@/shared/contracts/cms';
@@ -30,7 +30,21 @@ export type ComponentTreePanelContextValue = {
   ) => Promise<boolean>;
 };
 
-const ComponentTreePanelContext = createContext<ComponentTreePanelContextValue | null>(null);
+export type ComponentTreePanelStateContextValue = Omit<
+  ComponentTreePanelContextValue,
+  'startSectionMasterDrag' | 'endSectionMasterDrag' | 'moveSectionByMaster'
+>;
+export type ComponentTreePanelActionsContextValue = Pick<
+  ComponentTreePanelContextValue,
+  'startSectionMasterDrag' | 'endSectionMasterDrag' | 'moveSectionByMaster'
+>;
+
+const ComponentTreePanelStateContext = createContext<ComponentTreePanelStateContextValue | null>(
+  null
+);
+const ComponentTreePanelActionsContext = createContext<ComponentTreePanelActionsContextValue | null>(
+  null
+);
 
 type ComponentTreePanelProviderProps = {
   value: ComponentTreePanelContextValue;
@@ -41,17 +55,75 @@ export function ComponentTreePanelProvider({
   value,
   children,
 }: ComponentTreePanelProviderProps): React.JSX.Element {
+  const stateValue = useMemo(
+    (): ComponentTreePanelStateContextValue => ({
+      currentPage: value.currentPage,
+      clipboard: value.clipboard,
+      showExtractPlaceholder: value.showExtractPlaceholder,
+      showSectionDropPlaceholder: value.showSectionDropPlaceholder,
+      canDropSectionsAtRoot: value.canDropSectionsAtRoot,
+      canDropBlocksAtRoot: value.canDropBlocksAtRoot,
+      treePlaceholderClasses: value.treePlaceholderClasses,
+      treeInlineDropLabel: value.treeInlineDropLabel,
+      treeRootDropLabel: value.treeRootDropLabel,
+      draggedMasterSectionId: value.draggedMasterSectionId,
+    }),
+    [
+      value.currentPage,
+      value.clipboard,
+      value.showExtractPlaceholder,
+      value.showSectionDropPlaceholder,
+      value.canDropSectionsAtRoot,
+      value.canDropBlocksAtRoot,
+      value.treePlaceholderClasses,
+      value.treeInlineDropLabel,
+      value.treeRootDropLabel,
+      value.draggedMasterSectionId,
+    ]
+  );
+  const actionsValue = useMemo(
+    (): ComponentTreePanelActionsContextValue => ({
+      startSectionMasterDrag: value.startSectionMasterDrag,
+      endSectionMasterDrag: value.endSectionMasterDrag,
+      moveSectionByMaster: value.moveSectionByMaster,
+    }),
+    [value.startSectionMasterDrag, value.endSectionMasterDrag, value.moveSectionByMaster]
+  );
+
   return (
-    <ComponentTreePanelContext.Provider value={value}>
-      {children}
-    </ComponentTreePanelContext.Provider>
+    <ComponentTreePanelActionsContext.Provider value={actionsValue}>
+      <ComponentTreePanelStateContext.Provider value={stateValue}>
+        {children}
+      </ComponentTreePanelStateContext.Provider>
+    </ComponentTreePanelActionsContext.Provider>
   );
 }
 
-export function useComponentTreePanelContext(): ComponentTreePanelContextValue {
-  const context = useContext(ComponentTreePanelContext);
+export function useComponentTreePanelState(): ComponentTreePanelStateContextValue {
+  const context = useContext(ComponentTreePanelStateContext);
   if (!context) {
-    throw new Error('useComponentTreePanelContext must be used within ComponentTreePanelProvider');
+    throw new Error(
+      'useComponentTreePanelState must be used within ComponentTreePanelProvider'
+    );
   }
   return context;
+}
+
+export function useComponentTreePanelActions(): ComponentTreePanelActionsContextValue {
+  const context = useContext(ComponentTreePanelActionsContext);
+  if (!context) {
+    throw new Error(
+      'useComponentTreePanelActions must be used within ComponentTreePanelProvider'
+    );
+  }
+  return context;
+}
+
+export function useComponentTreePanelContext(): ComponentTreePanelContextValue {
+  const state = useComponentTreePanelState();
+  const actions = useComponentTreePanelActions();
+  return useMemo((): ComponentTreePanelContextValue => ({ ...state, ...actions }), [
+    state,
+    actions,
+  ]);
 }

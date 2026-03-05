@@ -6,19 +6,13 @@ import {
   type ProductStudioSequenceGenerationMode,
   type ProductStudioSequencingConfig,
   type ProductStudioSequencingDiagnostics,
+  type ProductStudioSequenceStepPlanEntry,
   type ProductStudioSequenceReadiness,
 } from '@/shared/contracts/products';
 import { badRequestError } from '@/shared/errors/app-error';
 import { clamp01, trimString } from './product-studio-service.helpers';
 
-export type ProductStudioSequenceStepPlanEntry = {
-  index: number;
-  stepId: string;
-  stepType: ImageStudioSequenceStep['type'];
-  inputSource: 'previous' | 'source';
-  resolvedInput: 'previous' | 'source';
-  producesOutput: boolean;
-};
+export type { ProductStudioSequenceStepPlanEntry };
 
 export type ResolvePostProductionRouteInput = {
   sequencing: ProductStudioSequencingConfig;

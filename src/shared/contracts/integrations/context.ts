@@ -7,6 +7,7 @@ import type {
 } from './index';
 import type { PlaywrightPersona } from '../playwright';
 import type { CatalogRecord, ProductCategory } from '../products';
+import type { LabelValueOptionDto as InternalCategoryOption } from '../ui';
 
 export interface IntegrationsData {
   integrations: Integration[];
@@ -19,10 +20,7 @@ export interface IntegrationsData {
   playwrightPersonasLoading: boolean;
 }
 
-export interface InternalCategoryOption {
-  value: string;
-  label: string;
-}
+export type { InternalCategoryOption };
 
 export interface CategoryMapperData {
   catalogs: CatalogRecord[];

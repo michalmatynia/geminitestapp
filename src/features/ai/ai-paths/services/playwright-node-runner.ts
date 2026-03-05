@@ -16,6 +16,7 @@ import {
   type PlaywrightPersona,
   type PlaywrightSettings,
 } from '@/shared/contracts/playwright';
+import type { ImageStudioRunStatus } from '@/shared/contracts/image-studio';
 import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 import { isObjectRecord } from '@/shared/utils/object-utils';
@@ -95,8 +96,6 @@ const cleanupOldRuns = async (): Promise<void> => {
   }
 };
 
-export type PlaywrightNodeRunStatus = 'queued' | 'running' | 'completed' | 'failed';
-
 export type PlaywrightNodeRunArtifact = {
   name: string;
   path: string;
@@ -107,7 +106,7 @@ export type PlaywrightNodeRunArtifact = {
 export type PlaywrightNodeRunRecord = {
   runId: string;
   ownerUserId: string | null;
-  status: PlaywrightNodeRunStatus;
+  status: ImageStudioRunStatus;
   startedAt: string | null;
   completedAt: string | null;
   createdAt: string;

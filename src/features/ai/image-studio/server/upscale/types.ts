@@ -4,13 +4,10 @@ import {
   type ImageStudioUpscaleSmoothingQuality,
 } from '@/features/ai/image-studio/contracts/upscale';
 import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
+import type { UploadedImageBinaryDto as UploadedClientUpscaleImage } from '@/shared/contracts/image-studio';
 
 export type StudioSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
-
-export type UploadedClientUpscaleImage = {
-  buffer: Buffer;
-  mime: string;
-};
+export type { UploadedClientUpscaleImage };
 
 export type UpscaleProcessingResult = {
   outputBuffer: Buffer;

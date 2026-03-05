@@ -14,7 +14,7 @@ export * from './types/producer-mapping';
 export * from './types/tag-mapping';
 export * from './types/integrations';
 export type { IntegrationWithConnections } from './types/integrations';
-export * from './types/integrations-ui';
+export { integrationDefinitions } from '@/shared/contracts/integrations';
 export * from './types/listings';
 
 // Utils

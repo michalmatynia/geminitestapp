@@ -27,7 +27,7 @@ import {
   DOCS_WIRING_SNIPPET,
   DOCS_DESCRIPTION_SNIPPET,
   DOCS_JOBS_SNIPPET,
-} from './docs-snippets';
+} from '@/shared/lib/ai-paths/core/definitions/docs-snippets';
 import {
   useGraphActions,
   usePersistenceActions,

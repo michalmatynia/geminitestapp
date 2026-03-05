@@ -4,11 +4,9 @@ import React, { createContext, useContext } from 'react';
 
 import { type ImageStudioAnalysisSummaryChipData } from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
 import { internalError } from '@/shared/errors/app-error';
+import type { LabelValueOptionDto as SelectOption } from '@/shared/contracts/ui';
 
-export type SelectOption = {
-  value: string;
-  label: string;
-};
+export type { SelectOption };
 
 export type CropTooltipContent = {
   cancelCrop: string;

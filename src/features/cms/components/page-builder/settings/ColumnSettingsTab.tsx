@@ -9,11 +9,11 @@ import {
 } from './field-group-helpers';
 import { getBlockDefinition } from '../section-registry';
 import { usePageBuilderSelection } from '../../../hooks/usePageBuilderContext';
-import { useComponentSettingsContext } from '../context/ComponentSettingsContext';
+import { useComponentSettingsActions } from '../context/ComponentSettingsContext';
 
 export function ColumnSettingsTab(): React.JSX.Element | null {
   const { selectedColumn } = usePageBuilderSelection();
-  const { handleColumnSettingChange } = useComponentSettingsContext();
+  const { handleColumnSettingChange } = useComponentSettingsActions();
 
   const columnHeightMode = (selectedColumn?.settings?.['heightMode'] as string) || 'inherit';
   const columnSettingsForRender = useMemo(

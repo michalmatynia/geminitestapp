@@ -1,4 +1,10 @@
 import { type VectorPoint, type VectorShape } from '@/shared/contracts/vector';
+import type {
+  PositiveRectBoundsDto as VectorCanvasViewCropRect,
+  PositiveRectBoundsDto as VectorCanvasImageContentFrame,
+} from '@/shared/contracts/geometry';
+
+export type { VectorCanvasViewCropRect, VectorCanvasImageContentFrame };
 
 export const DEFAULT_VECTOR_VIEWBOX = 1000;
 export const MIN_VECTOR_VIEW_SCALE = 0.5;
@@ -153,20 +159,6 @@ export type VectorViewTransform = {
   panY: number;
   rotateDeg: number;
 };
-
-export interface VectorCanvasViewCropRect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-export interface VectorCanvasImageContentFrame {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
 
 export const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
 

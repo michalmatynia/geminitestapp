@@ -4,13 +4,14 @@ import React from 'react';
 
 import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
 import { countryCodeOptions } from '@/shared/constants/internationalization';
-import { Checkbox, Label, LoadingState, Hint } from '@/shared/ui';
+import { LoadingState } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
   type SettingsField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useCountryForm } from './hooks/useCountryForm';
+import { renderSelectionChecklistGrid } from '../shared/renderSelectionChecklistGrid';
 
 type CountryFormState = {
   code: string;
@@ -73,28 +74,16 @@ export function CountryModal(): React.JSX.Element | null {
           {loadingCurrencies ? (
             <LoadingState message='Loading currencies...' size='sm' className='py-4' />
           ) : (
-            <div className='mt-2 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded-md border border-border bg-card/50 p-3'>
-              {currencyOptions.length === 0 ? (
-                <Hint size='xs' italic className='col-span-2 py-4 text-center'>
-                  No currencies available.
-                </Hint>
-              ) : (
-                currencyOptions.map((curr) => (
-                  <Label
-                    key={curr.id}
-                    className='flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1.5 rounded transition-colors'
-                  >
-                    <Checkbox
-                      checked={selectedCurrencyIds.includes(curr.id)}
-                      onCheckedChange={() => toggleCurrency(curr.id)}
-                    />
-                    <span className='text-xs text-gray-200'>
-                      {curr.code} ({curr.name})
-                    </span>
-                  </Label>
-                ))
-              )}
-            </div>
+            renderSelectionChecklistGrid({
+              className: 'mt-2',
+              items: currencyOptions.map((currency) => ({
+                id: currency.id,
+                label: `${currency.code} (${currency.name})`,
+              })),
+              selectedIds: selectedCurrencyIds,
+              onToggle: toggleCurrency,
+              emptyMessage: 'No currencies available.',
+            })
           )}
         </div>
       ),

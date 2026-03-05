@@ -10,8 +10,8 @@ import { SlotInlineEditEnvironmentTab } from './SlotInlineEditEnvironmentTab';
 import { SlotInlineEditGenerationsTab } from './SlotInlineEditGenerationsTab';
 import { SlotInlineEditMasksTab } from './SlotInlineEditMasksTab';
 import { useStudioInlineEdit } from './StudioInlineEditContext';
-import { ExtractPromptParamsModal } from '../modals/ExtractPromptParamsModal';
-import { GenerationPreviewModal } from '../modals/GenerationPreviewModal';
+import { ExtractPromptParamsModal } from '../modals/ExtractPromptParamsModalImpl';
+import { GenerationPreviewModal } from '../modals/GenerationPreviewModalImpl';
 import { SlotInlineEditModal } from '../modals/SlotInlineEditModal';
 
 export function StudioInlineEditPanels(): React.JSX.Element {

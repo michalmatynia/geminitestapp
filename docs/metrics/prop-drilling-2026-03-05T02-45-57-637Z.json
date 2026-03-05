@@ -1,0 +1,21 @@
+{
+  "summary": {
+    "generatedAt": "2026-03-05T02:45:57.637Z",
+    "scannedSourceFiles": 3865,
+    "scannedJsxFiles": 1372,
+    "componentCount": 2111,
+    "componentsWithForwarding": 0,
+    "componentsWithAnyForwarding": 0,
+    "resolvedTransitionCount": 0,
+    "depth2CandidateChainCount": 0,
+    "candidateChainCount": 0,
+    "highPriorityChainCount": 0,
+    "unknownSpreadForwardingCount": 0,
+    "topFeatureScopes": []
+  },
+  "backlog": [],
+  "transitionBacklog": [],
+  "componentBacklog": [],
+  "forwardingComponentBacklog": [],
+  "chains": []
+}

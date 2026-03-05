@@ -2,6 +2,7 @@ import 'server-only';
 
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import {
+  ImageStudioRunDispatchMode,
   ImageStudioRunRecord,
   ImageStudioRunStatus,
   ImageStudioRunHistoryEvent,
@@ -10,6 +11,7 @@ import {
 } from '@/shared/contracts/image-studio';
 
 export type {
+  ImageStudioRunDispatchMode,
   ImageStudioRunRecord,
   ImageStudioRunStatus,
   ImageStudioRunHistoryEvent,
@@ -19,8 +21,6 @@ export type {
 import type { UpdateFilter } from 'mongodb';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { isObjectRecord } from '@/shared/utils/object-utils';
-
-export type ImageStudioRunDispatchMode = 'queued' | 'inline';
 
 type ImageStudioRunHistoryEventDocument = {
   id?: string | null;

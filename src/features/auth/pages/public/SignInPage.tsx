@@ -104,6 +104,7 @@ function SignInPageLoader(): React.JSX.Element {
           <form
             className='space-y-5'
             onSubmit={(e: React.FormEvent<HTMLFormElement>) => void handleSubmit(e)}
+            aria-busy={isSubmitting}
           >
             {error && (
               <Alert variant='error' className='text-xs'>
@@ -120,6 +121,7 @@ function SignInPageLoader(): React.JSX.Element {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoFocus
+                autoComplete='email'
                 className='h-10 bg-gray-900/50'
               />
             </FormField>
@@ -132,6 +134,7 @@ function SignInPageLoader(): React.JSX.Element {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                autoComplete='current-password'
                 className='h-10 bg-gray-900/50'
               />
             </FormField>
@@ -166,7 +169,7 @@ function SignInPageLoader(): React.JSX.Element {
 
 export default function SignInPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<></>}>
+    <Suspense fallback={<div role='status' aria-live='polite' className='sr-only'>Loading sign in form...</div>}>
       <SignInPageLoader />
     </Suspense>
   );

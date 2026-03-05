@@ -1,7 +1,6 @@
-export type AiPathRunDisplayModel = {
-  label: string;
-  value: string;
-};
+import type { LabelValueOptionDto as AiPathRunDisplayModel } from '@/shared/contracts/ui';
+
+export type { AiPathRunDisplayModel };
 
 export type ContextDocumentSectionDisplay = {
   id: string | null;

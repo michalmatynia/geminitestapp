@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
+import type { FolderTreeViewportRenderNodeInput as ComponentTreeNodeRendererProps } from '@/features/foldertree/v2';
 import { Button } from '@/shared/ui';
 
 import { useComponentTreeNodeRuntimeContext } from './ComponentTreeNodeRuntimeContext';
@@ -16,7 +16,7 @@ import {
   fromCmsZoneNodeId,
 } from '../utils/cms-master-tree';
 
-export type ComponentTreeNodeRendererProps = FolderTreeViewportRenderNodeInput;
+export type { ComponentTreeNodeRendererProps };
 
 export function ComponentTreeNodeRenderer(
   props: ComponentTreeNodeRendererProps

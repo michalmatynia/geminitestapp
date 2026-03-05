@@ -9,7 +9,7 @@ import type { PreviewBlockItemProps, PreviewBlockProps } from '@/shared/contract
 import { Card } from '@/shared/ui';
 
 import { useBlockContext, BlockContextProvider } from './context/BlockContext';
-import { usePreviewEditor } from './context/PreviewEditorContext';
+import { usePreviewEditorState } from './context/PreviewEditorContext';
 import { getSpacingValue, resolveJustifyContent, resolveAlignItems } from './preview-utils';
 import { getSectionStyles, getTextAlign } from '../../frontend/theme-styles';
 
@@ -50,7 +50,7 @@ export function PreviewImageWithTextBlock({
   block,
   stretch = false,
 }: PreviewBlockProps): React.ReactNode {
-  const { inspectorSettings } = usePreviewEditor();
+  const { inspectorSettings } = usePreviewEditorState();
   const { mediaStyles, stretch: contextStretch } = useBlockContext();
   const resolvedStretch = stretch ?? contextStretch ?? false;
 
@@ -151,7 +151,7 @@ export function PreviewRichTextBlock({
 }: PreviewBlockProps): React.ReactNode {
   const { stretch: contextStretch } = useBlockContext();
   const resolvedStretch = stretch ?? contextStretch ?? false;
-  const { inspectorSettings } = usePreviewEditor();
+  const { inspectorSettings } = usePreviewEditorState();
   const children = block.blocks ?? [];
   const blockStyles = getSectionStyles(block.settings);
   const stretchStyle = resolvedStretch ? { height: '100%' } : undefined;
@@ -189,7 +189,7 @@ export function PreviewBlockSectionBlock({
 }: PreviewBlockProps): React.ReactNode {
   const { stretch: contextStretch } = useBlockContext();
   const resolvedStretch = stretch ?? contextStretch ?? false;
-  const { inspectorSettings } = usePreviewEditor();
+  const { inspectorSettings } = usePreviewEditorState();
   const children = block.blocks ?? [];
   const blockStyles = {
     ...getSectionStyles(block.settings),
@@ -257,7 +257,7 @@ export function PreviewTextAtomBlock({
 }: PreviewBlockProps): React.ReactNode {
   const { stretch: contextStretch } = useBlockContext();
   const resolvedStretch = stretch ?? contextStretch ?? false;
-  const { inspectorSettings } = usePreviewEditor();
+  const { inspectorSettings } = usePreviewEditorState();
   const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
   const text = (block.settings['text'] as string) || '';
   const alignment = (block.settings['alignment'] as string) || 'left';

@@ -38,6 +38,7 @@ export function ProductFormFooter({ entityId }: ProductFormFooterProps): React.J
 
   return (
     <Button
+      type='button'
       variant='ghost'
       size='xs'
       className='absolute bottom-0 right-0 flex items-center gap-1 rounded-none p-0 text-[10px] font-mono text-muted-foreground/70 hover:bg-transparent hover:text-muted-foreground'

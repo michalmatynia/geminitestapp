@@ -95,7 +95,7 @@ export const parseSnippetWiringAssertions = (
   snippetText: string,
   sourceHash: string
 ): AiPathsDocAssertion[] => {
-  const sourcePath = `src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#${snippetName}`;
+  const sourcePath = `src/shared/lib/ai-paths/core/definitions/docs-snippets.ts#${snippetName}`;
   const snippetSlug = snippetName.toLowerCase().replace(/[^a-z0-9_]+/g, '_');
   const parsed = snippetText
     .split('\n')

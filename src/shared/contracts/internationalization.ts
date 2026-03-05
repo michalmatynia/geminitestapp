@@ -134,4 +134,4 @@ export type SaveCurrencyInput = Partial<CurrencyOption>;
 export type SaveCountryInput = Partial<CountryOption> & { currencyIds?: string[] };
 export type SaveLanguageInput = Partial<Language> & { countryIds?: string[] };
 
-export type InternationalizationProvider = 'prisma' | 'mongodb';
+export type { AppProviderValue as InternationalizationProvider } from './system';

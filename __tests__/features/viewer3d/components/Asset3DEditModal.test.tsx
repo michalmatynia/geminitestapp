@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { updateAsset3D } from '@/features/viewer3d/api';
-import { Asset3DEditModal } from '@/features/viewer3d/components/Asset3DEditModal';
+import { Asset3DEditModal } from '@/features/viewer3d/components/Asset3DEditModalImpl';
 import { useAdmin3DAssetsContext } from '@/features/viewer3d/context/Admin3DAssetsContext';
 import { useAdmin3DAssetsState } from '@/features/viewer3d/hooks/useAdmin3DAssetsState';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';

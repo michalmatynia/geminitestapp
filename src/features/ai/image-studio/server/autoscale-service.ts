@@ -13,6 +13,7 @@ import type {
   ImageStudioCenterObjectBounds,
   ImageStudioCenterShadowPolicy,
 } from '@/features/ai/image-studio/contracts/center';
+import type { UploadedImageBinaryDto as UploadedClientAutoScaleImage } from '@/shared/contracts/image-studio';
 import {
   autoScaleObjectByAnalysis,
   normalizeAutoScalerLayoutConfig,
@@ -35,11 +36,7 @@ const STRICT_SERVER_AUTOSCALER_ENABLED =
   process.env['IMAGE_STUDIO_AUTOSCALER_SERVER_AUTHORITATIVE'] !== 'false';
 
 export type StudioSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
-
-export type UploadedClientAutoScaleImage = {
-  buffer: Buffer;
-  mime: string;
-};
+export type { UploadedClientAutoScaleImage };
 
 export type AutoScaleLayoutMetadata = {
   paddingPercent: number;

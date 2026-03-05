@@ -1,3 +1,5 @@
+import type { RunsTotalResponseDto } from '@/shared/contracts/image-studio';
+
 export type InlinePreviewSourceViewModel = {
   src: string | null;
   sourceType: string;
@@ -18,10 +20,7 @@ export type LinkedGeneratedRunRecord = {
   }>;
 };
 
-export type LinkedGeneratedRunsResponse = {
-  runs?: LinkedGeneratedRunRecord[];
-  total?: number;
-};
+export type LinkedGeneratedRunsResponse = Partial<RunsTotalResponseDto<LinkedGeneratedRunRecord>>;
 
 export type LinkedGeneratedVariantViewModel = {
   key: string;

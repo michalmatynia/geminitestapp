@@ -20,7 +20,7 @@ import {
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-import { CaseResolverTagModal } from '../components/modals/CaseResolverTagModal';
+import { CaseResolverTagModal } from '../components/modals/CaseResolverEntityModalVariants';
 import { CASE_RESOLVER_TAGS_KEY, parseCaseResolverTags } from '../settings';
 
 type TagFormData = {

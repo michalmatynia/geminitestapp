@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 
 import type { InspectorSettings } from '../../../../types/page-builder';
 import type { MediaReplaceTarget } from '../preview-utils';
@@ -19,7 +19,32 @@ export interface PreviewEditorContextValue {
   pauseSlideshowOnHoverInEditor: boolean;
 }
 
-const PreviewEditorContext = createContext<PreviewEditorContextValue | undefined>(undefined);
+export type PreviewEditorStateContextValue = Omit<
+  PreviewEditorContextValue,
+  | 'onSelect'
+  | 'onHoverNode'
+  | 'onOpenMedia'
+  | 'onRemoveSection'
+  | 'onToggleSectionVisibility'
+  | 'onRemoveRow'
+>;
+
+export type PreviewEditorActionsContextValue = Pick<
+  PreviewEditorContextValue,
+  | 'onSelect'
+  | 'onHoverNode'
+  | 'onOpenMedia'
+  | 'onRemoveSection'
+  | 'onToggleSectionVisibility'
+  | 'onRemoveRow'
+>;
+
+const PreviewEditorStateContext = createContext<PreviewEditorStateContextValue | undefined>(
+  undefined
+);
+const PreviewEditorActionsContext = createContext<PreviewEditorActionsContextValue | undefined>(
+  undefined
+);
 
 export function PreviewEditorProvider({
   children,
@@ -28,17 +53,85 @@ export function PreviewEditorProvider({
   children: React.ReactNode;
   value: PreviewEditorContextValue;
 }): React.JSX.Element {
-  return <PreviewEditorContext.Provider value={value}>{children}</PreviewEditorContext.Provider>;
+  const stateValue = useMemo(
+    (): PreviewEditorStateContextValue => ({
+      selectedNodeId: value.selectedNodeId,
+      isInspecting: value.isInspecting,
+      inspectorSettings: value.inspectorSettings,
+      hoveredNodeId: value.hoveredNodeId,
+      pauseSlideshowOnHoverInEditor: value.pauseSlideshowOnHoverInEditor,
+    }),
+    [
+      value.selectedNodeId,
+      value.isInspecting,
+      value.inspectorSettings,
+      value.hoveredNodeId,
+      value.pauseSlideshowOnHoverInEditor,
+    ]
+  );
+  const actionsValue = useMemo(
+    (): PreviewEditorActionsContextValue => ({
+      onSelect: value.onSelect,
+      onHoverNode: value.onHoverNode,
+      onOpenMedia: value.onOpenMedia,
+      onRemoveSection: value.onRemoveSection,
+      onToggleSectionVisibility: value.onToggleSectionVisibility,
+      onRemoveRow: value.onRemoveRow,
+    }),
+    [
+      value.onSelect,
+      value.onHoverNode,
+      value.onOpenMedia,
+      value.onRemoveSection,
+      value.onToggleSectionVisibility,
+      value.onRemoveRow,
+    ]
+  );
+
+  return (
+    <PreviewEditorActionsContext.Provider value={actionsValue}>
+      <PreviewEditorStateContext.Provider value={stateValue}>
+        {children}
+      </PreviewEditorStateContext.Provider>
+    </PreviewEditorActionsContext.Provider>
+  );
 }
 
-export function usePreviewEditor(): PreviewEditorContextValue {
-  const context = useContext(PreviewEditorContext);
+export function usePreviewEditorState(): PreviewEditorStateContextValue {
+  const context = useContext(PreviewEditorStateContext);
   if (context === undefined) {
-    throw new Error('usePreviewEditor must be used within a PreviewEditorProvider');
+    throw new Error('usePreviewEditorState must be used within a PreviewEditorProvider');
   }
   return context;
 }
 
+export function usePreviewEditorActions(): PreviewEditorActionsContextValue {
+  const context = useContext(PreviewEditorActionsContext);
+  if (context === undefined) {
+    throw new Error('usePreviewEditorActions must be used within a PreviewEditorProvider');
+  }
+  return context;
+}
+
+export function useOptionalPreviewEditorState(): PreviewEditorStateContextValue | undefined {
+  return useContext(PreviewEditorStateContext);
+}
+
+export function useOptionalPreviewEditorActions(): PreviewEditorActionsContextValue | undefined {
+  return useContext(PreviewEditorActionsContext);
+}
+
+export function usePreviewEditor(): PreviewEditorContextValue {
+  const state = usePreviewEditorState();
+  const actions = usePreviewEditorActions();
+  return useMemo((): PreviewEditorContextValue => ({ ...state, ...actions }), [state, actions]);
+}
+
 export function useOptionalPreviewEditor(): PreviewEditorContextValue | undefined {
-  return useContext(PreviewEditorContext);
+  const state = useOptionalPreviewEditorState();
+  const actions = useOptionalPreviewEditorActions();
+  if (state === undefined || actions === undefined) {
+    return undefined;
+  }
+  return { ...state, ...actions };
 }

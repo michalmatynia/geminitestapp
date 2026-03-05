@@ -1,1 +1,0 @@
-export { ParserNodeConfigSection } from '../ParserNodeConfigSection';

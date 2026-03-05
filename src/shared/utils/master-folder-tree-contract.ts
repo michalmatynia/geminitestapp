@@ -2,7 +2,7 @@ import type {
   MasterTreeNodeTypeDto,
   MasterTreeTargetTypeDto,
   MasterTreeDropPositionDto,
-  MasterTreeNodeDto,
+  MasterTreeNode,
 } from '../contracts/master-folder-tree';
 
 export const masterTreeNodeTypeValues = ['folder', 'file'] as const;
@@ -18,7 +18,7 @@ export type MasterTreeId = string;
 export type MasterTreeKind = string;
 export type MasterTreePath = string;
 
-export type MasterTreeNode = MasterTreeNodeDto;
+export type { MasterTreeNode };
 
 export const isMasterTreeNodeType = (value: unknown): value is MasterTreeNodeType =>
   typeof value === 'string' && (masterTreeNodeTypeValues as readonly string[]).includes(value);

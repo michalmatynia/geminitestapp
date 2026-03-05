@@ -1,6 +1,6 @@
 {
   "summary": {
-    "generatedAt": "2026-03-05T00:52:38.259Z",
+    "generatedAt": "2026-03-05T02:53:17.980Z",
     "mode": "apply",
     "dryRun": true,
     "manifestPath": "scripts/ai-paths/legacy-prune-manifest.json",
@@ -1245,7 +1245,7 @@
         "changed": false,
         "replacementCount": 0,
         "replacements": [],
-        "scannedFileCount": 3852
+        "scannedFileCount": 3812
       },
       {
         "ruleId": "legacy_index_key_runtime_source_scan",
@@ -1256,7 +1256,7 @@
         "changed": false,
         "replacementCount": 0,
         "replacements": [],
-        "scannedFileCount": 3852
+        "scannedFileCount": 3812
       },
       {
         "ruleId": "forbidden_maintenance_action_ids_runtime_source_scan",
@@ -1267,7 +1267,7 @@
         "changed": false,
         "replacementCount": 0,
         "replacements": [],
-        "scannedFileCount": 3852
+        "scannedFileCount": 3812
       },
       {
         "ruleId": "trigger_fetcher_migration_module_removed",
@@ -1288,7 +1288,7 @@
         "changed": false,
         "replacementCount": 0,
         "replacements": [],
-        "scannedFileCount": 3852
+        "scannedFileCount": 3812
       },
       {
         "ruleId": "legacy_dbquery_provider_migration_tokens_runtime_source_scan",
@@ -1299,7 +1299,7 @@
         "changed": false,
         "replacementCount": 0,
         "replacements": [],
-        "scannedFileCount": 3852
+        "scannedFileCount": 3812
       },
       {
         "ruleId": "feature_run_sources_duplicate_module_removed",
@@ -1395,7 +1395,7 @@
         "ruleId": "maintenance_action_ids_const_array_contract",
         "mode": "const_array",
         "expectedState": "present",
-        "file": "src/features/ai/ai-paths/server/settings-store.constants.ts",
+        "file": "src/shared/contracts/ai-paths.ts",
         "missingTargetFile": false,
         "changed": false,
         "replacementCount": 0,

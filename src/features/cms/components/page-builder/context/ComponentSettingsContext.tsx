@@ -46,12 +46,57 @@ export interface ComponentSettingsContextValue {
   handleColumnSettingChange: (key: string, value: unknown) => void;
 }
 
-const ComponentSettingsContext = createContext<ComponentSettingsContextValue | null>(null);
+export type ComponentSettingsStateContextValue = Omit<
+  ComponentSettingsContextValue,
+  | 'setActiveTab'
+  | 'handleAnimationChange'
+  | 'handleCssAnimationChange'
+  | 'handleCustomCssChange'
+  | 'handleCustomCssAiChange'
+  | 'handleApplyAiSettings'
+  | 'updateConnectionSetting'
+  | 'handleEventSettingChange'
+  | 'handleBlockSettingChange'
+  | 'handleSectionSettingChange'
+  | 'handleColumnSettingChange'
+>;
 
-export function useComponentSettingsContext(): ComponentSettingsContextValue {
-  const context = useContext(ComponentSettingsContext);
+export type ComponentSettingsActionsContextValue = Pick<
+  ComponentSettingsContextValue,
+  | 'setActiveTab'
+  | 'handleAnimationChange'
+  | 'handleCssAnimationChange'
+  | 'handleCustomCssChange'
+  | 'handleCustomCssAiChange'
+  | 'handleApplyAiSettings'
+  | 'updateConnectionSetting'
+  | 'handleEventSettingChange'
+  | 'handleBlockSettingChange'
+  | 'handleSectionSettingChange'
+  | 'handleColumnSettingChange'
+>;
+
+const ComponentSettingsStateContext = createContext<ComponentSettingsStateContextValue | null>(
+  null
+);
+const ComponentSettingsActionsContext = createContext<ComponentSettingsActionsContextValue | null>(
+  null
+);
+
+export function useComponentSettingsState(): ComponentSettingsStateContextValue {
+  const context = useContext(ComponentSettingsStateContext);
   if (!context) {
-    throw new Error('useComponentSettingsContext must be used within a ComponentSettingsProvider');
+    throw new Error('useComponentSettingsState must be used within a ComponentSettingsProvider');
+  }
+  return context;
+}
+
+export function useComponentSettingsActions(): ComponentSettingsActionsContextValue {
+  const context = useContext(ComponentSettingsActionsContext);
+  if (!context) {
+    throw new Error(
+      'useComponentSettingsActions must be used within a ComponentSettingsProvider'
+    );
   }
   return context;
 }
@@ -405,30 +450,19 @@ export function ComponentSettingsProvider({
     [selectedBlock, selectedSection, handleBlockSettingChange, handleSectionSettingChange]
   );
 
-  const contextValue = useMemo(
-    () => ({
+  const stateValue = useMemo(
+    (): ComponentSettingsStateContextValue => ({
       hasSelection,
       selectedLabel,
       selectedTitle,
       activeTab,
-      setActiveTab,
       currentAnimationConfig,
-      handleAnimationChange,
       currentCssAnimationConfig,
-      handleCssAnimationChange,
       customCssValue,
-      handleCustomCssChange,
       customCssAiConfig,
-      handleCustomCssAiChange,
-      handleApplyAiSettings,
       contentAiAllowedKeys,
       connectionSettings,
-      updateConnectionSetting,
       eventConfig,
-      handleEventSettingChange,
-      handleBlockSettingChange,
-      handleSectionSettingChange,
-      handleColumnSettingChange,
     }),
     [
       hasSelection,
@@ -436,18 +470,36 @@ export function ComponentSettingsProvider({
       selectedTitle,
       activeTab,
       currentAnimationConfig,
-      handleAnimationChange,
       currentCssAnimationConfig,
-      handleCssAnimationChange,
       customCssValue,
-      handleCustomCssChange,
       customCssAiConfig,
-      handleCustomCssAiChange,
-      handleApplyAiSettings,
       contentAiAllowedKeys,
       connectionSettings,
-      updateConnectionSetting,
       eventConfig,
+    ]
+  );
+  const actionsValue = useMemo(
+    (): ComponentSettingsActionsContextValue => ({
+      setActiveTab,
+      handleAnimationChange,
+      handleCssAnimationChange,
+      handleCustomCssChange,
+      handleCustomCssAiChange,
+      handleApplyAiSettings,
+      updateConnectionSetting,
+      handleEventSettingChange,
+      handleBlockSettingChange,
+      handleSectionSettingChange,
+      handleColumnSettingChange,
+    }),
+    [
+      setActiveTab,
+      handleAnimationChange,
+      handleCssAnimationChange,
+      handleCustomCssChange,
+      handleCustomCssAiChange,
+      handleApplyAiSettings,
+      updateConnectionSetting,
       handleEventSettingChange,
       handleBlockSettingChange,
       handleSectionSettingChange,
@@ -456,8 +508,22 @@ export function ComponentSettingsProvider({
   );
 
   return (
-    <ComponentSettingsContext.Provider value={contextValue}>
-      {children}
-    </ComponentSettingsContext.Provider>
+    <ComponentSettingsActionsContext.Provider value={actionsValue}>
+      <ComponentSettingsStateContext.Provider value={stateValue}>
+        {children}
+      </ComponentSettingsStateContext.Provider>
+    </ComponentSettingsActionsContext.Provider>
+  );
+}
+
+export function useComponentSettingsContext(): ComponentSettingsContextValue {
+  const state = useComponentSettingsState();
+  const actions = useComponentSettingsActions();
+  return useMemo(
+    (): ComponentSettingsContextValue => ({
+      ...state,
+      ...actions,
+    }),
+    [state, actions]
   );
 }

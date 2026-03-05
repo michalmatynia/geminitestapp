@@ -9,7 +9,7 @@ import {
   DOCS_JOBS_SNIPPET,
   DOCS_OVERVIEW_SNIPPET,
   DOCS_WIRING_SNIPPET,
-} from '../../src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets';
+} from '../../src/shared/lib/ai-paths/core/definitions/docs-snippets';
 
 type TooltipCatalogEntry = {
   id: string;

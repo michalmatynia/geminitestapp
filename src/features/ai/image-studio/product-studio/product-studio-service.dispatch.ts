@@ -35,6 +35,7 @@ import {
   type ProductStudioSequenceGenerationMode,
   type ProductStudioSequencingConfig,
   type ProductStudioSequencingDiagnostics,
+  type ProductStudioSequenceStepPlanEntry,
   type ProductStudioSequenceReadiness,
   type ProductWithImages,
 } from '@/shared/contracts/products';
@@ -69,7 +70,6 @@ import {
   resolvePostProductionRoute,
   resolveSequenceReadiness,
   validateProductStudioSequenceSteps,
-  type ProductStudioSequenceStepPlanEntry,
 } from './product-studio-service.sequencing';
 import { resolveStudioSettingsBundle } from './product-studio-service.settings';
 

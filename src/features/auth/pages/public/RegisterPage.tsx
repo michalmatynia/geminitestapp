@@ -105,6 +105,7 @@ function RegisterForm(): React.JSX.Element {
           <form
             className='space-y-5'
             onSubmit={(e: React.FormEvent<HTMLFormElement>) => void handleSubmit(e)}
+            aria-busy={isSubmitting}
           >
             {error && (
               <Alert variant='error' className='text-xs'>
@@ -128,6 +129,7 @@ function RegisterForm(): React.JSX.Element {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={!allowSignup}
+                autoComplete='name'
                 className='h-10 bg-gray-900/50'
               />
             </FormField>
@@ -141,6 +143,7 @@ function RegisterForm(): React.JSX.Element {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={!allowSignup}
+                autoComplete='email'
                 className='h-10 bg-gray-900/50'
               />
             </FormField>
@@ -155,6 +158,7 @@ function RegisterForm(): React.JSX.Element {
                 required
                 minLength={DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength}
                 disabled={!allowSignup}
+                autoComplete='new-password'
                 className='h-10 bg-gray-900/50'
               />
               <div className='mt-2 flex justify-between items-center px-1'>

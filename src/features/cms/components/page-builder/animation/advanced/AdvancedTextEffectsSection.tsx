@@ -3,10 +3,11 @@
 import React from 'react';
 import { Input, Checkbox, SelectSimple, FormSection, FormField } from '@/shared/ui';
 import { DEFAULT_ANIMATION_CONFIG, TEXT_EFFECTS, type TextEffect } from '@/features/gsap';
-import { useAnimationConfigContext } from '../AnimationConfigContext';
+import { useAnimationConfigActions, useAnimationConfigState } from '../AnimationConfigContext';
 
 export function AdvancedTextEffectsSection(): React.JSX.Element {
-  const { config, onChange } = useAnimationConfigContext();
+  const { config } = useAnimationConfigState();
+  const { onChange } = useAnimationConfigActions();
 
   const textEffectValue = config.textEffect ?? DEFAULT_ANIMATION_CONFIG.textEffect ?? 'none';
   const textStaggerValue = config.textStagger ?? DEFAULT_ANIMATION_CONFIG.textStagger ?? 0.05;

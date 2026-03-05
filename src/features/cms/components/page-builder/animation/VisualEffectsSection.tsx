@@ -5,7 +5,7 @@ import React, { useCallback } from 'react';
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
 import { FormSection, FormField, Card } from '@/shared/ui';
 
-import { useAnimationConfigContext } from './AnimationConfigContext';
+import { useAnimationConfigActions, useAnimationConfigState } from './AnimationConfigContext';
 import { RangeField, SelectField } from '../shared-fields';
 import { ColorPickerField } from './ColorPickerField';
 import {
@@ -26,7 +26,8 @@ import {
 } from './visual-effect-utils';
 
 export function VisualEffectsSection(): React.ReactNode {
-  const { config, onChange } = useAnimationConfigContext();
+  const { config } = useAnimationConfigState();
+  const { onChange } = useAnimationConfigActions();
   const visualFilterFromValue =
     config.visualFilterFrom ?? DEFAULT_ANIMATION_CONFIG.visualFilterFrom ?? '';
   const visualFilterToValue =

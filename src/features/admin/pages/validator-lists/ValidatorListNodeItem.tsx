@@ -4,7 +4,7 @@ import React from 'react';
 import { ExternalLink, GripVertical, Lock, Pencil, Trash2, Unlock } from 'lucide-react';
 import Link from 'next/link';
 
-import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
+import type { FolderTreeViewportRenderNodeInput as ValidatorListNodeItemProps } from '@/features/foldertree/v2';
 import { Badge, TreeContextMenu, TreeRow } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -12,7 +12,7 @@ import { VALIDATOR_SCOPE_LABELS } from '../validator-scope';
 import { fromValidatorListNodeId } from './validator-list-master-tree';
 import { useValidatorListTreeContext } from './ValidatorListTreeContext';
 
-export type ValidatorListNodeItemProps = FolderTreeViewportRenderNodeInput;
+export type { ValidatorListNodeItemProps };
 
 export function ValidatorListNodeItem(props: ValidatorListNodeItemProps): React.JSX.Element | null {
   const { node, depth, isSelected, isDragging, select } = props;

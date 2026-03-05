@@ -5,7 +5,7 @@ import React from 'react';
 
 import { FilePreviewModal } from '@/shared/ui';
 
-import { AssetPreviewModal } from './AssetPreviewModal';
+import { AssetPreviewModal } from './AssetPreviewModalImpl';
 import { useFileManager } from '../../contexts/FileManagerContext';
 
 export function FileManagerModals(): React.JSX.Element {

@@ -2,9 +2,12 @@ import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterShadowPolicy,
 } from '@/shared/contracts/image-studio';
+import type { IdNameDto } from '@/shared/contracts/base';
 
 import type { ImageStudioAnalysisSharedLayout } from './analysis-bridge';
 import { sanitizeStudioProjectId } from './project-session';
+
+export type { IdNameDto as AiPathMeta };
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -61,11 +64,6 @@ export type ExtractedObjectBounds = {
   top: number;
   width: number;
   height: number;
-};
-
-export type AiPathMeta = {
-  id: string;
-  name: string;
 };
 
 export type ImageStudioCustomTriggerButton = {
@@ -344,7 +342,7 @@ export const buildDefaultSharedLayout = (overrides?: {
 
 export const parseAiPathMetasFromSettings = (
   settings: Array<{ key: string; value: string }>
-): AiPathMeta[] => {
+): IdNameDto[] => {
   if (!Array.isArray(settings)) return [];
   const indexItem = settings.find((s) => s.key === AI_PATHS_INDEX_KEY);
   if (!indexItem) return [];

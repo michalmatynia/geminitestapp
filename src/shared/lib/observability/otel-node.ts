@@ -74,26 +74,59 @@ const hasExplicitOtelEndpoint = (): boolean =>
 const shouldEnableNodeOtel = (): boolean =>
   readBooleanEnv('OTEL_ENABLED') || hasExplicitOtelEndpoint();
 
-const buildTraceExporter = (headers: Record<string, string> | undefined): OTLPTraceExporter => {
+const resolveTraceEndpoint = (): string | null => {
   const tracesEndpoint =
     readEnvTrimmed('OTEL_EXPORTER_OTLP_TRACES_ENDPOINT') ||
     readEnvTrimmed('OTEL_EXPORTER_OTLP_ENDPOINT');
+  return tracesEndpoint ? normalizeSignalEndpoint(tracesEndpoint, TRACE_SIGNAL_PATH) : null;
+};
+
+const resolveLogsEndpoint = (): string | null => {
+  const logsEndpoint =
+    readEnvTrimmed('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT') ||
+    readEnvTrimmed('OTEL_EXPORTER_OTLP_ENDPOINT');
+  return logsEndpoint ? normalizeSignalEndpoint(logsEndpoint, LOG_SIGNAL_PATH) : null;
+};
+
+const buildTraceExporter = (headers: Record<string, string> | undefined): OTLPTraceExporter => {
+  const tracesEndpoint = resolveTraceEndpoint();
 
   return new OTLPTraceExporter({
-    ...(tracesEndpoint ? { url: normalizeSignalEndpoint(tracesEndpoint, TRACE_SIGNAL_PATH) } : {}),
+    ...(tracesEndpoint ? { url: tracesEndpoint } : {}),
     ...(headers ? { headers } : {}),
   });
 };
 
 const buildLogExporter = (headers: Record<string, string> | undefined): OTLPLogExporter => {
-  const logsEndpoint =
-    readEnvTrimmed('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT') ||
-    readEnvTrimmed('OTEL_EXPORTER_OTLP_ENDPOINT');
+  const logsEndpoint = resolveLogsEndpoint();
 
   return new OTLPLogExporter({
-    ...(logsEndpoint ? { url: normalizeSignalEndpoint(logsEndpoint, LOG_SIGNAL_PATH) } : {}),
+    ...(logsEndpoint ? { url: logsEndpoint } : {}),
     ...(headers ? { headers } : {}),
   });
+};
+
+export type NodeOtelRuntimeStatus = {
+  configured: boolean;
+  initialized: boolean;
+  active: boolean;
+  shuttingDown: boolean;
+  serviceName: string;
+  traceEndpoint: string | null;
+  logsEndpoint: string | null;
+};
+
+export const getNodeOtelRuntimeStatus = (): NodeOtelRuntimeStatus => {
+  const globalScope = globalThis as OTelGlobal;
+  return {
+    configured: shouldEnableNodeOtel(),
+    initialized: Boolean(globalScope.__otelNodeInitialized),
+    active: Boolean(globalScope.__otelNodeSdk),
+    shuttingDown: Boolean(globalScope.__otelNodeShuttingDown),
+    serviceName: readEnvTrimmed('OTEL_SERVICE_NAME') || OTEL_SERVICE_NAME_FALLBACK,
+    traceEndpoint: resolveTraceEndpoint(),
+    logsEndpoint: resolveLogsEndpoint(),
+  };
 };
 
 const registerShutdownHooks = (globalScope: OTelGlobal, sdk: NodeSDK): void => {

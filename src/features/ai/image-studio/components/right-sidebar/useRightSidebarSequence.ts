@@ -1,7 +1,10 @@
 import { useCallback, useMemo } from 'react';
 
 import type { VectorShape } from '@/shared/lib/vector-drawing';
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type {
+  ImageStudioSlotRecord,
+  ImageStudioSequenceRunStartResponse,
+} from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 
 import {
@@ -9,7 +12,6 @@ import {
   collectSequenceMaskPolygons,
   resolveSequenceStepsForRun,
   type SequenceRequestPreview,
-  type SequenceRunStartResponse,
 } from './right-sidebar-utils';
 import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
 
@@ -268,7 +270,7 @@ export function useRightSidebarSequence({
     }
     setSequenceRunBusy(true);
     void api
-      .post<SequenceRunStartResponse>('/api/image-studio/sequences/run', {
+      .post<ImageStudioSequenceRunStartResponse>('/api/image-studio/sequences/run', {
         projectId: normalizedProjectId,
         sourceSlotId: workingSlot.id,
         prompt: resolvedPrompt || promptText.trim(),

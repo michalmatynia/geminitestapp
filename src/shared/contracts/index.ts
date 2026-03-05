@@ -20,6 +20,7 @@ export * from './document-editor';
 export * from './drafter';
 export * from './files';
 export * from './foldertree';
+export * from './geometry';
 export * from './image-slots';
 export * from './image-studio';
 export * from './integrations';

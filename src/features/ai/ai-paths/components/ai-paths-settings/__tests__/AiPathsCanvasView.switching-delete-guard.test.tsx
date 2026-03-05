@@ -52,7 +52,7 @@ vi.mock('../../runtime-event-log-panel', () => ({
   RuntimeEventLogPanel: () => null,
 }));
 
-vi.mock('../sections/AiPathsRuntimeAnalysis', () => ({
+vi.mock('../panels/AiPathsRuntimeAnalysis', () => ({
   AiPathsRuntimeAnalysis: () => null,
 }));
 

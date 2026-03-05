@@ -11,9 +11,9 @@ import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
   PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
 } from '../../constants';
-import { useProductFormCore } from '../ProductFormCoreContext';
-import { useProductFormImages } from '../ProductFormImageContext';
-import { useProductFormStudio } from '../ProductFormStudioContext';
+import { useProductFormCore } from './ProductFormCoreContext';
+import { useProductFormImages } from './ProductFormImageContext';
+import { useProductFormStudio } from './ProductFormStudioContext';
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import {
@@ -28,18 +28,10 @@ import type {
   ProductStudioExecutionRoute,
   ProductStudioSequenceGenerationMode,
   ProductStudioSequenceReadiness,
+  ProductStudioSequenceStepPlanEntry,
 } from '@/shared/contracts/products';
 
 // --- Types ---
-
-export type ProductStudioSequenceStepPlanEntry = {
-  index: number;
-  stepId: string;
-  stepType: 'crop_center' | 'mask' | 'generate' | 'regenerate' | 'upscale';
-  inputSource: 'previous' | 'source';
-  resolvedInput: 'previous' | 'source';
-  producesOutput: boolean;
-};
 
 export type ProductStudioVariantsResponse = {
   sequencing: {

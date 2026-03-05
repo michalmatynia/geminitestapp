@@ -2,23 +2,16 @@
 
 import React, { createContext, useContext, useMemo, useRef, useState } from 'react';
 
-export interface PreviewCanvasCropRect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+import type {
+  PositiveRectBoundsDto as PreviewCanvasCropRect,
+  PositiveRectBoundsDto as PreviewCanvasImageContentFrame,
+} from '@/shared/contracts/geometry';
+
+export type { PreviewCanvasCropRect, PreviewCanvasImageContentFrame };
 
 export interface PreviewCanvasViewportCrop {
   slotId: string;
   cropRect: PreviewCanvasCropRect;
-}
-
-export interface PreviewCanvasImageContentFrame {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
 }
 
 export interface PreviewCanvasImageFrameBinding {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 
 import type { GsapAnimationConfig } from '@/features/gsap';
 import type { VectorShape } from '@/shared/ui';
@@ -20,7 +20,16 @@ type AnimationConfigContextValue = {
   openVectorOverlay: OpenVectorOverlay;
 };
 
-const AnimationConfigContext = createContext<AnimationConfigContextValue | null>(null);
+export type AnimationConfigStateContextValue = Pick<AnimationConfigContextValue, 'config'>;
+export type AnimationConfigActionsContextValue = Pick<
+  AnimationConfigContextValue,
+  'onChange' | 'openVectorOverlay'
+>;
+
+const AnimationConfigStateContext = createContext<AnimationConfigStateContextValue | null>(null);
+const AnimationConfigActionsContext = createContext<AnimationConfigActionsContextValue | null>(
+  null
+);
 
 type AnimationConfigProviderProps = {
   value: AnimationConfigContextValue;
@@ -31,15 +40,50 @@ export function AnimationConfigProvider({
   value,
   children,
 }: AnimationConfigProviderProps): React.JSX.Element {
+  const stateValue = useMemo(
+    (): AnimationConfigStateContextValue => ({
+      config: value.config,
+    }),
+    [value.config]
+  );
+  const actionsValue = useMemo(
+    (): AnimationConfigActionsContextValue => ({
+      onChange: value.onChange,
+      openVectorOverlay: value.openVectorOverlay,
+    }),
+    [value.onChange, value.openVectorOverlay]
+  );
+
   return (
-    <AnimationConfigContext.Provider value={value}>{children}</AnimationConfigContext.Provider>
+    <AnimationConfigActionsContext.Provider value={actionsValue}>
+      <AnimationConfigStateContext.Provider value={stateValue}>
+        {children}
+      </AnimationConfigStateContext.Provider>
+    </AnimationConfigActionsContext.Provider>
   );
 }
 
-export function useAnimationConfigContext(): AnimationConfigContextValue {
-  const context = useContext(AnimationConfigContext);
+export function useAnimationConfigState(): AnimationConfigStateContextValue {
+  const context = useContext(AnimationConfigStateContext);
   if (!context) {
-    throw new Error('useAnimationConfigContext must be used within AnimationConfigProvider');
+    throw new Error('useAnimationConfigState must be used within AnimationConfigProvider');
   }
   return context;
+}
+
+export function useAnimationConfigActions(): AnimationConfigActionsContextValue {
+  const context = useContext(AnimationConfigActionsContext);
+  if (!context) {
+    throw new Error('useAnimationConfigActions must be used within AnimationConfigProvider');
+  }
+  return context;
+}
+
+export function useAnimationConfigContext(): AnimationConfigContextValue {
+  const state = useAnimationConfigState();
+  const actions = useAnimationConfigActions();
+  return useMemo((): AnimationConfigContextValue => ({ ...state, ...actions }), [
+    state,
+    actions,
+  ]);
 }

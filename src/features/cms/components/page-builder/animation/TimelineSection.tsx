@@ -11,10 +11,11 @@ import {
 } from '@/features/gsap';
 import { SelectSimple, FormSection, FormField, ToggleRow, Input } from '@/shared/ui';
 
-import { useAnimationConfigContext } from './AnimationConfigContext';
+import { useAnimationConfigActions, useAnimationConfigState } from './AnimationConfigContext';
 
 export function TimelineSection(): React.ReactNode {
-  const { config, onChange } = useAnimationConfigContext();
+  const { config } = useAnimationConfigState();
+  const { onChange } = useAnimationConfigActions();
   const timelineModeValue = config.timelineMode ?? DEFAULT_ANIMATION_CONFIG.timelineMode ?? 'none';
   const timelineGapValue = config.timelineGap ?? DEFAULT_ANIMATION_CONFIG.timelineGap ?? 0.15;
   const timelineOverlapValue =

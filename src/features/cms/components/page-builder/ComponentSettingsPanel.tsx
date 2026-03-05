@@ -13,7 +13,8 @@ import { EventEffectsTab } from './settings/EventEffectsTab';
 import { PageSettingsTab } from './settings/PageSettingsTab';
 import {
   ComponentSettingsProvider,
-  useComponentSettingsContext,
+  useComponentSettingsActions,
+  useComponentSettingsState,
 } from './context/ComponentSettingsContext';
 import { usePageBuilderState, usePageBuilderSelection } from '../../hooks/usePageBuilderContext';
 
@@ -37,16 +38,10 @@ function ComponentSettingsPanelInner(): React.JSX.Element {
   const state = usePageBuilderState();
   const { selectedSection, selectedBlock, selectedColumn } = usePageBuilderSelection();
 
-  const {
-    activeTab,
-    setActiveTab,
-    customCssValue,
-    handleCustomCssChange,
-    customCssAiConfig,
-    handleCustomCssAiChange,
-    handleApplyAiSettings,
-    contentAiAllowedKeys,
-  } = useComponentSettingsContext();
+  const { activeTab, customCssValue, customCssAiConfig, contentAiAllowedKeys } =
+    useComponentSettingsState();
+  const { setActiveTab, handleCustomCssChange, handleCustomCssAiChange, handleApplyAiSettings } =
+    useComponentSettingsActions();
 
   const isGridSection = selectedSection?.type === 'Grid';
   const isBlockSection = selectedSection?.type === 'Block';

@@ -24,7 +24,7 @@ import {
   type ImageBackgroundTarget,
 } from '../section-registry';
 import { usePageBuilderSelection, usePageBuilderDispatch } from '../../../hooks/usePageBuilderContext';
-import { useComponentSettingsContext } from '../context/ComponentSettingsContext';
+import { useComponentSettingsActions } from '../context/ComponentSettingsContext';
 import type { BlockInstance } from '@/shared/contracts/cms';
 
 export function BlockSettingsTab(): React.JSX.Element | null {
@@ -36,7 +36,7 @@ export function BlockSettingsTab(): React.JSX.Element | null {
   const selectedParentRow = selection.selectedParentRow;
   const selectedParentBlock = selection.selectedParentBlock;
 
-  const { handleBlockSettingChange } = useComponentSettingsContext();
+  const { handleBlockSettingChange } = useComponentSettingsActions();
   const settingsStore = useSettingsStore();
 
   const isRowBlock = selectedBlock?.type === 'Row' && selectedParentSection?.type === 'Grid';

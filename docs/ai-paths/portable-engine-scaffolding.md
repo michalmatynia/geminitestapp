@@ -188,6 +188,10 @@ Resolver behavior:
     - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_EMAIL_RECIPIENTS` (comma-delimited recipients)
     - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_NOTIFICATION_TIMEOUT_MS` (notification webhook timeout)
     - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES` (max persisted failed notification deliveries)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_WINDOW_SECONDS` (max age window for dead-letter replay attempts)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_ENDPOINT_ALLOWLIST` (comma-delimited replay endpoint URL allowlist)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_SECRET` (optional HMAC secret for replay-history export signatures)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_EXPORT_KEY_ID` (optional replay-history export signature key-id hint)
   - Auto-remediation fan-out API:
     - `notifyPortablePathAuditSinkAutoRemediation(input, { ... })`
     - Supports webhook and email-relay webhook channels with retry/circuit protection.
@@ -259,6 +263,46 @@ These allow stable package integrity tagging across copy/paste surfaces.
   - applied filter metadata + matched snapshot count
   - pagination metadata (`hasMore`, `nextCursor`, accepted `cursor`)
   - auto-remediation runtime config (strategy/cooldown/rate-limit/notification channels) + persisted remediation state
+- Remediation dead-letter API: `GET /api/ai-paths/portable-engine/remediation-dead-letters`
+- Remediation dead-letter query:
+  - `limit=1..500` (default `50`)
+  - `channel=webhook|email` (optional)
+  - `endpoint=<exact URL>` (optional)
+- Remediation dead-letter replay API: `POST /api/ai-paths/portable-engine/remediation-dead-letters`
+- Replay request payload:
+  - `action: "replay"` (required)
+  - `dryRun: boolean` (default `true`)
+  - `limit: 1..200` (default `20`)
+  - `channel: webhook|email` (optional)
+  - `endpoint: string` (optional exact-match filter)
+  - `timeoutMs: number` (optional per-attempt timeout override)
+- Replay response includes:
+  - selected/attempted/delivered/failed/retained counters
+  - persisted status
+  - replay policy metadata (window and allowlist counters)
+  - per-entry replay attempts (status/error/signature metadata)
+  - policy-enforced skips are retained with explicit dead-letter error reasons
+- Replay history export API: `GET /api/ai-paths/portable-engine/remediation-dead-letters/replay-history`
+- Replay history query:
+  - `limit=1..200` (default `50`)
+  - `from=<ISO timestamp>` (optional)
+  - `to=<ISO timestamp>` (optional)
+  - `includeAttempts=true|false` (default `false`)
+  - `signed=true|false` (default `true`)
+  - `format=json|ndjson|csv` (default `json`)
+- Replay history export response includes:
+  - replay run counters and filters derived from replay audit logs
+  - optional replay attempt details (`includeAttempts=true`)
+  - optional HMAC export signature payload (`signature`) when signing secret is configured
+  - for `ndjson`/`csv`, signature is emitted in `x-ai-paths-export-signature*` headers
+- Receiver verification endpoint: `POST /api/ai-paths/portable-engine/remediation-webhook`
+- Receiver verification query:
+  - `channel=webhook|email` (default `webhook`)
+  - `maxSkewSeconds=1..3600` (default `300`)
+- Receiver verification response includes:
+  - accepted flag
+  - replay key hash (when signature verified)
+  - parsed payload echo for verification/debugging
 - Cache support: deterministic `ETag` + `If-None-Match` (`304 Not Modified`) with private SWR cache headers.
 - CI guardrail: `npm run ai-paths:check:portable-schema-diff -- --strict`
   - Uses `scripts/ai-paths/portable-schema-diff-allowlist.json`.
@@ -357,8 +401,42 @@ await bootstrapPortablePathSigningPolicyTrendReporterFromEnvironment({
 });
 ```
 
+Webhook signature verification example (Node receiver):
+
+```ts
+import { createHmac, timingSafeEqual } from 'crypto';
+
+const verifyAiPathsSignature = (
+  rawBody: string,
+  signatureHeader: string | null,
+  timestampHeader: string | null,
+  secret: string
+): boolean => {
+  if (!signatureHeader || !timestampHeader) return false;
+  const [version, signatureHex] = signatureHeader.split('=');
+  if (version !== 'v1' || !signatureHex) return false;
+  const expected = createHmac('sha256', secret)
+    .update(`${timestampHeader}.${rawBody}`)
+    .digest('hex');
+  const providedBuffer = Buffer.from(signatureHex, 'hex');
+  const expectedBuffer = Buffer.from(expected, 'hex');
+  if (providedBuffer.length !== expectedBuffer.length) return false;
+  return timingSafeEqual(providedBuffer, expectedBuffer);
+};
+```
+
+Portable receiver helper (clock-skew + replay checks):
+
+- `verifyPortablePathWebhookSignature(...)`
+- Source: `src/shared/lib/ai-paths/portable-engine/receiver-signature.ts`
+- Tests: `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine-receiver-signature.test.ts`
+
+Receiver operations runbook:
+
+- `docs/ai-paths/portable-engine-receiver-runbook.md`
+
 ## Next Hardening Steps
 
-1. Add remediation dead-letter replay tooling (manual retry endpoint + audit trail).
-2. Add cursor-stability smoke tests against concurrent snapshot append scenarios.
-3. Add webhook signature verification snippets/runbook examples for downstream receivers.
+1. Add cursor-based pagination for replay-history exports over very large incident windows.
+2. Add server-side compression for large NDJSON/CSV replay-history exports.
+3. Add redaction mode for replay-history export payload fields in lower-trust environments.

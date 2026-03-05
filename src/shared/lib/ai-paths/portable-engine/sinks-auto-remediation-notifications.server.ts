@@ -129,15 +129,15 @@ const normalizePortablePathAuditSinkAutoRemediationDeadLetterEntry = (
   const signature: PortablePathAuditSinkAutoRemediationNotificationDeadLetterSignature | null =
     signatureTimestamp
       ? {
-          algorithm: PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_ALGORITHM,
-          keyId:
+        algorithm: PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_ALGORITHM,
+        keyId:
             signatureRecord &&
             typeof signatureRecord['keyId'] === 'string' &&
             signatureRecord['keyId'].trim().length > 0
               ? signatureRecord['keyId'].trim()
               : null,
-          timestamp: signatureTimestamp,
-        }
+        timestamp: signatureTimestamp,
+      }
       : null;
 
   const rawStatusCode = record['statusCode'];
@@ -338,7 +338,7 @@ const toPortablePathAuditSinkAutoRemediationNotificationPayload = (
   appUrl: process.env['NEXT_PUBLIC_APP_URL'] ?? null,
 });
 
-type PortablePathAuditSinkAutoRemediationPreparedNotificationRequest = {
+export type PortablePathAuditSinkAutoRemediationPreparedNotificationRequest = {
   body: string;
   headers: Record<string, string>;
   signature: PortablePathAuditSinkAutoRemediationNotificationDeadLetterSignature | null;
@@ -354,7 +354,7 @@ class PortablePathAuditSinkAutoRemediationNotificationHttpError extends Error {
   }
 }
 
-const toPortablePathAuditSinkAutoRemediationNotificationTimestamp = (
+export const toPortablePathAuditSinkAutoRemediationNotificationTimestamp = (
   value: string | Date | undefined
 ): string => {
   const nowDate =
@@ -366,7 +366,7 @@ const toPortablePathAuditSinkAutoRemediationNotificationTimestamp = (
   return Number.isNaN(nowDate.getTime()) ? new Date().toISOString() : nowDate.toISOString();
 };
 
-const buildPortablePathAuditSinkAutoRemediationPreparedNotificationRequest = (
+export const buildPortablePathAuditSinkAutoRemediationPreparedNotificationRequest = (
   payload: Record<string, unknown>,
   options: {
     signatureSecret?: string | null;
@@ -411,7 +411,7 @@ const buildPortablePathAuditSinkAutoRemediationPreparedNotificationRequest = (
   };
 };
 
-const postPortablePathAuditSinkAutoRemediationNotification = async (
+export const postPortablePathAuditSinkAutoRemediationNotification = async (
   url: string,
   request: PortablePathAuditSinkAutoRemediationPreparedNotificationRequest,
   timeoutMs: number,
@@ -443,7 +443,7 @@ const postPortablePathAuditSinkAutoRemediationNotification = async (
   return response.status;
 };
 
-const toPortablePathAuditSinkAutoRemediationNotificationStatusCode = (
+export const toPortablePathAuditSinkAutoRemediationNotificationStatusCode = (
   error: unknown
 ): number | null => {
   if (error instanceof PortablePathAuditSinkAutoRemediationNotificationHttpError) {

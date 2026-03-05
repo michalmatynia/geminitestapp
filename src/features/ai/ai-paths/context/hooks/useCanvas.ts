@@ -1,7 +1,7 @@
 /**
  * Re-export canvas hooks from CanvasContext.
  */
-export { useCanvas, useCanvasState, useCanvasActions, useCanvasRefs } from '../CanvasContext';
+export { useCanvasState, useCanvasActions, useCanvasRefs } from '../CanvasContext';
 
 export type {
   CanvasState,

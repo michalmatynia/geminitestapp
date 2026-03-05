@@ -140,12 +140,6 @@ export function useInspectorAiActions(): InspectorAiActionsContextValue {
   return context;
 }
 
-export function useInspectorAi(): InspectorAiContextValue {
-  const state = useInspectorAiState();
-  const actions = useInspectorAiActions();
-  return useMemo((): InspectorAiContextValue => ({ ...state, ...actions }), [state, actions]);
-}
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------

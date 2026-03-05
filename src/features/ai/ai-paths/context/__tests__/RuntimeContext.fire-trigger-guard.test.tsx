@@ -10,7 +10,7 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: logClientErrorMock,
 }));
 
-import { RuntimeProvider, useRuntime } from '../RuntimeContext';
+import { RuntimeProvider, useRuntimeActions, useRuntimeState } from '../RuntimeContext';
 
 const wrapper = ({ children }: { children: React.ReactNode }): React.JSX.Element => (
   <RuntimeProvider>{children}</RuntimeProvider>
@@ -39,7 +39,9 @@ describe('RuntimeContext fire trigger guard', () => {
   });
 
   it('reports an explicit error when fireTrigger handler is missing', async () => {
-    const { result } = renderHook(() => useRuntime(), { wrapper });
+    const { result } = renderHook(() => ({ ...useRuntimeState(), ...useRuntimeActions() }), {
+      wrapper,
+    });
     const triggerNode = buildTriggerNode('node-trigger-a');
 
     await act(async () => {
@@ -64,7 +66,9 @@ describe('RuntimeContext fire trigger guard', () => {
   });
 
   it('dispatches fireTrigger to registered runtime control handlers', async () => {
-    const { result } = renderHook(() => useRuntime(), { wrapper });
+    const { result } = renderHook(() => ({ ...useRuntimeState(), ...useRuntimeActions() }), {
+      wrapper,
+    });
     const triggerNode = buildTriggerNode('node-trigger-b');
     const fireTrigger = vi.fn(async () => {});
 

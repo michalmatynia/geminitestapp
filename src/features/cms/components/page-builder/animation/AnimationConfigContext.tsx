@@ -78,12 +78,3 @@ export function useAnimationConfigActions(): AnimationConfigActionsContextValue 
   }
   return context;
 }
-
-export function useAnimationConfigContext(): AnimationConfigContextValue {
-  const state = useAnimationConfigState();
-  const actions = useAnimationConfigActions();
-  return useMemo((): AnimationConfigContextValue => ({ ...state, ...actions }), [
-    state,
-    actions,
-  ]);
-}

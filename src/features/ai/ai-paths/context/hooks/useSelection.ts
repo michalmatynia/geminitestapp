@@ -1,7 +1,7 @@
 /**
  * Re-export selection hooks from SelectionContext.
- * Provides cleaner imports: import { useSelection } from '@/features/ai/ai-paths/context/hooks/useSelection'
+ * Provides cleaner imports from a single module.
  */
-export { useSelection, useSelectionState, useSelectionActions } from '../SelectionContext';
+export { useSelectionState, useSelectionActions } from '../SelectionContext';
 
 export type { SelectionState, SelectionActions } from '../SelectionContext';

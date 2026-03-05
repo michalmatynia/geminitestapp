@@ -277,7 +277,3 @@ export function useUiActions(): UiActions {
   if (!ctx) throw new Error('useUiActions must be used within a UiProvider');
   return ctx;
 }
-
-export function useUi(): UiState & UiActions {
-  return { ...useUiState(), ...useUiActions() };
-}

@@ -8,7 +8,11 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: logClientErrorMock,
 }));
 
-import { PersistenceProvider, usePersistence } from '../PersistenceContext';
+import {
+  PersistenceProvider,
+  usePersistenceActions,
+  usePersistenceState,
+} from '../PersistenceContext';
 
 const wrapper = ({ children }: { children: React.ReactNode }): React.JSX.Element => (
   <PersistenceProvider initialLoading={false}>{children}</PersistenceProvider>
@@ -20,7 +24,10 @@ describe('PersistenceContext savePathConfig guard', () => {
   });
 
   it('fails loudly when save handler is missing', async () => {
-    const { result } = renderHook(() => usePersistence(), { wrapper });
+    const { result } = renderHook(
+      () => ({ ...usePersistenceState(), ...usePersistenceActions() }),
+      { wrapper }
+    );
 
     let saveResult = true;
     await act(async () => {
@@ -44,7 +51,10 @@ describe('PersistenceContext savePathConfig guard', () => {
   });
 
   it('delegates to registered save handler', async () => {
-    const { result } = renderHook(() => usePersistence(), { wrapper });
+    const { result } = renderHook(
+      () => ({ ...usePersistenceState(), ...usePersistenceActions() }),
+      { wrapper }
+    );
     const saveHandler = vi.fn(async () => true);
 
     act(() => {

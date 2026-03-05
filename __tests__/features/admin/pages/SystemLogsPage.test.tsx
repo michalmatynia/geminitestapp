@@ -3,7 +3,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
+import {
+  useSystemLogsActions,
+  useSystemLogsState,
+} from '@/features/observability/context/SystemLogsContext';
 import SystemLogsPage from '@/features/observability/pages/SystemLogsPage';
 import type { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 
@@ -24,7 +27,8 @@ vi.mock('@/features/observability/context/SystemLogsContext', async (importOrigi
   return {
     ...actual,
     SystemLogsProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-    useSystemLogsContext: vi.fn(),
+    useSystemLogsState: vi.fn(),
+    useSystemLogsActions: vi.fn(),
   };
 });
 
@@ -178,7 +182,7 @@ describe('SystemLogsPage', () => {
     vi.clearAllMocks();
 
     // Default context mock
-    vi.mocked(useSystemLogsContext).mockReturnValue({
+    const mockSystemLogsValue = {
       logsQuery: { isPending: false, isFetching: false, refetch: vi.fn() } as unknown as any,
       metricsQuery: { isPending: false, isFetching: false, refetch: vi.fn() } as unknown as any,
       insightsQuery: { isLoading: false, data: { insights: [] } } as unknown as any,
@@ -251,7 +255,10 @@ describe('SystemLogsPage', () => {
       diagnostics: [],
       diagnosticsUpdatedAt: null,
       logInterpretations: {},
-    } as ReturnType<typeof useSystemLogsContext>);
+    } as any;
+
+    vi.mocked(useSystemLogsState).mockReturnValue(mockSystemLogsValue);
+    vi.mocked(useSystemLogsActions).mockReturnValue(mockSystemLogsValue);
   });
 
   it('renders logs list and metrics', () => {

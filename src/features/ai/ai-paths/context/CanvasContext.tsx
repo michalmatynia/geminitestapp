@@ -282,13 +282,3 @@ export function useCanvasRefs(): CanvasRefs {
   }
   return context;
 }
-
-/**
- * Combined hook for components that need state, actions, and refs.
- */
-export function useCanvas(): CanvasState & CanvasActions & CanvasRefs {
-  const state = useCanvasState();
-  const actions = useCanvasActions();
-  const refs = useCanvasRefs();
-  return { ...state, ...actions, ...refs };
-}

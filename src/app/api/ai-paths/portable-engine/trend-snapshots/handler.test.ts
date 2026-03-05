@@ -258,6 +258,7 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       sinkWritesFailedTotal: 0,
       notificationDeadLetterCount: 1,
       latestNotificationDeadLetterAt: '2026-03-05T00:10:00.000Z',
+      notificationDeadLetterTopErrors: [{ reason: 'notification_http_502', count: 1 }],
     });
     expect(payload['autoRemediation']).toEqual(
       expect.objectContaining({
@@ -281,6 +282,9 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
             maxEntries: 100,
             queuedCount: 1,
             latestQueuedAt: '2026-03-05T00:10:00.000Z',
+            topErrors: [{ reason: 'notification_http_502', count: 1 }],
+            replayPolicySkipsTotal: 0,
+            replayPolicySkipReasons: [],
           },
         }),
       })
@@ -366,7 +370,74 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
             maxEntries: 200,
             queuedCount: 0,
             latestQueuedAt: null,
+            topErrors: [],
+            replayPolicySkipsTotal: 0,
+            replayPolicySkipReasons: [],
           },
+        }),
+      })
+    );
+  });
+
+  it('summarizes dead-letter replay policy skip reasons', async () => {
+    loadPortablePathAuditSinkAutoRemediationDeadLettersMock.mockResolvedValue([
+      {
+        queuedAt: '2026-03-05T00:10:00.000Z',
+        channel: 'webhook',
+        endpoint: 'https://example.test/webhook',
+        payload: { event: 'portable_audit_sink_auto_remediation' },
+        error: 'dead_letter_outside_replay_window',
+        statusCode: null,
+        attemptCount: 2,
+        signature: null,
+      },
+      {
+        queuedAt: '2026-03-05T00:11:00.000Z',
+        channel: 'webhook',
+        endpoint: 'https://example.test/webhook',
+        payload: { event: 'portable_audit_sink_auto_remediation' },
+        error: 'dead_letter_endpoint_disallowed',
+        statusCode: null,
+        attemptCount: 2,
+        signature: null,
+      },
+      {
+        queuedAt: '2026-03-05T00:12:00.000Z',
+        channel: 'webhook',
+        endpoint: 'https://example.test/webhook',
+        payload: { event: 'portable_audit_sink_auto_remediation' },
+        error: 'dead_letter_outside_replay_window',
+        statusCode: null,
+        attemptCount: 3,
+        signature: null,
+      },
+    ]);
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/portable-engine/trend-snapshots'),
+      {} as Parameters<typeof GET_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as Record<string, unknown>;
+    expect(payload['summary']).toEqual(
+      expect.objectContaining({
+        notificationDeadLetterTopErrors: [
+          { reason: 'dead_letter_outside_replay_window', count: 2 },
+          { reason: 'dead_letter_endpoint_disallowed', count: 1 },
+        ],
+      })
+    );
+    expect(payload['autoRemediation']).toEqual(
+      expect.objectContaining({
+        notifications: expect.objectContaining({
+          deadLetter: expect.objectContaining({
+            replayPolicySkipsTotal: 3,
+            replayPolicySkipReasons: [
+              { reason: 'dead_letter_outside_replay_window', count: 2 },
+              { reason: 'dead_letter_endpoint_disallowed', count: 1 },
+            ],
+          }),
         }),
       })
     );
@@ -545,6 +616,7 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       sinkWritesFailedTotal: 1,
       notificationDeadLetterCount: 0,
       latestNotificationDeadLetterAt: null,
+      notificationDeadLetterTopErrors: [],
     });
     expect(payload['pagination']).toEqual(
       expect.objectContaining({
@@ -575,6 +647,7 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       sinkWritesFailedTotal: 1,
       notificationDeadLetterCount: 0,
       latestNotificationDeadLetterAt: null,
+      notificationDeadLetterTopErrors: [],
     });
     expect(cursorPayload['pagination']).toEqual(
       expect.objectContaining({
@@ -584,6 +657,279 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
     );
     expect(
       (cursorPayload['snapshots'] as Array<{ at: string }>).map((entry) => entry.at)
+    ).toEqual(['2026-03-05T00:10:00.000Z']);
+  });
+
+  it('keeps cursor windows stable when newer snapshots append between page requests', async () => {
+    loadPortablePathSigningPolicyTrendSnapshotsMock.mockResolvedValueOnce([
+      {
+        at: '2026-03-05T00:10:00.000Z',
+        trigger: 'threshold',
+        reportEveryUses: 5,
+        usageTotals: { uses: 2 },
+        usageBySurface: { canvas: 0, product: 2, api: 0 },
+        usageByProfile: {
+          dev: {
+            uses: 2,
+            bySurface: { canvas: 0, product: 2, api: 0 },
+            fingerprintModeCounts: { off: 2, warn: 0, strict: 0 },
+            envelopeModeCounts: { off: 2, warn: 0, strict: 0 },
+            lastUsedAt: '2026-03-05T00:10:00.000Z',
+            lastSurface: 'product',
+          },
+          staging: {
+            uses: 0,
+            bySurface: { canvas: 0, product: 0, api: 0 },
+            fingerprintModeCounts: { off: 0, warn: 0, strict: 0 },
+            envelopeModeCounts: { off: 0, warn: 0, strict: 0 },
+            lastUsedAt: null,
+            lastSurface: null,
+          },
+          prod: {
+            uses: 0,
+            bySurface: { canvas: 0, product: 0, api: 0 },
+            fingerprintModeCounts: { off: 0, warn: 0, strict: 0 },
+            envelopeModeCounts: { off: 0, warn: 0, strict: 0 },
+            lastUsedAt: null,
+            lastSurface: null,
+          },
+        },
+        sinkTotals: {
+          registrationCount: 1,
+          unregistrationCount: 0,
+          writesAttempted: 2,
+          writesSucceeded: 1,
+          writesFailed: 1,
+        },
+        sinkRegisteredIds: ['sink-a'],
+        sinkRecentFailures: [],
+        expectedProfilesBySurface: {
+          canvas: ['prod'],
+          product: ['prod'],
+          api: ['prod'],
+        },
+        driftAlerts: [],
+      },
+      {
+        at: '2026-03-05T00:20:00.000Z',
+        trigger: 'threshold',
+        reportEveryUses: 5,
+        usageTotals: { uses: 3 },
+        usageBySurface: { canvas: 0, product: 0, api: 3 },
+        usageByProfile: {
+          dev: {
+            uses: 3,
+            bySurface: { canvas: 0, product: 0, api: 3 },
+            fingerprintModeCounts: { off: 3, warn: 0, strict: 0 },
+            envelopeModeCounts: { off: 3, warn: 0, strict: 0 },
+            lastUsedAt: '2026-03-05T00:20:00.000Z',
+            lastSurface: 'api',
+          },
+          staging: {
+            uses: 0,
+            bySurface: { canvas: 0, product: 0, api: 0 },
+            fingerprintModeCounts: { off: 0, warn: 0, strict: 0 },
+            envelopeModeCounts: { off: 0, warn: 0, strict: 0 },
+            lastUsedAt: null,
+            lastSurface: null,
+          },
+          prod: {
+            uses: 0,
+            bySurface: { canvas: 0, product: 0, api: 0 },
+            fingerprintModeCounts: { off: 0, warn: 0, strict: 0 },
+            envelopeModeCounts: { off: 0, warn: 0, strict: 0 },
+            lastUsedAt: null,
+            lastSurface: null,
+          },
+        },
+        sinkTotals: {
+          registrationCount: 1,
+          unregistrationCount: 0,
+          writesAttempted: 3,
+          writesSucceeded: 2,
+          writesFailed: 1,
+        },
+        sinkRegisteredIds: ['sink-a'],
+        sinkRecentFailures: [],
+        expectedProfilesBySurface: {
+          canvas: ['prod'],
+          product: ['prod'],
+          api: ['prod'],
+        },
+        driftAlerts: [],
+      },
+    ]);
+
+    const firstResponse = await GET_handler(
+      new NextRequest(
+        'http://localhost/api/ai-paths/portable-engine/trend-snapshots?limit=1&trigger=threshold'
+      ),
+      {} as Parameters<typeof GET_handler>[1]
+    );
+    const firstPayload = (await firstResponse.json()) as Record<string, unknown>;
+    const firstCursor = String(
+      (firstPayload['pagination'] as Record<string, unknown>)['nextCursor']
+    );
+    expect(firstCursor.length).toBeGreaterThan(0);
+
+    loadPortablePathSigningPolicyTrendSnapshotsMock.mockResolvedValueOnce([
+      {
+        at: '2026-03-05T00:10:00.000Z',
+        trigger: 'threshold',
+        reportEveryUses: 5,
+        usageTotals: { uses: 2 },
+        usageBySurface: { canvas: 0, product: 2, api: 0 },
+        usageByProfile: {
+          dev: {
+            uses: 2,
+            bySurface: { canvas: 0, product: 2, api: 0 },
+            fingerprintModeCounts: { off: 2, warn: 0, strict: 0 },
+            envelopeModeCounts: { off: 2, warn: 0, strict: 0 },
+            lastUsedAt: '2026-03-05T00:10:00.000Z',
+            lastSurface: 'product',
+          },
+          staging: {
+            uses: 0,
+            bySurface: { canvas: 0, product: 0, api: 0 },
+            fingerprintModeCounts: { off: 0, warn: 0, strict: 0 },
+            envelopeModeCounts: { off: 0, warn: 0, strict: 0 },
+            lastUsedAt: null,
+            lastSurface: null,
+          },
+          prod: {
+            uses: 0,
+            bySurface: { canvas: 0, product: 0, api: 0 },
+            fingerprintModeCounts: { off: 0, warn: 0, strict: 0 },
+            envelopeModeCounts: { off: 0, warn: 0, strict: 0 },
+            lastUsedAt: null,
+            lastSurface: null,
+          },
+        },
+        sinkTotals: {
+          registrationCount: 1,
+          unregistrationCount: 0,
+          writesAttempted: 2,
+          writesSucceeded: 1,
+          writesFailed: 1,
+        },
+        sinkRegisteredIds: ['sink-a'],
+        sinkRecentFailures: [],
+        expectedProfilesBySurface: {
+          canvas: ['prod'],
+          product: ['prod'],
+          api: ['prod'],
+        },
+        driftAlerts: [],
+      },
+      {
+        at: '2026-03-05T00:20:00.000Z',
+        trigger: 'threshold',
+        reportEveryUses: 5,
+        usageTotals: { uses: 3 },
+        usageBySurface: { canvas: 0, product: 0, api: 3 },
+        usageByProfile: {
+          dev: {
+            uses: 3,
+            bySurface: { canvas: 0, product: 0, api: 3 },
+            fingerprintModeCounts: { off: 3, warn: 0, strict: 0 },
+            envelopeModeCounts: { off: 3, warn: 0, strict: 0 },
+            lastUsedAt: '2026-03-05T00:20:00.000Z',
+            lastSurface: 'api',
+          },
+          staging: {
+            uses: 0,
+            bySurface: { canvas: 0, product: 0, api: 0 },
+            fingerprintModeCounts: { off: 0, warn: 0, strict: 0 },
+            envelopeModeCounts: { off: 0, warn: 0, strict: 0 },
+            lastUsedAt: null,
+            lastSurface: null,
+          },
+          prod: {
+            uses: 0,
+            bySurface: { canvas: 0, product: 0, api: 0 },
+            fingerprintModeCounts: { off: 0, warn: 0, strict: 0 },
+            envelopeModeCounts: { off: 0, warn: 0, strict: 0 },
+            lastUsedAt: null,
+            lastSurface: null,
+          },
+        },
+        sinkTotals: {
+          registrationCount: 1,
+          unregistrationCount: 0,
+          writesAttempted: 3,
+          writesSucceeded: 2,
+          writesFailed: 1,
+        },
+        sinkRegisteredIds: ['sink-a'],
+        sinkRecentFailures: [],
+        expectedProfilesBySurface: {
+          canvas: ['prod'],
+          product: ['prod'],
+          api: ['prod'],
+        },
+        driftAlerts: [],
+      },
+      {
+        at: '2026-03-05T00:30:00.000Z',
+        trigger: 'threshold',
+        reportEveryUses: 5,
+        usageTotals: { uses: 4 },
+        usageBySurface: { canvas: 1, product: 1, api: 2 },
+        usageByProfile: {
+          dev: {
+            uses: 4,
+            bySurface: { canvas: 1, product: 1, api: 2 },
+            fingerprintModeCounts: { off: 4, warn: 0, strict: 0 },
+            envelopeModeCounts: { off: 4, warn: 0, strict: 0 },
+            lastUsedAt: '2026-03-05T00:30:00.000Z',
+            lastSurface: 'api',
+          },
+          staging: {
+            uses: 0,
+            bySurface: { canvas: 0, product: 0, api: 0 },
+            fingerprintModeCounts: { off: 0, warn: 0, strict: 0 },
+            envelopeModeCounts: { off: 0, warn: 0, strict: 0 },
+            lastUsedAt: null,
+            lastSurface: null,
+          },
+          prod: {
+            uses: 0,
+            bySurface: { canvas: 0, product: 0, api: 0 },
+            fingerprintModeCounts: { off: 0, warn: 0, strict: 0 },
+            envelopeModeCounts: { off: 0, warn: 0, strict: 0 },
+            lastUsedAt: null,
+            lastSurface: null,
+          },
+        },
+        sinkTotals: {
+          registrationCount: 1,
+          unregistrationCount: 0,
+          writesAttempted: 4,
+          writesSucceeded: 3,
+          writesFailed: 1,
+        },
+        sinkRegisteredIds: ['sink-a'],
+        sinkRecentFailures: [],
+        expectedProfilesBySurface: {
+          canvas: ['prod'],
+          product: ['prod'],
+          api: ['prod'],
+        },
+        driftAlerts: [],
+      },
+    ]);
+
+    const secondResponse = await GET_handler(
+      new NextRequest(
+        `http://localhost/api/ai-paths/portable-engine/trend-snapshots?limit=1&trigger=threshold&cursor=${encodeURIComponent(firstCursor)}`
+      ),
+      {} as Parameters<typeof GET_handler>[1]
+    );
+    const secondPayload = (await secondResponse.json()) as Record<string, unknown>;
+    expect(secondPayload['snapshotCount']).toBe(1);
+    expect(secondPayload['matchedSnapshotCount']).toBe(3);
+    expect(
+      (secondPayload['snapshots'] as Array<{ at: string }>).map((entry) => entry.at)
     ).toEqual(['2026-03-05T00:10:00.000Z']);
   });
 

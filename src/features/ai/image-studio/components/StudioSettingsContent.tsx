@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { Button, Input, Label, SectionHeader, Textarea, SelectSimple } from '@/shared/ui';
 
-import { useSettings } from '../context/SettingsContext';
+import { useSettingsActions, useSettingsState } from '../context/SettingsContext';
 
 export function StudioSettingsContent(): React.JSX.Element {
   const promptExtractModel = useBrainAssignment({
@@ -18,14 +18,13 @@ export function StudioSettingsContent(): React.JSX.Element {
   const generationModel = useBrainAssignment({
     capability: 'image_studio.general',
   });
+  const { studioSettings, settingsLoaded } = useSettingsState();
   const {
-    studioSettings,
     setStudioSettings,
     saveStudioSettings,
     resetStudioSettings,
     handleRefreshSettings,
-    settingsLoaded,
-  } = useSettings();
+  } = useSettingsActions();
 
   const [advancedOverridesText, setAdvancedOverridesText] = useState<string>(
     JSON.stringify(studioSettings.targetAi.openai.advanced_overrides ?? {}, null, 2)

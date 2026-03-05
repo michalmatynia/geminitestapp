@@ -9,8 +9,12 @@ import {
   loadPortablePathAuditSinkAutoRemediationDeadLetters,
   replayPortablePathAuditSinkAutoRemediationDeadLetters,
   resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayEndpointAllowlistFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayWindowSecondsFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment,
   type PortablePathAuditSinkAutoRemediationNotificationChannel,
@@ -21,6 +25,7 @@ const MAX_DEAD_LETTER_LIMIT = 500;
 const DEFAULT_DEAD_LETTER_REPLAY_LIMIT = 20;
 const MAX_DEAD_LETTER_REPLAY_LIMIT = 200;
 const DEFAULT_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES = 200;
+const DEFAULT_DEAD_LETTER_REPLAY_WINDOW_SECONDS = 7 * 24 * 60 * 60;
 
 const parseDeadLetterLimit = (value: string | null): number => {
   if (!value) return DEFAULT_DEAD_LETTER_LIMIT;
@@ -167,11 +172,26 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
   const deadLetterMaxEntries =
     resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment() ??
     DEFAULT_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES;
+  const replayWindowSeconds =
+    resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayWindowSecondsFromEnvironment() ??
+    DEFAULT_DEAD_LETTER_REPLAY_WINDOW_SECONDS;
+  const replayEndpointAllowlist = Array.from(
+    new Set(
+      [
+        resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment(),
+        resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironment(),
+        ...(resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayEndpointAllowlistFromEnvironment() ??
+          []),
+      ].filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0)
+    )
+  );
   const result = await replayPortablePathAuditSinkAutoRemediationDeadLetters({
     dryRun: body.dryRun,
     limit: body.limit,
     channel: body.channel ?? undefined,
     endpoint: body.endpoint,
+    replayWindowSeconds,
+    endpointAllowlist: replayEndpointAllowlist,
     timeoutMs: body.timeoutMs,
     maxEntries: deadLetterMaxEntries,
     webhookSecret: resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment(),
@@ -194,6 +214,8 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
       endpoint: body.endpoint,
       timeoutMs: body.timeoutMs ?? null,
       maxEntries: deadLetterMaxEntries,
+      replayWindowSeconds,
+      endpointAllowlistCount: replayEndpointAllowlist.length,
     },
     result,
   });

@@ -35,6 +35,13 @@ const DEFAULT_AUTO_REMEDIATION_RATE_LIMIT_WINDOW_SECONDS = 3600;
 const DEFAULT_AUTO_REMEDIATION_RATE_LIMIT_MAX_ACTIONS = 3;
 const DEFAULT_AUTO_REMEDIATION_NOTIFICATION_TIMEOUT_MS = 8000;
 const DEFAULT_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES = 200;
+const DEAD_LETTER_ERROR_BREAKDOWN_LIMIT = 5;
+const DEAD_LETTER_REPLAY_POLICY_SKIP_REASONS = new Set<string>([
+  'dead_letter_endpoint_missing',
+  'dead_letter_endpoint_invalid',
+  'dead_letter_endpoint_disallowed',
+  'dead_letter_outside_replay_window',
+]);
 const TREND_SNAPSHOT_TRIGGERS = ['manual', 'threshold'] as const;
 const TREND_SNAPSHOT_CURSOR_VERSION = 1 as const;
 
@@ -140,6 +147,18 @@ const parseTrendSnapshotCursor = (
 const encodeTrendSnapshotCursor = (payload: TrendSnapshotCursorPayload): string =>
   Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
 
+const toTopDeadLetterErrorBreakdown = (
+  counts: Record<string, number>,
+  limit = DEAD_LETTER_ERROR_BREAKDOWN_LIMIT
+): Array<{ reason: string; count: number }> =>
+  Object.entries(counts)
+    .sort((left, right) => {
+      if (right[1] !== left[1]) return right[1] - left[1];
+      return left[0].localeCompare(right[0]);
+    })
+    .slice(0, limit)
+    .map(([reason, count]) => ({ reason, count }));
+
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
@@ -186,10 +205,10 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     cursorBeforeTime === null
       ? filteredSnapshots
       : filteredSnapshots.filter((snapshot) => {
-          const snapshotTime = Date.parse(snapshot.at);
-          if (Number.isNaN(snapshotTime)) return false;
-          return snapshotTime < cursorBeforeTime;
-        });
+        const snapshotTime = Date.parse(snapshot.at);
+        if (Number.isNaN(snapshotTime)) return false;
+        return snapshotTime < cursorBeforeTime;
+      });
   const pageSnapshots = cursorFilteredSnapshots.slice(-limit);
   const snapshotCount = pageSnapshots.length;
   const hasMore = cursorFilteredSnapshots.length > pageSnapshots.length;
@@ -206,18 +225,38 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const nextCursor =
     hasMore && snapshotCount > 0
       ? encodeTrendSnapshotCursor({
-          version: TREND_SNAPSHOT_CURSOR_VERSION,
-          beforeAt: pageSnapshots[0]!.at,
-          trigger,
-          from: from?.toISOString() ?? null,
-          to: to?.toISOString() ?? null,
-        })
+        version: TREND_SNAPSHOT_CURSOR_VERSION,
+        beforeAt: pageSnapshots[0]!.at,
+        trigger,
+        from: from?.toISOString() ?? null,
+        to: to?.toISOString() ?? null,
+      })
       : null;
   const notificationDeadLetterCount = deadLetters.length;
   const latestNotificationDeadLetterAt =
     notificationDeadLetterCount > 0
       ? deadLetters[notificationDeadLetterCount - 1]!.queuedAt
       : null;
+  const deadLetterErrorCounts: Record<string, number> = {};
+  const deadLetterReplayPolicySkipCounts: Record<string, number> = {};
+  for (const entry of deadLetters) {
+    const reason =
+      typeof entry.error === 'string' && entry.error.trim().length > 0
+        ? entry.error
+        : 'unknown';
+    deadLetterErrorCounts[reason] = (deadLetterErrorCounts[reason] ?? 0) + 1;
+    if (DEAD_LETTER_REPLAY_POLICY_SKIP_REASONS.has(reason)) {
+      deadLetterReplayPolicySkipCounts[reason] =
+        (deadLetterReplayPolicySkipCounts[reason] ?? 0) + 1;
+    }
+  }
+  const deadLetterTopErrors = toTopDeadLetterErrorBreakdown(deadLetterErrorCounts);
+  const deadLetterReplayPolicySkipReasons = toTopDeadLetterErrorBreakdown(
+    deadLetterReplayPolicySkipCounts
+  );
+  const deadLetterReplayPolicySkipsTotal = Object.values(
+    deadLetterReplayPolicySkipCounts
+  ).reduce((sum, value) => sum + value, 0);
 
   return NextResponse.json({
     specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
@@ -241,6 +280,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       sinkWritesFailedTotal,
       notificationDeadLetterCount,
       latestNotificationDeadLetterAt,
+      notificationDeadLetterTopErrors: deadLetterTopErrors,
     },
     autoRemediation: {
       enabled:
@@ -286,6 +326,9 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
           maxEntries: deadLetterMaxEntries,
           queuedCount: notificationDeadLetterCount,
           latestQueuedAt: latestNotificationDeadLetterAt,
+          topErrors: deadLetterTopErrors,
+          replayPolicySkipsTotal: deadLetterReplayPolicySkipsTotal,
+          replayPolicySkipReasons: deadLetterReplayPolicySkipReasons,
         },
       },
       state: autoRemediationState,

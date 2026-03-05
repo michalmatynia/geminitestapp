@@ -263,7 +263,3 @@ export function useSettingsActions(): SettingsActions {
   if (!ctx) throw new Error('useSettingsActions must be used within a SettingsProvider');
   return ctx;
 }
-
-export function useSettings(): SettingsState & SettingsActions {
-  return { ...useSettingsState(), ...useSettingsActions() };
-}

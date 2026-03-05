@@ -5,6 +5,7 @@ import {
   enqueuePortablePathAuditSinkAutoRemediationDeadLetter,
   loadPortablePathAuditSinkAutoRemediationDeadLetters,
   notifyPortablePathAuditSinkAutoRemediation,
+  replayPortablePathAuditSinkAutoRemediationDeadLetters,
   savePortablePathAuditSinkAutoRemediationDeadLetters,
 } from '../sinks.server';
 
@@ -237,5 +238,263 @@ describe('portable-engine remediation notifications', () => {
     expect(loadedAfterEnqueue).toHaveLength(2);
     expect(loadedAfterEnqueue[0]?.queuedAt).toBe('2026-03-05T00:02:00.000Z');
     expect(loadedAfterEnqueue[1]?.queuedAt).toBe('2026-03-05T00:03:00.000Z');
+  });
+
+  it('replays matching dead letters and removes successful deliveries from queue', async () => {
+    let rawStore: string | null = null;
+    const writeRaw = async (raw: string): Promise<boolean> => {
+      rawStore = raw;
+      return true;
+    };
+    const readRaw = async (): Promise<string | null> => rawStore;
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 204,
+    });
+
+    await savePortablePathAuditSinkAutoRemediationDeadLetters(
+      [
+        {
+          queuedAt: '2026-03-05T00:00:00.000Z',
+          channel: 'webhook',
+          endpoint: 'https://example.test/remediation',
+          payload: { event: 'portable_audit_sink_auto_remediation' },
+          error: 'notification_http_502',
+          statusCode: 502,
+          attemptCount: 1,
+          signature: null,
+        },
+        {
+          queuedAt: '2026-03-05T00:01:00.000Z',
+          channel: 'email',
+          endpoint: 'https://example.test/email',
+          payload: { event: 'portable_audit_sink_auto_remediation_email' },
+          error: 'notification_http_500',
+          statusCode: 500,
+          attemptCount: 1,
+          signature: null,
+        },
+      ],
+      {
+        maxEntries: 10,
+        writeRaw,
+      }
+    );
+
+    const replayResult = await replayPortablePathAuditSinkAutoRemediationDeadLetters({
+      dryRun: false,
+      limit: 1,
+      channel: 'webhook',
+      maxEntries: 10,
+      now: '2026-03-05T00:10:00.000Z',
+      webhookSecret: 'replay-secret',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+      writeLog: async () => {},
+      readRaw,
+      writeRaw,
+    });
+
+    expect(replayResult.selectedCount).toBe(1);
+    expect(replayResult.attemptedCount).toBe(1);
+    expect(replayResult.deliveredCount).toBe(1);
+    expect(replayResult.removedCount).toBe(1);
+    expect(replayResult.remainingCount).toBe(1);
+    expect(replayResult.persisted).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    const remaining = await loadPortablePathAuditSinkAutoRemediationDeadLetters({
+      maxEntries: 10,
+      readRaw,
+    });
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]?.channel).toBe('email');
+  });
+
+  it('retains failed replay entries and increments attempt counters', async () => {
+    let rawStore: string | null = null;
+    const writeRaw = async (raw: string): Promise<boolean> => {
+      rawStore = raw;
+      return true;
+    };
+    const readRaw = async (): Promise<string | null> => rawStore;
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 503,
+    });
+
+    await savePortablePathAuditSinkAutoRemediationDeadLetters(
+      [
+        {
+          queuedAt: '2026-03-05T00:00:00.000Z',
+          channel: 'webhook',
+          endpoint: 'https://example.test/remediation',
+          payload: { event: 'portable_audit_sink_auto_remediation' },
+          error: 'notification_http_502',
+          statusCode: 502,
+          attemptCount: 1,
+          signature: null,
+        },
+      ],
+      {
+        maxEntries: 10,
+        writeRaw,
+      }
+    );
+
+    const replayResult = await replayPortablePathAuditSinkAutoRemediationDeadLetters({
+      dryRun: false,
+      limit: 1,
+      channel: 'webhook',
+      maxEntries: 10,
+      now: '2026-03-05T00:20:00.000Z',
+      webhookSecret: 'replay-secret',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+      writeLog: async () => {},
+      readRaw,
+      writeRaw,
+    });
+
+    expect(replayResult.selectedCount).toBe(1);
+    expect(replayResult.attemptedCount).toBe(1);
+    expect(replayResult.failedCount).toBe(1);
+    expect(replayResult.removedCount).toBe(0);
+    expect(replayResult.remainingCount).toBe(1);
+
+    const remaining = await loadPortablePathAuditSinkAutoRemediationDeadLetters({
+      maxEntries: 10,
+      readRaw,
+    });
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]?.attemptCount).toBe(2);
+    expect(remaining[0]?.statusCode).toBe(503);
+    expect(remaining[0]?.error).toBe('notification_http_503');
+    expect(remaining[0]?.signature).toEqual(
+      expect.objectContaining({
+        algorithm: 'hmac_sha256',
+      })
+    );
+  });
+
+  it('skips entries outside the replay window and keeps them queued', async () => {
+    let rawStore: string | null = null;
+    const writeRaw = async (raw: string): Promise<boolean> => {
+      rawStore = raw;
+      return true;
+    };
+    const readRaw = async (): Promise<string | null> => rawStore;
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 204,
+    });
+
+    await savePortablePathAuditSinkAutoRemediationDeadLetters(
+      [
+        {
+          queuedAt: '2026-03-04T20:00:00.000Z',
+          channel: 'webhook',
+          endpoint: 'https://example.test/remediation',
+          payload: { event: 'portable_audit_sink_auto_remediation' },
+          error: 'notification_http_502',
+          statusCode: 502,
+          attemptCount: 1,
+          signature: null,
+        },
+      ],
+      {
+        maxEntries: 10,
+        writeRaw,
+      }
+    );
+
+    const replayResult = await replayPortablePathAuditSinkAutoRemediationDeadLetters({
+      dryRun: false,
+      limit: 1,
+      channel: 'webhook',
+      maxEntries: 10,
+      now: '2026-03-05T00:20:00.000Z',
+      replayWindowSeconds: 300,
+      endpointAllowlist: ['https://example.test/remediation'],
+      webhookSecret: 'replay-secret',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+      writeLog: async () => {},
+      readRaw,
+      writeRaw,
+    });
+
+    expect(replayResult.selectedCount).toBe(1);
+    expect(replayResult.attemptedCount).toBe(0);
+    expect(replayResult.failedCount).toBe(1);
+    expect(replayResult.skippedCount).toBe(1);
+    expect(replayResult.removedCount).toBe(0);
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    const remaining = await loadPortablePathAuditSinkAutoRemediationDeadLetters({
+      maxEntries: 10,
+      readRaw,
+    });
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]?.attemptCount).toBe(2);
+    expect(remaining[0]?.error).toBe('dead_letter_outside_replay_window');
+  });
+
+  it('skips entries outside endpoint allowlist and keeps them queued', async () => {
+    let rawStore: string | null = null;
+    const writeRaw = async (raw: string): Promise<boolean> => {
+      rawStore = raw;
+      return true;
+    };
+    const readRaw = async (): Promise<string | null> => rawStore;
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 204,
+    });
+
+    await savePortablePathAuditSinkAutoRemediationDeadLetters(
+      [
+        {
+          queuedAt: '2026-03-05T00:00:00.000Z',
+          channel: 'webhook',
+          endpoint: 'https://example.test/remediation',
+          payload: { event: 'portable_audit_sink_auto_remediation' },
+          error: 'notification_http_502',
+          statusCode: 502,
+          attemptCount: 1,
+          signature: null,
+        },
+      ],
+      {
+        maxEntries: 10,
+        writeRaw,
+      }
+    );
+
+    const replayResult = await replayPortablePathAuditSinkAutoRemediationDeadLetters({
+      dryRun: false,
+      limit: 1,
+      channel: 'webhook',
+      maxEntries: 10,
+      now: '2026-03-05T00:20:00.000Z',
+      endpointAllowlist: ['https://example.test/other'],
+      webhookSecret: 'replay-secret',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+      writeLog: async () => {},
+      readRaw,
+      writeRaw,
+    });
+
+    expect(replayResult.selectedCount).toBe(1);
+    expect(replayResult.attemptedCount).toBe(0);
+    expect(replayResult.failedCount).toBe(1);
+    expect(replayResult.skippedCount).toBe(1);
+    expect(replayResult.removedCount).toBe(0);
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    const remaining = await loadPortablePathAuditSinkAutoRemediationDeadLetters({
+      maxEntries: 10,
+      readRaw,
+    });
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]?.attemptCount).toBe(2);
+    expect(remaining[0]?.error).toBe('dead_letter_endpoint_disallowed');
   });
 });

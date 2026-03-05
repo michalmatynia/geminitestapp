@@ -861,7 +861,3 @@ export function useVersionGraphActions(): VersionGraphActions {
   if (!ctx) throw new Error('useVersionGraphActions must be used within a VersionGraphProvider');
   return ctx;
 }
-
-export function useVersionGraph(): VersionGraphState & VersionGraphActions {
-  return { ...useVersionGraphState(), ...useVersionGraphActions() };
-}

@@ -606,15 +606,6 @@ export function useGraphActions(): GraphActions {
   return context;
 }
 
-/**
- * Combined hook for components that need both state and actions.
- */
-export function useGraph(): GraphState & GraphActions {
-  const state = useGraphState();
-  const actions = useGraphActions();
-  return { ...state, ...actions };
-}
-
 // ---------------------------------------------------------------------------
 // Selector Hooks (for fine-grained subscriptions)
 // ---------------------------------------------------------------------------

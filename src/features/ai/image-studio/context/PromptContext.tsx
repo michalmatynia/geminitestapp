@@ -244,7 +244,3 @@ export function usePromptActions(): PromptActions {
   if (!ctx) throw new Error('usePromptActions must be used within a PromptProvider');
   return ctx;
 }
-
-export function usePrompt(): PromptState & PromptActions {
-  return { ...usePromptState(), ...usePromptActions() };
-}

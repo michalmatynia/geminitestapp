@@ -21,7 +21,7 @@ import {
 import { cn } from '@/shared/utils';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-import { useProjects } from '../context/ProjectsContext';
+import { useProjectsActions, useProjectsState } from '../context/ProjectsContext';
 import {
   IMAGE_STUDIO_CANVAS_TEMPLATES_KEY,
   parseImageStudioCanvasTemplates,
@@ -80,19 +80,17 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
   const projectSettingsMutation = useUpdateSetting();
   const projectLocksMutation = useUpdateSetting();
   const canvasTemplatesMutation = useUpdateSetting();
+  const { projectId, projectsQuery, projectSearch } = useProjectsState();
   const {
-    projectId,
     setProjectId,
-    projectsQuery,
     createProjectMutation,
     renameProjectMutation,
     deleteProjectMutation,
     handleConfirmDeleteProject,
     handleRenameProject,
-    projectSearch,
     setProjectSearch,
     ConfirmationModal,
-  } = useProjects();
+  } = useProjectsActions();
 
   const [newProjectId, setNewProjectId] = React.useState('');
   const [newProjectCanvasWidthPx, setNewProjectCanvasWidthPx] = React.useState('1024');

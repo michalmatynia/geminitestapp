@@ -194,12 +194,6 @@ export const useSystemLogsActions = (): SystemLogsActionsContextValue => {
   return context;
 };
 
-export const useSystemLogsContext = (): SystemLogsContextValue => {
-  const state = useSystemLogsState();
-  const actions = useSystemLogsActions();
-  return useMemo((): SystemLogsContextValue => ({ ...state, ...actions }), [state, actions]);
-};
-
 export function SystemLogsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { toast } = useToast();
   const pathname = usePathname();

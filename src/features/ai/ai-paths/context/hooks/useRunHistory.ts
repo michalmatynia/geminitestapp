@@ -1,7 +1,7 @@
 /**
  * Re-export run history hooks from RunHistoryContext.
  */
-export { useRunHistory, useRunHistoryState, useRunHistoryActions } from '../RunHistoryContext';
+export { useRunHistoryState, useRunHistoryActions } from '../RunHistoryContext';
 
 export type {
   RunHistoryState,

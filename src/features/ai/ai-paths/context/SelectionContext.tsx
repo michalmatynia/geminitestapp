@@ -229,13 +229,3 @@ export function useSelectionActions(): SelectionActions {
   }
   return context;
 }
-
-/**
- * Combined hook for components that need both state and actions.
- * Prefer using useSelectionState or useSelectionActions separately when possible.
- */
-export function useSelection(): SelectionState & SelectionActions {
-  const state = useSelectionState();
-  const actions = useSelectionActions();
-  return { ...state, ...actions };
-}

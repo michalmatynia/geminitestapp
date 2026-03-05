@@ -4,7 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   InspectorAiProvider,
-  useInspectorAi,
+  useInspectorAiActions,
+  useInspectorAiState,
 } from '@/features/cms/components/page-builder/context/InspectorAiContext';
 import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
@@ -82,7 +83,10 @@ describe('InspectorAiContext', () => {
       </InspectorAiProvider>
     );
 
-    const { result } = renderHook(() => useInspectorAi(), { wrapper });
+    const { result } = renderHook(
+      () => ({ ...useInspectorAiState(), ...useInspectorAiActions() }),
+      { wrapper }
+    );
     const value = result.current as unknown as Record<string, unknown>;
 
     expect(result.current.brainAiProvider).toBe('model');

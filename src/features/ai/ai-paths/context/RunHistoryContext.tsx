@@ -349,12 +349,3 @@ export function useRunHistoryActions(): RunHistoryActions {
   }
   return context;
 }
-
-/**
- * Combined hook for components that need both state and actions.
- */
-export function useRunHistory(): RunHistoryState & RunHistoryActions {
-  const state = useRunHistoryState();
-  const actions = useRunHistoryActions();
-  return { ...state, ...actions };
-}

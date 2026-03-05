@@ -552,9 +552,8 @@ if (typeof window !== 'undefined') {
 }
 
 // Mock SystemLogsProvider to always provide static test data
-vi.mock('@/features/observability/context/SystemLogsContext', () => ({
-  SystemLogsProvider: ({ children }: any) => children,
-  useSystemLogsContext: vi.fn(() => ({
+vi.mock('@/features/observability/context/SystemLogsContext', () => {
+  const systemLogsMock = {
     logsQuery: {
       isPending: false,
       data: {
@@ -665,8 +664,14 @@ vi.mock('@/features/observability/context/SystemLogsContext', () => ({
     },
     levels: { error: 1, warn: 0, info: 1 },
     logsJson: '[]',
-  })),
-}));
+  };
+
+  return {
+    SystemLogsProvider: ({ children }: any) => children,
+    useSystemLogsState: vi.fn(() => systemLogsMock),
+    useSystemLogsActions: vi.fn(() => systemLogsMock),
+  };
+});
 
 import { http, HttpResponse } from 'msw';
 

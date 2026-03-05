@@ -59,6 +59,10 @@ import {
   resolvePortablePathAuditSinkFailureAlertLevelFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayEndpointAllowlistFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportKeyIdFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportSecretFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayWindowSecondsFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironment,
@@ -566,6 +570,42 @@ describe('portable-engine envelope verification sink factories', () => {
     ).toBe(333);
     expect(
       resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment('invalid')
+    ).toBeNull();
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayWindowSecondsFromEnvironment(
+        '7200'
+      )
+    ).toBe(7200);
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayWindowSecondsFromEnvironment(
+        'invalid'
+      )
+    ).toBeNull();
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayEndpointAllowlistFromEnvironment(
+        'https://example.test/a, https://example.test/b, not-a-url'
+      )
+    ).toEqual(['https://example.test/a', 'https://example.test/b']);
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayEndpointAllowlistFromEnvironment(
+        'invalid'
+      )
+    ).toBeNull();
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportSecretFromEnvironment(
+        ' replay-export-secret '
+      )
+    ).toBe('replay-export-secret');
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportSecretFromEnvironment('')
+    ).toBeNull();
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportKeyIdFromEnvironment(
+        'replay-export-key-v1'
+      )
+    ).toBe('replay-export-key-v1');
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportKeyIdFromEnvironment('')
     ).toBeNull();
     expect(resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment('5')).toBe(5);
     expect(resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment('oops')).toBeNull();

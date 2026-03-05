@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { useGeneration } from '../context/GenerationContext';
+import { useGenerationActions, useGenerationState } from '../context/GenerationContext';
 
 export type GenerationHistoryPanelProps = {
   className?: string | undefined;
@@ -16,7 +16,8 @@ export type GenerationHistoryPanelProps = {
 export function GenerationHistoryPanel({
   className,
 }: GenerationHistoryPanelProps): React.JSX.Element {
-  const { generationHistory, restoreGeneration, removeGenerationRecord } = useGeneration();
+  const { generationHistory } = useGenerationState();
+  const { restoreGeneration, removeGenerationRecord } = useGenerationActions();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 

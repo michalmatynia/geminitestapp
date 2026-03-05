@@ -118,12 +118,3 @@ export function useComponentTreePanelActions(): ComponentTreePanelActionsContext
   }
   return context;
 }
-
-export function useComponentTreePanelContext(): ComponentTreePanelContextValue {
-  const state = useComponentTreePanelState();
-  const actions = useComponentTreePanelActions();
-  return useMemo((): ComponentTreePanelContextValue => ({ ...state, ...actions }), [
-    state,
-    actions,
-  ]);
-}

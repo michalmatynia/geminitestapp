@@ -358,7 +358,3 @@ export function useProjectsActions(): ProjectsActions {
   if (!ctx) throw new Error('useProjectsActions must be used within a ProjectsProvider');
   return ctx;
 }
-
-export function useProjects(): ProjectsState & ProjectsActions {
-  return { ...useProjectsState(), ...useProjectsActions() };
-}

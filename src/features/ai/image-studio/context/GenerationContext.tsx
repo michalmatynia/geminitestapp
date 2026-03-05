@@ -845,7 +845,3 @@ export function useGenerationActions(): GenerationActions {
   if (!ctx) throw new Error('useGenerationActions must be used within a GenerationProvider');
   return ctx;
 }
-
-export function useGeneration(): GenerationState & GenerationActions {
-  return { ...useGenerationState(), ...useGenerationActions() };
-}

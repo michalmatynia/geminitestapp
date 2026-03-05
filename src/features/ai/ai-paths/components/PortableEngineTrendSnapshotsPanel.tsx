@@ -33,6 +33,11 @@ type TrendSnapshotsPayload = {
       emailWebhookConfigured: boolean;
       emailRecipients: string[];
       timeoutMs: number;
+      deadLetter: {
+        queuedCount: number;
+        replayPolicySkipsTotal: number;
+        replayPolicySkipReasons: Array<{ reason: string; count: number }>;
+      };
     };
     state: {
       consecutiveFailureCount: number;
@@ -99,17 +104,33 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
             Signing policy drift, sink failures, and auto-remediation state.
           </p>
         </div>
-        <Button
-          size='xs'
-          variant='outline'
-          onClick={() => {
-            void loadSnapshots();
-          }}
-          disabled={isLoading}
-        >
-          <RefreshCcwIcon className='mr-1.5 size-3.5' />
-          Refresh
-        </Button>
+        <div className='flex flex-wrap items-center gap-2'>
+          <Button
+            size='xs'
+            variant='outline'
+            onClick={() => {
+              window.open(
+                '/api/ai-paths/portable-engine/remediation-dead-letters/replay-history?limit=200&includeAttempts=true',
+                '_blank',
+                'noopener,noreferrer'
+              );
+            }}
+            disabled={isLoading}
+          >
+            Export Replay History
+          </Button>
+          <Button
+            size='xs'
+            variant='outline'
+            onClick={() => {
+              void loadSnapshots();
+            }}
+            disabled={isLoading}
+          >
+            <RefreshCcwIcon className='mr-1.5 size-3.5' />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {isLoading && !data ? (
@@ -158,6 +179,26 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
             {data.autoRemediation.notifications.enabled
               ? `on (webhook=${data.autoRemediation.notifications.webhookConfigured ? 'yes' : 'no'}, email=${data.autoRemediation.notifications.emailWebhookConfigured ? 'yes' : 'no'})`
               : 'off'}
+            {' | '}dead-letter queued: {data.autoRemediation.notifications.deadLetter.queuedCount}
+            {' | '}policy skips:{' '}
+            {data.autoRemediation.notifications.deadLetter.replayPolicySkipsTotal}
+          </div>
+
+          <div className='rounded-md border border-border/60 bg-black/20 p-2 text-xs text-gray-300'>
+            <div className='font-medium text-gray-200'>Dead-letter replay policy skip reasons</div>
+            {data.autoRemediation.notifications.deadLetter.replayPolicySkipReasons.length > 0 ? (
+              <div className='mt-1 flex flex-wrap gap-1.5'>
+                {data.autoRemediation.notifications.deadLetter.replayPolicySkipReasons.map(
+                  (entry) => (
+                    <Badge key={entry.reason} variant='outline' className='border-white/10 text-gray-300'>
+                      {entry.reason} ({entry.count})
+                    </Badge>
+                  )
+                )}
+              </div>
+            ) : (
+              <div className='mt-1 text-gray-400'>No replay-policy skip reasons in dead letters.</div>
+            )}
           </div>
 
           {latestSnapshots.length === 0 ? (

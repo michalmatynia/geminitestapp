@@ -564,7 +564,3 @@ export function useSlotsState(): SlotsContextType {
 export function useSlotsActions(): SlotsContextType {
   return useSlotsState();
 }
-
-export function useSlots(): SlotsContextType {
-  return useSlotsState();
-}

@@ -18,7 +18,11 @@ const buildViewportRect = (): DOMRect =>
     toJSON: () => ({}),
   }) as DOMRect;
 
-const buildHarness = (): {
+const buildHarness = (options?: {
+  applyWheelZoom?: ReturnType<typeof vi.fn>;
+  isPanActive?: () => boolean;
+  rebasePanStateFromClient?: (x: number, y: number) => void;
+}): {
   viewportElement: HTMLDivElement;
   applyWheelZoom: ReturnType<typeof vi.fn>;
   handleWheel: (event: React.WheelEvent) => void;
@@ -30,7 +34,7 @@ const buildHarness = (): {
   });
 
   const viewportRef = { current: viewportElement } as React.RefObject<HTMLDivElement>;
-  const applyWheelZoom = vi.fn();
+  const applyWheelZoom = options?.applyWheelZoom ?? vi.fn();
   const updateLastPointerCanvasPosFromClient = vi.fn();
   const nav = {
     applyWheelZoom,
@@ -42,6 +46,8 @@ const buildHarness = (): {
       view: { scale: 1, panX: 0, panY: 0 },
       nav,
       updateLastPointerCanvasPosFromClient,
+      isPanActive: options?.isPanActive,
+      rebasePanStateFromClient: options?.rebasePanStateFromClient,
     })
   );
 
@@ -96,7 +102,16 @@ describe('useCanvasEventHandlers wheel capture boundaries', () => {
 
     expect(preventDefault).toHaveBeenCalledTimes(1);
     expect(applyWheelZoom).toHaveBeenCalledTimes(1);
-    expect(applyWheelZoom).toHaveBeenCalledWith(80, 260, 240, WheelEvent.DOM_DELTA_PIXEL, false, false, 0);
+    expect(applyWheelZoom).toHaveBeenCalledWith(
+      80,
+      260,
+      240,
+      WheelEvent.DOM_DELTA_PIXEL,
+      false,
+      false,
+      0,
+      undefined
+    );
 
     unmount();
   });
@@ -187,6 +202,41 @@ describe('useCanvasEventHandlers wheel capture boundaries', () => {
     expect(preventDefault).toHaveBeenCalledTimes(0);
     expect(stopPropagation).toHaveBeenCalledTimes(0);
     expect(applyWheelZoom).toHaveBeenCalledTimes(0);
+
+    unmount();
+  });
+
+  it('uses immediate wheel zoom and rebases active pan anchor when panning', () => {
+    const rebasePanStateFromClient = vi.fn();
+    const { viewportElement, applyWheelZoom, handleWheel, unmount } = buildHarness({
+      isPanActive: () => true,
+      rebasePanStateFromClient,
+    });
+    const { event, preventDefault } = buildWheelEvent({
+      target: viewportElement,
+      deltaY: 48,
+      clientX: 260,
+      clientY: 220,
+    });
+
+    act(() => {
+      handleWheel(event);
+    });
+
+    expect(preventDefault).toHaveBeenCalledTimes(1);
+    expect(applyWheelZoom).toHaveBeenCalledTimes(1);
+    expect(applyWheelZoom).toHaveBeenCalledWith(
+      48,
+      260,
+      220,
+      WheelEvent.DOM_DELTA_PIXEL,
+      false,
+      false,
+      0,
+      { immediate: true }
+    );
+    expect(rebasePanStateFromClient).toHaveBeenCalledTimes(1);
+    expect(rebasePanStateFromClient).toHaveBeenCalledWith(260, 220);
 
     unmount();
   });

@@ -92,7 +92,7 @@ export function CanvasSvgNodePorts({
   const trackConnectorPressMove = React.useCallback(
     (event: React.PointerEvent<SVGCircleElement>, key: string): void => {
       const press = connectorPressByPointerIdRef.current.get(event.pointerId);
-      if (!press || press.key !== key || press.moved) return;
+      if (press?.key !== key || press.moved) return;
       const deltaX = event.clientX - press.startClientX;
       const deltaY = event.clientY - press.startClientY;
       if (deltaX * deltaX + deltaY * deltaY > CONNECTOR_TAP_MOVE_THRESHOLD_SQ) {
@@ -106,7 +106,7 @@ export function CanvasSvgNodePorts({
     (event: React.PointerEvent<SVGCircleElement>, key: string): boolean => {
       const press = connectorPressByPointerIdRef.current.get(event.pointerId);
       connectorPressByPointerIdRef.current.delete(event.pointerId);
-      if (!press || press.key !== key || event.button !== 0) return false;
+      if (press?.key !== key || event.button !== 0) return false;
       const deltaX = event.clientX - press.startClientX;
       const deltaY = event.clientY - press.startClientY;
       const moved = press.moved || deltaX * deltaX + deltaY * deltaY > CONNECTOR_TAP_MOVE_THRESHOLD_SQ;

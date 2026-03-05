@@ -56,16 +56,3 @@ export function useOptionalSettingsFormState(): SettingsFormStateContextValue | 
 export function useOptionalSettingsFormActions(): SettingsFormActionsContextValue | null {
   return useContext(SettingsFormActionsContext);
 }
-
-export function useSettingsForm(): SettingsFormContextValue {
-  const state = useSettingsFormState();
-  const actions = useSettingsFormActions();
-  return useMemo((): SettingsFormContextValue => ({ ...state, ...actions }), [state, actions]);
-}
-
-export function useOptionalSettingsForm(): SettingsFormContextValue | null {
-  const state = useOptionalSettingsFormState();
-  const actions = useOptionalSettingsFormActions();
-  if (!state || !actions) return null;
-  return { ...state, ...actions };
-}

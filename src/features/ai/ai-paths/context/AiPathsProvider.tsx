@@ -69,7 +69,10 @@ interface AiPathsProviderProps {
  * 6. RuntimeProvider - Runtime state (inputs, outputs, samples, errors)
  * 7. PersistenceProvider - Persistence state (loading, saving, autoSave)
  *
- * Components consume via hooks: useSelection(), useCanvas(), usePresets(), useRunHistory(), useGraph(), useRuntime(), usePersistence()
+ * Components consume via hooks: useSelectionState/useSelectionActions,
+ * useCanvasState/useCanvasActions/useCanvasRefs,
+ * usePresetsState/usePresetsActions, useRunHistoryState/useRunHistoryActions,
+ * useGraphState/useGraphActions, useRuntimeState/useRuntimeActions, usePersistenceState/usePersistenceActions.
  */
 export function AiPathsProvider(props: AiPathsProviderProps): React.ReactNode {
   const {

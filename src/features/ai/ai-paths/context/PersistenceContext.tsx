@@ -254,12 +254,3 @@ export function usePersistenceActions(): PersistenceActions {
   }
   return context;
 }
-
-/**
- * Combined hook for components that need both state and actions.
- */
-export function usePersistence(): PersistenceState & PersistenceActions {
-  const state = usePersistenceState();
-  const actions = usePersistenceActions();
-  return { ...state, ...actions };
-}

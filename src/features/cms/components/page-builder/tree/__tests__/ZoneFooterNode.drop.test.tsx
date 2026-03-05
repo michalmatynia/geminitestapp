@@ -12,7 +12,7 @@ const { moveSectionByMasterMock, endSectionDragMock, useDragStateMock } = vi.hoi
 }));
 
 vi.mock('@/features/cms/components/page-builder/tree/ComponentTreePanelContext', () => ({
-  useComponentTreePanelContext: () => ({
+  useComponentTreePanelState: () => ({
     currentPage: { id: 'page-1' },
     clipboard: null,
     showExtractPlaceholder: true,
@@ -29,9 +29,11 @@ vi.mock('@/features/cms/components/page-builder/tree/ComponentTreePanelContext',
     },
     treeInlineDropLabel: 'Drop here',
     treeRootDropLabel: 'Drop section',
+    draggedMasterSectionId: 'section-master',
+  }),
+  useComponentTreePanelActions: () => ({
     startSectionMasterDrag: vi.fn(),
     endSectionMasterDrag: vi.fn(),
-    draggedMasterSectionId: 'section-master',
     moveSectionByMaster: moveSectionByMasterMock,
   }),
 }));

@@ -515,15 +515,3 @@ export function ComponentSettingsProvider({
     </ComponentSettingsActionsContext.Provider>
   );
 }
-
-export function useComponentSettingsContext(): ComponentSettingsContextValue {
-  const state = useComponentSettingsState();
-  const actions = useComponentSettingsActions();
-  return useMemo(
-    (): ComponentSettingsContextValue => ({
-      ...state,
-      ...actions,
-    }),
-    [state, actions]
-  );
-}

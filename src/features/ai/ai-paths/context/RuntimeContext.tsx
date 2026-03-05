@@ -674,15 +674,6 @@ export function useRuntimeActions(): RuntimeActions {
   return context;
 }
 
-/**
- * Combined hook for components that need both state and actions.
- */
-export function useRuntime(): RuntimeStateData & RuntimeActions {
-  const state = useRuntimeState();
-  const actions = useRuntimeActions();
-  return { ...state, ...actions };
-}
-
 // ---------------------------------------------------------------------------
 // Selector Hooks (for fine-grained subscriptions)
 // ---------------------------------------------------------------------------

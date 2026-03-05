@@ -2,7 +2,6 @@
  * Re-export graph hooks from GraphContext.
  */
 export {
-  useGraph,
   useGraphState,
   useGraphActions,
   useNodes,

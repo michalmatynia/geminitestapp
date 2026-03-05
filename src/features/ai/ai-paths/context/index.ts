@@ -9,20 +9,19 @@ export { PersistenceProvider } from './PersistenceContext';
 export { AiPathsProvider } from './AiPathsProvider';
 
 // Consumer Hooks - Selection
-export { useSelection, useSelectionState, useSelectionActions } from './SelectionContext';
+export { useSelectionState, useSelectionActions } from './SelectionContext';
 
 // Consumer Hooks - Canvas
-export { useCanvas, useCanvasState, useCanvasActions, useCanvasRefs } from './CanvasContext';
+export { useCanvasState, useCanvasActions, useCanvasRefs } from './CanvasContext';
 
 // Consumer Hooks - Presets
-export { usePresets, usePresetsState, usePresetsActions } from './PresetsContext';
+export { usePresetsState, usePresetsActions } from './PresetsContext';
 
 // Consumer Hooks - Run History
-export { useRunHistory, useRunHistoryState, useRunHistoryActions } from './RunHistoryContext';
+export { useRunHistoryState, useRunHistoryActions } from './RunHistoryContext';
 
 // Consumer Hooks - Graph
 export {
-  useGraph,
   useGraphState,
   useGraphActions,
   useNodes,
@@ -32,10 +31,10 @@ export {
 } from './GraphContext';
 
 // Consumer Hooks - Runtime
-export { useRuntime, useRuntimeState, useRuntimeActions, useNodeRuntime } from './RuntimeContext';
+export { useRuntimeState, useRuntimeActions, useNodeRuntime } from './RuntimeContext';
 
 // Consumer Hooks - Persistence
-export { usePersistence, usePersistenceState, usePersistenceActions } from './PersistenceContext';
+export { usePersistenceState, usePersistenceActions } from './PersistenceContext';
 
 // Types - Selection
 export type { SelectionState, SelectionActions } from './SelectionContext';

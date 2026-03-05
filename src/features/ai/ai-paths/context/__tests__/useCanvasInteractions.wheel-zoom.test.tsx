@@ -97,6 +97,47 @@ describe('useCanvasInteractionsNavigation wheel zoom', () => {
     expect(scale).not.toBe(1);
   });
 
+  it('applies immediate wheel zoom without scheduling animation frames when requested', () => {
+    const viewportElement = document.createElement('div');
+    Object.defineProperty(viewportElement, 'getBoundingClientRect', {
+      value: (): DOMRect => buildViewportRect(),
+    });
+
+    const latestViewRef = { current: { x: 0, y: 0, scale: 1 } };
+    const viewportRef = { current: viewportElement } as React.RefObject<HTMLDivElement | null>;
+    const rafQueue: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(
+      (callback: FrameRequestCallback): number => {
+        rafQueue.push(callback);
+        return rafQueue.length;
+      }
+    );
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((): void => undefined);
+
+    const { result, unmount } = renderHook(() =>
+      useCanvasInteractionsNavigation({
+        view: latestViewRef.current,
+        latestViewRef,
+        updateView: (next): void => {
+          latestViewRef.current = next;
+        },
+        viewportRef,
+        nodes: [],
+        resolveActiveNodeSelectionIds: (): string[] => [],
+        updateLastPointerCanvasPosFromClient: (): { x: number; y: number } | null => null,
+      })
+    );
+
+    act(() => {
+      result.current.applyWheelZoom(0.4, 300, 220, 0, false, false, 0, { immediate: true });
+    });
+
+    expect(latestViewRef.current.scale).not.toBe(1);
+    expect(rafQueue.length).toBe(0);
+
+    unmount();
+  });
+
   it('allows higher upward pan when nodes exist above canvas origin', () => {
     const viewportElement = document.createElement('div');
     Object.defineProperty(viewportElement, 'getBoundingClientRect', {

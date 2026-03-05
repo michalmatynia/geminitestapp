@@ -32,7 +32,3 @@ export function useSectionBlockData(): SectionBlockData {
   }
   return context;
 }
-
-export function useOptionalSectionBlockData(): SectionBlockData | null {
-  return useContext(SectionBlockContext);
-}

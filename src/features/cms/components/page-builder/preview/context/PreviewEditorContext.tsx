@@ -120,18 +120,3 @@ export function useOptionalPreviewEditorState(): PreviewEditorStateContextValue 
 export function useOptionalPreviewEditorActions(): PreviewEditorActionsContextValue | undefined {
   return useContext(PreviewEditorActionsContext);
 }
-
-export function usePreviewEditor(): PreviewEditorContextValue {
-  const state = usePreviewEditorState();
-  const actions = usePreviewEditorActions();
-  return useMemo((): PreviewEditorContextValue => ({ ...state, ...actions }), [state, actions]);
-}
-
-export function useOptionalPreviewEditor(): PreviewEditorContextValue | undefined {
-  const state = useOptionalPreviewEditorState();
-  const actions = useOptionalPreviewEditorActions();
-  if (state === undefined || actions === undefined) {
-    return undefined;
-  }
-  return { ...state, ...actions };
-}

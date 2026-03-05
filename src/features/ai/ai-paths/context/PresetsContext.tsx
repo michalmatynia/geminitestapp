@@ -348,12 +348,3 @@ export function usePresetsActions(): PresetsActions {
   }
   return context;
 }
-
-/**
- * Combined hook for components that need both state and actions.
- */
-export function usePresets(): PresetsState & PresetsActions {
-  const state = usePresetsState();
-  const actions = usePresetsActions();
-  return { ...state, ...actions };
-}

@@ -532,12 +532,3 @@ export function useProductImageManagerUIActions(): ProductImageManagerUIActionsC
   }
   return context;
 }
-
-export function useProductImageManagerUI(): ProductImageManagerUIContextValue {
-  const state = useProductImageManagerUIState();
-  const actions = useProductImageManagerUIActions();
-  return useMemo((): ProductImageManagerUIContextValue => ({ ...state, ...actions }), [
-    state,
-    actions,
-  ]);
-}

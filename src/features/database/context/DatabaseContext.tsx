@@ -36,10 +36,6 @@ export const useDatabasePagination = () => {
   return context;
 };
 
-// --- Context Aggregator ---
-
-interface DatabaseContextType extends DatabaseUiConfig, DatabaseData, DatabasePagination {}
-
 export function DatabaseProvider({
   children,
   defaultDbType = 'postgresql',
@@ -115,11 +111,4 @@ export function DatabaseProvider({
       </DataContext.Provider>
     </ConfigContext.Provider>
   );
-}
-
-export function useDatabase(): DatabaseContextType {
-  const config = useDatabaseConfig();
-  const data = useDatabaseData();
-  const pagination = useDatabasePagination();
-  return useMemo(() => ({ ...config, ...data, ...pagination }), [config, data, pagination]);
 }

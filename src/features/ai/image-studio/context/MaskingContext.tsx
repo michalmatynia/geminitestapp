@@ -789,7 +789,3 @@ export function useMaskingActions(): MaskingActions {
   if (!ctx) throw new Error('useMaskingActions must be used within a MaskingProvider');
   return ctx;
 }
-
-export function useMasking(): MaskingState & MaskingActions {
-  return { ...useMaskingState(), ...useMaskingActions() };
-}

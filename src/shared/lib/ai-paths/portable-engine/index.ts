@@ -681,7 +681,7 @@ const ensurePortablePathMigratorVersionStats = (
       lastMigratedAt: null,
     };
   }
-  return portablePathMigratorObservabilityState.bySpecVersion[specVersion]!;
+  return portablePathMigratorObservabilityState.bySpecVersion[specVersion];
 };
 
 const recordPortablePathMigratorSource = (source: PortablePathInputSource): void => {
@@ -900,7 +900,7 @@ const ensurePortablePathEnvelopeVerificationByKeyId = (
       lastAlgorithm: null,
     };
   }
-  return portablePathEnvelopeVerificationObservabilityState.byKeyId[keyId]!;
+  return portablePathEnvelopeVerificationObservabilityState.byKeyId[keyId];
 };
 
 const recordPortablePathEnvelopeVerificationEvent = (
@@ -1019,7 +1019,7 @@ const ensurePortablePathEnvelopeVerificationAuditSinkById = (
       lastWrittenAt: null,
     };
   }
-  return portablePathEnvelopeVerificationAuditSinkState.bySinkId[sinkId]!;
+  return portablePathEnvelopeVerificationAuditSinkState.bySinkId[sinkId];
 };
 
 const markPortablePathEnvelopeVerificationAuditSinkAttempt = (sinkId: string): void => {
@@ -2082,11 +2082,7 @@ export const computePortablePathFingerprint = async (
 ): Promise<PortablePathFingerprint> => {
   const stableFingerprint = computePortablePathFingerprintSync(input);
   const normalized = stableStringify(normalizePortableFingerprintInput(input));
-  if (
-    typeof globalThis.crypto !== 'undefined' &&
-    globalThis.crypto?.subtle &&
-    typeof TextEncoder === 'function'
-  ) {
+  if (globalThis.crypto?.subtle && typeof TextEncoder === 'function') {
     const digest = await globalThis.crypto.subtle.digest(
       'SHA-256',
       new TextEncoder().encode(normalized)
@@ -2928,3 +2924,11 @@ export const runPortablePathClient = async (
     runtimeState,
   };
 };
+
+export {
+  verifyPortablePathWebhookSignature,
+  type PortablePathWebhookSignatureReplayGuard,
+  type PortablePathWebhookSignatureVerificationFailureReason,
+  type VerifyPortablePathWebhookSignatureInput,
+  type VerifyPortablePathWebhookSignatureResult,
+} from './receiver-signature';

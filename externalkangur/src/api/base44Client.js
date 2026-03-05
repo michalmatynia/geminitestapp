@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+
 import { createClient } from '@base44/sdk';
 import { appParams } from '@/lib/app-params';
 

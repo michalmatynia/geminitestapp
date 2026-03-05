@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const validateProductCreateMock = vi.fn();
 const validateProductUpdateMock = vi.fn();
 
-vi.mock('@/features/products/validations/validators', () => ({
+vi.mock('@/shared/lib/products/validations/validators', () => ({
   validateProductCreate: (...args: unknown[]) => validateProductCreateMock(...args),
   validateProductUpdate: (...args: unknown[]) => validateProductUpdateMock(...args),
 }));

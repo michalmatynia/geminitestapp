@@ -34,6 +34,7 @@ Date: 2026-03-05
 28. Weekly duration budget safe-apply automation (Step 28) - completed
 29. Weekly duration readiness required-vs-optional model (Step 29) - completed
 30. Weekly duration readiness gap estimator (Step 30) - completed
+31. CI duration readiness summary exposure (Step 31) - completed
 
 ## Gate Status Snapshot
 
@@ -64,6 +65,7 @@ Date: 2026-03-05
 - Weekly duration safe-apply automation: PASS (apply path implemented with readiness guard and skip reasons)
 - Weekly duration readiness model: PASS (optional checks no longer block readiness progression)
 - Weekly duration readiness gap estimator: PASS (minimum additional required runs and blockers are reported)
+- CI duration readiness summary: PASS (weekly workflow summary now reports readiness progress and blockers)
 
 ## Current Risks Captured by Baseline
 

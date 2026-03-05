@@ -10,6 +10,8 @@ import { Button, CopyButton, Badge } from '@/shared/ui';
 
 export type NoteCardHeaderRuntimeValue = {
   note: NoteWithRelations;
+  backgroundColor: string;
+  relatedNoteStyle: React.CSSProperties;
 };
 
 const {
@@ -21,7 +23,7 @@ const {
   displayName: 'NoteCardHeaderRuntimeContext',
 });
 
-export { NoteCardHeaderRuntimeContext };
+export { NoteCardHeaderRuntimeContext, useNoteCardHeaderRuntime };
 
 export function NoteCardHeader(): React.JSX.Element {
   const { note } = useNoteCardHeaderRuntime();

@@ -83,8 +83,8 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
     color: effectiveTheme.relatedNoteTextColor,
   } as const;
   const noteCardHeaderRuntimeValue = React.useMemo<NoteCardHeaderRuntimeValue>(
-    () => ({ note }),
-    [note]
+    () => ({ note, backgroundColor, relatedNoteStyle }),
+    [note, backgroundColor, relatedNoteStyle]
   );
 
   return (
@@ -131,13 +131,9 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
     >
       <NoteCardHeaderRuntimeContext.Provider value={noteCardHeaderRuntimeValue}>
         <NoteCardHeader />
+        <NoteCardContent />
+        <NoteCardFooter />
       </NoteCardHeaderRuntimeContext.Provider>
-      <NoteCardContent note={note} />
-      <NoteCardFooter
-        note={note}
-        backgroundColor={backgroundColor}
-        relatedNoteStyle={relatedNoteStyle}
-      />
     </div>
   );
 }

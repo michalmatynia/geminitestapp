@@ -22,11 +22,15 @@ export type NotesAppTreeHeaderProps = {
 type NotesAppTreeHeaderActionsRuntimeValue = {
   selectedFolderForCreate: string | null;
   undoStackLength: number;
+  isAllNotesActive: boolean;
+  isFavoritesFilterActive: boolean;
   setSelectedNote: (note: NoteWithRelations | null) => void;
   setIsCreating: (isCreating: boolean) => void;
   setSelectedFolderId: (folderId: string | null) => void;
   setIsFolderTreeCollapsed: (isCollapsed: boolean) => void;
   setPanelCollapsed: (collapsed: boolean) => void;
+  onSelectAllNotes: () => void;
+  onToggleFavorites: () => void;
   handleUndoFolderTree: (steps: number) => Promise<void>;
   handleCreateFolder: (parentId?: string | null) => Promise<void>;
 };
@@ -106,6 +110,33 @@ function NotesAppTreeHeaderActions(): React.JSX.Element {
   );
 }
 
+function NotesAppTreeHeaderQuickFilters(): React.JSX.Element {
+  const { isAllNotesActive, isFavoritesFilterActive, onSelectAllNotes, onToggleFavorites } =
+    useNotesAppTreeHeaderActionsRuntime();
+  return (
+    <>
+      <Button
+        onClick={onSelectAllNotes}
+        className={`w-full justify-start gap-2 px-2 py-1.5 text-left text-sm ${
+          isAllNotesActive ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-muted/50'
+        }`}
+      >
+        <Folder className='size-4' />
+        <span>All Notes</span>
+      </Button>
+      <Button
+        onClick={onToggleFavorites}
+        className={`mt-1 w-full justify-start gap-2 px-2 py-1.5 text-left text-sm ${
+          isFavoritesFilterActive ? 'bg-yellow-500/20 text-yellow-200' : 'text-gray-300 hover:bg-muted/50'
+        }`}
+      >
+        <Star className='size-4' />
+        <span>Favorites</span>
+      </Button>
+    </>
+  );
+}
+
 export function NotesAppTreeHeader({
   controller,
   selectedFolderForCreate,
@@ -132,19 +163,34 @@ export function NotesAppTreeHeader({
     () => ({
       selectedFolderForCreate,
       undoStackLength: undoStack.length,
+      isAllNotesActive,
+      isFavoritesFilterActive: filters.filterFavorite === true,
       setSelectedNote,
       setIsCreating,
       setSelectedFolderId,
       setIsFolderTreeCollapsed,
       setPanelCollapsed,
+      onSelectAllNotes: () => {
+        setSelectedFolderId(null);
+        setSelectedNote(null);
+        setIsEditing(false);
+        controller.selectNode(null);
+      },
+      onToggleFavorites: () => {
+        filters.handleToggleFavoritesFilter(setSelectedFolderId, setSelectedNote, setIsEditing);
+      },
       handleUndoFolderTree,
       handleCreateFolder: operations.handleCreateFolder,
     }),
     [
+      controller,
+      filters,
       handleUndoFolderTree,
+      isAllNotesActive,
       operations.handleCreateFolder,
       selectedFolderForCreate,
       setIsCreating,
+      setIsEditing,
       setIsFolderTreeCollapsed,
       setPanelCollapsed,
       setSelectedFolderId,
@@ -156,33 +202,7 @@ export function NotesAppTreeHeader({
   return (
     <NotesAppTreeHeaderActionsRuntimeContext.Provider value={actionsRuntimeValue}>
       <TreeHeader title='Folders' actions={<NotesAppTreeHeaderActions />}>
-        <Button
-          onClick={(): void => {
-            setSelectedFolderId(null);
-            setSelectedNote(null);
-            setIsEditing(false);
-            controller.selectNode(null);
-          }}
-          className={`w-full justify-start gap-2 px-2 py-1.5 text-left text-sm ${
-            isAllNotesActive ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-muted/50'
-          }`}
-        >
-          <Folder className='size-4' />
-          <span>All Notes</span>
-        </Button>
-        <Button
-          onClick={(): void => {
-            filters.handleToggleFavoritesFilter(setSelectedFolderId, setSelectedNote, setIsEditing);
-          }}
-          className={`mt-1 w-full justify-start gap-2 px-2 py-1.5 text-left text-sm ${
-            filters.filterFavorite === true
-              ? 'bg-yellow-500/20 text-yellow-200'
-              : 'text-gray-300 hover:bg-muted/50'
-          }`}
-        >
-          <Star className='size-4' />
-          <span>Favorites</span>
-        </Button>
+        <NotesAppTreeHeaderQuickFilters />
         {undoHistory.length > 0 && (
           <div className='mt-3 rounded border border-border bg-card/60 p-2 text-xs text-gray-300'>
             <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>History</div>

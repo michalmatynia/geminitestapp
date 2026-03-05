@@ -89,6 +89,7 @@ const formatDelta = (deltaMs) => {
   if (!Number.isFinite(deltaMs) || deltaMs === 0) return '0ms';
   return `${deltaMs > 0 ? '+' : '-'}${formatDuration(Math.abs(deltaMs))}`;
 };
+const MILLIS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const readJsonIfExists = async (filePath) => {
   try {
@@ -446,11 +447,11 @@ const toMarkdown = (payload) => {
   lines.push('');
   lines.push('## Recommendations');
   lines.push('');
-  lines.push('| Check | Requirement | Current | Weekly | Supplemental | Samples | Need | Pctl | Max | Recommended | Delta | Status |');
-  lines.push('| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |');
+  lines.push('| Check | Requirement | Current | Weekly | Supplemental | Samples | Need | ETA | Pctl | Max | Recommended | Delta | Status |');
+  lines.push('| --- | --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | --- |');
   for (const entry of payload.recommendations) {
     lines.push(
-      `| ${entry.label} | ${entry.requiredForReadiness ? 'required' : 'optional'} | ${formatDuration(entry.currentBudgetMs)} | ${entry.sampleCountWeekly} | ${entry.sampleCountSupplemental} | ${entry.sampleCount} | ${entry.samplesNeeded} | ${formatDuration(entry.percentileDurationMs)} | ${formatDuration(entry.maxDurationMs)} | ${formatDuration(entry.recommendedBudgetMs)} | ${formatDelta(entry.deltaMs)} | ${entry.status} |`
+      `| ${entry.label} | ${entry.requiredForReadiness ? 'required' : 'optional'} | ${formatDuration(entry.currentBudgetMs)} | ${entry.sampleCountWeekly} | ${entry.sampleCountSupplemental} | ${entry.sampleCount} | ${entry.samplesNeeded} | ${entry.estimatedReadyDateWeeklyCadence ?? '-'} | ${formatDuration(entry.percentileDurationMs)} | ${formatDuration(entry.maxDurationMs)} | ${formatDuration(entry.recommendedBudgetMs)} | ${formatDelta(entry.deltaMs)} | ${entry.status} |`
     );
   }
   lines.push('');
@@ -470,12 +471,22 @@ const run = async () => {
   const analysis = analyze(runs, supplemental.byCheck);
   const application = await applyRecommendedBudgets(analysis);
   const newestRunDateMs = runs.length > 0 ? new Date(runs[runs.length - 1].generatedAt).getTime() : Number.NaN;
+  const toProjectedReadyDate = (samplesNeeded) => {
+    if (!Number.isFinite(newestRunDateMs)) {
+      return null;
+    }
+    const needed = Number.isFinite(samplesNeeded) ? Math.max(0, Number(samplesNeeded)) : 0;
+    return new Date(newestRunDateMs + needed * cadenceDays * MILLIS_PER_DAY).toISOString();
+  };
+  const recommendations = analysis.entries.map((entry) => ({
+    ...entry,
+    estimatedReadyDateWeeklyCadence:
+      entry.status === 'optional' && entry.sampleCount === 0
+        ? null
+        : toProjectedReadyDate(entry.samplesNeeded),
+  }));
   const estimatedReadyDateWeeklyCadence =
-    Number.isFinite(newestRunDateMs) && analysis.requiredRunsNeeded > 0
-      ? new Date(newestRunDateMs + analysis.requiredRunsNeeded * cadenceDays * 24 * 60 * 60 * 1000).toISOString()
-      : analysis.requiredRunsNeeded === 0 && Number.isFinite(newestRunDateMs)
-        ? new Date(newestRunDateMs).toISOString()
-        : null;
+    analysis.requiredRunsNeeded >= 0 ? toProjectedReadyDate(analysis.requiredRunsNeeded) : null;
 
   const payload = {
     generatedAt: new Date().toISOString(),
@@ -517,7 +528,7 @@ const run = async () => {
         ])
       ),
     },
-    recommendations: analysis.entries,
+    recommendations,
     runs: runs.map((runEntry) => ({
       sourceFile: runEntry.sourceFile,
       generatedAt: runEntry.generatedAt,

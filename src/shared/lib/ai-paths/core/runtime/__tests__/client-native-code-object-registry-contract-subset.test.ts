@@ -184,6 +184,37 @@ const buildDbSchemaNode = (): AiNode => ({
   position: { x: 160, y: 0 },
 });
 
+const buildApiAdvancedNode = (): AiNode => ({
+  id: 'node-api-advanced',
+  type: 'api_advanced',
+  title: 'API Advanced',
+  description: '',
+  inputs: [],
+  outputs: ['value', 'bundle', 'status', 'headers', 'items', 'route', 'error', 'success'],
+  config: {
+    apiAdvanced: {
+      url: '',
+      method: 'GET',
+      pathParamsJson: '{}',
+      queryParamsJson: '{}',
+      headersJson: '{}',
+      bodyTemplate: '',
+      bodyMode: 'none',
+      timeoutMs: 5000,
+      authMode: 'none',
+      responseMode: 'json',
+      responsePath: '',
+      outputMappingsJson: '{}',
+      retryEnabled: false,
+      retryAttempts: 1,
+      paginationMode: 'none',
+      paginationAggregateMode: 'first_page',
+      errorRoutesJson: '[]',
+    },
+  },
+  position: { x: 190, y: 0 },
+});
+
 const buildAudioOscillatorNode = (): AiNode => ({
   id: 'node-audio-oscillator',
   type: 'audio_oscillator',
@@ -290,7 +321,6 @@ describe('client native code-object registry contract subset', () => {
     expect(unsupportedOnClientNodeTypes).toEqual([
       'agent',
       'ai_description',
-      'api_advanced',
       'database',
       'description_updater',
       'learner_agent',
@@ -389,6 +419,28 @@ describe('client native code-object registry contract subset', () => {
         ] ?? ''
       )
     ).toContain('Collection: products');
+  });
+
+  it('executes api advanced nodes through client native contract resolver mapping', async () => {
+    const fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal('fetch', fetchMock);
+
+    try {
+      const result = await evaluateGraphClient({
+        nodes: [buildApiAdvancedNode()],
+        edges: [],
+        runtimeKernelPilotNodeTypes: ['api_advanced'],
+        reportAiPathsError: (): void => {},
+      });
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(result.outputs?.['node-api-advanced']?.['success']).toBe(false);
+      expect(result.outputs?.['node-api-advanced']?.['status']).toBe(0);
+      expect(result.outputs?.['node-api-advanced']?.['route']).toBe('missing_url');
+      expect(result.outputs?.['node-api-advanced']?.['error']).toBe('Missing URL');
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('executes audio oscillator nodes through client native contract resolver mapping', async () => {

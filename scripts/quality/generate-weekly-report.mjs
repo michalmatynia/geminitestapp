@@ -530,7 +530,13 @@ const run = async () => {
       id: 'lintDomains',
       label: 'Lint Domain Gate',
       command: 'node',
-      commandArgs: ['scripts/quality/run-lint-domain-checks.mjs', '--strict', '--ci', '--no-history'],
+      commandArgs: [
+        'scripts/quality/run-lint-domain-checks.mjs',
+        '--include-test-tree',
+        '--strict',
+        '--ci',
+        '--no-history',
+      ],
       timeoutMs: 25 * 60 * 1000,
     },
     {

@@ -30,6 +30,7 @@ Date: 2026-03-05
 24. Lint-domain full test-tree support (Step 24) - completed
 25. Accessibility warning-budget enforcement decision (Step 25) - completed
 26. Lint-domain test-tree stabilization to full pass (Step 26) - completed
+27. Weekly lint-domain test-tree promotion (Step 27) - completed
 
 ## Gate Status Snapshot
 
@@ -56,16 +57,16 @@ Date: 2026-03-05
 - Weekly duration recalibration report: PENDING (`0/12` checks ready; insufficient history for budget deltas)
 - Lint-domain full test-tree mode: PASS (`5/5` in strict mode after targeted remediation)
 - Accessibility warning-budget enforcement mode: PASS (telemetry default + opt-in strict fail-on-exceed)
+- Weekly strict lane lint-domain mode: PASS (now executes full test-tree lint domains)
 
 ## Current Risks Captured by Baseline
 
 - Full unit lane remains high-latency compared with domain-split gate runs.
 - Weekly lane has expanded checks; duration budgets are enforced but need tuning as history depth grows.
-- Default lint-domain gate remains source-focused unless `--include-test-tree` mode is enabled.
+- Weekly strict lane lint-domain check now includes test-tree scope, which may increase runtime variance.
 - Trend history depth is currently shallow (single-day baseline), so confidence improves as more runs accumulate.
 - Weekly duration budget recommendations are now automated but currently blocked by low pass-sample depth.
 
 ## Next Iteration Backlog (Priority)
 
 1. Apply weekly duration budget updates once recalibration status reaches `ready` (>=8 pass samples per check).
-2. Decide when to promote `--include-test-tree` lint-domain mode into default strict CI lanes.

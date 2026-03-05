@@ -1,6 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { AI_PATHS_RUNTIME_KERNEL_MODE_KEY } from '@/shared/lib/ai-paths';
+import {
+  AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
+  AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
+} from '@/shared/lib/ai-paths';
 import { fetchAiPathsSettingsByKeysCached } from '@/shared/lib/ai-paths/settings-store-client';
 
 import { AiPathsCanvasView } from '../sections/AiPathsCanvasView';
@@ -79,6 +82,7 @@ describe('AiPathsCanvasView switch guard', () => {
   it('shows effective runtime-kernel mode source from settings while path mode inherits', async () => {
     mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([
       { key: AI_PATHS_RUNTIME_KERNEL_MODE_KEY, value: 'legacy_only' },
+      { key: AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY, value: 'true' },
     ]);
     pageContextMock = {
       activeTab: 'canvas',
@@ -157,6 +161,95 @@ describe('AiPathsCanvasView switch guard', () => {
     await waitFor(() => {
       expect(screen.getByText('Mode: Auto (settings)')).toBeInTheDocument();
       expect(screen.getByText('Effective: Auto (settings)')).toBeInTheDocument();
+      expect(screen.getAllByText('Strict Native: On (settings)').length).toBeGreaterThan(0);
+    });
+  });
+
+  it('shows path strict-native-registry override above global settings', async () => {
+    mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([
+      { key: AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY, value: 'true' },
+    ]);
+    pageContextMock = {
+      activeTab: 'canvas',
+      isFocusMode: false,
+      renderActions: (actions: unknown) => actions,
+      confirmNodeSwitch: async () => true,
+      savePathConfig: vi.fn(async () => true),
+      saving: false,
+      setPathSettingsModalOpen: vi.fn(),
+      activePathId: 'path-main',
+      nodeValidationEnabled: true,
+      updateAiPathsValidation: vi.fn(),
+      validationPreflightReport: {
+        score: 100,
+        failedRules: 0,
+        blocked: false,
+        shouldWarn: false,
+        findings: [],
+        recommendations: [],
+        schemaVersion: 1,
+        skippedRuleIds: [],
+        moduleImpact: {},
+      },
+      handleOpenNodeValidator: vi.fn(),
+      docsTooltipsEnabled: true,
+      setDocsTooltipsEnabled: vi.fn(),
+      handleTogglePathLock: vi.fn(),
+      isPathLocked: false,
+      handleRunNodeValidationCheck: vi.fn(),
+      toast: vi.fn(),
+      autoSaveLabel: '',
+      autoSaveVariant: 'neutral',
+      lastRunAt: null,
+      isPathNameEditing: false,
+      renameDraft: '',
+      setRenameDraft: vi.fn(),
+      commitPathNameEdit: vi.fn(),
+      cancelPathNameEdit: vi.fn(),
+      startPathNameEdit: vi.fn(),
+      pathName: 'Path Main',
+      pathSwitchOptions: [{ label: 'Path Main', value: 'path-main' }],
+      handleSwitchPath: vi.fn(),
+      isPathSwitching: false,
+      lastError: null,
+      persistLastError: vi.fn(async () => undefined),
+      incrementLoadNonce: vi.fn(),
+      handleClearConnectorData: vi.fn(async () => undefined),
+      handleClearHistory: vi.fn(async () => undefined),
+      handleDeleteSelectedNode: vi.fn(),
+      isPathActive: true,
+      handleTogglePathActive: vi.fn(),
+      hasHistory: false,
+      selectionScopeMode: 'portion',
+      setSelectionScopeMode: vi.fn(),
+      dataContractReport: { byNodeId: {} },
+      setDataContractInspectorNodeId: vi.fn(),
+      paths: [
+        {
+          id: 'path-main',
+          name: 'Path Main',
+          createdAt: '2026-03-05',
+          updatedAt: '2026-03-05',
+        },
+      ],
+      pathConfigs: {
+        'path-main': {
+          id: 'path-main',
+          extensions: {
+            runtimeKernel: {
+              strictNativeRegistry: false,
+            },
+          },
+        },
+      },
+      persistPathSettings: vi.fn(async () => undefined),
+    };
+
+    render(<AiPathsCanvasView />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Strict Native: On (settings)')).toBeInTheDocument();
+      expect(screen.getByText('Strict Native: Off (path)')).toBeInTheDocument();
     });
   });
 

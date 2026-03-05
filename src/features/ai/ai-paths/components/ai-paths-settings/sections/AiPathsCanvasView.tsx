@@ -7,6 +7,7 @@ import {
   AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
   AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
   AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
+  AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
 } from '@/shared/lib/ai-paths';
 import {
   fetchAiPathsSettingsByKeysCached,
@@ -90,11 +91,26 @@ const parseRuntimeKernelCodeObjectResolverIds = (value: unknown): string[] =>
   });
 
 type PathRuntimeKernelModeDraft = 'inherit' | 'auto';
+type RuntimeKernelStrictDraft = 'default' | 'true' | 'false';
+type PathRuntimeKernelStrictDraft = 'inherit' | 'true' | 'false';
 
 const parseRuntimeKernelModeValue = (value: unknown): 'auto' | undefined => {
   if (typeof value !== 'string') return undefined;
   const normalized = value.trim().toLowerCase();
   return normalized === 'auto' || normalized === 'legacy_only' ? 'auto' : undefined;
+};
+
+const parseRuntimeKernelStrictNativeRegistryValue = (
+  value: unknown
+): boolean | undefined => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on')
+    return true;
+  if (normalized === 'false' || normalized === '0' || normalized === 'no' || normalized === 'off')
+    return false;
+  return undefined;
 };
 
 const parsePathRuntimeKernelMode = (value: unknown): PathRuntimeKernelModeDraft =>
@@ -108,6 +124,36 @@ const PATH_RUNTIME_KERNEL_MODE_OPTIONS = [
   {
     value: 'auto',
     label: 'Auto',
+  },
+] as const;
+
+const RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_OPTIONS = [
+  {
+    value: 'default',
+    label: 'Default (Off)',
+  },
+  {
+    value: 'true',
+    label: 'Strict On',
+  },
+  {
+    value: 'false',
+    label: 'Strict Off',
+  },
+] as const;
+
+const PATH_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_OPTIONS = [
+  {
+    value: 'inherit',
+    label: 'Inherit Global',
+  },
+  {
+    value: 'true',
+    label: 'Strict On',
+  },
+  {
+    value: 'false',
+    label: 'Strict Off',
   },
 ] as const;
 
@@ -221,6 +267,10 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
   >(undefined);
   const [runtimeKernelPersistedResolverIds, setRuntimeKernelPersistedResolverIds] =
     React.useState<string[]>([]);
+  const [runtimeKernelStrictNativeRegistryDraft, setRuntimeKernelStrictNativeRegistryDraft] =
+    React.useState<RuntimeKernelStrictDraft>('default');
+  const [runtimeKernelPersistedStrictNativeRegistry, setRuntimeKernelPersistedStrictNativeRegistry] =
+    React.useState<boolean | undefined>(undefined);
   const [runtimeKernelLoading, setRuntimeKernelLoading] = React.useState(true);
   const [runtimeKernelSaving, setRuntimeKernelSaving] = React.useState(false);
   const [pathRuntimeKernelPilotNodeTypesDraft, setPathRuntimeKernelPilotNodeTypesDraft] =
@@ -235,6 +285,10 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     React.useState<string>('');
   const [pathRuntimeKernelPersistedResolverIds, setPathRuntimeKernelPersistedResolverIds] =
     React.useState<string[]>([]);
+  const [pathRuntimeKernelStrictNativeRegistryDraft, setPathRuntimeKernelStrictNativeRegistryDraft] =
+    React.useState<PathRuntimeKernelStrictDraft>('inherit');
+  const [pathRuntimeKernelPersistedStrictNativeRegistry, setPathRuntimeKernelPersistedStrictNativeRegistry] =
+    React.useState<PathRuntimeKernelStrictDraft>('inherit');
   const [pathRuntimeKernelSaving, setPathRuntimeKernelSaving] = React.useState(false);
 
   const loadRuntimeKernelSettings = React.useCallback(async (): Promise<void> => {
@@ -245,6 +299,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
           AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
           AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
           AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
+          AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
         ],
         { timeoutMs: 8_000, bypassCache: true }
       );
@@ -256,11 +311,18 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
       const resolverIds = parseRuntimeKernelCodeObjectResolverIds(
         settingsMap.get(AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY)
       );
+      const strictNativeRegistry = parseRuntimeKernelStrictNativeRegistryValue(
+        settingsMap.get(AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY)
+      );
       setRuntimeKernelPersistedMode(mode);
       setRuntimeKernelPersistedPilotNodeTypes(pilotNodeTypes);
       setRuntimeKernelPilotNodeTypesDraft(pilotNodeTypes.join(', '));
       setRuntimeKernelPersistedResolverIds(resolverIds);
       setRuntimeKernelResolverIdsDraft(resolverIds.join(', '));
+      setRuntimeKernelPersistedStrictNativeRegistry(strictNativeRegistry);
+      setRuntimeKernelStrictNativeRegistryDraft(
+        strictNativeRegistry === undefined ? 'default' : strictNativeRegistry ? 'true' : 'false'
+      );
     } catch {
       // Non-fatal: keep defaults and let run-time env/settings resolver stay authoritative.
     } finally {
@@ -291,6 +353,8 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
       setPathRuntimeKernelPilotNodeTypesDraft('');
       setPathRuntimeKernelPersistedResolverIds([]);
       setPathRuntimeKernelResolverIdsDraft('');
+      setPathRuntimeKernelPersistedStrictNativeRegistry('inherit');
+      setPathRuntimeKernelStrictNativeRegistryDraft('inherit');
       return;
     }
     const activeConfig = pathConfigs[activePath];
@@ -301,12 +365,19 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     const resolverIds = parseRuntimeKernelCodeObjectResolverIds(
       runtimeKernelRecord?.['codeObjectResolverIds'] ?? runtimeKernelRecord?.['resolverIds']
     );
+    const strictNativeRegistry = parseRuntimeKernelStrictNativeRegistryValue(
+      runtimeKernelRecord?.['strictNativeRegistry']
+    );
+    const strictNativeRegistryDraft: PathRuntimeKernelStrictDraft =
+      strictNativeRegistry === undefined ? 'inherit' : strictNativeRegistry ? 'true' : 'false';
     setPathRuntimeKernelPersistedMode(mode);
     setPathRuntimeKernelModeDraft(mode);
     setPathRuntimeKernelPersistedPilotNodeTypes(pilotNodeTypes);
     setPathRuntimeKernelPilotNodeTypesDraft(pilotNodeTypes.join(', '));
     setPathRuntimeKernelPersistedResolverIds(resolverIds);
     setPathRuntimeKernelResolverIdsDraft(resolverIds.join(', '));
+    setPathRuntimeKernelPersistedStrictNativeRegistry(strictNativeRegistryDraft);
+    setPathRuntimeKernelStrictNativeRegistryDraft(strictNativeRegistryDraft);
   }, [activePath, pathConfigs]);
   const pathRuntimeKernelDraftPilotNodeTypes = React.useMemo(
     () => parseRuntimeKernelPilotNodeTypes(pathRuntimeKernelPilotNodeTypesDraft),
@@ -320,22 +391,50 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     pathRuntimeKernelModeDraft !== pathRuntimeKernelPersistedMode ||
     pathRuntimeKernelDraftPilotNodeTypes.join(',') !==
     pathRuntimeKernelPersistedPilotNodeTypes.join(',') ||
-    pathRuntimeKernelDraftResolverIds.join(',') !== pathRuntimeKernelPersistedResolverIds.join(',');
+    pathRuntimeKernelDraftResolverIds.join(',') !== pathRuntimeKernelPersistedResolverIds.join(',') ||
+    pathRuntimeKernelStrictNativeRegistryDraft !== pathRuntimeKernelPersistedStrictNativeRegistry;
+  const runtimeKernelStrictNativeRegistryDirty =
+    runtimeKernelStrictNativeRegistryDraft !==
+    (runtimeKernelPersistedStrictNativeRegistry === undefined
+      ? 'default'
+      : runtimeKernelPersistedStrictNativeRegistry
+        ? 'true'
+        : 'false');
   const pathRuntimeKernelEffectiveModeSource: 'path' | 'settings' | 'default' =
     pathRuntimeKernelModeDraft === 'auto'
       ? 'path'
       : runtimeKernelPersistedMode === 'auto'
         ? 'settings'
         : 'default';
+  const pathRuntimeKernelEffectiveStrictNativeRegistrySource: 'path' | 'settings' | 'default' =
+    pathRuntimeKernelStrictNativeRegistryDraft === 'true' ||
+    pathRuntimeKernelStrictNativeRegistryDraft === 'false'
+      ? 'path'
+      : runtimeKernelPersistedStrictNativeRegistry !== undefined
+        ? 'settings'
+        : 'default';
+  const pathRuntimeKernelEffectiveStrictNativeRegistry =
+    pathRuntimeKernelStrictNativeRegistryDraft === 'true'
+      ? true
+      : pathRuntimeKernelStrictNativeRegistryDraft === 'false'
+        ? false
+        : runtimeKernelPersistedStrictNativeRegistry ?? false;
   const pathRuntimeKernelEffectiveModeVariant =
     pathRuntimeKernelEffectiveModeSource === 'path'
       ? 'success'
       : pathRuntimeKernelEffectiveModeSource === 'settings'
         ? 'active'
         : 'neutral';
+  const pathRuntimeKernelEffectiveStrictVariant =
+    pathRuntimeKernelEffectiveStrictNativeRegistrySource === 'path'
+      ? 'success'
+      : pathRuntimeKernelEffectiveStrictNativeRegistrySource === 'settings'
+        ? 'active'
+        : 'neutral';
 
   const saveRuntimeKernelSettings = React.useCallback(async (): Promise<void> => {
-    if (!runtimeKernelSettingsDirty || runtimeKernelSaving) return;
+    if ((!runtimeKernelSettingsDirty && !runtimeKernelStrictNativeRegistryDirty) || runtimeKernelSaving)
+      return;
     setRuntimeKernelSaving(true);
     try {
       await updateAiPathsSettingsBulk([
@@ -353,12 +452,29 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
               ? JSON.stringify(runtimeKernelDraftResolverIds)
               : '',
         },
+        {
+          key: AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
+          value:
+            runtimeKernelStrictNativeRegistryDraft === 'default'
+              ? ''
+              : runtimeKernelStrictNativeRegistryDraft === 'true'
+                ? 'true'
+                : 'false',
+        },
       ]);
       invalidateAiPathsSettingsCache();
       setRuntimeKernelPersistedPilotNodeTypes(runtimeKernelDraftPilotNodeTypes);
       setRuntimeKernelPilotNodeTypesDraft(runtimeKernelDraftPilotNodeTypes.join(', '));
       setRuntimeKernelPersistedResolverIds(runtimeKernelDraftResolverIds);
       setRuntimeKernelResolverIdsDraft(runtimeKernelDraftResolverIds.join(', '));
+      const strictNativeRegistry =
+        runtimeKernelStrictNativeRegistryDraft === 'default'
+          ? undefined
+          : runtimeKernelStrictNativeRegistryDraft === 'true';
+      setRuntimeKernelPersistedStrictNativeRegistry(strictNativeRegistry);
+      setRuntimeKernelStrictNativeRegistryDraft(
+        strictNativeRegistry === undefined ? 'default' : strictNativeRegistry ? 'true' : 'false'
+      );
       notify('Runtime kernel settings saved.', { variant: 'success' });
     } catch (error) {
       const message =
@@ -372,6 +488,8 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     runtimeKernelDraftResolverIds,
     runtimeKernelDraftPilotNodeTypes,
     runtimeKernelPersistedResolverIds,
+    runtimeKernelStrictNativeRegistryDirty,
+    runtimeKernelStrictNativeRegistryDraft,
     runtimeKernelSaving,
     runtimeKernelSettingsDirty,
   ]);
@@ -386,7 +504,8 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
       const nextRuntimeKernelConfig =
         pathMode !== null ||
         pathRuntimeKernelDraftPilotNodeTypes.length > 0 ||
-        pathRuntimeKernelDraftResolverIds.length > 0
+        pathRuntimeKernelDraftResolverIds.length > 0 ||
+        pathRuntimeKernelStrictNativeRegistryDraft !== 'inherit'
           ? {
             ...(pathMode !== null ? { mode: pathMode } : {}),
             ...(pathRuntimeKernelDraftPilotNodeTypes.length > 0
@@ -394,6 +513,11 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
               : {}),
             ...(pathRuntimeKernelDraftResolverIds.length > 0
               ? { codeObjectResolverIds: pathRuntimeKernelDraftResolverIds }
+              : {}),
+            ...(pathRuntimeKernelStrictNativeRegistryDraft !== 'inherit'
+              ? {
+                strictNativeRegistry: pathRuntimeKernelStrictNativeRegistryDraft === 'true',
+              }
               : {}),
           }
           : null;
@@ -426,6 +550,8 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
       setPathRuntimeKernelPilotNodeTypesDraft(pathRuntimeKernelDraftPilotNodeTypes.join(', '));
       setPathRuntimeKernelPersistedResolverIds(pathRuntimeKernelDraftResolverIds);
       setPathRuntimeKernelResolverIdsDraft(pathRuntimeKernelDraftResolverIds.join(', '));
+      setPathRuntimeKernelPersistedStrictNativeRegistry(pathRuntimeKernelStrictNativeRegistryDraft);
+      setPathRuntimeKernelStrictNativeRegistryDraft(pathRuntimeKernelStrictNativeRegistryDraft);
       notify('Path runtime-kernel settings saved.', { variant: 'success' });
     } catch (error) {
       const message =
@@ -442,6 +568,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     pathRuntimeKernelDraftResolverIds,
     pathRuntimeKernelModeDraft,
     pathRuntimeKernelPersistedMode,
+    pathRuntimeKernelStrictNativeRegistryDraft,
     pathRuntimeKernelSaving,
     pathRuntimeKernelSettingsDirty,
     paths,
@@ -603,6 +730,29 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                       size='sm'
                       className='h-8 border border-cyan-500/50 bg-card/60 px-2 text-[11px] text-cyan-100'
                     />
+                    <div className='w-[160px]'>
+                      <SelectSimple
+                        dataDocId='canvas_runtime_kernel_strict_native_registry'
+                        size='sm'
+                        value={runtimeKernelStrictNativeRegistryDraft}
+                        onValueChange={(value: string) => {
+                          if (value === 'default' || value === 'true' || value === 'false') {
+                            setRuntimeKernelStrictNativeRegistryDraft(value);
+                          }
+                        }}
+                        options={[...RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_OPTIONS]}
+                        disabled={runtimeKernelLoading || runtimeKernelSaving}
+                        triggerClassName='h-8 border-cyan-500/40 bg-card/60 text-[11px] text-cyan-100'
+                        contentClassName='border-cyan-500/30'
+                        ariaLabel='Global runtime kernel strict native registry mode'
+                      />
+                    </div>
+                    <StatusBadge
+                      status={`Strict Native: ${runtimeKernelStrictNativeRegistryDraft === 'true' ? 'On' : 'Off'} (${runtimeKernelPersistedStrictNativeRegistry !== undefined ? 'settings' : 'default'})`}
+                      variant='neutral'
+                      size='sm'
+                      className='h-8 border border-cyan-500/50 bg-card/60 px-2 text-[11px] text-cyan-100'
+                    />
                     <input
                       data-doc-id='canvas_runtime_kernel_pilot_nodes'
                       type='text'
@@ -635,7 +785,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                       disabled={
                         runtimeKernelLoading ||
                         runtimeKernelSaving ||
-                        !runtimeKernelSettingsDirty
+                        (!runtimeKernelSettingsDirty && !runtimeKernelStrictNativeRegistryDirty)
                       }
                     >
                       {runtimeKernelSaving ? 'Saving...' : 'Apply'}
@@ -662,6 +812,23 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                         ariaLabel='Path runtime kernel mode'
                       />
                     </div>
+                    <div className='w-[170px]'>
+                      <SelectSimple
+                        dataDocId='canvas_path_runtime_kernel_strict_native_registry'
+                        size='sm'
+                        value={pathRuntimeKernelStrictNativeRegistryDraft}
+                        onValueChange={(value: string) => {
+                          if (value === 'inherit' || value === 'true' || value === 'false') {
+                            setPathRuntimeKernelStrictNativeRegistryDraft(value);
+                          }
+                        }}
+                        options={[...PATH_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_OPTIONS]}
+                        disabled={!activePath || pathRuntimeKernelSaving}
+                        triggerClassName='h-8 border-emerald-500/40 bg-card/60 text-[11px] text-emerald-100'
+                        contentClassName='border-emerald-500/30'
+                        ariaLabel='Path runtime kernel strict native registry mode'
+                      />
+                    </div>
                     <StatusBadge
                       status={activePath ? 'Scope: Active Path' : 'Scope: None'}
                       variant='neutral'
@@ -671,6 +838,12 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     <StatusBadge
                       status={`Effective: Auto (${pathRuntimeKernelEffectiveModeSource})`}
                       variant={pathRuntimeKernelEffectiveModeVariant}
+                      size='sm'
+                      className='h-8 border border-emerald-500/50 bg-card/60 px-2 text-[11px] text-emerald-100'
+                    />
+                    <StatusBadge
+                      status={`Strict Native: ${pathRuntimeKernelEffectiveStrictNativeRegistry ? 'On' : 'Off'} (${pathRuntimeKernelEffectiveStrictNativeRegistrySource})`}
+                      variant={pathRuntimeKernelEffectiveStrictVariant}
                       size='sm'
                       className='h-8 border border-emerald-500/50 bg-card/60 px-2 text-[11px] text-emerald-100'
                     />

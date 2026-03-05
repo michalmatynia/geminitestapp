@@ -35,8 +35,8 @@ Outputs:
 
 - [ ] Semantic contract reviewed against UI config fields.
 - [ ] v3 scaffold authored or updated for this node.
-- [ ] Dual-run parity validated (`legacy_adapter` vs `code_object_v3`).
-- [ ] Runtime kernel pilot list updated when rollout is approved.
+- [ ] Runtime parity validated for the migrated node execution path.
+- [ ] Native handler registry coverage checks pass for this node.
 - [ ] Observability and regression checks reviewed post-rollout.
 
 ## Notes

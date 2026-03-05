@@ -12,17 +12,17 @@ Generated at: 2026-03-05T00:00:00.000Z
 - `docs/ai-paths/node-code-objects-v2/index.json` (node-family metadata)
 - `docs/ai-paths/node-code-objects-v3/index.scaffold.json` (available v3 scaffolds)
 - `docs/ai-paths/node-code-objects-v3/index.json` + `contracts.json` (pilot v3 object hashes)
-- `docs/ai-paths/node-code-objects-v3/parity-evidence.json` (dual-run parity evidence)
+- `docs/ai-paths/node-code-objects-v3/parity-evidence.json` (runtime parity evidence: core dual-run + product-trigger E2E)
 - `docs/ai-paths/node-code-objects-v3/rollout-approvals.json` (manual rollout approvals)
 
 ## Migration Workflow
 
 1. Confirm semantic contract for the node (`semantic-grammar/nodes/<nodeType>.json`).
 2. Author/refresh `node-code-objects-v3/<nodeType>.scaffold.json` with runtime kernel metadata.
-3. Keep runtime strategy on `legacy_adapter` until parity validation passes.
-4. Validate dual-run parity (`legacy_adapter` vs `code_object_v3`) with integration coverage.
-5. Move node type to kernel pilot list (`NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES`).
-6. After rollout and observability sign-off, keep docs/checks green in CI.
+3. Keep runtime strategy on `code_object_v3` and set `executionAdapter` to `native_handler_registry`.
+4. Validate runtime parity and native registry coverage checks for server/client execution paths.
+5. Keep node type in kernel pilot list (`NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES`) and monitor rollout signals.
+6. Preserve docs/check guardrails in CI and use rollout approvals for governance sign-off when required.
 
 ## Strategy Totals
 
@@ -49,7 +49,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - Source file: `docs/ai-paths/node-code-objects-v3/parity-evidence.json`
 - Schema version: `ai-paths.node-migration-parity-evidence.v1`
 - Generated at: `2026-03-05T00:00:00.000Z`
-- Evidence suites: 1
+- Evidence suites: 2
 - Validated node types: `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`
 
 ## Rollout Approvals

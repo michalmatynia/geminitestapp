@@ -66,9 +66,10 @@
     "sourceFile": "docs/ai-paths/node-code-objects-v3/parity-evidence.json",
     "schemaVersion": "ai-paths.node-migration-parity-evidence.v1",
     "generatedAt": "2026-03-05T00:00:00.000Z",
-    "suiteCount": 1,
+    "suiteCount": 2,
     "suiteIds": [
-      "v3-pilot-parity-core"
+      "v3-pilot-parity-core",
+      "v3-pilot-product-trigger-queue-e2e"
     ],
     "validatedNodeTypes": [
       "agent",
@@ -1649,7 +1650,8 @@
         "rolloutApproved": false
       },
       "parityEvidenceSuiteIds": [
-        "v3-pilot-parity-core"
+        "v3-pilot-parity-core",
+        "v3-pilot-product-trigger-queue-e2e"
       ],
       "migrationReadiness": {
         "stage": "rollout_candidate",

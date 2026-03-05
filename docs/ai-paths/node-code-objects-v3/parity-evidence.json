@@ -48,6 +48,17 @@
         "viewer"
       ],
       "notes": "Core dual-run parity for active v3 pilot transform/math nodes."
+    },
+    {
+      "suiteId": "v3-pilot-product-trigger-queue-e2e",
+      "testFile": "e2e/features/products/products-trigger-queue-integration.spec.ts",
+      "modes": [
+        "code_object_v3"
+      ],
+      "nodeTypes": [
+        "trigger"
+      ],
+      "notes": "End-to-end product trigger-button enqueue and queue-refresh integration coverage."
     }
   ]
 }

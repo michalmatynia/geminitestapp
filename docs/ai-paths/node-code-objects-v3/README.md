@@ -9,7 +9,7 @@ Schema target:
 - `kind: "path_node_code_object"`
 - `runtimeKernel.strategy: "code_object_v3"`
 
-Current runtime scope is pilot-only (`agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`) and intentionally partial.
+Current runtime scope uses the pilot list (`agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`), which currently covers all 36 registered node types.
 
 Runtime rollout controls:
 
@@ -23,10 +23,13 @@ Runtime rollout controls:
 - Product/server runs can also read persisted global settings:
   - `ai_paths_runtime_kernel_mode`: `auto | legacy_only`
   - `ai_paths_runtime_kernel_pilot_node_types`: JSON array or comma-delimited node types
+  - `ai_paths_runtime_kernel_strict_native_registry`: `true | false`
 - Canvas admins can edit these persisted settings from the `Runtime Kernel` control group on the AI-Paths Canvas action bar.
+- `strict_native_registry` currently uses env/run-meta/settings API configuration (not yet exposed in canvas runtime controls).
 - Env vars override persisted settings:
   - `AI_PATHS_RUNTIME_KERNEL_MODE`
   - `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES`
+  - `AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY`
 
 Generated migration documentation:
 
@@ -40,7 +43,7 @@ Scaffold contracts:
 - `{agent,ai_description,api_advanced,audio_oscillator,audio_speaker,bundle,compare,constant,context,database,db_schema,delay,description_updater,fetcher,gate,http,iterator,learner_agent,mapper,math,model,mutator,notification,parser,playwright,poll,prompt,regex,router,simulation,string_mutator,template,trigger,validation_pattern,validator,viewer}.scaffold.json`
 - `index.json` (pilot v3 object index with hashes)
 - `contracts.json` (pilot v3 contract hash catalog)
-- `parity-evidence.json` (dual-run parity evidence by node type)
+- `parity-evidence.json` (runtime parity evidence by node type, including product-trigger E2E coverage)
 - `rollout-approvals.json` (manual rollout approval source)
 
 Regenerate migration docs:
@@ -101,6 +104,12 @@ Run pilot parity-evidence coverage regression:
 
 ```bash
 npm run test:ai-paths:node-migration-parity-evidence
+```
+
+Run product trigger-button enqueue integration lane:
+
+```bash
+npm run test:ai-paths:trigger-queue:integration
 ```
 
 Rollout approvals:

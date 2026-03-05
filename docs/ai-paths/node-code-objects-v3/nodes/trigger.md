@@ -10,7 +10,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - Readiness stage: `rollout_candidate`
 - Readiness score: 90/100
 - Readiness blockers: `rollout_not_approved`
-- Parity evidence suite IDs: `v3-pilot-parity-core`
+- Parity evidence suite IDs: `v3-pilot-parity-core`, `v3-pilot-product-trigger-queue-e2e`
 - Rollout approved: `no` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 5
 
@@ -36,8 +36,8 @@ Outputs:
 
 - [ ] Semantic contract reviewed against UI config fields.
 - [ ] v3 scaffold authored or updated for this node.
-- [ ] Dual-run parity validated (`legacy_adapter` vs `code_object_v3`).
-- [ ] Runtime kernel pilot list updated when rollout is approved.
+- [ ] Runtime parity validated for the migrated node execution path.
+- [ ] Native handler registry coverage checks pass for this node.
 - [ ] Observability and regression checks reviewed post-rollout.
 
 ## Notes

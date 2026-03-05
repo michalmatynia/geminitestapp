@@ -28,6 +28,13 @@ export type NodeMigrationParityEvidenceSummary = {
   generatedAt: string | null;
   suiteCount: number;
   suiteIds: string[];
+  suites: Array<{
+    suiteId: string;
+    testFile: string;
+    modes: string[];
+    nodeTypes: string[];
+    notes: string | null;
+  }>;
   validatedNodeTypes: string[];
   suiteIdsByNodeType: Record<string, string[]>;
 };
@@ -72,13 +79,24 @@ export const loadNodeMigrationParityEvidenceSummary = ({
 
   const rawSuiteIdsByNodeType = new Map<string, Set<string>>();
   const suiteIds = new Set<string>();
+  const normalizedSuites: NodeMigrationParityEvidenceSummary['suites'] = [];
 
   const suites = Array.isArray(payload.suites) ? payload.suites : [];
   for (const suite of suites) {
     const suiteId = toSafeString(suite?.suiteId);
     if (!suiteId) continue;
+    const testFile = toSafeString(suite?.testFile);
+    const modes = normalizeStringArray(suite?.modes);
     suiteIds.add(suiteId);
     const nodeTypes = normalizeStringArray(suite?.nodeTypes);
+    const notes = toSafeString(suite?.notes) || null;
+    normalizedSuites.push({
+      suiteId,
+      testFile,
+      modes,
+      nodeTypes,
+      notes,
+    });
     for (const nodeType of nodeTypes) {
       const setForNodeType = rawSuiteIdsByNodeType.get(nodeType) ?? new Set<string>();
       setForNodeType.add(suiteId);
@@ -107,8 +125,9 @@ export const loadNodeMigrationParityEvidenceSummary = ({
     sourcePath,
     schemaVersion,
     generatedAt,
-    suiteCount: suites.filter((suite) => toSafeString(suite?.suiteId).length > 0).length,
+    suiteCount: normalizedSuites.length,
     suiteIds: Array.from(suiteIds).sort((left, right) => left.localeCompare(right)),
+    suites: normalizedSuites.sort((left, right) => left.suiteId.localeCompare(right.suiteId)),
     validatedNodeTypes,
     suiteIdsByNodeType,
   };

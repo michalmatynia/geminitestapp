@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -32,6 +33,14 @@ describe('node migration parity evidence', () => {
     expect(summary.generatedAt).toBeTruthy();
     expect(summary.suiteCount).toBeGreaterThan(0);
     expect(summary.suiteIds.length).toBe(summary.suiteCount);
+    summary.suites.forEach((suite) => {
+      expect(suite.testFile, `${suite.suiteId} must define a testFile`).toBeTruthy();
+      const suiteTestPath = path.join(process.cwd(), suite.testFile);
+      expect(
+        fs.existsSync(suiteTestPath),
+        `${suite.suiteId} references missing test file ${suite.testFile}`
+      ).toBe(true);
+    });
   });
 
   it('requires every v3 pilot node type to be covered by at least one parity suite', () => {
@@ -46,5 +55,19 @@ describe('node migration parity evidence', () => {
         `Pilot node "${nodeType}" is missing parity evidence coverage in ${summary.sourceFile}`
       ).toBeGreaterThan(0);
     });
+  });
+
+  it('keeps product trigger queue E2E parity evidence pinned for trigger-node runtime integration', () => {
+    const summary = loadNodeMigrationParityEvidenceSummary({
+      workspaceRoot: process.cwd(),
+    });
+
+    const suite = summary.suites.find(
+      (entry) => entry.suiteId === 'v3-pilot-product-trigger-queue-e2e'
+    );
+    expect(suite).toBeTruthy();
+    expect(suite?.testFile).toBe('e2e/features/products/products-trigger-queue-integration.spec.ts');
+    expect(suite?.modes).toContain('code_object_v3');
+    expect(suite?.nodeTypes).toContain('trigger');
   });
 });

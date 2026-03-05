@@ -13,7 +13,7 @@ Runtime dispatch now has a kernel scaffold (`src/shared/lib/ai-paths/core/runtim
 - `legacy_adapter` (current default execution path)
 - `code_object_v3` (pilot migration strategy)
 
-Pilot node types (`constant`, `math`, `template`) are tagged to `code_object_v3` strategy while still executing through legacy handlers via adapter bridge, enabling dual-run parity rollout without changing node behavior.
+Pilot node types now cover all registered node types (36 total), and server runtime resolves their `code_object_v3` contracts via native handler registry mappings declared in `docs/ai-paths/node-code-objects-v3/contracts.json`.
 
 ## Node Migration Documentation (v3)
 

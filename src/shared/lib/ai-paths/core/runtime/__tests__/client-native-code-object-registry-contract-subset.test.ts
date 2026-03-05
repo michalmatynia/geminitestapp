@@ -215,6 +215,36 @@ const buildApiAdvancedNode = (): AiNode => ({
   position: { x: 190, y: 0 },
 });
 
+const buildDatabaseNode = (): AiNode => ({
+  id: 'node-database',
+  type: 'database',
+  title: 'Database',
+  description: '',
+  inputs: [],
+  outputs: ['result', 'bundle', 'query', 'queryMode', 'querySource'],
+  config: {
+    database: {
+      operation: 'query',
+      query: {
+        provider: 'auto',
+        collection: 'products',
+        mode: 'custom',
+        preset: 'by_id',
+        field: '_id',
+        idType: 'string',
+        queryTemplate: '',
+        limit: 20,
+        sort: '',
+        sortPresetId: 'custom',
+        projection: '',
+        projectionPresetId: 'custom',
+        single: false,
+      },
+    },
+  },
+  position: { x: 220, y: 0 },
+});
+
 const buildAudioOscillatorNode = (): AiNode => ({
   id: 'node-audio-oscillator',
   type: 'audio_oscillator',
@@ -321,7 +351,6 @@ describe('client native code-object registry contract subset', () => {
     expect(unsupportedOnClientNodeTypes).toEqual([
       'agent',
       'ai_description',
-      'database',
       'description_updater',
       'learner_agent',
       'model',
@@ -438,6 +467,33 @@ describe('client native code-object registry contract subset', () => {
       expect(result.outputs?.['node-api-advanced']?.['status']).toBe(0);
       expect(result.outputs?.['node-api-advanced']?.['route']).toBe('missing_url');
       expect(result.outputs?.['node-api-advanced']?.['error']).toBe('Missing URL');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('executes database nodes through client native contract resolver mapping', async () => {
+    const fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal('fetch', fetchMock);
+
+    try {
+      const result = await evaluateGraphClient({
+        nodes: [buildDatabaseNode()],
+        edges: [],
+        runtimeKernelPilotNodeTypes: ['database'],
+        reportAiPathsError: (): void => {},
+      });
+      const bundle = result.outputs?.['node-database']?.['bundle'] as
+        | Record<string, unknown>
+        | undefined;
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(result.outputs?.['node-database']?.['result']).toBeNull();
+      expect(bundle).toMatchObject({
+        guardrail: 'query-resolution',
+        querySource: 'customTemplate',
+      });
+      expect(String(bundle?.['error'] ?? '')).toContain('No explicit query provided.');
     } finally {
       vi.unstubAllGlobals();
     }

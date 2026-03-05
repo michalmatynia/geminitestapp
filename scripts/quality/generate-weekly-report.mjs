@@ -302,6 +302,7 @@ const toMarkdown = (report) => {
   lines.push(`- Typecheck pass rate: ${report.passRates.typecheck ?? 'n/a'}%`);
   lines.push(`- Critical-flow gate pass rate: ${report.passRates.criticalFlows ?? 'n/a'}%`);
   lines.push(`- Security smoke gate pass rate: ${report.passRates.securitySmoke ?? 'n/a'}%`);
+  lines.push(`- Unit-domain gate pass rate: ${report.passRates.unitDomains ?? 'n/a'}%`);
   lines.push(`- Full unit pass rate: ${report.passRates.fullUnit ?? 'n/a'}%`);
   lines.push(`- E2E test pass rate: ${report.passRates.e2e ?? 'n/a'}%`);
   lines.push('');
@@ -441,6 +442,13 @@ const run = async () => {
       timeoutMs: 20 * 60 * 1000,
     },
     {
+      id: 'unitDomains',
+      label: 'Unit Domain Gate',
+      command: 'npm',
+      commandArgs: ['run', 'test:unit:domains:strict', '--', '--ci', '--no-history'],
+      timeoutMs: 25 * 60 * 1000,
+    },
+    {
       id: 'fullUnit',
       label: 'Full Unit Tests',
       command: 'npm',
@@ -549,6 +557,7 @@ const run = async () => {
       typecheck: getPassRate(findCheck('typecheck')),
       criticalFlows: getPassRate(findCheck('criticalFlows')),
       securitySmoke: getPassRate(findCheck('securitySmoke')),
+      unitDomains: getPassRate(findCheck('unitDomains')),
       fullUnit: getPassRate(findCheck('fullUnit')),
       e2e: getPassRate(findCheck('e2e')),
     },

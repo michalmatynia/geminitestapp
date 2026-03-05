@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import ProductFormDebugPanel from '@/features/products/components/ProductFormDebugPanel';
-import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
 import {
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
@@ -50,7 +50,7 @@ export default function ProductForm({
   skuRequired: _skuRequired = false,
   validationInstanceScopeOverride,
 }: ProductFormProps): React.JSX.Element {
-  const { handleSubmit, product, draft, ConfirmationModal } = useProductFormContext();
+  const { handleSubmit, product, draft, ConfirmationModal } = useProductFormCore();
 
   const searchParams = useSearchParams();
   const [isDebugOpen, setIsDebugOpen] = useState(false);

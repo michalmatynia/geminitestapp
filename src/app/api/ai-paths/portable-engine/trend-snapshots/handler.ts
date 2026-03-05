@@ -5,6 +5,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { getQueryParams } from '@/shared/lib/api/api-handler';
 import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from '@/shared/lib/ai-paths/portable-engine';
+import { getPortablePathRunExecutionSnapshot } from '@/shared/lib/ai-paths/portable-engine/portable-engine-observability';
 import {
   loadPortablePathAuditSinkAutoRemediationDeadLetters,
   loadPortablePathAuditSinkStartupHealthState,
@@ -36,6 +37,7 @@ const DEFAULT_AUTO_REMEDIATION_RATE_LIMIT_MAX_ACTIONS = 3;
 const DEFAULT_AUTO_REMEDIATION_NOTIFICATION_TIMEOUT_MS = 8000;
 const DEFAULT_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES = 200;
 const DEAD_LETTER_ERROR_BREAKDOWN_LIMIT = 5;
+const RUN_EXECUTION_RECENT_FAILURE_LIMIT = 10;
 const DEAD_LETTER_REPLAY_POLICY_SKIP_REASONS = new Set<string>([
   'dead_letter_endpoint_missing',
   'dead_letter_endpoint_invalid',
@@ -159,6 +161,144 @@ const toTopDeadLetterErrorBreakdown = (
     .slice(0, limit)
     .map(([reason, count]) => ({ reason, count }));
 
+const createEmptyRunExecutionCounts = (): { attempts: number; successes: number; failures: number } => ({
+  attempts: 0,
+  successes: 0,
+  failures: 0,
+});
+
+const computeRunExecutionRate = (part: number, whole: number): number => {
+  if (!Number.isFinite(part) || !Number.isFinite(whole) || whole <= 0) return 0;
+  return Math.max(0, Math.min(100, (part / whole) * 100));
+};
+
+const buildRunExecutionSummary = (): {
+  source: 'in_memory' | 'unavailable';
+  totals: {
+    attempts: number;
+    successes: number;
+    failures: number;
+    successRate: number;
+    failureRate: number;
+  };
+  byRunner: {
+    client: { attempts: number; successes: number; failures: number };
+    server: { attempts: number; successes: number; failures: number };
+  };
+  bySurface: {
+    canvas: { attempts: number; successes: number; failures: number };
+    product: { attempts: number; successes: number; failures: number };
+    api: { attempts: number; successes: number; failures: number };
+  };
+  byInputSource: {
+    portable_package: { attempts: number; successes: number; failures: number };
+    portable_envelope: { attempts: number; successes: number; failures: number };
+    semantic_canvas: { attempts: number; successes: number; failures: number };
+    path_config: { attempts: number; successes: number; failures: number };
+  };
+  failureStageCounts: {
+    resolve: number;
+    validation: number;
+    runtime: number;
+  };
+  topFailureErrors: Array<{ reason: string; count: number }>;
+  recentFailures: Array<{
+    at: string;
+    runner: 'client' | 'server';
+    surface: 'canvas' | 'product' | 'api';
+    source: 'portable_package' | 'portable_envelope' | 'semantic_canvas' | 'path_config' | null;
+    stage: 'resolve' | 'validation' | 'runtime';
+    error: string;
+    durationMs: number;
+    validateBeforeRun: boolean;
+    validationMode: string | null;
+  }>;
+} => {
+  const emptySummary = {
+    source: 'unavailable' as const,
+    totals: {
+      attempts: 0,
+      successes: 0,
+      failures: 0,
+      successRate: 0,
+      failureRate: 0,
+    },
+    byRunner: {
+      client: createEmptyRunExecutionCounts(),
+      server: createEmptyRunExecutionCounts(),
+    },
+    bySurface: {
+      canvas: createEmptyRunExecutionCounts(),
+      product: createEmptyRunExecutionCounts(),
+      api: createEmptyRunExecutionCounts(),
+    },
+    byInputSource: {
+      portable_package: createEmptyRunExecutionCounts(),
+      portable_envelope: createEmptyRunExecutionCounts(),
+      semantic_canvas: createEmptyRunExecutionCounts(),
+      path_config: createEmptyRunExecutionCounts(),
+    },
+    failureStageCounts: {
+      resolve: 0,
+      validation: 0,
+      runtime: 0,
+    },
+    topFailureErrors: [],
+    recentFailures: [],
+  };
+
+  try {
+    const snapshot = getPortablePathRunExecutionSnapshot();
+    const failureEvents = snapshot.recentEvents.filter((event) => event.outcome === 'failure');
+    const recentFailures = failureEvents
+      .slice(-RUN_EXECUTION_RECENT_FAILURE_LIMIT)
+      .reverse()
+      .map((event) => ({
+        at: event.at,
+        runner: event.runner,
+        surface: event.surface,
+        source: event.source,
+        stage: event.failureStage ?? 'runtime',
+        error:
+          typeof event.error === 'string' && event.error.trim().length > 0
+            ? event.error
+            : 'Unknown portable engine runtime failure.',
+        durationMs: event.durationMs,
+        validateBeforeRun: event.validateBeforeRun,
+        validationMode: event.validationMode,
+      }));
+    const failureErrorCounts: Record<string, number> = {};
+    for (const event of failureEvents) {
+      const errorMessage =
+        typeof event.error === 'string' && event.error.trim().length > 0
+          ? event.error
+          : 'Unknown portable engine runtime failure.';
+      failureErrorCounts[errorMessage] = (failureErrorCounts[errorMessage] ?? 0) + 1;
+    }
+    const attempts = snapshot.totals.attempts;
+    const successes = snapshot.totals.successes;
+    const failures = snapshot.totals.failures;
+    return {
+      source: 'in_memory',
+      totals: {
+        attempts,
+        successes,
+        failures,
+        successRate: computeRunExecutionRate(successes, attempts),
+        failureRate: computeRunExecutionRate(failures, attempts),
+      },
+      byRunner: snapshot.byRunner,
+      bySurface: snapshot.bySurface,
+      byInputSource: snapshot.bySource,
+      failureStageCounts: snapshot.failureStageCounts,
+      topFailureErrors: toTopDeadLetterErrorBreakdown(failureErrorCounts),
+      recentFailures,
+    };
+  } catch {
+    return emptySummary;
+  }
+};
+
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
@@ -257,6 +397,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const deadLetterReplayPolicySkipsTotal = Object.values(
     deadLetterReplayPolicySkipCounts
   ).reduce((sum, value) => sum + value, 0);
+  const runExecution = buildRunExecutionSummary();
 
   return NextResponse.json({
     specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
@@ -333,6 +474,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       },
       state: autoRemediationState,
     },
+    runExecution,
     snapshots: pageSnapshots,
   });
 }

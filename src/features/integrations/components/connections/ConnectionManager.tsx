@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import { useIntegrationsData } from '@/features/integrations/context/IntegrationsContext';
 import { ConnectionForm } from './manager/ConnectionForm';
 import { ConnectionList } from './manager/ConnectionList';
 import { ConnectionTestLog } from './manager/ConnectionTestLog';
 
 export function ConnectionManager(): React.JSX.Element {
-  const { activeIntegration } = useIntegrationsContext();
+  const { activeIntegration } = useIntegrationsData();
 
   if (!activeIntegration) return <></>;
 

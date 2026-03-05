@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
+import { useInternationalizationData } from '@/features/internationalization/context/InternationalizationContext';
 import type { Catalog, PriceGroup } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { Alert } from '@/shared/ui';
@@ -32,7 +32,7 @@ export function CatalogModal(props: CatalogModalProps): React.JSX.Element {
     defaultId: defaultGroupId = '',
   } = props;
 
-  const { languages, languagesLoading, languagesError } = useInternationalizationContext();
+  const { languages, languagesLoading, languagesError } = useInternationalizationData();
 
   const {
     form,

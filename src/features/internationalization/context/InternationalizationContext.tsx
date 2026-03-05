@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 
 import {
   useDeleteCountryMutation,
@@ -12,81 +12,112 @@ import {
   useCurrencies,
   useLanguages,
 } from '@/features/internationalization/hooks/useInternationalizationQueries';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type {
-  CurrencyOption,
   CountryOption,
+  CurrencyOption,
   Language,
 } from '@/shared/contracts/internationalization';
 import { internalError } from '@/shared/errors/app-error';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useToast } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
-interface InternationalizationContextType {
-  // Data & Loading
+type ConfirmationConfig = {
+  title: string;
+  message: string;
+  onConfirm: () => void | Promise<void>;
+  confirmText?: string;
+  isDangerous?: boolean;
+};
+
+type ConfirmationState = ConfirmationConfig | null;
+
+export interface InternationalizationDataContextType {
   currencies: CurrencyOption[];
   loadingCurrencies: boolean;
   countries: CountryOption[];
   loadingCountries: boolean;
+  filteredCountries: CountryOption[];
   languages: Language[];
   languagesLoading: boolean;
   languagesError: string | null;
+}
 
-  // Search/Filter
+export interface InternationalizationUiContextType {
   countrySearch: string;
   setCountrySearch: (value: string) => void;
-  filteredCountries: CountryOption[];
-
-  // Modal State
   isLanguageModalOpen: boolean;
   activeLanguage: Language | null;
   isCurrencyModalOpen: boolean;
   activeCurrency: CurrencyOption | null;
   isCountryModalOpen: boolean;
   activeCountry: CountryOption | null;
+}
 
-  // Handlers
+export interface InternationalizationActionsContextType {
   handleOpenLanguageModal: (language?: Language | null) => void;
   handleCloseLanguageModal: () => void;
   handleDeleteLanguage: (language: Language) => Promise<void>;
-
   handleOpenCurrencyModal: (currency?: CurrencyOption | null) => void;
   handleCloseCurrencyModal: () => void;
   handleDeleteCurrency: (currency: CurrencyOption) => Promise<void>;
-
   handleOpenCountryModal: (country?: CountryOption | null) => void;
   handleCloseCountryModal: () => void;
   handleDeleteCountry: (country: CountryOption) => Promise<void>;
-
-  // Confirmation
-  confirmation: {
-    title: string;
-    message: string;
-    onConfirm: () => void | Promise<void>;
-    confirmText?: string;
-    isDangerous?: boolean;
-  } | null;
-  confirmAction: (config: {
-    title: string;
-    message: string;
-    onConfirm: () => void | Promise<void>;
-    confirmText?: string;
-    isDangerous?: boolean;
-  }) => void;
+  confirmAction: (config: ConfirmationConfig) => void;
 }
 
-export const InternationalizationContext = createContext<InternationalizationContextType | null>(
+export type InternationalizationContextType = InternationalizationDataContextType &
+  InternationalizationUiContextType &
+  InternationalizationActionsContextType;
+
+const InternationalizationDataContext = createContext<InternationalizationDataContextType | null>(
+  null
+);
+const InternationalizationUiContext = createContext<InternationalizationUiContextType | null>(null);
+const InternationalizationActionsContext = createContext<InternationalizationActionsContextType | null>(
   null
 );
 
-export function useInternationalizationContext(): InternationalizationContextType {
-  const context = useContext(InternationalizationContext);
+export function useInternationalizationData(): InternationalizationDataContextType {
+  const context = useContext(InternationalizationDataContext);
   if (!context) {
     throw internalError(
-      'useInternationalizationContext must be used within an InternationalizationProvider'
+      'useInternationalizationData must be used within an InternationalizationProvider'
     );
   }
   return context;
+}
+
+export function useInternationalizationUi(): InternationalizationUiContextType {
+  const context = useContext(InternationalizationUiContext);
+  if (!context) {
+    throw internalError(
+      'useInternationalizationUi must be used within an InternationalizationProvider'
+    );
+  }
+  return context;
+}
+
+export function useInternationalizationActions(): InternationalizationActionsContextType {
+  const context = useContext(InternationalizationActionsContext);
+  if (!context) {
+    throw internalError(
+      'useInternationalizationActions must be used within an InternationalizationProvider'
+    );
+  }
+  return context;
+}
+
+export function useInternationalizationContext(): InternationalizationContextType {
+  const data = useInternationalizationData();
+  const ui = useInternationalizationUi();
+  const actions = useInternationalizationActions();
+  return {
+    ...data,
+    ...ui,
+    ...actions,
+  };
 }
 
 export function InternationalizationProvider({
@@ -96,7 +127,6 @@ export function InternationalizationProvider({
 }): React.JSX.Element {
   const { toast } = useToast();
 
-  // Queries
   const { data: currencies = [], isLoading: loadingCurrencies } = useCurrencies();
   const { data: countries = [], isLoading: loadingCountries } = useCountries();
   const {
@@ -105,69 +135,56 @@ export function InternationalizationProvider({
     error: languagesError,
   } = useLanguages();
 
-  // Search state
   const [countrySearch, setCountrySearch] = useState('');
-
-  // Modal State
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [editingLanguage, setEditingLanguage] = useState<Language | null>(null);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [editingCurrency, setEditingCurrency] = useState<CurrencyOption | null>(null);
   const [showCountryModal, setShowCountryModal] = useState(false);
   const [editingCountry, setEditingCountry] = useState<CountryOption | null>(null);
-  const [confirmation, setConfirmation] = useState<{
-    title: string;
-    message: string;
-    onConfirm: () => void | Promise<void>;
-    confirmText?: string;
-    isDangerous?: boolean;
-      } | null>(null);
+  const [confirmation, setConfirmation] = useState<ConfirmationState>(null);
 
-  const confirmAction = (config: {
-    title: string;
-    message: string;
-    onConfirm: () => void | Promise<void>;
-    confirmText?: string;
-    isDangerous?: boolean;
-  }) => {
-    setConfirmation(config);
-  };
-
-  // Mutations
   const deleteCurrencyMutation = useDeleteCurrencyMutation();
   const deleteCountryMutation = useDeleteCountryMutation();
   const deleteLanguageMutation = useDeleteLanguageMutation();
+
+  const normalizedLanguagesError =
+    languagesError instanceof Error ? languagesError.message : languagesError || null;
 
   const filteredCountries = useMemo(() => {
     const term = countrySearch.trim().toLowerCase();
     if (!term) return countries;
     return countries.filter(
-      (c: CountryOption) =>
-        c.name.toLowerCase().includes(term) || c.code.toLowerCase().includes(term)
+      (country: CountryOption) =>
+        country.name.toLowerCase().includes(term) || country.code.toLowerCase().includes(term)
     );
   }, [countries, countrySearch]);
 
-  const handleOpenLanguageModal = (language?: Language | null) => {
+  const confirmAction = (config: ConfirmationConfig): void => {
+    setConfirmation(config);
+  };
+
+  const handleOpenLanguageModal = (language?: Language | null): void => {
     setEditingLanguage(language ?? null);
     setShowLanguageModal(true);
   };
 
-  const handleDeleteLanguage = async (l: Language) => {
+  const handleDeleteLanguage = async (language: Language): Promise<void> => {
     confirmAction({
       title: 'Delete Language?',
-      message: `Are you sure you want to delete ${l.name}? This action cannot be undone.`,
+      message: `Are you sure you want to delete ${language.name}? This action cannot be undone.`,
       confirmText: 'Delete',
       isDangerous: true,
       onConfirm: async () => {
         try {
-          await deleteLanguageMutation.mutateAsync(l.id);
-          toast(`Language ${l.name} deleted.`, { variant: 'success' });
+          await deleteLanguageMutation.mutateAsync(language.id);
+          toast(`Language ${language.name} deleted.`, { variant: 'success' });
         } catch (error) {
           logClientError(error, {
             context: {
               source: 'InternationalizationContext',
               action: 'deleteLanguage',
-              languageId: l.id,
+              languageId: language.id,
             },
           });
           toast('Failed to delete language.', { variant: 'error' });
@@ -176,27 +193,27 @@ export function InternationalizationProvider({
     });
   };
 
-  const handleOpenCurrencyModal = (currency?: CurrencyOption | null) => {
+  const handleOpenCurrencyModal = (currency?: CurrencyOption | null): void => {
     setEditingCurrency(currency ?? null);
     setShowCurrencyModal(true);
   };
 
-  const handleDeleteCurrency = async (c: CurrencyOption) => {
+  const handleDeleteCurrency = async (currency: CurrencyOption): Promise<void> => {
     confirmAction({
       title: 'Delete Currency?',
-      message: `Are you sure you want to delete ${c.code}? This action cannot be undone.`,
+      message: `Are you sure you want to delete ${currency.code}? This action cannot be undone.`,
       confirmText: 'Delete',
       isDangerous: true,
       onConfirm: async () => {
         try {
-          await deleteCurrencyMutation.mutateAsync(c.id);
-          toast(`Currency ${c.code} deleted.`, { variant: 'success' });
+          await deleteCurrencyMutation.mutateAsync(currency.id);
+          toast(`Currency ${currency.code} deleted.`, { variant: 'success' });
         } catch (error) {
           logClientError(error, {
             context: {
               source: 'InternationalizationContext',
               action: 'deleteCurrency',
-              currencyId: c.id,
+              currencyId: currency.id,
             },
           });
           toast('Failed to delete currency.', { variant: 'error' });
@@ -205,27 +222,27 @@ export function InternationalizationProvider({
     });
   };
 
-  const handleOpenCountryModal = (country?: CountryOption | null) => {
+  const handleOpenCountryModal = (country?: CountryOption | null): void => {
     setEditingCountry(country ?? null);
     setShowCountryModal(true);
   };
 
-  const handleDeleteCountry = async (c: CountryOption) => {
+  const handleDeleteCountry = async (country: CountryOption): Promise<void> => {
     confirmAction({
       title: 'Delete Country?',
-      message: `Are you sure you want to delete ${c.name}? This action cannot be undone.`,
+      message: `Are you sure you want to delete ${country.name}? This action cannot be undone.`,
       confirmText: 'Delete',
       isDangerous: true,
       onConfirm: async () => {
         try {
-          await deleteCountryMutation.mutateAsync(c.id);
-          toast(`Country ${c.name} deleted.`, { variant: 'success' });
+          await deleteCountryMutation.mutateAsync(country.id);
+          toast(`Country ${country.name} deleted.`, { variant: 'success' });
         } catch (error) {
           logClientError(error, {
             context: {
               source: 'InternationalizationContext',
               action: 'deleteCountry',
-              countryId: c.id,
+              countryId: country.id,
             },
           });
           toast('Failed to delete country.', { variant: 'error' });
@@ -234,60 +251,88 @@ export function InternationalizationProvider({
     });
   };
 
-  const value: InternationalizationContextType = {
-    currencies,
-    loadingCurrencies,
-    countries,
-    loadingCountries,
-    languages,
-    languagesLoading,
-    languagesError:
-      languagesError instanceof Error ? languagesError.message : languagesError || null,
+  const dataValue = useMemo<InternationalizationDataContextType>(
+    () => ({
+      currencies,
+      loadingCurrencies,
+      countries,
+      loadingCountries,
+      filteredCountries,
+      languages,
+      languagesLoading,
+      languagesError: normalizedLanguagesError,
+    }),
+    [
+      currencies,
+      loadingCurrencies,
+      countries,
+      loadingCountries,
+      filteredCountries,
+      languages,
+      languagesLoading,
+      normalizedLanguagesError,
+    ]
+  );
 
-    countrySearch,
-    setCountrySearch,
-    filteredCountries,
+  const uiValue = useMemo<InternationalizationUiContextType>(
+    () => ({
+      countrySearch,
+      setCountrySearch,
+      isLanguageModalOpen: showLanguageModal,
+      activeLanguage: editingLanguage,
+      isCurrencyModalOpen: showCurrencyModal,
+      activeCurrency: editingCurrency,
+      isCountryModalOpen: showCountryModal,
+      activeCountry: editingCountry,
+    }),
+    [
+      countrySearch,
+      showLanguageModal,
+      editingLanguage,
+      showCurrencyModal,
+      editingCurrency,
+      showCountryModal,
+      editingCountry,
+    ]
+  );
 
-    isLanguageModalOpen: showLanguageModal,
-    activeLanguage: editingLanguage,
-    isCurrencyModalOpen: showCurrencyModal,
-    activeCurrency: editingCurrency,
-    isCountryModalOpen: showCountryModal,
-    activeCountry: editingCountry,
-
-    handleOpenLanguageModal,
-    handleCloseLanguageModal: () => setShowLanguageModal(false),
-    handleDeleteLanguage,
-
-    handleOpenCurrencyModal,
-    handleCloseCurrencyModal: () => setShowCurrencyModal(false),
-    handleDeleteCurrency,
-
-    handleOpenCountryModal,
-    handleCloseCountryModal: () => setShowCountryModal(false),
-    handleDeleteCountry,
-
-    confirmation,
-    confirmAction,
-  };
+  const actionsValue = useMemo<InternationalizationActionsContextType>(
+    () => ({
+      handleOpenLanguageModal,
+      handleCloseLanguageModal: () => setShowLanguageModal(false),
+      handleDeleteLanguage,
+      handleOpenCurrencyModal,
+      handleCloseCurrencyModal: () => setShowCurrencyModal(false),
+      handleDeleteCurrency,
+      handleOpenCountryModal,
+      handleCloseCountryModal: () => setShowCountryModal(false),
+      handleDeleteCountry,
+      confirmAction,
+    }),
+    [handleDeleteCountry, handleDeleteCurrency, handleDeleteLanguage]
+  );
 
   return (
-    <InternationalizationContext.Provider value={value}>
-      {children}
-      <ConfirmModal
-        isOpen={Boolean(confirmation)}
-        onClose={() => setConfirmation(null)}
-        title={confirmation?.title ?? ''}
-        message={confirmation?.message ?? ''}
-        confirmText={confirmation?.confirmText ?? 'Confirm'}
-        isDangerous={confirmation?.isDangerous ?? false}
-        onConfirm={async () => {
-          if (confirmation?.onConfirm) {
-            await confirmation.onConfirm();
-          }
-          setConfirmation(null);
-        }}
-      />
-    </InternationalizationContext.Provider>
+    <InternationalizationDataContext.Provider value={dataValue}>
+      <InternationalizationUiContext.Provider value={uiValue}>
+        <InternationalizationActionsContext.Provider value={actionsValue}>
+          {children}
+          <ConfirmModal
+            isOpen={Boolean(confirmation)}
+            onClose={() => setConfirmation(null)}
+            title={confirmation?.title ?? ''}
+            message={confirmation?.message ?? ''}
+            confirmText={confirmation?.confirmText ?? 'Confirm'}
+            isDangerous={confirmation?.isDangerous ?? false}
+            onConfirm={async () => {
+              if (confirmation?.onConfirm) {
+                await confirmation.onConfirm();
+              }
+              setConfirmation(null);
+            }}
+          />
+        </InternationalizationActionsContext.Provider>
+      </InternationalizationUiContext.Provider>
+    </InternationalizationDataContext.Provider>
   );
 }

@@ -2,13 +2,19 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 
-import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import {
+  useIntegrationsActions,
+  useIntegrationsData,
+  useIntegrationsTesting,
+} from '@/features/integrations/context/IntegrationsContext';
 import { useDefaultExportConnection } from '@/features/integrations/hooks/useIntegrationQueries';
 import { useUpdateDefaultExportConnection } from '@/features/integrations/hooks/useIntegrationMutations';
 import { useSettings, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 
 export function useBaselinkerSettingsState() {
-  const { connections, handleBaselinkerTest, isTesting } = useIntegrationsContext();
+  const { connections } = useIntegrationsData();
+  const { handleBaselinkerTest } = useIntegrationsActions();
+  const { isTesting } = useIntegrationsTesting();
   const activeConnection = connections[0] || null;
   const baselinkerConnected = Boolean(activeConnection?.hasBaseApiToken);
   const baseTokenUpdatedAt = activeConnection?.baseTokenUpdatedAt

@@ -4,7 +4,11 @@ import React, { useCallback, useMemo } from 'react';
 import NextImage from 'next/image';
 import type { ColumnDef } from '@tanstack/react-table';
 
-import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
+import {
+  useImportExportActions,
+  useImportExportData,
+  useImportExportState,
+} from '@/features/data-import-export/context/ImportExportContext';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import type { ImportListItem } from '@/shared/contracts/integrations';
@@ -20,6 +24,7 @@ import { cn } from '@/shared/utils';
 import type { FilterField } from '@/shared/contracts/ui';
 
 export function ImportListPreviewSection(): React.JSX.Element {
+  const { loadingImportList, importListStats, importList } = useImportExportData();
   const {
     importNameSearch,
     setImportNameSearch,
@@ -31,13 +36,10 @@ export function ImportListPreviewSection(): React.JSX.Element {
     setImportListPageSize,
     uniqueOnly,
     setUniqueOnly,
-    handleLoadImportList,
-    loadingImportList,
-    importListStats,
-    importList,
     selectedImportIds,
     setSelectedImportIds,
-  } = useImportExport();
+  } = useImportExportState();
+  const { handleLoadImportList } = useImportExportActions();
 
   const selectedImportCount = selectedImportIds.size;
   const visibleImportIds = useMemo(

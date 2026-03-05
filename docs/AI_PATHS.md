@@ -140,9 +140,14 @@ Useful commands:
 ```bash
 npm run docs:ai-paths:semantic:generate
 npm run docs:ai-paths:semantic:check
+npm run docs:ai-paths:node-docs:verify
+npm run docs:ai-paths:node-docs:ci
 npm run docs:ai-paths:tooltip:generate
 npm run docs:ai-paths:tooltip:check
+npm run ai-paths:check:canonical
 ```
+
+`docs:ai-paths:node-docs:ci` runs `verify` plus tooltip coverage checks.
 
 ## Cross References
 

@@ -1,6 +1,10 @@
 'use client';
 
-import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import {
+  useIntegrationsActions,
+  useIntegrationsData,
+  useIntegrationsForm,
+} from '@/features/integrations/context/IntegrationsContext';
 import {
   Button,
   StatusBadge,
@@ -13,14 +17,14 @@ import {
 } from '@/shared/ui';
 
 export function AllegroSettings(): React.JSX.Element {
+  const { connections } = useIntegrationsData();
+  const { savingAllegroSandbox } = useIntegrationsForm();
   const {
-    connections,
-    savingAllegroSandbox,
     handleAllegroSandboxToggle,
     handleAllegroAuthorize,
     handleAllegroDisconnect,
     handleAllegroSandboxConnect,
-  } = useIntegrationsContext();
+  } = useIntegrationsActions();
 
   const activeConnection = connections[0] || null;
   const allegroConnected = Boolean(activeConnection?.hasAllegroAccessToken);

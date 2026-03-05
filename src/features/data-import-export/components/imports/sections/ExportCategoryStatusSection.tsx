@@ -2,14 +2,14 @@
 
 import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
+import { useImportExportState } from '@/features/data-import-export/context/ImportExportContext';
 import { useCategoryMappingsByConnection } from '@/features/integrations/hooks/useMarketplaceQueries';
 import { Badge, Hint } from '@/shared/ui';
 
 export function ExportCategoryStatusSection(): React.JSX.Element {
   const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set(['categoryid', 'category_id', 'category']);
 
-  const { selectedBaseConnectionId, exportTemplateMappings } = useImportExport();
+  const { selectedBaseConnectionId, exportTemplateMappings } = useImportExportState();
 
   const usesCategoryMapper = useMemo(
     (): boolean =>

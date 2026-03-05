@@ -29,7 +29,7 @@ describe('useProductAiPathsRunSync', () => {
 
     window.dispatchEvent(
       new CustomEvent('ai-path-run-enqueued', {
-        detail: { runId: 'run-1', entityType: 'product', entityId: 'product-1' },
+        detail: { runId: ' run-1 ', entityType: 'PRODUCT', entityId: ' product-1 ' },
       })
     );
 
@@ -47,6 +47,20 @@ describe('useProductAiPathsRunSync', () => {
     window.dispatchEvent(
       new CustomEvent('ai-path-run-enqueued', {
         detail: { runId: 'run-2', entityType: 'note', entityId: 'note-1' },
+      })
+    );
+
+    expect(addQueuedProductIdMock).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(30_000);
+    expect(removeQueuedProductIdMock).not.toHaveBeenCalled();
+  });
+
+  it('ignores malformed ai-path-run-enqueued events without runId', () => {
+    renderHook(() => useProductAiPathsRunSync());
+
+    window.dispatchEvent(
+      new CustomEvent('ai-path-run-enqueued', {
+        detail: { entityType: 'product', entityId: 'product-1' },
       })
     );
 

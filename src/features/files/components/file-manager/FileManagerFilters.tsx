@@ -5,7 +5,12 @@ import { memo, useMemo } from 'react';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
 
-import { useFileManager } from '../../contexts/FileManagerContext';
+import {
+  useFileManagerConfig,
+  useFileManagerData,
+  useFileManagerSearch,
+  useFileManagerUIState,
+} from '../../contexts/FileManagerContext';
 
 /**
  * REFACTORED: FileManagerFilters using FilterPanel template
@@ -23,15 +28,12 @@ export const FileManagerFilters = memo(function FileManagerFilters(): React.JSX.
     setFilenameSearch,
     productNameSearch,
     setProductNameSearch,
-    showTagSearch,
     tagSearch,
     setTagSearch,
-    activeTab,
-    showFolderFilter,
-    folderFilter,
-    setLocalFolderFilter,
-    folderOptions,
-  } = useFileManager();
+  } = useFileManagerSearch();
+  const { showTagSearch, showFolderFilter } = useFileManagerConfig();
+  const { activeTab, setLocalFolderFilter } = useFileManagerUIState();
+  const { folderFilter, folderOptions } = useFileManagerData();
 
   const enableTagSearch = showTagSearch;
   const folderFilterEnabled = showFolderFilter && activeTab === 'uploads';

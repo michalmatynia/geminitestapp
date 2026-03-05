@@ -2,7 +2,12 @@
 
 import React from 'react';
 import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
-import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import {
+  useIntegrationsActions,
+  useIntegrationsData,
+  useIntegrationsForm,
+  useIntegrationsTesting,
+} from '@/features/integrations/context/IntegrationsContext';
 import { IntegrationConnection } from '@/shared/contracts/integrations';
 import { Button, FormSection, SimpleSettingsList } from '@/shared/ui';
 
@@ -13,18 +18,16 @@ export function ConnectionList(): React.JSX.Element {
     null
   );
 
+  const { activeIntegration, connections } = useIntegrationsData();
+  const { editingConnectionId, setEditingConnectionId } = useIntegrationsForm();
+  const { isTesting } = useIntegrationsTesting();
   const {
-    activeIntegration,
-    connections,
-    editingConnectionId,
-    setEditingConnectionId,
     handleDeleteConnection,
     handleTestConnection,
     handleBaselinkerTest,
     handleAllegroTest,
     handleTraderaManualLogin,
-    isTesting,
-  } = useIntegrationsContext();
+  } = useIntegrationsActions();
 
   if (!activeIntegration) return <></>;
 

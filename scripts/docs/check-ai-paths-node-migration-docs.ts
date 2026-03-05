@@ -570,6 +570,12 @@ if (!indexPayload.readiness || typeof indexPayload.readiness !== 'object') {
     for (let index = 0; index < declaredTopBlockers.length; index += 1) {
       const declared = declaredTopBlockers[index];
       const expected = readinessSummary.blockers[index];
+      if (!declared || !expected) {
+        errors.push(
+          `migration-index.json readiness.topBlockers[${index}] is missing while comparing normalized summaries.`
+        );
+        continue;
+      }
       if (declared.code !== expected.code || declared.count !== expected.count) {
         errors.push(
           `migration-index.json readiness.topBlockers[${index}] mismatch (declared=${JSON.stringify(declared)}, expected=${JSON.stringify(expected)}).`

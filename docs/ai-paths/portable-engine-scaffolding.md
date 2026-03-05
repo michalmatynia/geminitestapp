@@ -41,7 +41,10 @@ Verify no artifact drift (CI guard):
 
 ```bash
 npm run docs:ai-paths:node-docs:verify
+npm run docs:ai-paths:node-docs:ci
 ```
+
+`docs:ai-paths:node-docs:ci` also enforces tooltip coverage checks.
 
 ## Implemented Module
 

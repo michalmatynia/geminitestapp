@@ -2,7 +2,12 @@
 
 import { useMemo } from 'react';
 
-import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import {
+  useIntegrationsActions,
+  useIntegrationsData,
+  useIntegrationsSession,
+  useIntegrationsTesting,
+} from '@/features/integrations/context/IntegrationsContext';
 import { Tabs, TabsContent } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
@@ -25,19 +30,17 @@ import { TestLogModal } from './TestLogModal';
 import { TestResultModal } from './TestResultModal';
 
 export function IntegrationModal(): React.JSX.Element {
+  const { activeIntegration } = useIntegrationsData();
+  const { onCloseModal, onOpenSessionModal } = useIntegrationsActions();
   const {
-    activeIntegration,
-    onCloseModal,
-    onOpenSessionModal,
     showTestLogModal,
     setShowTestLogModal,
     showTestErrorModal,
     setShowTestErrorModal,
     showTestSuccessModal,
     setShowTestSuccessModal,
-    showSessionModal,
-    setShowSessionModal,
-  } = useIntegrationsContext();
+  } = useIntegrationsTesting();
+  const { showSessionModal, setShowSessionModal } = useIntegrationsSession();
 
   const {
     activeTab,

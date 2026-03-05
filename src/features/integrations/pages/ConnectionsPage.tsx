@@ -6,19 +6,18 @@ import { IntegrationList } from '@/features/integrations/components/connections/
 import { IntegrationModal } from '@/features/integrations/components/connections/IntegrationModal';
 import {
   IntegrationsProvider,
-  useIntegrationsContext,
+  useIntegrationsActions,
+  useIntegrationsData,
+  useIntegrationsForm,
 } from '@/features/integrations/context/IntegrationsContext';
 import { LoadingState } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 function IntegrationsContent(): React.JSX.Element {
-  const {
-    activeIntegration,
-    isModalOpen,
-    connectionToDelete,
-    setConnectionToDelete,
-    handleConfirmDeleteConnection,
-  } = useIntegrationsContext();
+  const { activeIntegration } = useIntegrationsData();
+  const { isModalOpen, connectionToDelete, setConnectionToDelete } = useIntegrationsForm();
+  const { handleConfirmDeleteConnection } = useIntegrationsActions();
+
   const [deletePassword, setDeletePassword] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 

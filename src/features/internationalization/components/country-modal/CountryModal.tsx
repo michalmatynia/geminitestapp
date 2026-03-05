@@ -2,7 +2,11 @@
 
 import React from 'react';
 
-import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
+import {
+  useInternationalizationActions,
+  useInternationalizationData,
+  useInternationalizationUi,
+} from '@/features/internationalization/context/InternationalizationContext';
 import { countryCodeOptions } from '@/shared/constants/internationalization';
 import { LoadingState } from '@/shared/ui';
 import {
@@ -19,13 +23,9 @@ type CountryFormState = {
 };
 
 export function CountryModal(): React.JSX.Element | null {
-  const {
-    isCountryModalOpen,
-    handleCloseCountryModal,
-    activeCountry,
-    currencies: currencyOptions,
-    loadingCurrencies,
-  } = useInternationalizationContext();
+  const { isCountryModalOpen, activeCountry } = useInternationalizationUi();
+  const { handleCloseCountryModal } = useInternationalizationActions();
+  const { currencies: currencyOptions, loadingCurrencies } = useInternationalizationData();
 
   const defaultOption = countryCodeOptions[0];
   const { form, setForm, selectedCurrencyIds, setSelectedCurrencyIds, saveMutation, handleSubmit } =

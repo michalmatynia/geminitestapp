@@ -1,11 +1,15 @@
 'use client';
 
-import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import {
+  useIntegrationsActions,
+  useIntegrationsApiConsole,
+  useIntegrationsData,
+} from '@/features/integrations/context/IntegrationsContext';
 import { GenericApiConsole, type ApiPreset } from '@/shared/ui';
 
 export function BaseApiConsole(): React.JSX.Element {
+  const { connections } = useIntegrationsData();
   const {
-    connections,
     baseApiMethod,
     setBaseApiMethod,
     baseApiParams,
@@ -13,8 +17,8 @@ export function BaseApiConsole(): React.JSX.Element {
     baseApiLoading,
     baseApiError,
     baseApiResponse,
-    handleBaseApiRequest,
-  } = useIntegrationsContext();
+  } = useIntegrationsApiConsole();
+  const { handleBaseApiRequest } = useIntegrationsActions();
 
   const activeConnection = connections[0] || null;
   const defaultInventoryId = activeConnection?.baseLastInventoryId ?? '';

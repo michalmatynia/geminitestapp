@@ -46,6 +46,33 @@ type TrendSnapshotsPayload = {
       lastRemediatedAt: string | null;
     };
   };
+  runExecution?: {
+    source: 'in_memory' | 'unavailable';
+    totals: {
+      attempts: number;
+      successes: number;
+      failures: number;
+      successRate: number;
+      failureRate: number;
+    };
+    failureStageCounts: {
+      resolve: number;
+      validation: number;
+      runtime: number;
+    };
+    topFailureErrors: Array<{ reason: string; count: number }>;
+    recentFailures: Array<{
+      at: string;
+      runner: 'client' | 'server';
+      surface: 'canvas' | 'product' | 'api';
+      source: 'portable_package' | 'portable_envelope' | 'semantic_canvas' | 'path_config' | null;
+      stage: 'resolve' | 'validation' | 'runtime';
+      error: string;
+      durationMs: number;
+      validateBeforeRun: boolean;
+      validationMode: string | null;
+    }>;
+  };
   snapshots: TrendSnapshot[];
 };
 
@@ -57,6 +84,8 @@ const formatTimestamp = (value: string | null): string => {
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString();
 };
+
+const formatPercent = (value: number): string => `${Math.round(value)}%`;
 
 export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
   const [data, setData] = useState<TrendSnapshotsPayload | null>(null);
@@ -94,6 +123,33 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
     () => (data?.snapshots ?? []).slice(-6).reverse(),
     [data]
   );
+  const runExecution = data?.runExecution ?? {
+    source: 'unavailable' as const,
+    totals: {
+      attempts: 0,
+      successes: 0,
+      failures: 0,
+      successRate: 0,
+      failureRate: 0,
+    },
+    failureStageCounts: {
+      resolve: 0,
+      validation: 0,
+      runtime: 0,
+    },
+    topFailureErrors: [] as Array<{ reason: string; count: number }>,
+    recentFailures: [] as Array<{
+      at: string;
+      runner: 'client' | 'server';
+      surface: 'canvas' | 'product' | 'api';
+      source: 'portable_package' | 'portable_envelope' | 'semantic_canvas' | 'path_config' | null;
+      stage: 'resolve' | 'validation' | 'runtime';
+      error: string;
+      durationMs: number;
+      validateBeforeRun: boolean;
+      validationMode: string | null;
+    }>,
+  };
 
   return (
     <Card variant='subtle' className='border-border/60 bg-card/40 p-3 sm:p-4'>
@@ -159,6 +215,9 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
             <Badge variant='outline' className='border-white/10 text-gray-300'>
               sink failures {data.summary.sinkWritesFailedTotal}
             </Badge>
+            <Badge variant='outline' className='border-white/10 text-gray-300'>
+              run failures {runExecution.totals.failures}
+            </Badge>
             <Badge
               variant={data.autoRemediation.enabled ? 'success' : 'outline'}
               className={data.autoRemediation.enabled ? '' : 'border-white/10 text-gray-300'}
@@ -199,6 +258,44 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
             ) : (
               <div className='mt-1 text-gray-400'>No replay-policy skip reasons in dead letters.</div>
             )}
+          </div>
+
+          <div className='rounded-md border border-border/60 bg-black/20 p-2 text-xs text-gray-300'>
+            <div className='font-medium text-gray-200'>Run execution telemetry</div>
+            <div className='mt-1 text-gray-400'>
+              source={runExecution.source} attempts={runExecution.totals.attempts} success=
+              {formatPercent(runExecution.totals.successRate)} failure=
+              {formatPercent(runExecution.totals.failureRate)} stage(
+              {runExecution.failureStageCounts.resolve}/
+              {runExecution.failureStageCounts.validation}/
+              {runExecution.failureStageCounts.runtime})
+            </div>
+            {runExecution.topFailureErrors.length > 0 ? (
+              <div className='mt-1 flex flex-wrap gap-1.5'>
+                {runExecution.topFailureErrors.slice(0, 4).map((entry) => (
+                  <Badge key={entry.reason} variant='outline' className='border-white/10 text-gray-300'>
+                    {entry.reason} ({entry.count})
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <div className='mt-1 text-gray-400'>No recent runtime failures captured.</div>
+            )}
+            {runExecution.recentFailures.length > 0 ? (
+              <div className='mt-2 space-y-1'>
+                {runExecution.recentFailures.slice(0, 3).map((entry) => (
+                  <div
+                    key={`${entry.at}-${entry.runner}-${entry.stage}-${entry.error}`}
+                    className='rounded border border-border/40 bg-black/30 px-2 py-1 text-[11px] text-gray-300'
+                  >
+                    <span className='font-medium text-gray-200'>
+                      {entry.runner}/{entry.surface}/{entry.stage}
+                    </span>{' '}
+                    · {entry.error} · {entry.durationMs}ms · {formatTimestamp(entry.at)}
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
 
           {latestSnapshots.length === 0 ? (

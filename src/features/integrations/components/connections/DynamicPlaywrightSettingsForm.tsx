@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 
-import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import {
+  useIntegrationsActions,
+  useIntegrationsForm,
+} from '@/features/integrations/context/IntegrationsContext';
 import { PlaywrightSettingsProvider } from '@/features/playwright/context/PlaywrightSettingsContext';
 import { LoadingState } from '@/shared/ui';
 
 export function DynamicPlaywrightSettingsForm(): React.JSX.Element {
-  const { playwrightSettings, setPlaywrightSettings, handleSavePlaywrightSettings } =
-    useIntegrationsContext();
+  const { playwrightSettings, setPlaywrightSettings } = useIntegrationsForm();
+  const { handleSavePlaywrightSettings } = useIntegrationsActions();
   const [Component, setComponent] = useState<React.ComponentType<{ onSave: () => void }> | null>(
     null
   );

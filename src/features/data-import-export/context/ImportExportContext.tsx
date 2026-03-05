@@ -45,9 +45,139 @@ import { createImportExportRuntimeActions } from './import-export-runtime-action
 import type { ImportExportContextType } from './ImportExportContext.types';
 import { useImportExportPreferences } from './import-export/useImportExportPreferences';
 import { useImportExportTemplates } from './import-export/useImportExportTemplates';
-import { useImportExportData } from './import-export/useImportExportData';
+import { useImportExportData as useImportExportDataSource } from './import-export/useImportExportData';
 
-const ImportExportContext = createContext<ImportExportContextType | undefined>(undefined);
+export type ImportExportStateContextType = Pick<
+  ImportExportContextType,
+  | 'inventoryId'
+  | 'setInventoryId'
+  | 'exportInventoryId'
+  | 'setExportInventoryId'
+  | 'exportWarehouseId'
+  | 'setExportWarehouseId'
+  | 'catalogId'
+  | 'setCatalogId'
+  | 'limit'
+  | 'setLimit'
+  | 'imageMode'
+  | 'setImageMode'
+  | 'importMode'
+  | 'setImportMode'
+  | 'importDryRun'
+  | 'setImportDryRun'
+  | 'allowDuplicateSku'
+  | 'setAllowDuplicateSku'
+  | 'uniqueOnly'
+  | 'setUniqueOnly'
+  | 'importTemplateId'
+  | 'setImportTemplateId'
+  | 'importActiveTemplateId'
+  | 'setImportActiveTemplateId'
+  | 'exportActiveTemplateId'
+  | 'setExportActiveTemplateId'
+  | 'importTemplateName'
+  | 'setImportTemplateName'
+  | 'exportTemplateName'
+  | 'setExportTemplateName'
+  | 'importTemplateDescription'
+  | 'setImportTemplateDescription'
+  | 'exportTemplateDescription'
+  | 'setExportTemplateDescription'
+  | 'importTemplateMappings'
+  | 'setImportTemplateMappings'
+  | 'importTemplateParameterImport'
+  | 'setImportTemplateParameterImport'
+  | 'exportTemplateMappings'
+  | 'setExportTemplateMappings'
+  | 'exportImagesAsBase64'
+  | 'setExportImagesAsBase64'
+  | 'exportStockFallbackEnabled'
+  | 'setExportStockFallbackEnabled'
+  | 'imageRetryPresets'
+  | 'setImageRetryPresets'
+  | 'selectedBaseConnectionId'
+  | 'setSelectedBaseConnectionId'
+  | 'importNameSearch'
+  | 'setImportNameSearch'
+  | 'importSkuSearch'
+  | 'setImportSkuSearch'
+  | 'importListPage'
+  | 'setImportListPage'
+  | 'importListPageSize'
+  | 'setImportListPageSize'
+  | 'importListEnabled'
+  | 'setImportListEnabled'
+  | 'selectedImportIds'
+  | 'setSelectedImportIds'
+  | 'templateScope'
+  | 'setTemplateScope'
+  | 'showAllWarehouses'
+  | 'setShowAllWarehouses'
+  | 'includeAllWarehouses'
+  | 'setIncludeAllWarehouses'
+  | 'debugWarehouses'
+  | 'setDebugWarehouses'
+>;
+
+export type ImportExportDataContextType = Pick<
+  ImportExportContextType,
+  | 'integrationsWithConnections'
+  | 'checkingIntegration'
+  | 'isBaseConnected'
+  | 'baseConnections'
+  | 'catalogsData'
+  | 'loadingCatalogs'
+  | 'importTemplates'
+  | 'loadingImportTemplates'
+  | 'exportTemplates'
+  | 'loadingExportTemplates'
+  | 'inventories'
+  | 'isFetchingInventories'
+  | 'warehouses'
+  | 'allWarehouses'
+  | 'isFetchingWarehouses'
+  | 'importList'
+  | 'loadingImportList'
+  | 'importListStats'
+  | 'lastResult'
+  | 'activeImportRunId'
+  | 'activeImportRun'
+  | 'loadingImportRun'
+  | 'importSourceFields'
+  | 'importSourceFieldValues'
+  | 'loadingImportSourceFields'
+>;
+
+export type ImportExportActionsContextType = Pick<
+  ImportExportContextType,
+  | 'handleLoadInventories'
+  | 'handleLoadWarehouses'
+  | 'handleLoadImportList'
+  | 'handleImport'
+  | 'handleResumeImport'
+  | 'handleCancelImport'
+  | 'handleDownloadImportReport'
+  | 'handleSaveDefaultBaseConnection'
+  | 'handleSaveExportSettings'
+  | 'handleClearInventory'
+  | 'handleNewTemplate'
+  | 'handleDuplicateTemplate'
+  | 'handleCreateExportFromImportTemplate'
+  | 'handleSaveTemplate'
+  | 'handleDeleteTemplate'
+  | 'applyTemplate'
+  | 'importing'
+  | 'savingDefaultConnection'
+  | 'savingExportSettings'
+  | 'savingImportTemplate'
+  | 'savingExportTemplate'
+>;
+
+const ImportExportStateContext = createContext<ImportExportStateContextType | undefined>(undefined);
+const ImportExportDataContext = createContext<ImportExportDataContextType | undefined>(undefined);
+const ImportExportActionsContext = createContext<ImportExportActionsContextType | undefined>(
+  undefined
+);
 
 export function ImportExportProvider({
   children,
@@ -349,7 +479,7 @@ export function ImportExportProvider({
     });
     return normalized;
   }, [importParameterCache]);
-  const data = useImportExportData({
+  const data = useImportExportDataSource({
     selectedBaseConnectionId,
     isBaseConnected,
     inventoriesEnabled,
@@ -519,20 +649,44 @@ export function ImportExportProvider({
   const activeRunBusy =
     activeImportRun?.run.status === 'queued' || activeImportRun?.run.status === 'running';
 
+  const refetchInventoriesSafe = useCallback(async () => {
+    const result = await refetchInventories();
+    return {
+      data: Array.isArray(result.data) ? result.data : [],
+      error: result.error,
+    };
+  }, [refetchInventories]);
+
+  const refetchWarehousesSafe = useCallback(async () => {
+    const result = await refetchWarehouses();
+    return {
+      data: result.data,
+      error: result.error,
+    };
+  }, [refetchWarehouses]);
+
+  const refetchImportListSafe = useCallback(async () => {
+    const result = await refetchImportList();
+    return {
+      data: result.data,
+      error: result.error,
+    };
+  }, [refetchImportList]);
+
   const runtimeActions = createImportExportRuntimeActions({
     toast,
     setInventoriesEnabled,
-    refetchInventories,
+    refetchInventories: refetchInventoriesSafe,
     inventoryId,
     selectedBaseConnectionId,
     refreshImportParameterCacheMutation,
     lastHydratedImportSchemaKey,
     setWarehousesEnabled,
-    refetchWarehouses,
+    refetchWarehouses: refetchWarehousesSafe,
     setImportListEnabled,
     setImportListPage,
     setSelectedImportIds,
-    refetchImportList,
+    refetchImportList: refetchImportListSafe,
     catalogId,
     importListEnabled,
     imageMode,
@@ -579,7 +733,21 @@ export function ImportExportProvider({
     }
   }, [selectedBaseConnectionId, saveDefaultConnectionMutation, toast]);
 
-  const value: ImportExportContextType = {
+  const loadingImportSourceFields =
+    importParameterCacheQuery.isFetching || refreshImportParameterCacheMutation.isPending;
+  const importing =
+    importMutation.isPending ||
+    resumeImportRunMutation.isPending ||
+    cancelImportRunMutation.isPending ||
+    activeRunBusy;
+  const savingDefaultConnection = saveDefaultConnectionMutation.isPending;
+  const savingExportSettings = saveExportSettingsMutation.isPending;
+  const savingImportTemplate =
+    templates.saveImportTemplateMutation.isPending || templates.createImportTemplateMutation.isPending;
+  const savingExportTemplate =
+    templates.saveExportTemplateMutation.isPending || templates.createExportTemplateMutation.isPending;
+
+  const stateValue: ImportExportStateContextType = {
     inventoryId,
     setInventoryId,
     exportInventoryId,
@@ -611,8 +779,6 @@ export function ImportExportProvider({
     setImageRetryPresets,
     selectedBaseConnectionId,
     setSelectedBaseConnectionId,
-    isBaseConnected,
-    baseConnections,
     importNameSearch,
     setImportNameSearch,
     importSkuSearch,
@@ -625,15 +791,6 @@ export function ImportExportProvider({
     setImportListEnabled,
     selectedImportIds,
     setSelectedImportIds,
-    lastResult,
-    setLastResult,
-    activeImportRunId,
-    activeImportRun,
-    loadingImportRun,
-    importSourceFields,
-    importSourceFieldValues,
-    loadingImportSourceFields:
-      importParameterCacheQuery.isFetching || refreshImportParameterCacheMutation.isPending,
     templateScope,
     setTemplateScope,
     showAllWarehouses,
@@ -642,9 +799,13 @@ export function ImportExportProvider({
     setIncludeAllWarehouses,
     debugWarehouses,
     setDebugWarehouses,
+  };
 
+  const dataValue: ImportExportDataContextType = {
     integrationsWithConnections,
     checkingIntegration,
+    isBaseConnected,
+    baseConnections,
     catalogsData,
     loadingCatalogs,
     importTemplates,
@@ -659,36 +820,62 @@ export function ImportExportProvider({
     importList,
     loadingImportList,
     importListStats,
+    lastResult,
+    activeImportRunId,
+    activeImportRun,
+    loadingImportRun,
+    importSourceFields,
+    importSourceFieldValues,
+    loadingImportSourceFields,
+  };
 
+  const actionsValue: ImportExportActionsContextType = {
     ...runtimeActions,
     handleSaveDefaultBaseConnection,
     handleNewTemplate: () => templates.handleNewTemplate(templateScope),
     handleDuplicateTemplate: () => templates.handleDuplicateTemplate(templateScope),
+    handleCreateExportFromImportTemplate: templates.handleCreateExportFromImportTemplate,
     handleSaveTemplate: () => templates.handleSaveTemplate(templateScope),
     handleDeleteTemplate: () => templates.handleDeleteTemplate(templateScope),
-
-    importing:
-      importMutation.isPending ||
-      resumeImportRunMutation.isPending ||
-      cancelImportRunMutation.isPending ||
-      activeRunBusy,
-    savingDefaultConnection: saveDefaultConnectionMutation.isPending,
-    savingExportSettings: saveExportSettingsMutation.isPending,
-    savingImportTemplate:
-      templates.saveImportTemplateMutation.isPending ||
-      templates.createImportTemplateMutation.isPending,
-    savingExportTemplate:
-      templates.saveExportTemplateMutation.isPending ||
-      templates.createExportTemplateMutation.isPending,
+    applyTemplate: templates.applyTemplate,
+    importing,
+    savingDefaultConnection,
+    savingExportSettings,
+    savingImportTemplate,
+    savingExportTemplate,
   };
 
-  return <ImportExportContext.Provider value={value}>{children}</ImportExportContext.Provider>;
+  return (
+    <ImportExportStateContext.Provider value={stateValue}>
+      <ImportExportDataContext.Provider value={dataValue}>
+        <ImportExportActionsContext.Provider value={actionsValue}>
+          {children}
+        </ImportExportActionsContext.Provider>
+      </ImportExportDataContext.Provider>
+    </ImportExportStateContext.Provider>
+  );
 }
 
-export function useImportExport(): ImportExportContextType {
-  const context = useContext(ImportExportContext);
+export function useImportExportState(): ImportExportStateContextType {
+  const context = useContext(ImportExportStateContext);
   if (context === undefined) {
-    throw new Error('useImportExport must be used within an ImportExportProvider');
+    throw new Error('useImportExportState must be used within an ImportExportProvider');
+  }
+  return context;
+}
+
+export function useImportExportData(): ImportExportDataContextType {
+  const context = useContext(ImportExportDataContext);
+  if (context === undefined) {
+    throw new Error('useImportExportData must be used within an ImportExportProvider');
+  }
+  return context;
+}
+
+export function useImportExportActions(): ImportExportActionsContextType {
+  const context = useContext(ImportExportActionsContext);
+  if (context === undefined) {
+    throw new Error('useImportExportActions must be used within an ImportExportProvider');
   }
   return context;
 }

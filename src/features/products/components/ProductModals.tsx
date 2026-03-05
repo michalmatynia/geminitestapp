@@ -7,7 +7,8 @@ import { ListProductModal } from '@/features/integrations/components/listings/Li
 import { MassListProductModal } from '@/features/integrations/components/listings/MassListProductModal';
 import { ProductListingsModal } from '@/features/integrations/components/listings/ProductListingsModal';
 import { ProductFormProvider } from '@/features/products/context/ProductFormContext';
-import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
+import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
 import { isEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import { useProductListModalsContext } from '@/features/products/context/ProductListContext';
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
@@ -39,7 +40,7 @@ function ProductFormEditBridge(props: {
 }): null {
   const { onIsSavingChange, onHasUnsavedChangesChange, submitRef } = props;
 
-  const { handleSubmit, uploading, hasUnsavedChanges } = useProductFormContext();
+  const { handleSubmit, uploading, hasUnsavedChanges } = useProductFormCore();
 
   // Keep submit ref always fresh (no deps needed — render-time assignment is fine for refs)
   submitRef.current = () => {
@@ -67,7 +68,8 @@ function ProductFormEditBody(props: {
 }): React.JSX.Element {
   const { submitButtonText, validationInstanceScopeOverride } = props;
 
-  const { showFileManager, handleMultiFileSelect, product, getValues } = useProductFormContext();
+  const { product, getValues } = useProductFormCore();
+  const { showFileManager, handleMultiFileSelect } = useProductFormImages();
   const formInstanceKey = product?.id?.trim() || 'product-edit';
 
   const getEntityJson = useCallback((): Record<string, unknown> => {

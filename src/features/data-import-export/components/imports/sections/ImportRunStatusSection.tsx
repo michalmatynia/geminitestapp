@@ -2,18 +2,16 @@
 
 import React, { useMemo } from 'react';
 import type { BaseImportItemRecord } from '@/shared/contracts/integrations';
-import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
+import {
+  useImportExportActions,
+  useImportExportData,
+} from '@/features/data-import-export/context/ImportExportContext';
 import { Button, FormSection, Hint, StatusBadge } from '@/shared/ui';
 
 export function ImportRunStatusSection(): React.JSX.Element | null {
-  const {
-    importing,
-    handleResumeImport,
-    handleCancelImport,
-    handleDownloadImportReport,
-    activeImportRun,
-    loadingImportRun,
-  } = useImportExport();
+  const { activeImportRun, loadingImportRun } = useImportExportData();
+  const { importing, handleResumeImport, handleCancelImport, handleDownloadImportReport } =
+    useImportExportActions();
 
   const activeRun = activeImportRun?.run ?? null;
   const activeRunStats = activeRun?.stats ?? null;

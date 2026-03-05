@@ -1,11 +1,15 @@
 'use client';
 
-import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import {
+  useIntegrationsActions,
+  useIntegrationsApiConsole,
+  useIntegrationsData,
+} from '@/features/integrations/context/IntegrationsContext';
 import { GenericApiConsole, type ApiPreset } from '@/shared/ui';
 
 export function AllegroApiConsole(): React.JSX.Element {
+  const { connections } = useIntegrationsData();
   const {
-    connections,
     allegroApiMethod,
     setAllegroApiMethod,
     allegroApiPath,
@@ -15,8 +19,8 @@ export function AllegroApiConsole(): React.JSX.Element {
     allegroApiLoading,
     allegroApiError,
     allegroApiResponse,
-    handleAllegroApiRequest,
-  } = useIntegrationsContext();
+  } = useIntegrationsApiConsole();
+  const { handleAllegroApiRequest } = useIntegrationsActions();
 
   const activeConnection = connections[0] || null;
   const isConnected = Boolean(activeConnection?.hasAllegroAccessToken);

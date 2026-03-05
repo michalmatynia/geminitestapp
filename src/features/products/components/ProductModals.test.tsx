@@ -17,14 +17,22 @@ vi.mock('@/features/products/context/ProductFormContext', () => ({
   ProductFormProvider: ({ children }: { children: ReactNode }) => (
     <div data-testid='product-form-provider'>{children}</div>
   ),
-  useProductFormContext: () => ({
+}));
+
+vi.mock('@/features/products/context/ProductFormCoreContext', () => ({
+  useProductFormCore: () => ({
     handleSubmit: vi.fn(),
     uploading: false,
     hasUnsavedChanges: false,
-    showFileManager: false,
-    handleMultiFileSelect: vi.fn(),
     product: null,
     getValues: vi.fn().mockReturnValue({}),
+  }),
+}));
+
+vi.mock('@/features/products/context/ProductFormImageContext', () => ({
+  useProductFormImages: () => ({
+    showFileManager: false,
+    handleMultiFileSelect: vi.fn(),
   }),
 }));
 

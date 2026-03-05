@@ -1,7 +1,11 @@
 'use client';
 
 import React from 'react';
-import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
+import {
+  useImportExportActions,
+  useImportExportData,
+  useImportExportState,
+} from '@/features/data-import-export/context/ImportExportContext';
 import {
   Button,
   SelectSimple,
@@ -22,26 +26,24 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
   const {
     inventories,
     isFetchingInventories: loadingInventories,
-    inventoryId,
-    setInventoryId,
-    handleLoadInventories,
-    handleClearInventory,
-    limit,
-    setLimit,
     catalogsData: catalogs,
     loadingCatalogs,
+    importTemplates,
+    loadingImportTemplates,
+    isBaseConnected,
+    baseConnections,
+  } = useImportExportData();
+  const {
+    inventoryId,
+    setInventoryId,
+    limit,
+    setLimit,
     catalogId,
     setCatalogId,
     importTemplateId,
     setImportTemplateId,
-    importTemplates,
-    loadingImportTemplates,
     selectedBaseConnectionId,
     setSelectedBaseConnectionId,
-    savingDefaultConnection,
-    handleSaveDefaultBaseConnection,
-    isBaseConnected,
-    baseConnections,
     imageMode,
     setImageMode,
     importMode,
@@ -50,9 +52,15 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
     setImportDryRun,
     allowDuplicateSku,
     setAllowDuplicateSku,
+  } = useImportExportState();
+  const {
+    handleLoadInventories,
+    handleClearInventory,
+    savingDefaultConnection,
+    handleSaveDefaultBaseConnection,
     importing,
     handleImport,
-  } = useImportExport();
+  } = useImportExportActions();
 
   return (
     <FormSection

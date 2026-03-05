@@ -4,20 +4,18 @@ import React from 'react';
 
 import { Input, SelectSimple, Button } from '@/shared/ui';
 
-import { useFileManager } from '../../contexts/FileManagerContext';
+import {
+  useFileManagerActions,
+  useFileManagerConfig,
+  useFileManagerData,
+  useFileManagerUIState,
+} from '../../contexts/FileManagerContext';
 
 export function FileManagerBulkActions(): React.JSX.Element {
-  const {
-    mode,
-    selectionMode,
-    showBulkActions,
-    bulkTagInput,
-    setBulkTagInput,
-    bulkTagMode,
-    setBulkTagMode,
-    handleApplyTags,
-    isPending,
-  } = useFileManager();
+  const { mode, selectionMode, showBulkActions } = useFileManagerConfig();
+  const { bulkTagInput, setBulkTagInput, bulkTagMode, setBulkTagMode } = useFileManagerUIState();
+  const { handleApplyTags } = useFileManagerActions();
+  const { isPending } = useFileManagerData();
 
   if (!(mode === 'select' && selectionMode === 'multiple' && showBulkActions)) {
     return <></>;

@@ -140,7 +140,10 @@ describe('ai-paths runs enqueue handler', () => {
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ run: { id: 'run-1', status: 'queued' } });
+    await expect(response.json()).resolves.toEqual({
+      run: { id: 'run-1', status: 'queued' },
+      runId: 'run-1',
+    });
     expect(enqueuePathRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
         pathId: config.id,
@@ -152,6 +155,54 @@ describe('ai-paths runs enqueue handler', () => {
         }),
       })
     );
+  });
+
+  it('derives runId from legacy _id run payloads', async () => {
+    enqueuePathRunMock.mockResolvedValueOnce({ _id: 'run-legacy-1', status: 'queued' });
+    const config = createDefaultPathConfig('path-canonical-legacy-id');
+
+    const response = await POST_handler(
+      makeRequest({
+        pathId: config.id,
+        pathName: config.name,
+        nodes: config.nodes,
+        edges: config.edges,
+        meta: {
+          aiPathsValidation: {
+            enabled: false,
+          },
+        },
+      }),
+      {} as Parameters<typeof POST_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      run: { _id: 'run-legacy-1', status: 'queued' },
+      runId: 'run-legacy-1',
+    });
+  });
+
+  it('rejects enqueue responses that do not expose any run identifier', async () => {
+    enqueuePathRunMock.mockResolvedValueOnce({ status: 'queued' });
+    const config = createDefaultPathConfig('path-canonical-missing-id');
+
+    await expect(
+      POST_handler(
+        makeRequest({
+          pathId: config.id,
+          pathName: config.name,
+          nodes: config.nodes,
+          edges: config.edges,
+          meta: {
+            aiPathsValidation: {
+              enabled: false,
+            },
+          },
+        }),
+        {} as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow(/missing run identifier/i);
   });
 
   it('rejects legacy object-shaped enqueue metadata source', async () => {

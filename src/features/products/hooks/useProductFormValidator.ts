@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type SetStateAction 
 import { useFormContext } from 'react-hook-form';
 
 import * as productsApi from '@/features/products/api/products';
-import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
 import {
   useProductValidatorConfig,
@@ -97,7 +97,7 @@ export interface UseProductFormValidatorResult {
 // --- Main Hook Implementation ---
 
 export function useProductFormValidator(scopeOverride?: string): UseProductFormValidatorResult {
-  const { product, draft } = useProductFormContext();
+  const { product, draft } = useProductFormCore();
   const { categories, selectedCategoryId, setCategoryId, selectedCatalogIds } =
     useProductFormMetadata();
   const { watch, getValues, setValue } = useFormContext<ProductFormData>();

@@ -1,25 +1,27 @@
 'use client';
 
 import React from 'react';
-import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
+import {
+  useImportExportActions,
+  useImportExportData,
+  useImportExportState,
+} from '@/features/data-import-export/context/ImportExportContext';
 import { Label, SelectSimple } from '@/shared/ui';
 import type { InventoryOption, Template } from '@/shared/contracts/integrations';
 import type { IntegrationConnectionBasic } from '@/features/integrations';
 
 export function ExportBaseConfigSection(): React.JSX.Element {
+  const { baseConnections, inventories, exportTemplates, loadingExportTemplates } =
+    useImportExportData();
   const {
-    baseConnections,
     selectedBaseConnectionId,
     setSelectedBaseConnectionId,
-    inventories,
     exportInventoryId,
     setExportInventoryId,
     exportActiveTemplateId,
     setExportActiveTemplateId,
-    exportTemplates,
-    loadingExportTemplates,
-    applyTemplate,
-  } = useImportExport();
+  } = useImportExportState();
+  const { applyTemplate } = useImportExportActions();
 
   return (
     <div className='grid grid-cols-2 gap-4'>

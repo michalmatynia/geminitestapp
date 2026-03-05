@@ -104,18 +104,6 @@ export const useFileManagerActions = () => {
   return context;
 };
 
-// --- Context Aggregator ---
-
-export interface FileManagerContextState
-  extends
-    FileManagerConfig,
-    FileManagerSearch,
-    FileManagerUIState,
-    FileManagerData,
-    FileManagerActions {}
-
-const FileManagerContext = createContext<FileManagerContextState | undefined>(undefined);
-
 const normalizeTag = (tag: string): string => tag.trim().toLowerCase();
 const parseTagInput = (input: string): string[] => {
   const raw = input.split(',').map(normalizeTag).filter(Boolean);
@@ -499,38 +487,15 @@ export function FileManagerProvider({
     ]
   );
 
-  const aggregatedValue = useMemo<FileManagerContextState>(
-    () => ({
-      ...configValue,
-      ...searchValue,
-      ...uiStateValue,
-      ...dataValue,
-      ...actionsValue,
-    }),
-    [configValue, searchValue, uiStateValue, dataValue, actionsValue]
-  );
-
   return (
     <ConfigContext.Provider value={configValue}>
       <SearchContext.Provider value={searchValue}>
         <UIStateContext.Provider value={uiStateValue}>
           <DataContext.Provider value={dataValue}>
-            <ActionsContext.Provider value={actionsValue}>
-              <FileManagerContext.Provider value={aggregatedValue}>
-                {children}
-              </FileManagerContext.Provider>
-            </ActionsContext.Provider>
+            <ActionsContext.Provider value={actionsValue}>{children}</ActionsContext.Provider>
           </DataContext.Provider>
         </UIStateContext.Provider>
       </SearchContext.Provider>
     </ConfigContext.Provider>
   );
-}
-
-export function useFileManager(): FileManagerContextState {
-  const context = useContext(FileManagerContext);
-  if (context === undefined) {
-    throw new Error('useFileManager must be used within a FileManagerProvider');
-  }
-  return context;
 }

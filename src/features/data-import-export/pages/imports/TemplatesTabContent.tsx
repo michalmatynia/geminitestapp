@@ -26,7 +26,11 @@ import {
   useParameters as useProductParameters,
   useSimpleParameters as useProductSimpleParameters,
 } from '@/features/products/hooks/useProductSettingsQueries';
-import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
+import {
+  useImportExportActions,
+  useImportExportData,
+  useImportExportState,
+} from '@/features/data-import-export/context/ImportExportContext';
 import {
   parseParameterTarget,
   toParameterTargetValue,
@@ -37,20 +41,17 @@ import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/shared/contracts/products'
 
 export function TemplatesTabContent(): React.JSX.Element {
   const {
-    templateScope,
-    setTemplateScope,
-    handleNewTemplate,
-    handleDuplicateTemplate,
-    handleCreateExportFromImportTemplate,
-    handleSaveTemplate,
-    handleDeleteTemplate,
-    savingImportTemplate,
-    savingExportTemplate,
-    importActiveTemplateId,
-    exportActiveTemplateId,
     importTemplates,
     exportTemplates,
-    applyTemplate,
+    importSourceFields,
+    importSourceFieldValues,
+    loadingImportSourceFields,
+  } = useImportExportData();
+  const {
+    templateScope,
+    setTemplateScope,
+    importActiveTemplateId,
+    exportActiveTemplateId,
     importTemplateName,
     setImportTemplateName,
     exportTemplateName,
@@ -68,10 +69,17 @@ export function TemplatesTabContent(): React.JSX.Element {
     exportImagesAsBase64,
     setExportImagesAsBase64,
     catalogId,
-    importSourceFields,
-    importSourceFieldValues,
-    loadingImportSourceFields,
-  } = useImportExport();
+  } = useImportExportState();
+  const {
+    handleNewTemplate,
+    handleDuplicateTemplate,
+    handleCreateExportFromImportTemplate,
+    handleSaveTemplate,
+    handleDeleteTemplate,
+    savingImportTemplate,
+    savingExportTemplate,
+    applyTemplate,
+  } = useImportExportActions();
 
   const customParameterTargetsQuery = useProductParameters(catalogId || null);
   const simpleParameterTargetsQuery = useProductSimpleParameters(catalogId || null);

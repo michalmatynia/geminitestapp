@@ -28,5 +28,8 @@ Full node-docs pipeline:
 npm run docs:ai-paths:node-docs:generate
 npm run docs:ai-paths:node-docs:check
 npm run docs:ai-paths:node-docs:verify
+npm run docs:ai-paths:node-docs:ci
 ```
+
+`docs:ai-paths:node-docs:ci` runs `verify` and tooltip coverage checks.
 

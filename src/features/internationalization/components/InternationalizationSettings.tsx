@@ -3,7 +3,11 @@
 import { Coins, Languages } from 'lucide-react';
 import React from 'react';
 
-import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
+import {
+  useInternationalizationActions,
+  useInternationalizationData,
+  useInternationalizationUi,
+} from '@/features/internationalization/context/InternationalizationContext';
 import { countryFlagMap } from '@/shared/constants/internationalization';
 import {
   Button,
@@ -23,19 +27,20 @@ export function InternationalizationSettings(): React.JSX.Element {
   const {
     loadingCurrencies,
     currencies: currencyOptions,
-    handleOpenCurrencyModal,
-    handleDeleteCurrency,
     loadingCountries,
     filteredCountries,
-    countrySearch,
-    setCountrySearch,
-    handleOpenCountryModal,
-    handleDeleteCountry,
     languagesLoading,
     languages,
+  } = useInternationalizationData();
+  const { countrySearch, setCountrySearch } = useInternationalizationUi();
+  const {
+    handleOpenCurrencyModal,
+    handleDeleteCurrency,
+    handleOpenCountryModal,
+    handleDeleteCountry,
     handleOpenLanguageModal,
     handleDeleteLanguage,
-  } = useInternationalizationContext();
+  } = useInternationalizationActions();
 
   return (
     <div className='space-y-8'>

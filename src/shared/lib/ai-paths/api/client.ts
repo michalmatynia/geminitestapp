@@ -57,7 +57,12 @@ import { fetchRuntimeAnalyticsSummary } from './client/analytics';
 
 import type { SchemaResponse } from '@/shared/contracts/database';
 export type { SchemaResponse };
-import type { AiPathRunRecord, AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
+import {
+  aiPathRunEnqueueResponseSchema,
+  type AiPathRunEnqueueResponse,
+  type AiPathRunRecord,
+  type AiPathRuntimeAnalyticsSummary,
+} from '@/shared/contracts/ai-paths';
 
 export type {
   ApiResponse,
@@ -135,11 +140,23 @@ export async function enqueueAiPathRun(
     meta?: Record<string, unknown> | null;
   },
   options?: { timeoutMs?: number; signal?: AbortSignal }
-): Promise<ApiResponse<{ run: unknown }>> {
-  return apiPost<{ run: unknown }>('/api/ai-paths/runs/enqueue', payload, {
+): Promise<ApiResponse<AiPathRunEnqueueResponse>> {
+  const response = await apiPost<unknown>('/api/ai-paths/runs/enqueue', payload, {
     timeoutMs: options?.timeoutMs ?? 60_000,
     ...(options?.signal ? { signal: options.signal } : {}),
   });
+  if (!response.ok) return response;
+  const parsed = aiPathRunEnqueueResponseSchema.safeParse(response.data);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: 'invalid run identifier from API.',
+    };
+  }
+  return {
+    ok: true,
+    data: parsed.data,
+  };
 }
 
 const asNonEmptyString = (value: unknown): string | null => {
@@ -148,32 +165,148 @@ const asNonEmptyString = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const readEnqueueRunValue = (data: unknown): unknown => {
-  if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
-  return (data as Record<string, unknown>)['run'];
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
+const hasOwn = (record: Record<string, unknown>, key: string): boolean =>
+  Object.prototype.hasOwnProperty.call(record, key);
+
+const extractRunIdFromValue = (value: unknown): string | null => {
+  const directString = asNonEmptyString(value);
+  if (directString) return directString;
+  const record = asRecord(value);
+  if (!record) return null;
+  return (
+    asNonEmptyString(record['id']) ??
+    asNonEmptyString(record['runId']) ??
+    asNonEmptyString(record['_id']) ??
+    null
+  );
+};
+
+const isIdOnlyEnvelopeRecord = (record: Record<string, unknown>): boolean => {
+  const keys = Object.keys(record);
+  if (keys.length !== 1) return false;
+  return keys[0] === 'id' || keys[0] === 'runId' || keys[0] === '_id';
+};
+
+const looksLikeRunRecordEnvelope = (record: Record<string, unknown>): boolean => {
+  if (isIdOnlyEnvelopeRecord(record)) return true;
+  if (asNonEmptyString(record['status'])) return true;
+  if (asNonEmptyString(record['createdAt'])) return true;
+  if (asNonEmptyString(record['updatedAt'])) return true;
+  if (typeof record['progress'] === 'number') return true;
+  if (asNonEmptyString(record['pathName'])) return true;
+  return false;
+};
+
+const extractRunIdFromWrapperRecord = (record: Record<string, unknown>): string | null => {
+  const explicitRunId = asNonEmptyString(record['runId']);
+  if (explicitRunId) return explicitRunId;
+  if (!looksLikeRunRecordEnvelope(record)) return null;
+  return asNonEmptyString(record['id']) ?? asNonEmptyString(record['_id']) ?? null;
+};
+
+const readEnqueueRunCandidates = (
+  data: unknown
+): {
+  runCandidates: unknown[];
+  wrapperCandidates: Record<string, unknown>[];
+  hasPrimaryRunValue: boolean;
+} => {
+  if (typeof data === 'string') {
+    return { runCandidates: [data], wrapperCandidates: [], hasPrimaryRunValue: false };
+  }
+  const root = asRecord(data);
+  if (!root) return { runCandidates: [], wrapperCandidates: [], hasPrimaryRunValue: false };
+  const nestedData = asRecord(root['data']);
+  const runCandidates: unknown[] = [];
+  const wrapperCandidates: Record<string, unknown>[] = [root];
+  if (nestedData) wrapperCandidates.push(nestedData);
+  let hasPrimaryRunValue = false;
+  if (hasOwn(root, 'run')) {
+    runCandidates.push(root['run']);
+    hasPrimaryRunValue = true;
+  }
+  if (nestedData && hasOwn(nestedData, 'run')) {
+    runCandidates.push(nestedData['run']);
+    hasPrimaryRunValue = true;
+  }
+  return { runCandidates, wrapperCandidates, hasPrimaryRunValue };
 };
 
 export const extractAiPathRunIdFromEnqueueResponseData = (data: unknown): string | null => {
-  const runValue = readEnqueueRunValue(data);
-  if (typeof runValue === 'string') {
-    return asNonEmptyString(runValue);
+  const { runCandidates, wrapperCandidates } = readEnqueueRunCandidates(data);
+  for (const candidate of runCandidates) {
+    const runId = extractRunIdFromValue(candidate);
+    if (runId) return runId;
   }
-  if (!runValue || typeof runValue !== 'object' || Array.isArray(runValue)) {
-    return null;
+  for (const candidate of wrapperCandidates) {
+    const runId = extractRunIdFromWrapperRecord(candidate);
+    if (runId) return runId;
   }
-  return asNonEmptyString((runValue as Record<string, unknown>)['id']);
+  return null;
 };
 
 export const extractAiPathRunRecordFromEnqueueResponseData = (
   data: unknown
 ): AiPathRunRecord | null => {
-  const runValue = readEnqueueRunValue(data);
-  if (!runValue || typeof runValue !== 'object' || Array.isArray(runValue)) {
+  const { runCandidates, wrapperCandidates, hasPrimaryRunValue } = readEnqueueRunCandidates(data);
+  const primaryRunRecord = hasPrimaryRunValue ? asRecord(runCandidates[0] ?? null) : null;
+
+  let selectedRecord: Record<string, unknown> | null = null;
+  let runId: string | null = null;
+  for (const candidate of runCandidates) {
+    const candidateRecord = asRecord(candidate);
+    const candidateRunId = extractRunIdFromValue(candidate);
+    if (!candidateRunId) continue;
+    selectedRecord = candidateRecord;
+    runId = candidateRunId;
+    break;
+  }
+  if (!runId) {
+    for (const candidate of wrapperCandidates) {
+      const candidateRunId = extractRunIdFromWrapperRecord(candidate);
+      if (!candidateRunId) continue;
+      selectedRecord = candidate;
+      runId = candidateRunId;
+      break;
+    }
+  }
+
+  if (
+    runId &&
+    selectedRecord &&
+    primaryRunRecord &&
+    selectedRecord !== primaryRunRecord &&
+    !extractRunIdFromValue(primaryRunRecord)
+  ) {
+    // Prefer the primary `run` object payload body when id lives on wrapper fields.
+    selectedRecord = primaryRunRecord;
+  }
+
+  if (!runId) {
+    // Mixed legacy payloads can expose id outside `run`, e.g. { run: { status }, runId: "..." }.
+    runId = extractAiPathRunIdFromEnqueueResponseData(data);
+    if (runId && primaryRunRecord) {
+      selectedRecord = primaryRunRecord;
+    }
+  }
+
+  if (!runId) return null;
+  if (!selectedRecord) {
+    // Preserve legacy behavior for string-only payloads: return id only, no run record.
     return null;
   }
-  const runId = asNonEmptyString((runValue as Record<string, unknown>)['id']);
-  if (!runId) return null;
-  return runValue as AiPathRunRecord;
+
+  const normalizedStatus = asNonEmptyString(selectedRecord?.['status']) ?? 'queued';
+  return {
+    ...(selectedRecord ?? {}),
+    id: runId,
+    status: normalizedStatus,
+  } as AiPathRunRecord;
 };
 
 export const resolveAiPathRunFromEnqueueResponseData = (data: unknown): {

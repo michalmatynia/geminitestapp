@@ -8,11 +8,18 @@ import type { ExpandedImageFile } from '@/features/products';
 import { ImageFileSelection } from '@/shared/contracts/files';
 import { Button, Card, Badge } from '@/shared/ui';
 
-import { useFileManager } from '../../contexts/FileManagerContext';
+import {
+  useFileManagerActions,
+  useFileManagerConfig,
+  useFileManagerData,
+  useFileManagerUIState,
+} from '../../contexts/FileManagerContext';
 
 export function FileManagerGrid(): React.JSX.Element {
-  const { filteredFiles, selectedFiles, mode, handleToggleSelect, setPreviewFile, handleDelete } =
-    useFileManager();
+  const { filteredFiles } = useFileManagerData();
+  const { selectedFiles, setPreviewFile } = useFileManagerUIState();
+  const { mode } = useFileManagerConfig();
+  const { handleToggleSelect, handleDelete } = useFileManagerActions();
 
   const getFileKind = useCallback((filepath: string) => {
     const clean = (filepath || '').trim();

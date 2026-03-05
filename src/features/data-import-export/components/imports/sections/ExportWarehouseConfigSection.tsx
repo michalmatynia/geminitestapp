@@ -1,22 +1,23 @@
 'use client';
 
 import React from 'react';
-import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
+import {
+  useImportExportData,
+  useImportExportState,
+} from '@/features/data-import-export/context/ImportExportContext';
 import { Label, SelectSimple, Checkbox } from '@/shared/ui';
 import type { WarehouseOption } from '@/shared/contracts/integrations';
 
 export function ExportWarehouseConfigSection(): React.JSX.Element {
+  const { warehouses: warehouseOptions, allWarehouses, warehouses } = useImportExportData();
   const {
     exportWarehouseId,
     setExportWarehouseId,
-    warehouses: warehouseOptions,
     showAllWarehouses,
     setShowAllWarehouses,
     exportStockFallbackEnabled,
     setExportStockFallbackEnabled,
-    allWarehouses,
-    warehouses,
-  } = useImportExport();
+  } = useImportExportState();
 
   const exportStockFallbackLoaded = true;
   const inventoryWarehouseIds = new Set(warehouses.map((w: WarehouseOption) => w.id));

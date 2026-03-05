@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 
-import { useInternationalizationContext } from '@/features/internationalization';
+import { useInternationalizationData } from '@/features/internationalization';
 import type { PriceGroup } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import {
@@ -23,7 +23,7 @@ type PriceGroupFormState = {
 export function PriceGroupModal(props: PriceGroupModalProps): React.JSX.Element {
   const { isOpen, onClose, onSuccess, item: priceGroup } = props;
 
-  const { currencies: currencyOptions, loadingCurrencies } = useInternationalizationContext();
+  const { currencies: currencyOptions, loadingCurrencies } = useInternationalizationData();
 
   const {
     form,

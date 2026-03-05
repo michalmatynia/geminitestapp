@@ -1,10 +1,14 @@
 'use client';
 
-import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import {
+  useIntegrationsActions,
+  useIntegrationsData,
+} from '@/features/integrations/context/IntegrationsContext';
 import { integrationDefinitions, type Integration } from '@/shared/contracts/integrations';
 
 export function useIntegrationList() {
-  const { integrations, handleIntegrationClick } = useIntegrationsContext();
+  const { integrations } = useIntegrationsData();
+  const { handleIntegrationClick } = useIntegrationsActions();
   const integrationSlugs = integrations.map((integration: Integration) => integration.slug);
   const hasIntegrations = integrations.length > 0;
 

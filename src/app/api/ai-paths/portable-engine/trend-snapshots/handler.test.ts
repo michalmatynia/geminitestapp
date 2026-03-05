@@ -7,6 +7,10 @@ const { requireAiPathsAccessMock } = vi.hoisted(() => ({
   requireAiPathsAccessMock: vi.fn(),
 }));
 
+const { getPortablePathRunExecutionSnapshotMock } = vi.hoisted(() => ({
+  getPortablePathRunExecutionSnapshotMock: vi.fn(),
+}));
+
 const {
   loadPortablePathAuditSinkAutoRemediationDeadLettersMock,
   loadPortablePathSigningPolicyTrendSnapshotsMock,
@@ -51,6 +55,10 @@ const {
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsAccess: requireAiPathsAccessMock,
+}));
+
+vi.mock('@/shared/lib/ai-paths/portable-engine/portable-engine-observability', () => ({
+  getPortablePathRunExecutionSnapshot: getPortablePathRunExecutionSnapshotMock,
 }));
 
 vi.mock('@/shared/lib/ai-paths/portable-engine/server', () => ({
@@ -99,6 +107,34 @@ import { GET_handler } from './handler';
 describe('ai-paths portable-engine trend snapshots handler', () => {
   beforeEach(() => {
     requireAiPathsAccessMock.mockReset().mockResolvedValue(undefined);
+    getPortablePathRunExecutionSnapshotMock.mockReset().mockReturnValue({
+      totals: {
+        attempts: 0,
+        successes: 0,
+        failures: 0,
+      },
+      byRunner: {
+        client: { attempts: 0, successes: 0, failures: 0 },
+        server: { attempts: 0, successes: 0, failures: 0 },
+      },
+      bySurface: {
+        canvas: { attempts: 0, successes: 0, failures: 0 },
+        product: { attempts: 0, successes: 0, failures: 0 },
+        api: { attempts: 0, successes: 0, failures: 0 },
+      },
+      bySource: {
+        portable_package: { attempts: 0, successes: 0, failures: 0 },
+        portable_envelope: { attempts: 0, successes: 0, failures: 0 },
+        semantic_canvas: { attempts: 0, successes: 0, failures: 0 },
+        path_config: { attempts: 0, successes: 0, failures: 0 },
+      },
+      failureStageCounts: {
+        resolve: 0,
+        validation: 0,
+        runtime: 0,
+      },
+      recentEvents: [],
+    });
     loadPortablePathAuditSinkAutoRemediationDeadLettersMock
       .mockReset()
       .mockResolvedValue([]);
@@ -216,6 +252,59 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
   });
 
   it('returns portable trend snapshots payload with summary', async () => {
+    getPortablePathRunExecutionSnapshotMock.mockReturnValue({
+      totals: {
+        attempts: 4,
+        successes: 2,
+        failures: 2,
+      },
+      byRunner: {
+        client: { attempts: 3, successes: 2, failures: 1 },
+        server: { attempts: 1, successes: 0, failures: 1 },
+      },
+      bySurface: {
+        canvas: { attempts: 2, successes: 1, failures: 1 },
+        product: { attempts: 1, successes: 1, failures: 0 },
+        api: { attempts: 1, successes: 0, failures: 1 },
+      },
+      bySource: {
+        portable_package: { attempts: 1, successes: 1, failures: 0 },
+        portable_envelope: { attempts: 1, successes: 0, failures: 1 },
+        semantic_canvas: { attempts: 0, successes: 0, failures: 0 },
+        path_config: { attempts: 2, successes: 1, failures: 1 },
+      },
+      failureStageCounts: {
+        resolve: 1,
+        validation: 0,
+        runtime: 1,
+      },
+      recentEvents: [
+        {
+          at: '2026-03-05T00:15:00.000Z',
+          runner: 'client',
+          surface: 'canvas',
+          source: 'path_config',
+          validateBeforeRun: true,
+          validationMode: 'strict',
+          durationMs: 210,
+          outcome: 'failure',
+          failureStage: 'runtime',
+          error: 'runtime failure',
+        },
+        {
+          at: '2026-03-05T00:14:00.000Z',
+          runner: 'server',
+          surface: 'api',
+          source: null,
+          validateBeforeRun: true,
+          validationMode: 'strict',
+          durationMs: 30,
+          outcome: 'failure',
+          failureStage: 'resolve',
+          error: 'Invalid AI-Path payload',
+        },
+      ],
+    });
     loadPortablePathAuditSinkAutoRemediationDeadLettersMock.mockResolvedValue([
       {
         queuedAt: '2026-03-05T00:10:00.000Z',
@@ -289,6 +378,170 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
         }),
       })
     );
+    expect(payload['runExecution']).toEqual({
+      source: 'in_memory',
+      totals: {
+        attempts: 4,
+        successes: 2,
+        failures: 2,
+        successRate: 50,
+        failureRate: 50,
+      },
+      byRunner: {
+        client: { attempts: 3, successes: 2, failures: 1 },
+        server: { attempts: 1, successes: 0, failures: 1 },
+      },
+      bySurface: {
+        canvas: { attempts: 2, successes: 1, failures: 1 },
+        product: { attempts: 1, successes: 1, failures: 0 },
+        api: { attempts: 1, successes: 0, failures: 1 },
+      },
+      byInputSource: {
+        portable_package: { attempts: 1, successes: 1, failures: 0 },
+        portable_envelope: { attempts: 1, successes: 0, failures: 1 },
+        semantic_canvas: { attempts: 0, successes: 0, failures: 0 },
+        path_config: { attempts: 2, successes: 1, failures: 1 },
+      },
+      failureStageCounts: {
+        resolve: 1,
+        validation: 0,
+        runtime: 1,
+      },
+      topFailureErrors: [
+        { reason: 'Invalid AI-Path payload', count: 1 },
+        { reason: 'runtime failure', count: 1 },
+      ],
+      recentFailures: [
+        {
+          at: '2026-03-05T00:14:00.000Z',
+          runner: 'server',
+          surface: 'api',
+          source: null,
+          stage: 'resolve',
+          error: 'Invalid AI-Path payload',
+          durationMs: 30,
+          validateBeforeRun: true,
+          validationMode: 'strict',
+        },
+        {
+          at: '2026-03-05T00:15:00.000Z',
+          runner: 'client',
+          surface: 'canvas',
+          source: 'path_config',
+          stage: 'runtime',
+          error: 'runtime failure',
+          durationMs: 210,
+          validateBeforeRun: true,
+          validationMode: 'strict',
+        },
+      ],
+    });
+  });
+
+  it('aggregates top run failure errors from full in-memory history', async () => {
+    const failureEvents = Array.from({ length: 12 }, (_value, index) => ({
+      at: `2026-03-05T00:${String(index).padStart(2, '0')}:00.000Z`,
+      runner: 'client' as const,
+      surface: 'canvas' as const,
+      source: 'path_config' as const,
+      validateBeforeRun: true,
+      validationMode: 'strict' as const,
+      durationMs: 10 + index,
+      outcome: 'failure' as const,
+      failureStage: 'runtime' as const,
+      error: index < 5 ? 'timeout contacting provider' : `runtime_failure_${index}`,
+    }));
+    getPortablePathRunExecutionSnapshotMock.mockReturnValue({
+      totals: {
+        attempts: 12,
+        successes: 0,
+        failures: 12,
+      },
+      byRunner: {
+        client: { attempts: 12, successes: 0, failures: 12 },
+        server: { attempts: 0, successes: 0, failures: 0 },
+      },
+      bySurface: {
+        canvas: { attempts: 12, successes: 0, failures: 12 },
+        product: { attempts: 0, successes: 0, failures: 0 },
+        api: { attempts: 0, successes: 0, failures: 0 },
+      },
+      bySource: {
+        portable_package: { attempts: 0, successes: 0, failures: 0 },
+        portable_envelope: { attempts: 0, successes: 0, failures: 0 },
+        semantic_canvas: { attempts: 0, successes: 0, failures: 0 },
+        path_config: { attempts: 12, successes: 0, failures: 12 },
+      },
+      failureStageCounts: {
+        resolve: 0,
+        validation: 0,
+        runtime: 12,
+      },
+      recentEvents: failureEvents,
+    });
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/portable-engine/trend-snapshots'),
+      {} as Parameters<typeof GET_handler>[1]
+    );
+    expect(response.status).toBe(200);
+
+    const payload = (await response.json()) as Record<string, unknown>;
+    const runExecution = payload['runExecution'] as {
+      topFailureErrors: Array<{ reason: string; count: number }>;
+      recentFailures: Array<Record<string, unknown>>;
+    };
+    expect(runExecution.topFailureErrors[0]).toEqual({
+      reason: 'timeout contacting provider',
+      count: 5,
+    });
+    expect(runExecution.recentFailures).toHaveLength(10);
+  });
+
+  it('falls back to unavailable run execution summary when snapshot loading fails', async () => {
+    getPortablePathRunExecutionSnapshotMock.mockImplementation(() => {
+      throw new Error('snapshot unavailable');
+    });
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/portable-engine/trend-snapshots'),
+      {} as Parameters<typeof GET_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as Record<string, unknown>;
+    expect(payload['runExecution']).toEqual({
+      source: 'unavailable',
+      totals: {
+        attempts: 0,
+        successes: 0,
+        failures: 0,
+        successRate: 0,
+        failureRate: 0,
+      },
+      byRunner: {
+        client: { attempts: 0, successes: 0, failures: 0 },
+        server: { attempts: 0, successes: 0, failures: 0 },
+      },
+      bySurface: {
+        canvas: { attempts: 0, successes: 0, failures: 0 },
+        product: { attempts: 0, successes: 0, failures: 0 },
+        api: { attempts: 0, successes: 0, failures: 0 },
+      },
+      byInputSource: {
+        portable_package: { attempts: 0, successes: 0, failures: 0 },
+        portable_envelope: { attempts: 0, successes: 0, failures: 0 },
+        semantic_canvas: { attempts: 0, successes: 0, failures: 0 },
+        path_config: { attempts: 0, successes: 0, failures: 0 },
+      },
+      failureStageCounts: {
+        resolve: 0,
+        validation: 0,
+        runtime: 0,
+      },
+      topFailureErrors: [],
+      recentFailures: [],
+    });
   });
 
   it('falls back to default remediation threshold when resolver returns null', async () => {

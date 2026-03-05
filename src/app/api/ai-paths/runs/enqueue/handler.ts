@@ -15,9 +15,14 @@ import { enforceAiPathsRunRateLimit, requireAiPathsRunAccess } from '@/features/
 import { enqueuePathRun } from '@/features/ai/ai-paths/services/path-run-service';
 import { assertAiPathRunQueueReadyForEnqueue } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
-import { aiNodeSchema, edgeSchema, type PathConfig } from '@/shared/contracts/ai-paths';
+import {
+  aiNodeSchema,
+  aiPathRunEnqueueResponseSchema,
+  edgeSchema,
+  type PathConfig,
+} from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError, serviceUnavailableError } from '@/shared/errors/app-error';
+import { badRequestError, internalError, serviceUnavailableError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const enqueueSchema = z.object({
@@ -66,6 +71,22 @@ const withTimeout = async <T>(
   } finally {
     if (timeoutId) clearTimeout(timeoutId);
   }
+};
+
+const resolveEnqueueRunId = (run: unknown): string | null => {
+  if (typeof run === 'string') {
+    const normalized = run.trim();
+    return normalized.length > 0 ? normalized : null;
+  }
+  if (!run || typeof run !== 'object' || Array.isArray(run)) return null;
+  const record = run as Record<string, unknown>;
+  const candidates = [record['id'], record['runId'], record['_id']];
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string') continue;
+    const normalized = candidate.trim();
+    if (normalized.length > 0) return normalized;
+  }
+  return null;
 };
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -206,6 +227,13 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       meta: normalizedMeta,
     });
   });
+  const runId = resolveEnqueueRunId(run);
+  if (!runId) {
+    throw internalError('AI Paths enqueue response missing run identifier.', {
+      source: 'ai-paths.runs.enqueue',
+      pathId: rest.pathId,
+    });
+  }
   void logSystemEvent({
     level: 'info',
     source: 'ai-paths.runs.enqueue',
@@ -222,5 +250,15 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     },
   });
 
-  return NextResponse.json({ run });
+  const responsePayload = { run, runId };
+  const responseContract = aiPathRunEnqueueResponseSchema.safeParse(responsePayload);
+  if (!responseContract.success) {
+    throw internalError('AI Paths enqueue response contract violation.', {
+      source: 'ai-paths.runs.enqueue',
+      pathId: rest.pathId,
+      issues: responseContract.error.issues,
+    });
+  }
+
+  return NextResponse.json(responseContract.data);
 }

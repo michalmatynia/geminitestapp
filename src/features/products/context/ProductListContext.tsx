@@ -148,8 +148,6 @@ export interface ProductListContextType {
   onSelectIntegrationFromModal: (integrationId: string, connectionId: string) => void;
 }
 
-export const ProductListContext = createContext<ProductListContextType | null>(null);
-
 export interface ProductListFiltersContextType {
   page: number;
   totalPages: number;
@@ -292,14 +290,6 @@ const ProductListSelectionContext = createContext<ProductListSelectionContextTyp
 const ProductListTableContext = createContext<ProductListTableContextType | null>(null);
 const ProductListActionsContext = createContext<ProductListActionsContextType | null>(null);
 const ProductListModalsContext = createContext<ProductListModalsContextType | null>(null);
-
-export const useProductListContext = () => {
-  const context = useContext(ProductListContext);
-  if (!context) {
-    throw internalError('useProductListContext must be used within a ProductListProvider');
-  }
-  return context;
-};
 
 export const useProductListFiltersContext = (): ProductListFiltersContextType => {
   const context = useContext(ProductListFiltersContext);
@@ -501,18 +491,16 @@ export function ProductListProvider({
   );
 
   return (
-    <ProductListContext.Provider value={value}>
-      <ProductListFiltersContext.Provider value={filtersValue}>
-        <ProductListSelectionContext.Provider value={selectionValue}>
-          <ProductListTableContext.Provider value={tableValue}>
-            <ProductListActionsContext.Provider value={actionsValue}>
-              <ProductListModalsContext.Provider value={modalsValue}>
-                {children}
-              </ProductListModalsContext.Provider>
-            </ProductListActionsContext.Provider>
-          </ProductListTableContext.Provider>
-        </ProductListSelectionContext.Provider>
-      </ProductListFiltersContext.Provider>
-    </ProductListContext.Provider>
+    <ProductListFiltersContext.Provider value={filtersValue}>
+      <ProductListSelectionContext.Provider value={selectionValue}>
+        <ProductListTableContext.Provider value={tableValue}>
+          <ProductListActionsContext.Provider value={actionsValue}>
+            <ProductListModalsContext.Provider value={modalsValue}>
+              {children}
+            </ProductListModalsContext.Provider>
+          </ProductListActionsContext.Provider>
+        </ProductListTableContext.Provider>
+      </ProductListSelectionContext.Provider>
+    </ProductListFiltersContext.Provider>
   );
 }

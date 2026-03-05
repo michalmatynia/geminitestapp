@@ -2,7 +2,10 @@
 
 import React, { useState } from 'react';
 
-import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import {
+  useIntegrationsActions,
+  useIntegrationsData,
+} from '@/features/integrations/context/IntegrationsContext';
 import {
   createEmptyConnectionForm,
   type ConnectionFormState,
@@ -12,7 +15,8 @@ import { FormSection, FormActions } from '@/shared/ui';
 import { ConnectionFormFields } from './ConnectionFormFields';
 
 export function ConnectionForm(): React.JSX.Element {
-  const { activeIntegration, handleSaveConnection } = useIntegrationsContext();
+  const { activeIntegration } = useIntegrationsData();
+  const { handleSaveConnection } = useIntegrationsActions();
   const [createForm, setCreateForm] = useState<ConnectionFormState>(createEmptyConnectionForm());
   const [isSaving, setIsSaving] = useState(false);
 

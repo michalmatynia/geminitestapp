@@ -85,6 +85,100 @@ export const aiPathRunRecordSchema = aiPathRunSchema.extend({
 
 export type AiPathRunRecord = z.infer<typeof aiPathRunRecordSchema>;
 
+const nonEmptyTrimmedStringSchema = z
+  .string()
+  .transform((value) => value.trim())
+  .pipe(z.string().min(1));
+
+const aiPathRunEnqueueRunObjectSchema = z
+  .object({
+    id: nonEmptyTrimmedStringSchema.optional(),
+    runId: nonEmptyTrimmedStringSchema.optional(),
+    _id: nonEmptyTrimmedStringSchema.optional(),
+  })
+  .passthrough();
+
+const aiPathRunEnqueueEnvelopeCandidateSchema = z
+  .object({
+    run: z.union([nonEmptyTrimmedStringSchema, aiPathRunEnqueueRunObjectSchema]).optional(),
+    runId: nonEmptyTrimmedStringSchema.optional(),
+  })
+  .passthrough();
+
+const readRunIdFromEnqueueEnvelopeCandidate = (
+  value: z.infer<typeof aiPathRunEnqueueEnvelopeCandidateSchema>
+): string | null => {
+  if (typeof value.runId === 'string' && value.runId.length > 0) {
+    return value.runId;
+  }
+  if (typeof value.run === 'string' && value.run.length > 0) {
+    return value.run;
+  }
+  if (!value.run || typeof value.run !== 'object' || Array.isArray(value.run)) {
+    return null;
+  }
+  const run = value.run as Record<string, unknown>;
+  const candidates = [run['id'], run['runId'], run['_id']];
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string') continue;
+    const normalized = candidate.trim();
+    if (normalized.length > 0) return normalized;
+  }
+  return null;
+};
+
+export const extractAiPathRunIdFromEnqueueContractPayload = (value: unknown): string | null => {
+  const parsed = aiPathRunEnqueueEnvelopeCandidateSchema.safeParse(value);
+  if (parsed.success) {
+    const runId = readRunIdFromEnqueueEnvelopeCandidate(parsed.data);
+    if (runId) return runId;
+  }
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+  const nested = record['data'];
+  if (!nested || typeof nested !== 'object' || Array.isArray(nested)) return null;
+
+  const nestedParsed = aiPathRunEnqueueEnvelopeCandidateSchema.safeParse(nested);
+  if (!nestedParsed.success) return null;
+  return readRunIdFromEnqueueEnvelopeCandidate(nestedParsed.data);
+};
+
+export const aiPathRunEnqueueResponseSchema = z
+  .object({
+    run: z.union([nonEmptyTrimmedStringSchema, aiPathRunEnqueueRunObjectSchema]).optional(),
+    runId: nonEmptyTrimmedStringSchema.optional(),
+    data: aiPathRunEnqueueEnvelopeCandidateSchema.optional(),
+  })
+  .passthrough()
+  .superRefine((value, ctx) => {
+    if (extractAiPathRunIdFromEnqueueContractPayload(value)) return;
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'AI Paths enqueue response must include a non-empty run identifier.',
+      path: ['runId'],
+    });
+  });
+
+export type AiPathRunEnqueueResponse = z.infer<typeof aiPathRunEnqueueResponseSchema>;
+
+export const aiPathRunEnqueuedEventSchema = z.object({
+  type: z.literal('run-enqueued').optional().default('run-enqueued'),
+  runId: nonEmptyTrimmedStringSchema,
+  entityId: nonEmptyTrimmedStringSchema.nullish().transform((value) => value ?? null),
+  entityType: nonEmptyTrimmedStringSchema
+    .nullish()
+    .transform((value) => (value ? value.toLowerCase() : null)),
+  at: z.number().int().nonnegative().optional(),
+});
+
+export type AiPathRunEnqueuedEvent = z.infer<typeof aiPathRunEnqueuedEventSchema>;
+
+export const parseAiPathRunEnqueuedEventPayload = (value: unknown): AiPathRunEnqueuedEvent | null => {
+  const parsed = aiPathRunEnqueuedEventSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+};
+
 export const aiPathRunDetailSchema = z.object({
   run: aiPathRunRecordSchema,
   nodes: z.array(z.lazy(() => aiPathRunNodeSchema)),

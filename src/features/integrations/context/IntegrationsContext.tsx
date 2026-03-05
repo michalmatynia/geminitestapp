@@ -2,7 +2,6 @@
 
 import React, { useMemo, type ReactNode } from 'react';
 
-import type { IntegrationsContextType } from '@/features/integrations/context/integrations-context-types';
 import type { IntegrationsData } from '@/shared/contracts/integrations';
 
 import {
@@ -50,27 +49,6 @@ export {
   useIntegrationsApiConsole,
   useIntegrationsActions,
 };
-
-export function useIntegrationsContext(): IntegrationsContextType {
-  const data = useIntegrationsData();
-  const form = useIntegrationsForm();
-  const testing = useIntegrationsTesting();
-  const session = useIntegrationsSession();
-  const apiConsole = useIntegrationsApiConsole();
-  const actions = useIntegrationsActions();
-
-  return useMemo<IntegrationsContextType>(
-    () => ({
-      ...data,
-      ...form,
-      ...testing,
-      ...session,
-      ...apiConsole,
-      ...actions,
-    }),
-    [data, form, testing, session, apiConsole, actions]
-  );
-}
 
 export function IntegrationsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const data = useIntegrationsDataImpl();

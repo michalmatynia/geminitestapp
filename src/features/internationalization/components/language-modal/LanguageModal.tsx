@@ -2,7 +2,11 @@
 
 import React from 'react';
 
-import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
+import {
+  useInternationalizationActions,
+  useInternationalizationData,
+  useInternationalizationUi,
+} from '@/features/internationalization/context/InternationalizationContext';
 import {
   SettingsPanelBuilder,
   type SettingsField,
@@ -18,12 +22,9 @@ type LanguageFormState = {
 };
 
 export function LanguageModal(): React.JSX.Element | null {
-  const {
-    isLanguageModalOpen,
-    handleCloseLanguageModal,
-    activeLanguage,
-    filteredCountries: countries,
-  } = useInternationalizationContext();
+  const { isLanguageModalOpen, activeLanguage } = useInternationalizationUi();
+  const { handleCloseLanguageModal } = useInternationalizationActions();
+  const { filteredCountries: countries } = useInternationalizationData();
 
   const { form, setForm, selectedCountryIds, toggleCountry, isSaving, handleSubmit } =
     useLanguageForm();

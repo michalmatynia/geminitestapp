@@ -1,13 +1,16 @@
 'use client';
 
 import React from 'react';
-import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import {
+  useIntegrationsData,
+  useIntegrationsTesting,
+} from '@/features/integrations/context/IntegrationsContext';
 import { TestLogEntry } from '@/shared/contracts/integrations';
 import { StatusBadge, FormSection, SimpleSettingsList } from '@/shared/ui';
 
 export function ConnectionTestLog(): React.JSX.Element | null {
-  const { activeIntegration, isTesting, testLog, setSelectedStep, setShowTestLogModal } =
-    useIntegrationsContext();
+  const { activeIntegration } = useIntegrationsData();
+  const { isTesting, testLog, setSelectedStep, setShowTestLogModal } = useIntegrationsTesting();
 
   if (!activeIntegration) return null;
 

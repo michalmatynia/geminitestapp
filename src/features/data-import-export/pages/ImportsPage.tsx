@@ -7,7 +7,7 @@ import { ExportTab } from '@/features/data-import-export/components/imports/Expo
 import { ImportTab } from '@/features/data-import-export/components/imports/ImportTab';
 import {
   ImportExportProvider,
-  useImportExport,
+  useImportExportData,
 } from '@/features/data-import-export/context/ImportExportContext';
 import {
   Tabs,
@@ -22,7 +22,7 @@ import {
 import { TemplatesTabContent } from './imports/TemplatesTabContent';
 
 function ImportsPageContent(): React.JSX.Element {
-  const { checkingIntegration, isBaseConnected } = useImportExport();
+  const { checkingIntegration, isBaseConnected } = useImportExportData();
 
   if (checkingIntegration) {
     return (

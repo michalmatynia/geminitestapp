@@ -2,7 +2,10 @@
 
 import React from 'react';
 
-import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
+import {
+  useInternationalizationActions,
+  useInternationalizationUi,
+} from '@/features/internationalization/context/InternationalizationContext';
 import {
   SettingsPanelBuilder,
   type SettingsField,
@@ -41,8 +44,8 @@ const FIELDS: SettingsField<CurrencyFormState>[] = [
 ];
 
 export function CurrencyModal(): React.JSX.Element | null {
-  const { isCurrencyModalOpen, handleCloseCurrencyModal, activeCurrency } =
-    useInternationalizationContext();
+  const { isCurrencyModalOpen, activeCurrency } = useInternationalizationUi();
+  const { handleCloseCurrencyModal } = useInternationalizationActions();
 
   const {
     form,

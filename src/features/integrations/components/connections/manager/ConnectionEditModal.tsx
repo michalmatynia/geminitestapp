@@ -2,7 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import {
+  useIntegrationsActions,
+  useIntegrationsData,
+} from '@/features/integrations/context/IntegrationsContext';
 import {
   createEmptyConnectionForm,
   type ConnectionFormState,
@@ -21,7 +24,8 @@ type ConnectionEditModalProps = {
 export function ConnectionEditModal(props: ConnectionEditModalProps): React.JSX.Element {
   const { connection, onClose } = props;
 
-  const { activeIntegration, handleSaveConnection } = useIntegrationsContext();
+  const { activeIntegration } = useIntegrationsData();
+  const { handleSaveConnection } = useIntegrationsActions();
   const [form, setForm] = useState<ConnectionFormState>(createEmptyConnectionForm());
   const [isSaving, setIsSaving] = useState(false);
 

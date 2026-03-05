@@ -19,22 +19,18 @@ import {
   useProductFormCore,
 } from './ProductFormCoreContext';
 import {
-  ProductFormImageContextType,
   ProductFormImageProvider,
   useProductFormImages,
 } from './ProductFormImageContext';
 import {
-  ProductFormMetadataContextType,
   ProductFormMetadataProvider,
   useProductFormMetadata,
 } from './ProductFormMetadataContext';
 import {
-  ProductFormParameterContextType,
   ProductFormParameterProvider,
   useProductFormParameters,
 } from './ProductFormParameterContext';
 import {
-  ProductFormStudioContextType,
   ProductFormStudioProvider,
   useProductFormStudio,
 } from './ProductFormStudioContext';
@@ -146,15 +142,6 @@ const toComparableImageSlot = (slot: unknown): string => {
 
 const serializeComparableState = (value: NonFormComparableState): string => JSON.stringify(value);
 
-export interface ProductFormContextType
-  extends
-    ProductFormCoreContextType,
-    ProductFormMetadataContextType,
-    ProductFormImageContextType,
-    ProductFormParameterContextType,
-    ProductFormStudioContextType,
-    ProductFormSubmitContextType {}
-
 export type ProductFormSubmitContextType = Pick<
   ProductFormCoreContextType,
   'handleSubmit' | 'ConfirmationModal'
@@ -201,27 +188,6 @@ const useProductFormProviderConfigContext = (): ProductFormProviderConfigContext
     );
   }
   return context;
-};
-
-export const useProductFormContext = (): ProductFormContextType => {
-  const core = useProductFormCore();
-  const metadata = useProductFormMetadata();
-  const images = useProductFormImages();
-  const parameters = useProductFormParameters();
-  const studio = useProductFormStudio();
-  const submit = useProductFormSubmitContext();
-
-  return useMemo(
-    () => ({
-      ...core,
-      ...metadata,
-      ...images,
-      ...parameters,
-      ...studio,
-      ...submit,
-    }),
-    [core, metadata, images, parameters, studio, submit]
-  );
 };
 
 function ProductFormSubmitController(props: { children: React.ReactNode }) {

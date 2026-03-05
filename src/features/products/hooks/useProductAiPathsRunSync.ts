@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 
+import { parseAiPathRunEnqueuedEventPayload } from '@/shared/contracts/ai-paths';
 import {
   addQueuedProductId,
   removeQueuedProductId,
@@ -11,19 +12,11 @@ import {
 const AI_PATH_RUN_BADGE_TTL_MS = 30_000;
 
 const resolveProductIdFromEvent = (event: Event): string | null => {
-  const detail = (event as CustomEvent<Record<string, unknown>>).detail;
-  if (!detail || typeof detail !== 'object' || Array.isArray(detail)) return null;
-  const entityType = detail['entityType'];
-  const entityId = detail['entityId'];
-  if (
-    typeof entityType === 'string' &&
-    entityType.trim().toLowerCase() === 'product' &&
-    typeof entityId === 'string' &&
-    entityId.trim().length > 0
-  ) {
-    return entityId.trim();
-  }
-  return null;
+  const detail = (event as CustomEvent<unknown>).detail;
+  const payload = parseAiPathRunEnqueuedEventPayload(detail);
+  if (!payload) return null;
+  if (payload.entityType !== 'product') return null;
+  return payload.entityId;
 };
 
 /**

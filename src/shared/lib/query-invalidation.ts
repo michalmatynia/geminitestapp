@@ -1,5 +1,8 @@
 import { QueryClient, type QueryKey } from '@tanstack/react-query';
-import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import {
+  parseAiPathRunEnqueuedEventPayload,
+  type AiPathRunRecord,
+} from '@/shared/contracts/ai-paths';
 import type { StudioSlotsResponse } from '@/shared/contracts/image-studio';
 import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 
@@ -620,6 +623,7 @@ export const notifyAiPathRunEnqueued = (
   if (typeof window === 'undefined') return;
   const normalizedRunId =
     typeof runId === 'string' && runId.trim().length > 0 ? runId.trim() : null;
+  if (!normalizedRunId) return;
   const normalizedEntityId =
     typeof options?.entityId === 'string' && options.entityId.trim().length > 0
       ? options.entityId.trim()
@@ -628,13 +632,14 @@ export const notifyAiPathRunEnqueued = (
     typeof options?.entityType === 'string' && options.entityType.trim().length > 0
       ? options.entityType.trim().toLowerCase()
       : null;
-  const payload = {
+  const payload = parseAiPathRunEnqueuedEventPayload({
     type: 'run-enqueued',
     runId: normalizedRunId,
     entityId: normalizedEntityId,
     entityType: normalizedEntityType,
     at: Date.now(),
-  };
+  });
+  if (!payload) return;
 
   window.dispatchEvent(new CustomEvent('ai-path-run-enqueued', { detail: payload }));
 

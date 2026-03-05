@@ -2,23 +2,27 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
+import {
+  useImportExportActions,
+  useImportExportData,
+  useImportExportState,
+} from '@/features/data-import-export/context/ImportExportContext';
 import { Button, SectionHeader, Hint, ToggleRow, MetadataItem, Card } from '@/shared/ui';
 
 export function ExportQuickActionsSection(): React.JSX.Element {
   const {
     exportInventoryId,
-    handleLoadInventories,
-    isFetchingInventories: loadingInventories,
-    handleLoadWarehouses,
-    isFetchingWarehouses: loadingWarehouses,
     includeAllWarehouses,
     setIncludeAllWarehouses,
-    handleSaveExportSettings,
-    savingExportSettings,
     debugWarehouses,
     setDebugWarehouses,
-  } = useImportExport();
+  } = useImportExportState();
+  const {
+    isFetchingInventories: loadingInventories,
+    isFetchingWarehouses: loadingWarehouses,
+  } = useImportExportData();
+  const { handleLoadInventories, handleLoadWarehouses, handleSaveExportSettings, savingExportSettings } =
+    useImportExportActions();
 
   const loadingDebugWarehouses = false;
 

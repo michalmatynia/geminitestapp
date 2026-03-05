@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import {
   InternationalizationSettings,
   InternationalizationProvider,
-  useInternationalizationContext,
 } from '@/features/internationalization';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { ProductSyncSettings } from '@/features/product-sync/components/ProductSyncSettings';
@@ -41,9 +40,6 @@ import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { settingSections } from './ProductSettingsConstants';
 
 function InternationalizationModals(): React.JSX.Element | null {
-  const intCtx = useInternationalizationContext();
-  if (!intCtx) return null;
-
   return (
     <>
       <LanguageModal />

@@ -4,11 +4,16 @@ import React from 'react';
 
 import { PanelHeader } from '@/shared/ui';
 
-import { useFileManager } from '../../contexts/FileManagerContext';
+import {
+  useFileManagerActions,
+  useFileManagerConfig,
+  useFileManagerUIState,
+} from '../../contexts/FileManagerContext';
 
 export function FileManagerHeader(): React.JSX.Element {
-  const { mode, onSelectFile, autoConfirmSelection, selectedFiles, handleConfirmSelection } =
-    useFileManager();
+  const { mode, onSelectFile, autoConfirmSelection } = useFileManagerConfig();
+  const { selectedFiles } = useFileManagerUIState();
+  const { handleConfirmSelection } = useFileManagerActions();
 
   return (
     <PanelHeader

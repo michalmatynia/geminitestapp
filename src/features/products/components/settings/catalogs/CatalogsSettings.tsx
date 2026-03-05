@@ -1,4 +1,4 @@
-import { useInternationalizationContext } from '@/features/internationalization';
+import { useInternationalizationData } from '@/features/internationalization';
 import type { Language } from '@/shared/contracts/internationalization';
 import { Catalog } from '@/shared/contracts/products';
 import { Button, Badge, SimpleSettingsList } from '@/shared/ui';
@@ -8,7 +8,7 @@ import { useProductSettingsContext } from '../ProductSettingsContext';
 export function CatalogsSettings(): React.JSX.Element {
   const { loadingCatalogs, catalogs, onOpenCatalogModal, onEditCatalog, onDeleteCatalog } =
     useProductSettingsContext();
-  const { languages } = useInternationalizationContext();
+  const { languages } = useInternationalizationData();
   const getLanguageDisplay = (languageId: string): string => {
     const language = languages.find((l: Language) => l.id === languageId);
     return language ? `${language.name} (${language.code})` : languageId;

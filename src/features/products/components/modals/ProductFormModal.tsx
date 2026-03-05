@@ -5,7 +5,8 @@ import React, { useCallback } from 'react';
 
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import ProductForm from '@/features/products/components/ProductForm';
-import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
+import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
 import type { ModalStateProps } from '@/shared/contracts/ui';
 import { FormModal } from '@/shared/ui';
 
@@ -23,15 +24,14 @@ function ProductFormModalInner(props: ProductFormModalProps): React.JSX.Element 
   const { isOpen, onClose, title, submitButtonText, validationInstanceScopeOverride } = props;
 
   const {
-    showFileManager,
-    handleMultiFileSelect,
     handleSubmit,
     uploading,
     getValues,
     product,
     draft,
     hasUnsavedChanges,
-  } = useProductFormContext();
+  } = useProductFormCore();
+  const { showFileManager, handleMultiFileSelect } = useProductFormImages();
   const formInstanceKey = product?.id?.trim() || draft?.id?.trim() || 'product-create';
 
   const getEntityJson = useCallback((): Record<string, unknown> => {

@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v3",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "nodeType": "mapper",
+  "title": "JSON Mapper",
+  "runtimeKernel": {
+    "strategy": "code_object_v3",
+    "executionAdapter": "legacy_handler_bridge",
+    "legacyHandlerKey": "mapper",
+    "codeObjectId": "ai-paths.node-code-object.mapper.v3"
+  },
+  "runtimeSemantics": {
+    "processing": "pulse_node_only",
+    "waiting": "freeze_consumed_inputs_and_outputs",
+    "success": "animate_outgoing_on_emit",
+    "error": "animate_error_routes_on_emit"
+  },
+  "ports": {
+    "inputs": [
+      "context",
+      "result",
+      "bundle",
+      "value"
+    ],
+    "outputs": [
+      "value",
+      "result"
+    ]
+  },
+  "copyPaste": {
+    "fullNode": {
+      "id": "node_mapper_example",
+      "type": "mapper",
+      "title": "JSON Mapper",
+      "description": "Map context to custom outputs.",
+      "position": {
+        "x": 640,
+        "y": 100
+      },
+      "inputs": [
+        "context",
+        "result",
+        "bundle",
+        "value"
+      ],
+      "outputs": [
+        "value",
+        "result"
+      ],
+      "config": {
+        "mapper": {
+          "outputs": [
+            "value"
+          ],
+          "mappings": {},
+          "jsonIntegrityPolicy": "repair"
+        }
+      }
+    }
+  },
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "id": "node_obj_mapper_portable_v3",
+  "objectHashAlgorithm": "sha256",
+  "objectHash": ""
+}

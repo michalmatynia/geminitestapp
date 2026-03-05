@@ -2,11 +2,11 @@
 
 import React from 'react';
 import type { BaseImportPreflightIssue } from '@/shared/contracts/integrations';
-import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
+import { useImportExportData } from '@/features/data-import-export/context/ImportExportContext';
 import { FormSection, Hint, StatusBadge } from '@/shared/ui';
 
 export function ImportLastResultSection(): React.JSX.Element | null {
-  const { lastResult, activeImportRunId } = useImportExport();
+  const { lastResult, activeImportRunId } = useImportExportData();
 
   if (!lastResult) return null;
 

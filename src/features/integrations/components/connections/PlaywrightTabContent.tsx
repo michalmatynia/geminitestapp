@@ -1,19 +1,20 @@
 import Link from 'next/link';
 import React from 'react';
 
-import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import {
+  useIntegrationsActions,
+  useIntegrationsData,
+  useIntegrationsForm,
+} from '@/features/integrations/context/IntegrationsContext';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { Button, SelectSimple, FormSection, FormField } from '@/shared/ui';
 
 import { DynamicPlaywrightSettingsForm } from './DynamicPlaywrightSettingsForm';
 
 export function PlaywrightTabContent(): React.JSX.Element {
-  const {
-    playwrightPersonas,
-    playwrightPersonasLoading,
-    playwrightPersonaId,
-    handleSelectPlaywrightPersona,
-  } = useIntegrationsContext();
+  const { playwrightPersonas, playwrightPersonasLoading } = useIntegrationsData();
+  const { playwrightPersonaId } = useIntegrationsForm();
+  const { handleSelectPlaywrightPersona } = useIntegrationsActions();
 
   const selectedPersona =
     playwrightPersonas.find((persona: PlaywrightPersona) => persona.id === playwrightPersonaId) ??

@@ -4,7 +4,11 @@ import {
   isTraderaApiIntegrationSlug,
   isTraderaIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
-import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import {
+  useIntegrationsActions,
+  useIntegrationsData,
+  useIntegrationsForm,
+} from '@/features/integrations/context/IntegrationsContext';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 
 type UseIntegrationTabsResult = {
@@ -27,16 +31,10 @@ type UseIntegrationTabsResult = {
 };
 
 export function useIntegrationTabs(): UseIntegrationTabsResult {
-  const {
-    activeIntegration,
-    connections,
-    editingConnectionId,
-    playwrightPersonas,
-    playwrightPersonasLoading,
-    playwrightPersonaId,
-    handleSelectPlaywrightPersona,
-    handleSavePlaywrightSettings,
-  } = useIntegrationsContext();
+  const { activeIntegration, connections, playwrightPersonas, playwrightPersonasLoading } =
+    useIntegrationsData();
+  const { editingConnectionId, playwrightPersonaId } = useIntegrationsForm();
+  const { handleSelectPlaywrightPersona, handleSavePlaywrightSettings } = useIntegrationsActions();
 
   const [activeTab, setActiveTab] = useState('connections');
 

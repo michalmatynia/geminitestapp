@@ -9,7 +9,15 @@ export const NODE_RUNTIME_KERNEL_STRATEGIES = ['legacy_adapter', 'code_object_v3
 export const NODE_RUNTIME_KERNEL_MODES = ['auto', 'legacy_only'] as const;
 export type NodeRuntimeKernelMode = (typeof NODE_RUNTIME_KERNEL_MODES)[number];
 
-export const NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES = ['constant', 'math', 'template'] as const;
+export const NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES = [
+  'constant',
+  'mapper',
+  'math',
+  'mutator',
+  'parser',
+  'regex',
+  'template',
+] as const;
 
 export type NodeRuntimeKernelDescriptor = {
   nodeType: string;

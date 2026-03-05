@@ -8,8 +8,9 @@ import ProductForm from '@/features/products/components/ProductForm';
 import {
   ProductFormProvider,
   ProductFormProviderRuntimeContext,
-  useProductFormContext,
 } from '@/features/products/context/ProductFormContext';
+import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
+import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { Button, Card } from '@/shared/ui';
 
@@ -37,8 +38,8 @@ function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>): React.JSX.Element 
 }
 
 function EditProductForm(): React.JSX.Element {
-  const { showFileManager, handleMultiFileSelect, uploading, handleSubmit, hasUnsavedChanges } =
-    useProductFormContext();
+  const { uploading, handleSubmit, hasUnsavedChanges } = useProductFormCore();
+  const { showFileManager, handleMultiFileSelect } = useProductFormImages();
   const router = useRouter();
   const isSaveDisabled = uploading || !hasUnsavedChanges;
 

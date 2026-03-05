@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
+import { useInternationalizationUi } from '@/features/internationalization/context/InternationalizationContext';
 import { useSaveLanguageMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
 import { useToast } from '@/shared/ui';
 
@@ -20,8 +20,7 @@ type UseLanguageFormResult = {
 };
 
 export function useLanguageForm(): UseLanguageFormResult {
-  const context = useInternationalizationContext();
-  const language = context.activeLanguage;
+  const { activeLanguage: language } = useInternationalizationUi();
   const { toast } = useToast();
   const saveMutation = useSaveLanguageMutation();
 

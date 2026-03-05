@@ -32,6 +32,7 @@ Date: 2026-03-05
 26. Lint-domain test-tree stabilization to full pass (Step 26) - completed
 27. Weekly lint-domain test-tree promotion (Step 27) - completed
 28. Weekly duration budget safe-apply automation (Step 28) - completed
+29. Weekly duration readiness required-vs-optional model (Step 29) - completed
 
 ## Gate Status Snapshot
 
@@ -60,6 +61,7 @@ Date: 2026-03-05
 - Accessibility warning-budget enforcement mode: PASS (telemetry default + opt-in strict fail-on-exceed)
 - Weekly strict lane lint-domain mode: PASS (now executes full test-tree lint domains)
 - Weekly duration safe-apply automation: PASS (apply path implemented with readiness guard and skip reasons)
+- Weekly duration readiness model: PASS (optional checks no longer block readiness progression)
 
 ## Current Risks Captured by Baseline
 
@@ -71,4 +73,4 @@ Date: 2026-03-05
 
 ## Next Iteration Backlog (Priority)
 
-1. Re-run duration recalibration with `--apply-budgets` after enough passing weekly runs to move status from `pending` to `ready`.
+1. Accumulate additional passing weekly runs and re-run duration recalibration with `--apply-budgets` until required readiness reaches `readyRequired=10/10`.

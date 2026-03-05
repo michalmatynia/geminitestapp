@@ -51,6 +51,21 @@ const CHECK_LABELS = Object.freeze({
   observability: 'Observability Check',
 });
 
+const CHECK_READINESS = Object.freeze({
+  build: { required: true },
+  lint: { required: true },
+  lintDomains: { required: true },
+  typecheck: { required: true },
+  criticalFlows: { required: true },
+  securitySmoke: { required: true },
+  unitDomains: { required: true },
+  fullUnit: { required: false },
+  e2e: { required: false },
+  guardrails: { required: true },
+  uiConsolidation: { required: true },
+  observability: { required: true },
+});
+
 const formatDuration = (ms) => {
   if (!Number.isFinite(ms) || ms < 0) return 'n/a';
   if (ms < 1000) return `${ms}ms`;
@@ -158,6 +173,7 @@ const loadRuns = async (files) => {
 const analyze = (runs) => {
   const entries = [];
   for (const [checkId, currentBudgetMs] of Object.entries(WEEKLY_DURATION_BUDGETS_MS)) {
+    const readiness = CHECK_READINESS[checkId] ?? { required: true };
     const passSamples = runs
       .map((run) => run.checks.find((check) => check.id === checkId))
       .filter((check) => check && check.status === 'pass' && Number.isFinite(check.durationMs))
@@ -172,30 +188,46 @@ const analyze = (runs) => {
         : null;
     const suggestedBudgetMs =
       suggestedRaw === null ? currentBudgetMs : toMillisCeil(Math.max(currentBudgetMs, suggestedRaw));
+    const samplesNeeded = Math.max(0, minSamples - passSamples.length);
+    const status = !readiness.required && passSamples.length === 0
+      ? 'optional'
+      : enoughSamples
+        ? 'ready'
+        : 'insufficient-data';
 
     entries.push({
       id: checkId,
       label: CHECK_LABELS[checkId] ?? checkId,
+      requiredForReadiness: readiness.required,
       currentBudgetMs,
       sampleCount: passSamples.length,
+      samplesNeeded,
       percentileDurationMs: pValue,
       maxDurationMs: maxValue,
       recommendedBudgetMs: suggestedBudgetMs,
       deltaMs: suggestedBudgetMs - currentBudgetMs,
-      status: enoughSamples ? 'ready' : 'insufficient-data',
+      status,
     });
   }
 
+  const requiredEntries = entries.filter((entry) => entry.requiredForReadiness);
+  const readyRequired = requiredEntries.filter((entry) => entry.status === 'ready');
+  const pendingRequired = requiredEntries.filter((entry) => entry.status !== 'ready');
   const ready = entries.filter((entry) => entry.status === 'ready');
   const changed = ready.filter((entry) => entry.deltaMs !== 0);
-  const pending = entries.filter((entry) => entry.status !== 'ready');
-  const status = ready.length === 0 ? 'pending' : pending.length > 0 ? 'partial' : 'ready';
+  const status =
+    readyRequired.length === 0 ? 'pending' : pendingRequired.length > 0 ? 'partial' : 'ready';
 
   return {
     status,
     checks: entries.length,
+    checksRequired: requiredEntries.length,
+    checksOptional: entries.length - requiredEntries.length,
     checksReady: ready.length,
-    checksPending: pending.length,
+    checksReadyRequired: readyRequired.length,
+    checksPending: entries.filter((entry) => entry.status === 'insufficient-data').length,
+    checksPendingRequired: pendingRequired.length,
+    checksOptionalNoSamples: entries.filter((entry) => entry.status === 'optional').length,
     checksChanged: changed.length,
     minimumSamplesRequired: minSamples,
     percentile,
@@ -276,6 +308,8 @@ const toMarkdown = (payload) => {
   lines.push(`- Minimum pass samples per check: ${payload.summary.minimumSamplesRequired}`);
   lines.push(`- Percentile target: ${(payload.summary.percentile * 100).toFixed(0)}th`);
   lines.push(`- Headroom: ${(payload.summary.headroom * 100).toFixed(0)}%`);
+  lines.push(`- Required checks: ${payload.summary.checksRequired} (ready: ${payload.summary.checksReadyRequired}, pending: ${payload.summary.checksPendingRequired})`);
+  lines.push(`- Optional checks: ${payload.summary.checksOptional} (no samples: ${payload.summary.checksOptionalNoSamples})`);
   lines.push('');
   lines.push('## Application');
   lines.push('');
@@ -291,11 +325,11 @@ const toMarkdown = (payload) => {
   lines.push('');
   lines.push('## Recommendations');
   lines.push('');
-  lines.push('| Check | Current | Samples | Pctl | Max | Recommended | Delta | Status |');
-  lines.push('| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |');
+  lines.push('| Check | Requirement | Current | Samples | Need | Pctl | Max | Recommended | Delta | Status |');
+  lines.push('| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |');
   for (const entry of payload.recommendations) {
     lines.push(
-      `| ${entry.label} | ${formatDuration(entry.currentBudgetMs)} | ${entry.sampleCount} | ${formatDuration(entry.percentileDurationMs)} | ${formatDuration(entry.maxDurationMs)} | ${formatDuration(entry.recommendedBudgetMs)} | ${formatDelta(entry.deltaMs)} | ${entry.status} |`
+      `| ${entry.label} | ${entry.requiredForReadiness ? 'required' : 'optional'} | ${formatDuration(entry.currentBudgetMs)} | ${entry.sampleCount} | ${entry.samplesNeeded} | ${formatDuration(entry.percentileDurationMs)} | ${formatDuration(entry.maxDurationMs)} | ${formatDuration(entry.recommendedBudgetMs)} | ${formatDelta(entry.deltaMs)} | ${entry.status} |`
     );
   }
   lines.push('');
@@ -322,8 +356,13 @@ const run = async () => {
       oldestRun: runs[0]?.generatedAt ?? null,
       newestRun: runs[runs.length - 1]?.generatedAt ?? null,
       checks: analysis.checks,
+      checksRequired: analysis.checksRequired,
+      checksOptional: analysis.checksOptional,
       checksReady: analysis.checksReady,
+      checksReadyRequired: analysis.checksReadyRequired,
       checksPending: analysis.checksPending,
+      checksPendingRequired: analysis.checksPendingRequired,
+      checksOptionalNoSamples: analysis.checksOptionalNoSamples,
       checksChanged: analysis.checksChanged,
       minimumSamplesRequired: analysis.minimumSamplesRequired,
       percentile: analysis.percentile,
@@ -353,7 +392,7 @@ const run = async () => {
   }
 
   console.log(
-    `[weekly-duration-recalibration] runs=${payload.summary.runsAnalyzed} ready=${payload.summary.checksReady}/${payload.summary.checks}`
+    `[weekly-duration-recalibration] runs=${payload.summary.runsAnalyzed} readyRequired=${payload.summary.checksReadyRequired}/${payload.summary.checksRequired} readyAll=${payload.summary.checksReady}/${payload.summary.checks}`
   );
   console.log(
     `[weekly-duration-recalibration] changed=${payload.summary.checksChanged} pending=${payload.summary.checksPending} status=${payload.summary.status}`

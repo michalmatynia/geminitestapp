@@ -1,6 +1,7 @@
 import type {
   AiPathsValidationCondition,
   AiPathsValidationRule,
+  AiPathsValidationStage,
 } from '@/shared/contracts/ai-paths';
 
 import {
@@ -35,6 +36,9 @@ const uniqueStringList = (values: string[]): string[] =>
         .filter((entry: string): boolean => entry.length > 0)
     )
   );
+
+const uniqueStageList = (values: AiPathsValidationStage[]): AiPathsValidationStage[] =>
+  Array.from(new Set(values));
 
 const compileConditions = (
   ruleId: string,
@@ -90,6 +94,9 @@ const compileRuleFromAssertion = (
     module: assertion.module,
     ...(assertion.appliesToNodeTypes?.length
       ? { appliesToNodeTypes: uniqueStringList(assertion.appliesToNodeTypes) }
+      : {}),
+    ...(assertion.appliesToStages?.length
+      ? { appliesToStages: uniqueStageList(assertion.appliesToStages) }
       : {}),
     sequence:
       typeof assertion.sequenceHint === 'number' && Number.isFinite(assertion.sequenceHint)

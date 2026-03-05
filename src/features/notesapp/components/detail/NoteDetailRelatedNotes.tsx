@@ -4,7 +4,10 @@ import React, { useMemo } from 'react';
 import { X } from 'lucide-react';
 
 import { useNotesLookup } from '@/features/notesapp/api/useNoteQueries';
-import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import {
+  useNotesAppActions,
+  useNotesAppState,
+} from '@/features/notesapp/hooks/NotesAppContext';
 import { Button } from '@/shared/ui';
 import type { RelatedNote, NoteRelationRecord } from '@/shared/contracts/notes';
 
@@ -17,8 +20,8 @@ type NoteRelationWithSource = NoteRelationRecord & {
 };
 
 export function NoteDetailRelatedNotes(): React.JSX.Element | null {
-  const { selectedNote, selectedNoteTheme, handleSelectNoteFromTree, handleUnlinkRelatedNote } =
-    useNotesAppContext();
+  const { selectedNote, selectedNoteTheme } = useNotesAppState();
+  const { handleSelectNoteFromTree, handleUnlinkRelatedNote } = useNotesAppActions();
 
   const onSelectRelatedNote = (id: string): void => {
     void handleSelectNoteFromTree(id);

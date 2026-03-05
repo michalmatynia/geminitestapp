@@ -25,6 +25,7 @@ export * from './image-slots';
 export * from './image-studio';
 export * from './integrations';
 export * from './jobs';
+export * from './kangur';
 export * from './notes';
 export * from './observability';
 export * from './products';

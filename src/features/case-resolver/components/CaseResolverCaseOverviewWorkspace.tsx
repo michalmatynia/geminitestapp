@@ -14,7 +14,10 @@ import {
   SelectSimple,
 } from '@/shared/ui';
 
-import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
+import {
+  useCaseResolverPageActions,
+  useCaseResolverPageState,
+} from '../context/CaseResolverPageContext';
 import { CaseResolverRelationsWorkspace } from './CaseResolverRelationsWorkspace';
 
 const CASE_STATUS_OPTIONS = [
@@ -35,14 +38,13 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
     activeCaseFile,
     activeCaseMetadataDraft,
     isActiveCaseMetadataDirty,
-    onUpdateActiveCaseDraft,
-    onSaveActiveCase,
     caseTagOptions,
     caseIdentifierOptions,
     caseCategoryOptions,
     caseReferenceOptions,
     parentCaseOptions,
-  } = useCaseResolverPageContext();
+  } = useCaseResolverPageState();
+  const { onUpdateActiveCaseDraft, onSaveActiveCase } = useCaseResolverPageActions();
   const [isRelationsVisible, setIsRelationsVisible] = React.useState(false);
 
   React.useEffect(() => {

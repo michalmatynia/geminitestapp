@@ -2,14 +2,18 @@
 
 import React from 'react';
 
-import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import {
+  useNotesAppActions,
+  useNotesAppState,
+} from '@/features/notesapp/hooks/NotesAppContext';
 import { NoteForm } from './NoteForm';
 import { NoteDetailBreadcrumbs } from './detail/NoteDetailBreadcrumbs';
 import { NoteDetailActions } from './detail/NoteDetailActions';
 import { NoteDetailPreview } from './detail/NoteDetailPreview';
 
 export function NoteDetailView(): React.JSX.Element | null {
-  const { selectedNote, isEditing, handleUpdateSuccess } = useNotesAppContext();
+  const { selectedNote, isEditing } = useNotesAppState();
+  const { handleUpdateSuccess } = useNotesAppActions();
 
   if (!selectedNote) return null;
 

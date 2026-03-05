@@ -14,7 +14,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui';
-import { useCaseResolverViewContext } from './CaseResolverViewContext';
+import {
+  useCaseResolverViewActionsContext,
+  useCaseResolverViewStateContext,
+} from './CaseResolverViewContext';
 import { CaseResolverPageProvider } from '../context/CaseResolverPageContext';
 import { CaseResolverFolderTree } from './CaseResolverFolderTree';
 import { CaseResolverPageMainContent } from './page/CaseResolverPageMainContent';
@@ -29,8 +32,38 @@ type PendingNavigation = {
 
 export function CaseResolverPageView(): React.JSX.Element {
   const searchParams = useSearchParams();
-  const contextValue = useCaseResolverViewContext();
-  const { state } = contextValue;
+  const {
+    state,
+    caseTagOptions,
+    caseIdentifierOptions,
+    caseCategoryOptions,
+    caseReferenceOptions,
+    parentCaseOptions,
+    partyOptions,
+    isEditorDraftDirty,
+    isActiveCaseMetadataDirty,
+    activeCaseFile,
+    activeCaseMetadataDraft,
+  } = useCaseResolverViewStateContext();
+  const {
+    handleDeactivateActiveFile,
+    handleToggleFolderLock,
+    handleDeleteFile,
+    handleDeleteAsset,
+    handleToggleFileLock,
+    handleCreateDocumentFromSearch,
+    handleOpenFileFromSearch,
+    handleEditFileFromSearch,
+    handleGraphChange,
+    handleRelationGraphChange,
+    handleUpdateActiveCaseMetadata,
+    setWorkspaceView,
+    handleMoveFolder,
+    handleSaveActiveCaseMetadata,
+    handleDiscardActiveCaseMetadata,
+    updateActiveCaseMetadataDraft,
+    handleResetCaseContext,
+  } = useCaseResolverViewActionsContext();
   const workspaceDebugEnabled = (searchParams.get('debugWorkspace')?.trim() ?? '') === '1';
   const {
     workspace,
@@ -72,36 +105,6 @@ export function CaseResolverPageView(): React.JSX.Element {
     ConfirmationModal,
     PromptInputModal,
   } = state;
-
-  const {
-    handleDeactivateActiveFile,
-    handleToggleFolderLock,
-    handleDeleteFile,
-    handleDeleteAsset,
-    handleToggleFileLock,
-    handleCreateDocumentFromSearch,
-    handleOpenFileFromSearch,
-    handleEditFileFromSearch,
-    handleGraphChange,
-    handleRelationGraphChange,
-    handleUpdateActiveCaseMetadata,
-    caseTagOptions,
-    caseIdentifierOptions,
-    caseCategoryOptions,
-    caseReferenceOptions,
-    parentCaseOptions,
-    partyOptions,
-    setWorkspaceView,
-    handleMoveFolder,
-    isEditorDraftDirty,
-    isActiveCaseMetadataDirty,
-    handleSaveActiveCaseMetadata,
-    handleDiscardActiveCaseMetadata,
-    updateActiveCaseMetadataDraft,
-    activeCaseFile,
-    activeCaseMetadataDraft,
-    handleResetCaseContext,
-  } = contextValue;
 
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {

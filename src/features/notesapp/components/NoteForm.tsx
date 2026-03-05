@@ -5,7 +5,14 @@ import Image from 'next/image';
 import React from 'react';
 
 import { MarkdownToolbarActionsProvider } from '@/features/notesapp/context/MarkdownToolbarActionsContext';
-import { useNoteFormContext, NoteFormProvider } from '@/features/notesapp/context/NoteFormContext';
+import {
+  NoteFormProvider,
+  useNoteContentContext,
+  useNoteEditorContext,
+  useNoteFilesContext,
+  useNoteFormRuntime,
+  useNoteMetadataContext,
+} from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFormProps } from '@/shared/contracts/notes';
 import {
   Button,
@@ -37,18 +44,11 @@ function useNoteFormViewContext(): NoteFormViewContextValue {
 
 function NoteFormInner(): React.JSX.Element {
   const { formRef } = useNoteFormViewContext();
-  const {
-    note,
-    content,
-    setContent,
-    title,
-    setTitle,
-    editorMode,
-    handleSubmit,
-    lightboxImage,
-    setLightboxImage,
-    contentRef,
-  } = useNoteFormContext();
+  const { note, handleSubmit } = useNoteFormRuntime();
+  const { content, setContent } = useNoteContentContext();
+  const { title, setTitle } = useNoteMetadataContext();
+  const { editorMode, contentRef } = useNoteEditorContext();
+  const { lightboxImage, setLightboxImage } = useNoteFilesContext();
 
   const markdownToolbarActions = useMarkdownEditor({
     content,

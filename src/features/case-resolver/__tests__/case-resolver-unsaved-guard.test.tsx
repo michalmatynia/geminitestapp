@@ -2,7 +2,11 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CaseResolverPageView } from '@/features/case-resolver/components/CaseResolverPageView';
-import type { CaseResolverViewContextValue } from '@/features/case-resolver/components/CaseResolverViewContext';
+import type {
+  CaseResolverViewActionsValue,
+  CaseResolverViewContextValue,
+  CaseResolverViewStateValue,
+} from '@/features/case-resolver/components/CaseResolverViewContext';
 import type { CaseResolverStateValue } from '@/features/case-resolver/types';
 
 let viewContextMock: CaseResolverViewContextValue;
@@ -15,19 +19,18 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/features/case-resolver/components/CaseResolverViewContext', () => ({
-  useCaseResolverViewContext: (): CaseResolverViewContextValue => viewContextMock,
+  useCaseResolverViewStateContext: (): CaseResolverViewStateValue =>
+    viewContextMock as unknown as CaseResolverViewStateValue,
+  useCaseResolverViewActionsContext: (): CaseResolverViewActionsValue =>
+    viewContextMock as unknown as CaseResolverViewActionsValue,
 }));
 
 vi.mock('@/features/case-resolver/components/CaseResolverFolderTree', async () => {
-  const { useCaseResolverPageContext } =
+  const { useCaseResolverPageActions } =
     await import('@/features/case-resolver/context/CaseResolverPageContext');
   const CaseResolverFolderTree = () => {
-    const context = useCaseResolverPageContext();
-    return (
-      <button type='button' onClick={() => context.onEditFile('file-b')}>
-        Switch File
-      </button>
-    );
+    const { onEditFile } = useCaseResolverPageActions();
+    return <button type='button' onClick={() => onEditFile('file-b')}>Switch File</button>;
   };
   return { CaseResolverFolderTree };
 });

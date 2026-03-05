@@ -4,18 +4,16 @@ import React from 'react';
 import { Star } from 'lucide-react';
 
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
-import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import {
+  useNotesAppActions,
+  useNotesAppState,
+} from '@/features/notesapp/hooks/NotesAppContext';
 import { Button } from '@/shared/ui';
 
 export function NoteDetailActions(): React.JSX.Element | null {
-  const {
-    selectedNote,
-    setSelectedNote,
-    isEditing,
-    setIsEditing,
-    handleToggleFavorite,
-    handleDeleteNote,
-  } = useNotesAppContext();
+  const { selectedNote, isEditing } = useNotesAppState();
+  const { setSelectedNote, setIsEditing, handleToggleFavorite, handleDeleteNote } =
+    useNotesAppActions();
 
   if (!selectedNote) return null;
 

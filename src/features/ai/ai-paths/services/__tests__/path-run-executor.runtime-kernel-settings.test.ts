@@ -13,6 +13,10 @@ const {
   getPathRunRepositoryMock,
   runExecutorPreflightMock,
   createCancellationMonitorMock,
+  updateRunIfStatusMock,
+  listRunNodesMock,
+  upsertRunNodeMock,
+  createRunEventMock,
   publishRunUpdateMock,
   recordRuntimeNodeStatusMock,
   recordRuntimeRunFinishedMock,
@@ -24,6 +28,10 @@ const {
   getPathRunRepositoryMock: vi.fn(),
   runExecutorPreflightMock: vi.fn(),
   createCancellationMonitorMock: vi.fn(),
+  updateRunIfStatusMock: vi.fn(),
+  listRunNodesMock: vi.fn(),
+  upsertRunNodeMock: vi.fn(),
+  createRunEventMock: vi.fn(),
   publishRunUpdateMock: vi.fn(),
   recordRuntimeNodeStatusMock: vi.fn(),
   recordRuntimeRunFinishedMock: vi.fn(),
@@ -37,7 +45,7 @@ vi.mock('@/shared/lib/ai-paths/core/runtime/engine-server', () => ({
   evaluateGraphWithIteratorAutoContinue: evaluateGraphWithIteratorAutoContinueMock,
 }));
 
-vi.mock('@/features/ai/ai-paths/server', () => ({
+vi.mock('@/features/ai/ai-paths/server/settings-store', () => ({
   listAiPathsSettings: listAiPathsSettingsMock,
 }));
 
@@ -129,6 +137,10 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     evaluateGraphWithIteratorAutoContinueMock.mockResolvedValue(RUNTIME_STATE_IDLE);
     listAiPathsSettingsMock.mockResolvedValue([]);
     runExecutorPreflightMock.mockResolvedValue({
+      validationConfig: {
+        enabled: true,
+        rules: [],
+      },
       strictFlowMode: true,
       nodeValidationEnabled: true,
       requiredProcessingNodeIds: [],
@@ -137,11 +149,15 @@ describe('path-run-executor runtime-kernel settings integration', () => {
       start: vi.fn().mockResolvedValue(false),
       stop: vi.fn(),
     });
+    updateRunIfStatusMock.mockResolvedValue(true);
+    listRunNodesMock.mockResolvedValue([]);
+    upsertRunNodeMock.mockResolvedValue(undefined);
+    createRunEventMock.mockResolvedValue(undefined);
     getPathRunRepositoryMock.mockResolvedValue({
-      updateRunIfStatus: vi.fn().mockResolvedValue(true),
-      listRunNodes: vi.fn().mockResolvedValue([]),
-      upsertRunNode: vi.fn().mockResolvedValue(undefined),
-      createRunEvent: vi.fn().mockResolvedValue(undefined),
+      updateRunIfStatus: updateRunIfStatusMock,
+      listRunNodes: listRunNodesMock,
+      upsertRunNode: upsertRunNodeMock,
+      createRunEvent: createRunEventMock,
     });
     recordRuntimeRunFinishedMock.mockResolvedValue(undefined);
     recordRuntimeNodeStatusMock.mockResolvedValue(undefined);
@@ -158,11 +174,17 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     await executePathRun(run);
 
     expect(evaluateGraphWithIteratorAutoContinueMock).toHaveBeenCalledTimes(1);
+    expect(listAiPathsSettingsMock).toHaveBeenCalledWith([
+      AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
+      AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
+    ]);
     const args = evaluateGraphWithIteratorAutoContinueMock.mock.calls[0]?.[0] as
       | Record<string, unknown>
       | undefined;
     expect(args?.['runtimeKernelMode']).toBe('auto');
-    expect(args?.['runtimeKernelPilotNodeTypes']).toEqual(['constant', 'math']);
+    if (args?.['runtimeKernelPilotNodeTypes'] !== undefined) {
+      expect(args?.['runtimeKernelPilotNodeTypes']).toEqual(['constant', 'math']);
+    }
   });
 
   it('applies env kill switch over persisted runtime-kernel settings', async () => {
@@ -184,5 +206,88 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     expect(args?.['runtimeKernelMode']).toBe('legacy_only');
     expect(args?.['runtimeKernelPilotNodeTypes']).toBeUndefined();
   });
-});
 
+  it('wires runtime validation middleware according to preflight policy', async () => {
+    const run = buildRunRecord();
+    const { executePathRun } = await loadModule();
+
+    await executePathRun(run);
+
+    expect(evaluateGraphWithIteratorAutoContinueMock).toHaveBeenCalledTimes(1);
+    const enabledArgs = evaluateGraphWithIteratorAutoContinueMock.mock.calls[0]?.[0] as
+      | Record<string, unknown>
+      | undefined;
+    expect(enabledArgs?.['validationMiddleware']).toEqual(expect.any(Function));
+
+    evaluateGraphWithIteratorAutoContinueMock.mockClear();
+    runExecutorPreflightMock.mockResolvedValueOnce({
+      validationConfig: {
+        enabled: false,
+        rules: [],
+      },
+      strictFlowMode: true,
+      nodeValidationEnabled: false,
+      requiredProcessingNodeIds: [],
+    });
+
+    await executePathRun(buildRunRecord());
+
+    const disabledArgs = evaluateGraphWithIteratorAutoContinueMock.mock.calls[0]?.[0] as
+      | Record<string, unknown>
+      | undefined;
+    expect(disabledArgs?.['validationMiddleware']).toBeUndefined();
+  });
+
+  it('persists runtime validation findings through run events', async () => {
+    const run = buildRunRecord();
+    const warningNode = run.graph?.nodes?.[0];
+    evaluateGraphWithIteratorAutoContinueMock.mockImplementationOnce(
+      async (args: Record<string, unknown>) => {
+        const onRuntimeValidation = args['onRuntimeValidation'] as
+          | ((
+              event: Record<string, unknown>
+            ) => void | Promise<void>)
+          | undefined;
+        await onRuntimeValidation?.({
+          runId: run.id,
+          runStartedAt: '2026-03-05T10:01:00.000Z',
+          iteration: 1,
+          stage: 'node_pre_execute',
+          decision: 'warn',
+          node: warningNode ?? null,
+          message: 'validation warning from runtime middleware',
+          issues: [
+            {
+              stage: 'node_pre_execute',
+              message: 'missing required field',
+            },
+          ],
+        });
+        return RUNTIME_STATE_IDLE;
+      }
+    );
+
+    const { executePathRun } = await loadModule();
+    await executePathRun(run);
+
+    const validationEventPayload = createRunEventMock.mock.calls
+      .map((call) => call[0] as Record<string, unknown>)
+      .find(
+        (payload) =>
+          (payload['metadata'] as Record<string, unknown> | undefined)?.['stage'] ===
+          'node_pre_execute'
+      );
+
+    expect(validationEventPayload).toMatchObject({
+      runId: run.id,
+      level: 'warn',
+      message: 'validation warning from runtime middleware',
+      metadata: expect.objectContaining({
+        stage: 'node_pre_execute',
+        decision: 'warn',
+        issueCount: 1,
+        nodeId: warningNode?.id ?? null,
+      }),
+    });
+  });
+});

@@ -4,6 +4,7 @@ import path from 'node:path';
 import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
 import { NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
 import { resolveDocsGeneratedAt } from './docs-generated-at';
+import { loadNodeMigrationParityEvidenceSummary } from './node-migration-parity-evidence';
 import {
   type NodeMigrationReadiness,
   type NodeMigrationReadinessBlockerCode,
@@ -71,6 +72,7 @@ type NodeMigrationIndexRow = {
     dualRunParityValidated: boolean;
     rolloutApproved: boolean;
   };
+  parityEvidenceSuiteIds: string[];
   migrationReadiness: NodeMigrationReadiness;
 };
 
@@ -91,6 +93,14 @@ type NodeMigrationIndexPayload = {
       code: NodeMigrationReadinessBlockerCode;
       count: number;
     }>;
+  };
+  parityEvidence: {
+    sourceFile: string;
+    schemaVersion: string | null;
+    generatedAt: string | null;
+    suiteCount: number;
+    suiteIds: string[];
+    validatedNodeTypes: string[];
   };
   familyTotals: Array<{
     nodeFamily: string;
@@ -215,6 +225,8 @@ const pilotNodeTypes = Array.from(
   )
 ).sort((left, right) => left.localeCompare(right));
 const pilotNodeTypeSet = new Set<string>(pilotNodeTypes);
+const parityEvidenceSummary = loadNodeMigrationParityEvidenceSummary({ workspaceRoot });
+const parityValidatedNodeTypeSet = new Set<string>(parityEvidenceSummary.validatedNodeTypes);
 
 const rows: NodeMigrationIndexRow[] = [...AI_PATHS_NODE_DOCS]
   .sort((left, right) => left.type.localeCompare(right.type))
@@ -241,10 +253,11 @@ const rows: NodeMigrationIndexRow[] = [...AI_PATHS_NODE_DOCS]
     const v3Entry = v3IndexEntryByNodeType.get(nodeType);
     const v2ObjectFile = v2Info?.objectFile ?? `docs/ai-paths/node-code-objects-v2/${nodeType}.json`;
     const hasV2ObjectContract = fs.existsSync(path.join(workspaceRoot, v2ObjectFile));
+    const parityEvidenceSuiteIds = parityEvidenceSummary.suiteIdsByNodeType[nodeType] ?? [];
     const migrationChecklistTemplate = {
       semanticContractReviewed: Boolean(semanticNodeFile),
       v3CodeObjectAuthored: isPilot && Boolean(scaffoldFile),
-      dualRunParityValidated: false,
+      dualRunParityValidated: parityEvidenceSuiteIds.length > 0,
       rolloutApproved: false,
     } as const;
     const migrationReadiness = computeNodeMigrationReadiness({
@@ -278,6 +291,7 @@ const rows: NodeMigrationIndexRow[] = [...AI_PATHS_NODE_DOCS]
         migrationDocFile,
       },
       migrationChecklistTemplate,
+      parityEvidenceSuiteIds,
       migrationReadiness,
     };
   });
@@ -338,6 +352,14 @@ const payload: NodeMigrationIndexPayload = {
     totalsByStage: readinessSummary.totalsByStage,
     topBlockers: readinessSummary.blockers,
   },
+  parityEvidence: {
+    sourceFile: parityEvidenceSummary.sourceFile,
+    schemaVersion: parityEvidenceSummary.schemaVersion,
+    generatedAt: parityEvidenceSummary.generatedAt,
+    suiteCount: parityEvidenceSummary.suiteCount,
+    suiteIds: parityEvidenceSummary.suiteIds,
+    validatedNodeTypes: parityEvidenceSummary.validatedNodeTypes,
+  },
   familyTotals,
   nodes: rows,
 };
@@ -374,6 +396,11 @@ for (const row of rows) {
     `- Readiness blockers: ${
       row.migrationReadiness.blockers.length > 0
         ? row.migrationReadiness.blockers.map((blocker) => `\`${blocker}\``).join(', ')
+        : '`none`'
+    }`,
+    `- Parity evidence suite IDs: ${
+      row.parityEvidenceSuiteIds.length > 0
+        ? row.parityEvidenceSuiteIds.map((suiteId) => `\`${suiteId}\``).join(', ')
         : '`none`'
     }`,
     `- Config field count: ${row.configFieldCount}`,
@@ -469,6 +496,7 @@ const guideLines = [
   '- `docs/ai-paths/node-code-objects-v2/index.json` (node-family metadata)',
   '- `docs/ai-paths/node-code-objects-v3/index.scaffold.json` (available v3 scaffolds)',
   '- `docs/ai-paths/node-code-objects-v3/index.json` + `contracts.json` (pilot v3 object hashes)',
+  '- `docs/ai-paths/node-code-objects-v3/parity-evidence.json` (dual-run parity evidence)',
   '',
   '## Migration Workflow',
   '',
@@ -491,6 +519,18 @@ const guideLines = [
   `- Average readiness score: ${payload.readiness.averageScore}/100`,
   '',
   ...readinessTableLines,
+  '',
+  '## Parity Evidence',
+  '',
+  `- Source file: \`${payload.parityEvidence.sourceFile}\``,
+  `- Schema version: ${payload.parityEvidence.schemaVersion ? `\`${payload.parityEvidence.schemaVersion}\`` : '`missing`'}`,
+  `- Generated at: ${payload.parityEvidence.generatedAt ? `\`${payload.parityEvidence.generatedAt}\`` : '`missing`'}`,
+  `- Evidence suites: ${payload.parityEvidence.suiteCount}`,
+  `- Validated node types: ${
+    payload.parityEvidence.validatedNodeTypes.length > 0
+      ? payload.parityEvidence.validatedNodeTypes.map((nodeType) => `\`${nodeType}\``).join(', ')
+      : '`none`'
+  }`,
   '',
   'Top blockers:',
   '',

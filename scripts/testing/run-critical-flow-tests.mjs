@@ -41,6 +41,18 @@ const criticalFlows = [
     kpi: 'Queue-to-review completion without manual recovery',
     tests: ['src/features/case-resolver/__tests__/workspace-persistence.test.ts'],
   },
+  {
+    id: 'products-trigger-queue-integration',
+    name: 'Products Trigger Button Queue Integration',
+    kpi: 'Trigger enqueue updates queue state without invalid run-id regressions',
+    tests: [
+      'src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx',
+      'src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts',
+      'src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts',
+      'src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts',
+      'src/features/products/hooks/useProductAiPathsRunSync.test.tsx',
+    ],
+  },
 ];
 
 const formatDuration = (ms) => {
@@ -141,7 +153,7 @@ const toMarkdown = (payload) => {
   lines.push('');
   lines.push('## Notes');
   lines.push('');
-  lines.push('- This suite is intentionally narrow and maps directly to the top 5 critical user flows.');
+  lines.push('- This suite is intentionally narrow and maps directly to critical user flows.');
   lines.push('- Use `npm run test:critical-flows` for local regression checks and PR validation.');
 
   return `${lines.join('\n')}\n`;

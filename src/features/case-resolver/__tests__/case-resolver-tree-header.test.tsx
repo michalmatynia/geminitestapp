@@ -3,7 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CaseResolverTreeHeader } from '@/features/case-resolver/components/CaseResolverTreeHeader';
-import type { CaseResolverPageContextValue } from '@/features/case-resolver/context/CaseResolverPageContext';
+import type {
+  CaseResolverPageActionsValue,
+  CaseResolverPageStateValue,
+} from '@/features/case-resolver/context/CaseResolverPageContext';
 import type {
   CaseResolverFolderTreeDataContextValue,
   CaseResolverFolderTreeUiContextValue,
@@ -20,11 +23,15 @@ const onCreateImageAssetMock = vi.fn();
 const onCreateNodeFileMock = vi.fn();
 const setShowChildCaseFoldersMock = vi.fn();
 
-const pageContext = {
+const pageStateContext = {
   activeCaseId: 'case-a',
   requestedCaseStatus: 'ready' as const,
   requestedCaseIssue: null,
   canCreateInActiveCase: true,
+  caseResolverIdentifiers: [] as Array<{ id: string; name: string }>,
+} as unknown as CaseResolverPageStateValue;
+
+const pageActionsContext = {
   onRetryCaseContext: onRetryCaseContextMock,
   onResetCaseContext: onResetCaseContextMock,
   onCreateFolder: onCreateFolderMock,
@@ -32,8 +39,7 @@ const pageContext = {
   onCreateScanFile: onCreateScanFileMock,
   onCreateImageAsset: onCreateImageAssetMock,
   onCreateNodeFile: onCreateNodeFileMock,
-  caseResolverIdentifiers: [] as Array<{ id: string; name: string }>,
-} as unknown as CaseResolverPageContextValue;
+} as unknown as CaseResolverPageActionsValue;
 
 const folderTreeDataContext = {
   activeCaseFile: {
@@ -62,7 +68,8 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/features/case-resolver/context/CaseResolverPageContext', () => ({
-  useCaseResolverPageContext: () => pageContext,
+  useCaseResolverPageState: () => pageStateContext,
+  useCaseResolverPageActions: () => pageActionsContext,
 }));
 
 vi.mock('@/features/case-resolver/context/CaseResolverFolderTreeContext', () => ({
@@ -81,10 +88,10 @@ describe('CaseResolverTreeHeader', () => {
     onCreateImageAssetMock.mockReset();
     onCreateNodeFileMock.mockReset();
     setShowChildCaseFoldersMock.mockReset();
-    pageContext.requestedCaseStatus = 'ready';
-    pageContext.requestedCaseIssue = null;
-    pageContext.canCreateInActiveCase = true;
-    pageContext.activeCaseId = 'case-a';
+    pageStateContext.requestedCaseStatus = 'ready';
+    pageStateContext.requestedCaseIssue = null;
+    pageStateContext.canCreateInActiveCase = true;
+    pageStateContext.activeCaseId = 'case-a';
     folderTreeDataContext.activeCaseFile = {
       id: 'case-a',
       name: 'Case A',
@@ -107,7 +114,7 @@ describe('CaseResolverTreeHeader', () => {
   it('shows nested switch when case context exists even if activeCaseFile is unresolved', () => {
     folderTreeDataContext.activeCaseFile = null;
     folderTreeDataContext.activeCaseChildCount = 0;
-    pageContext.activeCaseId = 'case-a';
+    pageStateContext.activeCaseId = 'case-a';
 
     render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} />);
 
@@ -115,9 +122,9 @@ describe('CaseResolverTreeHeader', () => {
   });
 
   it('shows recoverable missing-context banner and actions', () => {
-    pageContext.requestedCaseStatus = 'missing';
-    pageContext.requestedCaseIssue = 'requested_file_missing';
-    pageContext.canCreateInActiveCase = false;
+    pageStateContext.requestedCaseStatus = 'missing';
+    pageStateContext.requestedCaseIssue = 'requested_file_missing';
+    pageStateContext.canCreateInActiveCase = false;
 
     render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} />);
 
@@ -133,9 +140,9 @@ describe('CaseResolverTreeHeader', () => {
   });
 
   it('keeps create actions disabled while context is missing', () => {
-    pageContext.requestedCaseStatus = 'missing';
-    pageContext.requestedCaseIssue = 'workspace_unavailable';
-    pageContext.canCreateInActiveCase = false;
+    pageStateContext.requestedCaseStatus = 'missing';
+    pageStateContext.requestedCaseIssue = 'workspace_unavailable';
+    pageStateContext.canCreateInActiveCase = false;
 
     render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} />);
 
@@ -147,9 +154,9 @@ describe('CaseResolverTreeHeader', () => {
   });
 
   it('keeps create actions disabled while context is loading', () => {
-    pageContext.requestedCaseStatus = 'loading';
-    pageContext.requestedCaseIssue = null;
-    pageContext.canCreateInActiveCase = false;
+    pageStateContext.requestedCaseStatus = 'loading';
+    pageStateContext.requestedCaseIssue = null;
+    pageStateContext.canCreateInActiveCase = false;
 
     render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} />);
 

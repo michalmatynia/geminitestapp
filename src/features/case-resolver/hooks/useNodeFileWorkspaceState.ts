@@ -1,7 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
+import {
+  useCaseResolverPageActions,
+  useCaseResolverPageState,
+} from '../context/CaseResolverPageContext';
 import {
   useCanvasActions,
   useCanvasRefs,
@@ -50,8 +53,8 @@ export function useNodeFileWorkspaceState({
   snapshot,
   onSnapshotChange,
 }: UseNodeFileWorkspaceStateProps) {
-  const { workspace, activeCaseId, caseResolverIdentifiers, onSelectFile } =
-    useCaseResolverPageContext();
+  const { workspace, activeCaseId, caseResolverIdentifiers } = useCaseResolverPageState();
+  const { onSelectFile } = useCaseResolverPageActions();
   const canvasHostRef = useRef<HTMLDivElement | null>(null);
   const { viewportRef, canvasRef } = useCanvasRefs();
   const { view } = useCanvasState();

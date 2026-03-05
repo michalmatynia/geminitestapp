@@ -20,7 +20,13 @@ Runtime now includes a kernel adapter (`node-runtime-kernel`) with two strategie
 Current pilot set:
 
 - `constant`
+- `context`
+- `mapper`
 - `math`
+- `mutator`
+- `parser`
+- `regex`
+- `string_mutator`
 - `template`
 
 In this phase, pilot nodes still execute through legacy handlers, but their runtime strategy is tagged as `code_object_v3` for staged rollout.
@@ -35,14 +41,15 @@ Rollout control:
 - Admin UI control is available in AI-Paths Canvas action bar under `Runtime Kernel`.
 - server env overrides persisted settings:
   - `AI_PATHS_RUNTIME_KERNEL_MODE=legacy_only`
-  - `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES=constant,math,template`
+  - `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES=constant,context,mapper,math,mutator,parser,regex,string_mutator,template`
 
 ## Directory
 
 - `docs/ai-paths/node-code-objects-v3/index.scaffold.json`
 - `docs/ai-paths/node-code-objects-v3/index.json` (generated pilot v3 index + hashes)
 - `docs/ai-paths/node-code-objects-v3/contracts.json` (generated pilot v3 contracts hash catalog)
-- `docs/ai-paths/node-code-objects-v3/{constant,math,template}.scaffold.json`
+- `docs/ai-paths/node-code-objects-v3/parity-evidence.json` (test-backed dual-run parity evidence)
+- `docs/ai-paths/node-code-objects-v3/{constant,context,mapper,math,mutator,parser,regex,string_mutator,template}.scaffold.json`
 - `docs/ai-paths/node-code-objects-v3/migration-index.json` (generated full-node migration matrix)
 - `docs/ai-paths/node-code-objects-v3/MIGRATION_GUIDE.md` (generated workflow and coverage guide)
 - `docs/ai-paths/node-code-objects-v3/nodes/<nodeType>.md` (generated per-node migration sheets)
@@ -97,11 +104,19 @@ As part of this pipeline, semantic/v2 generation also prunes stale per-node JSON
 
 The check validates migration docs against live node registry metadata (`title`, `ports`, config-field count, pilot strategy, semantic hashes, and per-node sheets).
 It also validates pilot-node linkage to v3 object IDs/hashes from `docs/ai-paths/node-code-objects-v3/index.json`.
+It also validates checklist parity readiness against `docs/ai-paths/node-code-objects-v3/parity-evidence.json`.
+Pilot nodes are required to have parity-evidence suite coverage; missing coverage fails `docs:ai-paths:node-migration:check`.
 
 Dual-run parity suite for pilot nodes:
 
 ```bash
 npm run test:ai-paths:v3-pilot-parity
+```
+
+Pilot parity-evidence coverage regression suite:
+
+```bash
+npm run test:ai-paths:node-migration-parity-evidence
 ```
 
 This check is also part of:

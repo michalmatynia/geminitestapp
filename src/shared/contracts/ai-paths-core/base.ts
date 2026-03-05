@@ -121,6 +121,14 @@ export const aiPathsValidationConditionSchema = z.object({
 });
 export type AiPathsValidationCondition = z.infer<typeof aiPathsValidationConditionSchema>;
 
+export const aiPathsValidationStageSchema = z.enum([
+  'graph_parse',
+  'graph_bind',
+  'node_pre_execute',
+  'node_post_execute',
+]);
+export type AiPathsValidationStage = z.infer<typeof aiPathsValidationStageSchema>;
+
 export const aiPathsValidationRuleSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -129,6 +137,7 @@ export const aiPathsValidationRuleSchema = z.object({
   severity: aiPathsValidationSeveritySchema,
   module: aiPathsValidationModuleSchema,
   appliesToNodeTypes: z.array(z.string()).optional(),
+  appliesToStages: z.array(aiPathsValidationStageSchema).optional(),
   sequence: z.number().optional(),
   conditionMode: z.enum(['all', 'any']).optional(),
   conditions: z.array(aiPathsValidationConditionSchema).min(1),

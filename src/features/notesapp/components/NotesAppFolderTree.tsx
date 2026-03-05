@@ -9,7 +9,10 @@ import {
   resolveFolderTreeIconSet,
   useMasterFolderTreeShell,
 } from '@/features/foldertree/v2';
-import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import {
+  useNotesAppActions,
+  useNotesAppState,
+} from '@/features/notesapp/hooks/NotesAppContext';
 import type { NotesMasterTreeOperations } from '@/shared/contracts/notes';
 import { FolderTreePanel } from '@/shared/ui';
 import { type MasterTreeId, type MasterTreeNode } from '@/shared/utils';
@@ -39,16 +42,9 @@ type NotesAppFolderTreeOperations = NotesMasterTreeOperations & {
 type NotesAppFolderTreeDropInput = Parameters<typeof handleMasterTreeDrop>[0]['input'];
 
 export function NotesAppFolderTree(): React.JSX.Element {
-  const notesAppContext = useNotesAppContext();
-  const {
-    folderTree,
-    selectedNote,
-    isFolderTreeCollapsed,
-    setIsFolderTreeCollapsed,
-    draggedNoteId,
-    selectedFolderId,
-  } = notesAppContext;
-  const operations = notesAppContext.operations as NotesAppFolderTreeOperations;
+  const { folderTree, selectedNote, isFolderTreeCollapsed, draggedNoteId, selectedFolderId } =
+    useNotesAppState();
+  const { setIsFolderTreeCollapsed, operations } = useNotesAppActions();
   const hasInitializedCollapseSyncRef = useRef(false);
 
   const masterNodes = useMemo(
@@ -68,7 +64,10 @@ export function NotesAppFolderTree(): React.JSX.Element {
     return null;
   }, [selectedNote?.id, selectedFolderId]);
 
-  const notesAdapter = useMemo(() => createNotesMasterTreeAdapter(operations), [operations]);
+  const notesAdapter = useMemo(
+    () => createNotesMasterTreeAdapter(operations as NotesAppFolderTreeOperations),
+    [operations]
+  );
   const {
     appearance: { rootDropUi, resolveIcon },
     controller,
@@ -196,7 +195,10 @@ export function NotesAppFolderTree(): React.JSX.Element {
                   if (!action) return;
 
                   if (action.type === 'relate_notes') {
-                    await operations.handleRelateNotes(action.noteId, action.targetNoteId);
+                    await (operations as NotesAppFolderTreeOperations).handleRelateNotes(
+                      action.noteId,
+                      action.targetNoteId
+                    );
                     return;
                   }
                   if (action.type === 'move_note') {

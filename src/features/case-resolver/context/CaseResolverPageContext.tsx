@@ -118,7 +118,53 @@ export type CaseResolverPageContextValue = {
   partyOptions: Array<{ value: string; label: string; description?: string }>;
 };
 
-const CaseResolverPageContext = React.createContext<CaseResolverPageContextValue | null>(null);
+type CaseResolverPageActionKey =
+  | 'onRetryCaseContext'
+  | 'onResetCaseContext'
+  | 'onPanelCollapsedChange'
+  | 'onDeactivateActiveFile'
+  | 'onSelectFile'
+  | 'onSelectAsset'
+  | 'onSelectFolder'
+  | 'onCreateFolder'
+  | 'onCreateFile'
+  | 'onCreateScanFile'
+  | 'onCreateNodeFile'
+  | 'onCreateImageAsset'
+  | 'onUploadScanFiles'
+  | 'onRunScanFileOcr'
+  | 'onUploadAssets'
+  | 'onAttachAssetFile'
+  | 'onMoveFile'
+  | 'onMoveAsset'
+  | 'onMoveFolder'
+  | 'onRenameFile'
+  | 'onRenameAsset'
+  | 'onRenameFolder'
+  | 'onDeleteFolder'
+  | 'onToggleFolderLock'
+  | 'onDeleteFile'
+  | 'onDeleteAsset'
+  | 'onToggleFileLock'
+  | 'onEditFile'
+  | 'onCreateDocumentFromSearch'
+  | 'onOpenFileFromSearch'
+  | 'onEditFileFromSearch'
+  | 'onUpdateSelectedAsset'
+  | 'onGraphChange'
+  | 'onRelationGraphChange'
+  | 'onLinkRelatedFiles'
+  | 'onUnlinkRelatedFile'
+  | 'onUpdateActiveCase'
+  | 'onUpdateActiveCaseDraft'
+  | 'onSaveActiveCase'
+  | 'onDiscardActiveCaseChanges';
+
+export type CaseResolverPageActionsValue = Pick<CaseResolverPageContextValue, CaseResolverPageActionKey>;
+export type CaseResolverPageStateValue = Omit<CaseResolverPageContextValue, CaseResolverPageActionKey>;
+
+const CaseResolverPageStateContext = React.createContext<CaseResolverPageStateValue | null>(null);
+const CaseResolverPageActionsContext = React.createContext<CaseResolverPageActionsValue | null>(null);
 
 type CaseResolverPageProviderProps = {
   value: CaseResolverPageContextValue;
@@ -129,15 +175,102 @@ export function CaseResolverPageProvider({
   value,
   children,
 }: CaseResolverPageProviderProps): React.JSX.Element {
+  const stateValue = React.useMemo<CaseResolverPageStateValue>(
+    () => ({
+      workspace: value.workspace,
+      activeCaseId: value.activeCaseId,
+      requestedCaseStatus: value.requestedCaseStatus,
+      requestedCaseIssue: value.requestedCaseIssue,
+      canCreateInActiveCase: value.canCreateInActiveCase,
+      selectedFileId: value.selectedFileId,
+      selectedAssetId: value.selectedAssetId,
+      selectedFolderPath: value.selectedFolderPath,
+      panelCollapsed: value.panelCollapsed,
+      caseResolverTags: value.caseResolverTags,
+      caseResolverIdentifiers: value.caseResolverIdentifiers,
+      caseResolverCategories: value.caseResolverCategories,
+      activeFile: value.activeFile,
+      selectedAsset: value.selectedAsset,
+      activeCaseFile: value.activeCaseFile,
+      activeCaseMetadataDraft: value.activeCaseMetadataDraft,
+      isActiveCaseMetadataDirty: value.isActiveCaseMetadataDirty,
+      caseTagOptions: value.caseTagOptions,
+      caseIdentifierOptions: value.caseIdentifierOptions,
+      caseCategoryOptions: value.caseCategoryOptions,
+      caseReferenceOptions: value.caseReferenceOptions,
+      parentCaseOptions: value.parentCaseOptions,
+      partyOptions: value.partyOptions,
+    }),
+    [value]
+  );
+
+  const actionsValue = React.useMemo<CaseResolverPageActionsValue>(
+    () => ({
+      onRetryCaseContext: value.onRetryCaseContext,
+      onResetCaseContext: value.onResetCaseContext,
+      onPanelCollapsedChange: value.onPanelCollapsedChange,
+      onDeactivateActiveFile: value.onDeactivateActiveFile,
+      onSelectFile: value.onSelectFile,
+      onSelectAsset: value.onSelectAsset,
+      onSelectFolder: value.onSelectFolder,
+      onCreateFolder: value.onCreateFolder,
+      onCreateFile: value.onCreateFile,
+      onCreateScanFile: value.onCreateScanFile,
+      onCreateNodeFile: value.onCreateNodeFile,
+      onCreateImageAsset: value.onCreateImageAsset,
+      onUploadScanFiles: value.onUploadScanFiles,
+      onRunScanFileOcr: value.onRunScanFileOcr,
+      onUploadAssets: value.onUploadAssets,
+      onAttachAssetFile: value.onAttachAssetFile,
+      onMoveFile: value.onMoveFile,
+      onMoveAsset: value.onMoveAsset,
+      onMoveFolder: value.onMoveFolder,
+      onRenameFile: value.onRenameFile,
+      onRenameAsset: value.onRenameAsset,
+      onRenameFolder: value.onRenameFolder,
+      onDeleteFolder: value.onDeleteFolder,
+      onToggleFolderLock: value.onToggleFolderLock,
+      onDeleteFile: value.onDeleteFile,
+      onDeleteAsset: value.onDeleteAsset,
+      onToggleFileLock: value.onToggleFileLock,
+      onEditFile: value.onEditFile,
+      onCreateDocumentFromSearch: value.onCreateDocumentFromSearch,
+      onOpenFileFromSearch: value.onOpenFileFromSearch,
+      onEditFileFromSearch: value.onEditFileFromSearch,
+      onUpdateSelectedAsset: value.onUpdateSelectedAsset,
+      onGraphChange: value.onGraphChange,
+      onRelationGraphChange: value.onRelationGraphChange,
+      onLinkRelatedFiles: value.onLinkRelatedFiles,
+      onUnlinkRelatedFile: value.onUnlinkRelatedFile,
+      onUpdateActiveCase: value.onUpdateActiveCase,
+      onUpdateActiveCaseDraft: value.onUpdateActiveCaseDraft,
+      onSaveActiveCase: value.onSaveActiveCase,
+      onDiscardActiveCaseChanges: value.onDiscardActiveCaseChanges,
+    }),
+    [value]
+  );
+
   return (
-    <CaseResolverPageContext.Provider value={value}>{children}</CaseResolverPageContext.Provider>
+    <CaseResolverPageStateContext.Provider value={stateValue}>
+      <CaseResolverPageActionsContext.Provider value={actionsValue}>
+        {children}
+      </CaseResolverPageActionsContext.Provider>
+    </CaseResolverPageStateContext.Provider>
   );
 }
 
-export function useCaseResolverPageContext(): CaseResolverPageContextValue {
-  const context = React.useContext(CaseResolverPageContext);
+export function useCaseResolverPageState(): CaseResolverPageStateValue {
+  const context = React.useContext(CaseResolverPageStateContext);
   if (!context) {
-    throw new Error('useCaseResolverPageContext must be used within CaseResolverPageProvider');
+    throw new Error('useCaseResolverPageState must be used within CaseResolverPageProvider');
+  }
+  return context;
+}
+
+export function useCaseResolverPageActions(): CaseResolverPageActionsValue {
+  const context = React.useContext(CaseResolverPageActionsContext);
+  if (!context) {
+    throw new Error('useCaseResolverPageActions must be used within CaseResolverPageProvider');
   }
   return context;
 }

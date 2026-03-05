@@ -11,11 +11,13 @@ export type NodeRuntimeKernelMode = (typeof NODE_RUNTIME_KERNEL_MODES)[number];
 
 export const NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES = [
   'constant',
+  'context',
   'mapper',
   'math',
   'mutator',
   'parser',
   'regex',
+  'string_mutator',
   'template',
 ] as const;
 

@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object-contracts.v3",
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "specVersion": "ai-paths.portable-engine.v1",
-  "totalContracts": 7,
+  "totalContracts": 9,
   "contracts": {
     "constant": {
       "objectId": "node_obj_constant_portable_v3",
@@ -13,6 +13,16 @@
       "executionAdapter": "legacy_handler_bridge",
       "legacyHandlerKey": "constant",
       "codeObjectId": "ai-paths.node-code-object.constant.v3"
+    },
+    "context": {
+      "objectId": "node_obj_context_portable_v3",
+      "title": "Context Filter",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "c227b30bb2d8955dc3d44284afadfd04eb50b2b7a31a844225e82805285183d5",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "context",
+      "codeObjectId": "ai-paths.node-code-object.context.v3"
     },
     "mapper": {
       "objectId": "node_obj_mapper_portable_v3",
@@ -64,6 +74,16 @@
       "legacyHandlerKey": "regex",
       "codeObjectId": "ai-paths.node-code-object.regex.v3"
     },
+    "string_mutator": {
+      "objectId": "node_obj_string_mutator_portable_v3",
+      "title": "String Mutator",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "a95b3ffff43ce36ac013b72a1ca98a9e0ab14d1d94966633cb67ba87c9c82098",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "string_mutator",
+      "codeObjectId": "ai-paths.node-code-object.string_mutator.v3"
+    },
     "template": {
       "objectId": "node_obj_template_portable_v3",
       "title": "Template",
@@ -76,5 +96,5 @@
     }
   },
   "contractsHashAlgorithm": "sha256",
-  "contractsHash": "d0454cbcd30fab1edd0daa6adff3dbebca6a752d920b6953dfe7dca04c376435"
+  "contractsHash": "820609a0b3ea69b4aae4d3a42eff70dcc0f6aadc30fe09008fde25dff6521001"
 }

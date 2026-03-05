@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import type { CaseResolverStateValue } from '../types';
 import type {
   CaseResolverGraph,
@@ -153,7 +153,17 @@ export type CaseResolverViewContextValue = {
   handleResetCaseContext: () => void;
 };
 
-const CaseResolverViewContext = createContext<CaseResolverViewContextValue | null>(null);
+type FunctionKey<T> = {
+  [K in keyof T]-?: T[K] extends (...args: infer _Args) => infer _Return ? K : never;
+}[keyof T];
+
+type CaseResolverViewActionKey = FunctionKey<CaseResolverViewContextValue>;
+
+export type CaseResolverViewActionsValue = Pick<CaseResolverViewContextValue, CaseResolverViewActionKey>;
+export type CaseResolverViewStateValue = Omit<CaseResolverViewContextValue, CaseResolverViewActionKey>;
+
+const CaseResolverViewStateContext = createContext<CaseResolverViewStateValue | null>(null);
+const CaseResolverViewActionsContext = createContext<CaseResolverViewActionsValue | null>(null);
 
 export function CaseResolverViewProvider({
   value,
@@ -162,15 +172,30 @@ export function CaseResolverViewProvider({
   value: CaseResolverViewContextValue;
   children: React.ReactNode;
 }): React.JSX.Element {
+  const stateValue = useMemo(() => value as CaseResolverViewStateValue, [value]);
+  const actionsValue = useMemo(() => value as CaseResolverViewActionsValue, [value]);
+
   return (
-    <CaseResolverViewContext.Provider value={value}>{children}</CaseResolverViewContext.Provider>
+    <CaseResolverViewStateContext.Provider value={stateValue}>
+      <CaseResolverViewActionsContext.Provider value={actionsValue}>
+        {children}
+      </CaseResolverViewActionsContext.Provider>
+    </CaseResolverViewStateContext.Provider>
   );
 }
 
-export function useCaseResolverViewContext(): CaseResolverViewContextValue {
-  const context = useContext(CaseResolverViewContext);
+export function useCaseResolverViewStateContext(): CaseResolverViewStateValue {
+  const context = useContext(CaseResolverViewStateContext);
   if (!context) {
-    throw new Error('useCaseResolverViewContext must be used within CaseResolverViewProvider');
+    throw new Error('useCaseResolverViewStateContext must be used within CaseResolverViewProvider');
+  }
+  return context;
+}
+
+export function useCaseResolverViewActionsContext(): CaseResolverViewActionsValue {
+  const context = useContext(CaseResolverViewActionsContext);
+  if (!context) {
+    throw new Error('useCaseResolverViewActionsContext must be used within CaseResolverViewProvider');
   }
   return context;
 }

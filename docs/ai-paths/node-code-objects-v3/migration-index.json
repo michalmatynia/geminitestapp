@@ -4,41 +4,63 @@
   "totalNodes": 36,
   "pilotNodeTypes": [
     "constant",
+    "context",
     "mapper",
     "math",
     "mutator",
     "parser",
     "regex",
+    "string_mutator",
     "template"
   ],
   "strategyTotals": {
-    "legacy_adapter": 29,
-    "code_object_v3": 7
+    "legacy_adapter": 27,
+    "code_object_v3": 9
   },
-  "v3ContractsHash": "d0454cbcd30fab1edd0daa6adff3dbebca6a752d920b6953dfe7dca04c376435",
+  "v3ContractsHash": "820609a0b3ea69b4aae4d3a42eff70dcc0f6aadc30fe09008fde25dff6521001",
   "readiness": {
-    "averageScore": 44,
+    "averageScore": 49,
     "totalsByStage": {
       "not_ready": 0,
-      "cataloged": 29,
+      "cataloged": 27,
       "scaffolded": 0,
-      "pilot_indexed": 7,
-      "rollout_candidate": 0,
+      "pilot_indexed": 0,
+      "rollout_candidate": 9,
       "rollout_approved": 0
     },
     "topBlockers": [
       {
         "code": "missing_v3_scaffold",
-        "count": 29
+        "count": 27
       },
       {
         "code": "not_in_v3_pilot",
-        "count": 29
+        "count": 27
       },
       {
-        "code": "parity_not_validated",
-        "count": 7
+        "code": "rollout_not_approved",
+        "count": 9
       }
+    ]
+  },
+  "parityEvidence": {
+    "sourceFile": "docs/ai-paths/node-code-objects-v3/parity-evidence.json",
+    "schemaVersion": "ai-paths.node-migration-parity-evidence.v1",
+    "generatedAt": "2026-03-05T00:00:00.000Z",
+    "suiteCount": 1,
+    "suiteIds": [
+      "v3-pilot-parity-core"
+    ],
+    "validatedNodeTypes": [
+      "constant",
+      "context",
+      "mapper",
+      "math",
+      "mutator",
+      "parser",
+      "regex",
+      "string_mutator",
+      "template"
     ]
   },
   "familyTotals": [
@@ -75,8 +97,8 @@
     {
       "nodeFamily": "transform",
       "total": 12,
-      "legacy_adapter": 5,
-      "code_object_v3": 7
+      "legacy_adapter": 3,
+      "code_object_v3": 9
     }
   ],
   "nodes": [
@@ -115,6 +137,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -157,6 +180,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -208,6 +232,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -256,6 +281,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -302,6 +328,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -346,6 +373,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -388,6 +416,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -423,14 +452,17 @@
       "migrationChecklistTemplate": {
         "semanticContractReviewed": true,
         "v3CodeObjectAuthored": true,
-        "dualRunParityValidated": false,
+        "dualRunParityValidated": true,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ],
       "migrationReadiness": {
-        "stage": "pilot_indexed",
-        "score": 80,
+        "stage": "rollout_candidate",
+        "score": 90,
         "blockers": [
-          "parity_not_validated"
+          "rollout_not_approved"
         ]
       }
     },
@@ -438,9 +470,9 @@
       "nodeType": "context",
       "title": "Context Filter",
       "nodeFamily": "transform",
-      "runtimeStrategy": "legacy_adapter",
-      "migrationWave": "backlog",
-      "codeObjectId": null,
+      "runtimeStrategy": "code_object_v3",
+      "migrationWave": "pilot",
+      "codeObjectId": "ai-paths.node-code-object.context.v3",
       "ports": {
         "inputs": [
           "context"
@@ -457,23 +489,25 @@
         "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/context.json",
         "semanticNodeHash": "8fec17546b68d240c422c0ddbc259a485825d96df3725bec228aacf3cdf84c16",
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/context.json",
-        "v3ScaffoldFile": null,
-        "v3ObjectId": null,
-        "v3ObjectHash": null,
+        "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/context.scaffold.json",
+        "v3ObjectId": "node_obj_context_portable_v3",
+        "v3ObjectHash": "c227b30bb2d8955dc3d44284afadfd04eb50b2b7a31a844225e82805285183d5",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/context.md"
       },
       "migrationChecklistTemplate": {
         "semanticContractReviewed": true,
-        "v3CodeObjectAuthored": false,
-        "dualRunParityValidated": false,
+        "v3CodeObjectAuthored": true,
+        "dualRunParityValidated": true,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ],
       "migrationReadiness": {
-        "stage": "cataloged",
-        "score": 35,
+        "stage": "rollout_candidate",
+        "score": 90,
         "blockers": [
-          "missing_v3_scaffold",
-          "not_in_v3_pilot"
+          "rollout_not_approved"
         ]
       }
     },
@@ -522,6 +556,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -561,6 +596,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -603,6 +639,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -644,6 +681,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -691,6 +729,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -735,6 +774,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -779,6 +819,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -824,6 +865,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -867,6 +909,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -908,14 +951,17 @@
       "migrationChecklistTemplate": {
         "semanticContractReviewed": true,
         "v3CodeObjectAuthored": true,
-        "dualRunParityValidated": false,
+        "dualRunParityValidated": true,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ],
       "migrationReadiness": {
-        "stage": "pilot_indexed",
-        "score": 80,
+        "stage": "rollout_candidate",
+        "score": 90,
         "blockers": [
-          "parity_not_validated"
+          "rollout_not_approved"
         ]
       }
     },
@@ -947,14 +993,17 @@
       "migrationChecklistTemplate": {
         "semanticContractReviewed": true,
         "v3CodeObjectAuthored": true,
-        "dualRunParityValidated": false,
+        "dualRunParityValidated": true,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ],
       "migrationReadiness": {
-        "stage": "pilot_indexed",
-        "score": 80,
+        "stage": "rollout_candidate",
+        "score": 90,
         "blockers": [
-          "parity_not_validated"
+          "rollout_not_approved"
         ]
       }
     },
@@ -991,6 +1040,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -1028,14 +1078,17 @@
       "migrationChecklistTemplate": {
         "semanticContractReviewed": true,
         "v3CodeObjectAuthored": true,
-        "dualRunParityValidated": false,
+        "dualRunParityValidated": true,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ],
       "migrationReadiness": {
-        "stage": "pilot_indexed",
-        "score": 80,
+        "stage": "rollout_candidate",
+        "score": 90,
         "blockers": [
-          "parity_not_validated"
+          "rollout_not_approved"
         ]
       }
     },
@@ -1070,6 +1123,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -1111,14 +1165,17 @@
       "migrationChecklistTemplate": {
         "semanticContractReviewed": true,
         "v3CodeObjectAuthored": true,
-        "dualRunParityValidated": false,
+        "dualRunParityValidated": true,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ],
       "migrationReadiness": {
-        "stage": "pilot_indexed",
-        "score": 80,
+        "stage": "rollout_candidate",
+        "score": 90,
         "blockers": [
-          "parity_not_validated"
+          "rollout_not_approved"
         ]
       }
     },
@@ -1158,6 +1215,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -1206,6 +1264,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -1251,6 +1310,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -1293,14 +1353,17 @@
       "migrationChecklistTemplate": {
         "semanticContractReviewed": true,
         "v3CodeObjectAuthored": true,
-        "dualRunParityValidated": false,
+        "dualRunParityValidated": true,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ],
       "migrationReadiness": {
-        "stage": "pilot_indexed",
-        "score": 80,
+        "stage": "rollout_candidate",
+        "score": 90,
         "blockers": [
-          "parity_not_validated"
+          "rollout_not_approved"
         ]
       }
     },
@@ -1337,6 +1400,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -1380,6 +1444,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -1393,9 +1458,9 @@
       "nodeType": "string_mutator",
       "title": "String Mutator",
       "nodeFamily": "transform",
-      "runtimeStrategy": "legacy_adapter",
-      "migrationWave": "backlog",
-      "codeObjectId": null,
+      "runtimeStrategy": "code_object_v3",
+      "migrationWave": "pilot",
+      "codeObjectId": "ai-paths.node-code-object.string_mutator.v3",
       "ports": {
         "inputs": [
           "value",
@@ -1411,23 +1476,25 @@
         "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/string_mutator.json",
         "semanticNodeHash": "b4a7a5bd6dafb681eedc8a64a18cf2d7be58116b1bbad6f4db32bc916703b899",
         "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/string_mutator.json",
-        "v3ScaffoldFile": null,
-        "v3ObjectId": null,
-        "v3ObjectHash": null,
+        "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/string_mutator.scaffold.json",
+        "v3ObjectId": "node_obj_string_mutator_portable_v3",
+        "v3ObjectHash": "a95b3ffff43ce36ac013b72a1ca98a9e0ab14d1d94966633cb67ba87c9c82098",
         "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/string_mutator.md"
       },
       "migrationChecklistTemplate": {
         "semanticContractReviewed": true,
-        "v3CodeObjectAuthored": false,
-        "dualRunParityValidated": false,
+        "v3CodeObjectAuthored": true,
+        "dualRunParityValidated": true,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ],
       "migrationReadiness": {
-        "stage": "cataloged",
-        "score": 35,
+        "stage": "rollout_candidate",
+        "score": 90,
         "blockers": [
-          "missing_v3_scaffold",
-          "not_in_v3_pilot"
+          "rollout_not_approved"
         ]
       }
     },
@@ -1461,14 +1528,17 @@
       "migrationChecklistTemplate": {
         "semanticContractReviewed": true,
         "v3CodeObjectAuthored": true,
-        "dualRunParityValidated": false,
+        "dualRunParityValidated": true,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ],
       "migrationReadiness": {
-        "stage": "pilot_indexed",
-        "score": 80,
+        "stage": "rollout_candidate",
+        "score": 90,
         "blockers": [
-          "parity_not_validated"
+          "rollout_not_approved"
         ]
       }
     },
@@ -1502,6 +1572,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -1550,6 +1621,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -1592,6 +1664,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,
@@ -1664,6 +1737,7 @@
         "dualRunParityValidated": false,
         "rolloutApproved": false
       },
+      "parityEvidenceSuiteIds": [],
       "migrationReadiness": {
         "stage": "cataloged",
         "score": 35,

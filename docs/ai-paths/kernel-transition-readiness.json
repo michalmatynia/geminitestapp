@@ -1,0 +1,280 @@
+{
+  "schemaVersion": "ai-paths.kernel-transition-readiness.v1",
+  "generatedAt": "2026-03-05T12:00:00.000Z",
+  "migrationSchemaVersion": "ai-paths.portable-engine.v2",
+  "summary": {
+    "goal": "Migrate AI-Paths to a semantic, portable, and page-independent kernel runtime without feature loss.",
+    "currentPhase": "kernel_runtime_parity",
+    "overallStatus": "in_progress"
+  },
+  "phases": [
+    {
+      "id": "baseline_contract",
+      "title": "Baseline Contract and Inventory",
+      "status": "completed",
+      "dependencies": [],
+      "gates": [
+        "feature_matrix_signed",
+        "acceptance_criteria_published"
+      ],
+      "artifacts": [
+        "docs/ai-paths/kernel-engine-transition-plan-2026-03-05.md",
+        "docs/ai-paths/kernel-transition-readiness.json"
+      ]
+    },
+    {
+      "id": "schema_and_parser",
+      "title": "Canonical Schema and Parser Patterns",
+      "status": "in_progress",
+      "dependencies": [
+        "baseline_contract"
+      ],
+      "gates": [
+        "portable_schema_v2_stable",
+        "ui_pattern_lists_cover_node_code_and_path_code"
+      ],
+      "artifacts": [
+        "docs/ai-paths/semantic-grammar/spec-v1.md",
+        "docs/ai-paths/node-validator-kernel-parser-pattern-lists.md",
+        "docs/ai-paths/node-validator-node-code-parser-patterns.md",
+        "docs/ai-paths/node-validator-node-path-code-parser-patterns.md",
+        "scripts/ai-paths/check-portable-schema-diff.ts"
+      ]
+    },
+    {
+      "id": "kernel_runtime_parity",
+      "title": "Kernel Runtime Parity",
+      "status": "in_progress",
+      "dependencies": [
+        "schema_and_parser"
+      ],
+      "gates": [
+        "runtime_validation_stage_parity",
+        "run_event_and_history_parity",
+        "portable_client_server_parity"
+      ],
+      "artifacts": [
+        "src/shared/lib/ai-paths/core/runtime/engine-core.ts",
+        "src/shared/lib/ai-paths/core/validation-engine/runtime-middleware.ts",
+        "src/shared/lib/ai-paths/portable-engine/index.ts",
+        "src/shared/lib/ai-paths/portable-engine/server.ts",
+        "src/shared/lib/ai-paths/core/runtime/__tests__/engine-core.runtime-validation-middleware.test.ts"
+      ]
+    },
+    {
+      "id": "page_integration_stabilization",
+      "title": "Page Integration Stabilization",
+      "status": "in_progress",
+      "dependencies": [
+        "kernel_runtime_parity"
+      ],
+      "gates": [
+        "canvas_runtime_loop_stable",
+        "server_executor_stable",
+        "queue_sync_stable"
+      ],
+      "artifacts": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/runtime/segments/useLocalExecutionLoop.ts",
+        "src/features/ai/ai-paths/services/path-run-executor/index.ts",
+        "src/features/ai/ai-paths/services/__tests__/path-run-executor.runtime-kernel-settings.test.ts"
+      ]
+    },
+    {
+      "id": "progressive_rollout",
+      "title": "Progressive Rollout and Observability",
+      "status": "planned",
+      "dependencies": [
+        "page_integration_stabilization"
+      ],
+      "gates": [
+        "shadow_diff_within_threshold",
+        "no_slo_regression",
+        "kill_switch_validated"
+      ],
+      "artifacts": [
+        "src/shared/lib/ai-paths/services/runtime-analytics-service.ts",
+        "src/shared/lib/observability/ai-paths-slo-notifier.ts"
+      ]
+    },
+    {
+      "id": "legacy_prune",
+      "title": "Legacy Workflow Coupling Prune",
+      "status": "planned",
+      "dependencies": [
+        "progressive_rollout"
+      ],
+      "gates": [
+        "rollout_stable_2_weeks",
+        "rollback_drill_passed",
+        "legacy_paths_removed"
+      ],
+      "artifacts": [
+        "docs/ai-paths/ai-paths-modernization-playbook-2026-03-04.md"
+      ]
+    }
+  ],
+  "featureParityMatrix": [
+    {
+      "id": "runtime_execution",
+      "status": "in_progress",
+      "coverage": "integration",
+      "requiredInvariants": [
+        "Node execution order and termination semantics match legacy behavior.",
+        "Blocked/failed/canceled status semantics remain stable."
+      ],
+      "evidence": [
+        "src/shared/lib/ai-paths/core/runtime/__tests__/engine-core.runtime-validation-middleware.test.ts"
+      ]
+    },
+    {
+      "id": "runtime_validation",
+      "status": "in_progress",
+      "coverage": "integration",
+      "requiredInvariants": [
+        "Stage-based validation executes at graph and node stages.",
+        "Validation warnings and blocks are persisted in run events/history."
+      ],
+      "evidence": [
+        "src/shared/lib/ai-paths/core/validation-engine/__tests__/runtime-middleware.test.ts",
+        "src/features/ai/ai-paths/services/__tests__/path-run-executor.runtime-kernel-settings.test.ts"
+      ]
+    },
+    {
+      "id": "portable_roundtrip",
+      "status": "in_progress",
+      "coverage": "integration",
+      "requiredInvariants": [
+        "Portable client and server runs preserve behavior with runtime validation enabled.",
+        "Schema diff check blocks incompatible contract changes."
+      ],
+      "evidence": [
+        "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine-signing-limits-and-client.test.ts",
+        "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine-server-runtime-observability.test.ts",
+        "scripts/ai-paths/check-portable-schema-diff.ts"
+      ]
+    },
+    {
+      "id": "page_runtime_integration",
+      "status": "in_progress",
+      "coverage": "integration",
+      "requiredInvariants": [
+        "Local canvas execution loop emits runtime validation diagnostics.",
+        "Server execution path persists runtime diagnostics and node statuses."
+      ],
+      "evidence": [
+        "src/features/ai/ai-paths/components/ai-paths-settings/runtime/segments/useLocalExecutionLoop.ts",
+        "src/features/ai/ai-paths/services/path-run-executor/index.ts"
+      ]
+    },
+    {
+      "id": "node_docs_and_migration",
+      "status": "in_progress",
+      "coverage": "unit",
+      "requiredInvariants": [
+        "Node migration docs and parity evidence stay consistent with runtime strategy.",
+        "Node parser and validation pattern documentation remains synchronized."
+      ],
+      "evidence": [
+        "scripts/docs/check-ai-paths-node-migration-docs.ts",
+        "docs/ai-paths/node-code-objects-v3/migration-index.json",
+        "docs/ai-paths/node-code-objects-v3/parity-evidence.json"
+      ]
+    },
+    {
+      "id": "cross_page_portability",
+      "status": "planned",
+      "coverage": "manual",
+      "requiredInvariants": [
+        "Path code can be exported/imported across pages running kernel adapter.",
+        "Path behavior and validation policy remain preserved after transfer."
+      ],
+      "evidence": [
+        "docs/ai-paths/portable-engine-receiver-runbook.md"
+      ]
+    }
+  ],
+  "integrationTouchpoints": [
+    {
+      "id": "canvas_editor_runtime",
+      "pages": [
+        "AI Paths Settings Canvas"
+      ],
+      "adapterArtifact": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/segments/useLocalExecutionLoop.ts",
+      "flags": [
+        "AI_PATHS_RUNTIME_KERNEL_MODE",
+        "AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES"
+      ]
+    },
+    {
+      "id": "server_run_executor",
+      "pages": [
+        "AI Paths Job Queue",
+        "Product AI Path Trigger Sync"
+      ],
+      "adapterArtifact": "src/features/ai/ai-paths/services/path-run-executor/index.ts",
+      "flags": [
+        "AI_PATHS_RUNTIME_KERNEL_MODE",
+        "AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES"
+      ]
+    },
+    {
+      "id": "portable_runtime_boundary",
+      "pages": [
+        "Any page with AI-Paths Kernel receiver"
+      ],
+      "adapterArtifact": "src/shared/lib/ai-paths/portable-engine/index.ts",
+      "flags": [
+        "AI_PATHS_RUNTIME_KERNEL_MODE",
+        "AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES"
+      ]
+    }
+  ],
+  "rollout": {
+    "killSwitches": [
+      "AI_PATHS_RUNTIME_KERNEL_MODE",
+      "AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES"
+    ],
+    "waves": [
+      {
+        "id": "wave_internal_shadow",
+        "order": 1,
+        "description": "Internal shadow runs with diff telemetry only.",
+        "gateRefs": [
+          "kernel_runtime_parity"
+        ]
+      },
+      {
+        "id": "wave_pilot_pages",
+        "order": 2,
+        "description": "Enable kernel primary execution for pilot pages and node families.",
+        "gateRefs": [
+          "page_integration_stabilization"
+        ]
+      },
+      {
+        "id": "wave_progressive_rollout",
+        "order": 3,
+        "description": "Roll out by traffic percentage with rollback on SLO drift.",
+        "gateRefs": [
+          "progressive_rollout"
+        ]
+      },
+      {
+        "id": "wave_legacy_prune",
+        "order": 4,
+        "description": "Remove legacy workflow-coupled runtime paths after sustained stability.",
+        "gateRefs": [
+          "legacy_prune"
+        ]
+      }
+    ]
+  },
+  "ci": {
+    "requiredScripts": [
+      "docs:ai-paths:kernel-transition:check",
+      "docs:ai-paths:node-docs:check",
+      "ai-paths:check:portable-schema-diff",
+      "test:ai-paths:v3-pilot-parity"
+    ]
+  }
+}

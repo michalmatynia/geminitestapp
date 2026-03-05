@@ -20,6 +20,8 @@ import {
   GraphExecutionError,
   GraphExecutionCancelled,
   type EvaluateGraphOptions,
+  type RuntimeValidationIssue,
+  type RuntimeValidationStage,
   type RuntimeNodeResolutionTelemetry,
 } from './engine-modules/engine-types';
 import {
@@ -162,6 +164,196 @@ export async function evaluateGraphInternal(
       }
       : {};
 
+  const normalizeRuntimeValidationIssues = (
+    issues: RuntimeValidationIssue[] | undefined,
+    stage: RuntimeValidationStage,
+    node: AiNode | null
+  ): RuntimeValidationIssue[] => {
+    if (!Array.isArray(issues)) return [];
+    return issues
+      .filter((issue: RuntimeValidationIssue | null | undefined): issue is RuntimeValidationIssue => {
+        if (!issue) return false;
+        return typeof issue.message === 'string' && issue.message.trim().length > 0;
+      })
+      .map((issue: RuntimeValidationIssue): RuntimeValidationIssue => ({
+        ...issue,
+        stage,
+        nodeId: issue.nodeId ?? node?.id ?? null,
+        nodeTitle: issue.nodeTitle ?? node?.title ?? null,
+      }));
+  };
+
+  const runRuntimeValidation = async (args: {
+    stage: RuntimeValidationStage;
+    iteration: number;
+    node?: AiNode | null;
+    nodeInputs?: RuntimePortValues;
+    nodeOutputs?: RuntimePortValues;
+    runtimeTelemetry?: RuntimeNodeResolutionTelemetry | null;
+  }): Promise<
+    | {
+        decision: 'warn' | 'block';
+        message: string;
+        issues: RuntimeValidationIssue[];
+      }
+    | null
+  > => {
+    if (!options.validationMiddleware) return null;
+
+    const stage = args.stage;
+    const node = args.node ?? null;
+    let validationResult:
+      | {
+          decision: 'pass' | 'warn' | 'block';
+          message?: string;
+          issues?: RuntimeValidationIssue[];
+        }
+      | null
+      | undefined = null;
+    try {
+      validationResult = await options.validationMiddleware({
+        stage,
+        runId: resolvedRunId,
+        runStartedAt: resolvedRunStartedAt,
+        iteration: args.iteration,
+        node,
+        nodeInputs: args.nodeInputs,
+        nodeOutputs: args.nodeOutputs,
+        nodes,
+        edges: sanitizedEdges,
+      });
+    } catch (error) {
+      options.reportAiPathsError(error, {
+        action: 'runtime_validation_middleware',
+        stage,
+        nodeId: node?.id ?? null,
+        iteration: args.iteration,
+        runId: resolvedRunId,
+      });
+      throw error;
+    }
+
+    if (!validationResult || validationResult.decision === 'pass') {
+      return null;
+    }
+
+    const decision = validationResult.decision === 'block' ? 'block' : 'warn';
+    const issues = normalizeRuntimeValidationIssues(validationResult.issues, stage, node);
+    const fallbackMessage =
+      decision === 'block'
+        ? `Runtime validation blocked ${node ? `node ${node.id}` : 'graph'} at stage ${stage}.`
+        : `Runtime validation warning for ${node ? `node ${node.id}` : 'graph'} at stage ${stage}.`;
+    const message =
+      typeof validationResult.message === 'string' && validationResult.message.trim().length > 0
+        ? validationResult.message.trim()
+        : (issues[0]?.message ?? fallbackMessage);
+
+    if (options.onRuntimeValidation) {
+      try {
+        await options.onRuntimeValidation({
+          runId: resolvedRunId,
+          runStartedAt: resolvedRunStartedAt,
+          iteration: args.iteration,
+          stage,
+          decision,
+          node,
+          nodeInputs: args.nodeInputs,
+          nodeOutputs: args.nodeOutputs,
+          message,
+          issues,
+          ...buildRuntimeTelemetryFields(args.runtimeTelemetry ?? null),
+        });
+      } catch (error) {
+        options.reportAiPathsError(error, {
+          action: 'onRuntimeValidation',
+          stage,
+          nodeId: node?.id ?? null,
+          iteration: args.iteration,
+          runId: resolvedRunId,
+        });
+      }
+    }
+
+    return {
+      decision,
+      message,
+      issues,
+    };
+  };
+
+  const applyValidationBlockedNodeState = async (args: {
+    node: AiNode;
+    nodeInputs: RuntimePortValues;
+    iteration: number;
+    nodeDurationMs: number;
+    runtimeTelemetry: RuntimeNodeResolutionTelemetry | null;
+    stage: RuntimeValidationStage;
+    message: string;
+    issues: RuntimeValidationIssue[];
+  }): Promise<void> => {
+    const blockedOutputs: RuntimePortValues = {
+      status: 'blocked',
+      skipReason: 'validation',
+      blockedReason: 'validation',
+      message: args.message,
+      validationStage: args.stage,
+      validationIssues: cloneValue(args.issues),
+    };
+    state.blockedNodes.add(args.node.id);
+    state.errorNodes.delete(args.node.id);
+    state.timeoutNodes.delete(args.node.id);
+    state.finishedNodes.delete(args.node.id);
+    state.outputs[args.node.id] = blockedOutputs;
+
+    if (options['recordHistory']) {
+      const entries = state.history.get(args.node.id) ?? [];
+      entries.push({
+        timestamp: new Date().toISOString(),
+        pathId: options.pathId ?? null,
+        pathName: null,
+        nodeId: args.node.id,
+        nodeType: args.node.type,
+        nodeTitle: args.node.title ?? null,
+        status: 'blocked',
+        iteration: args.iteration,
+        inputs: cloneValue(args.nodeInputs),
+        outputs: cloneValue(blockedOutputs),
+        skipReason: 'validation',
+        durationMs: args.nodeDurationMs,
+        ...buildRuntimeTelemetryFields(args.runtimeTelemetry),
+      } as RuntimeHistoryEntry);
+      state.history.set(args.node.id, entries);
+    }
+
+    if (options.profile?.onEvent) {
+      options.profile.onEvent({
+        type: 'node',
+        runId: resolvedRunId,
+        runStartedAt: resolvedRunStartedAt,
+        nodeId: args.node.id,
+        nodeType: args.node.type,
+        iteration: args.iteration,
+        status: 'skipped',
+        durationMs: args.nodeDurationMs,
+        reason: 'validation',
+        ...buildRuntimeTelemetryFields(args.runtimeTelemetry),
+      });
+    }
+
+    if (options.onNodeBlocked) {
+      await options.onNodeBlocked({
+        runId: resolvedRunId,
+        node: args.node,
+        reason: 'validation',
+        status: 'blocked',
+        message: args.message,
+        waitingOnPorts: [],
+        waitingOnDetails: [],
+        ...buildRuntimeTelemetryFields(args.runtimeTelemetry),
+      });
+    }
+  };
+
   const emitHalt = async (
     reason: 'blocked' | 'max_iterations' | 'completed' | 'failed'
   ): Promise<void> => {
@@ -246,6 +438,30 @@ export async function evaluateGraphInternal(
       `Trigger "${triggerSource.title || triggerSource.id}" requires simulation context but none was provided or resolved.`,
       state.buildRuntimeStateSnapshot(state.inputs),
       triggerSource.id
+    );
+  }
+
+  const graphParseValidation = await runRuntimeValidation({
+    stage: 'graph_parse',
+    iteration: 0,
+    node: null,
+  });
+  if (graphParseValidation?.decision === 'block') {
+    throw new GraphExecutionError(
+      graphParseValidation.message,
+      state.buildRuntimeStateSnapshot(state.inputs)
+    );
+  }
+
+  const graphBindValidation = await runRuntimeValidation({
+    stage: 'graph_bind',
+    iteration: 0,
+    node: null,
+  });
+  if (graphBindValidation?.decision === 'block') {
+    throw new GraphExecutionError(
+      graphBindValidation.message,
+      state.buildRuntimeStateSnapshot(state.inputs)
     );
   }
 
@@ -606,6 +822,31 @@ export async function evaluateGraphInternal(
           }
 
           try {
+            const preExecuteValidation = await runRuntimeValidation({
+              stage: 'node_pre_execute',
+              iteration,
+              node,
+              nodeInputs,
+              nodeOutputs: prevOutputs ?? undefined,
+              runtimeTelemetry,
+            });
+            if (preExecuteValidation?.decision === 'block') {
+              const nodeDurationMs = nowMs() - nodeStartedAt;
+              state.nodeDurationsMap.set(node.id, nodeDurationMs);
+              state.activeNodes.delete(node.id);
+              await applyValidationBlockedNodeState({
+                node,
+                nodeInputs,
+                iteration,
+                nodeDurationMs,
+                runtimeTelemetry,
+                stage: 'node_pre_execute',
+                message: preExecuteValidation.message,
+                issues: preExecuteValidation.issues,
+              });
+              return;
+            }
+
             const sideEffectPolicy = node.config?.runtime?.sideEffectPolicy ?? 'per_run';
             const activationHash = buildNodeInputHash(node, nodeInputs, {
               iteration,
@@ -704,12 +945,37 @@ export async function evaluateGraphInternal(
               options.abortSignal
             );
 
+            const nextOutputs = cloneValue(nodeResult);
+            const postExecuteValidation = await runRuntimeValidation({
+              stage: 'node_post_execute',
+              iteration,
+              node,
+              nodeInputs,
+              nodeOutputs: nextOutputs,
+              runtimeTelemetry,
+            });
+            if (postExecuteValidation?.decision === 'block') {
+              const nodeDurationMs = nowMs() - nodeStartedAt;
+              state.nodeDurationsMap.set(node.id, nodeDurationMs);
+              state.activeNodes.delete(node.id);
+              await applyValidationBlockedNodeState({
+                node,
+                nodeInputs,
+                iteration,
+                nodeDurationMs,
+                runtimeTelemetry,
+                stage: 'node_post_execute',
+                message: postExecuteValidation.message,
+                issues: postExecuteValidation.issues,
+              });
+              return;
+            }
+
             const nodeDurationMs = nowMs() - nodeStartedAt;
             state.nodeDurationsMap.set(node.id, nodeDurationMs);
             stats.totalMs += nodeDurationMs;
             stats.maxMs = Math.max(stats.maxMs, nodeDurationMs);
 
-            const nextOutputs = cloneValue(nodeResult);
             state.outputs[node.id] = nextOutputs;
 
             if (nodeHash && state.effectiveCache && !isCacheDisabled) {

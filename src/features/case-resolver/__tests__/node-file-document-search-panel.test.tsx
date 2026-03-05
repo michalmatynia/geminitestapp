@@ -27,16 +27,18 @@ const contextValue = (() => {
   const addNode = vi.fn();
   const setNodeFileMeta = vi.fn();
   return {
-    value: {
+    state: {
       documentSearchScope: 'all_cases',
-      setDocumentSearchScope: vi.fn(),
       documentSearchQuery: '',
-      setDocumentSearchQuery: vi.fn(),
       relationTreeNodes: relationTree.nodes,
       relationTreeLookup: relationTree.lookup,
       visibleDocumentSearchRows: [row],
       view: { x: 0, y: 0, scale: 1 },
       canvasHostRef: { current: null },
+    },
+    actions: {
+      setDocumentSearchScope: vi.fn(),
+      setDocumentSearchQuery: vi.fn(),
       addNode,
       setNodeFileMeta,
     },
@@ -46,7 +48,8 @@ const contextValue = (() => {
 })();
 
 vi.mock('@/features/case-resolver/components/NodeFileWorkspaceContext', () => ({
-  useNodeFileWorkspaceContext: () => contextValue.value,
+  useNodeFileWorkspaceStateContext: () => contextValue.state,
+  useNodeFileWorkspaceActionsContext: () => contextValue.actions,
 }));
 
 const expandVisibleNodes = (): void => {

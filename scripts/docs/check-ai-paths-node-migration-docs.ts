@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
 import { NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
+import { loadNodeMigrationParityEvidenceSummary } from './node-migration-parity-evidence';
 import {
   type NodeMigrationReadiness,
   type NodeMigrationReadinessBlockerCode,
@@ -40,6 +41,7 @@ type NodeMigrationIndexRow = {
     dualRunParityValidated: boolean;
     rolloutApproved: boolean;
   };
+  parityEvidenceSuiteIds: string[];
   migrationReadiness: NodeMigrationReadiness;
 };
 
@@ -60,6 +62,14 @@ type NodeMigrationIndexPayload = {
       code: NodeMigrationReadinessBlockerCode;
       count: number;
     }>;
+  };
+  parityEvidence?: {
+    sourceFile?: string;
+    schemaVersion?: string | null;
+    generatedAt?: string | null;
+    suiteCount?: number;
+    suiteIds?: string[];
+    validatedNodeTypes?: string[];
   };
   familyTotals: Array<{
     nodeFamily: string;
@@ -112,6 +122,7 @@ const pilotNodeTypeSet = new Set<string>(
     typeof entry === 'string' ? entry.trim() : ''
   ).filter(Boolean)
 );
+const parityEvidenceSummary = loadNodeMigrationParityEvidenceSummary({ workspaceRoot });
 
 if (!fs.existsSync(indexPath)) {
   console.error(`Missing migration index: ${path.relative(workspaceRoot, indexPath)}`);
@@ -135,6 +146,12 @@ if (!fs.existsSync(v3IndexPath)) {
 }
 if (!fs.existsSync(v3ContractsPath)) {
   console.error(`Missing v3 contracts: ${path.relative(workspaceRoot, v3ContractsPath)}`);
+  process.exit(1);
+}
+if (!fs.existsSync(parityEvidenceSummary.sourcePath)) {
+  console.error(
+    `Missing parity evidence file: ${path.relative(workspaceRoot, parityEvidenceSummary.sourcePath)}`
+  );
   process.exit(1);
 }
 
@@ -211,6 +228,12 @@ try {
 }
 
 const errors: string[] = [];
+
+if (parityEvidenceSummary.schemaVersion !== 'ai-paths.node-migration-parity-evidence.v1') {
+  errors.push(
+    `parity-evidence schemaVersion must be "ai-paths.node-migration-parity-evidence.v1" (got ${parityEvidenceSummary.schemaVersion ?? 'null'}).`
+  );
+}
 
 if (indexPayload.schemaVersion !== 'ai-paths.node-migration-doc-index.v2') {
   errors.push('migration-index.json schemaVersion must be "ai-paths.node-migration-doc-index.v2".');
@@ -414,6 +437,26 @@ for (const row of rows) {
     errors.push(`${nodeType}: semanticNodeHash must be null when semanticNodeFile is not a semantic node JSON.`);
   }
 
+  const declaredParityEvidenceSuiteIds = Array.isArray(row.parityEvidenceSuiteIds)
+    ? row.parityEvidenceSuiteIds.map((suiteId) => toSafeString(suiteId)).filter(Boolean).sort()
+    : [];
+  const expectedParityEvidenceSuiteIds = (
+    parityEvidenceSummary.suiteIdsByNodeType[nodeType] ?? []
+  ).slice().sort();
+  if (
+    JSON.stringify(declaredParityEvidenceSuiteIds) !==
+    JSON.stringify(expectedParityEvidenceSuiteIds)
+  ) {
+    errors.push(
+      `${nodeType}: parityEvidenceSuiteIds mismatch (expected ${JSON.stringify(expectedParityEvidenceSuiteIds)}, got ${JSON.stringify(declaredParityEvidenceSuiteIds)}).`
+    );
+  }
+  if (isPilot && expectedParityEvidenceSuiteIds.length === 0) {
+    errors.push(
+      `${nodeType}: pilot node is missing parity evidence coverage in ${parityEvidenceSummary.sourceFile}.`
+    );
+  }
+
   const migrationDocFile = toSafeString(row.docs?.migrationDocFile);
   const migrationDocPath = path.join(workspaceRoot, migrationDocFile);
   const expectedMigrationDocFile = `docs/ai-paths/node-code-objects-v3/nodes/${nodeType}.md`;
@@ -432,6 +475,14 @@ for (const row of rows) {
     }
     if (!migrationDocRaw.includes(`- Readiness stage: \`${row.migrationReadiness.stage}\``)) {
       errors.push(`${nodeType}: migration sheet readiness stage line mismatch.`);
+    }
+    const expectedParityEvidenceLine = `- Parity evidence suite IDs: ${
+      declaredParityEvidenceSuiteIds.length > 0
+        ? declaredParityEvidenceSuiteIds.map((suiteId) => `\`${suiteId}\``).join(', ')
+        : '`none`'
+    }`;
+    if (!migrationDocRaw.includes(expectedParityEvidenceLine)) {
+      errors.push(`${nodeType}: migration sheet parity evidence line mismatch.`);
     }
     const expectedV3ObjectIdLine = `- v3 object id: ${row.docs.v3ObjectId ? `\`${row.docs.v3ObjectId}\`` : '`missing`'}`;
     if (!migrationDocRaw.includes(expectedV3ObjectIdLine)) {
@@ -462,7 +513,34 @@ for (const row of rows) {
     typeof row.migrationChecklistTemplate?.dualRunParityValidated !== 'boolean' ||
     typeof row.migrationChecklistTemplate?.rolloutApproved !== 'boolean'
   ) {
-    errors.push(`${nodeType}: migrationChecklistTemplate must contain boolean fields.`);
+      errors.push(`${nodeType}: migrationChecklistTemplate must contain boolean fields.`);
+  }
+
+  const expectedChecklist = {
+    semanticContractReviewed: Boolean(semanticNodeFile),
+    v3CodeObjectAuthored: isPilot && Boolean(row.docs?.v3ScaffoldFile),
+    dualRunParityValidated: expectedParityEvidenceSuiteIds.length > 0,
+    rolloutApproved: false,
+  };
+  if (row.migrationChecklistTemplate?.semanticContractReviewed !== expectedChecklist.semanticContractReviewed) {
+    errors.push(
+      `${nodeType}: migrationChecklistTemplate.semanticContractReviewed mismatch (expected ${String(expectedChecklist.semanticContractReviewed)}, got ${String(row.migrationChecklistTemplate?.semanticContractReviewed)}).`
+    );
+  }
+  if (row.migrationChecklistTemplate?.v3CodeObjectAuthored !== expectedChecklist.v3CodeObjectAuthored) {
+    errors.push(
+      `${nodeType}: migrationChecklistTemplate.v3CodeObjectAuthored mismatch (expected ${String(expectedChecklist.v3CodeObjectAuthored)}, got ${String(row.migrationChecklistTemplate?.v3CodeObjectAuthored)}).`
+    );
+  }
+  if (row.migrationChecklistTemplate?.dualRunParityValidated !== expectedChecklist.dualRunParityValidated) {
+    errors.push(
+      `${nodeType}: migrationChecklistTemplate.dualRunParityValidated mismatch (expected ${String(expectedChecklist.dualRunParityValidated)}, got ${String(row.migrationChecklistTemplate?.dualRunParityValidated)}).`
+    );
+  }
+  if (row.migrationChecklistTemplate?.rolloutApproved !== expectedChecklist.rolloutApproved) {
+    errors.push(
+      `${nodeType}: migrationChecklistTemplate.rolloutApproved mismatch (expected ${String(expectedChecklist.rolloutApproved)}, got ${String(row.migrationChecklistTemplate?.rolloutApproved)}).`
+    );
   }
 
   const declaredReadiness = row.migrationReadiness;
@@ -490,7 +568,7 @@ for (const row of rows) {
     hasV2ObjectContract: Boolean(v2ObjectFile && fs.existsSync(v2ObjectPath)),
     hasV3Scaffold: Boolean(row.docs?.v3ScaffoldFile),
     hasV3ObjectArtifacts: Boolean(normalizedV3ObjectId && normalizedV3ObjectHash),
-    checklist: row.migrationChecklistTemplate,
+    checklist: expectedChecklist,
   });
 
   const normalizedDeclaredReadinessBlockers = [...declaredReadinessBlockers].sort((left, right) =>
@@ -585,6 +663,70 @@ if (!indexPayload.readiness || typeof indexPayload.readiness !== 'object') {
   }
 }
 
+if (!indexPayload.parityEvidence || typeof indexPayload.parityEvidence !== 'object') {
+  errors.push('migration-index.json parityEvidence summary is missing.');
+} else {
+  const declaredSourceFile = toSafeString(indexPayload.parityEvidence.sourceFile);
+  if (declaredSourceFile !== parityEvidenceSummary.sourceFile) {
+    errors.push(
+      `migration-index.json parityEvidence.sourceFile mismatch (declared=${declaredSourceFile || 'empty'}, expected=${parityEvidenceSummary.sourceFile}).`
+    );
+  }
+
+  const declaredSchemaVersionRaw = indexPayload.parityEvidence.schemaVersion;
+  const declaredSchemaVersion =
+    declaredSchemaVersionRaw === null || declaredSchemaVersionRaw === undefined
+      ? null
+      : toSafeString(declaredSchemaVersionRaw) || null;
+  if (declaredSchemaVersion !== parityEvidenceSummary.schemaVersion) {
+    errors.push(
+      `migration-index.json parityEvidence.schemaVersion mismatch (declared=${declaredSchemaVersion ?? 'null'}, expected=${parityEvidenceSummary.schemaVersion ?? 'null'}).`
+    );
+  }
+
+  const declaredGeneratedAtRaw = indexPayload.parityEvidence.generatedAt;
+  const declaredGeneratedAt =
+    declaredGeneratedAtRaw === null || declaredGeneratedAtRaw === undefined
+      ? null
+      : toSafeString(declaredGeneratedAtRaw) || null;
+  if (declaredGeneratedAt !== parityEvidenceSummary.generatedAt) {
+    errors.push(
+      `migration-index.json parityEvidence.generatedAt mismatch (declared=${declaredGeneratedAt ?? 'null'}, expected=${parityEvidenceSummary.generatedAt ?? 'null'}).`
+    );
+  }
+
+  const declaredSuiteCount = Number(indexPayload.parityEvidence.suiteCount);
+  if (declaredSuiteCount !== parityEvidenceSummary.suiteCount) {
+    errors.push(
+      `migration-index.json parityEvidence.suiteCount mismatch (declared=${String(indexPayload.parityEvidence.suiteCount)}, expected=${parityEvidenceSummary.suiteCount}).`
+    );
+  }
+
+  const declaredSuiteIds = Array.isArray(indexPayload.parityEvidence.suiteIds)
+    ? indexPayload.parityEvidence.suiteIds.map((entry) => toSafeString(entry)).filter(Boolean).sort()
+    : [];
+  if (JSON.stringify(declaredSuiteIds) !== JSON.stringify(parityEvidenceSummary.suiteIds)) {
+    errors.push(
+      `migration-index.json parityEvidence.suiteIds mismatch (declared=${JSON.stringify(declaredSuiteIds)}, expected=${JSON.stringify(parityEvidenceSummary.suiteIds)}).`
+    );
+  }
+
+  const declaredValidatedNodeTypes = Array.isArray(indexPayload.parityEvidence.validatedNodeTypes)
+    ? indexPayload.parityEvidence.validatedNodeTypes
+      .map((entry) => toSafeString(entry))
+      .filter(Boolean)
+      .sort()
+    : [];
+  if (
+    JSON.stringify(declaredValidatedNodeTypes) !==
+    JSON.stringify(parityEvidenceSummary.validatedNodeTypes)
+  ) {
+    errors.push(
+      `migration-index.json parityEvidence.validatedNodeTypes mismatch (declared=${JSON.stringify(declaredValidatedNodeTypes)}, expected=${JSON.stringify(parityEvidenceSummary.validatedNodeTypes)}).`
+    );
+  }
+}
+
 const declaredPilotTypes = new Set<string>((indexPayload.pilotNodeTypes ?? []).map(toSafeString).filter(Boolean));
 for (const pilotNodeType of pilotNodeTypeSet) {
   if (!declaredPilotTypes.has(pilotNodeType)) {
@@ -606,6 +748,9 @@ if (!guideRaw.includes('## Node Coverage Matrix')) {
 }
 if (!guideRaw.includes('## Readiness Scorecard')) {
   errors.push('MIGRATION_GUIDE.md is missing the "Readiness Scorecard" section.');
+}
+if (!guideRaw.includes('## Parity Evidence')) {
+  errors.push('MIGRATION_GUIDE.md is missing the "Parity Evidence" section.');
 }
 if (!guideRaw.includes('## Per-Node Sheets')) {
   errors.push('MIGRATION_GUIDE.md is missing the "Per-Node Sheets" section.');

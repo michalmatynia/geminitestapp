@@ -2,6 +2,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { AI_PATH_RUN_ENQUEUED_EVENT_NAME } from '@/shared/contracts/ai-paths';
 import { notifyAiPathRunEnqueued } from '@/shared/lib/query-invalidation';
 
 describe('notifyAiPathRunEnqueued', () => {
@@ -11,7 +12,7 @@ describe('notifyAiPathRunEnqueued', () => {
 
   it('dispatches canonical enqueue event and broadcast message when runId is valid', () => {
     const windowListener = vi.fn();
-    window.addEventListener('ai-path-run-enqueued', windowListener as EventListener);
+    window.addEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, windowListener as EventListener);
 
     const constructorSpy = vi.fn();
     const postMessage = vi.fn();
@@ -53,7 +54,7 @@ describe('notifyAiPathRunEnqueued', () => {
 
   it('does not dispatch enqueue event when runId is missing', () => {
     const windowListener = vi.fn();
-    window.addEventListener('ai-path-run-enqueued', windowListener as EventListener);
+    window.addEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, windowListener as EventListener);
 
     const broadcastCtor = vi.fn();
     vi.stubGlobal('BroadcastChannel', broadcastCtor);
@@ -65,5 +66,55 @@ describe('notifyAiPathRunEnqueued', () => {
 
     expect(windowListener).not.toHaveBeenCalled();
     expect(broadcastCtor).not.toHaveBeenCalled();
+  });
+
+  it('dispatches window event even when BroadcastChannel cannot be created', () => {
+    const windowListener = vi.fn();
+    window.addEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, windowListener as EventListener);
+
+    class ThrowingBroadcastChannel {
+      constructor() {
+        throw new Error('channel unavailable');
+      }
+    }
+    vi.stubGlobal('BroadcastChannel', ThrowingBroadcastChannel);
+
+    notifyAiPathRunEnqueued('run-2', {
+      entityId: 'product-2',
+      entityType: 'product',
+    });
+
+    expect(windowListener).toHaveBeenCalledTimes(1);
+  });
+
+  it('dispatches window event even when BroadcastChannel.postMessage fails', () => {
+    const windowListener = vi.fn();
+    window.addEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, windowListener as EventListener);
+
+    const constructorSpy = vi.fn();
+    const close = vi.fn();
+    class ThrowingPostMessageChannel {
+      constructor() {
+        constructorSpy();
+      }
+
+      postMessage(): void {
+        throw new Error('post failed');
+      }
+
+      close(): void {
+        close();
+      }
+    }
+    vi.stubGlobal('BroadcastChannel', ThrowingPostMessageChannel);
+
+    notifyAiPathRunEnqueued('run-3', {
+      entityId: 'product-3',
+      entityType: 'product',
+    });
+
+    expect(windowListener).toHaveBeenCalledTimes(1);
+    expect(constructorSpy).toHaveBeenCalledTimes(1);
+    expect(close).not.toHaveBeenCalled();
   });
 });

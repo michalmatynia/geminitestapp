@@ -1,11 +1,31 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { useAdminCaseResolverPageState } from '../hooks/useAdminCaseResolverPageState';
 
 export type AdminCaseResolverPageContextValue = ReturnType<typeof useAdminCaseResolverPageState>;
 
-const AdminCaseResolverPageContext = createContext<AdminCaseResolverPageContextValue | null>(null);
+type FunctionKey<T> = {
+  [K in keyof T]-?: T[K] extends (...args: infer _Args) => infer _Return ? K : never;
+}[keyof T];
+
+type AdminCaseResolverPageActionKey = FunctionKey<AdminCaseResolverPageContextValue>;
+
+export type AdminCaseResolverPageActionsValue = Pick<
+  AdminCaseResolverPageContextValue,
+  AdminCaseResolverPageActionKey
+>;
+export type AdminCaseResolverPageStateValue = Omit<
+  AdminCaseResolverPageContextValue,
+  AdminCaseResolverPageActionKey
+>;
+
+const AdminCaseResolverPageStateContext = createContext<AdminCaseResolverPageStateValue | null>(
+  null
+);
+const AdminCaseResolverPageActionsContext = createContext<AdminCaseResolverPageActionsValue | null>(
+  null
+);
 
 export function AdminCaseResolverPageProvider({
   children,
@@ -13,18 +33,33 @@ export function AdminCaseResolverPageProvider({
   children: React.ReactNode;
 }): React.JSX.Element {
   const value = useAdminCaseResolverPageState();
+  const stateValue = useMemo(() => value as AdminCaseResolverPageStateValue, [value]);
+  const actionsValue = useMemo(() => value as AdminCaseResolverPageActionsValue, [value]);
+
   return (
-    <AdminCaseResolverPageContext.Provider value={value}>
-      {children}
-    </AdminCaseResolverPageContext.Provider>
+    <AdminCaseResolverPageStateContext.Provider value={stateValue}>
+      <AdminCaseResolverPageActionsContext.Provider value={actionsValue}>
+        {children}
+      </AdminCaseResolverPageActionsContext.Provider>
+    </AdminCaseResolverPageStateContext.Provider>
   );
 }
 
-export function useAdminCaseResolverPageContext(): AdminCaseResolverPageContextValue {
-  const context = useContext(AdminCaseResolverPageContext);
+export function useAdminCaseResolverPageStateContext(): AdminCaseResolverPageStateValue {
+  const context = useContext(AdminCaseResolverPageStateContext);
   if (!context) {
     throw new Error(
-      'useAdminCaseResolverPageContext must be used within AdminCaseResolverPageProvider'
+      'useAdminCaseResolverPageStateContext must be used within AdminCaseResolverPageProvider'
+    );
+  }
+  return context;
+}
+
+export function useAdminCaseResolverPageActionsContext(): AdminCaseResolverPageActionsValue {
+  const context = useContext(AdminCaseResolverPageActionsContext);
+  if (!context) {
+    throw new Error(
+      'useAdminCaseResolverPageActionsContext must be used within AdminCaseResolverPageProvider'
     );
   }
   return context;

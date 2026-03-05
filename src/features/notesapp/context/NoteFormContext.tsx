@@ -29,8 +29,8 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-import { useNotesAppContext } from '../hooks/NotesAppContext';
-import { useNoteSettings } from '../hooks/NoteSettingsContext';
+import { useNotesAppActions, useNotesAppState } from '../hooks/NotesAppContext';
+import { useNoteSettingsState } from '../hooks/NoteSettingsContext';
 import { useEditorMode } from '../hooks/useEditorMode';
 import {
   useCreateNoteMutation,
@@ -73,26 +73,74 @@ const FALLBACK_THEME = {
   relatedNoteTextColor: '#e5e7eb', // gray-200
 };
 
-export interface NoteFormContextValue
-  extends
-    NoteContentData,
-    NoteMetadataData,
-    NoteEditorData,
-    NoteFilesData,
-    NoteTagsData,
-    NoteFoldersData,
-    NoteRelationsData {
+interface NoteFormRuntimeData {
   note: NoteWithRelations | null;
   setIsCreating: (val: boolean) => void;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
 }
 
-const NoteFormContext = createContext<NoteFormContextValue | null>(null);
+const NoteFormRuntimeContext = createContext<NoteFormRuntimeData | null>(null);
 
-export function useNoteFormContext(): NoteFormContextValue {
-  const context = useContext(NoteFormContext);
+export function useNoteFormRuntime(): NoteFormRuntimeData {
+  const context = useContext(NoteFormRuntimeContext);
   if (!context) {
-    throw internalError('useNoteFormContext must be used within NoteFormProvider');
+    throw internalError('useNoteFormRuntime must be used within NoteFormProvider');
+  }
+  return context;
+}
+
+export function useNoteContentContext(): NoteContentData {
+  const context = useContext(NoteContentContext);
+  if (!context) {
+    throw internalError('useNoteContentContext must be used within NoteFormProvider');
+  }
+  return context;
+}
+
+export function useNoteMetadataContext(): NoteMetadataData {
+  const context = useContext(NoteMetadataContext);
+  if (!context) {
+    throw internalError('useNoteMetadataContext must be used within NoteFormProvider');
+  }
+  return context;
+}
+
+export function useNoteEditorContext(): NoteEditorData {
+  const context = useContext(NoteEditorContext);
+  if (!context) {
+    throw internalError('useNoteEditorContext must be used within NoteFormProvider');
+  }
+  return context;
+}
+
+export function useNoteFilesContext(): NoteFilesData {
+  const context = useContext(NoteFilesContext);
+  if (!context) {
+    throw internalError('useNoteFilesContext must be used within NoteFormProvider');
+  }
+  return context;
+}
+
+export function useNoteTagsContext(): NoteTagsData {
+  const context = useContext(NoteTagsContext);
+  if (!context) {
+    throw internalError('useNoteTagsContext must be used within NoteFormProvider');
+  }
+  return context;
+}
+
+export function useNoteFoldersContext(): NoteFoldersData {
+  const context = useContext(NoteFoldersContext);
+  if (!context) {
+    throw internalError('useNoteFoldersContext must be used within NoteFormProvider');
+  }
+  return context;
+}
+
+export function useNoteRelationsContext(): NoteRelationsData {
+  const context = useContext(NoteRelationsContext);
+  if (!context) {
+    throw internalError('useNoteRelationsContext must be used within NoteFormProvider');
   }
   return context;
 }
@@ -113,13 +161,11 @@ export function NoteFormProvider({
     selectedFolderId: defaultFolderId,
     selectedFolderTheme,
     selectedNoteTheme,
-    fetchTags,
-    handleSelectNoteFromTree,
-    handleFilterByTag,
-    setIsCreating,
-  } = useNotesAppContext();
+  } = useNotesAppState();
+  const { fetchTags, handleSelectNoteFromTree, handleFilterByTag, setIsCreating } =
+    useNotesAppActions();
 
-  const { settings } = useNoteSettings();
+  const { settings } = useNoteSettingsState();
   const { toast } = useToast();
 
   const {
@@ -840,31 +886,13 @@ export function NoteFormProvider({
     ]
   );
 
-  const aggregatedValue: NoteFormContextValue = useMemo(
+  const runtimeValue = useMemo<NoteFormRuntimeData>(
     () => ({
-      ...contentValue,
-      ...metadataValue,
-      ...editorValue,
-      ...filesValue,
-      ...tagsValue,
-      ...foldersValue,
-      ...relationsValue,
       note,
       setIsCreating,
       handleSubmit,
     }),
-    [
-      contentValue,
-      metadataValue,
-      editorValue,
-      filesValue,
-      tagsValue,
-      foldersValue,
-      relationsValue,
-      note,
-      setIsCreating,
-      handleSubmit,
-    ]
+    [note, setIsCreating, handleSubmit]
   );
 
   return (
@@ -875,9 +903,9 @@ export function NoteFormProvider({
             <NoteTagsContext.Provider value={tagsValue}>
               <NoteFoldersContext.Provider value={foldersValue}>
                 <NoteRelationsContext.Provider value={relationsValue}>
-                  <NoteFormContext.Provider value={aggregatedValue}>
+                  <NoteFormRuntimeContext.Provider value={runtimeValue}>
                     {children}
-                  </NoteFormContext.Provider>
+                  </NoteFormRuntimeContext.Provider>
                 </NoteRelationsContext.Provider>
               </NoteFoldersContext.Provider>
             </NoteTagsContext.Provider>

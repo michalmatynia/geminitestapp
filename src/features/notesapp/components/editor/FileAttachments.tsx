@@ -4,7 +4,10 @@ import { Upload, FileIcon, Link2, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import React from 'react';
 
-import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
+import {
+  useNoteFilesContext,
+  useNoteFormRuntime,
+} from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFileRecord } from '@/shared/contracts/notes';
 import {
   Button,
@@ -16,8 +19,8 @@ import {
 } from '@/shared/ui';
 
 export function FileAttachments(): React.JSX.Element {
+  const { note } = useNoteFormRuntime();
   const {
-    note,
     noteFiles,
     MAX_SLOTS: maxSlots,
     uploadingSlots,
@@ -28,7 +31,7 @@ export function FileAttachments(): React.JSX.Element {
     insertFileReference: onInsertFileReference,
     formatFileSize,
     isImageFile,
-  } = useNoteFormContext();
+  } = useNoteFilesContext();
 
   if (!note?.id) {
     return (

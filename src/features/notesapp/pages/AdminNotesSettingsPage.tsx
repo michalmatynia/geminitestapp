@@ -4,8 +4,9 @@ import { RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 
 import {
-  useNoteSettings,
   DEFAULT_NOTE_SETTINGS,
+  useNoteSettingsActions,
+  useNoteSettingsState,
 } from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { NoteSettings } from '@/shared/contracts/notes';
 import {
@@ -59,7 +60,8 @@ const editorModeOptions = [
 ] as const;
 
 export function AdminNotesSettingsPage(): React.JSX.Element {
-  const { settings, updateSettings, resetToDefaults } = useNoteSettings();
+  const { settings } = useNoteSettingsState();
+  const { updateSettings, resetToDefaults } = useNoteSettingsActions();
   const { toast } = useToast();
 
   const handleResetToDefaults = (): void => {

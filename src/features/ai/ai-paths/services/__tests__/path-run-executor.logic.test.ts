@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   mergeNodeOutputsForStatus,
+  shouldCaptureRuntimeProfileHighlight,
   toRuntimeNodeStatus,
 } from '@/features/ai/ai-paths/services/path-run-executor.logic';
 
@@ -105,5 +106,23 @@ describe('mergeNodeOutputsForStatus', () => {
     expect(merged['status']).toBe('failed');
     expect(merged['result']).toBe('');
     expect(merged['error']).toBeUndefined();
+  });
+});
+
+describe('shouldCaptureRuntimeProfileHighlight', () => {
+  it('captures validation-skipped node events for profile highlights', () => {
+    expect(
+      shouldCaptureRuntimeProfileHighlight({
+        type: 'node',
+        runId: 'run-1',
+        runStartedAt: '2026-03-05T10:00:00.000Z',
+        nodeId: 'node-1',
+        nodeType: 'trigger',
+        iteration: 1,
+        status: 'skipped',
+        durationMs: 4,
+        reason: 'validation',
+      })
+    ).toBe(true);
   });
 });

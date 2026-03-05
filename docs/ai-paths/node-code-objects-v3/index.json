@@ -2,14 +2,16 @@
   "schemaVersion": "ai-paths.node-code-object-index.v3",
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "specVersion": "ai-paths.portable-engine.v1",
-  "totalObjects": 7,
+  "totalObjects": 9,
   "pilotNodeTypes": [
     "constant",
+    "context",
     "mapper",
     "math",
     "mutator",
     "parser",
     "regex",
+    "string_mutator",
     "template"
   ],
   "objects": [
@@ -24,6 +26,18 @@
       "executionAdapter": "legacy_handler_bridge",
       "legacyHandlerKey": "constant",
       "codeObjectId": "ai-paths.node-code-object.constant.v3"
+    },
+    {
+      "id": "node_obj_context_portable_v3",
+      "nodeType": "context",
+      "title": "Context Filter",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/context.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "c227b30bb2d8955dc3d44284afadfd04eb50b2b7a31a844225e82805285183d5",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "context",
+      "codeObjectId": "ai-paths.node-code-object.context.v3"
     },
     {
       "id": "node_obj_mapper_portable_v3",
@@ -84,6 +98,18 @@
       "executionAdapter": "legacy_handler_bridge",
       "legacyHandlerKey": "regex",
       "codeObjectId": "ai-paths.node-code-object.regex.v3"
+    },
+    {
+      "id": "node_obj_string_mutator_portable_v3",
+      "nodeType": "string_mutator",
+      "title": "String Mutator",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/string_mutator.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "a95b3ffff43ce36ac013b72a1ca98a9e0ab14d1d94966633cb67ba87c9c82098",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "string_mutator",
+      "codeObjectId": "ai-paths.node-code-object.string_mutator.v3"
     },
     {
       "id": "node_obj_template_portable_v3",

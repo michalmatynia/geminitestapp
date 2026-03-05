@@ -13,11 +13,18 @@ import {
 } from '@/shared/contracts/case-resolver';
 import { Button, EmptyState, Card, Chip, Tooltip, useToast, Badge } from '@/shared/ui';
 
-import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
+import {
+  useCaseResolverPageActions,
+  useCaseResolverPageState,
+} from '../context/CaseResolverPageContext';
 import { createEmptyNodeFileSnapshot } from '../settings';
 import { buildNode, createNodeId } from './case-resolver-canvas-utils';
 import { CaseResolverNodeInspectorModal } from './CaseResolverNodeInspectorModal';
-import { NodeFileWorkspaceProvider, useNodeFileWorkspaceContext } from './NodeFileWorkspaceContext';
+import {
+  NodeFileWorkspaceProvider,
+  useNodeFileWorkspaceActionsContext,
+  useNodeFileWorkspaceStateContext,
+} from './NodeFileWorkspaceContext';
 import {
   useNodeFileWorkspaceState,
   type UseNodeFileWorkspaceStateProps,
@@ -53,25 +60,29 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
   const {
     nodes,
     selectedNodeId,
-    configOpen,
-    isNodeInspectorOpen,
-    newNodeType,
-    setNewNodeType,
-    isSidePanelVisible,
-    setIsNodeInspectorOpen,
-    setConfigOpen,
     selectedNodeFileMeta,
     selectedFile,
-    addNode,
-    setNodeFileMeta,
+    configOpen,
+    isNodeInspectorOpen,
+    isLinkedPreviewOpen,
+    newNodeType,
+    isSidePanelVisible,
     filesById,
-    selectNode,
-    handleManualSave,
-    hasPendingSnapshotChanges = false,
     view,
     canvasHostRef,
+    hasPendingSnapshotChanges = false,
+  } = useNodeFileWorkspaceStateContext();
+  const {
+    setNewNodeType,
+    setIsNodeInspectorOpen,
+    setConfigOpen,
+    setIsLinkedPreviewOpen,
+    addNode,
+    setNodeFileMeta,
+    selectNode,
+    handleManualSave,
     onSelectFile,
-  } = useNodeFileWorkspaceContext();
+  } = useNodeFileWorkspaceActionsContext();
 
   const resolveCanvasCenter = useCallback((): { x: number; y: number } => {
     const rect = canvasHostRef.current?.getBoundingClientRect();
@@ -337,7 +348,8 @@ function CaseResolverNodeFileWorkspaceStateProviderBridge(
 // ─── public wrapper ───────────────────────────────────────────────────────────
 
 export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
-  const { selectedAsset, onUpdateSelectedAsset } = useCaseResolverPageContext();
+  const { selectedAsset } = useCaseResolverPageState();
+  const { onUpdateSelectedAsset } = useCaseResolverPageActions();
   const selectedAssetId = selectedAsset?.id ?? null;
   const selectedAssetKind = selectedAsset?.kind ?? null;
   const [resolvedSnapshot, setResolvedSnapshot] = React.useState<ResolvedNodeFileSnapshotState>({

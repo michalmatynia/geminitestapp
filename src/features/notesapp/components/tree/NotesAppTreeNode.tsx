@@ -4,7 +4,7 @@ import React from 'react';
 import { ChevronDown, ChevronRight, FilePlus, FolderPlus, Copy, Edit2, Trash2 } from 'lucide-react';
 
 import type { FolderTreeViewportRenderNodeInput as NotesAppTreeNodeProps } from '@/features/foldertree/v2';
-import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import { useNotesAppActions } from '@/features/notesapp/hooks/NotesAppContext';
 import {
   fromFolderMasterNodeId,
   fromNoteMasterNodeId,
@@ -40,15 +40,14 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
 
   const { controller, FolderClosedIcon, FolderOpenIcon, FileIcon, DragHandleIcon } =
     useNotesAppTreeNodeRuntimeContext();
-  const notesAppContext = useNotesAppContext();
   const {
     setSelectedFolderId,
     setSelectedNote,
     setIsEditing,
     setIsCreating,
     handleSelectNoteFromTree,
-  } = notesAppContext;
-  const operations = notesAppContext.operations as NotesAppTreeNodeOperations;
+    operations,
+  } = useNotesAppActions();
 
   const folderId = fromFolderMasterNodeId(node.id);
   const noteId = fromNoteMasterNodeId(node.id);
@@ -155,7 +154,7 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
                   size='sm'
                   onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                     event.stopPropagation();
-                    void operations.handleCreateFolder(folderId);
+                    void (operations as NotesAppTreeNodeOperations).handleCreateFolder(folderId);
                   }}
                   className='size-6 p-0 text-gray-400 hover:bg-white/10 hover:text-white'
                 >
@@ -178,7 +177,7 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
                 size='sm'
                 onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                   event.stopPropagation();
-                  void operations.handleDuplicateNote(noteId);
+                  void (operations as NotesAppTreeNodeOperations).handleDuplicateNote(noteId);
                 }}
                 className='size-6 p-0 text-gray-400 hover:bg-white/10 hover:text-white'
               >
@@ -216,11 +215,11 @@ export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Elemen
               onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                 event.stopPropagation();
                 if (folderId) {
-                  void operations.handleDeleteFolder(folderId);
+                  void (operations as NotesAppTreeNodeOperations).handleDeleteFolder(folderId);
                   return;
                 }
                 if (noteId) {
-                  void operations.handleDeleteNoteFromTree(noteId);
+                  void (operations as NotesAppTreeNodeOperations).handleDeleteNoteFromTree(noteId);
                 }
               }}
               className='size-6 p-0 text-rose-400 hover:bg-red-500/20 hover:text-rose-300'

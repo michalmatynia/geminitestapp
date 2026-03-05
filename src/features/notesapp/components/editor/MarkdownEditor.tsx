@@ -3,16 +3,19 @@
 import React from 'react';
 
 import { MarkdownSplitEditor } from '@/features/document-editor';
-import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
+import {
+  useNoteContentContext,
+  useNoteEditorContext,
+  useNoteFilesContext,
+} from '@/features/notesapp/context/NoteFormContext';
 import { useToast } from '@/shared/ui';
 import { sanitizeHtml } from '@/shared/utils';
 
 import { renderMarkdownToHtml } from '../../utils';
 
 export function MarkdownEditor(): React.JSX.Element {
+  const { content, setContent } = useNoteContentContext();
   const {
-    content,
-    setContent,
     editorMode,
     showPreview,
     editorWidth,
@@ -21,13 +24,15 @@ export function MarkdownEditor(): React.JSX.Element {
     setIsDraggingSplitter,
     editorSplitRef,
     contentRef,
-    isPasting,
     contentBackground,
     contentTextColor,
     previewTypographyStyle,
+  } = useNoteEditorContext();
+  const {
+    isPasting,
     handlePaste,
     setLightboxImage,
-  } = useNoteFormContext();
+  } = useNoteFilesContext();
   const isCodeMode = editorMode === 'code';
 
   const { toast } = useToast();

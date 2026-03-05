@@ -21,7 +21,7 @@ import {
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
-import { useProductSettingsContext } from './ProductSettingsContext';
+import { useProductSettingsTagsContext } from './ProductSettingsContext';
 
 type TagFormData = {
   name: string;
@@ -37,7 +37,7 @@ export function TagsSettings(): React.JSX.Element {
     selectedTagCatalogId: selectedCatalogId,
     onTagCatalogChange: onCatalogChange,
     onRefreshTags: onRefresh,
-  } = useProductSettingsContext();
+  } = useProductSettingsTagsContext();
 
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);

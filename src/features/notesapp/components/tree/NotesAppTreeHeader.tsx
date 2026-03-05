@@ -3,7 +3,10 @@
 import React, { useMemo } from 'react';
 import { FolderPlus, FilePlus, ChevronRight, Star, Folder } from 'lucide-react';
 
-import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import {
+  useNotesAppActions,
+  useNotesAppState,
+} from '@/features/notesapp/hooks/NotesAppContext';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { NoteWithRelations } from '@/shared/contracts/notes';
 import { Button, TreeHeader } from '@/shared/ui';
@@ -142,21 +145,17 @@ export function NotesAppTreeHeader({
   selectedFolderForCreate,
   setPanelCollapsed,
 }: NotesAppTreeHeaderProps): React.JSX.Element {
-  const notesAppContext = useNotesAppContext();
+  const { settings, filters, undoStack, undoHistory } = useNotesAppState();
   const {
-    settings,
-    filters,
     setSelectedNote,
     setIsEditing,
     setIsCreating,
     setIsFolderTreeCollapsed,
-    undoStack,
-    undoHistory,
     handleUndoFolderTree,
     handleUndoAtIndex,
     setSelectedFolderId,
-  } = notesAppContext;
-  const operations = notesAppContext.operations as NotesTreeHeaderOperations;
+    operations,
+  } = useNotesAppActions();
 
   const isAllNotesActive = !settings.selectedFolderId && !settings.selectedNoteId;
   const actionsRuntimeValue = useMemo(
@@ -180,14 +179,14 @@ export function NotesAppTreeHeader({
         filters.handleToggleFavoritesFilter(setSelectedFolderId, setSelectedNote, setIsEditing);
       },
       handleUndoFolderTree,
-      handleCreateFolder: operations.handleCreateFolder,
+      handleCreateFolder: (operations as NotesTreeHeaderOperations).handleCreateFolder,
     }),
     [
       controller,
       filters,
       handleUndoFolderTree,
       isAllNotesActive,
-      operations.handleCreateFolder,
+      operations,
       selectedFolderForCreate,
       setIsCreating,
       setIsEditing,

@@ -67,6 +67,9 @@ describe('portable AI-path server runtime observability', () => {
       validateBeforeRun: false,
     });
 
+    const call = mockedEvaluateGraphServer.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(call?.['validationMiddleware']).toEqual(expect.any(Function));
+
     const snapshot = getPortablePathRunExecutionSnapshot();
     expect(snapshot.totals.attempts).toBe(1);
     expect(snapshot.totals.successes).toBe(1);
@@ -79,6 +82,18 @@ describe('portable AI-path server runtime observability', () => {
     expect(snapshot.recentEvents).toHaveLength(1);
     expect(snapshot.recentEvents[0]?.outcome).toBe('success');
     expect(snapshot.recentEvents[0]?.runner).toBe('server');
+  });
+
+  it('allows disabling runtime validation middleware for server runs', async () => {
+    const pathConfig = createDefaultPathConfig('path_portable_server_no_runtime_validation');
+    await runPortablePathServer(pathConfig, {
+      validateBeforeRun: false,
+      runtimeValidationEnabled: false,
+    });
+
+    expect(mockedEvaluateGraphServer).toHaveBeenCalledTimes(1);
+    const call = mockedEvaluateGraphServer.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(Object.prototype.hasOwnProperty.call(call, 'validationMiddleware')).toBe(false);
   });
 
   it('records server run failures across validation/runtime/resolve stages', async () => {

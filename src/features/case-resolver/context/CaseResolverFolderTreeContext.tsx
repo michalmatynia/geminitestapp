@@ -10,7 +10,10 @@ import type {
 } from '@/shared/contracts/case-resolver';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import type { MasterFolderTreeAdapterV3 } from '@/shared/contracts/master-folder-tree';
-import { useCaseResolverPageContext } from './CaseResolverPageContext';
+import {
+  useCaseResolverPageActions,
+  useCaseResolverPageState,
+} from './CaseResolverPageContext';
 import { resolveCaseResolverTreeWorkspace } from '../components/case-resolver-tree-workspace';
 import {
   getCachedCaseResolverRuntimeIndexes,
@@ -171,15 +174,9 @@ export function CaseResolverFolderTreeProvider({
     if (decodedFileNodeId) return decodedFileNodeId;
     return normalizedRequestedFileId;
   }, [requestedFileIdRaw]);
-  const {
-    activeFile,
-    onMoveFile,
-    onMoveAsset,
-    onMoveFolder,
-    onRenameFile,
-    onRenameAsset,
-    onRenameFolder,
-  } = useCaseResolverPageContext();
+  const { activeFile } = useCaseResolverPageState();
+  const { onMoveFile, onMoveAsset, onMoveFolder, onRenameFile, onRenameAsset, onRenameFolder } =
+    useCaseResolverPageActions();
   const workspace = useCaseResolverRuntimeSelector((snapshot) => snapshot.state.workspace.value);
   const activeCaseId = useCaseResolverRuntimeSelector(
     (snapshot) => snapshot.state.selection.activeCaseId

@@ -24,7 +24,10 @@ import type {
 } from '@/shared/contracts/case-resolver';
 import { EmptyState } from '@/shared/ui';
 
-import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
+import {
+  useCaseResolverPageActions,
+  useCaseResolverPageState,
+} from '../context/CaseResolverPageContext';
 import {
   CaseResolverRelationsWorkspaceProvider,
   useCaseResolverRelationsWorkspaceContext,
@@ -275,7 +278,8 @@ const projectCaseOnlyRelationGraph = (
 function CaseResolverRelationsWorkspaceInner(): React.JSX.Element {
   const { relationGraph, focusCaseId, workspaceSnapshot } =
     useCaseResolverRelationsWorkspaceContext();
-  const { selectedFileId, onSelectFile, onRelationGraphChange } = useCaseResolverPageContext();
+  const { selectedFileId } = useCaseResolverPageState();
+  const { onSelectFile, onRelationGraphChange } = useCaseResolverPageActions();
   const { nodes, edges } = useGraphState();
   const { setNodes, setEdges } = useGraphActions();
   const { selectedNodeId } = useSelectionState();
@@ -424,7 +428,7 @@ export function CaseResolverRelationsWorkspace({
     if (decodedFileNodeId) return decodedFileNodeId;
     return normalizedRequestedFileId;
   }, [requestedFileIdRaw]);
-  const { workspace, selectedFileId, activeCaseId } = useCaseResolverPageContext();
+  const { workspace, selectedFileId, activeCaseId } = useCaseResolverPageState();
   const scopedWorkspace = React.useMemo(
     () =>
       resolveCaseResolverTreeWorkspace({

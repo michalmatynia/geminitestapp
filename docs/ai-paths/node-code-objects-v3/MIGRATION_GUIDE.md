@@ -12,6 +12,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - `docs/ai-paths/node-code-objects-v2/index.json` (node-family metadata)
 - `docs/ai-paths/node-code-objects-v3/index.scaffold.json` (available v3 scaffolds)
 - `docs/ai-paths/node-code-objects-v3/index.json` + `contracts.json` (pilot v3 object hashes)
+- `docs/ai-paths/node-code-objects-v3/parity-evidence.json` (dual-run parity evidence)
 
 ## Migration Workflow
 
@@ -25,30 +26,38 @@ Generated at: 2026-03-05T00:00:00.000Z
 ## Strategy Totals
 
 - Total node types: 36
-- `legacy_adapter`: 29
-- `code_object_v3`: 7
-- v3 contracts hash: `d0454cbcd30fab1edd0daa6adff3dbebca6a752d920b6953dfe7dca04c376435`
+- `legacy_adapter`: 27
+- `code_object_v3`: 9
+- v3 contracts hash: `820609a0b3ea69b4aae4d3a42eff70dcc0f6aadc30fe09008fde25dff6521001`
 
 ## Readiness Scorecard
 
-- Average readiness score: 44/100
+- Average readiness score: 49/100
 
 | Stage | Nodes |
 | --- | ---: |
 | `not_ready` | 0 |
-| `cataloged` | 29 |
+| `cataloged` | 27 |
 | `scaffolded` | 0 |
-| `pilot_indexed` | 7 |
-| `rollout_candidate` | 0 |
+| `pilot_indexed` | 0 |
+| `rollout_candidate` | 9 |
 | `rollout_approved` | 0 |
+
+## Parity Evidence
+
+- Source file: `docs/ai-paths/node-code-objects-v3/parity-evidence.json`
+- Schema version: `ai-paths.node-migration-parity-evidence.v1`
+- Generated at: `2026-03-05T00:00:00.000Z`
+- Evidence suites: 1
+- Validated node types: `constant`, `context`, `mapper`, `math`, `mutator`, `parser`, `regex`, `string_mutator`, `template`
 
 Top blockers:
 
 | Blocker | Nodes |
 | --- | ---: |
-| `missing_v3_scaffold` | 29 |
-| `not_in_v3_pilot` | 29 |
-| `parity_not_validated` | 7 |
+| `missing_v3_scaffold` | 27 |
+| `not_in_v3_pilot` | 27 |
+| `rollout_not_approved` | 9 |
 
 ## Family Coverage
 
@@ -59,7 +68,7 @@ Top blockers:
 | general | 1 | 1 | 0 |
 | integration | 7 | 7 | 0 |
 | orchestration | 9 | 9 | 0 |
-| transform | 12 | 5 | 7 |
+| transform | 12 | 3 | 9 |
 
 ## Node Coverage Matrix
 
@@ -73,7 +82,7 @@ Top blockers:
 | `bundle` | transform | `legacy_adapter` | 5/1 | `no` | [sheet](./nodes/bundle.md) | `f02021c0cfff...` | `n/a` |
 | `compare` | orchestration | `legacy_adapter` | 1/3 | `no` | [sheet](./nodes/compare.md) | `08b496fef266...` | `n/a` |
 | `constant` | transform | `code_object_v3` | 0/1 | `yes` | [sheet](./nodes/constant.md) | `ae37de0024fb...` | `37e4ab41ceac...` |
-| `context` | transform | `legacy_adapter` | 1/4 | `no` | [sheet](./nodes/context.md) | `8fec17546b68...` | `n/a` |
+| `context` | transform | `code_object_v3` | 1/4 | `yes` | [sheet](./nodes/context.md) | `8fec17546b68...` | `c227b30bb2d8...` |
 | `database` | integration | `legacy_adapter` | 12/4 | `no` | [sheet](./nodes/database.md) | `eadd4fae4b6f...` | `n/a` |
 | `db_schema` | integration | `legacy_adapter` | 0/2 | `no` | [sheet](./nodes/db_schema.md) | `dc56e39b3002...` | `n/a` |
 | `delay` | orchestration | `legacy_adapter` | 2/2 | `no` | [sheet](./nodes/delay.md) | `fa631c84b720...` | `n/a` |
@@ -95,7 +104,7 @@ Top blockers:
 | `regex` | transform | `code_object_v3` | 3/4 | `yes` | [sheet](./nodes/regex.md) | `119b8b6056ec...` | `22fd3b408e83...` |
 | `router` | orchestration | `legacy_adapter` | 2/2 | `no` | [sheet](./nodes/router.md) | `82e9ef3cc91b...` | `n/a` |
 | `simulation` | orchestration | `legacy_adapter` | 1/4 | `no` | [sheet](./nodes/simulation.md) | `cce9b04665f1...` | `n/a` |
-| `string_mutator` | transform | `legacy_adapter` | 3/1 | `no` | [sheet](./nodes/string_mutator.md) | `b4a7a5bd6daf...` | `n/a` |
+| `string_mutator` | transform | `code_object_v3` | 3/1 | `yes` | [sheet](./nodes/string_mutator.md) | `b4a7a5bd6daf...` | `a95b3ffff43c...` |
 | `template` | transform | `code_object_v3` | 3/1 | `yes` | [sheet](./nodes/template.md) | `349143bb99ff...` | `818d7ec5fca3...` |
 | `trigger` | orchestration | `legacy_adapter` | 0/2 | `no` | [sheet](./nodes/trigger.md) | `233c29f92acb...` | `n/a` |
 | `validation_pattern` | transform | `legacy_adapter` | 4/6 | `no` | [sheet](./nodes/validation_pattern.md) | `e64e35e2fd11...` | `n/a` |

@@ -154,7 +154,7 @@ export const shouldCaptureRuntimeProfileHighlight = (event: AiPathRuntimeProfile
   if (event.status === 'error' || event.status === 'skipped') return true;
   if ((event.durationMs ?? 0) >= RUNTIME_PROFILE_SLOW_NODE_MS) return true;
   if (event.sideEffectDecision === 'skipped_duplicate') return true;
-  if (event.reason === 'missing_inputs') return true;
+  if (event.reason === 'missing_inputs' || event.reason === 'validation') return true;
   return false;
 };
 

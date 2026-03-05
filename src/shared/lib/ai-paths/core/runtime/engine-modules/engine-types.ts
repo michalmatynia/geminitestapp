@@ -1,4 +1,9 @@
-import type { AiNode, Edge, RuntimePortValues } from '@/shared/contracts/ai-paths';
+import type {
+  AiNode,
+  AiPathsValidationStage,
+  Edge,
+  RuntimePortValues,
+} from '@/shared/contracts/ai-paths';
 import type { ToastOptions } from '@/shared/contracts/ui';
 import type {
   AiPathRuntimeProfileEvent,
@@ -24,6 +29,42 @@ export type RuntimeNodeResolutionTelemetry = {
   runtimeResolutionSource: NodeRuntimeResolutionSource;
   runtimeCodeObjectId?: string | null | undefined;
 };
+
+export type RuntimeValidationStage = AiPathsValidationStage;
+export type RuntimeValidationDecision = 'pass' | 'warn' | 'block';
+
+export type RuntimeValidationIssue = {
+  stage: RuntimeValidationStage;
+  ruleId?: string | undefined;
+  severity?: 'error' | 'warning' | 'info' | undefined;
+  message: string;
+  nodeId?: string | null | undefined;
+  nodeTitle?: string | null | undefined;
+  docsBindings?: string[] | undefined;
+  metadata?: Record<string, unknown> | undefined;
+};
+
+export type RuntimeValidationContext = {
+  stage: RuntimeValidationStage;
+  runId: string;
+  runStartedAt: string;
+  iteration: number;
+  nodes: AiNode[];
+  edges: Edge[];
+  node?: AiNode | null | undefined;
+  nodeInputs?: RuntimePortValues | undefined;
+  nodeOutputs?: RuntimePortValues | undefined;
+};
+
+export type RuntimeValidationResult = {
+  decision: RuntimeValidationDecision;
+  message?: string | undefined;
+  issues?: RuntimeValidationIssue[] | undefined;
+};
+
+export type RuntimeValidationMiddleware = (
+  context: RuntimeValidationContext
+) => RuntimeValidationResult | null | undefined | Promise<RuntimeValidationResult | null | undefined>;
 
 export type EvaluateGraphOptions = {
   runId?: string | undefined;
@@ -86,7 +127,7 @@ export type EvaluateGraphOptions = {
   onNodeBlocked?: (event: {
     runId: string;
     node: AiNode;
-    reason: 'missing_inputs' | 'flow_control' | 'error';
+    reason: 'missing_inputs' | 'flow_control' | 'validation' | 'error';
     status?: 'blocked' | 'waiting_callback';
     waitingOnPorts?: string[];
     waitingOnDetails?: Array<Record<string, unknown>>;
@@ -116,6 +157,22 @@ export type EvaluateGraphOptions = {
     nodeId: string;
     message: string;
     options?: ToastOptions;
+  }) => Promise<void> | void;
+  validationMiddleware?: RuntimeValidationMiddleware;
+  onRuntimeValidation?: (event: {
+    runId: string;
+    runStartedAt: string;
+    iteration: number;
+    stage: RuntimeValidationStage;
+    decision: Exclude<RuntimeValidationDecision, 'pass'>;
+    node: AiNode | null;
+    nodeInputs?: RuntimePortValues;
+    nodeOutputs?: RuntimePortValues;
+    message: string;
+    issues: RuntimeValidationIssue[];
+    runtimeStrategy?: NodeRuntimeResolutionStrategy;
+    runtimeResolutionSource?: NodeRuntimeResolutionSource;
+    runtimeCodeObjectId?: string | null;
   }) => Promise<void> | void;
   profile?: RuntimeProfileOptions | undefined;
   abortSignal?: AbortSignal | undefined;

@@ -162,6 +162,9 @@ export const aiPathRunEnqueueResponseSchema = z
 
 export type AiPathRunEnqueueResponse = z.infer<typeof aiPathRunEnqueueResponseSchema>;
 
+export const AI_PATH_RUN_ENQUEUED_EVENT_NAME = 'ai-path-run-enqueued';
+export const AI_PATH_RUN_QUEUE_CHANNEL = 'ai-path-queue';
+
 export const aiPathRunEnqueuedEventSchema = z.object({
   type: z.literal('run-enqueued').optional().default('run-enqueued'),
   runId: nonEmptyTrimmedStringSchema,

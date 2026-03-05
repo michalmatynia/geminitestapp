@@ -2,7 +2,10 @@ import { Plus, Pin, Archive, ChevronLeft, ChevronRight, FileText, Palette } from
 import React, { useMemo } from 'react';
 
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
-import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import {
+  useNotesAppActions,
+  useNotesAppState,
+} from '@/features/notesapp/hooks/NotesAppContext';
 import type { NoteWithRelations, ThemeRecord } from '@/shared/contracts/notes';
 import type { PickerGroup, PickerOption } from '@/shared/contracts/ui';
 import { Button, EmptyState, Pagination, DocumentSearchPage } from '@/shared/ui';
@@ -15,7 +18,6 @@ import { buildBreadcrumbPath } from '../utils';
 type BreadcrumbItem = { id: string | null; name: string; isNote?: boolean };
 
 export function NoteListView(): React.JSX.Element {
-  const notesAppContext = useNotesAppContext();
   const {
     settings,
     filters,
@@ -28,14 +30,16 @@ export function NoteListView(): React.JSX.Element {
     totalPages,
     noteLayoutClassName,
     selectedFolderThemeId,
+    isFolderTreeCollapsed,
+  } = useNotesAppState();
+  const {
     handleThemeChange,
     setSelectedFolderId,
     setSelectedNote,
     setIsEditing,
     setIsCreating,
-    isFolderTreeCollapsed,
     setIsFolderTreeCollapsed,
-  } = notesAppContext;
+  } = useNotesAppActions();
 
   const {
     page,

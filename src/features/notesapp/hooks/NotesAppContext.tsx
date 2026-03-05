@@ -2,7 +2,10 @@
 
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 
-import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
+import {
+  useNoteSettingsActions,
+  useNoteSettingsState,
+} from '@/features/notesapp/hooks/NoteSettingsContext';
 import {
   useNoteData,
   useUpdateNoteMutation,
@@ -30,10 +33,41 @@ import { useToast } from '@/shared/ui';
 import { ConfirmModal, PromptModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-const NotesAppContext = createContext<NotesAppContextValue | null>(null);
+type NotesAppActionKey =
+  | 'updateSettings'
+  | 'setSelectedNote'
+  | 'setIsEditing'
+  | 'setIsCreating'
+  | 'setIsFolderTreeCollapsed'
+  | 'setDraggedNoteId'
+  | 'handleThemeChange'
+  | 'fetchTags'
+  | 'setSelectedFolderId'
+  | 'handleSelectNoteFromTree'
+  | 'handleToggleFavorite'
+  | 'handleDeleteNote'
+  | 'handleUpdateSuccess'
+  | 'handleCreateSuccess'
+  | 'handleUnlinkRelatedNote'
+  | 'handleFilterByTag'
+  | 'setConfirmation'
+  | 'confirmAction'
+  | 'setPrompt'
+  | 'promptAction'
+  | 'operations'
+  | 'handleUndoFolderTree'
+  | 'handleUndoAtIndex'
+  | 'fetchFolderTree';
+
+export type NotesAppActionsValue = Pick<NotesAppContextValue, NotesAppActionKey>;
+export type NotesAppStateValue = Omit<NotesAppContextValue, NotesAppActionKey>;
+
+const NotesAppStateContext = createContext<NotesAppStateValue | null>(null);
+const NotesAppActionsContext = createContext<NotesAppActionsValue | null>(null);
 
 export function NotesAppProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
-  const { settings, updateSettings } = useNoteSettings();
+  const { settings } = useNoteSettingsState();
+  const { updateSettings } = useNoteSettingsActions();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -457,27 +491,25 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
     [undoStack, formatUndoLabel]
   );
 
-  const contextValue: NotesAppContextValue = useMemo(
+  const fetchTagsAction = useCallback((): void => {
+    void fetchTags();
+  }, [fetchTags]);
+
+  const stateValue: NotesAppStateValue = useMemo(
     () => ({
       settings,
-      updateSettings,
       filters,
       folderTree,
       tags,
       themes,
       loading,
       selectedNote,
-      setSelectedNote,
       selectedFolderId: settings.selectedFolderId ?? null,
       selectedNotebookId: settings.selectedNotebookId ?? null,
       isEditing,
-      setIsEditing,
       isCreating,
-      setIsCreating,
       isFolderTreeCollapsed,
-      setIsFolderTreeCollapsed,
       draggedNoteId,
-      setDraggedNoteId,
       sortedNotes,
       pagedNotes,
       totalPages,
@@ -487,10 +519,49 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
       selectedFolderTheme: themeLogic.selectedFolderTheme,
       selectedNoteTheme: themeLogic.selectedNoteTheme,
       getThemeForNote: themeLogic.getThemeForNote,
+      confirmation,
+      prompt,
+      undoStack,
+      undoHistory,
+    }),
+    [
+      settings,
+      filters,
+      folderTree,
+      tags,
+      themes,
+      loading,
+      selectedNote,
+      isEditing,
+      isCreating,
+      isFolderTreeCollapsed,
+      draggedNoteId,
+      sortedNotes,
+      pagedNotes,
+      totalPages,
+      noteLayoutClassName,
+      availableTagsInScope,
+      themeLogic.selectedFolderThemeId,
+      themeLogic.selectedFolderTheme,
+      themeLogic.selectedNoteTheme,
+      themeLogic.getThemeForNote,
+      confirmation,
+      prompt,
+      undoStack,
+      undoHistory,
+    ]
+  );
+
+  const actionsValue: NotesAppActionsValue = useMemo(
+    () => ({
+      updateSettings,
+      setSelectedNote,
+      setIsEditing,
+      setIsCreating,
+      setIsFolderTreeCollapsed,
+      setDraggedNoteId,
       handleThemeChange: themeLogic.handleThemeChange,
-      fetchTags: () => {
-        void fetchTags();
-      },
+      fetchTags: fetchTagsAction,
       setSelectedFolderId,
       handleSelectNoteFromTree,
       handleToggleFavorite,
@@ -499,16 +570,12 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
       handleCreateSuccess,
       handleUnlinkRelatedNote,
       handleFilterByTag,
-      confirmation,
       setConfirmation,
       confirmAction,
-      prompt,
       setPrompt,
       promptAction,
 
       operations,
-      undoStack,
-      undoHistory,
       handleUndoFolderTree,
       handleUndoAtIndex,
       fetchFolderTree,
@@ -531,8 +598,8 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
       totalPages,
       noteLayoutClassName,
       availableTagsInScope,
-      themeLogic,
-      fetchTags,
+      themeLogic.handleThemeChange,
+      fetchTagsAction,
       setSelectedFolderId,
       handleSelectNoteFromTree,
       handleToggleFavorite,
@@ -541,13 +608,11 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
       handleCreateSuccess,
       handleUnlinkRelatedNote,
       handleFilterByTag,
-      confirmation,
+      setConfirmation,
       confirmAction,
-      prompt,
+      setPrompt,
       promptAction,
       operations,
-      undoStack,
-      undoHistory,
       handleUndoFolderTree,
       handleUndoAtIndex,
       fetchFolderTree,
@@ -555,46 +620,56 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
   );
 
   return (
-    <NotesAppContext.Provider value={contextValue}>
-      {children}
-      <ConfirmModal
-        isOpen={Boolean(confirmation)}
-        onClose={() => setConfirmation(null)}
-        title={confirmation?.title ?? ''}
-        message={confirmation?.message ?? ''}
-        confirmText={confirmation?.confirmText ?? 'Confirm'}
-        isDangerous={confirmation?.isDangerous ?? false}
-        onConfirm={async () => {
-          if (confirmation?.onConfirm) {
-            await confirmation.onConfirm();
-          }
-          setConfirmation(null);
-        }}
-      />
-      <PromptModal
-        open={Boolean(prompt)}
-        onClose={() => setPrompt(null)}
-        title={prompt?.title ?? ''}
-        message={prompt?.message ?? ''}
-        label={prompt?.label ?? ''}
-        defaultValue={prompt?.defaultValue ?? ''}
-        placeholder={prompt?.placeholder ?? ''}
-        required={prompt?.required ?? false}
-        onConfirm={async (value) => {
-          if (prompt?.onConfirm) {
-            await prompt.onConfirm(value);
-          }
-          setPrompt(null);
-        }}
-      />
-    </NotesAppContext.Provider>
+    <NotesAppStateContext.Provider value={stateValue}>
+      <NotesAppActionsContext.Provider value={actionsValue}>
+        {children}
+        <ConfirmModal
+          isOpen={Boolean(confirmation)}
+          onClose={() => setConfirmation(null)}
+          title={confirmation?.title ?? ''}
+          message={confirmation?.message ?? ''}
+          confirmText={confirmation?.confirmText ?? 'Confirm'}
+          isDangerous={confirmation?.isDangerous ?? false}
+          onConfirm={async () => {
+            if (confirmation?.onConfirm) {
+              await confirmation.onConfirm();
+            }
+            setConfirmation(null);
+          }}
+        />
+        <PromptModal
+          open={Boolean(prompt)}
+          onClose={() => setPrompt(null)}
+          title={prompt?.title ?? ''}
+          message={prompt?.message ?? ''}
+          label={prompt?.label ?? ''}
+          defaultValue={prompt?.defaultValue ?? ''}
+          placeholder={prompt?.placeholder ?? ''}
+          required={prompt?.required ?? false}
+          onConfirm={async (value) => {
+            if (prompt?.onConfirm) {
+              await prompt.onConfirm(value);
+            }
+            setPrompt(null);
+          }}
+        />
+      </NotesAppActionsContext.Provider>
+    </NotesAppStateContext.Provider>
   );
 }
 
-export function useNotesAppContext(): NotesAppContextValue {
-  const context = useContext(NotesAppContext);
+export function useNotesAppState(): NotesAppStateValue {
+  const context = useContext(NotesAppStateContext);
   if (!context) {
-    throw internalError('useNotesAppContext must be used within NotesAppProvider');
+    throw internalError('useNotesAppState must be used within NotesAppProvider');
+  }
+  return context;
+}
+
+export function useNotesAppActions(): NotesAppActionsValue {
+  const context = useContext(NotesAppActionsContext);
+  if (!context) {
+    throw internalError('useNotesAppActions must be used within NotesAppProvider');
   }
   return context;
 }

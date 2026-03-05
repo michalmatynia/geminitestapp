@@ -2,14 +2,18 @@
 
 import React, { useMemo } from 'react';
 
-import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import {
+  useNotesAppActions,
+  useNotesAppState,
+} from '@/features/notesapp/hooks/NotesAppContext';
 import { sanitizeHtml } from '@/shared/utils';
 import { useToast } from '@/shared/ui';
 import { renderMarkdownToHtml } from '../../utils';
 import { NoteDetailRelatedNotes } from './NoteDetailRelatedNotes';
 
 export function NoteDetailPreview(): React.JSX.Element | null {
-  const { selectedNote, setIsEditing, selectedNoteTheme } = useNotesAppContext();
+  const { selectedNote, selectedNoteTheme } = useNotesAppState();
+  const { setIsEditing } = useNotesAppActions();
 
   if (!selectedNote) return null;
 

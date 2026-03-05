@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v3",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "nodeType": "string_mutator",
+  "title": "String Mutator",
+  "runtimeKernel": {
+    "strategy": "code_object_v3",
+    "executionAdapter": "legacy_handler_bridge",
+    "legacyHandlerKey": "string_mutator",
+    "codeObjectId": "ai-paths.node-code-object.string_mutator.v3"
+  },
+  "runtimeSemantics": {
+    "processing": "pulse_node_only",
+    "waiting": "freeze_consumed_inputs_and_outputs",
+    "success": "animate_outgoing_on_emit",
+    "error": "animate_error_routes_on_emit"
+  },
+  "ports": {
+    "inputs": [
+      "value",
+      "prompt",
+      "result"
+    ],
+    "outputs": [
+      "value"
+    ]
+  },
+  "copyPaste": {
+    "fullNode": {
+      "id": "node_string_mutator_example",
+      "type": "string_mutator",
+      "title": "String Mutator",
+      "description": "Transform text with chained string operations.",
+      "position": {
+        "x": 1020,
+        "y": 100
+      },
+      "inputs": [
+        "value",
+        "prompt",
+        "result"
+      ],
+      "outputs": [
+        "value"
+      ],
+      "config": {
+        "stringMutator": {
+          "operations": [
+            {
+              "type": "replace",
+              "search": "_",
+              "replace": "-",
+              "matchMode": "all",
+              "useRegex": false
+            },
+            {
+              "type": "append",
+              "position": "suffix",
+              "value": "-portable"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "id": "node_obj_string_mutator_portable_v3",
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "a95b3ffff43ce36ac013b72a1ca98a9e0ab14d1d94966633cb67ba87c9c82098"
+}

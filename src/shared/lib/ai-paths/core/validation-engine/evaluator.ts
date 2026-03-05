@@ -3,6 +3,7 @@ import type {
   AiPathsValidationCondition,
   AiPathsValidationConfig,
   AiPathsValidationRule,
+  AiPathsValidationStage,
   Edge,
   AiPathsValidationFinding,
   AiPathsValidationRecommendation,
@@ -497,11 +498,38 @@ const shouldEvaluateRuleAtRuntime = (rule: AiPathsValidationRule): boolean => {
   return true;
 };
 
-export const evaluateAiPathsValidationPreflight = ({
+const DEFAULT_STAGE_WHEN_UNSPECIFIED: AiPathsValidationStage = 'graph_parse';
+
+export type EvaluateAiPathsValidationAtStageInput = EvaluateAiPathsValidationInput & {
+  stage: AiPathsValidationStage;
+  node?: AiNode | null | undefined;
+};
+
+const isNodeStage = (stage: AiPathsValidationStage | undefined): boolean =>
+  stage === 'node_pre_execute' || stage === 'node_post_execute';
+
+export const doesAiPathsValidationRuleApplyToStage = (
+  rule: AiPathsValidationRule,
+  stage: AiPathsValidationStage | undefined
+): boolean => {
+  if (!stage) return true;
+  if (!Array.isArray(rule.appliesToStages) || rule.appliesToStages.length === 0) {
+    return stage === DEFAULT_STAGE_WHEN_UNSPECIFIED;
+  }
+  return rule.appliesToStages.includes(stage);
+};
+
+const evaluateAiPathsValidation = ({
   nodes,
   edges,
   config,
-}: EvaluateAiPathsValidationInput): AiPathsValidationReport => {
+  stage,
+  node,
+}: EvaluateAiPathsValidationInput & {
+  stage?: AiPathsValidationStage | undefined;
+  node?: AiNode | null | undefined;
+}): AiPathsValidationReport => {
+  const targetNode = node ?? null;
   const normalizedConfig = normalizeAiPathsValidationConfig(config);
   const policy = normalizedConfig.policy ?? 'block_below_threshold';
   const baseScore =
@@ -545,7 +573,10 @@ export const evaluateAiPathsValidationPreflight = ({
   const appliedRuleIds = new Set<string>();
   const skippedRuleIds = new Set<string>();
   const orderedRules = (normalizedConfig.rules ?? [])
-    .filter((rule: AiPathsValidationRule): boolean => shouldEvaluateRuleAtRuntime(rule))
+    .filter(
+      (rule: AiPathsValidationRule): boolean =>
+        shouldEvaluateRuleAtRuntime(rule) && doesAiPathsValidationRuleApplyToStage(rule, stage)
+    )
     .slice()
     .sort((a: AiPathsValidationRule, b: AiPathsValidationRule): number => {
       const left = typeof a.sequence === 'number' ? a.sequence : 0;
@@ -554,7 +585,10 @@ export const evaluateAiPathsValidationPreflight = ({
       return a.id.localeCompare(b.id);
     });
   (normalizedConfig.rules ?? []).forEach((rule: AiPathsValidationRule): void => {
-    if (!shouldEvaluateRuleAtRuntime(rule)) {
+    if (
+      !shouldEvaluateRuleAtRuntime(rule) ||
+      !doesAiPathsValidationRuleApplyToStage(rule, stage)
+    ) {
       skippedRuleIds.add(rule.id);
     }
   });
@@ -610,6 +644,7 @@ export const evaluateAiPathsValidationPreflight = ({
       ruleTitle: rule.title,
       severity,
       module: rule.module,
+      ...(stage ? { stage } : {}),
       nodeId: node?.id ?? null,
       nodeTitle: node?.title ?? null,
       message: rule.description?.trim() || `${rule.title} validation failed.`,
@@ -623,11 +658,19 @@ export const evaluateAiPathsValidationPreflight = ({
 
   orderedRules.forEach((rule: AiPathsValidationRule): void => {
     if (rule.module === 'graph') {
+      if (targetNode || isNodeStage(stage)) {
+        skippedRuleIds.add(rule.id);
+        return;
+      }
       evaluateAndCollectFinding(rule, null);
       return;
     }
 
-    const matchingNodes = nodes.filter((node: AiNode): boolean => matchesRuleNode(rule, node));
+    const matchingNodes = targetNode
+      ? matchesRuleNode(rule, targetNode)
+        ? [targetNode]
+        : []
+      : nodes.filter((candidate: AiNode): boolean => matchesRuleNode(rule, candidate));
     if (matchingNodes.length === 0) {
       skippedRuleIds.add(rule.id);
       return;
@@ -657,7 +700,7 @@ export const evaluateAiPathsValidationPreflight = ({
       (
         finding: AiPathsValidationFinding & { recommendation: string }
       ): AiPathsValidationRecommendation => ({
-        id: `${finding.ruleId}:${finding.nodeId ?? 'graph'}:recommendation`,
+        id: `${finding.ruleId}:${finding.nodeId ?? 'graph'}:${finding.stage ?? 'all'}:recommendation`,
         ruleId: finding.ruleId,
         module: finding.module,
         severity: finding.severity,
@@ -703,3 +746,29 @@ export const evaluateAiPathsValidationPreflight = ({
     skippedRuleIds: Array.from(skippedRuleIds),
   };
 };
+
+export const evaluateAiPathsValidationPreflight = ({
+  nodes,
+  edges,
+  config,
+}: EvaluateAiPathsValidationInput): AiPathsValidationReport =>
+  evaluateAiPathsValidation({
+    nodes,
+    edges,
+    config,
+  });
+
+export const evaluateAiPathsValidationAtStage = ({
+  nodes,
+  edges,
+  config,
+  stage,
+  node,
+}: EvaluateAiPathsValidationAtStageInput): AiPathsValidationReport =>
+  evaluateAiPathsValidation({
+    nodes,
+    edges,
+    config,
+    stage,
+    ...(node ? { node } : {}),
+  });

@@ -2,7 +2,10 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiNode, CaseResolverNodeFileSnapshot } from '@/shared/contracts/case-resolver';
-import type { CaseResolverPageContextValue } from '@/features/case-resolver/context/CaseResolverPageContext';
+import type {
+  CaseResolverPageActionsValue,
+  CaseResolverPageStateValue,
+} from '@/features/case-resolver/context/CaseResolverPageContext';
 import { parseCaseResolverWorkspace } from '@/features/case-resolver/settings';
 import { useNodeFileWorkspaceState } from '@/features/case-resolver/hooks/useNodeFileWorkspaceState';
 
@@ -28,10 +31,12 @@ vi.mock('@/features/case-resolver/workspace-persistence', () => ({
 }));
 
 vi.mock('@/features/case-resolver/context/CaseResolverPageContext', () => ({
-  useCaseResolverPageContext: (): Partial<CaseResolverPageContextValue> => ({
+  useCaseResolverPageState: (): Partial<CaseResolverPageStateValue> => ({
     workspace: parseCaseResolverWorkspace(null),
     activeCaseId: null,
     caseResolverIdentifiers: [],
+  }),
+  useCaseResolverPageActions: (): Partial<CaseResolverPageActionsValue> => ({
     onSelectFile: vi.fn(),
   }),
 }));

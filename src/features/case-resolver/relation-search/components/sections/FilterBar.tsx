@@ -3,7 +3,10 @@
 import React, { useMemo } from 'react';
 import { X } from 'lucide-react';
 import { Input, SelectSimple, Button } from '@/shared/ui';
-import { useDocumentRelationSearchContext } from '../../context/DocumentRelationSearchContext';
+import {
+  useDocumentRelationSearchActionsContext,
+  useDocumentRelationSearchStateContext,
+} from '../../context/DocumentRelationSearchContext';
 import { TAG_NONE, CAT_NONE } from './document-relation-search-utils';
 
 export function FilterBar(): React.JSX.Element {
@@ -11,16 +14,13 @@ export function FilterBar(): React.JSX.Element {
     caseTagOptions,
     caseCategoryOptions,
     dateFrom,
-    setDateFrom,
     dateTo,
-    setDateTo,
     tagIdFilter,
-    setTagIdFilter,
     categoryIdFilter,
-    setCategoryIdFilter,
     filtersActiveCount,
-    resetFilters,
-  } = useDocumentRelationSearchContext();
+  } = useDocumentRelationSearchStateContext();
+  const { setDateFrom, setDateTo, setTagIdFilter, setCategoryIdFilter, resetFilters } =
+    useDocumentRelationSearchActionsContext();
 
   const tagOpts = useMemo(
     () => [{ value: TAG_NONE, label: 'Any tag' }, ...caseTagOptions],

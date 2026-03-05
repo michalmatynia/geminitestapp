@@ -249,8 +249,22 @@ describe('portable AI-path engine scaffold signing policy, limits, and client ru
     });
 
     expect(mockedEvaluateGraphClient).toHaveBeenCalledTimes(1);
+    const call = mockedEvaluateGraphClient.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(call?.['validationMiddleware']).toEqual(expect.any(Function));
     expect(result.resolved.pathConfig.id).toBe(pathConfig.id);
     expect(result.runtimeState.status).toBe('completed');
+  });
+
+  it('allows disabling runtime validation middleware for client runs', async () => {
+    const pathConfig = createDefaultPathConfig('path_portable_client_run_no_runtime_validation');
+    await runPortablePathClient(pathConfig, {
+      validateBeforeRun: false,
+      runtimeValidationEnabled: false,
+    });
+
+    expect(mockedEvaluateGraphClient).toHaveBeenCalledTimes(1);
+    const call = mockedEvaluateGraphClient.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(Object.prototype.hasOwnProperty.call(call, 'validationMiddleware')).toBe(false);
   });
 
   it('blocks client execution on validation failures', async () => {

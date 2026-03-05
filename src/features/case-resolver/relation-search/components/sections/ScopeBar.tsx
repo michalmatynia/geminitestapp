@@ -3,7 +3,10 @@
 import React from 'react';
 import { AlignJustify, List, ListPlus, SlidersHorizontal } from 'lucide-react';
 import { SelectSimple, Tooltip, SegmentedControl, Chip } from '@/shared/ui';
-import { useDocumentRelationSearchContext } from '../../context/DocumentRelationSearchContext';
+import {
+  useDocumentRelationSearchActionsContext,
+  useDocumentRelationSearchStateContext,
+} from '../../context/DocumentRelationSearchContext';
 import {
   type DocumentRelationFileTypeFilter,
   type DocumentRelationSortMode,
@@ -28,17 +31,19 @@ export function ScopeBar(): React.JSX.Element {
   const { showFileTypeFilter, showSortControl } = useDocumentRelationSearchUiContext();
   const {
     documentSearchScope,
-    setDocumentSearchScope,
     fileTypeFilter,
-    setFileTypeFilter,
     sortMode,
-    setSortMode,
     resultHeight,
-    setResultHeight,
     filtersActiveCount,
     showFiltersBar,
+  } = useDocumentRelationSearchStateContext();
+  const {
+    setDocumentSearchScope,
+    setFileTypeFilter,
+    setSortMode,
+    setResultHeight,
     setShowFiltersBar,
-  } = useDocumentRelationSearchContext();
+  } = useDocumentRelationSearchActionsContext();
 
   return (
     <div className='flex flex-wrap items-center gap-2 border-b border-border/60 bg-card/30 px-3 py-2'>

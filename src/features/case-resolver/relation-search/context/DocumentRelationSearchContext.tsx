@@ -15,7 +15,7 @@ import type {
   NodeFileDocumentSearchRow,
   NodeFileDocumentSearchScope,
 } from '../../components/CaseResolverNodeFileUtils';
-import { useCaseResolverViewContext } from '../../components/CaseResolverViewContext';
+import { useCaseResolverViewStateContext } from '../../components/CaseResolverViewContext';
 import { useDocumentRelationSearch } from '../hooks/useDocumentRelationSearch';
 import type { RelationTreeLookup } from '../types';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
@@ -81,14 +81,59 @@ interface DocumentRelationSearchContextType {
   relationTreeLookup: RelationTreeLookup;
 }
 
-const DocumentRelationSearchContext = createContext<DocumentRelationSearchContextType | null>(null);
 export type DocumentRelationSearchContextValue = DocumentRelationSearchContextType;
 
-export function useDocumentRelationSearchContext(): DocumentRelationSearchContextType {
-  const context = useContext(DocumentRelationSearchContext);
+type DocumentRelationSearchActionKey =
+  | 'setDocumentSearchScope'
+  | 'setDocumentSearchQuery'
+  | 'setFileTypeFilter'
+  | 'setSortMode'
+  | 'setDateFrom'
+  | 'setDateTo'
+  | 'setTagIdFilter'
+  | 'setCategoryIdFilter'
+  | 'resetFilters'
+  | 'setResultHeight'
+  | 'setShowFiltersBar'
+  | 'setSelectedFileIds'
+  | 'setPreviewFileId'
+  | 'onLinkFile'
+  | 'handleLinkAll'
+  | 'selectAllVisible'
+  | 'clearSelection'
+  | 'toggleFileSelection';
+
+export type DocumentRelationSearchActionsValue = Pick<
+  DocumentRelationSearchContextValue,
+  DocumentRelationSearchActionKey
+>;
+export type DocumentRelationSearchStateValue = Omit<
+  DocumentRelationSearchContextValue,
+  DocumentRelationSearchActionKey
+>;
+
+const DocumentRelationSearchStateContext = createContext<DocumentRelationSearchStateValue | null>(
+  null
+);
+const DocumentRelationSearchActionsContext = createContext<DocumentRelationSearchActionsValue | null>(
+  null
+);
+
+export function useDocumentRelationSearchStateContext(): DocumentRelationSearchStateValue {
+  const context = useContext(DocumentRelationSearchStateContext);
   if (!context) {
     throw new Error(
-      'useDocumentRelationSearchContext must be used within a DocumentRelationSearchProvider'
+      'useDocumentRelationSearchStateContext must be used within a DocumentRelationSearchProvider'
+    );
+  }
+  return context;
+}
+
+export function useDocumentRelationSearchActionsContext(): DocumentRelationSearchActionsValue {
+  const context = useContext(DocumentRelationSearchActionsContext);
+  if (!context) {
+    throw new Error(
+      'useDocumentRelationSearchActionsContext must be used within a DocumentRelationSearchProvider'
     );
   }
   return context;
@@ -113,7 +158,7 @@ export function DocumentRelationSearchProvider({
   defaultSort,
   defaultFileType,
 }: DocumentRelationSearchProviderProps): React.JSX.Element {
-  const { state } = useCaseResolverViewContext();
+  const { state } = useCaseResolverViewStateContext();
   const { workspace, caseResolverIdentifiers, caseResolverTags, caseResolverCategories } = state;
   const draftFile = useMemo(
     () => workspace.files.find((file) => file.id === draftFileId) ?? null,
@@ -143,13 +188,26 @@ export function DocumentRelationSearchProvider({
 
   const {
     documentSearchScope,
+    setDocumentSearchScope,
     visibleDocumentSearchRows,
+    documentSearchRows,
     documentSearchQuery,
+    setDocumentSearchQuery,
     dateFrom,
+    setDateFrom,
     dateTo,
+    setDateTo,
     tagIdFilter,
+    setTagIdFilter,
     categoryIdFilter,
+    setCategoryIdFilter,
     fileTypeFilter,
+    setFileTypeFilter,
+    sortMode,
+    setSortMode,
+    resetFilters,
+    relationTreeNodes,
+    relationTreeLookup,
   } = searchProps;
 
   // Reset selection when scope or filters change
@@ -233,62 +291,111 @@ export function DocumentRelationSearchProvider({
   );
   const previewFile = previewRow?.file ?? null;
 
-  const value = useMemo(
+  const stateValue = useMemo<DocumentRelationSearchStateValue>(
     () => ({
-      ...searchProps,
+      documentSearchScope,
+      documentSearchQuery,
+      fileTypeFilter,
+      sortMode,
+      dateFrom,
+      dateTo,
+      tagIdFilter,
+      categoryIdFilter,
       resultHeight,
-      setResultHeight,
       showFiltersBar,
-      setShowFiltersBar,
       selectedFileIds,
-      setSelectedFileIds,
       previewFileId,
-      setPreviewFileId,
-      onLinkFile,
       isLocked,
       caseTagOptions,
       caseCategoryOptions,
+      documentSearchRows,
+      visibleDocumentSearchRows,
       currentDocRows,
       filtersActiveCount,
-      selectAllVisible,
-      clearSelection,
-      toggleFileSelection,
-      handleLinkAll,
       allVisibleSelected,
       someVisibleSelected,
       previewRow,
       previewFile,
-      relationTreeNodes: searchProps.relationTreeNodes,
-      relationTreeLookup: searchProps.relationTreeLookup,
+      relationTreeNodes,
+      relationTreeLookup,
     }),
     [
-      searchProps,
+      documentSearchScope,
+      documentSearchQuery,
+      fileTypeFilter,
+      sortMode,
+      dateFrom,
+      dateTo,
+      tagIdFilter,
+      categoryIdFilter,
       resultHeight,
       showFiltersBar,
       selectedFileIds,
       previewFileId,
-      onLinkFile,
       isLocked,
       caseTagOptions,
       caseCategoryOptions,
+      documentSearchRows,
+      visibleDocumentSearchRows,
       currentDocRows,
       filtersActiveCount,
-      selectAllVisible,
-      clearSelection,
-      toggleFileSelection,
-      handleLinkAll,
       allVisibleSelected,
       someVisibleSelected,
       previewRow,
       previewFile,
-      searchProps.relationTreeNodes,
-      searchProps.relationTreeLookup,
+      relationTreeNodes,
+      relationTreeLookup,
+    ]
+  );
+
+  const actionsValue = useMemo<DocumentRelationSearchActionsValue>(
+    () => ({
+      setDocumentSearchScope,
+      setDocumentSearchQuery,
+      setFileTypeFilter,
+      setSortMode,
+      setDateFrom,
+      setDateTo,
+      setTagIdFilter,
+      setCategoryIdFilter,
+      resetFilters,
+      setResultHeight,
+      setShowFiltersBar,
+      setSelectedFileIds,
+      setPreviewFileId,
+      onLinkFile,
+      handleLinkAll,
+      selectAllVisible,
+      clearSelection,
+      toggleFileSelection,
+    }),
+    [
+      setDocumentSearchScope,
+      setDocumentSearchQuery,
+      setFileTypeFilter,
+      setSortMode,
+      setDateFrom,
+      setDateTo,
+      setTagIdFilter,
+      setCategoryIdFilter,
+      resetFilters,
+      setResultHeight,
+      setShowFiltersBar,
+      setSelectedFileIds,
+      setPreviewFileId,
+      onLinkFile,
+      handleLinkAll,
+      selectAllVisible,
+      clearSelection,
+      toggleFileSelection,
     ]
   );
 
   return (
-    <DocumentRelationSearchContext.Provider value={value}>
-      {children}
-    </DocumentRelationSearchContext.Provider>
+    <DocumentRelationSearchStateContext.Provider value={stateValue}>
+      <DocumentRelationSearchActionsContext.Provider value={actionsValue}>
+        {children}
+      </DocumentRelationSearchActionsContext.Provider>
+    </DocumentRelationSearchStateContext.Provider>
   );
 }

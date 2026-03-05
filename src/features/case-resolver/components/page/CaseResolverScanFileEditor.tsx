@@ -32,7 +32,10 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/shared/ui';
-import { useCaseResolverViewContext } from '../CaseResolverViewContext';
+import {
+  useCaseResolverViewActionsContext,
+  useCaseResolverViewStateContext,
+} from '../CaseResolverViewContext';
 import { CaseResolverPartySelectField } from './CaseResolverPartySelectField';
 import { DocumentRelationSearchPanel } from '../../relation-search';
 import type { EditorDetailsTab } from './CaseResolverDocumentEditor';
@@ -94,31 +97,33 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
   const {
     state,
     editorDetailsTab,
+    isScanDraftDropActive,
+    scanDraftUploadInputRef,
+    isEditorDraftDirty,
+    caseTagOptions,
+    caseIdentifierOptions,
+    caseCategoryOptions,
+    partyOptions,
+  } = useCaseResolverViewStateContext();
+  const {
     setEditorDetailsTab,
     handleSaveFileEditor,
     handleDiscardFileEditorDraft,
     handleTriggerScanDraftUpload,
     handleDeleteScanDraftSlot,
     handleRunScanDraftOcr,
-    isScanDraftDropActive,
     handleScanDraftDragEnter,
     handleScanDraftDragOver,
     handleScanDraftDragLeave,
     handleScanDraftDrop,
     handleScanDraftUploadInputChange,
-    scanDraftUploadInputRef,
     handleUpdateDraftDocumentContent,
     updateEditingDocumentDraft,
-    isEditorDraftDirty,
     handleCopyDraftFileId,
     handleLinkRelatedFiles,
     handleUnlinkRelatedFile,
     handleUseHistoryEntry,
-    caseTagOptions,
-    caseIdentifierOptions,
-    caseCategoryOptions,
-    partyOptions,
-  } = useCaseResolverViewContext();
+  } = useCaseResolverViewActionsContext();
 
   const { workspace, editingDocumentDraft, isUploadingScanDraftFiles } = state;
 

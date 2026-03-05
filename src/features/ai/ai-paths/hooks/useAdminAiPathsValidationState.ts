@@ -7,6 +7,7 @@ import { useAiPathsSettingsQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQu
 import type {
   AiPathsValidationConfig,
   AiPathsValidationRule,
+  AiPathsValidationStage,
   PathConfig,
   PathMeta,
 } from '@/shared/lib/ai-paths';
@@ -41,6 +42,17 @@ import {
   type CentralDocsSnapshotResponse,
   type CandidateChangeKind,
 } from '../pages/AdminAiPathsValidationUtils';
+
+const VALIDATION_STAGE_ORDER: AiPathsValidationStage[] = [
+  'graph_parse',
+  'graph_bind',
+  'node_pre_execute',
+  'node_post_execute',
+];
+
+const VALIDATION_STAGE_RANK = new Map<AiPathsValidationStage, number>(
+  VALIDATION_STAGE_ORDER.map((stage, index) => [stage, index])
+);
 
 export function useAdminAiPathsValidationState() {
   const searchParams = useSearchParams();
@@ -449,6 +461,32 @@ export function useAdminAiPathsValidationState() {
     [setDraftRules, validationDraft.rules]
   );
 
+  const handleRuleStageToggle = useCallback(
+    (ruleId: string, stage: AiPathsValidationStage, checked: boolean): void => {
+      const nextRules = (validationDraft.rules ?? []).map((rule: AiPathsValidationRule) => {
+        if (rule.id !== ruleId) return rule;
+        const currentStages = Array.isArray(rule.appliesToStages) ? [...rule.appliesToStages] : [];
+        const stageSet = new Set<AiPathsValidationStage>(currentStages);
+        if (checked) {
+          stageSet.add(stage);
+        } else {
+          stageSet.delete(stage);
+        }
+        const sortedStages = Array.from(stageSet).sort((left, right) => {
+          const leftRank = VALIDATION_STAGE_RANK.get(left) ?? Number.MAX_SAFE_INTEGER;
+          const rightRank = VALIDATION_STAGE_RANK.get(right) ?? Number.MAX_SAFE_INTEGER;
+          return leftRank - rightRank;
+        });
+        return {
+          ...rule,
+          appliesToStages: sortedStages.length > 0 ? sortedStages : undefined,
+        };
+      });
+      setDraftRules(nextRules);
+    },
+    [setDraftRules, validationDraft.rules]
+  );
+
   const handleSyncFromCentralDocs = useCallback(async (): Promise<void> => {
     setSyncingCentralDocs(true);
     try {
@@ -834,6 +872,7 @@ export function useAdminAiPathsValidationState() {
     handleResetToDefaults,
     handleToggleRuleEnabled,
     handleRuleSequenceBlur,
+    handleRuleStageToggle,
     handleSyncFromCentralDocs,
     handleApproveCandidate,
     handleRejectCandidate,

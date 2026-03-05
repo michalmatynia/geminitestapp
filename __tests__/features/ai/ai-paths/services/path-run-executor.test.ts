@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import { GraphExecutionCancelled } from '@/shared/lib/ai-paths';
+import { GraphExecutionCancelled } from '@/shared/lib/ai-paths/core/runtime/engine-core';
 import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
 import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executor';
 import type {

@@ -9,7 +9,7 @@ Schema target:
 - `kind: "path_node_code_object"`
 - `runtimeKernel.strategy: "code_object_v3"`
 
-Current runtime scope is pilot-only (`constant`, `math`, `template`) and intentionally partial.
+Current runtime scope is pilot-only (`constant`, `context`, `mapper`, `math`, `mutator`, `parser`, `regex`, `string_mutator`, `template`) and intentionally partial.
 
 Runtime rollout controls:
 
@@ -32,9 +32,10 @@ Generated migration documentation:
 Scaffold contracts:
 
 - `index.scaffold.json`
-- `{constant,math,template}.scaffold.json`
+- `{constant,context,mapper,math,mutator,parser,regex,string_mutator,template}.scaffold.json`
 - `index.json` (pilot v3 object index with hashes)
 - `contracts.json` (pilot v3 contract hash catalog)
+- `parity-evidence.json` (dual-run parity evidence by node type)
 
 Regenerate migration docs:
 
@@ -57,6 +58,8 @@ npm run docs:ai-paths:node-migration:check
 ```
 
 This command validates pilot v3 contracts first (`docs:ai-paths:node-code-v3:check`) and then runs migration-doc checks.
+It also validates checklist parity readiness against `parity-evidence.json`.
+Pilot nodes without parity-evidence coverage fail the check.
 
 Validate v3 pilot contract artifacts:
 
@@ -86,6 +89,12 @@ Run pilot dual-run parity:
 
 ```bash
 npm run test:ai-paths:v3-pilot-parity
+```
+
+Run pilot parity-evidence coverage regression:
+
+```bash
+npm run test:ai-paths:node-migration-parity-evidence
 ```
 
 CI integration:

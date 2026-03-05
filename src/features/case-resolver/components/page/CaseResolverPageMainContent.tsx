@@ -4,7 +4,7 @@ import { FileText } from 'lucide-react';
 import React from 'react';
 
 import { Card, EmptyState } from '@/shared/ui';
-import { useCaseResolverViewContext } from '../CaseResolverViewContext';
+import { useCaseResolverViewStateContext } from '../CaseResolverViewContext';
 import { CaseResolverScanFileEditor } from './CaseResolverScanFileEditor';
 import { CaseResolverDocumentEditor } from './CaseResolverDocumentEditor';
 import { CaseResolverCanvasWorkspace } from '../CaseResolverCanvasWorkspace';
@@ -14,7 +14,7 @@ import { CaseResolverNodeFileWorkspace } from '../CaseResolverNodeFileWorkspace'
 import { CaseResolverRelationsWorkspace } from '../CaseResolverRelationsWorkspace';
 
 export function CaseResolverPageMainContent(): React.JSX.Element {
-  const { state, workspaceView } = useCaseResolverViewContext();
+  const { state, workspaceView } = useCaseResolverViewStateContext();
 
   const {
     workspace,

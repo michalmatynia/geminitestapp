@@ -10,6 +10,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - Readiness stage: `cataloged`
 - Readiness score: 35/100
 - Readiness blockers: `missing_v3_scaffold`, `not_in_v3_pilot`
+- Parity evidence suite IDs: `none`
 - Config field count: 17
 
 ## Node Contract Files

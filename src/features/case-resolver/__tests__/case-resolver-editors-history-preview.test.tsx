@@ -2,7 +2,11 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CaseResolverStateValue } from '@/features/case-resolver/types';
-import type { CaseResolverViewContextValue } from '@/features/case-resolver/components/CaseResolverViewContext';
+import type {
+  CaseResolverViewActionsValue,
+  CaseResolverViewContextValue,
+  CaseResolverViewStateValue,
+} from '@/features/case-resolver/components/CaseResolverViewContext';
 import type {
   CaseResolverDocumentHistoryEntry,
   CaseResolverFileEditDraft,
@@ -92,7 +96,10 @@ const buildDraft = (
 let viewContextMock: CaseResolverViewContextValue;
 
 vi.mock('@/features/case-resolver/components/CaseResolverViewContext', () => ({
-  useCaseResolverViewContext: (): CaseResolverViewContextValue => viewContextMock,
+  useCaseResolverViewStateContext: (): CaseResolverViewStateValue =>
+    viewContextMock as unknown as CaseResolverViewStateValue,
+  useCaseResolverViewActionsContext: (): CaseResolverViewActionsValue =>
+    viewContextMock as unknown as CaseResolverViewActionsValue,
 }));
 
 const createContextMock = (

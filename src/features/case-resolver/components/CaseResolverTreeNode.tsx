@@ -4,7 +4,7 @@ import React from 'react';
 import { ChevronDown, ChevronRight, Lock, Unlock, Trash2, GitBranch } from 'lucide-react';
 
 import type { FolderTreeViewportRenderNodeInput as CaseResolverTreeNodeProps } from '@/features/foldertree/v2';
-import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
+import { useCaseResolverPageActions } from '../context/CaseResolverPageContext';
 import {
   useCaseResolverFolderTreeDataContext,
   useCaseResolverFolderTreeUiContext,
@@ -66,7 +66,7 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
     onDeleteAsset,
     onToggleFolderLock,
     onDeleteFolder,
-  } = useCaseResolverPageContext();
+  } = useCaseResolverPageActions();
 
   const {
     fileLockById,

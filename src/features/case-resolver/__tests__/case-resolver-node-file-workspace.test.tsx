@@ -25,13 +25,15 @@ let workspaceStateMock: Record<string, unknown>;
 let lastUseNodeFileWorkspaceStateProps: Record<string, unknown> | null = null;
 
 vi.mock('@/features/case-resolver/context/CaseResolverPageContext', () => ({
-  useCaseResolverPageContext: () => ({
+  useCaseResolverPageState: () => ({
     selectedAsset: {
       id: 'asset-node-file',
       kind: 'node_file',
       name: 'Node File',
       textContent: 'snapshot',
     },
+  }),
+  useCaseResolverPageActions: () => ({
     onUpdateSelectedAsset: onUpdateSelectedAssetMock,
   }),
 }));

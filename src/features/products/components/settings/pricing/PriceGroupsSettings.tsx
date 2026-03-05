@@ -3,7 +3,7 @@ import React from 'react';
 import { PriceGroup } from '@/shared/contracts/products';
 import { Badge, Button, FormSection, SelectSimple, SimpleSettingsList } from '@/shared/ui';
 
-import { useProductSettingsContext } from '../ProductSettingsContext';
+import { useProductSettingsPriceGroupsContext } from '../ProductSettingsContext';
 
 export function PriceGroupsSettings(): React.JSX.Element {
   const {
@@ -15,7 +15,7 @@ export function PriceGroupsSettings(): React.JSX.Element {
     onOpenPriceGroupCreate,
     onEditPriceGroup,
     onDeletePriceGroup,
-  } = useProductSettingsContext();
+  } = useProductSettingsPriceGroupsContext();
 
   return (
     <div className='space-y-4'>

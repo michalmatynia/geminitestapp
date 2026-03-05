@@ -3,7 +3,7 @@
 import React from 'react';
 import { Pin, Star } from 'lucide-react';
 
-import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import { useNotesAppActions } from '@/features/notesapp/hooks/NotesAppContext';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { NoteWithRelations } from '@/shared/contracts/notes';
 import { Button, CopyButton, Badge } from '@/shared/ui';
@@ -27,7 +27,7 @@ export { NoteCardHeaderRuntimeContext, useNoteCardHeaderRuntime };
 
 export function NoteCardHeader(): React.JSX.Element {
   const { note } = useNoteCardHeaderRuntime();
-  const { handleToggleFavorite } = useNotesAppContext();
+  const { handleToggleFavorite } = useNotesAppActions();
 
   const isCodeNote = (note.editorType as string) === 'code';
   const onToggleFavorite = (target: NoteWithRelations): void => {

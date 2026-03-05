@@ -11,7 +11,8 @@ import type {
 } from '@/shared/contracts/case-resolver';
 import {
   DocumentRelationSearchProvider,
-  useDocumentRelationSearchContext,
+  useDocumentRelationSearchActionsContext,
+  useDocumentRelationSearchStateContext,
 } from '../context/DocumentRelationSearchContext';
 import { type NodeFileDocumentSearchScope } from '../../components/CaseResolverNodeFileUtils';
 
@@ -49,12 +50,11 @@ function DocumentRelationSearchInner(): React.JSX.Element {
     relationTreeNodes,
     relationTreeLookup,
     selectedFileIds,
-    toggleFileSelection,
-    onLinkFile,
     isLocked,
-    setPreviewFileId,
     documentSearchQuery,
-  } = useDocumentRelationSearchContext();
+  } = useDocumentRelationSearchStateContext();
+  const { toggleFileSelection, onLinkFile, setPreviewFileId } =
+    useDocumentRelationSearchActionsContext();
 
   return (
     <>

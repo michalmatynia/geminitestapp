@@ -3,22 +3,19 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import {
+  useNotesAppActions,
+  useNotesAppState,
+} from '@/features/notesapp/hooks/NotesAppContext';
 import { Button } from '@/shared/ui';
 import { buildBreadcrumbPath } from '../../utils';
 
 type BreadcrumbItem = { id: string | null; name: string; isNote?: boolean };
 
 export function NoteDetailBreadcrumbs(): React.JSX.Element | null {
-  const {
-    selectedNote,
-    folderTree,
-    isFolderTreeCollapsed,
-    setIsFolderTreeCollapsed,
-    setSelectedFolderId,
-    setSelectedNote,
-    setIsEditing,
-  } = useNotesAppContext();
+  const { selectedNote, folderTree, isFolderTreeCollapsed } = useNotesAppState();
+  const { setIsFolderTreeCollapsed, setSelectedFolderId, setSelectedNote, setIsEditing } =
+    useNotesAppActions();
 
   if (!selectedNote) return null;
 

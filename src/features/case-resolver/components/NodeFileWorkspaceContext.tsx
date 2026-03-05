@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import type {
   AiNode,
   CaseResolverNodeMeta,
@@ -94,7 +94,23 @@ export type NodeFileWorkspaceContextValue = {
   hasPendingSnapshotChanges?: boolean;
 };
 
-const NodeFileWorkspaceContext = createContext<NodeFileWorkspaceContextValue | null>(null);
+type FunctionKey<T> = {
+  [K in keyof T]-?: T[K] extends (...args: infer _Args) => infer _Return ? K : never;
+}[keyof T];
+
+type NodeFileWorkspaceActionKey = FunctionKey<NodeFileWorkspaceContextValue>;
+
+export type NodeFileWorkspaceActionsValue = Pick<
+  NodeFileWorkspaceContextValue,
+  NodeFileWorkspaceActionKey
+>;
+export type NodeFileWorkspaceStateValue = Omit<
+  NodeFileWorkspaceContextValue,
+  NodeFileWorkspaceActionKey
+>;
+
+const NodeFileWorkspaceStateContext = createContext<NodeFileWorkspaceStateValue | null>(null);
+const NodeFileWorkspaceActionsContext = createContext<NodeFileWorkspaceActionsValue | null>(null);
 
 export function NodeFileWorkspaceProvider({
   value,
@@ -103,15 +119,33 @@ export function NodeFileWorkspaceProvider({
   value: NodeFileWorkspaceContextValue;
   children: React.ReactNode;
 }): React.JSX.Element {
+  const stateValue = useMemo(() => value as NodeFileWorkspaceStateValue, [value]);
+  const actionsValue = useMemo(() => value as NodeFileWorkspaceActionsValue, [value]);
   return (
-    <NodeFileWorkspaceContext.Provider value={value}>{children}</NodeFileWorkspaceContext.Provider>
+    <NodeFileWorkspaceStateContext.Provider value={stateValue}>
+      <NodeFileWorkspaceActionsContext.Provider value={actionsValue}>
+        {children}
+      </NodeFileWorkspaceActionsContext.Provider>
+    </NodeFileWorkspaceStateContext.Provider>
   );
 }
 
-export function useNodeFileWorkspaceContext(): NodeFileWorkspaceContextValue {
-  const context = useContext(NodeFileWorkspaceContext);
+export function useNodeFileWorkspaceStateContext(): NodeFileWorkspaceStateValue {
+  const context = useContext(NodeFileWorkspaceStateContext);
   if (!context) {
-    throw new Error('useNodeFileWorkspaceContext must be used within NodeFileWorkspaceProvider');
+    throw new Error(
+      'useNodeFileWorkspaceStateContext must be used within NodeFileWorkspaceProvider'
+    );
+  }
+  return context;
+}
+
+export function useNodeFileWorkspaceActionsContext(): NodeFileWorkspaceActionsValue {
+  const context = useContext(NodeFileWorkspaceActionsContext);
+  if (!context) {
+    throw new Error(
+      'useNodeFileWorkspaceActionsContext must be used within NodeFileWorkspaceProvider'
+    );
   }
   return context;
 }

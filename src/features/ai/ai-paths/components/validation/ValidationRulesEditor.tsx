@@ -1,9 +1,16 @@
 'use client';
 
 import React from 'react';
-import { Badge, Button, Card, Input, Label, StatusBadge, Textarea } from '@/shared/ui';
+import { Badge, Button, Card, Checkbox, Input, Label, StatusBadge, Textarea } from '@/shared/ui';
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
-import { AiPathsValidationRule } from '@/shared/lib/ai-paths';
+import { AiPathsValidationRule, AiPathsValidationStage } from '@/shared/lib/ai-paths';
+
+const VALIDATION_STAGE_OPTIONS: Array<{ value: AiPathsValidationStage; label: string }> = [
+  { value: 'graph_parse', label: 'Parse' },
+  { value: 'graph_bind', label: 'Bind' },
+  { value: 'node_pre_execute', label: 'Node Pre' },
+  { value: 'node_post_execute', label: 'Node Post' },
+];
 
 export function ValidationRulesEditor(): React.JSX.Element {
   const {
@@ -14,6 +21,7 @@ export function ValidationRulesEditor(): React.JSX.Element {
     filteredRules,
     handleToggleRuleEnabled,
     handleRuleSequenceBlur,
+    handleRuleStageToggle,
   } = useAdminAiPathsValidationContext();
 
   return (
@@ -42,6 +50,10 @@ export function ValidationRulesEditor(): React.JSX.Element {
         </div>
         <div className='space-y-3'>
           {filteredRules.map((rule: AiPathsValidationRule) => {
+            const activeStages =
+              Array.isArray(rule.appliesToStages) && rule.appliesToStages.length > 0
+                ? rule.appliesToStages
+                : (['graph_parse'] satisfies AiPathsValidationStage[]);
             return (
               <Card
                 key={rule.id}
@@ -72,6 +84,34 @@ export function ValidationRulesEditor(): React.JSX.Element {
                           {type}
                         </Badge>
                       ))}
+                      {rule.appliesToStages?.map((stage: string) => (
+                        <Badge key={`${rule.id}:${stage}`} variant='outline' className='text-[10px]'>
+                          {stage}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className='mt-2 flex flex-wrap items-center gap-3'>
+                      {VALIDATION_STAGE_OPTIONS.map((option) => {
+                        const checked = activeStages.includes(option.value);
+                        const checkboxId = `${rule.id}:stage:${option.value}`;
+                        return (
+                          <label
+                            key={option.value}
+                            htmlFor={checkboxId}
+                            className='inline-flex cursor-pointer items-center gap-1 text-[10px] text-gray-400'
+                          >
+                            <Checkbox
+                              id={checkboxId}
+                              className='h-3.5 w-3.5 border-gray-500 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-black'
+                              checked={checked}
+                              onCheckedChange={(value) =>
+                                handleRuleStageToggle(rule.id, option.value, value === true)
+                              }
+                            />
+                            <span>{option.label}</span>
+                          </label>
+                        );
+                      })}
                     </div>
                   </div>
                   <div className='flex flex-col items-end gap-2'>

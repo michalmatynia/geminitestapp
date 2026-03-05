@@ -2,7 +2,10 @@
 
 import React from 'react';
 
-import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import {
+  useNotesAppActions,
+  useNotesAppState,
+} from '@/features/notesapp/hooks/NotesAppContext';
 import type { ThemeRecord, NoteWithRelations } from '@/shared/contracts/notes';
 import { cn, setNoteDragData } from '@/shared/utils';
 
@@ -36,13 +39,8 @@ type NoteCardProps = {
 };
 
 function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
-  const {
-    isFolderTreeCollapsed,
-    setSelectedNote,
-    setIsEditing,
-    setDraggedNoteId,
-    getThemeForNote,
-  } = useNotesAppContext();
+  const { isFolderTreeCollapsed, getThemeForNote } = useNotesAppState();
+  const { setSelectedNote, setIsEditing, setDraggedNoteId } = useNotesAppActions();
 
   const enableDrag = !isFolderTreeCollapsed;
   const onSelectNote = (next: NoteWithRelations): void => {

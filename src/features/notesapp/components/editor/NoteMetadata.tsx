@@ -3,7 +3,14 @@
 import { X } from 'lucide-react';
 import React from 'react';
 
-import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
+import {
+  useNoteEditorContext,
+  useNoteFoldersContext,
+  useNoteFormRuntime,
+  useNoteMetadataContext,
+  useNoteRelationsContext,
+  useNoteTagsContext,
+} from '@/features/notesapp/context/NoteFormContext';
 import type { TagRecord, NoteWithRelations } from '@/shared/contracts/notes';
 import {
   Button,
@@ -21,21 +28,12 @@ interface NoteMetadataProps {
 }
 
 export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX.Element {
+  const { note } = useNoteFormRuntime();
+  const { effectiveTheme } = useNoteEditorContext();
+  const { title, setTitle, color, setColor, isPinned, setIsPinned, isArchived, setIsArchived, isFavorite, setIsFavorite } =
+    useNoteMetadataContext();
+  const { selectedFolderId, setSelectedFolderId, flatFolders } = useNoteFoldersContext();
   const {
-    note,
-    title,
-    setTitle,
-    selectedFolderId,
-    setSelectedFolderId,
-    flatFolders,
-    color,
-    setColor,
-    isPinned,
-    setIsPinned,
-    isArchived,
-    setIsArchived,
-    isFavorite,
-    setIsFavorite,
     selectedTagIds,
     availableTags,
     tagInput,
@@ -46,6 +44,8 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
     handleAddTag,
     handleCreateTag,
     handleFilterByTag,
+  } = useNoteTagsContext();
+  const {
     selectedRelatedNotes,
     setSelectedRelatedNotes,
     relatedNoteQuery,
@@ -55,8 +55,7 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
     relatedNoteResults,
     isRelatedLoading,
     handleSelectRelatedNote,
-    effectiveTheme,
-  } = useNoteFormContext();
+  } = useNoteRelationsContext();
 
   const noteId = note?.id;
   const tagInputRef = React.useRef<HTMLInputElement>(null);

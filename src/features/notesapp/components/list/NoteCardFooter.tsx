@@ -2,7 +2,10 @@
 
 import React from 'react';
 
-import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import {
+  useNotesAppActions,
+  useNotesAppState,
+} from '@/features/notesapp/hooks/NotesAppContext';
 import type { RelatedNote, NoteRelationRecord } from '@/shared/contracts/notes';
 import { Breadcrumbs } from '@/shared/ui';
 import { buildBreadcrumbPath, darkenColor } from '../../utils';
@@ -20,8 +23,8 @@ type NoteRelationWithSource = NoteRelationRecord & {
 
 export function NoteCardFooter(): React.JSX.Element | null {
   const { note, backgroundColor, relatedNoteStyle } = useNoteCardHeaderRuntime();
-  const { folderTree, settings, setSelectedFolderId, setSelectedNote, setIsEditing } =
-    useNotesAppContext();
+  const { folderTree, settings } = useNotesAppState();
+  const { setSelectedFolderId, setSelectedNote, setIsEditing } = useNotesAppActions();
 
   const showTimestamps = settings.showTimestamps;
   const showBreadcrumbs = settings.showBreadcrumbs;

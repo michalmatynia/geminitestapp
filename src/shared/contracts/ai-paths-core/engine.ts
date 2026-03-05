@@ -5,6 +5,7 @@ import {
   type UpdaterSampleState,
   type AiPathsValidationConfig,
 } from './nodes';
+import { type AiPathsValidationStage } from './base';
 import { type RuntimeState } from '../ai-paths-runtime';
 
 /**
@@ -17,6 +18,7 @@ export type AiPathsValidationFinding = {
   ruleTitle: string;
   severity: 'error' | 'warning' | 'info';
   module: string;
+  stage?: AiPathsValidationStage | undefined;
   nodeId: string | null;
   nodeTitle: string | null;
   message: string;

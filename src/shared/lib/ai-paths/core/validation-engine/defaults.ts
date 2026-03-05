@@ -4,6 +4,7 @@ import type {
   AiPathsValidationModule,
   AiPathsValidationRule,
   AiPathsValidationSeverity,
+  AiPathsValidationStage,
 } from '@/shared/contracts/ai-paths';
 
 const VALIDATION_SEVERITIES: ReadonlySet<AiPathsValidationSeverity> =
@@ -22,6 +23,13 @@ const VALIDATION_MODULES: ReadonlySet<AiPathsValidationModule> = new Set<AiPaths
   'gate',
   'validation_pattern',
   'custom',
+]);
+
+const VALIDATION_STAGES: ReadonlySet<AiPathsValidationStage> = new Set<AiPathsValidationStage>([
+  'graph_parse',
+  'graph_bind',
+  'node_pre_execute',
+  'node_post_execute',
 ]);
 
 const VALIDATION_RULE_INFERENCE_SOURCE_TYPES: ReadonlySet<string> = new Set([
@@ -177,6 +185,9 @@ const sanitizeRule = (
   if (conditions.length === 0) return null;
 
   const appliesToNodeTypes = sanitizeStringArray(rawRule.appliesToNodeTypes);
+  const appliesToStages = sanitizeStringArray(rawRule.appliesToStages).filter(
+    (stage): stage is AiPathsValidationStage => VALIDATION_STAGES.has(stage as AiPathsValidationStage)
+  );
   const docsBindings = sanitizeStringArray(rawRule.docsBindings);
   const inference = sanitizeRuleInference(rawRule.inference);
 
@@ -190,6 +201,7 @@ const sanitizeRule = (
     sequence,
     conditionMode: rawRule.conditionMode === 'any' ? 'any' : 'all',
     appliesToNodeTypes: appliesToNodeTypes.length > 0 ? appliesToNodeTypes : undefined,
+    appliesToStages: appliesToStages.length > 0 ? appliesToStages : undefined,
     docsBindings: docsBindings.length > 0 ? docsBindings : undefined,
     ...(inference ? { inference } : {}),
     conditions,

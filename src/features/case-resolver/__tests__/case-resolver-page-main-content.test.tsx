@@ -3,12 +3,12 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { CaseResolverPageMainContent } from '@/features/case-resolver/components/page/CaseResolverPageMainContent';
 import type { CaseResolverStateValue } from '@/features/case-resolver/types';
-import type { CaseResolverViewContextValue } from '@/features/case-resolver/components/CaseResolverViewContext';
+import type { CaseResolverViewStateValue } from '@/features/case-resolver/components/CaseResolverViewContext';
 
-let viewContextMock: CaseResolverViewContextValue;
+let viewContextMock: CaseResolverViewStateValue;
 
 vi.mock('@/features/case-resolver/components/CaseResolverViewContext', () => ({
-  useCaseResolverViewContext: (): CaseResolverViewContextValue => viewContextMock,
+  useCaseResolverViewStateContext: (): CaseResolverViewStateValue => viewContextMock,
 }));
 
 vi.mock('@/features/case-resolver/components/CaseResolverNodeFileWorkspace', () => ({
@@ -45,7 +45,7 @@ const createContextMock = ({
 }: {
   workspaceView?: 'document' | 'relations';
   stateOverrides?: Partial<CaseResolverStateValue>;
-} = {}): CaseResolverViewContextValue => {
+} = {}): CaseResolverViewStateValue => {
   const baseState = {
     workspace: {
       id: 'workspace-1',
@@ -66,7 +66,7 @@ const createContextMock = ({
       ...stateOverrides,
     } as CaseResolverStateValue,
     workspaceView,
-  } as unknown as CaseResolverViewContextValue;
+  } as unknown as CaseResolverViewStateValue;
 };
 
 describe('CaseResolverPageMainContent routing', () => {

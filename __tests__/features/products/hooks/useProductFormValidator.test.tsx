@@ -102,6 +102,13 @@ vi.mock('@/features/products/context/ProductFormContext', () => ({
   }),
 }));
 
+vi.mock('@/features/products/context/ProductFormCoreContext', () => ({
+  useProductFormCore: () => ({
+    product: hookMocks.product,
+    draft: hookMocks.draft,
+  }),
+}));
+
 vi.mock('@/features/products/context/ProductFormMetadataContext', () => ({
   useProductFormMetadata: () => ({
     categories: hookMocks.categories,

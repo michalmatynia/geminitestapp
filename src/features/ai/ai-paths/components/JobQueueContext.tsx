@@ -19,6 +19,11 @@ import {
   removeAiPathRun,
 } from '@/shared/lib/ai-paths';
 import type { AiPathRunRecord, AiPathRunVisibility } from '@/shared/lib/ai-paths';
+import {
+  AI_PATH_RUN_ENQUEUED_EVENT_NAME,
+  AI_PATH_RUN_QUEUE_CHANNEL,
+  parseAiPathRunEnqueuedEventPayload,
+} from '@/shared/contracts/ai-paths';
 import { fetchAiPathsSettingsCached } from '@/shared/lib/ai-paths/settings-store-client';
 import {
   createDeleteMutationV2,
@@ -145,8 +150,6 @@ const POLLING_JITTER_MS = 500;
 const QUEUE_STATUS_POLL_INTERVAL_MS = 1_000;
 const BURST_REFRESH_WINDOW_MS = 15_000;
 const QUEUE_LAG_THRESHOLD_KEY = 'ai_paths_queue_lag_threshold_ms';
-const AI_PATH_RUN_QUEUE_CHANNEL = 'ai-path-queue';
-
 const JobQueueStateContext = createContext<JobQueueStateValue | null>(null);
 const JobQueueActionsContext = createContext<JobQueueActionsValue | null>(null);
 
@@ -626,17 +629,22 @@ export function JobQueueProvider({
       refetchQueueData({ fresh: true, markBurst: true });
     };
 
-    const handleWindowEvent = (): void => {
+    const handleWindowEvent = (event: Event): void => {
+      const payload = parseAiPathRunEnqueuedEventPayload(
+        (event as CustomEvent<unknown>).detail
+      );
+      if (!payload) return;
       refreshQueueViews();
     };
 
-    window.addEventListener('ai-path-run-enqueued', handleWindowEvent as EventListener);
+    window.addEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, handleWindowEvent as EventListener);
 
     let channel: BroadcastChannel | null = null;
     if (typeof BroadcastChannel !== 'undefined') {
       try {
         channel = new BroadcastChannel(AI_PATH_RUN_QUEUE_CHANNEL);
-        channel.onmessage = () => {
+        channel.onmessage = (event) => {
+          if (!parseAiPathRunEnqueuedEventPayload(event.data)) return;
           refreshQueueViews();
         };
       } catch {
@@ -645,7 +653,10 @@ export function JobQueueProvider({
     }
 
     return (): void => {
-      window.removeEventListener('ai-path-run-enqueued', handleWindowEvent as EventListener);
+      window.removeEventListener(
+        AI_PATH_RUN_ENQUEUED_EVENT_NAME,
+        handleWindowEvent as EventListener
+      );
       if (channel) {
         channel.close();
       }

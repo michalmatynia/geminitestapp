@@ -2,7 +2,10 @@
 
 import { useEffect } from 'react';
 
-import { parseAiPathRunEnqueuedEventPayload } from '@/shared/contracts/ai-paths';
+import {
+  AI_PATH_RUN_ENQUEUED_EVENT_NAME,
+  parseAiPathRunEnqueuedEventPayload,
+} from '@/shared/contracts/ai-paths';
 import {
   addQueuedProductId,
   removeQueuedProductId,
@@ -36,9 +39,9 @@ export function useProductAiPathsRunSync(): void {
         removeQueuedProductId(productId);
       }, AI_PATH_RUN_BADGE_TTL_MS);
     };
-    window.addEventListener('ai-path-run-enqueued', handler);
+    window.addEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, handler);
     return () => {
-      window.removeEventListener('ai-path-run-enqueued', handler);
+      window.removeEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, handler);
     };
   }, []);
 }

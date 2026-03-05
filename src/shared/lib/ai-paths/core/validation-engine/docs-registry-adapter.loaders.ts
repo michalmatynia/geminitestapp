@@ -214,6 +214,7 @@ export const extractAiPathsAssertionsFromMarkdown = (
       ...(value.description ? { description: value.description } : {}),
       ...(value.recommendation ? { recommendation: value.recommendation } : {}),
       ...(value.appliesToNodeTypes?.length ? { appliesToNodeTypes: value.appliesToNodeTypes } : {}),
+      ...(value.appliesToStages?.length ? { appliesToStages: value.appliesToStages } : {}),
       ...(value.sequenceHint !== undefined ? { sequenceHint: value.sequenceHint } : {}),
       ...(value.weight !== undefined ? { weight: value.weight } : {}),
       ...(value.forceProbabilityIfFailed !== undefined

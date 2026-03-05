@@ -1,15 +1,18 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   AdminCaseResolverPageProvider,
-  useAdminCaseResolverPageContext,
+  useAdminCaseResolverPageActionsContext,
+  useAdminCaseResolverPageStateContext,
 } from '../context/AdminCaseResolverPageContext';
 import { CaseResolverPageView } from '../components/CaseResolverPageView';
 import { CaseResolverViewProvider } from '../components/CaseResolverViewContext';
 
 function AdminCaseResolverPageInner(): React.JSX.Element {
-  const contextValue = useAdminCaseResolverPageContext();
+  const state = useAdminCaseResolverPageStateContext();
+  const actions = useAdminCaseResolverPageActionsContext();
+  const contextValue = useMemo(() => ({ ...state, ...actions }), [state, actions]);
 
   return (
     <CaseResolverViewProvider value={contextValue}>

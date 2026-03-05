@@ -4,7 +4,11 @@ import React from 'react';
 
 import { MarkdownToolbar as DocumentMarkdownToolbar } from '@/features/document-editor';
 import { useMarkdownToolbarActions } from '@/features/notesapp/context/MarkdownToolbarActionsContext';
-import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
+import {
+  useNoteContentContext,
+  useNoteEditorContext,
+  useNoteFilesContext,
+} from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFileRecord } from '@/shared/contracts/notes';
 
 export function NotesMarkdownToolbar(): React.JSX.Element {
@@ -17,27 +21,22 @@ export function NotesMarkdownToolbar(): React.JSX.Element {
     onApplySpanStyle,
   } = useMarkdownToolbarActions();
 
+  const { content, undo, redo, canUndo, canRedo } = useNoteContentContext();
   const {
-    noteFiles,
     textColor,
     setTextColor,
     fontFamily,
     setFontFamily,
     showPreview,
     setShowPreview,
-    insertFileReference,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
     editorMode,
     setEditorMode,
     isEditorModeLocked,
     isMigrating,
     handleMigrateToWysiwyg,
     handleMigrateToMarkdown,
-    content,
-  } = useNoteFormContext();
+  } = useNoteEditorContext();
+  const { noteFiles, insertFileReference } = useNoteFilesContext();
 
   const fileReferenceOptions = React.useMemo(
     () =>

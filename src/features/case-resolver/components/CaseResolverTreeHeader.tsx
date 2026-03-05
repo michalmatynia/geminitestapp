@@ -7,7 +7,10 @@ import { FolderPlus, FilePlus, FileImage, FileCode2, ImagePlus } from 'lucide-re
 import { Button, Switch } from '@/shared/ui';
 import { FolderTreeSearchBar } from '@/features/foldertree/v2/search';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
+import {
+  useCaseResolverPageActions,
+  useCaseResolverPageState,
+} from '../context/CaseResolverPageContext';
 import {
   useCaseResolverFolderTreeDataContext,
   useCaseResolverFolderTreeUiContext,
@@ -53,6 +56,9 @@ export function CaseResolverTreeHeader({
     requestedCaseStatus,
     requestedCaseIssue,
     canCreateInActiveCase,
+    caseResolverIdentifiers,
+  } = useCaseResolverPageState();
+  const {
     onRetryCaseContext,
     onResetCaseContext,
     onCreateFolder,
@@ -60,8 +66,7 @@ export function CaseResolverTreeHeader({
     onCreateScanFile,
     onCreateImageAsset,
     onCreateNodeFile,
-    caseResolverIdentifiers,
-  } = useCaseResolverPageContext();
+  } = useCaseResolverPageActions();
 
   const {
     activeCaseFile,

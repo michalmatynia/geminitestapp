@@ -3,11 +3,11 @@ import type { Language } from '@/shared/contracts/internationalization';
 import { Catalog } from '@/shared/contracts/products';
 import { Button, Badge, SimpleSettingsList } from '@/shared/ui';
 
-import { useProductSettingsContext } from '../ProductSettingsContext';
+import { useProductSettingsCatalogsContext } from '../ProductSettingsContext';
 
 export function CatalogsSettings(): React.JSX.Element {
   const { loadingCatalogs, catalogs, onOpenCatalogModal, onEditCatalog, onDeleteCatalog } =
-    useProductSettingsContext();
+    useProductSettingsCatalogsContext();
   const { languages } = useInternationalizationData();
   const getLanguageDisplay = (languageId: string): string => {
     const language = languages.find((l: Language) => l.id === languageId);

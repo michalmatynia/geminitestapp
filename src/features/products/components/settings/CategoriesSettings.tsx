@@ -43,7 +43,7 @@ import {
   type CategoryTreeNodeRuntimeContextValue,
 } from './CategoryTreeNodeRuntimeContext';
 import { CategoryTreeNodeRenderer } from './CategoryTreeNodeRenderer';
-import { useProductSettingsContext } from './ProductSettingsContext';
+import { useProductSettingsCategoriesContext } from './ProductSettingsContext';
 
 const cloneCategoryTree = (nodes: ProductCategoryWithChildren[]): ProductCategoryWithChildren[] =>
   nodes.map(
@@ -61,7 +61,7 @@ export function CategoriesSettings(): React.JSX.Element {
     selectedCategoryCatalogId: selectedCatalogId,
     onCategoryCatalogChange: onCatalogChange,
     onRefreshCategories: onRefresh,
-  } = useProductSettingsContext();
+  } = useProductSettingsCategoriesContext();
 
   const { toast } = useToast();
   const [showModal, setShowModal] = useState<boolean>(false);

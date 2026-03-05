@@ -7,9 +7,10 @@ import {
   normalizeNodes,
   sanitizeEdges,
 } from '@/shared/lib/ai-paths';
+import { createAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine';
 import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
 import { GraphExecutionCancelled } from '@/shared/lib/ai-paths/core/runtime/engine-core';
-import { listAiPathsSettings } from '@/features/ai/ai-paths/server';
+import { listAiPathsSettings } from '@/features/ai/ai-paths/server/settings-store';
 import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { repairRuntimeStatePorts } from '@/features/ai/ai-paths/services/runtime-state-port-repair';
@@ -388,7 +389,15 @@ export const executePathRun = async (
       traceId,
     });
 
-    const { strictFlowMode, nodeValidationEnabled, requiredProcessingNodeIds } = preflight;
+    const { validationConfig, strictFlowMode, nodeValidationEnabled, requiredProcessingNodeIds } =
+      preflight;
+    const runtimeValidationMiddleware = nodeValidationEnabled
+      ? createAiPathsRuntimeValidationMiddleware({
+        config: validationConfig,
+        nodes,
+        edges,
+      })
+      : undefined;
 
     const canceledBeforeExecution = await monitor.start();
     if (canceledBeforeExecution) {
@@ -438,6 +447,48 @@ export const executePathRun = async (
       },
       runtimeKernelMode,
       runtimeKernelPilotNodeTypes,
+      validationMiddleware: runtimeValidationMiddleware,
+      onRuntimeValidation: async ({
+        node,
+        stage,
+        decision,
+        message,
+        issues,
+        iteration,
+        runtimeStrategy,
+        runtimeResolutionSource,
+        runtimeCodeObjectId,
+      }) => {
+        try {
+          await repo.createRunEvent({
+            runId: run.id,
+            level: decision === 'block' ? 'error' : 'warn',
+            message,
+            metadata: {
+              traceId,
+              stage,
+              decision,
+              iteration,
+              nodeId: node?.id ?? null,
+              nodeType: node?.type ?? null,
+              nodeTitle: node?.title ?? null,
+              issueCount: issues.length,
+              issues: issues.slice(0, 5),
+              ...(runtimeStrategy ? { runtimeStrategy } : {}),
+              ...(runtimeResolutionSource ? { runtimeResolutionSource } : {}),
+              ...(runtimeCodeObjectId ? { runtimeCodeObjectId } : {}),
+            },
+          });
+        } catch (error) {
+          void reportAiPathsError(error, {
+            action: 'onRuntimeValidation',
+            stage,
+            nodeId: node?.id ?? null,
+            decision,
+            runId: run.id,
+          });
+        }
+      },
       onNodeStart: async ({
         node,
         nodeInputs,

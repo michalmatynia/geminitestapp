@@ -12,7 +12,10 @@ import {
   Button,
   Badge,
 } from '@/shared/ui';
-import { useDocumentRelationSearchContext } from '../../context/DocumentRelationSearchContext';
+import {
+  useDocumentRelationSearchActionsContext,
+  useDocumentRelationSearchStateContext,
+} from '../../context/DocumentRelationSearchContext';
 import { FileTypeIcon, formatShortDate } from './document-relation-search-utils';
 
 export function DocumentPreviewDialog(): React.JSX.Element {
@@ -20,9 +23,8 @@ export function DocumentPreviewDialog(): React.JSX.Element {
     previewFile: file,
     previewRow,
     isLocked,
-    onLinkFile,
-    setPreviewFileId,
-  } = useDocumentRelationSearchContext();
+  } = useDocumentRelationSearchStateContext();
+  const { onLinkFile, setPreviewFileId } = useDocumentRelationSearchActionsContext();
 
   const onClose = () => setPreviewFileId(null);
   const onLink = (fileId: string) => {

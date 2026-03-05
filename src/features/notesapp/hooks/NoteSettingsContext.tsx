@@ -8,6 +8,7 @@ import {
   useRef,
   ReactNode,
   useCallback,
+  useMemo,
 } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -39,13 +40,19 @@ const DB_NOTEBOOK_KEY = 'noteSettings:selectedNotebookId';
 const DB_AUTOFORMAT_KEY = 'noteSettings:autoformatOnPaste';
 const DB_EDITOR_MODE_KEY = 'noteSettings:editorMode';
 
-interface NoteSettingsContextType {
+interface NoteSettingsStateContextType {
   settings: NoteSettings;
+}
+
+interface NoteSettingsActionsContextType {
   updateSettings: (updates: Partial<NoteSettings>) => void;
   resetToDefaults: () => void;
 }
 
-const NoteSettingsContext = createContext<NoteSettingsContextType | undefined>(undefined);
+const NoteSettingsStateContext = createContext<NoteSettingsStateContextType | undefined>(undefined);
+const NoteSettingsActionsContext = createContext<NoteSettingsActionsContextType | undefined>(
+  undefined
+);
 
 export function NoteSettingsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [settings, setSettings] = useState<NoteSettings>(DEFAULT_NOTE_SETTINGS);
@@ -208,17 +215,42 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
     updateSetting.mutate({ key: DB_EDITOR_MODE_KEY, value: 'markdown' });
   }, [updateSetting]);
 
+  const stateValue = useMemo<NoteSettingsStateContextType>(
+    () => ({
+      settings,
+    }),
+    [settings]
+  );
+
+  const actionsValue = useMemo<NoteSettingsActionsContextType>(
+    () => ({
+      updateSettings,
+      resetToDefaults,
+    }),
+    [updateSettings, resetToDefaults]
+  );
+
   return (
-    <NoteSettingsContext.Provider value={{ settings, updateSettings, resetToDefaults }}>
-      {children}
-    </NoteSettingsContext.Provider>
+    <NoteSettingsStateContext.Provider value={stateValue}>
+      <NoteSettingsActionsContext.Provider value={actionsValue}>
+        {children}
+      </NoteSettingsActionsContext.Provider>
+    </NoteSettingsStateContext.Provider>
   );
 }
 
-export function useNoteSettings(): NoteSettingsContextType {
-  const context = useContext(NoteSettingsContext);
+export function useNoteSettingsState(): NoteSettingsStateContextType {
+  const context = useContext(NoteSettingsStateContext);
   if (context === undefined) {
-    throw internalError('useNoteSettings must be used within a NoteSettingsProvider');
+    throw internalError('useNoteSettingsState must be used within a NoteSettingsProvider');
+  }
+  return context;
+}
+
+export function useNoteSettingsActions(): NoteSettingsActionsContextType {
+  const context = useContext(NoteSettingsActionsContext);
+  if (context === undefined) {
+    throw internalError('useNoteSettingsActions must be used within a NoteSettingsProvider');
   }
   return context;
 }

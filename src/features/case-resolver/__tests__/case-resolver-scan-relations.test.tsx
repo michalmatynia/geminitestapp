@@ -40,7 +40,7 @@ const mockViewState = {
 };
 
 vi.mock('@/features/case-resolver/components/CaseResolverViewContext', () => ({
-  useCaseResolverViewContext: () => ({
+  useCaseResolverViewStateContext: () => ({
     state: mockViewState,
   }),
 }));

@@ -21,7 +21,10 @@ import {
 } from '@/shared/ui';
 import { PanelHeader } from '@/shared/ui/templates/panels';
 
-import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
+import {
+  useCaseResolverPageActions,
+  useCaseResolverPageState,
+} from '../context/CaseResolverPageContext';
 
 const formatFileSize = (size: number | null): string => {
   if (size === null || size < 0 || !Number.isFinite(size)) return 'Unknown';
@@ -38,13 +41,11 @@ const resolveAssetSubtitle = (asset: CaseResolverAssetFile): string => {
 };
 
 export function CaseResolverFileViewer(): React.JSX.Element {
+  const { selectedAsset, selectedFolderPath, activeFile } = useCaseResolverPageState();
   const {
-    selectedAsset,
-    selectedFolderPath,
-    activeFile,
     onUpdateSelectedAsset,
     onAttachAssetFile,
-  } = useCaseResolverPageContext();
+  } = useCaseResolverPageActions();
   const { toast } = useToast();
   const [isDragActive, setIsDragActive] = React.useState(false);
   const [isAttachingImage, setIsAttachingImage] = React.useState(false);

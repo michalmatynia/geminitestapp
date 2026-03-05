@@ -3,6 +3,7 @@ import {
   type AiPathsValidationModule,
   type AiPathsValidationOperator,
   type AiPathsValidationSeverity,
+  type AiPathsValidationStage,
   type NodeType,
 } from './base';
 
@@ -71,6 +72,7 @@ export type AiPathsDocAssertion = {
   description?: string | undefined;
   recommendation?: string | undefined;
   appliesToNodeTypes?: string[] | undefined;
+  appliesToStages?: AiPathsValidationStage[] | undefined;
   conditionMode?: 'all' | 'any' | undefined;
   docsBindings?: string[] | undefined;
   version?: string | undefined;
@@ -176,6 +178,9 @@ export const docAssertionSchema = z.object({
   description: z.string().optional(),
   recommendation: z.string().optional(),
   appliesToNodeTypes: z.array(z.string()).optional(),
+  appliesToStages: z
+    .array(z.enum(['graph_parse', 'graph_bind', 'node_pre_execute', 'node_post_execute']))
+    .optional(),
   sequenceHint: z.number().int().optional(),
   weight: z.number().int().optional(),
   forceProbabilityIfFailed: z.number().optional(),

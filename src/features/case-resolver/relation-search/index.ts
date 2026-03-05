@@ -12,8 +12,11 @@ export {
 
 export {
   DocumentRelationSearchProvider,
-  useDocumentRelationSearchContext,
+  useDocumentRelationSearchStateContext,
+  useDocumentRelationSearchActionsContext,
   type DocumentRelationSearchContextValue,
+  type DocumentRelationSearchStateValue,
+  type DocumentRelationSearchActionsValue,
   type DocumentRelationSearchProviderProps,
   type ResultHeight,
   type CaseRow,

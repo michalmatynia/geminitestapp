@@ -3,11 +3,14 @@
 import React from 'react';
 import { ListPlus } from 'lucide-react';
 import { Button } from '@/shared/ui';
-import { useDocumentRelationSearchContext } from '../../context/DocumentRelationSearchContext';
+import {
+  useDocumentRelationSearchActionsContext,
+  useDocumentRelationSearchStateContext,
+} from '../../context/DocumentRelationSearchContext';
 
 export function BulkActionBar(): React.JSX.Element | null {
-  const { selectedFileIds, isLocked, handleLinkAll, clearSelection } =
-    useDocumentRelationSearchContext();
+  const { selectedFileIds, isLocked } = useDocumentRelationSearchStateContext();
+  const { handleLinkAll, clearSelection } = useDocumentRelationSearchActionsContext();
 
   const selectedCount = selectedFileIds.size;
   if (selectedCount === 0) return null;

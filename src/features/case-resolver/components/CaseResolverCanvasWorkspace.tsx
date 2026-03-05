@@ -29,7 +29,10 @@ import { parseJsonSetting } from '@/shared/utils/settings-json';
 import { cn } from '@/shared/utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
+import {
+  useCaseResolverPageActions,
+  useCaseResolverPageState,
+} from '../context/CaseResolverPageContext';
 import { CaseResolverNodeInspectorModal } from './CaseResolverNodeInspectorModal';
 import { CaseResolverLinkedPreviewModal } from './CaseResolverLinkedPreviewModal';
 import {
@@ -40,7 +43,8 @@ import { resolvePromptConfig, renderPromptNodeTextPreview } from './case-resolve
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
-  const { workspace, activeFile, onGraphChange } = useCaseResolverPageContext();
+  const { workspace, activeFile } = useCaseResolverPageState();
+  const { onGraphChange } = useCaseResolverPageActions();
 
   const { nodes } = useGraphState();
   const { selectedNodeId, selectedEdgeId, configOpen } = useSelectionState();
@@ -401,7 +405,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
 }
 
 export function CaseResolverCanvasWorkspace(): React.JSX.Element {
-  const { activeFile } = useCaseResolverPageContext();
+  const { activeFile } = useCaseResolverPageState();
 
   if (!activeFile) {
     return (

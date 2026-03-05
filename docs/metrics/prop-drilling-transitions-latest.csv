@@ -1,1 +1,12 @@
 rank,score,from_component,from_file,to_component,to_file,root_fanout,distinct_features,source_prop,target_prop,location
+1,54,KangurGame,src/features/kangur/legacy/components/kangur/KangurGame.jsx,KangurExam,src/features/kangur/legacy/components/kangur/KangurExam.jsx,2,1,mode,mode,src/features/kangur/legacy/components/kangur/KangurGame.jsx:213
+2,54,KangurGame,src/features/kangur/legacy/components/kangur/KangurGame.jsx,KangurExam,src/features/kangur/legacy/components/kangur/KangurExam.jsx,2,1,onBack,onBack,src/features/kangur/legacy/components/kangur/KangurGame.jsx:213
+3,54,KangurGame,src/features/kangur/legacy/components/kangur/KangurGame.jsx,ResultView,src/features/kangur/legacy/components/kangur/KangurGame.jsx,2,1,mode,mode,src/features/kangur/legacy/components/kangur/KangurGame.jsx:253
+4,54,KangurGame,src/features/kangur/legacy/components/kangur/KangurGame.jsx,ResultView,src/features/kangur/legacy/components/kangur/KangurGame.jsx,2,1,onBack,onBack,src/features/kangur/legacy/components/kangur/KangurGame.jsx:253
+5,52,CompleteEquation,src/features/kangur/legacy/components/lessons/AddingBallGame.jsx,SlotZone,src/features/kangur/legacy/components/lessons/AddingBallGame.jsx,1,1,round,label,src/features/kangur/legacy/components/lessons/AddingBallGame.jsx:119
+6,52,CalendarLesson,src/features/kangur/legacy/components/lessons/CalendarLessson.jsx,CalendarInteractiveGame,src/features/kangur/legacy/components/lessons/CalendarInteractiveGame.jsx,1,1,onBack,onFinish,src/features/kangur/legacy/components/lessons/CalendarLessson.jsx:277
+7,52,ClockLesson,src/features/kangur/legacy/components/lessons/ClockLesson.jsx,ClockTrainingGame,src/features/kangur/legacy/components/lessons/ClockTrainingGame.jsx,1,1,onBack,onFinish,src/features/kangur/legacy/components/lessons/ClockLesson.jsx:271
+8,44,AuthenticatedApp,src/features/kangur/legacy/App.jsx,PageNotFound,src/features/kangur/legacy/lib/PageNotFound.jsx,1,1,requestedPath,requestedPath,src/features/kangur/legacy/App.jsx:36
+9,44,App,src/features/kangur/legacy/App.jsx,AuthenticatedApp,src/features/kangur/legacy/App.jsx,1,1,pageKey,pageKey,src/features/kangur/legacy/App.jsx:50
+10,44,App,src/features/kangur/legacy/App.jsx,AuthenticatedApp,src/features/kangur/legacy/App.jsx,1,1,requestedPath,requestedPath,src/features/kangur/legacy/App.jsx:50
+11,44,KangurExam,src/features/kangur/legacy/components/kangur/KangurExam.jsx,ExamSummary,src/features/kangur/legacy/components/kangur/KangurExam.jsx,1,1,onBack,onBack,src/features/kangur/legacy/components/kangur/KangurExam.jsx:330

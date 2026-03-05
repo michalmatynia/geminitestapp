@@ -95,8 +95,8 @@ const buildTransformPilotNodes = (title: string): AiNode[] => [
     type: 'parser',
     title: 'JSON Parser',
     description: '',
-    inputs: ['entityJson', 'context'],
-    outputs: ['productId', 'title', 'images', 'content_en'],
+    inputs: ['entityJson'],
+    outputs: ['value'],
     config: {
       parser: {
         outputMode: 'individual',
@@ -112,8 +112,8 @@ const buildTransformPilotNodes = (title: string): AiNode[] => [
     type: 'mapper',
     title: 'JSON Mapper',
     description: '',
-    inputs: ['context', 'result', 'bundle', 'value'],
-    outputs: ['value', 'result'],
+    inputs: ['value'],
+    outputs: ['context'],
     config: {
       mapper: {
         outputs: ['value'],
@@ -125,33 +125,77 @@ const buildTransformPilotNodes = (title: string): AiNode[] => [
     position: { x: 360, y: 180 },
   } as AiNode,
   {
+    id: 'node-context',
+    type: 'context',
+    title: 'Context Filter',
+    description: '',
+    inputs: ['context'],
+    outputs: ['context', 'entityId', 'entityType', 'entityJson'],
+    config: {
+      context: {
+        entityType: 'auto',
+        entityIdSource: 'context',
+        scopeMode: 'full',
+        scopeTarget: 'entity',
+      },
+    },
+    position: { x: 480, y: 180 },
+  } as AiNode,
+  {
     id: 'node-mutator',
     type: 'mutator',
     title: 'Mutator',
     description: '',
     inputs: ['context'],
-    outputs: ['context'],
+    outputs: ['value'],
     config: {
       mutator: {
         suffix: '-mutated',
       },
     },
-    position: { x: 540, y: 180 },
+    position: { x: 600, y: 180 },
   } as AiNode,
   {
     id: 'node-regex',
     type: 'regex',
     title: 'Regex Grouper',
     description: '',
-    inputs: ['value', 'prompt', 'regexCallback'],
-    outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
+    inputs: ['value'],
+    outputs: ['value'],
     config: {
       regex: {
         pattern: '\\s+',
         flags: 'g',
       },
     },
-    position: { x: 720, y: 180 },
+    position: { x: 780, y: 180 },
+  } as AiNode,
+  {
+    id: 'node-string-mutator',
+    type: 'string_mutator',
+    title: 'String Mutator',
+    description: '',
+    inputs: ['value', 'prompt', 'result'],
+    outputs: ['value'],
+    config: {
+      stringMutator: {
+        operations: [
+          {
+            type: 'replace',
+            search: '_',
+            replace: '-',
+            matchMode: 'all',
+            useRegex: false,
+          },
+          {
+            type: 'append',
+            position: 'suffix',
+            value: '-v3',
+          },
+        ],
+      },
+    },
+    position: { x: 960, y: 240 },
   } as AiNode,
   {
     id: 'node-template',
@@ -165,7 +209,7 @@ const buildTransformPilotNodes = (title: string): AiNode[] => [
         template: 'out={{value}}',
       },
     },
-    position: { x: 900, y: 180 },
+    position: { x: 1140, y: 180 },
   } as AiNode,
 ];
 
@@ -174,33 +218,47 @@ const buildTransformPilotEdges = (): Edge[] => [
     id: 'edge-constant-parser',
     from: 'node-constant',
     to: 'node-parser',
-    fromPort: 'value',
+    fromPort: 'entityJson',
     toPort: 'entityJson',
   },
   {
     id: 'edge-parser-mapper',
     from: 'node-parser',
     to: 'node-mapper',
-    fromPort: 'title',
+    fromPort: 'value',
     toPort: 'value',
   },
   {
-    id: 'edge-mapper-mutator',
+    id: 'edge-mapper-context',
     from: 'node-mapper',
+    to: 'node-context',
+    fromPort: 'context',
+    toPort: 'context',
+  },
+  {
+    id: 'edge-context-mutator',
+    from: 'node-context',
     to: 'node-mutator',
-    fromPort: 'value',
+    fromPort: 'context',
     toPort: 'context',
   },
   {
     id: 'edge-mutator-regex',
     from: 'node-mutator',
     to: 'node-regex',
-    fromPort: 'context',
+    fromPort: 'value',
     toPort: 'value',
   },
   {
-    id: 'edge-regex-template',
+    id: 'edge-regex-string-mutator',
     from: 'node-regex',
+    to: 'node-string-mutator',
+    fromPort: 'value',
+    toPort: 'value',
+  },
+  {
+    id: 'edge-string-mutator-template',
+    from: 'node-string-mutator',
     to: 'node-template',
     fromPort: 'value',
     toPort: 'value',
@@ -214,10 +272,19 @@ const pilotHandlers: Record<string, NodeHandler> = {
   constant: ({ node }) => {
     const valueType = node.config?.constant?.valueType;
     const rawValue = node.config?.constant?.value;
-    if (valueType === 'number') {
-      return { value: Number(rawValue ?? 0) };
-    }
-    return { value: rawValue ?? '' };
+    const value = valueType === 'number' ? Number(rawValue ?? 0) : rawValue ?? '';
+    const entityJson =
+      typeof value === 'string'
+        ? (() => {
+          try {
+            return asRecord(JSON.parse(value));
+          } catch {
+            return { value };
+          }
+        })()
+        : asRecord(value);
+
+    return { value, entityJson };
   },
   math: ({ node, nodeInputs }) => {
     const inputValue = nodeInputs['value'];
@@ -243,6 +310,7 @@ const pilotHandlers: Record<string, NodeHandler> = {
     return {
       productId: String(parsed['productId'] ?? ''),
       title: String(parsed['title'] ?? ''),
+      value: String(parsed['title'] ?? ''),
       images: Array.isArray(parsed['images']) ? parsed['images'] : [],
       content_en: String(parsed['content_en'] ?? ''),
     };
@@ -251,14 +319,31 @@ const pilotHandlers: Record<string, NodeHandler> = {
     const value = nodeInputs['value'] ?? nodeInputs['context'] ?? nodeInputs['result'] ?? nodeInputs['bundle'];
     return {
       value: String(value ?? ''),
+      context: { value: String(value ?? '') },
       result: value,
     };
   },
   mutator: ({ node, nodeInputs }) => {
-    const input = String(nodeInputs['context'] ?? '');
+    const inputContext = asRecord(nodeInputs['context']);
+    const input = String(inputContext['value'] ?? '');
     const suffix = String(node.config?.mutator?.suffix ?? '');
+    const value = `${input}${suffix}`;
+    const context = { ...inputContext, value };
     return {
-      context: `${input}${suffix}`,
+      context,
+      value,
+    };
+  },
+  context: ({ nodeInputs }) => {
+    const rawContext = asRecord(nodeInputs['context']);
+    const entityId = typeof rawContext['entityId'] === 'string' ? rawContext['entityId'] : '';
+    const entityType = typeof rawContext['entityType'] === 'string' ? rawContext['entityType'] : '';
+    const entityJson = asRecord(rawContext['entityJson']);
+    return {
+      context: rawContext,
+      entityId,
+      entityType,
+      entityJson,
     };
   },
   regex: ({ node, nodeInputs }) => {
@@ -278,6 +363,31 @@ const pilotHandlers: Record<string, NodeHandler> = {
       value: transformed,
       aiPrompt: '',
     };
+  },
+  string_mutator: ({ node, nodeInputs }) => {
+    const rawInput = String(nodeInputs['value'] ?? nodeInputs['prompt'] ?? nodeInputs['result'] ?? '');
+    const config = asRecord(node.config?.stringMutator);
+    const operations = Array.isArray(config['operations'])
+      ? (config['operations'] as Array<Record<string, unknown>>)
+      : [];
+
+    let current = rawInput;
+    operations.forEach((operation) => {
+      const type = String(operation['type'] ?? '');
+      if (type === 'replace') {
+        const search = String(operation['search'] ?? '');
+        if (!search) return;
+        const replace = String(operation['replace'] ?? '');
+        const mode = String(operation['matchMode'] ?? 'all');
+        current = mode === 'all' ? current.split(search).join(replace) : current.replace(search, replace);
+      } else if (type === 'append') {
+        const value = String(operation['value'] ?? '');
+        const position = String(operation['position'] ?? 'suffix');
+        current = position === 'prefix' ? `${value}${current}` : `${current}${value}`;
+      }
+    });
+
+    return { value: current };
   },
   template: ({ node, nodeInputs }) => {
     const template = String(node.config?.template?.template ?? '{{value}}');
@@ -431,8 +541,11 @@ describe('engine-core v3 pilot dual-run parity', () => {
     expect(legacy.result.nodeStatuses).toEqual(v3.result.nodeStatuses);
     expect(stripRuntimeTelemetry(legacy.result.history)).toEqual(stripRuntimeTelemetry(v3.result.history));
 
-    expect(legacy.result.outputs['node-template']?.['prompt']).toBe('out=Wave_A_Kernel-mutated');
-    expect(v3.result.outputs['node-template']?.['prompt']).toBe('out=Wave_A_Kernel-mutated');
+    const legacyPrompt = legacy.result.outputs['node-template']?.['prompt'];
+    const v3Prompt = v3.result.outputs['node-template']?.['prompt'];
+    expect(typeof legacyPrompt).toBe('string');
+    expect(legacyPrompt).toBe(v3Prompt);
+    expect(String(legacyPrompt)).toContain('-mutated-v3');
 
     const legacyNodeEvents = legacy.profileNodeEvents.filter(
       (event) =>
@@ -447,8 +560,8 @@ describe('engine-core v3 pilot dual-run parity', () => {
         typeof event['nodeId'] === 'string'
     );
 
-    expect(legacyNodeEvents).toHaveLength(6);
-    expect(v3NodeEvents).toHaveLength(6);
+    expect(legacyNodeEvents).toHaveLength(8);
+    expect(v3NodeEvents).toHaveLength(8);
 
     legacyNodeEvents.forEach((event) => {
       expect(event['runtimeStrategy']).toBe('legacy_adapter');

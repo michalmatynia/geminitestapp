@@ -15,8 +15,8 @@ import {
 } from '@/shared/ui';
 
 import {
-  CaseResolverPageContextValue,
-  useCaseResolverPageContext,
+  useCaseResolverPageActions,
+  useCaseResolverPageState,
 } from '../context/CaseResolverPageContext';
 import type {
   CaseResolverFile,
@@ -99,16 +99,13 @@ const buildPathLabelMap = <
 };
 
 export function CaseResolverDocumentSearchPage(): React.JSX.Element {
-  const context: CaseResolverPageContextValue = useCaseResolverPageContext();
+  const { workspace, caseResolverTags: tags, caseResolverIdentifiers: identifiers, caseResolverCategories: categories } =
+    useCaseResolverPageState();
   const {
-    workspace,
-    caseResolverTags: tags,
-    caseResolverIdentifiers: identifiers,
-    caseResolverCategories: categories,
     onCreateDocumentFromSearch,
     onOpenFileFromSearch,
     onEditFileFromSearch,
-  } = context;
+  } = useCaseResolverPageActions();
   const files: CaseResolverFile[] = useMemo(
     (): CaseResolverFile[] =>
       workspace.files.filter((file: CaseResolverFile): boolean => file.fileType !== 'case'),

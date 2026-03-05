@@ -5,6 +5,9 @@ import {
   GraphExecutionError,
   GraphExecutionCancelled,
 } from '@/shared/lib/ai-paths';
+import {
+  createAiPathsRuntimeValidationMiddleware,
+} from '@/shared/lib/ai-paths/core/validation-engine/runtime-middleware';
 
 import {
   createRunId,
@@ -39,6 +42,15 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
           args.pauseRequestedRef.current = false;
         }
         args.setRunStatus(mode === 'step' ? 'stepping' : 'running');
+        const runtimeValidationMiddleware =
+          args.aiPathsValidation?.enabled !== false
+            ? createAiPathsRuntimeValidationMiddleware({
+              config: args.aiPathsValidation,
+              nodes: args.normalizedNodes,
+              edges: args.sanitizedEdges,
+              maxIssuesPerDecision: 5,
+            })
+            : undefined;
         let state = args.runtimeStateRef.current;
         while (true) {
           const runId = args.currentRunIdRef.current ?? state.currentRun?.id ?? createRunId();
@@ -278,7 +290,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               runId: callbackRunId,
             }: {
               node: AiNode;
-              reason: 'missing_inputs' | 'flow_control' | 'error';
+              reason: 'missing_inputs' | 'flow_control' | 'validation' | 'error';
               status?: 'blocked' | 'waiting_callback';
               waitingOnPorts?: string[];
               waitingOnDetails?: Array<Record<string, unknown>>;
@@ -344,6 +356,29 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
             },
             fetchEntityByType: args.fetchEntityByType,
             reportAiPathsError: args.reportAiPathsError,
+            validationMiddleware: runtimeValidationMiddleware,
+            onRuntimeValidation: ({ node, stage, decision, message, iteration, issues }) => {
+              args.appendRuntimeEvent({
+                source: 'local',
+                kind:
+                  decision === 'block'
+                    ? 'runtime_validation_blocked'
+                    : 'runtime_validation_warn',
+                level: decision === 'block' ? 'error' : 'warn',
+                timestamp: new Date().toISOString(),
+                message,
+                ...(node?.id ? { nodeId: node.id } : {}),
+                ...(node?.type ? { nodeType: node.type } : {}),
+                ...(node?.title ? { nodeTitle: node.title } : {}),
+                ...(typeof iteration === 'number' ? { iteration } : {}),
+                metadata: {
+                  stage,
+                  decision,
+                  issueCount: issues.length,
+                  issues: issues.slice(0, 3),
+                },
+              });
+            },
             abortSignal: args.abortControllerRef.current?.signal,
             toast: (message: unknown, options?: unknown): void => {
               args.toast(

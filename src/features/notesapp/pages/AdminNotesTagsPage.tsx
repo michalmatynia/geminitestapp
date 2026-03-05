@@ -9,7 +9,10 @@ import {
   useUpdateNoteTag,
 } from '@/features/notesapp/api/useNoteMutations';
 import { useNotebooks, useNoteTags } from '@/features/notesapp/api/useNoteQueries';
-import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
+import {
+  useNoteSettingsActions,
+  useNoteSettingsState,
+} from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { TagRecord } from '@/shared/contracts/notes';
 import {
@@ -31,7 +34,8 @@ import type { ColumnDef } from '@tanstack/react-table';
 
 export function AdminNotesTagsPage(): React.JSX.Element {
   const { toast } = useToast();
-  const { settings, updateSettings } = useNoteSettings();
+  const { settings } = useNoteSettingsState();
+  const { updateSettings } = useNoteSettingsActions();
   const { selectedNotebookId } = settings;
   const [name, setName] = useState('');
   const [color, setColor] = useState('#3b82f6');

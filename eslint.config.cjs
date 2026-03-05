@@ -45,6 +45,7 @@ module.exports = tseslint.config(
       'gemini-headless-retry.sh',
       'gemini-retry.sh',
       'run-gemini.command',
+      'src/features/kangur/legacy/**/*',
     ],
   },
   {
@@ -125,10 +126,27 @@ module.exports = tseslint.config(
       'no-restricted-imports': [
         'error',
         {
+          paths: [
+            {
+              name: '@base44/sdk',
+              message:
+                'Base44 vendor SDK is not allowed in canonical app code. Use the Kangur platform ports/adapters.',
+            },
+            {
+              name: '@base44/sdk/dist/utils/axios-client',
+              message:
+                'Base44 vendor SDK is not allowed in canonical app code. Use the Kangur platform ports/adapters.',
+            },
+          ],
           patterns: [
             {
               group: ['use client', 'use server'],
               message: 'Prefer module-level directives over restricted imports.',
+            },
+            {
+              group: ['@base44/*'],
+              message:
+                'Base44 vendor SDK is not allowed in canonical app code. Use the Kangur platform ports/adapters.',
             },
           ],
         },
@@ -156,6 +174,18 @@ module.exports = tseslint.config(
       'no-restricted-imports': [
         'error',
         {
+          paths: [
+            {
+              name: '@base44/sdk',
+              message:
+                'Base44 vendor SDK is not allowed in canonical app code. Use the Kangur platform ports/adapters.',
+            },
+            {
+              name: '@base44/sdk/dist/utils/axios-client',
+              message:
+                'Base44 vendor SDK is not allowed in canonical app code. Use the Kangur platform ports/adapters.',
+            },
+          ],
           patterns: [
             {
               group: [
@@ -170,6 +200,19 @@ module.exports = tseslint.config(
             {
               group: ['use client', 'use server'],
               message: 'Prefer module-level directives over restricted imports.',
+            },
+            {
+              group: ['@base44/*'],
+              message:
+                'Base44 vendor SDK is not allowed in canonical app code. Use the Kangur platform ports/adapters.',
+            },
+            {
+              group: [
+                '@/features/kangur/legacy/components/ui/*',
+                '@/features/kangur/legacy/lib/utils',
+              ],
+              message:
+                'Kangur legacy UI/utils paths were pruned. Use canonical shared UI and utilities instead.',
             },
           ],
         },
@@ -312,6 +355,16 @@ module.exports = tseslint.config(
         {
           paths: [
             {
+              name: '@base44/sdk',
+              message:
+                'Base44 vendor SDK is not allowed in canonical app code. Use the Kangur platform ports/adapters.',
+            },
+            {
+              name: '@base44/sdk/dist/utils/axios-client',
+              message:
+                'Base44 vendor SDK is not allowed in canonical app code. Use the Kangur platform ports/adapters.',
+            },
+            {
               name: '@/shared/lib/api-hooks',
               message: 'Use explicit v2 factories from "@/shared/lib/query-factories-v2".',
             },
@@ -352,6 +405,16 @@ module.exports = tseslint.config(
         {
           paths: [
             {
+              name: '@base44/sdk',
+              message:
+                'Base44 vendor SDK is not allowed in canonical app code. Use the Kangur platform ports/adapters.',
+            },
+            {
+              name: '@base44/sdk/dist/utils/axios-client',
+              message:
+                'Base44 vendor SDK is not allowed in canonical app code. Use the Kangur platform ports/adapters.',
+            },
+            {
               name: '@/shared/lib/api-hooks',
               message:
                 'Use explicit v2 factories from "@/shared/lib/query-factories-v2" in feature code.',
@@ -387,6 +450,11 @@ module.exports = tseslint.config(
             {
               group: ['use client', 'use server'],
               message: 'Prefer module-level directives over restricted imports.',
+            },
+            {
+              group: ['@base44/*'],
+              message:
+                'Base44 vendor SDK is not allowed in canonical app code. Use the Kangur platform ports/adapters.',
             },
           ],
         },
@@ -428,6 +496,16 @@ module.exports = tseslint.config(
         {
           paths: [
             {
+              name: '@base44/sdk',
+              message:
+                'Base44 vendor SDK is not allowed in canonical app code. Use the Kangur platform ports/adapters.',
+            },
+            {
+              name: '@base44/sdk/dist/utils/axios-client',
+              message:
+                'Base44 vendor SDK is not allowed in canonical app code. Use the Kangur platform ports/adapters.',
+            },
+            {
               name: '@/features/ai/ai-paths/context',
               importNames: [
                 'useStateBridgeSelection',
@@ -467,6 +545,11 @@ module.exports = tseslint.config(
           ],
           patterns: [
             {
+              group: ['@base44/*'],
+              message:
+                'Base44 vendor SDK is not allowed in canonical app code. Use the Kangur platform ports/adapters.',
+            },
+            {
               group: [
                 '**/context/hooks/useStateBridge',
                 '**/components/ai-paths-settings/AiPathsStateBridger',
@@ -492,6 +575,16 @@ module.exports = tseslint.config(
         'error',
         {
           paths: [
+            {
+              name: '@base44/sdk',
+              message:
+                'Base44 vendor SDK is not allowed in canonical app code. Use the Kangur platform ports/adapters.',
+            },
+            {
+              name: '@base44/sdk/dist/utils/axios-client',
+              message:
+                'Base44 vendor SDK is not allowed in canonical app code. Use the Kangur platform ports/adapters.',
+            },
             {
               name: '@/shared/lib/api-hooks',
               message:
@@ -553,6 +646,11 @@ module.exports = tseslint.config(
             {
               group: ['use client', 'use server'],
               message: 'Prefer module-level directives over restricted imports.',
+            },
+            {
+              group: ['@base44/*'],
+              message:
+                'Base44 vendor SDK is not allowed in canonical app code. Use the Kangur platform ports/adapters.',
             },
             {
               group: [

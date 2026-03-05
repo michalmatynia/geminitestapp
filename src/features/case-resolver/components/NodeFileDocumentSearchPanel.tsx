@@ -8,7 +8,10 @@ import { Button, SelectSimple, SegmentedControl } from '@/shared/ui';
 import type { AiNode, CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 import { buildNode, createNodeId } from './case-resolver-canvas-utils';
-import { useNodeFileWorkspaceContext } from './NodeFileWorkspaceContext';
+import {
+  useNodeFileWorkspaceActionsContext,
+  useNodeFileWorkspaceStateContext,
+} from './NodeFileWorkspaceContext';
 import { RelationTreeBrowser } from '../relation-search/components/RelationTreeBrowser';
 import type { RelationTreeLookup } from '../relation-search/types';
 
@@ -26,17 +29,15 @@ export function NodeFileDocumentSearchPanel(
 
   const {
     documentSearchScope,
-    setDocumentSearchScope,
     documentSearchQuery,
-    setDocumentSearchQuery,
     relationTreeNodes,
     relationTreeLookup,
     visibleDocumentSearchRows,
     view,
     canvasHostRef,
-    addNode,
-    setNodeFileMeta,
-  } = useNodeFileWorkspaceContext();
+  } = useNodeFileWorkspaceStateContext();
+  const { setDocumentSearchScope, setDocumentSearchQuery, addNode, setNodeFileMeta } =
+    useNodeFileWorkspaceActionsContext();
   const resolvedRelationTreeNodes = relationTreeNodes ?? [];
   const resolvedRelationTreeLookup: RelationTreeLookup = relationTreeLookup ?? {
     fileRowByNodeId: new Map(),

@@ -9,7 +9,10 @@ import {
   useUpdateNoteTheme,
 } from '@/features/notesapp/api/useNoteMutations';
 import { useNotebooks, useNoteThemes } from '@/features/notesapp/api/useNoteQueries';
-import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
+import {
+  useNoteSettingsActions,
+  useNoteSettingsState,
+} from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ThemeRecord } from '@/shared/contracts/notes';
 import {
@@ -42,7 +45,8 @@ const defaultTheme: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> = {
 
 export function AdminNotesThemesPage(): React.JSX.Element {
   const { toast } = useToast();
-  const { settings, updateSettings } = useNoteSettings();
+  const { settings } = useNoteSettingsState();
+  const { updateSettings } = useNoteSettingsActions();
   const { selectedNotebookId } = settings;
   const [form, setForm] =
     useState<Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'>>(defaultTheme);

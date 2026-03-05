@@ -17,7 +17,10 @@ import { FolderTreePanel } from '@/shared/ui';
 import { DRAG_KEYS, resolveVerticalDropPosition, setDragData } from '@/shared/utils/drag-drop';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
-import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
+import {
+  useCaseResolverPageActions,
+  useCaseResolverPageState,
+} from '../context/CaseResolverPageContext';
 import {
   CaseResolverFolderTreeProvider,
   useCaseResolverFolderTreeDataContext,
@@ -60,7 +63,8 @@ type PendingNodeCanvasAction = {
 };
 
 function CaseResolverFolderTreeInner(): React.JSX.Element {
-  const { selectedAssetId, onLinkRelatedFiles } = useCaseResolverPageContext();
+  const { selectedAssetId } = useCaseResolverPageState();
+  const { onLinkRelatedFiles } = useCaseResolverPageActions();
 
   const {
     masterNodes,

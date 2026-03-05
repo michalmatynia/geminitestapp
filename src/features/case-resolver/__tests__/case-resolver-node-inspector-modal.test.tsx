@@ -8,10 +8,8 @@ const manualSaveMock = vi.fn();
 let hasPendingSnapshotChanges = false;
 
 vi.mock('@/features/case-resolver/components/NodeFileWorkspaceContext', () => ({
-  useNodeFileWorkspaceContext: () => ({
+  useNodeFileWorkspaceStateContext: () => ({
     isNodeInspectorOpen: true,
-    setIsNodeInspectorOpen: vi.fn(),
-    handleManualSave: manualSaveMock,
     hasPendingSnapshotChanges,
     selectedNode: null,
     selectedPromptMeta: null,
@@ -20,19 +18,25 @@ vi.mock('@/features/case-resolver/components/NodeFileWorkspaceContext', () => ({
     selectedPromptInputText: '',
     selectedPromptOutputPreview: null,
     selectedPromptSecondaryOutputHint: '',
-    updateSelectedPromptTemplate: vi.fn(),
-    updateSelectedNodeMeta: vi.fn(),
     selectedEdge: null,
     selectedEdgeJoinMode: 'newline',
+  }),
+  useNodeFileWorkspaceActionsContext: () => ({
+    setIsNodeInspectorOpen: vi.fn(),
+    handleManualSave: manualSaveMock,
+    updateSelectedPromptTemplate: vi.fn(),
+    updateSelectedNodeMeta: vi.fn(),
     updateSelectedEdgeMeta: vi.fn(),
   }),
 }));
 
 vi.mock('@/features/case-resolver/context/CaseResolverPageContext', () => ({
-  useCaseResolverPageContext: () => ({
-    onEditFile: vi.fn(),
+  useCaseResolverPageState: () => ({
     workspace: { id: 'workspace-1' },
     activeFile: { id: 'file-1' },
+  }),
+  useCaseResolverPageActions: () => ({
+    onEditFile: vi.fn(),
   }),
 }));
 

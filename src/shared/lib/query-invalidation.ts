@@ -1,5 +1,7 @@
 import { QueryClient, type QueryKey } from '@tanstack/react-query';
 import {
+  AI_PATH_RUN_ENQUEUED_EVENT_NAME,
+  AI_PATH_RUN_QUEUE_CHANNEL,
   parseAiPathRunEnqueuedEventPayload,
   type AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
@@ -437,8 +439,6 @@ type AiPathQueueCachePayload = {
 
 const AI_PATHS_NODE_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
 
-const AI_PATH_RUN_QUEUE_CHANNEL = 'ai-path-queue';
-
 const normalizeString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const normalized = value.trim().toLowerCase();
@@ -641,7 +641,7 @@ export const notifyAiPathRunEnqueued = (
   });
   if (!payload) return;
 
-  window.dispatchEvent(new CustomEvent('ai-path-run-enqueued', { detail: payload }));
+  window.dispatchEvent(new CustomEvent(AI_PATH_RUN_ENQUEUED_EVENT_NAME, { detail: payload }));
 
   if (typeof BroadcastChannel === 'undefined') return;
   try {

@@ -2,22 +2,27 @@
 
 import React from 'react';
 import { PromptExploderCaptureMappingModal } from '../PromptExploderCaptureMappingModal';
-import { useCaseResolverViewContext } from '../CaseResolverViewContext';
+import {
+  useCaseResolverViewActionsContext,
+  useCaseResolverViewStateContext,
+} from '../CaseResolverViewContext';
 
 export function CaseResolverCaptureMappingModal(): React.JSX.Element {
   const {
     state,
     promptExploderProposalDraft,
     captureProposalTargetFileName,
+    captureApplyDiagnostics,
+    partyOptions,
+  } = useCaseResolverViewStateContext();
+  const {
     handleClosePromptExploderProposalModal,
     handleApplyPromptExploderProposal,
     updatePromptExploderProposalAction,
     updatePromptExploderProposalReference,
     updatePromptExploderProposalDateAction,
     resolvePromptExploderMatchedPartyLabel,
-    captureApplyDiagnostics,
-    partyOptions,
-  } = useCaseResolverViewContext();
+  } = useCaseResolverViewActionsContext();
 
   const { isPromptExploderPartyProposalOpen, isApplyingPromptExploderPartyProposal } = state;
 

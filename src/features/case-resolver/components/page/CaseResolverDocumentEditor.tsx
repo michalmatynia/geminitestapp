@@ -42,7 +42,10 @@ import {
   FormSection,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import { useCaseResolverViewContext } from '../CaseResolverViewContext';
+import {
+  useCaseResolverViewActionsContext,
+  useCaseResolverViewStateContext,
+} from '../CaseResolverViewContext';
 import { CaseResolverPartySelectField } from './CaseResolverPartySelectField';
 import { DocumentRelationSearchPanel } from '../../relation-search';
 import { getCaseResolverDocTooltipWithFallback } from '../../relation-search/utils/docs';
@@ -82,16 +85,21 @@ function LinkedFileTypeIcon({ fileType }: { fileType: string }): React.JSX.Eleme
 
 export function CaseResolverDocumentEditor(): React.JSX.Element | null {
   const { toast } = useToast();
-  const contextValue = useCaseResolverViewContext();
   const {
     state,
     editorDetailsTab,
-    setEditorDetailsTab,
-    updateEditingDocumentDraft,
     caseTagOptions,
-    handleUseHistoryEntry,
     isEditorDraftDirty,
     editorContentRevisionSeed,
+    captureApplyDiagnostics,
+    caseIdentifierOptions,
+    caseCategoryOptions,
+    partyOptions,
+  } = useCaseResolverViewStateContext();
+  const {
+    setEditorDetailsTab,
+    updateEditingDocumentDraft,
+    handleUseHistoryEntry,
     handleUpdateDraftDocumentContent,
     handleCopyDraftFileId,
     handlePreviewDraftPdf,
@@ -100,13 +108,8 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
     handleSaveFileEditor,
     handleLinkRelatedFiles,
     handleUnlinkRelatedFile,
-    captureApplyDiagnostics,
-    caseIdentifierOptions,
-    caseCategoryOptions,
-    partyOptions,
     handleOpenPromptExploderForDraft,
-  } = contextValue;
-
+  } = useCaseResolverViewActionsContext();
   const {
     workspace,
     editingDocumentDraft,

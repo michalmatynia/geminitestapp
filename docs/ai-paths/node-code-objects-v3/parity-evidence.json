@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "ai-paths.node-migration-parity-evidence.v1",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "suites": [
+    {
+      "suiteId": "v3-pilot-parity-core",
+      "testFile": "src/shared/lib/ai-paths/core/runtime/__tests__/engine-core.v3-pilot-parity.test.ts",
+      "modes": [
+        "legacy_adapter",
+        "code_object_v3"
+      ],
+      "nodeTypes": [
+        "constant",
+        "context",
+        "mapper",
+        "math",
+        "mutator",
+        "parser",
+        "regex",
+        "string_mutator",
+        "template"
+      ],
+      "notes": "Core dual-run parity for active v3 pilot transform/math nodes."
+    }
+  ]
+}

@@ -26,17 +26,21 @@ import {
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
-import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
+import {
+  useCaseResolverPageActions,
+  useCaseResolverPageState,
+} from '../context/CaseResolverPageContext';
 import { CaseResolverRichTextEditor } from './CaseResolverRichTextEditor';
-import { useNodeFileWorkspaceContext } from './NodeFileWorkspaceContext';
+import {
+  useNodeFileWorkspaceActionsContext,
+  useNodeFileWorkspaceStateContext,
+} from './NodeFileWorkspaceContext';
 
 const CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 export function CaseResolverNodeInspectorModal(): React.JSX.Element {
   const {
     isNodeInspectorOpen: open,
-    setIsNodeInspectorOpen: onOpenChange,
-    handleManualSave: onManualUpdate,
     hasPendingSnapshotChanges = false,
     selectedNode,
     selectedPromptMeta,
@@ -45,14 +49,19 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
     selectedPromptInputText,
     selectedPromptOutputPreview,
     selectedPromptSecondaryOutputHint = false,
-    updateSelectedPromptTemplate: onUpdateSelectedPromptTemplate,
-    updateSelectedNodeMeta: onUpdateSelectedNodeMeta,
     selectedEdge,
     selectedEdgeJoinMode,
+  } = useNodeFileWorkspaceStateContext();
+  const {
+    setIsNodeInspectorOpen: onOpenChange,
+    handleManualSave: onManualUpdate,
+    updateSelectedPromptTemplate: onUpdateSelectedPromptTemplate,
+    updateSelectedNodeMeta: onUpdateSelectedNodeMeta,
     updateSelectedEdgeMeta: onUpdateSelectedEdgeMeta,
-  } = useNodeFileWorkspaceContext();
+  } = useNodeFileWorkspaceActionsContext();
 
-  const { onEditFile, workspace, activeFile } = useCaseResolverPageContext();
+  const { workspace, activeFile } = useCaseResolverPageState();
+  const { onEditFile } = useCaseResolverPageActions();
   const settingsQuery = useSettingsMap({ scope: 'light' });
   const rawPatternLists = settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
   const plainTextPatternStacks = React.useMemo(

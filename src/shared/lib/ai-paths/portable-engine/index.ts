@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import {
+  type AiPathsValidationConfig,
   type Edge,
   type GraphCompileReport,
   type PathConfig,
@@ -17,6 +18,7 @@ import {
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { evaluateGraphClient } from '@/shared/lib/ai-paths/core/runtime/engine-client';
 import type { EvaluateGraphOptions } from '@/shared/lib/ai-paths/core/runtime/engine-modules/engine-types';
+import { createAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine';
 import {
   parseAndDeserializeSemanticCanvas,
   serializePathConfigToSemanticCanvas,
@@ -397,10 +399,22 @@ export type ValidatePortablePathInputResult =
     }
   | { ok: false; error: string };
 
-export type PortablePathRunOptions = Omit<EvaluateGraphOptions, 'reportAiPathsError'> & {
+type KnownEvaluateGraphOptions = {
+  [Key in keyof EvaluateGraphOptions as string extends Key
+    ? never
+    : number extends Key
+      ? never
+      : symbol extends Key
+        ? never
+        : Key]: EvaluateGraphOptions[Key];
+};
+
+export type PortablePathRunOptions = Omit<KnownEvaluateGraphOptions, 'reportAiPathsError'> & {
   validateBeforeRun?: boolean;
   validationMode?: PortablePathValidationMode;
   validationTriggerNodeId?: string | null;
+  runtimeValidationEnabled?: boolean;
+  runtimeValidationConfig?: AiPathsValidationConfig | null;
   signingPolicyProfile?: PortablePathSigningPolicyProfile;
   signingPolicyTelemetrySurface?: PortablePathSigningPolicySurface;
   repairIdentities?: boolean;
@@ -421,6 +435,10 @@ export type PortablePathRunResult = {
   validation: PortablePathValidationReport | null;
   runtimeState: RuntimeState;
 };
+
+const isRuntimeValidationMiddleware = (
+  value: unknown
+): value is NonNullable<EvaluateGraphOptions['validationMiddleware']> => typeof value === 'function';
 
 export type MigratePortablePathInputResult =
   | {
@@ -2236,6 +2254,9 @@ export const runPortablePathClient = async (
     validateBeforeRun = true,
     validationMode = 'standard',
     validationTriggerNodeId = null,
+    runtimeValidationEnabled = true,
+    runtimeValidationConfig,
+    validationMiddleware,
     signingPolicyProfile,
     signingPolicyTelemetrySurface = 'canvas',
     repairIdentities = true,
@@ -2315,12 +2336,25 @@ export const runPortablePathClient = async (
     throw validationError;
   }
 
+  const runtimeValidationMiddlewareOverride: EvaluateGraphOptions['validationMiddleware'] =
+    isRuntimeValidationMiddleware(validationMiddleware) ? validationMiddleware : undefined;
+  const runtimeValidationMiddleware: EvaluateGraphOptions['validationMiddleware'] =
+    runtimeValidationMiddlewareOverride ??
+    (runtimeValidationEnabled
+      ? createAiPathsRuntimeValidationMiddleware({
+        config: runtimeValidationConfig ?? resolved.value.pathConfig.aiPathsValidation ?? null,
+        nodes: resolved.value.pathConfig.nodes,
+        edges: resolved.value.pathConfig.edges,
+      })
+      : undefined);
+
   let runtimeState: RuntimeState;
   try {
     runtimeState = await evaluateGraphClient({
       nodes: resolved.value.pathConfig.nodes,
       edges: resolved.value.pathConfig.edges,
       ...engineOptions,
+      ...(runtimeValidationMiddleware ? { validationMiddleware: runtimeValidationMiddleware } : {}),
       reportAiPathsError: reportAiPathsError ?? (() => {}),
     });
   } catch (error) {

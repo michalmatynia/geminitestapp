@@ -10,6 +10,9 @@ Machine-readable assertions are maintained in domain-specific docs referenced by
 - `docs/ai-paths/node-validator-wiring-patterns.md`
 - `docs/ai-paths/node-validator-advanced-patterns.md`
 - `docs/ai-paths/node-validator-semantic-grammar-patterns.md`
+- `docs/ai-paths/node-validator-node-code-parser-patterns.md`
+- `docs/ai-paths/node-validator-node-path-code-parser-patterns.md`
+- `docs/ai-paths/node-validator-kernel-parser-pattern-lists.md`
 - `docs/ai-paths/semantic-grammar/nodes/index.json`
 - `docs/ai-paths/tooltip-catalog.json`
 - `docs/ai-paths/node-validator-coverage-matrix.csv`

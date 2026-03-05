@@ -73,6 +73,22 @@ export const BUILTIN_FALLBACK_MANIFEST: AiPathsDocsManifest = {
       tags: ['semantic-grammar', 'interop', 'graph'],
     },
     {
+      id: 'node-code-parser-patterns',
+      type: 'markdown_assertion',
+      path: 'docs/ai-paths/node-validator-node-code-parser-patterns.md',
+      enabled: true,
+      priority: 58,
+      tags: ['kernel-parser', 'node-code', 'pattern-list'],
+    },
+    {
+      id: 'node-path-code-parser-patterns',
+      type: 'markdown_assertion',
+      path: 'docs/ai-paths/node-validator-node-path-code-parser-patterns.md',
+      enabled: true,
+      priority: 59,
+      tags: ['kernel-parser', 'node-path-code', 'pattern-list'],
+    },
+    {
       id: 'node-docs-catalog',
       type: 'node_docs_catalog',
       path: NODE_DOCS_CATALOG_SOURCE_PATH,

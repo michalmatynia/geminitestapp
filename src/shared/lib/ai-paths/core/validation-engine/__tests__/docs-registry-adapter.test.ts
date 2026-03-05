@@ -47,6 +47,8 @@ describe('docs registry adapter', () => {
     expect(sourceIds).toContain('wiring-patterns');
     expect(sourceIds).toContain('advanced-patterns');
     expect(sourceIds).toContain('semantic-grammar-patterns');
+    expect(sourceIds).toContain('node-code-parser-patterns');
+    expect(sourceIds).toContain('node-path-code-parser-patterns');
     expect(sourceIds).toContain('node-docs-catalog');
     expect(sourceIds).toContain('docs-snippets');
     expect(sourceIds).toContain('semantic-nodes-catalog');
@@ -101,6 +103,20 @@ describe('docs registry adapter', () => {
         (assertion) =>
           assertion.id === 'coverage.database.config.object_non_empty' &&
           assertion.sourceId === 'coverage-matrix'
+      )
+    ).toBe(true);
+    expect(
+      snapshot.assertions.some(
+        (assertion) =>
+          assertion.id === 'kernel.node_code.node_type_known_from_code_objects' &&
+          assertion.sourceId === 'node-code-parser-patterns'
+      )
+    ).toBe(true);
+    expect(
+      snapshot.assertions.some(
+        (assertion) =>
+          assertion.id === 'kernel.node_path_code.edge_ports_declared' &&
+          assertion.sourceId === 'node-path-code-parser-patterns'
       )
     ).toBe(true);
   });

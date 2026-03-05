@@ -17,8 +17,8 @@ All tracked compatibility-debt items for this wave are resolved, and the remaini
 2. Exception state:
    - `docs/legacy-compatibility-exception-register-2026-03-05.json` shows `0` active exceptions.
 3. Guardrail status:
-   - `npm run canonical:check:sitewide` passed (`3847` runtime source files, `4` docs).
-   - `npm run ai-paths:check:canonical` passed (`4245` source files under `src/`).
+   - `npm run canonical:check:sitewide` passed (`3814` runtime source files, `4` docs).
+   - `npm run ai-paths:check:canonical` passed (`4215` source files under `src/`).
    - `npm run observability:check` passed (`legacyCompatViolations=0`, `runtimeErrors=0`).
 4. Targeted regression verification passed:
    - `npx vitest run __tests__/api/products/migration.test.ts src/features/products/workers/__tests__/product-ai-processors.graph-model.test.ts src/features/filemaker/__tests__/settings.test.ts`

@@ -1,8 +1,8 @@
 import 'server-only';
 
-import type { SettingRecord } from '@/shared/contracts/settings';
+import type { SettingRecord as LiteSettingRecord } from '@/shared/contracts/settings';
 
-export type LiteSettingRecord = SettingRecord;
+export type { LiteSettingRecord };
 export type LiteSettingsCacheEntry = { data: LiteSettingRecord[]; ts: number };
 
 type LiteSettingsServerCacheState = {

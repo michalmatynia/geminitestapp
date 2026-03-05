@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { MasterFolderTreeRuntimeProvider } from '@/features/foldertree/v2/runtime/MasterFolderTreeRuntimeProvider';
 import type { NodeFileDocumentSearchRow } from '@/features/case-resolver/components/CaseResolverNodeFileUtils';
 import { RelationTreeBrowser } from '@/features/case-resolver/relation-search/components/RelationTreeBrowser';
 import { buildRelationMasterTree } from '@/features/case-resolver/relation-search/tree/relation-master-tree';
@@ -92,15 +91,13 @@ describe('RelationTreeBrowser', () => {
     const relationTree = buildRelationMasterTree({ rows });
 
     const { rerender } = render(
-      <MasterFolderTreeRuntimeProvider>
-        <RelationTreeBrowser
-          instance='case_resolver_document_relations'
-          mode='link_relations'
-          nodes={relationTree.nodes}
-          lookup={relationTree.lookup}
-          searchQuery=''
-        />
-      </MasterFolderTreeRuntimeProvider>
+      <RelationTreeBrowser
+        instance='case_resolver_document_relations'
+        mode='link_relations'
+        nodes={relationTree.nodes}
+        lookup={relationTree.lookup}
+        searchQuery=''
+      />
     );
 
     expect(screen.queryByText('Doc In Folder')).not.toBeInTheDocument();
@@ -108,28 +105,24 @@ describe('RelationTreeBrowser', () => {
     expect(screen.getByText('Doc In Folder')).toBeInTheDocument();
 
     rerender(
-      <MasterFolderTreeRuntimeProvider>
-        <RelationTreeBrowser
-          instance='case_resolver_document_relations'
-          mode='link_relations'
-          nodes={relationTree.nodes}
-          lookup={relationTree.lookup}
-          searchQuery='Doc'
-        />
-      </MasterFolderTreeRuntimeProvider>
+      <RelationTreeBrowser
+        instance='case_resolver_document_relations'
+        mode='link_relations'
+        nodes={relationTree.nodes}
+        lookup={relationTree.lookup}
+        searchQuery='Doc'
+      />
     );
     expect(screen.getByText('Doc In Folder')).toBeInTheDocument();
 
     rerender(
-      <MasterFolderTreeRuntimeProvider>
-        <RelationTreeBrowser
-          instance='case_resolver_document_relations'
-          mode='link_relations'
-          nodes={relationTree.nodes}
-          lookup={relationTree.lookup}
-          searchQuery=''
-        />
-      </MasterFolderTreeRuntimeProvider>
+      <RelationTreeBrowser
+        instance='case_resolver_document_relations'
+        mode='link_relations'
+        nodes={relationTree.nodes}
+        lookup={relationTree.lookup}
+        searchQuery=''
+      />
     );
     expect(screen.getByText('Doc In Folder')).toBeInTheDocument();
   });
@@ -142,14 +135,12 @@ describe('RelationTreeBrowser', () => {
     const dataTransfer = createDataTransfer();
 
     render(
-      <MasterFolderTreeRuntimeProvider>
-        <RelationTreeBrowser
-          instance='case_resolver_nodefile_relations'
-          mode='add_to_node_canvas'
-          nodes={relationTree.nodes}
-          lookup={relationTree.lookup}
-        />
-      </MasterFolderTreeRuntimeProvider>
+      <RelationTreeBrowser
+        instance='case_resolver_nodefile_relations'
+        mode='add_to_node_canvas'
+        nodes={relationTree.nodes}
+        lookup={relationTree.lookup}
+      />
     );
 
     expandVisibleNodes();
@@ -200,14 +191,12 @@ describe('RelationTreeBrowser', () => {
     const dataTransfer = createDataTransfer();
 
     render(
-      <MasterFolderTreeRuntimeProvider>
-        <RelationTreeBrowser
-          instance='case_resolver_nodefile_relations'
-          mode='add_to_node_canvas'
-          nodes={relationTree.nodes}
-          lookup={relationTree.lookup}
-        />
-      </MasterFolderTreeRuntimeProvider>
+      <RelationTreeBrowser
+        instance='case_resolver_nodefile_relations'
+        mode='add_to_node_canvas'
+        nodes={relationTree.nodes}
+        lookup={relationTree.lookup}
+      />
     );
 
     expandVisibleNodes();
@@ -240,17 +229,15 @@ describe('RelationTreeBrowser', () => {
     const onLinkFile = vi.fn();
 
     render(
-      <MasterFolderTreeRuntimeProvider>
-        <RelationTreeBrowser
-          instance='case_resolver_document_relations'
-          mode='link_relations'
-          nodes={relationTree.nodes}
-          lookup={relationTree.lookup}
-          selectedFileIds={new Set<string>()}
-          onToggleFileSelection={onToggleFileSelection}
-          onLinkFile={onLinkFile}
-        />
-      </MasterFolderTreeRuntimeProvider>
+      <RelationTreeBrowser
+        instance='case_resolver_document_relations'
+        mode='link_relations'
+        nodes={relationTree.nodes}
+        lookup={relationTree.lookup}
+        selectedFileIds={new Set<string>()}
+        onToggleFileSelection={onToggleFileSelection}
+        onLinkFile={onLinkFile}
+      />
     );
 
     expandVisibleNodes();

@@ -1,10 +1,9 @@
-import { z } from 'zod';
-
 import {
   productCreateInputSchema as productCreateSchema,
   productUpdateInputSchema as productUpdateSchema,
   productFilterSchema as productFilterDtoSchema,
   type ProductCreateInput,
+  type ProductFilter as ProductFiltersParsed,
   type ProductUpdateInput,
 } from '@/shared/contracts/products';
 
@@ -13,7 +12,7 @@ import {
  */
 export const productFilterSchema = productFilterDtoSchema;
 
-export type ProductFiltersParsed = z.infer<typeof productFilterSchema>;
+export type { ProductFiltersParsed };
 
 // Type exports
 export {

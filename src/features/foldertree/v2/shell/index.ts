@@ -4,3 +4,4 @@ export * from './useFolderTreeUiState';
 export * from './useMasterFolderTreeShell';
 export * from './resolveFolderTreeIconSet';
 export * from './useFolderTreeShellRuntime';
+export * from './useSharedMasterFolderTreeRuntime';

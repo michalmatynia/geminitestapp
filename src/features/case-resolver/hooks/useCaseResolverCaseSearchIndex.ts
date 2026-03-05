@@ -4,6 +4,7 @@ import { useDeferredValue, useEffect, useMemo, useRef } from 'react';
 
 import type {
   CaseResolverAssetFile,
+  CaseSearchScope,
   CaseResolverFile,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
@@ -12,8 +13,7 @@ import {
   getCaseSubtreeIds,
   logCaseResolverDurationMetric,
 } from '../runtime';
-
-export type CaseSearchScope = 'all' | 'name' | 'folder' | 'content';
+export type { CaseSearchScope };
 export type CaseSearchIndexMode = 'metadata_only' | 'full_text';
 
 export type UseCaseResolverCaseSearchIndexInput = {

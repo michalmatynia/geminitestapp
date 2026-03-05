@@ -9,6 +9,7 @@ import type {
   PromptValidationSeverity,
   PromptValidationChainMode,
   PromptValidationScope,
+  PromptExploderRuleSegmentType,
   PromptValidationLaunchScopeBehavior,
   PromptValidationLaunchOperator,
   PromptExploderCaptureApplyTo,
@@ -20,13 +21,13 @@ import type {
   PromptValidationSettings,
   PromptEngineSettings,
 } from '@/shared/contracts/prompt-engine';
-import type { PromptExploderSegmentType } from '@/shared/contracts/prompt-exploder';
 
 export { PROMPT_ENGINE_SETTINGS_KEY };
 export type {
   PromptValidationSeverity,
   PromptValidationChainMode,
   PromptValidationScope,
+  PromptExploderRuleSegmentType,
   PromptValidationLaunchScopeBehavior,
   PromptValidationLaunchOperator,
   PromptExploderCaptureApplyTo,
@@ -38,8 +39,6 @@ export type {
   PromptValidationSettings,
   PromptEngineSettings,
 };
-
-export type PromptExploderRuleSegmentType = PromptExploderSegmentType;
 
 export const PROMPT_VALIDATION_SCOPE_VALUES: PromptValidationScope[] = [
   'image_studio_prompt',

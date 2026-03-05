@@ -9,7 +9,7 @@ export const settingRecordSchema = z.object({
 });
 
 export type SettingRecord = z.infer<typeof settingRecordSchema>;
-export type SystemSetting = SettingRecord;
+export type { SettingRecord as SystemSetting };
 
 /**
  * Settings Scope Contract

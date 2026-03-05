@@ -5,6 +5,7 @@ import type { CaseResolverStateValue } from '../types';
 import type {
   CaseResolverGraph,
   CaseResolverRelationGraph,
+  EditorDetailsTab,
   CaseResolverFileEditDraft,
   CaseResolverNodeMeta,
   CaseResolverDocumentHistoryEntry,
@@ -16,9 +17,9 @@ import type {
   CaseResolverCaptureDocumentDateAction,
 } from '@/features/case-resolver-capture/proposals';
 import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
+export type { EditorDetailsTab };
 
 export type WorkspaceView = 'document' | 'relations';
-export type EditorDetailsTab = 'document' | 'relations' | 'metadata' | 'revisions';
 
 export type SelectOption = {
   value: string;

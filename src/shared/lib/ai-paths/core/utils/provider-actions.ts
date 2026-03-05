@@ -1,7 +1,8 @@
 import type { DatabaseAction, DatabaseActionCategory } from '@/shared/contracts/ai-paths';
+import type { AppProviderValue as DbActionProvider } from '@/shared/contracts/system';
 import type { LabeledOptionDto } from '@/shared/contracts/ui';
 
-export type DbActionProvider = 'mongodb' | 'prisma';
+export type { DbActionProvider };
 export type DbActionProviderSelection = 'auto' | DbActionProvider | undefined;
 
 export type ProviderActionOption = LabeledOptionDto<DatabaseAction>;

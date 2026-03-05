@@ -51,8 +51,8 @@ import {
   type PromptExploderTransferUiStatus,
 } from '../../hooks/prompt-exploder-transfer-lifecycle';
 import { CaseResolverHistoryEntries } from './CaseResolverHistoryEntries';
-
-export type EditorDetailsTab = 'document' | 'relations' | 'metadata' | 'revisions';
+import type { EditorDetailsTab } from '@/shared/contracts/case-resolver';
+export type { EditorDetailsTab };
 
 const formatHistoryTimestamp = (value: string): string => {
   const parsed = Date.parse(value);

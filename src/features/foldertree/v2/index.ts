@@ -16,6 +16,7 @@ export * from './operations/node-status';
 export * from './operations/search';
 export * from './operations/selection';
 export * from './runtime/MasterFolderTreeRuntimeProvider';
+export * from './runtime/createMasterFolderTreeRuntimeBus';
 export * from './search';
 export * from './shell';
 export * from './settings';

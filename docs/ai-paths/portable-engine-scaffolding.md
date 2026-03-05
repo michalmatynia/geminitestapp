@@ -112,6 +112,7 @@ These allow stable package integrity tagging across copy/paste surfaces.
 
 - API: `GET /api/ai-paths/portable-engine/schema`
 - Optional query: `kind=all|portable_package|semantic_canvas|path_config` (default `all`)
+- Cache support: deterministic `ETag` + `If-None-Match` (`304 Not Modified`) with private SWR cache headers.
 
 Response includes canonical JSON Schema (Draft 2020-12) generated from runtime Zod contracts, suitable for external editor validation.
 
@@ -145,6 +146,6 @@ import { runPortablePathServer } from '@/shared/lib/ai-paths/portable-engine/ser
 
 ## Next Hardening Steps
 
-1. Add schema endpoint caching headers / ETag for editor-side cache-friendly polling.
-2. Add signed package envelope option for tamper-evident cross-surface sharing.
-3. Add compatibility test matrix for custom registered migrators.
+1. Add signed package envelope option for tamper-evident cross-surface sharing.
+2. Add compatibility test matrix for custom registered migrators.
+3. Add optional schema-diff endpoint (`current` vs `vNext`) for tooling upgrades.

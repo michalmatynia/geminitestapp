@@ -54,6 +54,30 @@ describe('ai-paths portable-engine schema handler', () => {
     expect(payload['schemas']).toBeUndefined();
   });
 
+  it('returns 304 for matching If-None-Match', async () => {
+    const firstResponse = await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/portable-engine/schema?kind=portable_package') as Parameters<
+        typeof GET_handler
+      >[0],
+      {} as Parameters<typeof GET_handler>[1]
+    );
+    const etag = firstResponse.headers.get('etag');
+    expect(etag).toBeTruthy();
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/portable-engine/schema?kind=portable_package', {
+        headers: {
+          'if-none-match': etag ?? '',
+        },
+      }) as Parameters<typeof GET_handler>[0],
+      {} as Parameters<typeof GET_handler>[1]
+    );
+
+    expect(response.status).toBe(304);
+    expect(response.headers.get('etag')).toBe(etag);
+    expect(response.headers.get('cache-control')).toContain('max-age=300');
+  });
+
   it('rejects unsupported schema kinds', async () => {
     await expect(
       GET_handler(

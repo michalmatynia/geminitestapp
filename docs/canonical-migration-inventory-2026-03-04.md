@@ -2970,3 +2970,29 @@ Continue opportunistic canonicalization in remaining non-critical surfaces outsi
   - `npm run ai-paths:bulk-prune:report` passes.
   - `npm run typecheck` currently fails due unrelated repository typing drift:
     - `src/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository.ts:804` (`TS2322: Type 'null' is not assignable to type 'Condition<string | Date | undefined>'.`)
+
+## Executed Item 154 (AI Paths Manifest-Utils Mode Tests + Maintenance Const-Array Rule Retarget)
+
+- Added regression tests for new AI Paths manifest target modes:
+  - `__tests__/scripts/ai-paths/legacy-prune-manifest-utils.test.ts`
+  - validates:
+    - `source_scan` detects runtime forbidden tokens while skipping test files.
+    - `expectedState: "missing"` reports present retired files.
+    - `const_array` enforces exact ordered constant-list values.
+- Retargeted maintenance action-id const-array rule to the canonical ownership module:
+  - `scripts/ai-paths/legacy-prune-manifest.json`
+  - `maintenance_action_ids_const_array_contract` target:
+    - from `src/features/ai/ai-paths/server/settings-store.constants.ts`
+    - to `src/shared/contracts/ai-paths.ts`
+  - total bulk-prune coverage remains:
+    - `56` rules
+    - `81` targets
+- Validation:
+  - `npx vitest run __tests__/scripts/ai-paths/legacy-prune-manifest-utils.test.ts` passes (`3` tests).
+  - `npm run ai-paths:bulk-prune:scan` passes (`56` rules across `81` targets).
+  - `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` passes.
+  - `npm run ai-paths:check:canonical` passes (`4216` files scanned).
+  - `npm run ai-paths:bulk-prune:report` passes.
+  - `npm run typecheck` currently fails due unrelated repository typing drift:
+    - `src/features/products/validations/context.tsx:7` (`TS2307: Cannot find module './validators' or its corresponding type declarations.`)
+    - `src/features/products/validations/hooks.ts:5` (`TS2307: Cannot find module './validators' or its corresponding type declarations.`)

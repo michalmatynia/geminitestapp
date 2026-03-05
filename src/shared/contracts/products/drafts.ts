@@ -21,6 +21,7 @@ import type {
 } from './parameters';
 import type { Producer } from './producers';
 import type { ProductFilter, ProductStockOperator } from './filters';
+import type { AppProviderValue as DraftProvider } from '../system';
 import type {
   ProductTagFilters,
   ProductTag,
@@ -383,5 +384,4 @@ export type DebugInfo = {
 export type ProductFormData = ProductCreateInput;
 
 export type ProductImageSlot = ManagedImageSlot;
-
-export type DraftProvider = 'mongodb' | 'prisma';
+export type { DraftProvider };

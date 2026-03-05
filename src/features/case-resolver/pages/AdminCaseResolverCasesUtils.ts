@@ -1,4 +1,5 @@
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile, CaseSearchScope } from '@/shared/contracts/case-resolver';
+export type { CaseSearchScope };
 
 export type CaseTreeNode = {
   file: CaseResolverFile;
@@ -16,7 +17,6 @@ export type CaseSortKey =
   | 'sent';
 export type CaseSortOrder = 'asc' | 'desc';
 export type CaseViewMode = 'hierarchy' | 'list';
-export type CaseSearchScope = 'all' | 'name' | 'folder' | 'content';
 export type CaseFileTypeFilter = 'all' | 'case';
 
 export type IndexedCaseRow = {

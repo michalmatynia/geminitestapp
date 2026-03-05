@@ -4,7 +4,7 @@ import React, { createContext, useContext, useReducer, type ReactNode } from 're
 
 import { internalError } from '@/shared/errors/app-error';
 
-import type { ValidationError } from './validators';
+import type { ValidationError } from '@/shared/lib/products/validations/validators';
 
 type ValidationContextState = {
   globalErrors: ValidationError[];

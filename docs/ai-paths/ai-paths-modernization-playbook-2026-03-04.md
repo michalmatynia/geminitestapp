@@ -1435,6 +1435,27 @@ Progress (2026-03-04):
       3. `npm run ai-paths:check:canonical` -> passed (`4245` files scanned).
       4. `npm run ai-paths:bulk-prune:report` -> passed (report refreshed).
       5. `npm run typecheck` -> failed with current repository typing drift at `src/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository.ts:804` (`TS2322: Type 'null' is not assignable to type 'Condition<string | Date | undefined>'.`).
+63. Continued Phase 3 manifest-utils hardening + maintenance const-array ownership retarget in seam 193:
+   1. Added regression coverage for new manifest target modes:
+      1. `__tests__/scripts/ai-paths/legacy-prune-manifest-utils.test.ts`
+      2. covered behaviors:
+         1. `source_scan` flags runtime tokens and skips test files.
+         2. `expectedState: "missing"` reports present retired files.
+         3. `const_array` enforces exact ordered list values.
+   2. Retargeted maintenance const-array rule to canonical ownership file:
+      1. `scripts/ai-paths/legacy-prune-manifest.json`
+      2. `maintenance_action_ids_const_array_contract` target updated:
+         1. `src/features/ai/ai-paths/server/settings-store.constants.ts` -> `src/shared/contracts/ai-paths.ts`
+      3. bulk-prune manifest remains at `56` rules across `81` targets.
+   3. Validation:
+      1. `npx vitest run __tests__/scripts/ai-paths/legacy-prune-manifest-utils.test.ts` -> passed (`3` tests).
+      2. `npm run ai-paths:bulk-prune:scan` -> passed (`56` rules across `81` targets).
+      3. `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` -> passed.
+      4. `npm run ai-paths:check:canonical` -> passed (`4216` files scanned).
+      5. `npm run ai-paths:bulk-prune:report` -> passed (report refreshed).
+      6. `npm run typecheck` -> failed with current repository typing drift:
+         1. `src/features/products/validations/context.tsx:7` (`TS2307: Cannot find module './validators' or its corresponding type declarations.`)
+         2. `src/features/products/validations/hooks.ts:5` (`TS2307: Cannot find module './validators' or its corresponding type declarations.`)
 
 ## Deprecation map
 

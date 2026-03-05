@@ -2,7 +2,11 @@
 
 import { useState, useCallback } from 'react';
 
-import { validateProductCreate, validateProductUpdate, type ValidationError } from './validators';
+import {
+  validateProductCreate,
+  validateProductUpdate,
+  type ValidationError,
+} from '@/shared/lib/products/validations/validators';
 
 export type UseValidationOptions = {
   validateOnChange?: boolean;

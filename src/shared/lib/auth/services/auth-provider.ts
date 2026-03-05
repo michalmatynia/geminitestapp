@@ -11,8 +11,9 @@ import {
 } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import type { AppProviderValue as AuthDbProvider } from '@/shared/contracts/system';
 
-export type AuthDbProvider = 'mongodb' | 'prisma';
+export type { AuthDbProvider };
 
 const normalizeProvider = (value?: string | null): AuthDbProvider | null => {
   if (!value) return null;

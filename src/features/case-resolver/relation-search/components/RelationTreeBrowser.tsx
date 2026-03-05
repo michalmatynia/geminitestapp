@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   FolderTreeViewportV2,
   useFolderTreeInstanceV2,
+  useSharedMasterFolderTreeRuntime,
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree/v2';
 import { useMasterFolderTreeSearch } from '@/features/foldertree/v2/search';
@@ -71,10 +72,12 @@ export function RelationTreeBrowser(props: RelationTreeBrowserProps): React.JSX.
   const profile = useMemo(() => defaultFolderTreeProfilesV2[instance], [instance]);
   const searchConfig = useMemo(() => resolveFolderTreeSearchConfig(profile), [profile]);
   const multiSelectConfig = useMemo(() => resolveFolderTreeMultiSelectConfig(profile), [profile]);
+  const runtime = useSharedMasterFolderTreeRuntime({ bindWindowKeydown: false });
   const controller = useFolderTreeInstanceV2({
     initialNodes: nodes,
     profile,
     instanceId: instance,
+    runtime,
   });
 
   const dragArmedFileIdRef = useRef<string | null>(null);
@@ -258,6 +261,7 @@ export function RelationTreeBrowser(props: RelationTreeBrowserProps): React.JSX.
         searchState={searchState}
         multiSelectConfig={multiSelectConfig}
         enableDnd={mode === 'add_to_node_canvas'}
+        runtime={runtime}
         canStartDrag={mode === 'add_to_node_canvas' ? canStartDrag : undefined}
         canDrop={mode === 'add_to_node_canvas' ? canDrop : undefined}
         onNodeDragStart={mode === 'add_to_node_canvas' ? handleNodeDragStart : undefined}

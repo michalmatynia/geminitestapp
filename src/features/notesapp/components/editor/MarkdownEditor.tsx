@@ -9,14 +9,11 @@ import { sanitizeHtml } from '@/shared/utils';
 
 import { renderMarkdownToHtml } from '../../utils';
 
-interface MarkdownEditorProps {
-  isCodeMode?: boolean | undefined;
-}
-
-export function MarkdownEditor({ isCodeMode = false }: MarkdownEditorProps): React.JSX.Element {
+export function MarkdownEditor(): React.JSX.Element {
   const {
     content,
     setContent,
+    editorMode,
     showPreview,
     editorWidth,
     setEditorWidth,
@@ -31,6 +28,7 @@ export function MarkdownEditor({ isCodeMode = false }: MarkdownEditorProps): Rea
     handlePaste,
     setLightboxImage,
   } = useNoteFormContext();
+  const isCodeMode = editorMode === 'code';
 
   const { toast } = useToast();
 

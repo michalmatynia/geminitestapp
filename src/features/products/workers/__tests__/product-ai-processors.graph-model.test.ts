@@ -97,34 +97,26 @@ describe('processGraphModel AI Paths model selection', () => {
       })
     );
     expect(result['modelId']).toBe('ollama:brain-default');
-    expect(result).not.toHaveProperty('brainFallbackReason');
   });
 
-  it('falls back to node-selected model when AI Brain config is unavailable', async () => {
+  it('fails when AI Brain config is unavailable even if node model is provided', async () => {
     vi.mocked(resolveAiPathsNodeExecutionConfig).mockRejectedValue(
       configurationError(
         'AI Paths Model has no model assigned in AI Brain, and this Model node did not select one.'
       )
     );
 
-    const result = await processGraphModel(
-      buildJob({
-        modelId: 'gemma3:27b',
-        temperature: 0.58,
-        maxTokens: 444,
-        systemPrompt: 'Node system prompt',
-      })
-    );
-
-    expect(runBrainChatCompletion).toHaveBeenCalledWith(
-      expect.objectContaining({
-        modelId: 'gemma3:27b',
-        temperature: 0.58,
-        maxTokens: 444,
-      })
-    );
-    expect(result['modelId']).toBe('gemma3:27b');
-    expect(result['brainFallbackReason']).toContain('AI Paths Model');
+    await expect(
+      processGraphModel(
+        buildJob({
+          modelId: 'gemma3:27b',
+          temperature: 0.58,
+          maxTokens: 444,
+          systemPrompt: 'Node system prompt',
+        })
+      )
+    ).rejects.toThrow('AI Paths Model has no model assigned');
+    expect(runBrainChatCompletion).not.toHaveBeenCalled();
   });
 
   it('does not fallback when no node model is provided', async () => {

@@ -27,9 +27,7 @@ import { getProductRepository } from '@/features/products/server';
 import { buildImageBase64Slots } from '@/shared/lib/products/services/image-base64';
 import type { ProductAiJobRecord } from '@/shared/contracts/jobs';
 import {
-  AppErrorCodes,
   badRequestError,
-  isAppError,
   operationFailedError,
 } from '@/shared/errors/app-error';
 
@@ -62,17 +60,6 @@ export type JobPayload = {
 
 export type Job = ProductAiJobRecord & {
   payload: JobPayload;
-};
-
-const isAiPathsBrainConfigurationError = (error: unknown): boolean => {
-  if (isAppError(error) && error.code === AppErrorCodes.configurationError) {
-    return true;
-  }
-  if (!(error instanceof Error)) {
-    return false;
-  }
-  const normalized = error.message.trim().toLowerCase();
-  return normalized.includes('ai paths model') && normalized.includes('ai brain');
 };
 
 const buildImageParts = async (
@@ -164,7 +151,6 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
   let maxTokens: number;
   let systemMessage: string;
   let brainApplied: Record<string, unknown> | undefined;
-  let brainFallbackReason: string | null = null;
   const imageUrls = Array.isArray(payload.imageUrls)
     ? payload.imageUrls.filter(
       (url: unknown): url is string => typeof url === 'string' && url.trim() !== ''
@@ -172,35 +158,21 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
     : [];
   const attachImages = Boolean(payload.vision) && imageUrls.length > 0;
   if (source === 'ai_paths') {
-    try {
-      const brainConfig = await resolveAiPathsNodeExecutionConfig({
-        requestedModelId: requestedModelId || undefined,
-        requestedTemperature,
-        requestedMaxTokens,
-        requestedSystemPrompt: requestedSystemPrompt || undefined,
-        defaultTemperature: 0.7,
-        defaultMaxTokens: 800,
-        defaultSystemPrompt: 'You are an AI assistant.',
-        runtimeKind: payload.vision ? 'vision' : 'chat',
-      });
-      modelId = brainConfig.modelId;
-      temperature = brainConfig.temperature;
-      maxTokens = brainConfig.maxTokens;
-      systemMessage = brainConfig.systemPrompt;
-      brainApplied = brainConfig.brainApplied;
-    } catch (error) {
-      if (!requestedModelId || !isAiPathsBrainConfigurationError(error)) {
-        throw error;
-      }
-      // Keep legacy AI-Paths behavior: an explicit Model-node modelId is executable even when
-      // Brain routing for ai_paths.model is not configured yet.
-      modelId = requestedModelId;
-      temperature = requestedTemperature ?? 0.7;
-      maxTokens = requestedMaxTokens ?? 800;
-      systemMessage = requestedSystemPrompt || 'You are an AI assistant.';
-      brainApplied = undefined;
-      brainFallbackReason = error instanceof Error ? error.message : 'AI Brain routing not available.';
-    }
+    const brainConfig = await resolveAiPathsNodeExecutionConfig({
+      requestedModelId: requestedModelId || undefined,
+      requestedTemperature,
+      requestedMaxTokens,
+      requestedSystemPrompt: requestedSystemPrompt || undefined,
+      defaultTemperature: 0.7,
+      defaultMaxTokens: 800,
+      defaultSystemPrompt: 'You are an AI assistant.',
+      runtimeKind: payload.vision ? 'vision' : 'chat',
+    });
+    modelId = brainConfig.modelId;
+    temperature = brainConfig.temperature;
+    maxTokens = brainConfig.maxTokens;
+    systemMessage = brainConfig.systemPrompt;
+    brainApplied = brainConfig.brainApplied;
   } else {
     const capability = payload.vision
       ? 'product.description.vision'
@@ -251,7 +223,6 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
     source,
     graph: payload.graph ?? undefined,
     productId,
-    ...(brainFallbackReason ? { brainFallbackReason } : {}),
     ...(brainApplied ? { brainApplied } : {}),
   };
 }

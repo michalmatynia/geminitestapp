@@ -1,13 +1,13 @@
 {
   "summary": {
-    "generatedAt": "2026-03-05T01:11:24.991Z",
+    "generatedAt": "2026-03-05T01:07:16.730Z",
     "scannedSourceFiles": 3890,
     "scannedJsxFiles": 1392,
     "componentCount": 2082,
     "componentsWithForwarding": 0,
-    "componentsWithAnyForwarding": 59,
-    "resolvedTransitionCount": 62,
-    "depth2CandidateChainCount": 62,
+    "componentsWithAnyForwarding": 60,
+    "resolvedTransitionCount": 64,
+    "depth2CandidateChainCount": 64,
     "candidateChainCount": 0,
     "highPriorityChainCount": 0,
     "unknownSpreadForwardingCount": 0,
@@ -53,6 +53,10 @@
         "count": 2
       },
       {
+        "scope": "feature:document-editor",
+        "count": 1
+      },
+      {
         "scope": "feature:integrations",
         "count": 1
       },
@@ -64,6 +68,32 @@
   },
   "backlog": [],
   "transitionBacklog": [
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
+      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+      "componentPath": [
+        "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
+        "src/shared/ui/select-simple.tsx#SelectSimple"
+      ],
+      "propPath": [
+        "variant",
+        "triggerClassName"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
+          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+          "sourceProp": "variant",
+          "targetProp": "triggerClassName",
+          "relativePath": "src/features/document-editor/components/RichTextEditorImpl.tsx",
+          "line": 534
+        }
+      ]
+    },
     {
       "score": 62,
       "depth": 2,
@@ -711,6 +741,32 @@
           "targetProp": "analysis",
           "relativePath": "src/features/ai/image-studio/components/analysis/sections/AiPathAnalysisTriggerSectionImpl.tsx",
           "line": 496
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
+      "sinkComponentId": "src/features/document-editor/components/rich-text/RichTextEditorToolbar.tsx#ToolbarButton",
+      "componentPath": [
+        "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
+        "src/features/document-editor/components/rich-text/RichTextEditorToolbar.tsx#ToolbarButton"
+      ],
+      "propPath": [
+        "variant",
+        "variant"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
+          "toComponentId": "src/features/document-editor/components/rich-text/RichTextEditorToolbar.tsx#ToolbarButton",
+          "sourceProp": "variant",
+          "targetProp": "variant",
+          "relativePath": "src/features/document-editor/components/RichTextEditorImpl.tsx",
+          "line": 360
         }
       ]
     },
@@ -1684,6 +1740,15 @@
       "name": "AiPathAnalysisTriggerSection",
       "relativePath": "src/features/ai/image-studio/components/analysis/sections/AiPathAnalysisTriggerSectionImpl.tsx",
       "feature": "feature:ai",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
+      "name": "RichTextEditorImpl",
+      "relativePath": "src/features/document-editor/components/RichTextEditorImpl.tsx",
+      "feature": "feature:document-editor",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 2,
       "hasUnknownSpreadForwarding": false

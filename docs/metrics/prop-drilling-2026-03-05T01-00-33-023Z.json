@@ -1,13 +1,13 @@
 {
   "summary": {
-    "generatedAt": "2026-03-05T01:11:24.991Z",
-    "scannedSourceFiles": 3890,
+    "generatedAt": "2026-03-05T01:00:33.023Z",
+    "scannedSourceFiles": 3892,
     "scannedJsxFiles": 1392,
-    "componentCount": 2082,
+    "componentCount": 2084,
     "componentsWithForwarding": 0,
-    "componentsWithAnyForwarding": 59,
-    "resolvedTransitionCount": 62,
-    "depth2CandidateChainCount": 62,
+    "componentsWithAnyForwarding": 60,
+    "resolvedTransitionCount": 65,
+    "depth2CandidateChainCount": 65,
     "candidateChainCount": 0,
     "highPriorityChainCount": 0,
     "unknownSpreadForwardingCount": 0,
@@ -53,6 +53,10 @@
         "count": 2
       },
       {
+        "scope": "feature:document-editor",
+        "count": 1
+      },
+      {
         "scope": "feature:integrations",
         "count": 1
       },
@@ -64,6 +68,58 @@
   },
   "backlog": [],
   "transitionBacklog": [
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
+      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+      "componentPath": [
+        "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
+        "src/shared/ui/select-simple.tsx#SelectSimple"
+      ],
+      "propPath": [
+        "variant",
+        "triggerClassName"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
+          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+          "sourceProp": "variant",
+          "targetProp": "triggerClassName",
+          "relativePath": "src/features/document-editor/components/RichTextEditorImpl.tsx",
+          "line": 534
+        }
+      ]
+    },
+    {
+      "score": 62,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/cms/components/page-builder/tree/ZoneFooterNode.tsx#ZoneFooterNode",
+      "sinkComponentId": "src/features/cms/components/page-builder/tree/TreeSectionPicker.tsx#TreeSectionPicker",
+      "componentPath": [
+        "src/features/cms/components/page-builder/tree/ZoneFooterNode.tsx#ZoneFooterNode",
+        "src/features/cms/components/page-builder/tree/TreeSectionPicker.tsx#TreeSectionPicker"
+      ],
+      "propPath": [
+        "zone",
+        "onSelect"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/page-builder/tree/ZoneFooterNode.tsx#ZoneFooterNode",
+          "toComponentId": "src/features/cms/components/page-builder/tree/TreeSectionPicker.tsx#TreeSectionPicker",
+          "sourceProp": "zone",
+          "targetProp": "onSelect",
+          "relativePath": "src/features/cms/components/page-builder/tree/ZoneFooterNode.tsx",
+          "line": 75
+        }
+      ]
+    },
     {
       "score": 62,
       "depth": 2,
@@ -711,6 +767,58 @@
           "targetProp": "analysis",
           "relativePath": "src/features/ai/image-studio/components/analysis/sections/AiPathAnalysisTriggerSectionImpl.tsx",
           "line": 496
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/cms/components/page-builder/tree/ZoneFooterNode.tsx#ZoneFooterNode",
+      "sinkComponentId": "src/features/cms/components/page-builder/tree/TreeSectionPicker.tsx#TreeSectionPicker",
+      "componentPath": [
+        "src/features/cms/components/page-builder/tree/ZoneFooterNode.tsx#ZoneFooterNode",
+        "src/features/cms/components/page-builder/tree/TreeSectionPicker.tsx#TreeSectionPicker"
+      ],
+      "propPath": [
+        "zone",
+        "zone"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/page-builder/tree/ZoneFooterNode.tsx#ZoneFooterNode",
+          "toComponentId": "src/features/cms/components/page-builder/tree/TreeSectionPicker.tsx#TreeSectionPicker",
+          "sourceProp": "zone",
+          "targetProp": "zone",
+          "relativePath": "src/features/cms/components/page-builder/tree/ZoneFooterNode.tsx",
+          "line": 75
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
+      "sinkComponentId": "src/features/document-editor/components/rich-text/RichTextEditorToolbar.tsx#ToolbarButton",
+      "componentPath": [
+        "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
+        "src/features/document-editor/components/rich-text/RichTextEditorToolbar.tsx#ToolbarButton"
+      ],
+      "propPath": [
+        "variant",
+        "variant"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
+          "toComponentId": "src/features/document-editor/components/rich-text/RichTextEditorToolbar.tsx#ToolbarButton",
+          "sourceProp": "variant",
+          "targetProp": "variant",
+          "relativePath": "src/features/document-editor/components/RichTextEditorImpl.tsx",
+          "line": 360
         }
       ]
     },
@@ -1577,32 +1685,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/cms/components/page-builder/tree/ZoneFooterNode.tsx#ZoneFooterNode",
-      "sinkComponentId": "src/features/cms/components/page-builder/tree/TreeSectionPicker.tsx#TreeSectionPicker",
-      "componentPath": [
-        "src/features/cms/components/page-builder/tree/ZoneFooterNode.tsx#ZoneFooterNode",
-        "src/features/cms/components/page-builder/tree/TreeSectionPicker.tsx#TreeSectionPicker"
-      ],
-      "propPath": [
-        "zone",
-        "zone"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/cms/components/page-builder/tree/ZoneFooterNode.tsx#ZoneFooterNode",
-          "toComponentId": "src/features/cms/components/page-builder/tree/TreeSectionPicker.tsx#TreeSectionPicker",
-          "sourceProp": "zone",
-          "targetProp": "zone",
-          "relativePath": "src/features/cms/components/page-builder/tree/ZoneFooterNode.tsx",
-          "line": 73
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/shared/ui/data-table.tsx#DataTableSortableHeader",
       "sinkComponentId": "src/shared/ui/button.tsx#Button",
       "componentPath": [
@@ -1684,6 +1766,24 @@
       "name": "AiPathAnalysisTriggerSection",
       "relativePath": "src/features/ai/image-studio/components/analysis/sections/AiPathAnalysisTriggerSectionImpl.tsx",
       "feature": "feature:ai",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/cms/components/page-builder/tree/ZoneFooterNode.tsx#ZoneFooterNode",
+      "name": "ZoneFooterNode",
+      "relativePath": "src/features/cms/components/page-builder/tree/ZoneFooterNode.tsx",
+      "feature": "feature:cms",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
+      "name": "RichTextEditorImpl",
+      "relativePath": "src/features/document-editor/components/RichTextEditorImpl.tsx",
+      "feature": "feature:document-editor",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 2,
       "hasUnknownSpreadForwarding": false
@@ -1971,15 +2071,6 @@
       "componentId": "src/features/cms/components/page-builder/theme/ThemeSettingsFieldsSection.tsx#ThemeSettingsFieldsSection",
       "name": "ThemeSettingsFieldsSection",
       "relativePath": "src/features/cms/components/page-builder/theme/ThemeSettingsFieldsSection.tsx",
-      "feature": "feature:cms",
-      "forwardedPropCount": 1,
-      "outgoingTransitionCount": 1,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/cms/components/page-builder/tree/ZoneFooterNode.tsx#ZoneFooterNode",
-      "name": "ZoneFooterNode",
-      "relativePath": "src/features/cms/components/page-builder/tree/ZoneFooterNode.tsx",
       "feature": "feature:cms",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 1,

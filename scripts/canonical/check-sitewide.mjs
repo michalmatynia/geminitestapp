@@ -30,6 +30,8 @@ const FORBIDDEN_MIGRATION_HELPER_RUNTIME_FILES = [
   'src/features/case-resolver/workspace-detached-contract-migration.ts',
   'src/features/products/api/versioning.ts',
   'src/features/products/api/routes/v2-products-route.ts',
+  'src/app/api/v2/products/migrate/handler.ts',
+  'src/app/api/v2/products/migrate/route.ts',
 ];
 const FORBIDDEN_COMPAT_WRAPPER_RUNTIME_FILES = [
   'src/features/products/hooks/useMetadata.ts',
@@ -413,6 +415,18 @@ const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
   {
     token: 'migrateCmsPageBuilderTemplateSettingValue',
     reason: 'cms page-builder template migration helper usage reintroduced in runtime tree',
+  },
+  {
+    token: 'brainFallbackReason',
+    reason: 'products AI worker model fallback metadata channel reintroduced',
+  },
+  {
+    token: 'rejectLegacyInlinePayloads?: boolean;',
+    reason: 'filemaker normalizer runtime compatibility option flag reintroduced',
+  },
+  {
+    token: 'stripCompatibilityFields?: boolean;',
+    reason: 'filemaker normalizer runtime compatibility option flag reintroduced',
   },
   {
     token: 'cms_section_templates.v1',

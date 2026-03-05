@@ -30,6 +30,7 @@ import {
   removeFilemakerPhoneNumber,
   resolveFilemakerPartyLabel,
   setFilemakerDefaultAddressForOwner,
+  toPersistedFilemakerDatabase,
   unlinkFilemakerAddressFromOwner,
   unlinkFilemakerEventFromOrganization,
   unlinkFilemakerEmailFromParty,
@@ -205,6 +206,57 @@ describe('filemaker settings', () => {
     expect(getFilemakerAddressById(database, database.persons[0]?.addressId)?.country).toBe(
       'Poland'
     );
+  });
+
+  it('strips compatibility-only denormalized fields when persisting', () => {
+    const database = parseFilemakerDatabase(
+      JSON.stringify({
+        version: 2,
+        persons: [createPersonRecord({ id: 'p-1', addressId: 'a-1' })],
+        organizations: [createOrganizationRecord({ id: 'o-1', addressId: 'a-1' })],
+        events: [createEventRecord({ id: 'ev-1', addressId: 'a-1' })],
+        addresses: [
+          {
+            id: 'a-1',
+            street: 'Main Street',
+            streetNumber: '1',
+            city: 'Warsaw',
+            postalCode: '00-001',
+            country: 'Poland',
+            countryId: 'country-pl',
+          },
+        ],
+        addressLinks: [
+          { id: 'al-person', ownerKind: 'person', ownerId: 'p-1', addressId: 'a-1', isDefault: true },
+          {
+            id: 'al-organization',
+            ownerKind: 'organization',
+            ownerId: 'o-1',
+            addressId: 'a-1',
+            isDefault: true,
+          },
+          { id: 'al-event', ownerKind: 'event', ownerId: 'ev-1', addressId: 'a-1', isDefault: true },
+        ],
+        phoneNumbers: [{ id: 'ph-1', phoneNumber: '+48 123 456 789' }],
+        phoneNumberLinks: [{ id: 'phl-1', phoneNumberId: 'ph-1', partyKind: 'person', partyId: 'p-1' }],
+        emails: [],
+        emailLinks: [],
+        eventOrganizationLinks: [],
+      })
+    );
+
+    expect(database.persons[0]?.city).toBe('Warsaw');
+    expect(database.persons[0]?.phoneNumbers).toEqual(['+48123456789']);
+    expect(database.organizations[0]?.country).toBe('Poland');
+    expect(database.events[0]?.postalCode).toBe('00-001');
+
+    const persisted = toPersistedFilemakerDatabase(database);
+    expect(persisted.persons[0]?.city).toBe('');
+    expect(persisted.persons[0]?.phoneNumbers).toEqual([]);
+    expect(persisted.organizations[0]?.country).toBe('');
+    expect(persisted.events[0]?.postalCode).toBe('');
+    expect(persisted.addresses[0]?.city).toBe('Warsaw');
+    expect(persisted.phoneNumbers[0]?.phoneNumber).toBe('+48123456789');
   });
 
   it('normalizes address links and enforces one default per owner', () => {

@@ -14,7 +14,10 @@ import {
   FilemakerPerson,
 } from '../types';
 import { normalizeString } from '../filemaker-settings.helpers';
-import { normalizeFilemakerDatabase } from '../filemaker-settings.database';
+import {
+  assertCanonicalFilemakerDatabasePayload,
+  normalizeFilemakerDatabase,
+} from '../filemaker-settings.database';
 
 const parseFilemakerDatabasePayload = (
   raw: string | null | undefined
@@ -44,9 +47,8 @@ const parseFilemakerDatabasePayload = (
 
 export const parseFilemakerDatabase = (raw: string | null | undefined): FilemakerDatabase => {
   const parsed = parseFilemakerDatabasePayload(raw);
-  return normalizeFilemakerDatabase(parsed, {
-    rejectLegacyInlinePayloads: true,
-  });
+  assertCanonicalFilemakerDatabasePayload(parsed);
+  return normalizeFilemakerDatabase(parsed);
 };
 
 export const getFilemakerAddressById = (

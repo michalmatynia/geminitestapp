@@ -1,13 +1,13 @@
 {
   "summary": {
-    "generatedAt": "2026-03-05T01:11:24.991Z",
+    "generatedAt": "2026-03-05T01:10:07.578Z",
     "scannedSourceFiles": 3890,
     "scannedJsxFiles": 1392,
-    "componentCount": 2082,
-    "componentsWithForwarding": 0,
-    "componentsWithAnyForwarding": 59,
-    "resolvedTransitionCount": 62,
-    "depth2CandidateChainCount": 62,
+    "componentCount": 2083,
+    "componentsWithForwarding": 1,
+    "componentsWithAnyForwarding": 61,
+    "resolvedTransitionCount": 66,
+    "depth2CandidateChainCount": 66,
     "candidateChainCount": 0,
     "highPriorityChainCount": 0,
     "unknownSpreadForwardingCount": 0,
@@ -43,6 +43,10 @@
       {
         "scope": "feature:case-resolver",
         "count": 3
+      },
+      {
+        "scope": "feature:document-editor",
+        "count": 2
       },
       {
         "scope": "feature:admin",
@@ -451,6 +455,32 @@
           "targetProp": "onClick",
           "relativePath": "src/features/database/components/DatabaseColumns.tsx",
           "line": 44
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#ToolbarFontFamilySelect",
+      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+      "componentPath": [
+        "src/features/document-editor/components/RichTextEditorImpl.tsx#ToolbarFontFamilySelect",
+        "src/shared/ui/select-simple.tsx#SelectSimple"
+      ],
+      "propPath": [
+        "editor",
+        "onValueChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#ToolbarFontFamilySelect",
+          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+          "sourceProp": "editor",
+          "targetProp": "onValueChange",
+          "relativePath": "src/features/document-editor/components/RichTextEditorImpl.tsx",
+          "line": 93
         }
       ]
     },
@@ -1031,6 +1061,32 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
+      "sinkComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#ToolbarFontFamilySelect",
+      "componentPath": [
+        "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
+        "src/features/document-editor/components/RichTextEditorImpl.tsx#ToolbarFontFamilySelect"
+      ],
+      "propPath": [
+        "allowFontFamily",
+        "visible"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
+          "toComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#ToolbarFontFamilySelect",
+          "sourceProp": "allowFontFamily",
+          "targetProp": "visible",
+          "relativePath": "src/features/document-editor/components/RichTextEditorImpl.tsx",
+          "line": 557
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
       "rootComponentId": "src/shared/lib/analytics/components/AnalyticsEventDetails.tsx#AnalyticsEventDetails",
       "sinkComponentId": "src/shared/lib/analytics/components/AnalyticsEventDetails.tsx#DetailItem",
       "componentPath": [
@@ -1335,6 +1391,58 @@
           "targetProp": "fields",
           "relativePath": "src/features/cms/components/page-builder/theme/ThemeSettingsFieldsSection.tsx",
           "line": 33
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#ToolbarFontFamilySelect",
+      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+      "componentPath": [
+        "src/features/document-editor/components/RichTextEditorImpl.tsx#ToolbarFontFamilySelect",
+        "src/shared/ui/select-simple.tsx#SelectSimple"
+      ],
+      "propPath": [
+        "value",
+        "value"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#ToolbarFontFamilySelect",
+          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+          "sourceProp": "value",
+          "targetProp": "value",
+          "relativePath": "src/features/document-editor/components/RichTextEditorImpl.tsx",
+          "line": 93
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#ToolbarFontFamilySelect",
+      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+      "componentPath": [
+        "src/features/document-editor/components/RichTextEditorImpl.tsx#ToolbarFontFamilySelect",
+        "src/shared/ui/select-simple.tsx#SelectSimple"
+      ],
+      "propPath": [
+        "options",
+        "options"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#ToolbarFontFamilySelect",
+          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+          "sourceProp": "options",
+          "targetProp": "options",
+          "relativePath": "src/features/document-editor/components/RichTextEditorImpl.tsx",
+          "line": 93
         }
       ]
     },
@@ -1677,8 +1785,27 @@
       ]
     }
   ],
-  "componentBacklog": [],
+  "componentBacklog": [
+    {
+      "componentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#ToolbarFontFamilySelect",
+      "name": "ToolbarFontFamilySelect",
+      "relativePath": "src/features/document-editor/components/RichTextEditorImpl.tsx",
+      "feature": "feature:document-editor",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
+    }
+  ],
   "forwardingComponentBacklog": [
+    {
+      "componentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#ToolbarFontFamilySelect",
+      "name": "ToolbarFontFamilySelect",
+      "relativePath": "src/features/document-editor/components/RichTextEditorImpl.tsx",
+      "feature": "feature:document-editor",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
+    },
     {
       "componentId": "src/features/ai/image-studio/components/analysis/sections/AiPathAnalysisTriggerSectionImpl.tsx#AiPathAnalysisTriggerSection",
       "name": "AiPathAnalysisTriggerSection",
@@ -2035,6 +2162,15 @@
       "name": "DatabaseActionsCell",
       "relativePath": "src/features/database/components/DatabaseColumns.tsx",
       "feature": "feature:database",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/document-editor/components/RichTextEditorImpl.tsx#RichTextEditorImpl",
+      "name": "RichTextEditorImpl",
+      "relativePath": "src/features/document-editor/components/RichTextEditorImpl.tsx",
+      "feature": "feature:document-editor",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 1,
       "hasUnknownSpreadForwarding": false

@@ -1,167 +1,122 @@
 # Site-Wide Canonical Migration + Legacy Compatibility Pruning Plan (2026-03-05)
 
 Date: 2026-03-05  
-Owner: Platform Architecture + Domain Maintainers
+Owner: Platform Architecture + Domain Maintainers  
+Re-baselined: 2026-03-05 (post Wave E execution)
 
 ## Objective
 
-Complete hard-cut to canonical runtime/data contracts across all domains, prune remaining legacy compatibility surfaces, and close the migration program with explicit proof.
+Complete migration to canonical runtime and persistence contracts, remove remaining legacy compatibility behavior, and close the program with measurable proof.
 
-## Current Baseline (Validated 2026-03-05)
+## Current Baseline (Re-verified 2026-03-05)
 
-1. Guardrails are green:
-   - `npm run canonical:check:sitewide` passed (`3852` runtime source files, `4` required docs).
-   - `npm run ai-paths:check:canonical` passed (`4245` source files scanned under `src/`).
+1. Canonical guardrails are green:
+   - `npm run canonical:check:sitewide` passed (`3848` runtime source files, `4` required docs).
+   - `npm run ai-paths:check:canonical` passed (`4241` source files under `src/`).
    - `npm run observability:check` passed (`legacyCompatViolations=0`, `runtimeErrors=0`).
-2. Exception posture is strict:
-   - `docs/legacy-compatibility-exception-register-2026-03-05.json` has `0` active exceptions.
-3. Migration verification is already executed for Wave 1:
-   - `wave1:verify:prepare`, `wave1:verify:dry-run`, `wave1:verify:write` succeeded per `docs/migrations/wave-execution-status-2026-03-05.md`.
-4. Remaining compatibility backlog exists:
-   - `docs/canonical-prune-backlog-2026-03-05.csv` currently tracks `10` open compatibility-debt items and `2` accepted false positives.
-5. Script lifecycle decision is started:
-   - `docs/migrations/script-lifecycle-register-2026-03-05.md` marks `21` scripts as `retain-active`, `10` as `retain-breakglass`.
+2. Exception register posture is strict:
+   - `docs/legacy-compatibility-exception-register-2026-03-05.json` contains `0` active exceptions.
+3. Wave verification already executed:
+   - `wave1:verify:prepare`, `wave1:verify:dry-run`, `wave1:verify:write` succeeded (see `docs/migrations/wave-execution-status-2026-03-05.md`).
+4. Remaining compatibility-debt scope is now `0` open items:
+   - `products-ai-worker-model-fallback` resolved (hard-cut fallback removal).
+   - `filemaker-normalizer-compat-options` resolved (runtime options removed, persistence strip explicit).
+   - `products-migrate-runtime-endpoint` resolved (runtime endpoint removed).
 
-## Program End State
+## Canonical End State
 
-1. Runtime accepts canonical payloads only.
-2. No open compatibility debt in `src/**` runtime scope.
-3. Exception register remains empty, or only has active unexpired entries with owners.
-4. Migration scripts are reduced to an intentional retained set; obsolete ones are archived/removed.
-5. CI guardrails enforce canonical policy without dated-artifact drift.
+1. Runtime accepts only canonical payloads and canonical key names.
+2. No open `compatibility_behavior` or `breakglass_surface` debt items in `docs/canonical-prune-backlog-2026-03-05.csv`.
+3. Exception register remains empty, or only contains active unexpired entries with explicit owners and guard tokens.
+4. Breakglass scripts and endpoints are either removed or explicitly governed with expiry and operator policy.
 
-## Remaining Scope
+## Resolved Workboard (Executed 2026-03-05)
 
-In scope:
+| ID | Domain | File | Risk | Resolution |
+| --- | --- | --- | --- | --- |
+| `products-ai-worker-model-fallback` | Products | `src/features/products/workers/product-ai-processors.ts` | high | Removed fallback; AI Brain config errors fail fast |
+| `filemaker-normalizer-compat-options` | Filemaker | `src/features/filemaker/filemaker-settings.database.ts` | high | Removed runtime option flags; strict canonical behavior enforced |
+| `products-migrate-runtime-endpoint` | Products | `src/app/api/v2/products/migrate/handler.ts` | medium | Removed runtime endpoint and route test; script-only operations retained |
 
-1. Open items in `docs/canonical-prune-backlog-2026-03-05.csv`.
-2. CI/doc guardrail drift caused by hard-coded dated canonical artifact references.
-3. Breakglass script governance and final archival/removal decisions.
-4. Stabilization monitoring and closeout reporting.
+## Execution Plan
 
-Out of scope:
+### Phase 1: Decision Freeze (2026-03-05 to 2026-03-08)
 
-1. Non-contract resilience mechanisms (timeouts/retries/circuit-breakers).
-2. External vendor/API versioning that is currently required.
+1. Resolve architecture decisions for the three open items.
+2. Write short ADR-style notes in `docs/migrations/` for each decision, including rollback and owner sign-off.
+3. If any temporary compatibility is retained, add a same-PR exception entry with sunset date.
 
-## Execution Waves (Remaining)
+Deliverables:
 
-## Wave D-Remaining: Runtime Hard-Cut (2026-03-05 to 2026-03-20)
+1. `products-ai-worker-model-fallback` decision record.
+2. `filemaker-normalizer-compat-options` decision record.
+3. `products-migrate-runtime-endpoint` decision record.
 
-Goal: close all open runtime compatibility debt entries.
+### Phase 2: Implementation Hard-Cut (2026-03-08 to 2026-03-20)
 
-Actions:
+1. Products worker model fallback:
+   - Preferred path: remove the legacy fallback branch in `processGraphModel` and require Brain-resolved model assignment.
+   - If resilience fallback is kept, rename semantics to non-legacy language and gate it behind explicit policy config (not implicit compatibility).
+   - Update tests in `src/features/products/workers/__tests__/product-ai-processors.graph-model.test.ts`.
+2. Filemaker normalizer options:
+   - Move to strict canonical defaults as runtime baseline.
+   - Keep `stripCompatibilityFields` only in persistence serializer (`toPersistedFilemakerDatabase`) if still required for storage normalization.
+   - Remove or restrict optional compatibility flags from runtime-facing call sites.
+   - Expand coverage in `src/features/filemaker/__tests__/settings.test.ts`.
+3. Products migration endpoint:
+   - Choose one:
+     - remove endpoint (`src/app/api/v2/products/migrate/*`) and rely on script-only operations, or
+     - retain as breakglass with explicit authorization and runbook-only access.
+   - Align API tests (`__tests__/api/products/migration.test.ts`) with final route policy.
+4. Update backlog statuses in `docs/canonical-prune-backlog-2026-03-05.csv` as each item lands.
 
-1. Resolve open backlog items by domain owner:
-   - AI Paths: remove compatibility-layer naming channel in API client comments.
-   - Products: retire `useMetadata.ts` and `useCatalogQueries.ts` compatibility wrappers after callsite migration.
-   - Integrations: retire `integrationCache.ts` and `listingCache.ts` compatibility wrappers after callsite migration.
-   - Case Resolver: rename legacy mapper naming channel in requested-context hook.
-   - Products: decide and implement hard policy for model fallback in `product-ai-processors.ts`.
-   - Filemaker: decide and implement hard policy for `rejectLegacyInlinePayloads` / `stripCompatibilityFields` options.
-2. Keep two accepted false positives documented as intentional (`node-identity` seed keys and factory seed key naming).
-3. For each resolved item, add/extend guardrail tokens or tests to prevent reintroduction.
+### Phase 3: Verification and Policy Lock (2026-03-20 to 2026-03-31)
 
-Exit criteria:
+Required validation for each migration PR:
 
-1. Backlog shows `0` open compatibility-debt items.
-2. All resolved items have either test coverage or token guard coverage.
+1. `npm run canonical:check:sitewide`
+2. `npm run ai-paths:check:canonical`
+3. `npm run observability:check`
+4. `npm run test:unit`
+5. `npm run test:integration:prisma`
+6. `npm run test:integration:mongo`
 
-## Wave E-Remaining: CI + Artifact Canonicalization (2026-03-10 to 2026-03-24)
+Then run final wave verification sequence:
 
-Goal: remove canonical artifact date drift from enforcement path.
+1. `npm run wave1:verify:prepare`
+2. `npm run wave1:verify:dry-run`
+3. `npm run wave1:verify:write`
 
-Actions:
+### Phase 4: Stabilization and Closeout (2026-04-01 to 2026-04-17)
 
-1. Replace hard-coded `2026-03-04` doc requirements in `scripts/canonical/check-sitewide.mjs` with one of:
-   - canonical `latest` manifest file, or
-   - updated `2026-03-05` artifact set with single source mapping.
-2. Keep these docs synchronized as authority:
-   - `docs/canonical-contract-matrix-2026-03-05.md`
-   - `docs/legacy-compatibility-exception-register-2026-03-05.md`
-   - `docs/legacy-compatibility-exception-register-2026-03-05.json`
-   - `docs/site-wide-canonical-migration-plan-2026-03-05.md`
-3. Update CI references to match the same authority mapping and fail on drift.
-
-Exit criteria:
-
-1. `canonical:check:sitewide` validates current canonical artifact mapping.
-2. CI no longer depends on stale dated artifact names.
-
-## Wave F: Stabilization + Closeout (2026-03-24 to 2026-04-17)
-
-Goal: prove stable behavior after hard-cut and finalize script lifecycle.
-
-Actions:
-
-1. Observe 14-day stability window on main branch with required checks:
-   - `npm run canonical:check:sitewide`
-   - `npm run ai-paths:check:canonical`
-   - `npm run observability:check`
-2. Review all `retain-breakglass` scripts and reclassify each to:
-   - `retain-breakglass` (with renewed expiry),
+1. Hold a 14-day stabilization window on `main` with zero canonical guardrail regressions.
+2. Review `retain-breakglass` scripts in `docs/migrations/script-lifecycle-register-2026-03-05.md` and reclassify each to:
+   - `retain-breakglass` (with renewed expiry), or
    - `archive-history`, or
    - `remove-obsolete`.
-3. Decide future of migration endpoint:
-   - `src/app/api/v2/products/migrate/handler.ts` (keep as breakglass or remove).
-4. Publish closeout artifacts:
+3. Publish closeout artifacts:
    - `docs/canonical-closeout-2026-04-17.md`
    - updated `docs/migrations/script-lifecycle-register-2026-04-17.md`
-
-Exit criteria:
-
-1. 14 consecutive days with zero canonical guard failures on main.
-2. Zero open runtime compatibility debt items.
-3. Script lifecycle register finalized with explicit ownership and review dates.
-
-## Domain Workboard (Open Items)
-
-| Domain | Open Items | Decision Required |
-| --- | --- | --- |
-| AI Paths | naming-only compatibility channel cleanup | direct rename + guard token update |
-| Products | hook wrappers, model fallback behavior, migrate endpoint disposition | hard-cut vs resilience fallback classification |
-| Integrations | query/cache compatibility wrappers | callsite migration then delete wrappers |
-| Case Resolver | legacy-named mapper identifier | canonical rename only |
-| Filemaker | runtime compatibility options in normalizer | contract hard-cut decision |
+   - updated `docs/migrations/wave-execution-status-2026-04-17.md`
 
 ## Governance
 
-1. Weekly 30-minute canonical review until April 17, 2026.
-2. Every backlog item must have one domain owner and one target PR.
-3. Any temporary compatibility behavior requires same-PR exception registration with sunset date.
+1. Weekly canonical review until 2026-04-17.
+2. Every open item must have one owner, one target PR, and one due date.
+3. Any retained compatibility requires same-PR exception registration with sunset date.
 4. Expired exceptions are release blockers.
-
-## Required Checks Per PR
-
-1. `npm run lint`
-2. `npm run typecheck`
-3. `npm run test:unit`
-4. `npm run test:integration:prisma`
-5. `npm run test:integration:mongo`
-6. `npm run canonical:check:sitewide`
-7. `npm run ai-paths:check:canonical`
-8. `npm run observability:check`
 
 ## Success Metrics
 
 1. `compatibility_debt_open_count = 0`
-2. `active_exception_count = 0` (or all valid and unexpired)
-3. `canonical_guardrail_failures_on_main = 0` for the stabilization window
-4. `retain-breakglass_count` decreases from `10` after closeout review
-5. No sustained increase in unsupported-shape runtime errors post hard-cut
-
-## Risks and Mitigations
-
-1. Hidden clients still send legacy payloads.
-   - Mitigation: stage rollout, monitor validation telemetry, keep controlled rollback path.
-2. Over-pruning scripts reduces recovery options.
-   - Mitigation: explicit lifecycle register with owner and review date for each script.
-3. Ambiguous fallback behavior (resilience vs compatibility) causes regressions.
-   - Mitigation: domain-owner sign-off for each high-severity backlog item.
+2. `active_exception_count = 0` (or all active entries valid/unexpired)
+3. `canonical_guardrail_failures_on_main = 0` during stabilization window
+4. `retain-breakglass_count` reduced from current baseline of `10`
+5. No sustained increase in canonical unsupported-shape runtime errors
 
 ## Acceptance Criteria
 
-1. All open items in `docs/canonical-prune-backlog-2026-03-05.csv` are resolved or explicitly accepted with rationale.
-2. `scripts/canonical/check-sitewide.mjs` enforces current canonical artifact mapping without stale date pinning.
-3. Exception register remains empty or fully compliant.
-4. Closeout report and script lifecycle register are published by 2026-04-17.
+1. All three open entries in `docs/canonical-prune-backlog-2026-03-05.csv` are resolved or formally accepted with rationale.
+2. Canonical guardrails remain green after final hard-cut.
+3. Exception register is empty or policy-compliant.
+4. Closeout artifacts are published by 2026-04-17.

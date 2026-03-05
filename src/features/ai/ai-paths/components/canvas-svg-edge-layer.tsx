@@ -9,8 +9,6 @@ import { buildConnectingPreviewPath } from './CanvasBoard.utils';
 const FLOWING_RUNTIME_NODE_STATUSES = new Set([
   'running',
   'polling',
-  'waiting_callback',
-  'advance_pending',
   'pending',
   'processing',
 ]);
@@ -116,19 +114,13 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
         const fromNode = nodeById.get(fromNodeId);
         const toNode = nodeById.get(toNodeId);
         const isSchemaConnection = fromNode?.type === 'db_schema' && toNode?.type === 'database';
-        const fromRuntimeStatus =
-          typeof runtimeNodeStatuses[fromNodeId] === 'string'
-            ? runtimeNodeStatuses[fromNodeId].trim().toLowerCase()
-            : '';
         const toRuntimeStatus =
           typeof runtimeNodeStatuses[toNodeId] === 'string'
             ? runtimeNodeStatuses[toNodeId].trim().toLowerCase()
             : '';
-        const fromIsFlowing = FLOWING_RUNTIME_NODE_STATUSES.has(fromRuntimeStatus);
-        const fromIsWaiting = fromRuntimeStatus === 'waiting_callback';
         const toIsFlowing = FLOWING_RUNTIME_NODE_STATUSES.has(toRuntimeStatus);
         const toIsTerminal = TERMINAL_RUNTIME_NODE_STATUSES.has(toRuntimeStatus);
-        const isRuntimeActiveEdge = toIsFlowing || (fromIsFlowing && !fromIsWaiting && !toIsTerminal);
+        const isRuntimeActiveEdge = toIsFlowing && !toIsTerminal;
         const isFlowing = activeEdgeIds.has(edge.id) || isRuntimeActiveEdge;
         const isActivePath =
           !isManualConnector &&

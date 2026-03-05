@@ -1,17 +1,18 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { BlockPicker } from '../BlockPicker';
 import { SectionPicker as BaseSectionPicker } from '../SectionPicker';
+import { useTreeActions } from '../../../hooks/useTreeActionsContext';
 
 import type { PageZone } from '../../../types/page-builder';
 
 type SectionVariantProps = {
   disabled?: boolean;
   zone: PageZone;
-  onSelect: (sectionType: string) => void;
+  onSelect?: (sectionType: string) => void;
   variant?: 'sections';
   sectionType?: never;
 };
@@ -27,7 +28,7 @@ type BlockVariantProps = {
 type TreeSectionPickerProps = SectionVariantProps | BlockVariantProps;
 
 type TreeSectionPickerRuntimeValue = {
-  onSelect: (value: string) => void;
+  onSelect: ((value: string) => void) | null;
   disabled: boolean;
   sectionType: string | null;
   zone: PageZone | null;
@@ -44,14 +45,26 @@ const {
 
 function TreeBlockPicker(): React.ReactNode {
   const runtime = useTreeSectionPickerRuntime();
-  if (runtime.disabled || runtime.sectionType === null) return null;
+  if (runtime.disabled || runtime.sectionType === null || runtime.onSelect === null) return null;
   return <BlockPicker sectionType={runtime.sectionType} onSelect={runtime.onSelect} />;
 }
 
 function TreeZoneSectionPicker(): React.ReactNode {
   const runtime = useTreeSectionPickerRuntime();
+  const { sectionActions } = useTreeActions();
   if (runtime.zone === null) return null;
-  return <BaseSectionPicker disabled={runtime.disabled} zone={runtime.zone} onSelect={runtime.onSelect} />;
+  const zone = runtime.zone;
+  const handleSelect = useCallback(
+    (sectionType: string): void => {
+      if (runtime.onSelect) {
+        runtime.onSelect(sectionType);
+        return;
+      }
+      sectionActions.add(sectionType, zone);
+    },
+    [runtime.onSelect, sectionActions, zone]
+  );
+  return <BaseSectionPicker disabled={runtime.disabled} zone={zone} onSelect={handleSelect} />;
 }
 
 export function TreeSectionPicker(props: TreeSectionPickerProps): React.ReactNode {
@@ -59,7 +72,7 @@ export function TreeSectionPicker(props: TreeSectionPickerProps): React.ReactNod
   const zone = props.variant === 'blocks' ? null : props.zone;
   const runtimeValue = useMemo<TreeSectionPickerRuntimeValue>(
     () => ({
-      onSelect: props.onSelect,
+      onSelect: props.onSelect ?? null,
       disabled: Boolean(props.disabled),
       sectionType,
       zone,

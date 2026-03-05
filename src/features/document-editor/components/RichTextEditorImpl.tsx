@@ -54,7 +54,7 @@ import {
   inlineTextAlignMark,
   textAlignExtension,
 } from './rich-text/RichTextEditorExtensions';
-import { ToolbarButton } from './rich-text/RichTextEditorToolbar';
+import { ToolbarButton, ToolbarVariantContext } from './rich-text/RichTextEditorToolbar';
 
 const defaultFontFamilyOptions: RichTextEditorFontOption[] = [
   { value: '"Times New Roman", Georgia, serif', label: 'Times' },
@@ -333,6 +333,35 @@ export default function RichTextEditorImpl({
     [normalizedFontFamilyOptions]
   );
 
+  const FontFamilySelect = (): React.JSX.Element | null => {
+    const toolbarVariant = React.useContext(ToolbarVariantContext);
+    if (!allowFontFamily) return null;
+
+    return (
+      <SelectSimple
+        size='sm'
+        className='w-auto shrink-0'
+        value={activeFontFamilyValue}
+        onValueChange={(nextValue: string): void => {
+          if (nextValue === '__default__') {
+            editor.chain().focus().unsetMark('fontFamilyStyle').run();
+            return;
+          }
+          editor.chain().focus().setMark('fontFamilyStyle', { fontFamily: nextValue }).run();
+        }}
+        options={fontFamilySelectOptions}
+        placeholder='Font'
+        triggerClassName={cn(
+          toolbarVariant === 'full'
+            ? 'h-8 w-[168px] min-w-[168px] border-border/60 bg-gray-800 text-xs text-gray-100'
+            : 'h-7 w-[136px] min-w-[136px] border-border/60 bg-card/60 text-xs text-gray-100'
+        )}
+        contentClassName='border-border bg-card text-white'
+        ariaLabel='Select font family'
+      />
+    );
+  };
+
   if (!editor) {
     return (
       <div
@@ -357,247 +386,204 @@ export default function RichTextEditorImpl({
           toolbarClassName
         )}
       >
-        <ToolbarButton
-          title='Undo'
-          onClick={() => editor.chain().focus().undo().run()}
-          disabled={!editor.can().undo()}
-          variant={variant}
-        >
-          <Undo className='size-4' />
-        </ToolbarButton>
-        <ToolbarButton
-          title='Redo'
-          onClick={() => editor.chain().focus().redo().run()}
-          disabled={!editor.can().redo()}
-          variant={variant}
-        >
-          <Redo className='size-4' />
-        </ToolbarButton>
-
-        <ToolbarButton
-          title='Bold'
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          isActive={editor.isActive('bold')}
-          variant={variant}
-        >
-          <Bold className='size-4' />
-        </ToolbarButton>
-        <ToolbarButton
-          title='Italic'
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          isActive={editor.isActive('italic')}
-          variant={variant}
-        >
-          <Italic className='size-4' />
-        </ToolbarButton>
-        <ToolbarButton
-          title='Underline'
-          onClick={() => editor.chain().focus().toggleMark('underlineStyle').run()}
-          isActive={editor.isActive('underlineStyle')}
-          variant={variant}
-        >
-          <Underline className='size-4' />
-        </ToolbarButton>
-        <ToolbarButton
-          title='Strikethrough'
-          onClick={() => editor.chain().focus().toggleStrike().run()}
-          isActive={editor.isActive('strike')}
-          variant={variant}
-        >
-          <Strikethrough className='size-4' />
-        </ToolbarButton>
-        <ToolbarButton
-          title='Code'
-          onClick={() => editor.chain().focus().toggleCode().run()}
-          isActive={editor.isActive('code')}
-          variant={variant}
-        >
-          <Code className='size-4' />
-        </ToolbarButton>
-
-        {normalizedHeadingLevels.includes(1) ? (
+        <ToolbarVariantContext.Provider value={variant}>
           <ToolbarButton
-            title='Heading 1'
-            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-            isActive={editor.isActive('heading', { level: 1 })}
-            variant={variant}
+            title='Undo'
+            onClick={() => editor.chain().focus().undo().run()}
+            disabled={!editor.can().undo()}
           >
-            <Heading1 className='size-4' />
+            <Undo className='size-4' />
           </ToolbarButton>
-        ) : null}
-        {enableAdvancedTools ? (
           <ToolbarButton
-            title='Paragraph'
-            onClick={() => editor.chain().focus().setParagraph().run()}
-            isActive={editor.isActive('paragraph')}
-            variant={variant}
+            title='Redo'
+            onClick={() => editor.chain().focus().redo().run()}
+            disabled={!editor.can().redo()}
           >
-            <Pilcrow className='size-4' />
+            <Redo className='size-4' />
           </ToolbarButton>
-        ) : null}
-        {normalizedHeadingLevels.includes(2) ? (
-          <ToolbarButton
-            title='Heading 2'
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-            isActive={editor.isActive('heading', { level: 2 })}
-            variant={variant}
-          >
-            <Heading2 className='size-4' />
-          </ToolbarButton>
-        ) : null}
-        {normalizedHeadingLevels.includes(3) ? (
-          <ToolbarButton
-            title='Heading 3'
-            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-            isActive={editor.isActive('heading', { level: 3 })}
-            variant={variant}
-          >
-            <Heading3 className='size-4' />
-          </ToolbarButton>
-        ) : null}
 
-        <ToolbarButton
-          title='Bullet list'
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          isActive={editor.isActive('bulletList')}
-          variant={variant}
-        >
-          <List className='size-4' />
-        </ToolbarButton>
-        <ToolbarButton
-          title='Numbered list'
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          isActive={editor.isActive('orderedList')}
-          variant={variant}
-        >
-          <ListOrdered className='size-4' />
-        </ToolbarButton>
-        {allowTaskList ? (
           <ToolbarButton
-            title='Task list'
-            onClick={() => editor.chain().focus().toggleTaskList().run()}
-            isActive={editor.isActive('taskList')}
-            variant={variant}
+            title='Bold'
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            isActive={editor.isActive('bold')}
           >
-            <CheckSquare className='size-4' />
+            <Bold className='size-4' />
           </ToolbarButton>
-        ) : null}
-
-        <ToolbarButton
-          title='Quote'
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          isActive={editor.isActive('blockquote')}
-          variant={variant}
-        >
-          <Quote className='size-4' />
-        </ToolbarButton>
-
-        {variant === 'full' ? (
-          <>
-            <ToolbarButton
-              title='Horizontal rule'
-              onClick={() => editor.chain().focus().setHorizontalRule().run()}
-              variant={variant}
-            >
-              <Minus className='size-4' />
-            </ToolbarButton>
-            <ToolbarButton
-              title='Code block'
-              onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-              isActive={editor.isActive('codeBlock')}
-              variant={variant}
-            >
-              <Code className='size-4' />
-            </ToolbarButton>
-          </>
-        ) : null}
-
-        <ToolbarButton
-          title='Link'
-          onClick={addLink}
-          isActive={editor.isActive('link')}
-          variant={variant}
-        >
-          <LinkIcon className='size-4' />
-        </ToolbarButton>
-        {allowImage ? (
-          <ToolbarButton title='Insert image' onClick={addImage} variant={variant}>
-            <ImageIcon className='size-4' />
-          </ToolbarButton>
-        ) : null}
-        {allowTable ? (
-          <ToolbarButton title='Insert table' onClick={addTable} variant={variant}>
-            <TableIcon className='size-4' />
-          </ToolbarButton>
-        ) : null}
-        {allowFontFamily ? (
-          <SelectSimple
-            size='sm'
-            className='w-auto shrink-0'
-            value={activeFontFamilyValue}
-            onValueChange={(nextValue: string): void => {
-              if (nextValue === '__default__') {
-                editor.chain().focus().unsetMark('fontFamilyStyle').run();
-                return;
-              }
-              editor.chain().focus().setMark('fontFamilyStyle', { fontFamily: nextValue }).run();
-            }}
-            options={fontFamilySelectOptions}
-            placeholder='Font'
-            triggerClassName={cn(
-              variant === 'full'
-                ? 'h-8 w-[168px] min-w-[168px] border-border/60 bg-gray-800 text-xs text-gray-100'
-                : 'h-7 w-[136px] min-w-[136px] border-border/60 bg-card/60 text-xs text-gray-100'
-            )}
-            contentClassName='border-border bg-card text-white'
-            ariaLabel='Select font family'
-          />
-        ) : null}
-        {allowTextAlign ? (
-          <>
-            <ToolbarButton
-              title='Align left'
-              onClick={() => setTextAlign('left')}
-              isActive={isTextAlignActive('left')}
-              variant={variant}
-            >
-              <AlignLeft className='size-4' />
-            </ToolbarButton>
-            <ToolbarButton
-              title='Align right'
-              onClick={() => setTextAlign('right')}
-              isActive={isTextAlignActive('right')}
-              variant={variant}
-            >
-              <AlignRight className='size-4' />
-            </ToolbarButton>
-            <ToolbarButton
-              title='Align center'
-              onClick={() => setTextAlign('center')}
-              isActive={isTextAlignActive('center')}
-              variant={variant}
-            >
-              <AlignCenter className='size-4' />
-            </ToolbarButton>
-            <ToolbarButton
-              title='Justify'
-              onClick={() => setTextAlign('justify')}
-              isActive={isTextAlignActive('justify')}
-              variant={variant}
-            >
-              <AlignJustify className='size-4' />
-            </ToolbarButton>
-          </>
-        ) : null}
-        {enableAdvancedTools ? (
           <ToolbarButton
-            title='Clear formatting'
-            onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
-            variant={variant}
+            title='Italic'
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            isActive={editor.isActive('italic')}
           >
-            <Eraser className='size-4' />
+            <Italic className='size-4' />
           </ToolbarButton>
-        ) : null}
+          <ToolbarButton
+            title='Underline'
+            onClick={() => editor.chain().focus().toggleMark('underlineStyle').run()}
+            isActive={editor.isActive('underlineStyle')}
+          >
+            <Underline className='size-4' />
+          </ToolbarButton>
+          <ToolbarButton
+            title='Strikethrough'
+            onClick={() => editor.chain().focus().toggleStrike().run()}
+            isActive={editor.isActive('strike')}
+          >
+            <Strikethrough className='size-4' />
+          </ToolbarButton>
+          <ToolbarButton
+            title='Code'
+            onClick={() => editor.chain().focus().toggleCode().run()}
+            isActive={editor.isActive('code')}
+          >
+            <Code className='size-4' />
+          </ToolbarButton>
+
+          {normalizedHeadingLevels.includes(1) ? (
+            <ToolbarButton
+              title='Heading 1'
+              onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+              isActive={editor.isActive('heading', { level: 1 })}
+            >
+              <Heading1 className='size-4' />
+            </ToolbarButton>
+          ) : null}
+          {enableAdvancedTools ? (
+            <ToolbarButton
+              title='Paragraph'
+              onClick={() => editor.chain().focus().setParagraph().run()}
+              isActive={editor.isActive('paragraph')}
+            >
+              <Pilcrow className='size-4' />
+            </ToolbarButton>
+          ) : null}
+          {normalizedHeadingLevels.includes(2) ? (
+            <ToolbarButton
+              title='Heading 2'
+              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+              isActive={editor.isActive('heading', { level: 2 })}
+            >
+              <Heading2 className='size-4' />
+            </ToolbarButton>
+          ) : null}
+          {normalizedHeadingLevels.includes(3) ? (
+            <ToolbarButton
+              title='Heading 3'
+              onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+              isActive={editor.isActive('heading', { level: 3 })}
+            >
+              <Heading3 className='size-4' />
+            </ToolbarButton>
+          ) : null}
+
+          <ToolbarButton
+            title='Bullet list'
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            isActive={editor.isActive('bulletList')}
+          >
+            <List className='size-4' />
+          </ToolbarButton>
+          <ToolbarButton
+            title='Numbered list'
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            isActive={editor.isActive('orderedList')}
+          >
+            <ListOrdered className='size-4' />
+          </ToolbarButton>
+          {allowTaskList ? (
+            <ToolbarButton
+              title='Task list'
+              onClick={() => editor.chain().focus().toggleTaskList().run()}
+              isActive={editor.isActive('taskList')}
+            >
+              <CheckSquare className='size-4' />
+            </ToolbarButton>
+          ) : null}
+
+          <ToolbarButton
+            title='Quote'
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            isActive={editor.isActive('blockquote')}
+          >
+            <Quote className='size-4' />
+          </ToolbarButton>
+
+          {variant === 'full' ? (
+            <>
+              <ToolbarButton
+                title='Horizontal rule'
+                onClick={() => editor.chain().focus().setHorizontalRule().run()}
+              >
+                <Minus className='size-4' />
+              </ToolbarButton>
+              <ToolbarButton
+                title='Code block'
+                onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+                isActive={editor.isActive('codeBlock')}
+              >
+                <Code className='size-4' />
+              </ToolbarButton>
+            </>
+          ) : null}
+
+          <ToolbarButton
+            title='Link'
+            onClick={addLink}
+            isActive={editor.isActive('link')}
+          >
+            <LinkIcon className='size-4' />
+          </ToolbarButton>
+          {allowImage ? (
+            <ToolbarButton title='Insert image' onClick={addImage}>
+              <ImageIcon className='size-4' />
+            </ToolbarButton>
+          ) : null}
+          {allowTable ? (
+            <ToolbarButton title='Insert table' onClick={addTable}>
+              <TableIcon className='size-4' />
+            </ToolbarButton>
+          ) : null}
+          <FontFamilySelect />
+          {allowTextAlign ? (
+            <>
+              <ToolbarButton
+                title='Align left'
+                onClick={() => setTextAlign('left')}
+                isActive={isTextAlignActive('left')}
+              >
+                <AlignLeft className='size-4' />
+              </ToolbarButton>
+              <ToolbarButton
+                title='Align right'
+                onClick={() => setTextAlign('right')}
+                isActive={isTextAlignActive('right')}
+              >
+                <AlignRight className='size-4' />
+              </ToolbarButton>
+              <ToolbarButton
+                title='Align center'
+                onClick={() => setTextAlign('center')}
+                isActive={isTextAlignActive('center')}
+              >
+                <AlignCenter className='size-4' />
+              </ToolbarButton>
+              <ToolbarButton
+                title='Justify'
+                onClick={() => setTextAlign('justify')}
+                isActive={isTextAlignActive('justify')}
+              >
+                <AlignJustify className='size-4' />
+              </ToolbarButton>
+            </>
+          ) : null}
+          {enableAdvancedTools ? (
+            <ToolbarButton
+              title='Clear formatting'
+              onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
+            >
+              <Eraser className='size-4' />
+            </ToolbarButton>
+          ) : null}
+        </ToolbarVariantContext.Provider>
       </div>
 
       <div

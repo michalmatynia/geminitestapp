@@ -27,9 +27,9 @@ Completed outputs:
 
 Backlog status snapshot:
 
-- Open compatibility-debt candidates: `3`
+- Open compatibility-debt candidates: `0`
 - Accepted false positives: `2`
-- Completed in this execution: `11`
+- Completed in this execution: `14`
 
 ## Wave C
 
@@ -91,20 +91,27 @@ Additional hardening completed:
    - `src/shared/lib/ai-paths/api/client.ts` (removed compatibility-layer section wording)
    - `src/features/case-resolver/hooks/useCaseResolverState.requested-context.ts` (renamed legacy-status mapper to canonical naming)
 7. Extended canonical site-wide guardrail to block reintroduction of removed wrapper files.
+8. Removed AI Paths model fallback compatibility behavior in product worker runtime:
+   - `src/features/products/workers/product-ai-processors.ts`
+   - `src/features/products/workers/__tests__/product-ai-processors.graph-model.test.ts`
+9. Removed Filemaker runtime normalization compatibility flags and kept persistence stripping explicit:
+   - `src/features/filemaker/filemaker-settings.database.ts`
+   - `src/features/filemaker/settings/database-getters.ts`
+   - `src/features/filemaker/__tests__/settings.test.ts`
 
 ## Wave E
 
-Partially executed:
+Completed:
 
 1. Canonical artifacts refreshed and aligned in docs.
 2. Guardrail checks validated in current state:
    - `npm run canonical:check:sitewide` passed.
    - `npm run ai-paths:check:canonical` passed.
    - `npm run observability:check` passed.
-
-Remaining:
-
-1. Optional follow-up: archive superseded 2026-03-04 canonical artifacts after team sign-off.
+3. Removed products migration runtime endpoint surface:
+   - `src/app/api/v2/products/migrate/handler.ts`
+   - `src/app/api/v2/products/migrate/route.ts`
+   - `__tests__/api/products/migration.test.ts`
 
 ## Wave F
 

@@ -172,7 +172,7 @@ describe('canvas connection preview', () => {
     expect(call?.[2]).toBe('result');
   });
 
-  it('renders wire flow for edges connected to nodes in running status', () => {
+  it('renders wire flow when the target node is in running status', () => {
     const sourceNode = buildNode({
       id: 'node-running-source',
       outputs: ['result'],
@@ -210,7 +210,7 @@ describe('canvas connection preview', () => {
       },
     ];
     value.runtimeNodeStatuses = {
-      [sourceNode.id]: 'running',
+      [targetNode.id]: 'running',
     };
     value.wireFlowEnabled = true;
     value.activeEdgeIds = new Set<string>();
@@ -340,7 +340,7 @@ describe('canvas connection preview', () => {
     expect(container.querySelector('.ai-paths-wire-flow')).toBeFalsy();
   });
 
-  it('renders incoming wire flow for waiting nodes without animating their outgoing edges', () => {
+  it('does not render status-based wire flow for waiting_callback nodes', () => {
     const upstreamNode = buildNode({
       id: 'node-upstream',
       outputs: ['result'],
@@ -420,7 +420,6 @@ describe('canvas connection preview', () => {
     );
 
     const flowingPaths = Array.from(container.querySelectorAll('.ai-paths-wire-flow'));
-    expect(flowingPaths).toHaveLength(1);
-    expect(flowingPaths[0]?.getAttribute('d')).toBe('M 180 140 C 220 140 260 140 300 140');
+    expect(flowingPaths).toHaveLength(0);
   });
 });

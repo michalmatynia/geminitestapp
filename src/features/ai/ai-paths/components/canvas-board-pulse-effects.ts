@@ -40,8 +40,6 @@ const FLOW_START_RUNTIME_STATUSES = new Set<string>([
   'pending',
   'processing',
   'polling',
-  'waiting_callback',
-  'advance_pending',
 ]);
 
 export function useCanvasPulseEffects({

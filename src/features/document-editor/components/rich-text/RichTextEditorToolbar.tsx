@@ -5,17 +5,27 @@ import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import type { RichTextEditorVariant } from '../../types';
 
+export const ToolbarVariantContext = React.createContext<RichTextEditorVariant>('compact');
+
 export interface ToolbarButtonProps {
   title: string;
   onClick: () => void;
   isActive?: boolean | undefined;
   disabled?: boolean | undefined;
-  variant: RichTextEditorVariant;
+  variant?: RichTextEditorVariant | undefined;
   children: React.ReactNode;
 }
 
 export function ToolbarButton(props: ToolbarButtonProps): React.JSX.Element {
-  const { title, onClick, isActive = false, disabled = false, variant, children } = props;
+  const toolbarVariant = React.useContext(ToolbarVariantContext);
+  const {
+    title,
+    onClick,
+    isActive = false,
+    disabled = false,
+    variant = toolbarVariant,
+    children,
+  } = props;
 
   if (variant === 'full') {
     return (

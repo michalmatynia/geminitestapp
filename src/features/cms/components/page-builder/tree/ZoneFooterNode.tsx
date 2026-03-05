@@ -7,7 +7,6 @@ import { useDragState } from '../../../hooks/useDragStateContext';
 import { TreeSectionPicker } from './TreeSectionPicker';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import { useTreeActions } from '../../../hooks/useTreeActionsContext';
 
 export function ZoneFooterNode({
   zone,
@@ -25,7 +24,6 @@ export function ZoneFooterNode({
     draggedMasterSectionId,
     moveSectionByMaster,
   } = useComponentTreePanelContext();
-  const { sectionActions } = useTreeActions();
   const { state: dragState, endSectionDrag } = useDragState();
   const [isDropTarget, setIsDropTarget] = useState(false);
 
@@ -75,7 +73,6 @@ export function ZoneFooterNode({
         <TreeSectionPicker
           disabled={!currentPage}
           zone={zone}
-          onSelect={(sectionType: string): void => sectionActions.add(sectionType, zone)}
         />
       </div>
     </>

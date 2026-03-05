@@ -203,18 +203,49 @@ const isAddressOwnerPresent = (
   return eventIds.has(ownerId);
 };
 
-type NormalizeFilemakerDatabaseOptions = {
-  rejectLegacyInlinePayloads?: boolean;
-  stripCompatibilityFields?: boolean;
+export const assertCanonicalFilemakerDatabasePayload = (
+  value: FilemakerDatabase | null | undefined
+): void => {
+  if (!value || typeof value !== 'object') return;
+  const valueRecord = value as Record<string, unknown>;
+  if (Object.keys(valueRecord).length === 0) return;
+
+  const rawPersons = getRecordList('persons', valueRecord['persons']);
+  const rawOrganizations = getRecordList('organizations', valueRecord['organizations']);
+  const rawEvents = getRecordList('events', valueRecord['events']);
+
+  if ([...rawPersons, ...rawOrganizations, ...rawEvents].some(hasDeprecatedFullAddress)) {
+    throw validationError('Filemaker payload includes unsupported fullAddress fields.');
+  }
+
+  if ([...rawPersons, ...rawOrganizations, ...rawEvents].some(hasInlineAddressFields)) {
+    throw validationError('Filemaker payload includes unsupported inline address fields.');
+  }
+
+  if (rawPersons.some((entry) => normalizePhoneNumbers(entry['phoneNumbers']).length > 0)) {
+    throw validationError(
+      'Filemaker person payload includes unsupported inline phoneNumbers field.'
+    );
+  }
+
+  if (rawOrganizations.some((entry) => normalizePhoneNumbers(entry['phoneNumbers']).length > 0)) {
+    throw validationError(
+      'Filemaker organization payload includes unsupported inline phoneNumbers field.'
+    );
+  }
+
+  if (rawPersons.some(hasInlineEmailFields)) {
+    throw validationError('Filemaker person payload includes unsupported inline email fields.');
+  }
+
+  if (rawOrganizations.some(hasInlineEmailFields)) {
+    throw validationError('Filemaker organization payload includes unsupported inline email fields.');
+  }
 };
 
 export const normalizeFilemakerDatabase = (
-  value: FilemakerDatabase | null | undefined,
-  options: NormalizeFilemakerDatabaseOptions = {}
+  value: FilemakerDatabase | null | undefined
 ): FilemakerDatabase => {
-  const rejectLegacyInlinePayloads = options.rejectLegacyInlinePayloads === true;
-  const stripCompatibilityFields = options.stripCompatibilityFields === true;
-
   if (!value || typeof value !== 'object') {
     return createDefaultFilemakerDatabase();
   }
@@ -242,48 +273,6 @@ export const normalizeFilemakerDatabase = (
     'eventOrganizationLinks',
     valueRecord['eventOrganizationLinks']
   );
-
-  if (
-    rejectLegacyInlinePayloads &&
-    [...rawPersons, ...rawOrganizations, ...rawEvents].some(hasDeprecatedFullAddress)
-  ) {
-    throw validationError('Filemaker payload includes unsupported fullAddress fields.');
-  }
-
-  if (
-    rejectLegacyInlinePayloads &&
-    [...rawPersons, ...rawOrganizations, ...rawEvents].some(hasInlineAddressFields)
-  ) {
-    throw validationError('Filemaker payload includes unsupported inline address fields.');
-  }
-
-  if (
-    rejectLegacyInlinePayloads &&
-    rawPersons.some((entry) => normalizePhoneNumbers(entry['phoneNumbers']).length > 0)
-  ) {
-    throw validationError(
-      'Filemaker person payload includes unsupported inline phoneNumbers field.'
-    );
-  }
-
-  if (
-    rejectLegacyInlinePayloads &&
-    rawOrganizations.some((entry) => normalizePhoneNumbers(entry['phoneNumbers']).length > 0)
-  ) {
-    throw validationError(
-      'Filemaker organization payload includes unsupported inline phoneNumbers field.'
-    );
-  }
-
-  if (rejectLegacyInlinePayloads && rawPersons.some(hasInlineEmailFields)) {
-    throw validationError('Filemaker person payload includes unsupported inline email fields.');
-  }
-
-  if (rejectLegacyInlinePayloads && rawOrganizations.some(hasInlineEmailFields)) {
-    throw validationError(
-      'Filemaker organization payload includes unsupported inline email fields.'
-    );
-  }
 
   const addressesById = new Map<string, FilemakerAddress>();
   rawAddresses.forEach((entry: Record<string, unknown>) => {
@@ -773,52 +762,12 @@ export const normalizeFilemakerDatabase = (
   });
 
   const addresses: FilemakerAddress[] = Array.from(addressesById.values());
-  const outputPersons = stripCompatibilityFields
-    ? syncedPersons.map(
-      (person: FilemakerPerson): FilemakerPerson => ({
-        ...person,
-        street: '',
-        streetNumber: '',
-        city: '',
-        postalCode: '',
-        country: '',
-        countryId: '',
-        phoneNumbers: [],
-      })
-    )
-    : syncedPersons;
-  const outputOrganizations = stripCompatibilityFields
-    ? resolvedOrganizations.map(
-      (organization: FilemakerOrganization): FilemakerOrganization => ({
-        ...organization,
-        street: '',
-        streetNumber: '',
-        city: '',
-        postalCode: '',
-        country: '',
-        countryId: '',
-      })
-    )
-    : resolvedOrganizations;
-  const outputEvents = stripCompatibilityFields
-    ? resolvedEvents.map(
-      (event: FilemakerEvent): FilemakerEvent => ({
-        ...event,
-        street: '',
-        streetNumber: '',
-        city: '',
-        postalCode: '',
-        country: '',
-        countryId: '',
-      })
-    )
-    : resolvedEvents;
 
   return {
     version: 2,
-    persons: outputPersons,
-    organizations: outputOrganizations,
-    events: outputEvents,
+    persons: syncedPersons,
+    organizations: resolvedOrganizations,
+    events: resolvedEvents,
     addresses,
     addressLinks,
     phoneNumbers,
@@ -829,9 +778,46 @@ export const normalizeFilemakerDatabase = (
   };
 };
 
+const stripCompatibilityFieldsForPersistence = (
+  database: FilemakerDatabase
+): FilemakerDatabase => ({
+  ...database,
+  persons: database.persons.map(
+    (person: FilemakerPerson): FilemakerPerson => ({
+      ...person,
+      street: '',
+      streetNumber: '',
+      city: '',
+      postalCode: '',
+      country: '',
+      countryId: '',
+      phoneNumbers: [],
+    })
+  ),
+  organizations: database.organizations.map(
+    (organization: FilemakerOrganization): FilemakerOrganization => ({
+      ...organization,
+      street: '',
+      streetNumber: '',
+      city: '',
+      postalCode: '',
+      country: '',
+      countryId: '',
+    })
+  ),
+  events: database.events.map(
+    (event: FilemakerEvent): FilemakerEvent => ({
+      ...event,
+      street: '',
+      streetNumber: '',
+      city: '',
+      postalCode: '',
+      country: '',
+      countryId: '',
+    })
+  ),
+});
+
 export const toPersistedFilemakerDatabase = (
   value: FilemakerDatabase | null | undefined
-): FilemakerDatabase =>
-  normalizeFilemakerDatabase(value, {
-    stripCompatibilityFields: true,
-  });
+): FilemakerDatabase => stripCompatibilityFieldsForPersistence(normalizeFilemakerDatabase(value));

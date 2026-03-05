@@ -83,7 +83,7 @@ function NoteFormInner(): React.JSX.Element {
             </MarkdownToolbarActionsProvider>
             <div className='mt-2'>
               {editorMode === 'markdown' || editorMode === 'code' ? (
-                <MarkdownEditor isCodeMode={editorMode === 'code'} />
+                <MarkdownEditor />
               ) : (
                 <WysiwygEditor />
               )}

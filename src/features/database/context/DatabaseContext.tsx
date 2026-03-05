@@ -36,7 +36,7 @@ export const useDatabasePagination = () => {
   return context;
 };
 
-// --- Legacy Aggregator ---
+// --- Context Aggregator ---
 
 interface DatabaseContextType extends DatabaseUiConfig, DatabaseData, DatabasePagination {}
 

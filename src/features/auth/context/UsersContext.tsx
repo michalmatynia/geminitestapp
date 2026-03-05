@@ -81,7 +81,7 @@ export const useUsersDialogs = () => {
   return context;
 };
 
-// --- Legacy Aggregator ---
+// --- Context Aggregator ---
 
 const UsersContext = createContext<UseUsersStateReturn | undefined>(undefined);
 

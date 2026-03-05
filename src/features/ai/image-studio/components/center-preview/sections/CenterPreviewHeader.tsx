@@ -6,20 +6,18 @@ import { Button } from '@/shared/ui';
 import { ToggleButtonGroup } from '../../ToggleButtonGroup';
 import { useSlotsState, useSlotsActions } from '../../../context/SlotsContext';
 import { useCenterPreviewContext } from '../CenterPreviewContext';
+import { useCenterPreviewHeaderContext } from './CenterPreviewHeaderContext';
 
 const PREVIEW_MODE_OPTIONS = [
   { value: 'image', label: 'Image' },
   { value: '3d', label: '3D' },
 ] as const;
 
-export function CenterPreviewHeader({
-  onSaveScreenshot,
-}: {
-  onSaveScreenshot: () => void;
-}): React.JSX.Element {
+export function CenterPreviewHeader(): React.JSX.Element {
   const { workingSlot, previewMode } = useSlotsState();
   const { setPreviewMode } = useSlotsActions();
   const { screenshotBusy } = useCenterPreviewContext();
+  const { onSaveScreenshot } = useCenterPreviewHeaderContext();
 
   return (
     <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-2'>

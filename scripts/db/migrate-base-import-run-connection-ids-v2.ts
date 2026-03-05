@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import { MongoClient, ObjectId, type Collection } from 'mongodb';
 import { Pool } from 'pg';
 
-import { migrateBaseImportRunConnectionId } from '@/features/integrations/services/imports/base-import-run-connection-migration';
+import { migrateBaseImportRunConnectionId } from './lib/integrations/base-import-run-connection-migration';
 
 type CliOptions = {
   dryRun: boolean;

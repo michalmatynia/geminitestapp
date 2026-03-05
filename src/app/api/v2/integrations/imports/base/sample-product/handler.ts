@@ -132,7 +132,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     const token = tokenResolution.token;
     if (!token) {
       throw badRequestError(
-        tokenResolution.error ?? 'No Base API token configured. Legacy password token fallback is disabled.'
+        tokenResolution.error ?? 'No Base API token configured. Password token fallback is disabled.'
       );
     }
 

@@ -62,7 +62,7 @@ export const useAgentCreatorOperations = () => {
   return context;
 };
 
-// --- Legacy Aggregator ---
+// --- Context Aggregator ---
 
 type AgentCreatorSettingsContextType = AgentCreatorModes &
   AgentCreatorPerformance &

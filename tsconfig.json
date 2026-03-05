@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "checkJs": false,
     "skipLibCheck": true,
@@ -36,14 +40,30 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@/__tests__/*": ["./__tests__/*"],
-      "gsap/ScrollTrigger": ["./node_modules/gsap/types/scroll-trigger.d.ts"],
-      "gsap/MotionPathPlugin": ["./node_modules/gsap/types/motion-path-plugin.d.ts"],
-      "gsap/Flip": ["./node_modules/gsap/types/flip.d.ts"],
-      "gsap/Draggable": ["./node_modules/gsap/types/draggable.d.ts"],
-      "gsap/CustomEase": ["./node_modules/gsap/types/custom-ease.d.ts"],
-      "gsap/Observer": ["./node_modules/gsap/types/observer.d.ts"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@/__tests__/*": [
+        "./__tests__/*"
+      ],
+      "gsap/ScrollTrigger": [
+        "./node_modules/gsap/types/scroll-trigger.d.ts"
+      ],
+      "gsap/MotionPathPlugin": [
+        "./node_modules/gsap/types/motion-path-plugin.d.ts"
+      ],
+      "gsap/Flip": [
+        "./node_modules/gsap/types/flip.d.ts"
+      ],
+      "gsap/Draggable": [
+        "./node_modules/gsap/types/draggable.d.ts"
+      ],
+      "gsap/CustomEase": [
+        "./node_modules/gsap/types/custom-ease.d.ts"
+      ],
+      "gsap/Observer": [
+        "./node_modules/gsap/types/observer.d.ts"
+      ]
     },
     "types": [
       "vitest/globals",

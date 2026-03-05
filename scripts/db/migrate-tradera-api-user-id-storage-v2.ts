@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import { MongoClient, ObjectId } from 'mongodb';
 import { Pool } from 'pg';
 
-import { migrateTraderaApiUserIdStorage } from '@/features/integrations/services/tradera-api-user-id-storage-migration';
+import { migrateTraderaApiUserIdStorage } from './lib/integrations/tradera-api-user-id-storage-migration';
 
 type CliOptions = {
   dryRun: boolean;

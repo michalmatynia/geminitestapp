@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { migrateBaseTokenEncryption } from '@/features/integrations/services/base-token-encryption-migration';
+import { migrateBaseTokenEncryption } from '../../../../scripts/db/lib/integrations/base-token-encryption-migration';
 import { decryptSecret, encryptSecret } from '@/shared/lib/security/encryption';
 
 vi.mock('server-only', () => ({}));

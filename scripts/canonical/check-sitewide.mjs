@@ -7,13 +7,13 @@ const SRC_DIR = path.join(ROOT, 'src');
 const ROOT_TESTS_DIR = path.join(ROOT, '__tests__');
 
 const REQUIRED_DOCS = [
-  'docs/site-wide-canonical-migration-plan-2026-03-04.md',
-  'docs/canonical-contract-matrix-2026-03-04.md',
-  'docs/legacy-compatibility-exception-register-2026-03-04.md',
-  'docs/legacy-compatibility-exception-register-2026-03-04.json',
+  'docs/site-wide-canonical-migration-plan-2026-03-05.md',
+  'docs/canonical-contract-matrix-2026-03-05.md',
+  'docs/legacy-compatibility-exception-register-2026-03-05.md',
+  'docs/legacy-compatibility-exception-register-2026-03-05.json',
 ];
 
-const EXCEPTION_REGISTER_PATH = 'docs/legacy-compatibility-exception-register-2026-03-04.json';
+const EXCEPTION_REGISTER_PATH = 'docs/legacy-compatibility-exception-register-2026-03-05.json';
 const FORBIDDEN_LEGACY_ROUTE_DIRS = [
   'src/app/api/import',
   'src/app/api/catalogs/assign',
@@ -21,10 +21,21 @@ const FORBIDDEN_LEGACY_ROUTE_DIRS = [
 ];
 const FORBIDDEN_MIGRATION_HELPER_RUNTIME_FILES = [
   'src/features/integrations/services/imports/parameter-import/link-map-preference-migration.ts',
+  'src/features/integrations/services/imports/base-import-run-connection-migration.ts',
   'src/features/integrations/services/export-warehouse-preference-migration.ts',
+  'src/features/integrations/services/base-token-storage-migration.ts',
+  'src/features/integrations/services/base-token-encryption-migration.ts',
+  'src/features/integrations/services/tradera-api-credential-storage-migration.ts',
+  'src/features/integrations/services/tradera-api-user-id-storage-migration.ts',
   'src/features/case-resolver/workspace-detached-contract-migration.ts',
   'src/features/products/api/versioning.ts',
   'src/features/products/api/routes/v2-products-route.ts',
+];
+const FORBIDDEN_COMPAT_WRAPPER_RUNTIME_FILES = [
+  'src/features/products/hooks/useMetadata.ts',
+  'src/features/products/hooks/useCatalogQueries.ts',
+  'src/features/integrations/hooks/integrationCache.ts',
+  'src/features/integrations/hooks/listingCache.ts',
 ];
 const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
   {
@@ -312,6 +323,106 @@ const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
     reason: 'ai-paths node-identity legacy occurrence map naming channel reintroduced',
   },
   {
+    token: 'assertNoLegacyLocalizedShape',
+    reason: 'product localized-field legacy shape guard naming channel reintroduced',
+  },
+  {
+    token: 'assertNoLegacyRunIdentity',
+    reason: 'ai-paths runtime-state legacy run-identity guard naming channel reintroduced',
+  },
+  {
+    token: 'assertNoLegacyRuntimeIdentityFields',
+    reason: 'ai-paths runtime-state legacy runtime-identity guard naming channel reintroduced',
+  },
+  {
+    token: '--- Legacy Aggregator ---',
+    reason: 'context-layer legacy aggregator comment channel reintroduced',
+  },
+  {
+    token: '--- Legacy Aggregated Interface ---',
+    reason: 'context-layer legacy aggregated-interface comment channel reintroduced',
+  },
+  {
+    token: 'Legacy support / Additional types',
+    reason: 'chatbot contract legacy support comment channel reintroduced',
+  },
+  {
+    token: 'Legacy or custom header',
+    reason: 'shared list-panel legacy header comment channel reintroduced',
+  },
+  {
+    token: 'Legacy Trigger context policy:',
+    reason: 'ai-paths trigger docs legacy policy wording channel reintroduced',
+  },
+  {
+    token: 'Legacy password token fallback is disabled.',
+    reason: 'integrations/base token resolver legacy password-fallback wording channel reintroduced',
+  },
+  {
+    token: 'Legacy password fallback is disabled.',
+    reason: 'integrations/tradera test-connection legacy password-fallback wording channel reintroduced',
+  },
+  {
+    token: 'const deprecatedKeys: string[] = [];',
+    reason: 'image-studio settings deprecated-keys naming channel reintroduced',
+  },
+  {
+    token: 'return deprecatedKeys;',
+    reason: 'image-studio settings deprecated-keys return naming channel reintroduced',
+  },
+  {
+    token: 'deletedLegacySettingsKeys',
+    reason: 'image-studio project settings migration legacy stats-key naming channel reintroduced',
+  },
+  {
+    token: 'deletedLegacyKeys',
+    reason: 'image-studio project settings migration legacy deleted-keys naming channel reintroduced',
+  },
+  {
+    token: "const deprecatedKeys = ['runId', 'runStartedAt'].filter(",
+    reason: 'ai-paths runtime-state deprecated-keys naming channel reintroduced',
+  },
+  {
+    token: 'keys: deprecatedKeys',
+    reason: 'ai-paths runtime-state deprecated-keys payload channel reintroduced',
+  },
+  {
+    token: '@/features/prompt-exploder/persistence-contract-migration',
+    reason: 'prompt exploder persistence migration helper import reintroduced in runtime tree',
+  },
+  {
+    token: 'migratePromptExploderPersistedSettingValue',
+    reason: 'prompt exploder persisted-setting migration helper usage reintroduced in runtime tree',
+  },
+  {
+    token: 'runtime_retry_success',
+    reason: 'prompt exploder runtime retry compatibility counter token reintroduced',
+  },
+  {
+    token: "@/features/cms/migrations/page-builder-contract-migration",
+    reason: 'cms page-builder contract migration helper import reintroduced in runtime tree',
+  },
+  {
+    token: 'migrateCmsPageBuilderComponents',
+    reason: 'cms page-builder component migration helper usage reintroduced in runtime tree',
+  },
+  {
+    token: "@/features/cms/migrations/page-builder-template-contract-migration",
+    reason: 'cms page-builder template migration helper import reintroduced in runtime tree',
+  },
+  {
+    token: 'migrateCmsPageBuilderTemplateSettingValue',
+    reason: 'cms page-builder template migration helper usage reintroduced in runtime tree',
+  },
+  {
+    token: 'cms_section_templates.v1',
+    reason: 'cms page-builder section template v1 runtime compatibility key reintroduced',
+  },
+  {
+    token: 'cms_grid_templates.v1',
+    reason: 'cms page-builder grid template v1 runtime compatibility key reintroduced',
+  },
+  {
     token: "import { aiNodeSchema, edgeSchema, type AiNode, type Edge } from '../ai-paths-core';",
     reason: 'case-resolver graph edge contract recoupled to ai-paths edge schema',
   },
@@ -478,6 +589,14 @@ const checkForbiddenRuntimeMigrationHelpers = () => {
   for (const relative of FORBIDDEN_MIGRATION_HELPER_RUNTIME_FILES) {
     if (fs.existsSync(path.join(ROOT, relative))) {
       reportViolation(`forbidden migration helper remains in runtime tree: ${relative}`);
+    }
+  }
+};
+
+const checkForbiddenCompatWrapperRuntimeFiles = () => {
+  for (const relative of FORBIDDEN_COMPAT_WRAPPER_RUNTIME_FILES) {
+    if (fs.existsSync(path.join(ROOT, relative))) {
+      reportViolation(`forbidden compatibility wrapper remains in runtime tree: ${relative}`);
     }
   }
 };
@@ -820,6 +939,7 @@ const main = () => {
   checkRequiredDocs();
   checkForbiddenLegacyRouteDirs();
   checkForbiddenRuntimeMigrationHelpers();
+  checkForbiddenCompatWrapperRuntimeFiles();
   checkProductsMetadataGroupTypeAliasPrune();
   checkProductsPagedRouteHandlerImport();
   checkPromptExploderSettingsCanonicalAiShapeError();

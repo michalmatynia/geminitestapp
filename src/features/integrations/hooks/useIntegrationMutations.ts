@@ -12,10 +12,8 @@ import {
   createDeleteMutationV2,
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
-import { invalidateIntegrations } from '@/shared/lib/query-invalidation';
+import { invalidateIntegrationConnections, invalidateIntegrations } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-
-import { invalidateIntegrationConnections } from './integrationCache';
 
 export function useCreateIntegration(): MutationResult<
   Integration,

@@ -86,7 +86,7 @@ export type UpdateStudioProjectStats = {
   updatedSlotLinks: number;
   updatedImageFiles: number;
   migratedSettings?: boolean;
-  deletedLegacySettingsKeys?: number;
+  deletedUnsupportedSettingsKeys?: number;
   settingsKey?: string | null;
 };
 

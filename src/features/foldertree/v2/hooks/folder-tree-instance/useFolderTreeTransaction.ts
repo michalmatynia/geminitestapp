@@ -4,7 +4,6 @@ import {
   type MasterFolderTreePersistOperation,
   type UseMasterFolderTreeOptions,
 } from '@/shared/contracts/master-folder-tree';
-import { useMasterFolderTreeRuntime } from '../../runtime/MasterFolderTreeRuntimeProvider';
 import { FolderTreeStore } from '../../store/createFolderTreeStore';
 import { FolderTreeAppliedTransaction, FolderTreeState, FolderTreeTransaction } from '../../types';
 import {
@@ -19,14 +18,14 @@ import {
 } from './folder-tree-utils';
 import { normalizeNodesV2 } from '../../core/engine';
 import { ApplyPersistedOperationArgs } from './useFolderTreeEngineActions';
+import type { MasterFolderTreeShellRuntime } from '../../shell/useFolderTreeShellRuntime';
 
 export function useFolderTreeTransaction(
   store: FolderTreeStore,
   adapter: UseMasterFolderTreeOptions['adapter'],
-  maxUndoEntries: number
+  maxUndoEntries: number,
+  runtime: MasterFolderTreeShellRuntime
 ) {
-  const runtime = useMasterFolderTreeRuntime();
-
   const executeAdapterTransaction = useCallback(
     async ({
       tx,

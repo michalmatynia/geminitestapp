@@ -121,7 +121,7 @@ export const useProductSettingsPriceGroupModalSection = () => {
   return context;
 };
 
-// --- Legacy Aggregator ---
+// --- Context Aggregator ---
 
 type ProductSettingsPageContextValue = {
   categories: ProductSettingsCategoriesSection;

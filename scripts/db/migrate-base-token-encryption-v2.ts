@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import { MongoClient, ObjectId } from 'mongodb';
 import { Pool } from 'pg';
 
-import { migrateBaseTokenEncryption } from '@/features/integrations/services/base-token-encryption-migration';
+import { migrateBaseTokenEncryption } from './lib/integrations/base-token-encryption-migration';
 
 type CliOptions = {
   dryRun: boolean;

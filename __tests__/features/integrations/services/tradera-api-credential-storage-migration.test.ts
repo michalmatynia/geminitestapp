@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { migrateTraderaApiCredentialStorage } from '@/features/integrations/services/tradera-api-credential-storage-migration';
+import { migrateTraderaApiCredentialStorage } from '../../../../scripts/db/lib/integrations/tradera-api-credential-storage-migration';
 
 describe('tradera-api-credential-storage-migration', () => {
   it('keeps canonical tradera api credentials and trims whitespace', () => {

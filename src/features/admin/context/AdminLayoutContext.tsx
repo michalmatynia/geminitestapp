@@ -21,7 +21,7 @@ export const useAdminLayoutActions = () => {
   return context;
 };
 
-// --- Legacy Aggregator ---
+// --- Context Aggregator ---
 
 interface AdminLayoutContextType extends AdminLayoutState, AdminLayoutActions {}
 

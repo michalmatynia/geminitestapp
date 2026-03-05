@@ -3,7 +3,7 @@
   "wave": "wave1-data-canonicalization-verification",
   "reportMode": "dry-run-executed",
   "environment": "local",
-  "generatedAt": "2026-03-04T20:15:11.837Z",
+  "generatedAt": "2026-03-05T00:40:22.825Z",
   "commandTimeoutMs": 120000,
   "aggregate": {
     "total": 10,
@@ -22,9 +22,9 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-04T20:14:53.552Z",
-      "finishedAt": "2026-03-04T20:14:55.387Z",
-      "durationMs": 1835,
+      "startedAt": "2026-03-05T00:40:07.755Z",
+      "finishedAt": "2026-03-05T00:40:09.487Z",
+      "durationMs": 1732,
       "parsedSummary": {
         "mode": "dry-run",
         "scanned": 351,
@@ -52,9 +52,9 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-04T20:14:55.388Z",
-      "finishedAt": "2026-03-04T20:14:57.357Z",
-      "durationMs": 1969,
+      "startedAt": "2026-03-05T00:40:09.488Z",
+      "finishedAt": "2026-03-05T00:40:11.507Z",
+      "durationMs": 2019,
       "parsedSummary": {
         "mode": "dry-run",
         "pathFilter": "all",
@@ -80,9 +80,9 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-04T20:14:57.357Z",
-      "finishedAt": "2026-03-04T20:14:58.778Z",
-      "durationMs": 1421,
+      "startedAt": "2026-03-05T00:40:11.507Z",
+      "finishedAt": "2026-03-05T00:40:12.861Z",
+      "durationMs": 1354,
       "parsedSummary": {
         "mode": "dry-run",
         "providers": [
@@ -132,9 +132,9 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-04T20:14:58.778Z",
-      "finishedAt": "2026-03-04T20:15:00.147Z",
-      "durationMs": 1369,
+      "startedAt": "2026-03-05T00:40:12.861Z",
+      "finishedAt": "2026-03-05T00:40:14.200Z",
+      "durationMs": 1339,
       "parsedSummary": {
         "mode": "dry-run",
         "providers": [
@@ -180,9 +180,9 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-04T20:15:00.147Z",
-      "finishedAt": "2026-03-04T20:15:01.598Z",
-      "durationMs": 1451,
+      "startedAt": "2026-03-05T00:40:14.200Z",
+      "finishedAt": "2026-03-05T00:40:15.529Z",
+      "durationMs": 1329,
       "parsedSummary": {
         "mode": "dry-run",
         "providers": [
@@ -234,9 +234,9 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-04T20:15:01.598Z",
-      "finishedAt": "2026-03-04T20:15:03.125Z",
-      "durationMs": 1527,
+      "startedAt": "2026-03-05T00:40:15.529Z",
+      "finishedAt": "2026-03-05T00:40:16.883Z",
+      "durationMs": 1354,
       "parsedSummary": {
         "mode": "dry-run",
         "providers": [
@@ -286,9 +286,9 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-04T20:15:03.125Z",
-      "finishedAt": "2026-03-04T20:15:04.545Z",
-      "durationMs": 1420,
+      "startedAt": "2026-03-05T00:40:16.883Z",
+      "finishedAt": "2026-03-05T00:40:18.238Z",
+      "durationMs": 1355,
       "parsedSummary": {
         "mode": "dry-run",
         "providers": [
@@ -340,9 +340,9 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-04T20:15:04.545Z",
-      "finishedAt": "2026-03-04T20:15:08.752Z",
-      "durationMs": 4207,
+      "startedAt": "2026-03-05T00:40:18.238Z",
+      "finishedAt": "2026-03-05T00:40:19.683Z",
+      "durationMs": 1445,
       "parsedSummary": {
         "mode": "dry-run",
         "providers": [
@@ -394,9 +394,9 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-04T20:15:08.752Z",
-      "finishedAt": "2026-03-04T20:15:10.366Z",
-      "durationMs": 1614,
+      "startedAt": "2026-03-05T00:40:19.683Z",
+      "finishedAt": "2026-03-05T00:40:21.252Z",
+      "durationMs": 1569,
       "parsedSummary": {
         "mode": "dry-run",
         "providers": [
@@ -486,9 +486,9 @@
       "status": "success",
       "exitCode": 0,
       "timedOut": false,
-      "startedAt": "2026-03-04T20:15:10.366Z",
-      "finishedAt": "2026-03-04T20:15:11.837Z",
-      "durationMs": 1471,
+      "startedAt": "2026-03-05T00:40:21.252Z",
+      "finishedAt": "2026-03-05T00:40:22.825Z",
+      "durationMs": 1573,
       "parsedSummary": {
         "mode": "dry-run",
         "providers": [

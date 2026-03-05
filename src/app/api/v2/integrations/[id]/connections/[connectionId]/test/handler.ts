@@ -150,13 +150,13 @@ export async function postTestConnectionHandler(
     if (!encryptedAppKey) {
       return fail(
         'Decrypting credentials',
-        'Tradera API App Key is missing. Update the connection first. Legacy password fallback is disabled.'
+        'Tradera API App Key is missing. Update the connection first. Password fallback is disabled.'
       );
     }
     if (!encryptedToken) {
       return fail(
         'Decrypting credentials',
-        'Tradera API token is missing. Update the connection first. Legacy password fallback is disabled.'
+        'Tradera API token is missing. Update the connection first. Password fallback is disabled.'
       );
     }
 

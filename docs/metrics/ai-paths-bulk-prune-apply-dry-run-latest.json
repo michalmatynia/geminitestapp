@@ -1,12 +1,12 @@
 {
   "summary": {
-    "generatedAt": "2026-03-04T23:59:32.894Z",
+    "generatedAt": "2026-03-05T00:52:38.259Z",
     "mode": "apply",
     "dryRun": true,
     "manifestPath": "scripts/ai-paths/legacy-prune-manifest.json",
     "manifestVersion": "phase2-2026-03-05",
-    "ruleCount": 38,
-    "targetCount": 53,
+    "ruleCount": 56,
+    "targetCount": 81,
     "changedFileCount": 0,
     "replacedSnippetCount": 0,
     "findingCount": 0,
@@ -19,6 +19,8 @@
     "targetReports": [
       {
         "ruleId": "ai_paths_settings_edge_alias_shape",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -56,6 +58,8 @@
       },
       {
         "ruleId": "loaded_path_settings_edge_alias_shape",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/products/hooks/useAiPathSettings.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -93,6 +97,8 @@
       },
       {
         "ruleId": "semantic_grammar_edge_alias_shape",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/core/semantic-grammar/serialize.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -101,6 +107,8 @@
       },
       {
         "ruleId": "semantic_grammar_edge_alias_shape",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/core/semantic-grammar/deserialize.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -138,6 +146,8 @@
       },
       {
         "ruleId": "semantic_grammar_edge_alias_shape",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/core/semantic-grammar/subgraph.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -175,6 +185,8 @@
       },
       {
         "ruleId": "parameter_inference_target_path_channel",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -198,6 +210,8 @@
       },
       {
         "ruleId": "parameter_inference_target_path_channel",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/products/hooks/useAiPathSettings.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -221,6 +235,8 @@
       },
       {
         "ruleId": "database_template_catalog_alias",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-database-template-context.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -229,6 +245,8 @@
       },
       {
         "ruleId": "database_input_catalog_alias",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-database-input-resolution.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -237,6 +255,8 @@
       },
       {
         "ruleId": "database_provider_fallback_alias_metadata",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-database-query-execution.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -245,6 +265,8 @@
       },
       {
         "ruleId": "database_provider_fallback_alias_metadata",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-database-update-execution.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -253,6 +275,8 @@
       },
       {
         "ruleId": "database_provider_fallback_alias_metadata",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -261,6 +285,8 @@
       },
       {
         "ruleId": "db_action_provider_alias",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/app/api/ai-paths/db-action/handler.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -269,6 +295,8 @@
       },
       {
         "ruleId": "db_action_request_alias",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/app/api/ai-paths/db-action/handler.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -306,6 +334,8 @@
       },
       {
         "ruleId": "database_client_legacy_route",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/api/client/database.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -350,6 +380,8 @@
       },
       {
         "ruleId": "api_client_csrf_alias",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/api/client.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -366,6 +398,8 @@
       },
       {
         "ruleId": "api_client_csrf_alias",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/api/client/base.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -382,6 +416,8 @@
       },
       {
         "ruleId": "db_schema_provider_alias",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/components/node-config/DbSchemaNodeConfigSection.tsx",
         "missingTargetFile": false,
         "changed": false,
@@ -405,6 +441,8 @@
       },
       {
         "ruleId": "entity_update_simple_parameters_alias",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/app/api/ai-paths/update/handler.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -421,6 +459,8 @@
       },
       {
         "ruleId": "database_settings_target_path_edit",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/components/node-config/database/DatabaseSettingsTab.tsx",
         "missingTargetFile": false,
         "changed": false,
@@ -437,6 +477,8 @@
       },
       {
         "ruleId": "starter_workflow_edge_alias",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/core/starter-workflows/registry.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -488,6 +530,8 @@
       },
       {
         "ruleId": "edge_alias_cleanup",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/core/utils/factory.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -511,6 +555,8 @@
       },
       {
         "ruleId": "edge_alias_cleanup",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/core/utils/node-identity.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -534,6 +580,8 @@
       },
       {
         "ruleId": "parameter_inference_target_path_runtime",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/core/runtime/handlers/database-parameter-inference.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -542,6 +590,8 @@
       },
       {
         "ruleId": "database_schema_snapshot_provider_error_channel",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/core/normalization/trigger-normalization.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -579,6 +629,8 @@
       },
       {
         "ruleId": "database_schema_snapshot_provider_error_channel",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -616,6 +668,8 @@
       },
       {
         "ruleId": "database_schema_snapshot_provider_error_channel",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/products/hooks/useAiPathSettings.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -653,6 +707,8 @@
       },
       {
         "ruleId": "trigger_data_collection_alias_error_channel",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -690,6 +746,8 @@
       },
       {
         "ruleId": "trigger_data_collection_alias_error_channel",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/products/hooks/useAiPathSettings.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -727,6 +785,8 @@
       },
       {
         "ruleId": "runtime_node_identity_reason_channel",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -750,6 +810,8 @@
       },
       {
         "ruleId": "runtime_node_identity_reason_channel",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/services/path-run-executor.helpers.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -766,6 +828,8 @@
       },
       {
         "ruleId": "runtime_node_identity_reason_channel",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsPathActions.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -782,6 +846,8 @@
       },
       {
         "ruleId": "runtime_node_identity_reason_channel",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/products/hooks/useAiPathSettings.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -798,6 +864,8 @@
       },
       {
         "ruleId": "runtime_node_identity_reason_channel",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/services/path-run-service.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -814,6 +882,8 @@
       },
       {
         "ruleId": "simulation_edge_alias",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsSimulation.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -837,6 +907,8 @@
       },
       {
         "ruleId": "settings_handler_versioned_key_guards",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/app/api/ai-paths/settings/handler.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -845,6 +917,8 @@
       },
       {
         "ruleId": "maintenance_handler_enum_contract",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/app/api/ai-paths/settings/maintenance/handler.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -853,6 +927,8 @@
       },
       {
         "ruleId": "trigger_buttons_api_client",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/api/client.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -869,6 +945,8 @@
       },
       {
         "ruleId": "preset_collection_migration",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/context/PresetsContext.tsx",
         "missingTargetFile": false,
         "changed": false,
@@ -877,6 +955,8 @@
       },
       {
         "ruleId": "validation_config_schema",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/core/validation-engine/defaults.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -885,6 +965,8 @@
       },
       {
         "ruleId": "settings_backup_payload",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/settings-store-client.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -893,6 +975,8 @@
       },
       {
         "ruleId": "validation_path_index_meta_fallback",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/pages/AdminAiPathsValidationUtils.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -901,6 +985,8 @@
       },
       {
         "ruleId": "validation_collection_map_delimiter",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/pages/AdminAiPathsValidationUtils.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -924,6 +1010,8 @@
       },
       {
         "ruleId": "validation_docs_sources_delimiter",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/pages/AdminAiPathsValidationUtils.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -940,6 +1028,8 @@
       },
       {
         "ruleId": "database_node_legacy_dbquery",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/core/normalization/nodes/database.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -948,6 +1038,8 @@
       },
       {
         "ruleId": "collection_names_legacy_dbquery",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/core/utils/collection-names.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -956,6 +1048,8 @@
       },
       {
         "ruleId": "run_execution_meta_contract",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/components/job-queue-panel-utils.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -964,6 +1058,8 @@
       },
       {
         "ruleId": "run_source_meta_contract",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/components/job-queue-panel-utils.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -972,6 +1068,8 @@
       },
       {
         "ruleId": "enqueue_meta_source_contract",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/app/api/ai-paths/runs/enqueue/handler.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -980,6 +1078,8 @@
       },
       {
         "ruleId": "run_source_filter_contract",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -988,6 +1088,8 @@
       },
       {
         "ruleId": "run_source_filter_contract",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -996,6 +1098,8 @@
       },
       {
         "ruleId": "queue_cache_run_source_contract",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/query-invalidation.ts",
         "missingTargetFile": false,
         "changed": false,
@@ -1004,7 +1108,294 @@
       },
       {
         "ruleId": "run_source_helpers_contract",
+        "mode": "file",
+        "expectedState": "present",
         "file": "src/shared/lib/ai-paths/run-sources.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "runtime_retry_legacy_enabled",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/shared/lib/ai-paths/core/runtime/engine-core.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "runtime_halt_legacy_control",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/shared/lib/ai-paths/core/runtime/engine-core.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "run_mode_queue_alias",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "run_mode_queue_alias",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsPathActions.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "request_id_lookup_contract",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/features/ai/ai-paths/services/path-run-service.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "runtime_node_status_alias",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/features/ai/ai-paths/services/path-run-executor.logic.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "runtime_node_status_alias",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/utils.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "database_node_provider_normalization_contract",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/features/ai/ai-paths/hooks/useDatabaseNodeConfigState.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "graph_ports_legacy_alias_cleanup",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/shared/lib/ai-paths/core/utils/graph.ports.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "path_save_raw_message_contract",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.helpers.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "validation_docs_fallback_manifest_naming_channel",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.constants.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "validation_docs_fallback_manifest_naming_channel",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "legacy_validation_key_runtime_source_scan",
+        "mode": "source_scan",
+        "expectedState": "present",
+        "file": "src",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [],
+        "scannedFileCount": 3852
+      },
+      {
+        "ruleId": "legacy_index_key_runtime_source_scan",
+        "mode": "source_scan",
+        "expectedState": "present",
+        "file": "src",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [],
+        "scannedFileCount": 3852
+      },
+      {
+        "ruleId": "forbidden_maintenance_action_ids_runtime_source_scan",
+        "mode": "source_scan",
+        "expectedState": "present",
+        "file": "src",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [],
+        "scannedFileCount": 3852
+      },
+      {
+        "ruleId": "trigger_fetcher_migration_module_removed",
+        "mode": "file",
+        "expectedState": "missing",
+        "file": "src/shared/lib/ai-paths/core/normalization/normalization.edges.ts",
+        "missingTargetFile": true,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "trigger_fetcher_migration_tokens_runtime_source_scan",
+        "mode": "source_scan",
+        "expectedState": "present",
+        "file": "src",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [],
+        "scannedFileCount": 3852
+      },
+      {
+        "ruleId": "legacy_dbquery_provider_migration_tokens_runtime_source_scan",
+        "mode": "source_scan",
+        "expectedState": "present",
+        "file": "src",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [],
+        "scannedFileCount": 3852
+      },
+      {
+        "ruleId": "feature_run_sources_duplicate_module_removed",
+        "mode": "file",
+        "expectedState": "missing",
+        "file": "src/features/ai/ai-paths/lib/run-sources.ts",
+        "missingTargetFile": true,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "db_query_update_shim_retirement_state",
+        "mode": "file",
+        "expectedState": "missing",
+        "file": "src/app/api/ai-paths/db-command/handler.ts",
+        "missingTargetFile": true,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "db_query_update_shim_retirement_state",
+        "mode": "file",
+        "expectedState": "missing",
+        "file": "src/app/api/ai-paths/db-command/route.ts",
+        "missingTargetFile": true,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "db_query_update_shim_retirement_state",
+        "mode": "file",
+        "expectedState": "missing",
+        "file": "src/app/api/ai-paths/db-query/handler.ts",
+        "missingTargetFile": true,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "db_query_update_shim_retirement_state",
+        "mode": "file",
+        "expectedState": "missing",
+        "file": "src/app/api/ai-paths/db-query/route.ts",
+        "missingTargetFile": true,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "db_query_update_shim_retirement_state",
+        "mode": "file",
+        "expectedState": "missing",
+        "file": "src/app/api/ai-paths/db-update/handler.ts",
+        "missingTargetFile": true,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "db_query_update_shim_retirement_state",
+        "mode": "file",
+        "expectedState": "missing",
+        "file": "src/app/api/ai-paths/db-update/route.ts",
+        "missingTargetFile": true,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "db_query_update_shim_retirement_state",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/app/api/ai-paths/db-action/handler.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "db_query_update_shim_retirement_state",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/app/api/ai-paths/db-action/route.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "maintenance_action_ids_const_array_contract",
+        "mode": "const_array",
+        "expectedState": "present",
+        "file": "src/features/ai/ai-paths/server/settings-store.constants.ts",
         "missingTargetFile": false,
         "changed": false,
         "replacementCount": 0,

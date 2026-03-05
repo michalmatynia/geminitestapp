@@ -15,6 +15,7 @@ const SUMMARY_JSON_ONLY = args.has('--summary-json');
 const MAX_CHAIN_DEPTH = 7;
 const MAX_CHAIN_COUNT = 6000;
 const TOP_BACKLOG_LIMIT = 80;
+const TOP_COMPONENT_BACKLOG_LIMIT = 120;
 
 const toPosix = (value) => value.split(path.sep).join('/');
 
@@ -874,6 +875,41 @@ const buildChains = ({ adjacency, componentById }) => {
   return [...chainByKey.values()];
 };
 
+const buildTransitionBacklog = ({ transitions, adjacency, componentById }) =>
+  transitions
+    .map((transition) => {
+      const fromState = toStateKey(transition.fromComponentId, transition.sourceProp);
+      const rootFanout = (adjacency.get(fromState) ?? []).length || 1;
+      const distinctFeatureCount = new Set([
+        componentById.get(transition.fromComponentId)?.feature ?? 'other',
+        componentById.get(transition.toComponentId)?.feature ?? 'other',
+      ]).size;
+      const renamePenalty = transition.sourceProp !== transition.targetProp ? 8 : 0;
+      const score =
+        scoreChain({
+          depth: 2,
+          rootFanout,
+          distinctFeatureCount,
+        }) + renamePenalty;
+
+      return {
+        score,
+        depth: 2,
+        rootFanout,
+        distinctFeatureCount,
+        rootComponentId: transition.fromComponentId,
+        sinkComponentId: transition.toComponentId,
+        componentPath: [transition.fromComponentId, transition.toComponentId],
+        propPath: [transition.sourceProp, transition.targetProp],
+        transitions: [transition],
+      };
+    })
+    .sort((left, right) => {
+      if (right.score !== left.score) return right.score - left.score;
+      if (right.rootFanout !== left.rootFanout) return right.rootFanout - left.rootFanout;
+      return right.distinctFeatureCount - left.distinctFeatureCount;
+    });
+
 const toCsvLine = (fields) =>
   fields
     .map((field) => {
@@ -932,7 +968,56 @@ const buildChainCsv = ({ chains, componentById }) => {
   return `${lines.join('\n')}\n`;
 };
 
-const buildMarkdown = ({ summary, backlog, componentBacklog, componentById }) => {
+const buildTransitionCsv = ({ transitionBacklog, componentById }) => {
+  const lines = [];
+  lines.push(
+    toCsvLine([
+      'rank',
+      'score',
+      'from_component',
+      'from_file',
+      'to_component',
+      'to_file',
+      'root_fanout',
+      'distinct_features',
+      'source_prop',
+      'target_prop',
+      'location',
+    ])
+  );
+
+  transitionBacklog.forEach((entry, index) => {
+    const from = componentById.get(entry.rootComponentId);
+    const to = componentById.get(entry.sinkComponentId);
+    const firstTransition = entry.transitions[0];
+    lines.push(
+      toCsvLine([
+        index + 1,
+        entry.score,
+        from?.name ?? entry.rootComponentId,
+        from?.relativePath ?? '',
+        to?.name ?? entry.sinkComponentId,
+        to?.relativePath ?? '',
+        entry.rootFanout,
+        entry.distinctFeatureCount,
+        firstTransition?.sourceProp ?? '',
+        firstTransition?.targetProp ?? '',
+        firstTransition ? `${firstTransition.relativePath}:${firstTransition.line}` : '',
+      ])
+    );
+  });
+
+  return `${lines.join('\n')}\n`;
+};
+
+const buildMarkdown = ({
+  summary,
+  backlog,
+  transitionBacklog,
+  componentBacklog,
+  forwardingComponentBacklog,
+  componentById,
+}) => {
   const lines = [];
   lines.push('# Prop Drilling Scan');
   lines.push('');
@@ -943,77 +1028,136 @@ const buildMarkdown = ({ summary, backlog, componentBacklog, componentById }) =>
   lines.push(`- Scanned source files: ${summary.scannedSourceFiles}`);
   lines.push(`- JSX files scanned: ${summary.scannedJsxFiles}`);
   lines.push(`- Components detected: ${summary.componentCount}`);
-  lines.push(`- Components forwarding parent props: ${summary.componentsWithForwarding}`);
+  lines.push(`- Components forwarding parent props (hotspot threshold): ${summary.componentsWithForwarding}`);
+  lines.push(`- Components forwarding parent props (any): ${summary.componentsWithAnyForwarding}`);
   lines.push(`- Resolved forwarded transitions: ${summary.resolvedTransitionCount}`);
+  lines.push(`- Candidate chains (depth >= 2): ${summary.depth2CandidateChainCount}`);
   lines.push(`- Candidate chains (depth >= 3): ${summary.candidateChainCount}`);
   lines.push(`- High-priority chains (depth >= 4): ${summary.highPriorityChainCount}`);
   lines.push(`- Unknown spread forwarding edges: ${summary.unknownSpreadForwardingCount}`);
+  lines.push(`- Hotspot forwarding components backlog size: ${componentBacklog.length}`);
   lines.push('');
   lines.push('## Hot Features');
   lines.push('');
   lines.push('| Feature Scope | Forwarding Components |');
   lines.push('| --- | ---: |');
-  for (const entry of summary.topFeatureScopes) {
-    lines.push(`| \`${entry.scope}\` | ${entry.count} |`);
+  if (summary.topFeatureScopes.length === 0) {
+    lines.push('| _none_ | 0 |');
+  } else {
+    for (const entry of summary.topFeatureScopes) {
+      lines.push(`| \`${entry.scope}\` | ${entry.count} |`);
+    }
   }
   lines.push('');
   lines.push('## Top Prop-Drilling Components');
   lines.push('');
-  lines.push('| Rank | Component | File | Forwarded Props | Outgoing Transitions | Unknown Spread Forwarding |');
-  lines.push('| ---: | --- | --- | ---: | ---: | --- |');
-  componentBacklog.slice(0, 40).forEach((entry, index) => {
-    lines.push(
-      `| ${index + 1} | \`${entry.name}\` | \`${entry.relativePath}\` | ${entry.forwardedPropCount} | ${entry.outgoingTransitionCount} | ${entry.hasUnknownSpreadForwarding ? 'yes' : 'no'} |`
-    );
-  });
+  lines.push(
+    '| Rank | Component | File | Forwarded Props | Outgoing Transitions | Unknown Spread Forwarding | Hotspot |'
+  );
+  lines.push('| ---: | --- | --- | ---: | ---: | --- | --- |');
+  const hotspotComponentIds = new Set(componentBacklog.map((entry) => entry.componentId));
+  const componentRows = forwardingComponentBacklog.slice(0, TOP_COMPONENT_BACKLOG_LIMIT);
+  if (componentRows.length === 0) {
+    lines.push('| 1 | _none_ | _none_ | 0 | 0 | no | no |');
+  } else {
+    componentRows.forEach((entry, index) => {
+      lines.push(
+        `| ${index + 1} | \`${entry.name}\` | \`${entry.relativePath}\` | ${entry.forwardedPropCount} | ${entry.outgoingTransitionCount} | ${entry.hasUnknownSpreadForwarding ? 'yes' : 'no'} | ${hotspotComponentIds.has(entry.componentId) ? 'yes' : 'no'} |`
+      );
+    });
+  }
   lines.push('');
-  lines.push('## Ranked Chain Backlog');
+  lines.push('## Prioritized Transition Backlog (Depth = 2)');
+  lines.push('');
+  lines.push('| Rank | Score | From | To | Fanout | Features | Prop Mapping | Location |');
+  lines.push('| ---: | ---: | --- | --- | ---: | ---: | --- | --- |');
+  const transitionRows = transitionBacklog.slice(0, TOP_BACKLOG_LIMIT);
+  if (transitionRows.length === 0) {
+    lines.push('| 1 | 0 | _none_ | _none_ | 0 | 0 | _none_ | _none_ |');
+  } else {
+    transitionRows.forEach((chain, index) => {
+      const root = componentById.get(chain.rootComponentId);
+      const sink = componentById.get(chain.sinkComponentId);
+      const firstTransition = chain.transitions[0];
+      const location = firstTransition ? `${firstTransition.relativePath}:${firstTransition.line}` : '_unknown_';
+      lines.push(
+        `| ${index + 1} | ${chain.score} | \`${root?.name ?? chain.rootComponentId}\` | \`${sink?.name ?? chain.sinkComponentId}\` | ${chain.rootFanout} | ${chain.distinctFeatureCount} | \`${chain.propPath.join(' -> ')}\` | \`${location}\` |`
+      );
+    });
+  }
+  lines.push('');
+  lines.push('## Ranked Chain Backlog (Depth >= 3)');
   lines.push('');
   lines.push('| Rank | Score | Depth | Root | Sink | Root Fanout | Features | Prop Path |');
   lines.push('| ---: | ---: | ---: | --- | --- | ---: | ---: | --- |');
-  backlog.slice(0, TOP_BACKLOG_LIMIT).forEach((chain, index) => {
+  if (backlog.length === 0) {
+    lines.push('| 1 | 0 | 0 | _none_ | _none_ | 0 | 0 | _none_ |');
+  } else {
+    backlog.slice(0, TOP_BACKLOG_LIMIT).forEach((chain, index) => {
+      const root = componentById.get(chain.rootComponentId);
+      const sink = componentById.get(chain.sinkComponentId);
+      lines.push(
+        `| ${index + 1} | ${chain.score} | ${chain.depth} | \`${root?.name ?? chain.rootComponentId}\` | \`${sink?.name ?? chain.sinkComponentId}\` | ${chain.rootFanout} | ${chain.distinctFeatureCount} | \`${chain.propPath.join(' -> ')}\` |`
+      );
+    });
+  }
+  lines.push('');
+  lines.push('## Top Chain Details (Depth >= 3)');
+  lines.push('');
+  if (backlog.length === 0) {
+    lines.push('- No depth >= 3 chains were detected in this scan. Use the depth = 2 transition backlog for refactor wave planning.');
+    lines.push('');
+  } else {
+    backlog.slice(0, 15).forEach((chain, index) => {
+      const root = componentById.get(chain.rootComponentId);
+      const sink = componentById.get(chain.sinkComponentId);
+      lines.push(`### ${index + 1}. ${root?.name ?? chain.rootComponentId} -> ${sink?.name ?? chain.sinkComponentId}`);
+      lines.push('');
+      lines.push(`- Score: ${chain.score}`);
+      lines.push(`- Depth: ${chain.depth}`);
+      lines.push(`- Root fanout: ${chain.rootFanout}`);
+      lines.push(`- Prop path: ${chain.propPath.join(' -> ')}`);
+      lines.push('- Component path:');
+      for (const componentId of chain.componentPath) {
+        const component = componentById.get(componentId);
+        if (!component) {
+          lines.push(`  - \`${componentId}\``);
+          continue;
+        }
+        lines.push(`  - \`${component.name}\` (${component.relativePath})`);
+      }
+      lines.push('- Transition lines:');
+      for (const transition of chain.transitions) {
+        const fromComponent = componentById.get(transition.fromComponentId);
+        const toComponent = componentById.get(transition.toComponentId);
+        lines.push(
+          `  - \`${fromComponent?.name ?? transition.fromComponentId}\` -> \`${toComponent?.name ?? transition.toComponentId}\`: \`${transition.sourceProp}\` -> \`${transition.targetProp}\` at ${transition.relativePath}:${transition.line}`
+        );
+      }
+      lines.push('');
+    });
+  }
+  lines.push('## Top Transition Details (Depth = 2)');
+  lines.push('');
+  transitionRows.slice(0, 15).forEach((chain, index) => {
     const root = componentById.get(chain.rootComponentId);
     const sink = componentById.get(chain.sinkComponentId);
-    lines.push(
-      `| ${index + 1} | ${chain.score} | ${chain.depth} | \`${root?.name ?? chain.rootComponentId}\` | \`${sink?.name ?? chain.sinkComponentId}\` | ${chain.rootFanout} | ${chain.distinctFeatureCount} | \`${chain.propPath.join(' -> ')}\` |`
-    );
-  });
-  lines.push('');
-  lines.push('## Top Chain Details');
-  lines.push('');
-
-  backlog.slice(0, 15).forEach((chain, index) => {
-    const root = componentById.get(chain.rootComponentId);
-    const sink = componentById.get(chain.sinkComponentId);
+    const firstTransition = chain.transitions[0];
     lines.push(`### ${index + 1}. ${root?.name ?? chain.rootComponentId} -> ${sink?.name ?? chain.sinkComponentId}`);
     lines.push('');
     lines.push(`- Score: ${chain.score}`);
-    lines.push(`- Depth: ${chain.depth}`);
     lines.push(`- Root fanout: ${chain.rootFanout}`);
-    lines.push(`- Prop path: ${chain.propPath.join(' -> ')}`);
-    lines.push('- Component path:');
-    for (const componentId of chain.componentPath) {
-      const component = componentById.get(componentId);
-      if (!component) {
-        lines.push(`  - \`${componentId}\``);
-        continue;
-      }
-      lines.push(`  - \`${component.name}\` (${component.relativePath})`);
-    }
-    lines.push('- Transition lines:');
-    for (const transition of chain.transitions) {
-      const fromComponent = componentById.get(transition.fromComponentId);
-      const toComponent = componentById.get(transition.toComponentId);
-      lines.push(
-        `  - \`${fromComponent?.name ?? transition.fromComponentId}\` -> \`${toComponent?.name ?? transition.toComponentId}\`: \`${transition.sourceProp}\` -> \`${transition.targetProp}\` at ${transition.relativePath}:${transition.line}`
-      );
+    lines.push(`- Prop mapping: ${chain.propPath.join(' -> ')}`);
+    if (firstTransition) {
+      lines.push(`- Location: ${firstTransition.relativePath}:${firstTransition.line}`);
     }
     lines.push('');
   });
 
   lines.push('## Execution Notes');
   lines.push('');
-  lines.push('- Start with depth >= 4 chains in `feature:*` scopes.');
+  lines.push('- Start with the top depth = 2 transition backlog to eliminate pass-through props that block deeper chain detection.');
+  lines.push('- Continue prioritizing depth >= 4 chains in `feature:*` scopes once they appear.');
   lines.push('- Prefer introducing feature-level providers first, then split hot read/write contexts.');
   lines.push('- Re-run scan after each refactor wave and track depth/fanout reductions.');
 
@@ -1113,7 +1257,7 @@ const run = async () => {
     return right.rootFanout - left.rootFanout;
   });
 
-  const componentBacklog = [...componentForwardingStats.entries()]
+  const forwardingComponentBacklog = [...componentForwardingStats.entries()]
     .map(([componentId, stats]) => {
       const component = componentById.get(componentId);
       return {
@@ -1126,10 +1270,7 @@ const run = async () => {
         hasUnknownSpreadForwarding: stats.hasUnknownSpreadForwarding,
       };
     })
-    .filter(
-      (entry) =>
-        entry.forwardedPropCount >= 2 || entry.outgoingTransitionCount >= 3 || entry.hasUnknownSpreadForwarding
-    )
+    .filter((entry) => entry.outgoingTransitionCount > 0 || entry.hasUnknownSpreadForwarding)
     .sort((left, right) => {
       if (right.forwardedPropCount !== left.forwardedPropCount) {
         return right.forwardedPropCount - left.forwardedPropCount;
@@ -1137,8 +1278,21 @@ const run = async () => {
       return right.outgoingTransitionCount - left.outgoingTransitionCount;
     });
 
+  const componentBacklog = forwardingComponentBacklog
+    .filter(
+      (entry) =>
+        entry.forwardedPropCount >= 2 || entry.outgoingTransitionCount >= 3 || entry.hasUnknownSpreadForwarding
+    )
+    .slice(0, TOP_COMPONENT_BACKLOG_LIMIT);
+
+  const transitionBacklog = buildTransitionBacklog({
+    transitions: [...transitionsByKey.values()],
+    adjacency,
+    componentById,
+  });
+
   const forwardingScopeCounts = new Map();
-  for (const entry of componentBacklog) {
+  for (const entry of forwardingComponentBacklog) {
     forwardingScopeCounts.set(entry.feature, (forwardingScopeCounts.get(entry.feature) ?? 0) + 1);
   }
 
@@ -1148,7 +1302,9 @@ const run = async () => {
     scannedJsxFiles: scanInputs.filter((entry) => isJsxFile(entry.absolutePath)).length,
     componentCount: componentById.size,
     componentsWithForwarding: componentBacklog.length,
+    componentsWithAnyForwarding: forwardingComponentBacklog.length,
     resolvedTransitionCount: transitionsByKey.size,
+    depth2CandidateChainCount: transitionBacklog.length,
     candidateChainCount: chains.length,
     highPriorityChainCount: chains.filter((chain) => chain.depth >= 4).length,
     unknownSpreadForwardingCount,
@@ -1163,7 +1319,9 @@ const run = async () => {
   const result = {
     summary,
     backlog,
+    transitionBacklog,
     componentBacklog,
+    forwardingComponentBacklog,
     chains,
   };
 
@@ -1174,15 +1332,31 @@ const run = async () => {
     const latestJsonPath = path.join(outDir, 'prop-drilling-latest.json');
     const latestMdPath = path.join(outDir, 'prop-drilling-latest.md');
     const latestCsvPath = path.join(outDir, 'prop-drilling-chains-latest.csv');
+    const latestTransitionCsvPath = path.join(outDir, 'prop-drilling-transitions-latest.csv');
     const historicalJsonPath = path.join(outDir, `prop-drilling-${stamp}.json`);
 
     await fs.writeFile(latestJsonPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
     await fs.writeFile(
       latestMdPath,
-      buildMarkdown({ summary, backlog, componentBacklog, componentById }),
+      buildMarkdown({
+        summary,
+        backlog,
+        transitionBacklog,
+        componentBacklog,
+        forwardingComponentBacklog,
+        componentById,
+      }),
       'utf8'
     );
     await fs.writeFile(latestCsvPath, buildChainCsv({ chains: backlog, componentById }), 'utf8');
+    await fs.writeFile(
+      latestTransitionCsvPath,
+      buildTransitionCsv({
+        transitionBacklog: transitionBacklog.slice(0, TOP_BACKLOG_LIMIT),
+        componentById,
+      }),
+      'utf8'
+    );
 
     if (!HISTORY_DISABLED) {
       await fs.writeFile(historicalJsonPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
@@ -1192,6 +1366,7 @@ const run = async () => {
       console.log(`Wrote ${toPosix(path.relative(root, latestJsonPath))}`);
       console.log(`Wrote ${toPosix(path.relative(root, latestMdPath))}`);
       console.log(`Wrote ${toPosix(path.relative(root, latestCsvPath))}`);
+      console.log(`Wrote ${toPosix(path.relative(root, latestTransitionCsvPath))}`);
       if (!HISTORY_DISABLED) {
         console.log(`Wrote ${toPosix(path.relative(root, historicalJsonPath))}`);
       }
@@ -1206,8 +1381,10 @@ const run = async () => {
   console.log(
     [
       `Components: ${summary.componentCount}`,
-      `Forwarding components: ${summary.componentsWithForwarding}`,
+      `Forwarding components (hotspots): ${summary.componentsWithForwarding}`,
+      `Forwarding components (any): ${summary.componentsWithAnyForwarding}`,
       `Transitions: ${summary.resolvedTransitionCount}`,
+      `Depth>=2: ${summary.depth2CandidateChainCount}`,
       `Chains: ${summary.candidateChainCount}`,
       `Depth>=4: ${summary.highPriorityChainCount}`,
     ].join(' | ')

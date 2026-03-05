@@ -3,11 +3,46 @@ import { describe, expect, it } from 'vitest';
 import {
   mergeRuntimeNodeOutputsForStatus,
   mergeRuntimeStateSnapshot,
+  resolveRuntimeNodeDisplayStatus,
 } from '../utils';
 
 import type { RuntimeState } from '@/shared/lib/ai-paths';
 
 describe('mergeRuntimeNodeOutputsForStatus', () => {
+  it('maps blocked missing-input updates to waiting_callback', () => {
+    const merged = mergeRuntimeNodeOutputsForStatus({
+      previous: {
+        status: 'running',
+      },
+      next: {
+        blockedReason: 'missing_inputs',
+        waitingOnPorts: ['prompt'],
+      },
+      status: 'blocked',
+    });
+
+    expect(merged['status']).toBe('waiting_callback');
+    expect(merged['blockedReason']).toBe('missing_inputs');
+    expect(merged['waitingOnPorts']).toEqual(['prompt']);
+  });
+
+  it('keeps waiting diagnostics when status is waiting_callback', () => {
+    const merged = mergeRuntimeNodeOutputsForStatus({
+      previous: {
+        status: 'waiting_callback',
+        blockedReason: 'missing_inputs',
+      },
+      next: {
+        waitingOnPorts: ['bundle'],
+      },
+      status: 'waiting_callback',
+    });
+
+    expect(merged['status']).toBe('waiting_callback');
+    expect(merged['blockedReason']).toBe('missing_inputs');
+    expect(merged['waitingOnPorts']).toEqual(['bundle']);
+  });
+
   it('drops blocked diagnostics after status leaves blocked state', () => {
     const merged = mergeRuntimeNodeOutputsForStatus({
       previous: {
@@ -110,6 +145,19 @@ describe('mergeRuntimeNodeOutputsForStatus', () => {
 
     expect(merged['status']).toBeUndefined();
     expect(merged['note']).toBe('unsupported status');
+  });
+});
+
+describe('resolveRuntimeNodeDisplayStatus', () => {
+  it('maps blocked missing_inputs reason from metadata to waiting_callback', () => {
+    const status = resolveRuntimeNodeDisplayStatus({
+      status: 'blocked',
+      metadata: {
+        reason: 'missing_inputs',
+      },
+    });
+
+    expect(status).toBe('waiting_callback');
   });
 });
 

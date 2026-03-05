@@ -804,7 +804,140 @@ Wave 2 hard-cut execution started:
      - `scripts/canonical/check-sitewide.mjs`
      - blocks reintroduction of:
        - `legacy payload variants fallback to defaults.`
-
+62. AI Paths factory/node-identity source-id naming-channel canonicalization:
+   - renamed factory remap identifiers from legacy-id naming to source-id naming:
+     - `src/shared/lib/ai-paths/core/utils/factory.ts`
+     - `legacyId` -> `sourceId` (internal parameter/local channels).
+   - renamed node-identity repair helper naming to source-id/source-node naming:
+     - `src/shared/lib/ai-paths/core/utils/node-identity.ts`
+     - `legacyNodeId` warning field -> `sourceNodeId`
+     - `createNodeInstanceIdFromLegacy` -> `createNodeInstanceIdFromSource`
+     - `firstResolvedByLegacyId` -> `firstResolvedBySourceId`
+     - `legacyOccurrenceCounts` -> `sourceOccurrenceCounts`
+   - deterministic-id continuity preserved:
+     - hash seed object keys (`legacyId`, `legacyNodeTypeId`) remain intentionally unchanged to avoid id-generation drift.
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of removed legacy naming snippets:
+       - `legacyNodeId?: string;`
+       - `createNodeInstanceIdFromLegacy`
+       - `firstResolvedByLegacyId`
+       - `legacyOccurrenceCounts = new Map<string, number>()`
+63. AI Paths runtime-state identity guard naming-channel canonicalization:
+   - renamed runtime-state identity guard helpers to canonical unsupported naming:
+     - `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+     - `src/features/ai/ai-paths/services/path-run-executor.helpers.ts`
+     - `assertNoLegacyRunIdentity` -> `assertNoUnsupportedRunIdentity`
+     - `assertNoLegacyRuntimeIdentityFields` -> `assertNoUnsupportedRuntimeIdentityFields`
+   - renamed runtime-state identity key-list naming to canonical unsupported wording:
+     - `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+     - `src/features/ai/ai-paths/services/path-run-executor.helpers.ts`
+     - `deprecatedKeys` -> `unsupportedKeys`
+   - preserved runtime behavior:
+     - rejection channel remains unchanged (`unsupported_runtime_identity_fields`) for payloads containing `runId`/`runStartedAt`.
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of:
+       - `assertNoLegacyRunIdentity`
+       - `assertNoLegacyRuntimeIdentityFields`
+       - `const deprecatedKeys = ['runId', 'runStartedAt'].filter(`
+       - `keys: deprecatedKeys`
+64. Context-layer legacy aggregator comment-channel canonicalization:
+   - replaced legacy-tagged aggregator comments with canonical neutral wording in context/composition surfaces:
+     - `src/features/admin/context/AdminLayoutContext.tsx`
+     - `src/features/auth/context/UsersContext.tsx`
+     - `src/features/database/context/DatabaseContext.tsx`
+     - `src/features/drafter/components/DraftCreatorFormContext.tsx`
+     - `src/features/files/contexts/FileManagerContext.tsx`
+     - `src/features/products/context/ProductSettingsPageContext.tsx`
+     - `src/features/integrations/context/ProductListingsContext.tsx`
+     - `src/features/integrations/context/CategoryMapperContext.tsx`
+     - `src/features/integrations/context/ListingSettingsContext.tsx`
+     - `src/features/integrations/context/CategoryMapperPageContext.tsx`
+     - `src/features/ai/agentcreator/context/AgentRunContext.tsx`
+     - `src/features/ai/agentcreator/context/AgentCreatorSettingsContext.tsx`
+     - `src/features/ai/chatbot/context/ChatbotContext.tsx`
+     - `src/features/ai/ai-paths/components/AiPathConfigContext.tsx`
+   - comment channel replacements:
+     - `--- Legacy Aggregator ---` -> `--- Context Aggregator ---`
+     - `--- Legacy Aggregated Interface ---` -> `--- Aggregated Interface ---`
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of:
+       - `--- Legacy Aggregator ---`
+       - `--- Legacy Aggregated Interface ---`
+65. Product localized-shape guard naming-channel canonicalization:
+   - renamed product localized object-shape guard helper to canonical unsupported naming:
+     - `src/shared/lib/products/services/product-repository/mongo-product-repository-mappers.ts`
+     - `assertNoLegacyLocalizedShape` -> `assertNoUnsupportedLocalizedObjectShape`
+   - preserved runtime behavior:
+     - localized object-shape rejection semantics/messages are unchanged.
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of:
+       - `assertNoLegacyLocalizedShape`
+66. Shared docs/comment legacy wording-channel canonicalization:
+   - replaced legacy-tagged wording in shared contracts/UI/docs hint channels:
+     - `src/shared/contracts/chatbot.ts`
+       - `Legacy support / Additional types` -> `Extended support / Additional types`
+     - `src/shared/ui/list-panel.tsx`
+       - `Legacy or custom header` -> `Deprecated or custom header`
+     - `src/shared/lib/ai-paths/core/docs/node-docs/trigger.ts`
+       - `Legacy Trigger context policy:` -> `Deprecated Trigger context policy:`
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of:
+       - `Legacy support / Additional types`
+       - `Legacy or custom header`
+       - `Legacy Trigger context policy:`
+67. Prompt Exploder + CMS Page Builder runtime-compat guardrail centralization:
+   - extended site-wide canonical guardrails so removed Prompt Exploder/CMS migration helper and v1-key compatibility tokens are blocked centrally (runtime `src/**`, excluding tests):
+     - `scripts/canonical/check-sitewide.mjs`
+   - new forbidden Prompt Exploder tokens:
+     - `@/features/prompt-exploder/persistence-contract-migration`
+     - `migratePromptExploderPersistedSettingValue`
+     - `runtime_retry_success`
+   - new forbidden CMS Page Builder tokens:
+     - `@/features/cms/migrations/page-builder-contract-migration`
+     - `migrateCmsPageBuilderComponents`
+     - `@/features/cms/migrations/page-builder-template-contract-migration`
+     - `migrateCmsPageBuilderTemplateSettingValue`
+     - `cms_section_templates.v1`
+     - `cms_grid_templates.v1`
+68. Image Studio settings/project-migration legacy naming-channel canonicalization:
+   - renamed Image Studio settings unsupported-key accumulator naming to canonical unsupported wording:
+     - `src/features/ai/image-studio/utils/studio-settings.ts`
+     - `deprecatedKeys` -> `unsupportedKeys` in `resolveUnsupportedImageStudioSnapshotKeys`.
+   - renamed Image Studio project-settings migration stats key naming from legacy to unsupported wording:
+     - `src/app/api/image-studio/projects/[projectId]/handler.ts`
+       - `deletedLegacyKeys` -> `deletedUnsupportedKeys`
+       - response stats key `deletedLegacySettingsKeys` -> `deletedUnsupportedSettingsKeys`
+     - `src/features/ai/image-studio/hooks/useImageStudioMutations.ts`
+       - `UpdateStudioProjectStats.deletedLegacySettingsKeys` -> `deletedUnsupportedSettingsKeys`
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of:
+       - `const deprecatedKeys: string[] = [];`
+     - `return deprecatedKeys;`
+     - `deletedLegacySettingsKeys`
+     - `deletedLegacyKeys`
+69. Integrations token-fallback legacy wording-channel canonicalization:
+   - replaced legacy-tagged password fallback wording in integrations token-resolution error channels (behavior unchanged):
+     - `src/features/integrations/services/base-token-resolver.ts`
+       - `Legacy password token fallback is disabled.` -> `Password token fallback is disabled.`
+     - `src/app/api/v2/integrations/imports/base/handler.ts`
+     - `src/app/api/v2/integrations/imports/base/parameters/handler.ts`
+     - `src/app/api/v2/integrations/imports/base/sample-product/handler.ts`
+       - same wording canonicalization in Base token-required error channels.
+     - `src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts`
+       - `Legacy password fallback is disabled.` -> `Password fallback is disabled.`
+   - aligned integration test assertion:
+     - `__tests__/features/integrations/services/base-token-resolver.test.ts`
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of:
+       - `Legacy password token fallback is disabled.`
+       - `Legacy password fallback is disabled.`
 ## Baseline (Current State)
 
 Completed: major canonicalization waves across AI Paths, Case Resolver, Observability, Validation, Folder Tree/CMS, Integrations, Prompt Exploder, and token/credential storage.

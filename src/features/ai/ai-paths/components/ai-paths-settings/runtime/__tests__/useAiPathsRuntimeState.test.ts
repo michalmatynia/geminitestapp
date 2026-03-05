@@ -103,4 +103,21 @@ describe('useAiPathsRuntimeState', () => {
 
     expect(result.current.runtimeNodeStatuses['node-fetcher']).toBe('processing');
   });
+
+  it('maps blocked missing-input metadata to waiting_callback status', () => {
+    const { result } = renderHook(() => useAiPathsRuntimeState());
+
+    act(() => {
+      result.current.setNodeStatus({
+        nodeId: 'node-db',
+        status: 'blocked',
+        source: 'server',
+        metadata: {
+          reason: 'missing_inputs',
+        },
+      });
+    });
+
+    expect(result.current.runtimeNodeStatuses['node-db']).toBe('waiting_callback');
+  });
 });

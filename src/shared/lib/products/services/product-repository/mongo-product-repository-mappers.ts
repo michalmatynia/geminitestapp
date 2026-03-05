@@ -42,7 +42,7 @@ const toTrimmedString = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const assertNoLegacyLocalizedShape = (
+const assertNoUnsupportedLocalizedObjectShape = (
   value: unknown,
   field: 'name' | 'description',
   productId: string
@@ -296,8 +296,8 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
   const productId = doc.id ?? doc._id;
   const images = Array.isArray(doc.images) ? doc.images : [];
   const catalogs = Array.isArray(doc.catalogs) ? doc.catalogs : [];
-  assertNoLegacyLocalizedShape(doc.name, 'name', productId);
-  assertNoLegacyLocalizedShape(doc.description, 'description', productId);
+  assertNoUnsupportedLocalizedObjectShape(doc.name, 'name', productId);
+  assertNoUnsupportedLocalizedObjectShape(doc.description, 'description', productId);
   assertCanonicalLocalizedScalarField(doc.name_en, 'name_en', productId);
   assertCanonicalLocalizedScalarField(doc.name_pl, 'name_pl', productId);
   assertCanonicalLocalizedScalarField(doc.name_de, 'name_de', productId);
@@ -361,8 +361,8 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
 
 export const toProductBase = (doc: ProductDocument): ProductRecord => {
   const productId = doc.id ?? doc._id;
-  assertNoLegacyLocalizedShape(doc.name, 'name', productId);
-  assertNoLegacyLocalizedShape(doc.description, 'description', productId);
+  assertNoUnsupportedLocalizedObjectShape(doc.name, 'name', productId);
+  assertNoUnsupportedLocalizedObjectShape(doc.description, 'description', productId);
   assertCanonicalLocalizedScalarField(doc.name_en, 'name_en', productId);
   assertCanonicalLocalizedScalarField(doc.name_pl, 'name_pl', productId);
   assertCanonicalLocalizedScalarField(doc.name_de, 'name_de', productId);

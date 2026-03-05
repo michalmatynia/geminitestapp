@@ -1,0 +1,115 @@
+# Wave Execution Status (2026-03-05)
+
+Date: 2026-03-05  
+Scope: execution update for `docs/site-wide-canonical-migration-plan-2026-03-05.md`
+
+## Executed Today
+
+## Wave A
+
+Completed artifacts:
+
+1. `docs/canonical-contract-matrix-2026-03-05.md`
+2. `docs/legacy-compatibility-exception-register-2026-03-05.md`
+3. `docs/legacy-compatibility-exception-register-2026-03-05.json`
+
+Current exceptions:
+
+- `0` active exceptions.
+
+## Wave B
+
+Completed outputs:
+
+1. Runtime compatibility candidate scan executed (`legacy/compat/deprecated/fallback` marker sweep).
+2. Triaged backlog published:
+   - `docs/canonical-prune-backlog-2026-03-05.csv`
+
+Backlog status snapshot:
+
+- Open compatibility-debt candidates: `3`
+- Accepted false positives: `2`
+- Completed in this execution: `11`
+
+## Wave C
+
+Verification runner status:
+
+1. `npm run wave1:verify:prepare` -> success.
+2. `npm run wave1:verify:dry-run` -> success (`10/10`).
+3. `npm run wave1:verify:write` -> success (`10/10`).
+
+Execution note:
+
+- Initial sandboxed runs failed due TSX IPC permission (`listen EPERM .../tsx-...pipe`).
+- Re-runs outside sandbox restrictions succeeded.
+
+Migration result summary (local report):
+
+- Aggregate changes/writes were `0` for executed write-mode migrations.
+- Report artifacts:
+  - `docs/migrations/reports/wave1-dry-run-local.json`
+  - `docs/migrations/reports/wave1-write-local.json`
+
+Script lifecycle output:
+
+- `docs/migrations/script-lifecycle-register-2026-03-05.md`
+
+## Wave D
+
+Completed runtime prune items:
+
+1. Migrator helpers moved from runtime tree to script-only tree:
+   - `src/features/integrations/services/base-token-storage-migration.ts`
+   - `src/features/integrations/services/base-token-encryption-migration.ts`
+   - `src/features/integrations/services/tradera-api-credential-storage-migration.ts`
+   - `src/features/integrations/services/tradera-api-user-id-storage-migration.ts`
+   - `src/features/integrations/services/imports/base-import-run-connection-migration.ts`
+
+New script-only locations:
+
+1. `scripts/db/lib/integrations/base-token-storage-migration.ts`
+2. `scripts/db/lib/integrations/base-token-encryption-migration.ts`
+3. `scripts/db/lib/integrations/tradera-api-credential-storage-migration.ts`
+4. `scripts/db/lib/integrations/tradera-api-user-id-storage-migration.ts`
+5. `scripts/db/lib/integrations/base-import-run-connection-migration.ts`
+
+Additional hardening completed:
+
+1. Migration scripts now import these helpers from `scripts/db/lib/integrations/*`.
+2. Unit tests were rewired to import from script-only helper paths.
+3. `scripts/canonical/check-sitewide.mjs` now forbids reintroduction of these runtime helper files.
+4. Removed runtime compatibility wrapper files:
+   - `src/features/products/hooks/useMetadata.ts`
+   - `src/features/products/hooks/useCatalogQueries.ts`
+   - `src/features/integrations/hooks/integrationCache.ts`
+   - `src/features/integrations/hooks/listingCache.ts`
+5. Rewired affected callsites to canonical query keys/invalidation helpers:
+   - `src/features/integrations/hooks/useIntegrationQueries.ts`
+   - `src/features/integrations/hooks/useIntegrationMutations.ts`
+6. Applied naming-channel cleanup:
+   - `src/shared/lib/ai-paths/api/client.ts` (removed compatibility-layer section wording)
+   - `src/features/case-resolver/hooks/useCaseResolverState.requested-context.ts` (renamed legacy-status mapper to canonical naming)
+7. Extended canonical site-wide guardrail to block reintroduction of removed wrapper files.
+
+## Wave E
+
+Partially executed:
+
+1. Canonical artifacts refreshed and aligned in docs.
+2. Guardrail checks validated in current state:
+   - `npm run canonical:check:sitewide` passed.
+   - `npm run ai-paths:check:canonical` passed.
+   - `npm run observability:check` passed.
+
+Remaining:
+
+1. Optional follow-up: archive superseded 2026-03-04 canonical artifacts after team sign-off.
+
+## Wave F
+
+Not closed today:
+
+1. Requires stabilization observation window before final closeout.
+2. Closeout target artifact remains planned:
+   - `docs/canonical-closeout-2026-04-17.md`

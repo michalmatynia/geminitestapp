@@ -2601,7 +2601,32 @@ Continue opportunistic canonicalization in remaining non-critical surfaces outsi
   - `npm run canonical:check:sitewide` passes.
   - `npm run typecheck` passes.
 
-## Executed Item 140 (AI Paths Phase 3 DBQuery + Run-Source/Meta Manifest Consolidation)
+## Executed Item 140 (AI Paths Factory/Node-Identity Source-Id Naming-Channel Canonicalization)
+
+- Renamed factory canonical-id remap naming from legacy-id channel to source-id channel:
+  - `src/shared/lib/ai-paths/core/utils/factory.ts`
+  - `legacyId` -> `sourceId` for internal parameter/local mapping flow.
+- Renamed node-identity repair naming from legacy-id channel to source-id/source-node channel:
+  - `src/shared/lib/ai-paths/core/utils/node-identity.ts`
+  - `PathIdentityRepairWarning.legacyNodeId` -> `sourceNodeId`
+  - `createNodeInstanceIdFromLegacy` -> `createNodeInstanceIdFromSource`
+  - `firstResolvedByLegacyId` -> `firstResolvedBySourceId`
+  - `legacyOccurrenceCounts` -> `sourceOccurrenceCounts`
+- Preserved deterministic id generation compatibility:
+  - stable hash seed object keys (`legacyId`, `legacyNodeTypeId`) were intentionally kept unchanged to avoid id-generation drift.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of:
+    - `legacyNodeId?: string;`
+    - `createNodeInstanceIdFromLegacy`
+    - `firstResolvedByLegacyId`
+    - `legacyOccurrenceCounts = new Map<string, number>()`
+- Validation:
+  - `npx vitest run src/shared/lib/ai-paths/core/normalization/__tests__/node-identity-repair.test.ts src/shared/lib/ai-paths/core/semantic-grammar/__tests__/semantic-grammar.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 141 (AI Paths Phase 3 DBQuery + Run-Source/Meta Manifest Consolidation)
 
 - Expanded manifest coverage for database dbQuery compatibility and run-source/meta channels:
   - `scripts/ai-paths/legacy-prune-manifest.json`
@@ -2636,3 +2661,312 @@ Continue opportunistic canonicalization in remaining non-critical surfaces outsi
   - `npm run ai-paths:check:canonical` passes (`4242` files scanned).
   - `npm run ai-paths:bulk-prune:report` passes.
   - `npm run typecheck` passes.
+
+## Executed Item 142 (AI Paths Runtime-State Identity Guard Naming-Channel Canonicalization)
+
+- Renamed runtime-state identity guard helper names to canonical unsupported naming:
+  - `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+  - `src/features/ai/ai-paths/services/path-run-executor.helpers.ts`
+  - `assertNoLegacyRunIdentity` -> `assertNoUnsupportedRunIdentity`
+  - `assertNoLegacyRuntimeIdentityFields` -> `assertNoUnsupportedRuntimeIdentityFields`
+- Renamed runtime-state identity key-list naming to canonical unsupported wording:
+  - `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+  - `src/features/ai/ai-paths/services/path-run-executor.helpers.ts`
+  - `deprecatedKeys` -> `unsupportedKeys`
+- Preserved runtime rejection behavior:
+  - error channel remains unchanged for runtime identity payload rejection (`unsupported_runtime_identity_fields` when `runId` / `runStartedAt` are present).
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of:
+    - `assertNoLegacyRunIdentity`
+    - `assertNoLegacyRuntimeIdentityFields`
+    - `const deprecatedKeys = ['runId', 'runStartedAt'].filter(`
+    - `keys: deprecatedKeys`
+- Validation:
+  - `npx vitest run src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts src/features/ai/ai-paths/services/__tests__/path-run-executor.helpers.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes (after clearing transient `.next-dev` generated route-type artifacts).
+
+## Executed Item 143 (Context-Layer Legacy Aggregator Comment-Channel Canonicalization)
+
+- Replaced legacy-tagged aggregator comments with canonical neutral wording in context/composition runtime files:
+  - `src/features/admin/context/AdminLayoutContext.tsx`
+  - `src/features/auth/context/UsersContext.tsx`
+  - `src/features/database/context/DatabaseContext.tsx`
+  - `src/features/drafter/components/DraftCreatorFormContext.tsx`
+  - `src/features/files/contexts/FileManagerContext.tsx`
+  - `src/features/products/context/ProductSettingsPageContext.tsx`
+  - `src/features/integrations/context/ProductListingsContext.tsx`
+  - `src/features/integrations/context/CategoryMapperContext.tsx`
+  - `src/features/integrations/context/ListingSettingsContext.tsx`
+  - `src/features/integrations/context/CategoryMapperPageContext.tsx`
+  - `src/features/ai/agentcreator/context/AgentRunContext.tsx`
+  - `src/features/ai/agentcreator/context/AgentCreatorSettingsContext.tsx`
+  - `src/features/ai/chatbot/context/ChatbotContext.tsx`
+  - `src/features/ai/ai-paths/components/AiPathConfigContext.tsx`
+- Comment-channel replacements:
+  - `--- Legacy Aggregator ---` -> `--- Context Aggregator ---`
+  - `--- Legacy Aggregated Interface ---` -> `--- Aggregated Interface ---`
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of:
+    - `--- Legacy Aggregator ---`
+    - `--- Legacy Aggregated Interface ---`
+- Validation:
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 144 (AI Paths Phase 3 Runtime Retry/Halt + RunMode/RequestId/Status Manifest Consolidation)
+
+- Expanded manifest coverage for runtime retry/halt controls and runtime identity/status aliases:
+  - `scripts/ai-paths/legacy-prune-manifest.json`
+  - added rules:
+    - `runtime_retry_legacy_enabled`
+    - `runtime_halt_legacy_control`
+    - `run_mode_queue_alias`
+    - `request_id_lookup_contract`
+    - `runtime_node_status_alias`
+  - total bulk-prune coverage now:
+    - `43` rules
+    - `60` targets
+- Consolidated check-canonical execution to manifest-first for this slice:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - removed direct `main` execution of:
+    - `checkRuntimeRetryLegacyEnabledPrune`
+    - `checkRuntimeHaltLegacyControlPrune`
+    - `checkRunModeQueueCompatibilityPrune`
+    - `checkRequestIdLookupCompatibilityPrune`
+    - `checkRuntimeNodeStatusAliasCompatibilityPrune`
+  - migrated surfaces are now enforced via:
+    - `checkManifestLegacyPruneRules`
+- Validation:
+  - `npm run ai-paths:bulk-prune:scan` passes (`43` rules across `60` targets).
+  - `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` passes.
+  - `npm run ai-paths:check:canonical` passes (`4244` files scanned).
+  - `npm run ai-paths:bulk-prune:report` passes.
+  - `npm run typecheck` passes (after clearing transient `.next-dev` generated route-type artifacts).
+
+## Executed Item 145 (Product Localized-Shape Guard Naming-Channel Canonicalization)
+
+- Renamed product localized object-shape guard helper to canonical unsupported naming:
+  - `src/shared/lib/products/services/product-repository/mongo-product-repository-mappers.ts`
+  - `assertNoLegacyLocalizedShape` -> `assertNoUnsupportedLocalizedObjectShape`
+- Preserved runtime behavior:
+  - localized object-shape rejection semantics/messages are unchanged.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of:
+    - `assertNoLegacyLocalizedShape`
+- Validation:
+  - `npx vitest run src/shared/lib/products/services/product-repository/__tests__/mongo-product-repository-mappers.test.ts __tests__/features/products/services/mongo-product-canonical-shape-guard.test.ts` passes (`mongo-product-canonical-shape-guard` remains skipped in this environment).
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 146 (AI Paths Phase 3 Provider/Ports/Path-Save/Docs-Naming Manifest Consolidation)
+
+- Expanded manifest coverage for database provider normalization, graph ports alias cleanup, path-save raw-message contract, and docs fallback naming:
+  - `scripts/ai-paths/legacy-prune-manifest.json`
+  - added rules:
+    - `database_node_provider_normalization_contract`
+    - `graph_ports_legacy_alias_cleanup`
+    - `path_save_raw_message_contract`
+    - `validation_docs_fallback_manifest_naming_channel`
+  - total bulk-prune coverage now:
+    - `47` rules
+    - `65` targets
+- Consolidated check-canonical execution to manifest-first for this slice:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - removed direct `main` execution of:
+    - `checkDatabaseNodeLegacyProviderNormalizationPrune`
+    - `checkLegacyPortAliasPrune`
+    - `checkPathSaveRawMessageCompatibilityPrune`
+    - `checkValidationDocsFallbackManifestNamingChannelPrune`
+  - migrated surfaces are now enforced via:
+    - `checkManifestLegacyPruneRules`
+- Validation:
+  - `npm run ai-paths:bulk-prune:scan` passes (`47` rules across `65` targets).
+  - `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` passes.
+  - `npm run ai-paths:check:canonical` passes (`4246` files scanned).
+  - `npm run ai-paths:bulk-prune:report` passes.
+  - `npm run typecheck` currently fails due unrelated pre-existing Image Studio typing drift in `src/features/ai/image-studio/components/CenterPreview.tsx`, including:
+    - `TS6133` (`CenterPreviewDetailsModal` declared but never read, `:62`)
+    - `TS2552` (`detailsSlotId` cannot be found, `:652`, repeated)
+    - `TS2304` (`VersionNode` cannot be found, `:656`)
+    - `TS2304` (`buildDetailsNodeForCenterPreview` cannot be found, `:657`)
+    - `TS2304` (`VersionNodeDetailsModal` cannot be found, `:830`)
+
+## Executed Item 147 (Shared Docs/Comment Legacy Wording-Channel Canonicalization)
+
+- Replaced legacy-tagged wording in shared contracts/UI/docs hint channels:
+  - `src/shared/contracts/chatbot.ts`
+    - `Legacy support / Additional types` -> `Extended support / Additional types`
+  - `src/shared/ui/list-panel.tsx`
+    - `Legacy or custom header` -> `Deprecated or custom header`
+  - `src/shared/lib/ai-paths/core/docs/node-docs/trigger.ts`
+    - `Legacy Trigger context policy:` -> `Deprecated Trigger context policy:`
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of:
+    - `Legacy support / Additional types`
+    - `Legacy or custom header`
+    - `Legacy Trigger context policy:`
+- Validation:
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 148 (Prompt Exploder + CMS Page Builder Runtime-Compat Guardrail Centralization)
+
+- Extended site-wide canonical guardrails to centrally block reintroduction of removed Prompt Exploder/CMS runtime-compat channels:
+  - `scripts/canonical/check-sitewide.mjs`
+- Added Prompt Exploder runtime-compat forbidden tokens:
+  - `@/features/prompt-exploder/persistence-contract-migration`
+  - `migratePromptExploderPersistedSettingValue`
+  - `runtime_retry_success`
+- Added CMS Page Builder runtime-compat forbidden tokens:
+  - `@/features/cms/migrations/page-builder-contract-migration`
+  - `migrateCmsPageBuilderComponents`
+  - `@/features/cms/migrations/page-builder-template-contract-migration`
+  - `migrateCmsPageBuilderTemplateSettingValue`
+  - `cms_section_templates.v1`
+  - `cms_grid_templates.v1`
+- Validation:
+  - `npx vitest run src/features/prompt-exploder/__tests__/runtime-prune.test.ts src/features/cms/migrations/__tests__/page-builder-runtime-prune.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 149 (Image Studio Settings/Project-Migration Legacy Naming-Channel Canonicalization)
+
+- Renamed Image Studio settings parser local unsupported-key accumulator naming to canonical unsupported wording:
+  - `src/features/ai/image-studio/utils/studio-settings.ts`
+  - `deprecatedKeys` -> `unsupportedKeys` in `resolveUnsupportedImageStudioSnapshotKeys`.
+- Renamed Image Studio project-settings migration stats naming from legacy to unsupported wording:
+  - `src/app/api/image-studio/projects/[projectId]/handler.ts`
+  - `deletedLegacyKeys` -> `deletedUnsupportedKeys`
+  - response stats key `deletedLegacySettingsKeys` -> `deletedUnsupportedSettingsKeys`
+  - `src/features/ai/image-studio/hooks/useImageStudioMutations.ts`
+  - `UpdateStudioProjectStats.deletedLegacySettingsKeys` -> `deletedUnsupportedSettingsKeys`
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of:
+    - `const deprecatedKeys: string[] = [];`
+    - `return deprecatedKeys;`
+    - `deletedLegacySettingsKeys`
+    - `deletedLegacyKeys`
+- Validation:
+  - `npx vitest run src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 150 (Integrations Token-Fallback Legacy Wording-Channel Canonicalization)
+
+- Replaced legacy-tagged password fallback wording in integrations token-resolution error channels (behavior unchanged):
+  - `src/features/integrations/services/base-token-resolver.ts`
+  - `Legacy password token fallback is disabled.` -> `Password token fallback is disabled.`
+  - `src/app/api/v2/integrations/imports/base/handler.ts`
+  - `src/app/api/v2/integrations/imports/base/parameters/handler.ts`
+  - `src/app/api/v2/integrations/imports/base/sample-product/handler.ts`
+  - same wording canonicalization in Base token-required error channels.
+  - `src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts`
+  - `Legacy password fallback is disabled.` -> `Password fallback is disabled.`
+- Aligned integration assertion:
+  - `__tests__/features/integrations/services/base-token-resolver.test.ts`
+  - expected text now checks canonical `Password token fallback is disabled`.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of:
+    - `Legacy password token fallback is disabled.`
+    - `Legacy password fallback is disabled.`
+- Validation:
+  - `npx vitest run __tests__/features/integrations/services/base-token-resolver.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 151 (AI Paths Phase 3 Source-Scan + Retired-File Manifest Consolidation)
+
+- Extended AI Paths legacy-prune manifest engine for remaining bulk-only guardrail surfaces:
+  - `scripts/ai-paths/legacy-prune-manifest-utils.mjs`
+  - added target-mode controls:
+    - `mode: "source_scan"` to scan non-test runtime source files under target roots for forbidden tokens.
+    - `expectedState: "missing"` to enforce retired-file invariants.
+  - updated scan/apply evaluation paths to support these target types while preserving existing file-snippet behavior.
+- Expanded manifest coverage for legacy runtime key/action token scans and retired migration/shim files:
+  - `scripts/ai-paths/legacy-prune-manifest.json`
+  - added rules:
+    - `legacy_validation_key_runtime_source_scan`
+    - `legacy_index_key_runtime_source_scan`
+    - `forbidden_maintenance_action_ids_runtime_source_scan`
+    - `trigger_fetcher_migration_module_removed`
+    - `trigger_fetcher_migration_tokens_runtime_source_scan`
+    - `legacy_dbquery_provider_migration_tokens_runtime_source_scan`
+    - `feature_run_sources_duplicate_module_removed`
+    - `db_query_update_shim_retirement_state`
+  - total bulk-prune coverage now:
+    - `55` rules
+    - `80` targets
+- Consolidated check-canonical execution to manifest-first for this slice:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - removed direct `main` execution of:
+    - `checkLegacyValidationKeyUsage`
+    - `checkLegacyIndexKeyUsage`
+    - `checkForbiddenMaintenanceActionIds`
+    - `checkTriggerFetcherLegacyMigrationPrune`
+    - `checkLegacyDbQueryProviderMigrationPrune`
+    - `checkRunSourceHelpersCompatibilityPrune`
+    - `checkDbQueryUpdateShimRetirement`
+  - migrated surfaces are now enforced via:
+    - `checkManifestLegacyPruneRules`
+- Validation:
+  - `npm run ai-paths:bulk-prune:scan` passes (`55` rules across `80` targets).
+  - `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` passes.
+  - `npm run ai-paths:check:canonical` passes (`4249` files scanned).
+  - `npm run ai-paths:bulk-prune:report` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 152 (AI Paths Phase 3 Maintenance Action-Id Const-Array Manifest Consolidation)
+
+- Extended AI Paths legacy-prune manifest engine for exact const-array invariants:
+  - `scripts/ai-paths/legacy-prune-manifest-utils.mjs`
+  - added target mode:
+    - `mode: "const_array"` to parse and validate a named `... = [ ... ] as const` list against exact ordered expected items.
+  - updated scan/apply evaluation paths to support const-array targets without introducing file rewrites.
+- Expanded manifest coverage for maintenance action-id exactness:
+  - `scripts/ai-paths/legacy-prune-manifest.json`
+  - added rule:
+    - `maintenance_action_ids_const_array_contract`
+  - total bulk-prune coverage now:
+    - `56` rules
+    - `81` targets
+- Consolidated check-canonical execution to manifest-first for this slice:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - removed direct `main` execution of:
+    - `checkMaintenanceConstants`
+  - removed now-unused helper/constants tied to that direct check:
+    - `parseMaintenanceActionIds`
+    - `EXPECTED_MAINTENANCE_ACTION_IDS`
+    - `MAINTENANCE_CONSTANTS_FILE`
+  - migrated surface is now enforced via:
+    - `checkManifestLegacyPruneRules`
+- Validation:
+  - `npm run ai-paths:bulk-prune:scan` passes (`56` rules across `81` targets).
+  - `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` passes.
+  - `npm run ai-paths:check:canonical` passes (`4250` files scanned).
+  - `npm run ai-paths:bulk-prune:report` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 153 (AI Paths Canonical Check Runner Manifest-Only Simplification)
+
+- Simplified AI Paths canonical guardrail runner to manifest-only execution:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - removed legacy in-file compatibility-check function surface and retained:
+    - source-file counting helper (`collectSourceFiles`)
+    - manifest load/evaluate violation reporting (`checkManifestLegacyPruneRules`)
+    - canonical pass/fail output contract
+  - runtime enforcement remains manifest-driven via:
+    - `checkManifestLegacyPruneRules`
+- Validation:
+  - `npm run ai-paths:bulk-prune:scan` passes (`56` rules across `81` targets).
+  - `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` passes.
+  - `npm run ai-paths:check:canonical` passes (`4245` files scanned).
+  - `npm run ai-paths:bulk-prune:report` passes.
+  - `npm run typecheck` currently fails due unrelated repository typing drift:
+    - `src/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository.ts:804` (`TS2322: Type 'null' is not assignable to type 'Condition<string | Date | undefined>'.`)

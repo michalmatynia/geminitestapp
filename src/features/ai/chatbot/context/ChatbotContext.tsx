@@ -42,7 +42,7 @@ export const useChatbotUI = () => {
   return context;
 };
 
-// --- Legacy Aggregator ---
+// --- Context Aggregator ---
 export const ChatbotContext = createContext<UseChatbotLogicReturn | undefined>(undefined);
 
 export function ChatbotProvider({ children }: { children: ReactNode }): React.JSX.Element {

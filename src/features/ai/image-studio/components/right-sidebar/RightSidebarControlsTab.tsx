@@ -1,9 +1,14 @@
 'use client';
 
 import { MousePointer2, Move } from 'lucide-react';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
-import { type VectorToolMode, VectorDrawingToolbar } from '@/shared/lib/vector-drawing';
+import {
+  type VectorDrawingContextValue,
+  VectorDrawingProvider,
+  type VectorToolMode,
+  VectorDrawingToolbar,
+} from '@/shared/lib/vector-drawing';
 import { Button, MultiSelect, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -45,6 +50,8 @@ export const RightSidebarControlsTab = React.memo(
     const {
       tool,
       maskShapes,
+      activeMaskId,
+      selectedPointIndex,
       brushRadius,
       maskFeather,
       maskThresholdSensitivity,
@@ -162,6 +169,40 @@ export const RightSidebarControlsTab = React.memo(
       setImageTransformMode(isMoveImageActive ? 'none' : 'move');
     }, [isMoveImageActive, setImageTransformMode]);
 
+    const vectorToolbarContextValue = useMemo<VectorDrawingContextValue>(
+      () => ({
+        shapes: maskShapes,
+        tool,
+        activeShapeId: activeMaskId,
+        selectedPointIndex,
+        brushRadius,
+        imageSrc: workingSlotImageSrc ?? null,
+        allowWithoutImage: true,
+        showEmptyState: false,
+        emptyStateLabel: '',
+        setShapes: setMaskShapes,
+        setTool: handleSelectShapeTool,
+        setActiveShapeId: setActiveMaskId,
+        setSelectedPointIndex,
+        onClear: handleClearAllShapes,
+        disableClear: maskShapesLength === 0,
+      }),
+      [
+        maskShapes,
+        tool,
+        activeMaskId,
+        selectedPointIndex,
+        brushRadius,
+        workingSlotImageSrc,
+        setMaskShapes,
+        handleSelectShapeTool,
+        setActiveMaskId,
+        setSelectedPointIndex,
+        handleClearAllShapes,
+        maskShapesLength,
+      ]
+    );
+
     return (
       <>
         {!quickActionsHostEl ? (
@@ -197,14 +238,12 @@ export const RightSidebarControlsTab = React.memo(
                 </Button>
                 <span className='text-[11px] text-gray-500'>When off, drag to pan.</span>
               </div>
-              <VectorDrawingToolbar
-                tool={tool}
-                onSelectTool={handleSelectShapeTool}
-                showSelectTool={false}
-                onClear={handleClearAllShapes}
-                disableClear={maskShapesLength === 0}
-                className='w-full flex-wrap justify-start rounded-xl border-border/60 bg-card/40'
-              />
+              <VectorDrawingProvider value={vectorToolbarContextValue}>
+                <VectorDrawingToolbar
+                  showSelectTool={false}
+                  className='w-full flex-wrap justify-start rounded-xl border-border/60 bg-card/40'
+                />
+              </VectorDrawingProvider>
               {activeShapeDrawingTool ? (
                 <div className='mt-3 rounded border border-border/60 bg-card/30 p-3'>
                   <div className='grid grid-cols-[auto_1fr] gap-x-2 gap-y-2'>

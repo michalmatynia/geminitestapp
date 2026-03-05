@@ -6,17 +6,11 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
 import { type AuthUserPageSettings } from '@/features/auth/utils/auth-user-pages';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast, FormSection, ToggleRow, FormActions, LoadingState } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 export default function AuthUserPagesPage(): React.JSX.Element {
-  const {
-    userPageSettings: contextSettings,
-    isLoading,
-    updateSetting,
-    refetchSettings,
-  } = useAuth();
+  const { isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -26,24 +20,11 @@ export default function AuthUserPagesPage(): React.JSX.Element {
     );
   }
 
-  return (
-    <AuthUserPagesForm
-      initialSettings={contextSettings}
-      updateSetting={updateSetting}
-      refetchSettings={refetchSettings}
-    />
-  );
+  return <AuthUserPagesForm />;
 }
 
-function AuthUserPagesForm({
-  initialSettings,
-  updateSetting,
-  refetchSettings,
-}: {
-  initialSettings: AuthUserPageSettings;
-  updateSetting: ReturnType<typeof useUpdateSetting>;
-  refetchSettings: () => Promise<unknown>;
-}): React.JSX.Element {
+function AuthUserPagesForm(): React.JSX.Element {
+  const { userPageSettings: initialSettings, updateSetting, refetchSettings } = useAuth();
   const { toast } = useToast();
   const [settings, setSettings] = useState<AuthUserPageSettings>(initialSettings);
   const [dirty, setDirty] = useState(false);

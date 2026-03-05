@@ -6,7 +6,11 @@ import {
   GraphExecutionCancelled,
 } from '@/shared/lib/ai-paths';
 
-import { createRunId, mergeRuntimeNodeOutputsForStatus } from '../utils';
+import {
+  createRunId,
+  mergeRuntimeNodeOutputsForStatus,
+  resolveRuntimeNodeDisplayStatus,
+} from '../utils';
 
 import type { LocalExecutionArgs } from '../types';
 import { extractDatabaseRuntimeMetadata } from '../useAiPathsLocalExecution.helpers';
@@ -155,28 +159,33 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               const rawStatus = nextOutputs['status'] as string | undefined;
               const normalizedStatus =
                 (cached ? 'cached' : args.normalizeNodeStatus(rawStatus)) ?? 'completed';
+              const displayStatus = resolveRuntimeNodeDisplayStatus({
+                status: normalizedStatus,
+                outputs: nextOutputs,
+              });
+              if (!displayStatus) return;
               const metadata =
                 node.type === 'database' ? extractDatabaseRuntimeMetadata(nextOutputs) : null;
               args.setNodeStatus({
                 nodeId: node.id,
-                status: normalizedStatus,
+                status: displayStatus,
                 source: 'local',
                 nodeType: node.type,
                 nodeTitle: node.title ?? null,
                 iteration,
-                kind: normalizedStatus === 'failed' ? 'node_failed' : 'node_finished',
-                level: normalizedStatus === 'failed' ? 'error' : 'info',
+                kind: displayStatus === 'failed' ? 'node_failed' : 'node_finished',
+                level: displayStatus === 'failed' ? 'error' : 'info',
                 message:
-                  normalizedStatus === 'cached'
+                  displayStatus === 'cached'
                     ? `Node ${node.title ?? node.id} reused cached outputs.`
-                    : `Node ${node.title ?? node.id} ${args.formatStatusLabel(normalizedStatus)}.`,
+                    : `Node ${node.title ?? node.id} ${args.formatStatusLabel(displayStatus)}.`,
                 ...(metadata ? { metadata } : {}),
               });
               args.setRuntimeState((prev: RuntimeState): RuntimeState => {
                 const nextOutput = mergeRuntimeNodeOutputsForStatus({
                   previous: prev.outputs?.[node.id],
                   next: nextOutputs,
-                  status: normalizedStatus,
+                  status: displayStatus,
                 });
                 const next: RuntimeState = {
                   ...prev,
@@ -276,7 +285,14 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               message?: string;
               runId: string;
             }) => {
-              const nodeStatus = status === 'waiting_callback' ? 'waiting_callback' : 'blocked';
+              const nodeStatus = resolveRuntimeNodeDisplayStatus({
+                status: status === 'waiting_callback' ? 'waiting_callback' : 'blocked',
+                outputs: {
+                  blockedReason: reason,
+                  ...(waitingOnPorts ? { waitingOnPorts } : {}),
+                },
+              });
+              if (!nodeStatus) return;
               args.setNodeStatus({
                 nodeId: node.id,
                 status: nodeStatus,

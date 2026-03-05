@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { migrateTraderaApiUserIdStorage } from '@/features/integrations/services/tradera-api-user-id-storage-migration';
+import { migrateTraderaApiUserIdStorage } from '../../../../scripts/db/lib/integrations/tradera-api-user-id-storage-migration';
 
 describe('tradera-api-user-id-storage-migration', () => {
   it('keeps canonical traderaApiUserId and normalizes numeric string form', () => {

@@ -39,7 +39,7 @@ describe('base-token-resolver', () => {
 
     expect(resolved.token).toBeNull();
     expect(resolved.source).toBeNull();
-    expect(resolved.error).toContain('Legacy password token fallback is disabled');
+    expect(resolved.error).toContain('Password token fallback is disabled');
   });
 
   it('rejects plaintext token storage and requires encrypted canonical token', () => {

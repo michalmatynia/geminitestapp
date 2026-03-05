@@ -73,7 +73,7 @@ export const useCategoryMapperActions = () => {
   return context;
 };
 
-// --- Legacy Aggregator ---
+// --- Context Aggregator ---
 
 interface CategoryMapperContextValue
   extends CategoryMapperConfig, CategoryMapperData, CategoryMapperUIState, CategoryMapperActions {}

@@ -70,9 +70,20 @@ const MODEL_FIELDS: ModelField[] = [
   },
 ];
 
-function BrainManagedModelField({ field }: { field: ModelField }): React.JSX.Element {
+const MODEL_FIELD_BY_CAPABILITY = new Map<AiBrainCapabilityKey, ModelField>(
+  MODEL_FIELDS.map((field) => [field.capability, field])
+);
+
+function BrainManagedModelField({
+  capability,
+}: {
+  capability: AiBrainCapabilityKey;
+}): React.JSX.Element | null {
+  const field = MODEL_FIELD_BY_CAPABILITY.get(capability);
+  if (!field) return null;
+
   const brainModel = useBrainAssignment({
-    capability: field.capability,
+    capability,
   });
 
   const effectiveModelId = brainModel.effectiveModelId.trim();
@@ -106,7 +117,7 @@ export function AgentPersonaSettingsForm(): React.JSX.Element {
       </div>
       <div className='grid gap-4 md:grid-cols-2'>
         {MODEL_FIELDS.map((field: ModelField) => (
-          <BrainManagedModelField key={field.capability} field={field} />
+          <BrainManagedModelField key={field.capability} capability={field.capability} />
         ))}
       </div>
     </div>

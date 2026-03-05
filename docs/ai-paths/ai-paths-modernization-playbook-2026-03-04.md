@@ -1306,6 +1306,135 @@ Progress (2026-03-04):
       3. `npm run ai-paths:check:canonical` -> passed (`4242` files scanned).
       4. `npm run ai-paths:bulk-prune:report` -> passed (report refreshed).
       5. `npm run typecheck` -> passed.
+58. Continued Phase 3 manifest-first consolidation for runtime retry/halt + runMode/requestId/status guardrails in seam 188:
+   1. Expanded manifest coverage for runtime retry/halt controls and runtime identity/status aliases:
+      1. `scripts/ai-paths/legacy-prune-manifest.json`
+      2. added rule families:
+         1. `runtime_retry_legacy_enabled`
+         2. `runtime_halt_legacy_control`
+         3. `run_mode_queue_alias`
+         4. `request_id_lookup_contract`
+         5. `runtime_node_status_alias`
+      3. bulk-prune manifest now covers `43` rules across `60` targets.
+   2. Consolidated canonical guardrail execution path:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. removed direct `main` execution of migrated checks:
+         1. `checkRuntimeRetryLegacyEnabledPrune`
+         2. `checkRuntimeHaltLegacyControlPrune`
+         3. `checkRunModeQueueCompatibilityPrune`
+         4. `checkRequestIdLookupCompatibilityPrune`
+         5. `checkRuntimeNodeStatusAliasCompatibilityPrune`
+      3. migrated surfaces are now enforced by `checkManifestLegacyPruneRules`.
+   3. Validation:
+      1. `npm run ai-paths:bulk-prune:scan` -> passed (`43` rules across `60` targets).
+      2. `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` -> passed.
+      3. `npm run ai-paths:check:canonical` -> passed (`4244` files scanned).
+      4. `npm run ai-paths:bulk-prune:report` -> passed (report refreshed).
+      5. `npm run typecheck` -> failed at `src/features/ai/image-studio/components/CenterPreview.tsx:769` (`Property 'vectorContextValue' does not exist on type 'IntrinsicAttributes'.`).
+59. Continued Phase 3 manifest-first consolidation for provider/ports/path-save/docs naming guardrails in seam 189:
+   1. Expanded manifest coverage for database provider normalization, graph ports alias cleanup, path-save raw-message contract, and docs fallback naming:
+      1. `scripts/ai-paths/legacy-prune-manifest.json`
+      2. added rule families:
+         1. `database_node_provider_normalization_contract`
+         2. `graph_ports_legacy_alias_cleanup`
+         3. `path_save_raw_message_contract`
+         4. `validation_docs_fallback_manifest_naming_channel`
+      3. bulk-prune manifest now covers `47` rules across `65` targets.
+   2. Consolidated canonical guardrail execution path:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. removed direct `main` execution of migrated checks:
+         1. `checkDatabaseNodeLegacyProviderNormalizationPrune`
+         2. `checkLegacyPortAliasPrune`
+         3. `checkPathSaveRawMessageCompatibilityPrune`
+         4. `checkValidationDocsFallbackManifestNamingChannelPrune`
+      3. migrated surfaces are now enforced by `checkManifestLegacyPruneRules`.
+   3. Validation:
+      1. `npm run ai-paths:bulk-prune:scan` -> passed (`47` rules across `65` targets).
+      2. `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` -> passed.
+      3. `npm run ai-paths:check:canonical` -> passed (`4246` files scanned).
+      4. `npm run ai-paths:bulk-prune:report` -> passed (report refreshed).
+      5. `npm run typecheck` -> failed with current pre-existing Image Studio typing drift in `src/features/ai/image-studio/components/CenterPreview.tsx`:
+         1. `TS6133`: `CenterPreviewDetailsModal` is declared but never read (`:62`).
+         2. `TS2552`: `detailsSlotId` cannot be found (`:652`, repeated).
+         3. `TS2304`: `VersionNode` cannot be found (`:656`).
+         4. `TS2304`: `buildDetailsNodeForCenterPreview` cannot be found (`:657`).
+         5. `TS2304`: `VersionNodeDetailsModal` cannot be found (`:830`).
+60. Continued Phase 3 manifest-first consolidation for source-scan + retired-file guardrails in seam 190:
+   1. Extended manifest engine capabilities for remaining bulk-only compatibility surfaces:
+      1. `scripts/ai-paths/legacy-prune-manifest-utils.mjs`
+      2. added target modes/controls:
+         1. `mode: "source_scan"` for non-test runtime source token scanning under target roots.
+         2. `expectedState: "missing"` for retired-file invariants.
+      3. evaluator/apply reporting now supports these target shapes while preserving existing file-snippet rules.
+   2. Expanded manifest coverage for legacy runtime key/action token scans and retired migration/shim files:
+      1. `scripts/ai-paths/legacy-prune-manifest.json`
+      2. added rule families:
+         1. `legacy_validation_key_runtime_source_scan`
+         2. `legacy_index_key_runtime_source_scan`
+         3. `forbidden_maintenance_action_ids_runtime_source_scan`
+         4. `trigger_fetcher_migration_module_removed`
+         5. `trigger_fetcher_migration_tokens_runtime_source_scan`
+         6. `legacy_dbquery_provider_migration_tokens_runtime_source_scan`
+         7. `feature_run_sources_duplicate_module_removed`
+         8. `db_query_update_shim_retirement_state`
+      3. bulk-prune manifest now covers `55` rules across `80` targets.
+   3. Consolidated canonical guardrail execution path:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. removed direct `main` execution of migrated checks:
+         1. `checkLegacyValidationKeyUsage`
+         2. `checkLegacyIndexKeyUsage`
+         3. `checkForbiddenMaintenanceActionIds`
+         4. `checkTriggerFetcherLegacyMigrationPrune`
+         5. `checkLegacyDbQueryProviderMigrationPrune`
+         6. `checkRunSourceHelpersCompatibilityPrune`
+         7. `checkDbQueryUpdateShimRetirement`
+      3. migrated surfaces are now enforced by `checkManifestLegacyPruneRules`.
+   4. Validation:
+      1. `npm run ai-paths:bulk-prune:scan` -> passed (`55` rules across `80` targets).
+      2. `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` -> passed.
+      3. `npm run ai-paths:check:canonical` -> passed (`4249` files scanned).
+      4. `npm run ai-paths:bulk-prune:report` -> passed (report refreshed).
+      5. `npm run typecheck` -> passed.
+61. Continued Phase 3 manifest-first consolidation for maintenance action-id exactness in seam 191:
+   1. Extended manifest engine capabilities for exact const-array invariants:
+      1. `scripts/ai-paths/legacy-prune-manifest-utils.mjs`
+      2. added target mode:
+         1. `mode: "const_array"` parses a named `... = [ ... ] as const` list and enforces exact ordered items.
+      3. evaluator/apply reporting now supports const-array targets without changing file-rewrite behavior.
+   2. Expanded manifest coverage for maintenance action-id contract:
+      1. `scripts/ai-paths/legacy-prune-manifest.json`
+      2. added rule:
+         1. `maintenance_action_ids_const_array_contract`
+      3. bulk-prune manifest now covers `56` rules across `81` targets.
+   3. Consolidated canonical guardrail execution path:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. removed direct `main` execution of:
+         1. `checkMaintenanceConstants`
+      3. removed now-unused helper/constants for this check:
+         1. `parseMaintenanceActionIds`
+         2. `EXPECTED_MAINTENANCE_ACTION_IDS`
+         3. `MAINTENANCE_CONSTANTS_FILE`
+      4. migrated surface is now enforced by `checkManifestLegacyPruneRules`.
+   4. Validation:
+      1. `npm run ai-paths:bulk-prune:scan` -> passed (`56` rules across `81` targets).
+      2. `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` -> passed.
+      3. `npm run ai-paths:check:canonical` -> passed (`4250` files scanned).
+      4. `npm run ai-paths:bulk-prune:report` -> passed (report refreshed).
+      5. `npm run typecheck` -> passed.
+62. Continued Phase 3 canonical-guardrail runner simplification in seam 192:
+   1. Simplified canonical check runner to manifest-only execution path:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. removed legacy in-file compatibility-check function surface and retained:
+         1. source-file counting helper (`collectSourceFiles`)
+         2. manifest load/evaluate violation reporting (`checkManifestLegacyPruneRules`)
+         3. canonical pass/fail output contract
+      3. enforcement remains entirely manifest-driven via `checkManifestLegacyPruneRules`.
+   2. Validation:
+      1. `npm run ai-paths:bulk-prune:scan` -> passed (`56` rules across `81` targets).
+      2. `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` -> passed.
+      3. `npm run ai-paths:check:canonical` -> passed (`4245` files scanned).
+      4. `npm run ai-paths:bulk-prune:report` -> passed (report refreshed).
+      5. `npm run typecheck` -> failed with current repository typing drift at `src/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository.ts:804` (`TS2322: Type 'null' is not assignable to type 'Condition<string | Date | undefined>'.`).
 
 ## Deprecation map
 

@@ -119,7 +119,7 @@ export const useProductListingsActions = () => {
   return context;
 };
 
-// --- Legacy Aggregator ---
+// --- Context Aggregator ---
 
 interface ProductListingsContextType
   extends

@@ -104,7 +104,7 @@ export const useFileManagerActions = () => {
   return context;
 };
 
-// --- Legacy Aggregator ---
+// --- Context Aggregator ---
 
 export interface FileManagerContextState
   extends

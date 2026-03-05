@@ -123,7 +123,7 @@ export const useAiPathOrchestrator = (): AiPathOrchestratorData => {
   return context;
 };
 
-// --- Legacy Aggregated Interface ---
+// --- Aggregated Interface ---
 export interface AiPathConfigData
   extends
     AiPathSelectionData,

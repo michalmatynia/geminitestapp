@@ -796,7 +796,17 @@ export const mongoPathRunRepository: AiPathRunRepository = {
               {
                 $or: [{ startedAt: null }, { startedAt: { $exists: false } }],
               },
-              { updatedAt: { $lt: cutoff } },
+              {
+                $or: [
+                  { updatedAt: { $lt: cutoff } },
+                  {
+                    $and: [
+                      { $or: [{ updatedAt: { $exists: false } }] },
+                      { createdAt: { $lt: cutoff } },
+                    ],
+                  },
+                ],
+              },
             ],
           },
         ],

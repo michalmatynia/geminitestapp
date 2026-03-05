@@ -155,7 +155,7 @@ export const useDraftCreatorParameters = () => {
   return context;
 };
 
-// --- Legacy Aggregator ---
+// --- Context Aggregator ---
 export interface DraftCreatorFormContextValue
   extends
     DraftCreatorBasicInfo,

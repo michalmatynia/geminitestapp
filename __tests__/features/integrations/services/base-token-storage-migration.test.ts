@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { migrateBaseTokenStorage } from '@/features/integrations/services/base-token-storage-migration';
+import { migrateBaseTokenStorage } from '../../../../scripts/db/lib/integrations/base-token-storage-migration';
 
 describe('base-token-storage-migration', () => {
   it('keeps canonical baseApiToken and trims whitespace', () => {

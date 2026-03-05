@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
+import { ArrowLeftRight, Eye, EyeOff, Undo2 } from 'lucide-react';
 import { Button, FormSection } from '@/shared/ui';
 import { SplitVariantPreview } from '@/features/ai/image-studio/components/center-preview/SplitVariantPreview';
-import { SplitViewControls } from '@/features/ai/image-studio/components/center-preview/SplitViewControls';
 import {
   CenterPreviewProvider,
   useCenterPreviewContext,
@@ -30,10 +30,7 @@ function StudioPreviewCanvasInner(): React.JSX.Element {
   return (
     <div className='relative h-[420px] overflow-hidden rounded border border-border/60 bg-card/30'>
       {canCompareWithSource && splitVariantView ? (
-        <SplitVariantPreview
-          sourceSlotImageSrc={sourceImageSrc as string}
-          workingSlotImageSrc={variantImageSrc as string}
-        />
+        <SplitVariantPreview />
       ) : (
         <div className='relative h-full w-full overflow-hidden'>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -50,17 +47,52 @@ function StudioPreviewCanvasInner(): React.JSX.Element {
       )}
 
       {canCompareWithSource && (
-        <SplitViewControls
-          canCompare={canCompareWithSource}
-          onGoToSourceSlot={() => {
-            setSplitVariantView(false);
-            setSingleVariantView('source');
-          }}
-          onToggleSourceVariantView={() =>
-            setSingleVariantView((prev) => (prev === 'variant' ? 'source' : 'variant'))
-          }
-          onToggleSplitVariantView={() => setSplitVariantView(!splitVariantView)}
-        />
+        <div className='absolute bottom-2 left-2 z-20 flex items-center gap-2'>
+          <Button
+            size='xs'
+            type='button'
+            variant='outline'
+            onClick={() => {
+              setSplitVariantView(false);
+              setSingleVariantView('source');
+            }}
+            className='h-7 w-7 bg-background/90 px-0 backdrop-blur'
+            title='Go to source slot'
+            aria-label='Go to source slot'
+          >
+            <Undo2 className='size-3.5' />
+          </Button>
+          <Button
+            size='xs'
+            type='button'
+            variant='outline'
+            onClick={() =>
+              setSingleVariantView((prev) => (prev === 'variant' ? 'source' : 'variant'))
+            }
+            disabled={splitVariantView || !canCompareWithSource}
+            className='h-7 w-7 bg-background/90 px-0 backdrop-blur'
+            title={singleVariantView === 'variant' ? 'View source' : 'View variant'}
+            aria-label={singleVariantView === 'variant' ? 'View source' : 'View variant'}
+          >
+            {singleVariantView === 'variant' ? (
+              <Eye className='size-3.5' />
+            ) : (
+              <EyeOff className='size-3.5' />
+            )}
+          </Button>
+          <Button
+            size='xs'
+            type='button'
+            variant='outline'
+            onClick={() => setSplitVariantView(!splitVariantView)}
+            disabled={!canCompareWithSource}
+            className='h-7 w-7 bg-background/90 px-0 backdrop-blur'
+            title={splitVariantView ? 'Exit split view' : 'Split view'}
+            aria-label={splitVariantView ? 'Exit split view' : 'Split view'}
+          >
+            <ArrowLeftRight className='size-3.5' />
+          </Button>
+        </div>
       )}
 
       {!splitVariantView && canCompareWithSource && (

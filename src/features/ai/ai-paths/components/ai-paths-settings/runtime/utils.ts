@@ -83,6 +83,46 @@ const normalizeNodeStatusForMerge = (value: unknown): AiPathRuntimeNodeStatus | 
   return null;
 };
 
+const isObjectValue = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const normalizeBlockedReason = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const hasWaitingPorts = (value: unknown): boolean =>
+  Array.isArray(value) &&
+  value.some((port: unknown): boolean => typeof port === 'string' && port.trim().length > 0);
+
+export const resolveRuntimeNodeDisplayStatus = (input: {
+  status: AiPathRuntimeNodeStatus | null;
+  outputs?: RuntimePortValues | null;
+  metadata?: Record<string, unknown> | null;
+}): AiPathRuntimeNodeStatus | null => {
+  const status = input.status;
+  if (!status) return null;
+  if (status !== 'blocked') return status;
+
+  const outputs = isObjectValue(input.outputs) ? input.outputs : null;
+  const metadata = isObjectValue(input.metadata) ? input.metadata : null;
+  const metadataOutputs = isObjectValue(metadata?.['outputs']) ? metadata['outputs'] : null;
+  const blockedReason =
+    normalizeBlockedReason(outputs?.['blockedReason']) ??
+    normalizeBlockedReason(metadataOutputs?.['blockedReason']) ??
+    normalizeBlockedReason(metadata?.['reason']);
+  const waitingPortsPresent =
+    hasWaitingPorts(outputs?.['waitingOnPorts']) ||
+    hasWaitingPorts(metadataOutputs?.['waitingOnPorts']) ||
+    hasWaitingPorts(metadata?.['waitingOnPorts']);
+
+  if (blockedReason === 'missing_inputs' || (!blockedReason && waitingPortsPresent)) {
+    return 'waiting_callback';
+  }
+  return status;
+};
+
 export const mergeRuntimeNodeOutputsForStatus = (input: {
   previous: RuntimePortValues | undefined;
   next: RuntimePortValues | undefined;
@@ -91,7 +131,14 @@ export const mergeRuntimeNodeOutputsForStatus = (input: {
   const nextOutputs = input.next ?? {};
   const { status: _nextStatus, ...nextOutputsWithoutStatus } = nextOutputs;
   const previousStatus = normalizeNodeStatusForMerge(input.previous?.['status']);
-  const normalizedStatus = normalizeNodeStatusForMerge(input.status);
+  const mergedOutputsForStatus = {
+    ...(input.previous ?? {}),
+    ...nextOutputs,
+  } as RuntimePortValues;
+  const normalizedStatus = resolveRuntimeNodeDisplayStatus({
+    status: normalizeNodeStatusForMerge(input.status),
+    outputs: mergedOutputsForStatus,
+  });
   const effectiveStatus = normalizedStatus ?? previousStatus;
   const merged = {
     ...(input.previous ?? {}),
@@ -101,7 +148,12 @@ export const mergeRuntimeNodeOutputsForStatus = (input: {
 
   const hasOwn = (key: string): boolean => Object.prototype.hasOwnProperty.call(nextOutputs, key);
 
-  if (effectiveStatus !== 'blocked') {
+  const keepWaitingDiagnostics =
+    effectiveStatus === 'blocked' ||
+    effectiveStatus === 'waiting_callback' ||
+    effectiveStatus === 'advance_pending';
+
+  if (!keepWaitingDiagnostics) {
     delete merged['blockedReason'];
     delete merged['requiredPorts'];
     delete merged['waitingOnPorts'];

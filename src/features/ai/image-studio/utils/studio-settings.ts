@@ -533,19 +533,19 @@ const hasOwnKey = (value: Record<string, unknown>, key: string): boolean =>
 const resolveUnsupportedImageStudioSnapshotKeys = (value: unknown): string[] => {
   if (!isPlainObject(value)) return [];
 
-  const deprecatedKeys: string[] = [];
+  const unsupportedKeys: string[] = [];
 
   const promptExtraction = value['promptExtraction'];
   if (isPlainObject(promptExtraction)) {
     const gpt = promptExtraction['gpt'];
     if (isPlainObject(gpt) && hasOwnKey(gpt, 'model')) {
-      deprecatedKeys.push('promptExtraction.gpt.model');
+      unsupportedKeys.push('promptExtraction.gpt.model');
     }
   }
 
   const uiExtractor = value['uiExtractor'];
   if (isPlainObject(uiExtractor) && hasOwnKey(uiExtractor, 'model')) {
-    deprecatedKeys.push('uiExtractor.model');
+    unsupportedKeys.push('uiExtractor.model');
   }
 
   const targetAi = value['targetAi'];
@@ -553,15 +553,15 @@ const resolveUnsupportedImageStudioSnapshotKeys = (value: unknown): string[] => 
     const openai = targetAi['openai'];
     if (isPlainObject(openai)) {
       if (hasOwnKey(openai, 'model')) {
-        deprecatedKeys.push('targetAi.openai.model');
+        unsupportedKeys.push('targetAi.openai.model');
       }
       if (hasOwnKey(openai, 'modelPresets')) {
-        deprecatedKeys.push('targetAi.openai.modelPresets');
+        unsupportedKeys.push('targetAi.openai.modelPresets');
       }
     }
   }
 
-  return deprecatedKeys;
+  return unsupportedKeys;
 };
 
 export function parseImageStudioSettings(

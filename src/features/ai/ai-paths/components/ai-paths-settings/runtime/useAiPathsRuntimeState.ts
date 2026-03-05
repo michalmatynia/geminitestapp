@@ -14,6 +14,8 @@ import {
   type RuntimeEventInput,
   type SetNodeStatusInput,
 } from '@/shared/contracts/ai-paths-runtime';
+import { isObjectRecord } from '@/shared/utils/object-utils';
+import { resolveRuntimeNodeDisplayStatus } from './utils';
 
 const TERMINAL_NODE_STATUSES: ReadonlySet<AiPathRuntimeNodeStatus> = new Set([
   'completed',
@@ -151,25 +153,29 @@ export function useAiPathsRuntimeState() {
   const setNodeStatus = useCallback(
     (input: SetNodeStatusInput): void => {
       const normalizedStatus = normalizeNodeStatus(input.status);
-      if (!normalizedStatus) return;
+      const resolvedStatus = resolveRuntimeNodeDisplayStatus({
+        status: normalizedStatus,
+        metadata: isObjectRecord(input.metadata) ? input.metadata : null,
+      });
+      if (!resolvedStatus) return;
       const prevStatus = runtimeNodeStatusesRef.current[input.nodeId];
-      if (prevStatus === normalizedStatus) return;
+      if (prevStatus === resolvedStatus) return;
 
       if (prevStatus) {
         const isQueueLikeDowngrade =
-          (normalizedStatus === 'queued' || normalizedStatus === 'pending') &&
+          (resolvedStatus === 'queued' || resolvedStatus === 'pending') &&
           prevStatus !== 'idle' &&
           prevStatus !== 'queued' &&
           prevStatus !== 'pending';
         const isLateTransientAfterTerminal =
-          TERMINAL_NODE_STATUSES.has(prevStatus) && TRANSIENT_NODE_STATUSES.has(normalizedStatus);
+          TERMINAL_NODE_STATUSES.has(prevStatus) && TRANSIENT_NODE_STATUSES.has(resolvedStatus);
         if (isQueueLikeDowngrade || isLateTransientAfterTerminal) {
           return;
         }
       }
 
       // Track node execution timing
-      if (normalizedStatus === 'running') {
+      if (resolvedStatus === 'running') {
         nodeStartTimesRef.current[input.nodeId] = performance.now();
       }
       const TERMINAL_STATUSES: ReadonlySet<string> = new Set([
@@ -181,7 +187,7 @@ export function useAiPathsRuntimeState() {
         'skipped',
       ]);
       if (
-        TERMINAL_STATUSES.has(normalizedStatus) &&
+        TERMINAL_STATUSES.has(resolvedStatus) &&
         nodeStartTimesRef.current[input.nodeId] != null
       ) {
         const dur = Math.round(performance.now() - nodeStartTimesRef.current[input.nodeId]!);
@@ -190,7 +196,7 @@ export function useAiPathsRuntimeState() {
       }
       const next = {
         ...runtimeNodeStatusesRef.current,
-        [input.nodeId]: normalizedStatus,
+        [input.nodeId]: resolvedStatus,
       };
       runtimeNodeStatusesRef.current = next;
       setRuntimeNodeStatuses(next);
@@ -200,11 +206,11 @@ export function useAiPathsRuntimeState() {
         level: input.level ?? 'info',
         message:
           input.message ??
-          `Node ${input.nodeTitle ?? input.nodeId} is ${formatStatusLabel(normalizedStatus)}.`,
+          `Node ${input.nodeTitle ?? input.nodeId} is ${formatStatusLabel(resolvedStatus)}.`,
         nodeId: input.nodeId,
         ...(input.nodeType !== undefined ? { nodeType: input.nodeType } : {}),
         ...(input.nodeTitle !== undefined ? { nodeTitle: input.nodeTitle } : {}),
-        status: normalizedStatus,
+        status: resolvedStatus,
         ...(input.iteration !== undefined ? { iteration: input.iteration } : {}),
         ...(input.metadata != null ? { metadata: input.metadata } : {}),
       });

@@ -575,7 +575,7 @@ export const DEFAULT_AGENT_SETTINGS: AgentSettingsPayload = {
 };
 
 /**
- * Legacy support / Additional types
+ * Extended support / Additional types
  */
 export interface ChatSessionDocument {
   _id: unknown; // mongodb.ObjectId

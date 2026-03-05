@@ -15,10 +15,13 @@ import { validateMasterTreeNodes } from '@/shared/utils/master-folder-tree-engin
 import { validationError } from '@/shared/errors/app-error';
 
 import { buildRootsV2, normalizeNodesV2 } from '../core/engine';
-import { useMasterFolderTreeRuntime } from '../runtime/MasterFolderTreeRuntimeProvider';
 import { createFolderTreeStore, type FolderTreeStore } from '../store/createFolderTreeStore';
 import { useFolderTreeStoreSelector } from '../store/useFolderTreeStoreSelector';
 import type { FolderTreeState, FolderTreeTransaction } from '../types';
+import {
+  useFolderTreeShellRuntime,
+  type MasterFolderTreeShellRuntime,
+} from '../shell/useFolderTreeShellRuntime';
 
 import {
   createInitialState,
@@ -36,6 +39,7 @@ import { useFolderTreeEngineActions } from './folder-tree-instance/useFolderTree
 
 export type UseFolderTreeInstanceV2Options = UseMasterFolderTreeOptions & {
   instanceId?: string | undefined;
+  runtime?: MasterFolderTreeShellRuntime | undefined;
 };
 
 export function useFolderTreeInstanceV2(
@@ -66,7 +70,7 @@ export function useFolderTreeInstanceV2(
     return candidate;
   }, [options.adapter]);
   const txVersionRef = useRef(0);
-  const runtime = useMasterFolderTreeRuntime();
+  const runtime = useFolderTreeShellRuntime(options.runtime);
   const undoRef = useRef<() => Promise<MasterFolderTreeActionResult>>(async () =>
     createErrorAction('UNDO_UNAVAILABLE')
   );
@@ -86,7 +90,8 @@ export function useFolderTreeInstanceV2(
   const { applyPersistedOperation, executeAdapterTransaction } = useFolderTreeTransaction(
     store,
     adapter,
-    maxUndoEntries
+    maxUndoEntries,
+    runtime
   );
 
   const {

@@ -6,19 +6,19 @@ import React from 'react';
 import { Button } from '@/shared/ui';
 
 import { useCenterPreviewContext } from './CenterPreviewContext';
+import { useCenterPreviewCanvasContext } from './sections/CenterPreviewCanvasContext';
 
-type SplitViewControlsProps = {
-  canCompare: boolean;
-  onGoToSourceSlot: () => void;
-  onToggleSourceVariantView: () => void;
-  onToggleSplitVariantView: () => void;
-};
-
-export function SplitViewControls(props: SplitViewControlsProps): React.JSX.Element {
-  const { canCompare, onGoToSourceSlot, onToggleSourceVariantView, onToggleSplitVariantView } =
-    props;
+export function SplitViewControls(): React.JSX.Element {
+  const {
+    canCompareSelectedVariants,
+    canCompareWithSource,
+    onGoToSourceSlot,
+    onToggleSourceVariantView,
+    onToggleSplitVariantView,
+  } = useCenterPreviewCanvasContext();
 
   const { singleVariantView, splitVariantView } = useCenterPreviewContext();
+  const canCompare = canCompareSelectedVariants || canCompareWithSource;
 
   return (
     <div className='absolute bottom-2 left-2 z-20 flex items-center gap-2'>

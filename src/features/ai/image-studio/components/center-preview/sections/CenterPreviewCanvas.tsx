@@ -12,37 +12,9 @@ import { useUiState, useUiActions } from '../../../context/UiContext';
 import { useSlotsState } from '../../../context/SlotsContext';
 import { useVersionGraphState } from '../../../context/VersionGraphContext';
 import { useMaskingState } from '../../../context/MaskingContext';
-import type { VectorDrawingContextValue } from '@/shared/lib/vector-drawing';
-import type { VectorShape } from '@/shared/contracts/vector';
-import type {
-  PreviewCanvasCropRect,
-  PreviewCanvasImageContentFrame,
-} from '../../../context/UiContext';
+import { useCenterPreviewCanvasContext } from './CenterPreviewCanvasContext';
 
-export interface CenterPreviewCanvasProps {
-  vectorContextValue: VectorDrawingContextValue;
-  projectCanvasSize: { width: number; height: number } | null;
-  activeCanvasImageSrc: string | null;
-  liveMaskShapes: VectorShape[];
-  splitVariantView: boolean;
-  canCompareSelectedVariants: boolean;
-  compareVariantImageA: string | null;
-  compareVariantImageB: string | null;
-  canCompareWithSource: boolean;
-  sourceSlotImageSrc: string | null;
-  workingSlotImageSrc: string | null;
-  isCompositeSlot: boolean;
-  canNavigateToSource: boolean;
-  canRevealLoadedCardInTree: boolean;
-  handlePreviewCanvasCropRectChange: (rect: PreviewCanvasCropRect | null) => void;
-  handlePreviewCanvasImageFrameChange: (frame: PreviewCanvasImageContentFrame | null) => void;
-  handleGoToSourceSlot: () => void;
-  handleToggleSourceVariantView: () => void;
-  handleToggleSplitVariantView: () => void;
-  handleRevealInTreeFromCanvas: () => void;
-}
-
-export function CenterPreviewCanvas(props: CenterPreviewCanvasProps): React.JSX.Element {
+export function CenterPreviewCanvas(): React.JSX.Element {
   const {
     vectorContextValue,
     projectCanvasSize,
@@ -58,13 +30,11 @@ export function CenterPreviewCanvas(props: CenterPreviewCanvasProps): React.JSX.
     isCompositeSlot,
     canNavigateToSource,
     canRevealLoadedCardInTree,
-    handlePreviewCanvasCropRectChange,
-    handlePreviewCanvasImageFrameChange,
-    handleGoToSourceSlot,
-    handleToggleSourceVariantView,
-    handleToggleSplitVariantView,
-    handleRevealInTreeFromCanvas,
-  } = props;
+    onPreviewCanvasCropRectChange,
+    onPreviewCanvasImageFrameChange,
+    onGoToSourceSlot,
+    onRevealInTreeFromCanvas,
+  } = useCenterPreviewCanvasContext();
 
   const {
     maskPreviewEnabled,
@@ -83,14 +53,7 @@ export function CenterPreviewCanvas(props: CenterPreviewCanvasProps): React.JSX.
   const previewCanvasClassName = cn('h-full', 'bg-slate-900');
   const baseCanvasWidthPx = projectCanvasSize?.width ?? 1024;
   const baseCanvasHeightPx = projectCanvasSize?.height ?? 1024;
-  const canCompare = canCompareSelectedVariants || canCompareWithSource;
   const imageMoveEnabled = imageTransformMode === 'move';
-  const onViewCropRectChange = handlePreviewCanvasCropRectChange;
-  const onImageContentFrameChange = handlePreviewCanvasImageFrameChange;
-  const onGoToSourceSlot = handleGoToSourceSlot;
-  const onToggleSourceVariantView = handleToggleSourceVariantView;
-  const onToggleSplitVariantView = handleToggleSplitVariantView;
-  const onRevealInTree = handleRevealInTreeFromCanvas;
 
   return (
     <div className='sticky top-0 z-20 relative min-h-0 overflow-hidden bg-card/40'>
@@ -106,18 +69,12 @@ export function CenterPreviewCanvas(props: CenterPreviewCanvasProps): React.JSX.
           canCompareSelectedVariants &&
           compareVariantImageA &&
           compareVariantImageB ? (
-            <SplitVariantPreview
-              sourceSlotImageSrc={compareVariantImageA}
-              workingSlotImageSrc={compareVariantImageB}
-            />
+            <SplitVariantPreview />
           ) : splitVariantView &&
           canCompareWithSource &&
           sourceSlotImageSrc &&
           workingSlotImageSrc ? (
-              <SplitVariantPreview
-                sourceSlotImageSrc={sourceSlotImageSrc}
-                workingSlotImageSrc={workingSlotImageSrc}
-              />
+              <SplitVariantPreview />
             ) : (
               <div className={previewCanvasClassName}>
                 <VectorDrawingCanvas
@@ -137,19 +94,14 @@ export function CenterPreviewCanvas(props: CenterPreviewCanvasProps): React.JSX.
                   }}
                   backgroundLayerEnabled={canvasBackgroundLayerEnabled}
                   backgroundColor={canvasBackgroundColor}
-                  onViewCropRectChange={onViewCropRectChange}
-                  onImageContentFrameChange={onImageContentFrameChange}
+                  onViewCropRectChange={onPreviewCanvasCropRectChange}
+                  onImageContentFrameChange={onPreviewCanvasImageFrameChange}
                 />
               </div>
             )}
 
         <div className='absolute bottom-4 left-4 z-30'>
-          <SplitViewControls
-            canCompare={canCompare}
-            onGoToSourceSlot={onGoToSourceSlot}
-            onToggleSourceVariantView={onToggleSourceVariantView}
-            onToggleSplitVariantView={onToggleSplitVariantView}
-          />
+          <SplitViewControls />
         </div>
 
         <div className='absolute bottom-4 right-4 z-30 flex gap-2'>
@@ -168,7 +120,7 @@ export function CenterPreviewCanvas(props: CenterPreviewCanvasProps): React.JSX.
               variant='secondary'
               size='sm'
               className='h-8 w-8 p-0 rounded-full bg-slate-900/60 backdrop-blur-md border-white/10'
-              onClick={onRevealInTree}
+              onClick={onRevealInTreeFromCanvas}
               title='Reveal in Tree'
             >
               <Locate className='size-4' />

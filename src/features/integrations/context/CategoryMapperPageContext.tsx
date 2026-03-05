@@ -46,7 +46,7 @@ export const useCategoryMapperPageSelection = () => {
   return context;
 };
 
-// --- Legacy Aggregator ---
+// --- Context Aggregator ---
 
 type CategoryMapperPageContextType = CategoryMapperPageData & CategoryMapperPageSelection;
 

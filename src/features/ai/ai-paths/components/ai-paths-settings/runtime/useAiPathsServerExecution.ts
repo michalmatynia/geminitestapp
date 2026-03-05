@@ -26,6 +26,7 @@ import {
   resolveRunAt,
   resolveRunStartedAt,
   buildActivePathConfig,
+  resolveRuntimeNodeDisplayStatus,
 } from './utils';
 import { parseRuntimeState } from '../../AiPathsSettingsUtils';
 import {
@@ -601,10 +602,13 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                   : null;
               const nodeStatus = args.normalizeNodeStatus(nodeUpdate.status);
               const outputStatus = nodeOutputs ? args.normalizeNodeStatus(nodeOutputs['status']) : null;
-              const status =
-                outputStatus === 'waiting_callback'
-                  ? outputStatus
-                  : nodeStatus ?? outputStatus;
+              const status = resolveRuntimeNodeDisplayStatus({
+                status:
+                  outputStatus === 'waiting_callback'
+                    ? outputStatus
+                    : nodeStatus ?? outputStatus,
+                outputs: nodeOutputs,
+              });
               if (!status) return;
               const runtimeNode = runtimeNodeById.get(nodeId);
               const nodeTitle = runtimeNode?.title ?? nodeUpdate.nodeTitle ?? nodeId;
@@ -699,8 +703,12 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                   undefined;
                 const runtimeNode = nodeId ? runtimeNodeById.get(nodeId) : null;
                 const status =
-                  args.normalizeNodeStatus(rawEvent.status) ??
-                  (metadata ? args.normalizeNodeStatus(metadata['status']) : null);
+                  resolveRuntimeNodeDisplayStatus({
+                    status:
+                      args.normalizeNodeStatus(rawEvent.status) ??
+                      (metadata ? args.normalizeNodeStatus(metadata['status']) : null),
+                    metadata,
+                  });
                 const iteration =
                   asNumber(rawEvent.iteration) ??
                   (metadata ? asNumber(metadata['iteration']) : null);

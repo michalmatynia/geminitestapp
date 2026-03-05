@@ -73,7 +73,7 @@ export const useListingTraderaSettings = () => {
   return context;
 };
 
-// --- Legacy Aggregator ---
+// --- Context Aggregator ---
 
 interface ListingSettingsContextType
   extends ListingSelection, ListingBaseComSettings, ListingTraderaSettings {}

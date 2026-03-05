@@ -14,7 +14,7 @@ type ListPanelProps = {
   eyebrow?: ReactNode;
   icon?: ReactNode;
   headerActions?: ReactNode;
-  header?: ReactNode; // Legacy or custom header
+  header?: ReactNode; // Deprecated or custom header
   refresh?:
     | {
         onRefresh: () => void;

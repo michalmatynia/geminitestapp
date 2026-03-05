@@ -1,24 +1,24 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-04T19:47:14.022Z
+Generated at: 2026-03-05T00:28:03.353Z
 
 ## Snapshot
 
-- Source files: 4213
-- Source lines: 653588
-- use client files: 1284
-- Files >= 1000 LOC: 6
+- Source files: 4249
+- Source lines: 659188
+- use client files: 1316
+- Files >= 1000 LOC: 7
 - Files >= 1500 LOC: 2
 - Largest file: `src/features/case-resolver/__tests__/workspace.test.ts` (1802 LOC)
-- API routes: 310
+- API routes: 307
 - API delegated server routes: 13
 - API routes without apiHandler/delegation: 0
-- API explicit cache policy coverage: 310/310 (100.0%)
+- API explicit cache policy coverage: 307/307 (100.0%)
 - Cross-feature dependency pairs: 71
 - Shared -> features imports: 11
 - setInterval occurrences: 22
-- Prop-drilling chains (depth >= 3): 547
-- Prop-drilling chains (depth >= 4): 114
+- Prop-drilling chains (depth >= 3): 0
+- Prop-drilling chains (depth >= 4): 0
 
 ## Top API Hotspots (by LOC)
 
@@ -47,7 +47,7 @@ Generated at: 2026-03-04T19:47:14.022Z
 | `case-resolver -> foldertree` | 19 |
 | `cms -> gsap` | 19 |
 | `case-resolver -> case-resolver-capture` | 16 |
-| `ai -> products` | 14 |
+| `ai -> products` | 15 |
 | `case-resolver -> filemaker` | 13 |
 | `drafter -> products` | 13 |
 | `case-resolver -> document-editor` | 12 |
@@ -58,7 +58,7 @@ Generated at: 2026-03-04T19:47:14.022Z
 | `integrations -> products` | 8 |
 | `products -> internationalization` | 8 |
 | `integrations -> playwright` | 7 |
-| `products -> ai` | 7 |
+| `products -> foldertree` | 7 |
 
 ## Top File Hotspots (by LOC)
 
@@ -69,6 +69,7 @@ Generated at: 2026-03-04T19:47:14.022Z
 | `src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts` | 1406 |
 | `src/shared/contracts/image-studio.ts` | 1231 |
 | `src/shared/contracts/ai-paths-core/nodes.ts` | 1161 |
+| `src/shared/lib/ai-paths/core/runtime/engine-core.ts` | 1060 |
 | `src/shared/contracts/cms.ts` | 1029 |
 | `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 986 |
 | `src/app/api/image-studio/slots/[slotId]/autoscale/handler.test.ts` | 931 |
@@ -77,10 +78,9 @@ Generated at: 2026-03-04T19:47:14.022Z
 | `src/shared/lib/documentation/catalogs/validator-docs.ts` | 909 |
 | `src/features/case-resolver-capture/__tests__/proposals.test.ts` | 901 |
 | `src/shared/lib/ai-paths/hooks/useAiPathTriggerEvent.ts` | 898 |
-| `src/shared/lib/ai-brain/context/BrainContext.tsx` | 892 |
+| `src/shared/lib/ai-brain/context/BrainContext.tsx` | 891 |
 | `src/features/notesapp/context/NoteFormContext.tsx` | 890 |
 | `src/features/ai/ai-paths/services/path-run-service.ts` | 888 |
 | `src/features/products/hooks/useProductFormValidator.ts` | 886 |
 | `src/shared/lib/observability/system-log-repository.ts` | 883 |
-| `src/features/integrations/services/imports/base-import-item-processor.ts` | 877 |
-| `src/app/api/settings/handler.ts` | 872 |
+| `src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsServerExecution.ts` | 880 |

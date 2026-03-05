@@ -77,25 +77,28 @@ export const EMPTY_RUNTIME_STATE: RuntimeState = {
 
 export const parseRuntimeState = (value: unknown): RuntimeState => {
   if (!value) return EMPTY_RUNTIME_STATE;
-  const assertNoLegacyRunIdentity = (record: Record<string, unknown>, location: string): void => {
-    const deprecatedKeys = ['runId', 'runStartedAt'].filter(
+  const assertNoUnsupportedRunIdentity = (
+    record: Record<string, unknown>,
+    location: string
+  ): void => {
+    const unsupportedKeys = ['runId', 'runStartedAt'].filter(
       (key: string): boolean => key in record
     );
-    if (deprecatedKeys.length === 0) return;
+    if (unsupportedKeys.length === 0) return;
     throw validationError('AI Paths runtime state payload includes unsupported identity fields.', {
       reason: 'unsupported_runtime_identity_fields',
-      keys: deprecatedKeys,
+      keys: unsupportedKeys,
       location,
     });
   };
-  const assertNoLegacyRuntimeIdentityFields = (parsed: Record<string, unknown>): void => {
-    assertNoLegacyRunIdentity(parsed, 'runtime_state');
+  const assertNoUnsupportedRuntimeIdentityFields = (parsed: Record<string, unknown>): void => {
+    assertNoUnsupportedRunIdentity(parsed, 'runtime_state');
 
     const events = parsed['events'];
     if (Array.isArray(events)) {
       events.forEach((entry: unknown, index: number): void => {
         if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
-        assertNoLegacyRunIdentity(entry as Record<string, unknown>, `events[${index}]`);
+        assertNoUnsupportedRunIdentity(entry as Record<string, unknown>, `events[${index}]`);
       });
     }
 
@@ -106,7 +109,7 @@ export const parseRuntimeState = (value: unknown): RuntimeState => {
         if (!Array.isArray(entries)) return;
         entries.forEach((entry: unknown, index: number): void => {
           if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
-          assertNoLegacyRunIdentity(
+          assertNoUnsupportedRunIdentity(
             entry as Record<string, unknown>,
             `history.${nodeId}[${index}]`
           );
@@ -115,7 +118,7 @@ export const parseRuntimeState = (value: unknown): RuntimeState => {
     );
   };
   const normalizeParsedRuntimeState = (parsed: Record<string, unknown>): RuntimeState => {
-    assertNoLegacyRuntimeIdentityFields(parsed);
+    assertNoUnsupportedRuntimeIdentityFields(parsed);
     const merged = {
       ...EMPTY_RUNTIME_STATE,
       ...parsed,

@@ -1,7 +1,10 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { useFolderTreeInstanceV2 } from '@/features/foldertree/v2/hooks/useFolderTreeInstanceV2';
+import { useMasterFolderTreeRuntime } from '@/features/foldertree/v2/runtime/MasterFolderTreeRuntimeProvider';
+import { MasterFolderTreeRuntimeProvider } from '@/features/foldertree/v2/runtime/MasterFolderTreeRuntimeProvider';
 import type {
   FolderTreeAppliedTransaction,
   FolderTreePreparedTransaction,
@@ -18,6 +21,10 @@ const buildNode = (id: string, name: string, parentId: string | null = null): Ma
   path: name.toLowerCase(),
   sortOrder: 0,
 });
+
+const RuntimeWrapper = ({ children }: { children: ReactNode }) => (
+  <MasterFolderTreeRuntimeProvider>{children}</MasterFolderTreeRuntimeProvider>
+);
 
 describe('useFolderTreeInstanceV2 external sync replace', () => {
   it('rejects adapters that do not implement the V3 transaction contract', () => {
@@ -88,5 +95,131 @@ describe('useFolderTreeInstanceV2 external sync replace', () => {
     expect(prepare).not.toHaveBeenCalled();
     expect(apply).not.toHaveBeenCalled();
     expect(commit).not.toHaveBeenCalled();
+  });
+
+  it('routes focused instance to runtime when selection changes', async () => {
+    const initialNodes = [buildNode('folder-a', 'Folder A')];
+
+    const { result } = renderHook(
+      () => {
+        const controller = useFolderTreeInstanceV2({
+          initialNodes,
+          instanceId: 'focus-instance',
+        });
+        const runtime = useMasterFolderTreeRuntime();
+        return { controller, runtime };
+      },
+      { wrapper: RuntimeWrapper }
+    );
+
+    act(() => {
+      result.current.controller.selectNode('folder-a');
+    });
+
+    await waitFor(() => {
+      expect(result.current.runtime.getFocusedInstance()).toBe('focus-instance');
+    });
+  });
+
+  it('records conflict metric and rolls back when adapter apply fails with conflict', async () => {
+    const initialNodes = [buildNode('folder-a', 'Folder A')];
+    const nextNodes = [buildNode('folder-b', 'Folder B')];
+
+    const prepare = vi.fn(
+      async (tx: FolderTreeTransaction): Promise<FolderTreePreparedTransaction> => ({
+        tx,
+        preparedAt: Date.now(),
+      })
+    );
+    const conflictError = Object.assign(new Error('conflict during apply'), {
+      code: 'CONFLICT',
+    });
+    const apply = vi.fn(async () => {
+      throw conflictError;
+    });
+    const commit = vi.fn(async () => undefined);
+    const rollback = vi.fn(async () => undefined);
+
+    const { result } = renderHook(
+      () => {
+        const controller = useFolderTreeInstanceV2({
+          initialNodes,
+          instanceId: 'conflict-instance',
+          adapter: {
+            prepare,
+            apply,
+            commit,
+            rollback,
+          },
+        });
+        const runtime = useMasterFolderTreeRuntime();
+        return { controller, runtime };
+      },
+      { wrapper: RuntimeWrapper }
+    );
+
+    let action:
+      | Awaited<ReturnType<(typeof result.current.controller)['replaceNodes']>>
+      | undefined;
+    await act(async () => {
+      action = await result.current.controller.replaceNodes(nextNodes, 'refresh');
+    });
+
+    expect(action?.ok).toBe(false);
+    expect(result.current.controller.lastError?.code).toBe('PERSIST_FAILED');
+    expect(rollback).toHaveBeenCalledTimes(1);
+    expect(rollback).toHaveBeenCalledWith(expect.any(Object), 'apply', conflictError);
+    expect(result.current.runtime.getMetricsSnapshot()['transaction_conflict']).toBe(1);
+    expect(result.current.runtime.getMetricsSnapshot()['transaction_rollback'] ?? 0).toBe(0);
+  });
+
+  it('records rollback metric and rollback stage when adapter commit fails', async () => {
+    const initialNodes = [buildNode('folder-a', 'Folder A')];
+    const nextNodes = [buildNode('folder-b', 'Folder B')];
+
+    const prepare = vi.fn(
+      async (tx: FolderTreeTransaction): Promise<FolderTreePreparedTransaction> => ({
+        tx,
+        preparedAt: Date.now(),
+      })
+    );
+    const apply = vi.fn(
+      async (tx: FolderTreeTransaction): Promise<FolderTreeAppliedTransaction> => ({
+        tx,
+        appliedAt: Date.now(),
+      })
+    );
+    const commitError = new Error('commit failed');
+    const commit = vi.fn(async () => {
+      throw commitError;
+    });
+    const rollback = vi.fn(async () => undefined);
+
+    const { result } = renderHook(
+      () => {
+        const controller = useFolderTreeInstanceV2({
+          initialNodes,
+          instanceId: 'rollback-instance',
+          adapter: {
+            prepare,
+            apply,
+            commit,
+            rollback,
+          },
+        });
+        const runtime = useMasterFolderTreeRuntime();
+        return { controller, runtime };
+      },
+      { wrapper: RuntimeWrapper }
+    );
+
+    await act(async () => {
+      await result.current.controller.replaceNodes(nextNodes, 'refresh');
+    });
+
+    expect(rollback).toHaveBeenCalledTimes(1);
+    expect(rollback).toHaveBeenCalledWith(expect.any(Object), 'commit', commitError);
+    expect(result.current.runtime.getMetricsSnapshot()['transaction_rollback']).toBe(1);
+    expect(result.current.runtime.getMetricsSnapshot()['transaction_conflict'] ?? 0).toBe(0);
   });
 });

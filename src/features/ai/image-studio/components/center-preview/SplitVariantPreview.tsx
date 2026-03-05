@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/shared/ui';
 
 import { useCenterPreviewContext } from './CenterPreviewContext';
+import { useCenterPreviewCanvasContext } from './sections/CenterPreviewCanvasContext';
 import {
   SPLIT_WHEEL_MAX_DELTA,
   SPLIT_WHEEL_MIN_DELTA,
@@ -14,15 +15,26 @@ import {
 
 type Pane = 'left' | 'right';
 
-type SplitVariantPreviewProps = {
-  sourceSlotImageSrc: string;
-  workingSlotImageSrc: string;
-};
+export function SplitVariantPreview(): React.JSX.Element {
+  const {
+    compareVariantImageA,
+    compareVariantImageB,
+    sourceSlotImageSrc,
+    workingSlotImageSrc,
+    canCompareSelectedVariants,
+  } = useCenterPreviewCanvasContext();
 
-export function SplitVariantPreview({
-  sourceSlotImageSrc,
-  workingSlotImageSrc,
-}: SplitVariantPreviewProps): React.JSX.Element {
+  const leftImageSrc =
+    canCompareSelectedVariants && compareVariantImageA ? compareVariantImageA : sourceSlotImageSrc;
+  const rightImageSrc =
+    canCompareSelectedVariants && compareVariantImageB
+      ? compareVariantImageB
+      : workingSlotImageSrc;
+
+  if (!leftImageSrc || !rightImageSrc) {
+    return <div className='h-full w-full' />;
+  }
+
   const {
     leftSplitZoom,
     rightSplitZoom,
@@ -71,7 +83,7 @@ export function SplitVariantPreview({
     setActiveDrag(null);
     setLeftOffset({ x: 0, y: 0 });
     setRightOffset({ x: 0, y: 0 });
-  }, [sourceSlotImageSrc, workingSlotImageSrc]);
+  }, [leftImageSrc, rightImageSrc]);
 
   useEffect((): (() => void) => {
     if (!activeDrag) return () => {};
@@ -223,7 +235,7 @@ export function SplitVariantPreview({
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={sourceSlotImageSrc}
+          src={leftImageSrc}
           alt='Source image'
           className='h-full w-full object-contain transition-transform duration-150 ease-out'
           style={{
@@ -293,7 +305,7 @@ export function SplitVariantPreview({
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={workingSlotImageSrc}
+          src={rightImageSrc}
           alt='Generated variant'
           className='h-full w-full object-contain transition-transform duration-150 ease-out'
           style={{

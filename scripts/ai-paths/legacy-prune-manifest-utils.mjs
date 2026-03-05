@@ -3,6 +3,8 @@ import path from 'node:path';
 
 export const DEFAULT_LEGACY_PRUNE_MANIFEST_RELATIVE_PATH =
   'scripts/ai-paths/legacy-prune-manifest.json';
+const TARGET_MODES = new Set(['file', 'source_scan', 'const_array']);
+const TARGET_EXPECTED_STATES = new Set(['present', 'missing']);
 
 const normalizeStringArray = (value, label) => {
   if (!Array.isArray(value)) {
@@ -21,11 +23,35 @@ const normalizeManifestTarget = (target, ruleId, index) => {
   if (!target || typeof target !== 'object' || Array.isArray(target)) {
     throw new Error(`rules[${index}] (${ruleId}) target must be an object`);
   }
+  const mode =
+    typeof target.mode === 'string' && target.mode.trim().length > 0 ? target.mode.trim() : 'file';
+  if (!TARGET_MODES.has(mode)) {
+    throw new Error(
+      `rules[${index}] (${ruleId}) target.mode must be one of: file, source_scan, const_array`
+    );
+  }
+
   const file =
     typeof target.file === 'string' && target.file.trim().length > 0 ? target.file.trim() : null;
   if (!file) {
     throw new Error(`rules[${index}] (${ruleId}) target.file must be a non-empty string`);
   }
+
+  if (mode !== 'file' && target.expectedState !== undefined) {
+    throw new Error(`rules[${index}] (${ruleId}) target.expectedState is only supported for mode=file`);
+  }
+  const expectedState =
+    mode === 'file'
+      ? typeof target.expectedState === 'string' && target.expectedState.trim().length > 0
+        ? target.expectedState.trim()
+        : 'present'
+      : 'present';
+  if (mode === 'file' && !TARGET_EXPECTED_STATES.has(expectedState)) {
+    throw new Error(
+      `rules[${index}] (${ruleId}) target.expectedState must be one of: present, missing`
+    );
+  }
+
   const forbiddenSnippets =
     target.forbiddenSnippets === undefined
       ? []
@@ -39,8 +65,59 @@ const normalizeManifestTarget = (target, ruleId, index) => {
       ? []
       : normalizeManifestReplacements(target.replacements, ruleId, file);
 
+  const arrayName =
+    mode === 'const_array'
+      ? typeof target.arrayName === 'string' && target.arrayName.trim().length > 0
+        ? target.arrayName.trim()
+        : null
+      : null;
+  const expectedItems =
+    mode === 'const_array'
+      ? normalizeStringArray(target.expectedItems, `${ruleId}.targets[].expectedItems`)
+      : [];
+
+  if (mode === 'source_scan') {
+    if (requiredSnippets.length > 0) {
+      throw new Error(
+        `${ruleId}.targets[${file}].requiredSnippets is not supported for mode=source_scan`
+      );
+    }
+    if (replacements.length > 0) {
+      throw new Error(`${ruleId}.targets[${file}].replacements is not supported for mode=source_scan`);
+    }
+  }
+
+  if (mode === 'const_array') {
+    if (!arrayName) {
+      throw new Error(`${ruleId}.targets[${file}].arrayName must be a non-empty string`);
+    }
+    if (requiredSnippets.length > 0) {
+      throw new Error(`${ruleId}.targets[${file}].requiredSnippets is not supported for mode=const_array`);
+    }
+    if (forbiddenSnippets.length > 0) {
+      throw new Error(
+        `${ruleId}.targets[${file}].forbiddenSnippets is not supported for mode=const_array`
+      );
+    }
+    if (replacements.length > 0) {
+      throw new Error(`${ruleId}.targets[${file}].replacements is not supported for mode=const_array`);
+    }
+  }
+
+  if (mode === 'file' && expectedState === 'missing') {
+    if (forbiddenSnippets.length > 0 || requiredSnippets.length > 0 || replacements.length > 0) {
+      throw new Error(
+        `${ruleId}.targets[${file}] expectedState=missing cannot define snippets/replacements`
+      );
+    }
+  }
+
   return {
+    mode,
     file,
+    expectedState,
+    arrayName,
+    expectedItems,
     forbiddenSnippets,
     requiredSnippets,
     replacements,
@@ -108,6 +185,40 @@ export const resolveLegacyPruneManifestPath = (
   manifestRelativePath = DEFAULT_LEGACY_PRUNE_MANIFEST_RELATIVE_PATH
 ) => path.join(root, manifestRelativePath);
 
+const toRelative = (root, absolutePath) => path.relative(root, absolutePath).split(path.sep).join('/');
+
+const isSourceCodeFile = (file) => /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(file);
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const isTestFile = (relativeFile) => {
+  if (relativeFile.includes('/__tests__/')) return true;
+  return /\.(test|spec)\.[tj]sx?$/.test(relativeFile);
+};
+
+const collectSourceFiles = (dir) => {
+  if (!fs.existsSync(dir)) return [];
+  const stack = [dir];
+  const files = [];
+
+  while (stack.length > 0) {
+    const current = stack.pop();
+    if (!current) continue;
+    const entries = fs.readdirSync(current, { withFileTypes: true });
+    for (const entry of entries) {
+      const absolute = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(absolute);
+        continue;
+      }
+      if (!entry.isFile()) continue;
+      if (!isSourceCodeFile(entry.name)) continue;
+      files.push(absolute);
+    }
+  }
+
+  return files;
+};
+
 export const loadLegacyPruneManifest = (
   root,
   manifestRelativePath = DEFAULT_LEGACY_PRUNE_MANIFEST_RELATIVE_PATH
@@ -160,7 +271,102 @@ export const evaluateLegacyPruneManifest = (
 
   for (const rule of manifest.rules) {
     for (const target of rule.targets) {
+      if (target.mode === 'source_scan') {
+        const absoluteScanRoot = path.join(root, target.file);
+        if (!fs.existsSync(absoluteScanRoot)) {
+          if (includeTargetFileMissingFindings) {
+            findings.push({
+              ruleId: rule.id,
+              file: target.file,
+              type: 'missing_target_file',
+              message: `manifest target file is missing: ${target.file}`,
+            });
+          }
+          continue;
+        }
+
+        const stats = fs.statSync(absoluteScanRoot);
+        const sourceFiles = stats.isDirectory()
+          ? collectSourceFiles(absoluteScanRoot)
+          : stats.isFile() && isSourceCodeFile(path.basename(absoluteScanRoot))
+            ? [absoluteScanRoot]
+            : [];
+
+        for (const absoluteSourcePath of sourceFiles) {
+          const relativeSourcePath = toRelative(root, absoluteSourcePath);
+          if (isTestFile(relativeSourcePath)) continue;
+          const text = fs.readFileSync(absoluteSourcePath, 'utf8');
+          for (const snippet of target.forbiddenSnippets) {
+            if (text.includes(snippet)) {
+              findings.push({
+                ruleId: rule.id,
+                file: relativeSourcePath,
+                type: 'forbidden_snippet_present',
+                snippet,
+                message: `forbidden snippet detected: ${snippet}`,
+              });
+            }
+          }
+        }
+
+        continue;
+      }
+
+      if (target.mode === 'const_array') {
+        const absolutePath = path.join(root, target.file);
+        if (!fs.existsSync(absolutePath)) {
+          if (includeTargetFileMissingFindings) {
+            findings.push({
+              ruleId: rule.id,
+              file: target.file,
+              type: 'missing_target_file',
+              message: `manifest target file is missing: ${target.file}`,
+            });
+          }
+          continue;
+        }
+
+        const text = fs.readFileSync(absolutePath, 'utf8');
+        const arrayMatch = text.match(
+          new RegExp(`${escapeRegExp(target.arrayName)}\\s*=\\s*\\[([\\s\\S]*?)\\]\\s*as\\s+const`)
+        );
+        if (!arrayMatch) {
+          findings.push({
+            ruleId: rule.id,
+            file: target.file,
+            type: 'const_array_parse_failed',
+            message: `failed to parse const array "${target.arrayName}"`,
+          });
+          continue;
+        }
+
+        const body = arrayMatch[1] ?? '';
+        const actualItems = Array.from(body.matchAll(/'([^']+)'/g)).map((match) => match[1]);
+        if (JSON.stringify(actualItems) !== JSON.stringify(target.expectedItems)) {
+          findings.push({
+            ruleId: rule.id,
+            file: target.file,
+            type: 'const_array_items_mismatch',
+            message: `const array "${target.arrayName}" mismatch; expected ${JSON.stringify(target.expectedItems)}, received ${JSON.stringify(actualItems)}`,
+          });
+        }
+
+        continue;
+      }
+
       const absolutePath = path.join(root, target.file);
+      if (target.expectedState === 'missing') {
+        if (fs.existsSync(absolutePath)) {
+          findings.push({
+            ruleId: rule.id,
+            file: target.file,
+            type: 'unexpected_target_file_present',
+            message: `manifest target file must remain removed: ${target.file}`,
+          });
+        }
+        continue;
+      }
+
       if (!fs.existsSync(absolutePath)) {
         if (includeTargetFileMissingFindings) {
           findings.push({
@@ -224,10 +430,71 @@ export const applyLegacyPruneManifest = (manifest, { root, dryRun = false }) => 
 
   for (const rule of manifest.rules) {
     for (const target of rule.targets) {
+      if (target.mode === 'source_scan') {
+        const absoluteScanRoot = path.join(root, target.file);
+        const missingTargetFile = !fs.existsSync(absoluteScanRoot);
+        let scannedFileCount = 0;
+        if (!missingTargetFile) {
+          const stats = fs.statSync(absoluteScanRoot);
+          const sourceFiles = stats.isDirectory()
+            ? collectSourceFiles(absoluteScanRoot)
+            : stats.isFile() && isSourceCodeFile(path.basename(absoluteScanRoot))
+              ? [absoluteScanRoot]
+              : [];
+          scannedFileCount = sourceFiles
+            .map((absoluteSourcePath) => toRelative(root, absoluteSourcePath))
+            .filter((relativeSourcePath) => !isTestFile(relativeSourcePath)).length;
+        }
+
+        targetReports.push({
+          ruleId: rule.id,
+          mode: target.mode,
+          expectedState: target.expectedState,
+          file: target.file,
+          missingTargetFile,
+          changed: false,
+          replacementCount: 0,
+          replacements: [],
+          scannedFileCount,
+        });
+        continue;
+      }
+
+      if (target.mode === 'const_array') {
+        const absolutePath = path.join(root, target.file);
+        targetReports.push({
+          ruleId: rule.id,
+          mode: target.mode,
+          expectedState: target.expectedState,
+          file: target.file,
+          missingTargetFile: !fs.existsSync(absolutePath),
+          changed: false,
+          replacementCount: 0,
+          replacements: [],
+        });
+        continue;
+      }
+
       const absolutePath = path.join(root, target.file);
+      if (target.expectedState === 'missing') {
+        targetReports.push({
+          ruleId: rule.id,
+          mode: target.mode,
+          expectedState: target.expectedState,
+          file: target.file,
+          missingTargetFile: !fs.existsSync(absolutePath),
+          changed: false,
+          replacementCount: 0,
+          replacements: [],
+        });
+        continue;
+      }
+
       if (!fs.existsSync(absolutePath)) {
         targetReports.push({
           ruleId: rule.id,
+          mode: target.mode,
+          expectedState: target.expectedState,
           file: target.file,
           missingTargetFile: true,
           changed: false,
@@ -276,6 +543,8 @@ export const applyLegacyPruneManifest = (manifest, { root, dryRun = false }) => 
 
       targetReports.push({
         ruleId: rule.id,
+        mode: target.mode,
+        expectedState: target.expectedState,
         file: target.file,
         missingTargetFile: false,
         changed,

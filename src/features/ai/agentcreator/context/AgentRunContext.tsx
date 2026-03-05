@@ -54,7 +54,7 @@ export const useAgentRunDetail = () => {
   return context;
 };
 
-// --- Legacy Aggregator ---
+// --- Context Aggregator ---
 
 interface AgentRunContextType extends AgentRunListData, AgentRunSelectionData, AgentRunDetailData {}
 

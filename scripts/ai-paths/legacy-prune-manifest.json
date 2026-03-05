@@ -1260,6 +1260,347 @@
           ]
         }
       ]
+    },
+    {
+      "id": "runtime_retry_legacy_enabled",
+      "description": "Runtime engine retry flow must not reintroduce legacy enabled compatibility parsing.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/runtime/engine-core.ts",
+          "forbiddenSnippets": [
+            "legacyEnabledValue",
+            "enabled?: unknown"
+          ],
+          "requiredSnippets": []
+        }
+      ]
+    },
+    {
+      "id": "runtime_halt_legacy_control",
+      "description": "Runtime engine halt control must not reintroduce legacy control alias shape.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/runtime/engine-core.ts",
+          "forbiddenSnippets": [
+            "(options as Record<string, unknown>)['control']",
+            "| { onHalt?:"
+          ],
+          "requiredSnippets": []
+        }
+      ]
+    },
+    {
+      "id": "run_mode_queue_alias",
+      "description": "Settings persistence/path actions must reject legacy runMode='queue' alias checks.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts",
+          "forbiddenSnippets": [
+            "runMode === 'queue'"
+          ],
+          "requiredSnippets": []
+        },
+        {
+          "file": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsPathActions.ts",
+          "forbiddenSnippets": [
+            "runMode === 'queue'"
+          ],
+          "requiredSnippets": []
+        }
+      ]
+    },
+    {
+      "id": "request_id_lookup_contract",
+      "description": "Path run service requestId lookup must remain canonical provider-safe pathless filter.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/services/path-run-service.ts",
+          "forbiddenSnippets": [
+            "Provider-safe fallback when JSON-path filtering on meta is unavailable.",
+            "existingByScan"
+          ],
+          "requiredSnippets": [
+            "requestId",
+            "limit: 1",
+            "offset: 0"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "runtime_node_status_alias",
+      "description": "Runtime node status handling must not include paused/dead_lettered legacy aliases.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/services/path-run-executor.logic.ts",
+          "forbiddenSnippets": [
+            "case 'paused':",
+            "case 'dead_lettered':"
+          ],
+          "requiredSnippets": []
+        },
+        {
+          "file": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/utils.ts",
+          "forbiddenSnippets": [
+            "if (status === 'paused')",
+            "if (status === 'dead_lettered')"
+          ],
+          "requiredSnippets": []
+        }
+      ]
+    },
+    {
+      "id": "database_node_provider_normalization_contract",
+      "description": "Database node query normalization must remain canonical without legacy-provider compatibility shims.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/hooks/useDatabaseNodeConfigState.ts",
+          "forbiddenSnippets": [
+            "LEGACY_MONGO_DEFAULT_QUERY_TEMPLATE",
+            "const isLegacyMongoDefaultQuery = (query: DbQueryConfig): boolean =>",
+            "const normalizeLegacyQueryProvider = (query: DbQueryConfig): DbQueryConfig =>",
+            "query.provider !== 'auto' && query.provider !== 'mongodb' && query.provider !== 'prisma'",
+            "if (isLegacyMongoDefaultQuery(query)) {"
+          ],
+          "requiredSnippets": [
+            "const normalizeQueryConfig = (query: DbQueryConfig): DbQueryConfig => ({",
+            "queryTemplate: normalizeTemplateText(query.queryTemplate ?? ''),",
+            "() => normalizeQueryConfig(databaseConfig.query ?? DEFAULT_QUERY),"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "graph_ports_legacy_alias_cleanup",
+      "description": "Graph port normalization must not reintroduce legacy alias compatibility branches.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/utils/graph.ports.ts",
+          "forbiddenSnippets": [
+            "normalized === 'images (urls)'",
+            "normalized === 'images(urls)'",
+            "normalized === 'image urls'",
+            "normalized === 'text'",
+            "normalized === 'productjson'",
+            "normalized === 'simulation'",
+            "fromPort !== 'simulation'"
+          ],
+          "requiredSnippets": []
+        }
+      ]
+    },
+    {
+      "id": "path_save_raw_message_contract",
+      "description": "Path-save raw-message patterns must stay canonical and avoid legacy/deprecated compatibility wording.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.helpers.ts",
+          "forbiddenSnippets": [
+            "/deprecated ai snapshot keys/i",
+            "/legacy ai paths/i"
+          ],
+          "requiredSnippets": [
+            "/ai path config contains/i",
+            "/invalid ai paths runtime state payload/i",
+            "/^invalid payload\\b/i"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "validation_docs_fallback_manifest_naming_channel",
+      "description": "Validation docs fallback manifest naming must remain on BUILTIN channels only.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.constants.ts",
+          "forbiddenSnippets": [
+            "LEGACY_FALLBACK_MANIFEST",
+            "version: 'fallback.v1'"
+          ],
+          "requiredSnippets": [
+            "export const BUILTIN_FALLBACK_MANIFEST",
+            "version: 'builtin.v1'"
+          ]
+        },
+        {
+          "file": "src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts",
+          "forbiddenSnippets": [
+            "LEGACY_FALLBACK_MANIFEST",
+            "version: 'fallback.v1'"
+          ],
+          "requiredSnippets": [
+            "BUILTIN_FALLBACK_MANIFEST,",
+            "return BUILTIN_FALLBACK_MANIFEST;"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "legacy_validation_key_runtime_source_scan",
+      "description": "Runtime source must not reintroduce legacy ai_paths_validation_v1 key usage.",
+      "targets": [
+        {
+          "mode": "source_scan",
+          "file": "src",
+          "forbiddenSnippets": [
+            "ai_paths_validation_v1"
+          ],
+          "requiredSnippets": []
+        }
+      ]
+    },
+    {
+      "id": "legacy_index_key_runtime_source_scan",
+      "description": "Runtime source must not reintroduce legacy ai_paths_index_v1 key usage.",
+      "targets": [
+        {
+          "mode": "source_scan",
+          "file": "src",
+          "forbiddenSnippets": [
+            "ai_paths_index_v1"
+          ],
+          "requiredSnippets": []
+        }
+      ]
+    },
+    {
+      "id": "forbidden_maintenance_action_ids_runtime_source_scan",
+      "description": "Runtime source must not reintroduce forbidden legacy maintenance action ids.",
+      "targets": [
+        {
+          "mode": "source_scan",
+          "file": "src",
+          "forbiddenSnippets": [
+            "upgrade_translation_en_pl",
+            "ensure_parameter_inference_defaults",
+            "upgrade_runtime_input_contracts",
+            "migrate_legacy_starter_workflows"
+          ],
+          "requiredSnippets": []
+        }
+      ]
+    },
+    {
+      "id": "trigger_fetcher_migration_module_removed",
+      "description": "Legacy trigger->fetcher migration module must remain removed from runtime source.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/normalization/normalization.edges.ts",
+          "expectedState": "missing",
+          "forbiddenSnippets": [],
+          "requiredSnippets": []
+        }
+      ]
+    },
+    {
+      "id": "trigger_fetcher_migration_tokens_runtime_source_scan",
+      "description": "Runtime source must not reintroduce trigger->fetcher migration compatibility tokens.",
+      "targets": [
+        {
+          "mode": "source_scan",
+          "file": "src",
+          "forbiddenSnippets": [
+            "migrateTriggerToFetcherGraph",
+            "TriggerToFetcherMigrationResult"
+          ],
+          "requiredSnippets": []
+        }
+      ]
+    },
+    {
+      "id": "legacy_dbquery_provider_migration_tokens_runtime_source_scan",
+      "description": "Runtime source must not reintroduce legacy db-query provider migration tokens.",
+      "targets": [
+        {
+          "mode": "source_scan",
+          "file": "src",
+          "forbiddenSnippets": [
+            "migrateLegacyDbQueryProvider",
+            "DEFAULT_LEGACY_DB_QUERY_TEMPLATE"
+          ],
+          "requiredSnippets": []
+        }
+      ]
+    },
+    {
+      "id": "feature_run_sources_duplicate_module_removed",
+      "description": "Feature-level duplicate run-sources helper module must remain removed.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/lib/run-sources.ts",
+          "expectedState": "missing",
+          "forbiddenSnippets": [],
+          "requiredSnippets": []
+        }
+      ]
+    },
+    {
+      "id": "db_query_update_shim_retirement_state",
+      "description": "Legacy db-command/db-query/db-update shim files must stay removed while db-action files remain present.",
+      "targets": [
+        {
+          "file": "src/app/api/ai-paths/db-command/handler.ts",
+          "expectedState": "missing",
+          "forbiddenSnippets": [],
+          "requiredSnippets": []
+        },
+        {
+          "file": "src/app/api/ai-paths/db-command/route.ts",
+          "expectedState": "missing",
+          "forbiddenSnippets": [],
+          "requiredSnippets": []
+        },
+        {
+          "file": "src/app/api/ai-paths/db-query/handler.ts",
+          "expectedState": "missing",
+          "forbiddenSnippets": [],
+          "requiredSnippets": []
+        },
+        {
+          "file": "src/app/api/ai-paths/db-query/route.ts",
+          "expectedState": "missing",
+          "forbiddenSnippets": [],
+          "requiredSnippets": []
+        },
+        {
+          "file": "src/app/api/ai-paths/db-update/handler.ts",
+          "expectedState": "missing",
+          "forbiddenSnippets": [],
+          "requiredSnippets": []
+        },
+        {
+          "file": "src/app/api/ai-paths/db-update/route.ts",
+          "expectedState": "missing",
+          "forbiddenSnippets": [],
+          "requiredSnippets": []
+        },
+        {
+          "file": "src/app/api/ai-paths/db-action/handler.ts",
+          "forbiddenSnippets": [],
+          "requiredSnippets": []
+        },
+        {
+          "file": "src/app/api/ai-paths/db-action/route.ts",
+          "forbiddenSnippets": [],
+          "requiredSnippets": []
+        }
+      ]
+    },
+    {
+      "id": "maintenance_action_ids_const_array_contract",
+      "description": "Maintenance action ids constant must remain the canonical exact action-id list.",
+      "targets": [
+        {
+          "mode": "const_array",
+          "file": "src/features/ai/ai-paths/server/settings-store.constants.ts",
+          "arrayName": "AI_PATHS_MAINTENANCE_ACTION_IDS",
+          "expectedItems": [
+            "compact_oversized_configs",
+            "repair_path_index",
+            "ensure_starter_workflow_defaults"
+          ]
+        }
+      ]
     }
   ]
 }

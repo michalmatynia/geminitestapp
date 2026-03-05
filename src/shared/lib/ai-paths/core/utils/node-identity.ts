@@ -97,6 +97,36 @@ const createNodeTypeHashId = (args: {
   return createHashedIdentifier(NODE_TYPE_ID_PREFIX, seed);
 };
 
+const createNodeInstanceIdFromSource = (
+  args: {
+    pathId: string;
+    sourceId: string;
+    node: NodeIdentityLike;
+    occurrence: number;
+  },
+  usedIds: Set<string>
+): string => {
+  let collisionSalt = 0;
+  let candidate = '';
+  while (!candidate || usedIds.has(candidate)) {
+    const seed = stableStringify({
+      kind: 'ai_paths_node_instance',
+      pathId: asTrimmedString(args.pathId) || 'path',
+      // Keep stable seed key name for deterministic id continuity.
+      legacyId: asTrimmedString(args.sourceId) || 'missing',
+      type: asTrimmedString(args.node.type) || 'unknown',
+      title: asTrimmedString(args.node.title),
+      triggerEvent: getTriggerEvent(args.node),
+      occurrence: Math.max(1, Math.trunc(args.occurrence)),
+      collisionSalt,
+    });
+    candidate = createHashedIdentifier(NODE_INSTANCE_ID_PREFIX, seed);
+    collisionSalt += 1;
+  }
+  usedIds.add(candidate);
+  return candidate;
+};
+
 export const derivePaletteNodeTypeId = (
   definition: Pick<NodeDefinition, 'type' | 'title' | 'config'>,
   index?: number,

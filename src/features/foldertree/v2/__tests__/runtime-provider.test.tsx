@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, waitFor } from '@testing-library/react';
 
 import {
@@ -78,6 +78,179 @@ describe('MasterFolderTreeRuntimeProvider', () => {
     await waitFor(() => {
       expect(undoCalls).toEqual(['undo']);
     });
+  });
+
+  it('routes undo shortcut to the currently focused instance across multiple registrations', async () => {
+    const undoCalls: string[] = [];
+
+    const MultiUndoProbe = () => {
+      const runtime = useMasterFolderTreeRuntime();
+      useEffect(() => {
+        const unregisterAlpha = runtime.registerInstance({
+          id: 'undo-alpha',
+          getNodeCount: () => 1,
+          canUndo: () => true,
+          undo: () => {
+            undoCalls.push('alpha');
+          },
+        });
+        const unregisterBeta = runtime.registerInstance({
+          id: 'undo-beta',
+          getNodeCount: () => 1,
+          canUndo: () => true,
+          undo: () => {
+            undoCalls.push('beta');
+          },
+        });
+        runtime.setFocusedInstance('undo-alpha');
+
+        return (): void => {
+          unregisterAlpha();
+          unregisterBeta();
+        };
+        // Keep registration stable for this test; re-registering on focus updates
+        // would reset focus to alpha and mask target-routing behavior.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, []);
+
+      return (
+        <button
+          type='button'
+          data-testid='focus-beta'
+          onClick={() => {
+            runtime.setFocusedInstance('undo-beta');
+          }}
+        >
+          focus beta
+        </button>
+      );
+    };
+
+    const { getByTestId } = render(
+      <MasterFolderTreeRuntimeProvider>
+        <MultiUndoProbe />
+      </MasterFolderTreeRuntimeProvider>
+    );
+
+    fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
+
+    await waitFor(() => {
+      expect(undoCalls).toEqual(['alpha']);
+    });
+
+    fireEvent.click(getByTestId('focus-beta'));
+    fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
+
+    await waitFor(() => {
+      expect(undoCalls).toEqual(['alpha', 'beta']);
+    });
+  });
+
+  it('dispatches keyboard handlers only for the focused instance', async () => {
+    const alphaHandler = vi.fn();
+    const betaHandler = vi.fn();
+
+    const KeyboardProbe = () => {
+      const runtime = useMasterFolderTreeRuntime();
+
+      useEffect(() => {
+        const unregisterAlpha = runtime.registerInstance({
+          id: 'keyboard-alpha',
+          getNodeCount: () => 1,
+        });
+        const unregisterBeta = runtime.registerInstance({
+          id: 'keyboard-beta',
+          getNodeCount: () => 1,
+        });
+        const unregisterAlphaHandler = runtime.registerKeyboardHandler('keyboard-alpha', () => {
+          alphaHandler();
+        });
+        const unregisterBetaHandler = runtime.registerKeyboardHandler('keyboard-beta', () => {
+          betaHandler();
+        });
+        runtime.setFocusedInstance('keyboard-alpha');
+
+        return (): void => {
+          unregisterAlphaHandler();
+          unregisterBetaHandler();
+          unregisterAlpha();
+          unregisterBeta();
+        };
+        // Keep registration stable for this test; re-registering on focus updates
+        // would re-focus alpha and invalidate the target dispatch assertion.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, []);
+
+      return (
+        <button
+          type='button'
+          data-testid='focus-keyboard-beta'
+          onClick={() => runtime.setFocusedInstance('keyboard-beta')}
+        >
+          focus keyboard beta
+        </button>
+      );
+    };
+
+    const { getByTestId } = render(
+      <MasterFolderTreeRuntimeProvider>
+        <KeyboardProbe />
+      </MasterFolderTreeRuntimeProvider>
+    );
+
+    fireEvent.keyDown(window, { key: 'ArrowDown' });
+
+    await waitFor(() => {
+      expect(alphaHandler).toHaveBeenCalledTimes(1);
+      expect(betaHandler).toHaveBeenCalledTimes(0);
+    });
+
+    fireEvent.click(getByTestId('focus-keyboard-beta'));
+    fireEvent.keyDown(window, { key: 'ArrowDown' });
+
+    await waitFor(() => {
+      expect(alphaHandler).toHaveBeenCalledTimes(1);
+      expect(betaHandler).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('stores search cache per instance and clears it after unregister', async () => {
+    let runtimeRef: ReturnType<typeof useMasterFolderTreeRuntime> | null = null;
+
+    const SearchCacheProbe = () => {
+      const runtime = useMasterFolderTreeRuntime();
+
+      useEffect(() => {
+        runtimeRef = runtime;
+        const unregister = runtime.registerInstance({
+          id: 'search-cache-instance',
+          getNodeCount: () => 2,
+        });
+        runtime.setCachedSearchIndex('search-cache-instance', ['node-a', 'node-b']);
+        return unregister;
+      }, [runtime]);
+
+      return null;
+    };
+
+    const rendered = render(
+      <MasterFolderTreeRuntimeProvider>
+        <SearchCacheProbe />
+      </MasterFolderTreeRuntimeProvider>
+    );
+
+    await waitFor(() => {
+      expect(runtimeRef?.getInstanceIds()).toContain('search-cache-instance');
+      expect(runtimeRef?.getCachedSearchIndex('search-cache-instance')).toEqual([
+        'node-a',
+        'node-b',
+      ]);
+    });
+
+    rendered.unmount();
+
+    expect(runtimeRef?.getCachedSearchIndex('search-cache-instance')).toBeNull();
+    expect(runtimeRef?.getInstanceIds()).not.toContain('search-cache-instance');
   });
 
   it('does not hijack undo shortcut while typing in input', async () => {

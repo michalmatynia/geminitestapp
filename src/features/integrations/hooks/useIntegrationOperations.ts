@@ -11,8 +11,9 @@ import type { ProductWithImages } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateListingBadges } from '@/shared/lib/query-invalidation';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-import { listingBadgesQueryKey } from './listingCache';
+const listingBadgesQueryKey = QUERY_KEYS.integrations.productListingsBadges();
 
 const toMarketplaceEntry = (value: unknown): MarketplaceBadgeEntry =>
   value && typeof value === 'object' ? (value as MarketplaceBadgeEntry) : {};

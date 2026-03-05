@@ -23,14 +23,13 @@ import {
 } from '@/shared/ui';
 
 export default function RegisterPage(): React.JSX.Element {
-  const { userPageSettings } = useAuth();
-
-  const allowSignup = Boolean(userPageSettings.allowSignup);
-
-  return <RegisterForm allowSignup={allowSignup} />;
+  return <RegisterForm />;
 }
 
-function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Element {
+function RegisterForm(): React.JSX.Element {
+  const { userPageSettings } = useAuth();
+  const allowSignup = Boolean(userPageSettings.allowSignup);
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

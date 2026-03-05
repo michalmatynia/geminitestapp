@@ -142,7 +142,7 @@ const migrateProjectScopedSettings = async (params: {
   toProjectId: string;
 }): Promise<{
   migrated: boolean;
-  deletedLegacyKeys: number;
+  deletedUnsupportedKeys: number;
   targetKey: string | null;
 }> => {
   const provider = await getAppDbProvider();
@@ -169,14 +169,14 @@ const migrateProjectScopedSettings = async (params: {
   if (sourceValue) {
     await upsertSettingByKey(targetKey, sourceValue, provider);
   }
-  const deletedLegacyKeys = await deleteSettingsByKeys(fromKeys, provider);
-  if (sourceValue || deletedLegacyKeys > 0) {
+  const deletedUnsupportedKeys = await deleteSettingsByKeys(fromKeys, provider);
+  if (sourceValue || deletedUnsupportedKeys > 0) {
     clearSettingsCache();
   }
 
   return {
     migrated: Boolean(sourceValue),
-    deletedLegacyKeys,
+    deletedUnsupportedKeys,
     targetKey,
   };
 };
@@ -703,7 +703,7 @@ export async function patchImageStudioProjectHandler(
       updatedSlotLinks,
       updatedImageFiles,
       migratedSettings: settingsStats.migrated,
-      deletedLegacySettingsKeys: settingsStats.deletedLegacyKeys,
+      deletedUnsupportedSettingsKeys: settingsStats.deletedUnsupportedKeys,
       settingsKey: settingsStats.targetKey,
     },
   });

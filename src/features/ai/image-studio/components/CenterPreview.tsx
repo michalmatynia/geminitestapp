@@ -35,7 +35,6 @@ import {
   type VariantPanelContextValue,
 } from './center-preview/VariantPanelContext';
 import { VariantTooltipPortal } from './center-preview/VariantTooltipPortal';
-import { VersionNodeDetailsModal } from './VersionNodeDetailsModal';
 import { useGenerationActions, useGenerationState } from '../context/GenerationContext';
 import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
@@ -45,15 +44,22 @@ import { useVersionGraphState } from '../context/VersionGraphContext';
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import { asObjectRecord, type VariantThumbnailInfo } from './center-preview/preview-utils';
 import {
-  buildDetailsNodeForCenterPreview,
   isTreeRevealableCardSlot,
   resolveSourceSlotIdFromGeneratedPath,
   resolveVariantSlotIdForCenterPreview,
 } from './center-preview/variant-thumbnails';
 
-import type { VersionNode } from '../context/VersionGraphContext';
 import { CenterPreviewHeader } from './center-preview/sections/CenterPreviewHeader';
 import { CenterPreviewCanvas } from './center-preview/sections/CenterPreviewCanvas';
+import {
+  CenterPreviewCanvasSectionProvider,
+  type CenterPreviewCanvasContextValue,
+} from './center-preview/sections/CenterPreviewCanvasContext';
+import {
+  CenterPreviewHeaderSectionProvider,
+  type CenterPreviewHeaderContextValue,
+} from './center-preview/sections/CenterPreviewHeaderContext';
+import { CenterPreviewDetailsModal } from './center-preview/CenterPreviewDetailsModal';
 
 const PREVIEW_CANVAS_MIN_HEIGHT_BY_SIZE: Record<PreviewCanvasSize, number> = {
   regular: 280,
@@ -66,10 +72,8 @@ const IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID = 'image-studio-quick-actions-host';
 
 export function CenterPreviewInner(): React.JSX.Element {
   const queryClient = useQueryClient();
-  const { isFocusMode, maskPreviewEnabled, previewCanvasSize, pendingSequenceThumbnail } =
-    useUiState();
+  const { maskPreviewEnabled, previewCanvasSize, pendingSequenceThumbnail } = useUiState();
   const {
-    toggleFocusMode,
     registerPreviewCanvasViewportCropResolver,
     registerPreviewCanvasImageFrameResolver,
     resetCanvasImageOffset,
@@ -111,9 +115,7 @@ export function CenterPreviewInner(): React.JSX.Element {
     setRightSplitZoom,
     variantLoadingId,
     setVariantLoadingId,
-    variantTooltip,
     setVariantTooltip,
-    detailsSlotId,
     setDetailsSlotId,
   } = useCenterPreviewContext();
 
@@ -454,13 +456,6 @@ export function CenterPreviewInner(): React.JSX.Element {
     setSplitVariantView(true);
   }, [canCompareSelectedVariants, previewMode]);
 
-  const variantTooltipPosition = useMemo(() => {
-    if (!variantTooltip || typeof window === 'undefined') return null;
-    const left = Math.max(8, Math.min(variantTooltip.x + 14, window.innerWidth - 258));
-    const top = Math.max(8, Math.min(variantTooltip.y + 14, window.innerHeight - 138));
-    return { left, top };
-  }, [variantTooltip]);
-
   const handleLoadVariantToCanvas = useCallback(
     async (variant: VariantThumbnailInfo): Promise<void> => {
       if (variantLoadingId === variant.id) return;
@@ -649,26 +644,6 @@ export function CenterPreviewInner(): React.JSX.Element {
     [resolveVariantSlotId, toast]
   );
 
-  const handleCloseVariantDetails = useCallback((): void => {
-    setDetailsSlotId(null);
-  }, []);
-
-  const detailsSlot = useMemo(
-    () => (detailsSlotId ? (slots.find((slot) => slot.id === detailsSlotId) ?? null) : null),
-    [detailsSlotId, slots]
-  );
-
-  const detailsNode = useMemo<VersionNode | null>(
-    () => buildDetailsNodeForCenterPreview(detailsSlot, slots),
-    [detailsSlot, slots]
-  );
-
-  const getSlotImageSrc = useCallback(
-    (slot: ImageStudioSlotRecord): string | null =>
-      getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl),
-    [productImagesExternalBaseUrl]
-  );
-
   const handleSaveScreenshot = useCallback(async (): Promise<void> => {
     if (!workingSlot?.id) {
       toast('Select a slot before saving screenshot.', { variant: 'info' });
@@ -754,39 +729,74 @@ export function CenterPreviewInner(): React.JSX.Element {
     ]
   );
 
+  const centerPreviewCanvasContextValue = useMemo<CenterPreviewCanvasContextValue>(
+    () => ({
+      vectorContextValue,
+      projectCanvasSize,
+      activeCanvasImageSrc,
+      liveMaskShapes,
+      splitVariantView,
+      canCompareSelectedVariants,
+      compareVariantImageA,
+      compareVariantImageB,
+      canCompareWithSource,
+      sourceSlotImageSrc,
+      workingSlotImageSrc,
+      isCompositeSlot,
+      canNavigateToSource,
+      canRevealLoadedCardInTree,
+      onPreviewCanvasCropRectChange: handlePreviewCanvasCropRectChange,
+      onPreviewCanvasImageFrameChange: handlePreviewCanvasImageFrameChange,
+      onGoToSourceSlot: handleGoToSourceSlot,
+      onToggleSourceVariantView: handleToggleSourceVariantView,
+      onToggleSplitVariantView: handleToggleSplitVariantView,
+      onRevealInTreeFromCanvas: handleRevealInTreeFromCanvas,
+    }),
+    [
+      vectorContextValue,
+      projectCanvasSize,
+      activeCanvasImageSrc,
+      liveMaskShapes,
+      splitVariantView,
+      canCompareSelectedVariants,
+      compareVariantImageA,
+      compareVariantImageB,
+      canCompareWithSource,
+      sourceSlotImageSrc,
+      workingSlotImageSrc,
+      isCompositeSlot,
+      canNavigateToSource,
+      canRevealLoadedCardInTree,
+      handlePreviewCanvasCropRectChange,
+      handlePreviewCanvasImageFrameChange,
+      handleGoToSourceSlot,
+      handleToggleSourceVariantView,
+      handleToggleSplitVariantView,
+      handleRevealInTreeFromCanvas,
+    ]
+  );
+
+  const centerPreviewHeaderContextValue = useMemo<CenterPreviewHeaderContextValue>(
+    () => ({
+      onSaveScreenshot: (): void => {
+        void handleSaveScreenshot();
+      },
+    }),
+    [handleSaveScreenshot]
+  );
+
   return (
     <div className='order-2 relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0'>
-      <CenterPreviewHeader
-        onSaveScreenshot={() => {
-          void handleSaveScreenshot();
-        }}
-      />
-      <FocusModeTogglePortal isFocusMode={isFocusMode} onToggleFocusMode={toggleFocusMode} />
-      <VariantTooltipPortal tooltip={variantTooltip} position={variantTooltipPosition} />
+      <CenterPreviewHeaderSectionProvider value={centerPreviewHeaderContextValue}>
+        <CenterPreviewHeader />
+      </CenterPreviewHeaderSectionProvider>
+      <FocusModeTogglePortal />
+      <VariantTooltipPortal />
       <div className='flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-3 pt-0'>
         <div className='grid content-start gap-3' style={previewGridStyle}>
-          <CenterPreviewCanvas
-            vectorContextValue={vectorContextValue}
-            projectCanvasSize={projectCanvasSize}
-            activeCanvasImageSrc={activeCanvasImageSrc}
-            liveMaskShapes={liveMaskShapes}
-            splitVariantView={splitVariantView}
-            canCompareSelectedVariants={canCompareSelectedVariants}
-            compareVariantImageA={compareVariantImageA}
-            compareVariantImageB={compareVariantImageB}
-            canCompareWithSource={canCompareWithSource}
-            sourceSlotImageSrc={sourceSlotImageSrc}
-            workingSlotImageSrc={workingSlotImageSrc}
-            isCompositeSlot={isCompositeSlot}
-            canNavigateToSource={canNavigateToSource}
-            canRevealLoadedCardInTree={canRevealLoadedCardInTree}
-            handlePreviewCanvasCropRectChange={handlePreviewCanvasCropRectChange}
-            handlePreviewCanvasImageFrameChange={handlePreviewCanvasImageFrameChange}
-            handleGoToSourceSlot={handleGoToSourceSlot}
-            handleToggleSourceVariantView={handleToggleSourceVariantView}
-            handleToggleSplitVariantView={handleToggleSplitVariantView}
-            handleRevealInTreeFromCanvas={handleRevealInTreeFromCanvas}
-          />
+          <CenterPreviewCanvasSectionProvider value={centerPreviewCanvasContextValue}>
+            <CenterPreviewCanvas />
+          </CenterPreviewCanvasSectionProvider>
           {showVariantPanel ? (
             <VariantPanelProvider value={variantPanelContextValue}>
               <VariantPanel />
@@ -797,12 +807,7 @@ export function CenterPreviewInner(): React.JSX.Element {
           <div id={IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID} className='shrink-0' />
         ) : null}
       </div>
-      <VersionNodeDetailsModal
-        isOpen={Boolean(detailsNode)}
-        item={detailsNode}
-        onClose={handleCloseVariantDetails}
-        getSlotImageSrc={getSlotImageSrc}
-      />
+      <CenterPreviewDetailsModal />
       <ConfirmationModal />
     </div>
   );

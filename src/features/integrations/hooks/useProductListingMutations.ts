@@ -18,15 +18,11 @@ import {
   createDeleteMutationV2,
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
-
 import {
-  cancelProductListingsAndJobs,
-  getProductListingsQueryKey,
-  integrationJobsQueryKey,
   invalidateListingsBadgesAndQueues,
   invalidateProductListingsAndBadges,
-  listingBadgesQueryKey,
-} from '@/features/integrations/hooks/listingCache';
+} from '@/shared/lib/query-invalidation';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 type MarketplaceBadgeEntry = {
   base?: string;
@@ -38,6 +34,22 @@ type GenericExportToBaseVariables = ExportToBaseVariables & {
   requestId?: string;
 };
 type ListingBadgesSnapshot = Array<[readonly unknown[], ListingBadgesPayload | undefined]>;
+
+const listingBadgesQueryKey = QUERY_KEYS.integrations.productListingsBadges();
+const integrationJobsQueryKey = QUERY_KEYS.jobs.integrations();
+
+const getProductListingsQueryKey = (productId: string): readonly unknown[] =>
+  QUERY_KEYS.integrations.listings(productId);
+
+const cancelProductListingsAndJobs = async (
+  queryClient: ReturnType<typeof useQueryClient>,
+  productId: string
+): Promise<void> => {
+  await Promise.all([
+    queryClient.cancelQueries({ queryKey: getProductListingsQueryKey(productId) }),
+    queryClient.cancelQueries({ queryKey: integrationJobsQueryKey }),
+  ]);
+};
 
 interface ListingBadgeContext {
   previousListingBadges?: ListingBadgesSnapshot | undefined;

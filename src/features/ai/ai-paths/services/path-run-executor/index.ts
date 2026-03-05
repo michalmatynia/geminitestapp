@@ -126,6 +126,20 @@ export const executePathRun = async (
   const traceId = run.id;
   const runtimeFingerprint = getAiPathsRuntimeFingerprint();
 
+  const publishNodeUpdate = (
+    payload: Partial<AiPathRunNodeRecord> & {
+      nodeId: string;
+      status: AiPathRunNodeRecord['status'];
+    }
+  ): void => {
+    publishRunUpdate(run.id, 'nodes', [
+      {
+        runId: run.id,
+        ...payload,
+      },
+    ]);
+  };
+
   const profiling = createPathRunProfiling();
   let runtimeProfileSummary: RuntimeProfileSummary | null = null;
 
@@ -346,6 +360,20 @@ export const executePathRun = async (
             status: 'running',
           });
 
+          publishNodeUpdate({
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            status: 'running',
+            attempt: nextAttempt,
+            inputs: safeInputs,
+            outputs: safePrevOutputs,
+            startedAt: nodeStartedAt,
+            errorMessage: null,
+            finishedAt: null,
+            updatedAt: nodeStartedAt,
+          });
+
           // These observability writes are non-critical: if MongoDB is degraded
           // the run must still continue.  Individual .catch keeps Promise.all
           // from short-circuiting on the first failure.
@@ -421,6 +449,19 @@ export const executePathRun = async (
           const metadata =
             node.type === 'database' ? extractDatabaseRuntimeMetadata(safeOutputs) : null;
 
+          publishNodeUpdate({
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            status,
+            attempt,
+            inputs: safeInputs,
+            outputs: safeOutputs,
+            finishedAt,
+            updatedAt: finishedAt,
+            errorMessage: status === 'failed' ? (nextOutputs['message'] as string) : null,
+          });
+
           // Non-critical observability writes — individual .catch prevents
           // a MongoDB outage from aborting the run via Promise.all short-circuit.
           await Promise.all([
@@ -479,6 +520,18 @@ export const executePathRun = async (
             status: runtimeStatus,
           });
 
+          publishNodeUpdate({
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            status: runtimeStatus,
+            attempt,
+            outputs: safeOutputs,
+            finishedAt,
+            updatedAt: finishedAt,
+            errorMessage: message,
+          });
+
           await Promise.all([
             repo
               .upsertRunNode(run.id, node.id, {
@@ -535,6 +588,19 @@ export const executePathRun = async (
             previous: accOutputs[node.id],
             next: errorOutputs ?? {},
             status: 'failed',
+          });
+
+          publishNodeUpdate({
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            status: 'failed',
+            attempt,
+            inputs: safeInputs,
+            outputs: errorOutputs ?? undefined,
+            finishedAt,
+            updatedAt: finishedAt,
+            errorMessage: message,
           });
 
           await Promise.all([

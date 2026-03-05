@@ -11,7 +11,10 @@ import type {
 
 import { flattenVisibleNodesV2 } from '../core/engine';
 import { resolveKeyboardAction } from '../operations/keyboard';
-import { useMasterFolderTreeRuntime } from '../runtime/MasterFolderTreeRuntimeProvider';
+import {
+  useFolderTreeShellRuntime,
+  type MasterFolderTreeShellRuntime,
+} from '../shell/useFolderTreeShellRuntime';
 
 export type UseFolderTreeKeyboardNavOptions = {
   /** The tree controller to drive. */
@@ -29,11 +32,13 @@ export type UseFolderTreeKeyboardNavOptions = {
   keyboard: ResolvedFolderTreeKeyboardConfig;
   /** Resolved multi-select capability flags for this instance. */
   multiSelect: ResolvedFolderTreeMultiSelectConfig;
+  /** Optional runtime override to avoid hard dependency on runtime context. */
+  runtime?: MasterFolderTreeShellRuntime | undefined;
 };
 
 /**
  * Opt-in hook that registers keyboard navigation for a tree instance.
- * Must be used inside a MasterFolderTreeRuntimeProvider subtree.
+ * Uses context runtime by default, or an injected runtime when provided.
  *
  * Visible rows are derived automatically from controller.roots and
  * controller.expandedNodeIds — no separate ref required.
@@ -45,8 +50,9 @@ export function useFolderTreeKeyboardNav({
   scrollToNode,
   keyboard,
   multiSelect,
+  runtime: runtimeOverride,
 }: UseFolderTreeKeyboardNavOptions): void {
-  const runtime = useMasterFolderTreeRuntime();
+  const runtime = useFolderTreeShellRuntime(runtimeOverride);
 
   // Keep refs so the handler always reads the latest values without re-registering
   const controllerRef = useRef(controller);

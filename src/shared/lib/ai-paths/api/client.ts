@@ -280,7 +280,7 @@ export async function requeueAiPathDeadLetterRuns(payload: {
 }
 
 // ============================================================================
-// Grouped API Objects (Namespaces) - Compatibility Layer
+// Grouped API Objects (Namespaces)
 // ============================================================================
 
 export const runsApi = {

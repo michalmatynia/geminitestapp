@@ -44,7 +44,7 @@ type RequestedContextTransitionResolvedVia =
   | 'auto_clear'
   | 'none';
 
-const mapRequestedContextRuntimeToLegacyStatus = (
+const mapRequestedContextRuntimeToStatus = (
   status: CaseResolverRuntimeRequestedContextSlice['status']
 ): CaseResolverRequestedCaseStatus => {
   if (status === 'loading') return 'loading';
@@ -125,7 +125,7 @@ export function useCaseResolverStateRequestedContext({
 
   const [requestedCaseStatus, setRequestedCaseStatusState] =
     useState<CaseResolverRequestedCaseStatus>(
-      mapRequestedContextRuntimeToLegacyStatus(initialRequestedContextRuntimeState.status)
+      mapRequestedContextRuntimeToStatus(initialRequestedContextRuntimeState.status)
     );
   const [requestedCaseIssue, setRequestedCaseIssueState] =
     useState<CaseResolverRequestedCaseIssue | null>(initialRequestedContextRuntimeState.issue);
@@ -139,7 +139,7 @@ export function useCaseResolverStateRequestedContext({
   const requestedWorkspaceRefreshFileIdRef = useRef<string | null>(null);
   const requestedWorkspaceMissingFileIdRef = useRef<string | null>(null);
   const requestedCaseStatusRef = useRef<CaseResolverRequestedCaseStatus>(
-    mapRequestedContextRuntimeToLegacyStatus(initialRequestedContextRuntimeState.status)
+    mapRequestedContextRuntimeToStatus(initialRequestedContextRuntimeState.status)
   );
   const requestedCaseIssueRef = useRef<CaseResolverRequestedCaseIssue | null>(
     initialRequestedContextRuntimeState.issue
@@ -180,7 +180,7 @@ export function useCaseResolverStateRequestedContext({
     (event: RequestedContextEvent): CaseResolverRuntimeRequestedContextSlice => {
       const nextState = reduceRequestedContextState(requestedContextRuntimeStateRef.current, event);
       requestedContextRuntimeStateRef.current = nextState;
-      setRequestedCaseStatus(mapRequestedContextRuntimeToLegacyStatus(nextState.status));
+      setRequestedCaseStatus(mapRequestedContextRuntimeToStatus(nextState.status));
       setRequestedCaseIssue(nextState.issue);
       if (requestedContextRetryTickRef.current !== nextState.retryTick) {
         requestedContextRetryTickRef.current = nextState.retryTick;

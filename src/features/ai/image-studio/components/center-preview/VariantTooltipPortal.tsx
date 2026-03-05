@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { Card } from '@/shared/ui';
 
 import { formatBytes, formatUsd, type VariantThumbnailInfo } from './preview-utils';
+import { useCenterPreviewContext } from './CenterPreviewContext';
 
 export type VariantTooltipState = {
   variant: VariantThumbnailInfo;
@@ -11,15 +12,15 @@ export type VariantTooltipState = {
   y: number;
 };
 
-type VariantTooltipPortalProps = {
-  position: { left: number; top: number } | null;
-  tooltip: VariantTooltipState | null;
-};
+export function VariantTooltipPortal(): React.JSX.Element | null {
+  const { variantTooltip: tooltip } = useCenterPreviewContext();
+  const position = React.useMemo(() => {
+    if (!tooltip || typeof window === 'undefined') return null;
+    const left = Math.max(8, Math.min(tooltip.x + 14, window.innerWidth - 258));
+    const top = Math.max(8, Math.min(tooltip.y + 14, window.innerHeight - 138));
+    return { left, top };
+  }, [tooltip]);
 
-export function VariantTooltipPortal({
-  position,
-  tooltip,
-}: VariantTooltipPortalProps): React.JSX.Element | null {
   if (typeof document === 'undefined' || !tooltip || !position) {
     return null;
   }

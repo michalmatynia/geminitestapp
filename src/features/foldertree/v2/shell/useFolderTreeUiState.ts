@@ -13,7 +13,10 @@ import {
   serializeFolderTreeUiStateV2Entry,
   type FolderTreeUiStateV2Entry,
 } from '../settings';
-import { useMasterFolderTreeRuntime } from '../runtime/MasterFolderTreeRuntimeProvider';
+import {
+  useFolderTreeShellRuntime,
+  type MasterFolderTreeShellRuntime,
+} from './useFolderTreeShellRuntime';
 
 const EXPANDED_STATE_PERSIST_DEBOUNCE_MS = 300;
 
@@ -62,9 +65,10 @@ export type FolderTreeUiState = {
 export function useFolderTreeUiState(
   instance: FolderTreeInstance,
   controlledExpandedNodeIds?: ReadonlyArray<string> | undefined,
-  initiallyExpandedNodeIds?: ReadonlyArray<string> | undefined
+  initiallyExpandedNodeIds?: ReadonlyArray<string> | undefined,
+  runtimeOverride?: MasterFolderTreeShellRuntime | undefined
 ): FolderTreeUiState {
-  const runtime = useMasterFolderTreeRuntime();
+  const runtime = useFolderTreeShellRuntime(runtimeOverride);
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const rawUiStateV2 = settingsStore.get(getFolderTreeUiStateV2Key(instance));

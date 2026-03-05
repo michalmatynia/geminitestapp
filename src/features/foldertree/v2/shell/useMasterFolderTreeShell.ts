@@ -26,6 +26,7 @@ import {
 import { useFolderTreeKeyboardNav } from '../hooks/useFolderTreeKeyboardNav';
 import { useFolderTreeProfileConfig } from './useFolderTreeProfileConfig';
 import { useFolderTreeUiState, type FolderTreePanelState } from './useFolderTreeUiState';
+import type { MasterFolderTreeShellRuntime } from './useFolderTreeShellRuntime';
 import type { ResolveFolderTreeIconInput } from './useFolderTreeAppearance';
 
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
@@ -41,6 +42,7 @@ export type UseMasterFolderTreeShellOptions = Omit<
   expandedNodeIds?: MasterTreeId[] | undefined;
   initiallyExpandedNodeIds?: MasterTreeId[] | undefined;
   onKeyboardDeleteRequest?: ((nodeId: MasterTreeId) => void) | undefined;
+  runtime?: MasterFolderTreeShellRuntime | undefined;
 };
 
 export type MasterFolderTreeShell = {
@@ -75,6 +77,7 @@ export function useMasterFolderTreeShell({
   onKeyboardDeleteRequest,
   initiallyExpandedNodeIds,
   expandedNodeIds,
+  runtime,
   ...controllerOptions
 }: UseMasterFolderTreeShellOptions): MasterFolderTreeShell {
   const { toast } = useToast();
@@ -82,7 +85,12 @@ export function useMasterFolderTreeShell({
   const keyboardConfig = useMemo(() => resolveFolderTreeKeyboardConfig(profile), [profile]);
   const multiSelectConfig = useMemo(() => resolveFolderTreeMultiSelectConfig(profile), [profile]);
   const searchConfig = useMemo(() => resolveFolderTreeSearchConfig(profile), [profile]);
-  const uiState = useFolderTreeUiState(instance, expandedNodeIds, initiallyExpandedNodeIds);
+  const uiState = useFolderTreeUiState(
+    instance,
+    expandedNodeIds,
+    initiallyExpandedNodeIds,
+    runtime
+  );
 
   const controller = useFolderTreeInstanceV2({
     ...controllerOptions,
@@ -93,6 +101,7 @@ export function useMasterFolderTreeShell({
       : {}),
     profile,
     instanceId: instance,
+    runtime,
   });
 
   const scrollToNodeRef = useRef<((nodeId: MasterTreeId) => void) | null>(null);
@@ -118,6 +127,7 @@ export function useMasterFolderTreeShell({
     scrollToNode,
     keyboard: keyboardConfig,
     multiSelect: multiSelectConfig,
+    runtime,
   });
 
   useEffect(() => {

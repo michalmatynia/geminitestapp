@@ -18,9 +18,12 @@ import { FolderTreeContextMenu } from './FolderTreeContextMenu';
 import type { FolderTreeContextMenuItem } from './FolderTreeContextMenu';
 
 import { buildRootsV2, flattenVisibleNodesV2 } from '../core/engine';
-import { useMasterFolderTreeRuntime } from '../runtime/MasterFolderTreeRuntimeProvider';
 import { setMasterTreeDragNodeData } from '../operations/drag-data';
 import type { MasterFolderTreeSearchState } from '../search/useMasterFolderTreeSearch';
+import {
+  useFolderTreeShellRuntime,
+  type MasterFolderTreeShellRuntime,
+} from '../shell/useFolderTreeShellRuntime';
 
 import { DefaultRow } from './DefaultRow';
 import { FolderTreeViewportRenderNodeInput } from './types';
@@ -106,6 +109,7 @@ export type FolderTreeViewportV2Props = {
   multiSelectConfig?: ResolvedFolderTreeMultiSelectConfig | undefined;
   searchState?: MasterFolderTreeSearchState | undefined;
   scrollToNodeRef?: React.MutableRefObject<((nodeId: MasterTreeId) => void) | null> | undefined;
+  runtime?: MasterFolderTreeShellRuntime | undefined;
 };
 
 const defaultRootDropIdleClassName = 'border-border/45 bg-card/25 text-gray-400';
@@ -132,9 +136,10 @@ export function FolderTreeViewportV2(props: FolderTreeViewportV2Props): React.JS
     multiSelectConfig,
     searchState,
     scrollToNodeRef,
+    runtime: runtimeOverride,
   } = props;
 
-  const runtime = useMasterFolderTreeRuntime();
+  const runtime = useFolderTreeShellRuntime(runtimeOverride);
   const resolvedMultiSelectConfig = useMemo<ResolvedFolderTreeMultiSelectConfig>(
     () => ({
       enabled: multiSelectConfig?.enabled ?? false,

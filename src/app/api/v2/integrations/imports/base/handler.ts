@@ -203,8 +203,8 @@ export async function postBaseImportsHandler(
   if (!token) {
     throw badRequestError(
       tokenResolution.error ??
-        'Base.com API token is required. Legacy password token fallback is disabled.'
-    );
+        'Base.com API token is required. Password token fallback is disabled.'
+      );
   }
 
   if (action === 'inventories') {

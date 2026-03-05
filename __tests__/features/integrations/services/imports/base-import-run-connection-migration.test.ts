@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { migrateBaseImportRunConnectionId } from '@/features/integrations/services/imports/base-import-run-connection-migration';
+import { migrateBaseImportRunConnectionId } from '../../../../../scripts/db/lib/integrations/base-import-run-connection-migration';
 
 describe('base-import-run-connection-migration', () => {
   it('keeps valid connection id and canonicalizes whitespace', () => {

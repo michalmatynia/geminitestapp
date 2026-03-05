@@ -28,8 +28,6 @@ import {
 import { integrationKeys, playwrightKeys } from '@/shared/lib/query-key-exports';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
-import { getIntegrationConnectionsQueryKey } from './integrationCache';
-
 export function useIntegrations(): ListQuery<Integration> {
   const queryKey = integrationKeys.all;
   const queryFn = async (): Promise<Integration[]> => {
@@ -54,7 +52,7 @@ export function useIntegrations(): ListQuery<Integration> {
 export function useIntegrationConnections(
   integrationId?: string
 ): ListQuery<IntegrationConnection> {
-  const queryKey = getIntegrationConnectionsQueryKey(integrationId);
+  const queryKey = integrationKeys.connections(integrationId);
   const queryFn = async (): Promise<IntegrationConnection[]> => {
     if (!integrationId) return [];
     const data = await api.get<IntegrationConnection[]>(

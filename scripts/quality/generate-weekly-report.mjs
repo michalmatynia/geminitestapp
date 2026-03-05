@@ -299,6 +299,7 @@ const toMarkdown = (report) => {
     );
   }
   lines.push(`- Lint pass rate: ${report.passRates.lint ?? 'n/a'}%`);
+  lines.push(`- Lint-domain pass rate: ${report.passRates.lintDomains ?? 'n/a'}%`);
   lines.push(`- Typecheck pass rate: ${report.passRates.typecheck ?? 'n/a'}%`);
   lines.push(`- Critical-flow gate pass rate: ${report.passRates.criticalFlows ?? 'n/a'}%`);
   lines.push(`- Security smoke gate pass rate: ${report.passRates.securitySmoke ?? 'n/a'}%`);
@@ -419,6 +420,13 @@ const run = async () => {
       command: 'npm',
       commandArgs: ['run', 'lint'],
       timeoutMs: 15 * 60 * 1000,
+    },
+    {
+      id: 'lintDomains',
+      label: 'Lint Domain Gate',
+      command: 'node',
+      commandArgs: ['scripts/quality/run-lint-domain-checks.mjs', '--strict', '--ci', '--no-history'],
+      timeoutMs: 25 * 60 * 1000,
     },
     {
       id: 'typecheck',
@@ -554,6 +562,7 @@ const run = async () => {
     passRates: {
       build: getPassRate(findCheck('build')),
       lint: getPassRate(findCheck('lint')),
+      lintDomains: getPassRate(findCheck('lintDomains')),
       typecheck: getPassRate(findCheck('typecheck')),
       criticalFlows: getPassRate(findCheck('criticalFlows')),
       securitySmoke: getPassRate(findCheck('securitySmoke')),

@@ -9,7 +9,6 @@ import { getQueryParams } from '@/shared/lib/api/api-handler';
 import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
   PORTABLE_PATH_JSON_SCHEMA_KINDS,
-  type PortablePathJsonSchemaKind,
   buildPortablePathJsonSchemaDiffReport,
 } from '@/shared/lib/ai-paths/portable-engine';
 
@@ -55,16 +54,16 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const payload =
     kindRaw === 'all'
       ? {
-          specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
-          kind: 'all' as const,
-          diff,
-        }
+        specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
+        kind: 'all' as const,
+        diff,
+      }
       : {
-          specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
-          kind: kindRaw as PortablePathJsonSchemaKind,
-          hasChanges: diff.changedKinds.includes(kindRaw as PortablePathJsonSchemaKind),
-          entry: diff.entries.find((entry) => entry.kind === kindRaw)!,
-        };
+        specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
+        kind: kindRaw,
+        hasChanges: diff.changedKinds.includes(kindRaw),
+        entry: diff.entries.find((entry) => entry.kind === kindRaw)!,
+      };
   const etag = buildSchemaDiffEtag(payload);
   const headers = {
     ETag: etag,

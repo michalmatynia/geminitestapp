@@ -6,14 +6,17 @@ const ROOT = process.cwd();
 const SRC_DIR = path.join(ROOT, 'src');
 const ROOT_TESTS_DIR = path.join(ROOT, '__tests__');
 
-const REQUIRED_DOCS = [
+const CANONICAL_ARTIFACTS_MANIFEST_PATH = 'docs/canonical-artifacts-latest.json';
+const DEFAULT_REQUIRED_DOCS = [
   'docs/site-wide-canonical-migration-plan-2026-03-05.md',
   'docs/canonical-contract-matrix-2026-03-05.md',
   'docs/legacy-compatibility-exception-register-2026-03-05.md',
   'docs/legacy-compatibility-exception-register-2026-03-05.json',
 ];
 
-const EXCEPTION_REGISTER_PATH = 'docs/legacy-compatibility-exception-register-2026-03-05.json';
+const DEFAULT_EXCEPTION_REGISTER_PATH = 'docs/legacy-compatibility-exception-register-2026-03-05.json';
+let requiredDocs = [...DEFAULT_REQUIRED_DOCS];
+let exceptionRegisterPath = DEFAULT_EXCEPTION_REGISTER_PATH;
 const FORBIDDEN_LEGACY_ROUTE_DIRS = [
   'src/app/api/import',
   'src/app/api/catalogs/assign',
@@ -513,6 +516,75 @@ const reportViolation = (message) => {
   violations.push(message);
 };
 
+const loadCanonicalArtifactsManifest = () => {
+  const absolute = path.join(ROOT, CANONICAL_ARTIFACTS_MANIFEST_PATH);
+  if (!fs.existsSync(absolute)) {
+    reportViolation(`missing canonical artifacts manifest: ${CANONICAL_ARTIFACTS_MANIFEST_PATH}`);
+    return;
+  }
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(absolute, 'utf8'));
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      reportViolation(
+        `invalid canonical artifacts manifest payload shape: ${CANONICAL_ARTIFACTS_MANIFEST_PATH}`
+      );
+      return;
+    }
+
+    const docsValue = (parsed)['requiredDocs'];
+    if (!Array.isArray(docsValue)) {
+      reportViolation(
+        `invalid canonical artifacts manifest requiredDocs field: ${CANONICAL_ARTIFACTS_MANIFEST_PATH}`
+      );
+      return;
+    }
+
+    const normalizedDocs = docsValue
+      .filter((entry) => typeof entry === 'string')
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0);
+
+    if (normalizedDocs.length === 0) {
+      reportViolation(
+        `canonical artifacts manifest requiredDocs must include at least one artifact: ${CANONICAL_ARTIFACTS_MANIFEST_PATH}`
+      );
+      return;
+    }
+
+    const uniqueDocs = Array.from(new Set(normalizedDocs));
+    if (uniqueDocs.length !== normalizedDocs.length) {
+      reportViolation(
+        `canonical artifacts manifest requiredDocs contains duplicates: ${CANONICAL_ARTIFACTS_MANIFEST_PATH}`
+      );
+      return;
+    }
+
+    const exceptionPathValue = (parsed)['exceptionRegisterPath'];
+    if (typeof exceptionPathValue !== 'string' || exceptionPathValue.trim().length === 0) {
+      reportViolation(
+        `invalid canonical artifacts manifest exceptionRegisterPath field: ${CANONICAL_ARTIFACTS_MANIFEST_PATH}`
+      );
+      return;
+    }
+    const normalizedExceptionPath = exceptionPathValue.trim();
+
+    if (!uniqueDocs.includes(normalizedExceptionPath)) {
+      reportViolation(
+        `canonical artifacts manifest must include exception register path in requiredDocs: ${CANONICAL_ARTIFACTS_MANIFEST_PATH}`
+      );
+      return;
+    }
+
+    requiredDocs = uniqueDocs;
+    exceptionRegisterPath = normalizedExceptionPath;
+  } catch (error) {
+    reportViolation(
+      `failed to parse canonical artifacts manifest JSON: ${CANONICAL_ARTIFACTS_MANIFEST_PATH} (${error instanceof Error ? error.message : 'unknown_error'})`
+    );
+  }
+};
+
 const toRelative = (absolutePath) => path.relative(ROOT, absolutePath).split(path.sep).join('/');
 
 const isSourceCodeFile = (fileName) => /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(fileName);
@@ -552,22 +624,22 @@ const collectSourceFiles = (dir) => {
 const isIsoDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value);
 
 const readExceptionRegister = () => {
-  const absolute = path.join(ROOT, EXCEPTION_REGISTER_PATH);
+  const absolute = path.join(ROOT, exceptionRegisterPath);
   if (!fs.existsSync(absolute)) {
-    reportViolation(`missing exception register: ${EXCEPTION_REGISTER_PATH}`);
+    reportViolation(`missing exception register: ${exceptionRegisterPath}`);
     return null;
   }
 
   try {
     const parsed = JSON.parse(fs.readFileSync(absolute, 'utf8'));
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      reportViolation(`invalid exception register payload shape: ${EXCEPTION_REGISTER_PATH}`);
+      reportViolation(`invalid exception register payload shape: ${exceptionRegisterPath}`);
       return null;
     }
     return parsed;
   } catch (error) {
     reportViolation(
-      `failed to parse exception register JSON: ${EXCEPTION_REGISTER_PATH} (${error instanceof Error ? error.message : 'unknown_error'})`
+      `failed to parse exception register JSON: ${exceptionRegisterPath} (${error instanceof Error ? error.message : 'unknown_error'})`
     );
     return null;
   }
@@ -582,7 +654,7 @@ const requireNonEmptyString = (value, fieldPath) => {
 };
 
 const checkRequiredDocs = () => {
-  for (const relative of REQUIRED_DOCS) {
+  for (const relative of requiredDocs) {
     if (!fs.existsSync(path.join(ROOT, relative))) {
       reportViolation(`required canonicalization artifact missing: ${relative}`);
     }
@@ -950,6 +1022,7 @@ const checkExceptionRegister = (register, sourceFileMap) => {
 };
 
 const main = () => {
+  loadCanonicalArtifactsManifest();
   checkRequiredDocs();
   checkForbiddenLegacyRouteDirs();
   checkForbiddenRuntimeMigrationHelpers();
@@ -994,7 +1067,7 @@ const main = () => {
 
   console.log('[canonical:check:sitewide] passed');
   console.log(
-    `[canonical:check:sitewide] validated ${runtimeFiles.length} runtime source file(s) and ${REQUIRED_DOCS.length} docs artifact(s)`
+    `[canonical:check:sitewide] validated ${runtimeFiles.length} runtime source file(s) and ${requiredDocs.length} docs artifact(s)`
   );
 };
 

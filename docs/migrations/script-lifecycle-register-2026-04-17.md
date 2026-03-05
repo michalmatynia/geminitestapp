@@ -14,8 +14,8 @@ Owner: Platform Architecture + Domain Maintainers
 
 ## Proposed Final Summary (Target 2026-04-17)
 
-- `retain-active`: 21
-- `retain-breakglass`: 4
+- `retain-active`: 22
+- `retain-breakglass`: 5
 - `archive-history`: 5
 - `remove-obsolete`: 1
 
@@ -45,6 +45,7 @@ Owner: Platform Architecture + Domain Maintainers
 | `migrate:case-resolver:workspace-detached-contract:v2` | retain-active | retain-active | case-resolver | canonical detached workspace contract normalizer |
 | `migrate:master-folder-tree:profiles:v2` | retain-active | retain-active | folder-tree | canonical profile contract normalizer |
 | `migrate:validator-pattern-feature:v2` | retain-active | retain-active | validator | canonical validator config normalizer |
+| `restore:base-listing-statuses` | retain-breakglass | retain-breakglass | products | corrective restore utility for listing-status regressions; keep restricted as breakglass |
 | `backfill:ai-paths-input-contracts` | retain-breakglass | archive-history | ai-paths | one-off backfill completed; keep historical runbook reference only |
 | `backfill:ai-paths-sanitize-edges` | retain-breakglass | archive-history | ai-paths | one-off edge-shape repair completed; retain history only |
 | `backfill:ai-path-run-runtime-ports` | retain-breakglass | archive-history | ai-paths | one-off runtime-port repair completed; retain history only |

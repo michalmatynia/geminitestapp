@@ -14,8 +14,8 @@ Owner: Platform Architecture + Domain Maintainers
 
 Summary:
 
-- `retain-active`: 21
-- `retain-breakglass`: 10
+- `retain-active`: 22
+- `retain-breakglass`: 11
 - `archive-history`: 0
 - `remove-obsolete`: 0
 
@@ -45,6 +45,7 @@ Summary:
 | `migrate:case-resolver:workspace-detached-contract:v2` | retain-active | case-resolver | canonical detached schema v2 | 2026-04-17 |
 | `migrate:master-folder-tree:profiles:v2` | retain-active | folder-tree | canonical per-instance profile contract | 2026-04-17 |
 | `migrate:validator-pattern-feature:v2` | retain-active | validator | canonical validator runtime config shape | 2026-04-17 |
+| `restore:base-listing-statuses` | retain-breakglass | products | corrective restore utility for listing-status regressions; not routine migration flow | 2026-04-17 |
 | `backfill:ai-paths-input-contracts` | retain-breakglass | ai-paths | one-off backfill for non-canonical persisted inputs | 2026-04-17 |
 | `backfill:ai-paths-sanitize-edges` | retain-breakglass | ai-paths | one-off edge-shape cleanup | 2026-04-17 |
 | `backfill:ai-path-run-runtime-ports` | retain-breakglass | ai-paths | one-off runtime port backfill | 2026-04-17 |

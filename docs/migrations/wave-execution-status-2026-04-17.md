@@ -81,6 +81,9 @@ Completed:
    - `npm run canonical:check:sitewide`
    - `npm run ai-paths:check:canonical`
    - `npm run observability:check`
+4. Canonical artifact mapping moved to manifest-driven guard configuration:
+   - Added `docs/canonical-artifacts-latest.json`
+   - `scripts/canonical/check-sitewide.mjs` now loads required docs + exception register path from that manifest.
 
 ## Wave F (Stabilization + Final Closeout)
 
@@ -100,14 +103,14 @@ Required completion criteria by 2026-04-17:
 
 1. Consolidated daily gate:
    - `npm run canonical:stabilization:check` -> passed.
-2. `npm run canonical:check:sitewide` -> passed (`3814` runtime source files, `4` docs).
-3. `npm run ai-paths:check:canonical` -> passed (`4215` source files under `src/`).
+2. `npm run canonical:check:sitewide` -> passed (`3815` runtime source files, `4` docs).
+3. `npm run ai-paths:check:canonical` -> passed (`4216` source files under `src/`).
 4. `npm run observability:check` -> passed (`legacyCompatViolations=0`, `runtimeErrors=0`).
 5. Targeted regression suite:
    - `npx vitest run __tests__/api/products/migration.test.ts src/features/products/workers/__tests__/product-ai-processors.graph-model.test.ts src/features/filemaker/__tests__/settings.test.ts`
    - passed (`3` files, `26` tests).
 6. Consolidated stabilization gate rerun:
-   - `npm run canonical:stabilization:check` -> passed (latest observability snapshot `generatedAt=2026-03-05T02:53:56.189Z`).
+   - `npm run canonical:stabilization:check` -> passed (latest observability snapshot `generatedAt=2026-03-05T03:06:10.033Z`).
 7. Full CI-equivalent aggregate run:
    - `npm run test:ci` -> passed (unit phase reported `741` files, `3710` tests).
 8. Additional non-CI gate:

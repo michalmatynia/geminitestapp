@@ -69,10 +69,10 @@ describe('path-run-service enqueuePathRun', () => {
     const nodes = config.nodes.map((node, index) =>
       index === 0
         ? {
-            ...node,
-            id: legacyNodeId,
-            instanceId: legacyNodeId,
-          }
+          ...node,
+          id: legacyNodeId,
+          instanceId: legacyNodeId,
+        }
         : node
     );
     const edges = config.edges.map((edge) => ({

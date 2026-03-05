@@ -97,7 +97,7 @@ describe('CanvasSvgNode trigger interactions', () => {
 
     const triggerActionRect = container.querySelector(
       '[data-node-action="fire-trigger"]'
-    ) as SVGRectElement | null;
+    );
     expect(triggerActionRect).toBeTruthy();
     if (!triggerActionRect) return;
 
@@ -128,7 +128,7 @@ describe('CanvasSvgNode trigger interactions', () => {
 
     const triggerActionRect = container.querySelector(
       '[data-node-action="fire-trigger"]'
-    ) as SVGRectElement | null;
+    );
     expect(triggerActionRect).toBeTruthy();
     if (!triggerActionRect) return;
 
@@ -178,7 +178,7 @@ describe('CanvasSvgNode trigger interactions', () => {
 
     const triggerActionRect = container.querySelector(
       '[data-node-action="fire-trigger"]'
-    ) as SVGRectElement | null;
+    );
     expect(triggerActionRect).toBeTruthy();
     if (!triggerActionRect) return;
 

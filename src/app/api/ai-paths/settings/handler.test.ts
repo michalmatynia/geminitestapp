@@ -33,9 +33,7 @@ describe('ai-paths settings handler', () => {
   it('returns full settings list when no keys are requested', async () => {
     listAiPathsSettingsMock.mockResolvedValue([{ key: 'ai_paths_index', value: '[]' }]);
     const response = await GET_handler(
-      new NextRequest('http://localhost/api/ai-paths/settings') as Parameters<
-        typeof GET_handler
-      >[0],
+      new NextRequest('http://localhost/api/ai-paths/settings'),
       {} as Parameters<typeof GET_handler>[1]
     );
 
@@ -49,7 +47,7 @@ describe('ai-paths settings handler', () => {
     const response = await GET_handler(
       new NextRequest(
         'http://localhost/api/ai-paths/settings?keys=ai_paths_index,ai_paths_ui_state&keys=ai_paths_index'
-      ) as Parameters<typeof GET_handler>[0],
+      ),
       {} as Parameters<typeof GET_handler>[1]
     );
 
@@ -63,7 +61,7 @@ describe('ai-paths settings handler', () => {
       GET_handler(
         new NextRequest(
           'http://localhost/api/ai-paths/settings?keys=ai_paths_index&keys=invalid_key'
-        ) as Parameters<typeof GET_handler>[0],
+        ),
         {} as Parameters<typeof GET_handler>[1]
       )
     ).rejects.toThrow('Invalid AI Paths key "invalid_key".');
@@ -72,9 +70,7 @@ describe('ai-paths settings handler', () => {
   it('rejects versioned key requests', async () => {
     await expect(
       GET_handler(
-        new NextRequest('http://localhost/api/ai-paths/settings?keys=ai_paths_index_v1') as Parameters<
-          typeof GET_handler
-        >[0],
+        new NextRequest('http://localhost/api/ai-paths/settings?keys=ai_paths_index_v1'),
         {} as Parameters<typeof GET_handler>[1]
       )
     ).rejects.toThrow(
@@ -94,7 +90,7 @@ describe('ai-paths settings handler', () => {
             key: 'ai_paths_ui_state_v2',
             value: '[]',
           }),
-        }) as Parameters<typeof POST_handler>[0],
+        }),
         {} as Parameters<typeof POST_handler>[1]
       )
     ).rejects.toThrow(

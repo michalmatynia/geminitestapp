@@ -41,7 +41,7 @@ describe('sanitizeTriggerPathConfig', () => {
                 preset: 'by_id',
                 field: '_id',
                 idType: 'string',
-                queryTemplate: '{\"_id\":\"{{value}}\"}',
+                queryTemplate: '{"_id":"{{value}}"}',
                 limit: 20,
                 sort: '',
                 projection: '',

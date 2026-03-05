@@ -89,7 +89,7 @@ describe('CanvasSvgNode trigger regression interactions', () => {
 
     const triggerActionRect = container.querySelector(
       '[data-node-action="fire-trigger"]'
-    ) as SVGRectElement | null;
+    );
     expect(triggerActionRect).toBeTruthy();
     if (!triggerActionRect) return;
 
@@ -112,7 +112,7 @@ describe('CanvasSvgNode trigger regression interactions', () => {
       </svg>
     );
 
-    const nodeBody = container.querySelector(`[data-node-body="${node.id}"]`) as SVGRectElement | null;
+    const nodeBody = container.querySelector(`[data-node-body="${node.id}"]`);
     expect(nodeBody).toBeTruthy();
     if (!nodeBody) return;
 
@@ -140,7 +140,7 @@ describe('CanvasSvgNode trigger regression interactions', () => {
 
     const triggerActionRect = container.querySelector(
       '[data-node-action="fire-trigger"]'
-    ) as SVGRectElement | null;
+    );
     expect(triggerActionRect).toBeTruthy();
     if (!triggerActionRect) return;
 

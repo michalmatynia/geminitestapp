@@ -35,9 +35,7 @@ describe('ai-paths maintenance handler', () => {
     });
 
     const response = await GET_handler(
-      new NextRequest('http://localhost/api/ai-paths/settings/maintenance') as Parameters<
-        typeof GET_handler
-      >[0],
+      new NextRequest('http://localhost/api/ai-paths/settings/maintenance'),
       {} as Parameters<typeof GET_handler>[1]
     );
 
@@ -66,7 +64,7 @@ describe('ai-paths maintenance handler', () => {
       new NextRequest('http://localhost/api/ai-paths/settings/maintenance', {
         method: 'POST',
         body: JSON.stringify({ actionIds: ['repair_path_index'] }),
-      }) as Parameters<typeof POST_handler>[0],
+      }),
       {} as Parameters<typeof POST_handler>[1]
     );
 
@@ -80,7 +78,7 @@ describe('ai-paths maintenance handler', () => {
         new NextRequest('http://localhost/api/ai-paths/settings/maintenance', {
           method: 'POST',
           body: JSON.stringify({ actionIds: ['upgrade_translation_en_pl'] }),
-        }) as Parameters<typeof POST_handler>[0],
+        }),
         {} as Parameters<typeof POST_handler>[1]
       )
     ).rejects.toThrow('Invalid AI Paths maintenance payload.');

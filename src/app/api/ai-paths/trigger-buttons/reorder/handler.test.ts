@@ -57,7 +57,7 @@ describe('ai-paths trigger-buttons reorder handler', () => {
     });
 
     const response = await POST_handler(
-      request as Parameters<typeof POST_handler>[0],
+      request,
       {} as Parameters<typeof POST_handler>[1]
     );
 
@@ -97,7 +97,7 @@ describe('ai-paths trigger-buttons reorder handler', () => {
 
     await expect(
       POST_handler(
-        request as Parameters<typeof POST_handler>[0],
+        request,
         {} as Parameters<typeof POST_handler>[1]
       )
     ).rejects.toThrow('Invalid AI trigger button record payload.');

@@ -76,7 +76,7 @@ describe('v2 products route migration', () => {
   it('does not import v2 routes from removed legacy products namespace', () => {
     const v2Routes = collectRouteFiles(v2Root);
     const offenders = v2Routes.filter((relativeRoute) =>
-      readRouteSource(v2Root, relativeRoute).includes("@/app/api/products/")
+      readRouteSource(v2Root, relativeRoute).includes('@/app/api/products/')
     );
 
     expect(offenders).toEqual([]);

@@ -18,7 +18,7 @@ import {
 vi.mock('@/shared/lib/query-factories-v2', () => ({
   fetchQueryV2:
     (_queryClient: unknown, options: { queryFn: () => Promise<unknown> }) =>
-    options.queryFn,
+      options.queryFn,
 }));
 
 vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({

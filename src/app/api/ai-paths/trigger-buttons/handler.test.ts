@@ -54,9 +54,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
     );
 
     const response = await GET_handler(
-      new NextRequest('http://localhost/api/ai-paths/trigger-buttons') as Parameters<
-        typeof GET_handler
-      >[0],
+      new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
       {} as Parameters<typeof GET_handler>[1]
     );
 
@@ -80,9 +78,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
     requireAiPathsRunAccessMock.mockRejectedValue(authError('Unauthorized.'));
 
     const response = await GET_handler(
-      new NextRequest('http://localhost/api/ai-paths/trigger-buttons') as Parameters<
-        typeof GET_handler
-      >[0],
+      new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
       {} as Parameters<typeof GET_handler>[1]
     );
 
@@ -97,9 +93,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
 
     await expect(
       GET_handler(
-        new NextRequest('http://localhost/api/ai-paths/trigger-buttons') as Parameters<
-          typeof GET_handler
-        >[0],
+        new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
         {} as Parameters<typeof GET_handler>[1]
       )
     ).rejects.toThrow('Invalid AI trigger button settings payload.');
@@ -142,9 +136,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
 
     await expect(
       GET_handler(
-        new NextRequest('http://localhost/api/ai-paths/trigger-buttons') as Parameters<
-          typeof GET_handler
-        >[0],
+        new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
         {} as Parameters<typeof GET_handler>[1]
       )
     ).rejects.toThrow('Invalid AI trigger button record payload.');

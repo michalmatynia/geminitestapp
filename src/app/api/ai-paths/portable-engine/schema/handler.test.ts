@@ -20,9 +20,7 @@ describe('ai-paths portable-engine schema handler', () => {
 
   it('returns portable schema catalog by default', async () => {
     const response = await GET_handler(
-      new NextRequest('http://localhost/api/ai-paths/portable-engine/schema') as Parameters<
-        typeof GET_handler
-      >[0],
+      new NextRequest('http://localhost/api/ai-paths/portable-engine/schema'),
       {} as Parameters<typeof GET_handler>[1]
     );
 
@@ -42,9 +40,7 @@ describe('ai-paths portable-engine schema handler', () => {
 
   it('returns selected schema kind payload', async () => {
     const response = await GET_handler(
-      new NextRequest('http://localhost/api/ai-paths/portable-engine/schema?kind=portable_package') as Parameters<
-        typeof GET_handler
-      >[0],
+      new NextRequest('http://localhost/api/ai-paths/portable-engine/schema?kind=portable_package'),
       {} as Parameters<typeof GET_handler>[1]
     );
 
@@ -57,9 +53,7 @@ describe('ai-paths portable-engine schema handler', () => {
 
   it('returns 304 for matching If-None-Match', async () => {
     const firstResponse = await GET_handler(
-      new NextRequest('http://localhost/api/ai-paths/portable-engine/schema?kind=portable_package') as Parameters<
-        typeof GET_handler
-      >[0],
+      new NextRequest('http://localhost/api/ai-paths/portable-engine/schema?kind=portable_package'),
       {} as Parameters<typeof GET_handler>[1]
     );
     const etag = firstResponse.headers.get('etag');
@@ -70,7 +64,7 @@ describe('ai-paths portable-engine schema handler', () => {
         headers: {
           'if-none-match': etag ?? '',
         },
-      }) as Parameters<typeof GET_handler>[0],
+      }),
       {} as Parameters<typeof GET_handler>[1]
     );
 
@@ -82,9 +76,7 @@ describe('ai-paths portable-engine schema handler', () => {
   it('rejects unsupported schema kinds', async () => {
     await expect(
       GET_handler(
-        new NextRequest('http://localhost/api/ai-paths/portable-engine/schema?kind=invalid') as Parameters<
-          typeof GET_handler
-        >[0],
+        new NextRequest('http://localhost/api/ai-paths/portable-engine/schema?kind=invalid'),
         {} as Parameters<typeof GET_handler>[1]
       )
     ).rejects.toThrow('Invalid portable schema kind.');

@@ -61,7 +61,7 @@ const presetMock = {
 vi.mock('@/shared/lib/ai-paths/settings-store-client', async () => {
   const actual = await vi.importActual<
     typeof import('@/shared/lib/ai-paths/settings-store-client')
-  >('@/shared/lib/ai-paths/settings-store-client');
+      >('@/shared/lib/ai-paths/settings-store-client');
   return {
     ...actual,
     fetchAiPathsSettingsByKeysCached: vi.fn(),

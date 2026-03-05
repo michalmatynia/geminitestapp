@@ -202,15 +202,15 @@ vi.mock('@/shared/lib/query-factories-v2', () => ({
       _queryClient: unknown,
       options: { queryFn: (ctx: { signal: AbortSignal }) => Promise<unknown> }
     ) =>
-    () =>
-      options.queryFn({ signal: new AbortController().signal }),
+      () =>
+        options.queryFn({ signal: new AbortController().signal }),
   prefetchQueryV2:
     (
       _queryClient: unknown,
       options: { queryFn: (ctx: { signal: AbortSignal }) => Promise<unknown> }
     ) =>
-    () =>
-      options.queryFn({ signal: new AbortController().signal }),
+      () =>
+        options.queryFn({ signal: new AbortController().signal }),
 }));
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({

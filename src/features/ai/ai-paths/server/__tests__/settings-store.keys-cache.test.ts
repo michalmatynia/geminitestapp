@@ -52,12 +52,12 @@ describe('settings-store keyset cache', () => {
   it('invalidates keyset cache after upsert', async () => {
     fetchMongoAiPathsSettingsMock
       .mockResolvedValueOnce([{ key: 'ai_paths_index', value: '[]' }])
-      .mockResolvedValueOnce([{ key: 'ai_paths_index', value: '[{\"id\":\"path_1\"}]' }]);
+      .mockResolvedValueOnce([{ key: 'ai_paths_index', value: '[{"id":"path_1"}]' }]);
 
     const { getAiPathsSettings, upsertAiPathsSettings } = await loadSettingsStore();
 
     await getAiPathsSettings(['ai_paths_index']);
-    await upsertAiPathsSettings([{ key: 'ai_paths_index', value: '[{\"id\":\"path_1\"}]' }]);
+    await upsertAiPathsSettings([{ key: 'ai_paths_index', value: '[{"id":"path_1"}]' }]);
     await getAiPathsSettings(['ai_paths_index']);
 
     expect(fetchMongoAiPathsSettingsMock).toHaveBeenCalledTimes(2);
@@ -85,4 +85,3 @@ describe('settings-store keyset cache', () => {
     expect(fetchMongoAiPathsSettingsMock).toHaveBeenCalledTimes(1);
   });
 });
-

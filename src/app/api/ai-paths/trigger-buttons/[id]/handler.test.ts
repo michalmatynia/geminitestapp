@@ -54,7 +54,7 @@ describe('ai-paths trigger-buttons [id] handler', () => {
     });
 
     const response = await PATCH_handler(
-      request as Parameters<typeof PATCH_handler>[0],
+      request,
       {} as Parameters<typeof PATCH_handler>[1],
       { id: 'btn-1' }
     );
@@ -96,7 +96,7 @@ describe('ai-paths trigger-buttons [id] handler', () => {
 
     await expect(
       PATCH_handler(
-        request as Parameters<typeof PATCH_handler>[0],
+        request,
         {} as Parameters<typeof PATCH_handler>[1],
         { id: 'btn-1' }
       )
@@ -118,7 +118,7 @@ describe('ai-paths trigger-buttons [id] handler', () => {
     });
 
     const response = await DELETE_handler(
-      request as Parameters<typeof DELETE_handler>[0],
+      request,
       {} as Parameters<typeof DELETE_handler>[1],
       { id: 'btn-1' }
     );
@@ -153,7 +153,7 @@ describe('ai-paths trigger-buttons [id] handler', () => {
 
     await expect(
       DELETE_handler(
-        request as Parameters<typeof DELETE_handler>[0],
+        request,
         {} as Parameters<typeof DELETE_handler>[1],
         { id: 'btn-1' }
       )

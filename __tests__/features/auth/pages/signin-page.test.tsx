@@ -81,9 +81,17 @@ describe('SignInPage', () => {
   it('renders correctly', async () => {
     renderPage();
     expect(await screen.findByRole('heading', { name: /sign in/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    const emailInput = screen.getByLabelText(/email/i);
+    const passwordInput = screen.getByLabelText(/password/i);
+    expect(emailInput).toBeInTheDocument();
+    expect(passwordInput).toBeInTheDocument();
+    expect(emailInput).toHaveAttribute('autocomplete', 'email');
+    expect(passwordInput).toHaveAttribute('autocomplete', 'current-password');
     expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sign in/i }).closest('form')).toHaveAttribute(
+      'aria-busy',
+      'false'
+    );
   });
 
   it('handles successful sign in', async () => {

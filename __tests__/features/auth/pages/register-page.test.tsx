@@ -68,9 +68,20 @@ describe('RegisterPage', () => {
   it('renders correctly', () => {
     renderPage();
     expect(screen.getByRole('heading', { name: /create account/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    const nameInput = screen.getByLabelText(/full name/i);
+    const emailInput = screen.getByLabelText(/email/i);
+    const passwordInput = screen.getByLabelText(/password/i);
+    expect(nameInput).toBeInTheDocument();
+    expect(emailInput).toBeInTheDocument();
+    expect(passwordInput).toBeInTheDocument();
+    expect(nameInput).toHaveAttribute('autocomplete', 'name');
+    expect(emailInput).toHaveAttribute('autocomplete', 'email');
+    expect(passwordInput).toHaveAttribute('autocomplete', 'new-password');
     expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /create account/i }).closest('form')).toHaveAttribute(
+      'aria-busy',
+      'false'
+    );
   });
 
   it('handles successful registration and signs in', async () => {

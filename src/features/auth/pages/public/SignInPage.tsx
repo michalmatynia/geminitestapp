@@ -169,7 +169,13 @@ function SignInPageLoader(): React.JSX.Element {
 
 export default function SignInPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div role='status' aria-live='polite' className='sr-only'>Loading sign in form...</div>}>
+    <Suspense
+      fallback={
+        <div role='status' aria-live='polite' className='sr-only'>
+          Loading sign in form...
+        </div>
+      }
+    >
       <SignInPageLoader />
     </Suspense>
   );

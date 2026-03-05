@@ -36,6 +36,7 @@ Date: 2026-03-05
 30. Weekly duration readiness gap estimator (Step 30) - completed
 31. CI duration readiness summary exposure (Step 31) - completed
 32. Weekly duration supplemental sample ingestion (Step 32) - completed
+33. Weekly duration readiness ETA projection (Step 33) - completed
 
 ## Gate Status Snapshot
 
@@ -68,6 +69,7 @@ Date: 2026-03-05
 - Weekly duration readiness gap estimator: PASS (minimum additional required runs and blockers are reported)
 - CI duration readiness summary: PASS (weekly workflow summary now reports readiness progress and blockers)
 - Weekly duration supplemental ingestion: PASS (combined samples include lint/unit/flow/security historical artifacts)
+- Weekly duration readiness ETA projection: PASS (report and CI summary now include cadence-based estimated readiness date)
 
 ## Current Risks Captured by Baseline
 
@@ -76,7 +78,8 @@ Date: 2026-03-05
 - Weekly strict lane lint-domain check now includes test-tree scope, which may increase runtime variance.
 - Trend history depth is currently shallow (single-day baseline), so confidence improves as more runs accumulate.
 - Weekly duration budget recommendations are automated; required blockers are now concentrated on `build` and `lint` sample depth.
+- Weekly duration readiness ETA is cadence-based and assumes one qualifying weekly sample every 7 days.
 
 ## Next Iteration Backlog (Priority)
 
-1. Collect at least 8 additional passing build/lint weekly samples, then run `node scripts/quality/recalibrate-weekly-duration-budgets.mjs --apply-budgets`.
+1. Collect at least 8 additional passing build/lint weekly samples, then run `node scripts/quality/recalibrate-weekly-duration-budgets.mjs --apply-budgets` (current cadence estimate: `2026-04-30T03:11:43.736Z`).

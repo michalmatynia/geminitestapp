@@ -97,6 +97,7 @@ const readJsonIfExists = async (filePath) => {
 };
 
 const toMillisCeil = (value) => Math.max(1000, Math.ceil(value / 1000) * 1000);
+const WEEKLY_CADENCE_DAYS = 7;
 
 const toBudgetExpression = (ms) => {
   if (!Number.isFinite(ms) || ms < 0) {
@@ -422,6 +423,9 @@ const toMarkdown = (payload) => {
   lines.push(`- Required checks: ${payload.summary.checksRequired} (ready: ${payload.summary.checksReadyRequired}, pending: ${payload.summary.checksPendingRequired})`);
   lines.push(`- Optional checks: ${payload.summary.checksOptional} (no samples: ${payload.summary.checksOptionalNoSamples})`);
   lines.push(`- Required passing runs still needed (minimum): ${payload.summary.requiredRunsNeeded}`);
+  lines.push(
+    `- Estimated readiness date (${payload.summary.weeklyCadenceDays ?? WEEKLY_CADENCE_DAYS}-day cadence): ${payload.summary.estimatedReadyDateWeeklyCadence ?? 'unavailable'}`
+  );
   if (Array.isArray(payload.summary.blockingChecks) && payload.summary.blockingChecks.length > 0) {
     lines.push(`- Current blocking checks: ${payload.summary.blockingChecks.join(', ')}`);
   }
@@ -463,6 +467,13 @@ const run = async () => {
   const supplemental = await loadSupplementalSamplesByCheck();
   const analysis = analyze(runs, supplemental.byCheck);
   const application = await applyRecommendedBudgets(analysis);
+  const newestRunDateMs = runs.length > 0 ? new Date(runs[runs.length - 1].generatedAt).getTime() : Number.NaN;
+  const estimatedReadyDateWeeklyCadence =
+    Number.isFinite(newestRunDateMs) && analysis.requiredRunsNeeded > 0
+      ? new Date(newestRunDateMs + analysis.requiredRunsNeeded * WEEKLY_CADENCE_DAYS * 24 * 60 * 60 * 1000).toISOString()
+      : analysis.requiredRunsNeeded === 0 && Number.isFinite(newestRunDateMs)
+        ? new Date(newestRunDateMs).toISOString()
+        : null;
 
   const payload = {
     generatedAt: new Date().toISOString(),
@@ -485,6 +496,8 @@ const run = async () => {
       checksOptionalNoSamples: analysis.checksOptionalNoSamples,
       requiredRunsNeeded: analysis.requiredRunsNeeded,
       blockingChecks: analysis.blockingChecks,
+      weeklyCadenceDays: WEEKLY_CADENCE_DAYS,
+      estimatedReadyDateWeeklyCadence,
       checksChanged: analysis.checksChanged,
       minimumSamplesRequired: analysis.minimumSamplesRequired,
       percentile: analysis.percentile,

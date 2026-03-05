@@ -54,6 +54,14 @@ function EditSlugForm({
     () => slugDomainsQuery.data?.domainIds ?? [],
     [slugDomainsQuery.data]
   );
+  const slugFormInitialData = useMemo(
+    () => ({
+      slug: initialSlug.slug,
+      isDefault: Boolean(initialSlug.isDefault),
+      domainIds: initialDomainIds,
+    }),
+    [initialSlug, initialDomainIds]
+  );
 
   const handleSubmit = async (data: SlugFormSubmitData): Promise<void> => {
     setError(null);
@@ -119,11 +127,7 @@ function EditSlugForm({
       )}
 
       <SlugForm
-        initialData={{
-          slug: initialSlug.slug,
-          isDefault: Boolean(initialSlug.isDefault),
-          domainIds: initialDomainIds,
-        }}
+        initialData={slugFormInitialData}
         onSubmit={handleSubmit}
         isSaving={updateSlug.isPending || updateSlugDomains.isPending}
         onCancel={() => router.back()}

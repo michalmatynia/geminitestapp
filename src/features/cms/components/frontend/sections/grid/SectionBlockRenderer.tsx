@@ -221,11 +221,20 @@ export function SectionBlockRenderer({ block }: { block: BlockInstance }): React
 
     return null;
   })();
+  const blockSettings = block.settings;
+  const blockRenderContextValue = React.useMemo(
+    () => ({
+      block,
+      mediaStyles: null,
+      stretch,
+    }),
+    [block, stretch]
+  );
 
   return (
-    <BlockRenderContext.Provider value={{ block, mediaStyles: null, stretch }}>
-      <BlockSettingsContext.Provider value={block.settings}>
-        <SectionBlockProvider settings={block.settings} blocks={children}>
+    <BlockRenderContext.Provider value={blockRenderContextValue}>
+      <BlockSettingsContext.Provider value={blockSettings}>
+        <SectionBlockProvider settings={blockSettings} blocks={children}>
           {content}
         </SectionBlockProvider>
       </BlockSettingsContext.Provider>

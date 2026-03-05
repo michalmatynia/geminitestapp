@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v1",
+  "id": "node_obj_database_query",
+  "nodeType": "database",
+  "title": "Database Query",
+  "description": "Reads source entity and stores model output in target field.",
+  "inputs": ["entityId", "entityType", "entityJson", "prompt", "value", "result"],
+  "outputs": ["result", "entityJson", "status"],
+  "config": {
+    "database": {
+      "mode": "query",
+      "collection": "Product",
+      "query": "{ \"id\": \"{{entityId}}\" }",
+      "projection": "{ \"id\": 1, \"description_en\": 1 }",
+      "limit": 1
+    },
+    "runtime": {
+      "waitForInputs": true,
+      "inputContracts": {
+        "entityId": {
+          "required": true
+        }
+      }
+    }
+  },
+  "notes": [
+    "Use update mode for write-back steps, query mode for read-only fetch."
+  ]
+}

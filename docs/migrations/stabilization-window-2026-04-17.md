@@ -20,7 +20,7 @@ Track the required 14-day main-branch stabilization window with canonical guardr
 
 | Date | canonical:check:sitewide | ai-paths:check:canonical | observability:check | Notes |
 | --- | --- | --- | --- | --- |
-| 2026-03-05 | pass (`3847` runtime files, `4` docs) | pass (`4245` source files) | pass (`legacyCompatViolations=0`, `runtimeErrors=0`) | Baseline checkpoint captured; consolidated gate `npm run canonical:stabilization:check` executed (refreshed at `2026-03-05T01:50:45.714Z`) |
+| 2026-03-05 | pass (`3849` runtime files, `4` docs) | pass (`4248` source files) | pass (`legacyCompatViolations=0`, `runtimeErrors=0`) | Consolidated gate `npm run canonical:stabilization:check` passed (refreshed at `2026-03-05T01:55:55.592Z`). |
 | 2026-03-06 | pending | pending | pending |  |
 | 2026-03-07 | pending | pending | pending |  |
 | 2026-03-08 | pending | pending | pending |  |

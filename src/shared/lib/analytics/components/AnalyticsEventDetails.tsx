@@ -21,26 +21,28 @@ export function AnalyticsEventDetails({ event }: AnalyticsEventDetailsProps): Re
     ? `${event.connection.effectiveType ?? 'n/a'} • ${event.connection.downlink ?? '?'} Mbps • ${event.connection.rtt ?? '?'} ms`
     : '—';
   const ipDisplay = event.ip ?? event.ipMasked ?? event.ipHash ?? '—';
+  const detailItems: Array<{ label: string; value: string }> = [
+    { label: 'IP Address', value: ipDisplay },
+    { label: 'User Agent', value: event.userAgent ?? '—' },
+    { label: 'Visitor ID', value: event.visitorId },
+    { label: 'Session ID', value: event.sessionId },
+    { label: 'Client Timestamp', value: event.clientTs ?? '—' },
+    { label: 'Timezone', value: event.timeZone ?? '—' },
+    { label: 'Languages', value: languageValue },
+    { label: 'Viewport', value: viewportValue },
+    { label: 'Screen', value: screenValue },
+    { label: 'Connection', value: connectionValue },
+    { label: 'Region', value: event.region ?? '—' },
+    { label: 'City', value: event.city ?? '—' },
+    { label: 'UTM Parameters', value: event.utm ? JSON.stringify(event.utm, null, 2) : '—' },
+    { label: 'Metadata', value: event.meta ? JSON.stringify(event.meta, null, 2) : '—' },
+  ];
 
   return (
     <div className='grid gap-4 text-xs text-gray-300 md:grid-cols-2 lg:grid-cols-3'>
-      <DetailItem label='IP Address' value={ipDisplay} />
-      <DetailItem label='User Agent' value={event.userAgent ?? '—'} />
-      <DetailItem label='Visitor ID' value={event.visitorId} />
-      <DetailItem label='Session ID' value={event.sessionId} />
-      <DetailItem label='Client Timestamp' value={event.clientTs ?? '—'} />
-      <DetailItem label='Timezone' value={event.timeZone ?? '—'} />
-      <DetailItem label='Languages' value={languageValue} />
-      <DetailItem label='Viewport' value={viewportValue} />
-      <DetailItem label='Screen' value={screenValue} />
-      <DetailItem label='Connection' value={connectionValue} />
-      <DetailItem label='Region' value={event.region ?? '—'} />
-      <DetailItem label='City' value={event.city ?? '—'} />
-      <DetailItem
-        label='UTM Parameters'
-        value={event.utm ? JSON.stringify(event.utm, null, 2) : '—'}
-      />
-      <DetailItem label='Metadata' value={event.meta ? JSON.stringify(event.meta, null, 2) : '—'} />
+      {detailItems.map((detail) => (
+        <DetailItem key={detail.label} label={detail.label} value={detail.value} />
+      ))}
     </div>
   );
 }

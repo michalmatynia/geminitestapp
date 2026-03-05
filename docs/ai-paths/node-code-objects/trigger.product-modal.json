@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v1",
+  "id": "node_obj_trigger_product_modal",
+  "nodeType": "trigger",
+  "title": "Trigger: Product Modal",
+  "description": "Runs when Context Filter is clicked inside Product modal.",
+  "inputs": ["trigger", "context", "entityId", "entityType", "entityJson"],
+  "outputs": ["trigger", "context", "entityId", "entityType", "entityJson"],
+  "config": {
+    "trigger": {
+      "event": "product_modal_context_filter",
+      "contextMode": "simulation_preferred"
+    },
+    "runtime": {
+      "waitForInputs": false
+    }
+  },
+  "notes": [
+    "Use this node as the first node in Product-scope workflows."
+  ]
+}

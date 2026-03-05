@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v1",
+  "id": "node_obj_model_default",
+  "nodeType": "model",
+  "title": "Model",
+  "description": "Runs selected AI model and returns result text.",
+  "inputs": ["prompt", "images"],
+  "outputs": ["result", "jobId"],
+  "config": {
+    "model": {
+      "modelId": "gpt-4o",
+      "temperature": 0.2,
+      "maxTokens": 2048,
+      "vision": false,
+      "waitForResult": true
+    },
+    "runtime": {
+      "waitForInputs": true,
+      "inputContracts": {
+        "prompt": {
+          "required": true
+        }
+      }
+    }
+  },
+  "notes": [
+    "When waitForResult is false, consume jobId downstream instead of result."
+  ]
+}

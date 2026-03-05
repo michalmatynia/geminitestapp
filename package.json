@@ -75,6 +75,7 @@
     "ai-paths:bulk-prune:apply": "node scripts/ai-paths/bulk-prune.mjs --mode apply",
     "canonical:check:sitewide": "node scripts/canonical/check-sitewide.mjs",
     "canonical:stabilization:check": "npm run canonical:check:sitewide && npm run ai-paths:check:canonical && npm run observability:check",
+    "canonical:stabilization:track": "node scripts/canonical/track-stabilization-row.mjs",
     "auth:indexes": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/ensure-auth-indexes.ts",
     "debug": "tsx scripts/debug/debug-script.ts",
     "test": "npm run test:unit",

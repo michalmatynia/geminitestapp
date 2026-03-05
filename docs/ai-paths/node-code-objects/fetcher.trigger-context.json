@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v1",
+  "id": "node_obj_fetcher_trigger_context",
+  "nodeType": "fetcher",
+  "title": "Fetcher: Trigger Context",
+  "description": "Resolves live trigger context or fetches simulation fallback entity.",
+  "inputs": ["trigger", "context", "entityId", "entityType", "productId"],
+  "outputs": ["context", "entityId", "entityType", "entityJson", "images"],
+  "config": {
+    "fetcher": {
+      "sourceMode": "live_then_simulation",
+      "entityType": "product",
+      "entityId": "",
+      "productId": ""
+    },
+    "runtime": {
+      "waitForInputs": true,
+      "inputContracts": {
+        "trigger": {
+          "required": true
+        }
+      }
+    }
+  },
+  "notes": [
+    "Attach Trigger output to trigger input for deterministic context hydration."
+  ]
+}

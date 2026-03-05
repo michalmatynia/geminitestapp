@@ -400,9 +400,10 @@ export function PreviewSlideshowBlock({
                             }
                             : animationStyle;
                           const triggerKey = `${child.id}-${currentActiveIndex}-${blockIdx}`;
+                          const childBlockContextValue = { stretch: shouldFillBlock };
                           return (
                             <div key={triggerKey} style={wrapperStyle}>
-                              <BlockContextProvider value={{ stretch: shouldFillBlock }}>
+                              <BlockContextProvider value={childBlockContextValue}>
                                 <PreviewBlockItemProxy block={child} />
                               </BlockContextProvider>
                             </div>

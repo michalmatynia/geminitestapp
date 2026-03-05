@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "ai-paths.node-code-object-index.v1",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "objects": [
+    {
+      "id": "node_obj_trigger_product_modal",
+      "nodeType": "trigger",
+      "title": "Trigger: Product Modal",
+      "file": "trigger.product-modal.json"
+    },
+    {
+      "id": "node_obj_fetcher_trigger_context",
+      "nodeType": "fetcher",
+      "title": "Fetcher: Trigger Context",
+      "file": "fetcher.trigger-context.json"
+    },
+    {
+      "id": "node_obj_prompt_default",
+      "nodeType": "prompt",
+      "title": "Prompt Template",
+      "file": "prompt.default.json"
+    },
+    {
+      "id": "node_obj_model_default",
+      "nodeType": "model",
+      "title": "Model",
+      "file": "model.default.json"
+    },
+    {
+      "id": "node_obj_database_query",
+      "nodeType": "database",
+      "title": "Database Query",
+      "file": "database.query.json"
+    }
+  ]
+}

@@ -206,6 +206,10 @@ export function PreviewBlockSectionBlock({
   const wrapClass =
     direction === 'column' ? '' : wrapSetting === 'nowrap' ? 'flex-nowrap' : 'flex-wrap';
   const shouldStretchChildren = resolvedStretch && children.length === 1;
+  const childBlockContextValue = React.useMemo(
+    () => ({ contained: true, stretch: shouldStretchChildren }),
+    [shouldStretchChildren]
+  );
   const blockSelector = getCustomCssSelector(block.id);
   const blockCustomCss = buildScopedCustomCss(block.settings['customCss'], blockSelector);
   const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
@@ -229,7 +233,7 @@ export function PreviewBlockSectionBlock({
           className={`flex ${flexDirClass} ${wrapClass}`}
           style={{ gap: `${blockGap}px`, justifyContent, alignItems }}
         >
-          <BlockContextProvider value={{ contained: true, stretch: shouldStretchChildren }}>
+          <BlockContextProvider value={childBlockContextValue}>
             {children.map((child: BlockInstance) => (
               <PreviewBlockItemProxy key={child.id} block={child} />
             ))}

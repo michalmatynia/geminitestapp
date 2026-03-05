@@ -18,6 +18,7 @@ export * from './core/utils/graph';
 export * from './core/utils/data-contract-preflight';
 export * from './core/utils/path-templates';
 export * from './core/starter-workflows';
+export * from './portable-engine';
 export { buildPromptOutput } from './core/runtime/utils';
 export * from './api';
 export * from './local-runs';

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v1",
+  "id": "node_obj_prompt_default",
+  "nodeType": "prompt",
+  "title": "Prompt Template",
+  "description": "Builds prompt text from context payload and template variables.",
+  "inputs": ["context", "entityJson", "value"],
+  "outputs": ["prompt", "messages", "context"],
+  "config": {
+    "prompt": {
+      "template": "Generate a concise product description from {{entityJson}}.",
+      "mode": "single",
+      "temperature": 0.2
+    },
+    "runtime": {
+      "waitForInputs": true,
+      "inputContracts": {
+        "entityJson": {
+          "required": true
+        }
+      }
+    }
+  },
+  "notes": [
+    "Template variables should map to upstream output port names."
+  ]
+}

@@ -354,6 +354,18 @@ export function CanvasBoard({
       onFocusNodeDiagnostics,
     ]
   );
+  const connectorTooltipOverride = React.useMemo(() => {
+    if (!svgConnectorTooltip || !resolveConnectorTooltip) return null;
+    const node = state.nodeById.get(svgConnectorTooltip.info.nodeId);
+    if (!node) return null;
+    return (
+      resolveConnectorTooltip({
+        direction: svgConnectorTooltip.info.direction,
+        node,
+        port: svgConnectorTooltip.info.port,
+      }) ?? null
+    );
+  }, [resolveConnectorTooltip, state.nodeById, svgConnectorTooltip]);
 
   return (
     <CanvasBoardUIProvider value={canvasInteractions}>
@@ -437,13 +449,7 @@ export function CanvasBoard({
                   left: svgConnectorTooltip.clientX + 12,
                   top: svgConnectorTooltip.clientY + 12,
                 }}
-                override={
-                  resolveConnectorTooltip?.({
-                    direction: svgConnectorTooltip.info.direction,
-                    node: state.nodeById.get(svgConnectorTooltip.info.nodeId)!,
-                    port: svgConnectorTooltip.info.port,
-                  }) ?? null
-                }
+                override={connectorTooltipOverride}
               />
             )}
             {svgNodeDiagnosticsTooltip && (

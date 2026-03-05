@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { useCmsTheme, useUpdateTheme } from '@/features/cms/hooks/useCmsQueries';
 import { cmsThemeUpdateSchema } from '@/features/cms/validations/api';
@@ -15,6 +15,15 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
   const router = useRouter();
   const updateTheme = useUpdateTheme();
   const [error, setError] = useState<string | null>(null);
+  const themeFormInitialData = useMemo(
+    () => ({
+      name: theme.name,
+      colors: theme.colors,
+      typography: theme.typography,
+      spacing: theme.spacing,
+    }),
+    [theme]
+  );
 
   const handleSubmit = async (data: ThemeFormSubmitData): Promise<void> => {
     const validation = validateFormData(cmsThemeUpdateSchema, data, 'Theme form is invalid.');
@@ -62,12 +71,7 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
         </Alert>
       ) : null}
       <ThemeForm
-        initialData={{
-          name: theme.name,
-          colors: theme.colors,
-          typography: theme.typography,
-          spacing: theme.spacing,
-        }}
+        initialData={themeFormInitialData}
         onSubmit={handleSubmit}
         isSaving={updateTheme.isPending}
         onCancel={() => router.push('/admin/cms/themes')}

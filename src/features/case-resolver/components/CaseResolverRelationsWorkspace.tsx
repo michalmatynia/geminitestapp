@@ -475,15 +475,17 @@ export function CaseResolverRelationsWorkspace({
   const initialSelectedNodeId = focusCaseId?.trim()
     ? toCaseResolverRelationCaseNodeId(focusCaseId.trim())
     : undefined;
+  const relationsWorkspaceValue = React.useMemo(
+    () => ({
+      relationGraph,
+      focusCaseId,
+      workspaceSnapshot,
+    }),
+    [focusCaseId, relationGraph, workspaceSnapshot]
+  );
 
   return (
-    <CaseResolverRelationsWorkspaceProvider
-      value={{
-        relationGraph,
-        focusCaseId,
-        workspaceSnapshot,
-      }}
-    >
+    <CaseResolverRelationsWorkspaceProvider value={relationsWorkspaceValue}>
       <AiPathsProvider
         initialSelectedNodeId={initialSelectedNodeId}
         initialNodes={toRuntimeNodes(relationGraph.nodes)}

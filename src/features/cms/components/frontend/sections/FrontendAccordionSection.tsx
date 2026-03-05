@@ -80,6 +80,8 @@ function AccordionItem({
   defaultOpen: boolean;
 }): React.ReactNode {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const headingBlock = item.heading;
+  const textBlock = item.text;
 
   return (
     <div className='py-4'>
@@ -88,12 +90,12 @@ function AccordionItem({
         onClick={() => setIsOpen(!isOpen)}
         className='flex w-full items-center justify-between text-left'
       >
-        <FrontendBlockRenderer block={item.heading} />
+        <FrontendBlockRenderer block={headingBlock} />
         <span className='ml-4 shrink-0 text-gray-400 text-xl'>{isOpen ? '−' : '+'}</span>
       </button>
-      {isOpen && item.text && (
+      {isOpen && textBlock && (
         <div className='mt-3'>
-          <FrontendBlockRenderer block={item.text} />
+          <FrontendBlockRenderer block={textBlock} />
         </div>
       )}
     </div>

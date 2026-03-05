@@ -4,6 +4,7 @@ import path from 'node:path';
 const args = new Set(process.argv.slice(2));
 const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
 const includeLatest = !args.has('--exclude-latest');
+const applyBudgets = args.has('--apply-budgets');
 
 const minSamplesArg = [...args].find((arg) => arg.startsWith('--min-samples='));
 const maxRunsArg = [...args].find((arg) => arg.startsWith('--max-runs='));
@@ -17,6 +18,8 @@ const headroom = Math.min(1, Math.max(0, Number.parseFloat(headroomArg?.split('=
 
 const root = process.cwd();
 const metricsDir = path.join(root, 'docs', 'metrics');
+const weeklyReportScriptPath = path.join(root, 'scripts', 'quality', 'generate-weekly-report.mjs');
+const BUDGET_BLOCK_PATTERN = /const DURATION_ALERT_BUDGETS_MS = Object\.freeze\(\{\n[\s\S]*?\n\}\);/;
 
 const WEEKLY_DURATION_BUDGETS_MS = Object.freeze({
   build: 3 * 60 * 1000,
@@ -71,6 +74,29 @@ const readJsonIfExists = async (filePath) => {
 };
 
 const toMillisCeil = (value) => Math.max(1000, Math.ceil(value / 1000) * 1000);
+
+const toBudgetExpression = (ms) => {
+  if (!Number.isFinite(ms) || ms < 0) {
+    return '0';
+  }
+  if (ms % (60 * 1000) === 0) {
+    return `${ms / (60 * 1000)} * 60 * 1000`;
+  }
+  if (ms % 1000 === 0) {
+    return `${ms / 1000} * 1000`;
+  }
+  return String(ms);
+};
+
+const renderBudgetBlock = (recommendedById) => {
+  const lines = ['const DURATION_ALERT_BUDGETS_MS = Object.freeze({'];
+  for (const [checkId, defaultMs] of Object.entries(WEEKLY_DURATION_BUDGETS_MS)) {
+    const value = Number.isFinite(recommendedById[checkId]) ? recommendedById[checkId] : defaultMs;
+    lines.push(`  ${checkId}: ${toBudgetExpression(value)},`);
+  }
+  lines.push('});');
+  return lines.join('\n');
+};
 
 const percentileAt = (values, p) => {
   if (!Array.isArray(values) || values.length === 0) return null;
@@ -178,6 +204,65 @@ const analyze = (runs) => {
   };
 };
 
+const applyRecommendedBudgets = async (analysis) => {
+  const result = {
+    requested: applyBudgets,
+    status: 'not-requested',
+    applied: false,
+    targetFile: path.relative(root, weeklyReportScriptPath),
+    reason: null,
+    changedChecks: [],
+  };
+
+  if (!applyBudgets) {
+    return result;
+  }
+
+  if (analysis.status !== 'ready') {
+    result.status = 'skipped';
+    result.reason = `Calibration status is ${analysis.status}; all checks must be ready before apply.`;
+    return result;
+  }
+
+  const changedEntries = analysis.entries.filter(
+    (entry) => entry.status === 'ready' && Number.isFinite(entry.deltaMs) && entry.deltaMs !== 0
+  );
+  result.changedChecks = changedEntries.map((entry) => ({
+    id: entry.id,
+    label: entry.label,
+    fromMs: entry.currentBudgetMs,
+    toMs: entry.recommendedBudgetMs,
+    deltaMs: entry.deltaMs,
+  }));
+
+  if (changedEntries.length === 0) {
+    result.status = 'no-change';
+    result.reason = 'Recommendations match current budget values.';
+    return result;
+  }
+
+  const recommendedById = Object.fromEntries(
+    analysis.entries.map((entry) => [entry.id, entry.recommendedBudgetMs])
+  );
+  const replacement = renderBudgetBlock(recommendedById);
+  const raw = await fs.readFile(weeklyReportScriptPath, 'utf8');
+  if (!BUDGET_BLOCK_PATTERN.test(raw)) {
+    throw new Error('Unable to locate DURATION_ALERT_BUDGETS_MS block in weekly report script.');
+  }
+
+  const updated = raw.replace(BUDGET_BLOCK_PATTERN, replacement);
+  if (updated === raw) {
+    result.status = 'no-change';
+    result.reason = 'Budget block remained unchanged after replacement.';
+    return result;
+  }
+
+  await fs.writeFile(weeklyReportScriptPath, updated, 'utf8');
+  result.status = 'applied';
+  result.applied = true;
+  return result;
+};
+
 const toMarkdown = (payload) => {
   const lines = [];
   lines.push('# Weekly Duration Budget Recommendations');
@@ -192,6 +277,18 @@ const toMarkdown = (payload) => {
   lines.push(`- Percentile target: ${(payload.summary.percentile * 100).toFixed(0)}th`);
   lines.push(`- Headroom: ${(payload.summary.headroom * 100).toFixed(0)}%`);
   lines.push('');
+  lines.push('## Application');
+  lines.push('');
+  lines.push(`- Apply requested: ${payload.application.requested ? 'yes' : 'no'}`);
+  lines.push(`- Apply status: ${payload.application.status}`);
+  lines.push(`- Apply target file: \`${payload.application.targetFile}\``);
+  if (payload.application.reason) {
+    lines.push(`- Apply reason: ${payload.application.reason}`);
+  }
+  if (Array.isArray(payload.application.changedChecks) && payload.application.changedChecks.length > 0) {
+    lines.push(`- Checks changed: ${payload.application.changedChecks.length}`);
+  }
+  lines.push('');
   lines.push('## Recommendations');
   lines.push('');
   lines.push('| Check | Current | Samples | Pctl | Max | Recommended | Delta | Status |');
@@ -205,7 +302,7 @@ const toMarkdown = (payload) => {
   lines.push('## Notes');
   lines.push('');
   lines.push('- Recommendations are computed from passing check durations only.');
-  lines.push('- Budgets are not auto-applied; update `generate-weekly-report.mjs` budget constants intentionally.');
+  lines.push('- `--apply-budgets` updates weekly budget constants only when all checks are ready.');
   lines.push('- Pending status means there is not enough historical data for at least one check.');
   return `${lines.join('\n')}\n`;
 };
@@ -215,6 +312,7 @@ const run = async () => {
   const files = await listRunFiles();
   const runs = await loadRuns(files);
   const analysis = analyze(runs);
+  const application = await applyRecommendedBudgets(analysis);
 
   const payload = {
     generatedAt: new Date().toISOString(),
@@ -230,7 +328,9 @@ const run = async () => {
       minimumSamplesRequired: analysis.minimumSamplesRequired,
       percentile: analysis.percentile,
       headroom: analysis.headroom,
+      applicationStatus: application.status,
     },
+    application,
     recommendations: analysis.entries,
     runs: runs.map((runEntry) => ({
       sourceFile: runEntry.sourceFile,
@@ -257,6 +357,9 @@ const run = async () => {
   );
   console.log(
     `[weekly-duration-recalibration] changed=${payload.summary.checksChanged} pending=${payload.summary.checksPending} status=${payload.summary.status}`
+  );
+  console.log(
+    `[weekly-duration-recalibration] apply=${application.status} changedChecks=${application.changedChecks.length}`
   );
   console.log(`Wrote ${path.relative(root, latestJsonPath)}`);
   console.log(`Wrote ${path.relative(root, latestMdPath)}`);

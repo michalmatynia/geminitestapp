@@ -62,6 +62,8 @@ Supported adapters:
 - `legacy_handler_bridge`
 - `native_handler_registry` (current pilot: `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`)
 For `native_handler_registry`, runtime falls back to legacy bridge when a native registry mapping is unavailable.
+Client runtime now supports native execution for a broader local subset (`bundle`, `compare`, `constant`, `context`, `delay`, `gate`, `iterator`, `mapper`, `math`, `mutator`, `notification`, `parser`, `prompt`, `regex`, `router`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`).
+Remaining server-only native node families are tracked explicitly in runtime guardrails (`agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `database`, `db_schema`, `description_updater`, `fetcher`, `http`, `learner_agent`, `model`, `playwright`, `poll`, `simulation`).
 
 Rollout control:
 
@@ -72,7 +74,7 @@ Rollout control:
   - `ai_paths_runtime_kernel_pilot_node_types`: JSON array or comma-delimited node types
   - `ai_paths_runtime_kernel_strict_native_registry`: `true | false`
 - Admin UI control is available in AI-Paths Canvas action bar under `Runtime Kernel`.
-- `strict_native_registry` is currently configured through env/run-meta/settings API paths (not exposed in canvas runtime controls yet).
+- `strict_native_registry` can be configured from Canvas runtime controls (global + per-path override), and from env/run-meta/settings API paths.
 - server env overrides persisted settings:
   - `AI_PATHS_RUNTIME_KERNEL_MODE=legacy_only`
 - `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES=agent,api_advanced,audio_oscillator,audio_speaker,constant,context,bundle,compare,database,delay,db_schema,description_updater,ai_description,fetcher,gate,http,iterator,learner_agent,mapper,math,model,mutator,notification,parser,playwright,poll,prompt,regex,router,simulation,string_mutator,template,trigger,validation_pattern,validator,viewer`
@@ -190,6 +192,5 @@ npm run docs:ai-paths:node-docs:check
 
 ## Next Steps
 
-1. Expose `strict_native_registry` controls in canvas runtime settings (currently env/run-meta/settings API only).
-2. Track and reduce remaining client/server mapping asymmetries for server-only node families.
-3. Keep generated contracts/migration docs as the source of truth and enforce zero-drift in CI.
+1. Track and reduce remaining client/server mapping asymmetries for server-only node families.
+2. Keep generated contracts/migration docs as the source of truth and enforce zero-drift in CI.

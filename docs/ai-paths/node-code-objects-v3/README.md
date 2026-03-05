@@ -20,12 +20,16 @@ Runtime rollout controls:
   - `legacy_handler_bridge`
   - `native_handler_registry` (current pilot: `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`)
 - Native adapter path falls back to legacy bridge when native registry mapping is unavailable.
+- Client local runtime native subset now includes:
+  - `bundle`, `compare`, `constant`, `context`, `delay`, `gate`, `iterator`, `mapper`, `math`, `mutator`, `notification`, `parser`, `prompt`, `regex`, `router`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`
+- Remaining server-only native node families are:
+  - `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `database`, `db_schema`, `description_updater`, `fetcher`, `http`, `learner_agent`, `model`, `playwright`, `poll`, `simulation`
 - Product/server runs can also read persisted global settings:
   - `ai_paths_runtime_kernel_mode`: `auto | legacy_only`
   - `ai_paths_runtime_kernel_pilot_node_types`: JSON array or comma-delimited node types
   - `ai_paths_runtime_kernel_strict_native_registry`: `true | false`
 - Canvas admins can edit these persisted settings from the `Runtime Kernel` control group on the AI-Paths Canvas action bar.
-- `strict_native_registry` currently uses env/run-meta/settings API configuration (not yet exposed in canvas runtime controls).
+- `strict_native_registry` supports Canvas control (global + per-path override) and env/run-meta/settings API configuration.
 - Env vars override persisted settings:
   - `AI_PATHS_RUNTIME_KERNEL_MODE`
   - `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES`

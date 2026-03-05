@@ -33,6 +33,7 @@ Date: 2026-03-05
 27. Weekly lint-domain test-tree promotion (Step 27) - completed
 28. Weekly duration budget safe-apply automation (Step 28) - completed
 29. Weekly duration readiness required-vs-optional model (Step 29) - completed
+30. Weekly duration readiness gap estimator (Step 30) - completed
 
 ## Gate Status Snapshot
 
@@ -62,6 +63,7 @@ Date: 2026-03-05
 - Weekly strict lane lint-domain mode: PASS (now executes full test-tree lint domains)
 - Weekly duration safe-apply automation: PASS (apply path implemented with readiness guard and skip reasons)
 - Weekly duration readiness model: PASS (optional checks no longer block readiness progression)
+- Weekly duration readiness gap estimator: PASS (minimum additional required runs and blockers are reported)
 
 ## Current Risks Captured by Baseline
 
@@ -69,8 +71,8 @@ Date: 2026-03-05
 - Weekly lane has expanded checks; duration budgets are enforced but need tuning as history depth grows.
 - Weekly strict lane lint-domain check now includes test-tree scope, which may increase runtime variance.
 - Trend history depth is currently shallow (single-day baseline), so confidence improves as more runs accumulate.
-- Weekly duration budget recommendations are now automated but currently blocked by low pass-sample depth.
+- Weekly duration budget recommendations are automated, but required readiness currently remains `0/10` with minimum `8` additional passing runs needed.
 
 ## Next Iteration Backlog (Priority)
 
-1. Accumulate additional passing weekly runs and re-run duration recalibration with `--apply-budgets` until required readiness reaches `readyRequired=10/10`.
+1. Collect at least 8 additional passing weekly runs (especially `build`, `lint`, `lintDomains`, `unitDomains`), then run `node scripts/quality/recalibrate-weekly-duration-budgets.mjs --apply-budgets`.

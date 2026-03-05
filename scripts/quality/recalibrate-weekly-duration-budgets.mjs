@@ -215,6 +215,13 @@ const analyze = (runs) => {
   const pendingRequired = requiredEntries.filter((entry) => entry.status !== 'ready');
   const ready = entries.filter((entry) => entry.status === 'ready');
   const changed = ready.filter((entry) => entry.deltaMs !== 0);
+  const requiredRunsNeeded = pendingRequired.reduce(
+    (max, entry) => Math.max(max, Number.isFinite(entry.samplesNeeded) ? entry.samplesNeeded : 0),
+    0
+  );
+  const blockingChecks = pendingRequired
+    .filter((entry) => entry.samplesNeeded === requiredRunsNeeded)
+    .map((entry) => entry.id);
   const status =
     readyRequired.length === 0 ? 'pending' : pendingRequired.length > 0 ? 'partial' : 'ready';
 
@@ -228,6 +235,8 @@ const analyze = (runs) => {
     checksPending: entries.filter((entry) => entry.status === 'insufficient-data').length,
     checksPendingRequired: pendingRequired.length,
     checksOptionalNoSamples: entries.filter((entry) => entry.status === 'optional').length,
+    requiredRunsNeeded,
+    blockingChecks,
     checksChanged: changed.length,
     minimumSamplesRequired: minSamples,
     percentile,
@@ -310,6 +319,10 @@ const toMarkdown = (payload) => {
   lines.push(`- Headroom: ${(payload.summary.headroom * 100).toFixed(0)}%`);
   lines.push(`- Required checks: ${payload.summary.checksRequired} (ready: ${payload.summary.checksReadyRequired}, pending: ${payload.summary.checksPendingRequired})`);
   lines.push(`- Optional checks: ${payload.summary.checksOptional} (no samples: ${payload.summary.checksOptionalNoSamples})`);
+  lines.push(`- Required passing runs still needed (minimum): ${payload.summary.requiredRunsNeeded}`);
+  if (Array.isArray(payload.summary.blockingChecks) && payload.summary.blockingChecks.length > 0) {
+    lines.push(`- Current blocking checks: ${payload.summary.blockingChecks.join(', ')}`);
+  }
   lines.push('');
   lines.push('## Application');
   lines.push('');
@@ -363,6 +376,8 @@ const run = async () => {
       checksPending: analysis.checksPending,
       checksPendingRequired: analysis.checksPendingRequired,
       checksOptionalNoSamples: analysis.checksOptionalNoSamples,
+      requiredRunsNeeded: analysis.requiredRunsNeeded,
+      blockingChecks: analysis.blockingChecks,
       checksChanged: analysis.checksChanged,
       minimumSamplesRequired: analysis.minimumSamplesRequired,
       percentile: analysis.percentile,

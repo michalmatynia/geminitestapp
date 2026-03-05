@@ -29,6 +29,10 @@ jobs:
         if: always()
         run: node scripts/quality/generate-trend-index.mjs --ci --no-history
 
+      - name: Generate weekly duration budget recommendations
+        if: always()
+        run: npm run quality:weekly-duration-budgets:ci
+
       - name: Upload weekly quality artifacts
         id: upload_weekly_quality_artifacts
         if: always()
@@ -50,6 +54,8 @@ jobs:
           path: |
             docs/metrics/trend-index-latest.json
             docs/metrics/trend-index-latest.md
+            docs/metrics/weekly-duration-budget-recommendations-latest.json
+            docs/metrics/weekly-duration-budget-recommendations-latest.md
             docs/metrics/weekly-quality-trend-latest.json
             docs/metrics/weekly-quality-trend-latest.md
             docs/metrics/unit-domain-timings-trend-latest.json
@@ -82,6 +88,8 @@ jobs:
             echo "### Trend Index Files"
             echo "- \`docs/metrics/trend-index-latest.md\`"
             echo "- \`docs/metrics/trend-index-latest.json\`"
+            echo "- \`docs/metrics/weekly-duration-budget-recommendations-latest.md\`"
+            echo "- \`docs/metrics/weekly-duration-budget-recommendations-latest.json\`"
             echo "- \`docs/metrics/weekly-quality-trend-latest.md\`"
             echo "- \`docs/metrics/unit-domain-timings-trend-latest.md\`"
             echo "- \`docs/metrics/lint-domain-checks-trend-latest.md\`"

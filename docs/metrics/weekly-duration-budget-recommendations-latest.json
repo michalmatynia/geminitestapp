@@ -1,0 +1,160 @@
+{
+  "generatedAt": "2026-03-05T04:47:04.962Z",
+  "summary": {
+    "status": "pending",
+    "runsAnalyzed": 2,
+    "oldestRun": "2026-03-05T00:31:37.152Z",
+    "newestRun": "2026-03-05T03:11:43.736Z",
+    "checks": 12,
+    "checksReady": 0,
+    "checksPending": 12,
+    "checksChanged": 0,
+    "minimumSamplesRequired": 8,
+    "percentile": 0.9,
+    "headroom": 0.2
+  },
+  "recommendations": [
+    {
+      "id": "build",
+      "label": "Build",
+      "currentBudgetMs": 180000,
+      "sampleCount": 0,
+      "percentileDurationMs": null,
+      "maxDurationMs": null,
+      "recommendedBudgetMs": 180000,
+      "deltaMs": 0,
+      "status": "insufficient-data"
+    },
+    {
+      "id": "lint",
+      "label": "Lint",
+      "currentBudgetMs": 240000,
+      "sampleCount": 0,
+      "percentileDurationMs": null,
+      "maxDurationMs": null,
+      "recommendedBudgetMs": 240000,
+      "deltaMs": 0,
+      "status": "insufficient-data"
+    },
+    {
+      "id": "lintDomains",
+      "label": "Lint Domain Gate",
+      "currentBudgetMs": 180000,
+      "sampleCount": 0,
+      "percentileDurationMs": null,
+      "maxDurationMs": null,
+      "recommendedBudgetMs": 180000,
+      "deltaMs": 0,
+      "status": "insufficient-data"
+    },
+    {
+      "id": "typecheck",
+      "label": "Typecheck",
+      "currentBudgetMs": 120000,
+      "sampleCount": 1,
+      "percentileDurationMs": 40220,
+      "maxDurationMs": 40220,
+      "recommendedBudgetMs": 120000,
+      "deltaMs": 0,
+      "status": "insufficient-data"
+    },
+    {
+      "id": "criticalFlows",
+      "label": "Critical Flow Gate",
+      "currentBudgetMs": 60000,
+      "sampleCount": 1,
+      "percentileDurationMs": 12556,
+      "maxDurationMs": 12556,
+      "recommendedBudgetMs": 60000,
+      "deltaMs": 0,
+      "status": "insufficient-data"
+    },
+    {
+      "id": "securitySmoke",
+      "label": "Security Smoke Gate",
+      "currentBudgetMs": 60000,
+      "sampleCount": 1,
+      "percentileDurationMs": 8552,
+      "maxDurationMs": 8552,
+      "recommendedBudgetMs": 60000,
+      "deltaMs": 0,
+      "status": "insufficient-data"
+    },
+    {
+      "id": "unitDomains",
+      "label": "Unit Domain Gate",
+      "currentBudgetMs": 600000,
+      "sampleCount": 0,
+      "percentileDurationMs": null,
+      "maxDurationMs": null,
+      "recommendedBudgetMs": 600000,
+      "deltaMs": 0,
+      "status": "insufficient-data"
+    },
+    {
+      "id": "fullUnit",
+      "label": "Full Unit Tests",
+      "currentBudgetMs": 1500000,
+      "sampleCount": 0,
+      "percentileDurationMs": null,
+      "maxDurationMs": null,
+      "recommendedBudgetMs": 1500000,
+      "deltaMs": 0,
+      "status": "insufficient-data"
+    },
+    {
+      "id": "e2e",
+      "label": "E2E Tests",
+      "currentBudgetMs": 2400000,
+      "sampleCount": 0,
+      "percentileDurationMs": null,
+      "maxDurationMs": null,
+      "recommendedBudgetMs": 2400000,
+      "deltaMs": 0,
+      "status": "insufficient-data"
+    },
+    {
+      "id": "guardrails",
+      "label": "Architecture Guardrails",
+      "currentBudgetMs": 60000,
+      "sampleCount": 1,
+      "percentileDurationMs": 2691,
+      "maxDurationMs": 2691,
+      "recommendedBudgetMs": 60000,
+      "deltaMs": 0,
+      "status": "insufficient-data"
+    },
+    {
+      "id": "uiConsolidation",
+      "label": "UI Consolidation Guardrail",
+      "currentBudgetMs": 60000,
+      "sampleCount": 2,
+      "percentileDurationMs": 3098,
+      "maxDurationMs": 3208,
+      "recommendedBudgetMs": 60000,
+      "deltaMs": 0,
+      "status": "insufficient-data"
+    },
+    {
+      "id": "observability",
+      "label": "Observability Check",
+      "currentBudgetMs": 30000,
+      "sampleCount": 2,
+      "percentileDurationMs": 700,
+      "maxDurationMs": 717,
+      "recommendedBudgetMs": 30000,
+      "deltaMs": 0,
+      "status": "insufficient-data"
+    }
+  ],
+  "runs": [
+    {
+      "sourceFile": "weekly-quality-2026-03-05T00-31-37-152Z.json",
+      "generatedAt": "2026-03-05T00:31:37.152Z"
+    },
+    {
+      "sourceFile": "weekly-quality-latest.json",
+      "generatedAt": "2026-03-05T03:11:43.736Z"
+    }
+  ]
+}

@@ -26,6 +26,7 @@ Date: 2026-03-05
 20. Accessibility warning-budget telemetry rollout (Step 20) - completed
 21. Domain owner metadata in trend outputs (Step 21) - completed
 22. CI trend-index artifact summary links (Step 22) - completed
+23. Weekly duration recalibration automation (Step 23) - completed
 
 ## Gate Status Snapshot
 
@@ -49,6 +50,7 @@ Date: 2026-03-05
 - Accessibility warning budget telemetry: PASS (`5/5`, warnings tracked non-failing)
 - Domain trend owner metadata: PASS (unit/lint trend payloads and markdown include team ownership)
 - CI trend-index summary links: PASS (weekly workflow publishes direct artifact links in job summary)
+- Weekly duration recalibration report: PENDING (`0/12` checks ready; insufficient history for budget deltas)
 
 ## Current Risks Captured by Baseline
 
@@ -56,9 +58,10 @@ Date: 2026-03-05
 - Weekly lane has expanded checks; duration budgets are enforced but need tuning as history depth grows.
 - Domain lint gate currently ignores `__tests__` trees by ESLint config design, so test-only lint debt remains out-of-band.
 - Trend history depth is currently shallow (single-day baseline), so confidence improves as more runs accumulate.
+- Weekly duration budget recommendations are now automated but currently blocked by low pass-sample depth.
 
 ## Next Iteration Backlog (Priority)
 
-1. Recalibrate weekly duration budgets after 7-10 more runs to reduce false positives.
+1. Apply weekly duration budget updates once recalibration status reaches `ready` (>=8 pass samples per check).
 2. Extend lint-domain test-probe mode into full test-tree lint domains once ESLint config support is explicitly added.
 3. Decide whether accessibility warning budget should eventually become fail-on-exceed in strict mode.

@@ -163,6 +163,42 @@ const buildAudioSpeakerNode = (): AiNode => ({
   position: { x: 360, y: 0 },
 });
 
+const buildHttpNode = (): AiNode => ({
+  id: 'node-http',
+  type: 'http',
+  title: 'HTTP',
+  description: '',
+  inputs: ['url', 'body', 'headers', 'bundle'],
+  outputs: ['value', 'bundle'],
+  config: {
+    http: {
+      url: '',
+      method: 'GET',
+      headers: '{}',
+      responseMode: 'json',
+      responsePath: '',
+    },
+  },
+  position: { x: 480, y: 0 },
+});
+
+const buildPollNode = (): AiNode => ({
+  id: 'node-poll',
+  type: 'poll',
+  title: 'Poll',
+  description: '',
+  inputs: ['jobId'],
+  outputs: ['result', 'status', 'jobId', 'bundle'],
+  config: {
+    poll: {
+      intervalMs: 1000,
+      maxAttempts: 2,
+      mode: 'job',
+    },
+  },
+  position: { x: 600, y: 0 },
+});
+
 describe('client native code-object registry contract subset', () => {
   it('only contains codeObjectIds that exist in native contracts', () => {
     const nativeContractIds = readNativeContractCodeObjectIdSet();
@@ -201,11 +237,9 @@ describe('client native code-object registry contract subset', () => {
       'database',
       'db_schema',
       'description_updater',
-      'http',
       'learner_agent',
       'model',
       'playwright',
-      'poll',
     ]);
   });
 
@@ -313,6 +347,33 @@ describe('client native code-object registry contract subset', () => {
       waveform: 'triangle',
       frequencyHz: 512,
     });
+  });
+
+  it('executes http nodes through client native contract resolver mapping', async () => {
+    const result = await evaluateGraphClient({
+      nodes: [buildHttpNode()],
+      edges: [],
+      runtimeKernelPilotNodeTypes: ['http'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(result.outputs?.['node-http']?.['value']).toBeNull();
+    expect(result.outputs?.['node-http']?.['bundle']).toMatchObject({
+      ok: false,
+      status: 0,
+      error: 'Missing URL',
+    });
+  });
+
+  it('executes poll nodes through client native contract resolver mapping', async () => {
+    const result = await evaluateGraphClient({
+      nodes: [buildPollNode()],
+      edges: [],
+      runtimeKernelPilotNodeTypes: ['poll'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(result.outputs?.['node-poll']).toEqual({});
   });
 
   it('keeps unsupported server-only nodes blocked in client execution', async () => {

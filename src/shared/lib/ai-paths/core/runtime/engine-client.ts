@@ -43,6 +43,8 @@ import {
 } from './handlers/transform';
 import { handleNotification as handleIntegrationNotification } from './handlers/integration-notification-handler';
 import { handleFetcher as handleIntegrationFetcher } from './handlers/integration-fetcher-handler';
+import { handleHttp as handleIntegrationHttp } from './handlers/integration-http-handler';
+import { handlePoll as handleIntegrationPoll } from './handlers/integration-poll-handler';
 import { handleSimulation as handleIntegrationSimulation } from './handlers/integration-simulation-handler';
 import { handleTrigger as handleIntegrationTrigger } from './handlers/integration-trigger-handler';
 
@@ -80,6 +82,8 @@ const CLIENT_HANDLERS: Record<string, NodeHandler> = {
   trigger: handleIntegrationTrigger,
   notification: handleIntegrationNotification,
   fetcher: handleIntegrationFetcher,
+  http: handleIntegrationHttp,
+  poll: handleIntegrationPoll,
   simulation: handleIntegrationSimulation,
   audio_oscillator: handleAudioOscillator,
   audio_speaker: handleAudioSpeaker,
@@ -133,6 +137,8 @@ const NATIVE_CODE_OBJECT_HANDLERS: Record<string, NodeHandler> = {
   'ai-paths.node-code-object.mutator.v3': handleMutator,
   'ai-paths.node-code-object.notification.v3': handleIntegrationNotification,
   'ai-paths.node-code-object.fetcher.v3': handleIntegrationFetcher,
+  'ai-paths.node-code-object.http.v3': handleIntegrationHttp,
+  'ai-paths.node-code-object.poll.v3': handleIntegrationPoll,
   'ai-paths.node-code-object.audio_oscillator.v3': handleAudioOscillator,
   'ai-paths.node-code-object.audio_speaker.v3': handleAudioSpeaker,
   'ai-paths.node-code-object.parser.v3': handleParser,

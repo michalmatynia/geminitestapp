@@ -76,6 +76,7 @@ const FRONTEND_PREVIEW_SECTION_TYPES = new Set<string>([
   'ButtonElement',
   'TextAtom',
 ]);
+const CONTAINED_BLOCK_CONTEXT_VALUE = { contained: true };
 
 type PreviewFrontendSectionRendererRuntimeValue = {
   type: string;
@@ -369,7 +370,7 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
                 {isBlockSection ? 'Empty block' : 'Announcement bar'}
               </p>
             ) : (
-              <BlockContextProvider value={{ contained: true }}>
+              <BlockContextProvider value={CONTAINED_BLOCK_CONTEXT_VALUE}>
                 {section.blocks.map((block: BlockInstance) => (
                   <PreviewBlockItem key={block.id} block={block} />
                 ))}
@@ -494,6 +495,11 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
   const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
   const animConfig = block.settings['gsapAnimation'] as Partial<GsapAnimationConfig> | undefined;
   const cssAnimConfig = block.settings['cssAnimation'] as CssAnimationConfig | undefined;
+  const parentBlockContextValue = React.useMemo(
+    () => ({ parentBlockId: block.id }),
+    [block.id]
+  );
+  const stretchBlockContextValue = React.useMemo(() => ({ stretch }), [stretch]);
 
   const allowInlineCustomCss = !['Block', 'Row', 'Column'].includes(block.type);
   const isHovered = isInspecting && hoveredNodeId === block.id;
@@ -517,7 +523,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
   );
 
   const wrapBlock = (node: React.ReactNode): React.ReactNode => (
-    <BlockContextProvider value={{ parentBlockId: block.id }}>
+    <BlockContextProvider value={parentBlockContextValue}>
       <InspectorHover
         nodeId={block.id}
         fallbackNodeId={parentBlockId ?? columnId ?? sectionId}
@@ -557,7 +563,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
             `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/30 hover:ring-border/50'}`
           )}
         >
-          <BlockContextProvider value={{ stretch }}>
+          <BlockContextProvider value={stretchBlockContextValue}>
             {block.type === 'ImageWithText' && <PreviewImageWithTextBlock block={block} />}
             {block.type === 'Hero' && <PreviewHeroBlock block={block} />}
             {block.type === 'RichText' && <PreviewRichTextBlock block={block} />}

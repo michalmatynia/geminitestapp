@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 
 type TreeParentBlockContextValue = {
   parentBlockId: string;
@@ -17,8 +17,13 @@ export function TreeParentBlockProvider({
   parentBlockId,
   children,
 }: TreeParentBlockProviderProps): React.JSX.Element {
+  const value = useMemo<TreeParentBlockContextValue>(
+    () => ({ parentBlockId }),
+    [parentBlockId]
+  );
+
   return (
-    <TreeParentBlockContext.Provider value={{ parentBlockId }}>
+    <TreeParentBlockContext.Provider value={value}>
       {children}
     </TreeParentBlockContext.Provider>
   );

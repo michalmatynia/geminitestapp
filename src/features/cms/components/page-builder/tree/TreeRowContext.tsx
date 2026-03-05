@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 
 type TreeRowContextValue = {
   rowId: string;
@@ -14,7 +14,8 @@ type TreeRowProviderProps = {
 };
 
 export function TreeRowProvider({ rowId, children }: TreeRowProviderProps): React.JSX.Element {
-  return <TreeRowContext.Provider value={{ rowId }}>{children}</TreeRowContext.Provider>;
+  const value = useMemo<TreeRowContextValue>(() => ({ rowId }), [rowId]);
+  return <TreeRowContext.Provider value={value}>{children}</TreeRowContext.Provider>;
 }
 
 export function useOptionalTreeRowId(explicitRowId?: string): string | undefined {

@@ -131,10 +131,14 @@ export function SectionPickerModal(props: SectionPickerModalProps): React.JSX.El
     onSelect,
     onDeleteTemplate,
   } = props;
+  const selectionContextValue = useMemo<SectionPickerSelectionContextValue>(
+    () => ({ onSelect }),
+    [onSelect]
+  );
 
   return (
     <DetailModal isOpen={isOpen} onClose={onClose} title='Add a section' size='lg' footer={null}>
-      <SectionPickerSelectionContext.Provider value={{ onSelect }}>
+      <SectionPickerSelectionContext.Provider value={selectionContextValue}>
         <div className='space-y-6'>
           <CategorySection title='Primitives' items={primitives} />
           <CategorySection title='Elements' items={elements} />

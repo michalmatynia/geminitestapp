@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 
 import type { PreviewBlockItemProps, PreviewBlockProps } from '@/shared/contracts/cms';
 import type { BlockInstance } from '@/shared/contracts/cms';
@@ -11,6 +11,9 @@ import { usePreviewEditor } from './context/PreviewEditorContext';
 import { normalizeSlideshowAnimationType } from './preview-utils';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+
+const STRETCH_TRUE_BLOCK_CONTEXT_VALUE = { stretch: true };
+const STRETCH_FALSE_BLOCK_CONTEXT_VALUE = { stretch: false };
 
 // ---------------------------------------------------------------------------
 // PreviewBlockItem is needed as a dependency - import it lazily to avoid circular deps
@@ -33,6 +36,18 @@ function PreviewBlockItemProxy(props: PreviewBlockItemProps): React.ReactNode {
   }
 
   return <_PreviewBlockItem {...props} />;
+}
+
+function useParentBlockContextValueResolver(): (parentBlockId: string) => { parentBlockId: string } {
+  const cacheRef = useRef<Map<string, { parentBlockId: string }>>(new Map());
+
+  return useCallback((parentBlockId: string): { parentBlockId: string } => {
+    const cached = cacheRef.current.get(parentBlockId);
+    if (cached) return cached;
+    const nextValue = { parentBlockId };
+    cacheRef.current.set(parentBlockId, nextValue);
+    return nextValue;
+  }, []);
 }
 
 // ---------------------------------------------------------------------------
@@ -67,6 +82,7 @@ export function PreviewCarouselBlock({
   const loop = parseCarouselBoolSetting(block.settings['loop'], true);
 
   const frameCount = frames.length;
+  const getParentBlockContextValue = useParentBlockContextValueResolver();
 
   const goToNext = useCallback((): void => {
     if (frameCount === 0) return;
@@ -174,7 +190,7 @@ export function PreviewCarouselBlock({
               className={`flex flex-col ${alignmentClass} ${verticalAlignmentClass}`}
               style={frameStyle}
             >
-              <BlockContextProvider value={{ parentBlockId: frame.id }}>
+              <BlockContextProvider value={getParentBlockContextValue(frame.id)}>
                 {frameChildren.map((child: BlockInstance) => (
                   <PreviewBlockItemProxy key={child.id} block={child} />
                 ))}
@@ -260,6 +276,7 @@ export function PreviewSlideshowBlock({
   const heightMode = (block.settings['heightMode'] as string) || 'auto';
   const height = (block.settings['height'] as number) || 360;
   const frames = (block.blocks ?? []).filter((b: BlockInstance) => b.type === 'SlideshowFrame');
+  const getParentBlockContextValue = useParentBlockContextValueResolver();
   const slideCount = frames.length;
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -378,7 +395,7 @@ export function PreviewSlideshowBlock({
                   }
                 >
                   <div className='flex h-full w-full flex-col' style={frameStyle}>
-                    <BlockContextProvider value={{ parentBlockId: frame.id }}>
+                    <BlockContextProvider value={getParentBlockContextValue(frame.id)}>
                       {frameChildren.length > 0 ? (
                         frameChildren.map((child: BlockInstance, blockIdx: number) => {
                           const blockDelay = animationDelay + blockIdx * stagger;
@@ -400,7 +417,9 @@ export function PreviewSlideshowBlock({
                             }
                             : animationStyle;
                           const triggerKey = `${child.id}-${currentActiveIndex}-${blockIdx}`;
-                          const childBlockContextValue = { stretch: shouldFillBlock };
+                          const childBlockContextValue = shouldFillBlock
+                            ? STRETCH_TRUE_BLOCK_CONTEXT_VALUE
+                            : STRETCH_FALSE_BLOCK_CONTEXT_VALUE;
                           return (
                             <div key={triggerKey} style={wrapperStyle}>
                               <BlockContextProvider value={childBlockContextValue}>

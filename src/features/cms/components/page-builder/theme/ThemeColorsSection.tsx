@@ -8,11 +8,12 @@ import { Button, Badge, Card, Hint } from '@/shared/ui';
 
 import { useThemeColors } from './ThemeColorsContext';
 import { ColorField, TextField } from '../shared-fields';
-import { useThemeSettings } from '../ThemeSettingsContext';
+import { useThemeSettingsActions, useThemeSettingsValue } from '../ThemeSettingsContext';
 import { ThemeAiSection } from './ThemeAiSection';
 
 export function ThemeColorsSection(): React.JSX.Element {
-  const { theme, update } = useThemeSettings();
+  const theme = useThemeSettingsValue();
+  const { update } = useThemeSettingsActions();
   const {
     schemeView,
     setSchemeView,

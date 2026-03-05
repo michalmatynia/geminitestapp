@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 
 type TreeColumnContextValue = {
   columnId: string;
@@ -17,7 +17,8 @@ export function TreeColumnProvider({
   columnId,
   children,
 }: TreeColumnProviderProps): React.JSX.Element {
-  return <TreeColumnContext.Provider value={{ columnId }}>{children}</TreeColumnContext.Provider>;
+  const value = useMemo<TreeColumnContextValue>(() => ({ columnId }), [columnId]);
+  return <TreeColumnContext.Provider value={value}>{children}</TreeColumnContext.Provider>;
 }
 
 export function useOptionalTreeColumnId(explicitColumnId?: string): string | undefined {

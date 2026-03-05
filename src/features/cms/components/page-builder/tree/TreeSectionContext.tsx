@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 
 type TreeSectionContextValue = {
   sectionId: string;
@@ -17,8 +17,9 @@ export function TreeSectionProvider({
   sectionId,
   children,
 }: TreeSectionProviderProps): React.JSX.Element {
+  const value = useMemo<TreeSectionContextValue>(() => ({ sectionId }), [sectionId]);
   return (
-    <TreeSectionContext.Provider value={{ sectionId }}>{children}</TreeSectionContext.Provider>
+    <TreeSectionContext.Provider value={value}>{children}</TreeSectionContext.Provider>
   );
 }
 

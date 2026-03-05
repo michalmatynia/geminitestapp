@@ -26,7 +26,7 @@ import { ThemeBrandSection } from './theme/ThemeBrandSection';
 import { ThemeSocialSection } from './theme/ThemeSocialSection';
 import { ThemeCustomCssSection } from './theme/ThemeCustomCssSection';
 import { getFieldsForSection } from './theme/ThemeSettingsFields';
-import { useThemeSettings } from './ThemeSettingsContext';
+import { useThemeSettingsActions, useThemeSettingsValue } from './ThemeSettingsContext';
 
 // ---------------------------------------------------------------------------
 // Panel Content
@@ -37,7 +37,8 @@ function ThemeSettingsPanelContent({
 }: {
   showHeader?: boolean;
 }): React.JSX.Element {
-  const { theme, update } = useThemeSettings();
+  const theme = useThemeSettingsValue();
+  const { update } = useThemeSettingsActions();
   const themesQuery = useCmsThemes();
   const savedThemes = useMemo((): CmsTheme[] => themesQuery.data ?? [], [themesQuery.data]);
 

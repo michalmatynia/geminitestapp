@@ -3,10 +3,11 @@
 import React from 'react';
 import { Label, Textarea } from '@/shared/ui';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
-import { useThemeSettings } from '../ThemeSettingsContext';
+import { useThemeSettingsActions, useThemeSettingsValue } from '../ThemeSettingsContext';
 
 export function ThemeCustomCssSection(): React.JSX.Element {
-  const { theme, update } = useThemeSettings();
+  const theme = useThemeSettingsValue();
+  const { update } = useThemeSettingsActions();
 
   return (
     <div className='space-y-4'>

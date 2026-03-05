@@ -29,8 +29,6 @@ interface ThemeSettingsActionsContextValue {
   update: <K extends keyof ThemeSettings>(key: K, value: ThemeSettings[K]) => void;
 }
 
-type ThemeSettingsContextValue = ThemeSettingsStateContextValue & ThemeSettingsActionsContextValue;
-
 const ThemeSettingsStateContext = createContext<ThemeSettingsStateContextValue | undefined>(
   undefined
 );
@@ -140,13 +138,4 @@ export function useThemeSettingsActions(): ThemeSettingsActionsContextValue {
     throw new Error('useThemeSettingsActions must be used within ThemeSettingsProvider');
   }
   return ctx;
-}
-
-export function useThemeSettings(): ThemeSettingsContextValue {
-  const theme = useThemeSettingsValue();
-  const { setTheme, update } = useThemeSettingsActions();
-  return useMemo(
-    (): ThemeSettingsContextValue => ({ theme, setTheme, update }),
-    [theme, setTheme, update]
-  );
 }

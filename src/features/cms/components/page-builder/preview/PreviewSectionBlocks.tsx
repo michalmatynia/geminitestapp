@@ -15,6 +15,8 @@ import { getSectionStyles, getTextAlign } from '../../frontend/theme-styles';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
+const CONTAINED_BLOCK_CONTEXT_VALUE = { contained: true };
+
 // ---------------------------------------------------------------------------
 // PreviewBlockItem is needed as a dependency - import it lazily to avoid circular deps
 // We use a forward reference pattern: the parent file passes it through module scope
@@ -84,7 +86,7 @@ export function PreviewImageWithTextBlock({
       </div>
       <div className='flex w-full flex-col justify-center gap-3 md:w-3/5'>
         {children.length > 0 ? (
-          <BlockContextProvider value={{ contained: true }}>
+          <BlockContextProvider value={CONTAINED_BLOCK_CONTEXT_VALUE}>
             {children.map((child: BlockInstance) => (
               <PreviewBlockItemProxy key={child.id} block={child} />
             ))}
@@ -126,7 +128,7 @@ export function PreviewHeroBlock({ block, stretch = false }: PreviewBlockProps):
       )}
       <div className='relative z-10 flex min-h-[200px] flex-col items-center justify-center gap-3 p-6 text-center'>
         {children.length > 0 ? (
-          <BlockContextProvider value={{ contained: true }}>
+          <BlockContextProvider value={CONTAINED_BLOCK_CONTEXT_VALUE}>
             {children.map((child: BlockInstance) => (
               <PreviewBlockItemProxy key={child.id} block={child} />
             ))}
@@ -165,7 +167,7 @@ export function PreviewRichTextBlock({
       className={`space-y-4 ${resolvedStretch ? 'h-full' : ''}`}
     >
       {children.length > 0 ? (
-        <BlockContextProvider value={{ contained: true }}>
+        <BlockContextProvider value={CONTAINED_BLOCK_CONTEXT_VALUE}>
           {children.map((child: BlockInstance) => (
             <PreviewBlockItemProxy key={child.id} block={child} />
           ))}
@@ -295,7 +297,7 @@ export function PreviewTextAtomBlock({
       className={resolvedStretch ? 'h-full' : ''}
     >
       {letters.length > 0 ? (
-        <BlockContextProvider value={{ contained: true }}>
+        <BlockContextProvider value={CONTAINED_BLOCK_CONTEXT_VALUE}>
           {letters.map((child: BlockInstance) => (
             <PreviewBlockItemProxy key={child.id} block={child} />
           ))}

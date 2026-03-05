@@ -7,6 +7,8 @@ import type { BlockInstance } from '@/shared/contracts/cms';
 import { EmptyState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
+const CONTAINED_BLOCK_CONTEXT_VALUE = { contained: true };
+
 interface PreviewSectionBlocksProps {
   blocks: BlockInstance[];
   PreviewBlockItem: React.ComponentType<{ block: BlockInstance }>;
@@ -31,7 +33,7 @@ export function PreviewSectionBlocks(props: PreviewSectionBlocksProps): React.JS
   return (
     <div className={cn('space-y-4', className)}>
       {blocks.length > 0 ? (
-        <BlockContextProvider value={{ contained: true }}>
+        <BlockContextProvider value={CONTAINED_BLOCK_CONTEXT_VALUE}>
           {blocks.map((block: BlockInstance) => (
             <PreviewBlockItem key={block.id} block={block} />
           ))}

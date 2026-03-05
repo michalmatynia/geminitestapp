@@ -53,26 +53,24 @@ vi.mock('@/features/cms/components/page-builder/PreviewBlock', () => ({
 }));
 
 vi.mock('@/features/cms/components/page-builder/ThemeSettingsContext', () => ({
-  useThemeSettings: () => ({
-    theme: {
-      colorSchemes: [],
-      enableAnimations: false,
-      hoverEffect: 'none',
-      hoverScale: 1,
-      fullWidth: false,
-      pagePadding: 0,
-      pageMargin: 0,
-      pagePaddingTop: 0,
-      pagePaddingRight: 0,
-      pagePaddingBottom: 0,
-      pagePaddingLeft: 0,
-      pageMarginTop: 0,
-      pageMarginRight: 0,
-      pageMarginBottom: 0,
-      pageMarginLeft: 0,
-      borderRadius: 0,
-      backgroundColor: 'transparent',
-    },
+  useThemeSettingsValue: () => ({
+    colorSchemes: [],
+    enableAnimations: false,
+    hoverEffect: 'none',
+    hoverScale: 1,
+    fullWidth: false,
+    pagePadding: 0,
+    pageMargin: 0,
+    pagePaddingTop: 0,
+    pagePaddingRight: 0,
+    pagePaddingBottom: 0,
+    pagePaddingLeft: 0,
+    pageMarginTop: 0,
+    pageMarginRight: 0,
+    pageMarginBottom: 0,
+    pageMarginLeft: 0,
+    borderRadius: 0,
+    backgroundColor: 'transparent',
   }),
 }));
 

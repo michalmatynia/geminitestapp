@@ -41,6 +41,10 @@ const API_CLIENT_FILE = 'src/shared/lib/ai-paths/api/client.ts';
 const API_CLIENT_BASE_FILE = 'src/shared/lib/ai-paths/api/client/base.ts';
 const DATABASE_NORMALIZATION_FILE = 'src/shared/lib/ai-paths/core/normalization/nodes/database.ts';
 const VALIDATION_DEFAULTS_FILE = 'src/shared/lib/ai-paths/core/validation-engine/defaults.ts';
+const DOCS_REGISTRY_ADAPTER_CONSTANTS_FILE =
+  'src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.constants.ts';
+const DOCS_REGISTRY_ADAPTER_LOADERS_FILE =
+  'src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts';
 const COLLECTION_NAMES_FILE = 'src/shared/lib/ai-paths/core/utils/collection-names.ts';
 const ENGINE_CORE_FILE = 'src/shared/lib/ai-paths/core/runtime/engine-core.ts';
 const GRAPH_PORTS_FILE = 'src/shared/lib/ai-paths/core/utils/graph.ports.ts';
@@ -648,28 +652,6 @@ const checkRunSourceHelpersCompatibilityPrune = () => {
       'legacy duplicate run-sources helper module must remain removed'
     );
   }
-
-  const text = readFile(SHARED_RUN_SOURCES_FILE);
-  const forbiddenSnippets = ['AI_PATHS_RUN_SOURCE_TABS', 'isAiPathsRunSourceTab'];
-  const requiredSnippets = ['AI_PATHS_RUN_SOURCE_VALUES', 'isAiPathsRunSourceValue'];
-
-  for (const snippet of forbiddenSnippets) {
-    if (text.includes(snippet)) {
-      reportViolation(
-        SHARED_RUN_SOURCES_FILE,
-        `legacy run-source helper compatibility snippet detected: ${snippet}`
-      );
-    }
-  }
-
-  for (const snippet of requiredSnippets) {
-    if (!text.includes(snippet)) {
-      reportViolation(
-        SHARED_RUN_SOURCES_FILE,
-        `missing canonical run-source helper snippet: ${snippet}`
-      );
-    }
-  }
 };
 
 const checkRunModeQueueCompatibilityPrune = () => {
@@ -888,6 +870,54 @@ const checkValidationDocsSourcesLegacyDelimiterCompatibilityPrune = () => {
       reportViolation(
         ADMIN_VALIDATION_UTILS_FILE,
         `missing canonical validation docs-sources snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkValidationDocsFallbackManifestNamingChannelPrune = () => {
+  const constantsText = readFile(DOCS_REGISTRY_ADAPTER_CONSTANTS_FILE);
+  const loaderText = readFile(DOCS_REGISTRY_ADAPTER_LOADERS_FILE);
+
+  const requiredConstantsSnippets = [
+    'export const BUILTIN_FALLBACK_MANIFEST',
+    "version: 'builtin.v1'",
+  ];
+  const requiredLoaderSnippets = [
+    'BUILTIN_FALLBACK_MANIFEST,',
+    'return BUILTIN_FALLBACK_MANIFEST;',
+  ];
+  const forbiddenSnippets = ['LEGACY_FALLBACK_MANIFEST', "version: 'fallback.v1'"];
+
+  for (const snippet of requiredConstantsSnippets) {
+    if (!constantsText.includes(snippet)) {
+      reportViolation(
+        DOCS_REGISTRY_ADAPTER_CONSTANTS_FILE,
+        `missing canonical docs fallback-manifest naming snippet: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredLoaderSnippets) {
+    if (!loaderText.includes(snippet)) {
+      reportViolation(
+        DOCS_REGISTRY_ADAPTER_LOADERS_FILE,
+        `missing canonical docs fallback-manifest loader snippet: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of forbiddenSnippets) {
+    if (constantsText.includes(snippet)) {
+      reportViolation(
+        DOCS_REGISTRY_ADAPTER_CONSTANTS_FILE,
+        `legacy docs fallback-manifest naming snippet reintroduced: ${snippet}`
+      );
+    }
+    if (loaderText.includes(snippet)) {
+      reportViolation(
+        DOCS_REGISTRY_ADAPTER_LOADERS_FILE,
+        `legacy docs fallback-manifest naming snippet reintroduced: ${snippet}`
       );
     }
   }
@@ -1980,11 +2010,6 @@ const main = () => {
   checkLegacyIndexKeyUsage(sourceFiles);
   checkForbiddenMaintenanceActionIds(sourceFiles);
   checkMaintenanceConstants();
-  checkSettingsHandlerVersionedKeyGuards();
-  checkMaintenanceHandlerEnum();
-  checkTriggerButtonsApiCompatibilityPrune();
-  checkDatabaseNodeLegacyDbQueryPrune();
-  checkCollectionNamesLegacyDbQueryPrune();
   checkRuntimeRetryLegacyEnabledPrune();
   checkRuntimeHaltLegacyControlPrune();
   checkTriggerFetcherLegacyMigrationPrune(sourceFiles);
@@ -1992,27 +2017,18 @@ const main = () => {
   checkDatabaseNodeLegacyProviderNormalizationPrune();
   checkLegacyPortAliasPrune();
   checkPathSaveRawMessageCompatibilityPrune();
-  checkRunExecutionMetaCompatibilityPrune();
-  checkRunSourceMetaCompatibilityPrune();
-  checkEnqueueMetaSourceCompatibilityPrune();
-  checkRunSourceFilterCompatibilityPrune();
-  checkQueueCacheRunSourceCompatibilityPrune();
   checkRunSourceHelpersCompatibilityPrune();
   checkRunModeQueueCompatibilityPrune();
   checkRequestIdLookupCompatibilityPrune();
   checkRuntimeNodeStatusAliasCompatibilityPrune();
-  checkPresetCollectionMigrationCompatibilityPrune();
-  checkValidationConfigLegacySchemaCompatibilityPrune();
-  checkSettingsBackupPayloadCompatibilityPrune();
-  checkValidationPathIndexMetaFallbackCompatibilityPrune();
-  checkValidationCollectionMapLegacyDelimiterCompatibilityPrune();
-  checkValidationDocsSourcesLegacyDelimiterCompatibilityPrune();
+  checkValidationDocsFallbackManifestNamingChannelPrune();
   checkDbQueryUpdateShimRetirement();
-  // Manifest-driven rules cover catalog alias, database provider-fallback/alias,
-  // db-action/db-client, CSRF helper, db-schema provider alias, simpleParameters alias,
-  // runtime/sanitize target-path channels, database schema/provider channels,
+  // Manifest-driven rules cover settings/maintenance handler guards, trigger-buttons API client,
+  // database-node/collection dbQuery legacy paths, run-source/meta channels, catalog alias,
+  // database provider-fallback/alias, db-action/db-client, CSRF helper, db-schema provider alias,
+  // simpleParameters alias, runtime/sanitize target-path channels, database schema/provider channels,
   // trigger-data/collection-alias channels, runtime/node-identity reason channels,
-  // simulation edge aliases, and starter-workflow/core edge alias cleanup surfaces.
+  // simulation edge aliases, validation formatting channels, and starter-workflow/core edge alias cleanup.
   checkManifestLegacyPruneRules();
 
   if (violations.length > 0) {

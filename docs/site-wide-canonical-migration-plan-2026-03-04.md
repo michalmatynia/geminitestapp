@@ -743,6 +743,67 @@ Wave 2 hard-cut execution started:
    - runtime compile-stability hardening:
      - `src/shared/lib/ai-paths/core/runtime/engine-modules/engine-state-manager.ts`
      - declared node-status parsing now narrows to canonical runtime status union.
+58. AI Insights schedule-key legacy fallback hard-cut:
+   - removed legacy schedule-key fallback reads from AI Insights runtime scheduling flows:
+     - `src/features/ai/insights/generator.ts`
+     - `getScheduleSettings` and `runInsightsAutoGeneration` now read canonical `AI_INSIGHTS_SETTINGS_KEYS` only.
+   - removed now-dead multi-key fallback helper:
+     - `src/features/ai/insights/generator/settings-service.ts`
+     - removed `readSettingWithFallback(...)`.
+   - added runtime prune guard coverage:
+     - `src/features/ai/insights/__tests__/runtime-prune.test.ts`
+     - blocks reintroduction of legacy schedule-key fallback tokens in runtime source.
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of:
+       - `LEGACY_INSIGHT_SCHEDULE_KEYS`
+       - `readSettingWithFallback(`
+       - legacy schedule key tokens:
+         - `ai_analytics_schedule_enabled`
+         - `ai_analytics_schedule_minutes`
+         - `ai_runtime_analytics_schedule_enabled`
+         - `ai_runtime_analytics_schedule_minutes`
+         - `ai_logs_schedule_enabled`
+         - `ai_logs_schedule_minutes`
+         - `ai_logs_auto_on_error`
+59. AI Paths validation docs fallback-manifest naming-channel canonicalization:
+   - renamed docs-registry built-in fallback manifest constant:
+     - `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.constants.ts`
+     - `LEGACY_FALLBACK_MANIFEST` -> `BUILTIN_FALLBACK_MANIFEST`
+   - updated docs-registry loader import/returns to canonical built-in naming:
+     - `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts`
+     - all manifest-read fallback branches now return `BUILTIN_FALLBACK_MANIFEST`.
+   - extended AI Paths canonical guardrail:
+     - `scripts/ai-paths/check-canonical.mjs`
+     - added `checkValidationDocsFallbackManifestNamingChannelPrune` to enforce canonical built-in fallback-manifest naming in validation-engine runtime files.
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of:
+       - `LEGACY_FALLBACK_MANIFEST`
+60. Database collection-copy AI Paths store-prefix naming-channel canonicalization:
+   - renamed AI Paths store-prefix constants in database collection copy runtime:
+     - `src/shared/lib/db/services/database-collection-copy.ts`
+     - `AI_PATHS_LEGACY_PREFIX` -> `AI_PATHS_DEPRECATED_STORE_PREFIX`
+     - `AI_PATHS_LEGACY_KEY_PREFIX` -> `AI_PATHS_DEPRECATED_STORE_KEY_PREFIX`
+   - preserved runtime storage semantics:
+     - stored compatibility prefix value remains `ai_paths_store:`.
+     - copy/normalize logic continues to read and write existing prefixed keys without behavioral change.
+   - added runtime prune guard coverage:
+     - `src/shared/lib/db/services/__tests__/database-collection-copy.runtime-prune.test.ts`
+     - enforces canonical store-prefix naming tokens and blocks legacy prefix naming token reintroduction.
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of:
+       - `AI_PATHS_LEGACY_PREFIX`
+       - `AI_PATHS_LEGACY_KEY_PREFIX`
+61. Validator docs-catalog legacy wording-channel canonicalization:
+   - updated validator list-parser docs hint to canonical unsupported wording:
+     - `src/shared/lib/documentation/catalogs/validator-docs.ts`
+     - `legacy payload variants fallback to defaults` -> `unsupported payload variants fallback to defaults`
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of:
+       - `legacy payload variants fallback to defaults.`
 
 ## Baseline (Current State)
 

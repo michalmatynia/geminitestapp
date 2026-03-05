@@ -93,11 +93,3 @@ export const parseNumberSetting = (
   if (!Number.isFinite(parsed) || parsed < min) return fallback;
   return parsed;
 };
-
-export const readSettingWithFallback = async (keys: readonly string[]): Promise<string | null> => {
-  for (const key of keys) {
-    const value = await readInsightSettingValue(key);
-    if (value !== null) return value;
-  }
-  return null;
-};

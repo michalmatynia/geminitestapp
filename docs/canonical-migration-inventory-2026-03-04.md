@@ -2450,3 +2450,189 @@ Continue opportunistic canonicalization in remaining non-critical surfaces outsi
   - `npm run ai-paths:check:canonical` passes.
   - `npm run canonical:check:sitewide` passes.
   - `npx tsc -p tsconfig.json --noEmit --incremental false --pretty false` passes.
+
+## Executed Item 134 (AI Paths Phase 3 Runtime/Simulation Reason-Channel Manifest Consolidation)
+
+- Expanded manifest coverage for remaining runtime reason-channel and simulation edge-alias surfaces:
+  - `scripts/ai-paths/legacy-prune-manifest.json`
+  - added rules:
+    - `parameter_inference_target_path_runtime`
+    - `database_schema_snapshot_provider_error_channel`
+    - `trigger_data_collection_alias_error_channel`
+    - `runtime_node_identity_reason_channel`
+    - `simulation_edge_alias`
+  - total bulk-prune coverage now:
+    - `21` rules
+    - `35` targets
+- Consolidated check-canonical execution to manifest-first for these surfaces:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - removed direct `main` execution of:
+    - `checkParameterInferenceTargetPathCompatibilityPrune`
+    - `checkDatabaseSchemaSnapshotProviderErrorChannelPrune`
+    - `checkTriggerDataAndCollectionAliasErrorChannelPrune`
+    - `checkRuntimeAndNodeIdentityReasonChannelPrune`
+    - `checkEdgeAliasCleanupCompatibilityPrune`
+    - `checkSimulationEdgeAliasCompatibilityPrune`
+  - these checks are now enforced via:
+    - `checkManifestLegacyPruneRules`
+- Validation:
+  - `npm run ai-paths:bulk-prune:scan` passes (`21` rules across `35` targets).
+  - `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` passes.
+  - `npm run ai-paths:check:canonical` passes (`4239` files scanned).
+  - `npm run ai-paths:bulk-prune:report` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 135 (AI Paths Phase 3 Settings/Validation Guardrail Manifest Consolidation)
+
+- Expanded manifest coverage for settings-handler and validation-formatting guardrails:
+  - `scripts/ai-paths/legacy-prune-manifest.json`
+  - added rules:
+    - `settings_handler_versioned_key_guards`
+    - `maintenance_handler_enum_contract`
+    - `trigger_buttons_api_client`
+    - `preset_collection_migration`
+    - `validation_config_schema`
+    - `settings_backup_payload`
+    - `validation_path_index_meta_fallback`
+    - `validation_collection_map_delimiter`
+    - `validation_docs_sources_delimiter`
+  - total bulk-prune coverage now:
+    - `30` rules
+    - `44` targets
+- Consolidated check-canonical execution to manifest-first for this slice:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - removed direct `main` execution of:
+    - `checkSettingsHandlerVersionedKeyGuards`
+    - `checkMaintenanceHandlerEnum`
+    - `checkTriggerButtonsApiCompatibilityPrune`
+    - `checkPresetCollectionMigrationCompatibilityPrune`
+    - `checkValidationConfigLegacySchemaCompatibilityPrune`
+    - `checkSettingsBackupPayloadCompatibilityPrune`
+    - `checkValidationPathIndexMetaFallbackCompatibilityPrune`
+    - `checkValidationCollectionMapLegacyDelimiterCompatibilityPrune`
+    - `checkValidationDocsSourcesLegacyDelimiterCompatibilityPrune`
+  - these checks are now enforced via:
+    - `checkManifestLegacyPruneRules`
+- Validation:
+  - `npm run ai-paths:bulk-prune:scan` passes (`30` rules across `44` targets).
+  - `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` passes.
+  - `npm run ai-paths:check:canonical` passes (`4241` files scanned).
+  - `npm run ai-paths:bulk-prune:report` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 136 (AI Insights Schedule-Key Legacy Fallback Hard-Cut)
+
+- Removed legacy schedule-key fallback reads from AI Insights runtime scheduling flows:
+  - `src/features/ai/insights/generator.ts`
+  - `getScheduleSettings` now reads canonical `AI_INSIGHTS_SETTINGS_KEYS` values only.
+  - `runInsightsAutoGeneration` now reads canonical schedule toggle keys only.
+- Removed dead multi-key fallback helper:
+  - `src/features/ai/insights/generator/settings-service.ts`
+  - removed `readSettingWithFallback(...)` export.
+- Added runtime prune guard coverage for AI Insights schedule-key fallback surface:
+  - `src/features/ai/insights/__tests__/runtime-prune.test.ts`
+  - blocks reintroduction of:
+    - `LEGACY_INSIGHT_SCHEDULE_KEYS`
+    - `readSettingWithFallback(`
+    - legacy schedule key tokens (`ai_analytics_schedule_enabled`, `ai_runtime_analytics_schedule_enabled`, `ai_logs_schedule_enabled`, and related interval/error variants).
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of the same AI Insights legacy schedule-key tokens/helper.
+- Validation:
+  - `npx vitest run src/features/ai/insights/__tests__/runtime-prune.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 137 (AI Paths Validation Docs Fallback-Manifest Naming-Channel Canonicalization)
+
+- Renamed docs-registry fallback manifest constant to canonical built-in naming:
+  - `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.constants.ts`
+  - `LEGACY_FALLBACK_MANIFEST` -> `BUILTIN_FALLBACK_MANIFEST`
+- Updated docs-registry loader fallback branches/import to canonical built-in constant:
+  - `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts`
+  - invalid-json, invalid-schema, empty-sources, and read-error fallback returns now use `BUILTIN_FALLBACK_MANIFEST`.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of:
+    - `LEGACY_FALLBACK_MANIFEST`
+- Extended AI Paths canonical guardrails:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - added `checkValidationDocsFallbackManifestNamingChannelPrune` to:
+    - require `BUILTIN_FALLBACK_MANIFEST` snippets in docs-registry constants/loader.
+    - block `LEGACY_FALLBACK_MANIFEST` snippets in those runtime files.
+- Validation:
+  - `npx vitest run src/shared/lib/ai-paths/core/validation-engine/__tests__/docs-registry-adapter.test.ts src/shared/lib/ai-paths/core/validation-engine/__tests__/docs-inference.test.ts` passes.
+  - `npm run ai-paths:check:canonical` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 138 (Database Collection-Copy AI Paths Store-Prefix Naming-Channel Canonicalization)
+
+- Renamed AI Paths store-prefix compatibility constants to canonical deprecated-store naming:
+  - `src/shared/lib/db/services/database-collection-copy.ts`
+  - `AI_PATHS_LEGACY_PREFIX` -> `AI_PATHS_DEPRECATED_STORE_PREFIX`
+  - `AI_PATHS_LEGACY_KEY_PREFIX` -> `AI_PATHS_DEPRECATED_STORE_KEY_PREFIX`
+- Preserved runtime storage behavior for compatibility-prefixed keys:
+  - compatibility store prefix value remains unchanged (`ai_paths_store:`).
+  - key normalization and Prisma/Mongo copy filters continue to support existing prefixed records.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of:
+    - `AI_PATHS_LEGACY_PREFIX`
+    - `AI_PATHS_LEGACY_KEY_PREFIX`
+- Added runtime prune guard coverage for collection-copy naming channels:
+  - `src/shared/lib/db/services/__tests__/database-collection-copy.runtime-prune.test.ts`
+  - enforces canonical store-prefix naming tokens and blocks legacy prefix naming tokens.
+- Validation:
+  - `npx vitest run src/shared/lib/db/services/__tests__/database-collection-copy.runtime-prune.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 139 (Validator Docs-Catalog Legacy Wording-Channel Canonicalization)
+
+- Canonicalized validator docs-catalog wording from legacy-specific to unsupported wording:
+  - `src/shared/lib/documentation/catalogs/validator-docs.ts`
+  - `legacy payload variants fallback to defaults` -> `unsupported payload variants fallback to defaults`
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of:
+    - `legacy payload variants fallback to defaults.`
+- Validation:
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 140 (AI Paths Phase 3 DBQuery + Run-Source/Meta Manifest Consolidation)
+
+- Expanded manifest coverage for database dbQuery compatibility and run-source/meta channels:
+  - `scripts/ai-paths/legacy-prune-manifest.json`
+  - added rules:
+    - `database_node_legacy_dbquery`
+    - `collection_names_legacy_dbquery`
+    - `run_execution_meta_contract`
+    - `run_source_meta_contract`
+    - `enqueue_meta_source_contract`
+    - `run_source_filter_contract`
+    - `queue_cache_run_source_contract`
+    - `run_source_helpers_contract`
+  - total bulk-prune coverage now:
+    - `38` rules
+    - `53` targets
+- Consolidated check-canonical execution to manifest-first for this slice:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - removed direct `main` execution of:
+    - `checkDatabaseNodeLegacyDbQueryPrune`
+    - `checkCollectionNamesLegacyDbQueryPrune`
+    - `checkRunExecutionMetaCompatibilityPrune`
+    - `checkRunSourceMetaCompatibilityPrune`
+    - `checkEnqueueMetaSourceCompatibilityPrune`
+    - `checkRunSourceFilterCompatibilityPrune`
+    - `checkQueueCacheRunSourceCompatibilityPrune`
+  - retained `checkRunSourceHelpersCompatibilityPrune` for the file-existence guard only (`src/features/ai/ai-paths/lib/run-sources.ts`), while snippet checks moved to manifest.
+  - migrated surfaces are now enforced via:
+    - `checkManifestLegacyPruneRules`
+- Validation:
+  - `npm run ai-paths:bulk-prune:scan` passes (`38` rules across `53` targets).
+  - `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` passes.
+  - `npm run ai-paths:check:canonical` passes (`4242` files scanned).
+  - `npm run ai-paths:bulk-prune:report` passes.
+  - `npm run typecheck` passes.

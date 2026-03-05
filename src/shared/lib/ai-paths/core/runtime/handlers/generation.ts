@@ -225,6 +225,61 @@ export const handleModel: NodeHandler = async ({
     300_000,
     30_000
   );
+  const defaultModelEnqueueRetryAttempts = parseIntWithMin(
+    process.env['AI_PATHS_MODEL_ENQUEUE_RETRY_ATTEMPTS'],
+    3,
+    1
+  );
+  const defaultModelEnqueueRetryBackoffMs = parseIntWithMin(
+    process.env['AI_PATHS_MODEL_ENQUEUE_RETRY_BACKOFF_MS'],
+    400,
+    50
+  );
+
+  const sleepWithAbort = async (ms: number): Promise<void> => {
+    if (!Number.isFinite(ms) || ms <= 0) return;
+    await new Promise<void>((resolve, reject) => {
+      if (!abortSignal) {
+        setTimeout(resolve, ms);
+        return;
+      }
+      if (abortSignal.aborted) {
+        const abortError = new Error('Operation aborted.');
+        (abortError as { name?: string }).name = 'AbortError';
+        reject(abortError);
+        return;
+      }
+      const onAbort = (): void => {
+        clearTimeout(timer);
+        const abortError = new Error('Operation aborted.');
+        (abortError as { name?: string }).name = 'AbortError';
+        reject(abortError);
+      };
+      const timer = setTimeout((): void => {
+        abortSignal.removeEventListener('abort', onAbort);
+        resolve();
+      }, ms);
+      abortSignal.addEventListener('abort', onAbort, { once: true });
+    });
+  };
+
+  const isRetryableEnqueueError = (message: string): boolean => {
+    const normalized = message.trim().toLowerCase();
+    if (!normalized) return false;
+    return (
+      normalized.includes('request failed with status 404') ||
+      normalized.includes('request failed with status 429') ||
+      normalized.includes('request failed with status 500') ||
+      normalized.includes('request failed with status 502') ||
+      normalized.includes('request failed with status 503') ||
+      normalized.includes('request failed with status 504') ||
+      normalized.includes('request timeout') ||
+      normalized.includes('network') ||
+      normalized.includes('fetch failed') ||
+      normalized.includes('econnreset') ||
+      normalized.includes('econnrefused')
+    );
+  };
 
   if (skipAiJobs) {
     return buildModelTerminalOutputs({
@@ -439,16 +494,34 @@ export const handleModel: NodeHandler = async ({
   }
   let enqueuedJobId: string | undefined;
   try {
-    const enqueueResult = await aiJobsApi.enqueue({
-      productId,
-      type: 'graph_model',
-      payload: {
-        ...payload,
-        cacheKey,
-      },
-    });
-    if (!enqueueResult.ok) {
-      throw new Error(enqueueResult.error || 'Failed to enqueue AI job.');
+    const enqueuePayload = {
+      ...payload,
+      cacheKey,
+      payloadHash,
+    };
+    let enqueueResult: Awaited<ReturnType<typeof aiJobsApi.enqueue>> | null = null;
+    let enqueueErrorMessage: string | null = null;
+    for (let enqueueAttempt = 1; enqueueAttempt <= defaultModelEnqueueRetryAttempts; enqueueAttempt += 1) {
+      enqueueResult = await aiJobsApi.enqueue({
+        productId,
+        type: 'graph_model',
+        payload: enqueuePayload,
+      });
+      if (enqueueResult.ok) {
+        enqueueErrorMessage = null;
+        break;
+      }
+      enqueueErrorMessage = enqueueResult.error || 'Failed to enqueue AI job.';
+      const shouldRetry =
+        enqueueAttempt < defaultModelEnqueueRetryAttempts &&
+        isRetryableEnqueueError(enqueueErrorMessage);
+      if (!shouldRetry) {
+        break;
+      }
+      await sleepWithAbort(defaultModelEnqueueRetryBackoffMs * enqueueAttempt);
+    }
+    if (!enqueueResult?.ok) {
+      throw new Error(enqueueErrorMessage || 'Failed to enqueue AI job.');
     }
     enqueuedJobId = enqueueResult.data.jobId;
     toast('AI model job queued.', { variant: 'success' });

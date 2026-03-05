@@ -1,0 +1,36 @@
+name: weekly-quality-report
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 13 * * 1'
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run weekly quality report
+        run: npm run quality:weekly-report:strict -- --ci
+
+      - name: Upload weekly quality artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-quality-report
+          if-no-files-found: warn
+          path: |
+            docs/metrics/weekly-quality-latest.json
+            docs/metrics/weekly-quality-latest.md

@@ -283,6 +283,46 @@ describe('handleModel prompt routing', () => {
     );
   });
 
+  it('retries transient enqueue 404 and succeeds without failing the model node', async () => {
+    vi.mocked(aiJobsApi.enqueue)
+      .mockResolvedValueOnce({
+        ok: false,
+        error: 'Request failed with status 404',
+      } as Awaited<ReturnType<typeof aiJobsApi.enqueue>>)
+      .mockResolvedValueOnce({
+        ok: true,
+        data: { jobId: 'job-queued-retry' },
+      } as Awaited<ReturnType<typeof aiJobsApi.enqueue>>);
+
+    const modelNode = buildModelNode();
+    const promptNode = buildPromptNode('prompt-retry');
+    const edges: Edge[] = [
+      {
+        id: 'edge-retry',
+        from: 'prompt-retry',
+        fromPort: 'prompt',
+        to: 'model-1',
+        toPort: 'prompt',
+      } as Edge,
+    ];
+    const context = buildContext({
+      node: modelNode,
+      nodes: [promptNode, modelNode],
+      edges,
+      allOutputs: {
+        'prompt-retry': {
+          prompt: 'Retry-enqueue prompt',
+        },
+      },
+    });
+
+    const result = await handleModel(context);
+
+    expect(vi.mocked(aiJobsApi.enqueue)).toHaveBeenCalledTimes(2);
+    expect(result['status']).toBe('queued');
+    expect(result['jobId']).toBe('job-queued-retry');
+  });
+
   it('reports required prompt port diagnostics when no prompt input can be resolved', async () => {
     const modelNode = buildModelNode();
     const promptA = buildPromptNode('prompt-a');

@@ -33,13 +33,13 @@ const createCanonicalNodeId = (seed: string): string =>
 
 const buildUniqueCanonicalNodeId = ({
   pathId,
-  legacyId,
+  sourceId,
   node,
   index,
   usedIds,
 }: {
   pathId: string;
-  legacyId: string;
+  sourceId: string;
   node: Pick<AiNode, 'type' | 'title'>;
   index: number;
   usedIds: Set<string>;
@@ -51,7 +51,8 @@ const buildUniqueCanonicalNodeId = ({
       stableStringify({
         kind: 'ai_paths_factory_node',
         pathId,
-        legacyId,
+        // Keep stable seed key name for deterministic id continuity.
+        legacyId: sourceId,
         type: node.type,
         title: node.title,
         index,
@@ -104,16 +105,16 @@ const canonicalizePathNodes = ({
   const usedIds = new Set<string>();
   const nodeIdMap = new Map<string, string>();
   const remappedNodes = nodes.map((node: AiNode, index: number): AiNode => {
-    const legacyId = typeof node.id === 'string' ? node.id.trim() : '';
+    const sourceId = typeof node.id === 'string' ? node.id.trim() : '';
     const nextId = buildUniqueCanonicalNodeId({
       pathId,
-      legacyId,
+      sourceId,
       node,
       index,
       usedIds,
     });
-    if (legacyId) {
-      nodeIdMap.set(legacyId, nextId);
+    if (sourceId) {
+      nodeIdMap.set(sourceId, nextId);
     }
     return {
       ...node,

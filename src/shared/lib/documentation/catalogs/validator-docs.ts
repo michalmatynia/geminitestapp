@@ -604,7 +604,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Normalized list array.',
     errors: ['JSON parse errors fallback to defaults.'],
     edgeCases: [
-      'Requires canonical envelope shape `{ version: 2, lists: [...] }`; legacy payload variants fallback to defaults.',
+      'Requires canonical envelope shape `{ version: 2, lists: [...] }`; unsupported payload variants fallback to defaults.',
     ],
     example: 'parseValidatorPatternLists(rawSetting)',
   },

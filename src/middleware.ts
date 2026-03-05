@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { auth } from '@/features/auth/server';
 import { CSRF_COOKIE_NAME, ensureCsrfCookie } from '@/shared/lib/security/csrf';
 
-const baseProxy = (request: NextRequest): NextResponse => {
+const baseMiddleware = (request: NextRequest): NextResponse => {
   const response = NextResponse.next();
   const existing = request.cookies.get(CSRF_COOKIE_NAME)?.value ?? null;
   ensureCsrfCookie(response, existing);
@@ -23,22 +23,24 @@ type HandlerContext = Parameters<NextRequestHandler>[1];
 const shouldBypassAuth = (request: NextRequest): boolean =>
   request.nextUrl.pathname.startsWith('/api/');
 
-export function proxy(
+export function middleware(
   request: NextRequest,
   context?: HandlerContext
 ): Promise<Response> | Response {
   const resolvedContext = context ?? ({ params: {} } as HandlerContext);
   if (shouldBypassAuth(request)) {
-    return baseProxy(request);
+    return baseMiddleware(request);
   }
   if (!handler || typeof handler !== 'function') {
-    return baseProxy(request);
+    return baseMiddleware(request);
   }
   return handler(request, resolvedContext);
 }
 
-export default proxy;
+export default middleware;
 
 export const config = {
   matcher: ['/admin/:path*', '/api/:path*'],
 };
+
+export const runtime = 'nodejs';

@@ -38,7 +38,7 @@ vi.mock('@/shared/lib/security/csrf', () => ({
   ensureCsrfCookie: (...args: unknown[]) => ensureCsrfCookieMock(...args),
 }));
 
-import { proxy } from '@/proxy';
+import { middleware } from '@/middleware';
 
 const createRequest = (
   url: string,
@@ -60,27 +60,27 @@ const createRequest = (
   };
 };
 
-describe('proxy api routing', () => {
+describe('middleware api routing', () => {
   beforeEach(() => {
     ensureCsrfCookieMock.mockReset();
   });
 
-  it('lets legacy /api/products paths fall through base proxy flow', async () => {
+  it('lets legacy /api/products paths fall through base middleware flow', async () => {
     const request = createRequest(
       'http://localhost/api/products/categories/tree?catalogId=catalog-1&fresh=1'
     );
 
-    const response = await Promise.resolve(proxy(request as never, { params: {} }));
+    const response = await Promise.resolve(middleware(request as never, { params: {} }));
 
     expect(response.status).toBe(200);
     expect(response.headers.get('x-middleware-next')).toBe('1');
     expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
   });
 
-  it('allows /api/v2/products paths through base proxy flow', async () => {
+  it('allows /api/v2/products paths through base middleware flow', async () => {
     const request = createRequest('http://localhost/api/v2/products?page=1');
 
-    const response = await Promise.resolve(proxy(request as never, { params: {} }));
+    const response = await Promise.resolve(middleware(request as never, { params: {} }));
 
     expect(response.status).toBe(200);
     expect(response.headers.get('x-middleware-next')).toBe('1');

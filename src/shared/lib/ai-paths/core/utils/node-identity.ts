@@ -9,7 +9,7 @@ type NodeIdentityLike = Pick<AiNode, 'type' | 'title'> &
 export type PathIdentityRepairWarning = {
   code: 'missing_node_id' | 'duplicate_node_id';
   message: string;
-  legacyNodeId?: string;
+  sourceNodeId?: string;
 };
 
 export type PathIdentityRepairResult = {
@@ -74,7 +74,7 @@ const createNodeTypeHashId = (args: {
   type: string;
   title: string;
   triggerEvent?: string | null;
-  legacyNodeTypeId?: string | null;
+  sourceNodeTypeId?: string | null;
   index?: number;
   collisionSalt?: number;
 }): string => {
@@ -83,7 +83,8 @@ const createNodeTypeHashId = (args: {
     type: asTrimmedString(args.type) || 'unknown',
     title: asTrimmedString(args.title),
     triggerEvent: asTrimmedString(args.triggerEvent ?? ''),
-    legacyNodeTypeId: asTrimmedString(args.legacyNodeTypeId ?? ''),
+    // Keep stable seed key name for deterministic id continuity.
+    legacyNodeTypeId: asTrimmedString(args.sourceNodeTypeId ?? ''),
     index:
       typeof args.index === 'number' && Number.isFinite(args.index)
         ? Math.max(0, Math.trunc(args.index))
@@ -94,35 +95,6 @@ const createNodeTypeHashId = (args: {
         : 0,
   });
   return createHashedIdentifier(NODE_TYPE_ID_PREFIX, seed);
-};
-
-const createNodeInstanceIdFromLegacy = (
-  args: {
-    pathId: string;
-    legacyId: string;
-    node: NodeIdentityLike;
-    occurrence: number;
-  },
-  usedIds: Set<string>
-): string => {
-  let collisionSalt = 0;
-  let candidate = '';
-  while (!candidate || usedIds.has(candidate)) {
-    const seed = stableStringify({
-      kind: 'ai_paths_node_instance',
-      pathId: asTrimmedString(args.pathId) || 'path',
-      legacyId: asTrimmedString(args.legacyId) || 'missing',
-      type: asTrimmedString(args.node.type) || 'unknown',
-      title: asTrimmedString(args.node.title),
-      triggerEvent: getTriggerEvent(args.node),
-      occurrence: Math.max(1, Math.trunc(args.occurrence)),
-      collisionSalt,
-    });
-    candidate = createHashedIdentifier(NODE_INSTANCE_ID_PREFIX, seed);
-    collisionSalt += 1;
-  }
-  usedIds.add(candidate);
-  return candidate;
 };
 
 export const derivePaletteNodeTypeId = (
@@ -199,7 +171,7 @@ export const resolveNodeTypeId = (
       type: definition.type,
       title: definition.title,
       triggerEvent: definition.type === 'trigger' ? getTriggerEvent(definition) : null,
-      legacyNodeTypeId: fromDefinition.length > 0 ? fromDefinition : explicit,
+      sourceNodeTypeId: fromDefinition.length > 0 ? fromDefinition : explicit,
     });
   }
 
@@ -208,7 +180,7 @@ export const resolveNodeTypeId = (
     type: fallbackType.length > 0 ? fallbackType : 'unknown',
     title: asTrimmedString(node.title),
     triggerEvent: node.type === 'trigger' ? getTriggerEvent(node) : null,
-    legacyNodeTypeId: explicit.length > 0 ? explicit : null,
+    sourceNodeTypeId: explicit.length > 0 ? explicit : null,
   });
 };
 
@@ -485,26 +457,26 @@ export const repairPathNodeIdentities = (
   const palette = options?.palette ?? [];
   const warnings: PathIdentityRepairWarning[] = [];
   const usedIds = new Set<string>();
-  const firstResolvedByLegacyId = new Map<string, string>();
+  const firstResolvedBySourceId = new Map<string, string>();
   const duplicateCounts = new Map<string, number>();
-  const legacyOccurrenceCounts = new Map<string, number>();
+  const sourceOccurrenceCounts = new Map<string, number>();
 
   const remapNodeId = (candidate: string): string => {
-    const direct = firstResolvedByLegacyId.get(candidate);
+    const direct = firstResolvedBySourceId.get(candidate);
     if (direct) return direct;
     const trimmed = candidate.trim();
     if (!trimmed) return candidate;
-    return firstResolvedByLegacyId.get(trimmed) ?? candidate;
+    return firstResolvedBySourceId.get(trimmed) ?? candidate;
   };
 
   let changed = false;
   const pathIdSeed = asTrimmedString(pathConfig.id) || 'path';
   const repairedNodes = (pathConfig.nodes ?? []).map((node: AiNode): AiNode => {
-    const rawLegacyId = typeof node.id === 'string' ? node.id : '';
-    const trimmedLegacyId = rawLegacyId.trim();
+    const rawSourceId = typeof node.id === 'string' ? node.id : '';
+    const trimmedSourceId = rawSourceId.trim();
 
     let nextId: string;
-    if (!trimmedLegacyId) {
+    if (!trimmedSourceId) {
       nextId = createNodeInstanceId(usedIds);
       warnings.push({
         code: 'missing_node_id',
@@ -512,45 +484,45 @@ export const repairPathNodeIdentities = (
       });
       changed = true;
     } else {
-      const occurrence = (legacyOccurrenceCounts.get(trimmedLegacyId) ?? 0) + 1;
-      legacyOccurrenceCounts.set(trimmedLegacyId, occurrence);
-      const isDuplicateLegacy = occurrence > 1;
-      const canReuseHashedLegacyId =
+      const occurrence = (sourceOccurrenceCounts.get(trimmedSourceId) ?? 0) + 1;
+      sourceOccurrenceCounts.set(trimmedSourceId, occurrence);
+      const isDuplicateSourceId = occurrence > 1;
+      const canReuseHashedSourceId =
         occurrence === 1 &&
-        isHashedNodeInstanceId(trimmedLegacyId) &&
-        !usedIds.has(trimmedLegacyId);
-      if (canReuseHashedLegacyId) {
-        nextId = trimmedLegacyId;
+        isHashedNodeInstanceId(trimmedSourceId) &&
+        !usedIds.has(trimmedSourceId);
+      if (canReuseHashedSourceId) {
+        nextId = trimmedSourceId;
         usedIds.add(nextId);
       } else {
-        nextId = createNodeInstanceIdFromLegacy(
+        nextId = createNodeInstanceIdFromSource(
           {
             pathId: pathIdSeed,
-            legacyId: trimmedLegacyId,
+            sourceId: trimmedSourceId,
             node,
             occurrence,
           },
           usedIds
         );
       }
-      if (isDuplicateLegacy) {
-        duplicateCounts.set(trimmedLegacyId, occurrence);
+      if (isDuplicateSourceId) {
+        duplicateCounts.set(trimmedSourceId, occurrence);
         warnings.push({
           code: 'duplicate_node_id',
-          legacyNodeId: trimmedLegacyId,
-          message: `Duplicate node id "${trimmedLegacyId}" detected; remapped duplicate to "${nextId}".`,
+          sourceNodeId: trimmedSourceId,
+          message: `Duplicate node id "${trimmedSourceId}" detected; remapped duplicate to "${nextId}".`,
         });
       }
-      if (nextId !== rawLegacyId) {
+      if (nextId !== rawSourceId) {
         changed = true;
       }
     }
 
-    if (!firstResolvedByLegacyId.has(rawLegacyId)) {
-      firstResolvedByLegacyId.set(rawLegacyId, nextId);
+    if (!firstResolvedBySourceId.has(rawSourceId)) {
+      firstResolvedBySourceId.set(rawSourceId, nextId);
     }
-    if (trimmedLegacyId && !firstResolvedByLegacyId.has(trimmedLegacyId)) {
-      firstResolvedByLegacyId.set(trimmedLegacyId, nextId);
+    if (trimmedSourceId && !firstResolvedBySourceId.has(trimmedSourceId)) {
+      firstResolvedBySourceId.set(trimmedSourceId, nextId);
     }
 
     const nextNodeTypeId = resolveNodeTypeId(node, palette);
@@ -571,11 +543,11 @@ export const repairPathNodeIdentities = (
     };
   });
 
-  duplicateCounts.forEach((_count: number, legacyId: string): void => {
+  duplicateCounts.forEach((_count: number, sourceId: string): void => {
     warnings.push({
       code: 'duplicate_node_id',
-      legacyNodeId: legacyId,
-      message: `Ambiguous references for duplicate id "${legacyId}" were remapped to the first kept node.`,
+      sourceNodeId: sourceId,
+      message: `Ambiguous references for duplicate id "${sourceId}" were remapped to the first kept node.`,
     });
   });
 

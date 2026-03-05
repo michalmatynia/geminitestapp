@@ -358,6 +358,7 @@ export const evaluateInputReadiness = (
     const port = resolveEdgeToPort(edge);
     if (port) connectedPorts.add(port);
   });
+  const connectedPortList = Array.from(connectedPorts);
 
   if (connectedPorts.size === 0) {
     const requiredPorts = resolveConfiguredRequiredInputPorts(node, connectedPorts);
@@ -383,14 +384,54 @@ export const evaluateInputReadiness = (
   }
 
   const explicitRequiredPorts = resolveConfiguredRequiredInputPorts(node, connectedPorts);
+
+  if (node.type === 'prompt' && explicitRequiredPorts.length === 0) {
+    const promptTemplate =
+      typeof node.config?.prompt?.template === 'string' ? node.config.prompt.template.trim() : '';
+    const hasDynamicTemplateToken = /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/.test(
+      promptTemplate
+    );
+    const hasAnyConnectedValue = connectedPortList.some((port: string): boolean =>
+      hasMeaningfulValue(coerceInput(rawInputs[port]))
+    );
+
+    if (hasAnyConnectedValue) {
+      return {
+        ready: true,
+        requiredPorts: [],
+        optionalPorts: connectedPortList,
+        waitingOnPorts: [],
+        waitingOnDetails: [],
+      };
+    }
+
+    // Prompt nodes with upstream wiring should not execute on empty placeholder data.
+    // Wait when there is no template or when the template depends on runtime tokens.
+    if (!promptTemplate || hasDynamicTemplateToken) {
+      const waitingOnPorts = new Set<string>(connectedPortList);
+      return {
+        ready: false,
+        requiredPorts: connectedPortList,
+        optionalPorts: [],
+        waitingOnPorts: Array.from(waitingOnPorts),
+        waitingOnDetails: buildWaitingDetails(waitingOnPorts),
+      };
+    }
+
+    // Static templates are allowed to run without upstream values.
+    return {
+      ready: true,
+      requiredPorts: [],
+      optionalPorts: connectedPortList,
+      waitingOnPorts: [],
+      waitingOnDetails: [],
+    };
+  }
+
   const requiredPorts =
-    explicitRequiredPorts.length > 0
-      ? explicitRequiredPorts
-      : node.type === 'prompt'
-        ? []
-        : Array.from(connectedPorts);
+    explicitRequiredPorts.length > 0 ? explicitRequiredPorts : connectedPortList;
   const requiredPortSet = new Set(requiredPorts);
-  const optionalPorts = Array.from(connectedPorts).filter(
+  const optionalPorts = connectedPortList.filter(
     (port: string): boolean => !requiredPortSet.has(port)
   );
   const waitingOnPorts = new Set<string>();

@@ -74,10 +74,12 @@ const resolveGraphModelCacheKey = (payload: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const resolveGraphModelResultText = (result: unknown): string => {
-  if (!result || typeof result !== 'object') return '';
-  const value = (result as Record<string, unknown>)['result'];
-  return typeof value === 'string' ? value.trim() : '';
+const resolveGraphModelPayloadHash = (payload: unknown): string | null => {
+  if (!payload || typeof payload !== 'object') return null;
+  const raw = (payload as Record<string, unknown>)['payloadHash'];
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  return trimmed.length > 0 ? trimmed : null;
 };
 
 const summarizeGraphModelPayload = (payload: unknown): Record<string, unknown> | undefined => {
@@ -92,12 +94,19 @@ const summarizeGraphModelPayload = (payload: unknown): Record<string, unknown> |
     promptLength: typeof prompt === 'string' ? prompt.length : null,
     imageCount: imageUrls.length,
     cacheKey: typeof record['cacheKey'] === 'string' ? record['cacheKey'].slice(0, 12) : null,
+    payloadHash:
+      typeof record['payloadHash'] === 'string' ? record['payloadHash'].slice(0, 12) : null,
   };
 };
 
-const canReuseGraphModelJob = (job: ProductAiJobRecord, cacheKey: string): boolean => {
+const canReuseGraphModelJob = (
+  job: ProductAiJobRecord,
+  cacheKey: string,
+  payloadHash: string
+): boolean => {
   if (job.type !== 'graph_model') return false;
   if (resolveGraphModelCacheKey(job.payload) !== cacheKey) return false;
+  if (resolveGraphModelPayloadHash(job.payload) !== payloadHash) return false;
   if (job.status === 'pending') return true;
   if (job.status === 'running') {
     if (GRAPH_MODEL_REUSE_RUNNING_MAX_AGE_MS <= 0) return false;
@@ -106,8 +115,12 @@ const canReuseGraphModelJob = (job: ProductAiJobRecord, cacheKey: string): boole
     if (!Number.isFinite(startedAtMs)) return true;
     return Date.now() - startedAtMs < GRAPH_MODEL_REUSE_RUNNING_MAX_AGE_MS;
   }
-  if (job.status !== 'completed') return false;
-  return resolveGraphModelResultText(job.result).length > 0;
+  if (job.status === 'completed') {
+    // Forward-only policy: completed graph-model jobs are not reusable.
+    // This prevents stale prompt/result carryover across retries and reruns.
+    return false;
+  }
+  return false;
 };
 
 export async function enqueueProductAiJob(
@@ -138,14 +151,15 @@ export async function enqueueProductAiJob(
 
   if (type === 'graph_model') {
     const cacheKey = resolveGraphModelCacheKey(payload);
-    if (cacheKey) {
+    const payloadHash = resolveGraphModelPayloadHash(payload);
+    if (cacheKey && payloadHash) {
       const existingJobs = await jobRepository.findJobs(productId, {
         type: 'graph_model',
         statuses: ['pending', 'running', 'completed'],
         limit: GRAPH_MODEL_REUSE_SCAN_LIMIT,
       });
       const reusable = existingJobs.find((job: ProductAiJobRecord) =>
-        canReuseGraphModelJob(job, cacheKey)
+        canReuseGraphModelJob(job, cacheKey, payloadHash)
       );
       if (reusable) {
         try {
@@ -154,14 +168,14 @@ export async function enqueueProductAiJob(
             service: 'product-ai-service',
             productId,
             jobId: reusable.id,
-            context: { type, cacheKey, status: reusable.status },
+            context: { type, cacheKey, payloadHash, status: reusable.status },
           });
         } catch {
           void logSystemEvent({
             level: 'info',
             source: LOG_SOURCE,
             message: 'Reusing graph_model job',
-            context: { jobId: reusable.id, status: reusable.status, cacheKey },
+            context: { jobId: reusable.id, status: reusable.status, cacheKey, payloadHash },
           });
         }
         return toProductAiJob(reusable);

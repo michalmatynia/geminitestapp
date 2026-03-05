@@ -11,8 +11,8 @@ export const DOCS_MANIFEST_PATH = 'docs/ai-paths/node-validator-central-manifest
 export const CRITICAL_CONFIG_FIELD_PATTERN =
   /(entityId|collection|modelId|template|event|pattern|queryTemplate|intervalMs|maxAttempts|mappings|url)$/i;
 
-export const LEGACY_FALLBACK_MANIFEST: AiPathsDocsManifest = {
-  version: 'fallback.v1',
+export const BUILTIN_FALLBACK_MANIFEST: AiPathsDocsManifest = {
+  version: 'builtin.v1',
   sources: [
     {
       id: 'core-patterns',

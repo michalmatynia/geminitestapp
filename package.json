@@ -58,6 +58,8 @@
     "metrics:guardrails:update": "node scripts/architecture/check-guardrails.mjs --update-baseline",
     "metrics:hotspots": "node scripts/perf/route-hotspots.mjs",
     "metrics:all": "npm run metrics:collect && npm run metrics:hotspots && npm run metrics:guardrails",
+    "quality:weekly-report": "node scripts/quality/generate-weekly-report.mjs",
+    "quality:weekly-report:strict": "node scripts/quality/generate-weekly-report.mjs --strict",
     "docs:validator:generate": "tsx scripts/docs/generate-validator-docs.ts",
     "docs:validator:check": "tsx scripts/docs/check-validator-doc-coverage.ts",
     "docs:ai-paths:semantic:generate": "tsx scripts/docs/generate-ai-paths-semantic-grammar.ts",

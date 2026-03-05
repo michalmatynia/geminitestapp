@@ -7,7 +7,7 @@ import {
   DOC_ASSERTION_BLOCK_REGEX,
   DOCS_MANIFEST_PATH,
   DOCS_SNIPPET_REGISTRY,
-  LEGACY_FALLBACK_MANIFEST,
+  BUILTIN_FALLBACK_MANIFEST,
   NODE_LABEL_TO_TYPE,
 } from './docs-registry-adapter.constants';
 import {
@@ -384,28 +384,28 @@ export const readAiPathsDocsManifest = async (warnings: string[]): Promise<AiPat
       parsed = JSON.parse(manifestText);
     } catch {
       warnings.push(`${DOCS_MANIFEST_PATH}: invalid JSON. Falling back to built-in sources.`);
-      return LEGACY_FALLBACK_MANIFEST;
+      return BUILTIN_FALLBACK_MANIFEST;
     }
     const result = docsManifestSchema.safeParse(parsed);
     if (!result.success) {
       warnings.push(
         `${DOCS_MANIFEST_PATH}: schema validation failed. Falling back to built-in sources.`
       );
-      return LEGACY_FALLBACK_MANIFEST;
+      return BUILTIN_FALLBACK_MANIFEST;
     }
     const normalized = normalizeManifest(result.data, warnings);
     if (normalized.sources.length === 0) {
       warnings.push(
         `${DOCS_MANIFEST_PATH}: no valid sources enabled. Falling back to built-in sources.`
       );
-      return LEGACY_FALLBACK_MANIFEST;
+      return BUILTIN_FALLBACK_MANIFEST;
     }
     return normalized;
   } catch (error) {
     warnings.push(
       `${DOCS_MANIFEST_PATH}: failed to read manifest (${error instanceof Error ? error.message : 'unknown error'}). Falling back to built-in sources.`
     );
-    return LEGACY_FALLBACK_MANIFEST;
+    return BUILTIN_FALLBACK_MANIFEST;
   }
 };
 

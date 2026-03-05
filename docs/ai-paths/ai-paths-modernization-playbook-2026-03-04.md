@@ -1216,6 +1216,96 @@ Progress (2026-03-04):
       2. `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` -> passed.
       3. `npm run ai-paths:check:canonical` -> passed (`4237` files scanned).
       4. `npm run typecheck` -> fails due pre-existing unrelated compile error in runtime module typing (`src/shared/lib/ai-paths/core/runtime/engine-modules/engine-state-manager.ts`).
+55. Continued Phase 3 manifest-first consolidation for runtime/simulation reason-channel checks in seam 185:
+   1. Expanded manifest rule coverage for remaining runtime reason-channel and simulation alias checks:
+      1. `scripts/ai-paths/legacy-prune-manifest.json`
+      2. added rule families:
+         1. `parameter_inference_target_path_runtime`
+         2. `database_schema_snapshot_provider_error_channel`
+         3. `trigger_data_collection_alias_error_channel`
+         4. `runtime_node_identity_reason_channel`
+         5. `simulation_edge_alias`
+      3. bulk-prune manifest now covers `21` rules across `35` targets.
+   2. Consolidated canonical guardrail execution path:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. removed direct `main` execution of migrated checks:
+         1. `checkParameterInferenceTargetPathCompatibilityPrune`
+         2. `checkDatabaseSchemaSnapshotProviderErrorChannelPrune`
+         3. `checkTriggerDataAndCollectionAliasErrorChannelPrune`
+         4. `checkRuntimeAndNodeIdentityReasonChannelPrune`
+         5. `checkEdgeAliasCleanupCompatibilityPrune`
+         6. `checkSimulationEdgeAliasCompatibilityPrune`
+      3. these surfaces are now enforced by `checkManifestLegacyPruneRules`.
+   3. Validation:
+      1. `npm run ai-paths:bulk-prune:scan` -> passed (`21` rules across `35` targets).
+      2. `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` -> passed.
+      3. `npm run ai-paths:check:canonical` -> passed (`4239` files scanned).
+      4. `npm run ai-paths:bulk-prune:report` -> passed (report refreshed).
+      5. `npm run typecheck` -> passed.
+56. Continued Phase 3 manifest-first consolidation for settings/validation guardrails in seam 186:
+   1. Expanded manifest coverage for settings-handler and validation-formatting guardrails:
+      1. `scripts/ai-paths/legacy-prune-manifest.json`
+      2. added rule families:
+         1. `settings_handler_versioned_key_guards`
+         2. `maintenance_handler_enum_contract`
+         3. `trigger_buttons_api_client`
+         4. `preset_collection_migration`
+         5. `validation_config_schema`
+         6. `settings_backup_payload`
+         7. `validation_path_index_meta_fallback`
+         8. `validation_collection_map_delimiter`
+         9. `validation_docs_sources_delimiter`
+      3. bulk-prune manifest now covers `30` rules across `44` targets.
+   2. Consolidated canonical guardrail execution path:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. removed direct `main` execution of migrated checks:
+         1. `checkSettingsHandlerVersionedKeyGuards`
+         2. `checkMaintenanceHandlerEnum`
+         3. `checkTriggerButtonsApiCompatibilityPrune`
+         4. `checkPresetCollectionMigrationCompatibilityPrune`
+         5. `checkValidationConfigLegacySchemaCompatibilityPrune`
+         6. `checkSettingsBackupPayloadCompatibilityPrune`
+         7. `checkValidationPathIndexMetaFallbackCompatibilityPrune`
+         8. `checkValidationCollectionMapLegacyDelimiterCompatibilityPrune`
+         9. `checkValidationDocsSourcesLegacyDelimiterCompatibilityPrune`
+      3. these surfaces are now enforced by `checkManifestLegacyPruneRules`.
+   3. Validation:
+      1. `npm run ai-paths:bulk-prune:scan` -> passed (`30` rules across `44` targets).
+      2. `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` -> passed.
+      3. `npm run ai-paths:check:canonical` -> passed (`4241` files scanned).
+      4. `npm run ai-paths:bulk-prune:report` -> passed (report refreshed).
+      5. `npm run typecheck` -> passed.
+57. Continued Phase 3 manifest-first consolidation for dbQuery + run-source/meta guardrails in seam 187:
+   1. Expanded manifest coverage for database dbQuery compatibility and run-source/meta channels:
+      1. `scripts/ai-paths/legacy-prune-manifest.json`
+      2. added rule families:
+         1. `database_node_legacy_dbquery`
+         2. `collection_names_legacy_dbquery`
+         3. `run_execution_meta_contract`
+         4. `run_source_meta_contract`
+         5. `enqueue_meta_source_contract`
+         6. `run_source_filter_contract`
+         7. `queue_cache_run_source_contract`
+         8. `run_source_helpers_contract`
+      3. bulk-prune manifest now covers `38` rules across `53` targets.
+   2. Consolidated canonical guardrail execution path:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. removed direct `main` execution of migrated checks:
+         1. `checkDatabaseNodeLegacyDbQueryPrune`
+         2. `checkCollectionNamesLegacyDbQueryPrune`
+         3. `checkRunExecutionMetaCompatibilityPrune`
+         4. `checkRunSourceMetaCompatibilityPrune`
+         5. `checkEnqueueMetaSourceCompatibilityPrune`
+         6. `checkRunSourceFilterCompatibilityPrune`
+         7. `checkQueueCacheRunSourceCompatibilityPrune`
+      3. `checkRunSourceHelpersCompatibilityPrune` now retains only the file-presence guard (`src/features/ai/ai-paths/lib/run-sources.ts`) while snippet checks moved to manifest.
+      4. migrated surfaces are now enforced by `checkManifestLegacyPruneRules`.
+   3. Validation:
+      1. `npm run ai-paths:bulk-prune:scan` -> passed (`38` rules across `53` targets).
+      2. `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` -> passed.
+      3. `npm run ai-paths:check:canonical` -> passed (`4242` files scanned).
+      4. `npm run ai-paths:bulk-prune:report` -> passed (report refreshed).
+      5. `npm run typecheck` -> passed.
 
 ## Deprecation map
 

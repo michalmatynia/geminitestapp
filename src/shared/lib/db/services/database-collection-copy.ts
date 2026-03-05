@@ -33,13 +33,13 @@ type CollectionHandler = {
 };
 
 const AI_PATHS_KEY_PREFIX = 'ai_paths_';
-const AI_PATHS_LEGACY_PREFIX = 'ai_paths_store:';
-const AI_PATHS_LEGACY_KEY_PREFIX = `${AI_PATHS_LEGACY_PREFIX}${AI_PATHS_KEY_PREFIX}`;
+const AI_PATHS_DEPRECATED_STORE_PREFIX = 'ai_paths_store:';
+const AI_PATHS_DEPRECATED_STORE_KEY_PREFIX = `${AI_PATHS_DEPRECATED_STORE_PREFIX}${AI_PATHS_KEY_PREFIX}`;
 
 const normalizeAiPathsKey = (key: string | null | undefined): string | null => {
   if (typeof key !== 'string' || key.length === 0) return null;
-  if (key.startsWith(AI_PATHS_LEGACY_PREFIX)) {
-    const normalized = key.slice(AI_PATHS_LEGACY_PREFIX.length);
+  if (key.startsWith(AI_PATHS_DEPRECATED_STORE_PREFIX)) {
+    const normalized = key.slice(AI_PATHS_DEPRECATED_STORE_PREFIX.length);
     return normalized.startsWith(AI_PATHS_KEY_PREFIX) ? normalized : null;
   }
   return key.startsWith(AI_PATHS_KEY_PREFIX) ? key : null;
@@ -199,7 +199,7 @@ const aiPathsSettingsHandler: CollectionHandler = {
         const value = doc['value'];
         if (!key || typeof value !== 'string') return null;
         return {
-          key: `${AI_PATHS_LEGACY_PREFIX}${key}`,
+          key: `${AI_PATHS_DEPRECATED_STORE_PREFIX}${key}`,
           value,
           createdAt: toDate(doc['createdAt']) ?? new Date(),
           updatedAt: toDate(doc['updatedAt']) ?? new Date(),
@@ -210,7 +210,7 @@ const aiPathsSettingsHandler: CollectionHandler = {
     const deleted = await prisma.setting.deleteMany({
       where: {
         OR: [
-          { key: { startsWith: AI_PATHS_LEGACY_KEY_PREFIX } },
+          { key: { startsWith: AI_PATHS_DEPRECATED_STORE_KEY_PREFIX } },
           { key: { startsWith: AI_PATHS_KEY_PREFIX } },
         ],
       },
@@ -229,7 +229,7 @@ const aiPathsSettingsHandler: CollectionHandler = {
     const rows = await prisma.setting.findMany({
       where: {
         OR: [
-          { key: { startsWith: AI_PATHS_LEGACY_KEY_PREFIX } },
+          { key: { startsWith: AI_PATHS_DEPRECATED_STORE_KEY_PREFIX } },
           { key: { startsWith: AI_PATHS_KEY_PREFIX } },
         ],
       },

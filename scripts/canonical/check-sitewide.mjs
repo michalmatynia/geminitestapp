@@ -240,6 +240,78 @@ const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
     reason: 'data-import-export legacy parameter-source guard naming channel reintroduced',
   },
   {
+    token: 'LEGACY_FALLBACK_MANIFEST',
+    reason: 'ai-paths validation docs legacy fallback-manifest naming channel reintroduced',
+  },
+  {
+    token: "version: 'fallback.v1'",
+    reason: 'ai-paths validation docs fallback-manifest legacy version channel reintroduced',
+  },
+  {
+    token: 'AI_PATHS_LEGACY_PREFIX',
+    reason: 'database-collection-copy legacy ai-paths store-prefix naming channel reintroduced',
+  },
+  {
+    token: 'AI_PATHS_LEGACY_KEY_PREFIX',
+    reason: 'database-collection-copy legacy ai-paths store-key-prefix naming channel reintroduced',
+  },
+  {
+    token: 'LEGACY_INSIGHT_SCHEDULE_KEYS',
+    reason: 'ai-insights legacy schedule-key fallback map reintroduced',
+  },
+  {
+    token: 'readSettingWithFallback(',
+    reason: 'ai-insights legacy multi-key schedule fallback helper reintroduced',
+  },
+  {
+    token: 'ai_analytics_schedule_enabled',
+    reason: 'ai-insights legacy analytics schedule key fallback reintroduced',
+  },
+  {
+    token: 'ai_analytics_schedule_minutes',
+    reason: 'ai-insights legacy analytics interval key fallback reintroduced',
+  },
+  {
+    token: 'ai_runtime_analytics_schedule_enabled',
+    reason: 'ai-insights legacy runtime analytics schedule key fallback reintroduced',
+  },
+  {
+    token: 'ai_runtime_analytics_schedule_minutes',
+    reason: 'ai-insights legacy runtime analytics interval key fallback reintroduced',
+  },
+  {
+    token: 'ai_logs_schedule_enabled',
+    reason: 'ai-insights legacy logs schedule key fallback reintroduced',
+  },
+  {
+    token: 'ai_logs_schedule_minutes',
+    reason: 'ai-insights legacy logs interval key fallback reintroduced',
+  },
+  {
+    token: 'ai_logs_auto_on_error',
+    reason: 'ai-insights legacy logs auto-on-error key fallback reintroduced',
+  },
+  {
+    token: 'legacy payload variants fallback to defaults.',
+    reason: 'validator docs catalog legacy payload wording channel reintroduced',
+  },
+  {
+    token: 'legacyNodeId?: string;',
+    reason: 'ai-paths node-identity legacy warning field naming channel reintroduced',
+  },
+  {
+    token: 'createNodeInstanceIdFromLegacy',
+    reason: 'ai-paths node-identity legacy instance-id helper naming channel reintroduced',
+  },
+  {
+    token: 'firstResolvedByLegacyId',
+    reason: 'ai-paths node-identity legacy id map naming channel reintroduced',
+  },
+  {
+    token: 'legacyOccurrenceCounts = new Map<string, number>()',
+    reason: 'ai-paths node-identity legacy occurrence map naming channel reintroduced',
+  },
+  {
     token: "import { aiNodeSchema, edgeSchema, type AiNode, type Edge } from '../ai-paths-core';",
     reason: 'case-resolver graph edge contract recoupled to ai-paths edge schema',
   },

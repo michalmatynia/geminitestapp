@@ -936,6 +936,330 @@
           ]
         }
       ]
+    },
+    {
+      "id": "settings_handler_versioned_key_guards",
+      "description": "Settings handler must enforce canonical versioned-key guard semantics.",
+      "targets": [
+        {
+          "file": "src/app/api/ai-paths/settings/handler.ts",
+          "forbiddenSnippets": [
+            "LEGACY_PATH_INDEX_KEY",
+            "ai_paths_index_v1",
+            ".filter((item) => item.key !=="
+          ],
+          "requiredSnippets": [
+            "const VERSIONED_AI_PATHS_KEY_PATTERN = /^ai_paths_.*_v\\d+$/;",
+            "assertCanonicalAiPathsKey(key);",
+            "parsedBulk.data.items.forEach((item) => assertCanonicalAiPathsKey(item.key));",
+            "assertCanonicalAiPathsKey(parsedSingle.data.key);"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "maintenance_handler_enum_contract",
+      "description": "Maintenance handler payload schema must derive action enum from maintenance constants.",
+      "targets": [
+        {
+          "file": "src/app/api/ai-paths/settings/maintenance/handler.ts",
+          "forbiddenSnippets": [],
+          "requiredSnippets": [
+            "z.enum(AI_PATHS_MAINTENANCE_ACTION_IDS)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trigger_buttons_api_client",
+      "description": "Trigger-buttons API client must expose canonical delete/reorder contract only.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/api/client.ts",
+          "forbiddenSnippets": [
+            "remove: deleteTriggerButton",
+            "if (Array.isArray(payload))",
+            "payload.buttonIds"
+          ],
+          "requiredSnippets": [
+            "delete: deleteTriggerButton",
+            "reorder: reorderTriggerButtons"
+          ],
+          "replacements": [
+            {
+              "from": "remove: deleteTriggerButton",
+              "to": "delete: deleteTriggerButton"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "preset_collection_migration",
+      "description": "Presets context must remain on canonical preset collection normalization path.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/context/PresetsContext.tsx",
+          "forbiddenSnippets": [
+            "migrateDatabaseConfigCollections"
+          ],
+          "requiredSnippets": [
+            "config: normalizeDatabasePresetConfig(raw.config)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "validation_config_schema",
+      "description": "Validation defaults must not reintroduce legacy schema-version fallback branches.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/validation-engine/defaults.ts",
+          "forbiddenSnippets": [
+            "const legacySchemaVersion =",
+            "legacySchemaVersion < AI_PATHS_VALIDATION_SCHEMA_VERSION ? null : lastEvaluatedAt"
+          ],
+          "requiredSnippets": [
+            "lastEvaluatedAt,"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "settings_backup_payload",
+      "description": "Settings backup payload parser must stay on canonical key/schema shape.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/settings-store-client.ts",
+          "forbiddenSnippets": [
+            "const records = Array.isArray(parsed)",
+            "ai_paths_settings_backup_v1"
+          ],
+          "requiredSnippets": [
+            "const AI_PATHS_SETTINGS_BACKUP_KEY = 'ai_paths_settings_backup';",
+            "parsed && typeof parsed === 'object' && !Array.isArray(parsed)",
+            "if (!parsedRecord || !Array.isArray(parsedRecord.records)) return null;",
+            "if (typeof parsedRecord.savedAt !== 'number') return null;"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "validation_path_index_meta_fallback",
+      "description": "Validation path-index parser must avoid legacy fallback-meta merge flow.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/pages/AdminAiPathsValidationUtils.ts",
+          "forbiddenSnippets": [
+            "const fallbackMetas: PathMeta[]",
+            "[...metasFromIndex, ...fallbackMetas]"
+          ],
+          "requiredSnippets": [
+            "const indexMetas = parsePathIndex(settingsMap.get(PATH_INDEX_KEY));",
+            "const pathMetas = [...metasFromIndex].sort((left, right) =>"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "validation_collection_map_delimiter",
+      "description": "Validation collection-map parsing must require canonical ':' delimiter only.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/pages/AdminAiPathsValidationUtils.ts",
+          "forbiddenSnippets": [
+            "line.indexOf('=')",
+            "line.includes(':') ? line.indexOf(':') :"
+          ],
+          "requiredSnippets": [
+            "const separatorIndex = line.indexOf(':');"
+          ],
+          "replacements": [
+            {
+              "from": "line.indexOf('=')",
+              "to": "line.indexOf(':')"
+            },
+            {
+              "from": "line.includes(':') ? line.indexOf(':') :",
+              "to": "line.indexOf(':')"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "validation_docs_sources_delimiter",
+      "description": "Validation docs-sources parsing must remain canonical newline-delimited.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/pages/AdminAiPathsValidationUtils.ts",
+          "forbiddenSnippets": [
+            ".split(',')"
+          ],
+          "requiredSnippets": [
+            ".split('\\n')",
+            "entry.length > 0 && !entry.includes(',')"
+          ],
+          "replacements": [
+            {
+              "from": ".split(',')",
+              "to": ".split('\\n')"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "database_node_legacy_dbquery",
+      "description": "Database node normalization must not reintroduce legacy dbQuery compatibility aliases.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/normalization/nodes/database.ts",
+          "forbiddenSnippets": [
+            "legacyDbQuery",
+            "['dbQuery']"
+          ],
+          "requiredSnippets": []
+        }
+      ]
+    },
+    {
+      "id": "collection_names_legacy_dbquery",
+      "description": "Collection-name canonicalization must remain on canonical alias-issue detection path.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/utils/collection-names.ts",
+          "forbiddenSnippets": [
+            "legacyDbQueryCandidate",
+            "nextConfigWithLegacy['dbQuery']",
+            "export const migrateDatabaseConfigCollections =",
+            "export const migratePathConfigCollections ="
+          ],
+          "requiredSnippets": [
+            "export const canonicalizeAiPathsCollectionName =",
+            "export const findPathConfigCollectionAliasIssues ="
+          ]
+        }
+      ]
+    },
+    {
+      "id": "run_execution_meta_contract",
+      "description": "Run execution metadata parsing must use canonical executionMode channels only.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/components/job-queue-panel-utils.ts",
+          "forbiddenSnippets": [
+            "meta['execution_mode']",
+            "meta['runMode']",
+            "meta['run_mode']",
+            "meta['mode']",
+            "runtimeMeta?.['mode']",
+            "sourceInfoMeta?.['mode']",
+            "sourceInfoMeta?.['executionMode']"
+          ],
+          "requiredSnippets": [
+            "meta['executionMode']",
+            "runtimeMeta?.['executionMode']"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "run_source_meta_contract",
+      "description": "Run source metadata parsing must remain canonical source-string only.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/components/job-queue-panel-utils.ts",
+          "forbiddenSnippets": [
+            "meta['sourceInfo']",
+            "sourceRaw && typeof sourceRaw === 'object'",
+            "source.startsWith('tab:')",
+            "infoTab="
+          ],
+          "requiredSnippets": [
+            "readStringValue(meta['source'])",
+            "return `src=${"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "enqueue_meta_source_contract",
+      "description": "Run enqueue metadata must enforce canonical source string guard and no sourceInfo alias.",
+      "targets": [
+        {
+          "file": "src/app/api/ai-paths/runs/enqueue/handler.ts",
+          "forbiddenSnippets": [
+            "sourceInfo: sourceValue",
+            "triggerEventId ? 'trigger_button' : 'ai_paths_ui'"
+          ],
+          "requiredSnippets": [
+            "meta.source must be a string"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "run_source_filter_contract",
+      "description": "Run repository source filters must remain canonical meta.source-only across Prisma and Mongo.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository.ts",
+          "forbiddenSnippets": [
+            "['source', 'tab']",
+            "['sourceInfo', 'tab']"
+          ],
+          "requiredSnippets": [
+            "meta: { path: ['source'], equals: value }"
+          ]
+        },
+        {
+          "file": "src/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository.ts",
+          "forbiddenSnippets": [
+            "'meta.source.tab'",
+            "'meta.sourceInfo.tab'"
+          ],
+          "requiredSnippets": [
+            "'meta.source': { $in: [...AI_PATHS_RUN_SOURCE_VALUES] }"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "queue_cache_run_source_contract",
+      "description": "Query invalidation source parsing must remain canonical source-only for queue cache.",
+      "targets": [
+        {
+          "file": "src/shared/lib/query-invalidation.ts",
+          "forbiddenSnippets": [
+            "meta['sourceInfo']",
+            "source.startsWith('tab:')",
+            "sourceRaw && typeof sourceRaw === 'object'",
+            "AI_PATHS_RUN_SOURCE_TABS"
+          ],
+          "requiredSnippets": [
+            "normalizeString(meta['source'])",
+            "AI_PATHS_NODE_SOURCES.has(source)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "run_source_helpers_contract",
+      "description": "Shared run-source helpers must expose canonical values/value-guard surface only.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/run-sources.ts",
+          "forbiddenSnippets": [
+            "AI_PATHS_RUN_SOURCE_TABS",
+            "isAiPathsRunSourceTab"
+          ],
+          "requiredSnippets": [
+            "AI_PATHS_RUN_SOURCE_VALUES",
+            "isAiPathsRunSourceValue"
+          ]
+        }
+      ]
     }
   ]
 }

@@ -1,12 +1,12 @@
 {
   "summary": {
-    "generatedAt": "2026-03-04T23:47:50.658Z",
+    "generatedAt": "2026-03-04T23:59:32.894Z",
     "mode": "apply",
     "dryRun": true,
     "manifestPath": "scripts/ai-paths/legacy-prune-manifest.json",
     "manifestVersion": "phase2-2026-03-05",
-    "ruleCount": 21,
-    "targetCount": 35,
+    "ruleCount": 38,
+    "targetCount": 53,
     "changedFileCount": 0,
     "replacedSnippetCount": 0,
     "findingCount": 0,
@@ -834,6 +834,181 @@
             "appliedCount": 0
           }
         ]
+      },
+      {
+        "ruleId": "settings_handler_versioned_key_guards",
+        "file": "src/app/api/ai-paths/settings/handler.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "maintenance_handler_enum_contract",
+        "file": "src/app/api/ai-paths/settings/maintenance/handler.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "trigger_buttons_api_client",
+        "file": "src/shared/lib/ai-paths/api/client.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "remove: deleteTriggerButton",
+            "to": "delete: deleteTriggerButton",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "preset_collection_migration",
+        "file": "src/features/ai/ai-paths/context/PresetsContext.tsx",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "validation_config_schema",
+        "file": "src/shared/lib/ai-paths/core/validation-engine/defaults.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "settings_backup_payload",
+        "file": "src/shared/lib/ai-paths/settings-store-client.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "validation_path_index_meta_fallback",
+        "file": "src/features/ai/ai-paths/pages/AdminAiPathsValidationUtils.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "validation_collection_map_delimiter",
+        "file": "src/features/ai/ai-paths/pages/AdminAiPathsValidationUtils.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "line.indexOf('=')",
+            "to": "line.indexOf(':')",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "line.includes(':') ? line.indexOf(':') :",
+            "to": "line.indexOf(':')",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "validation_docs_sources_delimiter",
+        "file": "src/features/ai/ai-paths/pages/AdminAiPathsValidationUtils.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": ".split(',')",
+            "to": ".split('\\n')",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "database_node_legacy_dbquery",
+        "file": "src/shared/lib/ai-paths/core/normalization/nodes/database.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "collection_names_legacy_dbquery",
+        "file": "src/shared/lib/ai-paths/core/utils/collection-names.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "run_execution_meta_contract",
+        "file": "src/features/ai/ai-paths/components/job-queue-panel-utils.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "run_source_meta_contract",
+        "file": "src/features/ai/ai-paths/components/job-queue-panel-utils.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "enqueue_meta_source_contract",
+        "file": "src/app/api/ai-paths/runs/enqueue/handler.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "run_source_filter_contract",
+        "file": "src/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "run_source_filter_contract",
+        "file": "src/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "queue_cache_run_source_contract",
+        "file": "src/shared/lib/query-invalidation.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "run_source_helpers_contract",
+        "file": "src/shared/lib/ai-paths/run-sources.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
       }
     ]
   },

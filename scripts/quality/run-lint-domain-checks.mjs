@@ -5,6 +5,7 @@ import { spawn } from 'node:child_process';
 const args = new Set(process.argv.slice(2));
 const strictMode = args.has('--strict');
 const includeTestProbes = args.has('--include-test-probes');
+const includeTestTree = args.has('--include-test-tree');
 const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
 
 const root = process.cwd();
@@ -18,30 +19,35 @@ const domains = [
     id: 'auth',
     name: 'Auth',
     targets: ['src/features/auth', 'src/app/api/auth'],
+    testTreeTargets: ['__tests__/features/auth', 'src/features/auth/__tests__'],
     testProbes: ['__tests__/features/auth/pages/signin-page.test.tsx'],
   },
   {
     id: 'products',
     name: 'Products',
     targets: ['src/features/products', 'src/app/api/v2/products'],
+    testTreeTargets: ['__tests__/features/products', 'src/features/products/__tests__'],
     testProbes: ['__tests__/features/products/pages/product-edit-page.test.tsx'],
   },
   {
     id: 'ai-paths',
     name: 'AI Paths',
     targets: ['src/features/ai/ai-paths', 'src/app/api/ai-paths'],
+    testTreeTargets: ['src/features/ai/ai-paths/__tests__', 'src/features/ai/ai-paths/components/__tests__'],
     testProbes: ['src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx'],
   },
   {
     id: 'image-studio',
     name: 'Image Studio',
     targets: ['src/features/ai/image-studio', 'src/app/api/image-studio'],
+    testTreeTargets: ['src/features/ai/image-studio/__tests__', 'src/features/ai/image-studio/components/__tests__'],
     testProbes: ['src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx'],
   },
   {
     id: 'case-resolver',
     name: 'Case Resolver',
     targets: ['src/features/case-resolver', 'src/features/case-resolver-capture', 'src/app/api/case-resolver'],
+    testTreeTargets: ['src/features/case-resolver/__tests__', 'src/features/case-resolver-capture/__tests__'],
     testProbes: ['src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx'],
   },
 ];
@@ -75,16 +81,20 @@ const existingTargets = async (targets) => {
 
 const runLintDomain = async (domain) => {
   const targets = await existingTargets(domain.targets);
+  const testTreeTargets = includeTestTree
+    ? await existingTargets(Array.isArray(domain.testTreeTargets) ? domain.testTreeTargets : [])
+    : [];
   const testProbeTargets = includeTestProbes
     ? await existingTargets(Array.isArray(domain.testProbes) ? domain.testProbes : [])
     : [];
-  const commandTargets = [...targets, ...testProbeTargets];
+  const commandTargets = [...new Set([...targets, ...testTreeTargets, ...testProbeTargets])];
   if (commandTargets.length === 0) {
     return {
       id: domain.id,
       name: domain.name,
       targets: domain.targets,
       resolvedTargets: [],
+      resolvedTestTreeTargets: [],
       resolvedTestProbes: [],
       command: null,
       status: 'skipped',
@@ -103,6 +113,7 @@ const runLintDomain = async (domain) => {
       env: {
         ...process.env,
         FORCE_COLOR: '0',
+        ...(includeTestTree ? { ESLINT_INCLUDE_TESTS: '1' } : {}),
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -140,6 +151,7 @@ const runLintDomain = async (domain) => {
         name: domain.name,
         targets: domain.targets,
         resolvedTargets: targets,
+        resolvedTestTreeTargets: testTreeTargets,
         resolvedTestProbes: testProbeTargets,
         command: [command, ...commandArgs].join(' '),
         status: 'fail',
@@ -158,6 +170,7 @@ const runLintDomain = async (domain) => {
         name: domain.name,
         targets: domain.targets,
         resolvedTargets: targets,
+        resolvedTestTreeTargets: testTreeTargets,
         resolvedTestProbes: testProbeTargets,
         command: [command, ...commandArgs].join(' '),
         status: timedOut ? 'timeout' : exitCode === 0 ? 'pass' : 'fail',
@@ -184,14 +197,15 @@ const toMarkdown = (payload) => {
   lines.push(`- Skipped: ${payload.summary.skipped}`);
   lines.push(`- Total duration: ${formatDuration(payload.summary.totalDurationMs)}`);
   lines.push(`- Include test probes: ${payload.includeTestProbes ? 'yes' : 'no'}`);
+  lines.push(`- Include test tree: ${payload.includeTestTree ? 'yes' : 'no'}`);
   lines.push('');
   lines.push('## Domain Status');
   lines.push('');
-  lines.push('| Domain | Status | Duration | Exit | Targets | Test Probes |');
-  lines.push('| --- | --- | ---: | ---: | --- | --- |');
+  lines.push('| Domain | Status | Duration | Exit | Targets | Test Trees | Test Probes |');
+  lines.push('| --- | --- | ---: | ---: | --- | --- | --- |');
   for (const result of payload.results) {
     lines.push(
-      `| ${result.name} | ${result.status.toUpperCase()} | ${formatDuration(result.durationMs)} | ${result.exitCode ?? '-'} | ${result.resolvedTargets.map((target) => `\`${target}\``).join(', ') || '-' } | ${result.resolvedTestProbes.map((target) => `\`${target}\``).join(', ') || '-'} |`
+      `| ${result.name} | ${result.status.toUpperCase()} | ${formatDuration(result.durationMs)} | ${result.exitCode ?? '-'} | ${result.resolvedTargets.map((target) => `\`${target}\``).join(', ') || '-' } | ${result.resolvedTestTreeTargets.map((target) => `\`${target}\``).join(', ') || '-'} | ${result.resolvedTestProbes.map((target) => `\`${target}\``).join(', ') || '-'} |`
     );
   }
   lines.push('');
@@ -200,6 +214,7 @@ const toMarkdown = (payload) => {
   lines.push('- Chunked lint checks reduce long single-run bottlenecks and isolate failing domains.');
   lines.push('- Run `node scripts/quality/run-lint-domain-checks.mjs --strict` in CI-style enforcement mode.');
   lines.push('- Test probes run with `--no-warn-ignored`; if a probe is ignored by ESLint config, it will not emit lint signal.');
+  lines.push('- Full test-tree mode sets `ESLINT_INCLUDE_TESTS=1` to opt test files into ESLint scope.');
   return `${lines.join('\n')}\n`;
 };
 
@@ -226,6 +241,7 @@ const run = async () => {
     generatedAt: new Date().toISOString(),
     strictMode,
     includeTestProbes,
+    includeTestTree,
     summary,
     results,
   };

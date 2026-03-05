@@ -5,6 +5,8 @@ const tseslint = require('typescript-eslint');
 const reactPlugin = require('eslint-plugin-react');
 const reactHooksPlugin = require('eslint-plugin-react-hooks');
 
+const includeTestsFromEnv = process.env.ESLINT_INCLUDE_TESTS === '1';
+
 module.exports = tseslint.config(
   {
     // Global ignores and common configurations
@@ -18,12 +20,16 @@ module.exports = tseslint.config(
       'build/',
       'temp/',
       'tmp/',
-      '__tests__/**/*',
-      '**/__tests__/**/*',
-      '**/*.test.ts',
-      '**/*.test.tsx',
-      '**/*.spec.ts',
-      '**/*.spec.tsx',
+      ...(includeTestsFromEnv
+        ? []
+        : [
+            '__tests__/**/*',
+            '**/__tests__/**/*',
+            '**/*.test.ts',
+            '**/*.test.tsx',
+            '**/*.spec.ts',
+            '**/*.spec.tsx',
+          ]),
       '*.cjs',
       '*.mjs',
       'auto-keep-trying.js',
@@ -271,8 +277,16 @@ module.exports = tseslint.config(
   },
   {
     // Configuration for test files
-    files: ['**/__tests__/**/*.{js,jsx,ts,tsx}', 'e2e/**/*.{js,jsx,ts,tsx}'],
+    files: [
+      '**/__tests__/**/*.{js,jsx,ts,tsx}',
+      'e2e/**/*.{js,jsx,ts,tsx}',
+      '**/*.test.{js,jsx,ts,tsx}',
+      '**/*.spec.{js,jsx,ts,tsx}',
+    ],
     languageOptions: {
+      parserOptions: {
+        project: './tsconfig.eslint-tests.json',
+      },
       globals: {
         ...require('globals').jest, // Assuming Jest/Vitest for tests
         // Testing specific globals

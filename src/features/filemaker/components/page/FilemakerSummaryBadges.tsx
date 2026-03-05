@@ -2,10 +2,10 @@
 
 import React from 'react';
 import { Badge } from '@/shared/ui';
-import { useAdminFilemakerPageContext } from '../../context/AdminFilemakerPageContext';
+import { useAdminFilemakerPageStateContext } from '../../context/AdminFilemakerPageContext';
 
 export function FilemakerSummaryBadges(): React.JSX.Element {
-  const { database } = useAdminFilemakerPageContext();
+  const { database } = useAdminFilemakerPageStateContext();
 
   return (
     <div className='flex flex-wrap gap-2'>

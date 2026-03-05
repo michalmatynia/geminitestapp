@@ -3,7 +3,7 @@ import 'server-only';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { CmsRepository } from '@/shared/contracts/cms';
 
-import { getCmsDataProvider } from '../cms-provider';
+import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
 import { mongoCmsRepository } from './mongo-cms-repository';
 import { prismaCmsRepository } from './prisma-cms-repository';
 

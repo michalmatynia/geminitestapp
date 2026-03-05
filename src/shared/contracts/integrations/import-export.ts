@@ -6,6 +6,7 @@ import {
   type BaseImportStartResponse,
   type BaseImportRunDetailResponse,
 } from './base-com';
+import type { ImportTemplateParameterImport as IntegrationTemplateParameterImport } from './templates';
 
 /**
  * Data Import/Export DTOs
@@ -58,7 +59,7 @@ export const importExportTemplateMappingSchema = z.object({
 
 export type ImportExportTemplateMappingDto = z.infer<typeof importExportTemplateMappingSchema>;
 export type ImportExportTemplateMapping = ImportExportTemplateMappingDto;
-export type TemplateMapping = ImportExportTemplateMappingDto;
+export type TemplateMapping = ImportExportTemplateMapping;
 
 export const importTemplateParameterImportSchema = z.object({
   enabled: z.boolean().optional(),
@@ -69,7 +70,7 @@ export const importTemplateParameterImportSchema = z.object({
   matchBy: z.enum(['base_id_then_name', 'name_only']).optional(),
 });
 
-export type ImportTemplateParameterImportDto = z.infer<typeof importTemplateParameterImportSchema>;
+export type ImportTemplateParameterImportDto = IntegrationTemplateParameterImport;
 export type ImportTemplateParameterImport = ImportTemplateParameterImportDto;
 
 export const importExportTemplateSchema = namedDtoSchema.extend({
@@ -80,7 +81,7 @@ export const importExportTemplateSchema = namedDtoSchema.extend({
 
 export type ImportExportTemplateDto = z.infer<typeof importExportTemplateSchema>;
 export type ImportExportTemplate = ImportExportTemplateDto;
-export type Template = ImportExportTemplateDto;
+export type Template = ImportExportTemplate;
 
 export const createImportExportTemplateSchema = importExportTemplateSchema.omit({
   id: true,

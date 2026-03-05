@@ -15,16 +15,18 @@ import type {
   NodeFileDocumentSearchRow,
   NodeFileDocumentSearchScope,
 } from '../../components/CaseResolverNodeFileUtils';
-import {
-  useCaseResolverViewContext,
-  type SelectOption,
-} from '../../components/CaseResolverViewContext';
+import { useCaseResolverViewContext } from '../../components/CaseResolverViewContext';
 import { useDocumentRelationSearch } from '../hooks/useDocumentRelationSearch';
 import type { RelationTreeLookup } from '../types';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { logCaseResolverWorkspaceEvent } from '../../workspace-persistence';
 
 export type DocumentSearchScope = NodeFileDocumentSearchScope;
+type SelectOption = {
+  value: string;
+  label: string;
+  description?: string | undefined;
+};
 
 interface DocumentRelationSearchContextType {
   // State from hook

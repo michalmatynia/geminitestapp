@@ -28,19 +28,9 @@ import type {
   FilemakerPhoneNumber,
   FilemakerDatabase,
 } from '../types';
+import type { EditableAddress } from './editable-address';
 import type { CountryOption } from '@/shared/contracts/internationalization';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
-
-export type EditableAddress = {
-  addressId: string;
-  street: string;
-  streetNumber: string;
-  city: string;
-  postalCode: string;
-  countryId: string;
-  country: string;
-  isDefault: boolean;
-};
 
 export type AdminFilemakerPersonEditPageContextValue = {
   person: FilemakerPerson | null;

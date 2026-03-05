@@ -3,7 +3,8 @@ import React from 'react';
 import { ImageStudioAnalysisSummaryChip } from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
 import { Button, SelectSimple, Tooltip } from '@/shared/ui';
 
-import { useGenerationToolbarContext, type AutoScalerMode } from './GenerationToolbarContext';
+import type { AutoScalerMode } from './GenerationToolbarImageUtils';
+import { useGenerationToolbarContext } from './GenerationToolbarContext';
 import { useGenerationToolbarAutoScalerSectionRuntime } from './GenerationToolbarSectionContexts';
 import type { ImageStudioCenterShadowPolicy } from '../../contracts/center';
 export function GenerationToolbarAutoScalerSection(): React.JSX.Element {

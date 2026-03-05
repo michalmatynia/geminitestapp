@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react';
 
-import type { Asset3dViewMode, Asset3DRecord } from '@/shared/contracts/viewer3d';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
+import type { ViewMode } from './view-mode';
 
 import {
   useAssets3D,
@@ -10,8 +11,6 @@ import {
   useAsset3DTags,
   useReindexAssets3DMutation,
 } from '../hooks/useAsset3dQueries';
-
-export type ViewMode = Asset3dViewMode;
 
 export interface UseAsset3DListStateReturn {
   previewAsset: Asset3DRecord | null;

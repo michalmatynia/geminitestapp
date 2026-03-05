@@ -84,13 +84,24 @@ export const buildLookupValues = (ids: string[]): Array<string | ObjectId> => {
 
 export const normalizeProductParameterValues = (input: unknown): ProductParameterValue[] => {
   if (!Array.isArray(input)) return [];
-  return input.reduce((acc: ProductParameterValue[], raw: unknown) => {
-    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return acc;
+  const byParameterId = new Map<string, ProductParameterValue>();
+  const resolvePrimaryLocalizedValue = (map: Record<string, string>): string =>
+    map['default'] ||
+    map['en'] ||
+    map['pl'] ||
+    map['de'] ||
+    Object.values(map).find(
+      (entry: string): boolean => typeof entry === 'string' && entry.length > 0
+    ) ||
+    '';
+
+  input.forEach((raw: unknown) => {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return;
     const record = raw as Record<string, unknown>;
     const parameterIdRaw =
       typeof record['parameterId'] === 'string' ? record['parameterId'].trim() : '';
     const parameterId = decodeSimpleParameterStorageId(parameterIdRaw);
-    if (!parameterId) return acc;
+    if (!parameterId) return;
     const value = typeof record['value'] === 'string' ? record['value'] : '';
     const valuesByLanguageRaw = record['valuesByLanguage'];
     const valuesByLanguage =
@@ -108,13 +119,20 @@ export const normalizeProductParameterValues = (input: unknown): ProductParamete
             {} as Record<string, string>
         )
         : {};
-    acc.push({
+    const current = byParameterId.get(parameterId);
+    const mergedValuesByLanguage =
+      Object.keys(valuesByLanguage).length > 0 ? valuesByLanguage : (current?.valuesByLanguage ?? {});
+    const resolvedValue = value || resolvePrimaryLocalizedValue(mergedValuesByLanguage) || '';
+    byParameterId.set(parameterId, {
       parameterId,
-      value,
-      ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
+      value: resolvedValue,
+      ...(Object.keys(mergedValuesByLanguage).length > 0
+        ? { valuesByLanguage: mergedValuesByLanguage }
+        : {}),
     });
-    return acc;
-  }, [] as ProductParameterValue[]);
+  });
+
+  return Array.from(byParameterId.values());
 };
 
 export const normalizeImageFileIds = (imageFileIds: string[]): string[] => {

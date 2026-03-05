@@ -6,7 +6,7 @@ import React from 'react';
 import { PanelHeader } from '@/shared/ui';
 import {
   AdminFilemakerPageProvider,
-  useAdminFilemakerPageContext,
+  useAdminFilemakerPageStateContext,
 } from '../context/AdminFilemakerPageContext';
 import { FilemakerSummaryBadges } from '../components/page/FilemakerSummaryBadges';
 import { FilemakerPersonsSection } from '../components/page/FilemakerPersonsSection';
@@ -15,7 +15,7 @@ import { FilemakerOrganizationsSection } from '../components/page/FilemakerOrgan
 import { FilemakerEventsSection } from '../components/page/FilemakerEventsSection';
 
 function AdminFilemakerPageInner(): React.JSX.Element {
-  const { router } = useAdminFilemakerPageContext();
+  const { router } = useAdminFilemakerPageStateContext();
 
   return (
     <div className='container mx-auto space-y-6 py-8'>

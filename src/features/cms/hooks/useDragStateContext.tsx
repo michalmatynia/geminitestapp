@@ -10,18 +10,13 @@ import React, {
 } from 'react';
 
 import type { PageZone } from '@/shared/contracts/cms';
+import type { BlockDragPayload } from '../types/drag-drop';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export interface BlockDragState {
-  id: string | null;
-  type: string | null;
-  fromSectionId: string | null;
-  fromColumnId: string | null;
-  fromParentBlockId: string | null;
-}
+export type BlockDragState = BlockDragPayload;
 
 export interface SectionDragState {
   id: string | null;

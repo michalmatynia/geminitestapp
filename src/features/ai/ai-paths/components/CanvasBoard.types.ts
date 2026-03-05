@@ -4,6 +4,7 @@ import type {
   AiNode,
   DataContractNodeIssueSummary,
   Edge,
+  PathFlowIntensity,
   RuntimeState,
   AiPathRuntimeNodeStatusMap,
   AiPathRuntimeEvent,
@@ -51,7 +52,7 @@ export interface CanvasBoardState {
   // Graph Data
   nodes: AiNode[];
   edges: Edge[];
-  flowIntensity: import('@/features/ai/ai-paths/lib').PathFlowIntensity | undefined;
+  flowIntensity: PathFlowIntensity | undefined;
   nodeById: Map<string, AiNode>;
   edgePaths: EdgePath[];
 
@@ -130,7 +131,7 @@ export interface CanvasBoardState {
   viewportSize: { width: number; height: number } | null;
   prefersReducedMotion: boolean;
   svgPerf: { fps: number; avgFrameMs: number; slowFrameRatio: number };
-  effectiveFlowIntensity: import('@/features/ai/ai-paths/lib').PathFlowIntensity;
+  effectiveFlowIntensity: PathFlowIntensity;
   isSvgRenderer: boolean;
 
   // Helpers

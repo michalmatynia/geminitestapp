@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { normalizeProductPageSize } from '@/features/products/constants';
+import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 import { productAdvancedFilterGroupSchema } from '@/shared/contracts/products';
 
 const isValidAdvancedFilterPayload = (payload: string): boolean => {

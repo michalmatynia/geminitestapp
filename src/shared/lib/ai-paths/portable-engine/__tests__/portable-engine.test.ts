@@ -15,15 +15,24 @@ import {
   buildPortablePathJsonSchemaCatalog,
   buildPortablePathJsonSchemaDiffReport,
   computePortablePathFingerprintSync,
+  getPortablePathEnvelopeVerificationAuditSinkSnapshot,
+  getPortablePathEnvelopeVerificationObservabilitySnapshot,
+  getPortablePathSigningPolicy,
   getPortablePathMigratorObservabilitySnapshot,
+  listPortablePathEnvelopeVerificationAuditSinkIds,
   listPortablePathPackageMigratorVersions,
   migratePortablePathInput,
+  registerPortablePathEnvelopeVerificationAuditSink,
+  registerPortablePathEnvelopeVerificationObservabilityHook,
   registerPortablePathMigratorObservabilityHook,
   registerPortablePathPackageMigrator,
+  resetPortablePathEnvelopeVerificationAuditSinkSnapshot,
+  resetPortablePathEnvelopeVerificationObservabilitySnapshot,
   resetPortablePathMigratorObservabilitySnapshot,
   resolvePortablePathInput,
   resolvePortablePathInputAsync,
   runPortablePathClient,
+  unregisterPortablePathEnvelopeVerificationAuditSink,
   unregisterPortablePathPackageMigrator,
   validatePortablePathConfig,
   validatePortablePathInput,
@@ -107,6 +116,10 @@ describe('portable AI-path engine scaffold', () => {
   beforeEach(() => {
     mockedEvaluateGraphClient.mockReset();
     resetPortablePathMigratorObservabilitySnapshot();
+    resetPortablePathEnvelopeVerificationObservabilitySnapshot();
+    resetPortablePathEnvelopeVerificationAuditSinkSnapshot({
+      clearRegisteredSinks: true,
+    });
     mockedEvaluateGraphClient.mockResolvedValue({
       status: 'completed',
       nodeStatuses: {},
@@ -689,6 +702,209 @@ describe('portable AI-path engine scaffold', () => {
     } finally {
       restoreCrypto();
     }
+  });
+
+  it('records envelope verification audit outcomes by key id', async () => {
+    const restoreCrypto = ensureCryptoSubtleDigestForTest();
+    try {
+      const pathConfig = createDefaultPathConfig('path_portable_envelope_audit_key_id');
+      const portablePackage = buildPortablePathPackage(pathConfig);
+      const signedEnvelope = await buildPortablePathPackageEnvelope(portablePackage, {
+        secret: 'portable-key-secret-v4',
+        keyId: 'rotating-key-v4',
+      });
+      const parsed = await resolvePortablePathInputAsync(signedEnvelope, {
+        envelopeSignatureVerificationMode: 'strict',
+        envelopeSignatureSecretsByKeyId: {
+          'rotating-key-v4': 'portable-key-secret-v4',
+        },
+      });
+      expect(parsed.ok).toBe(true);
+      const snapshot = getPortablePathEnvelopeVerificationObservabilitySnapshot();
+      expect(snapshot.totals.events).toBeGreaterThan(0);
+      expect(snapshot.totals.verified).toBeGreaterThan(0);
+      expect(snapshot.byKeyId['rotating-key-v4']?.verified).toBeGreaterThan(0);
+      expect(snapshot.byKeyId['rotating-key-v4']?.lastOutcome).toBe('verified');
+      expect(snapshot.recentEvents[0]?.keyId).toBe('rotating-key-v4');
+    } finally {
+      restoreCrypto();
+    }
+  });
+
+  it('emits envelope verification observability hook events', async () => {
+    const pathConfig = createDefaultPathConfig('path_portable_envelope_audit_events');
+    const portablePackage = buildPortablePathPackage(pathConfig);
+    const unsignedEnvelope = {
+      specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
+      kind: 'path_package_envelope' as const,
+      signedAt: '2026-03-05T00:00:00.000Z',
+      package: portablePackage,
+    };
+    const events: Array<{ outcome: string; status: string; keyId: string | null }> = [];
+    const unsubscribe = registerPortablePathEnvelopeVerificationObservabilityHook((event) => {
+      events.push({
+        outcome: event.outcome,
+        status: event.status,
+        keyId: event.keyId,
+      });
+    });
+    try {
+      const parsed = await resolvePortablePathInputAsync(unsignedEnvelope, {
+        envelopeSignatureVerificationMode: 'strict',
+      });
+      expect(parsed.ok).toBe(false);
+    } finally {
+      unsubscribe();
+    }
+    expect(
+      events.some(
+        (event) =>
+          event.outcome === 'signature_missing' &&
+          event.status === 'rejected' &&
+          event.keyId === null
+      )
+    ).toBe(true);
+  });
+
+  it('dispatches envelope verification events to registered audit sinks', async () => {
+    const restoreCrypto = ensureCryptoSubtleDigestForTest();
+    try {
+      const pathConfig = createDefaultPathConfig('path_portable_envelope_sink_success');
+      const portablePackage = buildPortablePathPackage(pathConfig);
+      const signedEnvelope = await buildPortablePathPackageEnvelope(portablePackage, {
+        secret: 'portable-key-secret-sink',
+        keyId: 'portable-key-sink-1',
+      });
+      const sinkEvents: Array<{ keyId: string | null; outcome: string; status: string }> = [];
+      const unregister = registerPortablePathEnvelopeVerificationAuditSink({
+        id: 'test-envelope-sink-success',
+        write: (event) => {
+          sinkEvents.push({
+            keyId: event.keyId,
+            outcome: event.outcome,
+            status: event.status,
+          });
+        },
+      });
+      try {
+        const parsed = await resolvePortablePathInputAsync(signedEnvelope, {
+          envelopeSignatureVerificationMode: 'strict',
+          envelopeSignatureSecretsByKeyId: {
+            'portable-key-sink-1': 'portable-key-secret-sink',
+          },
+        });
+        expect(parsed.ok).toBe(true);
+      } finally {
+        unregister();
+      }
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
+      const sinkSnapshot = getPortablePathEnvelopeVerificationAuditSinkSnapshot();
+      expect(sinkSnapshot.totals.registrationCount).toBe(1);
+      expect(sinkSnapshot.totals.unregistrationCount).toBe(1);
+      expect(sinkSnapshot.totals.writesAttempted).toBeGreaterThan(0);
+      expect(sinkSnapshot.totals.writesSucceeded).toBeGreaterThan(0);
+      expect(sinkSnapshot.bySinkId['test-envelope-sink-success']?.writesSucceeded).toBeGreaterThan(0);
+      expect(sinkEvents.some((event) => event.keyId === 'portable-key-sink-1')).toBe(true);
+      expect(sinkEvents.some((event) => event.outcome === 'verified' && event.status === 'verified')).toBe(true);
+      expect(listPortablePathEnvelopeVerificationAuditSinkIds()).toEqual([]);
+    } finally {
+      restoreCrypto();
+    }
+  });
+
+  it('isolates envelope audit sink failures from verification flow and records telemetry', async () => {
+    const pathConfig = createDefaultPathConfig('path_portable_envelope_sink_failure');
+    const portablePackage = buildPortablePathPackage(pathConfig);
+    const unsignedEnvelope = {
+      specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
+      kind: 'path_package_envelope' as const,
+      signedAt: '2026-03-05T00:00:00.000Z',
+      package: portablePackage,
+    };
+    const unregister = registerPortablePathEnvelopeVerificationAuditSink({
+      id: 'test-envelope-sink-failure',
+      write: async () => {
+        throw new Error('sink exploded');
+      },
+    });
+    try {
+      const parsed = await resolvePortablePathInputAsync(unsignedEnvelope, {
+        envelopeSignatureVerificationMode: 'warn',
+      });
+      expect(parsed.ok).toBe(true);
+    } finally {
+      unregister();
+    }
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
+    const sinkSnapshot = getPortablePathEnvelopeVerificationAuditSinkSnapshot();
+    expect(sinkSnapshot.totals.writesAttempted).toBeGreaterThan(0);
+    expect(sinkSnapshot.totals.writesFailed).toBeGreaterThan(0);
+    expect(sinkSnapshot.bySinkId['test-envelope-sink-failure']?.writesFailed).toBeGreaterThan(0);
+    expect(sinkSnapshot.bySinkId['test-envelope-sink-failure']?.lastError).toContain('sink exploded');
+    expect(sinkSnapshot.recentFailures.length).toBeGreaterThan(0);
+    expect(unregisterPortablePathEnvelopeVerificationAuditSink('test-envelope-sink-failure')).toBe(false);
+  });
+
+  it('publishes signing policy profile defaults', () => {
+    expect(getPortablePathSigningPolicy('dev')).toEqual({
+      profile: 'dev',
+      fingerprintVerificationMode: 'off',
+      envelopeSignatureVerificationMode: 'off',
+    });
+    expect(getPortablePathSigningPolicy('staging')).toEqual({
+      profile: 'staging',
+      fingerprintVerificationMode: 'warn',
+      envelopeSignatureVerificationMode: 'warn',
+    });
+    expect(getPortablePathSigningPolicy('prod')).toEqual({
+      profile: 'prod',
+      fingerprintVerificationMode: 'strict',
+      envelopeSignatureVerificationMode: 'strict',
+    });
+  });
+
+  it('enforces strict envelope verification with prod signing policy profile', async () => {
+    const pathConfig = createDefaultPathConfig('path_portable_signing_profile_prod');
+    const portablePackage = buildPortablePathPackage(pathConfig);
+    const unsignedEnvelope = {
+      specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
+      kind: 'path_package_envelope' as const,
+      signedAt: '2026-03-05T00:00:00.000Z',
+      package: portablePackage,
+    };
+    const parsed = await resolvePortablePathInputAsync(unsignedEnvelope, {
+      signingPolicyProfile: 'prod',
+    });
+    expect(parsed.ok).toBe(false);
+    if (parsed.ok) return;
+    expect(parsed.error).toContain('signature is missing');
+  });
+
+  it('allows profile override of envelope verification mode', async () => {
+    const pathConfig = createDefaultPathConfig('path_portable_signing_profile_override');
+    const portablePackage = buildPortablePathPackage(pathConfig);
+    const unsignedEnvelope = {
+      specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
+      kind: 'path_package_envelope' as const,
+      signedAt: '2026-03-05T00:00:00.000Z',
+      package: portablePackage,
+    };
+    const parsed = await resolvePortablePathInputAsync(unsignedEnvelope, {
+      signingPolicyProfile: 'prod',
+      envelopeSignatureVerificationMode: 'warn',
+      fingerprintVerificationMode: 'off',
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(
+      parsed.value.migrationWarnings.some(
+        (warning) => warning.code === 'package_envelope_signature_missing'
+      )
+    ).toBe(true);
   });
 
   it('publishes json schema catalog for portable contracts', () => {

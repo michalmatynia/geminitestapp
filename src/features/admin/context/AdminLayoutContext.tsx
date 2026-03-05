@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 
-import { internalError } from '@/shared/errors/app-error';
 import type { AdminLayoutState, AdminLayoutActions } from '@/shared/contracts/admin';
 
 export type { AdminLayoutState, AdminLayoutActions };
@@ -24,8 +23,6 @@ export const useAdminLayoutActions = () => {
 // --- Context Aggregator ---
 
 interface AdminLayoutContextType extends AdminLayoutState, AdminLayoutActions {}
-
-const AdminLayoutContext = createContext<AdminLayoutContextType | undefined>(undefined);
 
 export function AdminLayoutProvider({
   children,
@@ -59,29 +56,15 @@ export function AdminLayoutProvider({
     []
   );
 
-  const aggregatedValue = useMemo<AdminLayoutContextType>(
-    () => ({
-      ...stateValue,
-      ...actionsValue,
-    }),
-    [stateValue, actionsValue]
-  );
-
   return (
     <StateContext.Provider value={stateValue}>
-      <ActionsContext.Provider value={actionsValue}>
-        <AdminLayoutContext.Provider value={aggregatedValue}>
-          {children}
-        </AdminLayoutContext.Provider>
-      </ActionsContext.Provider>
+      <ActionsContext.Provider value={actionsValue}>{children}</ActionsContext.Provider>
     </StateContext.Provider>
   );
 }
 
 export function useAdminLayout(): AdminLayoutContextType {
-  const context = useContext(AdminLayoutContext);
-  if (context === undefined) {
-    throw internalError('useAdminLayout must be used within an AdminLayoutProvider');
-  }
-  return context;
+  const state = useAdminLayoutState();
+  const actions = useAdminLayoutActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

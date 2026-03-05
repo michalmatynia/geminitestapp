@@ -178,8 +178,8 @@ export type DependencyInspectorOptions = {
  */
 
 export type DataContractPreflightMode = 'light' | 'full';
-export type DataContractPreflightScopeMode = 'full' | 'reachable_from_roots';
-export type DataContractIssueSeverity = 'warning' | 'error';
+export type DataContractPreflightScopeMode = DependencyInspectorScopeMode;
+export type DataContractIssueSeverity = DependencyRiskSeverity;
 
 export type DataContractIssueCode =
   | 'connection_type_mismatch'

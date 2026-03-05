@@ -18,8 +18,6 @@ import type { EdgePath } from '../context/hooks/useEdgePaths';
 import type { EdgeRoutingMode } from '../context/hooks/useEdgePaths';
 import type { RuntimeRunStatus, TriggerPreflightHint } from './CanvasBoard.types';
 
-export type CanvasRendererMode = 'svg';
-
 export interface CanvasBoardUIContextValue {
   // View & Viewport
   view: { x: number; y: number; scale: number };

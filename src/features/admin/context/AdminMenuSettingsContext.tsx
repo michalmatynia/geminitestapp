@@ -17,6 +17,7 @@ import {
   readAdminMenuLayoutMetadata,
   type AdminMenuLayoutNodeSemantic,
 } from '@/features/admin/pages/admin-menu-layout-master-tree';
+import type { AdminMenuLayoutNodeEntry as AdminMenuLayoutNodeState } from '@/features/admin/pages/admin-menu-layout-types';
 import {
   buildAdminMenuFromCustomNav,
   buildAdminNav,
@@ -238,13 +239,7 @@ const findNodeById = (items: AdminMenuCustomNode[], nodeId: string): AdminMenuCu
   return null;
 };
 
-export type AdminMenuLayoutNodeState = {
-  id: string;
-  label: string;
-  semantic: AdminMenuLayoutNodeSemantic;
-  href: string | null;
-  isBuiltIn: boolean;
-};
+export type { AdminMenuLayoutNodeState };
 
 export interface AdminMenuSettingsContextValue {
   favorites: string[];

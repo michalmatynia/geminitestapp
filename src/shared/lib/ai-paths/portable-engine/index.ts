@@ -122,7 +122,15 @@ export type PortablePathInputSource =
   | 'path_config';
 export type PortablePathValidationMode = 'standard' | 'strict';
 export type PortablePathFingerprintVerificationMode = 'off' | 'warn' | 'strict';
-export type PortablePathEnvelopeSignatureVerificationMode = 'off' | 'warn' | 'strict';
+export type PortablePathEnvelopeSignatureVerificationMode = PortablePathFingerprintVerificationMode;
+export const PORTABLE_PATH_SIGNING_POLICY_PROFILES = ['dev', 'staging', 'prod'] as const;
+export type PortablePathSigningPolicyProfile =
+  (typeof PORTABLE_PATH_SIGNING_POLICY_PROFILES)[number];
+export type PortablePathSigningPolicy = {
+  profile: PortablePathSigningPolicyProfile;
+  fingerprintVerificationMode: PortablePathFingerprintVerificationMode;
+  envelopeSignatureVerificationMode: PortablePathEnvelopeSignatureVerificationMode;
+};
 export type PortablePathEnvelopeSignatureKeyResolverContext = {
   phase: 'sync' | 'async';
   mode: PortablePathEnvelopeSignatureVerificationMode;
@@ -175,6 +183,7 @@ export const DEFAULT_PORTABLE_PAYLOAD_LIMITS: PortablePayloadLimits = {
 };
 
 export type ResolvePortablePathInputOptions = {
+  signingPolicyProfile?: PortablePathSigningPolicyProfile;
   repairIdentities?: boolean;
   includeConnections?: boolean;
   enforcePayloadLimits?: boolean;
@@ -272,6 +281,7 @@ export type PortablePathRunOptions = Omit<EvaluateGraphOptions, 'reportAiPathsEr
   validateBeforeRun?: boolean;
   validationMode?: PortablePathValidationMode;
   validationTriggerNodeId?: string | null;
+  signingPolicyProfile?: PortablePathSigningPolicyProfile;
   repairIdentities?: boolean;
   enforcePayloadLimits?: boolean;
   limits?: Partial<PortablePayloadLimits>;
@@ -356,6 +366,90 @@ export type PortablePathMigratorObservabilityHook = (
   snapshot: PortablePathMigratorObservabilitySnapshot
 ) => void;
 
+export type PortablePathEnvelopeVerificationOutcome =
+  | 'signature_missing'
+  | 'key_missing'
+  | 'async_required'
+  | 'unsupported_algorithm'
+  | 'verification_unavailable'
+  | 'mismatch'
+  | 'verified';
+
+export type PortablePathEnvelopeVerificationStatus = 'verified' | 'warned' | 'rejected';
+
+export type PortablePathEnvelopeVerificationAuditEvent = {
+  at: string;
+  phase: 'sync' | 'async';
+  mode: PortablePathEnvelopeSignatureVerificationMode;
+  algorithm: string | null;
+  keyId: string | null;
+  candidateSecretCount: number;
+  matchedSecretIndex: number | null;
+  outcome: PortablePathEnvelopeVerificationOutcome;
+  status: PortablePathEnvelopeVerificationStatus;
+};
+
+export type PortablePathEnvelopeVerificationObservabilityByKeyId = {
+  events: number;
+  verified: number;
+  warned: number;
+  rejected: number;
+  lastOutcome: PortablePathEnvelopeVerificationOutcome | null;
+  lastSeenAt: string | null;
+  lastAlgorithm: string | null;
+};
+
+export type PortablePathEnvelopeVerificationObservabilitySnapshot = {
+  totals: {
+    events: number;
+    verified: number;
+    warned: number;
+    rejected: number;
+  };
+  byKeyId: Record<string, PortablePathEnvelopeVerificationObservabilityByKeyId>;
+  recentEvents: PortablePathEnvelopeVerificationAuditEvent[];
+};
+
+export type PortablePathEnvelopeVerificationObservabilityHook = (
+  event: PortablePathEnvelopeVerificationAuditEvent,
+  snapshot: PortablePathEnvelopeVerificationObservabilitySnapshot
+) => void;
+
+export type PortablePathEnvelopeVerificationAuditSink = {
+  id: string;
+  write: (
+    event: PortablePathEnvelopeVerificationAuditEvent,
+    snapshot: PortablePathEnvelopeVerificationObservabilitySnapshot
+  ) => void | Promise<void>;
+};
+
+export type PortablePathEnvelopeVerificationAuditSinkById = {
+  writesAttempted: number;
+  writesSucceeded: number;
+  writesFailed: number;
+  lastError: string | null;
+  lastWrittenAt: string | null;
+};
+
+export type PortablePathEnvelopeVerificationAuditSinkFailureTelemetry = {
+  sinkId: string;
+  error: string;
+  at: string;
+};
+
+export type PortablePathEnvelopeVerificationAuditSinkSnapshot = {
+  totals: {
+    registrationCount: number;
+    unregistrationCount: number;
+    writesAttempted: number;
+    writesSucceeded: number;
+    writesFailed: number;
+  };
+  registeredSinkIds: string[];
+  bySinkId: Record<string, PortablePathEnvelopeVerificationAuditSinkById>;
+  recentFailures: PortablePathEnvelopeVerificationAuditSinkFailureTelemetry[];
+};
+
 const UNSAFE_OBJECT_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
 
 const PORTABLE_PACKAGE_SPEC_V2 = 'ai-paths.portable-engine.v2' as const;
@@ -421,6 +515,9 @@ const BUILTIN_PORTABLE_PATH_MIGRATOR_VERSIONS = new Set<string>([
 ]);
 
 const MAX_PORTABLE_PATH_MIGRATOR_FAILURE_EVENTS = 25;
+const MAX_PORTABLE_PATH_ENVELOPE_VERIFICATION_EVENTS = 100;
+const MAX_PORTABLE_PATH_ENVELOPE_VERIFICATION_SINK_FAILURE_EVENTS = 50;
+const PORTABLE_PATH_ENVELOPE_KEY_ID_UNSPECIFIED = '(none)';
 
 const createEmptyPortablePathSourceCounts = (): Record<PortablePathInputSource, number> => ({
   portable_package: 0,
@@ -538,6 +635,311 @@ export const resetPortablePathMigratorObservabilitySnapshot = (): void => {
   portablePathMigratorObservabilityState = createEmptyPortablePathMigratorObservabilityState();
 };
 
+const createEmptyPortablePathEnvelopeVerificationObservabilityState =
+  (): PortablePathEnvelopeVerificationObservabilitySnapshot => ({
+    totals: {
+      events: 0,
+      verified: 0,
+      warned: 0,
+      rejected: 0,
+    },
+    byKeyId: {},
+    recentEvents: [],
+  });
+
+let portablePathEnvelopeVerificationObservabilityState =
+  createEmptyPortablePathEnvelopeVerificationObservabilityState();
+const portablePathEnvelopeVerificationObservabilityHooks = new Set<
+  PortablePathEnvelopeVerificationObservabilityHook
+>();
+
+const clonePortablePathEnvelopeVerificationObservabilitySnapshot = (
+  snapshot: PortablePathEnvelopeVerificationObservabilitySnapshot
+): PortablePathEnvelopeVerificationObservabilitySnapshot => ({
+  totals: { ...snapshot.totals },
+  byKeyId: Object.fromEntries(
+    Object.entries(snapshot.byKeyId).map(([keyId, stats]) => [keyId, { ...stats }])
+  ),
+  recentEvents: snapshot.recentEvents.map((event) => ({ ...event })),
+});
+
+const emitPortablePathEnvelopeVerificationObservabilityEvent = (
+  event: PortablePathEnvelopeVerificationAuditEvent
+): void => {
+  if (portablePathEnvelopeVerificationObservabilityHooks.size === 0) return;
+  const snapshot = clonePortablePathEnvelopeVerificationObservabilitySnapshot(
+    portablePathEnvelopeVerificationObservabilityState
+  );
+  for (const hook of portablePathEnvelopeVerificationObservabilityHooks) {
+    try {
+      hook(event, snapshot);
+    } catch {
+      // Observability hooks must not break verification flow.
+    }
+  }
+};
+
+const resolvePortablePathEnvelopeVerificationKeyIdBucket = (keyId: string | null): string => {
+  if (typeof keyId !== 'string') return PORTABLE_PATH_ENVELOPE_KEY_ID_UNSPECIFIED;
+  const normalized = keyId.trim();
+  return normalized.length > 0 ? normalized : PORTABLE_PATH_ENVELOPE_KEY_ID_UNSPECIFIED;
+};
+
+const ensurePortablePathEnvelopeVerificationByKeyId = (
+  keyId: string
+): PortablePathEnvelopeVerificationObservabilityByKeyId => {
+  if (!portablePathEnvelopeVerificationObservabilityState.byKeyId[keyId]) {
+    portablePathEnvelopeVerificationObservabilityState.byKeyId[keyId] = {
+      events: 0,
+      verified: 0,
+      warned: 0,
+      rejected: 0,
+      lastOutcome: null,
+      lastSeenAt: null,
+      lastAlgorithm: null,
+    };
+  }
+  return portablePathEnvelopeVerificationObservabilityState.byKeyId[keyId]!;
+};
+
+const recordPortablePathEnvelopeVerificationEvent = (
+  event: Omit<PortablePathEnvelopeVerificationAuditEvent, 'at'>
+): void => {
+  const finalizedEvent: PortablePathEnvelopeVerificationAuditEvent = {
+    ...event,
+    at: new Date().toISOString(),
+  };
+  portablePathEnvelopeVerificationObservabilityState.totals.events += 1;
+  switch (finalizedEvent.status) {
+    case 'verified':
+      portablePathEnvelopeVerificationObservabilityState.totals.verified += 1;
+      break;
+    case 'warned':
+      portablePathEnvelopeVerificationObservabilityState.totals.warned += 1;
+      break;
+    case 'rejected':
+      portablePathEnvelopeVerificationObservabilityState.totals.rejected += 1;
+      break;
+    default:
+      break;
+  }
+  const keyIdBucket = resolvePortablePathEnvelopeVerificationKeyIdBucket(finalizedEvent.keyId);
+  const byKeyIdStats = ensurePortablePathEnvelopeVerificationByKeyId(keyIdBucket);
+  byKeyIdStats.events += 1;
+  switch (finalizedEvent.status) {
+    case 'verified':
+      byKeyIdStats.verified += 1;
+      break;
+    case 'warned':
+      byKeyIdStats.warned += 1;
+      break;
+    case 'rejected':
+      byKeyIdStats.rejected += 1;
+      break;
+    default:
+      break;
+  }
+  byKeyIdStats.lastOutcome = finalizedEvent.outcome;
+  byKeyIdStats.lastSeenAt = finalizedEvent.at;
+  byKeyIdStats.lastAlgorithm = finalizedEvent.algorithm;
+
+  portablePathEnvelopeVerificationObservabilityState.recentEvents.push(finalizedEvent);
+  if (
+    portablePathEnvelopeVerificationObservabilityState.recentEvents.length >
+    MAX_PORTABLE_PATH_ENVELOPE_VERIFICATION_EVENTS
+  ) {
+    portablePathEnvelopeVerificationObservabilityState.recentEvents.shift();
+  }
+  emitPortablePathEnvelopeVerificationObservabilityEvent(finalizedEvent);
+  dispatchPortablePathEnvelopeVerificationAuditSinks(finalizedEvent);
+};
+
+export const registerPortablePathEnvelopeVerificationObservabilityHook = (
+  hook: PortablePathEnvelopeVerificationObservabilityHook
+): (() => void) => {
+  portablePathEnvelopeVerificationObservabilityHooks.add(hook);
+  return () => {
+    portablePathEnvelopeVerificationObservabilityHooks.delete(hook);
+  };
+};
+
+export const getPortablePathEnvelopeVerificationObservabilitySnapshot =
+  (): PortablePathEnvelopeVerificationObservabilitySnapshot =>
+    clonePortablePathEnvelopeVerificationObservabilitySnapshot(
+      portablePathEnvelopeVerificationObservabilityState
+    );
+
+export const resetPortablePathEnvelopeVerificationObservabilitySnapshot = (): void => {
+  portablePathEnvelopeVerificationObservabilityState =
+    createEmptyPortablePathEnvelopeVerificationObservabilityState();
+};
+
+const createEmptyPortablePathEnvelopeVerificationAuditSinkState =
+  (): PortablePathEnvelopeVerificationAuditSinkSnapshot => ({
+    totals: {
+      registrationCount: 0,
+      unregistrationCount: 0,
+      writesAttempted: 0,
+      writesSucceeded: 0,
+      writesFailed: 0,
+    },
+    registeredSinkIds: [],
+    bySinkId: {},
+    recentFailures: [],
+  });
+
+let portablePathEnvelopeVerificationAuditSinkState =
+  createEmptyPortablePathEnvelopeVerificationAuditSinkState();
+const portablePathEnvelopeVerificationAuditSinks = new Map<
+  string,
+  PortablePathEnvelopeVerificationAuditSink
+>();
+
+const clonePortablePathEnvelopeVerificationAuditSinkSnapshot = (
+  snapshot: PortablePathEnvelopeVerificationAuditSinkSnapshot
+): PortablePathEnvelopeVerificationAuditSinkSnapshot => ({
+  totals: { ...snapshot.totals },
+  registeredSinkIds: [...snapshot.registeredSinkIds],
+  bySinkId: Object.fromEntries(
+    Object.entries(snapshot.bySinkId).map(([sinkId, stats]) => [sinkId, { ...stats }])
+  ),
+  recentFailures: snapshot.recentFailures.map((item) => ({ ...item })),
+});
+
+const ensurePortablePathEnvelopeVerificationAuditSinkById = (
+  sinkId: string
+): PortablePathEnvelopeVerificationAuditSinkById => {
+  if (!portablePathEnvelopeVerificationAuditSinkState.bySinkId[sinkId]) {
+    portablePathEnvelopeVerificationAuditSinkState.bySinkId[sinkId] = {
+      writesAttempted: 0,
+      writesSucceeded: 0,
+      writesFailed: 0,
+      lastError: null,
+      lastWrittenAt: null,
+    };
+  }
+  return portablePathEnvelopeVerificationAuditSinkState.bySinkId[sinkId]!;
+};
+
+const markPortablePathEnvelopeVerificationAuditSinkAttempt = (sinkId: string): void => {
+  portablePathEnvelopeVerificationAuditSinkState.totals.writesAttempted += 1;
+  const sink = ensurePortablePathEnvelopeVerificationAuditSinkById(sinkId);
+  sink.writesAttempted += 1;
+};
+
+const markPortablePathEnvelopeVerificationAuditSinkSuccess = (sinkId: string): void => {
+  portablePathEnvelopeVerificationAuditSinkState.totals.writesSucceeded += 1;
+  const sink = ensurePortablePathEnvelopeVerificationAuditSinkById(sinkId);
+  sink.writesSucceeded += 1;
+  sink.lastError = null;
+  sink.lastWrittenAt = new Date().toISOString();
+};
+
+const markPortablePathEnvelopeVerificationAuditSinkFailure = (
+  sinkId: string,
+  error: unknown
+): void => {
+  const message = error instanceof Error ? error.message : String(error);
+  portablePathEnvelopeVerificationAuditSinkState.totals.writesFailed += 1;
+  const sink = ensurePortablePathEnvelopeVerificationAuditSinkById(sinkId);
+  sink.writesFailed += 1;
+  sink.lastError = message;
+  sink.lastWrittenAt = new Date().toISOString();
+  portablePathEnvelopeVerificationAuditSinkState.recentFailures.push({
+    sinkId,
+    error: message,
+    at: new Date().toISOString(),
+  });
+  if (
+    portablePathEnvelopeVerificationAuditSinkState.recentFailures.length >
+    MAX_PORTABLE_PATH_ENVELOPE_VERIFICATION_SINK_FAILURE_EVENTS
+  ) {
+    portablePathEnvelopeVerificationAuditSinkState.recentFailures.shift();
+  }
+};
+
+const dispatchPortablePathEnvelopeVerificationAuditSinks = (
+  event: PortablePathEnvelopeVerificationAuditEvent
+): void => {
+  if (portablePathEnvelopeVerificationAuditSinks.size === 0) return;
+  const snapshot = clonePortablePathEnvelopeVerificationObservabilitySnapshot(
+    portablePathEnvelopeVerificationObservabilityState
+  );
+  for (const [sinkId, sink] of portablePathEnvelopeVerificationAuditSinks.entries()) {
+    markPortablePathEnvelopeVerificationAuditSinkAttempt(sinkId);
+    try {
+      const sinkResult = sink.write(event, snapshot);
+      Promise.resolve(sinkResult)
+        .then(() => {
+          markPortablePathEnvelopeVerificationAuditSinkSuccess(sinkId);
+        })
+        .catch((error: unknown) => {
+          markPortablePathEnvelopeVerificationAuditSinkFailure(sinkId, error);
+        });
+    } catch (error: unknown) {
+      markPortablePathEnvelopeVerificationAuditSinkFailure(sinkId, error);
+    }
+  }
+};
+
+export const registerPortablePathEnvelopeVerificationAuditSink = (
+  sink: PortablePathEnvelopeVerificationAuditSink
+): (() => void) => {
+  const sinkId = sink.id.trim();
+  if (sinkId.length === 0) {
+    throw new Error('Portable envelope verification audit sink id cannot be empty.');
+  }
+  if (portablePathEnvelopeVerificationAuditSinks.has(sinkId)) {
+    throw new Error(`Portable envelope verification audit sink "${sinkId}" is already registered.`);
+  }
+  portablePathEnvelopeVerificationAuditSinks.set(sinkId, {
+    ...sink,
+    id: sinkId,
+  });
+  portablePathEnvelopeVerificationAuditSinkState.totals.registrationCount += 1;
+  ensurePortablePathEnvelopeVerificationAuditSinkById(sinkId);
+  portablePathEnvelopeVerificationAuditSinkState.registeredSinkIds =
+    Array.from(portablePathEnvelopeVerificationAuditSinks.keys()).sort();
+  return () => {
+    unregisterPortablePathEnvelopeVerificationAuditSink(sinkId);
+  };
+};
+
+export const unregisterPortablePathEnvelopeVerificationAuditSink = (sinkId: string): boolean => {
+  const normalizedSinkId = sinkId.trim();
+  if (normalizedSinkId.length === 0) return false;
+  const deleted = portablePathEnvelopeVerificationAuditSinks.delete(normalizedSinkId);
+  if (deleted) {
+    portablePathEnvelopeVerificationAuditSinkState.totals.unregistrationCount += 1;
+    portablePathEnvelopeVerificationAuditSinkState.registeredSinkIds =
+      Array.from(portablePathEnvelopeVerificationAuditSinks.keys()).sort();
+  }
+  return deleted;
+};
+
+export const listPortablePathEnvelopeVerificationAuditSinkIds = (): string[] =>
+  Array.from(portablePathEnvelopeVerificationAuditSinks.keys()).sort();
+
+export const getPortablePathEnvelopeVerificationAuditSinkSnapshot =
+  (): PortablePathEnvelopeVerificationAuditSinkSnapshot =>
+    clonePortablePathEnvelopeVerificationAuditSinkSnapshot(
+      portablePathEnvelopeVerificationAuditSinkState
+    );
+
+export const resetPortablePathEnvelopeVerificationAuditSinkSnapshot = (
+  options?: { clearRegisteredSinks?: boolean }
+): void => {
+  const registeredSinkIds = options?.clearRegisteredSinks
+    ? []
+    : Array.from(portablePathEnvelopeVerificationAuditSinks.keys()).sort();
+  if (options?.clearRegisteredSinks) {
+    portablePathEnvelopeVerificationAuditSinks.clear();
+  }
+  portablePathEnvelopeVerificationAuditSinkState =
+    createEmptyPortablePathEnvelopeVerificationAuditSinkState();
+  portablePathEnvelopeVerificationAuditSinkState.registeredSinkIds = registeredSinkIds;
+};
+
 const normalizePortablePathMigratorSpecVersion = (specVersion: string): string => {
   const normalized = specVersion.trim();
   const parsed = portablePathPackageVersionedSpecVersionSchema.safeParse(normalized);
@@ -584,6 +986,52 @@ const formatZodError = (error: z.ZodError): string =>
   error.issues
     .map((issue) => `${issue.path.join('.') || 'document'}: ${issue.message}`)
     .join('; ');
+
+const PORTABLE_PATH_SIGNING_POLICY_BY_PROFILE: Record<
+  PortablePathSigningPolicyProfile,
+  PortablePathSigningPolicy
+> = {
+  dev: {
+    profile: 'dev',
+    fingerprintVerificationMode: 'off',
+    envelopeSignatureVerificationMode: 'off',
+  },
+  staging: {
+    profile: 'staging',
+    fingerprintVerificationMode: 'warn',
+    envelopeSignatureVerificationMode: 'warn',
+  },
+  prod: {
+    profile: 'prod',
+    fingerprintVerificationMode: 'strict',
+    envelopeSignatureVerificationMode: 'strict',
+  },
+};
+
+export const getPortablePathSigningPolicy = (
+  profile: PortablePathSigningPolicyProfile = 'dev'
+): PortablePathSigningPolicy => PORTABLE_PATH_SIGNING_POLICY_BY_PROFILE[profile];
+
+const resolvePortablePathVerificationModes = (
+  options?: Pick<
+    ResolvePortablePathInputOptions,
+    'signingPolicyProfile' | 'fingerprintVerificationMode' | 'envelopeSignatureVerificationMode'
+  >
+): {
+  signingPolicy: PortablePathSigningPolicy;
+  fingerprintVerificationMode: PortablePathFingerprintVerificationMode;
+  envelopeSignatureVerificationMode: PortablePathEnvelopeSignatureVerificationMode;
+} => {
+  const signingPolicy = getPortablePathSigningPolicy(options?.signingPolicyProfile ?? 'dev');
+  return {
+    signingPolicy,
+    fingerprintVerificationMode:
+      options?.fingerprintVerificationMode ?? signingPolicy.fingerprintVerificationMode,
+    envelopeSignatureVerificationMode:
+      options?.envelopeSignatureVerificationMode ??
+      signingPolicy.envelopeSignatureVerificationMode,
+  };
+};
 
 const resolvePayloadLimits = (limits?: Partial<PortablePayloadLimits>): PortablePayloadLimits => ({
   ...DEFAULT_PORTABLE_PAYLOAD_LIMITS,
@@ -961,6 +1409,7 @@ export const resolvePortablePathInput = (
   input: unknown,
   options?: ResolvePortablePathInputOptions
 ): ResolvePortablePathInputResult => {
+  const verificationModes = resolvePortablePathVerificationModes(options);
   const limits = resolvePayloadLimits(options?.limits);
   const decoded = decodePortablePayload(input);
   if (!decoded.ok) return decoded;
@@ -993,7 +1442,7 @@ export const resolvePortablePathInput = (
   }
 
   const envelopeParsed = aiPathPortablePackageEnvelopeVersionedSchema.safeParse(decoded.value);
-  const envelopeSignatureVerificationMode = options?.envelopeSignatureVerificationMode ?? 'off';
+  const envelopeSignatureVerificationMode = verificationModes.envelopeSignatureVerificationMode;
   const envelopeWarnings: PortablePathMigrationWarning[] = [];
   let envelopePayload = decoded.value;
   let resolvedSourceFromEnvelope = false;
@@ -1043,7 +1492,7 @@ export const resolvePortablePathInput = (
       };
     }
   }
-  const fingerprintVerificationMode = options?.fingerprintVerificationMode ?? 'off';
+  const fingerprintVerificationMode = verificationModes.fingerprintVerificationMode;
   if (migrated.value.source === 'portable_package') {
     const verification = verifyPortablePackageFingerprint(
       migrated.value.portablePackage,
@@ -1078,6 +1527,7 @@ export const resolvePortablePathInputAsync = async (
   input: unknown,
   options?: ResolvePortablePathInputOptions
 ): Promise<ResolvePortablePathInputResult> => {
+  const verificationModes = resolvePortablePathVerificationModes(options);
   const resolved = resolvePortablePathInput(input, {
     ...options,
     envelopeSignatureVerificationMode: 'off',
@@ -1087,7 +1537,7 @@ export const resolvePortablePathInputAsync = async (
 
   const migrationWarnings = [...resolved.value.migrationWarnings];
 
-  const envelopeSignatureVerificationMode = options?.envelopeSignatureVerificationMode ?? 'off';
+  const envelopeSignatureVerificationMode = verificationModes.envelopeSignatureVerificationMode;
   if (envelopeSignatureVerificationMode !== 'off') {
     const decoded = decodePortablePayload(input);
     if (!decoded.ok) return decoded;
@@ -1110,7 +1560,7 @@ export const resolvePortablePathInputAsync = async (
     }
   }
 
-  const fingerprintVerificationMode = options?.fingerprintVerificationMode ?? 'off';
+  const fingerprintVerificationMode = verificationModes.fingerprintVerificationMode;
   if (
     fingerprintVerificationMode === 'off' ||
     (resolved.value.source !== 'portable_package' && resolved.value.source !== 'portable_envelope') ||
@@ -1422,6 +1872,27 @@ export const computePortablePathFingerprint = async (
   return stableFingerprint;
 };
 
+const recordPortablePathEnvelopeVerificationResult = (
+  phase: 'sync' | 'async',
+  mode: PortablePathEnvelopeSignatureVerificationMode,
+  signature: AiPathPortablePackageEnvelopeVersioned['signature'],
+  outcome: PortablePathEnvelopeVerificationOutcome,
+  status: PortablePathEnvelopeVerificationStatus,
+  candidateSecretCount: number,
+  matchedSecretIndex: number | null
+): void => {
+  recordPortablePathEnvelopeVerificationEvent({
+    phase,
+    mode,
+    algorithm: signature?.algorithm ?? null,
+    keyId: signature?.keyId ?? null,
+    candidateSecretCount,
+    matchedSecretIndex,
+    outcome,
+    status,
+  });
+};
+
 export const verifyPortablePathPackageEnvelopeSignature = (
   portableEnvelope: AiPathPortablePackageEnvelopeVersioned,
   mode: PortablePathEnvelopeSignatureVerificationMode,
@@ -1440,12 +1911,30 @@ export const verifyPortablePathPackageEnvelopeSignature = (
       message: 'Portable package envelope signature is missing.',
     };
     if (mode === 'strict') {
+      recordPortablePathEnvelopeVerificationResult(
+        'sync',
+        mode,
+        signature,
+        'signature_missing',
+        'rejected',
+        0,
+        null
+      );
       return {
         ok: false,
         error: `Portable package envelope verification failed: ${warning.message}`,
         warnings: [warning],
       };
     }
+    recordPortablePathEnvelopeVerificationResult(
+      'sync',
+      mode,
+      signature,
+      'signature_missing',
+      'warned',
+      0,
+      null
+    );
     return { ok: true, warnings: [warning] };
   }
 
@@ -1463,12 +1952,30 @@ export const verifyPortablePathPackageEnvelopeSignature = (
           'Portable package envelope hmac signature requires a verification secret/key. Provide envelopeSignatureSecret, envelopeSignatureSecretsByKeyId, envelopeSignatureFallbackSecrets, or envelopeSignatureKeyResolver.',
       };
       if (mode === 'strict') {
+        recordPortablePathEnvelopeVerificationResult(
+          'sync',
+          mode,
+          signature,
+          'key_missing',
+          'rejected',
+          0,
+          null
+        );
         return {
           ok: false,
           error: `Portable package envelope verification failed: ${warning.message}`,
           warnings: [warning],
         };
       }
+      recordPortablePathEnvelopeVerificationResult(
+        'sync',
+        mode,
+        signature,
+        'key_missing',
+        'warned',
+        0,
+        null
+      );
       return { ok: true, warnings: [warning] };
     }
     const warning: PortablePathMigrationWarning = {
@@ -1477,12 +1984,30 @@ export const verifyPortablePathPackageEnvelopeSignature = (
         'Portable package envelope hmac signature requires asynchronous verification. Use resolvePortablePathInputAsync for strict verification.',
     };
     if (mode === 'strict') {
+      recordPortablePathEnvelopeVerificationResult(
+        'sync',
+        mode,
+        signature,
+        'async_required',
+        'rejected',
+        candidateSecrets.length,
+        null
+      );
       return {
         ok: false,
         error: `Portable package envelope verification failed: ${warning.message}`,
         warnings: [warning],
       };
     }
+    recordPortablePathEnvelopeVerificationResult(
+      'sync',
+      mode,
+      signature,
+      'async_required',
+      'warned',
+      candidateSecrets.length,
+      null
+    );
     return { ok: true, warnings: [warning] };
   }
 
@@ -1492,22 +2017,41 @@ export const verifyPortablePathPackageEnvelopeSignature = (
       message: `Portable package envelope signature algorithm "${signature.algorithm}" cannot be synchronously verified during import.`,
     };
     if (mode === 'strict') {
+      recordPortablePathEnvelopeVerificationResult(
+        'sync',
+        mode,
+        signature,
+        'unsupported_algorithm',
+        'rejected',
+        0,
+        null
+      );
       return {
         ok: false,
         error: `Portable package envelope verification failed: ${warning.message}`,
         warnings: [warning],
       };
     }
+    recordPortablePathEnvelopeVerificationResult(
+      'sync',
+      mode,
+      signature,
+      'unsupported_algorithm',
+      'warned',
+      0,
+      null
+    );
     return { ok: true, warnings: [warning] };
   }
 
+  const candidateSecrets = resolveEnvelopeSignatureSecrets(options, {
+    phase: 'sync',
+    mode,
+    algorithm: signature.algorithm,
+    keyId: signature.keyId ?? null,
+  });
   const expectedSignature = computePortablePathEnvelopeSignatureSync(portableEnvelope, {
-    secret: resolveEnvelopeSignatureSecrets(options, {
-      phase: 'sync',
-      mode,
-      algorithm: signature.algorithm,
-      keyId: signature.keyId ?? null,
-    })[0],
+    secret: candidateSecrets[0],
     keyId: signature.keyId,
   });
   if (signature.value !== expectedSignature.value) {
@@ -1516,15 +2060,42 @@ export const verifyPortablePathPackageEnvelopeSignature = (
       message: 'Portable package envelope signature does not match envelope contents.',
     };
     if (mode === 'strict') {
+      recordPortablePathEnvelopeVerificationResult(
+        'sync',
+        mode,
+        signature,
+        'mismatch',
+        'rejected',
+        candidateSecrets.length,
+        null
+      );
       return {
         ok: false,
         error: `Portable package envelope verification failed: ${warning.message}`,
         warnings: [warning],
       };
     }
+    recordPortablePathEnvelopeVerificationResult(
+      'sync',
+      mode,
+      signature,
+      'mismatch',
+      'warned',
+      candidateSecrets.length,
+      null
+    );
     return { ok: true, warnings: [warning] };
   }
 
+  recordPortablePathEnvelopeVerificationResult(
+    'sync',
+    mode,
+    signature,
+    'verified',
+    'verified',
+    candidateSecrets.length,
+    candidateSecrets.length > 0 ? 0 : null
+  );
   return { ok: true, warnings: [] };
 };
 
@@ -1548,23 +2119,42 @@ export const verifyPortablePathPackageEnvelopeSignatureAsync = async (
       message: 'Portable package envelope signature is missing.',
     };
     if (mode === 'strict') {
+      recordPortablePathEnvelopeVerificationResult(
+        'async',
+        mode,
+        signature,
+        'signature_missing',
+        'rejected',
+        0,
+        null
+      );
       return {
         ok: false,
         error: `Portable package envelope verification failed: ${warning.message}`,
         warnings: [warning],
       };
     }
+    recordPortablePathEnvelopeVerificationResult(
+      'async',
+      mode,
+      signature,
+      'signature_missing',
+      'warned',
+      0,
+      null
+    );
     return { ok: true, warnings: [warning] };
   }
 
   if (signature.algorithm === 'stable_hash_v1') {
+    const candidateSecrets = resolveEnvelopeSignatureSecrets(options, {
+      phase: 'async',
+      mode,
+      algorithm: signature.algorithm,
+      keyId: signature.keyId ?? null,
+    });
     const expectedSignature = computePortablePathEnvelopeSignatureSync(portableEnvelope, {
-      secret: resolveEnvelopeSignatureSecrets(options, {
-        phase: 'async',
-        mode,
-        algorithm: signature.algorithm,
-        keyId: signature.keyId ?? null,
-      })[0],
+      secret: candidateSecrets[0],
       keyId: signature.keyId,
     });
     if (signature.value !== expectedSignature.value) {
@@ -1573,14 +2163,41 @@ export const verifyPortablePathPackageEnvelopeSignatureAsync = async (
         message: 'Portable package envelope signature does not match envelope contents.',
       };
       if (mode === 'strict') {
+        recordPortablePathEnvelopeVerificationResult(
+          'async',
+          mode,
+          signature,
+          'mismatch',
+          'rejected',
+          candidateSecrets.length,
+          null
+        );
         return {
           ok: false,
           error: `Portable package envelope verification failed: ${warning.message}`,
           warnings: [warning],
         };
       }
+      recordPortablePathEnvelopeVerificationResult(
+        'async',
+        mode,
+        signature,
+        'mismatch',
+        'warned',
+        candidateSecrets.length,
+        null
+      );
       return { ok: true, warnings: [warning] };
     }
+    recordPortablePathEnvelopeVerificationResult(
+      'async',
+      mode,
+      signature,
+      'verified',
+      'verified',
+      candidateSecrets.length,
+      candidateSecrets.length > 0 ? 0 : null
+    );
     return { ok: true, warnings: [] };
   }
 
@@ -1598,23 +2215,44 @@ export const verifyPortablePathPackageEnvelopeSignatureAsync = async (
           'Portable package envelope hmac signature requires a verification secret/key. Provide envelopeSignatureSecret, envelopeSignatureSecretsByKeyId, envelopeSignatureFallbackSecrets, or envelopeSignatureKeyResolver.',
       };
       if (mode === 'strict') {
+        recordPortablePathEnvelopeVerificationResult(
+          'async',
+          mode,
+          signature,
+          'key_missing',
+          'rejected',
+          0,
+          null
+        );
         return {
           ok: false,
           error: `Portable package envelope verification failed: ${warning.message}`,
           warnings: [warning],
         };
       }
+      recordPortablePathEnvelopeVerificationResult(
+        'async',
+        mode,
+        signature,
+        'key_missing',
+        'warned',
+        0,
+        null
+      );
       return { ok: true, warnings: [warning] };
     }
     const normalized = stableStringify(normalizePortableEnvelopeSignatureInput(portableEnvelope));
     let hasRuntimeVerification = false;
     let isMatch = false;
-    for (const secret of candidateSecrets) {
+    let matchedSecretIndex: number | null = null;
+    for (let index = 0; index < candidateSecrets.length; index += 1) {
+      const secret = candidateSecrets[index]!;
       const hmac = await computeHmacSha256Hex(normalized, secret);
       if (!hmac) continue;
       hasRuntimeVerification = true;
       if (hmac === signature.value) {
         isMatch = true;
+        matchedSecretIndex = index;
         break;
       }
     }
@@ -1625,12 +2263,30 @@ export const verifyPortablePathPackageEnvelopeSignatureAsync = async (
           'Portable package envelope hmac signature verification is unavailable in this runtime (crypto.subtle not available).',
       };
       if (mode === 'strict') {
+        recordPortablePathEnvelopeVerificationResult(
+          'async',
+          mode,
+          signature,
+          'verification_unavailable',
+          'rejected',
+          candidateSecrets.length,
+          null
+        );
         return {
           ok: false,
           error: `Portable package envelope verification failed: ${warning.message}`,
           warnings: [warning],
         };
       }
+      recordPortablePathEnvelopeVerificationResult(
+        'async',
+        mode,
+        signature,
+        'verification_unavailable',
+        'warned',
+        candidateSecrets.length,
+        null
+      );
       return { ok: true, warnings: [warning] };
     }
     if (!isMatch) {
@@ -1639,14 +2295,41 @@ export const verifyPortablePathPackageEnvelopeSignatureAsync = async (
         message: 'Portable package envelope signature does not match envelope contents.',
       };
       if (mode === 'strict') {
+        recordPortablePathEnvelopeVerificationResult(
+          'async',
+          mode,
+          signature,
+          'mismatch',
+          'rejected',
+          candidateSecrets.length,
+          null
+        );
         return {
           ok: false,
           error: `Portable package envelope verification failed: ${warning.message}`,
           warnings: [warning],
         };
       }
+      recordPortablePathEnvelopeVerificationResult(
+        'async',
+        mode,
+        signature,
+        'mismatch',
+        'warned',
+        candidateSecrets.length,
+        null
+      );
       return { ok: true, warnings: [warning] };
     }
+    recordPortablePathEnvelopeVerificationResult(
+      'async',
+      mode,
+      signature,
+      'verified',
+      'verified',
+      candidateSecrets.length,
+      matchedSecretIndex
+    );
     return { ok: true, warnings: [] };
   }
 
@@ -1655,12 +2338,30 @@ export const verifyPortablePathPackageEnvelopeSignatureAsync = async (
     message: `Portable package envelope signature algorithm "${signature.algorithm}" is not supported for verification.`,
   };
   if (mode === 'strict') {
+    recordPortablePathEnvelopeVerificationResult(
+      'async',
+      mode,
+      signature,
+      'unsupported_algorithm',
+      'rejected',
+      0,
+      null
+    );
     return {
       ok: false,
       error: `Portable package envelope verification failed: ${warning.message}`,
       warnings: [warning],
     };
   }
+  recordPortablePathEnvelopeVerificationResult(
+    'async',
+    mode,
+    signature,
+    'unsupported_algorithm',
+    'warned',
+    0,
+    null
+  );
   return { ok: true, warnings: [warning] };
 };
 
@@ -1944,11 +2645,12 @@ export const runPortablePathClient = async (
     validateBeforeRun = true,
     validationMode = 'standard',
     validationTriggerNodeId = null,
+    signingPolicyProfile,
     repairIdentities = true,
     enforcePayloadLimits = true,
     limits,
-    fingerprintVerificationMode = 'off',
-    envelopeSignatureVerificationMode = 'off',
+    fingerprintVerificationMode,
+    envelopeSignatureVerificationMode,
     envelopeSignatureSecret,
     envelopeSignatureSecretsByKeyId,
     envelopeSignatureFallbackSecrets,
@@ -1958,6 +2660,7 @@ export const runPortablePathClient = async (
   } = options;
 
   const resolved = await resolvePortablePathInputAsync(input, {
+    signingPolicyProfile,
     repairIdentities,
     includeConnections: false,
     enforcePayloadLimits,

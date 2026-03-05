@@ -9,9 +9,9 @@ import { cn } from '@/shared/utils';
 
 import { useGeneration } from '../context/GenerationContext';
 
-export interface GenerationHistoryPanelProps {
+export type GenerationHistoryPanelProps = {
   className?: string | undefined;
-}
+};
 
 export function GenerationHistoryPanel({
   className,

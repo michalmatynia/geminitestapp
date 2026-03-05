@@ -4,13 +4,13 @@
 
 import type { AdvancedApiConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
-
-import { getValueAtMappingPath, renderTemplate, safeStringify } from '../../utils';
 import {
   evaluateOutboundUrlPolicy,
   fetchWithOutboundUrlPolicy,
   OutboundUrlPolicyError,
-} from '../security/outbound-url-policy';
+} from '@/shared/lib/security/outbound-url-policy';
+
+import { getValueAtMappingPath, renderTemplate, safeStringify } from '../../utils';
 
 import { DEFAULT_ADVANCED_API_CONFIG, JsonRecord } from './advanced-api/config';
 import {

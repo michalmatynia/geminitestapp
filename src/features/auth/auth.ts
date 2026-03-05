@@ -10,7 +10,7 @@ import Google from 'next-auth/providers/google';
 
 import { getAuthAccessForUser } from '@/features/auth/services/auth-access';
 import { consumeLoginChallenge } from '@/features/auth/services/auth-login-challenge';
-import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
+import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 import {
   checkLoginAllowed,
   extractClientIp,

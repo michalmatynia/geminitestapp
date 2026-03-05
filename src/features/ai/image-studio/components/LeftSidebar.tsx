@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
-} from '@/features/products/constants';
+} from '@/shared/lib/products/constants';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

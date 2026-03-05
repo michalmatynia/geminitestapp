@@ -1,7 +1,11 @@
 import type { AdminMenuCustomNode, AdminNavNodeEntry } from '@/shared/contracts/admin';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+import type {
+  AdminMenuLayoutNodeEntry as AdminMenuLayoutFallbackEntry,
+  AdminMenuLayoutNodeSemantic,
+} from './admin-menu-layout-types';
 
-export type AdminMenuLayoutNodeSemantic = 'link' | 'group';
+export type { AdminMenuLayoutNodeSemantic };
 
 export type AdminMenuLayoutNodeMetadata = {
   nodeId: string;
@@ -10,13 +14,7 @@ export type AdminMenuLayoutNodeMetadata = {
   href: string | null;
 };
 
-export type AdminMenuLayoutFallbackEntry = {
-  id: string;
-  label: string;
-  semantic: AdminMenuLayoutNodeSemantic;
-  href: string | null;
-  isBuiltIn: boolean;
-};
+export type { AdminMenuLayoutFallbackEntry };
 
 const DEFAULT_LABEL = 'Untitled';
 

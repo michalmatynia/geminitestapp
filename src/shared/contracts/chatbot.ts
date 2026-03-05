@@ -53,7 +53,7 @@ export type ChatbotSettingsRecordDto = ChatbotSettingsDto;
 export const createChatbotSettingsSchema = chatbotSettingsSchema.partial();
 export type CreateChatbotSettingsDto = z.infer<typeof createChatbotSettingsSchema>;
 export type ChatbotSettingsPayload = CreateChatbotSettingsDto;
-export type UpdateChatbotSettingsDto = CreateChatbotSettingsDto;
+export type UpdateChatbotSettingsDto = ChatbotSettingsPayload;
 
 const UNSUPPORTED_CHATBOT_AGENT_MODEL_KEYS = [
   'memoryValidationModel',
@@ -425,7 +425,7 @@ export const chatbotTimelineEntrySchema = z.object({
 
 export type ChatbotTimelineEntryDto = z.infer<typeof chatbotTimelineEntrySchema>;
 export type TimelineEntry = ChatbotTimelineEntryDto;
-export type ChatbotTimelineEntry = ChatbotTimelineEntryDto;
+export type ChatbotTimelineEntry = TimelineEntry;
 
 export const chatbotDebugStateSchema = z.object({
   activeRunId: z.string().nullable(),

@@ -6,6 +6,7 @@ import {
   type ValidatorPatternList,
   type ValidatorScope,
 } from '../validator';
+import type { PromptExploderRuntimeValidationScope as PromptExploderRuntimeValidationScopeCore } from '../prompt-exploder-core';
 import { type PromptValidationRule, type PromptEngineSettings } from '../prompt-engine';
 import {
   promptExploderSegmentTypeSchema,
@@ -147,9 +148,7 @@ export const promptExploderRuntimeValidationScopeSchema = z.enum([
   'prompt_exploder',
   'case_resolver_prompt_exploder',
 ]);
-export type PromptExploderRuntimeValidationScope = z.infer<
-  typeof promptExploderRuntimeValidationScopeSchema
->;
+export type PromptExploderRuntimeValidationScope = PromptExploderRuntimeValidationScopeCore;
 
 export const promptExploderValidationRuleStackSchema = z.string().trim().min(1);
 export type PromptExploderValidationRuleStack = string;

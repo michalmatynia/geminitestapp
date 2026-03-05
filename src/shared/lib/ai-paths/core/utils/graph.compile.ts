@@ -1,14 +1,10 @@
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { DependencyInspectorOptions as CompileGraphOptions } from '@/shared/contracts/ai-paths-core/engine';
 import type { GraphCompileFinding, GraphCompileReport } from './graph.types';
 import { sanitizeEdges } from './graph.edges';
 import { getNodeInputPortCardinality, getNodeInputPortContract } from './graph.nodes';
 import { normalizePortName } from './graph.ports';
 import { arePortTypesCompatible, getPortDataTypes } from './port-types';
-
-export type CompileGraphOptions = {
-  scopeMode?: 'full' | 'reachable_from_roots';
-  scopeRootNodeIds?: string[];
-};
 
 export const compileGraph = (
   nodes: AiNode[],

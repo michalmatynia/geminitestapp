@@ -10,7 +10,7 @@ export const caseResolverCaptureRoleSchema = z.enum([
   'reference',
   'other',
 ]);
-export type CaseResolverCaptureRole = z.infer<typeof caseResolverCaptureRoleSchema>;
+export type CaseResolverCaptureRole = 'addresser' | 'addressee' | 'subject' | 'reference' | 'other';
 
 export const caseResolverCaptureActionSchema = z.enum([
   'useMatched',
@@ -18,7 +18,7 @@ export const caseResolverCaptureActionSchema = z.enum([
   'keepText',
   'ignore',
 ]);
-export type CaseResolverCaptureAction = z.infer<typeof caseResolverCaptureActionSchema>;
+export type CaseResolverCaptureAction = 'useMatched' | 'createInFilemaker' | 'keepText' | 'ignore';
 
 export const caseResolverCaptureRoleMappingSchema = z.object({
   role: caseResolverCaptureRoleSchema,

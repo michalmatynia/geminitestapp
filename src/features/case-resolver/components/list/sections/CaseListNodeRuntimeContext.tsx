@@ -3,8 +3,9 @@
 import { createContext, useContext } from 'react';
 
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { CaseResolverTreeIconComponent as FolderIconComponent } from '../../tree-node-icon';
 
-export type FolderIconComponent = React.ComponentType<{ className?: string }>;
+export type { FolderIconComponent };
 
 export interface CaseListNodeRuntimeContextValue {
   filesById: Map<string, CaseResolverFile>;

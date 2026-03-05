@@ -1,4 +1,4 @@
-import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
+import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
 import {
   DEFAULT_AUTH_USER_PAGE_SETTINGS,

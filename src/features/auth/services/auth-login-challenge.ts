@@ -2,7 +2,7 @@ import 'server-only';
 
 import crypto from 'crypto';
 
-import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
+import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 

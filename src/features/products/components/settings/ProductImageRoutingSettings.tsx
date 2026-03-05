@@ -10,7 +10,7 @@ import {
   PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY,
   PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
   PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY,
-} from '@/features/products/constants';
+} from '@/shared/lib/products/constants';
 import { normalizeProductImageExternalBaseUrl } from '@/shared/utils/image-routing';
 import {
   normalizeProductStudioSequenceGenerationMode,

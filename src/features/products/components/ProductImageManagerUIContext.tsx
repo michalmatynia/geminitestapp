@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect, use
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
-} from '@/features/products/constants';
+} from '@/shared/lib/products/constants';
 import { ProductFormCoreContext } from '@/features/products/context/ProductFormCoreContext';
 import { ProductFormImageContext } from '@/features/products/context/ProductFormImageContext';
 import { ImageFileSelection } from '@/shared/contracts/files';

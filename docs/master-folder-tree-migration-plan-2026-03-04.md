@@ -59,6 +59,13 @@ Completed in codebase:
 7. Added shared shell runtime fallback for provider-less execution:
    - `useFolderTreeShellRuntime` now resolves to a shared runtime bus singleton when context runtime is absent.
 8. Removed additional provider wrappers from folder-tree viewport search/multi-select tests by injecting runtime directly.
+9. Removed remaining provider wrappers from runtime-coupled shell metrics tests by injecting `createMasterFolderTreeRuntimeBus` directly:
+   - `FolderTreeViewportV2.metrics.test.tsx`
+   - `useFolderTreeInstanceV2.external-sync.test.tsx`
+   - `useFolderTreeUiState.metrics.test.tsx`
+10. Added deterministic shell-runtime hardening tests:
+   - `frame_budget_miss` metric assertion for drag-frame budget overruns (`FolderTreeViewportV2.metrics.test.tsx`).
+   - repeated mount/unmount runtime-registration churn cleanup assertion (`useFolderTreeInstanceV2.external-sync.test.tsx`).
 
 ## Canonical Target (Newest Form)
 

@@ -1,10 +1,9 @@
 import { render, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useMasterFolderTreeRuntime } from '@/features/foldertree/v2/runtime/MasterFolderTreeRuntimeProvider';
-import { MasterFolderTreeRuntimeProvider } from '@/features/foldertree/v2/runtime/MasterFolderTreeRuntimeProvider';
+import { createMasterFolderTreeRuntimeBus } from '@/features/foldertree/v2/runtime/createMasterFolderTreeRuntimeBus';
 import { useFolderTreeUiState } from '@/features/foldertree/v2/shell/useFolderTreeUiState';
 
 const {
@@ -43,9 +42,12 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: (...args: unknown[]) => logClientErrorMock(...args),
 }));
 
-const RuntimeWrapper = ({ children }: { children: ReactNode }) => (
-  <MasterFolderTreeRuntimeProvider>{children}</MasterFolderTreeRuntimeProvider>
-);
+const runtimes: Array<ReturnType<typeof createMasterFolderTreeRuntimeBus>> = [];
+const createTestRuntime = () => {
+  const runtime = createMasterFolderTreeRuntimeBus({ bindWindowKeydown: false });
+  runtimes.push(runtime);
+  return runtime;
+};
 
 class ErrorBoundary extends React.Component<
   {
@@ -81,60 +83,46 @@ describe('useFolderTreeUiState metrics', () => {
 
   afterEach(() => {
     consoleErrorSpy.mockRestore();
+    while (runtimes.length > 0) {
+      runtimes.pop()?.dispose();
+    }
   });
 
   it('does not record parse metric for valid/default ui state payloads', () => {
-    const { result } = renderHook(
-      () => {
-        const uiState = useFolderTreeUiState('notes');
-        const runtime = useMasterFolderTreeRuntime();
-        return { uiState, runtime };
-      },
-      { wrapper: RuntimeWrapper }
+    const runtime = createTestRuntime();
+    const { result } = renderHook(() =>
+      useFolderTreeUiState('notes', undefined, undefined, runtime)
     );
 
-    expect(result.current.uiState.panel.collapsed).toBe(false);
-    expect(result.current.runtime.getMetricsSnapshot()['ui_state_parse_failure'] ?? 0).toBe(0);
+    expect(result.current.panel.collapsed).toBe(false);
+    expect(runtime.getMetricsSnapshot()['ui_state_parse_failure'] ?? 0).toBe(0);
     expect(logClientErrorMock).not.toHaveBeenCalled();
   });
 
   it('records parse metric and logs client error when persisted ui state is invalid', async () => {
     settingsStoreMock.get.mockReturnValue('{"panelCollapsed":"yes"}');
+    const runtime = createTestRuntime();
 
-    let runtimeRef: ReturnType<typeof useMasterFolderTreeRuntime> | null = null;
     let boundaryError: Error | null = null;
 
-    const RuntimeProbe = () => {
-      const runtime = useMasterFolderTreeRuntime();
-      useEffect(() => {
-        runtimeRef = runtime;
-      }, [runtime]);
-      return null;
-    };
-
     const InvalidUiProbe = () => {
-      useFolderTreeUiState('notes');
+      useFolderTreeUiState('notes', undefined, undefined, runtime);
       return null;
     };
 
     render(
-      <RuntimeWrapper>
-        <RuntimeProbe />
-        <ErrorBoundary
-          onError={(error) => {
-            boundaryError = error;
-          }}
-        >
-          <InvalidUiProbe />
-        </ErrorBoundary>
-      </RuntimeWrapper>
+      <ErrorBoundary
+        onError={(error) => {
+          boundaryError = error;
+        }}
+      >
+        <InvalidUiProbe />
+      </ErrorBoundary>
     );
 
     await waitFor(() => {
       expect(boundaryError).toBeTruthy();
-      expect(runtimeRef?.getMetricsSnapshot()['ui_state_parse_failure'] ?? 0).toBeGreaterThanOrEqual(
-        1
-      );
+      expect(runtime.getMetricsSnapshot()['ui_state_parse_failure'] ?? 0).toBeGreaterThanOrEqual(1);
       expect(logClientErrorMock.mock.calls.length).toBeGreaterThanOrEqual(1);
     });
   });

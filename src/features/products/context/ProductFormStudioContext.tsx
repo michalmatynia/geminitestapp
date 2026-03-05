@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/features/products/constants';
+import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/shared/lib/products/constants';
 import { ProductWithImages } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { internalError } from '@/shared/errors/app-error';

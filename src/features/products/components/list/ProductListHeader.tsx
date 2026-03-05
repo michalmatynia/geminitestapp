@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom';
 
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
-import { PRODUCT_PAGE_SIZE_OPTIONS } from '@/features/products/constants';
+import { PRODUCT_PAGE_SIZE_OPTIONS } from '@/shared/lib/products/constants';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import {
   useProductListActionsContext,

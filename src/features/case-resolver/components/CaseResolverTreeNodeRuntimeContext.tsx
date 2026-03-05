@@ -1,8 +1,9 @@
 'use client';
 
 import { createContext, useContext } from 'react';
+import type { CaseResolverTreeIconComponent as CaseResolverTreeNodeIconComponent } from './tree-node-icon';
 
-export type CaseResolverTreeNodeIconComponent = React.ComponentType<{ className?: string }>;
+export type { CaseResolverTreeNodeIconComponent };
 
 export interface CaseResolverTreeNodeRuntimeContextValue {
   armDragHandle: (nodeId: string) => void;

@@ -8,7 +8,7 @@ export type {
   EntityNameLookup as TagExternalIdLookup,
 };
 export type ProducerLookup = EntityNameLookup;
-export type TagLookup = EntityNameLookup;
+export type TagLookup = ProducerLookup;
 export type EntityLookup = ProducerLookup | TagLookup;
 
 export const getLookupValue = (lookup: EntityLookup, key: string): string | null => {

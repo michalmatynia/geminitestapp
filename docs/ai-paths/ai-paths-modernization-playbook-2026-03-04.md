@@ -1555,6 +1555,37 @@ Progress (2026-03-04):
       5. `npm run ai-paths:bulk-prune:report` -> passed (report refreshed).
       6. `npm run canonical:check:sitewide` -> passed (`3812` runtime source files, `4` docs artifacts).
       7. `npm run typecheck` -> terminated in this environment without diagnostics (`exit code 137`; log contains only `tsc --noEmit --incremental false` startup line).
+69. Continued Phase 3 portable-engine path-config edge-alias hard-cut in seam 199:
+   1. Removed path-config edge alias upgrade fallback from portable-engine normalization:
+      1. `src/shared/lib/ai-paths/portable-engine/index.ts`
+      2. canonical edge normalization now resolves only `from` / `to` / `fromPort` / `toPort`.
+      3. removed alias fallback reads for:
+         1. `source` / `target`
+         2. `sourceHandle` / `targetHandle`
+      4. renamed helper:
+         1. `normalizePathConfigEdgeAliases` -> `normalizePathConfigEdges`
+   2. Updated portable-engine regression coverage for canonical-only edge normalization:
+      1. `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts`
+      2. alias-only path-config edge test now asserts unresolved canonical edge endpoints (`from`/`to` empty; no port aliases upgraded).
+   3. Extended AI Paths and site-wide guardrails for this edge-alias channel:
+      1. `scripts/ai-paths/legacy-prune-manifest.json`
+      2. added rule family:
+         1. `portable_engine_path_config_edge_alias_hard_cut`
+      3. `scripts/canonical/check-sitewide.mjs`
+      4. added forbidden tokens:
+         1. `asTrimmedString(edge.from) ?? asTrimmedString(edge.source)`
+         2. `asTrimmedString(edge.to) ?? asTrimmedString(edge.target)`
+         3. `resolveEdgePort(edge, 'fromPort', 'sourceHandle')`
+         4. `resolveEdgePort(edge, 'toPort', 'targetHandle')`
+      5. bulk-prune manifest now covers `61` rules across `88` targets.
+   4. Validation:
+      1. `npx vitest run src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` -> passed (`37` tests).
+      2. `npm run ai-paths:bulk-prune:scan` -> passed (`61` rules across `88` targets).
+      3. `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` -> passed.
+      4. `npm run ai-paths:check:canonical` -> passed (`4204` files scanned).
+      5. `npm run ai-paths:bulk-prune:report` -> passed (report refreshed).
+      6. `npm run canonical:check:sitewide` -> passed (`3802` runtime source files, `4` docs artifacts).
+      7. `npm run typecheck` -> passed.
 
 ## Deprecation map
 

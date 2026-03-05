@@ -551,7 +551,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
 }
 
 export type SlotsState = SlotsContextType;
-export type SlotsActions = SlotsContextType;
+export type SlotsActions = SlotsState;
 
 export function useSlotsState(): SlotsContextType {
   const context = useContext(SlotsContext);

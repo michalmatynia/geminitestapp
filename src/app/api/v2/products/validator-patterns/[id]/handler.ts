@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/constants';
+import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/shared/lib/products/constants';
 import { getValidationPatternRepository } from '@/features/products/server';
 import { invalidateValidationPatternRuntimeCache } from '@/shared/lib/products/services/validation-pattern-runtime-cache';
 import {

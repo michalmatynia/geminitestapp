@@ -36,10 +36,12 @@ export const namedDtoSchema = dtoBaseSchema.extend({
   description: z.string().nullable().optional(),
 });
 
-export interface NamedDto extends DtoBase {
+export interface NamedFields {
   name: string;
   description?: string | null;
 }
+
+export interface NamedDto extends DtoBase, NamedFields {}
 
 export interface IdNameDto {
   id: string;
@@ -232,10 +234,7 @@ export interface BaseEntity {
 /**
  * Base interface for named entities.
  */
-export interface NamedEntity extends BaseEntity {
-  name: string;
-  description?: string | null;
-}
+export interface NamedEntity extends BaseEntity, NamedFields {}
 
 /**
  * MongoDB and Core Data Access Types

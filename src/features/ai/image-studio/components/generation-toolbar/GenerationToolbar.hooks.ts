@@ -15,7 +15,7 @@ import {
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
-} from '@/features/products/constants';
+} from '@/shared/lib/products/constants';
 import {
   buildImageStudioAnalysisSourceSignature,
   type ImageStudioAnalysisSharedLayout,

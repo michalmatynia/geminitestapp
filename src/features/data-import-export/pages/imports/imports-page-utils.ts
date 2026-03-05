@@ -1,9 +1,7 @@
 import { PRODUCT_PARAMETER_TARGET_PREFIX } from '@/features/data-import-export/components/imports/constants';
+import type { ParameterReference as ParsedParameterTarget } from '@/shared/contracts/integrations/parameter-reference';
 
-export type ParsedParameterTarget = {
-  parameterId: string;
-  languageCode: string | null;
-};
+export type { ParsedParameterTarget };
 
 export const parseParameterTarget = (value: string): ParsedParameterTarget | null => {
   const trimmed = value.trim();

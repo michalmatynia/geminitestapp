@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 
 import { useToast } from '@/shared/ui';
 
@@ -18,14 +18,35 @@ interface InsightsContextValue {
   runLogsMutation: ReturnType<typeof useRunLogInsightMutation>;
 }
 
-const InsightsContext = createContext<InsightsContextValue | undefined>(undefined);
+type InsightsStateContextValue = Pick<InsightsContextValue, 'analyticsQuery' | 'logsQuery'>;
+type InsightsActionsContextValue = Pick<
+  InsightsContextValue,
+  'runAnalyticsMutation' | 'runLogsMutation'
+>;
 
-export function useInsights(): InsightsContextValue {
-  const context = useContext(InsightsContext);
+const InsightsStateContext = createContext<InsightsStateContextValue | undefined>(undefined);
+const InsightsActionsContext = createContext<InsightsActionsContextValue | undefined>(undefined);
+
+export function useInsightsState(): InsightsStateContextValue {
+  const context = useContext(InsightsStateContext);
   if (!context) {
-    throw new Error('useInsights must be used within an InsightsProvider');
+    throw new Error('useInsightsState must be used within an InsightsProvider');
   }
   return context;
+}
+
+export function useInsightsActions(): InsightsActionsContextValue {
+  const context = useContext(InsightsActionsContext);
+  if (!context) {
+    throw new Error('useInsightsActions must be used within an InsightsProvider');
+  }
+  return context;
+}
+
+export function useInsights(): InsightsContextValue {
+  const state = useInsightsState();
+  const actions = useInsightsActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }
 
 export function InsightsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
@@ -62,12 +83,18 @@ export function InsightsProvider({ children }: { children: React.ReactNode }): R
     }
   }, [runLogsMutation.isError, runLogsMutation.error, toast]);
 
-  const value = {
+  const stateValue: InsightsStateContextValue = {
     analyticsQuery,
     logsQuery,
+  };
+  const actionsValue: InsightsActionsContextValue = {
     runAnalyticsMutation,
     runLogsMutation,
   };
 
-  return <InsightsContext.Provider value={value}>{children}</InsightsContext.Provider>;
+  return (
+    <InsightsActionsContext.Provider value={actionsValue}>
+      <InsightsStateContext.Provider value={stateValue}>{children}</InsightsStateContext.Provider>
+    </InsightsActionsContext.Provider>
+  );
 }

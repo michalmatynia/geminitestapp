@@ -4,6 +4,7 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
+import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
 
 import { aiJobsApi, aiGenerationApi } from '@/shared/lib/ai-paths/api';
 import { generateProductAiDescription } from '../server/description-generator';
@@ -14,7 +15,6 @@ import {
   hashRuntimeValue,
   renderTemplate,
 } from '../../utils';
-import { evaluateOutboundUrlPolicy } from '../security/outbound-url-policy';
 import { buildPromptOutput, extractImageUrls, pollGraphJob, resolveJobProductId } from '../utils';
 
 export const handleTemplate: NodeHandler = ({

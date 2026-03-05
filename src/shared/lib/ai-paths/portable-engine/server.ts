@@ -12,6 +12,7 @@ import {
 } from './index';
 
 export { runPortablePathClient };
+export * from './sinks.server';
 
 export const runPortablePathServer = async (
   input: unknown,
@@ -21,11 +22,12 @@ export const runPortablePathServer = async (
     validateBeforeRun = true,
     validationMode = 'standard',
     validationTriggerNodeId = null,
+    signingPolicyProfile,
     repairIdentities = true,
     enforcePayloadLimits = true,
     limits,
-    fingerprintVerificationMode = 'off',
-    envelopeSignatureVerificationMode = 'off',
+    fingerprintVerificationMode,
+    envelopeSignatureVerificationMode,
     envelopeSignatureSecret,
     envelopeSignatureSecretsByKeyId,
     envelopeSignatureFallbackSecrets,
@@ -34,6 +36,7 @@ export const runPortablePathServer = async (
     ...engineOptions
   } = options;
   const resolved = await resolvePortablePathInputAsync(input, {
+    signingPolicyProfile,
     repairIdentities,
     includeConnections: false,
     enforcePayloadLimits,

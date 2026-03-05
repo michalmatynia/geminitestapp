@@ -10,22 +10,11 @@ import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
 import type { CmsTheme, Page, PageComponent } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
+import type { SlugRenderData as PreviewRenderData } from '../../[...slug]/slug-page-data';
 
 import type { Session } from 'next-auth';
 
-export type PreviewRenderData = {
-  theme: CmsTheme | null;
-  menuSettings: Awaited<ReturnType<typeof getCmsMenuSettings>>;
-  themeSettings: Awaited<ReturnType<typeof getCmsThemeSettings>>;
-  colorSchemes: ReturnType<typeof buildColorSchemeMap>;
-  showMenu: boolean;
-  rendererComponents: PageComponent[];
-  layout: { fullWidth: boolean };
-  mediaVars: ReturnType<typeof getMediaStyleVars>;
-  mediaStyles: ReturnType<typeof getMediaInlineStyles>;
-  hoverEffect: Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverEffect'] | undefined;
-  hoverScale: Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverScale'] | undefined;
-};
+export type { PreviewRenderData };
 
 const normalizeRendererComponent = (
   pageId: string,

@@ -5,7 +5,7 @@ import { useState, useCallback, useMemo } from 'react';
 import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
-} from '@/features/products/constants';
+} from '@/shared/lib/products/constants';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';

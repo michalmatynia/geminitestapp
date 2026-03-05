@@ -4,15 +4,19 @@ import { CalendarDays } from 'lucide-react';
 import React from 'react';
 
 import { FilemakerEntityCardsSection } from '../shared/FilemakerEntityCardsSection';
-import { useAdminFilemakerPageContext } from '../../context/AdminFilemakerPageContext';
+import {
+  useAdminFilemakerPageActionsContext,
+  useAdminFilemakerPageStateContext,
+} from '../../context/AdminFilemakerPageContext';
 import { formatFilemakerAddress } from '../../settings';
 import { formatTimestamp } from '../../pages/filemaker-page-utils';
 
 import type { FilemakerEvent } from '../../types';
 
 export function FilemakerEventsSection(): React.JSX.Element {
-  const { database, openCreateEvent, handleStartEditEvent, handleDeleteEvent, updateSetting } =
-    useAdminFilemakerPageContext();
+  const { database, updateSetting } = useAdminFilemakerPageStateContext();
+  const { openCreateEvent, handleStartEditEvent, handleDeleteEvent } =
+    useAdminFilemakerPageActionsContext();
 
   return (
     <FilemakerEntityCardsSection

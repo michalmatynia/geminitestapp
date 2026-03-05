@@ -3,7 +3,7 @@
 import { PanelLeftClose, PanelRightClose } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 
-import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
+import { useAdminLayoutActions } from '@/features/admin/context/AdminLayoutContext';
 import { Button } from '@/shared/ui';
 
 import { PagePreviewPanel } from './PagePreviewPanel';
@@ -19,7 +19,7 @@ import type { PageBuilderState } from '../../types/page-builder';
 
 function PageBuilderInner(): React.JSX.Element {
   const { state, dispatch } = usePageBuilder();
-  const { setIsProgrammaticallyCollapsed } = useAdminLayout();
+  const { setIsProgrammaticallyCollapsed } = useAdminLayoutActions();
   useBuilderKeyboardShortcuts();
 
   const isViewing = state.leftPanelCollapsed && state.rightPanelCollapsed;

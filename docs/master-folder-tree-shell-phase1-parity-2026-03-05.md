@@ -59,10 +59,14 @@ Lock behavior parity before pure-shell runtime extraction by:
 - viewport `row_rerender` runtime metric
 - UI state parse-failure metric (`ui_state_parse_failure`)
 
+4. Follow-up shell-purity hardening:
+- removed runtime-provider wrapper dependency from runtime metric suites by passing explicit runtime buses
+- added deterministic `frame_budget_miss` assertion driven by controlled animation-frame timing
+- added repeated mount/unmount churn assertion to verify runtime registration cleanup across instance lifecycle churn
+
 ## Remaining Risks (For Phase 2/3)
 
-1. `frame_budget_miss` remains covered by runtime metric contract tests, but not yet by a deterministic drag-frame integration assertion.
-2. Cross-page shared-runtime behavior under concurrent mount/unmount churn still relies on integration confidence from feature suites rather than a dedicated stress test.
+1. Cross-route, real browser tab-lifecycle churn (navigation + suspended tabs) is still validated primarily by integration/manual smoke rather than a dedicated browser-driven stress suite.
 
 ## Verification Gate For Phase 1
 

@@ -18,6 +18,7 @@ import { Button, Input, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useMaskingState, useMaskingActions } from '../context/MaskingContext';
+import type { GenerationHistoryPanelProps as ShapeListPanelProps } from './GenerationHistoryPanel';
 
 const ROLE_OPTIONS: Array<{ value: VectorShapeRole; label: string }> = [
   { value: 'product', label: 'Product' },
@@ -58,9 +59,7 @@ const SHAPE_ICON_COLOR_MAP: Record<string, string> = {
 const isVectorShapeRole = (value: string): value is VectorShapeRole =>
   value === 'product' || value === 'shadow' || value === 'background' || value === 'custom';
 
-export interface ShapeListPanelProps {
-  className?: string | undefined;
-}
+export type { ShapeListPanelProps };
 
 export function ShapeListPanel({ className }: ShapeListPanelProps): React.JSX.Element {
   const { maskShapes, activeMaskId } = useMaskingState();

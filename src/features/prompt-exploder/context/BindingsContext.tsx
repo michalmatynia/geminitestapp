@@ -12,22 +12,15 @@ import {
   buildManualBindingFromDraft,
   resolveManualBindingSegmentIds,
   resolveManualBindingSubsectionIds,
+  type PromptExploderManualBindingDraft,
 } from '../manual-bindings';
 import { useDocumentState, useDocumentActions } from './hooks/useDocument';
 
-import type { PromptExploderBindingType, PromptExploderSubsection } from '../types';
+import type { PromptExploderSubsection } from '../types';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export interface BindingDraft {
-  type: PromptExploderBindingType;
-  fromSegmentId: string;
-  toSegmentId: string;
-  fromSubsectionId: string;
-  toSubsectionId: string;
-  sourceLabel: string;
-  targetLabel: string;
-}
+export type BindingDraft = PromptExploderManualBindingDraft;
 
 export interface BindingsState {
   bindingDraft: BindingDraft;

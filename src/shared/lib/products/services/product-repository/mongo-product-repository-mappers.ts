@@ -104,6 +104,15 @@ const resolveCanonicalCategoryId = (doc: ProductDocument, productId: string): st
 
 const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
   if (!Array.isArray(input)) return [];
+  const resolvePrimaryLocalizedValue = (map: Record<string, string>): string =>
+    map['default'] ||
+    map['en'] ||
+    map['pl'] ||
+    map['de'] ||
+    Object.values(map).find(
+      (entry: string): boolean => typeof entry === 'string' && entry.length > 0
+    ) ||
+    '';
   const byParameterId = new Map<string, ProductParameterValue>();
   input.forEach((entry: unknown) => {
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
@@ -137,13 +146,12 @@ const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
       });
       return;
     }
-    const mergedValuesByLanguage = {
-      ...(current.valuesByLanguage ?? {}),
-      ...valuesByLanguage,
-    };
+    const mergedValuesByLanguage =
+      Object.keys(valuesByLanguage).length > 0 ? valuesByLanguage : (current.valuesByLanguage ?? {});
+    const resolvedValue = value || resolvePrimaryLocalizedValue(mergedValuesByLanguage) || '';
     byParameterId.set(parameterId, {
       parameterId,
-      value: current.value || value,
+      value: resolvedValue,
       ...(Object.keys(mergedValuesByLanguage).length > 0
         ? { valuesByLanguage: mergedValuesByLanguage }
         : {}),

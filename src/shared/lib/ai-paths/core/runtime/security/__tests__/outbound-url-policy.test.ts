@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { evaluateOutboundUrlPolicy } from '../outbound-url-policy';
+import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
 
 const ORIGINAL_ALLOWED = process.env['AI_PATHS_OUTBOUND_ALLOWED_HOSTS'];
 const ORIGINAL_DENIED = process.env['AI_PATHS_OUTBOUND_DENY_HOSTS'];

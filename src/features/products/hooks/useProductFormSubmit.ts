@@ -46,6 +46,58 @@ export interface UseProductFormSubmitResult {
   ConfirmationModal: React.ComponentType;
 }
 
+export type NormalizedSubmittedParameterValue = {
+  parameterId: string | undefined;
+  value: string;
+  valuesByLanguage?: Record<string, string>;
+};
+
+const resolvePrimarySubmittedParameterValue = (valuesByLanguage: Record<string, string>): string =>
+  valuesByLanguage['default'] ||
+  valuesByLanguage['en'] ||
+  valuesByLanguage['pl'] ||
+  valuesByLanguage['de'] ||
+  Object.values(valuesByLanguage).find(
+    (value: string): boolean => typeof value === 'string' && value.length > 0
+  ) ||
+  '';
+
+export const normalizeProductParametersForSubmission = (
+  parameterValues: ProductParameterValue[]
+): NormalizedSubmittedParameterValue[] =>
+  parameterValues
+    .map((entry: ProductParameterValue): NormalizedSubmittedParameterValue => {
+      const valuesByLanguage =
+        entry.valuesByLanguage &&
+        typeof entry.valuesByLanguage === 'object' &&
+        !Array.isArray(entry.valuesByLanguage)
+          ? Object.entries(entry.valuesByLanguage).reduce(
+            (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
+              const normalizedLang = lang.trim().toLowerCase();
+              const normalizedValue = typeof value === 'string' ? value.trim() : '';
+              if (!normalizedLang || !normalizedValue) return acc;
+              acc[normalizedLang] = normalizedValue;
+              return acc;
+            },
+            {}
+          )
+          : {};
+
+      const hasLocalizedValues = Object.keys(valuesByLanguage).length > 0;
+      const directValue = typeof entry.value === 'string' ? entry.value.trim() : '';
+      const localizedPrimaryValue = resolvePrimarySubmittedParameterValue(valuesByLanguage);
+      const normalizedParameterId = decodeSimpleParameterStorageId(
+        typeof entry.parameterId === 'string' ? entry.parameterId.trim() : ''
+      );
+
+      return {
+        parameterId: normalizedParameterId,
+        value: hasLocalizedValues ? localizedPrimaryValue : directValue,
+        ...(hasLocalizedValues ? { valuesByLanguage } : {}),
+      };
+    })
+    .filter((entry: NormalizedSubmittedParameterValue): boolean => !!entry.parameterId);
+
 function buildFormData(
   data: ProductFormData,
   imageSlots: (ProductImageSlot | null)[],
@@ -118,54 +170,7 @@ function buildFormData(
     formData.append('noteIds', '');
   }
 
-  const normalizedParameters = parameterValues
-    .map(
-      (
-        entry: ProductParameterValue
-      ): {
-        parameterId: string | undefined;
-        value: string;
-        valuesByLanguage?: Record<string, string>;
-      } => {
-        const valuesByLanguage =
-          entry.valuesByLanguage &&
-          typeof entry.valuesByLanguage === 'object' &&
-          !Array.isArray(entry.valuesByLanguage)
-            ? Object.entries(entry.valuesByLanguage).reduce(
-              (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
-                const normalizedLang = lang.trim().toLowerCase();
-                const normalizedValue = typeof value === 'string' ? value.trim() : '';
-                if (!normalizedLang || !normalizedValue) return acc;
-                acc[normalizedLang] = normalizedValue;
-                return acc;
-              },
-              {}
-            )
-            : {};
-        const directValue = typeof entry.value === 'string' ? entry.value.trim() : '';
-        const fallbackLocalizedValue =
-          valuesByLanguage['default'] ||
-          valuesByLanguage['en'] ||
-          valuesByLanguage['pl'] ||
-          valuesByLanguage['de'] ||
-          Object.values(valuesByLanguage).find(
-            (value: string): boolean => typeof value === 'string' && value.length > 0
-          ) ||
-          '';
-        return {
-          parameterId: decodeSimpleParameterStorageId(entry.parameterId ?? ''),
-          value: directValue || fallbackLocalizedValue,
-          ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
-        };
-      }
-    )
-    .filter(
-      (entry: {
-        parameterId: string | undefined;
-        value: string;
-        valuesByLanguage?: Record<string, string>;
-      }): boolean => !!entry.parameterId
-    );
+  const normalizedParameters = normalizeProductParametersForSubmission(parameterValues);
   formData.append('parameters', JSON.stringify(normalizedParameters));
 
   formData.append('studioProjectId', studioProjectId ?? '');

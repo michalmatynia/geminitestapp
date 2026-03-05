@@ -101,6 +101,11 @@ Resolver behavior:
   - `envelopeSignatureVerificationMode: "strict"` blocks import on missing/mismatched/unsupported signatures.
   - For `hmac_sha256` envelope signatures in strict mode, use the async resolver path and pass `envelopeSignatureSecret`.
   - Key-id routing and rotation are supported via `envelopeSignatureSecretsByKeyId`, `envelopeSignatureFallbackSecrets`, and `envelopeSignatureKeyResolver`.
+  - `signingPolicyProfile` defaults verification by surface profile:
+    - `dev`: fingerprint `off`, envelope `off`
+    - `staging`: fingerprint `warn`, envelope `warn`
+    - `prod`: fingerprint `strict`, envelope `strict`
+  - Explicit mode options still override profile defaults for controlled rollouts.
 - Uses a migration registry keyed by portable package spec version (currently `v1` + `v2` compatibility shim).
 - Exposes custom migration registry APIs:
   - `registerPortablePathPackageMigrator(specVersion, migrator)`
@@ -111,6 +116,22 @@ Resolver behavior:
   - `resetPortablePathMigratorObservabilitySnapshot()`
   - `registerPortablePathMigratorObservabilityHook(hook)` (returns unsubscribe)
   - Snapshot includes version-level attempts/success/failure counts, source-path counts, and recent failure telemetry.
+- Exposes envelope verification observability APIs:
+  - `getPortablePathEnvelopeVerificationObservabilitySnapshot()`
+  - `resetPortablePathEnvelopeVerificationObservabilitySnapshot()`
+  - `registerPortablePathEnvelopeVerificationObservabilityHook(hook)` (returns unsubscribe)
+  - Snapshot includes by-key-id verification status counts and recent outcome events to support rotation cutovers.
+- Exposes envelope verification persistent sink adapter APIs:
+  - `registerPortablePathEnvelopeVerificationAuditSink({ id, write })`
+  - `unregisterPortablePathEnvelopeVerificationAuditSink(id)`
+  - `listPortablePathEnvelopeVerificationAuditSinkIds()`
+  - `getPortablePathEnvelopeVerificationAuditSinkSnapshot()`
+  - `resetPortablePathEnvelopeVerificationAuditSinkSnapshot({ clearRegisteredSinks })`
+  - Sink writes are failure-isolated and do not block path import/verification flow.
+  - Built-in server sink factories:
+    - `createPortablePathEnvelopeVerificationLogForwardingSink(...)`
+    - `createPortablePathEnvelopeVerificationPrismaSink(...)`
+    - `createPortablePathEnvelopeVerificationMongoSink(...)`
 
 ### Validate
 
@@ -134,6 +155,7 @@ Both run methods support:
 - `validationMode` (`standard` or `strict`)
 - `repairIdentities` (default `true`)
 - `reportAiPathsError`
+- `signingPolicyProfile` (`dev` | `staging` | `prod`)
 - `limits` / `enforcePayloadLimits`
 - `fingerprintVerificationMode` (`off` | `warn` | `strict`)
 - `envelopeSignatureVerificationMode` (`off` | `warn` | `strict`)
@@ -156,6 +178,9 @@ These allow stable package integrity tagging across copy/paste surfaces.
 - Diff API: `GET /api/ai-paths/portable-engine/schema/diff`
 - Diff query: `kind=all|portable_envelope|portable_package|semantic_canvas|path_config` (default `all`)
 - Cache support: deterministic `ETag` + `If-None-Match` (`304 Not Modified`) with private SWR cache headers.
+- CI guardrail: `npm run ai-paths:check:portable-schema-diff -- --strict`
+  - Uses `scripts/ai-paths/portable-schema-diff-allowlist.json`.
+  - Unallowlisted schema hash changes are treated as breaking until reviewed.
 
 Response includes canonical JSON Schema (Draft 2020-12) generated from runtime Zod contracts, suitable for external editor validation.
 Diff response includes per-kind deterministic schema hashes (`current` vs `vnext_preview`) to support tooling upgrade checks.
@@ -188,8 +213,21 @@ Server:
 import { runPortablePathServer } from '@/shared/lib/ai-paths/portable-engine/server';
 ```
 
+Server sink registration example:
+
+```ts
+import {
+  createPortablePathEnvelopeVerificationPrismaSink,
+  registerPortablePathEnvelopeVerificationAuditSink,
+} from '@/shared/lib/ai-paths/portable-engine/server';
+
+registerPortablePathEnvelopeVerificationAuditSink(
+  createPortablePathEnvelopeVerificationPrismaSink()
+);
+```
+
 ## Next Hardening Steps
 
-1. Add CI guardrail that fails when schema diff report includes unexpected breaking changes.
-2. Add optional signing policy profiles (dev/staging/prod) to enforce envelope verification defaults per surface.
-3. Add audit log stream for envelope verification outcomes by key id to support rotation cutovers.
+1. Add bootstrap helpers to register sink profiles per environment (`dev/staging/prod`) with one call.
+2. Add pre-commit helper to auto-suggest allowlist entries for intentional schema updates.
+3. Add per-surface telemetry tags (`canvas`/`product`/`api`) to signing policy usage snapshots.

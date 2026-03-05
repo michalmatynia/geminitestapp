@@ -1,3 +1,5 @@
+import type { ParameterReference as ParsedParameterSourceKey } from '@/shared/contracts/integrations/parameter-reference';
+
 export const toStringValue = (value: unknown): string | null => {
   if (value === null || value === undefined) return null;
   if (typeof value === 'string') return value.trim() || null;
@@ -35,10 +37,7 @@ export const toTrimmedString = (value: unknown): string | null => {
   return trimmed || null;
 };
 
-export type ParsedParameterSourceKey = {
-  parameterId: string;
-  languageCode: string | null;
-};
+export type { ParsedParameterSourceKey };
 
 export const parseParameterSourceKey = (sourceKey: string): ParsedParameterSourceKey | null => {
   const trimmed = sourceKey.trim();

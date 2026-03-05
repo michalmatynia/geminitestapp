@@ -1,3 +1,8 @@
+import type {
+  Point2dDto as ImageStudioSequencePoint,
+  RectBoundsDto as ImageStudioSequenceCropRect,
+} from '@/shared/contracts/geometry';
+
 export const IMAGE_STUDIO_SEQUENCE_OPERATIONS = [
   'crop_center',
   'mask',
@@ -47,17 +52,7 @@ export const IMAGE_STUDIO_SEQUENCE_STEP_INPUT_SOURCES = ['previous', 'source'] a
 export type ImageStudioSequenceStepInputSource =
   (typeof IMAGE_STUDIO_SEQUENCE_STEP_INPUT_SOURCES)[number];
 
-export type ImageStudioSequencePoint = {
-  x: number;
-  y: number;
-};
-
-export type ImageStudioSequenceCropRect = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
+export type { ImageStudioSequenceCropRect, ImageStudioSequencePoint };
 
 export type ImageStudioSequenceStepBase = {
   id: string;

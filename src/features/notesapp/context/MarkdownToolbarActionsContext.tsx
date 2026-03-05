@@ -2,16 +2,10 @@
 
 import React, { createContext, useContext } from 'react';
 
+import type { MarkdownToolbarActionHandlers as MarkdownToolbarActionsContextValue } from '@/features/document-editor/components/MarkdownToolbar';
 import { internalError } from '@/shared/errors/app-error';
 
-export type MarkdownToolbarActionsContextValue = {
-  onApplyWrap: (prefix: string, suffix: string, placeholder: string) => void;
-  onApplyLinePrefix: (prefix: string) => void;
-  onInsertAtCursor: (value: string) => void;
-  onApplyBulletList: () => void;
-  onApplyChecklist: () => void;
-  onApplySpanStyle: (color: string, font: string) => void;
-};
+export type { MarkdownToolbarActionsContextValue };
 
 const MarkdownToolbarActionsContext = createContext<MarkdownToolbarActionsContextValue | null>(
   null

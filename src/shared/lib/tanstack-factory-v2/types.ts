@@ -184,13 +184,19 @@ export type SingleQueryConfigV2<
   transformError?: (error: unknown) => Error;
 };
 
+type MultiQueryConfigBaseV2<
+  TQueries extends readonly unknown[],
+  TResults,
+  TCombine = TResults,
+> = {
+  queries: TQueries;
+  combine?: (results: TResults) => TCombine;
+};
+
 export type MultiQueryConfigV2<
   TQueries extends readonly unknown[],
   TCombine = MultiQueryResultsV2<TQueries>,
-> = {
-  queries: TQueries;
-  combine?: (results: MultiQueryResultsV2<TQueries>) => TCombine;
-};
+> = MultiQueryConfigBaseV2<TQueries, MultiQueryResultsV2<TQueries>, TCombine>;
 
 export type MultiQueryResultsV2<TQueries extends readonly unknown[]> = {
   [K in keyof TQueries]: TQueries[K] extends QueryDescriptorV2<
@@ -208,10 +214,7 @@ export type MultiQueryResultsV2<TQueries extends readonly unknown[]> = {
 export type SuspenseMultiQueryConfigV2<
   TQueries extends readonly unknown[],
   TCombine = SuspenseMultiQueryResultsV2<TQueries>,
-> = {
-  queries: TQueries;
-  combine?: (results: SuspenseMultiQueryResultsV2<TQueries>) => TCombine;
-};
+> = MultiQueryConfigBaseV2<TQueries, SuspenseMultiQueryResultsV2<TQueries>, TCombine>;
 
 export type SuspenseMultiQueryResultsV2<TQueries extends readonly unknown[]> = {
   [K in keyof TQueries]: TQueries[K] extends SuspenseQueryDescriptorV2<

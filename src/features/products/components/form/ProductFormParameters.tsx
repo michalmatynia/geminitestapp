@@ -94,7 +94,6 @@ export default function ProductFormParameters(): React.JSX.Element {
     parameterValues,
     addParameterValue,
     updateParameterId,
-    updateParameterValue,
     updateParameterValueByLanguage,
     removeParameterValue,
   } = useProductFormParameters();
@@ -258,9 +257,6 @@ export default function ProductFormParameters(): React.JSX.Element {
               };
               const handleLanguageValueChange = (languageCode: string, nextValue: string): void => {
                 updateParameterValueByLanguage(index, languageCode, nextValue);
-                if (normalizeLanguageCode(languageCode) === primaryLanguageCode) {
-                  updateParameterValue(index, nextValue);
-                }
               };
               const currentChecklistValues = parseChecklistValues(
                 getLanguageValue(activeParameterLanguage.code)

@@ -1,4 +1,5 @@
 import type { VectorShape } from '@/shared/lib/vector-drawing';
+import type { RectBoundsDto as NormalizedImageFrame } from '@/shared/contracts/geometry';
 
 export type CanvasResizeDirection =
   | 'up-left'
@@ -11,12 +12,7 @@ export type CanvasResizeDirection =
   | 'down'
   | 'down-right';
 
-export interface NormalizedImageFrame {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+export type { NormalizedImageFrame };
 
 type AxisMode = 'left' | 'center' | 'right';
 type VerticalMode = 'up' | 'center' | 'down';

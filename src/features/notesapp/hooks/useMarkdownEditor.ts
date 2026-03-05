@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
+import type { MarkdownToolbarActionHandlers as UseMarkdownEditorReturn } from '@/features/document-editor/components/MarkdownToolbar';
 
 export type UseMarkdownEditorProps = {
   content: string;
@@ -8,14 +9,7 @@ export type UseMarkdownEditorProps = {
   contentRef: React.RefObject<HTMLTextAreaElement | null>;
 };
 
-export type UseMarkdownEditorReturn = {
-  onApplyWrap: (prefix: string, suffix: string, placeholder: string) => void;
-  onApplyLinePrefix: (prefix: string) => void;
-  onInsertAtCursor: (value: string) => void;
-  onApplyBulletList: () => void;
-  onApplyChecklist: () => void;
-  onApplySpanStyle: (colorValue: string, fontValue: string) => void;
-};
+export type { UseMarkdownEditorReturn };
 
 export function useMarkdownEditor({
   content,

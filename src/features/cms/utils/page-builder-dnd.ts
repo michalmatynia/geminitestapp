@@ -4,25 +4,19 @@ import {
   parseDragIndex,
   setDragData,
 } from '@/shared/utils/drag-drop';
+import type { PageZone } from '@/shared/contracts/cms';
+import type {
+  BlockDragState as BlockDragData,
+  SectionDragState as SectionDragData,
+} from '../hooks/useDragStateContext';
 
-export type SectionDragData = {
-  id: string | null;
-  type: string | null;
-  zone: string | null;
-  index: number | null;
-};
+export type { SectionDragData };
 
-export type BlockDragData = {
-  id: string | null;
-  type: string | null;
-  fromSectionId: string | null;
-  fromColumnId: string | null;
-  fromParentBlockId: string | null;
-};
+export type { BlockDragData };
 
 export const setSectionDragData = (
   dataTransfer: DataTransfer,
-  payload: { id: string; type: string; zone: string; index: number }
+  payload: { id: string; type: string; zone: PageZone; index: number }
 ): void => {
   setDragData(
     dataTransfer,
@@ -65,7 +59,11 @@ export const readSectionDragData = (
 ): SectionDragData => {
   const id = getFirstDragValue(dataTransfer, [DRAG_KEYS.SECTION_ID], fallback?.id ?? null);
   const type = getFirstDragValue(dataTransfer, [DRAG_KEYS.SECTION_TYPE], fallback?.type ?? null);
-  const zone = getFirstDragValue(dataTransfer, [DRAG_KEYS.SECTION_ZONE], fallback?.zone ?? null);
+  const rawZone = getFirstDragValue(dataTransfer, [DRAG_KEYS.SECTION_ZONE], fallback?.zone ?? null);
+  const zone: PageZone | null =
+    rawZone === 'header' || rawZone === 'template' || rawZone === 'footer'
+      ? rawZone
+      : (fallback?.zone ?? null);
   const rawIndex = getFirstDragValue(
     dataTransfer,
     [DRAG_KEYS.SECTION_INDEX],

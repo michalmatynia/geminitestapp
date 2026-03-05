@@ -1,11 +1,35 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { useAdminFilemakerPageState } from '../hooks/useAdminFilemakerPageState';
 
 export type AdminFilemakerPageContextValue = ReturnType<typeof useAdminFilemakerPageState>;
 
-const AdminFilemakerPageContext = createContext<AdminFilemakerPageContextValue | null>(null);
+type AdminFilemakerPageFunctionKeys = {
+  [Key in keyof AdminFilemakerPageContextValue]-?: AdminFilemakerPageContextValue[Key] extends (
+    ...args: never[]
+  ) => unknown
+    ? Key
+    : never;
+}[keyof AdminFilemakerPageContextValue];
+
+type AdminFilemakerPageDataKeys = Exclude<keyof AdminFilemakerPageContextValue, AdminFilemakerPageFunctionKeys>;
+
+export type AdminFilemakerPageStateContextValue = Pick<
+  AdminFilemakerPageContextValue,
+  AdminFilemakerPageDataKeys
+>;
+
+export type AdminFilemakerPageActionsContextValue = Pick<
+  AdminFilemakerPageContextValue,
+  AdminFilemakerPageFunctionKeys
+>;
+
+const AdminFilemakerPageStateContext = createContext<AdminFilemakerPageStateContextValue | null>(
+  null
+);
+const AdminFilemakerPageActionsContext =
+  createContext<AdminFilemakerPageActionsContextValue | null>(null);
 
 export function AdminFilemakerPageProvider({
   children,
@@ -13,17 +37,90 @@ export function AdminFilemakerPageProvider({
   children: React.ReactNode;
 }): React.JSX.Element {
   const value = useAdminFilemakerPageState();
+  const {
+    setActiveTab,
+    setSearchQuery,
+    setIsPersonModalOpen,
+    setPersonDraft,
+    openCreatePerson,
+    handleStartEditPerson,
+    handleDeletePerson,
+    setIsOrgModalOpen,
+    setOrgDraft,
+    openCreateOrg,
+    handleStartEditOrg,
+    handleDeleteOrganization,
+    setIsEmailModalOpen,
+    setEmailDraft,
+    openCreateEmail,
+    handleStartEditEmail,
+    handleDeleteEmail,
+    setIsEventModalOpen,
+    setEventDraft,
+    openCreateEvent,
+    handleStartEditEvent,
+    handleDeleteEvent,
+    handleCreateEvent,
+    ...stateValue
+  } = value;
+
+  const actionsValue: AdminFilemakerPageActionsContextValue = {
+    setActiveTab,
+    setSearchQuery,
+    setIsPersonModalOpen,
+    setPersonDraft,
+    openCreatePerson,
+    handleStartEditPerson,
+    handleDeletePerson,
+    setIsOrgModalOpen,
+    setOrgDraft,
+    openCreateOrg,
+    handleStartEditOrg,
+    handleDeleteOrganization,
+    setIsEmailModalOpen,
+    setEmailDraft,
+    openCreateEmail,
+    handleStartEditEmail,
+    handleDeleteEmail,
+    setIsEventModalOpen,
+    setEventDraft,
+    openCreateEvent,
+    handleStartEditEvent,
+    handleDeleteEvent,
+    handleCreateEvent,
+  };
+
   return (
-    <AdminFilemakerPageContext.Provider value={value}>
-      {children}
-    </AdminFilemakerPageContext.Provider>
+    <AdminFilemakerPageActionsContext.Provider value={actionsValue}>
+      <AdminFilemakerPageStateContext.Provider value={stateValue}>
+        {children}
+      </AdminFilemakerPageStateContext.Provider>
+    </AdminFilemakerPageActionsContext.Provider>
   );
 }
 
-export function useAdminFilemakerPageContext(): AdminFilemakerPageContextValue {
-  const context = useContext(AdminFilemakerPageContext);
+export function useAdminFilemakerPageStateContext(): AdminFilemakerPageStateContextValue {
+  const context = useContext(AdminFilemakerPageStateContext);
   if (!context) {
-    throw new Error('useAdminFilemakerPageContext must be used within AdminFilemakerPageProvider');
+    throw new Error(
+      'useAdminFilemakerPageStateContext must be used within AdminFilemakerPageProvider'
+    );
   }
   return context;
+}
+
+export function useAdminFilemakerPageActionsContext(): AdminFilemakerPageActionsContextValue {
+  const context = useContext(AdminFilemakerPageActionsContext);
+  if (!context) {
+    throw new Error(
+      'useAdminFilemakerPageActionsContext must be used within AdminFilemakerPageProvider'
+    );
+  }
+  return context;
+}
+
+export function useAdminFilemakerPageContext(): AdminFilemakerPageContextValue {
+  const state = useAdminFilemakerPageStateContext();
+  const actions = useAdminFilemakerPageActionsContext();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

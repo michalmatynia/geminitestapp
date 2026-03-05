@@ -9,6 +9,7 @@ import {
   AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT,
   stableStringify,
 } from '@/shared/lib/ai-paths';
+import type { RunEnqueuePayloadIssue as PathSavePayloadIssue } from './runtime/payload-validation';
 
 const normalizeHistoryRetentionValue = (value: unknown, fallback: number): number => {
   const parsed =
@@ -101,10 +102,7 @@ export type PathNodeRoleLintResult = {
   warnings: string[];
 };
 
-export type PathSavePayloadIssue = {
-  path: string;
-  message: string;
-};
+export type { PathSavePayloadIssue };
 
 const formatNodeType = (type: string): string => type.replace(/_/g, ' ');
 

@@ -4,12 +4,12 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
-
-import { getValueAtMappingPath, renderTemplate } from '../../utils';
 import {
   fetchWithOutboundUrlPolicy,
   OutboundUrlPolicyError,
-} from '../security/outbound-url-policy';
+} from '@/shared/lib/security/outbound-url-policy';
+
+import { getValueAtMappingPath, renderTemplate } from '../../utils';
 
 export const handleHttp: NodeHandler = async ({
   node,

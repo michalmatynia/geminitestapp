@@ -3,10 +3,11 @@
 import React from 'react';
 
 import { InsightsResultPanel } from './InsightsResultPanel';
-import { useInsights } from '../context/InsightsContext';
+import { useInsightsActions, useInsightsState } from '../context/InsightsContext';
 
 export function LogInsightsPanel(): React.JSX.Element {
-  const { logsQuery, runLogsMutation } = useInsights();
+  const { logsQuery } = useInsightsState();
+  const { runLogsMutation } = useInsightsActions();
 
   return (
     <InsightsResultPanel

@@ -7,7 +7,8 @@ import type {
   ImageStudioAnalysisPlanSnapshot,
   ImageStudioAnalysisApplyTarget,
 } from '@/features/ai/image-studio/utils/analysis-bridge';
-import type { UpscaleSmoothingQuality } from './GenerationToolbarImageUtils';
+import type { AnalysisStatus } from '../analysis/analysis-types';
+import type { UpscaleSmoothingQuality, AutoScalerMode } from './GenerationToolbarImageUtils';
 import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterShadowPolicy,
@@ -23,7 +24,6 @@ export type CenterMode =
   | 'client_object_layout'
   | 'server_object_layout'
   | 'client_white_bg_bbox';
-export type AutoScalerMode = 'client_auto_scaler' | 'server_auto_scaler';
 
 export type ImageStudioOperationStatus =
   | 'idle'
@@ -32,7 +32,6 @@ export type ImageStudioOperationStatus =
   | 'uploading'
   | 'processing'
   | 'persisting';
-export type AnalysisStatus = 'idle' | 'resolving' | 'processing';
 
 export interface GenerationToolbarContextValue {
   // Mode State

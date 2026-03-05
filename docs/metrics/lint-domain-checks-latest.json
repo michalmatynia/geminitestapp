@@ -1,0 +1,115 @@
+{
+  "generatedAt": "2026-03-05T04:00:57.270Z",
+  "strictMode": false,
+  "summary": {
+    "total": 5,
+    "passed": 0,
+    "failed": 5,
+    "timedOut": 0,
+    "skipped": 0,
+    "totalDurationMs": 5087
+  },
+  "results": [
+    {
+      "id": "auth",
+      "name": "Auth",
+      "targets": [
+        "src/features/auth",
+        "__tests__/features/auth",
+        "__tests__/api/auth",
+        "src/app/api/auth"
+      ],
+      "resolvedTargets": [
+        "src/features/auth",
+        "__tests__/features/auth",
+        "__tests__/api/auth",
+        "src/app/api/auth"
+      ],
+      "command": "npx eslint src/features/auth __tests__/features/auth __tests__/api/auth src/app/api/auth",
+      "status": "fail",
+      "exitCode": 2,
+      "durationMs": 1705,
+      "output": "Oops! Something went wrong! :(\n\nESLint: 9.39.3\n\nYou are linting \"__tests__/features/auth\", but all of the files matching the glob pattern \"__tests__/features/auth\" are ignored.\n\nIf you don't want to lint these files, remove the pattern \"__tests__/features/auth\" from the list of arguments passed to ESLint.\n\nIf you do want to lint these files, explicitly list one or more of the files from this glob that you'd like to lint to see more details about why they are ignored.\n\n  * If the file is ignored because of a matching ignore pattern, check global ignores in your config file.\n    https://eslint.org/docs/latest/use/configure/ignore\n\n  * If the file is ignored because no matching configuration was supplied, check file patterns in your config file.\n    https://eslint.org/docs/latest/use/configure/configuration-files#specifying-files-with-arbitrary-extensions\n\n  * If the file is ignored because it is located outside of the base path, change the location of your config file to be in a parent directory."
+    },
+    {
+      "id": "products",
+      "name": "Products",
+      "targets": [
+        "src/features/products",
+        "__tests__/features/products",
+        "__tests__/api/products",
+        "src/app/api/v2/products"
+      ],
+      "resolvedTargets": [
+        "src/features/products",
+        "__tests__/features/products",
+        "__tests__/api/products",
+        "src/app/api/v2/products"
+      ],
+      "command": "npx eslint src/features/products __tests__/features/products __tests__/api/products src/app/api/v2/products",
+      "status": "fail",
+      "exitCode": 2,
+      "durationMs": 821,
+      "output": "Oops! Something went wrong! :(\n\nESLint: 9.39.3\n\nYou are linting \"__tests__/features/products\", but all of the files matching the glob pattern \"__tests__/features/products\" are ignored.\n\nIf you don't want to lint these files, remove the pattern \"__tests__/features/products\" from the list of arguments passed to ESLint.\n\nIf you do want to lint these files, explicitly list one or more of the files from this glob that you'd like to lint to see more details about why they are ignored.\n\n  * If the file is ignored because of a matching ignore pattern, check global ignores in your config file.\n    https://eslint.org/docs/latest/use/configure/ignore\n\n  * If the file is ignored because no matching configuration was supplied, check file patterns in your config file.\n    https://eslint.org/docs/latest/use/configure/configuration-files#specifying-files-with-arbitrary-extensions\n\n  * If the file is ignored because it is located outside of the base path, change the location of your config file to be in a parent directory."
+    },
+    {
+      "id": "ai-paths",
+      "name": "AI Paths",
+      "targets": [
+        "src/features/ai/ai-paths",
+        "__tests__/features/ai/ai-paths",
+        "src/app/api/ai-paths"
+      ],
+      "resolvedTargets": [
+        "src/features/ai/ai-paths",
+        "__tests__/features/ai/ai-paths",
+        "src/app/api/ai-paths"
+      ],
+      "command": "npx eslint src/features/ai/ai-paths __tests__/features/ai/ai-paths src/app/api/ai-paths",
+      "status": "fail",
+      "exitCode": 2,
+      "durationMs": 841,
+      "output": "Oops! Something went wrong! :(\n\nESLint: 9.39.3\n\nYou are linting \"__tests__/features/ai/ai-paths\", but all of the files matching the glob pattern \"__tests__/features/ai/ai-paths\" are ignored.\n\nIf you don't want to lint these files, remove the pattern \"__tests__/features/ai/ai-paths\" from the list of arguments passed to ESLint.\n\nIf you do want to lint these files, explicitly list one or more of the files from this glob that you'd like to lint to see more details about why they are ignored.\n\n  * If the file is ignored because of a matching ignore pattern, check global ignores in your config file.\n    https://eslint.org/docs/latest/use/configure/ignore\n\n  * If the file is ignored because no matching configuration was supplied, check file patterns in your config file.\n    https://eslint.org/docs/latest/use/configure/configuration-files#specifying-files-with-arbitrary-extensions\n\n  * If the file is ignored because it is located outside of the base path, change the location of your config file to be in a parent directory."
+    },
+    {
+      "id": "image-studio",
+      "name": "Image Studio",
+      "targets": [
+        "src/features/ai/image-studio",
+        "__tests__/features/ai/image-studio",
+        "src/app/api/image-studio"
+      ],
+      "resolvedTargets": [
+        "src/features/ai/image-studio",
+        "__tests__/features/ai/image-studio",
+        "src/app/api/image-studio"
+      ],
+      "command": "npx eslint src/features/ai/image-studio __tests__/features/ai/image-studio src/app/api/image-studio",
+      "status": "fail",
+      "exitCode": 2,
+      "durationMs": 847,
+      "output": "Oops! Something went wrong! :(\n\nESLint: 9.39.3\n\nYou are linting \"__tests__/features/ai/image-studio\", but all of the files matching the glob pattern \"__tests__/features/ai/image-studio\" are ignored.\n\nIf you don't want to lint these files, remove the pattern \"__tests__/features/ai/image-studio\" from the list of arguments passed to ESLint.\n\nIf you do want to lint these files, explicitly list one or more of the files from this glob that you'd like to lint to see more details about why they are ignored.\n\n  * If the file is ignored because of a matching ignore pattern, check global ignores in your config file.\n    https://eslint.org/docs/latest/use/configure/ignore\n\n  * If the file is ignored because no matching configuration was supplied, check file patterns in your config file.\n    https://eslint.org/docs/latest/use/configure/configuration-files#specifying-files-with-arbitrary-extensions\n\n  * If the file is ignored because it is located outside of the base path, change the location of your config file to be in a parent directory."
+    },
+    {
+      "id": "case-resolver",
+      "name": "Case Resolver",
+      "targets": [
+        "src/features/case-resolver",
+        "src/features/case-resolver-capture",
+        "__tests__/features/case-resolver-capture",
+        "src/app/api/case-resolver"
+      ],
+      "resolvedTargets": [
+        "src/features/case-resolver",
+        "src/features/case-resolver-capture",
+        "__tests__/features/case-resolver-capture",
+        "src/app/api/case-resolver"
+      ],
+      "command": "npx eslint src/features/case-resolver src/features/case-resolver-capture __tests__/features/case-resolver-capture src/app/api/case-resolver",
+      "status": "fail",
+      "exitCode": 2,
+      "durationMs": 873,
+      "output": "Oops! Something went wrong! :(\n\nESLint: 9.39.3\n\nYou are linting \"__tests__/features/case-resolver-capture\", but all of the files matching the glob pattern \"__tests__/features/case-resolver-capture\" are ignored.\n\nIf you don't want to lint these files, remove the pattern \"__tests__/features/case-resolver-capture\" from the list of arguments passed to ESLint.\n\nIf you do want to lint these files, explicitly list one or more of the files from this glob that you'd like to lint to see more details about why they are ignored.\n\n  * If the file is ignored because of a matching ignore pattern, check global ignores in your config file.\n    https://eslint.org/docs/latest/use/configure/ignore\n\n  * If the file is ignored because no matching configuration was supplied, check file patterns in your config file.\n    https://eslint.org/docs/latest/use/configure/configuration-files#specifying-files-with-arbitrary-extensions\n\n  * If the file is ignored because it is located outside of the base path, change the location of your config file to be in a parent directory."
+    }
+  ]
+}

@@ -30,6 +30,37 @@ describe('mongo product repository mappers', () => {
     expect(result.categoryId).toBe('category-1');
   });
 
+  it('normalizes duplicate parameter entries without preserving stale earlier values', () => {
+    const result = toProductResponse({
+      _id: 'product-params-1',
+      id: 'product-params-1',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      catalogId: 'catalog-1',
+      published: false,
+      parameters: [
+        {
+          parameterId: 'condition',
+          value: 'Nowy',
+          valuesByLanguage: { en: 'Nowy' },
+        },
+        {
+          parameterId: 'condition',
+          value: '',
+          valuesByLanguage: { pl: 'Uzywany' },
+        },
+      ],
+    } as unknown as WithId<ProductDocument>);
+
+    expect(result.parameters).toEqual([
+      {
+        parameterId: 'condition',
+        value: 'Uzywany',
+        valuesByLanguage: { pl: 'Uzywany' },
+      },
+    ]);
+  });
+
   it('rejects legacy nested localized objects', () => {
     expect(() =>
       toProductResponse({

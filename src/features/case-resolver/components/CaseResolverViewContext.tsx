@@ -24,7 +24,7 @@ type WorkspaceView = CaseResolverWorkspaceView;
 
 export type { WorkspaceView };
 
-export type SelectOption = {
+type SelectOption = {
   value: string;
   label: string;
   description?: string | undefined;

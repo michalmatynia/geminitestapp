@@ -28,6 +28,19 @@ export const ProductFormParameterContext = createContext<ProductFormParameterCon
   null
 );
 
+export const resolvePrimaryParameterValue = (
+  valuesByLanguage: Record<string, string>,
+  fallbackValue: string = ''
+): string =>
+  valuesByLanguage['default'] ||
+  valuesByLanguage['en'] ||
+  valuesByLanguage['pl'] ||
+  valuesByLanguage['de'] ||
+  Object.values(valuesByLanguage).find(
+    (value: string): boolean => typeof value === 'string' && value.length > 0
+  ) ||
+  fallbackValue;
+
 export function ProductFormParameterProvider({
   children,
   product,
@@ -65,14 +78,7 @@ export function ProductFormParameterProvider({
           )
           : {};
       const directValue = typeof entry?.value === 'string' ? entry.value : '';
-      const fallbackValue =
-        directValue ||
-        valuesByLanguage['default'] ||
-        valuesByLanguage['en'] ||
-        Object.values(valuesByLanguage).find(
-          (value: string): boolean => typeof value === 'string' && value.length > 0
-        ) ||
-        '';
+      const fallbackValue = resolvePrimaryParameterValue(valuesByLanguage, directValue);
 
       return {
         parameterId: decodeSimpleParameterStorageId(
@@ -131,10 +137,17 @@ export function ProductFormParameterProvider({
           !Array.isArray(current.valuesByLanguage)
             ? { ...current.valuesByLanguage }
             : {};
-        currentValues[normalizedLang] = value;
+        const normalizedValue = value.trim();
+        if (normalizedValue.length > 0) {
+          currentValues[normalizedLang] = normalizedValue;
+        } else {
+          delete currentValues[normalizedLang];
+        }
+        const nextPrimaryValue = resolvePrimaryParameterValue(currentValues, '');
         next[index] = {
           ...current,
-          valuesByLanguage: currentValues,
+          value: nextPrimaryValue,
+          ...(Object.keys(currentValues).length > 0 ? { valuesByLanguage: currentValues } : {}),
         };
         return next;
       });

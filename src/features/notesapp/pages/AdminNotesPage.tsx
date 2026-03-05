@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 
-import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
+import { useAdminLayoutState } from '@/features/admin/context/AdminLayoutContext';
 import { CreateNoteModal } from '@/features/notesapp/components/CreateNoteModal';
 import { NoteDetailView } from '@/features/notesapp/components/NoteDetailView';
 import { NoteListView } from '@/features/notesapp/components/NoteListView';
@@ -10,7 +10,7 @@ import { NotesAppProvider, useNotesAppContext } from '@/features/notesapp/hooks/
 import { Card } from '@/shared/ui';
 
 function AdminNotesPageContent(): React.JSX.Element {
-  const { isMenuCollapsed } = useAdminLayout();
+  const { isMenuCollapsed } = useAdminLayoutState();
   const { selectedNote, isFolderTreeCollapsed, isCreating, setIsCreating, handleCreateSuccess } =
     useNotesAppContext();
 

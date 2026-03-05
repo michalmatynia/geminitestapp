@@ -82,8 +82,6 @@ const formatDuration = (
   return `${minutes}m ${remaining}s`;
 };
 
-// formatDurationMs imported from @/features/ai/ai-paths/lib
-
 const getDurationMs = (start?: Date | string | null, end?: Date | string | null): number | null => {
   const startDate = toDate(start);
   const endDate = toDate(end);

@@ -5,10 +5,9 @@ import {
   type PromptExploderSegment,
   type PromptExploderBinding,
 } from './document';
-import { type PromptExploderSegmentType } from './base';
 import {
-  type PromptExploderBenchmarkCaseReport,
-  type PromptExploderBenchmarkAggregate,
+  type PromptExploderBenchmarkCase as PromptExploderBenchmarkCaseContract,
+  type PromptExploderBenchmarkReport as PromptExploderBenchmarkReportContract,
 } from './benchmark';
 
 export type SegmentSelectionStrategy =
@@ -198,20 +197,6 @@ export type ParsedPromptHeading = {
   title: string;
 };
 
-export type PromptExploderBenchmarkCase = {
-  id: string;
-  prompt: string;
-  expectedTypes: PromptExploderSegmentType[];
-  minSegments: number;
-};
+export type PromptExploderBenchmarkCase = PromptExploderBenchmarkCaseContract;
 
-export type PromptExploderBenchmarkReport = {
-  generatedAt: string;
-  suite: 'default' | 'extended' | 'custom';
-  config: {
-    lowConfidenceThreshold: number;
-    suggestionLimit: number;
-  };
-  cases: PromptExploderBenchmarkCaseReport[];
-  aggregate: PromptExploderBenchmarkAggregate;
-};
+export type PromptExploderBenchmarkReport = PromptExploderBenchmarkReportContract;

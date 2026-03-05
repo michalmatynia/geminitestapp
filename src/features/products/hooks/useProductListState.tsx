@@ -8,7 +8,7 @@ import { ProductTableSkeleton } from '@/features/products/components/list/Produc
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
-} from '@/features/products/constants';
+} from '@/shared/lib/products/constants';
 import { useCatalogSync } from '@/features/products/hooks/useCatalogSync';
 import { useProductData } from '@/features/products/hooks/useProductData';
 import { useProductSync } from '@/features/products/hooks/useProductEnhancements';

@@ -3,15 +3,19 @@
 import React from 'react';
 
 import { FilemakerEntityCardsSection } from '../shared/FilemakerEntityCardsSection';
-import { useAdminFilemakerPageContext } from '../../context/AdminFilemakerPageContext';
+import {
+  useAdminFilemakerPageActionsContext,
+  useAdminFilemakerPageStateContext,
+} from '../../context/AdminFilemakerPageContext';
 import { formatFilemakerAddress } from '../../settings';
 import { formatTimestamp } from '../../pages/filemaker-page-utils';
 
 import type { FilemakerOrganization } from '../../types';
 
 export function FilemakerOrganizationsSection(): React.JSX.Element {
-  const { database, openCreateOrg, handleStartEditOrg, handleDeleteOrganization, updateSetting } =
-    useAdminFilemakerPageContext();
+  const { database, updateSetting } = useAdminFilemakerPageStateContext();
+  const { openCreateOrg, handleStartEditOrg, handleDeleteOrganization } =
+    useAdminFilemakerPageActionsContext();
 
   return (
     <FilemakerEntityCardsSection

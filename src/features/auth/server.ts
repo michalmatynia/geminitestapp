@@ -3,8 +3,8 @@ import 'server-only';
 export * from './auth';
 export { invalidateAuthAccessCache } from './services/auth-access';
 export * from './services/auth-login-challenge';
-export { getAuthDataProvider, requireAuthProvider } from './services/auth-provider';
-export type { AuthDbProvider } from './services/auth-provider';
+export { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
+export type { AuthDbProvider } from '@/shared/lib/auth/services/auth-provider';
 export * from './services/auth-security';
 export {
   getAuthSecurityProfile,

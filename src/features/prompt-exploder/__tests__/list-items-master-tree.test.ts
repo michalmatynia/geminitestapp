@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  buildPromptExploderListItemMasterNodes,
-  rebuildPromptExploderListItemsFromMasterNodes,
-} from '@/features/prompt-exploder/tree/list-items-master-tree';
+  buildPromptExploderMasterNodes as buildPromptExploderListItemMasterNodes,
+  rebuildPromptExploderListFromMasterNodes as rebuildPromptExploderListItemsFromMasterNodes,
+} from '@/features/prompt-exploder/hierarchy-master-tree';
 import type { PromptExploderListItem } from '@/features/prompt-exploder/types';
 
 const createItem = (

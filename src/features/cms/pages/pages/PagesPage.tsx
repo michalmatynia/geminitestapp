@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
-import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
+import { useAdminLayoutActions } from '@/features/admin/context/AdminLayoutContext';
 import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { useCmsPages, useCmsSlugs, useDeletePage } from '@/features/cms/hooks/useCmsQueries';
@@ -44,7 +44,7 @@ const STATUS_FILTERS: StatusFilterOption[] = [
 ];
 
 export default function PagesPage(): React.ReactNode {
-  const { setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayout();
+  const { setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayoutActions();
   const router = useRouter();
   const { activeDomainId, activeDomain } = useCmsDomainSelection();
   const pagesQuery = useCmsPages(activeDomainId);

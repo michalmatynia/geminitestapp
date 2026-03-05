@@ -3,11 +3,12 @@
 import React, { createContext, useContext, useMemo, useRef, useState } from 'react';
 
 import type {
+  Point2dDto as CanvasImageOffset,
   PositiveRectBoundsDto as PreviewCanvasCropRect,
   PositiveRectBoundsDto as PreviewCanvasImageContentFrame,
 } from '@/shared/contracts/geometry';
 
-export type { PreviewCanvasCropRect, PreviewCanvasImageContentFrame };
+export type { CanvasImageOffset, PreviewCanvasCropRect, PreviewCanvasImageContentFrame };
 
 export interface PreviewCanvasViewportCrop {
   slotId: string;
@@ -23,11 +24,6 @@ export type PreviewCanvasViewportCropResolver = () => PreviewCanvasViewportCrop 
 export type PreviewCanvasImageFrameResolver = () => PreviewCanvasImageFrameBinding | null;
 export type ImageTransformMode = 'none' | 'move';
 export type PreviewCanvasSize = 'regular' | 'large' | 'xlarge';
-
-export interface CanvasImageOffset {
-  x: number;
-  y: number;
-}
 
 export interface PendingSequenceThumbnailState {
   runId: string;

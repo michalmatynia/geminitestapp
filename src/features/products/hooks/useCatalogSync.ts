@@ -9,6 +9,7 @@ import { api } from '@/shared/lib/api-client';
 import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { UseProductsOptions } from './useProductsQuery';
 
 type LanguageOption = {
   value: 'name_en' | 'name_pl' | 'name_de';
@@ -56,9 +57,7 @@ export interface UseCatalogSyncResult {
   fallbackNameLocale: 'name_en' | 'name_pl' | 'name_de' | undefined;
 }
 
-export interface UseCatalogSyncOptions {
-  enabled?: boolean;
-}
+export type UseCatalogSyncOptions = UseProductsOptions;
 
 export function useCatalogSync(
   catalogFilter: string,

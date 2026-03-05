@@ -1,4 +1,4 @@
-import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/constants';
+import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/shared/lib/products/constants';
 import {
   isPatternEnabledForValidationScope,
   isPatternLaunchEnabledForValidationScope,

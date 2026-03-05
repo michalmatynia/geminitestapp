@@ -4,20 +4,21 @@ import { Mail } from 'lucide-react';
 import React from 'react';
 
 import { FilemakerEntityCardsSection } from '../shared/FilemakerEntityCardsSection';
-import { useAdminFilemakerPageContext } from '../../context/AdminFilemakerPageContext';
+import {
+  useAdminFilemakerPageActionsContext,
+  useAdminFilemakerPageStateContext,
+} from '../../context/AdminFilemakerPageContext';
 import { formatTimestamp } from '../../pages/filemaker-page-utils';
 
 import type { FilemakerEmail } from '../../types';
 
 export function FilemakerEmailsSection(): React.JSX.Element {
+  const { database, updateSetting, emailLinkCountByEmailId } = useAdminFilemakerPageStateContext();
   const {
-    database,
     openCreateEmail,
     handleStartEditEmail,
     handleDeleteEmail,
-    updateSetting,
-    emailLinkCountByEmailId,
-  } = useAdminFilemakerPageContext();
+  } = useAdminFilemakerPageActionsContext();
 
   return (
     <FilemakerEntityCardsSection

@@ -11,7 +11,7 @@ import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/image-src
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
-} from '../../../constants';
+} from '@/shared/lib/products/constants';
 
 export function StudioVariantsGrid(): React.JSX.Element {
   const context = useProductStudioContext();

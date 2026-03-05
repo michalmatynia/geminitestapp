@@ -1,7 +1,45 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+const { mockDbApiSchema } = vi.hoisted(() => ({
+  mockDbApiSchema: vi.fn(async () => ({
+    ok: true as const,
+    data: {
+      provider: 'prisma',
+      collections: [
+        {
+          name: 'products',
+          fields: [
+            {
+              name: 'id',
+              type: 'String',
+              isId: true,
+              isRequired: true,
+              isUnique: true,
+              hasDefault: false,
+            },
+          ],
+          relations: ['categories'],
+        },
+      ],
+    },
+  })),
+}));
+
+vi.mock('@/shared/lib/ai-paths/api', async () => {
+  const actual = await vi.importActual<typeof import('@/shared/lib/ai-paths/api')>(
+    '@/shared/lib/ai-paths/api'
+  );
+  return {
+    ...actual,
+    dbApi: {
+      ...actual.dbApi,
+      schema: mockDbApiSchema,
+    },
+  };
+});
 
 import type { AiNode } from '@/shared/contracts/ai-paths';
 import {
@@ -127,6 +165,25 @@ const buildFetcherNode = (): AiNode => ({
   position: { x: 120, y: 0 },
 });
 
+const buildDbSchemaNode = (): AiNode => ({
+  id: 'node-db-schema',
+  type: 'db_schema',
+  title: 'DB Schema',
+  description: '',
+  inputs: [],
+  outputs: ['schema', 'context'],
+  config: {
+    db_schema: {
+      mode: 'selected',
+      collections: ['products'],
+      includeFields: true,
+      includeRelations: true,
+      formatAs: 'text',
+    },
+  },
+  position: { x: 160, y: 0 },
+});
+
 const buildAudioOscillatorNode = (): AiNode => ({
   id: 'node-audio-oscillator',
   type: 'audio_oscillator',
@@ -235,7 +292,6 @@ describe('client native code-object registry contract subset', () => {
       'ai_description',
       'api_advanced',
       'database',
-      'db_schema',
       'description_updater',
       'learner_agent',
       'model',
@@ -306,6 +362,33 @@ describe('client native code-object registry contract subset', () => {
     expect(result.outputs?.['node-fetcher']?.['meta']).toMatchObject({
       fetcherResolvedSource: 'live_context',
     });
+  });
+
+  it('executes db schema nodes through client native contract resolver mapping', async () => {
+    mockDbApiSchema.mockClear();
+
+    const result = await evaluateGraphClient({
+      nodes: [buildDbSchemaNode()],
+      edges: [],
+      runtimeKernelPilotNodeTypes: ['db_schema'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockDbApiSchema).toHaveBeenCalledTimes(1);
+    expect(result.outputs?.['node-db-schema']?.['schema']).toMatchObject({
+      provider: 'prisma',
+      collections: [{ name: 'products' }],
+    });
+    expect(result.outputs?.['node-db-schema']?.['context']).toMatchObject({
+      provider: 'prisma',
+    });
+    expect(
+      String(
+        (result.outputs?.['node-db-schema']?.['context'] as Record<string, unknown> | undefined)?.[
+          'schemaText'
+        ] ?? ''
+      )
+    ).toContain('Collection: products');
   });
 
   it('executes audio oscillator nodes through client native contract resolver mapping', async () => {

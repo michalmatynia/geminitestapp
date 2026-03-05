@@ -90,6 +90,7 @@ npm run docs:ai-paths:node-docs:ci
 ```
 
 The verify step compares artifact file hashes before/after pipeline execution and fails on any added/removed/changed content.
+The CI alias also runs tooltip coverage checks (`npm run docs:ai-paths:tooltip:check`).
 On CI (clean checkout), this enforces generated artifacts are committed.
 As part of this pipeline, semantic/v2 generation also prunes stale per-node JSON artifacts, while checks fail fast if unexpected per-node files remain.
 `v3` generation also prunes stale `*.scaffold.json` files outside the active pilot set, and `docs:ai-paths:node-code-v3:check` fails on unexpected scaffold files.

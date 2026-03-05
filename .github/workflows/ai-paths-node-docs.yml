@@ -4,11 +4,18 @@ on:
   pull_request:
     paths:
       - 'src/shared/lib/ai-paths/core/docs/**'
+      - 'src/shared/lib/ai-paths/core/definitions/docs-snippets.ts'
+      - 'src/shared/lib/ai-paths/core/validation-engine/**'
       - 'src/shared/lib/ai-paths/core/runtime/node-runtime-kernel.ts'
+      - 'scripts/ai-paths/check-canonical.mjs'
       - 'scripts/docs/**'
       - 'docs/ai-paths/node-code-objects-v2/**'
       - 'docs/ai-paths/node-code-objects-v3/**'
       - 'docs/ai-paths/semantic-grammar/nodes/**'
+      - 'docs/ai-paths/node-validator-central-manifest.json'
+      - 'docs/ai-paths/tooltip-central-manifest.json'
+      - 'docs/ai-paths/tooltip-catalog.json'
+      - 'docs/ai-paths/tooltip-catalog.ts'
       - 'package.json'
       - 'package-lock.json'
   push:
@@ -17,11 +24,18 @@ on:
       - master
     paths:
       - 'src/shared/lib/ai-paths/core/docs/**'
+      - 'src/shared/lib/ai-paths/core/definitions/docs-snippets.ts'
+      - 'src/shared/lib/ai-paths/core/validation-engine/**'
       - 'src/shared/lib/ai-paths/core/runtime/node-runtime-kernel.ts'
+      - 'scripts/ai-paths/check-canonical.mjs'
       - 'scripts/docs/**'
       - 'docs/ai-paths/node-code-objects-v2/**'
       - 'docs/ai-paths/node-code-objects-v3/**'
       - 'docs/ai-paths/semantic-grammar/nodes/**'
+      - 'docs/ai-paths/node-validator-central-manifest.json'
+      - 'docs/ai-paths/tooltip-central-manifest.json'
+      - 'docs/ai-paths/tooltip-catalog.json'
+      - 'docs/ai-paths/tooltip-catalog.ts'
       - 'package.json'
       - 'package-lock.json'
 
@@ -41,5 +55,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify AI Paths node docs artifacts
+      - name: Verify AI Paths node docs and tooltip artifacts
         run: npm run docs:ai-paths:node-docs:ci

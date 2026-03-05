@@ -77,6 +77,7 @@ npm run docs:ai-paths:node-docs:ci
 ```
 
 `verify` snapshots artifact file hashes before/after generate+check and fails on any added/removed/changed file content.
+`ci` runs `verify` plus tooltip coverage checks (`npm run docs:ai-paths:tooltip:check`).
 On CI (clean checkout), this enforces regenerated artifacts are committed.
 Semantic/v2 generation in this pipeline also prunes stale per-node JSON artifacts, and corresponding checks fail fast on unexpected per-node files.
 `v3` generation also prunes stale `*.scaffold.json` files outside the pilot set, and `docs:ai-paths:node-code-v3:check` fails fast on unexpected scaffold files.

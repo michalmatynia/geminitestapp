@@ -5,7 +5,7 @@ import { ChevronDown, ChevronRight, Copy, GripVertical } from 'lucide-react';
 import { Button, Tooltip, Badge, StatusBadge } from '@/shared/ui';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
-import { usePromptEngine } from '../../context/PromptEngineContext';
+import { usePromptEngineActions } from '../../context/prompt-engine/PromptEngineActionsContext';
 import { useRuleItemContext } from '../context/RuleItemContext';
 import { useRuleItemDragState } from '../context/RuleListDragContext';
 import {
@@ -26,7 +26,7 @@ export function RuleItemHeader({
   const { draft, rule } = useRuleItemContext();
   const { draggableEnabled, onDragStart, onDragEnd } = useRuleItemDragState(draft.uid);
   const { handleToggleRuleEnabled, handleDuplicateRule, handleRemoveRule, handleCopy } =
-    usePromptEngine();
+    usePromptEngineActions();
 
   const appliesToScopes = normalizeRuleScopes(rule?.appliesToScopes);
   const launchAppliesToScopes = normalizeRuleScopes(rule?.launchAppliesToScopes);

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
@@ -21,7 +21,10 @@ import {
   type PromptEngineFilters,
   type ScopeFilter,
 } from './prompt-engine/PromptEngineFiltersContext';
-import { DataContext, type PromptEngineData } from './prompt-engine/PromptEngineDataContext';
+import {
+  DataContext,
+  type PromptEngineData,
+} from './prompt-engine/PromptEngineDataContext';
 import {
   ActionsContext,
   type PromptEngineActions,
@@ -44,11 +47,6 @@ type PromptEngineProviderProps = {
   initialScope?: ScopeFilter | undefined;
   lockedScope?: ScopeFilter | undefined;
 };
-
-export interface PromptEngineContextValue
-  extends PromptEngineConfig, PromptEngineFilters, PromptEngineData, PromptEngineActions {}
-
-const PromptEngineContext = createContext<PromptEngineContextValue | undefined>(undefined);
 
 export function PromptEngineProvider({
   children,
@@ -193,38 +191,13 @@ export function PromptEngineProvider({
     [config.setPatternTab, config.setExploderSubTab, actions, toast]
   );
 
-  const aggregatedValue = useMemo<PromptEngineContextValue>(
-    () => ({
-      ...configValue,
-      ...filtersValue,
-      ...dataValue,
-      ...actionsValue,
-    }),
-    [configValue, filtersValue, dataValue, actionsValue]
-  );
-
   return (
     <ConfigContext.Provider value={configValue}>
       <FiltersContext.Provider value={filtersValue}>
         <DataContext.Provider value={dataValue}>
-          <ActionsContext.Provider value={actionsValue}>
-            <PromptEngineContext.Provider value={aggregatedValue}>
-              {children}
-            </PromptEngineContext.Provider>
-          </ActionsContext.Provider>
+          <ActionsContext.Provider value={actionsValue}>{children}</ActionsContext.Provider>
         </DataContext.Provider>
       </FiltersContext.Provider>
     </ConfigContext.Provider>
   );
 }
-
-export function usePromptEngineContext(): PromptEngineContextValue {
-  const context = useContext(PromptEngineContext);
-  if (!context) {
-    throw new Error('usePromptEngineContext must be used within a PromptEngineProvider');
-  }
-  return context;
-}
-
-// Preferred short hook alias used across prompt-engine components.
-export const usePromptEngine = usePromptEngineContext;

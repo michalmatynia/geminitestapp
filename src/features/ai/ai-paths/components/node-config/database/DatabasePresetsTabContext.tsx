@@ -84,9 +84,3 @@ export function useDatabasePresetsTabActionsContext(): DatabasePresetsTabActions
   }
   return context;
 }
-
-export function useDatabasePresetsTabContext(): DatabasePresetsTabContextValue {
-  const state = useDatabasePresetsTabStateContext();
-  const actions = useDatabasePresetsTabActionsContext();
-  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
-}

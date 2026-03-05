@@ -4,7 +4,6 @@ import prisma from '@/shared/lib/db/prisma';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logSystemEvent, type SystemLogInput } from '@/shared/lib/observability/system-logger';
-import { withTransientRecovery } from '@/shared/lib/observability/transient-recovery/with-recovery';
 
 import {
   getPortablePathEnvelopeVerificationAuditSinkSnapshot,
@@ -21,6 +20,25 @@ import {
   type PortablePathSigningPolicySurface,
   type PortablePathSigningPolicyUsageSnapshot,
 } from './index';
+import {
+  enqueuePortablePathAuditSinkAutoRemediationDeadLetterCore,
+  loadPortablePathAuditSinkAutoRemediationDeadLettersCore,
+  notifyPortablePathAuditSinkAutoRemediationCore,
+  savePortablePathAuditSinkAutoRemediationDeadLettersCore,
+  type EnqueuePortablePathAuditSinkAutoRemediationDeadLetterOptions,
+  type LoadPortablePathAuditSinkAutoRemediationDeadLettersOptions,
+  type NotifyPortablePathAuditSinkAutoRemediationDeps,
+  type NotifyPortablePathAuditSinkAutoRemediationOptions,
+  type PortablePathAuditSinkAutoRemediationAction,
+  type PortablePathAuditSinkAutoRemediationNotificationChannel,
+  type PortablePathAuditSinkAutoRemediationNotificationChannelResult,
+  type PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry,
+  type PortablePathAuditSinkAutoRemediationNotificationDeadLetterSignature,
+  type PortablePathAuditSinkAutoRemediationNotificationInput,
+  type PortablePathAuditSinkAutoRemediationNotificationReceipt,
+  type PortablePathAuditSinkAutoRemediationNotificationResult,
+  type SavePortablePathAuditSinkAutoRemediationDeadLettersOptions,
+} from './sinks-auto-remediation-notifications.server';
 
 export const PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_KIND =
   'ai-paths.portable-envelope-verification-audit.v1' as const;
@@ -791,6 +809,8 @@ const DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_COOLDOWN_SECONDS = 300;
 const DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_RATE_LIMIT_WINDOW_SECONDS = 3600;
 const DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_RATE_LIMIT_MAX_ACTIONS = 3;
 const DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_NOTIFICATION_TIMEOUT_MS = 8000;
+const DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES = 200;
+const DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_LIMIT = 20;
 const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_STRATEGIES = [
   'none',
   'unregister_all',
@@ -860,6 +880,32 @@ const resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMs = (
     return DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_NOTIFICATION_TIMEOUT_MS;
   }
   return Math.min(normalized, 60000);
+};
+
+const resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntries = (
+  value: number | null | undefined
+): number => {
+  if (!Number.isFinite(value)) {
+    return DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES;
+  }
+  const normalized = Math.floor(Number(value));
+  if (normalized <= 0) {
+    return DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES;
+  }
+  return Math.min(normalized, 1000);
+};
+
+const resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayLimit = (
+  value: number | null | undefined
+): number => {
+  if (!Number.isFinite(value)) {
+    return DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_LIMIT;
+  }
+  const normalized = Math.floor(Number(value));
+  if (normalized <= 0) {
+    return DEFAULT_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_LIMIT;
+  }
+  return Math.min(normalized, 200);
 };
 
 const createDefaultPortablePathSigningPolicyExpectedProfilesBySurface = (
@@ -1075,6 +1121,13 @@ const parseOptionalUrlFromEnvironment = (value: string | undefined): string | nu
   }
 };
 
+const parseOptionalSecretFromEnvironment = (value: string | undefined): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+  return trimmed;
+};
+
 export const resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment = (
   value = process.env[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_COOLDOWN_SECONDS_ENV]
 ): number | null => {
@@ -1121,6 +1174,30 @@ export const resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFro
   const numeric = parseNumberFromEnvironment(value);
   if (numeric === null) return null;
   return resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMs(numeric);
+};
+
+export const resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment = (
+  value = process.env[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_WEBHOOK_SECRET_ENV]
+): string | null => parseOptionalSecretFromEnvironment(value);
+
+export const resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment = (
+  value = process.env[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_WEBHOOK_SIGNATURE_KEY_ID_ENV]
+): string | null => parseOptionalSecretFromEnvironment(value);
+
+export const resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironment = (
+  value = process.env[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_EMAIL_WEBHOOK_SECRET_ENV]
+): string | null => parseOptionalSecretFromEnvironment(value);
+
+export const resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironment = (
+  value = process.env[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_EMAIL_WEBHOOK_SIGNATURE_KEY_ID_ENV]
+): string | null => parseOptionalSecretFromEnvironment(value);
+
+export const resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment = (
+  value = process.env[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES_ENV]
+): number | null => {
+  const numeric = parseNumberFromEnvironment(value);
+  if (numeric === null) return null;
+  return resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntries(numeric);
 };
 
 export const resolvePortablePathSigningPolicyTrendPersistenceMaxSnapshotsFromEnvironment = (
@@ -1501,6 +1578,80 @@ export const savePortablePathAuditSinkStartupHealthState = async (
   return writeRaw(serialized);
 };
 
+export type {
+  EnqueuePortablePathAuditSinkAutoRemediationDeadLetterOptions,
+  LoadPortablePathAuditSinkAutoRemediationDeadLettersOptions,
+  SavePortablePathAuditSinkAutoRemediationDeadLettersOptions,
+  PortablePathAuditSinkAutoRemediationNotificationChannel,
+  PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry,
+  PortablePathAuditSinkAutoRemediationNotificationDeadLetterSignature,
+};
+
+export const loadPortablePathAuditSinkAutoRemediationDeadLetters = async (
+  options: LoadPortablePathAuditSinkAutoRemediationDeadLettersOptions = {}
+): Promise<PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry[]> => {
+  const maxEntries = resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntries(
+    options.maxEntries
+  );
+  const readRaw =
+    options.readRaw ??
+    (async (): Promise<string | null> =>
+      readSettingsRawByProviderPriority(
+        PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_SETTINGS_KEY
+      ));
+  return loadPortablePathAuditSinkAutoRemediationDeadLettersCore({
+    maxEntries,
+    readRaw,
+  });
+};
+
+export const savePortablePathAuditSinkAutoRemediationDeadLetters = async (
+  entries: PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry[],
+  options: SavePortablePathAuditSinkAutoRemediationDeadLettersOptions = {}
+): Promise<boolean> => {
+  const maxEntries = resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntries(
+    options.maxEntries
+  );
+  const writeRaw =
+    options.writeRaw ??
+    (async (raw: string): Promise<boolean> =>
+      writeSettingsRawByProviderPriority(
+        PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_SETTINGS_KEY,
+        raw
+      ));
+  return savePortablePathAuditSinkAutoRemediationDeadLettersCore(entries, {
+    maxEntries,
+    writeRaw,
+  });
+};
+
+export const enqueuePortablePathAuditSinkAutoRemediationDeadLetter = async (
+  entry: PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry,
+  options: EnqueuePortablePathAuditSinkAutoRemediationDeadLetterOptions = {}
+): Promise<boolean> => {
+  const maxEntries = resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntries(
+    options.maxEntries
+  );
+  const readRaw =
+    options.readRaw ??
+    (async (): Promise<string | null> =>
+      readSettingsRawByProviderPriority(
+        PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_SETTINGS_KEY
+      ));
+  const writeRaw =
+    options.writeRaw ??
+    (async (raw: string): Promise<boolean> =>
+      writeSettingsRawByProviderPriority(
+        PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_SETTINGS_KEY,
+        raw
+      ));
+  return enqueuePortablePathAuditSinkAutoRemediationDeadLetterCore(entry, {
+    maxEntries,
+    readRaw,
+    writeRaw,
+  });
+};
+
 const toPortablePathSigningPolicyUsageSurfaceDelta = (
   current: PortablePathSigningPolicyUsageSnapshot,
   previous: PortablePathSigningPolicyUsageSnapshot,
@@ -1863,10 +2014,14 @@ export const emitPortablePathAuditSinkStartupHealthAlert = async (
   return true;
 };
 
-export type PortablePathAuditSinkAutoRemediationAction =
-  | 'none'
-  | 'unregister_all'
-  | 'degrade_to_log_only';
+export type {
+  NotifyPortablePathAuditSinkAutoRemediationOptions,
+  PortablePathAuditSinkAutoRemediationAction,
+  PortablePathAuditSinkAutoRemediationNotificationChannelResult,
+  PortablePathAuditSinkAutoRemediationNotificationInput,
+  PortablePathAuditSinkAutoRemediationNotificationReceipt,
+  PortablePathAuditSinkAutoRemediationNotificationResult,
+};
 
 export type PortablePathAuditSinkAutoRemediationThrottleReason =
   | 'cooldown'
@@ -1877,10 +2032,28 @@ export type PortablePathAuditSinkAutoRemediationNotificationChannelResult = {
   attempted: boolean;
   delivered: boolean;
   error: string | null;
+  statusCode: number | null;
+  endpoint: string | null;
+  signatureApplied: boolean;
+  deadLetterQueued: boolean;
+  receiptAt: string | null;
+};
+
+export type PortablePathAuditSinkAutoRemediationNotificationReceipt = {
+  channel: PortablePathAuditSinkAutoRemediationNotificationChannel;
+  attempted: boolean;
+  delivered: boolean;
+  endpoint: string | null;
+  statusCode: number | null;
+  error: string | null;
+  signatureApplied: boolean;
+  deadLetterQueued: boolean;
+  at: string;
 };
 
 export type PortablePathAuditSinkAutoRemediationNotificationResult = {
   enabled: boolean;
+  receipts: PortablePathAuditSinkAutoRemediationNotificationReceipt[];
   webhook: PortablePathAuditSinkAutoRemediationNotificationChannelResult;
   email: PortablePathAuditSinkAutoRemediationNotificationChannelResult & {
     recipients: string[];
@@ -1931,178 +2104,297 @@ export type RunPortablePathAuditSinkAutoRemediationOptions = {
   saveState?: (state: PortablePathAuditSinkStartupHealthState) => Promise<boolean>;
 };
 
-export type NotifyPortablePathAuditSinkAutoRemediationOptions = {
-  enabled?: boolean;
-  webhookUrl?: string | null;
-  emailWebhookUrl?: string | null;
-  emailRecipients?: string[] | null;
-  timeoutMs?: number;
-  fetchImpl?: typeof fetch;
-  writeLog?: (input: SystemLogInput) => Promise<void>;
-};
-
-const toPortablePathAuditSinkAutoRemediationNotificationMessage = (
-  input: PortablePathAuditSinkAutoRemediationNotificationInput
-): string => {
-  const failedSinkIds = input.summary.failedSinkIds.join(',') || 'none';
-  return [
-    'Portable audit sink auto-remediation triggered.',
-    `action=${input.action}`,
-    `strategy=${input.strategy}`,
-    `status=${input.summary.status}`,
-    `consecutiveFailures=${input.state.consecutiveFailureCount}`,
-    `failedSinkIds=${failedSinkIds}`,
-  ].join(' ');
-};
-
-const toPortablePathAuditSinkAutoRemediationNotificationPayload = (
-  input: PortablePathAuditSinkAutoRemediationNotificationInput
-): Record<string, unknown> => ({
-  event: 'portable_audit_sink_auto_remediation',
-  action: input.action,
-  strategy: input.strategy,
-  threshold: input.threshold,
-  cooldownSeconds: input.cooldownSeconds,
-  rateLimitWindowSeconds: input.rateLimitWindowSeconds,
-  rateLimitMaxActions: input.rateLimitMaxActions,
-  startupHealthSummary: input.summary,
-  state: input.state,
-  environment: process.env['NODE_ENV'] ?? 'development',
-  appUrl: process.env['NEXT_PUBLIC_APP_URL'] ?? null,
-});
-
-const postPortablePathAuditSinkAutoRemediationNotification = async (
-  url: string,
-  payload: Record<string, unknown>,
-  timeoutMs: number,
-  fetchImpl: typeof fetch,
-  source: string,
-  circuitId: string
-): Promise<void> => {
-  const response = await withTransientRecovery(
-    async () =>
-      fetchImpl(url, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      }),
-    {
-      source,
-      circuitId,
-      retry: {
-        maxAttempts: 3,
-        initialDelayMs: 500,
-        maxDelayMs: 5000,
-        timeoutMs,
-      },
-    }
-  );
-  if (!response.ok) {
-    throw new Error(`notification_http_${response.status}`);
-  }
-};
+const NOTIFY_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEPS: NotifyPortablePathAuditSinkAutoRemediationDeps =
+  {
+    resolveTimeoutMs: resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMs,
+    defaultFetch: fetch,
+    defaultWriteLog: logSystemEvent,
+    toErrorMessage,
+    logSource: PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_BOOTSTRAP_SOURCE,
+    logService: PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
+    logCategory: PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
+    logKind: PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_KIND,
+  };
 
 export const notifyPortablePathAuditSinkAutoRemediation = async (
   input: PortablePathAuditSinkAutoRemediationNotificationInput,
   options: NotifyPortablePathAuditSinkAutoRemediationOptions = {}
 ): Promise<PortablePathAuditSinkAutoRemediationNotificationResult> => {
-  const enabled = options.enabled ?? true;
+  const deadLetterMaxEntries = resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntries(
+    options.deadLetterMaxEntries
+  );
+  const enqueueDeadLetter =
+    options.enqueueDeadLetter ??
+    (async (
+      entry: PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry
+    ): Promise<boolean> =>
+      enqueuePortablePathAuditSinkAutoRemediationDeadLetter(entry, {
+        maxEntries: deadLetterMaxEntries,
+        readRaw: options.deadLetterReadRaw,
+        writeRaw: options.deadLetterWriteRaw,
+      }));
+  return notifyPortablePathAuditSinkAutoRemediationCore(
+    input,
+    {
+      ...options,
+      enqueueDeadLetter,
+    },
+    NOTIFY_PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEPS
+  );
+};
+
+export type PortablePathAuditSinkAutoRemediationDeadLetterReplayAttempt = {
+  replayedAt: string;
+  queuedAt: string;
+  channel: PortablePathAuditSinkAutoRemediationNotificationChannel;
+  endpoint: string | null;
+  attempted: boolean;
+  delivered: boolean;
+  statusCode: number | null;
+  error: string | null;
+  signatureApplied: boolean;
+  attemptCountBefore: number;
+  attemptCountAfter: number;
+};
+
+export type PortablePathAuditSinkAutoRemediationDeadLetterReplayResult = {
+  dryRun: boolean;
+  selectedCount: number;
+  attemptedCount: number;
+  deliveredCount: number;
+  failedCount: number;
+  skippedCount: number;
+  removedCount: number;
+  retainedCount: number;
+  persisted: boolean;
+  remainingCount: number;
+  attempts: PortablePathAuditSinkAutoRemediationDeadLetterReplayAttempt[];
+};
+
+export type ReplayPortablePathAuditSinkAutoRemediationDeadLettersOptions = {
+  dryRun?: boolean;
+  limit?: number;
+  channel?: PortablePathAuditSinkAutoRemediationNotificationChannel | 'all';
+  endpoint?: string | null;
+  timeoutMs?: number;
+  now?: string | Date;
+  maxEntries?: number;
+  webhookSecret?: string | null;
+  webhookSignatureKeyId?: string | null;
+  emailWebhookSecret?: string | null;
+  emailWebhookSignatureKeyId?: string | null;
+  fetchImpl?: typeof fetch;
+  writeLog?: (input: SystemLogInput) => Promise<void>;
+  readRaw?: () => Promise<string | null>;
+  writeRaw?: (raw: string) => Promise<boolean>;
+};
+
+export const replayPortablePathAuditSinkAutoRemediationDeadLetters = async (
+  options: ReplayPortablePathAuditSinkAutoRemediationDeadLettersOptions = {}
+): Promise<PortablePathAuditSinkAutoRemediationDeadLetterReplayResult> => {
+  const dryRun = options.dryRun ?? false;
+  const replayLimit = resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayLimit(
+    options.limit
+  );
   const timeoutMs = resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMs(
     options.timeoutMs
   );
+  const maxEntries = resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntries(
+    options.maxEntries
+  );
   const fetchImpl = options.fetchImpl ?? fetch;
   const writeLog = options.writeLog ?? logSystemEvent;
-  const webhookUrl = options.webhookUrl ?? null;
-  const emailWebhookUrl = options.emailWebhookUrl ?? null;
-  const emailRecipients = (options.emailRecipients ?? []).filter(
-    (entry): entry is string => typeof entry === 'string' && entry.trim().length > 0
-  );
-  const result: PortablePathAuditSinkAutoRemediationNotificationResult = {
-    enabled,
-    webhook: {
+  const replayedAt = toPortablePathAuditSinkAutoRemediationNotificationTimestamp(options.now);
+  const normalizedChannel =
+    options.channel === 'webhook' || options.channel === 'email' ? options.channel : null;
+  const normalizedEndpoint = options.endpoint?.trim() ?? '';
+  const endpointFilter = normalizedEndpoint.length > 0 ? normalizedEndpoint : null;
+  const webhookSecret = options.webhookSecret ?? null;
+  const webhookSignatureKeyId = options.webhookSignatureKeyId ?? null;
+  const emailWebhookSecret = options.emailWebhookSecret ?? null;
+  const emailWebhookSignatureKeyId = options.emailWebhookSignatureKeyId ?? null;
+
+  const entries = await loadPortablePathAuditSinkAutoRemediationDeadLetters({
+    maxEntries,
+    readRaw: options.readRaw,
+  });
+  const selected = entries
+    .map((entry, index) => ({ entry, index }))
+    .filter(({ entry }) => {
+      if (normalizedChannel && entry.channel !== normalizedChannel) return false;
+      if (endpointFilter && entry.endpoint !== endpointFilter) return false;
+      return true;
+    })
+    .slice(0, replayLimit);
+
+  const attempts: PortablePathAuditSinkAutoRemediationDeadLetterReplayAttempt[] = [];
+  if (selected.length === 0) {
+    return {
+      dryRun,
+      selectedCount: 0,
+      attemptedCount: 0,
+      deliveredCount: 0,
+      failedCount: 0,
+      skippedCount: 0,
+      removedCount: 0,
+      retainedCount: entries.length,
+      persisted: true,
+      remainingCount: entries.length,
+      attempts,
+    };
+  }
+
+  const remainingEntries = entries.map((entry) => ({ ...entry }));
+  const indicesToRemove = new Set<number>();
+  let attemptedCount = 0;
+  let deliveredCount = 0;
+  let failedCount = 0;
+  let skippedCount = 0;
+
+  for (const { entry, index } of selected) {
+    const attemptBase: PortablePathAuditSinkAutoRemediationDeadLetterReplayAttempt = {
+      replayedAt,
+      queuedAt: entry.queuedAt,
+      channel: entry.channel,
+      endpoint: entry.endpoint,
       attempted: false,
       delivered: false,
+      statusCode: null,
       error: null,
+      signatureApplied: false,
+      attemptCountBefore: entry.attemptCount,
+      attemptCountAfter: entry.attemptCount,
+    };
+    if (dryRun) {
+      skippedCount += 1;
+      attempts.push(attemptBase);
+      continue;
+    }
+    if (!entry.endpoint) {
+      skippedCount += 1;
+      failedCount += 1;
+      const attemptCountAfter = entry.attemptCount + 1;
+      remainingEntries[index] = {
+        ...entry,
+        error: 'dead_letter_endpoint_missing',
+        statusCode: null,
+        attemptCount: attemptCountAfter,
+      };
+      attempts.push({
+        ...attemptBase,
+        error: 'dead_letter_endpoint_missing',
+        attemptCountAfter,
+      });
+      continue;
+    }
+
+    const request = buildPortablePathAuditSinkAutoRemediationPreparedNotificationRequest(
+      entry.payload,
+      entry.channel === 'email'
+        ? {
+            signatureSecret: emailWebhookSecret,
+            signatureKeyId: emailWebhookSignatureKeyId,
+            now: replayedAt,
+          }
+        : {
+            signatureSecret: webhookSecret,
+            signatureKeyId: webhookSignatureKeyId,
+            now: replayedAt,
+          }
+    );
+    attemptBase.signatureApplied = request.signature !== null;
+
+    try {
+      attemptedCount += 1;
+      attemptBase.attempted = true;
+      attemptBase.statusCode = await postPortablePathAuditSinkAutoRemediationNotification(
+        entry.endpoint,
+        request,
+        timeoutMs,
+        fetchImpl,
+        entry.channel === 'email'
+          ? 'portable-audit-sink-auto-remediation-email-webhook-replay'
+          : 'portable-audit-sink-auto-remediation-webhook-replay',
+        entry.channel === 'email'
+          ? 'portable-audit-sink-auto-remediation-email-webhook-replay'
+          : 'portable-audit-sink-auto-remediation-webhook-replay'
+      );
+      attemptBase.delivered = true;
+      deliveredCount += 1;
+      indicesToRemove.add(index);
+      attempts.push(attemptBase);
+    } catch (error) {
+      attemptedCount += 1;
+      failedCount += 1;
+      attemptBase.attempted = true;
+      attemptBase.error = toErrorMessage(error);
+      attemptBase.statusCode =
+        toPortablePathAuditSinkAutoRemediationNotificationStatusCode(error);
+      const attemptCountAfter = entry.attemptCount + 1;
+      attemptBase.attemptCountAfter = attemptCountAfter;
+      remainingEntries[index] = {
+        ...entry,
+        error: attemptBase.error,
+        statusCode: attemptBase.statusCode,
+        attemptCount: attemptCountAfter,
+        signature: request.signature,
+      };
+      attempts.push(attemptBase);
+    }
+  }
+
+  const persistedEntries = dryRun
+    ? remainingEntries
+    : remainingEntries.filter((_entry, index) => !indicesToRemove.has(index));
+  const persisted = dryRun
+    ? true
+    : await savePortablePathAuditSinkAutoRemediationDeadLetters(persistedEntries, {
+        maxEntries,
+        writeRaw: options.writeRaw,
+      });
+  const removedCount = dryRun ? 0 : indicesToRemove.size;
+  const retainedCount = persistedEntries.length;
+
+  await writeLog({
+    level: failedCount > 0 || !persisted ? 'warn' : 'info',
+    source: PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_BOOTSTRAP_SOURCE,
+    service: PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
+    message: 'Portable audit sink auto-remediation dead-letter replay completed.',
+    context: {
+      category: PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
+      kind: PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_KIND,
+      alertType: 'portable_audit_sink_auto_remediation_dead_letter_replay',
+      dryRun,
+      selectedCount: selected.length,
+      attemptedCount,
+      deliveredCount,
+      failedCount,
+      skippedCount,
+      removedCount,
+      retainedCount,
+      persisted,
+      filters: {
+        channel: normalizedChannel,
+        endpoint: endpointFilter,
+        limit: replayLimit,
+      },
+      attempts: attempts.slice(-50),
     },
-    email: {
-      attempted: false,
-      delivered: false,
-      error: null,
-      recipients: emailRecipients,
-    },
+  });
+
+  return {
+    dryRun,
+    selectedCount: selected.length,
+    attemptedCount,
+    deliveredCount,
+    failedCount,
+    skippedCount,
+    removedCount,
+    retainedCount,
+    persisted,
+    remainingCount: retainedCount,
+    attempts,
   };
-  if (!enabled) return result;
-
-  const payload = toPortablePathAuditSinkAutoRemediationNotificationPayload(input);
-  if (webhookUrl) {
-    result.webhook.attempted = true;
-    try {
-      await postPortablePathAuditSinkAutoRemediationNotification(
-        webhookUrl,
-        payload,
-        timeoutMs,
-        fetchImpl,
-        'portable-audit-sink-auto-remediation-webhook',
-        'portable-audit-sink-auto-remediation-webhook'
-      );
-      result.webhook.delivered = true;
-    } catch (error) {
-      result.webhook.error = toErrorMessage(error);
-      await writeLog({
-        level: 'warn',
-        source: PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_BOOTSTRAP_SOURCE,
-        service: PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
-        message: 'Portable audit sink auto-remediation webhook notification failed.',
-        context: {
-          category: PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
-          kind: PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_KIND,
-          notificationChannel: 'webhook',
-          error: result.webhook.error,
-        },
-      });
-    }
-  }
-
-  if (emailWebhookUrl && emailRecipients.length > 0) {
-    result.email.attempted = true;
-    try {
-      await postPortablePathAuditSinkAutoRemediationNotification(
-        emailWebhookUrl,
-        {
-          event: 'portable_audit_sink_auto_remediation_email',
-          to: emailRecipients,
-          subject:
-            '[AI-Paths] Portable audit sink auto-remediation triggered',
-          text: toPortablePathAuditSinkAutoRemediationNotificationMessage(input),
-          metadata: payload,
-        },
-        timeoutMs,
-        fetchImpl,
-        'portable-audit-sink-auto-remediation-email-webhook',
-        'portable-audit-sink-auto-remediation-email-webhook'
-      );
-      result.email.delivered = true;
-    } catch (error) {
-      result.email.error = toErrorMessage(error);
-      await writeLog({
-        level: 'warn',
-        source: PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_BOOTSTRAP_SOURCE,
-        service: PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
-        message: 'Portable audit sink auto-remediation email notification failed.',
-        context: {
-          category: PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
-          kind: PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_KIND,
-          notificationChannel: 'email',
-          error: result.email.error,
-          recipients: emailRecipients,
-        },
-      });
-    }
-  }
-
-  return result;
 };
 
 const toEpochMs = (value: string | null | undefined): number | null => {
@@ -2744,6 +3036,26 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment 
     resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironment(
       env[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_NOTIFICATION_TIMEOUT_MS_ENV]
     );
+  const autoRemediationWebhookSecret =
+    resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment(
+      env[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_WEBHOOK_SECRET_ENV]
+    );
+  const autoRemediationWebhookSignatureKeyId =
+    resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment(
+      env[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_WEBHOOK_SIGNATURE_KEY_ID_ENV]
+    );
+  const autoRemediationEmailWebhookSecret =
+    resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironment(
+      env[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_EMAIL_WEBHOOK_SECRET_ENV]
+    );
+  const autoRemediationEmailWebhookSignatureKeyId =
+    resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironment(
+      env[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_EMAIL_WEBHOOK_SIGNATURE_KEY_ID_ENV]
+    );
+  const autoRemediationDeadLetterMaxEntries =
+    resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment(
+      env[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES_ENV]
+    );
 
   if (!enabled) {
     if (options.emitSystemLog !== false) {
@@ -2813,9 +3125,14 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment 
         notifyPortablePathAuditSinkAutoRemediation(notificationInput, {
           enabled: autoRemediationNotificationsEnabled,
           webhookUrl: autoRemediationWebhookUrl,
+          webhookSecret: autoRemediationWebhookSecret,
+          webhookSignatureKeyId: autoRemediationWebhookSignatureKeyId,
           emailWebhookUrl: autoRemediationEmailWebhookUrl,
+          emailWebhookSecret: autoRemediationEmailWebhookSecret,
+          emailWebhookSignatureKeyId: autoRemediationEmailWebhookSignatureKeyId,
           emailRecipients: autoRemediationEmailRecipients,
           timeoutMs: autoRemediationNotificationTimeoutMs ?? undefined,
+          deadLetterMaxEntries: autoRemediationDeadLetterMaxEntries ?? undefined,
         }),
     }
   );

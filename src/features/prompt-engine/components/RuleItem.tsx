@@ -8,7 +8,7 @@ import { cn } from '@/shared/utils';
 import { useRuleItemDragState } from './context/RuleListDragContext';
 import { normalizeRuleScopes } from './rule-item-utils';
 import { RuleItemSimilarPatternsSection } from './RuleItemSimilarPatternsSection';
-import { usePromptEngine } from '../context/PromptEngineContext';
+import { usePromptEngineActions } from '../context/prompt-engine/PromptEngineActionsContext';
 import { type RuleDraft } from '../context/prompt-engine-context-utils';
 import { RuleItemProvider, useRuleItemContext } from './context/RuleItemContext';
 
@@ -40,7 +40,7 @@ function RuleItemInner(props: RuleItemProps): React.JSX.Element {
 
   const { draft, rule } = useRuleItemContext();
   const { isDragging, isDragTarget } = useRuleItemDragState(draft.uid);
-  const { handleRuleTextChange } = usePromptEngine();
+  const { handleRuleTextChange } = usePromptEngineActions();
 
   const [internalCollapsed, setInternalCollapsed] = React.useState(true);
   const isCollapsed = collapsed ?? internalCollapsed;

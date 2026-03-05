@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useMemo, ReactNode } from 'react';
 
-import { useChatbotLogic, UseChatbotLogicReturn } from '../hooks/useChatbotLogic';
+import { useChatbotLogic } from '../hooks/useChatbotLogic';
 import type {
   ChatbotMessagesData,
   ChatbotSettingsData,
@@ -41,9 +41,6 @@ export const useChatbotUI = () => {
   if (!context) throw new Error('useChatbotUI must be used within ChatbotProvider');
   return context;
 };
-
-// --- Context Aggregator ---
-export const ChatbotContext = createContext<UseChatbotLogicReturn | undefined>(undefined);
 
 export function ChatbotProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const logic = useChatbotLogic();
@@ -159,19 +156,9 @@ export function ChatbotProvider({ children }: { children: ReactNode }): React.JS
     <MessagesContext.Provider value={messagesValue}>
       <SettingsContext.Provider value={settingsValue}>
         <SessionsContext.Provider value={sessionsValue}>
-          <UIContext.Provider value={uiValue}>
-            <ChatbotContext.Provider value={logic}>{children}</ChatbotContext.Provider>
-          </UIContext.Provider>
+          <UIContext.Provider value={uiValue}>{children}</UIContext.Provider>
         </SessionsContext.Provider>
       </SettingsContext.Provider>
     </MessagesContext.Provider>
   );
-}
-
-export function useChatbot(): UseChatbotLogicReturn {
-  const context = useContext(ChatbotContext);
-  if (context === undefined) {
-    throw new Error('useChatbot must be used within a ChatbotProvider');
-  }
-  return context;
 }

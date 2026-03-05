@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext } from 'react';
 
 import { useDatabaseBackupsState } from '../hooks/useDatabaseBackupsState';
 
@@ -131,10 +131,4 @@ export function useDatabaseBackupsActionsContext(): DatabaseBackupsActionsContex
     );
   }
   return context;
-}
-
-export function useDatabaseBackupsContext(): DatabaseBackupsContextValue {
-  const state = useDatabaseBackupsStateContext();
-  const actions = useDatabaseBackupsActionsContext();
-  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

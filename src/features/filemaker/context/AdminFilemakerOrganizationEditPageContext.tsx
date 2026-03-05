@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext } from 'react';
 import {
   useAdminFilemakerOrganizationEditPageState,
   type AdminFilemakerOrganizationEditPageContextValue,
@@ -88,10 +88,4 @@ export function useAdminFilemakerOrganizationEditPageActionsContext(): AdminFile
     );
   }
   return context;
-}
-
-export function useAdminFilemakerOrganizationEditPageContext(): AdminFilemakerOrganizationEditPageContextValue {
-  const state = useAdminFilemakerOrganizationEditPageStateContext();
-  const actions = useAdminFilemakerOrganizationEditPageActionsContext();
-  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

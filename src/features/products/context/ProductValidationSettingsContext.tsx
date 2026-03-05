@@ -70,17 +70,6 @@ export function useProductValidationActions(): ProductValidationActionsValue {
 export interface ProductValidationSettingsValue
   extends ProductValidationStateValue, ProductValidationActionsValue {}
 
-/**
- * Combined hook for components that need both state and actions.
- * Prefer `useProductValidationState()` or `useProductValidationActions()`
- * for components that only need one subset, to avoid unnecessary re-renders.
- */
-export function useProductValidationSettings(): ProductValidationSettingsValue {
-  const state = useProductValidationState();
-  const actions = useProductValidationActions();
-  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
-}
-
 // ── Provider ─────────────────────────────────────────────────────────────────
 
 interface ProductValidationSettingsProviderProps {

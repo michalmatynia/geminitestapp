@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext } from 'react';
 import { useAdminFilemakerPageState } from '../hooks/useAdminFilemakerPageState';
 
 export type AdminFilemakerPageContextValue = ReturnType<typeof useAdminFilemakerPageState>;
@@ -117,10 +117,4 @@ export function useAdminFilemakerPageActionsContext(): AdminFilemakerPageActions
     );
   }
   return context;
-}
-
-export function useAdminFilemakerPageContext(): AdminFilemakerPageContextValue {
-  const state = useAdminFilemakerPageStateContext();
-  const actions = useAdminFilemakerPageActionsContext();
-  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

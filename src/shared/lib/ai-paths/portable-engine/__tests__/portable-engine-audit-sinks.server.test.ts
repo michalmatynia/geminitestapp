@@ -58,7 +58,10 @@ import {
   notifyPortablePathAuditSinkAutoRemediation,
   resolvePortablePathAuditSinkFailureAlertLevelFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironment,
@@ -67,6 +70,8 @@ import {
   resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment,
+  resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment,
   resolvePortablePathEnvelopeVerificationAuditSinkHealthPolicyFromEnvironment,
   resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment,
@@ -542,6 +547,26 @@ describe('portable-engine envelope verification sink factories', () => {
     expect(resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironment('6500')).toBe(
       6500
     );
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment(' signing-secret ')
+    ).toBe('signing-secret');
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment('kid-v2')
+    ).toBe('kid-v2');
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironment('email-secret')
+    ).toBe('email-secret');
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironment(
+        'email-kid-v1'
+      )
+    ).toBe('email-kid-v1');
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment('333')
+    ).toBe(333);
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment('invalid')
+    ).toBeNull();
     expect(resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment('5')).toBe(5);
     expect(resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment('oops')).toBeNull();
   });

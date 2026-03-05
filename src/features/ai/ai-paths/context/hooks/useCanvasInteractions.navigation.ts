@@ -41,7 +41,8 @@ export interface UseCanvasInteractionsNavigationValue {
     deltaMode?: number,
     ctrlKey?: boolean,
     metaKey?: boolean,
-    deltaX?: number
+    deltaX?: number,
+    options?: { immediate?: boolean }
   ) => void;
   wheelZoomRafRef: React.MutableRefObject<number | null>;
   viewAnimationRafRef: React.MutableRefObject<number | null>;
@@ -431,7 +432,8 @@ export function useCanvasInteractionsNavigation({
       deltaMode = 0,
       ctrlKey = false,
       metaKey = false,
-      deltaX = 0
+      deltaX = 0,
+      options?: { immediate?: boolean }
     ): void => {
       stopProgrammaticViewAnimation();
       // Some macOS trackpad pinch streams report minimal deltaY and meaningful deltaX.
@@ -477,13 +479,27 @@ export function useCanvasInteractionsNavigation({
           y: clientY,
         },
       };
+      if (options?.immediate) {
+        if (wheelZoomRafRef.current !== null) {
+          cancelAnimationFrame(wheelZoomRafRef.current);
+          wheelZoomRafRef.current = null;
+        }
+        const immediateView = getZoomTargetView(targetScale, wheelZoomTargetRef.current.anchorClientPos);
+        setViewClamped(immediateView);
+        wheelZoomTargetRef.current = null;
+        updateLastPointerCanvasPosFromClient(clientX, clientY);
+        return;
+      }
       startWheelZoomLoop();
       updateLastPointerCanvasPosFromClient(clientX, clientY);
     },
     [
+      getZoomTargetView,
+      setViewClamped,
       startWheelZoomLoop,
       stopProgrammaticViewAnimation,
       updateLastPointerCanvasPosFromClient,
+      wheelZoomRafRef,
       latestViewRef,
     ]
   );

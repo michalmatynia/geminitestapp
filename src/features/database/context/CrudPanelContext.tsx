@@ -1,4 +1,6 @@
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+'use client';
+
+import { createContext, useContext, type ReactNode } from 'react';
 
 import type { DatabaseTableDetail } from '@/shared/contracts/database';
 
@@ -51,12 +53,6 @@ export function useCrudPanelActionsContext(): CrudPanelActionsContextValue {
     throw new Error('useCrudPanelActionsContext must be used within a CrudPanelProvider');
   }
   return context;
-}
-
-export function useCrudPanelContext(): CrudPanelContextValue {
-  const state = useCrudPanelStateContext();
-  const actions = useCrudPanelActionsContext();
-  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }
 
 export function CrudPanelProvider({

@@ -3,7 +3,7 @@
 import React from 'react';
 import { Input, MultiSelect, SelectSimple, Textarea, FormField } from '@/shared/ui';
 import { useRuleItemContext } from '../context/RuleItemContext';
-import { usePromptEngine } from '../../context/PromptEngineContext';
+import { usePromptEngineActions } from '../../context/prompt-engine/PromptEngineActionsContext';
 import {
   SCOPE_OPTIONS,
   compileRegex,
@@ -14,7 +14,7 @@ import type { PromptValidationRule, PromptValidationScope } from '@/shared/lib/p
 
 export function RuleItemBasicSettings(): React.JSX.Element | null {
   const { draft, rule, patchRule } = useRuleItemContext();
-  const { handleRuleTextChange } = usePromptEngine();
+  const { handleRuleTextChange } = usePromptEngineActions();
 
   if (!rule) return null;
 

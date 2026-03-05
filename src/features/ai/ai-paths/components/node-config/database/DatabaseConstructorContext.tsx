@@ -262,9 +262,3 @@ export function useDatabaseConstructorActionsContext(): DatabaseConstructorActio
   }
   return context;
 }
-
-export function useDatabaseConstructorContext(): DatabaseConstructorContextValue {
-  const state = useDatabaseConstructorStateContext();
-  const actions = useDatabaseConstructorActionsContext();
-  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
-}

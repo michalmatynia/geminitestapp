@@ -76,6 +76,7 @@ export function useCanvasInteractions(args?: {
     useCanvasState();
   const {
     updateView,
+    setPanState,
     startPan,
     endPan,
     setIsPanning,
@@ -128,6 +129,18 @@ export function useCanvasInteractions(args?: {
 
   const latestViewRef = useRef(view);
   latestViewRef.current = view;
+  const rebasePanStateFromClient = useCallback(
+    (clientX: number, clientY: number): void => {
+      const currentView = latestViewRef.current;
+      setPanState({
+        startX: clientX,
+        startY: clientY,
+        originX: currentView.x,
+        originY: currentView.y,
+      });
+    },
+    [setPanState]
+  );
 
   const nav: UseCanvasInteractionsNavigationValue = useCanvasInteractionsNavigation({
     view,
@@ -217,7 +230,8 @@ export function useCanvasInteractions(args?: {
     view: { scale: view.scale, panX: view.x, panY: view.y },
     nav,
     updateLastPointerCanvasPosFromClient: stateHandlers.updateLastPointerCanvasPosFromClient,
-    resolveViewportPointFromClient: stateHandlers.resolveViewportPointFromClient,
+    isPanActive: () => panState !== null,
+    rebasePanStateFromClient,
   });
 
   const touch: UseCanvasTouchHandlersValue = useCanvasTouchHandlers({

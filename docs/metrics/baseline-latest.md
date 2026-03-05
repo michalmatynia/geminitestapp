@@ -1,15 +1,15 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-05T05:38:57.351Z
+Generated at: 2026-03-05T06:02:46.352Z
 
 ## Snapshot
 
-- Source files: 4192
-- Source lines: 672871
+- Source files: 4189
+- Source lines: 673458
 - use client files: 1310
-- Files >= 1000 LOC: 10
+- Files >= 1000 LOC: 7
 - Files >= 1500 LOC: 2
-- Largest file: `src/shared/lib/ai-paths/portable-engine/index.ts` (2931 LOC)
+- Largest file: `src/shared/lib/ai-paths/portable-engine/sinks.server.ts` (3400 LOC)
 - API routes: 309
 - API delegated server routes: 13
 - API routes without apiHandler/delegation: 0
@@ -64,23 +64,23 @@ Generated at: 2026-03-05T05:38:57.351Z
 
 | File | LOC |
 | --- | ---: |
+| `src/shared/lib/ai-paths/portable-engine/sinks.server.ts` | 3400 |
 | `src/shared/lib/ai-paths/portable-engine/index.ts` | 2931 |
-| `src/shared/lib/ai-paths/portable-engine/sinks.server.ts` | 2844 |
-| `src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts` | 1406 |
-| `src/features/case-resolver/__tests__/workspace-persistence.test.ts` | 1249 |
 | `src/shared/contracts/image-studio.ts` | 1240 |
-| `src/features/case-resolver/__tests__/workspace.test.ts` | 1223 |
 | `src/shared/contracts/ai-paths-core/nodes.ts` | 1161 |
 | `src/shared/lib/observability/system-logger.ts` | 1090 |
 | `src/shared/lib/ai-paths/core/runtime/engine-core.ts` | 1060 |
 | `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 1052 |
+| `src/features/case-resolver/__tests__/workspace-persistence.test.ts` | 987 |
 | `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 986 |
-| `src/features/ai/ai-paths/components/JobQueueContext.tsx` | 933 |
+| `src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx` | 936 |
 | `src/app/api/image-studio/slots/[slotId]/autoscale/handler.test.ts` | 931 |
 | `src/app/api/image-studio/slots/[slotId]/crop/handler.ts` | 929 |
+| `src/features/ai/ai-paths/components/JobQueueContext.tsx` | 927 |
 | `src/features/ai/ai-paths/services/runtime-analytics-service.ts` | 917 |
 | `src/shared/lib/documentation/catalogs/validator-docs.ts` | 909 |
 | `src/shared/lib/ai-paths/hooks/useAiPathTriggerEvent.ts` | 905 |
 | `src/features/case-resolver-capture/__tests__/proposals.test.ts` | 901 |
 | `src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsServerExecution.ts` | 894 |
 | `src/shared/contracts/cms.ts` | 894 |
+| `src/shared/lib/ai-brain/context/BrainContext.tsx` | 891 |

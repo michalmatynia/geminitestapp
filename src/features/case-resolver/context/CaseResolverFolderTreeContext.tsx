@@ -98,9 +98,6 @@ export interface CaseResolverFolderTreeUiContextValue {
   highlightedFolderAncestorNodeIds: string[];
 }
 
-export interface CaseResolverFolderTreeContextValue
-  extends CaseResolverFolderTreeDataContextValue, CaseResolverFolderTreeUiContextValue {}
-
 const CaseResolverFolderTreeDataContext =
   createContext<CaseResolverFolderTreeDataContextValue | null>(null);
 const CaseResolverFolderTreeUiContext = createContext<CaseResolverFolderTreeUiContextValue | null>(
@@ -125,18 +122,6 @@ export function useCaseResolverFolderTreeUiContext(): CaseResolverFolderTreeUiCo
     );
   }
   return context;
-}
-
-export function useCaseResolverFolderTreeContext(): CaseResolverFolderTreeContextValue {
-  const dataContext = useCaseResolverFolderTreeDataContext();
-  const uiContext = useCaseResolverFolderTreeUiContext();
-  return useMemo(
-    (): CaseResolverFolderTreeContextValue => ({
-      ...dataContext,
-      ...uiContext,
-    }),
-    [dataContext, uiContext]
-  );
 }
 
 const resolveFolderAncestorNodeIds = (folderPath: string): string[] => {

@@ -180,12 +180,23 @@ Resolver behavior:
     - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_RATE_LIMIT_MAX_ACTIONS` (max remediation actions per window)
     - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_NOTIFICATIONS_ENABLED` (`true`/`false`)
     - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_WEBHOOK_URL` (JSON webhook for remediation alerts)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_WEBHOOK_SECRET` (optional HMAC secret for webhook signing)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_WEBHOOK_SIGNATURE_KEY_ID` (optional webhook signature key-id hint)
     - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_EMAIL_WEBHOOK_URL` (email-relay webhook endpoint)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_EMAIL_WEBHOOK_SECRET` (optional HMAC secret for email webhook signing)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_EMAIL_WEBHOOK_SIGNATURE_KEY_ID` (optional email webhook signature key-id hint)
     - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_EMAIL_RECIPIENTS` (comma-delimited recipients)
     - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_NOTIFICATION_TIMEOUT_MS` (notification webhook timeout)
+    - `PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES` (max persisted failed notification deliveries)
   - Auto-remediation fan-out API:
     - `notifyPortablePathAuditSinkAutoRemediation(input, { ... })`
     - Supports webhook and email-relay webhook channels with retry/circuit protection.
+    - Includes channel delivery receipts and optional HMAC request signing headers (`x-ai-paths-signature*`).
+    - Failed deliveries are persisted to a dead-letter queue for replay/inspection.
+  - Dead-letter persistence APIs:
+    - `loadPortablePathAuditSinkAutoRemediationDeadLetters({ maxEntries? })`
+    - `savePortablePathAuditSinkAutoRemediationDeadLetters(entries, { maxEntries? })`
+    - `enqueuePortablePathAuditSinkAutoRemediationDeadLetter(entry, { maxEntries? })`
   - Built-in server sink factories:
     - `createPortablePathEnvelopeVerificationLogForwardingSink(...)`
     - `createPortablePathEnvelopeVerificationPrismaSink(...)`
@@ -241,10 +252,12 @@ These allow stable package integrity tagging across copy/paste surfaces.
   - `trigger=manual|threshold` (optional)
   - `from=<ISO timestamp>` (optional)
   - `to=<ISO timestamp>` (optional)
+  - `cursor=<opaque>` (optional; filter-bound cursor for paging older snapshots)
 - Trend snapshot response includes:
   - persisted signing-policy trend snapshots
   - aggregate drift/sink-failure summary
   - applied filter metadata + matched snapshot count
+  - pagination metadata (`hasMore`, `nextCursor`, accepted `cursor`)
   - auto-remediation runtime config (strategy/cooldown/rate-limit/notification channels) + persisted remediation state
 - Cache support: deterministic `ETag` + `If-None-Match` (`304 Not Modified`) with private SWR cache headers.
 - CI guardrail: `npm run ai-paths:check:portable-schema-diff -- --strict`
@@ -346,6 +359,6 @@ await bootstrapPortablePathSigningPolicyTrendReporterFromEnvironment({
 
 ## Next Hardening Steps
 
-1. Add delivery receipts and dead-letter persistence for failed remediation notifications.
-2. Add signed webhook payload support (HMAC) for remediation fan-out endpoints.
-3. Add trend snapshot cursor pagination for large historical windows beyond single-request cap.
+1. Add remediation dead-letter replay tooling (manual retry endpoint + audit trail).
+2. Add cursor-stability smoke tests against concurrent snapshot append scenarios.
+3. Add webhook signature verification snippets/runbook examples for downstream receivers.

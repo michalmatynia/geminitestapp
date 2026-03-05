@@ -1,5 +1,3 @@
-'use client';
-
 import { Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import React from 'react';
 

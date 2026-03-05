@@ -18,19 +18,63 @@ const buildViewportRect = (): DOMRect =>
     toJSON: () => ({}),
   }) as DOMRect;
 
-const dispatchWheel = (init?: WheelEventInit): WheelEvent => {
-  const event = new WheelEvent('wheel', {
-    bubbles: true,
-    cancelable: true,
+const buildHarness = (): {
+  viewportElement: HTMLDivElement;
+  applyWheelZoom: ReturnType<typeof vi.fn>;
+  handleWheel: (event: React.WheelEvent) => void;
+  unmount: () => void;
+} => {
+  const viewportElement = document.createElement('div');
+  Object.defineProperty(viewportElement, 'getBoundingClientRect', {
+    value: (): DOMRect => buildViewportRect(),
+  });
+
+  const viewportRef = { current: viewportElement } as React.RefObject<HTMLDivElement>;
+  const applyWheelZoom = vi.fn();
+  const updateLastPointerCanvasPosFromClient = vi.fn();
+  const nav = {
+    applyWheelZoom,
+  } as unknown as UseCanvasInteractionsNavigationValue;
+
+  const { result, unmount } = renderHook(() =>
+    useCanvasEventHandlers({
+      viewportRef,
+      view: { scale: 1, panX: 0, panY: 0 },
+      nav,
+      updateLastPointerCanvasPosFromClient,
+    })
+  );
+
+  return {
+    viewportElement,
+    applyWheelZoom,
+    handleWheel: result.current.handleWheel,
+    unmount,
+  };
+};
+
+const buildWheelEvent = (patch: Partial<React.WheelEvent> = {}): {
+  event: React.WheelEvent;
+  preventDefault: ReturnType<typeof vi.fn>;
+  stopPropagation: ReturnType<typeof vi.fn>;
+} => {
+  const preventDefault = vi.fn();
+  const stopPropagation = vi.fn();
+  const event = {
+    defaultPrevented: false,
+    preventDefault,
+    stopPropagation,
     deltaMode: WheelEvent.DOM_DELTA_PIXEL,
     deltaX: 0,
     deltaY: 1,
     clientX: 0,
     clientY: 0,
-    ...init,
-  });
-  window.dispatchEvent(event);
-  return event;
+    ctrlKey: false,
+    metaKey: false,
+    target: null,
+    ...patch,
+  } as unknown as React.WheelEvent;
+  return { event, preventDefault, stopPropagation };
 };
 
 describe('useCanvasEventHandlers wheel capture boundaries', () => {
@@ -39,42 +83,18 @@ describe('useCanvasEventHandlers wheel capture boundaries', () => {
   });
 
   it('treats unmodified in-canvas wheel as zoom', () => {
-    const viewportElement = document.createElement('div');
-    Object.defineProperty(viewportElement, 'getBoundingClientRect', {
-      value: (): DOMRect => buildViewportRect(),
+    const { viewportElement, applyWheelZoom, handleWheel, unmount } = buildHarness();
+    const { event, preventDefault } = buildWheelEvent({
+      clientX: 260,
+      clientY: 240,
+      deltaY: 80,
+      target: viewportElement,
     });
-
-    const viewportRef = { current: viewportElement } as React.RefObject<HTMLDivElement>;
-    const applyWheelZoom = vi.fn();
-    const updateLastPointerCanvasPosFromClient = vi.fn();
-    const resolveViewportPointFromClient = vi.fn((x: number, y: number) => ({ x, y }));
-
-    const nav = {
-      applyWheelZoom,
-    } as unknown as UseCanvasInteractionsNavigationValue;
-
-    const { unmount } = renderHook(() =>
-      useCanvasEventHandlers({
-        viewportRef,
-        view: { scale: 1, panX: 0, panY: 0 },
-        nav,
-        updateLastPointerCanvasPosFromClient,
-        resolveViewportPointFromClient,
-      })
-    );
-
-    let insideScroll: WheelEvent | null = null;
     act(() => {
-      insideScroll = dispatchWheel({
-        clientX: 260,
-        clientY: 240,
-        deltaY: 80,
-        ctrlKey: false,
-        metaKey: false,
-      });
+      handleWheel(event);
     });
 
-    expect(insideScroll?.defaultPrevented).toBe(true);
+    expect(preventDefault).toHaveBeenCalledTimes(1);
     expect(applyWheelZoom).toHaveBeenCalledTimes(1);
     expect(applyWheelZoom).toHaveBeenCalledWith(80, 260, 240, WheelEvent.DOM_DELTA_PIXEL, false, false, 0);
 
@@ -82,114 +102,91 @@ describe('useCanvasEventHandlers wheel capture boundaries', () => {
   });
 
   it('does not block outside-page wheel scrolling after an in-canvas zoom event', () => {
-    const viewportElement = document.createElement('div');
-    Object.defineProperty(viewportElement, 'getBoundingClientRect', {
-      value: (): DOMRect => buildViewportRect(),
-    });
-
-    const viewportRef = { current: viewportElement } as React.RefObject<HTMLDivElement>;
-    const applyWheelZoom = vi.fn();
-    const updateLastPointerCanvasPosFromClient = vi.fn();
-    const resolveViewportPointFromClient = vi.fn((x: number, y: number) => ({ x, y }));
-
     let now = 100;
     vi.spyOn(performance, 'now').mockImplementation(() => now);
-
-    const nav = {
-      applyWheelZoom,
-    } as unknown as UseCanvasInteractionsNavigationValue;
-
-    const { unmount } = renderHook(() =>
-      useCanvasEventHandlers({
-        viewportRef,
-        view: { scale: 1, panX: 0, panY: 0 },
-        nav,
-        updateLastPointerCanvasPosFromClient,
-        resolveViewportPointFromClient,
-      })
-    );
-
-    let insideZoom: WheelEvent | null = null;
-    act(() => {
-      insideZoom = dispatchWheel({
-        clientX: 260,
-        clientY: 240,
-        deltaY: 0.2,
-        ctrlKey: true,
-      });
+    const { viewportElement, applyWheelZoom, handleWheel, unmount } = buildHarness();
+    const insideEvent = buildWheelEvent({
+      clientX: 260,
+      clientY: 240,
+      deltaY: 0.2,
+      ctrlKey: true,
+      target: viewportElement,
     });
-    expect(insideZoom?.defaultPrevented).toBe(true);
+    act(() => {
+      handleWheel(insideEvent.event);
+    });
+    expect(insideEvent.preventDefault).toHaveBeenCalledTimes(1);
     expect(applyWheelZoom).toHaveBeenCalledTimes(1);
 
     now = 200;
-    let outsideScroll: WheelEvent | null = null;
-    act(() => {
-      outsideScroll = dispatchWheel({
-        clientX: 2200,
-        clientY: 1800,
-        deltaY: 120,
-      });
+    const outsideEvent = buildWheelEvent({
+      clientX: 2200,
+      clientY: 1800,
+      deltaY: 120,
+      target: document.body,
     });
-    expect(outsideScroll?.defaultPrevented).toBe(false);
+    act(() => {
+      handleWheel(outsideEvent.event);
+    });
+    expect(outsideEvent.preventDefault).toHaveBeenCalledTimes(0);
     expect(applyWheelZoom).toHaveBeenCalledTimes(1);
 
     unmount();
   });
 
   it('keeps in-canvas wheel zoom enabled after ctrl+wheel zoom starts', () => {
-    const viewportElement = document.createElement('div');
-    Object.defineProperty(viewportElement, 'getBoundingClientRect', {
-      value: (): DOMRect => buildViewportRect(),
-    });
-
-    const viewportRef = { current: viewportElement } as React.RefObject<HTMLDivElement>;
-    const applyWheelZoom = vi.fn();
-    const updateLastPointerCanvasPosFromClient = vi.fn();
-    const resolveViewportPointFromClient = vi.fn((x: number, y: number) => ({ x, y }));
-
     let now = 100;
     vi.spyOn(performance, 'now').mockImplementation(() => now);
-
-    const nav = {
-      applyWheelZoom,
-    } as unknown as UseCanvasInteractionsNavigationValue;
-
-    const { unmount } = renderHook(() =>
-      useCanvasEventHandlers({
-        viewportRef,
-        view: { scale: 1, panX: 0, panY: 0 },
-        nav,
-        updateLastPointerCanvasPosFromClient,
-        resolveViewportPointFromClient,
-      })
-    );
-
-    let insideZoom: WheelEvent | null = null;
-    act(() => {
-      insideZoom = dispatchWheel({
-        clientX: 280,
-        clientY: 260,
-        deltaY: 0.2,
-        ctrlKey: true,
-      });
+    const { viewportElement, applyWheelZoom, handleWheel, unmount } = buildHarness();
+    const ctrlWheelEvent = buildWheelEvent({
+      clientX: 280,
+      clientY: 260,
+      deltaY: 0.2,
+      ctrlKey: true,
+      target: viewportElement,
     });
-    expect(insideZoom?.defaultPrevented).toBe(true);
+    act(() => {
+      handleWheel(ctrlWheelEvent.event);
+    });
+    expect(ctrlWheelEvent.preventDefault).toHaveBeenCalledTimes(1);
     expect(applyWheelZoom).toHaveBeenCalledTimes(1);
 
     now = 140;
-    let insideZoomAfterCtrl: WheelEvent | null = null;
+    const followupWheelEvent = buildWheelEvent({
+      clientX: 285,
+      clientY: 268,
+      deltaY: 120,
+      target: viewportElement,
+    });
     act(() => {
-      insideZoomAfterCtrl = dispatchWheel({
-        clientX: 285,
-        clientY: 268,
-        deltaY: 120,
-        ctrlKey: false,
-        metaKey: false,
-      });
+      handleWheel(followupWheelEvent.event);
     });
 
-    expect(insideZoomAfterCtrl?.defaultPrevented).toBe(true);
+    expect(followupWheelEvent.preventDefault).toHaveBeenCalledTimes(1);
     expect(applyWheelZoom).toHaveBeenCalledTimes(2);
+
+    unmount();
+  });
+
+  it('does not hijack wheel events from marked in-canvas scroll regions', () => {
+    const { viewportElement, applyWheelZoom, handleWheel, unmount } = buildHarness();
+    const scrollRegion = document.createElement('div');
+    scrollRegion.setAttribute('data-canvas-scroll-region', 'true');
+    viewportElement.appendChild(scrollRegion);
+    const { event, preventDefault, stopPropagation } = buildWheelEvent({
+      target: scrollRegion,
+      deltaY: 64,
+      clientX: 240,
+      clientY: 220,
+    });
+
+    act(() => {
+      handleWheel(event);
+    });
+
+    expect(preventDefault).toHaveBeenCalledTimes(0);
+    expect(stopPropagation).toHaveBeenCalledTimes(0);
+    expect(applyWheelZoom).toHaveBeenCalledTimes(0);
 
     unmount();
   });

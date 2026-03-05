@@ -12,7 +12,7 @@ import {
   StatusBadge,
 } from '@/shared/ui';
 
-import { usePromptEngine } from '../context/PromptEngineContext';
+import { usePromptEngineActions } from '../context/prompt-engine/PromptEngineActionsContext';
 import { type RuleDraft } from '../context/prompt-engine-context-utils';
 import { type PromptValidationSeverity } from '@/shared/lib/prompt-engine/settings';
 
@@ -35,7 +35,7 @@ type LearnedRuleItemProps = {
 export function LearnedRuleItem(props: LearnedRuleItemProps): React.JSX.Element {
   const { draft } = props;
 
-  const { handleLearnedRuleTextChange, handleRemoveLearnedRule } = usePromptEngine();
+  const { handleLearnedRuleTextChange, handleRemoveLearnedRule } = usePromptEngineActions();
   const rule = draft.parsed;
 
   return (

@@ -5,10 +5,12 @@ import React from 'react';
 import { ClientOnly, EmptyState, Hint, SectionHeader, Card } from '@/shared/ui';
 
 import { LearnedRuleItem } from './LearnedRuleItem';
-import { usePromptEngine } from '../context/PromptEngineContext';
+import { usePromptEngineConfig } from '../context/prompt-engine/PromptEngineConfigContext';
+import { usePromptEngineData } from '../context/prompt-engine/PromptEngineDataContext';
 
 export function LearnedRuleList(): React.JSX.Element {
-  const { filteredLearnedDrafts, patternTab, exploderSubTab } = usePromptEngine();
+  const { patternTab, exploderSubTab } = usePromptEngineConfig();
+  const { filteredLearnedDrafts } = usePromptEngineData();
   const tabLabel =
     patternTab === 'core'
       ? 'Core'

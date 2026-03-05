@@ -94,10 +94,3 @@ export function useDatabaseSaveQueryPresetDialogActionsContext(): DatabaseSaveQu
   }
   return context;
 }
-
-export function useDatabaseSaveQueryPresetDialogContext(): DatabaseSaveQueryPresetDialogContextValue {
-  const state = useDatabaseSaveQueryPresetDialogStateContext();
-  const actions = useDatabaseSaveQueryPresetDialogActionsContext();
-
-  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
-}

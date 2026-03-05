@@ -41,6 +41,13 @@ const createTriggerNode = (): AiNode => ({
   },
 });
 
+const createFarNode = (): AiNode => ({
+  ...createNode(),
+  id: 'node-far-1',
+  title: 'Far Node',
+  position: { x: 13850, y: 120 },
+});
+
 const createHistoryEntry = (): RuntimeHistoryEntry => ({
   timestamp: '2026-01-01T00:00:10.000Z',
   runId: 'run-1',
@@ -420,5 +427,28 @@ describe('CanvasSvgNodeLayer', () => {
       expect.objectContaining({ id: 'node-trigger-1', type: 'trigger' }),
       expect.any(Object)
     );
+  });
+
+  it('keeps nodes within screen-space culling margin visible at low zoom levels', () => {
+    const runtimeState: RuntimeState = {
+      status: 'idle',
+      nodeStatuses: {},
+      nodeOutputs: {},
+      variables: {},
+      events: [],
+      inputs: {},
+      outputs: {},
+      history: {},
+    };
+    const nodes = [createFarNode()];
+
+    const { container } = renderWithContext({
+      runtimeState,
+      nodes,
+      view: { x: 0, y: 0, scale: 0.1 },
+      cullPadding: 260,
+    });
+
+    expect(container.querySelector('[data-node-root="node-far-1"]')).toBeTruthy();
   });
 });

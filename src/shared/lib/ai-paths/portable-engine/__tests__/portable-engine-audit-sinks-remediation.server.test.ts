@@ -1,579 +1,241 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
-
-import type {
-  PortablePathEnvelopeVerificationAuditEvent,
-  PortablePathEnvelopeVerificationAuditSinkSnapshot,
-  PortablePathEnvelopeVerificationObservabilitySnapshot,
-  PortablePathSigningPolicyUsageSnapshot,
-} from '../index';
-import {
-  listPortablePathEnvelopeVerificationAuditSinkIds,
-  resetPortablePathEnvelopeVerificationAuditSinkSnapshot,
-  resetPortablePathSigningPolicyUsageSnapshot,
-  resolvePortablePathInput,
-} from '../index';
-
-const { logSystemEventMock } = vi.hoisted(() => ({
-  logSystemEventMock: vi.fn(),
-}));
-
-const { prismaSystemLogCreateMock } = vi.hoisted(() => ({
-  prismaSystemLogCreateMock: vi.fn(),
-}));
-
-const { getMongoDbMock } = vi.hoisted(() => ({
-  getMongoDbMock: vi.fn(),
-}));
-
-vi.mock('@/shared/lib/observability/system-logger', () => ({
-  logSystemEvent: logSystemEventMock,
-}));
-
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
-    systemLog: {
-      create: prismaSystemLogCreateMock,
-    },
-  },
-}));
-
-vi.mock('@/shared/lib/db/mongo-client', () => ({
-  getMongoDb: getMongoDbMock,
-}));
+import { createHmac } from 'crypto';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
-  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_KIND,
-  PORTABLE_PATH_SIGNING_POLICY_TREND_KIND,
-  appendPortablePathSigningPolicyTrendSnapshot,
-  bootstrapPortablePathEnvelopeVerificationAuditSinks,
-  bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment,
-  bootstrapPortablePathEnvelopeVerificationAuditSinksWithStartupHealthChecks,
-  bootstrapPortablePathSigningPolicyTrendReporterFromEnvironment,
-  createPortablePathSigningPolicyTrendReporter,
-  loadPortablePathSigningPolicyTrendSnapshots,
-  createPortablePathEnvelopeVerificationLogForwardingSink,
-  createPortablePathEnvelopeVerificationMongoSink,
-  createPortablePathEnvelopeVerificationPrismaSink,
+  enqueuePortablePathAuditSinkAutoRemediationDeadLetter,
+  loadPortablePathAuditSinkAutoRemediationDeadLetters,
   notifyPortablePathAuditSinkAutoRemediation,
-  resolvePortablePathAuditSinkFailureAlertLevelFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment,
-  resolvePortablePathEnvelopeVerificationAuditSinkHealthPolicyFromEnvironment,
-  resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment,
-  resolvePortablePathEnvelopeVerificationAuditSinkProfileOverrideFromEnvironment,
-  resolvePortablePathSigningPolicyTrendAlertLevelFromEnvironment,
-  resolvePortablePathSigningPolicyTrendPersistenceEnabledFromEnvironment,
-  resolvePortablePathSigningPolicyTrendPersistenceMaxSnapshotsFromEnvironment,
-  resolvePortablePathSigningPolicyTrendReportEveryUsesFromEnvironment,
-  runPortablePathAuditSinkAutoRemediation,
+  savePortablePathAuditSinkAutoRemediationDeadLetters,
 } from '../sinks.server';
 
-const createEvent = (
-  overrides?: Partial<PortablePathEnvelopeVerificationAuditEvent>
-): PortablePathEnvelopeVerificationAuditEvent => ({
-  at: '2026-03-05T00:00:00.000Z',
-  phase: 'async',
-  mode: 'strict',
-  algorithm: 'hmac_sha256',
-  keyId: 'key-v1',
-  candidateSecretCount: 2,
-  matchedSecretIndex: 1,
-  outcome: 'verified',
-  status: 'verified',
-  ...(overrides ?? {}),
+const createNotificationInput = () => ({
+  summary: {
+    profile: 'prod' as const,
+    policy: 'warn' as const,
+    timeoutMs: 1000,
+    status: 'degraded' as const,
+    checkedAt: '2026-03-05T00:00:00.000Z',
+    failedSinkIds: ['sink-a'],
+    diagnostics: [
+      {
+        sinkId: 'sink-a',
+        status: 'failed' as const,
+        checkedAt: '2026-03-05T00:00:00.000Z',
+        durationMs: 5,
+        message: 'Health check failed.',
+        error: 'permission_denied',
+      },
+    ],
+  },
+  strategy: 'unregister_all' as const,
+  action: 'unregister_all' as const,
+  threshold: 2,
+  cooldownSeconds: 120,
+  rateLimitWindowSeconds: 900,
+  rateLimitMaxActions: 2,
+  state: {
+    consecutiveFailureCount: 2,
+    lastFailureAt: '2026-03-05T00:00:00.000Z',
+    lastRecoveredAt: null,
+    lastFailedSinkIds: ['sink-a'],
+    remediationCount: 1,
+    lastRemediatedAt: '2026-03-05T00:00:00.000Z',
+    remediationWindowStartedAt: '2026-03-05T00:00:00.000Z',
+    remediationWindowActionCount: 1,
+    lastRemediationSkippedAt: null,
+    lastRemediationSkippedReason: null,
+    lastStatus: 'degraded' as const,
+  },
 });
 
-const createSnapshot = (
-  event: PortablePathEnvelopeVerificationAuditEvent
-): PortablePathEnvelopeVerificationObservabilitySnapshot => ({
-  totals: {
-    events: 3,
-    verified: 2,
-    warned: 1,
-    rejected: 0,
-  },
-  byKeyId: {
-    'key-v1': {
-      events: 2,
-      verified: 2,
-      warned: 0,
-      rejected: 0,
-      lastOutcome: event.outcome,
-      lastSeenAt: event.at,
-      lastAlgorithm: event.algorithm,
-    },
-  },
-  recentEvents: [event],
-});
-
-const createSigningPolicyUsageSnapshot = (
-  uses: number
-): PortablePathSigningPolicyUsageSnapshot => ({
-  totals: { uses },
-  byProfile: {
-    dev: {
-      uses,
-      bySurface: { canvas: 0, product: uses, api: 0 },
-      fingerprintModeCounts: { off: uses, warn: 0, strict: 0 },
-      envelopeModeCounts: { off: uses, warn: 0, strict: 0 },
-      lastUsedAt: '2026-03-05T00:00:00.000Z',
-      lastSurface: 'product',
-    },
-    staging: {
-      uses: 0,
-      bySurface: { canvas: 0, product: 0, api: 0 },
-      fingerprintModeCounts: { off: 0, warn: 0, strict: 0 },
-      envelopeModeCounts: { off: 0, warn: 0, strict: 0 },
-      lastUsedAt: null,
-      lastSurface: null,
-    },
-    prod: {
-      uses: 0,
-      bySurface: { canvas: 0, product: 0, api: 0 },
-      fingerprintModeCounts: { off: 0, warn: 0, strict: 0 },
-      envelopeModeCounts: { off: 0, warn: 0, strict: 0 },
-      lastUsedAt: null,
-      lastSurface: null,
-    },
-  },
-  bySurface: { canvas: 0, product: uses, api: 0 },
-  recentEvents: [],
-});
-
-const createAuditSinkSnapshot = (
-  writesFailed: number
-): PortablePathEnvelopeVerificationAuditSinkSnapshot => ({
-  totals: {
-    registrationCount: 1,
-    unregistrationCount: 0,
-    writesAttempted: writesFailed,
-    writesSucceeded: 0,
-    writesFailed,
-  },
-  registeredSinkIds: ['test-sink'],
-  bySinkId: {
-    'test-sink': {
-      writesAttempted: writesFailed,
-      writesSucceeded: 0,
-      writesFailed,
-      lastError: writesFailed > 0 ? 'sink_down' : null,
-      lastWrittenAt: writesFailed > 0 ? '2026-03-05T00:00:00.000Z' : null,
-    },
-  },
-  recentFailures:
-    writesFailed > 0
-      ? [{ sinkId: 'test-sink', error: 'sink_down', at: '2026-03-05T00:00:00.000Z' }]
-      : [],
-});
-
-const createPersistedTrendSnapshot = (at: string, uses: number) => ({
-  at,
-  trigger: 'manual' as const,
-  reportEveryUses: 5,
-  usageTotals: createSigningPolicyUsageSnapshot(uses).totals,
-  usageBySurface: createSigningPolicyUsageSnapshot(uses).bySurface,
-  usageByProfile: createSigningPolicyUsageSnapshot(uses).byProfile,
-  sinkTotals: createAuditSinkSnapshot(0).totals,
-  sinkRegisteredIds: createAuditSinkSnapshot(0).registeredSinkIds,
-  sinkRecentFailures: [],
-  expectedProfilesBySurface: {
-    canvas: ['prod'],
-    product: ['prod'],
-    api: ['prod'],
-  },
-  driftAlerts: [],
-});
-
-describe('portable-engine envelope verification sink factories', () => {
-  beforeEach(() => {
-    logSystemEventMock.mockReset().mockResolvedValue(undefined);
-    prismaSystemLogCreateMock.mockReset().mockResolvedValue({});
-    getMongoDbMock.mockReset();
-    resetPortablePathSigningPolicyUsageSnapshot();
-    resetPortablePathEnvelopeVerificationAuditSinkSnapshot({
-      clearRegisteredSinks: true,
-    });
-  });
-  it('triggers auto-remediation after repeated startup sink failures and resets on recovery', async () => {
-    let state = {
-      consecutiveFailureCount: 0,
-      lastFailureAt: null,
-      lastRecoveredAt: null,
-      lastFailedSinkIds: [] as string[],
-      remediationCount: 0,
-      lastRemediatedAt: null,
-      remediationWindowStartedAt: null,
-      remediationWindowActionCount: 0,
-      lastRemediationSkippedAt: null,
-      lastRemediationSkippedReason: null as 'cooldown' | 'rate_limited' | null,
-      lastStatus: null as
-        | 'healthy'
-        | 'degraded'
-        | 'failed'
-        | 'skipped'
-        | null,
-    };
-    const loadState = async () => state;
-    const saveState = async (next: typeof state): Promise<boolean> => {
-      state = next;
-      return true;
-    };
-    const unregisterAll = vi.fn();
-    const degradedSummary = {
-      profile: 'prod' as const,
-      policy: 'warn' as const,
-      timeoutMs: 1000,
-      status: 'degraded' as const,
-      checkedAt: '2026-03-05T00:00:00.000Z',
-      failedSinkIds: ['sink-a'],
-      diagnostics: [
-        {
-          sinkId: 'sink-a',
-          status: 'failed' as const,
-          checkedAt: '2026-03-05T00:00:00.000Z',
-          durationMs: 5,
-          message: 'Health check failed.',
-          error: 'permission_denied',
-        },
-      ],
-    };
-
-    const first = await runPortablePathAuditSinkAutoRemediation(degradedSummary, {
-      enabled: true,
-      threshold: 2,
-      strategy: 'unregister_all',
-      loadState,
-      saveState,
-      unregisterAll,
-    });
-    expect(first.triggered).toBe(false);
-    expect(first.state.consecutiveFailureCount).toBe(1);
-
-    const second = await runPortablePathAuditSinkAutoRemediation(degradedSummary, {
-      enabled: true,
-      threshold: 2,
-      strategy: 'unregister_all',
-      loadState,
-      saveState,
-      unregisterAll,
-    });
-    expect(second.triggered).toBe(true);
-    expect(second.action).toBe('unregister_all');
-    expect(second.state.remediationCount).toBe(1);
-    expect(second.throttled).toBe(false);
-    expect(unregisterAll).toHaveBeenCalledTimes(1);
-
-    const healthySummary = {
-      ...degradedSummary,
-      status: 'healthy' as const,
-      failedSinkIds: [] as string[],
-      diagnostics: [] as typeof degradedSummary.diagnostics,
-    };
-    const recovered = await runPortablePathAuditSinkAutoRemediation(healthySummary, {
-      enabled: true,
-      threshold: 2,
-      strategy: 'unregister_all',
-      loadState,
-      saveState,
-      unregisterAll,
-    });
-    expect(recovered.triggered).toBe(false);
-    expect(recovered.state.consecutiveFailureCount).toBe(0);
-    expect(recovered.state.lastRecoveredAt).toBeTruthy();
-    expect(recovered.throttled).toBe(false);
-  });
-
-  it('supports log-only degradation remediation strategy', async () => {
-    let state = {
-      consecutiveFailureCount: 1,
-      lastFailureAt: '2026-03-05T00:00:00.000Z',
-      lastRecoveredAt: null,
-      lastFailedSinkIds: ['sink-a'] as string[],
-      remediationCount: 0,
-      lastRemediatedAt: null,
-      remediationWindowStartedAt: null,
-      remediationWindowActionCount: 0,
-      lastRemediationSkippedAt: null,
-      lastRemediationSkippedReason: null as 'cooldown' | 'rate_limited' | null,
-      lastStatus: 'degraded' as
-        | 'healthy'
-        | 'degraded'
-        | 'failed'
-        | 'skipped'
-        | null,
-    };
-    const loadState = async () => state;
-    const saveState = async (next: typeof state): Promise<boolean> => {
-      state = next;
-      return true;
-    };
-    const unregisterAll = vi.fn();
-    const activateLogOnlyMode = vi.fn();
-    const summary = {
-      profile: 'staging' as const,
-      policy: 'warn' as const,
-      timeoutMs: 1000,
-      status: 'degraded' as const,
-      checkedAt: '2026-03-05T00:00:00.000Z',
-      failedSinkIds: ['sink-a'],
-      diagnostics: [
-        {
-          sinkId: 'sink-a',
-          status: 'failed' as const,
-          checkedAt: '2026-03-05T00:00:00.000Z',
-          durationMs: 5,
-          message: 'Health check failed.',
-          error: 'permission_denied',
-        },
-      ],
-    };
-
-    const result = await runPortablePathAuditSinkAutoRemediation(summary, {
-      enabled: true,
-      threshold: 2,
-      strategy: 'degrade_to_log_only',
-      loadState,
-      saveState,
-      unregisterAll,
-      activateLogOnlyMode,
-    });
-
-    expect(result.triggered).toBe(true);
-    expect(result.action).toBe('degrade_to_log_only');
-    expect(result.strategy).toBe('degrade_to_log_only');
-    expect(activateLogOnlyMode).toHaveBeenCalledTimes(1);
-    expect(unregisterAll).not.toHaveBeenCalled();
-  });
-
-  it('throttles auto-remediation during cooldown windows', async () => {
-    let state = {
-      consecutiveFailureCount: 1,
-      lastFailureAt: '2026-03-05T00:00:00.000Z',
-      lastRecoveredAt: null,
-      lastFailedSinkIds: ['sink-a'] as string[],
-      remediationCount: 1,
-      lastRemediatedAt: '2026-03-05T00:00:30.000Z',
-      remediationWindowStartedAt: '2026-03-05T00:00:00.000Z',
-      remediationWindowActionCount: 1,
-      lastRemediationSkippedAt: null,
-      lastRemediationSkippedReason: null as 'cooldown' | 'rate_limited' | null,
-      lastStatus: 'degraded' as
-        | 'healthy'
-        | 'degraded'
-        | 'failed'
-        | 'skipped'
-        | null,
-    };
-    const loadState = async () => state;
-    const saveState = async (next: typeof state): Promise<boolean> => {
-      state = next;
-      return true;
-    };
-    const unregisterAll = vi.fn();
-    const summary = {
-      profile: 'prod' as const,
-      policy: 'warn' as const,
-      timeoutMs: 1000,
-      status: 'degraded' as const,
-      checkedAt: '2026-03-05T00:01:00.000Z',
-      failedSinkIds: ['sink-a'],
-      diagnostics: [
-        {
-          sinkId: 'sink-a',
-          status: 'failed' as const,
-          checkedAt: '2026-03-05T00:01:00.000Z',
-          durationMs: 5,
-          message: 'Health check failed.',
-          error: 'permission_denied',
-        },
-      ],
-    };
-
-    const result = await runPortablePathAuditSinkAutoRemediation(summary, {
-      enabled: true,
-      threshold: 2,
-      strategy: 'unregister_all',
-      cooldownSeconds: 120,
-      now: '2026-03-05T00:01:00.000Z',
-      loadState,
-      saveState,
-      unregisterAll,
-    });
-
-    expect(result.triggered).toBe(false);
-    expect(result.throttled).toBe(true);
-    expect(result.throttleReason).toBe('cooldown');
-    expect(result.state.lastRemediationSkippedReason).toBe('cooldown');
-    expect(unregisterAll).not.toHaveBeenCalled();
-  });
-
-  it('throttles auto-remediation when rate-limit window is exhausted', async () => {
-    let state = {
-      consecutiveFailureCount: 1,
-      lastFailureAt: '2026-03-05T00:00:00.000Z',
-      lastRecoveredAt: null,
-      lastFailedSinkIds: ['sink-a'] as string[],
-      remediationCount: 2,
-      lastRemediatedAt: '2026-03-05T00:00:10.000Z',
-      remediationWindowStartedAt: '2026-03-05T00:00:00.000Z',
-      remediationWindowActionCount: 2,
-      lastRemediationSkippedAt: null,
-      lastRemediationSkippedReason: null as 'cooldown' | 'rate_limited' | null,
-      lastStatus: 'degraded' as
-        | 'healthy'
-        | 'degraded'
-        | 'failed'
-        | 'skipped'
-        | null,
-    };
-    const loadState = async () => state;
-    const saveState = async (next: typeof state): Promise<boolean> => {
-      state = next;
-      return true;
-    };
-    const unregisterAll = vi.fn();
-    const summary = {
-      profile: 'prod' as const,
-      policy: 'warn' as const,
-      timeoutMs: 1000,
-      status: 'degraded' as const,
-      checkedAt: '2026-03-05T00:05:00.000Z',
-      failedSinkIds: ['sink-a'],
-      diagnostics: [
-        {
-          sinkId: 'sink-a',
-          status: 'failed' as const,
-          checkedAt: '2026-03-05T00:05:00.000Z',
-          durationMs: 5,
-          message: 'Health check failed.',
-          error: 'permission_denied',
-        },
-      ],
-    };
-
-    const result = await runPortablePathAuditSinkAutoRemediation(summary, {
-      enabled: true,
-      threshold: 2,
-      strategy: 'unregister_all',
-      cooldownSeconds: 0,
-      rateLimitWindowSeconds: 600,
-      rateLimitMaxActions: 2,
-      now: '2026-03-05T00:05:00.000Z',
-      loadState,
-      saveState,
-      unregisterAll,
-    });
-
-    expect(result.triggered).toBe(false);
-    expect(result.throttled).toBe(true);
-    expect(result.throttleReason).toBe('rate_limited');
-    expect(result.state.lastRemediationSkippedReason).toBe('rate_limited');
-    expect(unregisterAll).not.toHaveBeenCalled();
-  });
-
-  it('delivers remediation fan-out notifications to webhook and email relay channels', async () => {
+describe('portable-engine remediation notifications', () => {
+  it('signs webhook notifications and records signed delivery receipts', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      status: 200,
+      status: 202,
     });
-
     const result = await notifyPortablePathAuditSinkAutoRemediation(
-      {
-        summary: {
-          profile: 'prod',
-          policy: 'warn',
-          timeoutMs: 1000,
-          status: 'degraded',
-          checkedAt: '2026-03-05T00:00:00.000Z',
-          failedSinkIds: ['sink-a'],
-          diagnostics: [],
-        },
-        strategy: 'unregister_all',
-        action: 'unregister_all',
-        threshold: 2,
-        cooldownSeconds: 120,
-        rateLimitWindowSeconds: 900,
-        rateLimitMaxActions: 2,
-        state: {
-          consecutiveFailureCount: 2,
-          lastFailureAt: '2026-03-05T00:00:00.000Z',
-          lastRecoveredAt: null,
-          lastFailedSinkIds: ['sink-a'],
-          remediationCount: 1,
-          lastRemediatedAt: '2026-03-05T00:00:00.000Z',
-          remediationWindowStartedAt: '2026-03-05T00:00:00.000Z',
-          remediationWindowActionCount: 1,
-          lastRemediationSkippedAt: null,
-          lastRemediationSkippedReason: null,
-          lastStatus: 'degraded',
-        },
-      },
+      createNotificationInput(),
       {
         enabled: true,
         webhookUrl: 'https://example.test/remediation',
-        emailWebhookUrl: 'https://example.test/email-remediation',
-        emailRecipients: ['ops@example.test'],
+        webhookSecret: 'signing-secret',
+        webhookSignatureKeyId: 'rotation-v2',
+        now: '2026-03-05T00:00:00.000Z',
         fetchImpl: fetchMock as unknown as typeof fetch,
       }
     );
 
-    expect(result.webhook.attempted).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const headers = requestInit.headers as Record<string, string>;
+    const body = String(requestInit.body ?? '');
+    const expectedSignature = createHmac('sha256', 'signing-secret')
+      .update(`2026-03-05T00:00:00.000Z.${body}`)
+      .digest('hex');
+    expect(headers['x-ai-paths-signature']).toBe(`v1=${expectedSignature}`);
+    expect(headers['x-ai-paths-signature-timestamp']).toBe(
+      '2026-03-05T00:00:00.000Z'
+    );
+    expect(headers['x-ai-paths-signature-algorithm']).toBe('hmac_sha256');
+    expect(headers['x-ai-paths-signature-key-id']).toBe('rotation-v2');
     expect(result.webhook.delivered).toBe(true);
-    expect(result.email.attempted).toBe(true);
-    expect(result.email.delivered).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result.webhook.signatureApplied).toBe(true);
+    expect(result.webhook.statusCode).toBe(202);
+    expect(result.webhook.deadLetterQueued).toBe(false);
+    expect(result.receipts).toEqual([
+      expect.objectContaining({
+        channel: 'webhook',
+        delivered: true,
+        signatureApplied: true,
+        deadLetterQueued: false,
+      }),
+    ]);
   });
 
-  it('emits startup sink health alert and can disable trend reporter from environment', async () => {
-    const result = await bootstrapPortablePathSigningPolicyTrendReporterFromEnvironment({
-      env: {
-        NODE_ENV: 'production',
-        PORTABLE_PATH_SIGNING_POLICY_TREND_REPORTER_ENABLED: 'false',
-        PORTABLE_PATH_AUDIT_SINK_FAILURE_ALERT_LEVEL: 'error',
-        PORTABLE_PATH_SIGNING_POLICY_TREND_PERSISTENCE_ENABLED: 'false',
-        PORTABLE_PATH_SIGNING_POLICY_TREND_PERSISTENCE_MAX_SNAPSHOTS: '50',
-      },
-      startupHealthSummary: {
-        profile: 'prod',
-        policy: 'warn',
-        timeoutMs: 1500,
-        status: 'degraded',
-        checkedAt: '2026-03-05T00:00:00.000Z',
-        failedSinkIds: ['portable-envelope-verification-prisma'],
-        diagnostics: [
-          {
-            sinkId: 'portable-envelope-verification-prisma',
-            status: 'failed',
-            checkedAt: '2026-03-05T00:00:00.000Z',
-            durationMs: 5,
-            message: 'Health check failed.',
-            error: 'permission_denied',
-          },
-        ],
-      },
+  it('queues webhook delivery failures in the remediation dead-letter store', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 502,
     });
+    let rawStore: string | null = null;
 
-    expect(result.enabled).toBe(false);
-    expect(result.reporter).toBeNull();
-    expect(result.persistenceEnabled).toBe(false);
-    expect(result.persistenceMaxSnapshots).toBe(50);
-    expect(
-      logSystemEventMock.mock.calls.some(
-        ([input]) =>
-          input.level === 'error' &&
-          input.context?.['kind'] === PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_KIND &&
-          input.context?.['alertType'] === 'portable_audit_sink_startup_health'
-      )
-    ).toBe(true);
+    const result = await notifyPortablePathAuditSinkAutoRemediation(
+      createNotificationInput(),
+      {
+        enabled: true,
+        webhookUrl: 'https://example.test/remediation',
+        webhookSecret: 'signing-secret',
+        now: '2026-03-05T00:00:00.000Z',
+        fetchImpl: fetchMock as unknown as typeof fetch,
+        deadLetterReadRaw: async () => rawStore,
+        deadLetterWriteRaw: async (raw: string): Promise<boolean> => {
+          rawStore = raw;
+          return true;
+        },
+      }
+    );
+
+    expect(result.webhook.delivered).toBe(false);
+    expect(result.webhook.statusCode).toBe(502);
+    expect(result.webhook.error).toBe('notification_http_502');
+    expect(result.webhook.deadLetterQueued).toBe(true);
+    expect(result.receipts).toEqual([
+      expect.objectContaining({
+        channel: 'webhook',
+        delivered: false,
+        deadLetterQueued: true,
+      }),
+    ]);
+
+    const deadLetters = await loadPortablePathAuditSinkAutoRemediationDeadLetters({
+      maxEntries: 10,
+      readRaw: async () => rawStore,
+    });
+    expect(deadLetters).toHaveLength(1);
+    expect(deadLetters[0]).toEqual(
+      expect.objectContaining({
+        channel: 'webhook',
+        endpoint: 'https://example.test/remediation',
+        error: 'notification_http_502',
+        statusCode: 502,
+      })
+    );
+    expect(deadLetters[0]?.signature).toEqual(
+      expect.objectContaining({
+        algorithm: 'hmac_sha256',
+        keyId: null,
+        timestamp: '2026-03-05T00:00:00.000Z',
+      })
+    );
+  });
+
+  it('parses, trims, saves, and appends remediation dead-letter entries', async () => {
+    let rawStore: string | null = null;
+    const writeRaw = async (raw: string): Promise<boolean> => {
+      rawStore = raw;
+      return true;
+    };
+    const readRaw = async (): Promise<string | null> => rawStore;
+
+    const saveOk = await savePortablePathAuditSinkAutoRemediationDeadLetters(
+      [
+        {
+          queuedAt: '2026-03-05T00:00:00.000Z',
+          channel: 'webhook',
+          endpoint: 'https://example.test/a',
+          payload: { event: 'a' },
+          error: 'notification_http_500',
+          statusCode: 500,
+          attemptCount: 1,
+          signature: null,
+        },
+        {
+          queuedAt: '2026-03-05T00:01:00.000Z',
+          channel: 'email',
+          endpoint: 'https://example.test/b',
+          payload: { event: 'b' },
+          error: 'notification_http_502',
+          statusCode: 502,
+          attemptCount: 1,
+          signature: {
+            algorithm: 'hmac_sha256',
+            keyId: 'rotation-v2',
+            timestamp: '2026-03-05T00:01:00.000Z',
+          },
+        },
+        {
+          queuedAt: '2026-03-05T00:02:00.000Z',
+          channel: 'webhook',
+          endpoint: 'https://example.test/c',
+          payload: { event: 'c' },
+          error: 'notification_http_503',
+          statusCode: 503,
+          attemptCount: 1,
+          signature: null,
+        },
+      ],
+      {
+        maxEntries: 2,
+        writeRaw,
+      }
+    );
+    expect(saveOk).toBe(true);
+
+    const loadedAfterSave = await loadPortablePathAuditSinkAutoRemediationDeadLetters({
+      maxEntries: 2,
+      readRaw,
+    });
+    expect(loadedAfterSave).toHaveLength(2);
+    expect(loadedAfterSave[0]?.queuedAt).toBe('2026-03-05T00:01:00.000Z');
+    expect(loadedAfterSave[1]?.queuedAt).toBe('2026-03-05T00:02:00.000Z');
+
+    const enqueueOk = await enqueuePortablePathAuditSinkAutoRemediationDeadLetter(
+      {
+        queuedAt: '2026-03-05T00:03:00.000Z',
+        channel: 'email',
+        endpoint: 'https://example.test/d',
+        payload: { event: 'd' },
+        error: 'notification_http_504',
+        statusCode: 504,
+        attemptCount: 1,
+        signature: null,
+      },
+      {
+        maxEntries: 2,
+        readRaw,
+        writeRaw,
+      }
+    );
+    expect(enqueueOk).toBe(true);
+
+    const loadedAfterEnqueue =
+      await loadPortablePathAuditSinkAutoRemediationDeadLetters({
+        maxEntries: 2,
+        readRaw,
+      });
+    expect(loadedAfterEnqueue).toHaveLength(2);
+    expect(loadedAfterEnqueue[0]?.queuedAt).toBe('2026-03-05T00:02:00.000Z');
+    expect(loadedAfterEnqueue[1]?.queuedAt).toBe('2026-03-05T00:03:00.000Z');
   });
 });

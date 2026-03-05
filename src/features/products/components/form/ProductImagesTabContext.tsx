@@ -122,22 +122,3 @@ export function useProductImagesTabActionsContext(): ProductImagesTabActionsCont
   }
   return context;
 }
-
-export function useOptionalProductImagesTabContext(): ProductImagesTabContextValue | null {
-  const state = useOptionalProductImagesTabStateContext();
-  const actions = useOptionalProductImagesTabActionsContext();
-
-  return useMemo(() => {
-    if (!state || !actions) {
-      return null;
-    }
-    return { ...state, ...actions };
-  }, [actions, state]);
-}
-
-export function useProductImagesTabContext(): ProductImagesTabContextValue {
-  const state = useProductImagesTabStateContext();
-  const actions = useProductImagesTabActionsContext();
-
-  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
-}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext } from 'react';
 import {
   useAdminFilemakerPersonEditPageState,
   type AdminFilemakerPersonEditPageContextValue,
@@ -86,10 +86,4 @@ export function useAdminFilemakerPersonEditPageActionsContext(): AdminFilemakerP
     );
   }
   return context;
-}
-
-export function useAdminFilemakerPersonEditPageContext(): AdminFilemakerPersonEditPageContextValue {
-  const state = useAdminFilemakerPersonEditPageStateContext();
-  const actions = useAdminFilemakerPersonEditPageActionsContext();
-  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

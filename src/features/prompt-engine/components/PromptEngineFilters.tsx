@@ -6,14 +6,17 @@ import { Tabs, TabsList, TabsTrigger } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
 
-import { usePromptEngine } from '../context/PromptEngineContext';
+import { usePromptEngineActions } from '../context/prompt-engine/PromptEngineActionsContext';
 import {
   type ExploderPatternSubTab,
   type PatternCollectionTab,
+  usePromptEngineConfig,
 } from '../context/prompt-engine/PromptEngineConfigContext';
+import { usePromptEngineData } from '../context/prompt-engine/PromptEngineDataContext';
 import {
   type ScopeFilter,
   type SeverityFilter,
+  usePromptEngineFilters,
 } from '../context/prompt-engine/PromptEngineFiltersContext';
 import { PROMPT_VALIDATION_SCOPE_LABELS, PROMPT_VALIDATION_SCOPE_VALUES } from '@/shared/lib/prompt-engine/settings';
 
@@ -26,23 +29,19 @@ import { PROMPT_VALIDATION_SCOPE_LABELS, PROMPT_VALIDATION_SCOPE_VALUES } from '
  */
 export function PromptEngineFilters(): React.JSX.Element {
   const {
-    query,
-    setQuery,
-    severity,
-    setSeverity,
-    scope,
-    setScope,
     patternTab,
     patternTabLocked,
-    setPatternTab,
     exploderSubTab,
     exploderSubTabLocked,
-    setExploderSubTab,
     scopeLocked,
-    includeDisabled,
-    setIncludeDisabled,
-    filteredDrafts,
-  } = usePromptEngine();
+  } = usePromptEngineConfig();
+  const { query, setQuery, severity, setSeverity, scope, setScope, includeDisabled, setIncludeDisabled } =
+    usePromptEngineFilters();
+  const { filteredDrafts } = usePromptEngineData();
+  const {
+    setPatternTab,
+    setExploderSubTab,
+  } = usePromptEngineActions();
   const activeTabLabel =
     patternTab === 'core'
       ? 'Core'

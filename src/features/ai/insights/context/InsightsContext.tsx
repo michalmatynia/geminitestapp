@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext } from 'react';
 
 import { useToast } from '@/shared/ui';
 
@@ -41,12 +41,6 @@ export function useInsightsActions(): InsightsActionsContextValue {
     throw new Error('useInsightsActions must be used within an InsightsProvider');
   }
   return context;
-}
-
-export function useInsights(): InsightsContextValue {
-  const state = useInsightsState();
-  const actions = useInsightsActions();
-  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }
 
 export function InsightsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {

@@ -38,11 +38,24 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
 
   const worldViewport = React.useMemo(() => {
     if (!viewportSize) return null;
+    if (
+      !Number.isFinite(view.scale) ||
+      view.scale <= 0 ||
+      !Number.isFinite(view.x) ||
+      !Number.isFinite(view.y) ||
+      !Number.isFinite(viewportSize.width) ||
+      !Number.isFinite(viewportSize.height) ||
+      viewportSize.width <= 0 ||
+      viewportSize.height <= 0
+    ) {
+      return null;
+    }
+    const cullPaddingWorld = cullPadding / view.scale;
     return {
-      minX: -view.x / view.scale - cullPadding,
-      minY: -view.y / view.scale - cullPadding,
-      maxX: (-view.x + viewportSize.width) / view.scale + cullPadding,
-      maxY: (-view.y + viewportSize.height) / view.scale + cullPadding,
+      minX: -view.x / view.scale - cullPaddingWorld,
+      minY: -view.y / view.scale - cullPaddingWorld,
+      maxX: (-view.x + viewportSize.width) / view.scale + cullPaddingWorld,
+      maxY: (-view.y + viewportSize.height) / view.scale + cullPaddingWorld,
     };
   }, [cullPadding, view.scale, view.x, view.y, viewportSize]);
 
@@ -55,6 +68,14 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
       if (activeEdgeIds.has(edgePath.id)) return true;
       if (worldViewport) {
         const bounds = edgePath.bounds;
+        if (
+          !Number.isFinite(bounds.minX) ||
+          !Number.isFinite(bounds.maxX) ||
+          !Number.isFinite(bounds.minY) ||
+          !Number.isFinite(bounds.maxY)
+        ) {
+          return true;
+        }
         if (
           bounds.maxX >= worldViewport.minX &&
           bounds.minX <= worldViewport.maxX &&

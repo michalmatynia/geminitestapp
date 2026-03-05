@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext } from 'react';
 
 import {
   useDatabaseEngineState,
@@ -91,10 +91,4 @@ export function useDatabaseEngineActionsContext(): DatabaseEngineActionsContextV
     );
   }
   return context;
-}
-
-export function useDatabaseEngineContext(): DatabaseEngineContextValue {
-  const state = useDatabaseEngineStateContext();
-  const actions = useDatabaseEngineActionsContext();
-  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

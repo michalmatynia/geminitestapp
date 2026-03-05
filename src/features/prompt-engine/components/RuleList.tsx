@@ -8,8 +8,11 @@ import { cn } from '@/shared/utils';
 
 import { RuleListDragProvider } from './context/RuleListDragContext';
 import { RuleItem } from './RuleItem';
-import { usePromptEngine } from '../context/PromptEngineContext';
+import { usePromptEngineActions } from '../context/prompt-engine/PromptEngineActionsContext';
+import { usePromptEngineConfig } from '../context/prompt-engine/PromptEngineConfigContext';
 import { type RuleDraft } from '../context/prompt-engine-context-utils';
+import { usePromptEngineData } from '../context/prompt-engine/PromptEngineDataContext';
+import { usePromptEngineFilters } from '../context/prompt-engine/PromptEngineFiltersContext';
 
 import type { PromptValidationRule } from '@/shared/lib/prompt-engine/settings';
 
@@ -96,18 +99,14 @@ type RuleListEntry =
     };
 
 export function RuleList(): React.JSX.Element {
+  const { filteredDrafts } = usePromptEngineData();
+  const { query, severity, scope, includeDisabled } = usePromptEngineFilters();
+  const { patternTab, exploderSubTab } = usePromptEngineConfig();
   const {
-    filteredDrafts,
-    query,
-    severity,
-    scope,
-    patternTab,
-    exploderSubTab,
-    includeDisabled,
     handleSequenceDrop,
     handleSaveSequenceGroup,
     handleUngroupSequenceGroup,
-  } = usePromptEngine();
+  } = usePromptEngineActions();
   const [draggedUid, setDraggedUid] = useState<string | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [groupDrafts, setGroupDrafts] = useState<Record<string, SequenceGroupDraft>>({});

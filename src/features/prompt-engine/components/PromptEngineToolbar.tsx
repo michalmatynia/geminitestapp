@@ -6,7 +6,9 @@ import React from 'react';
 
 import { Button, FileUploadButton, SectionHeader, JSONImportModal } from '@/shared/ui';
 
-import { usePromptEngine } from '../context/PromptEngineContext';
+import { usePromptEngineActions } from '../context/prompt-engine/PromptEngineActionsContext';
+import { usePromptEngineConfig } from '../context/prompt-engine/PromptEngineConfigContext';
+import { usePromptEngineData } from '../context/prompt-engine/PromptEngineDataContext';
 import { useOptionalPromptEngineValidationPageContext } from '../context/PromptEngineValidationPageContext';
 
 const DEFAULT_EYEBROW = 'AI · Prompt Engine';
@@ -19,13 +21,9 @@ export function PromptEngineToolbar(): React.JSX.Element {
   const resolvedEyebrow = pageContext?.eyebrow ?? DEFAULT_EYEBROW;
   const resolvedBackLinkHref = pageContext?.backLinkHref ?? DEFAULT_BACK_LINK_HREF;
   const resolvedBackLinkLabel = pageContext?.backLinkLabel ?? DEFAULT_BACK_LINK_LABEL;
+  const { patternTab, exploderSubTab } = usePromptEngineConfig();
+  const { isSaving, isDirty, learnedDirty, isLoading } = usePromptEngineData();
   const {
-    patternTab,
-    exploderSubTab,
-    isSaving,
-    isDirty,
-    learnedDirty,
-    isLoading,
     handleExport,
     handleExportLearned,
     handleImport,
@@ -34,7 +32,7 @@ export function PromptEngineToolbar(): React.JSX.Element {
     handleAddLearnedRule,
     handleSave,
     handleRefresh,
-  } = usePromptEngine();
+  } = usePromptEngineActions();
   const [pasteModalOpen, setPasteModalOpen] = React.useState(false);
   const [pasteTarget, setPasteTarget] = React.useState<'rules' | 'learned'>('rules');
 

@@ -20,10 +20,6 @@ export const useAdminLayoutActions = () => {
   return context;
 };
 
-// --- Context Aggregator ---
-
-interface AdminLayoutContextType extends AdminLayoutState, AdminLayoutActions {}
-
 export function AdminLayoutProvider({
   children,
   initialMenuCollapsed = false,
@@ -61,10 +57,4 @@ export function AdminLayoutProvider({
       <ActionsContext.Provider value={actionsValue}>{children}</ActionsContext.Provider>
     </StateContext.Provider>
   );
-}
-
-export function useAdminLayout(): AdminLayoutContextType {
-  const state = useAdminLayoutState();
-  const actions = useAdminLayoutActions();
-  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

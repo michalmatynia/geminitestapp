@@ -18,11 +18,24 @@ export function CanvasSvgNodeLayer({
 
   const worldViewport = React.useMemo(() => {
     if (!viewportSize) return null;
+    if (
+      !Number.isFinite(view.scale) ||
+      view.scale <= 0 ||
+      !Number.isFinite(view.x) ||
+      !Number.isFinite(view.y) ||
+      !Number.isFinite(viewportSize.width) ||
+      !Number.isFinite(viewportSize.height) ||
+      viewportSize.width <= 0 ||
+      viewportSize.height <= 0
+    ) {
+      return null;
+    }
+    const cullPaddingWorld = cullPadding / view.scale;
     return {
-      minX: -view.x / view.scale - cullPadding,
-      minY: -view.y / view.scale - cullPadding,
-      maxX: (-view.x + viewportSize.width) / view.scale + cullPadding,
-      maxY: (-view.y + viewportSize.height) / view.scale + cullPadding,
+      minX: -view.x / view.scale - cullPaddingWorld,
+      minY: -view.y / view.scale - cullPaddingWorld,
+      maxX: (-view.x + viewportSize.width) / view.scale + cullPaddingWorld,
+      maxY: (-view.y + viewportSize.height) / view.scale + cullPaddingWorld,
     };
   }, [cullPadding, view.scale, view.x, view.y, viewportSize]);
 
@@ -34,6 +47,14 @@ export function CanvasSvgNodeLayer({
         const top = node.position.y;
         const right = node.position.x + NODE_WIDTH;
         const bottom = node.position.y + NODE_MIN_HEIGHT;
+        if (
+          !Number.isFinite(left) ||
+          !Number.isFinite(top) ||
+          !Number.isFinite(right) ||
+          !Number.isFinite(bottom)
+        ) {
+          return true;
+        }
         if (
           right >= worldViewport.minX &&
             left <= worldViewport.maxX &&

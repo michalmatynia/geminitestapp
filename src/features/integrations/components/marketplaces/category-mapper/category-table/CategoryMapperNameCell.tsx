@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { ChevronDown, ChevronRight, Check } from 'lucide-react';
 import { Button } from '@/shared/ui';

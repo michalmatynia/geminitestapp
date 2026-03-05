@@ -8,7 +8,6 @@ import type {
   ProductCategoryWithChildren,
   ProductTag,
 } from '@/shared/contracts/products';
-import { internalError } from '@/shared/errors/app-error';
 
 // --- Granular Contexts ---
 
@@ -121,8 +120,6 @@ export const useProductSettingsPriceGroupModalSection = () => {
   return context;
 };
 
-// --- Context Aggregator ---
-
 type ProductSettingsPageContextValue = {
   categories: ProductSettingsCategoriesSection;
   tags: ProductSettingsTagsSection;
@@ -131,8 +128,6 @@ type ProductSettingsPageContextValue = {
   catalogModal: ProductSettingsCatalogModalSection;
   priceGroupModal: ProductSettingsPriceGroupModalSection;
 };
-
-const ProductSettingsPageContext = createContext<ProductSettingsPageContextValue | null>(null);
 
 export function ProductSettingsPageProvider({
   value,
@@ -148,9 +143,7 @@ export function ProductSettingsPageProvider({
           <CatalogsContext.Provider value={value.catalogs}>
             <CatalogModalContext.Provider value={value.catalogModal}>
               <PriceGroupModalContext.Provider value={value.priceGroupModal}>
-                <ProductSettingsPageContext.Provider value={value}>
-                  {children}
-                </ProductSettingsPageContext.Provider>
+                {children}
               </PriceGroupModalContext.Provider>
             </CatalogModalContext.Provider>
           </CatalogsContext.Provider>
@@ -158,15 +151,4 @@ export function ProductSettingsPageProvider({
       </TagsContext.Provider>
     </CategoriesContext.Provider>
   );
-}
-
-// Deprecated hook, use granular hooks instead
-export function useProductSettingsPageContext(): ProductSettingsPageContextValue {
-  const context = useContext(ProductSettingsPageContext);
-  if (!context) {
-    throw internalError(
-      'useProductSettingsPageContext must be used within ProductSettingsPageProvider'
-    );
-  }
-  return context;
 }

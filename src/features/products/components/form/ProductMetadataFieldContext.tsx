@@ -116,12 +116,3 @@ export function useOptionalProductMetadataFieldActionsContext():
   | null {
   return React.useContext(ProductMetadataFieldActionsContext);
 }
-
-export function useOptionalProductMetadataFieldContext(): ProductMetadataFieldContextValue | null {
-  const state = useOptionalProductMetadataFieldStateContext();
-  const actions = useOptionalProductMetadataFieldActionsContext();
-  if (!state || !actions) {
-    return null;
-  }
-  return { ...state, ...actions };
-}

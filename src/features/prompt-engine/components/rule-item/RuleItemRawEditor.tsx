@@ -3,11 +3,11 @@
 import React from 'react';
 import { Textarea, CollapsibleSection, Hint } from '@/shared/ui';
 import { useRuleItemContext } from '../context/RuleItemContext';
-import { usePromptEngine } from '../../context/PromptEngineContext';
+import { usePromptEngineActions } from '../../context/prompt-engine/PromptEngineActionsContext';
 
 export function RuleItemRawEditor(): React.JSX.Element {
   const { draft } = useRuleItemContext();
-  const { handleRuleTextChange } = usePromptEngine();
+  const { handleRuleTextChange } = usePromptEngineActions();
 
   return (
     <CollapsibleSection

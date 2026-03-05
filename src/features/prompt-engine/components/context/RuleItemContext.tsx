@@ -15,7 +15,7 @@ import {
   removeAutofixOperationFromRule,
   addAutofixOperationToRule,
 } from '../rule-item-mutations';
-import { usePromptEngine } from '../../context/PromptEngineContext';
+import { usePromptEngineActions } from '../../context/prompt-engine/PromptEngineActionsContext';
 
 interface RuleItemContextValue {
   draft: RuleDraft;
@@ -45,7 +45,7 @@ interface RuleItemProviderProps {
 }
 
 export function RuleItemProvider({ draft, children }: RuleItemProviderProps): React.JSX.Element {
-  const { handlePatchRule } = usePromptEngine();
+  const { handlePatchRule } = usePromptEngineActions();
   const rule = draft.parsed;
 
   const patchRule = useCallback(

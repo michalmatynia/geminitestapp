@@ -2,18 +2,19 @@
 
 import React from 'react';
 import { SelectSimple, ValidatorFormatterToggle } from '@/shared/ui';
-import { useProductValidationSettings } from '@/features/products/context/ProductValidationSettingsContext';
+import {
+  useProductValidationActions,
+  useProductValidationState,
+} from '@/features/products/context/ProductValidationSettingsContext';
 
 export function ProductFormValidationTab(): React.JSX.Element {
+  const { validatorEnabled, formatterEnabled, validationDenyBehavior, validationInstanceScope } =
+    useProductValidationState();
   const {
-    validatorEnabled,
-    formatterEnabled,
     setValidatorEnabled,
     setFormatterEnabled,
-    validationDenyBehavior,
     setValidationDenyBehavior,
-    validationInstanceScope,
-  } = useProductValidationSettings();
+  } = useProductValidationActions();
 
   return (
     <div className='rounded-md border border-border bg-gray-900/70 p-4'>

@@ -8,11 +8,13 @@ import { LearnedRuleList } from '../components/LearnedRuleList';
 import { PromptEngineFilters } from '../components/PromptEngineFilters';
 import { PromptEngineToolbar } from '../components/PromptEngineToolbar';
 import { RuleList } from '../components/RuleList';
-import { PromptEngineProvider, usePromptEngine } from '../context/PromptEngineContext';
+import { PromptEngineProvider } from '../context/PromptEngineContext';
 import {
   type ExploderPatternSubTab,
   type PatternCollectionTab,
+  usePromptEngineConfig,
 } from '../context/prompt-engine/PromptEngineConfigContext';
+import { usePromptEngineData } from '../context/prompt-engine/PromptEngineDataContext';
 import { PromptEngineValidationPageProvider } from '../context/PromptEngineValidationPageContext';
 import type { PromptValidationScope } from '@/shared/lib/prompt-engine/settings';
 
@@ -31,7 +33,8 @@ type AdminPromptEngineValidationPatternsPageProps = {
 };
 
 function AdminPromptEngineValidationPatternsContent(): React.JSX.Element {
-  const { promptEngineSettings, saveError, isUsingDefaults } = usePromptEngine();
+  const { promptEngineSettings, isUsingDefaults } = usePromptEngineConfig();
+  const { saveError } = usePromptEngineData();
 
   return (
     <div className='space-y-4'>

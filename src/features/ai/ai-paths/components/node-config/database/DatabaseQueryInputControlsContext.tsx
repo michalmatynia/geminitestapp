@@ -207,9 +207,3 @@ export function useDatabaseQueryInputControlsActionsContext(): DatabaseQueryInpu
   }
   return context;
 }
-
-export function useDatabaseQueryInputControlsContext(): DatabaseQueryInputControlsContextValue {
-  const state = useDatabaseQueryInputControlsStateContext();
-  const actions = useDatabaseQueryInputControlsActionsContext();
-  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
-}

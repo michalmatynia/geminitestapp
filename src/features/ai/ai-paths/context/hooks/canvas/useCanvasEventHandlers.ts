@@ -7,14 +7,17 @@ export interface UseCanvasEventHandlersValue {
   wheelGestureActiveUntilRef: React.MutableRefObject<number>;
 }
 
+const CANVAS_SCROLL_REGION_SELECTOR = '[data-canvas-scroll-region]';
+
 export function useCanvasEventHandlers(args: {
   viewportRef: React.RefObject<HTMLDivElement | null>;
   view: { scale: number; panX: number; panY: number };
   nav: UseCanvasInteractionsNavigationValue;
   updateLastPointerCanvasPosFromClient: (x: number, y: number) => void;
-  resolveViewportPointFromClient: (x: number, y: number) => { x: number; y: number } | null;
+  isPanActive?: () => boolean;
+  rebasePanStateFromClient?: (x: number, y: number) => void;
 }): UseCanvasEventHandlersValue {
-  const { nav, resolveViewportPointFromClient, updateLastPointerCanvasPosFromClient } = args;
+  const { nav, updateLastPointerCanvasPosFromClient, isPanActive, rebasePanStateFromClient } = args;
 
   const wheelGestureActiveUntilRef = useRef(0);
   const wheelGestureSourceRef = useRef<'wheel-modifier' | 'safari' | null>(null);
@@ -26,6 +29,7 @@ export function useCanvasEventHandlers(args: {
     defaultPrevented?: boolean;
     preventDefault: () => void;
     stopPropagation?: () => void;
+    target?: EventTarget | null;
     deltaY: number;
     deltaX: number;
     deltaMode: number;
@@ -66,8 +70,13 @@ export function useCanvasEventHandlers(args: {
     return wheelGestureSourceRef.current === 'safari';
   }, []);
 
+  const isWheelEventFromScrollRegion = useCallback((target: EventTarget | null | undefined): boolean => {
+    if (!(target instanceof Element)) return false;
+    return Boolean(target.closest(CANVAS_SCROLL_REGION_SELECTOR));
+  }, []);
+
   const applyWheelZoomFromEvent = useCallback(
-    (event: WheelLikeEvent): void => {
+    (event: WheelLikeEvent, options?: { immediate?: boolean }): void => {
       const hasFiniteClient = Number.isFinite(event.clientX) && Number.isFinite(event.clientY);
       const anchorClient = hasFiniteClient
         ? { x: event.clientX, y: event.clientY }
@@ -80,7 +89,8 @@ export function useCanvasEventHandlers(args: {
         event.deltaMode,
         event.ctrlKey,
         event.metaKey,
-        event.deltaX
+        event.deltaX,
+        options
       );
     },
     [nav, resolveViewportCenter]
@@ -92,6 +102,8 @@ export function useCanvasEventHandlers(args: {
       const now = performance.now();
       const insideByPoint = isPointInsideCanvas(event.clientX, event.clientY);
       if (!insideByPoint) return;
+      if (isWheelEventFromScrollRegion(event.target)) return;
+      const panActive = isPanActive?.() ?? false;
       const likelyZoomGesture = isWheelLikelyZoomGesture(event);
 
       wheelGestureSourceRef.current =
@@ -99,9 +111,19 @@ export function useCanvasEventHandlers(args: {
       wheelGestureActiveUntilRef.current = now + 1800;
       event.preventDefault();
       event.stopPropagation?.();
-      applyWheelZoomFromEvent(event);
+      applyWheelZoomFromEvent(event, panActive ? { immediate: true } : undefined);
+      if (panActive && Number.isFinite(event.clientX) && Number.isFinite(event.clientY)) {
+        rebasePanStateFromClient?.(event.clientX, event.clientY);
+      }
     },
-    [applyWheelZoomFromEvent, isPointInsideCanvas, isWheelLikelyZoomGesture]
+    [
+      applyWheelZoomFromEvent,
+      isPointInsideCanvas,
+      isWheelEventFromScrollRegion,
+      isWheelLikelyZoomGesture,
+      isPanActive,
+      rebasePanStateFromClient,
+    ]
   );
 
   const handleWheel = useCallback(
@@ -110,16 +132,6 @@ export function useCanvasEventHandlers(args: {
     },
     [handleWheelLike]
   );
-
-  useEffect(() => {
-    const handleNativeWheel = (event: WheelEvent): void => {
-      handleWheelLike(event);
-    };
-    window.addEventListener('wheel', handleNativeWheel, { passive: false, capture: true });
-    return (): void => {
-      window.removeEventListener('wheel', handleNativeWheel, true);
-    };
-  }, [handleWheelLike]);
 
   useEffect(() => {
     const viewportElement = args.viewportRef.current;
@@ -181,9 +193,8 @@ export function useCanvasEventHandlers(args: {
 
       wheelGestureSourceRef.current = 'safari';
       wheelGestureActiveUntilRef.current = performance.now() + 1800;
-      const anchor = resolveViewportPointFromClient(anchorClient.x, anchorClient.y);
       const targetScale = clampScale(latestScaleRef.current * scaleFactor);
-      const targetView = nav.getZoomTargetView(targetScale, anchor);
+      const targetView = nav.getZoomTargetView(targetScale, anchorClient);
       nav.setViewClamped(targetView);
       updateLastPointerCanvasPosFromClient(anchorClient.x, anchorClient.y);
     };
@@ -209,7 +220,6 @@ export function useCanvasEventHandlers(args: {
     isPointInsideCanvas,
     nav,
     resolveViewportCenter,
-    resolveViewportPointFromClient,
     updateLastPointerCanvasPosFromClient,
   ]);
 

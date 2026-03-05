@@ -6,6 +6,7 @@ import {
   evaluateLegacyPruneManifest,
   loadLegacyPruneManifest,
 } from './legacy-prune-manifest-utils.mjs';
+import { evaluateCanonicalManifestPathRules } from './canonical-manifest-paths-utils.mjs';
 
 const ROOT = process.cwd();
 const SRC_DIR = path.join(ROOT, 'src');
@@ -42,6 +43,13 @@ const reportViolation = (file, message) => {
   violations.push({ file, message });
 };
 
+const checkValidationManifestSourcePaths = () => {
+  const findings = evaluateCanonicalManifestPathRules({ root: ROOT });
+  for (const finding of findings) {
+    reportViolation(finding.file, finding.message);
+  }
+};
+
 const checkManifestLegacyPruneRules = () => {
   let manifest;
   try {
@@ -66,6 +74,7 @@ const main = () => {
   const sourceFiles = collectSourceFiles(SRC_DIR);
 
   checkManifestLegacyPruneRules();
+  checkValidationManifestSourcePaths();
 
   if (violations.length > 0) {
     console.error('[ai-paths:check:canonical] failed with violations:');

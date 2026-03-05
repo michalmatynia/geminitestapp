@@ -76,7 +76,7 @@
     {
       "id": "docs-snippets",
       "type": "docs_snippet",
-      "path": "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts",
+      "path": "src/shared/lib/ai-paths/core/definitions/docs-snippets.ts",
       "enabled": true,
       "priority": 90,
       "snippetNames": ["DOCS_WIRING_SNIPPET", "DOCS_DESCRIPTION_SNIPPET", "DOCS_JOBS_SNIPPET"],

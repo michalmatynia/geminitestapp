@@ -6,8 +6,10 @@ import {
   CRITICAL_CONFIG_FIELD_PATTERN,
   DOC_ASSERTION_BLOCK_REGEX,
   DOCS_MANIFEST_PATH,
+  DOCS_SNIPPETS_SOURCE_PATH,
   DOCS_SNIPPET_REGISTRY,
   BUILTIN_FALLBACK_MANIFEST,
+  NODE_DOCS_CATALOG_SOURCE_PATH,
   NODE_LABEL_TO_TYPE,
 } from './docs-registry-adapter.constants';
 import {
@@ -38,9 +40,9 @@ import {
 
 const PROJECT_ROOT = process.cwd();
 const DOCS_AI_PATHS_ROOT = path.join(PROJECT_ROOT, 'docs', 'ai-paths');
-const AI_PATHS_FEATURE_ROOT = path.join(PROJECT_ROOT, 'src', 'features', 'ai', 'ai-paths');
+const AI_PATHS_SHARED_ROOT = path.join(PROJECT_ROOT, 'src', 'shared', 'lib', 'ai-paths');
 const DOCS_AI_PATHS_PREFIX = 'docs/ai-paths/';
-const AI_PATHS_FEATURE_PREFIX = 'src/features/ai/ai-paths/';
+const AI_PATHS_SHARED_PREFIX = 'src/shared/lib/ai-paths/';
 
 const normalizeRepoRelativePath = (candidate: string): string =>
   candidate
@@ -54,7 +56,7 @@ const hasPathTraversal = (segments: string[]): boolean =>
 const resolveAiPathsDocsAbsolutePath = (candidate: string): string => {
   if (path.isAbsolute(candidate)) {
     const absoluteCandidate = path.normalize(candidate);
-    const allowedAbsoluteRoots = [DOCS_AI_PATHS_ROOT, AI_PATHS_FEATURE_ROOT];
+    const allowedAbsoluteRoots = [DOCS_AI_PATHS_ROOT, AI_PATHS_SHARED_ROOT];
     const isUnderAllowedRoot = allowedAbsoluteRoots.some(
       (root) => absoluteCandidate === root || absoluteCandidate.startsWith(`${root}${path.sep}`)
     );
@@ -62,7 +64,7 @@ const resolveAiPathsDocsAbsolutePath = (candidate: string): string => {
       return absoluteCandidate;
     }
     throw new Error(
-      `Path "${candidate}" is outside allowed docs roots: "${DOCS_AI_PATHS_ROOT}" or "${AI_PATHS_FEATURE_ROOT}".`
+      `Path "${candidate}" is outside allowed docs roots: "${DOCS_AI_PATHS_ROOT}" or "${AI_PATHS_SHARED_ROOT}".`
     );
   }
 
@@ -76,17 +78,17 @@ const resolveAiPathsDocsAbsolutePath = (candidate: string): string => {
     return path.join(DOCS_AI_PATHS_ROOT, ...segments);
   }
 
-  if (normalized.startsWith(AI_PATHS_FEATURE_PREFIX)) {
-    const tail = normalized.slice(AI_PATHS_FEATURE_PREFIX.length);
+  if (normalized.startsWith(AI_PATHS_SHARED_PREFIX)) {
+    const tail = normalized.slice(AI_PATHS_SHARED_PREFIX.length);
     const segments = tail.split('/').filter((segment) => segment.length > 0);
     if (hasPathTraversal(segments)) {
       throw new Error(`Path "${candidate}" includes forbidden parent traversal.`);
     }
-    return path.join(AI_PATHS_FEATURE_ROOT, ...segments);
+    return path.join(AI_PATHS_SHARED_ROOT, ...segments);
   }
 
   throw new Error(
-    `Path "${candidate}" must start with "${DOCS_AI_PATHS_PREFIX}" or "${AI_PATHS_FEATURE_PREFIX}".`
+    `Path "${candidate}" must start with "${DOCS_AI_PATHS_PREFIX}" or "${AI_PATHS_SHARED_PREFIX}".`
   );
 };
 
@@ -95,7 +97,7 @@ export const parseSnippetWiringAssertions = (
   snippetText: string,
   sourceHash: string
 ): AiPathsDocAssertion[] => {
-  const sourcePath = `src/shared/lib/ai-paths/core/definitions/docs-snippets.ts#${snippetName}`;
+  const sourcePath = `${DOCS_SNIPPETS_SOURCE_PATH}#${snippetName}`;
   const snippetSlug = snippetName.toLowerCase().replace(/[^a-z0-9_]+/g, '_');
   const parsed = snippetText
     .split('\n')
@@ -234,7 +236,7 @@ export const extractAiPathsAssertionsFromMarkdown = (
 };
 
 export const buildNodeDocsCatalogAssertions = (): AiPathsDocAssertion[] => {
-  const sourcePath = 'src/features/ai/ai-paths/lib/core/docs/node-docs.ts';
+  const sourcePath = NODE_DOCS_CATALOG_SOURCE_PATH;
   const sourceHash = hashText(JSON.stringify(AI_PATHS_NODE_DOCS));
   const assertions: AiPathsDocAssertion[] = [];
   const seenIds = new Set<string>();

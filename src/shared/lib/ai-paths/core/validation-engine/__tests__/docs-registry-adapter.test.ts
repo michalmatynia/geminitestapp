@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  DOCS_SNIPPETS_SOURCE_PATH,
+  NODE_DOCS_CATALOG_SOURCE_PATH,
+} from '../docs-registry-adapter.constants';
+import {
   buildAiPathsValidationDocsSnapshot,
   extractAiPathsAssertionsFromMarkdown,
 } from '../docs-registry-adapter';
@@ -48,6 +52,12 @@ describe('docs registry adapter', () => {
     expect(sourceIds).toContain('semantic-nodes-catalog');
     expect(sourceIds).toContain('tooltip-docs-catalog');
     expect(sourceIds).toContain('coverage-matrix');
+    const nodeDocsCatalogSource = snapshot.sources.find(
+      (source) => source.id === 'node-docs-catalog'
+    );
+    expect(nodeDocsCatalogSource?.path).toBe(NODE_DOCS_CATALOG_SOURCE_PATH);
+    const docsSnippetsSource = snapshot.sources.find((source) => source.id === 'docs-snippets');
+    expect(docsSnippetsSource?.path).toBe(DOCS_SNIPPETS_SOURCE_PATH);
 
     const uniqueAssertionIds = new Set(snapshot.assertions.map((assertion) => assertion.id));
     expect(uniqueAssertionIds.size).toBe(snapshot.assertions.length);

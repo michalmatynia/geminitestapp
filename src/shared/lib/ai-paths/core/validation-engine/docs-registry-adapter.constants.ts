@@ -7,6 +7,8 @@ import { type AiPathsDocsManifest } from './docs-registry-adapter.types';
 
 export const DOC_ASSERTION_BLOCK_REGEX = /```ai-paths-assertion\s*([\s\S]*?)```/gim;
 export const DOCS_MANIFEST_PATH = 'docs/ai-paths/node-validator-central-manifest.json';
+export const NODE_DOCS_CATALOG_SOURCE_PATH = 'src/shared/lib/ai-paths/core/docs/node-docs.ts';
+export const DOCS_SNIPPETS_SOURCE_PATH = 'src/shared/lib/ai-paths/core/definitions/docs-snippets.ts';
 
 export const CRITICAL_CONFIG_FIELD_PATTERN =
   /(entityId|collection|modelId|template|event|pattern|queryTemplate|intervalMs|maxAttempts|mappings|url)$/i;
@@ -73,7 +75,7 @@ export const BUILTIN_FALLBACK_MANIFEST: AiPathsDocsManifest = {
     {
       id: 'node-docs-catalog',
       type: 'node_docs_catalog',
-      path: 'src/features/ai/ai-paths/lib/core/docs/node-docs.ts',
+      path: NODE_DOCS_CATALOG_SOURCE_PATH,
       enabled: true,
       priority: 80,
       tags: ['catalog'],
@@ -81,7 +83,7 @@ export const BUILTIN_FALLBACK_MANIFEST: AiPathsDocsManifest = {
     {
       id: 'docs-snippets',
       type: 'docs_snippet',
-      path: 'src/shared/lib/ai-paths/core/definitions/docs-snippets.ts',
+      path: DOCS_SNIPPETS_SOURCE_PATH,
       enabled: true,
       priority: 90,
       tags: ['snippets', 'wiring'],

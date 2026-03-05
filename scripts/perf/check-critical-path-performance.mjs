@@ -48,33 +48,40 @@ const apiRouteBudgets = [
     id: 'auth-session-api',
     name: 'Authentication + Session Bootstrap (API)',
     maxLines: 240,
+    maxBranchPoints: 14,
     files: ['src/app/api/auth/verify-credentials/handler.ts'],
   },
   {
     id: 'products-core-crud-api',
     name: 'Products CRUD + Listing Refresh (API)',
     maxLines: 180,
+    maxBranchPoints: 14,
     files: ['src/app/api/v2/products/handler.ts'],
   },
   {
     id: 'image-studio-generate-api',
     name: 'Image Studio Generate + Preview (API)',
     maxLines: 760,
+    maxBranchPoints: 95,
     files: ['src/app/api/image-studio/projects/[projectId]/handler.ts'],
   },
   {
     id: 'ai-paths-runtime-api',
     name: 'AI Paths Run Execution (API)',
     maxLines: 260,
+    maxBranchPoints: 22,
     files: ['src/app/api/ai-paths/runs/handler.ts'],
   },
   {
     id: 'case-resolver-capture-api',
     name: 'Case Resolver OCR + Capture Mapping (API)',
     maxLines: 120,
+    maxBranchPoints: 15,
     files: ['src/app/api/case-resolver/ocr/jobs/handler.ts'],
   },
 ];
+
+const BRANCH_POINT_PATTERNS = [/\bif\b/g, /\bswitch\b/g, /\bcase\b/g, /\bcatch\b/g, /\bfor\b/g, /\bwhile\b/g];
 
 const countLines = async (absolutePath) => {
   const content = await fs.readFile(absolutePath, 'utf8');
@@ -82,6 +89,15 @@ const countLines = async (absolutePath) => {
     return 0;
   }
   return content.split(/\r?\n/).length;
+};
+
+const countBranchPoints = async (absolutePath) => {
+  const content = await fs.readFile(absolutePath, 'utf8');
+  if (!content) return 0;
+  return BRANCH_POINT_PATTERNS.reduce((acc, pattern) => {
+    const matches = content.match(pattern);
+    return acc + (matches ? matches.length : 0);
+  }, 0);
 };
 
 const summarizeGroup = (results) => ({
@@ -96,28 +112,35 @@ const evaluateBudgetGroup = async (entries, kind) => {
   for (const budget of entries) {
     const files = [];
     let totalLines = 0;
+    let totalBranchPoints = 0;
 
     for (const relPath of budget.files) {
       const absPath = path.join(root, relPath);
       try {
         const lines = await countLines(absPath);
+        const branchPoints = await countBranchPoints(absPath);
         totalLines += lines;
-        files.push({ path: relPath, exists: true, lines });
+        totalBranchPoints += branchPoints;
+        files.push({ path: relPath, exists: true, lines, branchPoints });
       } catch {
-        files.push({ path: relPath, exists: false, lines: null });
+        files.push({ path: relPath, exists: false, lines: null, branchPoints: null });
       }
     }
 
     const hasMissing = files.some((file) => !file.exists);
     const overBudget = totalLines > budget.maxLines;
-    const status = hasMissing || overBudget ? 'fail' : 'pass';
+    const hasBranchBudget = Number.isFinite(budget.maxBranchPoints);
+    const overBranchBudget = hasBranchBudget && totalBranchPoints > budget.maxBranchPoints;
+    const status = hasMissing || overBudget || overBranchBudget ? 'fail' : 'pass';
 
     const result = {
       id: budget.id,
       kind,
       name: budget.name,
       maxLines: budget.maxLines,
+      maxBranchPoints: hasBranchBudget ? budget.maxBranchPoints : null,
       totalLines,
+      totalBranchPoints,
       status,
       files,
     };
@@ -125,7 +148,7 @@ const evaluateBudgetGroup = async (entries, kind) => {
     results.push(result);
 
     console.log(
-      `[critical-paths] ${budget.name.padEnd(44, ' ')} ${status.toUpperCase()} ${totalLines}/${budget.maxLines} LOC`
+      `[critical-paths] ${budget.name.padEnd(44, ' ')} ${status.toUpperCase()} ${totalLines}/${budget.maxLines} LOC${hasBranchBudget ? ` | branch ${totalBranchPoints}/${budget.maxBranchPoints}` : ''}`
     );
   }
 
@@ -135,15 +158,38 @@ const evaluateBudgetGroup = async (entries, kind) => {
 const renderBudgetTable = (lines, title, results) => {
   lines.push(`## ${title}`);
   lines.push('');
-  lines.push('| Path | Status | Total LOC | Budget LOC | Delta |');
-  lines.push('| --- | --- | ---: | ---: | ---: |');
+  const includesBranch = results.some((result) => Number.isFinite(result.maxBranchPoints));
+  if (includesBranch) {
+    lines.push(
+      '| Path | Status | Total LOC | Budget LOC | LOC Delta | Branch Points | Branch Budget | Branch Delta |'
+    );
+    lines.push('| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |');
+  } else {
+    lines.push('| Path | Status | Total LOC | Budget LOC | Delta |');
+    lines.push('| --- | --- | ---: | ---: | ---: |');
+  }
 
   for (const result of results) {
-    const delta = result.totalLines - result.maxLines;
-    const deltaText = delta > 0 ? `+${delta}` : String(delta);
-    lines.push(
-      `| ${result.name} | ${result.status.toUpperCase()} | ${result.totalLines} | ${result.maxLines} | ${deltaText} |`
-    );
+    const locDelta = result.totalLines - result.maxLines;
+    const locDeltaText = locDelta > 0 ? `+${locDelta}` : String(locDelta);
+    if (includesBranch) {
+      const branchBudget = Number.isFinite(result.maxBranchPoints) ? result.maxBranchPoints : null;
+      const branchDelta =
+        branchBudget === null ? '-' : result.totalBranchPoints - branchBudget;
+      const branchDeltaText =
+        branchDelta === '-'
+          ? '-'
+          : branchDelta > 0
+            ? `+${branchDelta}`
+            : String(branchDelta);
+      lines.push(
+        `| ${result.name} | ${result.status.toUpperCase()} | ${result.totalLines} | ${result.maxLines} | ${locDeltaText} | ${result.totalBranchPoints} | ${branchBudget ?? '-'} | ${branchDeltaText} |`
+      );
+    } else {
+      lines.push(
+        `| ${result.name} | ${result.status.toUpperCase()} | ${result.totalLines} | ${result.maxLines} | ${locDeltaText} |`
+      );
+    }
   }
 
   lines.push('');
@@ -156,7 +202,9 @@ const renderFileBreakdown = (lines, title, results) => {
     lines.push(`### ${result.name}`);
     lines.push('');
     for (const file of result.files) {
-      const suffix = file.exists ? `${file.lines} LOC` : 'missing';
+      const suffix = file.exists
+        ? `${file.lines} LOC${Number.isFinite(file.branchPoints) ? ` | ${file.branchPoints} branch points` : ''}`
+        : 'missing';
       lines.push(`- \`${file.path}\`: ${suffix}`);
     }
     lines.push('');
@@ -205,6 +253,7 @@ const toMarkdown = (payload) => {
   lines.push('## Notes');
   lines.push('');
   lines.push('- LOC is a static complexity heuristic, not runtime latency.');
+  lines.push('- Branch points are a coarse static control-flow complexity heuristic (if/switch/case/catch/for/while).');
   lines.push('- Keep critical-path pages/routes below budget before adding more conditional branches.');
 
   return `${lines.join('\n')}\n`;

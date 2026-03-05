@@ -13,6 +13,7 @@ import {
   normalizeNodes,
   sanitizeEdges,
   normalizeAiPathsValidationConfig,
+  resolvePortablePathInput,
   stableStringify,
 } from '@/shared/lib/ai-paths';
 import {
@@ -139,6 +140,31 @@ export function useAiPathsPersistence(
     []
   );
 
+  const resolveLoadedPathConfig = useCallback(
+    (payload: string, pathId: string, fallbackName?: string): PathConfig => {
+      const resolved = resolvePortablePathInput(payload, {
+        repairIdentities: true,
+        includeConnections: false,
+      });
+      if (!resolved.ok) {
+        throw new Error(resolved.error);
+      }
+      const base = createDefaultPathConfig(pathId);
+      const resolvedConfig = resolved.value.pathConfig;
+      const resolvedName =
+        typeof resolvedConfig.name === 'string' && resolvedConfig.name.trim().length > 0
+          ? resolvedConfig.name
+          : (fallbackName ?? base.name);
+      return {
+        ...base,
+        ...resolvedConfig,
+        id: pathId,
+        name: resolvedName,
+      };
+    },
+    []
+  );
+
   const persistLastError = useCallback(
     async (error: unknown): Promise<void> => {
       const message = error instanceof Error ? error.message : error ? String(error) : null;
@@ -219,7 +245,8 @@ export function useAiPathsPersistence(
           const configItem = activeConfigSettings.find((item) => item.key === activeConfigKey);
           if (configItem?.value) {
             try {
-              config = JSON.parse(configItem.value) as PathConfig;
+              const fallbackName = loadedPaths.find((path: PathMeta): boolean => path.id === resolvedActivePathId)?.name;
+              config = resolveLoadedPathConfig(configItem.value, resolvedActivePathId, fallbackName);
             } catch (error) {
               logClientError(error, {
                 context: {
@@ -436,7 +463,8 @@ export function useAiPathsPersistence(
             const item = settingByKey.get(`${PATH_CONFIG_PREFIX}${pathId}`);
             if (!item?.value) return;
             try {
-              const parsed = JSON.parse(item.value) as PathConfig;
+              const fallbackName = paths.find((path: PathMeta): boolean => path.id === pathId)?.name;
+              const parsed = resolveLoadedPathConfig(item.value, pathId, fallbackName);
               const sanitized = sanitizePrefetchedPathConfig(parsed, pathId);
               if (!sanitized) return;
               hydratedConfigs[pathId] = sanitized;
@@ -520,7 +548,15 @@ export function useAiPathsPersistence(
         }
       }
     };
-  }, [activePathId, loading, pathConfigs, paths, sanitizePrefetchedPathConfig, setPathConfigs]);
+  }, [
+    activePathId,
+    loading,
+    pathConfigs,
+    paths,
+    resolveLoadedPathConfig,
+    sanitizePrefetchedPathConfig,
+    setPathConfigs,
+  ]);
 
   useEffect((): void => {
     if (loading || !activePathId) return;

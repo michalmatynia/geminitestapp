@@ -30,6 +30,7 @@ export function ZoneFooterNode({
   const draggedSectionId = dragState.section.id ?? draggedMasterSectionId;
   const canDropHere =
     showSectionDropPlaceholder && canDropSectionsAtRoot && Boolean(draggedSectionId);
+  const pickerZone = zone;
 
   return (
     <>
@@ -72,7 +73,7 @@ export function ZoneFooterNode({
         ) : null}
         <TreeSectionPicker
           disabled={!currentPage}
-          zone={zone}
+          zone={pickerZone}
         />
       </div>
     </>

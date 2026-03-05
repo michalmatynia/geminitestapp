@@ -189,12 +189,14 @@ export function AdminLayout({
   initialMenuCollapsed?: boolean;
   session?: Session | null;
 }): React.ReactNode {
+  const menuCollapsedDefault = initialMenuCollapsed;
+
   return (
     <SessionProvider session={session}>
       <QueryProvider>
         <AuthProvider>
           <ToastProvider>
-            <AdminLayoutProvider initialMenuCollapsed={initialMenuCollapsed}>
+            <AdminLayoutProvider initialMenuCollapsed={menuCollapsedDefault}>
               <NoteSettingsProvider>
                 <AdminLayoutContent>{children}</AdminLayoutContent>
               </NoteSettingsProvider>

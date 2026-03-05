@@ -62,11 +62,12 @@ export function ValidatorDocTooltip({
   children: React.ReactNode;
 }): React.JSX.Element {
   const { enabled } = useValidatorDocsTooltips();
+  const tooltipDocId = React.useMemo(() => docId, [docId]);
 
   return (
     <DocumentationTooltip
       moduleId={MODULE_ID}
-      docId={docId}
+      docId={tooltipDocId}
       enabled={enabled}
       side='top'
       maxWidth='360px'

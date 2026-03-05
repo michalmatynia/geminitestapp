@@ -10,9 +10,11 @@ import { Button, Checkbox, SectionHeader, SimpleSettingsList, LoadingState } fro
 export function AppEmbedsPanel({
   showHeader = true,
 }: { showHeader?: boolean } = {}): React.ReactNode {
+  const shouldShowHeader = showHeader;
+
   return (
     <AppEmbedsProvider>
-      <AppEmbedsPanelContent showHeader={showHeader} />
+      <AppEmbedsPanelContent showHeader={shouldShowHeader} />
     </AppEmbedsProvider>
   );
 }

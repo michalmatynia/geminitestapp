@@ -62,6 +62,7 @@ export function DataTableSortableHeader<TData, TValue>({
 }) {
   const direction = column.getIsSorted();
   const handler = column.getToggleSortingHandler();
+  const headerClassName = className;
 
   return (
     <Button
@@ -72,7 +73,7 @@ export function DataTableSortableHeader<TData, TValue>({
       disabled={!handler}
       className={cn(
         '-ml-3 h-8 gap-1 px-3 text-left text-sm font-medium text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60',
-        className
+        headerClassName
       )}
     >
       {label}

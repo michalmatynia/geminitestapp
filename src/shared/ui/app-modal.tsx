@@ -236,11 +236,12 @@ export function AppModal({
     }),
     [modalContentClassName, handleInteractOutside, handleEscapeKeyDown]
   );
+  const modalTitle = title;
 
   return (
     <Dialog open={isCurrentlyOpen} onOpenChange={handleOpenChange}>
       <AppModalDialogContentRuntimeContext.Provider value={dialogContentRuntimeValue}>
-        <AppModalDialogContentShell title={title} dialogDescription={dialogDescription}>
+        <AppModalDialogContentShell title={modalTitle} dialogDescription={dialogDescription}>
           <div
             className={cn(
               'pointer-events-auto w-full rounded-lg border flex flex-col',

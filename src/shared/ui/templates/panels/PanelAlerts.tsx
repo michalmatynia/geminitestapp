@@ -56,28 +56,31 @@ export const PanelAlerts: React.FC<PanelAlertsProps> = ({
 
   return (
     <div className={cn('space-y-2', className)}>
-      {allAlerts.map((alert, index) => (
-        <Alert
-          key={index}
-          variant={alert.type as AlertVariant}
-          title={alert.title}
-          onDismiss={alert.dismissible ? () => onDismiss?.(index) : undefined}
-        >
-          <div className='flex flex-col gap-2'>
-            {alert.message}
-            {alert.action && (
-              <Button
-                variant='link'
-                size='xs'
-                onClick={alert.action.onClick}
-                className='h-auto p-0 justify-start text-inherit hover:no-underline font-semibold'
-              >
-                {alert.action.label}
-              </Button>
-            )}
-          </div>
-        </Alert>
-      ))}
+      {allAlerts.map((alert, index) => {
+        const dismissHandler = alert.dismissible ? () => onDismiss?.(index) : undefined;
+        return (
+          <Alert
+            key={index}
+            variant={alert.type as AlertVariant}
+            title={alert.title}
+            onDismiss={dismissHandler}
+          >
+            <div className='flex flex-col gap-2'>
+              {alert.message}
+              {alert.action && (
+                <Button
+                  variant='link'
+                  size='xs'
+                  onClick={alert.action.onClick}
+                  className='h-auto p-0 justify-start text-inherit hover:no-underline font-semibold'
+                >
+                  {alert.action.label}
+                </Button>
+              )}
+            </div>
+          </Alert>
+        );
+      })}
     </div>
   );
 };

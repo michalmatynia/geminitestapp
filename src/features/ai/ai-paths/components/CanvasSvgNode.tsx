@@ -190,6 +190,7 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
     ? Math.max(64, runtimeStatusLabel.length * 6 + 16)
     : 0;
   const showNodePorts = detailLevel !== 'skeleton' || isSelected || isPrimarySelected;
+  const nodeForPorts = node;
   const titleFontSize = detailLevel === 'skeleton' ? 11 : 12;
   const titleY = detailLevel === 'skeleton' ? 17 : 18;
   const titleText =
@@ -559,7 +560,7 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
 
       {showNodePorts && (
         <CanvasSvgNodePorts
-          node={node}
+          node={nodeForPorts}
           incomingEdgePortSet={incomingEdgePortSet}
           hoveredConnectorKey={hoveredConnectorKey}
           pinnedConnectorKey={pinnedConnectorKey}

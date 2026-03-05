@@ -20,6 +20,7 @@ import {
   duplicatePathConfig,
   normalizeAiPathsValidationConfig,
   normalizeNodes,
+  resolvePortablePathInput,
   sanitizeEdges,
   triggers,
 } from '@/shared/lib/ai-paths';
@@ -157,6 +158,32 @@ export function useAiPathsSettingsPathActions({
       }
     },
     []
+  );
+
+  const parseLoadedPathConfigPayload = useCallback(
+    (payload: string, pathId: string): PathConfig => {
+      const resolved = resolvePortablePathInput(payload, {
+        repairIdentities: true,
+        includeConnections: false,
+      });
+      if (!resolved.ok) {
+        throw new Error(resolved.error);
+      }
+      const base = createDefaultPathConfig(pathId);
+      const imported = resolved.value.pathConfig;
+      const fallbackName = paths.find((path: PathMeta): boolean => path.id === pathId)?.name;
+      const resolvedName =
+        typeof imported.name === 'string' && imported.name.trim().length > 0
+          ? imported.name
+          : (fallbackName || base.name);
+      return {
+        ...base,
+        ...imported,
+        id: pathId,
+        name: resolvedName,
+      };
+    },
+    [paths]
   );
 
   const resolveDuplicatePathName = useCallback(
@@ -578,7 +605,7 @@ export function useAiPathsSettingsPathActions({
           let config: PathConfig = createDefaultPathConfig(value);
           if (configItem?.value) {
             try {
-              config = JSON.parse(configItem.value) as PathConfig;
+              config = parseLoadedPathConfigPayload(configItem.value, value);
             } catch (error) {
               reportAiPathsError(
                 error,
@@ -607,7 +634,7 @@ export function useAiPathsSettingsPathActions({
             if (configItem?.value) {
               let recoveredConfig = createDefaultPathConfig(value);
               try {
-                recoveredConfig = JSON.parse(configItem.value) as PathConfig;
+                recoveredConfig = parseLoadedPathConfigPayload(configItem.value, value);
               } catch (parseError) {
                 reportAiPathsError(
                   parseError,
@@ -657,6 +684,7 @@ export function useAiPathsSettingsPathActions({
       pathConfigs,
       persistActivePathPreference,
       reportAiPathsError,
+      parseLoadedPathConfigPayload,
       sanitizePathConfigWithRuntimeFallback,
       setActivePathId,
       setIsPathSwitching,

@@ -44,8 +44,9 @@ function MetadataItemLabel({
   withColon?: boolean;
 }): React.JSX.Element {
   const runtime = useMetadataItemLabelRuntime();
+  const labelClassName = className;
   return (
-    <Label className={cn(className, runtime.labelClassName)}>
+    <Label className={cn(labelClassName, runtime.labelClassName)}>
       {runtime.label}
       {withColon && runtime.isStringLabel ? ':' : ''}
     </Label>

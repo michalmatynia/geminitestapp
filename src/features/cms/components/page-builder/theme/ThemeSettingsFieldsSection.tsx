@@ -18,6 +18,7 @@ export function ThemeSettingsFieldsSection({
   fields,
 }: ThemeSettingsFieldsSectionProps): React.JSX.Element {
   const { theme, update } = useThemeSettings();
+  const rendererFields = React.useMemo(() => fields, [fields]);
 
   const handleChange = React.useCallback(
     (values: Partial<ThemeSettings>): void => {
@@ -30,5 +31,5 @@ export function ThemeSettingsFieldsSection({
     [update]
   );
 
-  return <SettingsFieldsRenderer fields={fields} values={theme} onChange={handleChange} />;
+  return <SettingsFieldsRenderer fields={rendererFields} values={theme} onChange={handleChange} />;
 }

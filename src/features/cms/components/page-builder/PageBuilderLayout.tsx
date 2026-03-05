@@ -108,8 +108,13 @@ export function PageBuilderLayout({
 }: {
   initialState?: PageBuilderState | undefined;
 }): React.JSX.Element {
+  const providerProps = React.useMemo(
+    () => (initialState ? { initialState } : {}),
+    [initialState]
+  );
+
   return (
-    <PageBuilderProvider {...(initialState ? { initialState } : {})}>
+    <PageBuilderProvider {...providerProps}>
       <DragStateProvider>
         <ThemeSettingsProvider>
           <PageBuilderInner />

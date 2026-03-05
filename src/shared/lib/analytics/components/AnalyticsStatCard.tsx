@@ -14,8 +14,10 @@ export function AnalyticsStatCard({
   rows,
   emptyLabel,
 }: AnalyticsStatCardProps): React.JSX.Element {
+  const sectionTitle = React.useMemo(() => title, [title]);
+
   return (
-    <FormSection title={title}>
+    <FormSection title={sectionTitle}>
       {rows.length === 0 ? (
         <Hint size='xs' italic className='py-4 text-center'>
           {emptyLabel}

@@ -121,6 +121,7 @@ export function CaseTreeRenderer({
         const isEditing = editingCaseId === file.id;
         const hasChildren = node.children.length > 0;
         const isCollapsed = collapsedCaseIds.has(file.id);
+        const nextDepth = depth + 1;
         const tag = file.tagId ? caseTagById.get(file.tagId) : null;
         const identifier = file.caseIdentifierId
           ? caseIdentifierById.get(file.caseIdentifierId)
@@ -323,7 +324,7 @@ export function CaseTreeRenderer({
               </Tooltip>
             </Card>
             {hasChildren && !isCollapsed && (
-              <CaseTreeRenderer nodes={node.children} depth={depth + 1} />
+              <CaseTreeRenderer nodes={node.children} depth={nextDepth} />
             )}
           </div>
         );

@@ -230,9 +230,11 @@ function ThemeSettingsPanelContent({
 export function ThemeSettingsPanel({
   showHeader = true,
 }: { showHeader?: boolean } = {}): React.JSX.Element {
+  const shouldShowHeader = showHeader;
+
   return (
     <ThemeColorsProvider>
-      <ThemeSettingsPanelContent showHeader={showHeader} />
+      <ThemeSettingsPanelContent showHeader={shouldShowHeader} />
     </ThemeColorsProvider>
   );
 }

@@ -101,6 +101,32 @@ const buildTriggerNode = (): AiNode => ({
   position: { x: 0, y: 0 },
 });
 
+const buildSimulationNode = (): AiNode => ({
+  id: 'node-simulation',
+  type: 'simulation',
+  title: 'Simulation',
+  description: '',
+  inputs: ['trigger'],
+  outputs: ['context', 'entityId', 'entityType', 'entityJson'],
+  config: {},
+  position: { x: 0, y: 0 },
+});
+
+const buildFetcherNode = (): AiNode => ({
+  id: 'node-fetcher',
+  type: 'fetcher',
+  title: 'Fetcher',
+  description: '',
+  inputs: ['trigger', 'context'],
+  outputs: ['context', 'meta', 'entityId', 'entityType'],
+  config: {
+    fetcher: {
+      sourceMode: 'live_context',
+    },
+  },
+  position: { x: 120, y: 0 },
+});
+
 describe('client native code-object registry contract subset', () => {
   it('only contains codeObjectIds that exist in native contracts', () => {
     const nativeContractIds = readNativeContractCodeObjectIdSet();
@@ -141,13 +167,11 @@ describe('client native code-object registry contract subset', () => {
       'database',
       'db_schema',
       'description_updater',
-      'fetcher',
       'http',
       'learner_agent',
       'model',
       'playwright',
       'poll',
-      'simulation',
     ]);
   });
 
@@ -172,6 +196,48 @@ describe('client native code-object registry contract subset', () => {
 
     expect(result.outputs?.['node-trigger']?.['trigger']).toBe(true);
     expect(result.outputs?.['node-trigger']?.['triggerName']).toBe('manual');
+  });
+
+  it('executes simulation nodes through client native contract resolver mapping', async () => {
+    const result = await evaluateGraphClient({
+      nodes: [buildSimulationNode()],
+      edges: [],
+      runtimeKernelPilotNodeTypes: ['simulation'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(result.outputs?.['node-simulation']?.['entityType']).toBe('product');
+    expect(result.outputs?.['node-simulation']?.['context']).toMatchObject({
+      contextSource: 'simulation',
+      simulationNodeId: 'node-simulation',
+      entityType: 'product',
+    });
+  });
+
+  it('executes fetcher nodes through client native contract resolver mapping', async () => {
+    const result = await evaluateGraphClient({
+      nodes: [buildTriggerNode(), buildFetcherNode()],
+      edges: [
+        {
+          id: 'edge-trigger-fetcher',
+          from: 'node-trigger',
+          to: 'node-fetcher',
+          fromPort: 'trigger',
+          toPort: 'trigger',
+          kind: 'signal',
+        },
+      ],
+      runtimeKernelPilotNodeTypes: ['trigger', 'fetcher'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(result.outputs?.['node-fetcher']?.['context']).toMatchObject({
+      contextSource: 'trigger_fetcher',
+      fetcherNodeId: 'node-fetcher',
+    });
+    expect(result.outputs?.['node-fetcher']?.['meta']).toMatchObject({
+      fetcherResolvedSource: 'live_context',
+    });
   });
 
   it('keeps unsupported server-only nodes blocked in client execution', async () => {

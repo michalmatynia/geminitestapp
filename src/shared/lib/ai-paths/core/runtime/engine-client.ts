@@ -41,6 +41,8 @@ import {
   handleContext,
 } from './handlers/transform';
 import { handleNotification as handleIntegrationNotification } from './handlers/integration-notification-handler';
+import { handleFetcher as handleIntegrationFetcher } from './handlers/integration-fetcher-handler';
+import { handleSimulation as handleIntegrationSimulation } from './handlers/integration-simulation-handler';
 import { handleTrigger as handleIntegrationTrigger } from './handlers/integration-trigger-handler';
 
 // Re-export types from core
@@ -76,6 +78,8 @@ const CLIENT_HANDLERS: Record<string, NodeHandler> = {
   template: handleTemplate,
   trigger: handleIntegrationTrigger,
   notification: handleIntegrationNotification,
+  fetcher: handleIntegrationFetcher,
+  simulation: handleIntegrationSimulation,
   constant: handleConstant,
   math: handleMath,
   compare: handleCompare,
@@ -125,10 +129,12 @@ const NATIVE_CODE_OBJECT_HANDLERS: Record<string, NodeHandler> = {
   'ai-paths.node-code-object.math.v3': handleMath,
   'ai-paths.node-code-object.mutator.v3': handleMutator,
   'ai-paths.node-code-object.notification.v3': handleIntegrationNotification,
+  'ai-paths.node-code-object.fetcher.v3': handleIntegrationFetcher,
   'ai-paths.node-code-object.parser.v3': handleParser,
   'ai-paths.node-code-object.prompt.v3': handlePrompt,
   'ai-paths.node-code-object.regex.v3': handleRegex,
   'ai-paths.node-code-object.router.v3': handleRouter,
+  'ai-paths.node-code-object.simulation.v3': handleIntegrationSimulation,
   'ai-paths.node-code-object.string_mutator.v3': handleStringMutator,
   'ai-paths.node-code-object.template.v3': handleTemplate,
   'ai-paths.node-code-object.trigger.v3': handleIntegrationTrigger,

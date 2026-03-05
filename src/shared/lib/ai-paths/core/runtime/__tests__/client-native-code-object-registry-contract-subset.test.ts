@@ -3,7 +3,8 @@ import path from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
-const { mockDbApiSchema } = vi.hoisted(() => ({
+const { mockDbApiSchema, mockAiGenerationGenerate, mockAiGenerationUpdateProductDescription } =
+  vi.hoisted(() => ({
   mockDbApiSchema: vi.fn(async () => ({
     ok: true as const,
     data: {
@@ -26,6 +27,14 @@ const { mockDbApiSchema } = vi.hoisted(() => ({
       ],
     },
   })),
+  mockAiGenerationGenerate: vi.fn(async () => ({
+    ok: true as const,
+    data: { result: 'generated-description' },
+  })),
+  mockAiGenerationUpdateProductDescription: vi.fn(async () => ({
+    ok: true as const,
+    data: {},
+  })),
 }));
 
 vi.mock('@/shared/lib/ai-paths/api', async () => {
@@ -37,6 +46,11 @@ vi.mock('@/shared/lib/ai-paths/api', async () => {
     dbApi: {
       ...actual.dbApi,
       schema: mockDbApiSchema,
+    },
+    aiGenerationApi: {
+      ...actual.aiGenerationApi,
+      generate: mockAiGenerationGenerate,
+      updateProductDescription: mockAiGenerationUpdateProductDescription,
     },
   };
 });
@@ -182,6 +196,48 @@ const buildDbSchemaNode = (): AiNode => ({
     },
   },
   position: { x: 160, y: 0 },
+});
+
+const buildAiDescriptionNode = (): AiNode => ({
+  id: 'node-ai-description',
+  type: 'ai_description',
+  title: 'AI Description',
+  description: '',
+  inputs: ['entityJson', 'images'],
+  outputs: ['description_en'],
+  config: {
+    description: {
+      visionOutputEnabled: true,
+      generationOutputEnabled: true,
+    },
+  },
+  position: { x: 175, y: 0 },
+});
+
+const buildDescriptionUpdaterNode = (): AiNode => ({
+  id: 'node-description-updater',
+  type: 'description_updater',
+  title: 'Description Updater',
+  description: '',
+  inputs: ['productId', 'description_en'],
+  outputs: ['description_en'],
+  config: {},
+  position: { x: 182, y: 0 },
+});
+
+const buildConstantNode = (input: { id: string; value: unknown; title?: string }): AiNode => ({
+  id: input.id,
+  type: 'constant',
+  title: input.title ?? 'Constant',
+  description: '',
+  inputs: [],
+  outputs: ['value'],
+  config: {
+    constant: {
+      value: input.value,
+    },
+  },
+  position: { x: 170, y: 0 },
 });
 
 const buildApiAdvancedNode = (): AiNode => ({
@@ -350,8 +406,6 @@ describe('client native code-object registry contract subset', () => {
 
     expect(unsupportedOnClientNodeTypes).toEqual([
       'agent',
-      'ai_description',
-      'description_updater',
       'learner_agent',
       'model',
       'playwright',
@@ -448,6 +502,48 @@ describe('client native code-object registry contract subset', () => {
         ] ?? ''
       )
     ).toContain('Collection: products');
+  });
+
+  it('executes ai description nodes through client native contract resolver mapping', async () => {
+    mockAiGenerationGenerate.mockClear();
+    const entityJsonNode = buildConstantNode({
+      id: 'node-entity-json',
+      title: 'Entity JSON',
+      value: { id: 'product-42', imageLinks: [] },
+    });
+
+    const result = await evaluateGraphClient({
+      nodes: [entityJsonNode, buildAiDescriptionNode()],
+      edges: [
+        {
+          id: 'edge-entity-json-ai-description',
+          from: 'node-entity-json',
+          to: 'node-ai-description',
+          fromPort: 'value',
+          toPort: 'entityJson',
+          kind: 'value',
+        },
+      ],
+      runtimeKernelPilotNodeTypes: ['constant', 'ai_description'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockAiGenerationGenerate).toHaveBeenCalledTimes(1);
+    expect(result.outputs?.['node-ai-description']?.['description_en']).toBe('generated-description');
+  });
+
+  it('executes description updater nodes through client native contract resolver mapping', async () => {
+    mockAiGenerationUpdateProductDescription.mockClear();
+
+    const result = await evaluateGraphClient({
+      nodes: [buildDescriptionUpdaterNode()],
+      edges: [],
+      runtimeKernelPilotNodeTypes: ['description_updater'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockAiGenerationUpdateProductDescription).not.toHaveBeenCalled();
+    expect(result.outputs?.['node-description-updater']).toEqual({});
   });
 
   it('executes api advanced nodes through client native contract resolver mapping', async () => {

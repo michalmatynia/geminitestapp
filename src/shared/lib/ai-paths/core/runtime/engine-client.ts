@@ -11,6 +11,7 @@ import { resolveAiPathsRuntimeCodeObjectHandler } from './code-object-resolver-r
 import { createNodeRuntimeKernel, toNodeRuntimeResolutionTelemetry } from './node-runtime-kernel';
 import { createNodeCodeObjectV3ContractResolver } from './node-code-object-v3-legacy-bridge';
 import { buildPromptOutput } from './utils';
+import { aiGenerationApi } from '@/shared/lib/ai-paths/api';
 
 import { type EvaluateGraphArgs, type EvaluateGraphOptions } from './engine-modules/engine-types';
 import { coerceInput, formatRuntimeValue, renderTemplate } from '../utils';
@@ -79,9 +80,57 @@ const handleTemplate: NodeHandler = ({
   return { prompt: prompt || 'Prompt: (no template)' };
 };
 
+const handleAiDescription: NodeHandler = async ({
+  node,
+  nodeInputs,
+  prevOutputs,
+  executed,
+}: NodeHandlerContext): Promise<RuntimePortValues> => {
+  if (executed.ai.has(node.id)) return prevOutputs;
+  const entityJson = coerceInput(nodeInputs['entityJson']) as Record<string, unknown> | undefined;
+  if (!entityJson) {
+    return {};
+  }
+
+  const generationResult = await aiGenerationApi.generate();
+  executed.ai.add(node.id);
+
+  const generatedDescription =
+    typeof generationResult.data?.result === 'string' ? generationResult.data.result : '';
+  return { description_en: generatedDescription };
+};
+
+const handleDescriptionUpdater: NodeHandler = async ({
+  node,
+  nodeInputs,
+  prevOutputs,
+  executed,
+  reportAiPathsError,
+}: NodeHandlerContext): Promise<RuntimePortValues> => {
+  if (executed.updater.has(node.id)) return prevOutputs;
+  const productId = coerceInput(nodeInputs['productId']) as string | undefined;
+  const description = coerceInput(nodeInputs['description_en']) as string | undefined;
+  if (!productId || !description) {
+    return {};
+  }
+
+  const updateResult = await aiGenerationApi.updateProductDescription(productId, description);
+  executed.updater.add(node.id);
+  if (!updateResult.ok) {
+    reportAiPathsError(
+      new Error(updateResult.error),
+      { action: 'updateDescription', productId, nodeId: node.id },
+      'Failed to update description:'
+    );
+  }
+  return { description_en: description };
+};
+
 const CLIENT_HANDLERS: Record<string, NodeHandler> = {
   prompt: handlePrompt,
   template: handleTemplate,
+  ai_description: handleAiDescription,
+  description_updater: handleDescriptionUpdater,
   trigger: handleIntegrationTrigger,
   notification: handleIntegrationNotification,
   fetcher: handleIntegrationFetcher,
@@ -152,6 +201,8 @@ const NATIVE_CODE_OBJECT_HANDLERS: Record<string, NodeHandler> = {
   'ai-paths.node-code-object.audio_speaker.v3': handleAudioSpeaker,
   'ai-paths.node-code-object.parser.v3': handleParser,
   'ai-paths.node-code-object.prompt.v3': handlePrompt,
+  'ai-paths.node-code-object.ai_description.v3': handleAiDescription,
+  'ai-paths.node-code-object.description_updater.v3': handleDescriptionUpdater,
   'ai-paths.node-code-object.regex.v3': handleRegex,
   'ai-paths.node-code-object.router.v3': handleRouter,
   'ai-paths.node-code-object.simulation.v3': handleIntegrationSimulation,

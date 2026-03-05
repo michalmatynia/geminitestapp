@@ -2,6 +2,7 @@
 
 import { Image as ImageIcon } from 'lucide-react';
 import NextImage from 'next/image';
+import React from 'react';
 
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 import type { PreviewBlockItemProps, PreviewBlockProps } from '@/shared/contracts/cms';

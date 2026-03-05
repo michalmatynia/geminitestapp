@@ -20,6 +20,13 @@ const SUITES = {
     label: 'Unit Domain Timings',
     sourcePrefix: 'unit-domain-timings-',
     trendPrefix: 'unit-domain-timings-trend-',
+    domainOwners: {
+      auth: 'team-auth-platform',
+      products: 'team-products-platform',
+      'ai-paths': 'team-ai-runtime',
+      'image-studio': 'team-image-studio',
+      'case-resolver': 'team-case-resolver',
+    },
     notes: [
       'Tracks runtime drift of deterministic unit domain suites.',
       'Use this trend to catch regressions before full unit lane latency spikes.',
@@ -29,6 +36,13 @@ const SUITES = {
     label: 'Lint Domain Checks',
     sourcePrefix: 'lint-domain-checks-',
     trendPrefix: 'lint-domain-checks-trend-',
+    domainOwners: {
+      auth: 'team-auth-platform',
+      products: 'team-products-platform',
+      'ai-paths': 'team-ai-runtime',
+      'image-studio': 'team-image-studio',
+      'case-resolver': 'team-case-resolver',
+    },
     notes: [
       'Tracks lint gate stability by domain instead of one long global lint run.',
       'Use this trend to identify domain-specific lint regressions quickly.',
@@ -80,6 +94,10 @@ const runFromPayload = (fileName, payload) => {
   const domains = results.map((entry) => ({
     id: entry.id ?? null,
     name: entry.name ?? entry.id ?? 'unknown',
+    owner:
+      entry.id && Object.prototype.hasOwnProperty.call(cfg.domainOwners ?? {}, entry.id)
+        ? cfg.domainOwners[entry.id]
+        : null,
     status: entry.status ?? 'unknown',
     durationMs: Number.isFinite(entry.durationMs) ? entry.durationMs : 0,
     exitCode: entry.exitCode ?? null,
@@ -185,7 +203,10 @@ const toMarkdown = (payload) => {
   lines.push('');
 
   for (const domainId of payload.domainIds) {
+    const owner = payload.domainOwners[domainId] ?? 'unassigned';
     lines.push(`## Domain: ${domainId}`);
+    lines.push('');
+    lines.push(`Owner: \`${owner}\``);
     lines.push('');
     lines.push('| Run | Status | Duration | Delta vs Prev | Exit |');
     lines.push('| --- | --- | ---: | ---: | ---: |');
@@ -231,6 +252,7 @@ const run = async () => {
     windowDays: Math.max(1, Number.isFinite(windowDays) ? windowDays : 7),
     summary,
     domainIds,
+    domainOwners: cfg.domainOwners ?? {},
     runs,
   };
 

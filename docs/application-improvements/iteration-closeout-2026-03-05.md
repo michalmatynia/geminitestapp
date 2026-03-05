@@ -24,6 +24,7 @@ Date: 2026-03-05
 18. Trend index generation for PR/CI observability (Step 18) - completed
 19. Lint-domain optional test-probe evaluation (Step 19) - completed
 20. Accessibility warning-budget telemetry rollout (Step 20) - completed
+21. Domain owner metadata in trend outputs (Step 21) - completed
 
 ## Gate Status Snapshot
 
@@ -45,6 +46,7 @@ Date: 2026-03-05
 - Trend index: PASS (`3/3` trend streams indexed)
 - Lint-domain test-probe mode: PASS (`5/5` with `--include-test-probes`)
 - Accessibility warning budget telemetry: PASS (`5/5`, warnings tracked non-failing)
+- Domain trend owner metadata: PASS (unit/lint trend payloads and markdown include team ownership)
 
 ## Current Risks Captured by Baseline
 
@@ -56,7 +58,6 @@ Date: 2026-03-05
 ## Next Iteration Backlog (Priority)
 
 1. Recalibrate weekly duration budgets after 7-10 more runs to reduce false positives.
-2. Add per-domain owner metadata in trend outputs to improve triage routing.
-3. Expose trend-index artifacts in CI job summaries for direct click-through navigation.
-4. Extend lint-domain test-probe mode into full test-tree lint domains once ESLint config support is explicitly added.
-5. Decide whether accessibility warning budget should eventually become fail-on-exceed in strict mode.
+2. Expose trend-index artifacts in CI job summaries for direct click-through navigation.
+3. Extend lint-domain test-probe mode into full test-tree lint domains once ESLint config support is explicitly added.
+4. Decide whether accessibility warning budget should eventually become fail-on-exceed in strict mode.

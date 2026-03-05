@@ -4,8 +4,14 @@
   "nodeType": "ai_description",
   "title": "AI Description Generator",
   "purpose": "Runs the AI Description pipeline to produce description_en.",
-  "inputs": ["entityJson", "images", "title"],
-  "outputs": ["description_en"],
+  "inputs": [
+    "entityJson",
+    "images",
+    "title"
+  ],
+  "outputs": [
+    "description_en"
+  ],
   "configFields": [
     {
       "path": "description.visionOutputEnabled",
@@ -23,6 +29,11 @@
       "defaultValue": "auto"
     },
     {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
+    },
+    {
       "path": "runtime.waitForInputs",
       "description": "If true, wait until all connected input ports have values before executing the node.",
       "defaultValue": "false"
@@ -38,8 +49,14 @@
       "x": 100,
       "y": 100
     },
-    "inputs": ["entityJson", "images", "title"],
-    "outputs": ["description_en"],
+    "inputs": [
+      "entityJson",
+      "images",
+      "title"
+    ],
+    "outputs": [
+      "description_en"
+    ],
     "data": {},
     "connections": {
       "incoming": [],
@@ -47,5 +64,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "b931649ba589813fb9e772a179003b8960426e919e9ae553692507278d3c5097"
+  "nodeHash": "93b3b2422e407af85154a56198326729fba9e936f87882491f1d311ea46967e7"
 }

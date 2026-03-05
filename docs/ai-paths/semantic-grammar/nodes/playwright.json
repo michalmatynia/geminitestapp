@@ -5,20 +5,16 @@
   "title": "Playwright",
   "purpose": "Run programmable browser automation with persona-driven fidelity.",
   "inputs": [
-    "prompt",
+    "url",
     "bundle",
-    "context",
-    "entityJson",
-    "value",
-    "result",
-    "title",
-    "images",
-    "content_en",
-    "entityId",
-    "entityType",
-    "productId"
+    "context"
   ],
-  "outputs": ["result", "value", "bundle", "status", "jobId"],
+  "outputs": [
+    "result",
+    "jobId",
+    "screenshot",
+    "html"
+  ],
   "configFields": [
     {
       "path": "playwright.personaId",
@@ -91,12 +87,19 @@
       "defaultValue": "auto"
     },
     {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
+    },
+    {
       "path": "runtime.waitForInputs",
       "description": "If true, wait until all connected input ports have values before executing the node.",
       "defaultValue": "false"
     }
   ],
-  "notes": ["Built-in script templates are available in the Playwright node config dialog."],
+  "notes": [
+    "Built-in script templates are available in the Playwright node config dialog."
+  ],
   "defaultConfig": {
     "playwright": {
       "personaId": "",
@@ -126,20 +129,16 @@
       "y": 100
     },
     "inputs": [
-      "prompt",
+      "url",
       "bundle",
-      "context",
-      "entityJson",
-      "value",
-      "result",
-      "title",
-      "images",
-      "content_en",
-      "entityId",
-      "entityType",
-      "productId"
+      "context"
     ],
-    "outputs": ["result", "value", "bundle", "status", "jobId"],
+    "outputs": [
+      "result",
+      "jobId",
+      "screenshot",
+      "html"
+    ],
     "config": {
       "playwright": {
         "personaId": "",
@@ -166,5 +165,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "f3b63284ff083ea90e8ebce1d5c25f299d43ff39dbeba4219ab0ee325945b442"
+  "nodeHash": "7fe5f58cbada808ffbcf5fdcafb8ad435b9278f38320239f6b66897e3d2d0056"
 }

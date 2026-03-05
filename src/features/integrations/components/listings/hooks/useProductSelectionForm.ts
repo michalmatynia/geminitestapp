@@ -1,6 +1,9 @@
 import { useState } from 'react';
 
-import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
+import {
+  useListingBaseComSettings,
+  useListingSelection,
+} from '@/features/integrations/context/ListingSettingsContext';
 import {
   useExportToBaseMutation,
   useCreateListingMutation,
@@ -30,10 +33,13 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
     selectedIntegrationId,
     selectedConnectionId,
     isBaseComIntegration,
+  } = useListingSelection();
+
+  const {
     selectedInventoryId,
     selectedTemplateId,
     allowDuplicateSku,
-  } = useListingSettingsContext();
+  } = useListingBaseComSettings();
 
   const exportToBaseMutation = useExportToBaseMutation(selectedProductId || '');
   const createListingMutation = useCreateListingMutation(selectedProductId || '');

@@ -63,35 +63,6 @@ export function useChatbotSessions(options?: {
 }
 
 /**
- * Query hook for fetching session IDs only (lightweight)
- */
-export function useChatbotSessionIds(
-  query?: string,
-  options?: { enabled?: boolean }
-): ListQuery<string> {
-  const queryKey = chatbotKeys.sessionIds(query);
-  return createListQueryV2({
-    queryKey,
-    queryFn: async (): Promise<string[]> => {
-      const data = await fetchChatbotSessions<ChatbotSessionListItem>({
-        scope: 'ids',
-        ...(query ? { query } : {}),
-      });
-      return data.ids ?? [];
-    },
-    enabled: options?.enabled ?? true,
-    meta: {
-      source: 'chatbot.hooks.useChatbotSessionIds',
-      operation: 'list',
-      resource: 'chatbot.sessions.ids',
-      domain: 'chatbot',
-      queryKey,
-      tags: ['chatbot', 'sessions', 'ids'],
-    },
-  });
-}
-
-/**
  * Query hook for fetching a single chatbot session with messages
  */
 export function useChatbotSession(

@@ -1,7 +1,6 @@
 'use client';
 
-import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { type UseQueryResult } from '@tanstack/react-query';
 
 import { getLanguages } from '@/features/internationalization/api';
 import type { Language } from '@/shared/contracts/internationalization';
@@ -22,7 +21,6 @@ import {
   createMultiQueryV2,
   createMutationV2,
   createDeleteMutationV2,
-  prefetchQueryV2,
 } from '@/shared/lib/query-factories-v2';
 import { invalidateProductMetadata } from '@/shared/lib/query-invalidation';
 import { productMetadataKeys } from '@/shared/lib/query-key-exports';
@@ -86,29 +84,6 @@ export function useCategories(catalogId?: string): ListQuery<ProductCategory> {
       queryKey,
       tags: ['products', 'metadata', 'categories'],
     },
-  });
-}
-
-export function useMultiCategories(catalogIds: string[]): UseQueryResult<ProductCategory[]>[] {
-  return createMultiQueryV2({
-    queries: catalogIds.map((catalogId) => {
-      const queryKey = normalizeQueryKey(productMetadataKeys.categories(catalogId));
-      return {
-        queryKey,
-        queryFn: async (): Promise<ProductCategory[]> =>
-          await api.get<ProductCategory[]>(
-            `/api/v2/products/categories?catalogId=${encodeURIComponent(catalogId)}`
-          ),
-        meta: {
-          source: 'products.hooks.useMultiCategories',
-          operation: 'list',
-          resource: 'products.metadata.categories',
-          domain: 'products',
-          queryKey,
-          tags: ['products', 'metadata', 'categories', 'multi'],
-        },
-      };
-    }),
   });
 }
 
@@ -265,33 +240,6 @@ export function useSimpleParameters(catalogId?: string): ListQuery<ProductSimple
   });
 }
 
-export function useMultiParameters(catalogIds: string[]): UseQueryResult<ProductParameter[]>[] {
-  return createMultiQueryV2({
-    queries: catalogIds.map((catalogId) => {
-      const queryKey = normalizeQueryKey(productMetadataKeys.parameters(catalogId));
-      return {
-        queryKey,
-        queryFn: async (): Promise<ProductParameter[]> =>
-          await api.get<ProductParameter[]>('/api/v2/products/parameters', {
-            params: {
-              catalogId,
-              fresh: 1,
-            },
-            cache: 'no-store',
-          }),
-        meta: {
-          source: 'products.hooks.useMultiParameters',
-          operation: 'list',
-          resource: 'products.metadata.parameters',
-          domain: 'products',
-          queryKey,
-          tags: ['products', 'metadata', 'parameters', 'multi'],
-        },
-      };
-    }),
-  });
-}
-
 export function useLanguages(): ListQuery<Language> {
   const queryKey = productMetadataKeys.languages();
   return createListQueryV2({
@@ -323,61 +271,4 @@ export function usePriceGroups(): ListQuery<PriceGroupWithDetails> {
       tags: ['products', 'metadata', 'price-groups'],
     },
   });
-}
-
-export function useProductMetadataPrefetch(catalogId?: string): () => void {
-  const queryClient = useQueryClient();
-
-  return useCallback(() => {
-    if (!catalogId) return;
-
-    void prefetchQueryV2(queryClient, {
-      queryKey: normalizeQueryKey(productMetadataKeys.categories(catalogId)),
-      queryFn: async () => {
-        const tree = await api.get<ProductCategoryWithChildren[]>(
-          `/api/v2/products/categories/tree?catalogId=${encodeURIComponent(catalogId)}`
-        );
-        return flattenCategoryTree(tree);
-      },
-      meta: {
-        source: 'products.hooks.useProductMetadataPrefetch.categories',
-        operation: 'list',
-        resource: 'products.metadata.categories',
-        domain: 'products',
-        queryKey: normalizeQueryKey(productMetadataKeys.categories(catalogId)),
-        tags: ['products', 'metadata', 'categories', 'prefetch'],
-      },
-    })();
-
-    void prefetchQueryV2(queryClient, {
-      queryKey: normalizeQueryKey(productMetadataKeys.tags(catalogId)),
-      queryFn: () =>
-        api.get<ProductTag[]>(`/api/v2/products/tags?catalogId=${encodeURIComponent(catalogId)}`),
-      meta: {
-        source: 'products.hooks.useProductMetadataPrefetch.tags',
-        operation: 'list',
-        resource: 'products.metadata.tags',
-        domain: 'products',
-        queryKey: normalizeQueryKey(productMetadataKeys.tags(catalogId)),
-        tags: ['products', 'metadata', 'tags', 'prefetch'],
-      },
-    })();
-
-    void prefetchQueryV2(queryClient, {
-      queryKey: normalizeQueryKey(productMetadataKeys.parameters(catalogId)),
-      queryFn: () =>
-        api.get<ProductParameter[]>('/api/v2/products/parameters', {
-          params: { catalogId, fresh: 1 },
-          cache: 'no-store',
-        }),
-      meta: {
-        source: 'products.hooks.useProductMetadataPrefetch.parameters',
-        operation: 'list',
-        resource: 'products.metadata.parameters',
-        domain: 'products',
-        queryKey: normalizeQueryKey(productMetadataKeys.parameters(catalogId)),
-        tags: ['products', 'metadata', 'parameters', 'prefetch'],
-      },
-    })();
-  }, [catalogId, queryClient]);
 }

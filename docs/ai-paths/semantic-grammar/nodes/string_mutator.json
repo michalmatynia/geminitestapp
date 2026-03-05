@@ -4,8 +4,14 @@
   "nodeType": "string_mutator",
   "title": "String Mutator",
   "purpose": "Transform text with chained string operations.",
-  "inputs": ["value", "prompt", "result"],
-  "outputs": ["value"],
+  "inputs": [
+    "value",
+    "prompt",
+    "result"
+  ],
+  "outputs": [
+    "value"
+  ],
   "configFields": [
     {
       "path": "stringMutator.operations",
@@ -44,6 +50,11 @@
       "defaultValue": "auto"
     },
     {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
+    },
+    {
       "path": "runtime.waitForInputs",
       "description": "If true, wait until all connected input ports have values before executing the node.",
       "defaultValue": "false"
@@ -59,8 +70,14 @@
       "x": 100,
       "y": 100
     },
-    "inputs": ["value", "prompt", "result"],
-    "outputs": ["value"],
+    "inputs": [
+      "value",
+      "prompt",
+      "result"
+    ],
+    "outputs": [
+      "value"
+    ],
     "data": {},
     "connections": {
       "incoming": [],
@@ -68,5 +85,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "848dcae30b83cd2ead1f9da5d3c642e3c76b90909fa516c71ca0ef095a198652"
+  "nodeHash": "b4a7a5bd6dafb681eedc8a64a18cf2d7be58116b1bbad6f4db32bc916703b899"
 }

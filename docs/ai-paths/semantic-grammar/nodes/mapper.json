@@ -4,8 +4,16 @@
   "nodeType": "mapper",
   "title": "JSON Mapper",
   "purpose": "Map context to custom outputs.",
-  "inputs": ["context", "result", "bundle", "value"],
-  "outputs": ["value", "result"],
+  "inputs": [
+    "context",
+    "result",
+    "bundle",
+    "value"
+  ],
+  "outputs": [
+    "value",
+    "result"
+  ],
   "configFields": [
     {
       "path": "mapper.outputs",
@@ -18,9 +26,19 @@
       "defaultValue": "{}"
     },
     {
+      "path": "mapper.jsonIntegrityPolicy",
+      "description": "How mapper normalizes JSON-like string inputs before resolving mapping paths. strict performs no repair. repair uses the shared staged JSON normalization pipeline before path resolution.",
+      "defaultValue": "repair"
+    },
+    {
       "path": "runtime.cache.mode",
       "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
       "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
     },
     {
       "path": "runtime.waitForInputs",
@@ -38,8 +56,16 @@
       "x": 100,
       "y": 100
     },
-    "inputs": ["context", "result", "bundle", "value"],
-    "outputs": ["value", "result"],
+    "inputs": [
+      "context",
+      "result",
+      "bundle",
+      "value"
+    ],
+    "outputs": [
+      "value",
+      "result"
+    ],
     "data": {},
     "connections": {
       "incoming": [],
@@ -47,5 +73,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "020683330a43b053a365a8ad52778562aa39bf7a0ec9fdf23bf5b5364211316c"
+  "nodeHash": "4fe386d977d549e3093ddd028db6ed2da07b6962e3f6c7f0f3e980e8a07ceba1"
 }

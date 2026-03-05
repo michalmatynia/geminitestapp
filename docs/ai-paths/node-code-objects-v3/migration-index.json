@@ -1,0 +1,1367 @@
+{
+  "schemaVersion": "ai-paths.node-migration-doc-index.v1",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "totalNodes": 36,
+  "pilotNodeTypes": [
+    "constant",
+    "math",
+    "template"
+  ],
+  "strategyTotals": {
+    "legacy_adapter": 33,
+    "code_object_v3": 3
+  },
+  "v3ContractsHash": "275c095242cb2f6b8c1e27c56c0e19a4b5689a4fa62f57e57e192dc8246c8ad8",
+  "familyTotals": [
+    {
+      "nodeFamily": "ai-generation",
+      "total": 5,
+      "legacy_adapter": 5,
+      "code_object_v3": 0
+    },
+    {
+      "nodeFamily": "audio",
+      "total": 2,
+      "legacy_adapter": 2,
+      "code_object_v3": 0
+    },
+    {
+      "nodeFamily": "general",
+      "total": 1,
+      "legacy_adapter": 1,
+      "code_object_v3": 0
+    },
+    {
+      "nodeFamily": "integration",
+      "total": 7,
+      "legacy_adapter": 7,
+      "code_object_v3": 0
+    },
+    {
+      "nodeFamily": "orchestration",
+      "total": 9,
+      "legacy_adapter": 9,
+      "code_object_v3": 0
+    },
+    {
+      "nodeFamily": "transform",
+      "total": 12,
+      "legacy_adapter": 9,
+      "code_object_v3": 3
+    }
+  ],
+  "nodes": [
+    {
+      "nodeType": "agent",
+      "title": "Reasoning Agent",
+      "nodeFamily": "ai-generation",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "prompt",
+          "bundle",
+          "context",
+          "entityJson"
+        ],
+        "outputs": [
+          "result",
+          "jobId"
+        ]
+      },
+      "configFieldCount": 6,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/agent.json",
+        "semanticNodeHash": "ed2953a2fed7b2b3df7daed875bce21aaca13836d56e95b9995e05c33bb2b99b",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/agent.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/agent.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "ai_description",
+      "title": "AI Description Generator",
+      "nodeFamily": "ai-generation",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "entityJson",
+          "images",
+          "title"
+        ],
+        "outputs": [
+          "description_en"
+        ]
+      },
+      "configFieldCount": 5,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/ai_description.json",
+        "semanticNodeHash": "93b3b2422e407af85154a56198326729fba9e936f87882491f1d311ea46967e7",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/ai_description.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/ai_description.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "api_advanced",
+      "title": "API Operation (Advanced)",
+      "nodeFamily": "integration",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "url",
+          "body",
+          "headers",
+          "params",
+          "bundle"
+        ],
+        "outputs": [
+          "value",
+          "bundle",
+          "status",
+          "headers",
+          "items",
+          "route",
+          "error",
+          "success"
+        ]
+      },
+      "configFieldCount": 17,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+        "semanticNodeHash": "37b85ffa57728292544aa9cd66b45bbf4e5bbf9dafc436d4b5819340e52277b1",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/api_advanced.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/api_advanced.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "audio_oscillator",
+      "title": "Audio Oscillator",
+      "nodeFamily": "audio",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "frequency",
+          "waveform",
+          "gain",
+          "durationMs",
+          "trigger"
+        ],
+        "outputs": [
+          "audioSignal",
+          "frequency",
+          "waveform",
+          "gain",
+          "durationMs"
+        ]
+      },
+      "configFieldCount": 7,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/audio_oscillator.json",
+        "semanticNodeHash": "7baab1b01ab357f02eee514fc42f17c000caaa5d51e5610ca9197cbe0a9f8224",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/audio_oscillator.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/audio_oscillator.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "audio_speaker",
+      "title": "Audio Speaker (Mono)",
+      "nodeFamily": "audio",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "audioSignal",
+          "frequency",
+          "waveform",
+          "gain",
+          "durationMs",
+          "trigger"
+        ],
+        "outputs": [
+          "status",
+          "audioSignal"
+        ]
+      },
+      "configFieldCount": 7,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/audio_speaker.json",
+        "semanticNodeHash": "37a4b7541ec63acc4d5d1797a0871d52f1d3fa54d8dc44cf6fc350796c3b0d3e",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/audio_speaker.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/audio_speaker.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "bundle",
+      "title": "Bundle",
+      "nodeFamily": "transform",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "value",
+          "productId",
+          "content_en",
+          "images",
+          "title"
+        ],
+        "outputs": [
+          "bundle"
+        ]
+      },
+      "configFieldCount": 4,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/bundle.json",
+        "semanticNodeHash": "f02021c0cfff57b77cf446d8b1d8740edd80c73e9b4d2b39a2b2474fbe707385",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/bundle.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/bundle.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "compare",
+      "title": "Compare",
+      "nodeFamily": "orchestration",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "value"
+        ],
+        "outputs": [
+          "value",
+          "valid",
+          "errors"
+        ]
+      },
+      "configFieldCount": 7,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/compare.json",
+        "semanticNodeHash": "08b496fef266ad268a39c60e85ab3f24dd844e05348c6498d5eaedf9bf56d3c0",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/compare.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/compare.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "constant",
+      "title": "Constant",
+      "nodeFamily": "transform",
+      "runtimeStrategy": "code_object_v3",
+      "migrationWave": "pilot",
+      "codeObjectId": "ai-paths.node-code-object.constant.v3",
+      "ports": {
+        "inputs": [],
+        "outputs": [
+          "value"
+        ]
+      },
+      "configFieldCount": 5,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/constant.json",
+        "semanticNodeHash": "ae37de0024fb836784502eefbc5303bca55888d6d9621910b6e2c6170108f27b",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/constant.json",
+        "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/constant.scaffold.json",
+        "v3ObjectId": "node_obj_constant_portable_v3",
+        "v3ObjectHash": "37e4ab41ceac45282a65a532f566b9d8bf253ab37adb3c9a9ca97e37d8fb62e7",
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/constant.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": true,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "context",
+      "title": "Context Filter",
+      "nodeFamily": "transform",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "context"
+        ],
+        "outputs": [
+          "context",
+          "entityId",
+          "entityType",
+          "entityJson"
+        ]
+      },
+      "configFieldCount": 11,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/context.json",
+        "semanticNodeHash": "8fec17546b68d240c422c0ddbc259a485825d96df3725bec228aacf3cdf84c16",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/context.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/context.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "database",
+      "title": "Database Query",
+      "nodeFamily": "integration",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "entityId",
+          "entityType",
+          "productId",
+          "context",
+          "query",
+          "value",
+          "bundle",
+          "result",
+          "content_en",
+          "queryCallback",
+          "schema",
+          "aiQuery"
+        ],
+        "outputs": [
+          "result",
+          "bundle",
+          "content_en",
+          "aiPrompt"
+        ]
+      },
+      "configFieldCount": 41,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/database.json",
+        "semanticNodeHash": "eadd4fae4b6fd18c8374000db6b359b5cc64ea57a4ded245991a360e13e1eb73",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/database.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/database.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "db_schema",
+      "title": "Database Schema",
+      "nodeFamily": "integration",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [],
+        "outputs": [
+          "schema",
+          "context"
+        ]
+      },
+      "configFieldCount": 9,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+        "semanticNodeHash": "dc56e39b3002dc63ba6b609293b11b296ef5616fbc1eec589de7882b694ecdc6",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/db_schema.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/db_schema.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "delay",
+      "title": "Delay",
+      "nodeFamily": "orchestration",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "value",
+          "bundle"
+        ],
+        "outputs": [
+          "value",
+          "bundle"
+        ]
+      },
+      "configFieldCount": 4,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/delay.json",
+        "semanticNodeHash": "fa631c84b720f9f975e8da3f24935e4d1b5d36ff103e58319691af9d07f5bd30",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/delay.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/delay.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "description_updater",
+      "title": "Description Updater (Deprecated)",
+      "nodeFamily": "general",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "productId",
+          "description_en"
+        ],
+        "outputs": [
+          "description_en"
+        ]
+      },
+      "configFieldCount": 3,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/description_updater.json",
+        "semanticNodeHash": "0140c1929e747f53a5f4f60043595787d367bdd869350012552e7cc185c69588",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/description_updater.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/description_updater.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "fetcher",
+      "title": "Fetcher: Trigger Context",
+      "nodeFamily": "orchestration",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "trigger",
+          "context",
+          "meta",
+          "entityId",
+          "entityType"
+        ],
+        "outputs": [
+          "context",
+          "meta",
+          "entityId",
+          "entityType"
+        ]
+      },
+      "configFieldCount": 7,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/fetcher.json",
+        "semanticNodeHash": "b75a94276b7a8f77d8281fd3b6afbfb94bfbc8df9bcab61a8c23a4417a58c545",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/fetcher.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/fetcher.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "gate",
+      "title": "Gate",
+      "nodeFamily": "orchestration",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "context",
+          "valid",
+          "errors"
+        ],
+        "outputs": [
+          "context",
+          "valid",
+          "errors"
+        ]
+      },
+      "configFieldCount": 5,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/gate.json",
+        "semanticNodeHash": "c49aeec3b3e821c7acbe9f9602a3ab9d27933ddede848c552a4e728011e39425",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/gate.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/gate.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "http",
+      "title": "HTTP Fetch",
+      "nodeFamily": "integration",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "url",
+          "body",
+          "headers",
+          "bundle"
+        ],
+        "outputs": [
+          "value",
+          "bundle"
+        ]
+      },
+      "configFieldCount": 9,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/http.json",
+        "semanticNodeHash": "19960ba99dd579f48b6b5aaca8261193573a80a4a7222db9bef9b5de518fc6c2",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/http.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/http.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "iterator",
+      "title": "Iterator",
+      "nodeFamily": "orchestration",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "value",
+          "callback"
+        ],
+        "outputs": [
+          "value",
+          "index",
+          "total",
+          "done",
+          "status"
+        ]
+      },
+      "configFieldCount": 5,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/iterator.json",
+        "semanticNodeHash": "80ba1661cabb2b734598b77d3924b0d4623db9e439978ef6137db125fbbecd79",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/iterator.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/iterator.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "learner_agent",
+      "title": "Learner Agent",
+      "nodeFamily": "ai-generation",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "prompt",
+          "bundle"
+        ],
+        "outputs": [
+          "result",
+          "jobId",
+          "sources"
+        ]
+      },
+      "configFieldCount": 6,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/learner_agent.json",
+        "semanticNodeHash": "5009d070f150f40646cabdfa36f86858c8636c2e645f230d39698aa465f653e2",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/learner_agent.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/learner_agent.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "mapper",
+      "title": "JSON Mapper",
+      "nodeFamily": "transform",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "context",
+          "result",
+          "bundle",
+          "value"
+        ],
+        "outputs": [
+          "value",
+          "result"
+        ]
+      },
+      "configFieldCount": 6,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/mapper.json",
+        "semanticNodeHash": "4fe386d977d549e3093ddd028db6ed2da07b6962e3f6c7f0f3e980e8a07ceba1",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/mapper.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/mapper.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "math",
+      "title": "Math",
+      "nodeFamily": "transform",
+      "runtimeStrategy": "code_object_v3",
+      "migrationWave": "pilot",
+      "codeObjectId": "ai-paths.node-code-object.math.v3",
+      "ports": {
+        "inputs": [
+          "value"
+        ],
+        "outputs": [
+          "value"
+        ]
+      },
+      "configFieldCount": 5,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/math.json",
+        "semanticNodeHash": "d5cf086af1271545687273d8182e3ceb628aa14edb31fec62ff95b5fa970267d",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/math.json",
+        "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/math.scaffold.json",
+        "v3ObjectId": "node_obj_math_portable_v3",
+        "v3ObjectHash": "617cca2fcff9a80cf354ad125bcdb7efc3387fa9fb1e2dfb45b53cf5388ad1c2",
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/math.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": true,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "model",
+      "title": "Model",
+      "nodeFamily": "ai-generation",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "prompt",
+          "images"
+        ],
+        "outputs": [
+          "result",
+          "jobId"
+        ]
+      },
+      "configFieldCount": 9,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/model.json",
+        "semanticNodeHash": "69429171748383402c62fb8f86ce6e354e76e13ed83ad5302d8b266b2cced9d5",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/model.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/model.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "mutator",
+      "title": "Mutator",
+      "nodeFamily": "transform",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "context"
+        ],
+        "outputs": [
+          "context"
+        ]
+      },
+      "configFieldCount": 5,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/mutator.json",
+        "semanticNodeHash": "86dc18244f712290a2815cef8e22145b0cd058095cfd729b300b030b4eacfb4b",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/mutator.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/mutator.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "notification",
+      "title": "Toast Notification",
+      "nodeFamily": "integration",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "value",
+          "bundle",
+          "title"
+        ],
+        "outputs": []
+      },
+      "configFieldCount": 3,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/notification.json",
+        "semanticNodeHash": "171fd2da082697571cfa13252042393d4b5069c0befbda30b6f1e508d64d37d1",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/notification.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/notification.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "parser",
+      "title": "JSON Parser",
+      "nodeFamily": "transform",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "entityJson",
+          "context"
+        ],
+        "outputs": [
+          "productId",
+          "title",
+          "images",
+          "content_en"
+        ]
+      },
+      "configFieldCount": 6,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/parser.json",
+        "semanticNodeHash": "f4efe5d4248e963cb61027db51299b57b9d7fb3bbb1beba1a260c8e531493771",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/parser.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/parser.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "playwright",
+      "title": "Playwright",
+      "nodeFamily": "integration",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "url",
+          "bundle",
+          "context"
+        ],
+        "outputs": [
+          "result",
+          "jobId",
+          "screenshot",
+          "html"
+        ]
+      },
+      "configFieldCount": 16,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/playwright.json",
+        "semanticNodeHash": "7fe5f58cbada808ffbcf5fdcafb8ad435b9278f38320239f6b66897e3d2d0056",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/playwright.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/playwright.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "poll",
+      "title": "Poll Job",
+      "nodeFamily": "orchestration",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "jobId",
+          "query",
+          "value",
+          "entityId",
+          "productId",
+          "bundle"
+        ],
+        "outputs": [
+          "result",
+          "status",
+          "jobId",
+          "bundle"
+        ]
+      },
+      "configFieldCount": 21,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/poll.json",
+        "semanticNodeHash": "86f5979ebe33fa966505a2c2bdb7ab279df0696faf94fb4605a561b7e196cdb2",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/poll.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/poll.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "prompt",
+      "title": "Prompt",
+      "nodeFamily": "ai-generation",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "bundle",
+          "title",
+          "images",
+          "result",
+          "entityId"
+        ],
+        "outputs": [
+          "prompt",
+          "images"
+        ]
+      },
+      "configFieldCount": 4,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/prompt.json",
+        "semanticNodeHash": "98e6f0ffd5cb8cdce5426c507661c7c7a1d9c7aae1c2aca8deb89ddae4375bde",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/prompt.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/prompt.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "regex",
+      "title": "Regex Grouper",
+      "nodeFamily": "transform",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "value",
+          "prompt",
+          "regexCallback"
+        ],
+        "outputs": [
+          "grouped",
+          "matches",
+          "value",
+          "aiPrompt"
+        ]
+      },
+      "configFieldCount": 15,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/regex.json",
+        "semanticNodeHash": "119b8b6056ec81cb38c9cbd2d5cc55c2353a94bf86fd0ad407fc9e9f06eb251e",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/regex.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/regex.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "router",
+      "title": "Router",
+      "nodeFamily": "orchestration",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "value",
+          "bundle"
+        ],
+        "outputs": [
+          "value",
+          "bundle"
+        ]
+      },
+      "configFieldCount": 6,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/router.json",
+        "semanticNodeHash": "82e9ef3cc91bba0a0e65b487b31cc23a065df0740fd65ba429942efdfc4cc0d9",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/router.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/router.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "simulation",
+      "title": "Simulation: Entity Modal",
+      "nodeFamily": "orchestration",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "trigger"
+        ],
+        "outputs": [
+          "context",
+          "entityId",
+          "entityType",
+          "productId"
+        ]
+      },
+      "configFieldCount": 7,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/simulation.json",
+        "semanticNodeHash": "cce9b04665f1d723b51d00c2139a75d1225cee9488574ab03d39fb68537dbcb7",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/simulation.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/simulation.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "string_mutator",
+      "title": "String Mutator",
+      "nodeFamily": "transform",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "value",
+          "prompt",
+          "result"
+        ],
+        "outputs": [
+          "value"
+        ]
+      },
+      "configFieldCount": 10,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/string_mutator.json",
+        "semanticNodeHash": "b4a7a5bd6dafb681eedc8a64a18cf2d7be58116b1bbad6f4db32bc916703b899",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/string_mutator.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/string_mutator.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "template",
+      "title": "Template",
+      "nodeFamily": "transform",
+      "runtimeStrategy": "code_object_v3",
+      "migrationWave": "pilot",
+      "codeObjectId": "ai-paths.node-code-object.template.v3",
+      "ports": {
+        "inputs": [
+          "bundle",
+          "value",
+          "productId"
+        ],
+        "outputs": [
+          "prompt"
+        ]
+      },
+      "configFieldCount": 4,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/template.json",
+        "semanticNodeHash": "349143bb99ff84ec6f3ceba1c8d8a24e48682e23c0679ef6bc8ff3048636640c",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/template.json",
+        "v3ScaffoldFile": "docs/ai-paths/node-code-objects-v3/template.scaffold.json",
+        "v3ObjectId": "node_obj_template_portable_v3",
+        "v3ObjectHash": "818d7ec5fca3d3ae120198a3418831ed55f1d54d0f7aafce0ff969a6408d02bf",
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/template.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": true,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "trigger",
+      "title": "Trigger: Image Studio Analysis",
+      "nodeFamily": "orchestration",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [],
+        "outputs": [
+          "trigger",
+          "triggerName"
+        ]
+      },
+      "configFieldCount": 5,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/trigger.json",
+        "semanticNodeHash": "233c29f92acbe95972897af33d008a92c8026fc82bb6a1b721b60e0320116431",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/trigger.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/trigger.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "validation_pattern",
+      "title": "Validation Pattern",
+      "nodeFamily": "transform",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "value",
+          "prompt",
+          "result",
+          "context"
+        ],
+        "outputs": [
+          "value",
+          "result",
+          "context",
+          "valid",
+          "errors",
+          "bundle"
+        ]
+      },
+      "configFieldCount": 14,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+        "semanticNodeHash": "e64e35e2fd1184b3b984c4645f0778f6bd2c5a415224fbc949e5418eb706978f",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/validation_pattern.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/validation_pattern.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "validator",
+      "title": "Validator",
+      "nodeFamily": "transform",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "context"
+        ],
+        "outputs": [
+          "context",
+          "valid",
+          "errors"
+        ]
+      },
+      "configFieldCount": 5,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/validator.json",
+        "semanticNodeHash": "626a3f87a56184a58e1c7c3f488383a855a2ce50a97bbcef42898d28788d8619",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/validator.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/validator.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    },
+    {
+      "nodeType": "viewer",
+      "title": "Result Viewer",
+      "nodeFamily": "integration",
+      "runtimeStrategy": "legacy_adapter",
+      "migrationWave": "backlog",
+      "codeObjectId": null,
+      "ports": {
+        "inputs": [
+          "result",
+          "sources",
+          "grouped",
+          "matches",
+          "index",
+          "total",
+          "done",
+          "analysis",
+          "description",
+          "description_en",
+          "prompt",
+          "images",
+          "title",
+          "productId",
+          "content_en",
+          "context",
+          "meta",
+          "trigger",
+          "triggerName",
+          "jobId",
+          "status",
+          "entityId",
+          "entityType",
+          "entityJson",
+          "bundle",
+          "valid",
+          "errors",
+          "value",
+          "audioSignal",
+          "frequency",
+          "waveform",
+          "gain",
+          "durationMs",
+          "queryCallback",
+          "aiPrompt"
+        ],
+        "outputs": []
+      },
+      "configFieldCount": 5,
+      "docs": {
+        "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/viewer.json",
+        "semanticNodeHash": "4a4c8d08ad55fc833ebc93a11f861e66dbbf5af48bc240eece2270de24c930af",
+        "v2ObjectFile": "docs/ai-paths/node-code-objects-v2/viewer.json",
+        "v3ScaffoldFile": null,
+        "v3ObjectId": null,
+        "v3ObjectHash": null,
+        "migrationDocFile": "docs/ai-paths/node-code-objects-v3/nodes/viewer.md"
+      },
+      "migrationChecklistTemplate": {
+        "semanticContractReviewed": true,
+        "v3CodeObjectAuthored": false,
+        "dualRunParityValidated": false,
+        "rolloutApproved": false
+      }
+    }
+  ]
+}

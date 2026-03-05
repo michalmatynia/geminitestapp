@@ -20,6 +20,7 @@ import {
   GraphExecutionError,
   GraphExecutionCancelled,
   type EvaluateGraphOptions,
+  type RuntimeNodeResolutionTelemetry,
 } from './engine-modules/engine-types';
 import {
   buildNodeInputHash,
@@ -133,6 +134,33 @@ export async function evaluateGraphInternal(
   const triggerContext = options.triggerContext ?? null;
   const triggerSource = options.triggerNodeId ? nodeById.get(options.triggerNodeId) : null;
   const resolvedOnHalt = options.onHalt;
+  const runtimeTelemetryByNodeType = new Map<string, RuntimeNodeResolutionTelemetry | null>();
+
+  const resolveRuntimeTelemetry = (nodeTypeInput: string): RuntimeNodeResolutionTelemetry | null => {
+    const nodeType = typeof nodeTypeInput === 'string' ? nodeTypeInput.trim() : '';
+    if (!nodeType) return null;
+    if (runtimeTelemetryByNodeType.has(nodeType)) {
+      return runtimeTelemetryByNodeType.get(nodeType) ?? null;
+    }
+    const telemetry = options.resolveHandlerTelemetry ? options.resolveHandlerTelemetry(nodeType) : null;
+    runtimeTelemetryByNodeType.set(nodeType, telemetry ?? null);
+    return telemetry ?? null;
+  };
+
+  const buildRuntimeTelemetryFields = (
+    telemetry: RuntimeNodeResolutionTelemetry | null
+  ): {
+    runtimeStrategy?: RuntimeNodeResolutionTelemetry['runtimeStrategy'];
+    runtimeResolutionSource?: RuntimeNodeResolutionTelemetry['runtimeResolutionSource'];
+    runtimeCodeObjectId?: string | null;
+  } =>
+    telemetry
+      ? {
+        runtimeStrategy: telemetry.runtimeStrategy,
+        runtimeResolutionSource: telemetry.runtimeResolutionSource,
+        runtimeCodeObjectId: telemetry.runtimeCodeObjectId ?? null,
+      }
+      : {};
 
   const emitHalt = async (
     reason: 'blocked' | 'max_iterations' | 'completed' | 'failed'
@@ -259,6 +287,7 @@ export async function evaluateGraphInternal(
         triggerContext,
         checkTriggerProvenance,
       });
+      const runtimeTelemetry = resolveRuntimeTelemetry(node.type);
 
       const readiness = evaluateInputReadiness(
         node,
@@ -360,6 +389,7 @@ export async function evaluateGraphInternal(
               skipReason: 'missing_inputs',
               requiredPorts: readiness.requiredPorts,
               waitingOnPorts: readiness.waitingOnPorts,
+              ...buildRuntimeTelemetryFields(runtimeTelemetry),
             } as RuntimeHistoryEntry);
             state.history.set(node.id, entries);
           }
@@ -377,6 +407,7 @@ export async function evaluateGraphInternal(
               reason: 'missing_inputs',
               requiredPorts: readiness.requiredPorts,
               waitingOnPorts: readiness.waitingOnPorts,
+              ...buildRuntimeTelemetryFields(runtimeTelemetry),
             });
           }
 
@@ -389,6 +420,7 @@ export async function evaluateGraphInternal(
               message,
               waitingOnPorts: readiness.waitingOnPorts,
               waitingOnDetails: readiness.waitingOnDetails,
+              ...buildRuntimeTelemetryFields(runtimeTelemetry),
             });
           }
         }
@@ -410,6 +442,7 @@ export async function evaluateGraphInternal(
             triggerContext,
             checkTriggerProvenance,
           });
+          const runtimeTelemetry = resolveRuntimeTelemetry(node.type);
 
           // --- Cache Check Start ---
           const nodeHash = buildNodeHash(node, nodeInputs);
@@ -472,6 +505,7 @@ export async function evaluateGraphInternal(
                 iteration,
                 inputs: cloneValue(nodeInputs),
                 outputs: cloneValue(state.outputs[node.id]),
+                ...buildRuntimeTelemetryFields(runtimeTelemetry),
               } as RuntimeHistoryEntry);
               state.history.set(node.id, entries);
             }
@@ -486,6 +520,7 @@ export async function evaluateGraphInternal(
                 iteration,
                 status: 'cached',
                 durationMs: 0,
+                ...buildRuntimeTelemetryFields(runtimeTelemetry),
               });
             }
 
@@ -500,6 +535,7 @@ export async function evaluateGraphInternal(
                 changed: false,
                 iteration,
                 cached: true,
+                ...buildRuntimeTelemetryFields(runtimeTelemetry),
               });
             }
             return;
@@ -547,6 +583,7 @@ export async function evaluateGraphInternal(
                 prevOutputs,
                 error: handlerMissingError,
                 iteration,
+                ...buildRuntimeTelemetryFields(runtimeTelemetry),
               });
             }
             throw handlerMissingError;
@@ -564,6 +601,7 @@ export async function evaluateGraphInternal(
               nodeInputs,
               prevOutputs,
               iteration,
+              ...buildRuntimeTelemetryFields(runtimeTelemetry),
             });
           }
 
@@ -703,6 +741,7 @@ export async function evaluateGraphInternal(
                 inputsFrom: [],
                 outputsTo: [],
                 durationMs: nodeDurationMs,
+                ...buildRuntimeTelemetryFields(runtimeTelemetry),
               } as RuntimeHistoryEntry);
               state.history.set(node.id, entries);
             }
@@ -717,6 +756,7 @@ export async function evaluateGraphInternal(
                 iteration,
                 status: 'executed',
                 durationMs: nodeDurationMs,
+                ...buildRuntimeTelemetryFields(runtimeTelemetry),
               });
             }
 
@@ -731,6 +771,7 @@ export async function evaluateGraphInternal(
                 changed: true,
                 iteration,
                 cached: false,
+                ...buildRuntimeTelemetryFields(runtimeTelemetry),
               });
             }
 
@@ -799,6 +840,7 @@ export async function evaluateGraphInternal(
                   skipReason: 'missing_inputs',
                   requiredPorts: recoverableWaitState.waitingOnPorts,
                   waitingOnPorts: recoverableWaitState.waitingOnPorts,
+                  ...buildRuntimeTelemetryFields(runtimeTelemetry),
                 } as RuntimeHistoryEntry);
                 state.history.set(node.id, entries);
               }
@@ -816,6 +858,7 @@ export async function evaluateGraphInternal(
                   reason: 'missing_inputs',
                   requiredPorts: recoverableWaitState.waitingOnPorts,
                   waitingOnPorts: recoverableWaitState.waitingOnPorts,
+                  ...buildRuntimeTelemetryFields(runtimeTelemetry),
                 });
               }
 
@@ -828,6 +871,7 @@ export async function evaluateGraphInternal(
                   message: recoverableWaitState.message,
                   waitingOnPorts: recoverableWaitState.waitingOnPorts,
                   waitingOnDetails: [],
+                  ...buildRuntimeTelemetryFields(runtimeTelemetry),
                 });
               }
 
@@ -874,6 +918,7 @@ export async function evaluateGraphInternal(
                 inputsFrom: [],
                 outputsTo: [],
                 durationMs: nodeDurationMs,
+                ...buildRuntimeTelemetryFields(runtimeTelemetry),
               } as RuntimeHistoryEntry);
               state.history.set(node.id, entries);
             }
@@ -889,6 +934,7 @@ export async function evaluateGraphInternal(
                 status: 'error',
                 durationMs: nodeDurationMs,
                 reason: graphError.message,
+                ...buildRuntimeTelemetryFields(runtimeTelemetry),
               });
             }
 
@@ -901,6 +947,7 @@ export async function evaluateGraphInternal(
                 prevOutputs,
                 error: graphError,
                 iteration,
+                ...buildRuntimeTelemetryFields(runtimeTelemetry),
               });
             }
 

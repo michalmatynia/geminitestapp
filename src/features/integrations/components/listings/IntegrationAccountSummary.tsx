@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { useOptionalListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
+import { useOptionalListingSelection } from '@/features/integrations/context/ListingSettingsContext';
 import type { IntegrationConnectionBasic } from '@/shared/contracts/integrations';
 
 interface IntegrationAccountSummaryProps {
@@ -14,12 +14,12 @@ export function IntegrationAccountSummary({
   integrationName,
   connectionName,
 }: IntegrationAccountSummaryProps): React.JSX.Element {
-  const listingSettings = useOptionalListingSettingsContext();
-  const selectedConnection = (listingSettings?.selectedIntegration?.connections ?? []).find(
+  const listingSelection = useOptionalListingSelection();
+  const selectedConnection = (listingSelection?.selectedIntegration?.connections ?? []).find(
     (connection: IntegrationConnectionBasic) =>
-      connection.id === listingSettings?.selectedConnectionId
+      connection.id === listingSelection?.selectedConnectionId
   );
-  const resolvedIntegrationName = integrationName ?? listingSettings?.selectedIntegration?.name;
+  const resolvedIntegrationName = integrationName ?? listingSelection?.selectedIntegration?.name;
   const resolvedConnectionName = connectionName ?? selectedConnection?.name;
 
   return (

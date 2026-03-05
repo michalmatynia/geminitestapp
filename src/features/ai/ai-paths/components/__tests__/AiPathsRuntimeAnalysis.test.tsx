@@ -135,4 +135,98 @@ describe('AiPathsRuntimeAnalysis', () => {
     await user.keyboard('{Enter}');
     expect(refetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it('renders portable engine analytics details when provided by runtime summary', () => {
+    useAiPathsSettingsOrchestratorMock.mockReturnValue({
+      runtimeRunStatus: 'running',
+      runtimeNodeStatuses: {},
+      activePathId: null,
+      nodes: [],
+      reportAiPathsError: vi.fn(),
+    });
+    useRunHistoryActionsMock.mockReturnValue({
+      setRunHistoryNodeId: vi.fn(),
+      setRunFilter: vi.fn(),
+      openRunDetail: vi.fn(),
+    });
+    useBrainAssignmentMock.mockImplementation(() => ({
+      assignment: {
+        enabled: true,
+      },
+      effectiveModelId: '',
+    }));
+    useAiPathRuntimeAnalyticsMock.mockReturnValue({
+      data: {
+        storage: 'redis',
+        runs: {
+          total: 12,
+          successRate: 75,
+          avgDurationMs: 100,
+          p95DurationMs: 200,
+        },
+        traces: {
+          sampledRuns: 2,
+          sampledSpans: 8,
+          avgDurationMs: 60,
+          p95DurationMs: 90,
+          slowestSpan: null,
+          topSlowNodes: [],
+          topFailedNodes: [],
+        },
+        portableEngine: {
+          source: 'in_memory',
+          totals: {
+            attempts: 12,
+            successes: 9,
+            failures: 3,
+            successRate: 75,
+            failureRate: 25,
+          },
+          byRunner: {
+            client: { attempts: 7, successes: 6, failures: 1 },
+            server: { attempts: 5, successes: 3, failures: 2 },
+          },
+          bySurface: {
+            canvas: { attempts: 4, successes: 3, failures: 1 },
+            product: { attempts: 5, successes: 4, failures: 1 },
+            api: { attempts: 3, successes: 2, failures: 1 },
+          },
+          byInputSource: {
+            portable_package: { attempts: 2, successes: 2, failures: 0 },
+            portable_envelope: { attempts: 1, successes: 0, failures: 1 },
+            semantic_canvas: { attempts: 3, successes: 3, failures: 0 },
+            path_config: { attempts: 6, successes: 4, failures: 2 },
+          },
+          failureStageCounts: {
+            resolve: 1,
+            validation: 1,
+            runtime: 1,
+          },
+          recentFailures: [
+            {
+              at: '2026-03-05T11:00:00.000Z',
+              runner: 'client',
+              surface: 'canvas',
+              source: 'path_config',
+              stage: 'runtime',
+              error: 'runtime failed',
+              durationMs: 321,
+              validateBeforeRun: true,
+              validationMode: 'strict',
+            },
+          ],
+        },
+      },
+      isFetching: false,
+      refetch: vi.fn(),
+    });
+
+    render(<AiPathsRuntimeAnalysis />);
+
+    expect(screen.getByText('Portable Engine (24h)')).toBeInTheDocument();
+    expect(screen.getByText('in_memory')).toBeInTheDocument();
+    expect(screen.getByText(/Attempts 12/i)).toBeInTheDocument();
+    expect(screen.getByText(/Failures 3 \(R 1 · V 1 · RT 1\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Latest client runtime · canvas/i)).toBeInTheDocument();
+  });
 });

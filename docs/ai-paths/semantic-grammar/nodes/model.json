@@ -4,27 +4,38 @@
   "nodeType": "model",
   "title": "Model",
   "purpose": "Runs a selected model.",
-  "inputs": ["prompt", "images"],
-  "outputs": ["result", "jobId"],
+  "inputs": [
+    "prompt",
+    "images"
+  ],
+  "outputs": [
+    "result",
+    "jobId"
+  ],
   "configFields": [
     {
       "path": "model.modelId",
-      "description": "Model identifier to run.",
-      "defaultValue": "gpt-4o"
+      "description": "Optional node-selected model ID. Empty means inherit the AI Brain default model for AI Paths. The picker uses the Brain model catalog.",
+      "defaultValue": "\"\" (inherit Brain default)"
     },
     {
       "path": "model.temperature",
-      "description": "Sampling temperature (0-2).",
-      "defaultValue": "0.2"
+      "description": "Node-level sampling temperature (0-2). When set, it overrides the AI Brain default for this node.",
+      "defaultValue": "0.7"
     },
     {
       "path": "model.maxTokens",
-      "description": "Maximum output tokens.",
-      "defaultValue": "2048"
+      "description": "Node-level maximum output tokens. When set, it overrides the AI Brain default for this node.",
+      "defaultValue": "800"
+    },
+    {
+      "path": "model.systemPrompt",
+      "description": "Optional node-level system prompt. A non-empty value overrides the AI Brain default; empty inherits the AI Brain prompt.",
+      "defaultValue": "\"\" (inherit Brain default)"
     },
     {
       "path": "model.vision",
-      "description": "When true, image URLs are included as vision inputs if connected.",
+      "description": "When true, image URLs are included as vision inputs if connected. Provider execution still routes through AI Brain.",
       "defaultValue": "false"
     },
     {
@@ -36,6 +47,11 @@
       "path": "runtime.cache.mode",
       "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
       "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
     },
     {
       "path": "runtime.waitForInputs",
@@ -53,8 +69,14 @@
       "x": 100,
       "y": 100
     },
-    "inputs": ["prompt", "images"],
-    "outputs": ["result", "jobId"],
+    "inputs": [
+      "prompt",
+      "images"
+    ],
+    "outputs": [
+      "result",
+      "jobId"
+    ],
     "data": {},
     "connections": {
       "incoming": [],
@@ -62,5 +84,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "10b82d8debfae435ca227a48b0bf661e1aca278188352ff6dfca2ba773ddb8a0"
+  "nodeHash": "69429171748383402c62fb8f86ce6e354e76e13ed83ad5302d8b266b2cced9d5"
 }

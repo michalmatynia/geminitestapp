@@ -4,8 +4,13 @@
   "nodeType": "description_updater",
   "title": "Description Updater (Deprecated)",
   "purpose": "Writes description_en back to the product.",
-  "inputs": ["productId", "description_en"],
-  "outputs": ["description_en"],
+  "inputs": [
+    "productId",
+    "description_en"
+  ],
+  "outputs": [
+    "description_en"
+  ],
   "configFields": [
     {
       "path": "runtime.cache.mode",
@@ -13,12 +18,19 @@
       "defaultValue": "auto"
     },
     {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
+    },
+    {
       "path": "runtime.waitForInputs",
       "description": "If true, wait until all connected input ports have values before executing the node.",
       "defaultValue": "false"
     }
   ],
-  "notes": ["Deprecated node. Prefer Database node write operations for updates."],
+  "notes": [
+    "Deprecated node. Prefer Database node write operations for updates."
+  ],
   "semanticNodeExample": {
     "id": "node_description_updater",
     "type": "description_updater",
@@ -28,8 +40,13 @@
       "x": 100,
       "y": 100
     },
-    "inputs": ["productId", "description_en"],
-    "outputs": ["description_en"],
+    "inputs": [
+      "productId",
+      "description_en"
+    ],
+    "outputs": [
+      "description_en"
+    ],
     "data": {},
     "connections": {
       "incoming": [],
@@ -37,5 +54,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "2032d304ca08ffdee0bf70d214a4a3945066eded008da4f958a534ca0ba586f0"
+  "nodeHash": "0140c1929e747f53a5f4f60043595787d367bdd869350012552e7cc185c69588"
 }

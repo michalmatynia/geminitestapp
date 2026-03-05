@@ -6,11 +6,13 @@ import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-r
 import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
+  AiPathRuntimePortableEngineAnalytics,
   AiPathRuntimeAnalyticsRange,
   AiPathRuntimeAnalyticsSummary,
   AiPathRuntimeTraceAnalytics,
   AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
+import { getPortablePathRunExecutionSnapshot } from '@/shared/lib/ai-paths/portable-engine';
 import { getRedisConnection } from '@/shared/lib/queue';
 import type { RuntimeAnalyticsAvailability } from '@/shared/lib/ai-paths/services/runtime-analytics/availability';
 
@@ -271,6 +273,95 @@ const emptyTraceAnalytics = (): AiPathRuntimeTraceAnalytics => ({
   truncated: false,
 });
 
+const toPortableEngineRates = (
+  counts: Pick<AiPathRuntimePortableEngineAnalytics['totals'], 'attempts' | 'successes' | 'failures'>
+): Pick<AiPathRuntimePortableEngineAnalytics['totals'], 'successRate' | 'failureRate'> => {
+  if (counts.attempts <= 0) {
+    return {
+      successRate: 0,
+      failureRate: 0,
+    };
+  }
+  return {
+    successRate: clampRate((counts.successes / counts.attempts) * 100),
+    failureRate: clampRate((counts.failures / counts.attempts) * 100),
+  };
+};
+
+const emptyPortableEngineAnalytics = (
+  source: AiPathRuntimePortableEngineAnalytics['source']
+): AiPathRuntimePortableEngineAnalytics => ({
+  source,
+  totals: {
+    attempts: 0,
+    successes: 0,
+    failures: 0,
+    successRate: 0,
+    failureRate: 0,
+  },
+  byRunner: {
+    client: { attempts: 0, successes: 0, failures: 0 },
+    server: { attempts: 0, successes: 0, failures: 0 },
+  },
+  bySurface: {
+    canvas: { attempts: 0, successes: 0, failures: 0 },
+    product: { attempts: 0, successes: 0, failures: 0 },
+    api: { attempts: 0, successes: 0, failures: 0 },
+  },
+  byInputSource: {
+    portable_package: { attempts: 0, successes: 0, failures: 0 },
+    portable_envelope: { attempts: 0, successes: 0, failures: 0 },
+    semantic_canvas: { attempts: 0, successes: 0, failures: 0 },
+    path_config: { attempts: 0, successes: 0, failures: 0 },
+  },
+  failureStageCounts: {
+    resolve: 0,
+    validation: 0,
+    runtime: 0,
+  },
+  recentFailures: [],
+});
+
+const buildPortableEngineAnalytics = (): AiPathRuntimePortableEngineAnalytics => {
+  try {
+    const snapshot = getPortablePathRunExecutionSnapshot();
+    const recentFailures = snapshot.recentEvents
+      .filter((event) => event.outcome === 'failure')
+      .slice(-10)
+      .reverse()
+      .map((event) => ({
+        at: event.at,
+        runner: event.runner,
+        surface: event.surface,
+        source: event.source,
+        stage: event.failureStage ?? 'runtime',
+        error: event.error ?? 'Unknown portable engine runtime failure.',
+        durationMs: event.durationMs,
+        validateBeforeRun: event.validateBeforeRun,
+        validationMode: event.validationMode,
+      }));
+
+    return {
+      source: 'in_memory',
+      totals: {
+        ...snapshot.totals,
+        ...toPortableEngineRates(snapshot.totals),
+      },
+      byRunner: snapshot.byRunner,
+      bySurface: snapshot.bySurface,
+      byInputSource: snapshot.bySource,
+      failureStageCounts: snapshot.failureStageCounts,
+      recentFailures,
+    };
+  } catch (error) {
+    void ErrorSystem.logWarning('Failed to read portable engine runtime analytics snapshot', {
+      service: 'ai-paths-analytics',
+      error,
+    });
+    return emptyPortableEngineAnalytics('unavailable');
+  }
+};
+
 const asRecord = (value: unknown): Record<string, unknown> | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   return value as Record<string, unknown>;
@@ -523,6 +614,7 @@ const emptySummary = (
     errorReports: 0,
   },
   traces: emptyTraceAnalytics(),
+  portableEngine: buildPortableEngineAnalytics(),
   generatedAt: new Date().toISOString(),
 });
 
@@ -889,6 +981,7 @@ export const getRuntimeAnalyticsSummary = async (input: {
           errorReports: readCountAt(19),
         },
         traces,
+        portableEngine: buildPortableEngineAnalytics(),
         generatedAt: new Date().toISOString(),
       };
       setCachedSummary(cacheKey, summary, Date.now());

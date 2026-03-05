@@ -4,8 +4,20 @@
   "nodeType": "audio_oscillator",
   "title": "Audio Oscillator",
   "purpose": "Generate a waveform signal (sine/square/triangle/sawtooth).",
-  "inputs": ["frequency", "waveform", "gain", "durationMs", "trigger"],
-  "outputs": ["audioSignal", "frequency", "waveform", "gain", "durationMs"],
+  "inputs": [
+    "frequency",
+    "waveform",
+    "gain",
+    "durationMs",
+    "trigger"
+  ],
+  "outputs": [
+    "audioSignal",
+    "frequency",
+    "waveform",
+    "gain",
+    "durationMs"
+  ],
   "configFields": [
     {
       "path": "audioOscillator.waveform",
@@ -33,6 +45,11 @@
       "defaultValue": "auto"
     },
     {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
+    },
+    {
       "path": "runtime.waitForInputs",
       "description": "If true, wait until all connected input ports have values before executing the node.",
       "defaultValue": "false"
@@ -56,8 +73,20 @@
       "x": 100,
       "y": 100
     },
-    "inputs": ["frequency", "waveform", "gain", "durationMs", "trigger"],
-    "outputs": ["audioSignal", "frequency", "waveform", "gain", "durationMs"],
+    "inputs": [
+      "frequency",
+      "waveform",
+      "gain",
+      "durationMs",
+      "trigger"
+    ],
+    "outputs": [
+      "audioSignal",
+      "frequency",
+      "waveform",
+      "gain",
+      "durationMs"
+    ],
     "config": {
       "audioOscillator": {
         "waveform": "sine",
@@ -73,5 +102,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "aeaa5ceb04391b2376ccefc657bbcba7781f08922f210e82f3569b2b16314956"
+  "nodeHash": "7baab1b01ab357f02eee514fc42f17c000caaa5d51e5610ca9197cbe0a9f8224"
 }

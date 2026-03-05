@@ -225,6 +225,40 @@ describe('portable AI-path engine scaffold', () => {
     }
   });
 
+  it('warns or blocks on invalid node code object manifest by verification mode', () => {
+    const pathConfig = createDefaultPathConfig('path_portable_manifest_invalid');
+    const portablePackage = buildPortablePathPackage(pathConfig);
+    const tamperedPackage = {
+      ...portablePackage,
+      metadata: {
+        ...(portablePackage.metadata ?? {}),
+        [PORTABLE_NODE_CODE_OBJECT_MANIFEST_METADATA_KEY]: {
+          schemaVersion: 'invalid.manifest',
+        },
+      },
+    };
+
+    const warnParsed = resolvePortablePathInput(tamperedPackage, {
+      nodeCodeObjectHashVerificationMode: 'warn',
+    });
+    expect(warnParsed.ok).toBe(true);
+    if (warnParsed.ok) {
+      expect(
+        warnParsed.value.migrationWarnings.some(
+          (warning) => warning.code === 'node_code_object_manifest_invalid'
+        )
+      ).toBe(true);
+    }
+
+    const strictParsed = resolvePortablePathInput(tamperedPackage, {
+      nodeCodeObjectHashVerificationMode: 'strict',
+    });
+    expect(strictParsed.ok).toBe(false);
+    if (!strictParsed.ok) {
+      expect(strictParsed.error.toLowerCase()).toContain('node code object');
+    }
+  });
+
   it('resolves semantic canvas documents directly', () => {
     const pathConfig = createDefaultPathConfig('path_portable_semantic_direct');
     const semanticDocument = serializePathConfigToSemanticCanvas(pathConfig, {

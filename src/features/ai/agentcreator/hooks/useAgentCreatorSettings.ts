@@ -1,5 +1,31 @@
 'use client';
 
-import { useAgentCreatorSettingsContext } from '../context/AgentCreatorSettingsContext';
+import { useMemo } from 'react';
 
-export const useAgentCreatorSettings = useAgentCreatorSettingsContext;
+import {
+  useAgentCreatorModes,
+  useAgentCreatorOperations,
+  useAgentCreatorPerformance,
+  type AgentCreatorModes,
+  type AgentCreatorOperations,
+  type AgentCreatorPerformance,
+} from '../context/AgentCreatorSettingsContext';
+
+export type AgentCreatorSettings = AgentCreatorModes &
+  AgentCreatorPerformance &
+  AgentCreatorOperations;
+
+export const useAgentCreatorSettings = (): AgentCreatorSettings => {
+  const modes = useAgentCreatorModes();
+  const performance = useAgentCreatorPerformance();
+  const operations = useAgentCreatorOperations();
+
+  return useMemo<AgentCreatorSettings>(
+    () => ({
+      ...modes,
+      ...performance,
+      ...operations,
+    }),
+    [modes, performance, operations]
+  );
+};

@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_audio_speaker_portable_v2",
   "nodeType": "audio_speaker",
   "nodeDocVersion": "2026-02-20.v1",
@@ -112,6 +112,11 @@
         "defaultValue": "auto"
       },
       {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
+      },
+      {
         "path": "runtime.waitForInputs",
         "description": "If true, wait until all connected input ports have values before executing the node.",
         "defaultValue": "false"
@@ -181,7 +186,8 @@
         },
         "runtime": {
           "cache": {
-            "mode": "auto"
+            "mode": "auto",
+            "scope": "run"
           },
           "waitForInputs": false
         }
@@ -224,7 +230,8 @@
             },
             "runtime": {
               "cache": {
-                "mode": "auto"
+                "mode": "auto",
+                "scope": "run"
               },
               "waitForInputs": false
             }
@@ -238,8 +245,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/audio_speaker.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "1d5c93c395f1d7c0ec4c8abb0d28abc7842f36613e52255c7dc6b0b6abaf2321"
+    "semanticNodeHash": "37a4b7541ec63acc4d5d1797a0871d52f1d3fa54d8dc44cf6fc350796c3b0d3e"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "7e96d95d0b87a52e9a23a509d03b214cfd1257d9689e4d502785476743854d3c"
+  "objectHash": "dfb90e0e8d2acee6e82550a456eed3f470ed6cb0b9c1e455f19e9d2471a9a640"
 }

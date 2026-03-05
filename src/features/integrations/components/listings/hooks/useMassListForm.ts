@@ -1,6 +1,9 @@
 import { useState, useCallback } from 'react';
 
-import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
+import {
+  useListingBaseComSettings,
+  useListingSelection,
+} from '@/features/integrations/context/ListingSettingsContext';
 import {
   useGenericExportToBaseMutation,
   useGenericCreateListingMutation,
@@ -20,10 +23,13 @@ export function useMassListForm() {
   const {
     selectedConnectionId,
     isBaseComIntegration,
+  } = useListingSelection();
+
+  const {
     selectedInventoryId,
     selectedTemplateId,
     allowDuplicateSku,
-  } = useListingSettingsContext();
+  } = useListingBaseComSettings();
 
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<{

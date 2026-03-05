@@ -17,7 +17,7 @@ import {
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 
-import { useDrafterContext } from '../context/DrafterContext';
+import { useDrafterActions } from '../context/DrafterContext';
 
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
@@ -34,7 +34,7 @@ const resolveDraftIconColor = (draft: ProductDraft): string | undefined => {
 };
 
 export function DraftList(): React.JSX.Element {
-  const { openCreator } = useDrafterContext();
+  const { openCreator } = useDrafterActions();
   const { data: drafts = [], isLoading: loading } = useDraftQueries();
   const deleteDraftMutation = useDeleteDraftMutation();
   const [deleting, setDeleting] = useState<string | null>(null);

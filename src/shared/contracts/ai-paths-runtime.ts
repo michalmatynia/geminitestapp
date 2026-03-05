@@ -225,9 +225,25 @@ export const runtimeHistoryEntrySchema = z.object({
   outputsTo: z.array(runtimeHistoryLinkSchema).optional().default([]),
   delayMs: z.number().nullable().optional(),
   durationMs: z.number().nullable().optional(),
+  runtimeStrategy: z.enum(['legacy_adapter', 'code_object_v3']).optional(),
+  runtimeResolutionSource: z.enum(['override', 'registry', 'missing']).optional(),
+  runtimeCodeObjectId: z.string().nullable().optional(),
 });
 
 export type RuntimeHistoryEntry = z.infer<typeof runtimeHistoryEntrySchema>;
+
+export const nodeRuntimeResolutionStrategySchema = z.enum(['legacy_adapter', 'code_object_v3']);
+export type NodeRuntimeResolutionStrategy = z.infer<typeof nodeRuntimeResolutionStrategySchema>;
+
+export const nodeRuntimeResolutionSourceSchema = z.enum(['override', 'registry', 'missing']);
+export type NodeRuntimeResolutionSource = z.infer<typeof nodeRuntimeResolutionSourceSchema>;
+
+export const nodeRuntimeResolutionTelemetrySchema = z.object({
+  runtimeStrategy: nodeRuntimeResolutionStrategySchema,
+  runtimeResolutionSource: nodeRuntimeResolutionSourceSchema,
+  runtimeCodeObjectId: z.string().nullable().optional(),
+});
+export type NodeRuntimeResolutionTelemetry = z.infer<typeof nodeRuntimeResolutionTelemetrySchema>;
 
 export const runtimeStateSchema = z.object({
   status: runStatusSchema,
@@ -306,6 +322,9 @@ export const aiPathRuntimeProfileEventSchema = z.discriminatedUnion('type', [
       .optional(),
     activationHash: z.string().optional(),
     idempotencyKey: z.string().optional(),
+    runtimeStrategy: nodeRuntimeResolutionStrategySchema.optional(),
+    runtimeResolutionSource: nodeRuntimeResolutionSourceSchema.optional(),
+    runtimeCodeObjectId: z.string().nullable().optional(),
   }),
 ]);
 

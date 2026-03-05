@@ -4,8 +4,15 @@
   "nodeType": "simulation",
   "title": "Simulation: Entity Modal",
   "purpose": "Simulate a modal action by Entity ID.",
-  "inputs": ["trigger"],
-  "outputs": ["context", "entityId", "entityType", "productId"],
+  "inputs": [
+    "trigger"
+  ],
+  "outputs": [
+    "context",
+    "entityId",
+    "entityType",
+    "productId"
+  ],
   "configFields": [
     {
       "path": "simulation.entityType",
@@ -22,9 +29,19 @@
       "defaultValue": "\"\""
     },
     {
+      "path": "simulation.runBehavior",
+      "description": "Execution policy for connected triggers: before_connected_trigger or manual_only.",
+      "defaultValue": "before_connected_trigger"
+    },
+    {
       "path": "runtime.cache.mode",
       "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
       "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
     },
     {
       "path": "runtime.waitForInputs",
@@ -42,8 +59,15 @@
       "x": 100,
       "y": 100
     },
-    "inputs": ["trigger"],
-    "outputs": ["context", "entityId", "entityType", "productId"],
+    "inputs": [
+      "trigger"
+    ],
+    "outputs": [
+      "context",
+      "entityId",
+      "entityType",
+      "productId"
+    ],
     "data": {},
     "connections": {
       "incoming": [],
@@ -51,5 +75,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "97707b90712e96ce6e1f8603c121f3ec124269a26f100e18e25f359d0336461d"
+  "nodeHash": "cce9b04665f1d723b51d00c2139a75d1225cee9488574ab03d39fb68537dbcb7"
 }

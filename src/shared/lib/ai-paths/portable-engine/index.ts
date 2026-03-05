@@ -40,6 +40,7 @@ import {
   getPortablePathEnvelopeVerificationAuditSinkSnapshot,
   getPortablePathEnvelopeVerificationObservabilitySnapshot,
   getPortablePathMigratorObservabilitySnapshot,
+  getPortablePathRunExecutionSnapshot,
   getPortablePathSigningPolicyUsageSnapshot,
   listPortablePathEnvelopeVerificationAuditSinkIds,
   markPortablePathMigratorFailure,
@@ -48,14 +49,19 @@ import {
   markPortablePathMigratorUnregistration,
   recordPortablePathEnvelopeVerificationEvent,
   recordPortablePathMigratorSource,
+  recordPortablePathRunExecutionAttempt,
+  recordPortablePathRunExecutionFailure,
+  recordPortablePathRunExecutionSuccess,
   recordPortablePathSigningPolicyUsage,
   registerPortablePathEnvelopeVerificationAuditSink,
   registerPortablePathEnvelopeVerificationObservabilityHook,
   registerPortablePathMigratorObservabilityHook,
+  registerPortablePathRunExecutionHook,
   registerPortablePathSigningPolicyUsageHook,
   resetPortablePathEnvelopeVerificationAuditSinkSnapshot,
   resetPortablePathEnvelopeVerificationObservabilitySnapshot,
   resetPortablePathMigratorObservabilitySnapshot,
+  resetPortablePathRunExecutionSnapshot,
   resetPortablePathSigningPolicyUsageSnapshot,
   unregisterPortablePathEnvelopeVerificationAuditSink,
 } from './portable-engine-observability';
@@ -68,15 +74,18 @@ export {
   getPortablePathEnvelopeVerificationAuditSinkSnapshot,
   getPortablePathEnvelopeVerificationObservabilitySnapshot,
   getPortablePathMigratorObservabilitySnapshot,
+  getPortablePathRunExecutionSnapshot,
   getPortablePathSigningPolicyUsageSnapshot,
   listPortablePathEnvelopeVerificationAuditSinkIds,
   registerPortablePathEnvelopeVerificationAuditSink,
   registerPortablePathEnvelopeVerificationObservabilityHook,
   registerPortablePathMigratorObservabilityHook,
+  registerPortablePathRunExecutionHook,
   registerPortablePathSigningPolicyUsageHook,
   resetPortablePathEnvelopeVerificationAuditSinkSnapshot,
   resetPortablePathEnvelopeVerificationObservabilitySnapshot,
   resetPortablePathMigratorObservabilitySnapshot,
+  resetPortablePathRunExecutionSnapshot,
   resetPortablePathSigningPolicyUsageSnapshot,
   unregisterPortablePathEnvelopeVerificationAuditSink,
 };
@@ -98,6 +107,12 @@ export type {
   PortablePathMigratorObservabilityEvent,
   PortablePathMigratorObservabilityHook,
   PortablePathMigratorObservabilitySnapshot,
+  PortablePathRunExecutionCounts,
+  PortablePathRunExecutionEvent,
+  PortablePathRunExecutionFailureStage,
+  PortablePathRunExecutionHook,
+  PortablePathRunExecutionRunner,
+  PortablePathRunExecutionSnapshot,
   PortablePathSigningPolicyUsageByProfile,
   PortablePathSigningPolicyUsageEvent,
   PortablePathSigningPolicyUsageHook,
@@ -111,6 +126,8 @@ export type {
   PortableNodeCodeObjectManifestWarningCode,
 } from './node-code-objects-v2';
 export {
+  getPortableNodeCodeObjectContractsCatalog,
+  getPortableNodeCodeObjectContractsHash,
   PORTABLE_NODE_CODE_OBJECT_HASH_VERIFICATION_MODES,
   PORTABLE_NODE_CODE_OBJECT_MANIFEST_METADATA_KEY,
   PORTABLE_NODE_CODE_OBJECT_MANIFEST_SCHEMA_VERSION,
@@ -2234,6 +2251,17 @@ export const runPortablePathClient = async (
     reportAiPathsError,
     ...engineOptions
   } = options;
+  const runStartedAt = Date.now();
+  const validationModeForTelemetry: PortablePathValidationMode | null = validateBeforeRun
+    ? validationMode
+    : null;
+  const telemetrySurface = normalizePortablePathSigningPolicySurface(signingPolicyTelemetrySurface);
+  let resolvedSourceForTelemetry: PortablePathInputSource | null = null;
+  const getDurationMs = (): number => Date.now() - runStartedAt;
+  recordPortablePathRunExecutionAttempt({
+    runner: 'client',
+    surface: telemetrySurface,
+  });
 
   const resolved = await resolvePortablePathInputAsync(input, {
     signingPolicyProfile,
@@ -2251,8 +2279,20 @@ export const runPortablePathClient = async (
     envelopeSignatureKeyResolver,
   });
   if (!resolved.ok) {
-    throw new Error(`Invalid AI-Path payload: ${resolved.error}`);
+    const resolveError = `Invalid AI-Path payload: ${resolved.error}`;
+    recordPortablePathRunExecutionFailure({
+      runner: 'client',
+      surface: telemetrySurface,
+      source: null,
+      validateBeforeRun,
+      validationMode: validationModeForTelemetry,
+      durationMs: getDurationMs(),
+      failureStage: 'resolve',
+      error: resolveError,
+    });
+    throw new Error(resolveError);
   }
+  resolvedSourceForTelemetry = resolved.value.source;
 
   const validation = validateBeforeRun
     ? validatePortablePathConfig(resolved.value.pathConfig, {
@@ -2261,14 +2301,48 @@ export const runPortablePathClient = async (
     })
     : null;
   if (validation && !validation.ok) {
-    throw new PortablePathValidationError(validation);
+    const validationError = new PortablePathValidationError(validation);
+    recordPortablePathRunExecutionFailure({
+      runner: 'client',
+      surface: telemetrySurface,
+      source: resolvedSourceForTelemetry,
+      validateBeforeRun,
+      validationMode: validationModeForTelemetry,
+      durationMs: getDurationMs(),
+      failureStage: 'validation',
+      error: validationError,
+    });
+    throw validationError;
   }
 
-  const runtimeState = await evaluateGraphClient({
-    nodes: resolved.value.pathConfig.nodes,
-    edges: resolved.value.pathConfig.edges,
-    ...engineOptions,
-    reportAiPathsError: reportAiPathsError ?? (() => {}),
+  let runtimeState: RuntimeState;
+  try {
+    runtimeState = await evaluateGraphClient({
+      nodes: resolved.value.pathConfig.nodes,
+      edges: resolved.value.pathConfig.edges,
+      ...engineOptions,
+      reportAiPathsError: reportAiPathsError ?? (() => {}),
+    });
+  } catch (error) {
+    recordPortablePathRunExecutionFailure({
+      runner: 'client',
+      surface: telemetrySurface,
+      source: resolvedSourceForTelemetry,
+      validateBeforeRun,
+      validationMode: validationModeForTelemetry,
+      durationMs: getDurationMs(),
+      failureStage: 'runtime',
+      error,
+    });
+    throw error;
+  }
+  recordPortablePathRunExecutionSuccess({
+    runner: 'client',
+    surface: telemetrySurface,
+    source: resolvedSourceForTelemetry,
+    validateBeforeRun,
+    validationMode: validationModeForTelemetry,
+    durationMs: getDurationMs(),
   });
 
   return {

@@ -24,7 +24,6 @@ import {
   updateChatbotSessionTitle,
   deleteChatbotSession,
   deleteChatbotSessions,
-  persistSessionMessage,
   sendChatbotMessage,
   saveChatbotSettings,
 } from '../api';
@@ -131,39 +130,10 @@ export function useDeleteChatbotSessions(): UpdateMutation<unknown, string[]> {
   });
 }
 
-/**
- * Mutation hook for persisting a message to a session
- */
-type PersistSessionMessageVariables = {
-  sessionId: string;
-  role: ChatMessage['role'];
-  content: string;
-};
-
 type SaveChatbotSettingsVariables = {
   key: string;
   settings: ChatbotSettingsPayload;
 };
-
-export function usePersistSessionMessage(): UpdateMutation<void, PersistSessionMessageVariables> {
-  const mutationKey = chatbotQueryKeys.mutation('persist-session-message');
-
-  return createUpdateMutationV2({
-    mutationFn: ({ sessionId, role, content }: PersistSessionMessageVariables): Promise<void> =>
-      persistSessionMessage(sessionId, role, content),
-    mutationKey,
-    meta: {
-      source: 'chatbot.hooks.usePersistSessionMessage',
-      operation: 'update',
-      resource: 'chatbot.sessions.messages',
-      domain: 'chatbot',
-      mutationKey,
-      tags: ['chatbot', 'sessions', 'messages', 'persist'],
-    },
-    invalidate: (queryClient, _data, { sessionId }) =>
-      invalidateChatbotSession(queryClient, sessionId),
-  });
-}
 
 /**
  * Mutation hook for sending a chat message

@@ -146,6 +146,7 @@ export function useAiPathsPersistence(
         repairIdentities: true,
         includeConnections: false,
         signingPolicyTelemetrySurface: 'canvas',
+        nodeCodeObjectHashVerificationMode: 'warn',
       });
       if (!resolved.ok) {
         throw new Error(resolved.error);

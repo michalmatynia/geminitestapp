@@ -3,6 +3,15 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 
+import {
+  AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
+  AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
+} from '@/shared/lib/ai-paths';
+import {
+  fetchAiPathsSettingsByKeysCached,
+  invalidateAiPathsSettingsCache,
+  updateAiPathsSettingsBulk,
+} from '@/shared/lib/ai-paths/settings-store-client';
 import { Button, StatusBadge, SelectSimple } from '@/shared/ui';
 import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
 import { useSelectionActions, useSelectionState } from '../../../context';
@@ -14,6 +23,43 @@ import { RunHistoryPanel } from '../../run-history-panel';
 import { RuntimeEventLogPanel } from '../../runtime-event-log-panel';
 import { AiPathsRuntimeAnalysis } from '../panels/AiPathsRuntimeAnalysis';
 import { AiPathsLiveLog } from './AiPathsLiveLog';
+
+type RuntimeKernelMode = 'auto' | 'legacy_only';
+
+const normalizeRuntimeKernelMode = (value: unknown): RuntimeKernelMode =>
+  value === 'legacy_only' ? 'legacy_only' : 'auto';
+
+const normalizeRuntimeKernelPilotNodeTypeToken = (value: string): string =>
+  value.trim().toLowerCase().replace(/\s+/g, '_');
+
+const normalizeRuntimeKernelPilotNodeTypes = (values: string[]): string[] =>
+  Array.from(
+    new Set(values.map(normalizeRuntimeKernelPilotNodeTypeToken).filter(Boolean))
+  );
+
+const parseRuntimeKernelPilotNodeTypes = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return normalizeRuntimeKernelPilotNodeTypes(
+      value.filter((entry): entry is string => typeof entry === 'string')
+    );
+  }
+  if (typeof value !== 'string') return [];
+  const trimmed = value.trim();
+  if (!trimmed) return [];
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(trimmed) as unknown;
+      if (Array.isArray(parsed)) {
+        return normalizeRuntimeKernelPilotNodeTypes(
+          parsed.filter((entry): entry is string => typeof entry === 'string')
+        );
+      }
+    } catch {
+      // Fall through to tokenized parsing.
+    }
+  }
+  return normalizeRuntimeKernelPilotNodeTypes(trimmed.split(/[,\n]/g));
+};
 
 export function AiPathsCanvasView(): React.JSX.Element | null {
   const {
@@ -105,6 +151,88 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
   const pathOptions = Array.isArray(pathSwitchOptions) ? pathSwitchOptions : [];
   const nodeDiagnosticsById = dataContractReport?.byNodeId ?? {};
   const focusDataContractNode = setDataContractInspectorNodeId ?? (() => undefined);
+  const [runtimeKernelModeDraft, setRuntimeKernelModeDraft] =
+    React.useState<RuntimeKernelMode>('auto');
+  const [runtimeKernelPilotNodeTypesDraft, setRuntimeKernelPilotNodeTypesDraft] =
+    React.useState<string>('');
+  const [runtimeKernelPersistedMode, setRuntimeKernelPersistedMode] =
+    React.useState<RuntimeKernelMode>('auto');
+  const [runtimeKernelPersistedPilotNodeTypes, setRuntimeKernelPersistedPilotNodeTypes] =
+    React.useState<string[]>([]);
+  const [runtimeKernelLoading, setRuntimeKernelLoading] = React.useState(true);
+  const [runtimeKernelSaving, setRuntimeKernelSaving] = React.useState(false);
+
+  const loadRuntimeKernelSettings = React.useCallback(async (): Promise<void> => {
+    setRuntimeKernelLoading(true);
+    try {
+      const records = await fetchAiPathsSettingsByKeysCached(
+        [AI_PATHS_RUNTIME_KERNEL_MODE_KEY, AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY],
+        { timeoutMs: 8_000, bypassCache: true }
+      );
+      const settingsMap = new Map(records.map((record) => [record.key, record.value]));
+      const mode = normalizeRuntimeKernelMode(settingsMap.get(AI_PATHS_RUNTIME_KERNEL_MODE_KEY));
+      const pilotNodeTypes = parseRuntimeKernelPilotNodeTypes(
+        settingsMap.get(AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY)
+      );
+      setRuntimeKernelPersistedMode(mode);
+      setRuntimeKernelPersistedPilotNodeTypes(pilotNodeTypes);
+      setRuntimeKernelModeDraft(mode);
+      setRuntimeKernelPilotNodeTypesDraft(pilotNodeTypes.join(', '));
+    } catch {
+      // Non-fatal: keep defaults and let run-time env/settings resolver stay authoritative.
+    } finally {
+      setRuntimeKernelLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    void loadRuntimeKernelSettings();
+  }, [loadRuntimeKernelSettings]);
+
+  const runtimeKernelDraftPilotNodeTypes = React.useMemo(
+    () => parseRuntimeKernelPilotNodeTypes(runtimeKernelPilotNodeTypesDraft),
+    [runtimeKernelPilotNodeTypesDraft]
+  );
+  const runtimeKernelSettingsDirty =
+    runtimeKernelModeDraft !== runtimeKernelPersistedMode ||
+    runtimeKernelDraftPilotNodeTypes.join(',') !== runtimeKernelPersistedPilotNodeTypes.join(',');
+
+  const saveRuntimeKernelSettings = React.useCallback(async (): Promise<void> => {
+    if (!runtimeKernelSettingsDirty || runtimeKernelSaving) return;
+    setRuntimeKernelSaving(true);
+    try {
+      await updateAiPathsSettingsBulk([
+        {
+          key: AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
+          value: runtimeKernelModeDraft,
+        },
+        {
+          key: AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
+          value:
+            runtimeKernelDraftPilotNodeTypes.length > 0
+              ? JSON.stringify(runtimeKernelDraftPilotNodeTypes)
+              : '',
+        },
+      ]);
+      invalidateAiPathsSettingsCache();
+      setRuntimeKernelPersistedMode(runtimeKernelModeDraft);
+      setRuntimeKernelPersistedPilotNodeTypes(runtimeKernelDraftPilotNodeTypes);
+      setRuntimeKernelPilotNodeTypesDraft(runtimeKernelDraftPilotNodeTypes.join(', '));
+      notify('Runtime kernel settings saved.', { variant: 'success' });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to save runtime kernel settings.';
+      notify(message, { variant: 'error' });
+    } finally {
+      setRuntimeKernelSaving(false);
+    }
+  }, [
+    notify,
+    runtimeKernelDraftPilotNodeTypes,
+    runtimeKernelModeDraft,
+    runtimeKernelSaving,
+    runtimeKernelSettingsDirty,
+  ]);
 
   if (activeTab !== 'canvas') return null;
 
@@ -249,6 +377,56 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                   >
                     {isPathLocked ? 'Unlock Path' : 'Lock Path'}
                   </Button>
+                  <div className='flex items-center gap-2 rounded-md border border-cyan-500/40 bg-cyan-500/10 px-2 py-1'>
+                    <span className='text-[10px] uppercase tracking-wide text-cyan-100'>
+                      Runtime Kernel
+                    </span>
+                    <SelectSimple
+                      dataDocId='canvas_runtime_kernel_mode'
+                      size='sm'
+                      value={runtimeKernelModeDraft}
+                      onValueChange={(value: string): void => {
+                        setRuntimeKernelModeDraft(normalizeRuntimeKernelMode(value));
+                      }}
+                      options={[
+                        { value: 'auto', label: 'Mode: Auto' },
+                        { value: 'legacy_only', label: 'Mode: Legacy Only' },
+                      ]}
+                      className='w-[170px]'
+                      triggerClassName='h-8 border-cyan-500/50 bg-card/60 px-2 text-[11px] text-cyan-100'
+                      disabled={runtimeKernelLoading || runtimeKernelSaving}
+                    />
+                    <input
+                      data-doc-id='canvas_runtime_kernel_pilot_nodes'
+                      type='text'
+                      value={runtimeKernelPilotNodeTypesDraft}
+                      onChange={(event) => {
+                        setRuntimeKernelPilotNodeTypesDraft(event.target.value);
+                      }}
+                      placeholder='pilot nodes: constant, math'
+                      disabled={
+                        runtimeKernelLoading ||
+                        runtimeKernelSaving ||
+                        runtimeKernelModeDraft === 'legacy_only'
+                      }
+                      className='h-8 w-[220px] rounded-md border border-cyan-500/40 bg-card/60 px-2 text-[11px] text-cyan-50 outline-none ring-offset-background placeholder:text-cyan-200/50 focus-visible:ring-2 focus-visible:ring-cyan-500/60 focus-visible:ring-offset-2'
+                    />
+                    <Button
+                      data-doc-id='canvas_runtime_kernel_apply'
+                      type='button'
+                      className='h-8 rounded-md border border-cyan-400/50 px-2 text-[11px] text-cyan-100 hover:bg-cyan-500/20'
+                      onClick={() => {
+                        void saveRuntimeKernelSettings();
+                      }}
+                      disabled={
+                        runtimeKernelLoading ||
+                        runtimeKernelSaving ||
+                        !runtimeKernelSettingsDirty
+                      }
+                    >
+                      {runtimeKernelSaving ? 'Saving...' : 'Apply'}
+                    </Button>
+                  </div>
                   <div className='flex items-center rounded-md border border-border/60 bg-card/40 p-0.5'>
                     <Button
                       type='button'

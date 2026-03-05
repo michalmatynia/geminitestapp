@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_math_portable_v2",
   "nodeType": "math",
   "nodeDocVersion": "2026-02-20.v1",
@@ -96,6 +96,11 @@
         "defaultValue": "auto"
       },
       {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
+      },
+      {
         "path": "runtime.waitForInputs",
         "description": "If true, wait until all connected input ports have values before executing the node.",
         "defaultValue": "false"
@@ -151,7 +156,8 @@
         },
         "runtime": {
           "cache": {
-            "mode": "auto"
+            "mode": "auto",
+            "scope": "run"
           },
           "waitForInputs": false
         }
@@ -186,7 +192,8 @@
             },
             "runtime": {
               "cache": {
-                "mode": "auto"
+                "mode": "auto",
+                "scope": "run"
               },
               "waitForInputs": false
             }
@@ -200,8 +207,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/math.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "9da335c327d81a23f10a890a37c7dbcdd8463900afbc4a8279ecd094b6bf9b0e"
+    "semanticNodeHash": "d5cf086af1271545687273d8182e3ceb628aa14edb31fec62ff95b5fa970267d"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "939078212ce7059a75fafd287e2772c149103f8febe3670d4a3c26b48c9f1137"
+  "objectHash": "7d67808394fd85a1f2c4a80876d53e5f2f33bf1391d637d084de0eb8b5969f1e"
 }

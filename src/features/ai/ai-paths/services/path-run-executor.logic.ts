@@ -184,6 +184,9 @@ export const toRuntimeProfileHighlight = (
     iteration: event.iteration,
     durationMs: event.durationMs,
     hashMs: event.hashMs,
+    runtimeStrategy: event.runtimeStrategy,
+    runtimeResolutionSource: event.runtimeResolutionSource,
+    runtimeCodeObjectId: event.runtimeCodeObjectId ?? undefined,
   };
 };
 

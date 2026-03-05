@@ -2,7 +2,11 @@
 
 import Link from 'next/link';
 
-import { JobsProvider, useJobsContext } from '@/shared/lib/jobs/context/JobsContext';
+import {
+  JobsProvider,
+  useJobsActions,
+  useJobsState,
+} from '@/shared/lib/jobs/context/JobsContext';
 import { useProductListingJobsProps } from '@/shared/lib/jobs/hooks/useProductListingJobsProps';
 import {
   Button,
@@ -33,19 +37,21 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
   const { showBackToProducts } = useProductListingJobsPanelView();
   const {
     listingJobsRefreshing: isRefreshing,
-    refetchListingJobs: refetch,
     listingJobsError: error,
     traderaQueueHealth,
     traderaQueueHealthLoading,
     query,
+    pageSize,
+    selectedListing,
+  } = useJobsState();
+  const {
+    refetchListingJobs: refetch,
     setQuery,
     setPage,
-    pageSize,
     setPageSize,
-    selectedListing,
     setSelectedListing,
     ConfirmationModal,
-  } = useJobsContext();
+  } = useJobsActions();
 
   const { tableData, isLoading, totalRows, totalPages, clampedPage, startIndex, endIndex } =
     useProductListingJobsProps();

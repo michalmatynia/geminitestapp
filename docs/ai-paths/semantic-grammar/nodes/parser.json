@@ -4,8 +4,16 @@
   "nodeType": "parser",
   "title": "JSON Parser",
   "purpose": "Extract fields into outputs or a single bundle.",
-  "inputs": ["entityJson", "context"],
-  "outputs": ["productId", "title", "images", "content_en"],
+  "inputs": [
+    "entityJson",
+    "context"
+  ],
+  "outputs": [
+    "productId",
+    "title",
+    "images",
+    "content_en"
+  ],
   "configFields": [
     {
       "path": "parser.outputMode",
@@ -27,6 +35,11 @@
       "defaultValue": "auto"
     },
     {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
+    },
+    {
       "path": "runtime.waitForInputs",
       "description": "If true, wait until all connected input ports have values before executing the node.",
       "defaultValue": "false"
@@ -42,8 +55,16 @@
       "x": 100,
       "y": 100
     },
-    "inputs": ["entityJson", "context"],
-    "outputs": ["productId", "title", "images", "content_en"],
+    "inputs": [
+      "entityJson",
+      "context"
+    ],
+    "outputs": [
+      "productId",
+      "title",
+      "images",
+      "content_en"
+    ],
     "data": {},
     "connections": {
       "incoming": [],
@@ -51,5 +72,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "40b4d56d51ee3d3433bbd68043b97490a57bed8beaf03406f62d0010a8993d1e"
+  "nodeHash": "f4efe5d4248e963cb61027db51299b57b9d7fb3bbb1beba1a260c8e531493771"
 }

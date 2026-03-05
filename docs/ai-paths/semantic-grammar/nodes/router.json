@@ -4,8 +4,14 @@
   "nodeType": "router",
   "title": "Router",
   "purpose": "Route payloads based on a condition.",
-  "inputs": ["context", "bundle", "prompt", "result", "value", "valid", "errors"],
-  "outputs": ["context", "bundle", "prompt", "result", "value", "valid", "errors"],
+  "inputs": [
+    "value",
+    "bundle"
+  ],
+  "outputs": [
+    "value",
+    "bundle"
+  ],
   "configFields": [
     {
       "path": "router.mode",
@@ -28,6 +34,11 @@
       "defaultValue": "auto"
     },
     {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
+    },
+    {
       "path": "runtime.waitForInputs",
       "description": "If true, wait until all connected input ports have values before executing the node.",
       "defaultValue": "false"
@@ -43,8 +54,14 @@
       "x": 100,
       "y": 100
     },
-    "inputs": ["context", "bundle", "prompt", "result", "value", "valid", "errors"],
-    "outputs": ["context", "bundle", "prompt", "result", "value", "valid", "errors"],
+    "inputs": [
+      "value",
+      "bundle"
+    ],
+    "outputs": [
+      "value",
+      "bundle"
+    ],
     "data": {},
     "connections": {
       "incoming": [],
@@ -52,5 +69,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "9ef7e3acda01fcedf0a2581da7a5330add9bdc3047e9948cbeeca0d6efbfb7d2"
+  "nodeHash": "82e9ef3cc91bba0a0e65b487b31cc23a065df0740fd65ba429942efdfc4cc0d9"
 }

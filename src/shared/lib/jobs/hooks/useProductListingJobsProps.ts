@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import { useJobsContext } from '@/shared/lib/jobs/context/JobsContext';
+import { useJobsState } from '@/shared/lib/jobs/context/JobsContext';
 import type { ListingJob, ProductJob } from '@/shared/contracts/integrations';
 
 import { type JobRowData } from '../types';
@@ -13,7 +13,7 @@ type ListingRow = {
 };
 
 export function useProductListingJobsProps() {
-  const { listingJobs, listingJobsLoading: isLoading, query, page, pageSize } = useJobsContext();
+  const { listingJobs, listingJobsLoading: isLoading, query, page, pageSize } = useJobsState();
 
   const jobs: ProductJob[] = listingJobs;
 

@@ -33,6 +33,8 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
     runtimeAnalyticsCapability.assignment.enabled && aiPathsModelCapability.assignment.enabled;
 
   const runtimeAnalyticsQuery = useAiPathRuntimeAnalytics('24h', runtimeAnalyticsEnabled);
+  const portableEngineAnalytics = runtimeAnalyticsQuery.data?.portableEngine;
+  const latestPortableEngineFailure = portableEngineAnalytics?.recentFailures[0] ?? null;
 
   const nodeTitleById = useMemo((): Map<string, string> => {
     const map = new Map<string, string>();
@@ -237,7 +239,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
           24h runtime summaries and trace samples are not queried.
         </Card>
       ) : (
-        <div className='grid gap-2 sm:grid-cols-2'>
+        <div className='grid gap-2 sm:grid-cols-3'>
           <Card
             variant='subtle-compact'
             padding='sm'
@@ -250,6 +252,32 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
             <div className='mt-1 text-gray-400'>
               Success: {formatPercent(runtimeAnalyticsQuery.data?.runs.successRate ?? 0)}
             </div>
+          </Card>
+          <Card
+            variant='subtle-compact'
+            padding='sm'
+            className='border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'
+          >
+            <div className='text-[10px] uppercase text-gray-500'>Portable Engine (24h)</div>
+            <div className='mt-1 text-sm text-white'>
+              {portableEngineAnalytics?.source ?? 'unavailable'}
+            </div>
+            <div className='mt-1 text-gray-200'>
+              Attempts {portableEngineAnalytics?.totals.attempts ?? 0} · Success{' '}
+              {formatPercent(portableEngineAnalytics?.totals.successRate ?? 0)}
+            </div>
+            <div className='mt-1 text-gray-400'>
+              Failures {portableEngineAnalytics?.totals.failures ?? 0} (R{' '}
+              {portableEngineAnalytics?.failureStageCounts.resolve ?? 0} · V{' '}
+              {portableEngineAnalytics?.failureStageCounts.validation ?? 0} · RT{' '}
+              {portableEngineAnalytics?.failureStageCounts.runtime ?? 0})
+            </div>
+            {latestPortableEngineFailure ? (
+              <div className='mt-1 text-gray-500'>
+                Latest {latestPortableEngineFailure.runner} {latestPortableEngineFailure.stage} ·{' '}
+                {latestPortableEngineFailure.surface}
+              </div>
+            ) : null}
           </Card>
           <Card
             variant='subtle-compact'

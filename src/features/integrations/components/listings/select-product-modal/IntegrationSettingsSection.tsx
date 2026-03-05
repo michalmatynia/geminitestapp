@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
+import { useListingSelection } from '@/features/integrations/context/ListingSettingsContext';
 import type {
   IntegrationConnectionBasic,
   IntegrationWithConnections,
@@ -20,7 +20,7 @@ export function IntegrationSettingsSection(): React.JSX.Element {
     isBaseComIntegration,
     setSelectedIntegrationId,
     setSelectedConnectionId,
-  } = useListingSettingsContext();
+  } = useListingSelection();
   const { error } = useSelectProductForListingModalContext();
   const integrationsWithConnections = integrations.filter(
     (i: IntegrationWithConnections) => i.connections.length > 0

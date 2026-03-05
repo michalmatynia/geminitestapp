@@ -20,7 +20,13 @@ import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { MockSignInModal } from '../../components/admin/MockSignInModal';
 import { UserCreateModal } from '../../components/admin/UserCreateModal';
 import { UserEditModal } from '../../components/admin/UserEditModal';
-import { UsersProvider, useUsers } from '../../context/UsersContext';
+import {
+  UsersProvider,
+  useUsersData,
+  useUsersDialogs,
+  useUsersRoles,
+  useUsersSearch,
+} from '../../context/UsersContext';
 
 import type { AuthRole } from '@/features/auth/utils/auth-management';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -36,25 +42,23 @@ export default function AuthUsersPage(): React.JSX.Element {
 function AuthUsersPageContent(): React.JSX.Element {
   const {
     filteredUsers,
-    search,
-    setSearch,
-    localUserRoles,
-    handleRoleChange,
-    dirtyRoles,
-    saveRoles,
+    isFetching,
+    isLoading,
+    canReadUsers,
+    roles,
+    provider,
+    refetch,
+  } = useUsersData();
+  const { search, setSearch } = useUsersSearch();
+  const { localUserRoles, handleRoleChange, dirtyRoles, saveRoles } = useUsersRoles();
+  const {
     setEditingUser,
     userToDelete,
     setUserToDelete,
     deleteUser,
     setCreateOpen,
     setMockOpen,
-    canReadUsers,
-    roles,
-    provider,
-    refetch,
-    isFetching,
-    isLoading,
-  } = useUsers();
+  } = useUsersDialogs();
 
   const columns = useMemo<ColumnDef<AuthUserSummary>[]>(
     () => [

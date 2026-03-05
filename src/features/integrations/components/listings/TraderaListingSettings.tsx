@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
+import { useListingTraderaSettings } from '@/features/integrations/context/ListingSettingsContext';
 import { Input, FormField, ToggleRow } from '@/shared/ui';
 
 export function TraderaListingSettings(): React.JSX.Element {
@@ -15,7 +15,7 @@ export function TraderaListingSettings(): React.JSX.Element {
     setSelectedTraderaAutoRelistLeadMinutes,
     selectedTraderaTemplateId,
     setSelectedTraderaTemplateId,
-  } = useListingSettingsContext();
+  } = useListingTraderaSettings();
 
   return (
     <div className='space-y-4'>

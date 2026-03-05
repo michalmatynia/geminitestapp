@@ -4,8 +4,15 @@
   "nodeType": "context",
   "title": "Context Filter",
   "purpose": "Filter incoming context payloads into scoped entity data.",
-  "inputs": ["context"],
-  "outputs": ["context", "entityId", "entityType", "entityJson"],
+  "inputs": [
+    "context"
+  ],
+  "outputs": [
+    "context",
+    "entityId",
+    "entityType",
+    "entityJson"
+  ],
   "configFields": [
     {
       "path": "context.role",
@@ -52,6 +59,11 @@
       "defaultValue": "auto"
     },
     {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
+    },
+    {
       "path": "runtime.waitForInputs",
       "description": "If true, wait until all connected input ports have values before executing the node.",
       "defaultValue": "false"
@@ -67,8 +79,15 @@
       "x": 100,
       "y": 100
     },
-    "inputs": ["context"],
-    "outputs": ["context", "entityId", "entityType", "entityJson"],
+    "inputs": [
+      "context"
+    ],
+    "outputs": [
+      "context",
+      "entityId",
+      "entityType",
+      "entityJson"
+    ],
     "data": {},
     "connections": {
       "incoming": [],
@@ -76,5 +95,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "601940c8afc6994432b68e1fcb6a203b5b34d5247c6356b08e285ab2fad7d6ee"
+  "nodeHash": "8fec17546b68d240c422c0ddbc259a485825d96df3725bec228aacf3cdf84c16"
 }

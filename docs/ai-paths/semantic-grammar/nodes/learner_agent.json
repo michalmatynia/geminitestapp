@@ -6,19 +6,13 @@
   "purpose": "Answer using connected embedding collections (RAG).",
   "inputs": [
     "prompt",
-    "bundle",
-    "context",
-    "entityJson",
-    "value",
-    "result",
-    "title",
-    "images",
-    "content_en",
-    "entityId",
-    "entityType",
-    "productId"
+    "bundle"
   ],
-  "outputs": ["result", "sources", "status", "bundle"],
+  "outputs": [
+    "result",
+    "jobId",
+    "sources"
+  ],
   "configFields": [
     {
       "path": "learnerAgent.agentId",
@@ -39,6 +33,11 @@
       "path": "runtime.cache.mode",
       "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
       "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
     },
     {
       "path": "runtime.waitForInputs",
@@ -65,19 +64,13 @@
     },
     "inputs": [
       "prompt",
-      "bundle",
-      "context",
-      "entityJson",
-      "value",
-      "result",
-      "title",
-      "images",
-      "content_en",
-      "entityId",
-      "entityType",
-      "productId"
+      "bundle"
     ],
-    "outputs": ["result", "sources", "status", "bundle"],
+    "outputs": [
+      "result",
+      "jobId",
+      "sources"
+    ],
     "config": {
       "learnerAgent": {
         "agentId": "",
@@ -92,5 +85,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "6e2b2011d84b2904b5bcd9781a8fc71750ef2bbaf9cfc3ad4154f126d71997b8"
+  "nodeHash": "5009d070f150f40646cabdfa36f86858c8636c2e645f230d39698aa465f653e2"
 }

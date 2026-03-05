@@ -5,7 +5,10 @@
   "title": "Database Schema",
   "purpose": "Provides live database structure as context for AI.",
   "inputs": [],
-  "outputs": ["schema", "context"],
+  "outputs": [
+    "schema",
+    "context"
+  ],
   "configFields": [
     {
       "path": "db_schema.provider",
@@ -43,6 +46,11 @@
       "defaultValue": "auto"
     },
     {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
+    },
+    {
       "path": "runtime.waitForInputs",
       "description": "If true, wait until all connected input ports have values before executing the node.",
       "defaultValue": "false"
@@ -59,7 +67,10 @@
       "y": 100
     },
     "inputs": [],
-    "outputs": ["schema", "context"],
+    "outputs": [
+      "schema",
+      "context"
+    ],
     "data": {},
     "connections": {
       "incoming": [],
@@ -67,5 +78,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "9ce34ef49b7709e8e6c0008cde0260ba925c9100a3019a342166590eb2d4cd81"
+  "nodeHash": "dc56e39b3002dc63ba6b609293b11b296ef5616fbc1eec589de7882b694ecdc6"
 }

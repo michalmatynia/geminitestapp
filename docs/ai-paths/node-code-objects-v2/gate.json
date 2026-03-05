@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_gate_portable_v2",
   "nodeType": "gate",
   "nodeDocVersion": "2026-02-20.v1",
@@ -99,6 +99,11 @@
         "defaultValue": "auto"
       },
       {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
+      },
+      {
         "path": "runtime.waitForInputs",
         "description": "If true, wait until all connected input ports have values before executing the node.",
         "defaultValue": "false"
@@ -161,7 +166,8 @@
         },
         "runtime": {
           "cache": {
-            "mode": "auto"
+            "mode": "auto",
+            "scope": "run"
           },
           "waitForInputs": false
         }
@@ -199,7 +205,8 @@
             },
             "runtime": {
               "cache": {
-                "mode": "auto"
+                "mode": "auto",
+                "scope": "run"
               },
               "waitForInputs": false
             }
@@ -213,8 +220,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/gate.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "a55ef2c56acbcda8db15ebfd789c22fa9f8285fe5e615132684c16fd4e9fff1b"
+    "semanticNodeHash": "c49aeec3b3e821c7acbe9f9602a3ab9d27933ddede848c552a4e728011e39425"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "ac467cfffb8d21186227f6607e18fa4b65258ddf329943b66df28a142c24c0b3"
+  "objectHash": "4ef5922f5ef3e0a43626941478fb90df7e852fa2a778fa226b2f67ce4803b4ec"
 }

@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_bundle_portable_v2",
   "nodeType": "bundle",
   "nodeDocVersion": "2026-02-20.v1",
@@ -18,19 +18,11 @@
   },
   "ports": {
     "inputs": [
-      "context",
-      "meta",
-      "trigger",
-      "triggerName",
-      "result",
-      "entityJson",
-      "entityId",
-      "entityType",
       "value",
-      "errors",
-      "valid",
-      "description_en",
-      "prompt"
+      "productId",
+      "content_en",
+      "images",
+      "title"
     ],
     "outputs": [
       "bundle"
@@ -103,6 +95,11 @@
         "defaultValue": "auto"
       },
       {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
+      },
+      {
         "path": "runtime.waitForInputs",
         "description": "If true, wait until all connected input ports have values before executing the node.",
         "defaultValue": "false"
@@ -120,19 +117,11 @@
         "y": 100
       },
       "inputs": [
-        "context",
-        "meta",
-        "trigger",
-        "triggerName",
-        "result",
-        "entityJson",
-        "entityId",
-        "entityType",
         "value",
-        "errors",
-        "valid",
-        "description_en",
-        "prompt"
+        "productId",
+        "content_en",
+        "images",
+        "title"
       ],
       "outputs": [
         "bundle"
@@ -153,19 +142,11 @@
         "y": 100
       },
       "inputs": [
-        "context",
-        "meta",
-        "trigger",
-        "triggerName",
-        "result",
-        "entityJson",
-        "entityId",
-        "entityType",
         "value",
-        "errors",
-        "valid",
-        "description_en",
-        "prompt"
+        "productId",
+        "content_en",
+        "images",
+        "title"
       ],
       "outputs": [
         "bundle"
@@ -181,7 +162,8 @@
         },
         "runtime": {
           "cache": {
-            "mode": "auto"
+            "mode": "auto",
+            "scope": "run"
           },
           "waitForInputs": false
         }
@@ -199,19 +181,11 @@
             "y": 100
           },
           "inputs": [
-            "context",
-            "meta",
-            "trigger",
-            "triggerName",
-            "result",
-            "entityJson",
-            "entityId",
-            "entityType",
             "value",
-            "errors",
-            "valid",
-            "description_en",
-            "prompt"
+            "productId",
+            "content_en",
+            "images",
+            "title"
           ],
           "outputs": [
             "bundle"
@@ -227,7 +201,8 @@
             },
             "runtime": {
               "cache": {
-                "mode": "auto"
+                "mode": "auto",
+                "scope": "run"
               },
               "waitForInputs": false
             }
@@ -241,8 +216,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/bundle.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "ea14e4d3016ccec5a80fe54af1e4e8e846bef139585d14d802078e67788dfc0e"
+    "semanticNodeHash": "f02021c0cfff57b77cf446d8b1d8740edd80c73e9b4d2b39a2b2474fbe707385"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "a71e4d0e52abd97484eac604d5b68e67c1c104b77c4fea3caf1a95bd29b3dea7"
+  "objectHash": "b68da6ac9bdac116d1254903d20735a0d85eaa4b29cacd4a5f340b71269c5cd7"
 }

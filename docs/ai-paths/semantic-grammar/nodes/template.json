@@ -5,20 +5,13 @@
   "title": "Template",
   "purpose": "Create prompts from template strings.",
   "inputs": [
-    "context",
-    "meta",
-    "trigger",
-    "triggerName",
-    "result",
-    "entityJson",
-    "entityId",
-    "entityType",
-    "value",
     "bundle",
-    "description_en",
+    "value",
+    "productId"
+  ],
+  "outputs": [
     "prompt"
   ],
-  "outputs": ["prompt"],
   "configFields": [
     {
       "path": "template.template",
@@ -29,6 +22,11 @@
       "path": "runtime.cache.mode",
       "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
       "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
     },
     {
       "path": "runtime.waitForInputs",
@@ -47,20 +45,13 @@
       "y": 100
     },
     "inputs": [
-      "context",
-      "meta",
-      "trigger",
-      "triggerName",
-      "result",
-      "entityJson",
-      "entityId",
-      "entityType",
-      "value",
       "bundle",
-      "description_en",
+      "value",
+      "productId"
+    ],
+    "outputs": [
       "prompt"
     ],
-    "outputs": ["prompt"],
     "data": {},
     "connections": {
       "incoming": [],
@@ -68,5 +59,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "c894cfe662ffd60f6495b253f87137c9f8d0f9eaa4d29b84cae161e0b480d36b"
+  "nodeHash": "349143bb99ff84ec6f3ceba1c8d8a24e48682e23c0679ef6bc8ff3048636640c"
 }

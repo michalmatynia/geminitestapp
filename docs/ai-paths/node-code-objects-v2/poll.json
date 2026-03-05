@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_poll_portable_v2",
   "nodeType": "poll",
   "nodeDocVersion": "2026-02-20.v1",
@@ -95,17 +95,13 @@
       },
       {
         "path": "poll.intervalMs",
-        "description": "Wait time between polling attempts (ms).",
-        "defaultValue": "1000"
+        "description": "Poll frequency.",
+        "defaultValue": "2000"
       },
       {
         "path": "poll.maxAttempts",
-        "description": "Maximum polling attempts before failing.",
-        "defaultValue": "40"
-      },
-      {
-        "path": "poll.dbQuery",
-        "description": "Database query definition used when mode is database (provider/collection/preset/queryTemplate/etc)."
+        "description": "Maximum retry limit before failing.",
+        "defaultValue": "30"
       },
       {
         "path": "poll.dbQuery.provider",
@@ -164,25 +160,33 @@
       },
       {
         "path": "poll.successPath",
-        "description": "Optional JSON path evaluated against the polled result to determine completion."
+        "description": "JSON path in result to check for completion.",
+        "defaultValue": "\"status\""
       },
       {
         "path": "poll.successOperator",
-        "description": "truthy/equals/contains/notEquals used with successPath.",
-        "defaultValue": "truthy"
+        "description": "equals/not_equals/contains/in.",
+        "defaultValue": "\"equals\""
       },
       {
         "path": "poll.successValue",
-        "description": "String value used by equals/contains/notEquals."
+        "description": "Value that indicates success (string/number).",
+        "defaultValue": "\"completed\""
       },
       {
         "path": "poll.resultPath",
-        "description": "Optional JSON path to extract the final result payload to emit."
+        "description": "JSON path to the actual data to emit on result port.",
+        "defaultValue": "\"result\""
       },
       {
         "path": "runtime.cache.mode",
         "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
         "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
       },
       {
         "path": "runtime.waitForInputs",
@@ -252,8 +256,8 @@
       "config": {
         "poll": {
           "mode": "job",
-          "intervalMs": 1000,
-          "maxAttempts": 40,
+          "intervalMs": 2000,
+          "maxAttempts": 30,
           "dbQuery": {
             "provider": "mongodb",
             "collection": "products",
@@ -267,11 +271,15 @@
             "projection": "",
             "single": false
           },
-          "successOperator": "truthy"
+          "successPath": "status",
+          "successOperator": "equals",
+          "successValue": "completed",
+          "resultPath": "result"
         },
         "runtime": {
           "cache": {
-            "mode": "auto"
+            "mode": "auto",
+            "scope": "run"
           },
           "waitForInputs": false
         }
@@ -310,8 +318,8 @@
           "config": {
             "poll": {
               "mode": "job",
-              "intervalMs": 1000,
-              "maxAttempts": 40,
+              "intervalMs": 2000,
+              "maxAttempts": 30,
               "dbQuery": {
                 "provider": "mongodb",
                 "collection": "products",
@@ -325,11 +333,15 @@
                 "projection": "",
                 "single": false
               },
-              "successOperator": "truthy"
+              "successPath": "status",
+              "successOperator": "equals",
+              "successValue": "completed",
+              "resultPath": "result"
             },
             "runtime": {
               "cache": {
-                "mode": "auto"
+                "mode": "auto",
+                "scope": "run"
               },
               "waitForInputs": false
             }
@@ -343,8 +355,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/poll.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "6bed270f19afc27bb4ee9f42723aaae11c297d22ea4980626e95719cf8c6f293"
+    "semanticNodeHash": "86f5979ebe33fa966505a2c2bdb7ab279df0696faf94fb4605a561b7e196cdb2"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "d4864867b0c409dfa27a6b0d3daff8d439d299c7897759df9d93bcd3139d0cc9"
+  "objectHash": "96f7eb9628b3d69b261032d582f9e954fcc554dfe8aca3a03e5b2880be207bfb"
 }

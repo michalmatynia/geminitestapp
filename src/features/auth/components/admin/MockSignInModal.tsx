@@ -8,7 +8,7 @@ import {
   type SettingsField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
-import { useUsers } from '../../context/UsersContext';
+import { useUsersData, useUsersDialogs } from '../../context/UsersContext';
 
 type MockSignInFormState = {
   email: string;
@@ -17,6 +17,7 @@ type MockSignInFormState = {
 
 export function MockSignInModal(): React.JSX.Element | null {
   const { toast } = useToast();
+  const { mutations } = useUsersData();
   const {
     mockOpen: isOpen,
     setMockOpen,
@@ -24,8 +25,7 @@ export function MockSignInModal(): React.JSX.Element | null {
     setMockEmail,
     mockPassword,
     setMockPassword,
-    mutations,
-  } = useUsers();
+  } = useUsersDialogs();
 
   const isSaving = mutations.mockSignIn.isPending;
   const onClose = () => setMockOpen(false);

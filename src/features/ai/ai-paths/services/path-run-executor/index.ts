@@ -1,8 +1,15 @@
 import 'server-only';
 
-import { cloneJsonSafe, normalizeNodes, sanitizeEdges } from '@/shared/lib/ai-paths';
+import {
+  AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
+  AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
+  cloneJsonSafe,
+  normalizeNodes,
+  sanitizeEdges,
+} from '@/shared/lib/ai-paths';
 import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
 import { GraphExecutionCancelled } from '@/shared/lib/ai-paths/core/runtime/engine-core';
+import { listAiPathsSettings } from '@/features/ai/ai-paths/server';
 import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { repairRuntimeStatePorts } from '@/features/ai/ai-paths/services/runtime-state-port-repair';
@@ -34,6 +41,7 @@ import {
   extractNodeErrorOutputs,
   isMissingRunUpdateError,
   parseRuntimeState,
+  resolveRuntimeKernelConfigForRun,
   resolveCancellationPollIntervalMs,
 } from '../path-run-executor.helpers';
 import { fetchEntityByType } from '../path-run-executor.entities';
@@ -150,6 +158,30 @@ export const executePathRun = async (
   const triggerNodeId =
     resolveTriggerNodeId(nodes, edges, run.triggerEvent, run.triggerNodeId) ?? null;
   const runtimeState = parseRuntimeState(run.runtimeState);
+  const runtimeKernelSettings = await listAiPathsSettings([
+    AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
+    AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
+  ]).catch((error: unknown) => {
+    void ErrorSystem.logWarning('Failed to load AI Paths runtime-kernel settings', {
+      service: 'ai-paths-executor',
+      runId: run.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return [];
+  });
+  const runtimeKernelSettingsMap = new Map(
+    runtimeKernelSettings.map((record) => [record.key, record.value])
+  );
+  const runtimeKernelConfig = resolveRuntimeKernelConfigForRun({
+    envMode: process.env['AI_PATHS_RUNTIME_KERNEL_MODE'],
+    settingMode: runtimeKernelSettingsMap.get(AI_PATHS_RUNTIME_KERNEL_MODE_KEY),
+    envPilotNodeTypes: process.env['AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES'],
+    settingPilotNodeTypes: runtimeKernelSettingsMap.get(
+      AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY
+    ),
+  });
+  const runtimeKernelMode = runtimeKernelConfig.mode;
+  const runtimeKernelPilotNodeTypes = runtimeKernelConfig.pilotNodeTypes;
 
   const accInputs: Record<string, RuntimePortValues> = mergeRuntimePortMaps(
     {},
@@ -404,11 +436,16 @@ export const executePathRun = async (
           runtimeProfileSummary = summary;
         },
       },
+      runtimeKernelMode,
+      runtimeKernelPilotNodeTypes,
       onNodeStart: async ({
         node,
         nodeInputs,
         prevOutputs,
         iteration,
+        runtimeStrategy,
+        runtimeResolutionSource,
+        runtimeCodeObjectId,
         runStartedAt: cbRunStartedAt,
       }) => {
         try {
@@ -481,6 +518,9 @@ export const executePathRun = async (
                       nodeType: node.type,
                       iteration,
                       attempt: nextAttempt,
+                      ...(runtimeStrategy ? { runtimeStrategy } : {}),
+                      ...(runtimeResolutionSource ? { runtimeResolutionSource } : {}),
+                      ...(runtimeCodeObjectId ? { runtimeCodeObjectId } : {}),
                     },
                   })
                   .catch(() => {}),
@@ -497,6 +537,9 @@ export const executePathRun = async (
         nextOutputs,
         iteration,
         cached,
+        runtimeStrategy,
+        runtimeResolutionSource,
+        runtimeCodeObjectId,
         runStartedAt: cbRunStartedAt,
       }) => {
         try {
@@ -566,6 +609,9 @@ export const executePathRun = async (
                   iteration,
                   attempt,
                   cached,
+                  ...(runtimeStrategy ? { runtimeStrategy } : {}),
+                  ...(runtimeResolutionSource ? { runtimeResolutionSource } : {}),
+                  ...(runtimeCodeObjectId ? { runtimeCodeObjectId } : {}),
                   ...(metadata ? { nodeMetadata: metadata } : {}),
                 },
               })
@@ -577,7 +623,17 @@ export const executePathRun = async (
           void reportAiPathsError(error, { nodeId: node.id, action: 'onNodeFinish' });
         }
       },
-      onNodeBlocked: async ({ node, reason, message, status, waitingOnPorts, waitingOnDetails }) => {
+      onNodeBlocked: async ({
+        node,
+        reason,
+        message,
+        status,
+        waitingOnPorts,
+        waitingOnDetails,
+        runtimeStrategy,
+        runtimeResolutionSource,
+        runtimeCodeObjectId,
+      }) => {
         try {
           const finishedAt = new Date().toISOString();
           const attempt = nodeAttemptMap.get(node.id) ?? 0;
@@ -633,6 +689,9 @@ export const executePathRun = async (
                   attempt,
                   reason,
                   status: runtimeStatus,
+                  ...(runtimeStrategy ? { runtimeStrategy } : {}),
+                  ...(runtimeResolutionSource ? { runtimeResolutionSource } : {}),
+                  ...(runtimeCodeObjectId ? { runtimeCodeObjectId } : {}),
                   ...(waitingOnPorts ? { waitingOnPorts } : {}),
                 },
               })
@@ -643,7 +702,16 @@ export const executePathRun = async (
           void reportAiPathsError(error, { nodeId: node.id, action: 'onNodeBlocked' });
         }
       },
-      onNodeError: async ({ node, nodeInputs, error, iteration, runStartedAt: cbRunStartedAt }) => {
+      onNodeError: async ({
+        node,
+        nodeInputs,
+        error,
+        iteration,
+        runtimeStrategy,
+        runtimeResolutionSource,
+        runtimeCodeObjectId,
+        runStartedAt: cbRunStartedAt,
+      }) => {
         try {
           resolvedRunStartedAt = cbRunStartedAt;
           const attempt = nodeAttemptMap.get(node.id) ?? 1;
@@ -736,6 +804,9 @@ export const executePathRun = async (
                   iteration,
                   attempt,
                   error: message,
+                  ...(runtimeStrategy ? { runtimeStrategy } : {}),
+                  ...(runtimeResolutionSource ? { runtimeResolutionSource } : {}),
+                  ...(runtimeCodeObjectId ? { runtimeCodeObjectId } : {}),
                   errorCode: errorReport.code,
                   errorCategory: errorReport.category,
                   errorScope: errorReport.scope,

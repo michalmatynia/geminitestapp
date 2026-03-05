@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 
-import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
+import { useCategoryMapperData } from '@/features/integrations/context/CategoryMapperContext';
 import type { CatalogRecord } from '@/shared/contracts/products';
 import type { PickerGroup, PickerOption } from '@/shared/contracts/ui';
 import { Label } from '@/shared/ui';
@@ -10,7 +10,7 @@ import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
 
 export function CategoryMapperCatalogSelector(): React.JSX.Element {
   const { selectedCatalogId, setSelectedCatalogId, catalogsLoading, catalogs, internalCategories } =
-    useCategoryMapper();
+    useCategoryMapperData();
 
   const groups = useMemo<PickerGroup[]>(
     () => [

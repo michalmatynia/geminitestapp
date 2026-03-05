@@ -78,6 +78,37 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
             topFailedNodes: [],
             truncated: false,
           },
+          portableEngine: {
+            source: 'unavailable',
+            totals: {
+              attempts: 0,
+              successes: 0,
+              failures: 0,
+              successRate: 0,
+              failureRate: 0,
+            },
+            byRunner: {
+              client: { attempts: 0, successes: 0, failures: 0 },
+              server: { attempts: 0, successes: 0, failures: 0 },
+            },
+            bySurface: {
+              canvas: { attempts: 0, successes: 0, failures: 0 },
+              product: { attempts: 0, successes: 0, failures: 0 },
+              api: { attempts: 0, successes: 0, failures: 0 },
+            },
+            byInputSource: {
+              portable_package: { attempts: 0, successes: 0, failures: 0 },
+              portable_envelope: { attempts: 0, successes: 0, failures: 0 },
+              semantic_canvas: { attempts: 0, successes: 0, failures: 0 },
+              path_config: { attempts: 0, successes: 0, failures: 0 },
+            },
+            failureStageCounts: {
+              resolve: 0,
+              validation: 0,
+              runtime: 0,
+            },
+            recentFailures: [],
+          },
           generatedAt: new Date().toISOString(),
         },
       });

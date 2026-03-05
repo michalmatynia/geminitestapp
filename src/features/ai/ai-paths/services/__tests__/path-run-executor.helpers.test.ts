@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { EMPTY_RUNTIME_STATE, parseRuntimeState } from '../path-run-executor.helpers';
+import {
+  EMPTY_RUNTIME_STATE,
+  parseRuntimeState,
+  parseRuntimeKernelPilotNodeTypes,
+  resolveRuntimeKernelConfigForRun,
+} from '../path-run-executor.helpers';
 
 describe('parseRuntimeState', () => {
   it('returns empty runtime state for empty input', () => {
@@ -131,5 +136,76 @@ describe('parseRuntimeState', () => {
         })
       )
     ).toThrowError(/Invalid AI Paths runtime state payload\./i);
+  });
+});
+
+describe('parseRuntimeKernelPilotNodeTypes', () => {
+  it('parses comma-delimited values', () => {
+    expect(parseRuntimeKernelPilotNodeTypes(' constant, math ,template ')).toEqual([
+      'constant',
+      'math',
+      'template',
+    ]);
+  });
+
+  it('parses JSON arrays and normalizes values', () => {
+    expect(parseRuntimeKernelPilotNodeTypes('["Template Node","math"," "]')).toEqual([
+      'template_node',
+      'math',
+    ]);
+  });
+
+  it('returns undefined for empty or invalid inputs', () => {
+    expect(parseRuntimeKernelPilotNodeTypes('')).toBeUndefined();
+    expect(parseRuntimeKernelPilotNodeTypes('[]')).toBeUndefined();
+    expect(parseRuntimeKernelPilotNodeTypes(null)).toBeUndefined();
+  });
+});
+
+describe('resolveRuntimeKernelConfigForRun', () => {
+  it('prefers env mode over settings mode', () => {
+    expect(
+      resolveRuntimeKernelConfigForRun({
+        envMode: 'legacy_only',
+        settingMode: 'auto',
+        envPilotNodeTypes: 'constant',
+        settingPilotNodeTypes: 'math',
+      })
+    ).toMatchObject({
+      mode: 'legacy_only',
+      modeSource: 'env',
+      pilotNodeTypes: undefined,
+      pilotSource: 'default',
+    });
+  });
+
+  it('uses settings mode when env mode is missing', () => {
+    expect(
+      resolveRuntimeKernelConfigForRun({
+        envMode: undefined,
+        settingMode: 'legacy_only',
+        envPilotNodeTypes: undefined,
+        settingPilotNodeTypes: undefined,
+      })
+    ).toMatchObject({
+      mode: 'legacy_only',
+      modeSource: 'settings',
+    });
+  });
+
+  it('falls back to default mode and setting pilot list', () => {
+    expect(
+      resolveRuntimeKernelConfigForRun({
+        envMode: 'invalid',
+        settingMode: 'invalid',
+        envPilotNodeTypes: '',
+        settingPilotNodeTypes: 'constant, math',
+      })
+    ).toMatchObject({
+      mode: 'auto',
+      modeSource: 'default',
+      pilotNodeTypes: ['constant', 'math'],
+      pilotSource: 'settings',
+    });
   });
 });

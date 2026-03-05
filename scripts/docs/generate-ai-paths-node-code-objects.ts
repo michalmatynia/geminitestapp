@@ -342,9 +342,33 @@ const buildMinimalNode = (
   },
 });
 
-const generatedAt = new Date().toISOString();
+const resolveGeneratedAt = (): string => {
+  const generatedAtValue = process.env['AI_PATHS_DOCS_GENERATED_AT'];
+  const raw = typeof generatedAtValue === 'string'
+    ? generatedAtValue.trim()
+    : '';
+  if (!raw) return '2026-03-05T00:00:00.000Z';
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error(`Invalid AI_PATHS_DOCS_GENERATED_AT value: "${raw}".`);
+  }
+  return parsed.toISOString();
+};
+
+const generatedAt = resolveGeneratedAt();
 
 fs.mkdirSync(outputDir, { recursive: true });
+
+const expectedNodeObjectJsonFileNames = new Set<string>(
+  AI_PATHS_NODE_DOCS.map((doc) => `${doc.type}.json`)
+);
+for (const entry of fs.readdirSync(outputDir, { withFileTypes: true })) {
+  if (!entry.isFile()) continue;
+  if (!entry.name.endsWith('.json')) continue;
+  if (entry.name === 'index.json' || entry.name === 'contracts.json') continue;
+  if (expectedNodeObjectJsonFileNames.has(entry.name)) continue;
+  fs.unlinkSync(path.join(outputDir, entry.name));
+}
 
 const rows: PortableNodeCodeObjectIndexRow[] = [];
 const contractsByNodeType: PortableNodeCodeObjectContractIndex['contracts'] = {};
@@ -520,6 +544,8 @@ const readmeLines = [
   '- Contract hash map: `contracts.json`',
   '- One object per node type: `<nodeType>.json`',
   '- Integrity: deterministic `objectHash` (`sha256`)',
+  '- Generation prunes stale per-node JSON artifacts not present in `AI_PATHS_NODE_DOCS`',
+  '- Check fails fast when unexpected per-node JSON artifacts are present',
   '',
   'Regenerate:',
   '',
@@ -531,6 +557,14 @@ const readmeLines = [
   '',
   '```bash',
   'npm run docs:ai-paths:node-code:check',
+  '```',
+  '',
+  'Full node-docs pipeline:',
+  '',
+  '```bash',
+  'npm run docs:ai-paths:node-docs:generate',
+  'npm run docs:ai-paths:node-docs:check',
+  'npm run docs:ai-paths:node-docs:verify',
   '```',
   '',
 ];

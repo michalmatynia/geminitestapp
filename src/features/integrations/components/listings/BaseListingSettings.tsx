@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
+import { useListingBaseComSettings } from '@/features/integrations/context/ListingSettingsContext';
 import type {
   BaseInventory,
   IntegrationTemplate as Template,
@@ -20,7 +20,7 @@ export function BaseListingSettings(): React.JSX.Element {
     setSelectedTemplateId,
     allowDuplicateSku,
     setAllowDuplicateSku,
-  } = useListingSettingsContext();
+  } = useListingBaseComSettings();
 
   return (
     <div className='space-y-4'>

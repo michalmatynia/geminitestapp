@@ -1,9 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 
 import type { Asset3dOrderedDitheringPresetKey, Viewer3DState } from '@/shared/contracts/viewer3d';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { LightingPreset, EnvironmentPreset } from '../components/Viewer3D';
 
@@ -79,7 +80,58 @@ interface Viewer3DContextType extends Viewer3DState {
   applyOrderedDitheringPreset: (preset: Exclude<OrderedDitheringPresetKey, 'custom'>) => void;
 }
 
-const Viewer3DContext = createContext<Viewer3DContextType | undefined>(undefined);
+type Viewer3DActionsKey =
+  | 'setAutoRotate'
+  | 'setAutoRotateSpeed'
+  | 'setEnvironment'
+  | 'setLighting'
+  | 'setLightIntensity'
+  | 'setEnableShadows'
+  | 'setEnableContactShadows'
+  | 'setShowGround'
+  | 'setEnableBloom'
+  | 'setBloomIntensity'
+  | 'setEnableVignette'
+  | 'setEnableToneMapping'
+  | 'setExposure'
+  | 'setEnableDithering'
+  | 'setDitheringIntensity'
+  | 'setEnablePixelation'
+  | 'setPixelSize'
+  | 'setEnableOrderedDithering'
+  | 'setOrderedDitheringGridSize'
+  | 'setOrderedDitheringPixelSizeRatio'
+  | 'setOrderedDitheringGrayscaleOnly'
+  | 'setOrderedDitheringInvertColor'
+  | 'setOrderedDitheringLuminanceMethod'
+  | 'setOrderedDitheringPreset'
+  | 'setBackgroundColor'
+  | 'resetSettings'
+  | 'applyOrderedDitheringPreset';
+
+export type Viewer3DStateContextType = Viewer3DState;
+export type Viewer3DActionsContextType = Pick<Viewer3DContextType, Viewer3DActionsKey>;
+
+export const {
+  Context: Viewer3DStateContext,
+  useStrictContext: useViewer3DState,
+  useOptionalContext: useOptionalViewer3DState,
+} = createStrictContext<Viewer3DStateContextType>({
+  hookName: 'useViewer3DState',
+  providerName: 'a Viewer3DProvider',
+  displayName: 'Viewer3DStateContext',
+  errorFactory: internalError,
+});
+
+export const {
+  Context: Viewer3DActionsContext,
+  useStrictContext: useViewer3DActions,
+} = createStrictContext<Viewer3DActionsContextType>({
+  hookName: 'useViewer3DActions',
+  providerName: 'a Viewer3DProvider',
+  displayName: 'Viewer3DActionsContext',
+  errorFactory: internalError,
+});
 
 export function Viewer3DProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const [autoRotate, setAutoRotate] = useState(true);
@@ -150,60 +202,33 @@ export function Viewer3DProvider({ children }: { children: React.ReactNode }): R
     setBackgroundColor('#1a1a2e');
   }, []);
 
-  const value = useMemo(
+  const stateValue = useMemo<Viewer3DStateContextType>(
     () => ({
       autoRotate,
-      setAutoRotate,
       autoRotateSpeed,
-      setAutoRotateSpeed,
       environment,
-      setEnvironment,
       lighting,
-      setLighting,
       lightIntensity,
-      setLightIntensity,
       enableShadows,
-      setEnableShadows,
       enableContactShadows,
-      setEnableContactShadows,
       showGround,
-      setShowGround,
       enableBloom,
-      setEnableBloom,
       bloomIntensity,
-      setBloomIntensity,
       enableVignette,
-      setEnableVignette,
       enableToneMapping,
-      setEnableToneMapping,
       exposure,
-      setExposure,
       enableDithering,
-      setEnableDithering,
       ditheringIntensity,
-      setDitheringIntensity,
       enablePixelation,
-      setEnablePixelation,
       pixelSize,
-      setPixelSize,
       enableOrderedDithering,
-      setEnableOrderedDithering,
       orderedDitheringGridSize,
-      setOrderedDitheringGridSize,
       orderedDitheringPixelSizeRatio,
-      setOrderedDitheringPixelSizeRatio,
       orderedDitheringGrayscaleOnly,
-      setOrderedDitheringGrayscaleOnly,
       orderedDitheringInvertColor,
-      setOrderedDitheringInvertColor,
       orderedDitheringLuminanceMethod,
-      setOrderedDitheringLuminanceMethod,
       orderedDitheringPreset,
-      setOrderedDitheringPreset,
       backgroundColor,
-      setBackgroundColor,
-      resetSettings,
-      applyOrderedDitheringPreset,
     }),
     [
       autoRotate,
@@ -231,22 +256,45 @@ export function Viewer3DProvider({ children }: { children: React.ReactNode }): R
       orderedDitheringLuminanceMethod,
       orderedDitheringPreset,
       backgroundColor,
-      resetSettings,
-      applyOrderedDitheringPreset,
     ]
   );
 
-  return <Viewer3DContext.Provider value={value}>{children}</Viewer3DContext.Provider>;
-}
+  const actionsValue = useMemo<Viewer3DActionsContextType>(
+    () => ({
+      setAutoRotate,
+      setAutoRotateSpeed,
+      setEnvironment,
+      setLighting,
+      setLightIntensity,
+      setEnableShadows,
+      setEnableContactShadows,
+      setShowGround,
+      setEnableBloom,
+      setBloomIntensity,
+      setEnableVignette,
+      setEnableToneMapping,
+      setExposure,
+      setEnableDithering,
+      setDitheringIntensity,
+      setEnablePixelation,
+      setPixelSize,
+      setEnableOrderedDithering,
+      setOrderedDitheringGridSize,
+      setOrderedDitheringPixelSizeRatio,
+      setOrderedDitheringGrayscaleOnly,
+      setOrderedDitheringInvertColor,
+      setOrderedDitheringLuminanceMethod,
+      setOrderedDitheringPreset,
+      setBackgroundColor,
+      resetSettings,
+      applyOrderedDitheringPreset,
+    }),
+    [resetSettings, applyOrderedDitheringPreset]
+  );
 
-export function useViewer3D(): Viewer3DContextType {
-  const context = useContext(Viewer3DContext);
-  if (context === undefined) {
-    throw internalError('useViewer3D must be used within a Viewer3DProvider');
-  }
-  return context;
-}
-
-export function useOptionalViewer3D(): Viewer3DContextType | undefined {
-  return useContext(Viewer3DContext);
+  return (
+    <Viewer3DActionsContext.Provider value={actionsValue}>
+      <Viewer3DStateContext.Provider value={stateValue}>{children}</Viewer3DStateContext.Provider>
+    </Viewer3DActionsContext.Provider>
+  );
 }

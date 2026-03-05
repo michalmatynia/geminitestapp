@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useAnalytics } from '../context/AnalyticsContext';
+import { useAnalyticsSummaryData } from '../context/AnalyticsContext';
 import { AnalyticsStatCard } from './AnalyticsStatCard';
 
 const formatCount = (value: number): string => {
@@ -13,7 +13,7 @@ const formatCount = (value: number): string => {
 };
 
 export function AnalyticsTopStats(): React.JSX.Element {
-  const { summaryQuery } = useAnalytics();
+  const { summaryQuery } = useAnalyticsSummaryData();
   const summary = summaryQuery.data;
 
   return (

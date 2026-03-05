@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "ai-paths.node-code-object-contracts.v3",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "totalContracts": 3,
+  "contracts": {
+    "constant": {
+      "objectId": "node_obj_constant_portable_v3",
+      "title": "Constant",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "37e4ab41ceac45282a65a532f566b9d8bf253ab37adb3c9a9ca97e37d8fb62e7",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "constant",
+      "codeObjectId": "ai-paths.node-code-object.constant.v3"
+    },
+    "math": {
+      "objectId": "node_obj_math_portable_v3",
+      "title": "Math",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "617cca2fcff9a80cf354ad125bcdb7efc3387fa9fb1e2dfb45b53cf5388ad1c2",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "math",
+      "codeObjectId": "ai-paths.node-code-object.math.v3"
+    },
+    "template": {
+      "objectId": "node_obj_template_portable_v3",
+      "title": "Template",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "818d7ec5fca3d3ae120198a3418831ed55f1d54d0f7aafce0ff969a6408d02bf",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "template",
+      "codeObjectId": "ai-paths.node-code-object.template.v3"
+    }
+  },
+  "contractsHashAlgorithm": "sha256",
+  "contractsHash": "275c095242cb2f6b8c1e27c56c0e19a4b5689a4fa62f57e57e192dc8246c8ad8"
+}

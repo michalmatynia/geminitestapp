@@ -1,0 +1,40 @@
+# Constant Migration Sheet (`constant`)
+
+Generated at: 2026-03-05T00:00:00.000Z
+
+## Status
+
+- Runtime strategy: `code_object_v3`
+- Migration wave: `pilot`
+- Code object ID: `ai-paths.node-code-object.constant.v3`
+- Config field count: 5
+
+## Node Contract Files
+
+- Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/constant.json`
+- Semantic hash: `ae37de0024fb836784502eefbc5303bca55888d6d9621910b6e2c6170108f27b`
+- v2 code object: `docs/ai-paths/node-code-objects-v2/constant.json`
+- v3 scaffold: `docs/ai-paths/node-code-objects-v3/constant.scaffold.json`
+- v3 object id: `node_obj_constant_portable_v3`
+- v3 object hash: `37e4ab41ceac45282a65a532f566b9d8bf253ab37adb3c9a9ca97e37d8fb62e7`
+
+## Ports
+
+Inputs:
+- (none)
+
+Outputs:
+- `value`
+
+## Migration Checklist
+
+- [ ] Semantic contract reviewed against UI config fields.
+- [ ] v3 scaffold authored or updated for this node.
+- [ ] Dual-run parity validated (`legacy_adapter` vs `code_object_v3`).
+- [ ] Runtime kernel pilot list updated when rollout is approved.
+- [ ] Observability and regression checks reviewed post-rollout.
+
+## Notes
+
+- Capture node-specific edge cases, known incompatibilities, and rollout guardrails here.
+

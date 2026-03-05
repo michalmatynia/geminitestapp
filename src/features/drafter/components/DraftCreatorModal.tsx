@@ -5,17 +5,15 @@ import React, { useEffect, useState } from 'react';
 import { FormModal, Button } from '@/shared/ui';
 
 import type { ProductDraft } from '@/shared/contracts/products';
-import { useDrafterContext } from '../context/DrafterContext';
+import { useDrafterActions, useDrafterState } from '../context/DrafterContext';
 import { useDraftQueries } from '../hooks/useDraftQueries';
 import { DraftCreator } from './DraftCreator';
 
 export function DraftCreatorModal(): React.JSX.Element | null {
+  const { isCreatorOpen: isOpen, editingDraftId, formRef } = useDrafterState();
   const {
-    isCreatorOpen: isOpen,
     closeCreator: onClose,
-    editingDraftId,
-    formRef,
-  } = useDrafterContext();
+  } = useDrafterActions();
 
   const { data: drafts = [] } = useDraftQueries();
   const editingDraft = drafts.find((d: ProductDraft) => d.id === editingDraftId) ?? null;

@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_mapper_portable_v2",
   "nodeType": "mapper",
   "nodeDocVersion": "2026-02-20.v1",
@@ -95,9 +95,19 @@
         "defaultValue": "{}"
       },
       {
+        "path": "mapper.jsonIntegrityPolicy",
+        "description": "How mapper normalizes JSON-like string inputs before resolving mapping paths. strict performs no repair. repair uses the shared staged JSON normalization pipeline before path resolution.",
+        "defaultValue": "repair"
+      },
+      {
         "path": "runtime.cache.mode",
         "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
         "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
       },
       {
         "path": "runtime.waitForInputs",
@@ -161,11 +171,13 @@
           "outputs": [
             "value"
           ],
-          "mappings": {}
+          "mappings": {},
+          "jsonIntegrityPolicy": "repair"
         },
         "runtime": {
           "cache": {
-            "mode": "auto"
+            "mode": "auto",
+            "scope": "run"
           },
           "waitForInputs": false
         }
@@ -202,11 +214,13 @@
               "outputs": [
                 "value"
               ],
-              "mappings": {}
+              "mappings": {},
+              "jsonIntegrityPolicy": "repair"
             },
             "runtime": {
               "cache": {
-                "mode": "auto"
+                "mode": "auto",
+                "scope": "run"
               },
               "waitForInputs": false
             }
@@ -220,8 +234,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/mapper.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "020683330a43b053a365a8ad52778562aa39bf7a0ec9fdf23bf5b5364211316c"
+    "semanticNodeHash": "4fe386d977d549e3093ddd028db6ed2da07b6962e3f6c7f0f3e980e8a07ceba1"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "63db3797367a6adbf0eb0c1dc8532d5e0583081bf6cc7ed252f7744c03165545"
+  "objectHash": "046b95e80ff88094b4ac361273038b7fedc945b240131e041f1018450ebf6c61"
 }

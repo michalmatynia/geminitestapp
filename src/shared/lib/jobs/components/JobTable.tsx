@@ -4,7 +4,7 @@ import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import React, { useMemo } from 'react';
 
-import { useJobsContext } from '@/shared/lib/jobs/context/JobsContext';
+import { useJobsActions, useJobsState } from '@/shared/lib/jobs/context/JobsContext';
 import { StandardDataTablePanel, StandardDataTablePanelRuntimeContext } from '@/shared/ui';
 
 import { type JobRowData } from '../types';
@@ -45,8 +45,8 @@ export function JobTable(props: JobTableProps): React.JSX.Element {
     footer,
   } = props;
 
-  const { setSelectedListing, listingJobs, confirmCancelListing, isCancellingListing } =
-    useJobsContext();
+  const { listingJobs } = useJobsState();
+  const { setSelectedListing, confirmCancelListing, isCancellingListing } = useJobsActions();
 
   const handleViewDetails = useMemo(
     () =>

@@ -4,8 +4,17 @@
   "nodeType": "regex",
   "title": "Regex Grouper",
   "purpose": "Group strings with regex or extract matched fragments.",
-  "inputs": ["value", "prompt", "regexCallback"],
-  "outputs": ["grouped", "matches", "value", "aiPrompt"],
+  "inputs": [
+    "value",
+    "prompt",
+    "regexCallback"
+  ],
+  "outputs": [
+    "grouped",
+    "matches",
+    "value",
+    "aiPrompt"
+  ],
   "configFields": [
     {
       "path": "regex.pattern",
@@ -63,9 +72,19 @@
       "defaultValue": "\"\""
     },
     {
+      "path": "regex.jsonIntegrityPolicy",
+      "description": "How extract_json handles malformed JSON-like strings. strict performs no repair. repair applies staged normalization (code-fence stripping, malformed boundary repair, truncation closure, trailing-comma cleanup) before parsing.",
+      "defaultValue": "repair"
+    },
+    {
       "path": "runtime.cache.mode",
       "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
       "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
     },
     {
       "path": "runtime.waitForInputs",
@@ -99,8 +118,17 @@
       "x": 100,
       "y": 100
     },
-    "inputs": ["value", "prompt", "regexCallback"],
-    "outputs": ["grouped", "matches", "value", "aiPrompt"],
+    "inputs": [
+      "value",
+      "prompt",
+      "regexCallback"
+    ],
+    "outputs": [
+      "grouped",
+      "matches",
+      "value",
+      "aiPrompt"
+    ],
     "config": {
       "regex": {
         "pattern": "",
@@ -124,5 +152,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "d0583ae56728de97269462932f310e12dd01956d086b9e3447b8a285e93f544e"
+  "nodeHash": "119b8b6056ec81cb38c9cbd2d5cc55c2353a94bf86fd0ad407fc9e9f06eb251e"
 }

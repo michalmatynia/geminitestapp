@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_validator_portable_v2",
   "nodeType": "validator",
   "nodeDocVersion": "2026-02-20.v1",
@@ -98,6 +98,11 @@
         "defaultValue": "auto"
       },
       {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
+      },
+      {
         "path": "runtime.waitForInputs",
         "description": "If true, wait until all connected input ports have values before executing the node.",
         "defaultValue": "false"
@@ -157,7 +162,8 @@
         },
         "runtime": {
           "cache": {
-            "mode": "auto"
+            "mode": "auto",
+            "scope": "run"
           },
           "waitForInputs": false
         }
@@ -194,7 +200,8 @@
             },
             "runtime": {
               "cache": {
-                "mode": "auto"
+                "mode": "auto",
+                "scope": "run"
               },
               "waitForInputs": false
             }
@@ -208,8 +215,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/validator.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "7c7a056aa81a91e0e131c1f7fab215a992cdcfb659f8b1b2f91b731825c8c0cc"
+    "semanticNodeHash": "626a3f87a56184a58e1c7c3f488383a855a2ce50a97bbcef42898d28788d8619"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "93bdbe96a7cd03634be0f18ad0d0b95d336f9c903c116d789fd9ac7a42ccb4f7"
+  "objectHash": "2cadc718c275d37687d13f7d8a1fb05a3d2ab5b7311e90e4334427868c3d93fd"
 }

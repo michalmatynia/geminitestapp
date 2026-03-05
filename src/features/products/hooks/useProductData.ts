@@ -19,7 +19,6 @@ import {
   productAdvancedFilterGroupSchema,
   type ProductWithImages,
 } from '@/shared/contracts/products';
-import type { DeleteResponse } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api } from '@/shared/lib/api-client';
@@ -262,30 +261,6 @@ export function useUpdateProductMutation(): UseMutationResult<
       }) => removeQueuedProductId(variables.id),
     }
   );
-}
-
-export function useDeleteProductMutation(): UseMutationResult<
-  DeleteResponse | null,
-  Error,
-  string,
-  unknown
-  > {
-  return useOfflineMutation((id: string) => deleteProduct(id) as Promise<DeleteResponse>, {
-    queryKey: productsAllQueryKey,
-    meta: {
-      source: 'products.hooks.useDeleteProductMutation',
-      operation: 'delete',
-      resource: 'products',
-      domain: 'products',
-      tags: ['products', 'delete'],
-    },
-    extraInvalidateKeys: [productsCountsQueryKey],
-    queuedMessage: 'Product deletion queued in runtime queue.',
-    processedMessage: 'Queued product deletion completed.',
-    errorMessage: 'Failed to delete product',
-    onQueued: (id: string) => addQueuedProductId(id),
-    onProcessed: (id: string) => removeQueuedProductId(id),
-  });
 }
 
 export function useBulkDeleteProductsMutation(): UseMutationResult<

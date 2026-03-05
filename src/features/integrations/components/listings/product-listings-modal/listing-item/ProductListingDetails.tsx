@@ -1,7 +1,10 @@
 'use client';
 
 import React from 'react';
-import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
+import {
+  useProductListingsData,
+  useProductListingsUIState,
+} from '@/features/integrations/context/ProductListingsContext';
 import type {
   ProductListingExportEvent,
 } from '@/shared/contracts/integrations';
@@ -24,7 +27,8 @@ const normalizeIntegrationSlug = (value: string | null | undefined): string =>
 
 export function ProductListingDetails(): React.JSX.Element {
   const { listing } = useProductListingItemRuntime();
-  const { product, historyOpenByListing, setHistoryOpenByListing } = useProductListingsContext();
+  const { product } = useProductListingsData();
+  const { historyOpenByListing, setHistoryOpenByListing } = useProductListingsUIState();
 
   const isBaseListing = ['baselinker', 'base-com', 'base'].includes(
     normalizeIntegrationSlug(listing.integration.slug)

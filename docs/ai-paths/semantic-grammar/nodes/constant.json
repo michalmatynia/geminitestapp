@@ -5,7 +5,9 @@
   "title": "Constant",
   "purpose": "Emit a constant value as a signal.",
   "inputs": [],
-  "outputs": ["value"],
+  "outputs": [
+    "value"
+  ],
   "configFields": [
     {
       "path": "constant.valueType",
@@ -21,6 +23,11 @@
       "path": "runtime.cache.mode",
       "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
       "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
     },
     {
       "path": "runtime.waitForInputs",
@@ -39,7 +46,9 @@
       "y": 100
     },
     "inputs": [],
-    "outputs": ["value"],
+    "outputs": [
+      "value"
+    ],
     "data": {},
     "connections": {
       "incoming": [],
@@ -47,5 +56,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "87cb270cb7e4e7858b1de8682c17c019cbbb2991afae5a5685fd1c415422bb7c"
+  "nodeHash": "ae37de0024fb836784502eefbc5303bca55888d6d9621910b6e2c6170108f27b"
 }

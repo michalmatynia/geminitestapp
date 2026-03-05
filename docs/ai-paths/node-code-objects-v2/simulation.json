@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_simulation_portable_v2",
   "nodeType": "simulation",
   "nodeDocVersion": "2026-02-20.v1",
@@ -98,9 +98,19 @@
         "defaultValue": "\"\""
       },
       {
+        "path": "simulation.runBehavior",
+        "description": "Execution policy for connected triggers: before_connected_trigger or manual_only.",
+        "defaultValue": "before_connected_trigger"
+      },
+      {
         "path": "runtime.cache.mode",
         "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
         "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
       },
       {
         "path": "runtime.waitForInputs",
@@ -160,11 +170,13 @@
       "config": {
         "simulation": {
           "entityType": "product",
-          "productId": ""
+          "productId": "",
+          "runBehavior": "before_connected_trigger"
         },
         "runtime": {
           "cache": {
-            "mode": "auto"
+            "mode": "auto",
+            "scope": "run"
           },
           "waitForInputs": false
         }
@@ -198,11 +210,13 @@
           "config": {
             "simulation": {
               "entityType": "product",
-              "productId": ""
+              "productId": "",
+              "runBehavior": "before_connected_trigger"
             },
             "runtime": {
               "cache": {
-                "mode": "auto"
+                "mode": "auto",
+                "scope": "run"
               },
               "waitForInputs": false
             }
@@ -216,8 +230,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/simulation.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "97707b90712e96ce6e1f8603c121f3ec124269a26f100e18e25f359d0336461d"
+    "semanticNodeHash": "cce9b04665f1d723b51d00c2139a75d1225cee9488574ab03d39fb68537dbcb7"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "e6aa475ba506b96e64d13f8382ab8d77148bb10a5399eb601422c7634a72ce74"
+  "objectHash": "af436c5397ba87d302ab8417030e28d9eb82a4cd0b17e9cc4907ee9b96a9a8cd"
 }

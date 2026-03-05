@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "ai-paths.node-code-object-index.v3",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "totalObjects": 3,
+  "pilotNodeTypes": [
+    "constant",
+    "math",
+    "template"
+  ],
+  "objects": [
+    {
+      "id": "node_obj_constant_portable_v3",
+      "nodeType": "constant",
+      "title": "Constant",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/constant.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "37e4ab41ceac45282a65a532f566b9d8bf253ab37adb3c9a9ca97e37d8fb62e7",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "constant",
+      "codeObjectId": "ai-paths.node-code-object.constant.v3"
+    },
+    {
+      "id": "node_obj_math_portable_v3",
+      "nodeType": "math",
+      "title": "Math",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/math.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "617cca2fcff9a80cf354ad125bcdb7efc3387fa9fb1e2dfb45b53cf5388ad1c2",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "math",
+      "codeObjectId": "ai-paths.node-code-object.math.v3"
+    },
+    {
+      "id": "node_obj_template_portable_v3",
+      "nodeType": "template",
+      "title": "Template",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/template.scaffold.json",
+      "objectHashAlgorithm": "sha256",
+      "objectHash": "818d7ec5fca3d3ae120198a3418831ed55f1d54d0f7aafce0ff969a6408d02bf",
+      "runtimeStrategy": "code_object_v3",
+      "executionAdapter": "legacy_handler_bridge",
+      "legacyHandlerKey": "template",
+      "codeObjectId": "ai-paths.node-code-object.template.v3"
+    }
+  ]
+}

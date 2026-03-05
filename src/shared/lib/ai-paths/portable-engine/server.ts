@@ -10,6 +10,11 @@ import {
   type PortablePathRunResult,
   validatePortablePathConfig,
 } from './index';
+import {
+  recordPortablePathRunExecutionAttempt,
+  recordPortablePathRunExecutionFailure,
+  recordPortablePathRunExecutionSuccess,
+} from './portable-engine-observability';
 
 export { runPortablePathClient };
 export * from './sinks.server';
@@ -37,6 +42,15 @@ export const runPortablePathServer = async (
     reportAiPathsError,
     ...engineOptions
   } = options;
+  const runStartedAt = Date.now();
+  const validationModeForTelemetry = validateBeforeRun ? validationMode : null;
+  const telemetrySurface = signingPolicyTelemetrySurface;
+  let resolvedSourceForTelemetry: PortablePathRunResult['resolved']['source'] | null = null;
+  const getDurationMs = (): number => Date.now() - runStartedAt;
+  recordPortablePathRunExecutionAttempt({
+    runner: 'server',
+    surface: telemetrySurface,
+  });
   const resolved = await resolvePortablePathInputAsync(input, {
     signingPolicyProfile,
     signingPolicyTelemetrySurface,
@@ -53,8 +67,20 @@ export const runPortablePathServer = async (
     envelopeSignatureKeyResolver,
   });
   if (!resolved.ok) {
-    throw new Error(`Invalid AI-Path payload: ${resolved.error}`);
+    const resolveError = `Invalid AI-Path payload: ${resolved.error}`;
+    recordPortablePathRunExecutionFailure({
+      runner: 'server',
+      surface: telemetrySurface,
+      source: null,
+      validateBeforeRun,
+      validationMode: validationModeForTelemetry,
+      durationMs: getDurationMs(),
+      failureStage: 'resolve',
+      error: resolveError,
+    });
+    throw new Error(resolveError);
   }
+  resolvedSourceForTelemetry = resolved.value.source;
 
   const validation = validateBeforeRun
     ? validatePortablePathConfig(resolved.value.pathConfig, {
@@ -63,14 +89,48 @@ export const runPortablePathServer = async (
     })
     : null;
   if (validation && !validation.ok) {
-    throw new PortablePathValidationError(validation);
+    const validationError = new PortablePathValidationError(validation);
+    recordPortablePathRunExecutionFailure({
+      runner: 'server',
+      surface: telemetrySurface,
+      source: resolvedSourceForTelemetry,
+      validateBeforeRun,
+      validationMode: validationModeForTelemetry,
+      durationMs: getDurationMs(),
+      failureStage: 'validation',
+      error: validationError,
+    });
+    throw validationError;
   }
 
-  const runtimeState = await evaluateGraphServer({
-    nodes: resolved.value.pathConfig.nodes,
-    edges: resolved.value.pathConfig.edges,
-    ...engineOptions,
-    reportAiPathsError: reportAiPathsError ?? (() => {}),
+  let runtimeState: PortablePathRunResult['runtimeState'];
+  try {
+    runtimeState = await evaluateGraphServer({
+      nodes: resolved.value.pathConfig.nodes,
+      edges: resolved.value.pathConfig.edges,
+      ...engineOptions,
+      reportAiPathsError: reportAiPathsError ?? (() => {}),
+    });
+  } catch (error) {
+    recordPortablePathRunExecutionFailure({
+      runner: 'server',
+      surface: telemetrySurface,
+      source: resolvedSourceForTelemetry,
+      validateBeforeRun,
+      validationMode: validationModeForTelemetry,
+      durationMs: getDurationMs(),
+      failureStage: 'runtime',
+      error,
+    });
+    throw error;
+  }
+  recordPortablePathRunExecutionSuccess({
+    runner: 'server',
+    surface: telemetrySurface,
+    source: resolvedSourceForTelemetry,
+    validateBeforeRun,
+    validationMode: validationModeForTelemetry,
+    durationMs: getDurationMs(),
   });
 
   return {

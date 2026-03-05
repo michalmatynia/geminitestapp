@@ -20,7 +20,7 @@ import type {
 } from '@/shared/contracts/integrations';
 import type { ImageRetryPreset, ImageTransformOptions } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
-import { badRequestError, internalError } from '@/shared/errors/app-error';
+import { badRequestError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
@@ -118,18 +118,6 @@ export const useProductListingsActions = () => {
     throw new Error('useProductListingsActions must be used within ProductListingsProvider');
   return context;
 };
-
-// --- Context Aggregator ---
-
-interface ProductListingsContextType
-  extends
-    ProductListingsData,
-    ProductListingsUIState,
-    ProductListingsModals,
-    ProductListingsLogs,
-    ProductListingsActions {}
-
-const ProductListingsContext = createContext<ProductListingsContextType | undefined>(undefined);
 
 export function ProductListingsProvider({
   product,
@@ -639,38 +627,15 @@ export function ProductListingsProvider({
     ]
   );
 
-  const aggregatedValue = useMemo<ProductListingsContextType>(
-    () => ({
-      ...dataValue,
-      ...uiStateValue,
-      ...modalsValue,
-      ...logsValue,
-      ...actionsValue,
-    }),
-    [dataValue, uiStateValue, modalsValue, logsValue, actionsValue]
-  );
-
   return (
     <DataContext.Provider value={dataValue}>
       <UIStateContext.Provider value={uiStateValue}>
         <ModalsContext.Provider value={modalsValue}>
           <LogsContext.Provider value={logsValue}>
-            <ActionsContext.Provider value={actionsValue}>
-              <ProductListingsContext.Provider value={aggregatedValue}>
-                {children}
-              </ProductListingsContext.Provider>
-            </ActionsContext.Provider>
+            <ActionsContext.Provider value={actionsValue}>{children}</ActionsContext.Provider>
           </LogsContext.Provider>
         </ModalsContext.Provider>
       </UIStateContext.Provider>
     </DataContext.Provider>
   );
-}
-
-export function useProductListingsContext(): ProductListingsContextType {
-  const context = useContext(ProductListingsContext);
-  if (context === undefined) {
-    throw internalError('useProductListingsContext must be used within a ProductListingsProvider');
-  }
-  return context;
 }

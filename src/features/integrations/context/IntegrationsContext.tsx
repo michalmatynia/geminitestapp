@@ -1,30 +1,37 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, ReactNode } from 'react';
+import React, { useMemo, type ReactNode } from 'react';
 
 import type { IntegrationsContextType } from '@/features/integrations/context/integrations-context-types';
 import type { IntegrationsData } from '@/shared/contracts/integrations';
-import { internalError } from '@/shared/errors/app-error';
 
-import { IntegrationsDataContext } from './integrations/IntegrationsDataContext';
+import {
+  IntegrationsDataContext,
+  useIntegrationsData,
+} from './integrations/IntegrationsDataContext';
 import {
   IntegrationsFormContext,
+  useIntegrationsForm,
   type IntegrationsForm,
 } from './integrations/IntegrationsFormContext';
 import {
   IntegrationsTestingContext,
+  useIntegrationsTesting,
   type IntegrationsTesting,
 } from './integrations/IntegrationsTestingContext';
 import {
   IntegrationsSessionContext,
+  useIntegrationsSession,
   type IntegrationsSession,
 } from './integrations/IntegrationsSessionContext';
 import {
   IntegrationsApiConsoleContext,
+  useIntegrationsApiConsole,
   type IntegrationsApiConsole,
 } from './integrations/IntegrationsApiConsoleContext';
 import {
   IntegrationsActionsContext,
+  useIntegrationsActions,
   type IntegrationsActions,
 } from './integrations/IntegrationsActionsContext';
 
@@ -35,21 +42,34 @@ import { useIntegrationsSessionImpl } from './integrations/useIntegrationsSessio
 import { useIntegrationsApiConsoleImpl } from './integrations/useIntegrationsApiConsoleImpl';
 import { useIntegrationsActionsImpl } from './integrations/useIntegrationsActionsImpl';
 
-export { useIntegrationsData } from './integrations/IntegrationsDataContext';
-export { useIntegrationsForm } from './integrations/IntegrationsFormContext';
-export { useIntegrationsTesting } from './integrations/IntegrationsTestingContext';
-export { useIntegrationsSession } from './integrations/IntegrationsSessionContext';
-export { useIntegrationsApiConsole } from './integrations/IntegrationsApiConsoleContext';
-export { useIntegrationsActions } from './integrations/IntegrationsActionsContext';
-
-const IntegrationsContext = createContext<IntegrationsContextType | null>(null);
+export {
+  useIntegrationsData,
+  useIntegrationsForm,
+  useIntegrationsTesting,
+  useIntegrationsSession,
+  useIntegrationsApiConsole,
+  useIntegrationsActions,
+};
 
 export function useIntegrationsContext(): IntegrationsContextType {
-  const context = useContext(IntegrationsContext);
-  if (!context) {
-    throw internalError('useIntegrationsContext must be used within an IntegrationsProvider');
-  }
-  return context;
+  const data = useIntegrationsData();
+  const form = useIntegrationsForm();
+  const testing = useIntegrationsTesting();
+  const session = useIntegrationsSession();
+  const apiConsole = useIntegrationsApiConsole();
+  const actions = useIntegrationsActions();
+
+  return useMemo<IntegrationsContextType>(
+    () => ({
+      ...data,
+      ...form,
+      ...testing,
+      ...session,
+      ...apiConsole,
+      ...actions,
+    }),
+    [data, form, testing, session, apiConsole, actions]
+  );
 }
 
 export function IntegrationsProvider({ children }: { children: ReactNode }): React.JSX.Element {
@@ -207,18 +227,6 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     [actions]
   );
 
-  const aggregatedValue = useMemo<IntegrationsContextType>(
-    () => ({
-      ...dataValue,
-      ...formValue,
-      ...testingValue,
-      ...sessionValue,
-      ...apiConsoleValue,
-      ...actionsValue,
-    }),
-    [dataValue, formValue, testingValue, sessionValue, apiConsoleValue, actionsValue]
-  );
-
   return (
     <IntegrationsDataContext.Provider value={dataValue}>
       <IntegrationsFormContext.Provider value={formValue}>
@@ -226,9 +234,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
           <IntegrationsSessionContext.Provider value={sessionValue}>
             <IntegrationsApiConsoleContext.Provider value={apiConsoleValue}>
               <IntegrationsActionsContext.Provider value={actionsValue}>
-                <IntegrationsContext.Provider value={aggregatedValue}>
-                  {children}
-                </IntegrationsContext.Provider>
+                {children}
               </IntegrationsActionsContext.Provider>
             </IntegrationsApiConsoleContext.Provider>
           </IntegrationsSessionContext.Provider>

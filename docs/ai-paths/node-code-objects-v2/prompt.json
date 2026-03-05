@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_prompt_portable_v2",
   "nodeType": "prompt",
   "nodeDocVersion": "2026-02-20.v1",
@@ -96,6 +96,11 @@
         "defaultValue": "auto"
       },
       {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
+      },
+      {
         "path": "runtime.waitForInputs",
         "description": "If true, wait until all connected input ports have values before executing the node.",
         "defaultValue": "false"
@@ -160,7 +165,8 @@
         },
         "runtime": {
           "cache": {
-            "mode": "auto"
+            "mode": "auto",
+            "scope": "run"
           },
           "waitForInputs": false
         }
@@ -199,7 +205,8 @@
             },
             "runtime": {
               "cache": {
-                "mode": "auto"
+                "mode": "auto",
+                "scope": "run"
               },
               "waitForInputs": false
             }
@@ -213,8 +220,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/prompt.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "9b049d6d986596fd7f28c45834fcc67e37ee803645c5a208a39f0a1d128d22ed"
+    "semanticNodeHash": "98e6f0ffd5cb8cdce5426c507661c7c7a1d9c7aae1c2aca8deb89ddae4375bde"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "b48b0389cd5f146bacb0963ccb26235082c8edb2c1f296b9c1ae10704a61f075"
+  "objectHash": "610058c970dd64232e4ed2bd4c02987b0ebb57b00712e38ccf361f663ba73dbd"
 }

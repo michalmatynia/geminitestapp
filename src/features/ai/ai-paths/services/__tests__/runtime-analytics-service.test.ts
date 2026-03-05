@@ -1,8 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { getBrainAssignmentForCapabilityMock, getRedisConnectionMock, getPathRunRepositoryMock } =
+const {
+  getBrainAssignmentForCapabilityMock,
+  getPortablePathRunExecutionSnapshotMock,
+  getRedisConnectionMock,
+  getPathRunRepositoryMock,
+} =
   vi.hoisted(() => ({
     getBrainAssignmentForCapabilityMock: vi.fn(),
+    getPortablePathRunExecutionSnapshotMock: vi.fn(),
     getRedisConnectionMock: vi.fn(),
     getPathRunRepositoryMock: vi.fn(),
   }));
@@ -17,6 +23,10 @@ vi.mock('@/shared/lib/queue', () => ({
 
 vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: getPathRunRepositoryMock,
+}));
+
+vi.mock('@/shared/lib/ai-paths/portable-engine', () => ({
+  getPortablePathRunExecutionSnapshot: getPortablePathRunExecutionSnapshotMock,
 }));
 
 const buildPipelineResults = (): Array<[null, number | string[]]> => [
@@ -57,6 +67,35 @@ const createRedisMock = () => {
   };
 };
 
+const buildPortableRunSnapshot = () => ({
+  totals: {
+    attempts: 0,
+    successes: 0,
+    failures: 0,
+  },
+  byRunner: {
+    client: { attempts: 0, successes: 0, failures: 0 },
+    server: { attempts: 0, successes: 0, failures: 0 },
+  },
+  bySurface: {
+    canvas: { attempts: 0, successes: 0, failures: 0 },
+    product: { attempts: 0, successes: 0, failures: 0 },
+    api: { attempts: 0, successes: 0, failures: 0 },
+  },
+  bySource: {
+    portable_package: { attempts: 0, successes: 0, failures: 0 },
+    portable_envelope: { attempts: 0, successes: 0, failures: 0 },
+    semantic_canvas: { attempts: 0, successes: 0, failures: 0 },
+    path_config: { attempts: 0, successes: 0, failures: 0 },
+  },
+  failureStageCounts: {
+    resolve: 0,
+    validation: 0,
+    runtime: 0,
+  },
+  recentEvents: [],
+});
+
 const mockCapabilities = (runtimeAnalyticsEnabled: boolean, aiPathsEnabled: boolean): void => {
   getBrainAssignmentForCapabilityMock.mockImplementation(async (capability: string) => ({
     enabled:
@@ -75,6 +114,7 @@ describe('runtime analytics service', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    getPortablePathRunExecutionSnapshotMock.mockReturnValue(buildPortableRunSnapshot());
   });
 
   it('returns disabled storage without touching Redis or trace sampling when the gate is off', async () => {
@@ -89,6 +129,7 @@ describe('runtime analytics service', () => {
 
     expect(summary.storage).toBe('disabled');
     expect(summary.traces.source).toBe('none');
+    expect(summary.portableEngine?.source).toBe('in_memory');
     expect(getRedisConnectionMock).not.toHaveBeenCalled();
     expect(getPathRunRepositoryMock).not.toHaveBeenCalled();
   });
@@ -116,6 +157,7 @@ describe('runtime analytics service', () => {
     expect(summary.runs.avgDurationMs).toBe(1800);
     expect(summary.runs.p95DurationMs).toBe(2400);
     expect(summary.traces.source).toBe('none');
+    expect(summary.portableEngine?.totals.attempts).toBe(0);
     expect(redis.pipeline).toHaveBeenCalledTimes(1);
     expect(pipeline.exec).toHaveBeenCalledTimes(1);
     expect(getPathRunRepositoryMock).not.toHaveBeenCalled();
@@ -173,5 +215,182 @@ describe('runtime analytics service', () => {
     expect(summary.traces.sampledRuns).toBe(1);
     expect(summary.traces.sampledSpans).toBe(1);
     expect(summary.traces.avgDurationMs).toBe(1800);
+  });
+
+  it('includes portable engine runtime analytics snapshot details', async () => {
+    mockCapabilities(true, true);
+    const { redis } = createRedisMock();
+    getRedisConnectionMock.mockReturnValue(redis);
+    getPathRunRepositoryMock.mockResolvedValue({
+      listRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
+    });
+    getPortablePathRunExecutionSnapshotMock.mockReturnValue({
+      totals: {
+        attempts: 5,
+        successes: 3,
+        failures: 2,
+      },
+      byRunner: {
+        client: { attempts: 4, successes: 3, failures: 1 },
+        server: { attempts: 1, successes: 0, failures: 1 },
+      },
+      bySurface: {
+        canvas: { attempts: 2, successes: 1, failures: 1 },
+        product: { attempts: 2, successes: 2, failures: 0 },
+        api: { attempts: 1, successes: 0, failures: 1 },
+      },
+      bySource: {
+        portable_package: { attempts: 1, successes: 1, failures: 0 },
+        portable_envelope: { attempts: 1, successes: 0, failures: 1 },
+        semantic_canvas: { attempts: 1, successes: 1, failures: 0 },
+        path_config: { attempts: 2, successes: 1, failures: 1 },
+      },
+      failureStageCounts: {
+        resolve: 1,
+        validation: 0,
+        runtime: 1,
+      },
+      recentEvents: [
+        {
+          at: '2026-03-05T10:00:00.000Z',
+          runner: 'client',
+          surface: 'canvas',
+          source: 'path_config',
+          validateBeforeRun: true,
+          validationMode: 'strict',
+          durationMs: 231,
+          outcome: 'failure',
+          failureStage: 'runtime',
+          error: 'model request failed',
+        },
+        {
+          at: '2026-03-05T09:59:00.000Z',
+          runner: 'server',
+          surface: 'api',
+          source: null,
+          validateBeforeRun: true,
+          validationMode: 'strict',
+          durationMs: 10,
+          outcome: 'failure',
+          failureStage: 'resolve',
+          error: 'Invalid AI-Path payload',
+        },
+      ],
+    });
+
+    const { getRuntimeAnalyticsSummary } = await loadModule();
+    const summary = await getRuntimeAnalyticsSummary({
+      from: new Date('2026-03-01T00:00:00.000Z'),
+      to: new Date('2026-03-02T00:00:00.000Z'),
+      range: '24h',
+      includeTraces: false,
+    });
+
+    expect(summary.portableEngine).toEqual({
+      source: 'in_memory',
+      totals: {
+        attempts: 5,
+        successes: 3,
+        failures: 2,
+        successRate: 60,
+        failureRate: 40,
+      },
+      byRunner: {
+        client: { attempts: 4, successes: 3, failures: 1 },
+        server: { attempts: 1, successes: 0, failures: 1 },
+      },
+      bySurface: {
+        canvas: { attempts: 2, successes: 1, failures: 1 },
+        product: { attempts: 2, successes: 2, failures: 0 },
+        api: { attempts: 1, successes: 0, failures: 1 },
+      },
+      byInputSource: {
+        portable_package: { attempts: 1, successes: 1, failures: 0 },
+        portable_envelope: { attempts: 1, successes: 0, failures: 1 },
+        semantic_canvas: { attempts: 1, successes: 1, failures: 0 },
+        path_config: { attempts: 2, successes: 1, failures: 1 },
+      },
+      failureStageCounts: {
+        resolve: 1,
+        validation: 0,
+        runtime: 1,
+      },
+      recentFailures: [
+        {
+          at: '2026-03-05T09:59:00.000Z',
+          runner: 'server',
+          surface: 'api',
+          source: null,
+          stage: 'resolve',
+          error: 'Invalid AI-Path payload',
+          durationMs: 10,
+          validateBeforeRun: true,
+          validationMode: 'strict',
+        },
+        {
+          at: '2026-03-05T10:00:00.000Z',
+          runner: 'client',
+          surface: 'canvas',
+          source: 'path_config',
+          stage: 'runtime',
+          error: 'model request failed',
+          durationMs: 231,
+          validateBeforeRun: true,
+          validationMode: 'strict',
+        },
+      ],
+    });
+  });
+
+  it('falls back to unavailable portable engine analytics when snapshot lookup fails', async () => {
+    mockCapabilities(true, true);
+    const { redis } = createRedisMock();
+    getRedisConnectionMock.mockReturnValue(redis);
+    getPathRunRepositoryMock.mockResolvedValue({
+      listRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
+    });
+    getPortablePathRunExecutionSnapshotMock.mockImplementation(() => {
+      throw new Error('snapshot unavailable');
+    });
+
+    const { getRuntimeAnalyticsSummary } = await loadModule();
+    const summary = await getRuntimeAnalyticsSummary({
+      from: new Date('2026-03-01T00:00:00.000Z'),
+      to: new Date('2026-03-02T00:00:00.000Z'),
+      range: '24h',
+      includeTraces: false,
+    });
+
+    expect(summary.portableEngine).toEqual({
+      source: 'unavailable',
+      totals: {
+        attempts: 0,
+        successes: 0,
+        failures: 0,
+        successRate: 0,
+        failureRate: 0,
+      },
+      byRunner: {
+        client: { attempts: 0, successes: 0, failures: 0 },
+        server: { attempts: 0, successes: 0, failures: 0 },
+      },
+      bySurface: {
+        canvas: { attempts: 0, successes: 0, failures: 0 },
+        product: { attempts: 0, successes: 0, failures: 0 },
+        api: { attempts: 0, successes: 0, failures: 0 },
+      },
+      byInputSource: {
+        portable_package: { attempts: 0, successes: 0, failures: 0 },
+        portable_envelope: { attempts: 0, successes: 0, failures: 0 },
+        semantic_canvas: { attempts: 0, successes: 0, failures: 0 },
+        path_config: { attempts: 0, successes: 0, failures: 0 },
+      },
+      failureStageCounts: {
+        resolve: 0,
+        validation: 0,
+        runtime: 0,
+      },
+      recentFailures: [],
+    });
   });
 });

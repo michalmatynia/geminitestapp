@@ -67,6 +67,11 @@ Portable package export now embeds a node-code-object hash manifest in package m
 
 Direct UI paste in Paths tab uses `strict` mode.
 
+Portable schema APIs expose contract hashes for clients:
+
+- `GET /api/ai-paths/portable-engine/schema` (`kind=all`) includes `nodeCodeObjectContracts`.
+- `GET /api/ai-paths/portable-engine/schema/diff` (`kind=all`) includes `nodeCodeObjectContracts` hash parity.
+
 ## Copy/Paste Usage
 
 1. Open `docs/ai-paths/node-code-objects-v2/<nodeType>.json`.
@@ -92,8 +97,31 @@ Validate coverage + hashes:
 npm run docs:ai-paths:node-code:check
 ```
 
+## v3 Migration Bridge
+
+`v2` remains the canonical portable copy/paste contract for all node types. Runtime migration to executable contracts is tracked separately in `v3` artifacts:
+
+- overview: `docs/ai-paths/node-code-objects-v3.md`
+- migration matrix: `docs/ai-paths/node-code-objects-v3/migration-index.json`
+- workflow guide: `docs/ai-paths/node-code-objects-v3/MIGRATION_GUIDE.md`
+- per-node migration sheets: `docs/ai-paths/node-code-objects-v3/nodes/<nodeType>.md`
+
+Generate full node docs stack (semantic + v2 + v3 migration):
+
+```bash
+npm run docs:ai-paths:node-docs:generate
+```
+
+Validate full node docs stack:
+
+```bash
+npm run docs:ai-paths:node-docs:check
+```
+
 ## Robustness Notes
 
 - `objectHash` is deterministic over object payload (excluding hash field itself).
 - `index.json` must match per-file hash and node type coverage.
 - Node coverage is aligned to `AI_PATHS_NODE_DOCS` to prevent missing copy/paste artifacts when node catalog evolves.
+- `docs:ai-paths:node-code:check` fails when unexpected `<nodeType>.json` files exist in `docs/ai-paths/node-code-objects-v2`.
+- `docs:ai-paths:node-code:generate` prunes stale `<nodeType>.json` files not represented in `AI_PATHS_NODE_DOCS`.

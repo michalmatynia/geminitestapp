@@ -4,12 +4,12 @@ import { BaseCategoryMapper } from '@/features/integrations/components/marketpla
 import { MarketplaceSelector } from '@/features/integrations/components/marketplaces/category-mapper/MarketplaceSelector';
 import {
   CategoryMapperPageProvider,
-  useCategoryMapperPageContext,
+  useCategoryMapperPageSelection,
 } from '@/features/integrations/context/CategoryMapperPageContext';
 import { SectionHeader, Card } from '@/shared/ui';
 
 function CategoryMapperPageContent(): React.JSX.Element {
-  const { selectedConnectionId, isSupportedConnection } = useCategoryMapperPageContext();
+  const { selectedConnectionId, isSupportedConnection } = useCategoryMapperPageSelection();
 
   return (
     <div className='container mx-auto py-10'>

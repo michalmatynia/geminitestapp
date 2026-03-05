@@ -81,10 +81,6 @@ export const useUsersDialogs = () => {
   return context;
 };
 
-// --- Context Aggregator ---
-
-const UsersContext = createContext<UseUsersStateReturn | undefined>(undefined);
-
 export function UsersProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const state = useUsersState();
 
@@ -177,19 +173,9 @@ export function UsersProvider({ children }: { children: React.ReactNode }): Reac
     <DataContext.Provider value={dataValue}>
       <SearchContext.Provider value={searchValue}>
         <RolesContext.Provider value={rolesValue}>
-          <DialogsContext.Provider value={dialogsValue}>
-            <UsersContext.Provider value={state}>{children}</UsersContext.Provider>
-          </DialogsContext.Provider>
+          <DialogsContext.Provider value={dialogsValue}>{children}</DialogsContext.Provider>
         </RolesContext.Provider>
       </SearchContext.Provider>
     </DataContext.Provider>
   );
-}
-
-export function useUsers(): UseUsersStateReturn {
-  const context = useContext(UsersContext);
-  if (context === undefined) {
-    throw new Error('useUsers must be used within a UsersProvider');
-  }
-  return context;
 }

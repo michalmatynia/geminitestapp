@@ -7,7 +7,6 @@ import {
   noteTagSchema,
   noteThemeSchema,
   noteCategorySchema,
-  noteCategoryRecordWithChildrenSchema as noteCategoryWithChildrenSchema,
   relatedNoteSchema,
 } from '@/shared/contracts/notes';
 import type {
@@ -45,33 +44,6 @@ const NOTES_STALE_MS = 10_000;
 type QueryOptions = {
   enabled?: boolean;
 };
-
-export function useNoteFolderTree(
-  notebookId?: string,
-  options?: QueryOptions
-): ListQuery<CategoryRecord> {
-  const queryKey = noteKeys.folderTree(notebookId);
-  return createListQueryV2({
-    queryKey,
-    queryFn: async (): Promise<CategoryRecord[]> => {
-      const url = notebookId
-        ? `/api/notes/categories/tree?notebookId=${encodeURIComponent(notebookId)}`
-        : '/api/notes/categories/tree';
-      const data = await api.get<CategoryRecord[]>(url);
-      return z.array(noteCategoryWithChildrenSchema).parse(data) as unknown as CategoryRecord[];
-    },
-    enabled: options?.enabled ?? true,
-    staleTime: NOTES_STALE_MS,
-    meta: {
-      source: 'notes.hooks.useNoteFolderTree',
-      operation: 'list',
-      resource: 'notes.folder-tree',
-      domain: 'notes',
-      queryKey,
-      tags: ['notes', 'folder-tree'],
-    },
-  });
-}
 
 export function useNoteTags(notebookId?: string, options?: QueryOptions): ListQuery<TagRecord> {
   const queryKey = noteKeys.tags(notebookId);

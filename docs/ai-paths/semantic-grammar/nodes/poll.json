@@ -4,8 +4,20 @@
   "nodeType": "poll",
   "title": "Poll Job",
   "purpose": "Poll an AI job or database query until it completes.",
-  "inputs": ["jobId", "query", "value", "entityId", "productId", "bundle"],
-  "outputs": ["result", "status", "jobId", "bundle"],
+  "inputs": [
+    "jobId",
+    "query",
+    "value",
+    "entityId",
+    "productId",
+    "bundle"
+  ],
+  "outputs": [
+    "result",
+    "status",
+    "jobId",
+    "bundle"
+  ],
   "configFields": [
     {
       "path": "poll.mode",
@@ -14,17 +26,13 @@
     },
     {
       "path": "poll.intervalMs",
-      "description": "Wait time between polling attempts (ms).",
-      "defaultValue": "1000"
+      "description": "Poll frequency.",
+      "defaultValue": "2000"
     },
     {
       "path": "poll.maxAttempts",
-      "description": "Maximum polling attempts before failing.",
-      "defaultValue": "40"
-    },
-    {
-      "path": "poll.dbQuery",
-      "description": "Database query definition used when mode is database (provider/collection/preset/queryTemplate/etc)."
+      "description": "Maximum retry limit before failing.",
+      "defaultValue": "30"
     },
     {
       "path": "poll.dbQuery.provider",
@@ -83,25 +91,33 @@
     },
     {
       "path": "poll.successPath",
-      "description": "Optional JSON path evaluated against the polled result to determine completion."
+      "description": "JSON path in result to check for completion.",
+      "defaultValue": "\"status\""
     },
     {
       "path": "poll.successOperator",
-      "description": "truthy/equals/contains/notEquals used with successPath.",
-      "defaultValue": "truthy"
+      "description": "equals/not_equals/contains/in.",
+      "defaultValue": "\"equals\""
     },
     {
       "path": "poll.successValue",
-      "description": "String value used by equals/contains/notEquals."
+      "description": "Value that indicates success (string/number).",
+      "defaultValue": "\"completed\""
     },
     {
       "path": "poll.resultPath",
-      "description": "Optional JSON path to extract the final result payload to emit."
+      "description": "JSON path to the actual data to emit on result port.",
+      "defaultValue": "\"result\""
     },
     {
       "path": "runtime.cache.mode",
       "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
       "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
     },
     {
       "path": "runtime.waitForInputs",
@@ -119,8 +135,20 @@
       "x": 100,
       "y": 100
     },
-    "inputs": ["jobId", "query", "value", "entityId", "productId", "bundle"],
-    "outputs": ["result", "status", "jobId", "bundle"],
+    "inputs": [
+      "jobId",
+      "query",
+      "value",
+      "entityId",
+      "productId",
+      "bundle"
+    ],
+    "outputs": [
+      "result",
+      "status",
+      "jobId",
+      "bundle"
+    ],
     "data": {},
     "connections": {
       "incoming": [],
@@ -128,5 +156,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "6bed270f19afc27bb4ee9f42723aaae11c297d22ea4980626e95719cf8c6f293"
+  "nodeHash": "86f5979ebe33fa966505a2c2bdb7ab279df0696faf94fb4605a561b7e196cdb2"
 }

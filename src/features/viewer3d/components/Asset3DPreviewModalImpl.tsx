@@ -17,13 +17,13 @@ import {
 import { Viewer3D } from './Viewer3D';
 import { Viewer3DSettingsPanel } from './Viewer3DSettingsPanel';
 import { Viewer3DStatusInfo } from './Viewer3DStatusInfo';
-import { Viewer3DProvider, useViewer3D } from '../context/Viewer3DContext';
+import { Viewer3DProvider, useViewer3DActions } from '../context/Viewer3DContext';
 
 interface Asset3DPreviewModalProps extends EntityModalProps<Asset3DRecord> {}
 
 function Asset3DPreviewModalContent(): React.JSX.Element {
   const { asset } = useAsset3DPreviewModalViewContext();
-  const { resetSettings } = useViewer3D();
+  const { resetSettings } = useViewer3DActions();
 
   // UI State
   const [showSettings, setShowSettings] = useState(false);

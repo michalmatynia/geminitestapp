@@ -1,0 +1,48 @@
+# Validation Pattern Migration Sheet (`validation_pattern`)
+
+Generated at: 2026-03-05T00:00:00.000Z
+
+## Status
+
+- Runtime strategy: `legacy_adapter`
+- Migration wave: `backlog`
+- Code object ID: `not_assigned`
+- Config field count: 14
+
+## Node Contract Files
+
+- Semantic node contract: `docs/ai-paths/semantic-grammar/nodes/validation_pattern.json`
+- Semantic hash: `e64e35e2fd1184b3b984c4645f0778f6bd2c5a415224fbc949e5418eb706978f`
+- v2 code object: `docs/ai-paths/node-code-objects-v2/validation_pattern.json`
+- v3 scaffold: `missing`
+- v3 object id: `missing`
+- v3 object hash: `missing`
+
+## Ports
+
+Inputs:
+- `value`
+- `prompt`
+- `result`
+- `context`
+
+Outputs:
+- `value`
+- `result`
+- `context`
+- `valid`
+- `errors`
+- `bundle`
+
+## Migration Checklist
+
+- [ ] Semantic contract reviewed against UI config fields.
+- [ ] v3 scaffold authored or updated for this node.
+- [ ] Dual-run parity validated (`legacy_adapter` vs `code_object_v3`).
+- [ ] Runtime kernel pilot list updated when rollout is approved.
+- [ ] Observability and regression checks reviewed post-rollout.
+
+## Notes
+
+- Capture node-specific edge cases, known incompatibilities, and rollout guardrails here.
+

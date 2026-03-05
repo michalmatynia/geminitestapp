@@ -4,7 +4,10 @@ import {
   type RuntimePortValues,
 } from '@/shared/contracts/ai-paths';
 import { runtimeStateSchema } from '@/shared/contracts/ai-paths-runtime';
-import { cloneJsonSafe } from '@/shared/lib/ai-paths';
+import type { NodeRuntimeKernelMode } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
+import {
+  cloneJsonSafe,
+} from '@/shared/lib/ai-paths';
 import { isAppError, validationError } from '@/shared/errors/app-error';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
@@ -39,6 +42,88 @@ export const RUNTIME_PROFILE_SLOW_NODE_MS = Math.max(
   10,
   Number.parseInt(process.env['AI_PATHS_RUNTIME_PROFILE_SLOW_NODE_MS'] ?? '', 10) || 600
 );
+
+const normalizeRuntimeKernelModeValue = (value: unknown): NodeRuntimeKernelMode | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'auto' || normalized === 'legacy_only') {
+    return normalized;
+  }
+  return null;
+};
+
+const normalizeRuntimeKernelPilotNodeTypeToken = (value: string): string =>
+  value.trim().toLowerCase().replace(/\s+/g, '_');
+
+const normalizeRuntimeKernelPilotNodeTypes = (values: string[]): string[] | undefined => {
+  const normalized = Array.from(
+    new Set(values.map(normalizeRuntimeKernelPilotNodeTypeToken).filter(Boolean))
+  );
+  return normalized.length > 0 ? normalized : undefined;
+};
+
+export const parseRuntimeKernelPilotNodeTypes = (value: unknown): string[] | undefined => {
+  if (Array.isArray(value)) {
+    return normalizeRuntimeKernelPilotNodeTypes(value.filter((entry): entry is string => typeof entry === 'string'));
+  }
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(trimmed) as unknown;
+      if (Array.isArray(parsed)) {
+        return normalizeRuntimeKernelPilotNodeTypes(
+          parsed.filter((entry): entry is string => typeof entry === 'string')
+        );
+      }
+    } catch {
+      // Fall through to tokenized parsing.
+    }
+  }
+
+  return normalizeRuntimeKernelPilotNodeTypes(trimmed.split(/[,\n]/g));
+};
+
+export const resolveRuntimeKernelConfigForRun = (input: {
+  envMode: unknown;
+  settingMode: unknown;
+  envPilotNodeTypes: unknown;
+  settingPilotNodeTypes: unknown;
+}): {
+  mode: NodeRuntimeKernelMode;
+  modeSource: 'env' | 'settings' | 'default';
+  pilotNodeTypes: string[] | undefined;
+  pilotSource: 'env' | 'settings' | 'default';
+} => {
+  const envMode = normalizeRuntimeKernelModeValue(input.envMode);
+  const settingMode = normalizeRuntimeKernelModeValue(input.settingMode);
+  const mode: NodeRuntimeKernelMode = envMode ?? settingMode ?? 'auto';
+  const modeSource: 'env' | 'settings' | 'default' = envMode
+    ? 'env'
+    : settingMode
+      ? 'settings'
+      : 'default';
+
+  const envPilotNodeTypes = parseRuntimeKernelPilotNodeTypes(input.envPilotNodeTypes);
+  const settingsPilotNodeTypes = parseRuntimeKernelPilotNodeTypes(input.settingPilotNodeTypes);
+  const pilotNodeTypes = mode === 'legacy_only' ? undefined : (envPilotNodeTypes ?? settingsPilotNodeTypes);
+  const pilotSource: 'env' | 'settings' | 'default' = mode === 'legacy_only'
+    ? 'default'
+    : envPilotNodeTypes
+      ? 'env'
+      : settingsPilotNodeTypes
+        ? 'settings'
+        : 'default';
+
+  return {
+    mode,
+    modeSource,
+    pilotNodeTypes,
+    pilotSource,
+  };
+};
 
 export const resolveCancellationPollIntervalMs = (): number => {
   const parsed = Number.parseInt(process.env['AI_PATHS_CANCEL_POLL_INTERVAL_MS'] ?? '', 10);

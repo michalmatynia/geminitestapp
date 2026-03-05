@@ -2,7 +2,6 @@
 
 import type {
   ProductSyncProfile,
-  ProductSyncRunDetail,
   ProductSyncRunRecord,
 } from '@/shared/contracts/product-sync';
 import type {
@@ -10,7 +9,6 @@ import type {
   DeleteMutation,
   ListQuery,
   MutationResult,
-  SingleQuery,
   UpdateMutation,
 } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
@@ -19,7 +17,6 @@ import {
   createDeleteMutationV2,
   createListQueryV2,
   createMutationV2,
-  createSingleQueryV2,
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';
@@ -76,42 +73,6 @@ export function useProductSyncRuns(
       domain: 'products',
       queryKey,
       tags: ['products', 'settings', 'sync', 'runs'],
-    },
-  });
-}
-
-export function useProductSyncRunDetail(
-  runId: string,
-  options?: {
-    page?: number;
-    pageSize?: number;
-    includeItems?: boolean;
-    enabled?: boolean;
-  }
-): SingleQuery<ProductSyncRunDetail> {
-  const queryKey = productSettingsKeys.syncRunDetail(runId || '__none__');
-  return createSingleQueryV2({
-    id: runId || null,
-    queryKey,
-    enabled: (options?.enabled ?? true) && Boolean(runId),
-    queryFn: async (): Promise<ProductSyncRunDetail> => {
-      const params = new URLSearchParams();
-      if (typeof options?.page === 'number') params.set('page', String(options.page));
-      if (typeof options?.pageSize === 'number') params.set('pageSize', String(options.pageSize));
-      if (typeof options?.includeItems === 'boolean') {
-        params.set('includeItems', String(options.includeItems));
-      }
-      const query = params.toString();
-      const endpoint = `/api/v2/products/sync/runs/${encodeURIComponent(runId)}${query ? `?${query}` : ''}`;
-      return api.get<ProductSyncRunDetail>(endpoint, { cache: 'no-store' });
-    },
-    meta: {
-      source: 'products.hooks.useProductSyncRunDetail',
-      operation: 'detail',
-      resource: 'products.settings.sync.run-detail',
-      domain: 'products',
-      queryKey,
-      tags: ['products', 'settings', 'sync', 'runs', 'detail'],
     },
   });
 }

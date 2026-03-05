@@ -4,8 +4,20 @@
   "nodeType": "validation_pattern",
   "title": "Validation Pattern",
   "purpose": "Run ordered validation patterns from a stack or a path-local rule list.",
-  "inputs": ["value", "prompt", "result", "context"],
-  "outputs": ["value", "result", "context", "valid", "errors", "bundle"],
+  "inputs": [
+    "value",
+    "prompt",
+    "result",
+    "context"
+  ],
+  "outputs": [
+    "value",
+    "result",
+    "context",
+    "valid",
+    "errors",
+    "bundle"
+  ],
   "configFields": [
     {
       "path": "validationPattern.source",
@@ -67,6 +79,11 @@
       "defaultValue": "auto"
     },
     {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
+    },
+    {
       "path": "runtime.waitForInputs",
       "description": "If true, wait until all connected input ports have values before executing the node.",
       "defaultValue": "false"
@@ -100,8 +117,20 @@
       "x": 100,
       "y": 100
     },
-    "inputs": ["value", "prompt", "result", "context"],
-    "outputs": ["value", "result", "context", "valid", "errors", "bundle"],
+    "inputs": [
+      "value",
+      "prompt",
+      "result",
+      "context"
+    ],
+    "outputs": [
+      "value",
+      "result",
+      "context",
+      "valid",
+      "errors",
+      "bundle"
+    ],
     "config": {
       "validationPattern": {
         "source": "global_stack",
@@ -127,5 +156,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "e599c96a6105b4245fd3b44575ed9f082bda0d234eba61f322d41f75e2c397ca"
+  "nodeHash": "e64e35e2fd1184b3b984c4645f0778f6bd2c5a415224fbc949e5418eb706978f"
 }

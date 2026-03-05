@@ -133,6 +133,7 @@ const extractTriggerButtonPathUsageMap = (
       repairIdentities: true,
       includeConnections: false,
       signingPolicyTelemetrySurface: 'canvas',
+      nodeCodeObjectHashVerificationMode: 'warn',
     });
     if (!resolvedConfig.ok) {
       return;

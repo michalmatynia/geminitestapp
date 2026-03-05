@@ -8,7 +8,7 @@ import {
   type SettingsField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
-import { useUsers } from '../../context/UsersContext';
+import { useUsersData, useUsersDialogs } from '../../context/UsersContext';
 
 export interface UserCreateFormState {
   name: string;
@@ -43,14 +43,13 @@ const FIELDS: SettingsField<UserCreateFormState>[] = [
 
 export function UserCreateModal(): React.JSX.Element | null {
   const { toast } = useToast();
+  const { mutations, refetch } = useUsersData();
   const {
     createOpen: isOpen,
     setCreateOpen,
     createForm,
     setCreateForm,
-    mutations,
-    refetch,
-  } = useUsers();
+  } = useUsersDialogs();
 
   const isSaving = mutations.register.isPending;
   const onClose = () => setCreateOpen(false);

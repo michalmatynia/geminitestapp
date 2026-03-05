@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_delay_portable_v2",
   "nodeType": "delay",
   "nodeDocVersion": "2026-02-20.v1",
@@ -18,18 +18,12 @@
   },
   "ports": {
     "inputs": [
-      "context",
-      "bundle",
-      "prompt",
-      "result",
-      "value"
+      "value",
+      "bundle"
     ],
     "outputs": [
-      "context",
-      "bundle",
-      "prompt",
-      "result",
-      "value"
+      "value",
+      "bundle"
     ]
   },
   "statusModel": {
@@ -99,6 +93,11 @@
         "defaultValue": "auto"
       },
       {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
+      },
+      {
         "path": "runtime.waitForInputs",
         "description": "If true, wait until all connected input ports have values before executing the node.",
         "defaultValue": "false"
@@ -116,18 +115,12 @@
         "y": 100
       },
       "inputs": [
-        "context",
-        "bundle",
-        "prompt",
-        "result",
-        "value"
+        "value",
+        "bundle"
       ],
       "outputs": [
-        "context",
-        "bundle",
-        "prompt",
-        "result",
-        "value"
+        "value",
+        "bundle"
       ],
       "data": {},
       "connections": {
@@ -145,18 +138,12 @@
         "y": 100
       },
       "inputs": [
-        "context",
-        "bundle",
-        "prompt",
-        "result",
-        "value"
+        "value",
+        "bundle"
       ],
       "outputs": [
-        "context",
-        "bundle",
-        "prompt",
-        "result",
-        "value"
+        "value",
+        "bundle"
       ],
       "data": {},
       "connections": {
@@ -169,7 +156,8 @@
         },
         "runtime": {
           "cache": {
-            "mode": "auto"
+            "mode": "auto",
+            "scope": "run"
           },
           "waitForInputs": false
         }
@@ -187,18 +175,12 @@
             "y": 100
           },
           "inputs": [
-            "context",
-            "bundle",
-            "prompt",
-            "result",
-            "value"
+            "value",
+            "bundle"
           ],
           "outputs": [
-            "context",
-            "bundle",
-            "prompt",
-            "result",
-            "value"
+            "value",
+            "bundle"
           ],
           "data": {},
           "connections": {
@@ -211,7 +193,8 @@
             },
             "runtime": {
               "cache": {
-                "mode": "auto"
+                "mode": "auto",
+                "scope": "run"
               },
               "waitForInputs": false
             }
@@ -225,8 +208,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/delay.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "c7975b9909b39589c4c4f1432d2f3f7e660647c9425d63004f12ee0ac937a6b6"
+    "semanticNodeHash": "fa631c84b720f9f975e8da3f24935e4d1b5d36ff103e58319691af9d07f5bd30"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "83b27bacee4c9763f536269e0157daa0ee6078911d27f8431729f63883552314"
+  "objectHash": "f20e3d01f2917b54f5b394e2e8567df33d15362329f86ec2c422d7337dc1422f"
 }

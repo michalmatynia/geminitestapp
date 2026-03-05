@@ -2,7 +2,7 @@
 
 import {
   ListingSettingsProvider,
-  useListingSettingsContext,
+  useListingSelection,
 } from '@/features/integrations/context/ListingSettingsContext';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations';
@@ -36,7 +36,7 @@ function ListProductModalContent(): React.JSX.Element {
     selectedConnectionId,
     isBaseComIntegration,
     isTraderaIntegration,
-  } = useListingSettingsContext();
+  } = useListingSelection();
 
   const { error, exportLogs, submitting, handleSubmit, handleImageRetry } = useListProductForm(
     product.id

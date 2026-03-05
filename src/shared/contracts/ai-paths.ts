@@ -239,6 +239,65 @@ export const aiPathRuntimeTraceAnalyticsSchema = z.object({
 
 export type AiPathRuntimeTraceAnalytics = z.infer<typeof aiPathRuntimeTraceAnalyticsSchema>;
 
+export const aiPathRuntimePortableEngineCountsSchema = z.object({
+  attempts: z.number(),
+  successes: z.number(),
+  failures: z.number(),
+});
+
+export type AiPathRuntimePortableEngineCounts = z.infer<
+  typeof aiPathRuntimePortableEngineCountsSchema
+>;
+
+export const aiPathRuntimePortableEngineFailureSchema = z.object({
+  at: z.string(),
+  runner: z.enum(['client', 'server']),
+  surface: z.enum(['canvas', 'product', 'api']),
+  source: z.enum(['portable_package', 'portable_envelope', 'semantic_canvas', 'path_config']).nullable(),
+  stage: z.enum(['resolve', 'validation', 'runtime']),
+  error: z.string(),
+  durationMs: z.number(),
+  validateBeforeRun: z.boolean(),
+  validationMode: z.string().nullable(),
+});
+
+export type AiPathRuntimePortableEngineFailure = z.infer<
+  typeof aiPathRuntimePortableEngineFailureSchema
+>;
+
+export const aiPathRuntimePortableEngineAnalyticsSchema = z.object({
+  source: z.enum(['in_memory', 'unavailable']),
+  totals: aiPathRuntimePortableEngineCountsSchema.extend({
+    successRate: z.number(),
+    failureRate: z.number(),
+  }),
+  byRunner: z.object({
+    client: aiPathRuntimePortableEngineCountsSchema,
+    server: aiPathRuntimePortableEngineCountsSchema,
+  }),
+  bySurface: z.object({
+    canvas: aiPathRuntimePortableEngineCountsSchema,
+    product: aiPathRuntimePortableEngineCountsSchema,
+    api: aiPathRuntimePortableEngineCountsSchema,
+  }),
+  byInputSource: z.object({
+    portable_package: aiPathRuntimePortableEngineCountsSchema,
+    portable_envelope: aiPathRuntimePortableEngineCountsSchema,
+    semantic_canvas: aiPathRuntimePortableEngineCountsSchema,
+    path_config: aiPathRuntimePortableEngineCountsSchema,
+  }),
+  failureStageCounts: z.object({
+    resolve: z.number(),
+    validation: z.number(),
+    runtime: z.number(),
+  }),
+  recentFailures: z.array(aiPathRuntimePortableEngineFailureSchema),
+});
+
+export type AiPathRuntimePortableEngineAnalytics = z.infer<
+  typeof aiPathRuntimePortableEngineAnalyticsSchema
+>;
+
 export const aiPathRuntimeAnalyticsSummarySchema = z.object({
   from: z.string(),
   to: z.string(),
@@ -276,6 +335,7 @@ export const aiPathRuntimeAnalyticsSummarySchema = z.object({
     errorReports: z.number(),
   }),
   traces: aiPathRuntimeTraceAnalyticsSchema,
+  portableEngine: aiPathRuntimePortableEngineAnalyticsSchema.optional(),
   generatedAt: z.string(),
 });
 
@@ -659,6 +719,9 @@ export type RuntimeProfileHighlight = {
   iteration?: number | undefined;
   durationMs?: number | undefined;
   hashMs?: number | undefined;
+  runtimeStrategy?: 'legacy_adapter' | 'code_object_v3' | undefined;
+  runtimeResolutionSource?: 'override' | 'registry' | 'missing' | undefined;
+  runtimeCodeObjectId?: string | null | undefined;
 };
 
 export type RuntimeProfileNodeSpanStatus =

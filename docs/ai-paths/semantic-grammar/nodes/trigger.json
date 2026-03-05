@@ -2,10 +2,13 @@
   "specVersion": "ai-paths.semantic-grammar.v1",
   "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "trigger",
-  "title": "Trigger: Scheduled Run",
-  "purpose": "Runs on a server schedule or cron.",
-  "inputs": ["context"],
-  "outputs": ["trigger", "triggerName", "context", "meta", "entityId", "entityType"],
+  "title": "Trigger: Image Studio Analysis",
+  "purpose": "Entry point for Image Studio object analysis. Receives imageUrl, imageWidth, imageHeight, slotId, and projectId from the Image Studio analysis panel.",
+  "inputs": [],
+  "outputs": [
+    "trigger",
+    "triggerName"
+  ],
   "configFields": [
     {
       "path": "trigger.event",
@@ -13,9 +16,19 @@
       "defaultValue": "manual"
     },
     {
+      "path": "trigger.contextMode",
+      "description": "Deprecated Trigger context policy: simulation_required, simulation_preferred, or trigger_only. For forward flow, prefer Trigger only + Fetcher node.",
+      "defaultValue": "trigger_only"
+    },
+    {
       "path": "runtime.cache.mode",
       "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
       "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
     },
     {
       "path": "runtime.waitForInputs",
@@ -32,14 +45,17 @@
   "semanticNodeExample": {
     "id": "node_trigger",
     "type": "trigger",
-    "title": "Trigger: Scheduled Run",
-    "description": "Runs on a server schedule or cron.",
+    "title": "Trigger: Image Studio Analysis",
+    "description": "Entry point for Image Studio object analysis. Receives imageUrl, imageWidth, imageHeight, slotId, and projectId from the Image Studio analysis panel.",
     "position": {
       "x": 100,
       "y": 100
     },
-    "inputs": ["context"],
-    "outputs": ["trigger", "triggerName", "context", "meta", "entityId", "entityType"],
+    "inputs": [],
+    "outputs": [
+      "trigger",
+      "triggerName"
+    ],
     "config": {
       "trigger": {
         "event": "scheduled_run"
@@ -52,5 +68,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "3abc69836bcb192e2a1e6aa3a7c3a33aee7ef8db5ebc689a27036903b576d1e3"
+  "nodeHash": "233c29f92acbe95972897af33d008a92c8026fc82bb6a1b721b60e0320116431"
 }

@@ -4,8 +4,12 @@
   "nodeType": "mutator",
   "title": "Mutator",
   "purpose": "Mutate context values with templates.",
-  "inputs": ["context"],
-  "outputs": ["context"],
+  "inputs": [
+    "context"
+  ],
+  "outputs": [
+    "context"
+  ],
   "configFields": [
     {
       "path": "mutator.path",
@@ -19,6 +23,11 @@
       "path": "runtime.cache.mode",
       "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
       "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
     },
     {
       "path": "runtime.waitForInputs",
@@ -36,8 +45,12 @@
       "x": 100,
       "y": 100
     },
-    "inputs": ["context"],
-    "outputs": ["context"],
+    "inputs": [
+      "context"
+    ],
+    "outputs": [
+      "context"
+    ],
     "data": {},
     "connections": {
       "incoming": [],
@@ -45,5 +58,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "d88f2b708a7ae6217db6acec6ad473b8f40a35b917fb89e87a3e1fa0528fd31e"
+  "nodeHash": "86dc18244f712290a2815cef8e22145b0cd058095cfd729b300b030b4eacfb4b"
 }

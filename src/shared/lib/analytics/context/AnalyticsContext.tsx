@@ -1,38 +1,62 @@
 'use client';
 
 import { type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
-import { createContext, useContext, useMemo, useState, ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 
 import {
   useAnalyticsSummary,
   useAnalyticsInsights,
   useRunAnalyticsInsight,
 } from '@/shared/lib/analytics/hooks/useAnalyticsQueries';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { AnalyticsScope, AnalyticsSummary } from '@/shared/contracts/analytics';
 import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 
 import { type AnalyticsRange } from '../api';
 
-interface AnalyticsContextValue {
+interface AnalyticsFiltersContextValue {
   range: AnalyticsRange;
   setRange: (range: AnalyticsRange) => void;
   scope: AnalyticsScope | 'all';
   setScope: (scope: AnalyticsScope | 'all') => void;
+}
+
+interface AnalyticsSummaryContextValue {
   summaryQuery: UseQueryResult<AnalyticsSummary, Error>;
-  insightsQuery: UseQueryResult<{ insights: AiInsightRecord[] }, Error>;
-  runInsightMutation: UseMutationResult<{ insight: AiInsightRecord }, Error, void>;
   fromToLabel: string | null;
 }
 
-const AnalyticsContext = createContext<AnalyticsContextValue | undefined>(undefined);
-
-export function useAnalytics(): AnalyticsContextValue {
-  const context = useContext(AnalyticsContext);
-  if (!context) {
-    throw new Error('useAnalytics must be used within an AnalyticsProvider');
-  }
-  return context;
+interface AnalyticsInsightsContextValue {
+  insightsQuery: UseQueryResult<{ insights: AiInsightRecord[] }, Error>;
+  runInsightMutation: UseMutationResult<{ insight: AiInsightRecord }, Error, void>;
 }
+
+export const {
+  Context: AnalyticsFiltersContext,
+  useStrictContext: useAnalyticsFilters,
+} = createStrictContext<AnalyticsFiltersContextValue>({
+  hookName: 'useAnalyticsFilters',
+  providerName: 'an AnalyticsProvider',
+  displayName: 'AnalyticsFiltersContext',
+});
+
+export const {
+  Context: AnalyticsSummaryContext,
+  useStrictContext: useAnalyticsSummaryData,
+} = createStrictContext<AnalyticsSummaryContextValue>({
+  hookName: 'useAnalyticsSummaryData',
+  providerName: 'an AnalyticsProvider',
+  displayName: 'AnalyticsSummaryContext',
+});
+
+export const {
+  Context: AnalyticsInsightsContext,
+  useStrictContext: useAnalyticsInsightsData,
+} = createStrictContext<AnalyticsInsightsContextValue>({
+  hookName: 'useAnalyticsInsightsData',
+  providerName: 'an AnalyticsProvider',
+  displayName: 'AnalyticsInsightsContext',
+});
 
 export function AnalyticsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [range, setRange] = useState<AnalyticsRange>('24h');
@@ -43,15 +67,6 @@ export function AnalyticsProvider({ children }: { children: ReactNode }): React.
   const insightsQuery = useAnalyticsInsights({ limit: 5 });
 
   const runInsightMutation = useRunAnalyticsInsight();
-
-  // We can wrap the mutation to add toast handling if we want it to be part of the context
-  // or just let the components using it handle it.
-  // Given it's in a context, let's keep it as is and maybe the components handle the toast.
-  // Actually, the original had it in the mutation options.
-  // Let's use the mutation with options if we want.
-
-  // Actually, I'll just use the mutation as returned by the hook.
-  // If the user wants specific behavior in the context, we can add it.
 
   const fromToLabel = useMemo((): string | null => {
     const summary = summaryQuery.data;
@@ -65,16 +80,37 @@ export function AnalyticsProvider({ children }: { children: ReactNode }): React.
     }
   }, [summaryQuery.data]);
 
-  const value: AnalyticsContextValue = {
-    range,
-    setRange,
-    scope,
-    setScope,
-    summaryQuery,
-    insightsQuery,
-    runInsightMutation,
-    fromToLabel,
-  };
+  const filtersValue = useMemo<AnalyticsFiltersContextValue>(
+    () => ({
+      range,
+      setRange,
+      scope,
+      setScope,
+    }),
+    [range, scope]
+  );
 
-  return <AnalyticsContext.Provider value={value}>{children}</AnalyticsContext.Provider>;
+  const summaryValue = useMemo<AnalyticsSummaryContextValue>(
+    () => ({
+      summaryQuery,
+      fromToLabel,
+    }),
+    [summaryQuery, fromToLabel]
+  );
+
+  const insightsValue = useMemo<AnalyticsInsightsContextValue>(
+    () => ({
+      insightsQuery,
+      runInsightMutation,
+    }),
+    [insightsQuery, runInsightMutation]
+  );
+
+  return (
+    <AnalyticsFiltersContext.Provider value={filtersValue}>
+      <AnalyticsSummaryContext.Provider value={summaryValue}>
+        <AnalyticsInsightsContext.Provider value={insightsValue}>{children}</AnalyticsInsightsContext.Provider>
+      </AnalyticsSummaryContext.Provider>
+    </AnalyticsFiltersContext.Provider>
+  );
 }

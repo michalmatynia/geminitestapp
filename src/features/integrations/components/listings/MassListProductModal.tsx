@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import {
   ListingSettingsProvider,
-  useListingSettingsContext,
+  useListingSelection,
 } from '@/features/integrations/context/ListingSettingsContext';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { FormModal, Alert, LoadingState } from '@/shared/ui';
@@ -32,7 +32,7 @@ function MassListProductModalContent(): React.JSX.Element {
     loadingIntegrations: loading,
     selectedIntegration,
     isBaseComIntegration,
-  } = useListingSettingsContext();
+  } = useListingSelection();
 
   const { error, progress, exportLogs, handleSubmit, submitting } = useMassListForm();
 

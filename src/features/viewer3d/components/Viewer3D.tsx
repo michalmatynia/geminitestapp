@@ -25,7 +25,7 @@ import type {
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { getLastUserAction } from '@/shared/utils/observability/user-action-tracker';
 
-import { useOptionalViewer3D } from '../context/Viewer3DContext';
+import { useOptionalViewer3DState } from '../context/Viewer3DContext';
 import { DitheringPass } from './shaders/DitheringEffect';
 import { OrderedDitheringPass } from './shaders/OrderedDitheringEffect';
 import { PixelationPass } from './shaders/PixelationEffect';
@@ -350,7 +350,7 @@ export function Viewer3D(props: Viewer3DProps): React.JSX.Element {
     captureRef,
   } = props;
 
-  const context = useOptionalViewer3D();
+  const context = useOptionalViewer3DState();
 
   const getSetting = <K extends keyof Viewer3DSettings>(
     key: K,

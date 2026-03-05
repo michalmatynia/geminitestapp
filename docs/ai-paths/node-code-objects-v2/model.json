@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_model_portable_v2",
   "nodeType": "model",
   "nodeDocVersion": "2026-02-20.v1",
@@ -84,22 +84,27 @@
     "fields": [
       {
         "path": "model.modelId",
-        "description": "Model identifier to run.",
-        "defaultValue": "gpt-4o"
+        "description": "Optional node-selected model ID. Empty means inherit the AI Brain default model for AI Paths. The picker uses the Brain model catalog.",
+        "defaultValue": "\"\" (inherit Brain default)"
       },
       {
         "path": "model.temperature",
-        "description": "Sampling temperature (0-2).",
-        "defaultValue": "0.2"
+        "description": "Node-level sampling temperature (0-2). When set, it overrides the AI Brain default for this node.",
+        "defaultValue": "0.7"
       },
       {
         "path": "model.maxTokens",
-        "description": "Maximum output tokens.",
-        "defaultValue": "2048"
+        "description": "Node-level maximum output tokens. When set, it overrides the AI Brain default for this node.",
+        "defaultValue": "800"
+      },
+      {
+        "path": "model.systemPrompt",
+        "description": "Optional node-level system prompt. A non-empty value overrides the AI Brain default; empty inherits the AI Brain prompt.",
+        "defaultValue": "\"\" (inherit Brain default)"
       },
       {
         "path": "model.vision",
-        "description": "When true, image URLs are included as vision inputs if connected.",
+        "description": "When true, image URLs are included as vision inputs if connected. Provider execution still routes through AI Brain.",
         "defaultValue": "false"
       },
       {
@@ -111,6 +116,11 @@
         "path": "runtime.cache.mode",
         "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
         "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
       },
       {
         "path": "runtime.waitForInputs",
@@ -167,15 +177,17 @@
       },
       "config": {
         "model": {
-          "modelId": "gpt-4o",
-          "temperature": 0.2,
-          "maxTokens": 2048,
+          "modelId": "\"\" (inherit Brain default)",
+          "temperature": 0.7,
+          "maxTokens": 800,
+          "systemPrompt": "\"\" (inherit Brain default)",
           "vision": false,
           "waitForResult": true
         },
         "runtime": {
           "cache": {
-            "mode": "auto"
+            "mode": "auto",
+            "scope": "run"
           },
           "waitForInputs": false
         }
@@ -207,15 +219,17 @@
           },
           "config": {
             "model": {
-              "modelId": "gpt-4o",
-              "temperature": 0.2,
-              "maxTokens": 2048,
+              "modelId": "\"\" (inherit Brain default)",
+              "temperature": 0.7,
+              "maxTokens": 800,
+              "systemPrompt": "\"\" (inherit Brain default)",
               "vision": false,
               "waitForResult": true
             },
             "runtime": {
               "cache": {
-                "mode": "auto"
+                "mode": "auto",
+                "scope": "run"
               },
               "waitForInputs": false
             }
@@ -229,8 +243,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/model.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "10b82d8debfae435ca227a48b0bf661e1aca278188352ff6dfca2ba773ddb8a0"
+    "semanticNodeHash": "69429171748383402c62fb8f86ce6e354e76e13ed83ad5302d8b266b2cced9d5"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "6d6727baaa009df029c3ffa6745e55465d96cd3b0af196e63f070abfe04f594d"
+  "objectHash": "f62cf36a5a3f14d6818bcd94a171b260795911b5f5323817e49412075adc6cd2"
 }

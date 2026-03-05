@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
+import { useCategoryMapperConfig } from '@/features/integrations/context/CategoryMapperContext';
 import {
   useFetchExternalProducersMutation,
   useSaveProducerMappingsMutation,
@@ -17,7 +17,7 @@ import { type Producer } from '@/shared/contracts/products';
 import { GenericMapper, type GenericItemMapperConfig } from '@/shared/ui';
 
 export function BaseProducerMapper(): React.JSX.Element {
-  const { connectionId, connectionName } = useCategoryMapper();
+  const { connectionId, connectionName } = useCategoryMapperConfig();
 
   const producersQuery = useProducers();
   const externalProducersQuery = useExternalProducers(connectionId ?? '');

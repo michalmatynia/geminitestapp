@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_audio_oscillator_portable_v2",
   "nodeType": "audio_oscillator",
   "nodeDocVersion": "2026-02-20.v1",
@@ -114,6 +114,11 @@
         "defaultValue": "auto"
       },
       {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
+      },
+      {
         "path": "runtime.waitForInputs",
         "description": "If true, wait until all connected input ports have values before executing the node.",
         "defaultValue": "false"
@@ -187,7 +192,8 @@
         },
         "runtime": {
           "cache": {
-            "mode": "auto"
+            "mode": "auto",
+            "scope": "run"
           },
           "waitForInputs": false
         }
@@ -232,7 +238,8 @@
             },
             "runtime": {
               "cache": {
-                "mode": "auto"
+                "mode": "auto",
+                "scope": "run"
               },
               "waitForInputs": false
             }
@@ -246,8 +253,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/audio_oscillator.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "aeaa5ceb04391b2376ccefc657bbcba7781f08922f210e82f3569b2b16314956"
+    "semanticNodeHash": "7baab1b01ab357f02eee514fc42f17c000caaa5d51e5610ca9197cbe0a9f8224"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "ba7562231dd764154a9baee867f70285430eb8784a2c10c1089106fde6361fc0"
+  "objectHash": "35e46627b1615832dd4bfc11dce862da1b3301ea2a9ae8106b20db386818e2c1"
 }

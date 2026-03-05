@@ -164,8 +164,6 @@ export interface DraftCreatorFormContextValue
     DraftCreatorImages,
     DraftCreatorParameters {}
 
-const DraftCreatorFormContext = createContext<DraftCreatorFormContextValue | null>(null);
-
 export function DraftCreatorFormProvider({
   value,
   children,
@@ -294,22 +292,10 @@ export function DraftCreatorFormProvider({
       <ProductDataContext.Provider value={productData}>
         <MetadataContext.Provider value={metadata}>
           <ImagesContext.Provider value={images}>
-            <ParametersContext.Provider value={parameters}>
-              <DraftCreatorFormContext.Provider value={value}>
-                {children}
-              </DraftCreatorFormContext.Provider>
-            </ParametersContext.Provider>
+            <ParametersContext.Provider value={parameters}>{children}</ParametersContext.Provider>
           </ImagesContext.Provider>
         </MetadataContext.Provider>
       </ProductDataContext.Provider>
     </BasicInfoContext.Provider>
   );
-}
-
-export function useDraftCreatorFormContext(): DraftCreatorFormContextValue {
-  const context = useContext(DraftCreatorFormContext);
-  if (!context) {
-    throw new Error('useDraftCreatorFormContext must be used within DraftCreatorFormProvider');
-  }
-  return context;
 }

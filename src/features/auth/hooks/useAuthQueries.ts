@@ -1,6 +1,5 @@
 'use client';
 
-import { verifyCredentials, type VerifyCredentialsResponse } from '@/features/auth/api/credentials';
 import { registerUser, type RegisterResponse } from '@/features/auth/api/register';
 import {
   fetchAuthUsers,
@@ -13,7 +12,7 @@ import {
   type AuthUserSecurityProfile,
 } from '@/features/auth/api/users';
 
-export type { AuthUsersResponse, AuthUserSecurityProfile, VerifyCredentialsResponse };
+export type { AuthUsersResponse, AuthUserSecurityProfile };
 
 import type { AuthUser as AuthUserSummary } from '@/shared/contracts/auth';
 import type {
@@ -216,23 +215,5 @@ export function useRegisterUser(): CreateMutation<
       tags: ['auth', 'register'],
     },
     invalidate: (queryClient) => invalidateUsers(queryClient),
-  });
-}
-
-export function useVerifyCredentials(): MutationResult<
-  { ok: boolean; payload: VerifyCredentialsResponse },
-  { email: string; password: string }
-  > {
-  return createCreateMutationV2({
-    mutationFn: verifyCredentials,
-    mutationKey: authKeys.users.all,
-    meta: {
-      source: 'auth.hooks.useVerifyCredentials',
-      operation: 'create',
-      resource: 'auth.verify-credentials',
-      domain: 'auth',
-      mutationKey: authKeys.users.all,
-      tags: ['auth', 'credentials'],
-    },
   });
 }

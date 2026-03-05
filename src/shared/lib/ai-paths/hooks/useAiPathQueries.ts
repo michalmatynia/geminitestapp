@@ -105,28 +105,3 @@ export function useAiPathRuntimeAnalytics(
     },
   });
 }
-
-export function useAiPathsQueueStatusQuery(): SingleQuery<{
-  status: string;
-  active: number;
-  queued: number;
-  total: number;
-}> {
-  const queryKey = QUERY_KEYS.ai.aiPaths.queueStatus();
-  return createSingleQueryV2({
-    queryKey,
-    queryFn: () =>
-      api.get<{ status: string; active: number; queued: number; total: number }>(
-        '/api/ai-paths/queue-status'
-      ),
-    id: 'queue-status',
-    meta: {
-      source: 'aiPaths.hooks.useAiPathsQueueStatusQuery',
-      operation: 'detail',
-      resource: 'ai-paths.queue-status',
-      domain: 'ai_paths',
-      queryKey,
-      tags: ['ai-paths', 'queue-status'],
-    },
-  });
-}

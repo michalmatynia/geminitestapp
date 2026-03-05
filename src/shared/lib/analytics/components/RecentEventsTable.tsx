@@ -6,7 +6,7 @@ import type { AnalyticsSummary } from '@/shared/contracts';
 import { Button, StandardDataTablePanel, EmptyState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { useAnalytics } from '../context/AnalyticsContext';
+import { useAnalyticsSummaryData } from '../context/AnalyticsContext';
 import { AnalyticsEventDetails } from './AnalyticsEventDetails';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -14,7 +14,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 type AnalyticsEvent = NonNullable<AnalyticsSummary['recent']>[number];
 
 export function RecentEventsTable(): React.JSX.Element {
-  const { summaryQuery } = useAnalytics();
+  const { summaryQuery } = useAnalyticsSummaryData();
   const summary = summaryQuery.data;
   const [expandedId, setExpandedId] = useState<string | null>(null);
 

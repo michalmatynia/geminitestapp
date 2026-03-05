@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "ai-paths.node-code-object.v3",
+  "kind": "path_node_code_object",
+  "specVersion": "ai-paths.portable-engine.v1",
+  "nodeType": "template",
+  "title": "Template",
+  "runtimeKernel": {
+    "strategy": "code_object_v3",
+    "executionAdapter": "legacy_handler_bridge",
+    "legacyHandlerKey": "template",
+    "codeObjectId": "ai-paths.node-code-object.template.v3"
+  },
+  "runtimeSemantics": {
+    "processing": "pulse_node_only",
+    "waiting": "freeze_consumed_inputs_and_outputs",
+    "success": "animate_outgoing_on_emit",
+    "error": "animate_error_routes_on_emit"
+  },
+  "ports": {
+    "inputs": [
+      "value",
+      "bundle",
+      "context"
+    ],
+    "outputs": [
+      "prompt"
+    ]
+  },
+  "copyPaste": {
+    "fullNode": {
+      "id": "node_template_example",
+      "type": "template",
+      "title": "Template",
+      "description": "Render prompt text from template and input values.",
+      "position": {
+        "x": 360,
+        "y": 100
+      },
+      "inputs": [
+        "value",
+        "bundle",
+        "context"
+      ],
+      "outputs": [
+        "prompt"
+      ],
+      "config": {
+        "template": {
+          "template": "{{value}}"
+        }
+      }
+    }
+  },
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "id": "node_obj_template_portable_v3",
+  "objectHashAlgorithm": "sha256",
+  "objectHash": "818d7ec5fca3d3ae120198a3418831ed55f1d54d0f7aafce0ff969a6408d02bf"
+}

@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_database_portable_v2",
   "nodeType": "database",
   "nodeDocVersion": "2026-02-20.v1",
@@ -207,6 +207,16 @@
         "description": "Optional JSON path within writeSource to write (example: 'result.items[0]')."
       },
       {
+        "path": "database.writeOutcomePolicy.onZeroAffected",
+        "description": "Write outcome policy when execution affects 0 records: `fail` throws terminal node error, `warn` completes with warning metadata.",
+        "defaultValue": "fail"
+      },
+      {
+        "path": "database.writeTemplateGuardrails",
+        "description": "Runtime-enforced for writes: all query/update/insert template placeholders must resolve to connected, non-empty values (missing/empty blocks execution).",
+        "defaultValue": "enabled"
+      },
+      {
         "path": "database.dryRun",
         "description": "When true, does not persist changes; returns computed payload only.",
         "defaultValue": "false"
@@ -218,16 +228,22 @@
       },
       {
         "path": "database.trimStrings",
-        "description": "When true, trims string values before writing.",
+        "description": "When true, trim all string values before writing.",
         "defaultValue": "false"
       },
       {
         "path": "database.aiPrompt",
-        "description": "Optional AI prompt string used by some presets/helpers (does not call a model by itself)."
+        "description": "Optional AI prompt template used by Database AI assistants.",
+        "defaultValue": "\"\""
+      },
+      {
+        "path": "database.validationRuleIds",
+        "description": "Optional list of validation rule IDs to apply before writing.",
+        "defaultValue": "[]"
       },
       {
         "path": "database.parameterInferenceGuard.enabled",
-        "description": "When true, sanitizes inferred `parameters` updates against parameter definitions before write.",
+        "description": "When enabled, validate/sanitize updated payload against parameter definitions.",
         "defaultValue": "false"
       },
       {
@@ -259,6 +275,11 @@
         "path": "runtime.cache.mode",
         "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
         "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
       },
       {
         "path": "runtime.waitForInputs",
@@ -353,9 +374,15 @@
             "projection": "",
             "single": false
           },
+          "writeOutcomePolicy": {
+            "onZeroAffected": "fail"
+          },
+          "writeTemplateGuardrails": "enabled",
           "dryRun": false,
           "skipEmpty": false,
           "trimStrings": false,
+          "aiPrompt": "",
+          "validationRuleIds": [],
           "parameterInferenceGuard": {
             "enabled": false,
             "targetPath": "parameters",
@@ -367,7 +394,8 @@
         },
         "runtime": {
           "cache": {
-            "mode": "auto"
+            "mode": "auto",
+            "scope": "run"
           },
           "waitForInputs": false
         }
@@ -425,9 +453,15 @@
                 "projection": "",
                 "single": false
               },
+              "writeOutcomePolicy": {
+                "onZeroAffected": "fail"
+              },
+              "writeTemplateGuardrails": "enabled",
               "dryRun": false,
               "skipEmpty": false,
               "trimStrings": false,
+              "aiPrompt": "",
+              "validationRuleIds": [],
               "parameterInferenceGuard": {
                 "enabled": false,
                 "targetPath": "parameters",
@@ -439,7 +473,8 @@
             },
             "runtime": {
               "cache": {
-                "mode": "auto"
+                "mode": "auto",
+                "scope": "run"
               },
               "waitForInputs": false
             }
@@ -453,8 +488,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/database.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "86fe54f51916db858e1eae7e818d4d1fd6557745efd0b6d0497af99be853716a"
+    "semanticNodeHash": "eadd4fae4b6fd18c8374000db6b359b5cc64ea57a4ded245991a360e13e1eb73"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "4651f4ba500cadf03eeb871d0139bd834089e11d256b0b25b5e684bfd56644ec"
+  "objectHash": "caed2b853455909bffa191e4aa5bb49b3b756a9660d2c73ee08311b5bab68d79"
 }

@@ -2,7 +2,11 @@
 
 import React from 'react';
 import { Trash2 } from 'lucide-react';
-import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
+import {
+  useProductListingsActions,
+  useProductListingsModals,
+  useProductListingsUIState,
+} from '@/features/integrations/context/ProductListingsContext';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations';
 import { Button, ActionMenu, DropdownMenuItem, Label, Input } from '@/shared/ui';
 import {
@@ -22,18 +26,21 @@ export function ProductListingActions(): React.JSX.Element {
     inventoryOverrides,
     setInventoryOverrides,
     savingInventoryId,
-    handleExportAgain,
-    handleExportImagesOnly,
-    handleSaveInventoryId,
-    setListingToDelete,
-    setListingToPurge,
     deletingFromBase,
     purgingListing,
     relistingListing,
     openingTraderaLogin,
+  } = useProductListingsUIState();
+
+  const {
+    handleExportAgain,
+    handleExportImagesOnly,
+    handleSaveInventoryId,
     handleRelistTradera,
     handleOpenTraderaLogin,
-  } = useProductListingsContext();
+  } = useProductListingsActions();
+
+  const { setListingToDelete, setListingToPurge } = useProductListingsModals();
 
   const imageRetryPresets = useImageRetryPresets();
   const isBaseListing = ['baselinker', 'base-com', 'base'].includes(

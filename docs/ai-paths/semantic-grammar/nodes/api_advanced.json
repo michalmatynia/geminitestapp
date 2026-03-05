@@ -5,17 +5,22 @@
   "title": "API Operation (Advanced)",
   "purpose": "Advanced API node with auth, retries, pagination, and error routing.",
   "inputs": [
-    "context",
-    "bundle",
-    "prompt",
-    "result",
-    "value",
-    "entityId",
-    "entityType",
-    "cursor",
-    "page"
+    "url",
+    "body",
+    "headers",
+    "params",
+    "bundle"
   ],
-  "outputs": ["value", "bundle", "status", "headers", "items", "route", "error", "success"],
+  "outputs": [
+    "value",
+    "bundle",
+    "status",
+    "headers",
+    "items",
+    "route",
+    "error",
+    "success"
+  ],
   "configFields": [
     {
       "path": "apiAdvanced.url",
@@ -93,6 +98,11 @@
       "defaultValue": "auto"
     },
     {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
+    },
+    {
       "path": "runtime.waitForInputs",
       "description": "If true, wait until all connected input ports have values before executing the node.",
       "defaultValue": "false"
@@ -109,17 +119,22 @@
       "y": 100
     },
     "inputs": [
-      "context",
-      "bundle",
-      "prompt",
-      "result",
-      "value",
-      "entityId",
-      "entityType",
-      "cursor",
-      "page"
+      "url",
+      "body",
+      "headers",
+      "params",
+      "bundle"
     ],
-    "outputs": ["value", "bundle", "status", "headers", "items", "route", "error", "success"],
+    "outputs": [
+      "value",
+      "bundle",
+      "status",
+      "headers",
+      "items",
+      "route",
+      "error",
+      "success"
+    ],
     "data": {},
     "connections": {
       "incoming": [],
@@ -127,5 +142,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "69f3bde2c13c1b27ec39583ca125716647c33685897bc8ead8c5f2879a15178f"
+  "nodeHash": "37b85ffa57728292544aa9cd66b45bbf4e5bbf9dafc436d4b5819340e52277b1"
 }

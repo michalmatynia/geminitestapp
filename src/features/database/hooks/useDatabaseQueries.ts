@@ -6,9 +6,7 @@ import type {
   DatabaseBackupFile as DatabaseInfoResponse,
   DatabaseBackupResponse,
   CollectionCopyResult,
-  DatabaseEngineBackupRunNowResponse,
   DatabaseEngineBackupSchedulerStatus as DatabaseEngineBackupSchedulerStatusResponse,
-  DatabaseEngineBackupSchedulerTickResponse,
   DatabaseEngineOperationsJobs as DatabaseEngineOperationsJobsResponse,
   DatabaseEngineProviderPreview as DatabaseEngineProviderPreviewResponse,
   DatabaseEngineStatus as DatabaseEngineStatusResponse,
@@ -40,7 +38,6 @@ import {
 import { dbKeys } from '@/shared/lib/query-key-exports';
 
 import {
-  cancelDatabaseEngineOperationJob,
   copyCollectionBetweenProviders,
   createDatabaseBackup,
   createJsonBackup,
@@ -58,8 +55,6 @@ import {
   fetchRedisOverview,
   restoreDatabaseBackup,
   restoreJsonBackup,
-  runDatabaseEngineBackupNow,
-  runDatabaseEngineBackupSchedulerTick,
   uploadDatabaseBackup,
 } from '../api';
 
@@ -372,71 +367,6 @@ export function useDatabaseEngineOperationsJobs(
 
       tags: ['database', 'engine', 'operations-jobs'],
     },
-  });
-}
-
-export function useDatabaseBackupSchedulerTickMutation(): UpdateMutation<
-  DatabaseEngineBackupSchedulerTickResponse,
-  void
-  > {
-  const mutationKey = dbKeys.all;
-  return createUpdateMutationV2({
-    mutationFn: runDatabaseEngineBackupSchedulerTick,
-    mutationKey,
-    meta: {
-      source: 'database.hooks.useDatabaseBackupSchedulerTickMutation',
-      operation: 'update',
-      resource: 'system.databases.backup-scheduler-tick',
-      domain: 'database',
-      mutationKey,
-      tags: ['database', 'engine', 'backup-scheduler', 'tick'],
-    },
-    invalidateKeys: [dbKeys.engineBackupSchedulerStatus()],
-  });
-}
-
-export function useDatabaseBackupRunNowMutation(): UpdateMutation<
-  DatabaseEngineBackupRunNowResponse,
-  { dbType: 'mongodb' | 'postgresql' | 'all' }
-  > {
-  const mutationKey = dbKeys.all;
-  return createCreateMutationV2({
-    mutationFn: (variables) => runDatabaseEngineBackupNow(variables.dbType),
-    mutationKey,
-    meta: {
-      source: 'database.hooks.useDatabaseBackupRunNowMutation',
-      operation: 'create',
-      resource: 'system.databases.backup-run-now',
-      domain: 'database',
-      mutationKey,
-      tags: ['database', 'engine', 'backup', 'run-now'],
-    },
-    invalidate: (queryClient, payload) => {
-      invalidateEngineSchedulerStatus(queryClient);
-      payload.queued.forEach((item) => {
-        invalidateBackups(queryClient, item.dbType);
-      });
-    },
-  });
-}
-
-export function useCancelDatabaseEngineOperationJobMutation(): MutationResult<
-  { success: boolean; job: unknown },
-  { jobId: string }
-  > {
-  const mutationKey = dbKeys.all;
-  return createUpdateMutationV2({
-    mutationFn: (variables: { jobId: string }) => cancelDatabaseEngineOperationJob(variables.jobId),
-    mutationKey,
-    meta: {
-      source: 'database.hooks.useCancelDatabaseEngineOperationJobMutation',
-      operation: 'update',
-      resource: 'system.databases.engine-operation-job',
-      domain: 'database',
-      mutationKey,
-      tags: ['database', 'engine', 'operations-jobs', 'cancel'],
-    },
-    invalidateKeys: [dbKeys.engineOperationsJobs({ limit: 30 })],
   });
 }
 

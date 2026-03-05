@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
+import { useListingSelection } from '@/features/integrations/context/ListingSettingsContext';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations';
 import { ActionMenu, DropdownMenuItem, Alert } from '@/shared/ui';
 
@@ -12,7 +12,7 @@ const isImageExportError = (error: string): boolean => {
 };
 
 export function ListProductErrorPanel(): React.JSX.Element {
-  const { isBaseComIntegration } = useListingSettingsContext();
+  const { isBaseComIntegration } = useListingSelection();
   const { error, submitting, onRetryImageExport } = useListProductModalFormContext();
   const imageRetryPresets = useImageRetryPresets();
 

@@ -11,8 +11,6 @@ import type {
   BaseInventory,
   IntegrationTemplate as Template,
 } from '@/shared/contracts/integrations';
-import { internalError } from '@/shared/errors/app-error';
-
 import { useBaseComSettings } from '../components/listings/hooks/useBaseComSettings';
 import { useIntegrationSelection } from '../components/listings/hooks/useIntegrationSelection';
 
@@ -35,6 +33,8 @@ export const useListingSelection = () => {
   if (!context) throw new Error('useListingSelection must be used within ListingSettingsProvider');
   return context;
 };
+export const useOptionalListingSelection = (): ListingSelection | null =>
+  useContext(SelectionContext);
 
 export interface ListingBaseComSettings {
   templates: Template[];
@@ -72,25 +72,6 @@ export const useListingTraderaSettings = () => {
     throw new Error('useListingTraderaSettings must be used within ListingSettingsProvider');
   return context;
 };
-
-// --- Context Aggregator ---
-
-interface ListingSettingsContextType
-  extends ListingSelection, ListingBaseComSettings, ListingTraderaSettings {}
-
-const ListingSettingsContext = createContext<ListingSettingsContextType | null>(null);
-
-export function useListingSettingsContext(): ListingSettingsContextType {
-  const context = useContext(ListingSettingsContext);
-  if (!context) {
-    throw internalError('useListingSettingsContext must be used within a ListingSettingsProvider');
-  }
-  return context;
-}
-
-export function useOptionalListingSettingsContext(): ListingSettingsContextType | null {
-  return useContext(ListingSettingsContext);
-}
 
 interface ListingSettingsProviderProps {
   children: ReactNode;
@@ -178,23 +159,10 @@ export function ListingSettingsProvider({
     ]
   );
 
-  const aggregatedValue = useMemo<ListingSettingsContextType>(
-    () => ({
-      ...selectionValue,
-      ...baseComSettings,
-      ...traderaValue,
-    }),
-    [selectionValue, baseComSettings, traderaValue]
-  );
-
   return (
     <SelectionContext.Provider value={selectionValue}>
       <BaseComSettingsContext.Provider value={baseComSettings}>
-        <TraderaSettingsContext.Provider value={traderaValue}>
-          <ListingSettingsContext.Provider value={aggregatedValue}>
-            {children}
-          </ListingSettingsContext.Provider>
-        </TraderaSettingsContext.Provider>
+        <TraderaSettingsContext.Provider value={traderaValue}>{children}</TraderaSettingsContext.Provider>
       </BaseComSettingsContext.Provider>
     </SelectionContext.Provider>
   );

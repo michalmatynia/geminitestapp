@@ -65,6 +65,17 @@ const indexRows: NodeDocExportRow[] = [];
 
 fs.mkdirSync(nodesDir, { recursive: true });
 
+const expectedNodeJsonFileNames = new Set<string>(
+  AI_PATHS_NODE_DOCS.map((doc) => `${doc.type}.json`)
+);
+for (const entry of fs.readdirSync(nodesDir, { withFileTypes: true })) {
+  if (!entry.isFile()) continue;
+  if (!entry.name.endsWith('.json')) continue;
+  if (entry.name === 'index.json') continue;
+  if (expectedNodeJsonFileNames.has(entry.name)) continue;
+  fs.unlinkSync(path.join(nodesDir, entry.name));
+}
+
 for (const doc of AI_PATHS_NODE_DOCS) {
   const fileName = `${doc.type}.json`;
   const filePath = path.join(nodesDir, fileName);
@@ -147,8 +158,10 @@ const readmeLines = [
   '- One file per node type (`<nodeType>.json`)',
   '- Every node file includes `nodeHashAlgorithm` + `nodeHash` (`sha256`)',
   '- `index.json` contains per-node hash + quick metadata for docs-driven validation inference',
-  '- Source of truth: `src/features/ai/ai-paths/lib/core/docs/node-docs.ts`',
-  '- Optional default config seeded from: `src/features/ai/ai-paths/lib/core/definitions/index.ts`',
+  '- Source of truth: `src/shared/lib/ai-paths/core/docs/node-docs.ts`',
+  '- Optional default config seeded from: `src/shared/lib/ai-paths/core/definitions/index.ts`',
+  '- Generation prunes stale per-node JSON artifacts not present in `AI_PATHS_NODE_DOCS`',
+  '- Check fails fast if unexpected per-node JSON artifacts are present',
   '',
   'Regenerate:',
   '',

@@ -4,8 +4,17 @@
   "nodeType": "iterator",
   "title": "Iterator",
   "purpose": "Iterate over an array and emit one item at a time (advance on callback).",
-  "inputs": ["value", "callback"],
-  "outputs": ["value", "index", "total", "done", "status"],
+  "inputs": [
+    "value",
+    "callback"
+  ],
+  "outputs": [
+    "value",
+    "index",
+    "total",
+    "done",
+    "status"
+  ],
   "configFields": [
     {
       "path": "iterator.autoContinue",
@@ -21,6 +30,11 @@
       "path": "runtime.cache.mode",
       "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
       "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
     },
     {
       "path": "runtime.waitForInputs",
@@ -44,8 +58,17 @@
       "x": 100,
       "y": 100
     },
-    "inputs": ["value", "callback"],
-    "outputs": ["value", "index", "total", "done", "status"],
+    "inputs": [
+      "value",
+      "callback"
+    ],
+    "outputs": [
+      "value",
+      "index",
+      "total",
+      "done",
+      "status"
+    ],
     "config": {
       "iterator": {
         "autoContinue": true,
@@ -59,5 +82,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "5f7cf778405cc759dbde169b966b504eda46c86cefc9ea0fb2125bab01e74fdd"
+  "nodeHash": "80ba1661cabb2b734598b77d3924b0d4623db9e439978ef6137db125fbbecd79"
 }

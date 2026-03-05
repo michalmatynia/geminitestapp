@@ -3,7 +3,11 @@
 import { ArrowRight, ArrowLeft, ArrowLeftRight, Check, X } from 'lucide-react';
 import React from 'react';
 
-import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
+import {
+  useProductListingsData,
+  useProductListingsModals,
+  useProductListingsUIState,
+} from '@/features/integrations/context/ProductListingsContext';
 import type { SyncDirection } from '@/shared/contracts/products';
 import { Button, Card, Hint, Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -12,8 +16,9 @@ const normalizeIntegrationSlug = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
 export function ProductListingsSyncPanel(): React.JSX.Element {
-  const { product, listings, syncingImages, setIsSyncImagesConfirmOpen } =
-    useProductListingsContext();
+  const { product, listings } = useProductListingsData();
+  const { syncingImages } = useProductListingsUIState();
+  const { setIsSyncImagesConfirmOpen } = useProductListingsModals();
 
   const baseListing = listings.find((listing) =>
     ['baselinker', 'base-com', 'base'].includes(normalizeIntegrationSlug(listing.integration.slug))

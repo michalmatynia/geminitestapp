@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "ai-paths.node-code-object-index.v3-scaffold",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
+  "strategy": "code_object_v3",
+  "totalObjects": 3,
+  "objects": [
+    {
+      "nodeType": "constant",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/constant.scaffold.json"
+    },
+    {
+      "nodeType": "math",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/math.scaffold.json"
+    },
+    {
+      "nodeType": "template",
+      "objectFile": "docs/ai-paths/node-code-objects-v3/template.scaffold.json"
+    }
+  ]
+}

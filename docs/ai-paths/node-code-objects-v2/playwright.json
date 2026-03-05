@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_playwright_portable_v2",
   "nodeType": "playwright",
   "nodeDocVersion": "2026-02-20.v1",
@@ -18,25 +18,15 @@
   },
   "ports": {
     "inputs": [
-      "prompt",
+      "url",
       "bundle",
-      "context",
-      "entityJson",
-      "value",
-      "result",
-      "title",
-      "images",
-      "content_en",
-      "entityId",
-      "entityType",
-      "productId"
+      "context"
     ],
     "outputs": [
       "result",
-      "value",
-      "bundle",
-      "status",
-      "jobId"
+      "jobId",
+      "screenshot",
+      "html"
     ]
   },
   "statusModel": {
@@ -166,6 +156,11 @@
         "defaultValue": "auto"
       },
       {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
+      },
+      {
         "path": "runtime.waitForInputs",
         "description": "If true, wait until all connected input ports have values before executing the node.",
         "defaultValue": "false"
@@ -183,25 +178,15 @@
         "y": 100
       },
       "inputs": [
-        "prompt",
+        "url",
         "bundle",
-        "context",
-        "entityJson",
-        "value",
-        "result",
-        "title",
-        "images",
-        "content_en",
-        "entityId",
-        "entityType",
-        "productId"
+        "context"
       ],
       "outputs": [
         "result",
-        "value",
-        "bundle",
-        "status",
-        "jobId"
+        "jobId",
+        "screenshot",
+        "html"
       ],
       "data": {},
       "connections": {
@@ -219,25 +204,15 @@
         "y": 100
       },
       "inputs": [
-        "prompt",
+        "url",
         "bundle",
-        "context",
-        "entityJson",
-        "value",
-        "result",
-        "title",
-        "images",
-        "content_en",
-        "entityId",
-        "entityType",
-        "productId"
+        "context"
       ],
       "outputs": [
         "result",
-        "value",
-        "bundle",
-        "status",
-        "jobId"
+        "jobId",
+        "screenshot",
+        "html"
       ],
       "data": {},
       "connections": {
@@ -264,7 +239,8 @@
         },
         "runtime": {
           "cache": {
-            "mode": "auto"
+            "mode": "auto",
+            "scope": "run"
           },
           "waitForInputs": false
         }
@@ -282,25 +258,15 @@
             "y": 100
           },
           "inputs": [
-            "prompt",
+            "url",
             "bundle",
-            "context",
-            "entityJson",
-            "value",
-            "result",
-            "title",
-            "images",
-            "content_en",
-            "entityId",
-            "entityType",
-            "productId"
+            "context"
           ],
           "outputs": [
             "result",
-            "value",
-            "bundle",
-            "status",
-            "jobId"
+            "jobId",
+            "screenshot",
+            "html"
           ],
           "data": {},
           "connections": {
@@ -327,7 +293,8 @@
             },
             "runtime": {
               "cache": {
-                "mode": "auto"
+                "mode": "auto",
+                "scope": "run"
               },
               "waitForInputs": false
             }
@@ -343,8 +310,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/playwright.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "f3b63284ff083ea90e8ebce1d5c25f299d43ff39dbeba4219ab0ee325945b442"
+    "semanticNodeHash": "7fe5f58cbada808ffbcf5fdcafb8ad435b9278f38320239f6b66897e3d2d0056"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "948bd59d12ed92fda44515b92d70049561e4ce305c4cb507123e1ccd501ffc25"
+  "objectHash": "e886f668b4d88b3dbc24f9f1ee4cbf639262a90cb538881361bc2da3110006d9"
 }

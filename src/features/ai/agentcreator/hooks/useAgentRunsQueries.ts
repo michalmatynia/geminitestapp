@@ -1,8 +1,7 @@
 import { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { AgentSnapshot, AgentBrowserLog, AgentAuditLog } from '@/shared/contracts/chatbot';
-import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
-import { createDeleteMutationV2, createListQueryV2 } from '@/shared/lib/query-factories-v2';
-import { invalidateAgentRuns } from '@/shared/lib/query-invalidation';
+import type { ListQuery } from '@/shared/contracts/ui';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { agentRunsKeys } from '@/shared/lib/query-key-exports';
 
 import * as api from '../api/client';
@@ -81,43 +80,5 @@ export function useAgentAudits(
       queryKey,
       tags: ['agent-runs', 'audits'],
     },
-  });
-}
-
-export function useDeleteAgentRunMutation(): MutationResult<
-  void,
-  { runId: string; force?: boolean }
-  > {
-  const mutationKey = agentRunsKeys.lists();
-  return createDeleteMutationV2<void, { runId: string; force?: boolean }>({
-    mutationFn: ({ runId, force }: { runId: string; force?: boolean }) =>
-      api.deleteAgentRun(runId, force),
-    mutationKey,
-    meta: {
-      source: 'agentRuns.hooks.useDeleteAgentRunMutation',
-      operation: 'delete',
-      resource: 'agent-runs',
-      domain: 'agent_creator',
-      mutationKey,
-      tags: ['agent-runs', 'delete'],
-    },
-    invalidate: (queryClient) => invalidateAgentRuns(queryClient),
-  });
-}
-
-export function useDeleteCompletedAgentRunsMutation(): MutationResult<void, void> {
-  const mutationKey = agentRunsKeys.lists();
-  return createDeleteMutationV2<void, void>({
-    mutationFn: api.deleteCompletedAgentRuns,
-    mutationKey,
-    meta: {
-      source: 'agentRuns.hooks.useDeleteCompletedAgentRunsMutation',
-      operation: 'delete',
-      resource: 'agent-runs.completed',
-      domain: 'agent_creator',
-      mutationKey,
-      tags: ['agent-runs', 'completed', 'delete'],
-    },
-    invalidate: (queryClient) => invalidateAgentRuns(queryClient),
   });
 }

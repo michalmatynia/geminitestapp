@@ -1586,6 +1586,7 @@ describe('evaluateGraph', () => {
               sort: '',
               projection: '',
             },
+            updateTemplate: '{"$set":{"parameters":{{value}}}}',
             dryRun: true,
             skipEmpty: true,
           },

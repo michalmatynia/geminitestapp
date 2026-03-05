@@ -9,7 +9,9 @@ import {
 } from '@/features/integrations/constants/slugs';
 import {
   ProductListingsProvider,
-  useProductListingsContext,
+  useProductListingsData,
+  useProductListingsLogs,
+  useProductListingsModals,
 } from '@/features/integrations/context/ProductListingsContext';
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
@@ -57,16 +59,13 @@ const matchesIntegrationSlug = (
 };
 
 function ProductListingsModalContent(): React.JSX.Element {
+  const { product, listings, isLoading, error } = useProductListingsData();
+  const { exportLogs } = useProductListingsLogs();
   const {
-    product,
-    listings,
-    isLoading,
-    error,
-    exportLogs,
     onClose,
     onStartListing,
     filterIntegrationSlug,
-  } = useProductListingsContext();
+  } = useProductListingsModals();
 
   const productName: string =
     product.name_en || product.name_pl || product.name_de || 'Unnamed Product';

@@ -11,12 +11,15 @@ import {
   buildPortablePathJsonSchemaCatalog,
   buildPortablePathJsonSchemaDiffReport,
   buildPortablePathPackage,
+  getPortablePathRunExecutionSnapshot,
   getPortablePathSigningPolicy,
   getPortablePathSigningPolicyUsageSnapshot,
+  registerPortablePathRunExecutionHook,
   registerPortablePathSigningPolicyUsageHook,
   resetPortablePathEnvelopeVerificationAuditSinkSnapshot,
   resetPortablePathEnvelopeVerificationObservabilitySnapshot,
   resetPortablePathMigratorObservabilitySnapshot,
+  resetPortablePathRunExecutionSnapshot,
   resetPortablePathSigningPolicyUsageSnapshot,
   resolvePortablePathInput,
   resolvePortablePathInputAsync,
@@ -54,6 +57,7 @@ describe('portable AI-path engine scaffold signing policy, limits, and client ru
     resetPortablePathMigratorObservabilitySnapshot();
     resetPortablePathEnvelopeVerificationObservabilitySnapshot();
     resetPortablePathSigningPolicyUsageSnapshot();
+    resetPortablePathRunExecutionSnapshot();
     resetPortablePathEnvelopeVerificationAuditSinkSnapshot({
       clearRegisteredSinks: true,
     });
@@ -254,6 +258,73 @@ describe('portable AI-path engine scaffold signing policy, limits, and client ru
       PortablePathValidationError
     );
     expect(mockedEvaluateGraphClient).not.toHaveBeenCalled();
+  });
+
+  it('tracks client run execution telemetry across resolve/validation/runtime outcomes', async () => {
+    const telemetryEvents: Array<{
+      outcome: 'success' | 'failure';
+      failureStage: 'resolve' | 'validation' | 'runtime' | null;
+    }> = [];
+    const unsubscribe = registerPortablePathRunExecutionHook((event) => {
+      telemetryEvents.push({
+        outcome: event.outcome,
+        failureStage: event.failureStage,
+      });
+    });
+    const pathConfig = createDefaultPathConfig('path_portable_client_telemetry');
+    const originalImpl = mockedEvaluateGraphClient.getMockImplementation();
+    try {
+      await runPortablePathClient(pathConfig, {
+        validateBeforeRun: false,
+      });
+      await expect(runPortablePathClient(buildInvalidCompilePath())).rejects.toBeInstanceOf(
+        PortablePathValidationError
+      );
+      mockedEvaluateGraphClient.mockRejectedValueOnce(new Error('runtime failure from client'));
+      await expect(
+        runPortablePathClient(pathConfig, {
+          validateBeforeRun: false,
+        })
+      ).rejects.toThrow('runtime failure from client');
+      await expect(runPortablePathClient('{')).rejects.toThrow('Invalid AI-Path payload');
+    } finally {
+      unsubscribe();
+      mockedEvaluateGraphClient.mockReset();
+      if (originalImpl) {
+        mockedEvaluateGraphClient.mockImplementation(originalImpl);
+      }
+      mockedEvaluateGraphClient.mockResolvedValue({
+        status: 'completed',
+        nodeStatuses: {},
+        nodeOutputs: {},
+        variables: {},
+        events: [],
+        inputs: {},
+        outputs: {},
+      } as RuntimeState);
+    }
+
+    const snapshot = getPortablePathRunExecutionSnapshot();
+    expect(snapshot.totals.attempts).toBe(4);
+    expect(snapshot.totals.successes).toBe(1);
+    expect(snapshot.totals.failures).toBe(3);
+    expect(snapshot.byRunner.client.attempts).toBe(4);
+    expect(snapshot.byRunner.client.successes).toBe(1);
+    expect(snapshot.byRunner.client.failures).toBe(3);
+    expect(snapshot.failureStageCounts.resolve).toBe(1);
+    expect(snapshot.failureStageCounts.validation).toBe(1);
+    expect(snapshot.failureStageCounts.runtime).toBe(1);
+    expect(snapshot.bySource.path_config.attempts).toBe(3);
+    expect(snapshot.bySource.path_config.successes).toBe(1);
+    expect(snapshot.bySource.path_config.failures).toBe(2);
+    expect(snapshot.bySurface.canvas.attempts).toBe(4);
+    expect(snapshot.recentEvents).toHaveLength(4);
+    expect(telemetryEvents).toEqual([
+      { outcome: 'success', failureStage: null },
+      { outcome: 'failure', failureStage: 'validation' },
+      { outcome: 'failure', failureStage: 'runtime' },
+      { outcome: 'failure', failureStage: 'resolve' },
+    ]);
   });
 
   it('adds deterministic fingerprint to portable package', async () => {

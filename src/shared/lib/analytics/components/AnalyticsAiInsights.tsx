@@ -3,10 +3,10 @@
 import type { AiInsightRecord } from '@/shared/contracts';
 import { Button, StatusBadge, Hint, FormSection, Card } from '@/shared/ui';
 
-import { useAnalytics } from '../context/AnalyticsContext';
+import { useAnalyticsInsightsData } from '../context/AnalyticsContext';
 
 export function AnalyticsAiInsights(): React.JSX.Element {
-  const { insightsQuery, runInsightMutation } = useAnalytics();
+  const { insightsQuery, runInsightMutation } = useAnalyticsInsightsData();
 
   return (
     <FormSection

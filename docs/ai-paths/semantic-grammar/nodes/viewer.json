@@ -59,6 +59,11 @@
       "defaultValue": "auto"
     },
     {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
+    },
+    {
       "path": "runtime.waitForInputs",
       "description": "If true, wait until all connected input ports have values before executing the node.",
       "defaultValue": "false"
@@ -119,5 +124,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "3c7eab09a12e259cfeb2c3fcf0fd0eb6c9ba7dc44701629d355d24afd46ab328"
+  "nodeHash": "4a4c8d08ad55fc833ebc93a11f861e66dbbf5af48bc240eece2270de24c930af"
 }

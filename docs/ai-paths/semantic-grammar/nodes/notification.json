@@ -5,15 +5,9 @@
   "title": "Toast Notification",
   "purpose": "Display an instant toast from incoming results.",
   "inputs": [
-    "result",
-    "prompt",
     "value",
     "bundle",
-    "context",
-    "meta",
-    "trigger",
-    "triggerName",
-    "entityId"
+    "title"
   ],
   "outputs": [],
   "configFields": [
@@ -23,12 +17,19 @@
       "defaultValue": "auto"
     },
     {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
+    },
+    {
       "path": "runtime.waitForInputs",
       "description": "If true, wait until all connected input ports have values before executing the node.",
       "defaultValue": "false"
     }
   ],
-  "notes": ["Configuration UI is not available yet; it runs with defaults."],
+  "notes": [
+    "Configuration UI is not available yet; it runs with defaults."
+  ],
   "semanticNodeExample": {
     "id": "node_notification",
     "type": "notification",
@@ -39,15 +40,9 @@
       "y": 100
     },
     "inputs": [
-      "result",
-      "prompt",
       "value",
       "bundle",
-      "context",
-      "meta",
-      "trigger",
-      "triggerName",
-      "entityId"
+      "title"
     ],
     "outputs": [],
     "data": {},
@@ -57,5 +52,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "d28f08a8f8045477cef378e496178c489d131067ec79c89b1288ada283e03fae"
+  "nodeHash": "171fd2da082697571cfa13252042393d4b5069c0befbda30b6f1e508d64d37d1"
 }

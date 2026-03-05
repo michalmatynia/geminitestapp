@@ -387,6 +387,7 @@ export async function fetchPathSettings(
           repairIdentities: true,
           includeConnections: false,
           signingPolicyTelemetrySurface: 'product',
+          nodeCodeObjectHashVerificationMode: 'warn',
         });
         if (!resolvedConfig.ok) {
           throw validationError('Invalid AI Paths path config payload.', {

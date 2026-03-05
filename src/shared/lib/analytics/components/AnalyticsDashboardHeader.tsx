@@ -4,7 +4,7 @@ import type { AnalyticsScope } from '@/shared/contracts';
 import { Button, SectionHeader, SelectSimple } from '@/shared/ui';
 
 import { type AnalyticsRange } from '../api';
-import { useAnalytics } from '../context/AnalyticsContext';
+import { useAnalyticsFilters, useAnalyticsSummaryData } from '../context/AnalyticsContext';
 
 const ranges: Array<{ value: AnalyticsRange; label: string }> = [
   { value: '24h', label: 'Last 24h' },
@@ -19,7 +19,8 @@ const scopes: Array<{ value: AnalyticsScope | 'all'; label: string }> = [
 ];
 
 export function AnalyticsDashboardHeader(): React.JSX.Element {
-  const { range, setRange, scope, setScope, summaryQuery, fromToLabel } = useAnalytics();
+  const { range, setRange, scope, setScope } = useAnalyticsFilters();
+  const { summaryQuery, fromToLabel } = useAnalyticsSummaryData();
 
   return (
     <>

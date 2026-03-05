@@ -6,6 +6,43 @@ Allow a workflow to be copied as JSON from one surface and executed in another s
 
 This scaffold introduces a portable package wrapper around semantic canvas JSON and a runtime-facing resolver/validator.
 
+## Migration Baseline (2026-03-05)
+
+Runtime dispatch now has a kernel scaffold (`src/shared/lib/ai-paths/core/runtime/node-runtime-kernel.ts`) with staged strategies:
+
+- `legacy_adapter` (current default execution path)
+- `code_object_v3` (pilot migration strategy)
+
+Pilot node types (`constant`, `math`, `template`) are tagged to `code_object_v3` strategy while still executing through legacy handlers via adapter bridge, enabling dual-run parity rollout without changing node behavior.
+
+## Node Migration Documentation (v3)
+
+Migration planning and rollout status are tracked in generated node-doc artifacts:
+
+- `docs/ai-paths/node-code-objects-v3/index.json` (pilot executable object index)
+- `docs/ai-paths/node-code-objects-v3/contracts.json` (pilot contract hash catalog)
+- `docs/ai-paths/node-code-objects-v3/migration-index.json` (all-node migration matrix)
+- `docs/ai-paths/node-code-objects-v3/MIGRATION_GUIDE.md` (migration workflow)
+- `docs/ai-paths/node-code-objects-v3/nodes/<nodeType>.md` (per-node sheets)
+
+Generate:
+
+```bash
+npm run docs:ai-paths:node-docs:generate
+```
+
+Check:
+
+```bash
+npm run docs:ai-paths:node-docs:check
+```
+
+Verify no artifact drift (CI guard):
+
+```bash
+npm run docs:ai-paths:node-docs:verify
+```
+
 ## Implemented Module
 
 - `src/shared/lib/ai-paths/portable-engine/index.ts`

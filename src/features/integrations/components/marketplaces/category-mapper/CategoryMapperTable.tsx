@@ -3,7 +3,12 @@
 import { ColumnDef } from '@tanstack/react-table';
 import React, { useMemo } from 'react';
 
-import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
+import {
+  useCategoryMapperActions,
+  useCategoryMapperConfig,
+  useCategoryMapperData,
+  useCategoryMapperUIState,
+} from '@/features/integrations/context/CategoryMapperContext';
 import { StandardDataTablePanel, EmptyState, GenericMapperStats } from '@/shared/ui';
 
 import { CategoryMapperCatalogSelector } from './CategoryMapperCatalogSelector';
@@ -13,26 +18,19 @@ import { CategoryMapperSelectCell } from './category-table/CategoryMapperSelectC
 import { type CategoryRow } from './category-table/utils';
 
 export function CategoryMapperTable(): React.JSX.Element {
+  const { connectionName } = useCategoryMapperConfig();
   const {
-    connectionName,
     externalCategoriesLoading,
     mappingsLoading,
     externalCategories,
-    getMappingForExternal,
-    handleMappingChange,
     internalCategoriesLoading,
     selectedCatalogId,
     internalCategoryOptions,
-    pendingMappings,
-    expandedIds,
     categoryTree,
-    toggleExpand,
-    handleFetchFromBase,
-    handleSave,
-    fetchMutation,
-    saveMutation,
-    stats,
-  } = useCategoryMapper();
+  } = useCategoryMapperData();
+  const { pendingMappings, expandedIds, toggleExpand, stats } = useCategoryMapperUIState();
+  const { getMappingForExternal, handleMappingChange, handleFetchFromBase, handleSave, fetchMutation, saveMutation } =
+    useCategoryMapperActions();
 
   const isFetchPending = fetchMutation.isPending;
   const isSavePending = saveMutation.isPending;

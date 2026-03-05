@@ -2,7 +2,10 @@
 
 import { useMemo } from 'react';
 
-import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
+import {
+  useCategoryMapperConfig,
+  useCategoryMapperData,
+} from '@/features/integrations/context/CategoryMapperContext';
 import {
   useFetchExternalTagsMutation,
   useSaveTagMappingsMutation,
@@ -17,7 +20,8 @@ import { type ProductTag } from '@/shared/contracts/products';
 import { GenericMapper, type GenericItemMapperConfig } from '@/shared/ui';
 
 export function BaseTagMapper(): React.JSX.Element {
-  const { connectionId, connectionName, selectedCatalogId: catalogId } = useCategoryMapper();
+  const { connectionId, connectionName } = useCategoryMapperConfig();
+  const { selectedCatalogId: catalogId } = useCategoryMapperData();
 
   const tagsQuery = useTags(catalogId ?? undefined);
   const externalTagsQuery = useExternalTags(connectionId ?? '');

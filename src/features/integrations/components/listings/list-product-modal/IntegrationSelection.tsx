@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
+import { useListingSelection } from '@/features/integrations/context/ListingSettingsContext';
 import type {
   IntegrationWithConnections,
   IntegrationConnectionBasic,
@@ -17,7 +17,7 @@ export function IntegrationSelection(): React.JSX.Element {
     selectedIntegration,
     setSelectedIntegrationId,
     setSelectedConnectionId,
-  } = useListingSettingsContext();
+  } = useListingSelection();
   const integrationsWithConnections = integrations.filter(
     (i: IntegrationWithConnections) => i.connections.length > 0
   );

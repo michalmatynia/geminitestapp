@@ -41,7 +41,7 @@ import { validateFormData } from '@/shared/validations/form-validation';
 
 import { DraftCreatorFormProvider } from './DraftCreatorFormContext';
 import { DraftCreatorDetailsTab, DraftCreatorParametersTab } from './DraftCreatorFormFields';
-import { useOptionalDrafterContext } from '../context/DrafterContext';
+import { useOptionalDrafterActions, useOptionalDrafterState } from '../context/DrafterContext';
 
 const DEFAULT_ICON_COLOR = '#60a5fa';
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
@@ -81,11 +81,14 @@ export function DraftCreator({
   onCancel?: () => void;
 } = {}): React.JSX.Element {
   const { toast } = useToast();
-  const context = useOptionalDrafterContext();
+  const stateContext = useOptionalDrafterState();
+  const actionsContext = useOptionalDrafterActions();
 
-  const draftId = propDraftId !== undefined ? propDraftId : (context?.editingDraftId ?? null);
-  const handleSaveSuccess = propOnSaveSuccess ?? context?.handleSaveSuccess ?? ((): void => {});
-  const formRef = context?.formRef;
+  const draftId =
+    propDraftId !== undefined ? propDraftId : (stateContext?.editingDraftId ?? null);
+  const handleSaveSuccess =
+    propOnSaveSuccess ?? actionsContext?.handleSaveSuccess ?? ((): void => {});
+  const formRef = stateContext?.formRef;
 
   // Queries
   const { data: catalogs = [] } = useCatalogs();

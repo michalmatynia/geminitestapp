@@ -18,14 +18,12 @@ import type {
   CreateMutation,
   UpdateMutation,
   DeleteMutation,
-  MutationResult,
 } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
   createDeleteMutationV2,
   createUpdateMutationV2,
-  createMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import {
   invalidateImageStudioProjects,
@@ -668,29 +666,6 @@ export function useRunStudio(): CreateMutation<RunStudioEnqueueResult, RunStudio
       domain: 'image_studio',
       mutationKey: QUERY_KEYS.imageStudio.all,
       tags: ['image-studio', 'run'],
-    },
-  });
-}
-
-export function useSaveSlotScreenshot(
-  projectId: string
-): MutationResult<void, { slotId: string; dataUrl: string; filename: string }> {
-  return createMutationV2<void, { slotId: string; dataUrl: string; filename: string }>({
-    mutationFn: async ({ slotId, dataUrl, filename }) => {
-      await api.post(`/api/image-studio/slots/${encodeURIComponent(slotId)}/screenshot`, {
-        dataUrl,
-        filename,
-      });
-    },
-    meta: {
-      source: 'imageStudio.hooks.useSaveSlotScreenshot',
-      operation: 'update',
-      resource: 'image-studio.slots.screenshot',
-      domain: 'image_studio',
-      tags: ['image-studio', 'slots', 'screenshot'],
-    },
-    invalidate: (queryClient) => {
-      void invalidateImageStudioSlots(queryClient, projectId);
     },
   });
 }

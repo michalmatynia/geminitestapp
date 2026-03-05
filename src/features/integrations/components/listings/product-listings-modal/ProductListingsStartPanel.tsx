@@ -4,11 +4,11 @@ import Link from 'next/link';
 import React from 'react';
 
 import { useIntegrationSelection } from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
-import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
+import { useProductListingsModals } from '@/features/integrations/context/ProductListingsContext';
 import { Button, Alert, LoadingState, IntegrationSelector, Card } from '@/shared/ui';
 
 export function ProductListingsStartPanel(): React.JSX.Element {
-  const { onStartListing } = useProductListingsContext();
+  const { onStartListing } = useProductListingsModals();
   const {
     integrations,
     loading: loadingIntegrations,

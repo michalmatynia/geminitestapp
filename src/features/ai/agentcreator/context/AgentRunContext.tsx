@@ -54,20 +54,6 @@ export const useAgentRunDetail = () => {
   return context;
 };
 
-// --- Context Aggregator ---
-
-interface AgentRunContextType extends AgentRunListData, AgentRunSelectionData, AgentRunDetailData {}
-
-const AgentRunContext = createContext<AgentRunContextType | null>(null);
-
-export const useAgentRunContext = (): AgentRunContextType => {
-  const context = useContext(AgentRunContext);
-  if (!context) {
-    throw new Error('useAgentRunContext must be used within an AgentRunProvider');
-  }
-  return context;
-};
-
 export function AgentRunProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(null);
   const [agentStreamStatus, setAgentStreamStatus] = useState<
@@ -159,21 +145,10 @@ export function AgentRunProvider({ children }: { children: ReactNode }): React.J
     [agentSnapshots, agentBrowserLogs, agentAuditLogs, agentStreamStatus]
   );
 
-  const aggregatedValue = useMemo(
-    (): AgentRunContextType => ({
-      ...listValue,
-      ...selectionValue,
-      ...detailValue,
-    }),
-    [listValue, selectionValue, detailValue]
-  );
-
   return (
     <RunListContext.Provider value={listValue}>
       <RunSelectionContext.Provider value={selectionValue}>
-        <RunDetailContext.Provider value={detailValue}>
-          <AgentRunContext.Provider value={aggregatedValue}>{children}</AgentRunContext.Provider>
-        </RunDetailContext.Provider>
+        <RunDetailContext.Provider value={detailValue}>{children}</RunDetailContext.Provider>
       </RunSelectionContext.Provider>
     </RunListContext.Provider>
   );

@@ -2,25 +2,32 @@
 
 import React from 'react';
 
-import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
+import {
+  useProductListingsActions,
+  useProductListingsData,
+  useProductListingsModals,
+} from '@/features/integrations/context/ProductListingsContext';
 import { ConfirmDialogBatch } from '@/shared/ui/templates';
 
 const normalizeIntegrationSlug = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
 export function ProductListingsConfirmDialogs(): React.JSX.Element {
+  const { listings } = useProductListingsData();
   const {
     listingToDelete,
     setListingToDelete,
-    handleDeleteFromBase,
     listingToPurge,
     setListingToPurge,
-    handlePurgeListing,
     isSyncImagesConfirmOpen,
     setIsSyncImagesConfirmOpen,
+  } = useProductListingsModals();
+
+  const {
+    handleDeleteFromBase,
+    handlePurgeListing,
     handleSyncBaseImages,
-    listings,
-  } = useProductListingsContext();
+  } = useProductListingsActions();
 
   const baseListing =
     listings.find((listing) =>

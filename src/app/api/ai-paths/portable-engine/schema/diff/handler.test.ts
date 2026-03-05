@@ -36,6 +36,11 @@ describe('ai-paths portable-engine schema diff handler', () => {
     const entries = diff['entries'] as unknown[];
     expect(Array.isArray(entries)).toBe(true);
     expect(entries.length).toBeGreaterThan(0);
+    const nodeCodeObjectContracts = payload['nodeCodeObjectContracts'] as Record<string, unknown>;
+    expect(nodeCodeObjectContracts).toBeDefined();
+    expect(nodeCodeObjectContracts['changed']).toBe(false);
+    expect(typeof nodeCodeObjectContracts['currentHash']).toBe('string');
+    expect(nodeCodeObjectContracts['currentHash']).toBe(nodeCodeObjectContracts['vNextHash']);
   });
 
   it('returns selected schema diff entry payload', async () => {
@@ -49,6 +54,7 @@ describe('ai-paths portable-engine schema diff handler', () => {
     expect(payload['kind']).toBe('portable_package');
     expect(payload['entry']).toBeDefined();
     expect(payload['diff']).toBeUndefined();
+    expect(payload['nodeCodeObjectContracts']).toBeUndefined();
   });
 
   it('returns 304 for matching If-None-Match', async () => {

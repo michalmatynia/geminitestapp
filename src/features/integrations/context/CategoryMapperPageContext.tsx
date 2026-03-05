@@ -4,7 +4,6 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 
 import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
-import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
 
 const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
@@ -45,22 +44,6 @@ export const useCategoryMapperPageSelection = () => {
     );
   return context;
 };
-
-// --- Context Aggregator ---
-
-type CategoryMapperPageContextType = CategoryMapperPageData & CategoryMapperPageSelection;
-
-const CategoryMapperPageContext = createContext<CategoryMapperPageContextType | null>(null);
-
-export function useCategoryMapperPageContext(): CategoryMapperPageContextType {
-  const context = useContext(CategoryMapperPageContext);
-  if (!context) {
-    throw internalError(
-      'useCategoryMapperPageContext must be used within CategoryMapperPageProvider'
-    );
-  }
-  return context;
-}
 
 type CategoryMapperPageProviderProps = {
   children: React.ReactNode;
@@ -149,21 +132,9 @@ export function CategoryMapperPageProvider({
     [selectedConnectionId, selectedConnection, isSupportedConnection, setSelectedConnectionId]
   );
 
-  const aggregatedValue = useMemo<CategoryMapperPageContextType>(
-    () => ({
-      ...dataValue,
-      ...selectionValue,
-    }),
-    [dataValue, selectionValue]
-  );
-
   return (
     <DataContext.Provider value={dataValue}>
-      <SelectionContext.Provider value={selectionValue}>
-        <CategoryMapperPageContext.Provider value={aggregatedValue}>
-          {children}
-        </CategoryMapperPageContext.Provider>
-      </SelectionContext.Provider>
+      <SelectionContext.Provider value={selectionValue}>{children}</SelectionContext.Provider>
     </DataContext.Provider>
   );
 }

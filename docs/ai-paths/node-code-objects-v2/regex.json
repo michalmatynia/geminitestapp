@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_regex_portable_v2",
   "nodeType": "regex",
   "nodeDocVersion": "2026-02-20.v1",
@@ -141,9 +141,19 @@
         "defaultValue": "\"\""
       },
       {
+        "path": "regex.jsonIntegrityPolicy",
+        "description": "How extract_json handles malformed JSON-like strings. strict performs no repair. repair applies staged normalization (code-fence stripping, malformed boundary repair, truncation closure, trailing-comma cleanup) before parsing.",
+        "defaultValue": "repair"
+      },
+      {
         "path": "runtime.cache.mode",
         "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
         "defaultValue": "auto"
+      },
+      {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
       },
       {
         "path": "runtime.waitForInputs",
@@ -217,11 +227,13 @@
           "splitLines": true,
           "sampleText": "",
           "aiPrompt": "You are a regex expert. Propose a JavaScript RegExp to group items in the input.\n\nReturn ONLY JSON:\n{\"pattern\":\"...\",\"flags\":\"...\",\"groupBy\":\"match|1|<namedGroup>\"}\n\nInput:\n{{text}}",
+          "jsonIntegrityPolicy": "repair",
           "aiAutoRun": false
         },
         "runtime": {
           "cache": {
-            "mode": "auto"
+            "mode": "auto",
+            "scope": "run"
           },
           "waitForInputs": false
         }
@@ -267,11 +279,13 @@
               "splitLines": true,
               "sampleText": "",
               "aiPrompt": "You are a regex expert. Propose a JavaScript RegExp to group items in the input.\n\nReturn ONLY JSON:\n{\"pattern\":\"...\",\"flags\":\"...\",\"groupBy\":\"match|1|<namedGroup>\"}\n\nInput:\n{{text}}",
+              "jsonIntegrityPolicy": "repair",
               "aiAutoRun": false
             },
             "runtime": {
               "cache": {
-                "mode": "auto"
+                "mode": "auto",
+                "scope": "run"
               },
               "waitForInputs": false
             }
@@ -285,8 +299,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/regex.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "d0583ae56728de97269462932f310e12dd01956d086b9e3447b8a285e93f544e"
+    "semanticNodeHash": "119b8b6056ec81cb38c9cbd2d5cc55c2353a94bf86fd0ad407fc9e9f06eb251e"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "4d0bfc2e8ccdc1d8a5edbeeb4235a67d3f9bde81f2b7dbf905b88fc60a2f13be"
+  "objectHash": "ac9334089eea472005759b6f6abe5148353d9721390c890ccef09de0a624c7b2"
 }

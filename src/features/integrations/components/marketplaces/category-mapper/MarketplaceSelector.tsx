@@ -4,7 +4,10 @@ import { Store } from 'lucide-react';
 import Link from 'next/link';
 import React, { useMemo } from 'react';
 
-import { useCategoryMapperPageContext } from '@/features/integrations/context/CategoryMapperPageContext';
+import {
+  useCategoryMapperPageData,
+  useCategoryMapperPageSelection,
+} from '@/features/integrations/context/CategoryMapperPageContext';
 import type {
   IntegrationWithConnections,
   IntegrationConnectionBasic,
@@ -14,8 +17,8 @@ import { EmptyState, Skeleton } from '@/shared/ui';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
 
 export function MarketplaceSelector(): React.JSX.Element {
-  const { integrations, loading, selectedConnectionId, setSelectedConnectionId } =
-    useCategoryMapperPageContext();
+  const { integrations, loading } = useCategoryMapperPageData();
+  const { selectedConnectionId, setSelectedConnectionId } = useCategoryMapperPageSelection();
 
   const groups = useMemo<PickerGroup[]>(
     () =>

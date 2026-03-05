@@ -1,0 +1,143 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
+  "nodeType": "fetcher",
+  "title": "Fetcher: Trigger Context",
+  "purpose": "Resolve live trigger context or fetch simulated entity by ID.",
+  "inputs": [
+    "trigger",
+    "context",
+    "meta",
+    "entityId",
+    "entityType"
+  ],
+  "outputs": [
+    "context",
+    "meta",
+    "entityId",
+    "entityType"
+  ],
+  "configFields": [
+    {
+      "path": "fetcher.sourceMode",
+      "description": "How to resolve context: live_context, simulation_id, or live_then_simulation.",
+      "defaultValue": "live_context"
+    },
+    {
+      "path": "fetcher.entityType",
+      "description": "Entity type used by simulation fetch modes.",
+      "defaultValue": "product"
+    },
+    {
+      "path": "fetcher.entityId",
+      "description": "Entity ID used by simulation fetch modes (preferred over productId alias)."
+    },
+    {
+      "path": "fetcher.productId",
+      "description": "Product ID alias for entityId.",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "defaultConfig": {
+    "fetcher": {
+      "sourceMode": "live_context",
+      "entityType": "product",
+      "entityId": "",
+      "productId": ""
+    },
+    "runtime": {
+      "waitForInputs": true,
+      "inputContracts": {
+        "trigger": {
+          "required": true
+        },
+        "context": {
+          "required": false
+        },
+        "meta": {
+          "required": false
+        },
+        "entityId": {
+          "required": false
+        },
+        "entityType": {
+          "required": false
+        }
+      }
+    }
+  },
+  "semanticNodeExample": {
+    "id": "node_fetcher",
+    "type": "fetcher",
+    "title": "Fetcher: Trigger Context",
+    "description": "Resolve live trigger context or fetch simulated entity by ID.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "trigger",
+      "context",
+      "meta",
+      "entityId",
+      "entityType"
+    ],
+    "outputs": [
+      "context",
+      "meta",
+      "entityId",
+      "entityType"
+    ],
+    "config": {
+      "fetcher": {
+        "sourceMode": "live_context",
+        "entityType": "product",
+        "entityId": "",
+        "productId": ""
+      },
+      "runtime": {
+        "waitForInputs": true,
+        "inputContracts": {
+          "trigger": {
+            "required": true
+          },
+          "context": {
+            "required": false
+          },
+          "meta": {
+            "required": false
+          },
+          "entityId": {
+            "required": false
+          },
+          "entityType": {
+            "required": false
+          }
+        }
+      }
+    },
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "b75a94276b7a8f77d8281fd3b6afbfb94bfbc8df9bcab61a8c23a4417a58c545"
+}

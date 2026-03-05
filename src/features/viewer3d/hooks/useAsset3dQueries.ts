@@ -164,29 +164,6 @@ export function useDeleteAsset3DMutation(): DeleteMutation {
   });
 }
 
-export function useUpdateAsset3DMutation(): UpdateMutation<
-  Asset3DRecord,
-  { id: string; data: Partial<Asset3DRecord> }
-  > {
-  return createUpdateMutationV2({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Asset3DRecord> }) =>
-      api.patch<Asset3DRecord>(`/api/assets3d/${id}`, data),
-    mutationKey: asset3dKeys.all,
-    meta: {
-      source: 'viewer3d.hooks.useUpdateAsset3DMutation',
-      operation: 'update',
-      resource: 'viewer3d.asset',
-      domain: 'viewer3d',
-
-      tags: ['viewer3d', 'asset', 'update'],
-    },
-    invalidate: (queryClient, data: Asset3DRecord) => {
-      void invalidateAsset3d(queryClient);
-      return invalidateAsset3dDetail(queryClient, data.id);
-    },
-  });
-}
-
 export function useReindexAssets3DMutation(): UpdateMutation<
   {
     diskFiles: number;

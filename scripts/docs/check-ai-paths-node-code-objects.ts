@@ -37,6 +37,7 @@ type NodeObjectContracts = {
 type PortableNodeObject = {
   schemaVersion: string;
   kind: string;
+  id: string;
   nodeType: string;
   ports: {
     inputs: unknown[];
@@ -84,6 +85,20 @@ const computeHash = (value: unknown): string =>
 
 const expectedNodeTypes = new Set<string>(AI_PATHS_NODE_DOCS.map((doc) => doc.type));
 const errors: string[] = [];
+
+const unexpectedObjectJsonFiles = fs.existsSync(objectsDir)
+  ? fs.readdirSync(objectsDir, { withFileTypes: true })
+      .filter(
+        (entry) =>
+          entry.isFile() &&
+          entry.name.endsWith('.json') &&
+          entry.name !== 'index.json' &&
+          entry.name !== 'contracts.json'
+      )
+      .map((entry) => entry.name)
+      .filter((fileName) => !expectedNodeTypes.has(fileName.slice(0, -'.json'.length)))
+      .sort((left, right) => left.localeCompare(right))
+  : [];
 
 if (!fs.existsSync(indexPath)) {
   console.error(`Missing node object index: ${path.relative(workspaceRoot, indexPath)}`);
@@ -244,6 +259,13 @@ if (contracts.totalContracts !== index.totalObjects) {
     `contracts.json totalContracts must match index totalObjects (contracts=${contracts.totalContracts}, index=${index.totalObjects}).`
   );
 }
+
+if (unexpectedObjectJsonFiles.length > 0) {
+  errors.push(
+    `Unexpected node object files in docs/ai-paths/node-code-objects-v2: ${unexpectedObjectJsonFiles.join(', ')}`
+  );
+}
+
 const unexpectedContracts = [...expectedContractNodeTypes].filter((type) => !seenNodeTypes.has(type));
 if (unexpectedContracts.length > 0) {
   errors.push(`Unexpected node types in contracts.json: ${unexpectedContracts.join(', ')}`);

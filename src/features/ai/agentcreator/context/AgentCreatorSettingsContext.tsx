@@ -62,24 +62,6 @@ export const useAgentCreatorOperations = () => {
   return context;
 };
 
-// --- Context Aggregator ---
-
-type AgentCreatorSettingsContextType = AgentCreatorModes &
-  AgentCreatorPerformance &
-  AgentCreatorOperations;
-
-const AgentCreatorSettingsContext = createContext<AgentCreatorSettingsContextType | null>(null);
-
-export const useAgentCreatorSettingsContext = (): AgentCreatorSettingsContextType => {
-  const context = useContext(AgentCreatorSettingsContext);
-  if (!context) {
-    throw new Error(
-      'useAgentCreatorSettingsContext must be used within an AgentCreatorSettingsProvider'
-    );
-  }
-  return context;
-};
-
 export function AgentCreatorSettingsProvider({
   children,
 }: {
@@ -170,23 +152,10 @@ export function AgentCreatorSettingsProvider({
     [agentBrowser, agentRunHeadless, agentIgnoreRobotsTxt, agentRequireHumanApproval]
   );
 
-  const aggregatedValue = useMemo<AgentCreatorSettingsContextType>(
-    () => ({
-      ...modesValue,
-      ...performanceValue,
-      ...operationsValue,
-    }),
-    [modesValue, performanceValue, operationsValue]
-  );
-
   return (
     <ModesContext.Provider value={modesValue}>
       <PerformanceContext.Provider value={performanceValue}>
-        <OperationsContext.Provider value={operationsValue}>
-          <AgentCreatorSettingsContext.Provider value={aggregatedValue}>
-            {children}
-          </AgentCreatorSettingsContext.Provider>
-        </OperationsContext.Provider>
+        <OperationsContext.Provider value={operationsValue}>{children}</OperationsContext.Provider>
       </PerformanceContext.Provider>
     </ModesContext.Provider>
   );

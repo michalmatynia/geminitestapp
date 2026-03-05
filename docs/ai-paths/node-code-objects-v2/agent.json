@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_agent_portable_v2",
   "nodeType": "agent",
   "nodeDocVersion": "2026-02-20.v1",
@@ -21,21 +21,11 @@
       "prompt",
       "bundle",
       "context",
-      "entityJson",
-      "value",
-      "result",
-      "title",
-      "images",
-      "content_en",
-      "entityId",
-      "entityType",
-      "productId"
+      "entityJson"
     ],
     "outputs": [
       "result",
-      "jobId",
-      "status",
-      "bundle"
+      "jobId"
     ]
   },
   "statusModel": {
@@ -115,6 +105,11 @@
         "defaultValue": "auto"
       },
       {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
+      },
+      {
         "path": "runtime.waitForInputs",
         "description": "If true, wait until all connected input ports have values before executing the node.",
         "defaultValue": "false"
@@ -135,21 +130,11 @@
         "prompt",
         "bundle",
         "context",
-        "entityJson",
-        "value",
-        "result",
-        "title",
-        "images",
-        "content_en",
-        "entityId",
-        "entityType",
-        "productId"
+        "entityJson"
       ],
       "outputs": [
         "result",
-        "jobId",
-        "status",
-        "bundle"
+        "jobId"
       ],
       "data": {},
       "connections": {
@@ -170,21 +155,11 @@
         "prompt",
         "bundle",
         "context",
-        "entityJson",
-        "value",
-        "result",
-        "title",
-        "images",
-        "content_en",
-        "entityId",
-        "entityType",
-        "productId"
+        "entityJson"
       ],
       "outputs": [
         "result",
-        "jobId",
-        "status",
-        "bundle"
+        "jobId"
       ],
       "data": {},
       "connections": {
@@ -199,7 +174,8 @@
         },
         "runtime": {
           "cache": {
-            "mode": "auto"
+            "mode": "auto",
+            "scope": "run"
           },
           "waitForInputs": false
         }
@@ -220,21 +196,11 @@
             "prompt",
             "bundle",
             "context",
-            "entityJson",
-            "value",
-            "result",
-            "title",
-            "images",
-            "content_en",
-            "entityId",
-            "entityType",
-            "productId"
+            "entityJson"
           ],
           "outputs": [
             "result",
-            "jobId",
-            "status",
-            "bundle"
+            "jobId"
           ],
           "data": {},
           "connections": {
@@ -249,7 +215,8 @@
             },
             "runtime": {
               "cache": {
-                "mode": "auto"
+                "mode": "auto",
+                "scope": "run"
               },
               "waitForInputs": false
             }
@@ -263,8 +230,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/agent.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "c4f89d1364ac8557ddd3e33bb60df57e49c513d0c192fd39a0fc3eebdc8ef422"
+    "semanticNodeHash": "ed2953a2fed7b2b3df7daed875bce21aaca13836d56e95b9995e05c33bb2b99b"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "4708a66de99e5452e5549aa6b3abf65ddf396a68dea079f4d4a6245bc8189ff5"
+  "objectHash": "faa0bfe78128b816e54ddc786c0a817b930325f193fa80cd5cc1c0c3e6591238"
 }

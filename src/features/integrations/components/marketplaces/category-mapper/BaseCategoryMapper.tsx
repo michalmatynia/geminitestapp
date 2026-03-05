@@ -3,14 +3,14 @@
 import React from 'react';
 
 import { CategoryMapperProvider } from '@/features/integrations/context/CategoryMapperContext';
-import { useCategoryMapperPageContext } from '@/features/integrations/context/CategoryMapperPageContext';
+import { useCategoryMapperPageSelection } from '@/features/integrations/context/CategoryMapperPageContext';
 
 import { BaseProducerMapper } from './BaseProducerMapper';
 import { BaseTagMapper } from './BaseTagMapper';
 import { CategoryMapperTable } from './CategoryMapperTable';
 
 export function BaseCategoryMapper(): React.JSX.Element {
-  const { selectedConnection } = useCategoryMapperPageContext();
+  const { selectedConnection } = useCategoryMapperPageSelection();
   if (!selectedConnection) {
     return <></>;
   }

@@ -73,21 +73,6 @@ export const useCategoryMapperActions = () => {
   return context;
 };
 
-// --- Context Aggregator ---
-
-interface CategoryMapperContextValue
-  extends CategoryMapperConfig, CategoryMapperData, CategoryMapperUIState, CategoryMapperActions {}
-
-const CategoryMapperContext = createContext<CategoryMapperContextValue | null>(null);
-
-export function useCategoryMapper(): CategoryMapperContextValue {
-  const context = useContext(CategoryMapperContext);
-  if (!context) {
-    throw new Error('useCategoryMapper must be used within a CategoryMapperProvider');
-  }
-  return context;
-}
-
 const normalizeParentExternalId = (value: string | null | undefined): string | null => {
   const candidate = typeof value === 'string' ? value.trim() : '';
   if (!candidate || candidate === '0' || candidate.toLowerCase() === 'null') {
@@ -452,25 +437,11 @@ export function CategoryMapperProvider({
     ]
   );
 
-  const aggregatedValue = useMemo<CategoryMapperContextValue>(
-    () => ({
-      ...configValue,
-      ...dataValue,
-      ...uiStateValue,
-      ...actionsValue,
-    }),
-    [configValue, dataValue, uiStateValue, actionsValue]
-  );
-
   return (
     <ConfigContext.Provider value={configValue}>
       <DataContext.Provider value={dataValue}>
         <UIStateContext.Provider value={uiStateValue}>
-          <ActionsContext.Provider value={actionsValue}>
-            <CategoryMapperContext.Provider value={aggregatedValue}>
-              {children}
-            </CategoryMapperContext.Provider>
-          </ActionsContext.Provider>
+          <ActionsContext.Provider value={actionsValue}>{children}</ActionsContext.Provider>
         </UIStateContext.Provider>
       </DataContext.Provider>
     </ConfigContext.Provider>

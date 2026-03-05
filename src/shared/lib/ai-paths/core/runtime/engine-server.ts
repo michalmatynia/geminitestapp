@@ -4,6 +4,7 @@ import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import type { NodeHandler, RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 import { evaluateGraphInternal } from './engine-core';
+import { createNodeRuntimeKernel, toNodeRuntimeResolutionTelemetry } from './node-runtime-kernel';
 
 import { type EvaluateGraphArgs, type EvaluateGraphOptions } from './engine-modules/engine-types';
 
@@ -104,7 +105,7 @@ const HANDLERS: Record<string, NodeHandler> = {
   canvas_output: handleCanvasOutput,
 };
 
-const resolveHandler = (type: string): NodeHandler | null => {
+const resolveLegacyHandler = (type: string): NodeHandler | null => {
   return HANDLERS[type] || null;
 };
 
@@ -150,18 +151,18 @@ export async function evaluateGraphServer(
     });
   }
 
-  const customResolveHandler = (type: string): NodeHandler | null => {
-    const rh = resolvedOptions.resolveHandler;
-    if (rh) {
-      const handler = rh(type);
-      if (handler) return handler;
-    }
-    return resolveHandler(type);
-  };
+  const runtimeKernel = createNodeRuntimeKernel({
+    resolveLegacyHandler,
+    resolveOverrideHandler: resolvedOptions.resolveHandler,
+    mode: resolvedOptions.runtimeKernelMode,
+    v3PilotNodeTypes: resolvedOptions.runtimeKernelPilotNodeTypes,
+  });
 
   const result = await evaluateGraphInternal(nodes, resolvedEdges, {
     ...resolvedOptions,
-    resolveHandler: customResolveHandler,
+    resolveHandler: runtimeKernel.resolveHandler,
+    resolveHandlerTelemetry: (type: string) =>
+      toNodeRuntimeResolutionTelemetry(runtimeKernel.resolveDescriptor(type)),
     services: {
       prisma,
       mongo,

@@ -2,6 +2,8 @@ import type { AiNode, Edge, RuntimePortValues } from '@/shared/contracts/ai-path
 import type { ToastOptions } from '@/shared/contracts/ui';
 import type {
   AiPathRuntimeProfileEvent,
+  NodeRuntimeResolutionSource,
+  NodeRuntimeResolutionStrategy,
   RuntimeProfileNodeStats,
   RuntimeProfileSummary,
   RuntimeState,
@@ -15,6 +17,12 @@ export type { RuntimeProfileNodeStats, RuntimeProfileSummary };
 export type RuntimeProfileOptions = {
   onEvent?: (event: RuntimeProfileEvent) => void;
   onSummary?: (summary: RuntimeProfileSummary) => void;
+};
+
+export type RuntimeNodeResolutionTelemetry = {
+  runtimeStrategy: NodeRuntimeResolutionStrategy;
+  runtimeResolutionSource: NodeRuntimeResolutionSource;
+  runtimeCodeObjectId?: string | null | undefined;
 };
 
 export type EvaluateGraphOptions = {
@@ -41,6 +49,9 @@ export type EvaluateGraphOptions = {
     nodeInputs: RuntimePortValues;
     prevOutputs: RuntimePortValues | null;
     iteration: number;
+    runtimeStrategy?: NodeRuntimeResolutionStrategy;
+    runtimeResolutionSource?: NodeRuntimeResolutionSource;
+    runtimeCodeObjectId?: string | null;
   }) => Promise<void> | void;
   onNodeFinish?: (event: {
     runId: string;
@@ -56,6 +67,9 @@ export type EvaluateGraphOptions = {
     sideEffectDecision?: string;
     sideEffectPolicy?: string;
     activationHash?: string | null;
+    runtimeStrategy?: NodeRuntimeResolutionStrategy;
+    runtimeResolutionSource?: NodeRuntimeResolutionSource;
+    runtimeCodeObjectId?: string | null;
   }) => Promise<void> | void;
   onNodeError?: (event: {
     runId: string;
@@ -65,6 +79,9 @@ export type EvaluateGraphOptions = {
     prevOutputs: RuntimePortValues | null;
     error: unknown;
     iteration: number;
+    runtimeStrategy?: NodeRuntimeResolutionStrategy;
+    runtimeResolutionSource?: NodeRuntimeResolutionSource;
+    runtimeCodeObjectId?: string | null;
   }) => Promise<void> | void;
   onNodeBlocked?: (event: {
     runId: string;
@@ -74,6 +91,9 @@ export type EvaluateGraphOptions = {
     waitingOnPorts?: string[];
     waitingOnDetails?: Array<Record<string, unknown>>;
     message?: string;
+    runtimeStrategy?: NodeRuntimeResolutionStrategy;
+    runtimeResolutionSource?: NodeRuntimeResolutionSource;
+    runtimeCodeObjectId?: string | null;
   }) => Promise<void> | void;
   onIteration?: (event: {
     runId: string;
@@ -103,6 +123,9 @@ export type EvaluateGraphOptions = {
   reportAiPathsError: (error: unknown, context: Record<string, unknown>, summary?: string) => void;
   // Handler Resolution
   resolveHandler?: (type: string) => NodeHandler | null;
+  resolveHandlerTelemetry?: (type: string) => RuntimeNodeResolutionTelemetry | null;
+  runtimeKernelMode?: 'auto' | 'legacy_only' | undefined;
+  runtimeKernelPilotNodeTypes?: string[] | undefined;
   // Services
   fetchEntityByType?: (type: string, id: string) => Promise<Record<string, unknown> | null>;
   fetchEntityCached?: (type: string, id: string) => Promise<Record<string, unknown> | null>;

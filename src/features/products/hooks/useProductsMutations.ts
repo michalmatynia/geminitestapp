@@ -142,25 +142,6 @@ export function useBulkDeleteProducts(): DeleteMutation<void, string[]> {
   });
 }
 
-export function useConvertAllImagesToBase64(): UpdateMutation<{ ok: boolean }, void> {
-  return createUpdateMutationV2({
-    mutationFn: async (): Promise<{ ok: boolean }> => {
-      await api.post<unknown>('/api/v2/products/images/base64/all');
-      return { ok: true };
-    },
-    mutationKey: QUERY_KEYS.products.all,
-    meta: {
-      source: 'products.hooks.useConvertAllImagesToBase64',
-      operation: 'update',
-      resource: 'products.images.base64.all',
-      domain: 'products',
-      mutationKey: QUERY_KEYS.products.all,
-      tags: ['products', 'images', 'base64'],
-    },
-    invalidateKeys: [QUERY_KEYS.products.all],
-  });
-}
-
 export function useBulkConvertImagesToBase64(): UpdateMutation<{ ok: boolean }, string[]> {
   return createUpdateMutationV2({
     mutationFn: async (productIds: string[]): Promise<{ ok: boolean }> => {

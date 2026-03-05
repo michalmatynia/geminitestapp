@@ -1,6 +1,10 @@
 import { useState } from 'react';
 
-import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
+import {
+  useListingBaseComSettings,
+  useListingSelection,
+  useListingTraderaSettings,
+} from '@/features/integrations/context/ListingSettingsContext';
 import {
   useExportToBaseMutation,
   useCreateListingMutation,
@@ -35,14 +39,20 @@ export function useListProductForm(productId: string): UseListProductFormResult 
     selectedIntegrationId,
     selectedConnectionId,
     isBaseComIntegration,
+    isTraderaIntegration,
+  } = useListingSelection();
+
+  const {
     selectedInventoryId,
     selectedTemplateId,
-    isTraderaIntegration,
+  } = useListingBaseComSettings();
+
+  const {
     selectedTraderaDurationHours,
     selectedTraderaAutoRelistEnabled,
     selectedTraderaAutoRelistLeadMinutes,
     selectedTraderaTemplateId,
-  } = useListingSettingsContext();
+  } = useListingTraderaSettings();
 
   const exportToBaseMutation = useExportToBaseMutation(productId);
   const createListingMutation = useCreateListingMutation(productId);

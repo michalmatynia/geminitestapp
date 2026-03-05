@@ -6,7 +6,8 @@ import { useMemo } from 'react';
 
 import {
   JobsProvider,
-  useJobsContext,
+  useJobsActions,
+  useJobsState,
   type ChatbotJob,
 } from '@/shared/lib/jobs/context/JobsContext';
 import {
@@ -25,14 +26,16 @@ function ChatbotJobsPageContent(): React.JSX.Element {
     chatbotJobs: jobs,
     chatbotJobsLoading: isLoading,
     chatbotJobsRefreshing: isRefreshing,
-    refetchChatbotJobs: refetch,
     query,
+    isClearingChatbotJobs,
+  } = useJobsState();
+  const {
+    refetchChatbotJobs: refetch,
     setQuery,
     handleCancelChatbotJob,
     isCancellingChatbotJob,
     handleClearCompletedChatbotJobs,
-    isClearingChatbotJobs,
-  } = useJobsContext();
+  } = useJobsActions();
 
   const filteredJobs = useMemo((): ChatbotJob[] => {
     const term = query.trim().toLowerCase();

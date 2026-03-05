@@ -5,21 +5,15 @@
   "title": "Bundle",
   "purpose": "Cluster inputs into a single bundle output.",
   "inputs": [
-    "context",
-    "meta",
-    "trigger",
-    "triggerName",
-    "result",
-    "entityJson",
-    "entityId",
-    "entityType",
     "value",
-    "errors",
-    "valid",
-    "description_en",
-    "prompt"
+    "productId",
+    "content_en",
+    "images",
+    "title"
   ],
-  "outputs": ["bundle"],
+  "outputs": [
+    "bundle"
+  ],
   "configFields": [
     {
       "path": "bundle.includePorts",
@@ -30,6 +24,11 @@
       "path": "runtime.cache.mode",
       "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
       "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
     },
     {
       "path": "runtime.waitForInputs",
@@ -48,21 +47,15 @@
       "y": 100
     },
     "inputs": [
-      "context",
-      "meta",
-      "trigger",
-      "triggerName",
-      "result",
-      "entityJson",
-      "entityId",
-      "entityType",
       "value",
-      "errors",
-      "valid",
-      "description_en",
-      "prompt"
+      "productId",
+      "content_en",
+      "images",
+      "title"
     ],
-    "outputs": ["bundle"],
+    "outputs": [
+      "bundle"
+    ],
     "data": {},
     "connections": {
       "incoming": [],
@@ -70,5 +63,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "ea14e4d3016ccec5a80fe54af1e4e8e846bef139585d14d802078e67788dfc0e"
+  "nodeHash": "f02021c0cfff57b77cf446d8b1d8740edd80c73e9b4d2b39a2b2474fbe707385"
 }

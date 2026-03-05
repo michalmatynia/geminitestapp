@@ -10,6 +10,7 @@ import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
   PORTABLE_PATH_JSON_SCHEMA_KINDS,
   buildPortablePathJsonSchemaCatalog,
+  getPortableNodeCodeObjectContractsCatalog,
 } from '@/shared/lib/ai-paths/portable-engine';
 
 const SCHEMA_KIND_VALUES = ['all', ...PORTABLE_PATH_JSON_SCHEMA_KINDS] as const;
@@ -57,6 +58,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
         specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
         kind: 'all' as const,
         schemas,
+        nodeCodeObjectContracts: getPortableNodeCodeObjectContractsCatalog(),
       }
       : {
         specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,

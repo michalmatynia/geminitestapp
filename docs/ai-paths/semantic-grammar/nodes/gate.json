@@ -4,8 +4,16 @@
   "nodeType": "gate",
   "title": "Gate",
   "purpose": "Allow context through when valid is true.",
-  "inputs": ["context", "valid", "errors"],
-  "outputs": ["context", "valid", "errors"],
+  "inputs": [
+    "context",
+    "valid",
+    "errors"
+  ],
+  "outputs": [
+    "context",
+    "valid",
+    "errors"
+  ],
   "configFields": [
     {
       "path": "gate.mode",
@@ -20,6 +28,11 @@
       "path": "runtime.cache.mode",
       "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
       "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.cache.scope",
+      "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+      "defaultValue": "run"
     },
     {
       "path": "runtime.waitForInputs",
@@ -37,8 +50,16 @@
       "x": 100,
       "y": 100
     },
-    "inputs": ["context", "valid", "errors"],
-    "outputs": ["context", "valid", "errors"],
+    "inputs": [
+      "context",
+      "valid",
+      "errors"
+    ],
+    "outputs": [
+      "context",
+      "valid",
+      "errors"
+    ],
     "data": {},
     "connections": {
       "incoming": [],
@@ -46,5 +67,5 @@
     }
   },
   "nodeHashAlgorithm": "sha256",
-  "nodeHash": "a55ef2c56acbcda8db15ebfd789c22fa9f8285fe5e615132684c16fd4e9fff1b"
+  "nodeHash": "c49aeec3b3e821c7acbe9f9602a3ab9d27933ddede848c552a4e728011e39425"
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
+import React, { useState, useMemo, type ReactNode } from 'react';
 
 import type { TraderaQueueHealthResponse } from '@/shared/lib/jobs/api';
 import {
@@ -17,6 +17,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import type { ListingJob, ProductJob } from '@/shared/contracts/integrations';
 import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type ChatbotJob = {
   id: string;
@@ -30,12 +31,13 @@ export type ChatbotJob = {
   payload?: unknown;
 };
 
-interface JobsContextType {
+type SelectedListing = { job: ProductJob; listing: ListingJob } | null;
+
+interface JobsStateContextType {
   // Product Listing Jobs
   listingJobs: ProductJob[];
   listingJobsLoading: boolean;
   listingJobsRefreshing: boolean;
-  refetchListingJobs: () => Promise<unknown>;
   listingJobsError: Error | null;
   traderaQueueHealth: TraderaQueueHealthResponse | null;
   traderaQueueHealthLoading: boolean;
@@ -44,20 +46,25 @@ interface JobsContextType {
   chatbotJobs: ChatbotJob[];
   chatbotJobsLoading: boolean;
   chatbotJobsRefreshing: boolean;
-  refetchChatbotJobs: () => Promise<unknown>;
   chatbotJobsError: Error | null;
+  isClearingChatbotJobs: boolean;
 
   // UI State - Filtering & Pagination
   query: string;
-  setQuery: (query: string) => void;
   page: number;
-  setPage: (page: number) => void;
   pageSize: number;
-  setPageSize: (size: number) => void;
 
   // Selected Job Details
-  selectedListing: { job: ProductJob; listing: ListingJob } | null;
-  setSelectedListing: (selection: { job: ProductJob; listing: ListingJob } | null) => void;
+  selectedListing: SelectedListing;
+}
+
+interface JobsActionsContextType {
+  refetchListingJobs: () => Promise<unknown>;
+  refetchChatbotJobs: () => Promise<unknown>;
+  setQuery: (query: string) => void;
+  setPage: (page: number) => void;
+  setPageSize: (size: number) => void;
+  setSelectedListing: (selection: SelectedListing) => void;
 
   // Actions
   handleCancelListing: (productId: string, listingId: string) => Promise<void>;
@@ -67,22 +74,31 @@ interface JobsContextType {
   isCancellingChatbotJob: (jobId: string) => boolean;
 
   handleClearCompletedChatbotJobs: () => void;
-  isClearingChatbotJobs: boolean;
 
   // Confirmation
   confirmCancelListing: (productId: string, listingId: string) => void;
   ConfirmationModal: React.FC;
 }
 
-const JobsContext = createContext<JobsContextType | null>(null);
+export const {
+  Context: JobsStateContext,
+  useStrictContext: useJobsState,
+} = createStrictContext<JobsStateContextType>({
+  hookName: 'useJobsState',
+  providerName: 'a JobsProvider',
+  displayName: 'JobsStateContext',
+  errorFactory: internalError,
+});
 
-export function useJobsContext(): JobsContextType {
-  const context = useContext(JobsContext);
-  if (!context) {
-    throw internalError('useJobsContext must be used within a JobsProvider');
-  }
-  return context;
-}
+export const {
+  Context: JobsActionsContext,
+  useStrictContext: useJobsActions,
+} = createStrictContext<JobsActionsContextType>({
+  hookName: 'useJobsActions',
+  providerName: 'a JobsProvider',
+  displayName: 'JobsActionsContext',
+  errorFactory: internalError,
+});
 
 export function JobsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   // --- Product Listing Jobs ---
@@ -110,10 +126,7 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const [selectedListing, setSelectedListing] = useState<{
-    job: ProductJob;
-    listing: ListingJob;
-  } | null>(null);
+  const [selectedListing, setSelectedListing] = useState<SelectedListing>(null);
 
   // --- Handlers ---
   const handleCancelListing = async (productId: string, listingId: string): Promise<void> => {
@@ -150,49 +163,83 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
     clearChatbotMutation.mutate({ scope: 'completed' });
   };
 
-  const value: JobsContextType = {
-    listingJobs,
-    listingJobsLoading: listingJobsQuery.isLoading,
-    listingJobsRefreshing: listingJobsQuery.isFetching,
-    refetchListingJobs: async () => {
-      await listingJobsQuery.refetch();
-    },
-    listingJobsError: listingJobsQuery.error,
-    traderaQueueHealth: traderaQueueHealthQuery.data ?? null,
-    traderaQueueHealthLoading: traderaQueueHealthQuery.isLoading,
+  const stateValue = useMemo<JobsStateContextType>(
+    () => ({
+      listingJobs,
+      listingJobsLoading: listingJobsQuery.isLoading,
+      listingJobsRefreshing: listingJobsQuery.isFetching,
+      listingJobsError: listingJobsQuery.error,
+      traderaQueueHealth: traderaQueueHealthQuery.data ?? null,
+      traderaQueueHealthLoading: traderaQueueHealthQuery.isLoading,
+      chatbotJobs,
+      chatbotJobsLoading: chatbotJobsQuery.isLoading,
+      chatbotJobsRefreshing: chatbotJobsQuery.isFetching,
+      chatbotJobsError: chatbotJobsQuery.error,
+      isClearingChatbotJobs: clearChatbotMutation.isPending,
+      query,
+      page,
+      pageSize,
+      selectedListing,
+    }),
+    [
+      listingJobs,
+      listingJobsQuery.isLoading,
+      listingJobsQuery.isFetching,
+      listingJobsQuery.error,
+      traderaQueueHealthQuery.data,
+      traderaQueueHealthQuery.isLoading,
+      chatbotJobs,
+      chatbotJobsQuery.isLoading,
+      chatbotJobsQuery.isFetching,
+      chatbotJobsQuery.error,
+      clearChatbotMutation.isPending,
+      query,
+      page,
+      pageSize,
+      selectedListing,
+    ]
+  );
 
-    chatbotJobs,
-    chatbotJobsLoading: chatbotJobsQuery.isLoading,
-    chatbotJobsRefreshing: chatbotJobsQuery.isFetching,
-    refetchChatbotJobs: async () => {
-      await chatbotJobsQuery.refetch();
-    },
-    chatbotJobsError: chatbotJobsQuery.error,
+  const actionsValue = useMemo<JobsActionsContextType>(
+    () => ({
+      refetchListingJobs: async () => {
+        await listingJobsQuery.refetch();
+      },
+      refetchChatbotJobs: async () => {
+        await chatbotJobsQuery.refetch();
+      },
+      setQuery,
+      setPage,
+      setPageSize,
+      setSelectedListing,
+      handleCancelListing,
+      isCancellingListing: (id) =>
+        cancelListingMutation.isPending && cancelListingMutation.variables?.listingId === id,
+      handleCancelChatbotJob,
+      isCancellingChatbotJob: (id) =>
+        chatbotMutation.isPending && chatbotMutation.variables?.jobId === id,
+      handleClearCompletedChatbotJobs,
+      confirmCancelListing,
+      ConfirmationModal,
+    }),
+    [
+      listingJobsQuery,
+      chatbotJobsQuery,
+      handleCancelListing,
+      cancelListingMutation.isPending,
+      cancelListingMutation.variables,
+      handleCancelChatbotJob,
+      chatbotMutation.isPending,
+      chatbotMutation.variables,
+      handleClearCompletedChatbotJobs,
+      confirmCancelListing,
+      ConfirmationModal,
+    ]
+  );
 
-    query,
-    setQuery,
-    page,
-    setPage,
-    pageSize,
-    setPageSize,
-
-    selectedListing,
-    setSelectedListing,
-
-    handleCancelListing,
-    isCancellingListing: (id) =>
-      cancelListingMutation.isPending && cancelListingMutation.variables?.listingId === id,
-
-    handleCancelChatbotJob,
-    isCancellingChatbotJob: (id) =>
-      chatbotMutation.isPending && chatbotMutation.variables?.jobId === id,
-
-    handleClearCompletedChatbotJobs,
-    isClearingChatbotJobs: clearChatbotMutation.isPending,
-
-    confirmCancelListing,
-    ConfirmationModal,
-  };
-
-  return <JobsContext.Provider value={value}>{children}</JobsContext.Provider>;
+  return (
+    <JobsActionsContext.Provider value={actionsValue}>
+      <JobsStateContext.Provider value={stateValue}>{children}</JobsStateContext.Provider>
+    </JobsActionsContext.Provider>
+  );
 }

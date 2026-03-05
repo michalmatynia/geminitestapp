@@ -30,7 +30,7 @@ type PortableNodeCodeObjectContractEntry = {
   objectHash: string;
 };
 
-type PortableNodeCodeObjectContractsCatalog = {
+export type PortableNodeCodeObjectContractsCatalog = {
   schemaVersion: string;
   generatedAt: string;
   specVersion: string;
@@ -134,6 +134,14 @@ const parseContractsCatalog = (input: unknown): PortableNodeCodeObjectContractsC
 
 const PORTABLE_NODE_CODE_OBJECT_CONTRACTS: PortableNodeCodeObjectContractsCatalog =
   parseContractsCatalog(nodeCodeObjectContractsJson);
+
+export const getPortableNodeCodeObjectContractsCatalog = (): PortableNodeCodeObjectContractsCatalog => ({
+  ...PORTABLE_NODE_CODE_OBJECT_CONTRACTS,
+  contracts: { ...PORTABLE_NODE_CODE_OBJECT_CONTRACTS.contracts },
+});
+
+export const getPortableNodeCodeObjectContractsHash = (): string =>
+  PORTABLE_NODE_CODE_OBJECT_CONTRACTS.contractsHash;
 
 const resolveUniqueNodeTypes = (nodeTypes: string[]): string[] =>
   Array.from(

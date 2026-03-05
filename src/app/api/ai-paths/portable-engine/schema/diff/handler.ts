@@ -10,6 +10,7 @@ import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
   PORTABLE_PATH_JSON_SCHEMA_KINDS,
   buildPortablePathJsonSchemaDiffReport,
+  getPortableNodeCodeObjectContractsHash,
 } from '@/shared/lib/ai-paths/portable-engine';
 
 const SCHEMA_DIFF_KIND_VALUES = ['all', ...PORTABLE_PATH_JSON_SCHEMA_KINDS] as const;
@@ -51,12 +52,18 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   }
 
   const diff = buildPortablePathJsonSchemaDiffReport();
+  const nodeCodeObjectContractsHash = getPortableNodeCodeObjectContractsHash();
   const payload =
     kindRaw === 'all'
       ? {
         specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
         kind: 'all' as const,
         diff,
+        nodeCodeObjectContracts: {
+          changed: false,
+          currentHash: nodeCodeObjectContractsHash,
+          vNextHash: nodeCodeObjectContractsHash,
+        },
       }
       : {
         specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,

@@ -13,6 +13,9 @@ export const AI_PATHS_VALIDATION_ENTITY_COLLECTION_MAP_KEY =
   'ai_paths_validation_entity_collection_map';
 export const AI_PATHS_HISTORY_RETENTION_KEY = 'ai_paths_history_retention_passes';
 export const AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY = 'ai_paths_history_retention_options_max';
+export const AI_PATHS_RUNTIME_KERNEL_MODE_KEY = 'ai_paths_runtime_kernel_mode';
+export const AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY =
+  'ai_paths_runtime_kernel_pilot_node_types';
 export const AI_PATHS_HISTORY_RETENTION_MIN = 1;
 export const AI_PATHS_HISTORY_RETENTION_MAX = 50;
 export const AI_PATHS_HISTORY_RETENTION_DEFAULT = 3;

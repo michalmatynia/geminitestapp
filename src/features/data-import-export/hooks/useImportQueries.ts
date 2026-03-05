@@ -5,7 +5,6 @@ import type {
   ImportListItem,
   WarehouseOption,
   BaseImportRunDetailResponse,
-  BaseImportRunRecord,
   BaseImportStartResponse,
   BaseImportMode,
   ImportParameterCacheResponse,
@@ -462,28 +461,6 @@ export function useImportMutation(): MutationResult<
       domain: 'integrations',
       mutationKey,
       tags: ['import-export', 'import'],
-    },
-  });
-}
-
-export function useImportRuns(limit: number = 25): ListQuery<BaseImportRunRecord> {
-  const queryKey = importExportKeys.runs();
-  return createListQueryV2({
-    queryKey,
-    queryFn: async (): Promise<BaseImportRunRecord[]> => {
-      const data = await api.get<{ runs: BaseImportRunRecord[] }>(
-        `/api/v2/integrations/imports/base/runs?limit=${encodeURIComponent(String(limit))}`,
-        { cache: 'no-store' }
-      );
-      return data.runs ?? [];
-    },
-    meta: {
-      source: 'importExport.hooks.useImportRuns',
-      operation: 'list',
-      resource: 'integrations.import-export.import-runs',
-      domain: 'integrations',
-      queryKey,
-      tags: ['import-export', 'import-runs'],
     },
   });
 }

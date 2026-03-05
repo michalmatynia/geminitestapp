@@ -5,7 +5,7 @@ import React from 'react';
 
 import { StatusBadge, MetadataItem } from '@/shared/ui';
 
-import { useViewer3D } from '../context/Viewer3DContext';
+import { useViewer3DState } from '../context/Viewer3DContext';
 
 export function Viewer3DStatusInfo(): React.JSX.Element {
   const {
@@ -16,7 +16,7 @@ export function Viewer3DStatusInfo(): React.JSX.Element {
     enableOrderedDithering,
     enableDithering,
     enableShadows,
-  } = useViewer3D();
+  } = useViewer3DState();
 
   return (
     <div className='flex items-center justify-between px-4 py-2 border-t border-gray-700 bg-gray-900/80 flex-shrink-0'>

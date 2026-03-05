@@ -9,18 +9,15 @@ import {
   type SettingsField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 
-import { useUsers } from '../../context/UsersContext';
+import { useUsersData, useUsersDialogs } from '../../context/UsersContext';
 
 export function UserEditModal(): React.JSX.Element | null {
   const { toast } = useToast();
+  const { mutations, loadingSecurity, canManageSecurity, userSecurity } = useUsersData();
   const {
     editingUser,
     setEditingUser,
-    mutations,
-    loadingSecurity,
-    canManageSecurity,
-    userSecurity,
-  } = useUsers();
+  } = useUsersDialogs();
 
   const isOpen = Boolean(editingUser);
   const onClose = () => setEditingUser(null);

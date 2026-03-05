@@ -183,20 +183,3 @@ export function VectorDrawingProvider({
     </VectorDrawingActionsContext.Provider>
   );
 }
-
-export function useVectorDrawing(): VectorDrawingContextValue {
-  const state = useVectorDrawingState();
-  const actions = useVectorDrawingActions();
-  return useMemo(() => ({ ...state, ...actions }), [actions, state]);
-}
-
-export function useOptionalVectorDrawing(): VectorDrawingContextValue | null {
-  const state = useOptionalVectorDrawingState();
-  const actions = useOptionalVectorDrawingActions();
-  return useMemo(() => {
-    if (!state || !actions) {
-      return null;
-    }
-    return { ...state, ...actions };
-  }, [actions, state]);
-}

@@ -1,17 +1,21 @@
 'use client';
 
-import React, { createContext, useContext, useState, useRef } from 'react';
+import React, { createContext, useContext, useMemo, useRef, useState } from 'react';
 
-interface DrafterContextType {
+interface DrafterStateContextType {
   isCreatorOpen: boolean;
   editingDraftId: string | null;
-  openCreator: (id?: string) => void;
-  closeCreator: () => void;
-  handleSaveSuccess: () => void;
   formRef: React.RefObject<HTMLFormElement | null>;
 }
 
-const DrafterContext = createContext<DrafterContextType | undefined>(undefined);
+interface DrafterActionsContextType {
+  openCreator: (id?: string) => void;
+  closeCreator: () => void;
+  handleSaveSuccess: () => void;
+}
+
+const DrafterStateContext = createContext<DrafterStateContextType | undefined>(undefined);
+const DrafterActionsContext = createContext<DrafterActionsContextType | undefined>(undefined);
 
 export function DrafterProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);
@@ -33,30 +37,51 @@ export function DrafterProvider({ children }: { children: React.ReactNode }): Re
     setIsCreatorOpen(false);
   };
 
+  const stateValue = useMemo<DrafterStateContextType>(
+    () => ({
+      isCreatorOpen,
+      editingDraftId,
+      formRef,
+    }),
+    [isCreatorOpen, editingDraftId]
+  );
+
+  const actionsValue = useMemo<DrafterActionsContextType>(
+    () => ({
+      openCreator,
+      closeCreator,
+      handleSaveSuccess,
+    }),
+    []
+  );
+
   return (
-    <DrafterContext.Provider
-      value={{
-        isCreatorOpen,
-        editingDraftId,
-        openCreator,
-        closeCreator,
-        handleSaveSuccess,
-        formRef,
-      }}
-    >
-      {children}
-    </DrafterContext.Provider>
+    <DrafterActionsContext.Provider value={actionsValue}>
+      <DrafterStateContext.Provider value={stateValue}>{children}</DrafterStateContext.Provider>
+    </DrafterActionsContext.Provider>
   );
 }
 
-export function useDrafterContext(): DrafterContextType {
-  const context = useContext(DrafterContext);
+export function useDrafterState(): DrafterStateContextType {
+  const context = useContext(DrafterStateContext);
   if (context === undefined) {
-    throw new Error('useDrafterContext must be used within a DrafterProvider');
+    throw new Error('useDrafterState must be used within a DrafterProvider');
   }
   return context;
 }
 
-export function useOptionalDrafterContext(): DrafterContextType | null {
-  return useContext(DrafterContext) ?? null;
+export function useDrafterActions(): DrafterActionsContextType {
+  const context = useContext(DrafterActionsContext);
+  if (context === undefined) {
+    throw new Error('useDrafterActions must be used within a DrafterProvider');
+  }
+  return context;
+}
+
+export function useOptionalDrafterState(): DrafterStateContextType | null {
+  return useContext(DrafterStateContext) ?? null;
+}
+
+export function useOptionalDrafterActions(): DrafterActionsContextType | null {
+  return useContext(DrafterActionsContext) ?? null;
 }

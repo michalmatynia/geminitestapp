@@ -2,7 +2,7 @@
 
 import { MetadataItem } from '@/shared/ui';
 
-import { useAnalytics } from '../context/AnalyticsContext';
+import { useAnalyticsSummaryData } from '../context/AnalyticsContext';
 
 const formatCount = (value: number): string => {
   try {
@@ -13,7 +13,7 @@ const formatCount = (value: number): string => {
 };
 
 export function AnalyticsMetricsGrid(): React.JSX.Element {
-  const { summaryQuery } = useAnalytics();
+  const { summaryQuery } = useAnalyticsSummaryData();
   const summary = summaryQuery.data;
 
   const metrics = [

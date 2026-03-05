@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_ai_description_portable_v2",
   "nodeType": "ai_description",
   "nodeDocVersion": "2026-02-20.v1",
@@ -98,6 +98,11 @@
         "defaultValue": "auto"
       },
       {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
+      },
+      {
         "path": "runtime.waitForInputs",
         "description": "If true, wait until all connected input ports have values before executing the node.",
         "defaultValue": "false"
@@ -157,7 +162,8 @@
         },
         "runtime": {
           "cache": {
-            "mode": "auto"
+            "mode": "auto",
+            "scope": "run"
           },
           "waitForInputs": false
         }
@@ -194,7 +200,8 @@
             },
             "runtime": {
               "cache": {
-                "mode": "auto"
+                "mode": "auto",
+                "scope": "run"
               },
               "waitForInputs": false
             }
@@ -208,8 +215,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/ai_description.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "b931649ba589813fb9e772a179003b8960426e919e9ae553692507278d3c5097"
+    "semanticNodeHash": "93b3b2422e407af85154a56198326729fba9e936f87882491f1d311ea46967e7"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "af53311838f92d01dac5111ea376c36c1e81afdfb0d8b3edf683cd18ca6b8e1a"
+  "objectHash": "394ad579d2446645315cb39bd09ada121a1bb586bd967ad40558d2d627d63280"
 }

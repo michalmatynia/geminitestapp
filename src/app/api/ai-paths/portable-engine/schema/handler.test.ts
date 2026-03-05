@@ -36,6 +36,11 @@ describe('ai-paths portable-engine schema handler', () => {
     expect(schemas['portable_package']).toBeDefined();
     expect(schemas['semantic_canvas']).toBeDefined();
     expect(schemas['path_config']).toBeDefined();
+    const nodeCodeObjectContracts = payload['nodeCodeObjectContracts'] as Record<string, unknown>;
+    expect(nodeCodeObjectContracts).toBeDefined();
+    expect(nodeCodeObjectContracts['schemaVersion']).toBe('ai-paths.node-code-object-contracts.v2');
+    expect(nodeCodeObjectContracts['contractsHashAlgorithm']).toBe('sha256');
+    expect(typeof nodeCodeObjectContracts['contractsHash']).toBe('string');
   });
 
   it('returns selected schema kind payload', async () => {
@@ -49,6 +54,7 @@ describe('ai-paths portable-engine schema handler', () => {
     expect(payload['kind']).toBe('portable_package');
     expect(payload['schema']).toBeDefined();
     expect(payload['schemas']).toBeUndefined();
+    expect(payload['nodeCodeObjectContracts']).toBeUndefined();
   });
 
   it('returns 304 for matching If-None-Match', async () => {

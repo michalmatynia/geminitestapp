@@ -2,10 +2,10 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_fetcher_portable_v2",
   "nodeType": "fetcher",
-  "nodeDocVersion": "from-node-docs",
+  "nodeDocVersion": "2026-02-20.v1",
   "title": "Fetcher: Trigger Context",
   "purpose": "Resolve live trigger context or fetch simulated entity by ID.",
   "nodeFamily": "orchestration",
@@ -280,10 +280,10 @@
   },
   "notes": [],
   "source": {
-    "semanticNodeFile": "src/shared/lib/ai-paths/core/docs/node-docs.ts",
-    "semanticNodeHashAlgorithm": null,
-    "semanticNodeHash": null
+    "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/fetcher.json",
+    "semanticNodeHashAlgorithm": "sha256",
+    "semanticNodeHash": "b75a94276b7a8f77d8281fd3b6afbfb94bfbc8df9bcab61a8c23a4417a58c545"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "6de385da1dd78f6fc4770e03af60826050c4a47317d80f089d69b619c7fd077a"
+  "objectHash": "7af58efce7c0d45289170a8945b563d29dadd37f54f456e10da088d8d674f1a9"
 }

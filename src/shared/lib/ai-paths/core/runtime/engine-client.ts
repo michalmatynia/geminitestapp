@@ -2,6 +2,7 @@ import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import type { RuntimeState, NodeHandler } from '@/shared/contracts/ai-paths-runtime';
 
 import { evaluateGraphInternal } from './engine-core';
+import { createNodeRuntimeKernel, toNodeRuntimeResolutionTelemetry } from './node-runtime-kernel';
 
 import { type EvaluateGraphArgs, type EvaluateGraphOptions } from './engine-modules/engine-types';
 
@@ -56,7 +57,7 @@ const CLIENT_HANDLERS: Record<string, NodeHandler> = {
   canvas_output: handleCanvasOutput,
 };
 
-const resolveHandler = (type: string): NodeHandler | null => {
+const resolveLegacyHandler = (type: string): NodeHandler | null => {
   const handler = CLIENT_HANDLERS[type];
   if (handler) return handler;
 
@@ -87,8 +88,16 @@ export async function evaluateGraphClient(
     resolvedOptions = argsOrNodes;
   }
 
+  const runtimeKernel = createNodeRuntimeKernel({
+    resolveLegacyHandler,
+    mode: resolvedOptions.runtimeKernelMode,
+    v3PilotNodeTypes: resolvedOptions.runtimeKernelPilotNodeTypes,
+  });
+
   return evaluateGraphInternal(nodes, resolvedEdges, {
     ...resolvedOptions,
-    resolveHandler,
+    resolveHandler: runtimeKernel.resolveHandler,
+    resolveHandlerTelemetry: (type: string) =>
+      toNodeRuntimeResolutionTelemetry(runtimeKernel.resolveDescriptor(type)),
   });
 }

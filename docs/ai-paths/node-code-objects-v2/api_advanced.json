@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-code-object.v2",
   "kind": "path_node_code_object",
   "specVersion": "ai-paths.portable-engine.v1",
-  "generatedAt": "2026-03-05T08:08:34.185Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "id": "node_obj_api_advanced_portable_v2",
   "nodeType": "api_advanced",
   "nodeDocVersion": "2026-02-20.v1",
@@ -18,15 +18,11 @@
   },
   "ports": {
     "inputs": [
-      "context",
-      "bundle",
-      "prompt",
-      "result",
-      "value",
-      "entityId",
-      "entityType",
-      "cursor",
-      "page"
+      "url",
+      "body",
+      "headers",
+      "params",
+      "bundle"
     ],
     "outputs": [
       "value",
@@ -171,6 +167,11 @@
         "defaultValue": "auto"
       },
       {
+        "path": "runtime.cache.scope",
+        "description": "Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.",
+        "defaultValue": "run"
+      },
+      {
         "path": "runtime.waitForInputs",
         "description": "If true, wait until all connected input ports have values before executing the node.",
         "defaultValue": "false"
@@ -188,15 +189,11 @@
         "y": 100
       },
       "inputs": [
-        "context",
-        "bundle",
-        "prompt",
-        "result",
-        "value",
-        "entityId",
-        "entityType",
-        "cursor",
-        "page"
+        "url",
+        "body",
+        "headers",
+        "params",
+        "bundle"
       ],
       "outputs": [
         "value",
@@ -224,15 +221,11 @@
         "y": 100
       },
       "inputs": [
-        "context",
-        "bundle",
-        "prompt",
-        "result",
-        "value",
-        "entityId",
-        "entityType",
-        "cursor",
-        "page"
+        "url",
+        "body",
+        "headers",
+        "params",
+        "bundle"
       ],
       "outputs": [
         "value",
@@ -274,7 +267,8 @@
         },
         "runtime": {
           "cache": {
-            "mode": "auto"
+            "mode": "auto",
+            "scope": "run"
           },
           "waitForInputs": false
         }
@@ -292,15 +286,11 @@
             "y": 100
           },
           "inputs": [
-            "context",
-            "bundle",
-            "prompt",
-            "result",
-            "value",
-            "entityId",
-            "entityType",
-            "cursor",
-            "page"
+            "url",
+            "body",
+            "headers",
+            "params",
+            "bundle"
           ],
           "outputs": [
             "value",
@@ -342,7 +332,8 @@
             },
             "runtime": {
               "cache": {
-                "mode": "auto"
+                "mode": "auto",
+                "scope": "run"
               },
               "waitForInputs": false
             }
@@ -356,8 +347,8 @@
   "source": {
     "semanticNodeFile": "docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
     "semanticNodeHashAlgorithm": "sha256",
-    "semanticNodeHash": "69f3bde2c13c1b27ec39583ca125716647c33685897bc8ead8c5f2879a15178f"
+    "semanticNodeHash": "37b85ffa57728292544aa9cd66b45bbf4e5bbf9dafc436d4b5819340e52277b1"
   },
   "objectHashAlgorithm": "sha256",
-  "objectHash": "6b6fe8ded3a5b49b6c5837cf4c0e7ca38d849f2c5667f28efa13bbe7f116b182"
+  "objectHash": "fdf628b5f7112bb32d0e32c5bbfb1708259cda63ef529fc39c519086980f014c"
 }

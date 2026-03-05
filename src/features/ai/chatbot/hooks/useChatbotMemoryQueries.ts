@@ -1,9 +1,9 @@
 'use client';
 
 import type { ChatbotMemoryItem } from '@/shared/contracts/chatbot';
-import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
+import type { ListQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
-import { createDeleteMutationV2, createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export const chatbotMemoryKeys = {
@@ -32,25 +32,5 @@ export function useChatbotMemory(params: string = ''): ListQuery<ChatbotMemoryIt
       queryKey,
       tags: ['chatbot', 'memory'],
     },
-  });
-}
-
-export function useDeleteMemoryItemMutation(): MutationResult<void, string> {
-  const mutationKey = QUERY_KEYS.ai.chatbot.mutation('delete-memory-item');
-
-  return createDeleteMutationV2({
-    mutationFn: async (id: string): Promise<void> => {
-      await api.delete(`/api/chatbot/memory/${id}`);
-    },
-    mutationKey,
-    meta: {
-      source: 'chatbot.hooks.useDeleteMemoryItemMutation',
-      operation: 'delete',
-      resource: 'chatbot.memory',
-      domain: 'chatbot',
-      mutationKey,
-      tags: ['chatbot', 'memory', 'delete'],
-    },
-    invalidateKeys: [chatbotMemoryKeys.all()],
   });
 }

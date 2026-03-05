@@ -30,6 +30,22 @@ const computeNodeHash = (value: unknown): string =>
     .update(JSON.stringify(normalizeForHashing(value)), 'utf8')
     .digest('hex');
 
+const unexpectedNodeJsonFiles = fs.existsSync(nodesDir)
+  ? fs.readdirSync(nodesDir, { withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name.endsWith('.json') && entry.name !== 'index.json')
+      .map((entry) => entry.name)
+      .filter((fileName) => !expectedTypes.has(fileName.slice(0, -'.json'.length)))
+      .sort((left, right) => left.localeCompare(right))
+  : [];
+
+if (unexpectedNodeJsonFiles.length > 0) {
+  console.error('Unexpected semantic node JSON files (not present in AI_PATHS_NODE_DOCS):');
+  for (const fileName of unexpectedNodeJsonFiles) {
+    console.error(`- ${path.join('docs/ai-paths/semantic-grammar/nodes', fileName)}`);
+  }
+  process.exit(1);
+}
+
 const missingFiles = expectedFiles.filter((filePath) => !fs.existsSync(filePath));
 const indexPath = path.join(nodesDir, 'index.json');
 

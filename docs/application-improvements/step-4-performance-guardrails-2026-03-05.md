@@ -4,7 +4,7 @@ Date: 2026-03-05
 
 ## Objective
 
-Introduce a lightweight, repeatable performance gate for the five critical application paths so page complexity drift is visible and enforceable in CI.
+Introduce a lightweight, repeatable performance gate for the five critical application paths so page and API route complexity drift is visible and enforceable in CI.
 
 ## Implemented Artifacts
 
@@ -18,16 +18,23 @@ Introduce a lightweight, repeatable performance gate for the five critical appli
 - Reports:
   - `docs/metrics/critical-path-performance-latest.json`
   - `docs/metrics/critical-path-performance-latest.md`
-  - `docs/metrics/critical-path-performance-2026-03-05T02-58-19-950Z.json`
-  - `docs/metrics/critical-path-performance-2026-03-05T02-58-19-950Z.md`
+  - `docs/metrics/critical-path-performance-2026-03-05T03-23-24-341Z.json`
+  - `docs/metrics/critical-path-performance-2026-03-05T03-23-24-341Z.md`
 
 ## Current Budget Snapshot
 
-- Authentication + Session Bootstrap: `183 / 220 LOC` (PASS)
-- Products CRUD + Listing Refresh: `43 / 80 LOC` (PASS)
-- Image Studio Generate + Preview: `311 / 360 LOC` (PASS)
-- AI Paths Run Execution: `84 / 120 LOC` (PASS)
-- Case Resolver OCR + Capture Mapping: `28 / 60 LOC` (PASS)
+- UI budgets:
+  - Authentication + Session Bootstrap: `183 / 220 LOC` (PASS)
+  - Products CRUD + Listing Refresh: `43 / 80 LOC` (PASS)
+  - Image Studio Generate + Preview: `311 / 360 LOC` (PASS)
+  - AI Paths Run Execution: `84 / 120 LOC` (PASS)
+  - Case Resolver OCR + Capture Mapping: `28 / 60 LOC` (PASS)
+- API budgets:
+  - Authentication + Session Bootstrap: `184 / 240 LOC` (PASS)
+  - Products CRUD + Listing Refresh: `138 / 180 LOC` (PASS)
+  - Image Studio Generate + Preview: `711 / 760 LOC` (PASS)
+  - AI Paths Run Execution: `220 / 260 LOC` (PASS)
+  - Case Resolver OCR + Capture Mapping: `90 / 120 LOC` (PASS)
 
 ## Validation
 

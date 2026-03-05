@@ -10,36 +10,69 @@ const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
 const root = process.cwd();
 const outDir = path.join(root, 'docs', 'metrics');
 
-const criticalPaths = [
+const uiPathBudgets = [
   {
-    id: 'auth-session',
-    name: 'Authentication + Session Bootstrap',
+    id: 'auth-session-ui',
+    name: 'Authentication + Session Bootstrap (UI)',
     maxLines: 220,
     files: ['src/features/auth/pages/public/SignInPage.tsx'],
   },
   {
-    id: 'products-core-crud',
-    name: 'Products CRUD + Listing Refresh',
+    id: 'products-core-crud-ui',
+    name: 'Products CRUD + Listing Refresh (UI)',
     maxLines: 80,
     files: ['src/features/products/pages/AdminProductsPage.tsx'],
   },
   {
-    id: 'image-studio-generate',
-    name: 'Image Studio Generate + Preview',
+    id: 'image-studio-generate-ui',
+    name: 'Image Studio Generate + Preview (UI)',
     maxLines: 360,
     files: ['src/features/ai/image-studio/pages/AdminImageStudioPage.tsx'],
   },
   {
-    id: 'ai-paths-runtime',
-    name: 'AI Paths Run Execution',
+    id: 'ai-paths-runtime-ui',
+    name: 'AI Paths Run Execution (UI)',
     maxLines: 120,
     files: ['src/features/ai/ai-paths/pages/AdminAiPathsPage.tsx'],
   },
   {
-    id: 'case-resolver-capture',
-    name: 'Case Resolver OCR + Capture Mapping',
+    id: 'case-resolver-capture-ui',
+    name: 'Case Resolver OCR + Capture Mapping (UI)',
     maxLines: 60,
     files: ['src/features/case-resolver/pages/AdminCaseResolverPage.tsx'],
+  },
+];
+
+const apiRouteBudgets = [
+  {
+    id: 'auth-session-api',
+    name: 'Authentication + Session Bootstrap (API)',
+    maxLines: 240,
+    files: ['src/app/api/auth/verify-credentials/handler.ts'],
+  },
+  {
+    id: 'products-core-crud-api',
+    name: 'Products CRUD + Listing Refresh (API)',
+    maxLines: 180,
+    files: ['src/app/api/v2/products/handler.ts'],
+  },
+  {
+    id: 'image-studio-generate-api',
+    name: 'Image Studio Generate + Preview (API)',
+    maxLines: 760,
+    files: ['src/app/api/image-studio/projects/[projectId]/handler.ts'],
+  },
+  {
+    id: 'ai-paths-runtime-api',
+    name: 'AI Paths Run Execution (API)',
+    maxLines: 260,
+    files: ['src/app/api/ai-paths/runs/handler.ts'],
+  },
+  {
+    id: 'case-resolver-capture-api',
+    name: 'Case Resolver OCR + Capture Mapping (API)',
+    maxLines: 120,
+    files: ['src/app/api/case-resolver/ocr/jobs/handler.ts'],
   },
 ];
 
@@ -49,6 +82,85 @@ const countLines = async (absolutePath) => {
     return 0;
   }
   return content.split(/\r?\n/).length;
+};
+
+const summarizeGroup = (results) => ({
+  total: results.length,
+  passed: results.filter((result) => result.status === 'pass').length,
+  failed: results.filter((result) => result.status === 'fail').length,
+});
+
+const evaluateBudgetGroup = async (entries, kind) => {
+  const results = [];
+
+  for (const budget of entries) {
+    const files = [];
+    let totalLines = 0;
+
+    for (const relPath of budget.files) {
+      const absPath = path.join(root, relPath);
+      try {
+        const lines = await countLines(absPath);
+        totalLines += lines;
+        files.push({ path: relPath, exists: true, lines });
+      } catch {
+        files.push({ path: relPath, exists: false, lines: null });
+      }
+    }
+
+    const hasMissing = files.some((file) => !file.exists);
+    const overBudget = totalLines > budget.maxLines;
+    const status = hasMissing || overBudget ? 'fail' : 'pass';
+
+    const result = {
+      id: budget.id,
+      kind,
+      name: budget.name,
+      maxLines: budget.maxLines,
+      totalLines,
+      status,
+      files,
+    };
+
+    results.push(result);
+
+    console.log(
+      `[critical-paths] ${budget.name.padEnd(44, ' ')} ${status.toUpperCase()} ${totalLines}/${budget.maxLines} LOC`
+    );
+  }
+
+  return results;
+};
+
+const renderBudgetTable = (lines, title, results) => {
+  lines.push(`## ${title}`);
+  lines.push('');
+  lines.push('| Path | Status | Total LOC | Budget LOC | Delta |');
+  lines.push('| --- | --- | ---: | ---: | ---: |');
+
+  for (const result of results) {
+    const delta = result.totalLines - result.maxLines;
+    const deltaText = delta > 0 ? `+${delta}` : String(delta);
+    lines.push(
+      `| ${result.name} | ${result.status.toUpperCase()} | ${result.totalLines} | ${result.maxLines} | ${deltaText} |`
+    );
+  }
+
+  lines.push('');
+};
+
+const renderFileBreakdown = (lines, title, results) => {
+  lines.push(`## ${title}`);
+  lines.push('');
+  for (const result of results) {
+    lines.push(`### ${result.name}`);
+    lines.push('');
+    for (const file of result.files) {
+      const suffix = file.exists ? `${file.lines} LOC` : 'missing';
+      lines.push(`- \`${file.path}\`: ${suffix}`);
+    }
+    lines.push('');
+  }
 };
 
 const toMarkdown = (payload) => {
@@ -62,32 +174,15 @@ const toMarkdown = (payload) => {
   lines.push(`- Paths checked: ${payload.summary.total}`);
   lines.push(`- Within budget: ${payload.summary.passed}`);
   lines.push(`- Over budget: ${payload.summary.failed}`);
+  lines.push(`- UI paths checked: ${payload.summary.ui.total} (pass=${payload.summary.ui.passed}, fail=${payload.summary.ui.failed})`);
+  lines.push(`- API routes checked: ${payload.summary.api.total} (pass=${payload.summary.api.passed}, fail=${payload.summary.api.failed})`);
   lines.push('');
-  lines.push('## Critical Path Budgets (LOC)');
-  lines.push('');
-  lines.push('| Path | Status | Total LOC | Budget LOC | Delta |');
-  lines.push('| --- | --- | ---: | ---: | ---: |');
 
-  for (const result of payload.results) {
-    const delta = result.totalLines - result.maxLines;
-    const deltaText = delta > 0 ? `+${delta}` : String(delta);
-    lines.push(
-      `| ${result.name} | ${result.status.toUpperCase()} | ${result.totalLines} | ${result.maxLines} | ${deltaText} |`
-    );
-  }
+  renderBudgetTable(lines, 'Critical UI Path Budgets (LOC)', payload.uiResults);
+  renderBudgetTable(lines, 'Critical API Route Budgets (LOC)', payload.apiResults);
 
-  lines.push('');
-  lines.push('## File Breakdown');
-  lines.push('');
-  for (const result of payload.results) {
-    lines.push(`### ${result.name}`);
-    lines.push('');
-    for (const file of result.files) {
-      const suffix = file.exists ? `${file.lines} LOC` : 'missing';
-      lines.push(`- \`${file.path}\`: ${suffix}`);
-    }
-    lines.push('');
-  }
+  renderFileBreakdown(lines, 'UI File Breakdown', payload.uiResults);
+  renderFileBreakdown(lines, 'API File Breakdown', payload.apiResults);
 
   lines.push('## Top Repo Hotspots (Reference)');
   lines.push('');
@@ -96,12 +191,21 @@ const toMarkdown = (payload) => {
   for (const hotspot of payload.metrics.hotspots.topFilesByLines.slice(0, 10)) {
     lines.push(`| \`${hotspot.path}\` | ${hotspot.lines} |`);
   }
-
   lines.push('');
+
+  lines.push('## Top API Route Hotspots (Reference)');
+  lines.push('');
+  lines.push('| Route | LOC |');
+  lines.push('| --- | ---: |');
+  for (const hotspot of payload.metrics.api.topRouteHotspots.slice(0, 10)) {
+    lines.push(`| \`${hotspot.path}\` | ${hotspot.lines} |`);
+  }
+  lines.push('');
+
   lines.push('## Notes');
   lines.push('');
   lines.push('- LOC is a static complexity heuristic, not runtime latency.');
-  lines.push('- Keep critical-path pages below budget before splitting into additional sections/hooks.');
+  lines.push('- Keep critical-path pages/routes below budget before adding more conditional branches.');
 
   return `${lines.join('\n')}\n`;
 };
@@ -109,44 +213,21 @@ const toMarkdown = (payload) => {
 const run = async () => {
   const metrics = await collectMetrics({ root });
 
-  const results = [];
-  for (const pathBudget of criticalPaths) {
-    const files = [];
-    let totalLines = 0;
+  const [uiResults, apiResults] = await Promise.all([
+    evaluateBudgetGroup(uiPathBudgets, 'ui'),
+    evaluateBudgetGroup(apiRouteBudgets, 'api'),
+  ]);
 
-    for (const relPath of pathBudget.files) {
-      const absPath = path.join(root, relPath);
-      try {
-        const lines = await countLines(absPath);
-        totalLines += lines;
-        files.push({ path: relPath, exists: true, lines });
-      } catch {
-        files.push({ path: relPath, exists: false, lines: null });
-      }
-    }
-
-    const hasMissing = files.some((file) => !file.exists);
-    const overBudget = totalLines > pathBudget.maxLines;
-    const status = hasMissing || overBudget ? 'fail' : 'pass';
-
-    results.push({
-      id: pathBudget.id,
-      name: pathBudget.name,
-      maxLines: pathBudget.maxLines,
-      totalLines,
-      status,
-      files,
-    });
-
-    console.log(
-      `[critical-paths] ${pathBudget.name.padEnd(44, ' ')} ${status.toUpperCase()} ${totalLines}/${pathBudget.maxLines} LOC`
-    );
-  }
+  const results = [...uiResults, ...apiResults];
+  const uiSummary = summarizeGroup(uiResults);
+  const apiSummary = summarizeGroup(apiResults);
 
   const summary = {
     total: results.length,
-    passed: results.filter((result) => result.status === 'pass').length,
-    failed: results.filter((result) => result.status === 'fail').length,
+    passed: uiSummary.passed + apiSummary.passed,
+    failed: uiSummary.failed + apiSummary.failed,
+    ui: uiSummary,
+    api: apiSummary,
   };
 
   const payload = {
@@ -154,10 +235,15 @@ const run = async () => {
     strictMode,
     summary,
     results,
+    uiResults,
+    apiResults,
     metrics: {
       generatedAt: metrics.generatedAt,
       hotspots: {
         topFilesByLines: metrics.hotspots.topFilesByLines,
+      },
+      api: {
+        topRouteHotspots: metrics.api.topRouteHotspots,
       },
     },
   };

@@ -152,16 +152,6 @@ export const PORTABLE_PATH_SIGNING_POLICY_ALERT_LEVELS = ['off', 'warn', 'error'
 export type PortablePathSigningPolicyAlertLevel =
   (typeof PORTABLE_PATH_SIGNING_POLICY_ALERT_LEVELS)[number];
 
-const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_ALGORITHM = 'hmac_sha256' as const;
-const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_VERSION = 'v1' as const;
-const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_HEADER = 'x-ai-paths-signature';
-const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_TIMESTAMP_HEADER =
-  'x-ai-paths-signature-timestamp';
-const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_ALGORITHM_HEADER =
-  'x-ai-paths-signature-algorithm';
-const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_KEY_ID_HEADER =
-  'x-ai-paths-signature-key-id';
-
 type PortablePathEnvelopeVerificationSinkLevel = 'info' | 'warn' | 'error';
 
 const getSinkLevel = (

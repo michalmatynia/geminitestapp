@@ -57,7 +57,47 @@ export interface ProductImageManagerUIContextValue {
   handleDrop: (e: React.DragEvent<HTMLDivElement>, toIndex: number) => void;
 }
 
-const ProductImageManagerUIContext = createContext<ProductImageManagerUIContextValue | null>(null);
+export type ProductImageManagerUIStateContextValue = Omit<
+  ProductImageManagerUIContextValue,
+  | 'setSlotViewMode'
+  | 'setShowDebug'
+  | 'pushDebug'
+  | 'convertSlotToBase64'
+  | 'convertAllSlotsToBase64'
+  | 'convertLinkToFile'
+  | 'triggerFileManager'
+  | 'handleSlotFileUpload'
+  | 'clearVisibleImage'
+  | 'handleDragStart'
+  | 'handleDragEnd'
+  | 'handleDragOver'
+  | 'handleDragLeave'
+  | 'handleDrop'
+>;
+
+export type ProductImageManagerUIActionsContextValue = Pick<
+  ProductImageManagerUIContextValue,
+  | 'setSlotViewMode'
+  | 'setShowDebug'
+  | 'pushDebug'
+  | 'convertSlotToBase64'
+  | 'convertAllSlotsToBase64'
+  | 'convertLinkToFile'
+  | 'triggerFileManager'
+  | 'handleSlotFileUpload'
+  | 'clearVisibleImage'
+  | 'handleDragStart'
+  | 'handleDragEnd'
+  | 'handleDragOver'
+  | 'handleDragLeave'
+  | 'handleDrop'
+>;
+
+const ProductImageManagerUIStateContext = createContext<ProductImageManagerUIStateContextValue | null>(
+  null
+);
+const ProductImageManagerUIActionsContext =
+  createContext<ProductImageManagerUIActionsContextValue | null>(null);
 
 export function ProductImageManagerUIProvider({
   children,
@@ -397,8 +437,8 @@ export function ProductImageManagerUIProvider({
     [swapImageSlots, handleDragEnd]
   );
 
-  const value = useMemo(
-    () => ({
+  const stateValue = useMemo(
+    (): ProductImageManagerUIStateContextValue => ({
       slotViewModes,
       base64LoadingSlots,
       linkToFileLoadingSlots,
@@ -412,6 +452,25 @@ export function ProductImageManagerUIProvider({
       showDragHandle,
       minimalSingleSlotAlign,
       controller,
+    }),
+    [
+      slotViewModes,
+      base64LoadingSlots,
+      linkToFileLoadingSlots,
+      draggedIndex,
+      dragOverIndex,
+      isReordering,
+      debugInfo,
+      showDebug,
+      externalBaseUrl,
+      minimalUi,
+      showDragHandle,
+      minimalSingleSlotAlign,
+      controller,
+    ]
+  );
+  const actionsValue = useMemo(
+    (): ProductImageManagerUIActionsContextValue => ({
       setSlotViewMode,
       setShowDebug,
       pushDebug,
@@ -428,19 +487,6 @@ export function ProductImageManagerUIProvider({
       handleDrop,
     }),
     [
-      slotViewModes,
-      base64LoadingSlots,
-      linkToFileLoadingSlots,
-      draggedIndex,
-      dragOverIndex,
-      isReordering,
-      debugInfo,
-      showDebug,
-      externalBaseUrl,
-      minimalUi,
-      showDragHandle,
-      minimalSingleSlotAlign,
-      controller,
       setSlotViewMode,
       setShowDebug,
       pushDebug,
@@ -459,16 +505,39 @@ export function ProductImageManagerUIProvider({
   );
 
   return (
-    <ProductImageManagerUIContext.Provider value={value}>
-      {children}
-    </ProductImageManagerUIContext.Provider>
+    <ProductImageManagerUIActionsContext.Provider value={actionsValue}>
+      <ProductImageManagerUIStateContext.Provider value={stateValue}>
+        {children}
+      </ProductImageManagerUIStateContext.Provider>
+    </ProductImageManagerUIActionsContext.Provider>
   );
 }
 
-export function useProductImageManagerUI() {
-  const context = useContext(ProductImageManagerUIContext);
+export function useProductImageManagerUIState(): ProductImageManagerUIStateContextValue {
+  const context = useContext(ProductImageManagerUIStateContext);
   if (!context) {
-    throw new Error('useProductImageManagerUI must be used within ProductImageManagerUIProvider');
+    throw new Error(
+      'useProductImageManagerUIState must be used within ProductImageManagerUIProvider'
+    );
   }
   return context;
+}
+
+export function useProductImageManagerUIActions(): ProductImageManagerUIActionsContextValue {
+  const context = useContext(ProductImageManagerUIActionsContext);
+  if (!context) {
+    throw new Error(
+      'useProductImageManagerUIActions must be used within ProductImageManagerUIProvider'
+    );
+  }
+  return context;
+}
+
+export function useProductImageManagerUI(): ProductImageManagerUIContextValue {
+  const state = useProductImageManagerUIState();
+  const actions = useProductImageManagerUIActions();
+  return useMemo((): ProductImageManagerUIContextValue => ({ ...state, ...actions }), [
+    state,
+    actions,
+  ]);
 }

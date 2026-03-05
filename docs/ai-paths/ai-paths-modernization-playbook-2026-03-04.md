@@ -1456,6 +1456,38 @@ Progress (2026-03-04):
       6. `npm run typecheck` -> failed with current repository typing drift:
          1. `src/features/products/validations/context.tsx:7` (`TS2307: Cannot find module './validators' or its corresponding type declarations.`)
          2. `src/features/products/validations/hooks.ts:5` (`TS2307: Cannot find module './validators' or its corresponding type declarations.`)
+64. Continued Phase 3 portable-engine path-config warning-channel canonicalization in seam 194:
+   1. Canonicalized portable-engine path-config migration warning code/message and local naming:
+      1. `src/shared/lib/ai-paths/portable-engine/index.ts`
+      2. changes:
+         1. `PortablePathMigrationWarningCode`: `'legacy_path_config_upgraded'` -> `'path_config_upgraded'`
+         2. message: `Legacy path config payload upgraded to portable package v1.` -> `Path config payload upgraded to portable package v1.`
+         3. local var: `normalizedLegacyPathConfig` -> `normalizedPathConfig`
+   2. Added regression coverage + manifest guardrail for the warning-channel rename:
+      1. `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts`
+      2. assertion now expects `warning.code === 'path_config_upgraded'`
+      3. `scripts/ai-paths/legacy-prune-manifest.json`
+      4. added rule family:
+         1. `portable_engine_path_config_warning_channel`
+      5. bulk-prune manifest now covers `57` rules across `82` targets.
+   3. Validation:
+      1. `npx vitest run src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts __tests__/scripts/ai-paths/legacy-prune-manifest-utils.test.ts` -> passed (`32` tests).
+      2. `npm run ai-paths:bulk-prune:scan` -> passed (`57` rules across `82` targets).
+      3. `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` -> passed.
+      4. `npm run ai-paths:check:canonical` -> passed (`4216` files scanned).
+      5. `npm run ai-paths:bulk-prune:report` -> passed (report refreshed).
+      6. `npm run typecheck` -> failed with current repository typing drift at `src/features/observability/context/SystemLogsContext.tsx:529` (`TS2353: Object literal may only specify known properties, and 'setPage' does not exist in type 'SystemLogsStateContextValue'.`)
+65. Continued Phase 3 portable-engine warning-channel site-wide guardrail alignment in seam 195:
+   1. Extended site-wide canonical runtime guardrails for portable-engine warning-channel canonicalization:
+      1. `scripts/canonical/check-sitewide.mjs`
+      2. added forbidden tokens:
+         1. `legacy_path_config_upgraded`
+         2. `Legacy path config payload upgraded to portable package v1.`
+   2. Validation:
+      1. `npm run canonical:check:sitewide` -> passed (`3816` runtime source files, `4` docs artifacts).
+      2. `npm run ai-paths:bulk-prune:scan` -> passed (`57` rules across `82` targets).
+      3. `npm run ai-paths:check:canonical` -> passed (`4217` files scanned).
+      4. `npm run typecheck` -> failed with current repository typing drift at `src/features/cms/components/frontend/blocks/BlockContext.tsx:3` (`TS6133: 'React' is declared but its value is never read.`).
 
 ## Deprecation map
 

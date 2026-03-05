@@ -2,7 +2,10 @@
 
 import React, { useMemo } from 'react';
 
-import { useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
+import {
+  useSystemLogsActions,
+  useSystemLogsState,
+} from '@/features/observability/context/SystemLogsContext';
 import {
   type MongoIndexInfoDto as MongoIndexInfo,
   type MongoCollectionIndexStatusDto as MongoCollectionIndexStatus,
@@ -16,9 +19,8 @@ export function LogDiagnostics(): React.JSX.Element {
     diagnostics,
     diagnosticsUpdatedAt,
     mongoDiagnosticsQuery,
-    confirmAction,
-    handleRebuildMongoIndexes,
-  } = useSystemLogsContext();
+  } = useSystemLogsState();
+  const { confirmAction, handleRebuildMongoIndexes } = useSystemLogsActions();
 
   const columns = useMemo<ColumnDef<MongoCollectionIndexStatus>[]>(
     () => [

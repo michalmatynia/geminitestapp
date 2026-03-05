@@ -142,9 +142,12 @@ export const chatMessageSchema = z.object({
 export type ChatMessageDto = z.infer<typeof chatMessageSchema>;
 export type ChatMessage = ChatMessageDto;
 
-export interface SimpleChatMessage {
-  role: 'user' | 'assistant' | 'system' | string;
-  content: string;
+export interface SimpleChatMessage<
+  TContent = string,
+  TRole extends string = 'user' | 'assistant' | 'system' | string,
+> {
+  role: TRole;
+  content: TContent;
 }
 
 /**

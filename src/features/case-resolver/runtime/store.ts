@@ -1,12 +1,12 @@
 import type { CaseResolverRuntimeSnapshot, CaseResolverRuntimeState } from './types';
+import type { SnapshotStateStore } from '@/shared/contracts/state-store';
 
-export type CaseResolverRuntimeStore = {
-  getSnapshot: () => CaseResolverRuntimeSnapshot;
-  getState: () => CaseResolverRuntimeState;
-  setState: (nextState: CaseResolverRuntimeState) => void;
-  patchState: (updater: (current: CaseResolverRuntimeState) => CaseResolverRuntimeState) => void;
-  subscribe: (listener: () => void) => () => void;
-};
+type CaseResolverRuntimeStore = SnapshotStateStore<
+  CaseResolverRuntimeState,
+  CaseResolverRuntimeSnapshot
+>;
+
+export type { CaseResolverRuntimeStore };
 
 const cloneSnapshot = (
   state: CaseResolverRuntimeState,

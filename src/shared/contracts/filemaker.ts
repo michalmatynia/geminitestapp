@@ -192,11 +192,17 @@ export type FilemakerAddressFields = {
   countryId: string;
 };
 
-export type FilemakerEmailParserRule = {
+type FilemakerPatternRule = {
   id: string;
   pattern: string;
   flags?: string | null;
   sequence?: number | null;
+};
+
+export type {
+  FilemakerPatternRule,
+  FilemakerPatternRule as FilemakerEmailParserRule,
+  FilemakerPatternRule as FilemakerPhoneValidationRule,
 };
 
 export type FilemakerEmailExtractionResult = {
@@ -204,13 +210,6 @@ export type FilemakerEmailExtractionResult = {
   totalMatches: number;
   invalidMatches: number;
   usedDefaultRules: boolean;
-};
-
-export type FilemakerPhoneValidationRule = {
-  id: string;
-  pattern: string;
-  flags?: string | null;
-  sequence?: number | null;
 };
 
 export type FilemakerPhoneValidationResult = {

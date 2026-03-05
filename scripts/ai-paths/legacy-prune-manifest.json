@@ -1436,6 +1436,25 @@
       ]
     },
     {
+      "id": "portable_engine_path_config_warning_channel",
+      "description": "Portable engine path-config migration warning channel must remain canonical and avoid legacy wording.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/portable-engine/index.ts",
+          "forbiddenSnippets": [
+            "'legacy_path_config_upgraded'",
+            "Legacy path config payload upgraded to portable package v1.",
+            "normalizedLegacyPathConfig"
+          ],
+          "requiredSnippets": [
+            "'path_config_upgraded'",
+            "Path config payload upgraded to portable package v1.",
+            "normalizedPathConfig"
+          ]
+        }
+      ]
+    },
+    {
       "id": "legacy_validation_key_runtime_source_scan",
       "description": "Runtime source must not reintroduce legacy ai_paths_validation_v1 key usage.",
       "targets": [

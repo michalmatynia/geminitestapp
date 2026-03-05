@@ -3,7 +3,10 @@
 import { AlertTriangle, Monitor, Server, Shield } from 'lucide-react';
 import React from 'react';
 
-import { useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
+import {
+  useSystemLogsActions,
+  useSystemLogsState,
+} from '@/features/observability/context/SystemLogsContext';
 import {
   SYSTEM_LOG_FILTER_DEFAULTS,
   SYSTEM_LOG_TRIAGE_PRESETS,
@@ -42,9 +45,8 @@ export function LogTriagePresets(): React.JSX.Element {
     category,
     fromDate,
     toDate,
-    handleFilterChange,
-    handleResetFilters: onClearPreset,
-  } = useSystemLogsContext();
+  } = useSystemLogsState();
+  const { handleFilterChange, handleResetFilters: onClearPreset } = useSystemLogsActions();
 
   const values: SystemLogFilterFormValues = {
     level,

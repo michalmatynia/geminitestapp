@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { MasterFolderTreeRuntimeProvider } from '@/features/foldertree/v2/runtime/MasterFolderTreeRuntimeProvider';
 import { NodeFileDocumentSearchPanel } from '@/features/case-resolver/components/NodeFileDocumentSearchPanel';
 import { buildRelationMasterTree } from '@/features/case-resolver/relation-search/tree/relation-master-tree';
 
@@ -64,14 +63,12 @@ const expandVisibleNodes = (): void => {
 describe('NodeFileDocumentSearchPanel tree mode', () => {
   it('adds selected document from tree action button to canvas', () => {
     render(
-      <MasterFolderTreeRuntimeProvider>
-        <NodeFileDocumentSearchPanel
-          newNodeType='prompt'
-          setNewNodeType={vi.fn()}
-          onExplanatoryClick={vi.fn()}
-          onNodeInspectorClick={vi.fn()}
-        />
-      </MasterFolderTreeRuntimeProvider>
+      <NodeFileDocumentSearchPanel
+        newNodeType='prompt'
+        setNewNodeType={vi.fn()}
+        onExplanatoryClick={vi.fn()}
+        onNodeInspectorClick={vi.fn()}
+      />
     );
 
     expandVisibleNodes();

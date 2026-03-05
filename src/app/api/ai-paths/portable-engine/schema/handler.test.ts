@@ -34,6 +34,7 @@ describe('ai-paths portable-engine schema handler', () => {
     expect(payload['kind']).toBe('all');
     const schemas = payload['schemas'] as Record<string, unknown>;
     expect(schemas).toBeDefined();
+    expect(schemas['portable_envelope']).toBeDefined();
     expect(schemas['portable_package']).toBeDefined();
     expect(schemas['semantic_canvas']).toBeDefined();
     expect(schemas['path_config']).toBeDefined();

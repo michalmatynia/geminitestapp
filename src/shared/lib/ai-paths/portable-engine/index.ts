@@ -38,14 +38,32 @@ export type PortablePathFingerprint = {
   value: string;
 };
 
+export type PortablePathEnvelopeSignature = {
+  algorithm: 'hmac_sha256' | 'stable_hash_v1';
+  value: string;
+  keyId?: string;
+};
+
 const portablePathFingerprintSchema = z.object({
   algorithm: z.enum(['sha256', 'stable_hash_v1']),
   value: z.string().min(8),
 });
 
+const portablePathEnvelopeSignatureSchema = z.object({
+  algorithm: z.enum(['hmac_sha256', 'stable_hash_v1']),
+  value: z.string().min(8),
+  keyId: z.string().min(1).optional(),
+});
+
 const portablePathVersionedFingerprintSchema = z.object({
   algorithm: z.string().min(1),
   value: z.string().min(8),
+});
+
+const portablePathVersionedEnvelopeSignatureSchema = z.object({
+  algorithm: z.string().min(1),
+  value: z.string().min(8),
+  keyId: z.string().min(1).optional(),
 });
 
 export const aiPathPortablePackageSchema = z.object({
@@ -74,13 +92,39 @@ const aiPathPortablePackageVersionedSchema = z.object({
   fingerprint: portablePathVersionedFingerprintSchema.optional(),
 });
 
-export type AiPathPortablePackage = z.infer<typeof aiPathPortablePackageSchema>;
-type AiPathPortablePackageVersioned = z.infer<typeof aiPathPortablePackageVersionedSchema>;
+export const aiPathPortablePackageEnvelopeSchema = z.object({
+  specVersion: z.literal(AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION),
+  kind: z.literal('path_package_envelope'),
+  signedAt: z.string(),
+  package: aiPathPortablePackageSchema,
+  signature: portablePathEnvelopeSignatureSchema,
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
 
-export type PortablePathInputSource = 'portable_package' | 'semantic_canvas' | 'path_config';
+const aiPathPortablePackageEnvelopeVersionedSchema = z.object({
+  specVersion: portablePathPackageVersionedSpecVersionSchema,
+  kind: z.literal('path_package_envelope'),
+  signedAt: z.string(),
+  package: aiPathPortablePackageVersionedSchema,
+  signature: portablePathVersionedEnvelopeSignatureSchema.optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type AiPathPortablePackage = z.infer<typeof aiPathPortablePackageSchema>;
+export type AiPathPortablePackageEnvelope = z.infer<typeof aiPathPortablePackageEnvelopeSchema>;
+type AiPathPortablePackageVersioned = z.infer<typeof aiPathPortablePackageVersionedSchema>;
+type AiPathPortablePackageEnvelopeVersioned = z.infer<typeof aiPathPortablePackageEnvelopeVersionedSchema>;
+
+export type PortablePathInputSource =
+  | 'portable_package'
+  | 'portable_envelope'
+  | 'semantic_canvas'
+  | 'path_config';
 export type PortablePathValidationMode = 'standard' | 'strict';
 export type PortablePathFingerprintVerificationMode = 'off' | 'warn' | 'strict';
+export type PortablePathEnvelopeSignatureVerificationMode = 'off' | 'warn' | 'strict';
 export const PORTABLE_PATH_JSON_SCHEMA_KINDS = [
+  'portable_envelope',
   'portable_package',
   'semantic_canvas',
   'path_config',
@@ -114,12 +158,20 @@ export type ResolvePortablePathInputOptions = {
   enforcePayloadLimits?: boolean;
   limits?: Partial<PortablePayloadLimits>;
   fingerprintVerificationMode?: PortablePathFingerprintVerificationMode;
+  envelopeSignatureVerificationMode?: PortablePathEnvelopeSignatureVerificationMode;
+  envelopeSignatureSecret?: string;
 };
 
 export type PortablePathMigrationWarningCode =
-  | 'legacy_path_config_upgraded'
+  | 'path_config_upgraded'
   | 'semantic_canvas_upgraded'
   | 'portable_package_version_upgraded'
+  | 'package_envelope_signature_missing'
+  | 'package_envelope_signature_mismatch'
+  | 'package_envelope_signature_unsupported_algorithm'
+  | 'package_envelope_signature_async_required'
+  | 'package_envelope_signature_verification_unavailable'
+  | 'package_envelope_signature_key_missing'
   | 'package_path_id_mismatch'
   | 'package_name_mismatch'
   | 'package_fingerprint_missing'
@@ -138,6 +190,7 @@ export type ResolvedPortablePathInput = {
   pathConfig: PathConfig;
   semanticDocument: CanvasSemanticDocument;
   portablePackage: AiPathPortablePackage | null;
+  portableEnvelope: AiPathPortablePackageEnvelope | null;
   canonicalPackage: AiPathPortablePackage;
   identityRepaired: boolean;
   identityWarnings: PathIdentityRepairWarning[];
@@ -154,6 +207,13 @@ export type BuildPortablePathPackageOptions = {
   exporterVersion?: string;
   workspace?: string;
   includeConnections?: boolean;
+  metadata?: Record<string, unknown>;
+};
+
+export type BuildPortablePathPackageEnvelopeOptions = {
+  signedAt?: string;
+  secret?: string;
+  keyId?: string;
   metadata?: Record<string, unknown>;
 };
 
@@ -191,6 +251,8 @@ export type PortablePathRunOptions = Omit<EvaluateGraphOptions, 'reportAiPathsEr
   enforcePayloadLimits?: boolean;
   limits?: Partial<PortablePayloadLimits>;
   fingerprintVerificationMode?: PortablePathFingerprintVerificationMode;
+  envelopeSignatureVerificationMode?: PortablePathEnvelopeSignatureVerificationMode;
+  envelopeSignatureSecret?: string;
   reportAiPathsError?: EvaluateGraphOptions['reportAiPathsError'];
 };
 
@@ -215,7 +277,7 @@ type PortablePathPackageMigrationResult =
   | { ok: true; value: { portablePackage: AiPathPortablePackage; migrationWarnings: PortablePathMigrationWarning[] } }
   | { ok: false; error: string };
 
-type PortablePathPackageMigrator = (
+export type PortablePathPackageMigrator = (
   input: AiPathPortablePackageVersioned
 ) => PortablePathPackageMigrationResult;
 
@@ -238,9 +300,9 @@ const normalizeVersionedPortablePackageToV1 = (
     input.fingerprint &&
     (input.fingerprint.algorithm === 'stable_hash_v1' || input.fingerprint.algorithm === 'sha256')
       ? {
-          algorithm: input.fingerprint.algorithm,
-          value: input.fingerprint.value,
-        }
+        algorithm: input.fingerprint.algorithm,
+        value: input.fingerprint.value,
+      }
       : null;
 
   if (input.fingerprint && !normalizedFingerprint) {
@@ -278,15 +340,38 @@ const portablePathPackageMigrationRegistry = new Map<string, PortablePathPackage
   [PORTABLE_PACKAGE_SPEC_V2, normalizeVersionedPortablePackageToV1],
 ]);
 
+const BUILTIN_PORTABLE_PATH_MIGRATOR_VERSIONS = new Set<string>([
+  AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
+  PORTABLE_PACKAGE_SPEC_V2,
+]);
+
+const normalizePortablePathMigratorSpecVersion = (specVersion: string): string => {
+  const normalized = specVersion.trim();
+  const parsed = portablePathPackageVersionedSpecVersionSchema.safeParse(normalized);
+  if (!parsed.success) {
+    throw new Error(`Invalid portable package spec version "${specVersion}".`);
+  }
+  return parsed.data;
+};
+
 export const registerPortablePathPackageMigrator = (
   specVersion: string,
   migrator: PortablePathPackageMigrator
 ): void => {
-  portablePathPackageMigrationRegistry.set(specVersion, migrator);
+  const normalizedVersion = normalizePortablePathMigratorSpecVersion(specVersion);
+  portablePathPackageMigrationRegistry.set(normalizedVersion, migrator);
 };
 
 export const listPortablePathPackageMigratorVersions = (): string[] =>
   Array.from(portablePathPackageMigrationRegistry.keys()).sort();
+
+export const unregisterPortablePathPackageMigrator = (specVersion: string): boolean => {
+  const normalizedVersion = normalizePortablePathMigratorSpecVersion(specVersion);
+  if (BUILTIN_PORTABLE_PATH_MIGRATOR_VERSIONS.has(normalizedVersion)) {
+    throw new Error(`Cannot unregister built-in portable package migrator "${normalizedVersion}".`);
+  }
+  return portablePathPackageMigrationRegistry.delete(normalizedVersion);
+};
 
 const formatZodError = (error: z.ZodError): string =>
   error.issues
@@ -361,7 +446,7 @@ const validatePayloadObjectSafety = (
   if (!value || typeof value !== 'object') {
     return null;
   }
-  const objectValue = value as object;
+  const objectValue = value;
   if (ancestors.has(objectValue)) {
     return `Payload contains circular reference at ${path}.`;
   }
@@ -564,16 +649,16 @@ export const migratePortablePathInput = (
 
   const pathConfigParsed = pathConfigSchema.safeParse(input);
   if (pathConfigParsed.success) {
-    const normalizedLegacyPathConfig = normalizePathConfigEdgeAliases(pathConfigParsed.data);
+    const normalizedPathConfig = normalizePathConfigEdgeAliases(pathConfigParsed.data);
     return {
       ok: true,
       value: {
         source: 'path_config',
-        portablePackage: buildCanonicalPackageFromPathConfig(normalizedLegacyPathConfig, options),
+        portablePackage: buildCanonicalPackageFromPathConfig(normalizedPathConfig, options),
         migrationWarnings: [
           {
-            code: 'legacy_path_config_upgraded',
-            message: 'Legacy path config payload upgraded to portable package v1.',
+            code: 'path_config_upgraded',
+            message: 'Path config payload upgraded to portable package v1.',
           },
         ],
       },
@@ -595,6 +680,7 @@ const finalizeResolvedPath = ({
   source,
   pathConfig,
   portablePackage,
+  portableEnvelope,
   options,
   migrationWarnings,
   payloadByteSize,
@@ -602,6 +688,7 @@ const finalizeResolvedPath = ({
   source: PortablePathInputSource;
   pathConfig: PathConfig;
   portablePackage: AiPathPortablePackage;
+  portableEnvelope: AiPathPortablePackageEnvelope | null;
   options?: ResolvePortablePathInputOptions;
   migrationWarnings: PortablePathMigrationWarning[];
   payloadByteSize: number | null;
@@ -630,7 +717,9 @@ const finalizeResolvedPath = ({
       source,
       pathConfig: repaired.config,
       semanticDocument,
-      portablePackage: source === 'portable_package' ? portablePackage : null,
+      portablePackage:
+        source === 'portable_package' || source === 'portable_envelope' ? portablePackage : null,
+      portableEnvelope: source === 'portable_envelope' ? portableEnvelope : null,
       canonicalPackage: {
         ...portablePackage,
         document: semanticDocument,
@@ -680,11 +769,54 @@ export const resolvePortablePathInput = (
     }
   }
 
-  const migrated = migratePortablePathInput(decoded.value, options);
+  const envelopeParsed = aiPathPortablePackageEnvelopeVersionedSchema.safeParse(decoded.value);
+  const envelopeSignatureVerificationMode = options?.envelopeSignatureVerificationMode ?? 'off';
+  const envelopeWarnings: PortablePathMigrationWarning[] = [];
+  let envelopePayload = decoded.value;
+  let resolvedSourceFromEnvelope = false;
+  let portableEnvelopeForResult: AiPathPortablePackageEnvelope | null = null;
+  if (envelopeParsed.success) {
+    const envelopeVerification = verifyPortablePathPackageEnvelopeSignature(
+      envelopeParsed.data,
+      envelopeSignatureVerificationMode,
+      {
+        envelopeSignatureSecret: options?.envelopeSignatureSecret,
+      }
+    );
+    envelopeWarnings.push(...envelopeVerification.warnings);
+    if (!envelopeVerification.ok) {
+      return { ok: false, error: envelopeVerification.error };
+    }
+    envelopePayload = envelopeParsed.data.package;
+    resolvedSourceFromEnvelope = true;
+  }
+
+  const migrated = migratePortablePathInput(envelopePayload, options);
   if (!migrated.ok) {
     return migrated;
   }
-  const migrationWarnings = [...migrated.value.migrationWarnings];
+  const migrationWarnings = [...envelopeWarnings, ...migrated.value.migrationWarnings];
+  const resolvedSource: PortablePathInputSource =
+    resolvedSourceFromEnvelope && migrated.value.source === 'portable_package'
+      ? 'portable_envelope'
+      : migrated.value.source;
+  if (resolvedSource === 'portable_envelope' && envelopeParsed.success) {
+    const signature = envelopeParsed.data.signature;
+    if (signature && (signature.algorithm === 'hmac_sha256' || signature.algorithm === 'stable_hash_v1')) {
+      portableEnvelopeForResult = {
+        specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
+        kind: 'path_package_envelope',
+        signedAt: envelopeParsed.data.signedAt,
+        package: migrated.value.portablePackage,
+        signature: {
+          algorithm: signature.algorithm,
+          value: signature.value,
+          ...(signature.keyId ? { keyId: signature.keyId } : {}),
+        },
+        ...(envelopeParsed.data.metadata ? { metadata: envelopeParsed.data.metadata } : {}),
+      };
+    }
+  }
   const fingerprintVerificationMode = options?.fingerprintVerificationMode ?? 'off';
   if (migrated.value.source === 'portable_package') {
     const verification = verifyPortablePackageFingerprint(
@@ -706,9 +838,10 @@ export const resolvePortablePathInput = (
   }
 
   return finalizeResolvedPath({
-    source: migrated.value.source,
+    source: resolvedSource,
     pathConfig: deserialized.value,
     portablePackage: migrated.value.portablePackage,
+    portableEnvelope: portableEnvelopeForResult,
     options,
     migrationWarnings,
     payloadByteSize,
@@ -721,17 +854,49 @@ export const resolvePortablePathInputAsync = async (
 ): Promise<ResolvePortablePathInputResult> => {
   const resolved = resolvePortablePathInput(input, {
     ...options,
+    envelopeSignatureVerificationMode: 'off',
     fingerprintVerificationMode: 'off',
   });
   if (!resolved.ok) return resolved;
 
+  const migrationWarnings = [...resolved.value.migrationWarnings];
+
+  const envelopeSignatureVerificationMode = options?.envelopeSignatureVerificationMode ?? 'off';
+  if (envelopeSignatureVerificationMode !== 'off') {
+    const decoded = decodePortablePayload(input);
+    if (!decoded.ok) return decoded;
+    const envelopeParsed = aiPathPortablePackageEnvelopeVersionedSchema.safeParse(decoded.value);
+    if (envelopeParsed.success) {
+      const verification = await verifyPortablePathPackageEnvelopeSignatureAsync(
+        envelopeParsed.data,
+        envelopeSignatureVerificationMode,
+        {
+          envelopeSignatureSecret: options?.envelopeSignatureSecret,
+        }
+      );
+      if (!verification.ok) {
+        return { ok: false, error: verification.error };
+      }
+      migrationWarnings.push(...verification.warnings);
+    }
+  }
+
   const fingerprintVerificationMode = options?.fingerprintVerificationMode ?? 'off';
   if (
     fingerprintVerificationMode === 'off' ||
-    resolved.value.source !== 'portable_package' ||
+    (resolved.value.source !== 'portable_package' && resolved.value.source !== 'portable_envelope') ||
     !resolved.value.portablePackage
   ) {
-    return resolved;
+    if (migrationWarnings.length === resolved.value.migrationWarnings.length) {
+      return resolved;
+    }
+    return {
+      ok: true,
+      value: {
+        ...resolved.value,
+        migrationWarnings,
+      },
+    };
   }
 
   const verification = await verifyPortablePackageFingerprintAsync(
@@ -741,7 +906,7 @@ export const resolvePortablePathInputAsync = async (
   if (!verification.ok) {
     return { ok: false, error: verification.error };
   }
-  if (verification.warnings.length === 0) {
+  if (verification.warnings.length === 0 && migrationWarnings.length === resolved.value.migrationWarnings.length) {
     return resolved;
   }
 
@@ -749,7 +914,7 @@ export const resolvePortablePathInputAsync = async (
     ok: true,
     value: {
       ...resolved.value,
-      migrationWarnings: [...resolved.value.migrationWarnings, ...verification.warnings],
+      migrationWarnings: [...migrationWarnings, ...verification.warnings],
     },
   };
 };
@@ -785,6 +950,7 @@ const toJsonSchemaRecord = (schema: z.ZodTypeAny): Record<string, unknown> =>
   z.toJSONSchema(schema) as Record<string, unknown>;
 
 export const buildPortablePathJsonSchemaCatalog = (): PortablePathJsonSchemaCatalog => ({
+  portable_envelope: toJsonSchemaRecord(aiPathPortablePackageEnvelopeSchema),
   portable_package: toJsonSchemaRecord(aiPathPortablePackageSchema),
   semantic_canvas: toJsonSchemaRecord(canvasSemanticDocumentSchema),
   path_config: toJsonSchemaRecord(pathConfigSchema),
@@ -797,6 +963,12 @@ const createStableHashHex = (value: string): string =>
     hashString(`b:${value}`),
     hashString(`c:${value}`),
   ].join('');
+
+const normalizeOptionalSecret = (value: string | undefined): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
 
 const removeTopLevelFingerprint = (input: unknown): unknown => {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return input;
@@ -816,10 +988,109 @@ const normalizePortableFingerprintInput = (input: unknown): unknown => {
   }
 };
 
+const removeTopLevelEnvelopeSignature = (input: unknown): unknown => {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return input;
+  const record = input as Record<string, unknown>;
+  if (record['kind'] !== 'path_package_envelope') return input;
+  const { signature: _signature, ...rest } = record;
+  return rest;
+};
+
+const normalizePortableEnvelopeSignatureInput = (input: unknown): unknown => {
+  const withoutSignature = removeTopLevelEnvelopeSignature(input);
+  try {
+    return JSON.parse(JSON.stringify(withoutSignature)) as unknown;
+  } catch {
+    return withoutSignature;
+  }
+};
+
 const toHex = (bytes: Uint8Array): string =>
   Array.from(bytes)
     .map((byte: number): string => byte.toString(16).padStart(2, '0'))
     .join('');
+
+const computeHmacSha256Hex = async (message: string, secret: string): Promise<string | null> => {
+  if (
+    !globalThis.crypto?.subtle ||
+    typeof TextEncoder !== 'function'
+  ) {
+    return null;
+  }
+  const encoder = new TextEncoder();
+  const key = await globalThis.crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    {
+      name: 'HMAC',
+      hash: 'SHA-256',
+    },
+    false,
+    ['sign']
+  );
+  const signature = await globalThis.crypto.subtle.sign('HMAC', key, encoder.encode(message));
+  return toHex(new Uint8Array(signature));
+};
+
+export const computePortablePathEnvelopeSignatureSync = (
+  input: unknown,
+  options?: Pick<BuildPortablePathPackageEnvelopeOptions, 'secret' | 'keyId'>
+): PortablePathEnvelopeSignature => {
+  const normalized = stableStringify(normalizePortableEnvelopeSignatureInput(input));
+  const secret = normalizeOptionalSecret(options?.secret);
+  const stableInput = secret ? `${secret}:${normalized}` : normalized;
+  return {
+    algorithm: 'stable_hash_v1',
+    value: createStableHashHex(stableInput),
+    ...(options?.keyId ? { keyId: options.keyId } : {}),
+  };
+};
+
+export const computePortablePathEnvelopeSignature = async (
+  input: unknown,
+  options?: Pick<BuildPortablePathPackageEnvelopeOptions, 'secret' | 'keyId'>
+): Promise<PortablePathEnvelopeSignature> => {
+  const normalized = stableStringify(normalizePortableEnvelopeSignatureInput(input));
+  const secret = normalizeOptionalSecret(options?.secret);
+  if (secret) {
+    const hmac = await computeHmacSha256Hex(normalized, secret);
+    if (hmac) {
+      return {
+        algorithm: 'hmac_sha256',
+        value: hmac,
+        ...(options?.keyId ? { keyId: options.keyId } : {}),
+      };
+    }
+  }
+  return computePortablePathEnvelopeSignatureSync(input, options);
+};
+
+export const buildPortablePathPackageEnvelope = async (
+  portablePackage: AiPathPortablePackage,
+  options?: BuildPortablePathPackageEnvelopeOptions
+): Promise<AiPathPortablePackageEnvelope> => {
+  const envelope: Omit<AiPathPortablePackageEnvelope, 'signature'> = {
+    specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
+    kind: 'path_package_envelope',
+    signedAt: options?.signedAt ?? new Date().toISOString(),
+    package: portablePackage,
+    ...(options?.metadata ? { metadata: options.metadata } : {}),
+  };
+  const signature = await computePortablePathEnvelopeSignature(envelope, {
+    secret: options?.secret,
+    keyId: options?.keyId,
+  });
+  return {
+    ...envelope,
+    signature,
+  };
+};
+
+export const serializePortablePathPackageEnvelope = async (
+  portablePackage: AiPathPortablePackage,
+  options?: BuildPortablePathPackageEnvelopeOptions
+): Promise<string> =>
+  JSON.stringify(await buildPortablePathPackageEnvelope(portablePackage, options), null, 2);
 
 export const computePortablePathFingerprintSync = (input: unknown): PortablePathFingerprint => {
   const normalized = stableStringify(normalizePortableFingerprintInput(input));
@@ -849,6 +1120,218 @@ export const computePortablePathFingerprint = async (
     };
   }
   return stableFingerprint;
+};
+
+export const verifyPortablePathPackageEnvelopeSignature = (
+  portableEnvelope: AiPathPortablePackageEnvelopeVersioned,
+  mode: PortablePathEnvelopeSignatureVerificationMode,
+  options?: Pick<ResolvePortablePathInputOptions, 'envelopeSignatureSecret'>
+):
+  | { ok: true; warnings: PortablePathMigrationWarning[] }
+  | { ok: false; error: string; warnings: PortablePathMigrationWarning[] } => {
+  if (mode === 'off') {
+    return { ok: true, warnings: [] };
+  }
+
+  const signature = portableEnvelope.signature;
+  if (!signature) {
+    const warning: PortablePathMigrationWarning = {
+      code: 'package_envelope_signature_missing',
+      message: 'Portable package envelope signature is missing.',
+    };
+    if (mode === 'strict') {
+      return {
+        ok: false,
+        error: `Portable package envelope verification failed: ${warning.message}`,
+        warnings: [warning],
+      };
+    }
+    return { ok: true, warnings: [warning] };
+  }
+
+  if (signature.algorithm === 'hmac_sha256') {
+    const secret = normalizeOptionalSecret(options?.envelopeSignatureSecret);
+    if (!secret) {
+      const warning: PortablePathMigrationWarning = {
+        code: 'package_envelope_signature_key_missing',
+        message:
+          'Portable package envelope hmac signature requires a verification secret. Provide envelopeSignatureSecret.',
+      };
+      if (mode === 'strict') {
+        return {
+          ok: false,
+          error: `Portable package envelope verification failed: ${warning.message}`,
+          warnings: [warning],
+        };
+      }
+      return { ok: true, warnings: [warning] };
+    }
+    const warning: PortablePathMigrationWarning = {
+      code: 'package_envelope_signature_async_required',
+      message:
+        'Portable package envelope hmac signature requires asynchronous verification. Use resolvePortablePathInputAsync for strict verification.',
+    };
+    if (mode === 'strict') {
+      return {
+        ok: false,
+        error: `Portable package envelope verification failed: ${warning.message}`,
+        warnings: [warning],
+      };
+    }
+    return { ok: true, warnings: [warning] };
+  }
+
+  if (signature.algorithm !== 'stable_hash_v1') {
+    const warning: PortablePathMigrationWarning = {
+      code: 'package_envelope_signature_unsupported_algorithm',
+      message: `Portable package envelope signature algorithm "${signature.algorithm}" cannot be synchronously verified during import.`,
+    };
+    if (mode === 'strict') {
+      return {
+        ok: false,
+        error: `Portable package envelope verification failed: ${warning.message}`,
+        warnings: [warning],
+      };
+    }
+    return { ok: true, warnings: [warning] };
+  }
+
+  const expectedSignature = computePortablePathEnvelopeSignatureSync(portableEnvelope, {
+    secret: options?.envelopeSignatureSecret,
+    keyId: signature.keyId,
+  });
+  if (signature.value !== expectedSignature.value) {
+    const warning: PortablePathMigrationWarning = {
+      code: 'package_envelope_signature_mismatch',
+      message: 'Portable package envelope signature does not match envelope contents.',
+    };
+    if (mode === 'strict') {
+      return {
+        ok: false,
+        error: `Portable package envelope verification failed: ${warning.message}`,
+        warnings: [warning],
+      };
+    }
+    return { ok: true, warnings: [warning] };
+  }
+
+  return { ok: true, warnings: [] };
+};
+
+export const verifyPortablePathPackageEnvelopeSignatureAsync = async (
+  portableEnvelope: AiPathPortablePackageEnvelopeVersioned,
+  mode: PortablePathEnvelopeSignatureVerificationMode,
+  options?: Pick<ResolvePortablePathInputOptions, 'envelopeSignatureSecret'>
+):
+  Promise<
+    | { ok: true; warnings: PortablePathMigrationWarning[] }
+    | { ok: false; error: string; warnings: PortablePathMigrationWarning[] }
+  > => {
+  if (mode === 'off') {
+    return { ok: true, warnings: [] };
+  }
+
+  const signature = portableEnvelope.signature;
+  if (!signature) {
+    const warning: PortablePathMigrationWarning = {
+      code: 'package_envelope_signature_missing',
+      message: 'Portable package envelope signature is missing.',
+    };
+    if (mode === 'strict') {
+      return {
+        ok: false,
+        error: `Portable package envelope verification failed: ${warning.message}`,
+        warnings: [warning],
+      };
+    }
+    return { ok: true, warnings: [warning] };
+  }
+
+  if (signature.algorithm === 'stable_hash_v1') {
+    const expectedSignature = computePortablePathEnvelopeSignatureSync(portableEnvelope, {
+      secret: options?.envelopeSignatureSecret,
+      keyId: signature.keyId,
+    });
+    if (signature.value !== expectedSignature.value) {
+      const warning: PortablePathMigrationWarning = {
+        code: 'package_envelope_signature_mismatch',
+        message: 'Portable package envelope signature does not match envelope contents.',
+      };
+      if (mode === 'strict') {
+        return {
+          ok: false,
+          error: `Portable package envelope verification failed: ${warning.message}`,
+          warnings: [warning],
+        };
+      }
+      return { ok: true, warnings: [warning] };
+    }
+    return { ok: true, warnings: [] };
+  }
+
+  if (signature.algorithm === 'hmac_sha256') {
+    const secret = normalizeOptionalSecret(options?.envelopeSignatureSecret);
+    if (!secret) {
+      const warning: PortablePathMigrationWarning = {
+        code: 'package_envelope_signature_key_missing',
+        message:
+          'Portable package envelope hmac signature requires a verification secret. Provide envelopeSignatureSecret.',
+      };
+      if (mode === 'strict') {
+        return {
+          ok: false,
+          error: `Portable package envelope verification failed: ${warning.message}`,
+          warnings: [warning],
+        };
+      }
+      return { ok: true, warnings: [warning] };
+    }
+    const normalized = stableStringify(normalizePortableEnvelopeSignatureInput(portableEnvelope));
+    const hmac = await computeHmacSha256Hex(normalized, secret);
+    if (!hmac) {
+      const warning: PortablePathMigrationWarning = {
+        code: 'package_envelope_signature_verification_unavailable',
+        message:
+          'Portable package envelope hmac signature verification is unavailable in this runtime (crypto.subtle not available).',
+      };
+      if (mode === 'strict') {
+        return {
+          ok: false,
+          error: `Portable package envelope verification failed: ${warning.message}`,
+          warnings: [warning],
+        };
+      }
+      return { ok: true, warnings: [warning] };
+    }
+    if (hmac !== signature.value) {
+      const warning: PortablePathMigrationWarning = {
+        code: 'package_envelope_signature_mismatch',
+        message: 'Portable package envelope signature does not match envelope contents.',
+      };
+      if (mode === 'strict') {
+        return {
+          ok: false,
+          error: `Portable package envelope verification failed: ${warning.message}`,
+          warnings: [warning],
+        };
+      }
+      return { ok: true, warnings: [warning] };
+    }
+    return { ok: true, warnings: [] };
+  }
+
+  const warning: PortablePathMigrationWarning = {
+    code: 'package_envelope_signature_unsupported_algorithm',
+    message: `Portable package envelope signature algorithm "${signature.algorithm}" is not supported for verification.`,
+  };
+  if (mode === 'strict') {
+    return {
+      ok: false,
+      error: `Portable package envelope verification failed: ${warning.message}`,
+      warnings: [warning],
+    };
+  }
+  return { ok: true, warnings: [warning] };
 };
 
 const verifyPortablePackageFingerprint = (
@@ -1044,19 +1527,19 @@ export const validatePortablePathConfig = (
   const preflightReport =
     mode === 'strict'
       ? evaluateRunPreflight({
-          nodes: pathConfig.nodes,
-          edges: pathConfig.edges,
-          aiPathsValidation: pathConfig.aiPathsValidation,
-          strictFlowMode: pathConfig.strictFlowMode !== false,
-          triggerNodeId: options?.triggerNodeId ?? null,
-          runtimeState:
+        nodes: pathConfig.nodes,
+        edges: pathConfig.edges,
+        aiPathsValidation: pathConfig.aiPathsValidation,
+        strictFlowMode: pathConfig.strictFlowMode !== false,
+        triggerNodeId: options?.triggerNodeId ?? null,
+        runtimeState:
             pathConfig.runtimeState && typeof pathConfig.runtimeState === 'object'
               ? (pathConfig.runtimeState as RuntimeState)
               : null,
-          parserSamples,
-          updaterSamples,
-          mode: 'full',
-        })
+        parserSamples,
+        updaterSamples,
+        mode: 'full',
+      })
       : null;
 
   return {
@@ -1135,6 +1618,8 @@ export const runPortablePathClient = async (
     enforcePayloadLimits = true,
     limits,
     fingerprintVerificationMode = 'off',
+    envelopeSignatureVerificationMode = 'off',
+    envelopeSignatureSecret,
     reportAiPathsError,
     ...engineOptions
   } = options;
@@ -1145,6 +1630,8 @@ export const runPortablePathClient = async (
     enforcePayloadLimits,
     limits,
     fingerprintVerificationMode,
+    envelopeSignatureVerificationMode,
+    envelopeSignatureSecret,
   });
   if (!resolved.ok) {
     throw new Error(`Invalid AI-Path payload: ${resolved.error}`);
@@ -1152,9 +1639,9 @@ export const runPortablePathClient = async (
 
   const validation = validateBeforeRun
     ? validatePortablePathConfig(resolved.value.pathConfig, {
-        mode: validationMode,
-        triggerNodeId: validationTriggerNodeId,
-      })
+      mode: validationMode,
+      triggerNodeId: validationTriggerNodeId,
+    })
     : null;
   if (validation && !validation.ok) {
     throw new PortablePathValidationError(validation);

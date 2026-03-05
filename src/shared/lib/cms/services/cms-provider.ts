@@ -35,5 +35,5 @@ export const getCmsDataProvider = async (): Promise<CmsDbProvider> => {
   }
 
   const provider = await getAppDbProvider();
-  return provider as CmsDbProvider;
+  return provider;
 };

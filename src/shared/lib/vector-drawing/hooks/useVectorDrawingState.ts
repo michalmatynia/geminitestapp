@@ -4,13 +4,13 @@ import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useShapeHistory } from '../useShapeHistory';
 import { smoothShape, simplifyShape } from '../geometry';
 import { vectorShapesToPath } from '@/shared/ui';
-import type { VectorShape, VectorToolMode } from '@/shared/contracts/vector';
+import type {
+  VectorOverlayResult as VectorDrawingOutput,
+  VectorShape,
+  VectorToolMode,
+} from '@/shared/contracts/vector';
 
-export type VectorDrawingOutput = {
-  shapes: VectorShape[];
-  path: string;
-  points: Array<{ shapeId: string; points: VectorShape['points'] }>;
-};
+export type { VectorDrawingOutput };
 
 const buildOutput = (shapes: VectorShape[]): VectorDrawingOutput => ({
   shapes,

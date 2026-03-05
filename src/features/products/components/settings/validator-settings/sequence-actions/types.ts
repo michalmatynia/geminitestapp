@@ -5,13 +5,18 @@ import type {
 import { ProductValidationPattern, SequenceGroupDraft } from '@/shared/contracts/products';
 import { QueryClient } from '@tanstack/react-query';
 
-export type CreatePatternMutation = {
-  mutateAsync: (payload: CreateValidationPatternPayload) => Promise<unknown>;
+type ValidationPatternMutation<TPayload> = {
+  mutateAsync: (payload: TPayload) => Promise<unknown>;
 };
 
-export type UpdatePatternMutation = {
-  mutateAsync: (payload: { id: string; data: UpdateValidationPatternPayload }) => Promise<unknown>;
-};
+type CreatePatternMutation = ValidationPatternMutation<CreateValidationPatternPayload>;
+
+type UpdatePatternMutation = ValidationPatternMutation<{
+  id: string;
+  data: UpdateValidationPatternPayload;
+}>;
+
+export type { CreatePatternMutation, UpdatePatternMutation };
 
 export type SequenceGroup = {
   id: string;

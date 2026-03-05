@@ -2996,3 +2996,53 @@ Continue opportunistic canonicalization in remaining non-critical surfaces outsi
   - `npm run typecheck` currently fails due unrelated repository typing drift:
     - `src/features/products/validations/context.tsx:7` (`TS2307: Cannot find module './validators' or its corresponding type declarations.`)
     - `src/features/products/validations/hooks.ts:5` (`TS2307: Cannot find module './validators' or its corresponding type declarations.`)
+
+## Executed Item 155 (AI Paths Portable-Engine Path-Config Warning-Channel Canonicalization)
+
+- Canonicalized portable-engine path-config migration warning naming/channel:
+  - `src/shared/lib/ai-paths/portable-engine/index.ts`
+  - `PortablePathMigrationWarningCode`:
+    - `'legacy_path_config_upgraded'` -> `'path_config_upgraded'`
+  - warning message:
+    - `Legacy path config payload upgraded to portable package v1.` -> `Path config payload upgraded to portable package v1.`
+  - local migration variable:
+    - `normalizedLegacyPathConfig` -> `normalizedPathConfig`
+- Updated portable-engine test coverage for renamed warning code:
+  - `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts`
+  - path-config migration assertion now expects:
+    - `warning.code === 'path_config_upgraded'`
+- Extended AI Paths bulk-prune manifest guardrails:
+  - `scripts/ai-paths/legacy-prune-manifest.json`
+  - added rule:
+    - `portable_engine_path_config_warning_channel`
+  - total bulk-prune coverage now:
+    - `57` rules
+    - `82` targets
+- Validation:
+  - `npx vitest run src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts __tests__/scripts/ai-paths/legacy-prune-manifest-utils.test.ts` passes (`32` tests).
+  - `npm run ai-paths:bulk-prune:scan` passes (`57` rules across `82` targets).
+  - `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` passes.
+  - `npm run ai-paths:check:canonical` passes (`4216` files scanned).
+  - `npm run ai-paths:bulk-prune:report` passes.
+  - `npm run typecheck` currently fails due unrelated repository typing drift:
+    - `src/features/observability/context/SystemLogsContext.tsx:529` (`TS2353: Object literal may only specify known properties, and 'setPage' does not exist in type 'SystemLogsStateContextValue'.`)
+
+## Executed Item 156 (AI Paths Portable-Engine Warning-Channel Site-Wide Guardrail Alignment)
+
+- Extended site-wide canonical guardrails for portable-engine warning-channel canonicalization:
+  - `scripts/canonical/check-sitewide.mjs`
+  - added forbidden runtime guard tokens:
+    - `legacy_path_config_upgraded`
+    - `Legacy path config payload upgraded to portable package v1.`
+- Preserved AI Paths bulk-prune + canonical guardrail coverage:
+  - `scripts/ai-paths/legacy-prune-manifest.json`
+  - `scripts/ai-paths/check-canonical.mjs`
+  - bulk-prune coverage remains:
+    - `57` rules
+    - `82` targets
+- Validation:
+  - `npm run canonical:check:sitewide` passes (`3816` runtime source files and `4` docs artifacts validated).
+  - `npm run ai-paths:bulk-prune:scan` passes (`57` rules across `82` targets).
+  - `npm run ai-paths:check:canonical` passes (`4217` files scanned).
+  - `npm run typecheck` currently fails due unrelated repository typing drift:
+    - `src/features/cms/components/frontend/blocks/BlockContext.tsx:3` (`TS6133: 'React' is declared but its value is never read.`)

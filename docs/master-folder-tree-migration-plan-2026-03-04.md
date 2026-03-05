@@ -34,6 +34,26 @@ Operational follow-up required:
 2. Review generated report.
 3. Run in apply mode and optionally delete the legacy aggregate key (if present in that environment).
 
+## Execution Status (2026-03-05, Shell Runtime Decoupling)
+
+Completed in codebase:
+
+1. Introduced runtime bus factory + explicit runtime types:
+   - `src/features/foldertree/v2/runtime/createMasterFolderTreeRuntimeBus.ts`
+   - `src/features/foldertree/v2/runtime/types.ts`
+2. Refactored `MasterFolderTreeRuntimeProvider` to use the factory runtime object lifecycle (`dispose` on unmount) instead of embedding runtime state/event logic directly.
+3. Added shell runtime injection primitives:
+   - `useFolderTreeShellRuntime`
+   - `useSharedMasterFolderTreeRuntime`
+4. Updated v2 internals to consume injected runtime (with context fallback):
+   - `useFolderTreeInstanceV2`
+   - `useFolderTreeTransaction`
+   - `useFolderTreeKeyboardNav`
+   - `useFolderTreeUiState`
+   - `useMasterFolderTreeShell`
+   - `FolderTreeViewportV2`
+5. Migrated `RelationTreeBrowser` to a self-contained shared runtime coordinator (no hard provider dependency for tree runtime behavior) and updated related tests to run without `MasterFolderTreeRuntimeProvider`.
+
 ## Canonical Target (Newest Form)
 
 - Runtime/UI: `useMasterFolderTreeShell` + `FolderTreeViewportV2` for all interactive instances.

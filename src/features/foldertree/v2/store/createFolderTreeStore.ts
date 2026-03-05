@@ -1,12 +1,9 @@
 import type { FolderTreeState, FolderTreeStoreSnapshot } from '../types';
+import type { SnapshotStateStore } from '@/shared/contracts/state-store';
 
-export type FolderTreeStore = {
-  getSnapshot: () => FolderTreeStoreSnapshot;
-  getState: () => FolderTreeState;
-  setState: (nextState: FolderTreeState) => void;
-  patchState: (updater: (prev: FolderTreeState) => FolderTreeState) => void;
-  subscribe: (listener: () => void) => () => void;
-};
+type FolderTreeStore = SnapshotStateStore<FolderTreeState, FolderTreeStoreSnapshot>;
+
+export type { FolderTreeStore };
 
 const cloneSnapshot = (state: FolderTreeState, rootsVersion: number): FolderTreeStoreSnapshot => ({
   state,

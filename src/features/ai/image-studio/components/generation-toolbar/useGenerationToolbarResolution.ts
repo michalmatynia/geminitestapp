@@ -30,7 +30,7 @@ export function useGenerationToolbarResolution(state: GenerationToolbarState) {
     const frameBinding = getPreviewCanvasImageFrame();
     if (!frameBinding) return null;
     if (frameBinding.slotId !== normalizedWorkingSlotId) return null;
-    return frameBinding.frame as ImageContentFrame;
+    return frameBinding.frame;
   }, [getPreviewCanvasImageFrame, workingSlot?.id]);
 
   const resolveWorkingSourceDimensions = useCallback(async (): Promise<{

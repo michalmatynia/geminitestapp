@@ -1,12 +1,12 @@
 {
   "summary": {
-    "generatedAt": "2026-03-05T02:53:17.980Z",
+    "generatedAt": "2026-03-05T03:05:53.952Z",
     "mode": "apply",
     "dryRun": true,
     "manifestPath": "scripts/ai-paths/legacy-prune-manifest.json",
     "manifestVersion": "phase2-2026-03-05",
-    "ruleCount": 56,
-    "targetCount": 81,
+    "ruleCount": 57,
+    "targetCount": 82,
     "changedFileCount": 0,
     "replacedSnippetCount": 0,
     "findingCount": 0,
@@ -1237,6 +1237,16 @@
         "replacements": []
       },
       {
+        "ruleId": "portable_engine_path_config_warning_channel",
+        "mode": "file",
+        "expectedState": "present",
+        "file": "src/shared/lib/ai-paths/portable-engine/index.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
         "ruleId": "legacy_validation_key_runtime_source_scan",
         "mode": "source_scan",
         "expectedState": "present",
@@ -1245,7 +1255,7 @@
         "changed": false,
         "replacementCount": 0,
         "replacements": [],
-        "scannedFileCount": 3812
+        "scannedFileCount": 3815
       },
       {
         "ruleId": "legacy_index_key_runtime_source_scan",
@@ -1256,7 +1266,7 @@
         "changed": false,
         "replacementCount": 0,
         "replacements": [],
-        "scannedFileCount": 3812
+        "scannedFileCount": 3815
       },
       {
         "ruleId": "forbidden_maintenance_action_ids_runtime_source_scan",
@@ -1267,7 +1277,7 @@
         "changed": false,
         "replacementCount": 0,
         "replacements": [],
-        "scannedFileCount": 3812
+        "scannedFileCount": 3815
       },
       {
         "ruleId": "trigger_fetcher_migration_module_removed",
@@ -1288,7 +1298,7 @@
         "changed": false,
         "replacementCount": 0,
         "replacements": [],
-        "scannedFileCount": 3812
+        "scannedFileCount": 3815
       },
       {
         "ruleId": "legacy_dbquery_provider_migration_tokens_runtime_source_scan",
@@ -1299,7 +1309,7 @@
         "changed": false,
         "replacementCount": 0,
         "replacements": [],
-        "scannedFileCount": 3812
+        "scannedFileCount": 3815
       },
       {
         "ruleId": "feature_run_sources_duplicate_module_removed",

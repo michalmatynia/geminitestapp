@@ -4,7 +4,10 @@ import { AlertTriangle, Monitor, SearchIcon, Eye } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
-import { useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
+import {
+  useSystemLogsActions,
+  useSystemLogsState,
+} from '@/features/observability/context/SystemLogsContext';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 import {
@@ -39,11 +42,10 @@ export function EventStreamPanel(): React.JSX.Element {
     total,
     totalPages,
     page,
-    setPage,
     interpretLogMutation,
     logInterpretations,
-    handleFilterChange,
-  } = useSystemLogsContext();
+  } = useSystemLogsState();
+  const { setPage, handleFilterChange } = useSystemLogsActions();
   const aiInterpretationTooltip =
     getDocumentationTooltip(
       DOCUMENTATION_MODULE_IDS.observability,

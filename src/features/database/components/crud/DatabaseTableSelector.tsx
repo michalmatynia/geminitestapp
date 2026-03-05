@@ -2,20 +2,15 @@ import React from 'react';
 import { PlusIcon } from 'lucide-react';
 
 import { Button, SearchableSelect } from '@/shared/ui';
-import { useCrudPanelContext } from '../../context/CrudPanelContext';
+import {
+  useCrudPanelActionsContext,
+  useCrudPanelStateContext,
+} from '../../context/CrudPanelContext';
 
 export function DatabaseTableSelector(): React.JSX.Element {
-  const {
-    selectedTable,
-    setSelectedTable,
-    tableDetails,
-    onRefresh,
-    onAddRow,
-    isFetching,
-    setPage,
-    setMutationError,
-    setSuccessMessage,
-  } = useCrudPanelContext();
+  const { selectedTable, tableDetails, isFetching } = useCrudPanelStateContext();
+  const { setSelectedTable, onRefresh, onAddRow, setPage, setMutationError, setSuccessMessage } =
+    useCrudPanelActionsContext();
   return (
     <div className='flex flex-wrap items-center gap-3'>
       <SearchableSelect

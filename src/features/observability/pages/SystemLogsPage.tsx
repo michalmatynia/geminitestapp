@@ -5,7 +5,8 @@ import React, { Suspense } from 'react';
 
 import {
   SystemLogsProvider,
-  useSystemLogsContext,
+  useSystemLogsActions,
+  useSystemLogsState,
 } from '@/features/observability/context/SystemLogsContext';
 import { type SystemLogFilterFormValues } from '@/shared/lib/observability/log-triage-presets';
 import { Button, PageLayout, CopyButton, Card, LoadingState } from '@/shared/ui';
@@ -34,16 +35,14 @@ function SystemLogsContent(): React.JSX.Element {
     category,
     fromDate,
     toDate,
-    handleFilterChange,
-    handleResetFilters,
     logs,
     logsJson,
     logsQuery,
     metricsQuery,
-    confirmAction,
-    handleClearLogs,
     clearLogsMutation,
-  } = useSystemLogsContext();
+  } = useSystemLogsState();
+  const { handleFilterChange, handleResetFilters, confirmAction, handleClearLogs } =
+    useSystemLogsActions();
 
   const currentFilterValues: SystemLogFilterFormValues = {
     level,

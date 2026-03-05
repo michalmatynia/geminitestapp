@@ -16,7 +16,10 @@ import {
   Tooltip,
 } from '@/shared/ui';
 
-import { useProductImageManagerUI } from './ProductImageManagerUIContext';
+import {
+  useProductImageManagerUIActions,
+  useProductImageManagerUIState,
+} from './ProductImageManagerUIContext';
 
 interface ProductImageSlotProps {
   index: number;
@@ -37,6 +40,8 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
     showDragHandle,
     minimalSingleSlotAlign,
     controller,
+  } = useProductImageManagerUIState();
+  const {
     setSlotViewMode,
     convertSlotToBase64,
     convertLinkToFile,
@@ -48,7 +53,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
     handleDragOver,
     handleDragLeave,
     handleDrop,
-  } = useProductImageManagerUI();
+  } = useProductImageManagerUIActions();
 
   const { imageSlots, imageLinks, imageBase64s, setImageLinkAt, setImageBase64At } = controller;
 

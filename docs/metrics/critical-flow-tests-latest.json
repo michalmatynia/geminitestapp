@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-03-05T02:55:31.445Z",
-  "strictMode": false,
+  "generatedAt": "2026-03-05T03:11:23.773Z",
+  "strictMode": true,
   "summary": {
     "total": 5,
     "passed": 5,
@@ -17,8 +17,8 @@
       "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 7202,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (8 tests) 806ms\n\n Test Files  1 passed (1)\n      Tests  8 passed (8)\n   Start at  03:55:13\n   Duration  5.86s (transform 2.20s, setup 541ms, import 2.97s, tests 806ms, environment 1.24s)"
+      "durationMs": 3700,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (8 tests) 659ms\n\n Test Files  1 passed (1)\n      Tests  8 passed (8)\n   Start at  04:11:12\n   Duration  2.74s (transform 886ms, setup 230ms, import 1.26s, tests 659ms, environment 475ms)"
     },
     {
       "id": "products-core-crud",
@@ -30,8 +30,8 @@
       "command": "npx vitest run --project unit __tests__/features/products/services/getSettingValue.test.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 2638,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/products/services/getSettingValue.test.ts (5 tests) 7ms\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n   Start at  03:55:20\n   Duration  1.33s (transform 297ms, setup 421ms, import 178ms, tests 7ms, environment 586ms)"
+      "durationMs": 1445,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/products/services/getSettingValue.test.ts (5 tests) 6ms\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n   Start at  04:11:15\n   Duration  688ms (transform 124ms, setup 172ms, import 92ms, tests 6ms, environment 304ms)"
     },
     {
       "id": "image-studio-generate",
@@ -43,8 +43,8 @@
       "command": "npx vitest run --project unit src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 2645,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts (11 tests) 40ms\n\n Test Files  1 passed (1)\n      Tests  11 passed (11)\n   Start at  03:55:23\n   Duration  908ms (transform 174ms, setup 224ms, import 132ms, tests 40ms, environment 350ms)"
+      "durationMs": 1631,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts (11 tests) 21ms\n\n Test Files  1 passed (1)\n      Tests  11 passed (11)\n   Start at  04:11:17\n   Duration  762ms (transform 121ms, setup 190ms, import 68ms, tests 21ms, environment 357ms)"
     },
     {
       "id": "ai-paths-runtime",
@@ -56,8 +56,8 @@
       "command": "npx vitest run --project unit __tests__/features/ai/ai-paths/services/path-run-executor.test.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 3918,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/ai/ai-paths/services/path-run-executor.test.ts (17 tests) 133ms\n\n Test Files  1 passed (1)\n      Tests  17 passed (17)\n   Start at  03:55:25\n   Duration  2.84s (transform 1.28s, setup 254ms, import 1.77s, tests 133ms, environment 501ms)"
+      "durationMs": 3242,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/ai/ai-paths/services/path-run-executor.test.ts (17 tests) 135ms\n\n Test Files  1 passed (1)\n      Tests  17 passed (17)\n   Start at  04:11:18\n   Duration  2.47s (transform 1.28s, setup 199ms, import 1.72s, tests 135ms, environment 293ms)"
     },
     {
       "id": "case-resolver-capture",
@@ -69,8 +69,8 @@
       "command": "npx vitest run --project unit src/features/case-resolver/__tests__/workspace-persistence.test.ts",
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 2703,
-      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/workspace-persistence.test.ts (35 tests) 69ms\n\n Test Files  1 passed (1)\n      Tests  35 passed (35)\n   Start at  03:55:29\n   Duration  1.98s (transform 816ms, setup 444ms, import 848ms, tests 69ms, environment 500ms)"
+      "durationMs": 2319,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/workspace-persistence.test.ts (35 tests) 77ms\n\n Test Files  1 passed (1)\n      Tests  35 passed (35)\n   Start at  04:11:22\n   Duration  1.42s (transform 489ms, setup 287ms, import 509ms, tests 77ms, environment 415ms)"
     }
   ]
 }

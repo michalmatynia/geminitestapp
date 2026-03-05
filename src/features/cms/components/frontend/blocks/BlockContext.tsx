@@ -1,14 +1,17 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import type { CSSProperties } from 'react';
+import { createContext, useContext } from 'react';
 
-import type { BlockInstance } from '../../../types/page-builder';
+import type { PreviewBlockProps } from '@/shared/contracts/cms';
 
-export interface BlockRenderContextValue {
-  block: BlockInstance;
-  mediaStyles: React.CSSProperties | null;
+type BlockRenderContextValue = {
+  block: PreviewBlockProps['block'];
+  mediaStyles: NonNullable<PreviewBlockProps['mediaStyles']> | CSSProperties | null;
   stretch: boolean;
-}
+};
+
+export type { BlockRenderContextValue };
 
 export const BlockSettingsContext = createContext<Record<string, unknown> | null>(null);
 export const BlockRenderContext = createContext<BlockRenderContextValue | null>(null);

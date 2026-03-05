@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { MasterFolderTreeRuntimeProvider } from '@/features/foldertree/v2/runtime/MasterFolderTreeRuntimeProvider';
 import { DocumentRelationSearchPanel } from '@/features/case-resolver/relation-search/components/DocumentRelationSearchPanel';
 import { parseCaseResolverWorkspace } from '@/features/case-resolver/settings';
 
@@ -82,9 +81,7 @@ describe('DocumentRelationSearchPanel tree integration', () => {
     const onLinkFile = vi.fn();
 
     render(
-      <MasterFolderTreeRuntimeProvider>
-        <DocumentRelationSearchPanel draftFileId='doc-a' isLocked={false} onLinkFile={onLinkFile} />
-      </MasterFolderTreeRuntimeProvider>
+      <DocumentRelationSearchPanel draftFileId='doc-a' isLocked={false} onLinkFile={onLinkFile} />
     );
 
     expandVisibleNodes();
@@ -97,14 +94,12 @@ describe('DocumentRelationSearchPanel tree integration', () => {
     const onLinkFile = vi.fn();
 
     render(
-      <MasterFolderTreeRuntimeProvider>
-        <DocumentRelationSearchPanel
-          draftFileId='doc-a'
-          isLocked={false}
-          onLinkFile={onLinkFile}
-          defaultScope='all_cases'
-        />
-      </MasterFolderTreeRuntimeProvider>
+      <DocumentRelationSearchPanel
+        draftFileId='doc-a'
+        isLocked={false}
+        onLinkFile={onLinkFile}
+        defaultScope='all_cases'
+      />
     );
 
     expandVisibleNodes();
@@ -124,16 +119,14 @@ describe('DocumentRelationSearchPanel tree integration', () => {
     const onLinkFile = vi.fn();
 
     render(
-      <MasterFolderTreeRuntimeProvider>
-        <DocumentRelationSearchPanel
-          draftFileId='doc-a'
-          isLocked={false}
-          onLinkFile={onLinkFile}
-          relationTreeInstance='case_resolver_document_relations'
-          defaultScope='all_cases'
-          defaultFileType='document'
-        />
-      </MasterFolderTreeRuntimeProvider>
+      <DocumentRelationSearchPanel
+        draftFileId='doc-a'
+        isLocked={false}
+        onLinkFile={onLinkFile}
+        relationTreeInstance='case_resolver_document_relations'
+        defaultScope='all_cases'
+        defaultFileType='document'
+      />
     );
 
     expandVisibleNodes();

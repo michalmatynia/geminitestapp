@@ -6,6 +6,7 @@ import type {
   ChatCompletionMessageParam,
 } from 'openai/resources/chat/completions';
 
+import type { SimpleChatMessage } from '@/shared/contracts/chatbot';
 import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/shared/contracts/image-studio';
 import { configurationError, operationFailedError } from '@/shared/errors/app-error';
 
@@ -16,10 +17,12 @@ import { readStoredSettingValue } from './server';
 
 export type BrainRuntimeVendor = BrainModelVendor;
 
-export type BrainChatMessage = {
-  role: 'system' | 'user' | 'assistant';
-  content: string | ChatCompletionContentPart[];
-};
+type BrainChatMessage = SimpleChatMessage<
+  string | ChatCompletionContentPart[],
+  'system' | 'user' | 'assistant'
+>;
+
+export type { BrainChatMessage };
 
 const OLLAMA_BASE_URL = resolveOllamaBaseUrl();
 

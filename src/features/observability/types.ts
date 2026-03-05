@@ -1,4 +1,8 @@
 import type { LabelValueOptionDto as AiPathRunDisplayModel } from '@/shared/contracts/ui';
+import type {
+  AlertEvidenceContext as WorkerAlertEvidenceContext,
+  AlertEvidenceSample as WorkerAlertEvidenceSample,
+} from '@/shared/lib/observability/workers/system-log-alerts/types';
 
 export type { AiPathRunDisplayModel };
 
@@ -34,21 +38,23 @@ export type ContextRegistryDisplay = {
   nodes: ContextRegistryNodeDisplay[];
 };
 
-export type AlertEvidenceSampleDisplay = {
-  logId: string | null;
-  createdAt: string | null;
-  level: string | null;
-  source: string | null;
-  message: string | null;
-  fingerprint: string | null;
+type AlertEvidenceSampleDisplay = {
+  logId: WorkerAlertEvidenceSample['logId'] | null;
+  createdAt: WorkerAlertEvidenceSample['createdAt'] | null;
+  level: WorkerAlertEvidenceSample['level'] | null;
+  source: WorkerAlertEvidenceSample['source'] | null;
+  message: WorkerAlertEvidenceSample['message'] | null;
+  fingerprint: WorkerAlertEvidenceSample['fingerprint'] | null;
   contextRegistry: ContextRegistryDisplay | null;
 };
 
-export type AlertEvidenceDisplay = {
-  matchedCount: number | null;
-  sampleSize: number | null;
-  windowStart: string | null;
-  windowEnd: string | null;
+type AlertEvidenceDisplay = {
+  matchedCount: WorkerAlertEvidenceContext['matchedCount'] | null;
+  sampleSize: WorkerAlertEvidenceContext['sampleSize'] | null;
+  windowStart: WorkerAlertEvidenceContext['windowStart'] | null;
+  windowEnd: WorkerAlertEvidenceContext['windowEnd'] | null;
   lastObservedLog: AlertEvidenceSampleDisplay | null;
   samples: AlertEvidenceSampleDisplay[];
 };
+
+export type { AlertEvidenceDisplay, AlertEvidenceSampleDisplay };

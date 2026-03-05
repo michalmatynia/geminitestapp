@@ -23,7 +23,11 @@ import {
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useCrudPanelState, type UseCrudPanelStateReturn } from '../hooks/useCrudPanelState';
-import { CrudPanelProvider } from '../context/CrudPanelContext';
+import {
+  CrudPanelProvider,
+  type CrudPanelActionsContextValue,
+  type CrudPanelStateContextValue,
+} from '../context/CrudPanelContext';
 import { DatabaseTableSelector } from './crud/DatabaseTableSelector';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -261,20 +265,22 @@ export function CrudPanel(props: {
       </div>
     ) : null;
 
+  const stateValue: CrudPanelStateContextValue = {
+    selectedTable,
+    tableDetails,
+    isFetching: rowsQuery.isFetching,
+  };
+  const actionsValue: CrudPanelActionsContextValue = {
+    setSelectedTable,
+    onRefresh: fetchRows,
+    onAddRow: () => setShowAddModal(true),
+    setPage,
+    setMutationError,
+    setSuccessMessage,
+  };
+
   return (
-    <CrudPanelProvider
-      value={{
-        selectedTable,
-        setSelectedTable,
-        tableDetails,
-        onRefresh: fetchRows,
-        onAddRow: () => setShowAddModal(true),
-        isFetching: rowsQuery.isFetching,
-        setPage,
-        setMutationError,
-        setSuccessMessage,
-      }}
-    >
+    <CrudPanelProvider stateValue={stateValue} actionsValue={actionsValue}>
       <div className='space-y-4'>
         {selectedTable ? (
           <StandardDataTablePanel

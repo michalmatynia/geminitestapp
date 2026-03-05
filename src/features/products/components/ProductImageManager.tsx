@@ -5,7 +5,7 @@ import type { ProductImageManagerController } from '@/shared/contracts/product-i
 import { ProductImageManagerHeader } from './ProductImageManagerHeader';
 import {
   ProductImageManagerUIProvider,
-  useProductImageManagerUI,
+  useProductImageManagerUIState,
 } from './ProductImageManagerUIContext';
 import { ProductImageSlot } from './ProductImageSlot';
 
@@ -19,7 +19,7 @@ interface ProductImageManagerProps {
 }
 
 function ProductImageManagerGrid() {
-  const { controller, minimalUi, minimalSingleSlotAlign } = useProductImageManagerUI();
+  const { controller, minimalUi, minimalSingleSlotAlign } = useProductImageManagerUIState();
   const { imageSlots } = controller;
 
   const gridClass = minimalUi

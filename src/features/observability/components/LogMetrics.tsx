@@ -2,12 +2,12 @@
 
 import React from 'react';
 
-import { useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
+import { useSystemLogsState } from '@/features/observability/context/SystemLogsContext';
 import { Card, FormSection, Hint, LoadingState, MetadataItem, StatusBadge } from '@/shared/ui';
 import { formatTimestamp } from '../utils/formatTimestamp';
 
 export function LogMetrics(): React.JSX.Element {
-  const { metricsQuery, metrics, levels } = useSystemLogsContext();
+  const { metricsQuery, metrics, levels } = useSystemLogsState();
   const topSources = metrics?.topSources ?? [];
   const topServices = metrics?.topServices ?? [];
   const topPaths = metrics?.topPaths ?? [];

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-05T02:55:41.153Z",
+  "generatedAt": "2026-03-05T03:11:07.206Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -10,54 +10,61 @@
   },
   "filters": {
     "domains": [],
-    "minRisk": 12
+    "minRisk": 8
   },
   "thresholds": {
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 4216,
-    "exportedDeclarationsScanned": 3381,
-    "candidateDeclarationsScanned": 3353,
+    "filesScanned": 4217,
+    "exportedDeclarationsScanned": 3376,
+    "candidateDeclarationsScanned": 3348,
     "exactShapeClusters": 86,
-    "nearShapeClusters": 32,
-    "clustersAfterFilters": 9,
-    "declarationsInClusters": 18,
-    "highestRiskScore": 18
+    "nearShapeClusters": 24,
+    "clustersAfterFilters": 110,
+    "declarationsInClusters": 223,
+    "highestRiskScore": 11
   },
   "clusters": [
     {
-      "clusterId": "near-0008",
-      "clusterKind": "near-shape",
+      "clusterId": "exact-0001",
+      "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 18,
-      "declarationCount": 2,
+      "riskScore": 11,
+      "declarationCount": 3,
       "domains": [
-        "feature:case-resolver",
-        "feature:foldertree"
+        "feature:ai"
       ],
       "signature": {
         "shapeKind": "structural-members",
-        "normalizedShapeHash": "ae107052d9a6",
-        "memberCount": 5,
-        "preview": "prop:getSnapshot:() => CaseResolverRuntimeSnapshot; prop:getState:() => CaseResolverRuntimeState; prop:patchState:(updater: (current: CaseResolverRuntimeState) => CaseResolverRuntimeState) => void; prop:setState:(nextState: CaseResolverRuntimeState) => void; prop:subscribe:(listener: () => void) => () => void"
+        "normalizedShapeHash": "27b1b0b04d59",
+        "memberCount": 2,
+        "preview": "prop:x:number; prop:y:number"
       },
       "declarations": [
         {
-          "name": "FolderTreeStore",
-          "kind": "type",
-          "path": "src/features/foldertree/v2/store/createFolderTreeStore.ts",
-          "line": 3,
-          "domain": "feature:foldertree",
-          "usageCount": 6
+          "name": "CanvasImageOffset",
+          "kind": "interface",
+          "path": "src/features/ai/image-studio/context/UiContext.tsx",
+          "line": 27,
+          "domain": "feature:ai",
+          "usageCount": 0
         },
         {
-          "name": "CaseResolverRuntimeStore",
+          "name": "ImageStudioSequencePoint",
           "kind": "type",
-          "path": "src/features/case-resolver/runtime/store.ts",
-          "line": 3,
-          "domain": "feature:case-resolver",
-          "usageCount": 2
+          "path": "src/features/ai/image-studio/studio-sequencing-settings.ts",
+          "line": 50,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "ImageStudioSequencePoint",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
+          "line": 50,
+          "domain": "feature:ai",
+          "usageCount": 0
         }
       ],
       "notes": [
@@ -65,36 +72,89 @@
       ]
     },
     {
-      "clusterId": "near-0018",
-      "clusterKind": "near-shape",
+      "clusterId": "exact-0002",
+      "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 13,
-      "declarationCount": 2,
+      "riskScore": 11,
+      "declarationCount": 3,
       "domains": [
-        "feature:products"
+        "feature:ai"
       ],
       "signature": {
         "shapeKind": "structural-members",
-        "normalizedShapeHash": "8797bd5e9c40",
+        "normalizedShapeHash": "d63f423ba556",
+        "memberCount": 4,
+        "preview": "prop:height:number; prop:width:number; prop:x:number; prop:y:number"
+      },
+      "declarations": [
+        {
+          "name": "ImageStudioSequenceCropRect",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/studio-sequencing-settings.ts",
+          "line": 55,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "NormalizedImageFrame",
+          "kind": "interface",
+          "path": "src/features/ai/image-studio/utils/canvas-resize.ts",
+          "line": 14,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "ImageStudioSequenceCropRect",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
+          "line": 55,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0003",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 3,
+      "domains": [
+        "feature:integrations"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "76dd3a16b776",
         "memberCount": 1,
-        "preview": "prop:mutateAsync:(payload: CreateValidationPatternPayload) => Promise<unknown>"
+        "preview": "prop:inventoryId?:string | null"
       },
       "declarations": [
         {
-          "name": "CreatePatternMutation",
+          "name": "FetchBaseCategoriesOptions",
           "kind": "type",
-          "path": "src/features/products/components/settings/validator-settings/sequence-actions/types.ts",
-          "line": 8,
-          "domain": "feature:products",
-          "usageCount": 3
+          "path": "src/features/integrations/services/imports/base-client/categories.ts",
+          "line": 6,
+          "domain": "feature:integrations",
+          "usageCount": 0
         },
         {
-          "name": "UpdatePatternMutation",
+          "name": "FetchBaseProducersOptions",
           "kind": "type",
-          "path": "src/features/products/components/settings/validator-settings/sequence-actions/types.ts",
-          "line": 12,
-          "domain": "feature:products",
-          "usageCount": 2
+          "path": "src/features/integrations/services/imports/base-client/producers-tags.ts",
+          "line": 11,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        },
+        {
+          "name": "FetchBaseTagsOptions",
+          "kind": "type",
+          "path": "src/features/integrations/services/imports/base-client/producers-tags.ts",
+          "line": 92,
+          "domain": "feature:integrations",
+          "usageCount": 0
         }
       ],
       "notes": [
@@ -102,37 +162,1166 @@
       ]
     },
     {
-      "clusterId": "near-0026",
-      "clusterKind": "near-shape",
+      "clusterId": "exact-0017",
+      "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 13,
+      "riskScore": 11,
       "declarationCount": 2,
       "domains": [
-        "shared",
+        "feature:ai",
         "shared:contracts"
       ],
       "signature": {
         "shapeKind": "structural-members",
-        "normalizedShapeHash": "167b2bb54710",
-        "memberCount": 2,
-        "preview": "prop:content:string; prop:role:'user' | 'assistant' | 'system' | string"
+        "normalizedShapeHash": "4a6a0348cac5",
+        "memberCount": 9,
+        "preview": "prop:attachments:File[]; prop:input:string; prop:isSending:boolean; prop:messages:ChatMessage[]; prop:sendMessage:() => Promise<void>; prop:setAttachments:React.Dispatch<React.SetStateAction<File[]>>; prop:setInput:React.Dispatch<React.SetStateAction<string>>; prop:setIsSending:React.Dispatch<React.SetStateAction<boolean>>"
       },
       "declarations": [
         {
-          "name": "SimpleChatMessage",
+          "name": "ChatbotMessagesData",
           "kind": "interface",
           "path": "src/shared/contracts/chatbot.ts",
-          "line": 145,
+          "line": 445,
           "domain": "shared:contracts",
+          "usageCount": 1
+        },
+        {
+          "name": "UseChatbotMessagesStateReturn",
+          "kind": "interface",
+          "path": "src/features/ai/chatbot/hooks/useChatbotMessagesState.ts",
+          "line": 12,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0018",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "72e5dd528757",
+        "memberCount": 4,
+        "preview": "prop:debugState:ChatbotDebugState; prop:latestAgentRunId:string | null; prop:setDebugState:React.Dispatch<React.SetStateAction<ChatbotDebugState>>; prop:setLatestAgentRunId:React.Dispatch<React.SetStateAction<string | null>>"
+      },
+      "declarations": [
+        {
+          "name": "ChatbotUIData",
+          "kind": "interface",
+          "path": "src/shared/contracts/chatbot.ts",
+          "line": 492,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        },
+        {
+          "name": "UseChatbotUIStateReturn",
+          "kind": "interface",
+          "path": "src/features/ai/chatbot/hooks/useChatbotUIState.ts",
+          "line": 6,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0029",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "9a65827b60e8",
+        "memberCount": 1,
+        "preview": "NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>"
+      },
+      "declarations": [
+        {
+          "name": "StudioSlotRecord",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/server/upscale/types.ts",
+          "line": 9,
+          "domain": "feature:ai",
+          "usageCount": 3
+        },
+        {
+          "name": "StudioSlotRecord",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/server/autoscale-service.ts",
+          "line": 38,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0061",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "1d50954fd148",
+        "memberCount": 1,
+        "preview": "Record<string, string>"
+      },
+      "declarations": [
+        {
+          "name": "AiPathsCollectionMap",
+          "kind": "type",
+          "path": "src/shared/lib/ai-paths/core/utils/collection-mapping.ts",
+          "line": 1,
+          "domain": "shared",
+          "usageCount": 1
+        },
+        {
+          "name": "ExportWarehouseByInventoryMap",
+          "kind": "type",
+          "path": "src/features/integrations/services/export-warehouse-preference.ts",
+          "line": 3,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0001",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "0f45aa41a4b4",
+        "memberCount": 7,
+        "preview": "prop:createNewSession:(initialSettings?: Partial<ChatSession['settings']>) => Promise<void>; prop:currentSessionId:string | null; prop:deleteSession:(id: string) => Promise<void>; prop:selectSession:React.Dispatch<React.SetStateAction<string | null>>; prop:sessionId:string | null; prop:sessions:ChatSession[]; prop:sessionsLoading:boolean"
+      },
+      "declarations": [
+        {
+          "name": "ChatbotSessionsData",
+          "kind": "interface",
+          "path": "src/shared/contracts/chatbot.ts",
+          "line": 482,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        },
+        {
+          "name": "UseChatbotSessionManagerReturn",
+          "kind": "interface",
+          "path": "src/features/ai/chatbot/hooks/useChatbotSessionManager.ts",
+          "line": 13,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0005",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "4b8323894d73",
+        "memberCount": 5,
+        "preview": "prop:message?:string; prop:ruleId?:string; prop:severity?:string; prop:suggestions?:Array<{ suggestion?: string; found?: string; comment?: string | null; }>; prop:title?:string"
+      },
+      "declarations": [
+        {
+          "name": "PromptExtractValidationIssue",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/components/studio-modals/prompt-extract-utils.ts",
+          "line": 15,
+          "domain": "feature:ai",
+          "usageCount": 3
+        },
+        {
+          "name": "PromptValidationIssue",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/prompt-validator.ts",
+          "line": 16,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0013",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:prompt-exploder",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "7ec5c3144cdc",
+        "memberCount": 2,
+        "preview": "prop:code:PromptExploderSettingsValidationErrorCode; prop:message:string"
+      },
+      "declarations": [
+        {
+          "name": "PromptExploderSettingsValidationError",
+          "kind": "type",
+          "path": "src/features/prompt-exploder/settings.ts",
+          "line": 59,
+          "domain": "feature:prompt-exploder",
+          "usageCount": 1
+        },
+        {
+          "name": "PortablePathMigrationWarning",
+          "kind": "type",
+          "path": "src/shared/lib/ai-paths/portable-engine/index.ts",
+          "line": 183,
+          "domain": "shared",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0021",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "6a307af82a56",
+        "memberCount": 1,
+        "preview": "prop:children:ExternalCategoryWithChildren[]"
+      },
+      "declarations": [
+        {
+          "name": "ProductCategoryWithChildren",
+          "kind": "interface",
+          "path": "src/shared/contracts/products/categories.ts",
+          "line": 22,
+          "domain": "shared:contracts",
+          "usageCount": 3
+        },
+        {
+          "name": "ExternalCategoryWithChildren",
+          "kind": "interface",
+          "path": "src/shared/contracts/integrations/listings.ts",
+          "line": 203,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0005",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "app"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "413764a6f707",
+        "memberCount": 1,
+        "preview": "prop:setting:string"
+      },
+      "declarations": [
+        {
+          "name": "SettingParams",
+          "kind": "type",
+          "path": "src/app/api/v2/integrations/exports/base/[setting]/handler.ts",
+          "line": 31,
+          "domain": "app",
+          "usageCount": 1
+        },
+        {
+          "name": "SettingParams",
+          "kind": "type",
+          "path": "src/app/api/v2/integrations/imports/base/[setting]/handler.ts",
+          "line": 15,
+          "domain": "app",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0007",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:admin",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "85bbb1590d1b",
+        "memberCount": 5,
+        "preview": "prop:deletionLocked:boolean; prop:description:string; prop:listId:string; prop:scope:string; prop:updatedAt:string | null"
+      },
+      "declarations": [
+        {
+          "name": "ValidatorListNodeMetadata",
+          "kind": "type",
+          "path": "src/features/admin/pages/validator-lists/validator-list-master-tree.ts",
+          "line": 21,
+          "domain": "feature:admin",
+          "usageCount": 0
+        },
+        {
+          "name": "ValidatorListNodeMetadata",
+          "kind": "type",
+          "path": "src/shared/contracts/validator.ts",
+          "line": 26,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0008",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "888d960fce32",
+        "memberCount": 1,
+        "preview": "'session' | 'longterm'"
+      },
+      "declarations": [
+        {
+          "name": "MemoryScope",
+          "kind": "type",
+          "path": "src/features/ai/agent-runtime/memory/index.ts",
+          "line": 13,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "MemoryScope",
+          "kind": "type",
+          "path": "src/shared/contracts/agent-runtime.ts",
+          "line": 213,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0011",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "c635103942e2",
+        "memberCount": 7,
+        "preview": "prop:edgesOverride?:Edge[] | undefined; prop:force?:boolean | undefined; prop:includeNodeConfig?:boolean | undefined; prop:nodeOverride?:AiNode | undefined; prop:nodesOverride?:AiNode[] | undefined; prop:pathNameOverride?:string | undefined; prop:silent?:boolean | undefined"
+      },
+      "declarations": [
+        {
+          "name": "PathSaveOptions",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.types.ts",
+          "line": 21,
+          "domain": "feature:ai",
           "usageCount": 2
         },
         {
-          "name": "BrainChatMessage",
+          "name": "SavePathConfigOptions",
+          "kind": "interface",
+          "path": "src/features/ai/ai-paths/context/PersistenceContext.tsx",
+          "line": 22,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0012",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "51f855cc80cf",
+        "memberCount": 4,
+        "preview": "prop:bundlePorts:string; prop:description:string; prop:name:string; prop:template:string"
+      },
+      "declarations": [
+        {
+          "name": "ClusterPresetDraft",
           "kind": "type",
-          "path": "src/shared/lib/ai-brain/server-runtime-client.ts",
-          "line": 19,
+          "path": "src/features/ai/ai-paths/components/cluster-presets-panel.tsx",
+          "line": 9,
+          "domain": "feature:ai",
+          "usageCount": 2
+        },
+        {
+          "name": "ClusterPresetDraft",
+          "kind": "interface",
+          "path": "src/features/ai/ai-paths/context/PresetsContext.tsx",
+          "line": 29,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0014",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "b120fe4ab691",
+        "memberCount": 1,
+        "preview": "'connecting' | 'live' | 'stopped' | 'paused'"
+      },
+      "declarations": [
+        {
+          "name": "StreamConnectionStatus",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/components/job-queue-panel-utils.ts",
+          "line": 110,
+          "domain": "feature:ai",
+          "usageCount": 2
+        },
+        {
+          "name": "RunStreamStatus",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/context/RunHistoryContext.tsx",
+          "line": 32,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0015",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "0f956a9a1b2b",
+        "memberCount": 2,
+        "preview": "prop:enabled:boolean; prop:storage:'redis' | 'disabled'"
+      },
+      "declarations": [
+        {
+          "name": "RuntimeAnalyticsAvailability",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/services/runtime-analytics-service.ts",
+          "line": 79,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "RuntimeAnalyticsAvailability",
+          "kind": "type",
+          "path": "src/shared/lib/ai-paths/services/runtime-analytics/availability.ts",
+          "line": 8,
           "domain": "shared",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0021",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "614191bd35c5",
+        "memberCount": 1,
+        "preview": "ImageStudioCenterShadowPolicy"
+      },
+      "declarations": [
+        {
+          "name": "ShadowPolicy",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/components/analysis/analysis-types.ts",
+          "line": 13,
+          "domain": "feature:ai",
+          "usageCount": 2
+        },
+        {
+          "name": "CenterShadowPolicy",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/components/generation-toolbar/GenerationToolbarImageUtils.types.ts",
+          "line": 55,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0022",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "5ea7c73b8066",
+        "memberCount": 1,
+        "preview": "ImageStudioCenterDetectionMode"
+      },
+      "declarations": [
+        {
+          "name": "DetectionMode",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/components/analysis/analysis-types.ts",
+          "line": 14,
+          "domain": "feature:ai",
+          "usageCount": 2
+        },
+        {
+          "name": "CenterDetectionMode",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/components/generation-toolbar/GenerationToolbarImageUtils.types.ts",
+          "line": 54,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0027",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "691988e6ee88",
+        "memberCount": 3,
+        "preview": "prop:canvasHeightPx?:number; prop:canvasWidthPx?:number; prop:projectId:string"
+      },
+      "declarations": [
+        {
+          "name": "ResizeStudioProjectCanvasPayload",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/hooks/useImageStudioMutations.ts",
+          "line": 57,
+          "domain": "feature:ai",
           "usageCount": 1
+        },
+        {
+          "name": "CreateStudioProjectPayload",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/hooks/useImageStudioMutations.ts",
+          "line": 63,
+          "domain": "feature:ai",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0047",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:case-resolver",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "7d911d92871b",
+        "memberCount": 1,
+        "preview": "'document' | 'relations'"
+      },
+      "declarations": [
+        {
+          "name": "WorkspaceView",
+          "kind": "type",
+          "path": "src/features/case-resolver/components/CaseResolverViewContext.tsx",
+          "line": 22,
+          "domain": "feature:case-resolver",
+          "usageCount": 0
+        },
+        {
+          "name": "WorkspaceView",
+          "kind": "type",
+          "path": "src/shared/contracts/case-resolver/base.ts",
+          "line": 153,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0049",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:case-resolver",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "964e6a1e5bf7",
+        "memberCount": 1,
+        "preview": "'loading' | 'ready' | 'missing'"
+      },
+      "declarations": [
+        {
+          "name": "CaseResolverRequestedCaseStatus",
+          "kind": "type",
+          "path": "src/features/case-resolver/hooks/useCaseResolverState.helpers.mutation.ts",
+          "line": 10,
+          "domain": "feature:case-resolver",
+          "usageCount": 0
+        },
+        {
+          "name": "CaseResolverRequestedCaseStatus",
+          "kind": "type",
+          "path": "src/shared/contracts/case-resolver/base.ts",
+          "line": 148,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0050",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:case-resolver",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "917fcd444ebe",
+        "memberCount": 1,
+        "preview": "| 'updated' | 'created' | 'happeningDate' | 'name' | 'status' | 'signature' | 'locked' | 'sent'"
+      },
+      "declarations": [
+        {
+          "name": "CaseSortKey",
+          "kind": "type",
+          "path": "src/features/case-resolver/pages/AdminCaseResolverCasesUtils.ts",
+          "line": 9,
+          "domain": "feature:case-resolver",
+          "usageCount": 0
+        },
+        {
+          "name": "CaseSortKey",
+          "kind": "type",
+          "path": "src/shared/contracts/case-resolver/base.ts",
+          "line": 112,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0051",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:case-resolver",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "52a9960e2de4",
+        "memberCount": 1,
+        "preview": "'asc' | 'desc'"
+      },
+      "declarations": [
+        {
+          "name": "CaseSortOrder",
+          "kind": "type",
+          "path": "src/features/case-resolver/pages/AdminCaseResolverCasesUtils.ts",
+          "line": 18,
+          "domain": "feature:case-resolver",
+          "usageCount": 0
+        },
+        {
+          "name": "CaseSortOrder",
+          "kind": "type",
+          "path": "src/shared/contracts/case-resolver/base.ts",
+          "line": 121,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0053",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:data-import-export",
+        "feature:integrations"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "b2a2e9ea433d",
+        "memberCount": 2,
+        "preview": "prop:languageCode:string | null; prop:parameterId:string"
+      },
+      "declarations": [
+        {
+          "name": "ParsedParameterTarget",
+          "kind": "type",
+          "path": "src/features/data-import-export/pages/imports/imports-page-utils.ts",
+          "line": 3,
+          "domain": "feature:data-import-export",
+          "usageCount": 0
+        },
+        {
+          "name": "ParsedParameterSourceKey",
+          "kind": "type",
+          "path": "src/features/integrations/services/exports/base-exporter/template-helpers.ts",
+          "line": 38,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0054",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:document-editor",
+        "feature:notesapp"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "015fb924d528",
+        "memberCount": 6,
+        "preview": "prop:onApplyBulletList:() => void; prop:onApplyChecklist:() => void; prop:onApplyLinePrefix:(prefix: string) => void; prop:onApplySpanStyle:(colorValue: string, fontValue: string) => void; prop:onApplyWrap:(prefix: string, suffix: string, placeholder: string) => void; prop:onInsertAtCursor:(value: string) => void"
+      },
+      "declarations": [
+        {
+          "name": "MarkdownToolbarActionHandlers",
+          "kind": "type",
+          "path": "src/features/document-editor/components/MarkdownToolbar.tsx",
+          "line": 10,
+          "domain": "feature:document-editor",
+          "usageCount": 0
+        },
+        {
+          "name": "UseMarkdownEditorReturn",
+          "kind": "type",
+          "path": "src/features/notesapp/hooks/useMarkdownEditor.ts",
+          "line": 11,
+          "domain": "feature:notesapp",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0056",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:foldertree",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "31d7e9b669b1",
+        "memberCount": 3,
+        "preview": "prop:entity:TEntity; prop:id:string; prop:nodeId:MasterTreeId"
+      },
+      "declarations": [
+        {
+          "name": "DecodedMasterTreeNodeV3",
+          "kind": "type",
+          "path": "src/features/foldertree/v2/adapter/createMasterFolderTreeAdapterV3.ts",
+          "line": 19,
+          "domain": "feature:foldertree",
+          "usageCount": 0
+        },
+        {
+          "name": "DecodedMasterTreeNode",
+          "kind": "type",
+          "path": "src/shared/contracts/master-folder-tree.ts",
+          "line": 263,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0057",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:foldertree",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "6dcc0bef848e",
+        "memberCount": 1,
+        "preview": "MasterTreeCanDropResultDto"
+      },
+      "declarations": [
+        {
+          "name": "FolderTreeDropCheck",
+          "kind": "type",
+          "path": "src/features/foldertree/v2/types/index.ts",
+          "line": 57,
+          "domain": "feature:foldertree",
+          "usageCount": 0
+        },
+        {
+          "name": "MasterTreeCanDropResult",
+          "kind": "type",
+          "path": "src/shared/utils/master-folder-tree-engine.ts",
+          "line": 38,
+          "domain": "shared",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0058",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "fdfabba3be99",
+        "memberCount": 4,
+        "preview": "prop:disabled:boolean; prop:onChange:(value: string | null) => void; prop:options:Array<{ value: string; label: string }>; prop:value:string | null"
+      },
+      "declarations": [
+        {
+          "name": "CategoryMapperSelectCellProps",
+          "kind": "type",
+          "path": "src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperSelectCell.tsx",
+          "line": 5,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        },
+        {
+          "name": "GenericMapperExternalCellProps",
+          "kind": "type",
+          "path": "src/shared/ui/templates/mappers/GenericMapperExternalCell.tsx",
+          "line": 4,
+          "domain": "shared",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0059",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "12f233a14650",
+        "memberCount": 5,
+        "preview": "prop:isFetching:boolean; prop:isSaving:boolean; prop:onFetch:() => void; prop:onSave:() => void; prop:pendingCount:number"
+      },
+      "declarations": [
+        {
+          "name": "CategoryMapperTableHeaderActionsProps",
+          "kind": "type",
+          "path": "src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperTableHeaderActions.tsx",
+          "line": 5,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        },
+        {
+          "name": "GenericMapperHeaderActionsProps",
+          "kind": "type",
+          "path": "src/shared/ui/templates/mappers/GenericMapperHeaderActions.tsx",
+          "line": 5,
+          "domain": "shared",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0060",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "26e428f1bf82",
+        "memberCount": 2,
+        "preview": "prop:connectionId?:string | null; prop:inventoryId?:string | null"
+      },
+      "declarations": [
+        {
+          "name": "ActiveTemplateScopeInput",
+          "kind": "type",
+          "path": "src/features/integrations/services/active-template-preference.ts",
+          "line": 3,
+          "domain": "feature:integrations",
+          "usageCount": 2
+        },
+        {
+          "name": "ParameterLinkScopeInput",
+          "kind": "type",
+          "path": "src/features/integrations/services/imports/parameter-import/link-map-preference.ts",
+          "line": 5,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0063",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:products",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "9856e55c3be1",
+        "memberCount": 4,
+        "preview": "prop:debounceMs:number; prop:id:string; prop:label:string; prop:patternIds:string[]"
+      },
+      "declarations": [
+        {
+          "name": "SequenceGroup",
+          "kind": "type",
+          "path": "src/features/products/components/settings/validator-settings/sequence-actions/types.ts",
+          "line": 21,
+          "domain": "feature:products",
+          "usageCount": 0
+        },
+        {
+          "name": "SequenceGroupView",
+          "kind": "interface",
+          "path": "src/shared/contracts/products/drafts.ts",
+          "line": 251,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0065",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:prompt-exploder",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "2baa74b14d17",
+        "memberCount": 1,
+        "preview": "| 'addresser' | 'addressee' | 'subject' | 'reference' | 'other'"
+      },
+      "declarations": [
+        {
+          "name": "PromptExploderCaseResolverPartyRole",
+          "kind": "type",
+          "path": "src/features/prompt-exploder/bridge.ts",
+          "line": 37,
+          "domain": "feature:prompt-exploder",
+          "usageCount": 0
+        },
+        {
+          "name": "PromptExploderCaseResolverPartyRole",
+          "kind": "type",
+          "path": "src/shared/contracts/prompt-exploder/case-resolver.ts",
+          "line": 4,
+          "domain": "shared:contracts",
+          "usageCount": 0
         }
       ],
       "notes": [
@@ -143,33 +1332,295 @@
       "clusterId": "exact-0075",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 12,
+      "riskScore": 10,
       "declarationCount": 2,
       "domains": [
         "shared:contracts"
       ],
       "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "23b2ebc330fb",
-        "memberCount": 4,
-        "preview": "prop:flags?:string | null; prop:id:string; prop:pattern:string; prop:sequence?:number | null"
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "de169af076bb",
+        "memberCount": 1,
+        "preview": "ImageStudioRunDispatchMode"
       },
       "declarations": [
         {
-          "name": "FilemakerEmailParserRule",
+          "name": "ImageStudioSequenceRunDispatchMode",
           "kind": "type",
-          "path": "src/shared/contracts/filemaker.ts",
-          "line": 195,
+          "path": "src/shared/contracts/image-studio.ts",
+          "line": 1058,
           "domain": "shared:contracts",
           "usageCount": 2
         },
         {
-          "name": "FilemakerPhoneValidationRule",
+          "name": "ImageStudioRunDispatchModeDto",
           "kind": "type",
-          "path": "src/shared/contracts/filemaker.ts",
-          "line": 209,
+          "path": "src/shared/contracts/image-studio.ts",
+          "line": 609,
           "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0076",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "f861ef326094",
+        "memberCount": 1,
+        "preview": "IntegrationTemplateMapping"
+      },
+      "declarations": [
+        {
+          "name": "BaseFieldMapping",
+          "kind": "type",
+          "path": "src/shared/contracts/integrations/base-com.ts",
+          "line": 8,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        },
+        {
+          "name": "TemplateMapping",
+          "kind": "type",
+          "path": "src/shared/contracts/integrations/templates.ts",
+          "line": 22,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0083",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "5547b5b81659",
+        "memberCount": 1,
+        "preview": "z.infer<typeof promptExploderLearnedTemplateSchema>"
+      },
+      "declarations": [
+        {
+          "name": "PromptExploderLearnedTemplate",
+          "kind": "type",
+          "path": "src/shared/contracts/prompt-exploder-core.ts",
+          "line": 39,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        },
+        {
+          "name": "PromptExploderLearnedTemplate",
+          "kind": "type",
+          "path": "src/shared/contracts/prompt-exploder/settings.ts",
+          "line": 38,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0085",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "b9d00c941d92",
+        "memberCount": 1,
+        "preview": "Record<string, unknown>"
+      },
+      "declarations": [
+        {
+          "name": "JsonRecord",
+          "kind": "type",
+          "path": "src/shared/lib/ai-paths/core/runtime/handlers/advanced-api/config.ts",
+          "line": 3,
+          "domain": "shared",
           "usageCount": 2
+        },
+        {
+          "name": "SystemLogStaticContextEnvelope",
+          "kind": "type",
+          "path": "src/shared/lib/observability/runtime-context/types.ts",
+          "line": 5,
+          "domain": "shared",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0002",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "3483e69513ae",
+        "memberCount": 1,
+        "preview": "prop:config:AnalysisSettingsSectionConfig"
+      },
+      "declarations": [
+        {
+          "name": "AnalysisSettingsSectionProps",
+          "kind": "interface",
+          "path": "src/features/ai/image-studio/components/analysis/sections/AnalysisSettingsSection.tsx",
+          "line": 59,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "GenericItemMapperProps",
+          "kind": "interface",
+          "path": "src/shared/ui/templates/mappers/GenericMapper.tsx",
+          "line": 60,
+          "domain": "shared",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0006",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "26127840371a",
+        "memberCount": 6,
+        "preview": "prop:baseKind:ParamSpecKind; prop:canSlider:boolean; prop:confidence:number; prop:options:ParamUiControl[]; prop:reason:string | null; prop:recommended:Exclude<ParamUiControl, 'auto'>"
+      },
+      "declarations": [
+        {
+          "name": "ParamUiRecommendation",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/param-ui.ts",
+          "line": 33,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "PromptExploderParamUiRecommendation",
+          "kind": "type",
+          "path": "src/shared/contracts/prompt-exploder/params.ts",
+          "line": 4,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0007",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:case-resolver",
+        "feature:products"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "00dc6db4388d",
+        "memberCount": 3,
+        "preview": "prop:entity:'case'; prop:id:string; prop:nodeId:string"
+      },
+      "declarations": [
+        {
+          "name": "CaseResolverCaseMasterNodeRef",
+          "kind": "type",
+          "path": "src/features/case-resolver/master-tree.ts",
+          "line": 21,
+          "domain": "feature:case-resolver",
+          "usageCount": 0
+        },
+        {
+          "name": "CategoryMasterNodeRef",
+          "kind": "type",
+          "path": "src/features/products/components/settings/category-master-tree.ts",
+          "line": 9,
+          "domain": "feature:products",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0008",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:case-resolver"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "346ba2a8616d",
+        "memberCount": 4,
+        "preview": "prop:files:CaseResolverWorkspaceDetachedDocumentsFileEntry[]; prop:lastMutationId:string | null; prop:schema:typeof CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA; prop:workspaceRevision:number"
+      },
+      "declarations": [
+        {
+          "name": "CaseResolverWorkspaceDetachedDocumentsPayload",
+          "kind": "type",
+          "path": "src/features/case-resolver/workspace-persistence-detached-documents.ts",
+          "line": 28,
+          "domain": "feature:case-resolver",
+          "usageCount": 1
+        },
+        {
+          "name": "CaseResolverWorkspaceDetachedHistoryPayload",
+          "kind": "type",
+          "path": "src/features/case-resolver/workspace-persistence-detached-history.ts",
+          "line": 26,
+          "domain": "feature:case-resolver",
+          "usageCount": 1
         }
       ],
       "notes": [
@@ -180,33 +1631,71 @@
       "clusterId": "near-0010",
       "clusterKind": "near-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 12,
+      "riskScore": 10,
       "declarationCount": 2,
       "domains": [
-        "feature:cms",
+        "feature:foldertree",
         "shared:contracts"
       ],
       "signature": {
         "shapeKind": "structural-members",
-        "normalizedShapeHash": "1ec82a8b59bb",
+        "normalizedShapeHash": "96897b8bc1dc",
         "memberCount": 3,
-        "preview": "prop:block:BlockInstance; prop:mediaStyles:React.CSSProperties | null; prop:stretch:boolean"
+        "preview": "prop:decodeNodeId:(nodeId: MasterTreeId) => DecodedMasterTreeNodeV3<TEntity> | null; prop:fetchState?:| ((instanceId?: string) => Promise<{ nodes: MasterTreeNode[]; version?: number | undefined }>) | undefined; prop:handlers?:{ onMove?: | ((input: { operation: MoveOperation; context: MasterFolderTreePersistContext; node: DecodedMasterTreeNodeV3<TEntity>; targetParent: DecodedMasterTreeNodeV3<TEntity> | null; }) => Promise<MasterTreeNode[] | void> | MasterTreeNode[] | void) | undefined; onReorder?: | ((input: { operation: ReorderOperation; context: MasterFolderTreePersistContext; node: DecodedMasterTreeNodeV3<TEntity>; target: DecodedMasterTreeNodeV3<TEntity>; }) => Promise<MasterTreeNode[] | void> | MasterTreeNode[] | void) | undefined; onRename?: | ((input: { operation: RenameOperation; context: MasterFolderTreePersistContext; node: DecodedMasterTreeNodeV3<TEntity>; nextName: string; }) => Promise<MasterTreeNode[] | void> | MasterTreeNode[] | void) | undefined; onReplaceNodes?: | ((input: { operation: ReplaceNodesOperation; context: MasterFolderTreePersistContext; }) => Promise<MasterTreeNode[] | void> | MasterTreeNode[] | void) | undefined; }"
       },
       "declarations": [
         {
-          "name": "PreviewBlockProps",
-          "kind": "interface",
-          "path": "src/shared/contracts/cms.ts",
-          "line": 195,
-          "domain": "shared:contracts",
-          "usageCount": 2
+          "name": "CreateMasterFolderTreeAdapterV3Options",
+          "kind": "type",
+          "path": "src/features/foldertree/v2/adapter/createMasterFolderTreeAdapterV3.ts",
+          "line": 25,
+          "domain": "feature:foldertree",
+          "usageCount": 0
         },
         {
-          "name": "BlockRenderContextValue",
+          "name": "CreateMasterFolderTreeAdapterOptions",
+          "kind": "type",
+          "path": "src/shared/contracts/master-folder-tree.ts",
+          "line": 277,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0012",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:products",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "c6b890d5c609",
+        "memberCount": 2,
+        "preview": "prop:children:React.ReactNode; prop:value:ProductImagesTabContextValue"
+      },
+      "declarations": [
+        {
+          "name": "ProductImagesTabProviderProps",
+          "kind": "type",
+          "path": "src/features/products/components/form/ProductImagesTabContext.tsx",
+          "line": 23,
+          "domain": "feature:products",
+          "usageCount": 0
+        },
+        {
+          "name": "VectorDrawingProviderProps",
           "kind": "interface",
-          "path": "src/features/cms/components/frontend/blocks/BlockContext.tsx",
-          "line": 7,
-          "domain": "feature:cms",
+          "path": "src/shared/lib/vector-drawing/context/VectorDrawingContext.tsx",
+          "line": 47,
+          "domain": "shared",
           "usageCount": 0
         }
       ],
@@ -218,33 +1707,32 @@
       "clusterId": "near-0014",
       "clusterKind": "near-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 12,
+      "riskScore": 10,
       "declarationCount": 2,
       "domains": [
-        "feature:integrations",
-        "shared"
+        "shared:contracts"
       ],
       "signature": {
         "shapeKind": "structural-members",
-        "normalizedShapeHash": "294fbe8b0753",
+        "normalizedShapeHash": "74b1290e03ed",
         "memberCount": 6,
-        "preview": "prop:_id:string | ObjectId; prop:createdAt:Date; prop:id:string; prop:name:string; prop:updatedAt:Date; prop:website?:string | null"
+        "preview": "method:canInferRefs(input:Record<string, unknown> | null):boolean; method:canResolveRef(ref:ContextRegistryRef):boolean; method:getVersion():string; method:inferRefs(input:Record<string, unknown>):ContextRegistryRef[]; method:resolveRefs(refs:ContextRegistryRef[],options:RuntimeContextProviderResolveOptions):Promise<ContextRuntimeDocument[]>; prop:id:string"
       },
       "declarations": [
         {
-          "name": "MongoInternalProducerDoc",
-          "kind": "type",
-          "path": "src/features/integrations/services/producer-mapping-repository-mongo-utils.ts",
-          "line": 27,
-          "domain": "feature:integrations",
+          "name": "RuntimeContextProvider",
+          "kind": "interface",
+          "path": "src/shared/contracts/ai-context-registry.ts",
+          "line": 298,
+          "domain": "shared:contracts",
           "usageCount": 1
         },
         {
-          "name": "MongoProducerDoc",
-          "kind": "interface",
-          "path": "src/shared/lib/db/services/database-sync-types.ts",
-          "line": 243,
-          "domain": "shared",
+          "name": "ApiParams",
+          "kind": "type",
+          "path": "src/shared/contracts/base.ts",
+          "line": 245,
+          "domain": "shared:contracts",
           "usageCount": 1
         }
       ],
@@ -256,34 +1744,34 @@
       "clusterId": "near-0015",
       "clusterKind": "near-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 12,
+      "riskScore": 10,
       "declarationCount": 2,
       "domains": [
-        "feature:observability",
-        "shared"
+        "shared",
+        "shared:contracts"
       ],
       "signature": {
         "shapeKind": "structural-members",
-        "normalizedShapeHash": "62b064e5be79",
-        "memberCount": 7,
-        "preview": "prop:contextRegistry:ContextRegistryDisplay | null; prop:createdAt:string | null; prop:fingerprint:string | null; prop:level:string | null; prop:logId:string | null; prop:message:string | null; prop:source:string | null"
+        "normalizedShapeHash": "dc203ef9adf9",
+        "memberCount": 2,
+        "preview": "prop:scopeMode?:DependencyInspectorScopeMode; prop:scopeRootNodeIds?:string[] | Set<string>"
       },
       "declarations": [
         {
-          "name": "AlertEvidenceSampleDisplay",
+          "name": "DependencyInspectorOptions",
           "kind": "type",
-          "path": "src/features/observability/types.ts",
-          "line": 37,
-          "domain": "feature:observability",
-          "usageCount": 1
+          "path": "src/shared/contracts/ai-paths-core/engine.ts",
+          "line": 171,
+          "domain": "shared:contracts",
+          "usageCount": 0
         },
         {
-          "name": "AlertEvidenceSample",
+          "name": "CompileGraphOptions",
           "kind": "type",
-          "path": "src/shared/lib/observability/workers/system-log-alerts/types.ts",
-          "line": 37,
+          "path": "src/shared/lib/ai-paths/core/utils/graph.compile.ts",
+          "line": 8,
           "domain": "shared",
-          "usageCount": 1
+          "usageCount": 0
         }
       ],
       "notes": [
@@ -294,32 +1782,106 @@
       "clusterId": "near-0016",
       "clusterKind": "near-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 12,
+      "riskScore": 10,
       "declarationCount": 2,
       "domains": [
-        "feature:observability",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "71bbe53ead43",
+        "memberCount": 3,
+        "preview": "prop:createdAt?:string; prop:id:string; prop:updatedAt?:string | null"
+      },
+      "declarations": [
+        {
+          "name": "DtoBase",
+          "kind": "interface",
+          "path": "src/shared/contracts/base.ts",
+          "line": 28,
+          "domain": "shared:contracts",
+          "usageCount": 2
+        },
+        {
+          "name": "BaseEntity",
+          "kind": "interface",
+          "path": "src/shared/contracts/base.ts",
+          "line": 226,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0017",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "shared",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "7f35ebd6626d",
+        "memberCount": 8,
+        "preview": "prop:cause?:unknown; prop:code:AppErrorCode; prop:critical?:boolean; prop:expected?:boolean; prop:httpStatus:number; prop:meta?:Record<string, unknown> | undefined; prop:retryAfterMs?:number; prop:retryable?:boolean"
+      },
+      "declarations": [
+        {
+          "name": "AppErrorOptions",
+          "kind": "type",
+          "path": "src/shared/contracts/base.ts",
+          "line": 107,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        },
+        {
+          "name": "AppErrorOptions",
+          "kind": "type",
+          "path": "src/shared/errors/app-error.ts",
+          "line": 4,
+          "domain": "shared",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0023",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
         "shared"
       ],
       "signature": {
         "shapeKind": "structural-members",
-        "normalizedShapeHash": "9d072c6361f1",
-        "memberCount": 6,
-        "preview": "prop:lastObservedLog:AlertEvidenceSampleDisplay | null; prop:matchedCount:number | null; prop:sampleSize:number | null; prop:samples:AlertEvidenceSampleDisplay[]; prop:windowEnd:string | null; prop:windowStart:string | null"
+        "normalizedShapeHash": "388a28797763",
+        "memberCount": 2,
+        "preview": "prop:combine?:(results: MultiQueryResultsV2<TQueries>) => TCombine; prop:queries:TQueries"
       },
       "declarations": [
         {
-          "name": "AlertEvidenceDisplay",
+          "name": "MultiQueryConfigV2",
           "kind": "type",
-          "path": "src/features/observability/types.ts",
-          "line": 47,
-          "domain": "feature:observability",
+          "path": "src/shared/lib/tanstack-factory-v2/types.ts",
+          "line": 187,
+          "domain": "shared",
           "usageCount": 1
         },
         {
-          "name": "AlertEvidenceContext",
+          "name": "SuspenseMultiQueryConfigV2",
           "kind": "type",
-          "path": "src/shared/lib/observability/workers/system-log-alerts/types.ts",
-          "line": 47,
+          "path": "src/shared/lib/tanstack-factory-v2/types.ts",
+          "line": 208,
           "domain": "shared",
           "usageCount": 1
         }
@@ -329,37 +1891,2256 @@
       ]
     },
     {
-      "clusterId": "near-0029",
-      "clusterKind": "near-shape",
+      "clusterId": "exact-0009",
+      "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 12,
+      "riskScore": 9,
       "declarationCount": 2,
       "domains": [
-        "shared",
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "1361e69e91a6",
+        "memberCount": 1,
+        "preview": "'svg'"
+      },
+      "declarations": [
+        {
+          "name": "CanvasRendererMode",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/components/CanvasBoard.utils.tsx",
+          "line": 29,
+          "domain": "feature:ai",
+          "usageCount": 1
+        },
+        {
+          "name": "CanvasRendererMode",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/components/CanvasBoardUIContext.tsx",
+          "line": 21,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0013",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "b195797c396f",
+        "memberCount": 3,
+        "preview": "prop:events:AiPathRunEventRecord[]; prop:nodes:AiPathRunNodeRecord[]; prop:run:AiPathRunRecord"
+      },
+      "declarations": [
+        {
+          "name": "RunDetail",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/components/job-queue-panel-utils.ts",
+          "line": 102,
+          "domain": "feature:ai",
+          "usageCount": 1
+        },
+        {
+          "name": "RunDetailData",
+          "kind": "interface",
+          "path": "src/features/ai/ai-paths/context/RunHistoryContext.tsx",
+          "line": 34,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0016",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "6f5f3a86aed9",
+        "memberCount": 70,
+        "preview": "prop:agentBrowser:string; prop:agentIgnoreRobotsTxt:boolean; prop:agentLoopBackoffBaseMs:number; prop:agentLoopBackoffMaxMs:number; prop:agentLoopGuardThreshold:number; prop:agentMaxReplanCalls:number; prop:agentMaxSelfChecks:number; prop:agentMaxStepAttempts:number"
+      },
+      "declarations": [
+        {
+          "name": "UseChatbotLogicReturn",
+          "kind": "interface",
+          "path": "src/features/ai/chatbot/hooks/useChatbotLogic.ts",
+          "line": 21,
+          "domain": "feature:ai",
+          "usageCount": 1
+        },
+        {
+          "name": "UseChatbotLogicReturn",
+          "kind": "interface",
+          "path": "src/features/ai/chatbot/hooks/useChatbotLogic.types.ts",
+          "line": 8,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0020",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "cc58a11e7f3e",
+        "memberCount": 1,
+        "preview": "'idle' | 'resolving' | 'processing'"
+      },
+      "declarations": [
+        {
+          "name": "AnalysisStatus",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/components/analysis/analysis-types.ts",
+          "line": 11,
+          "domain": "feature:ai",
+          "usageCount": 1
+        },
+        {
+          "name": "AnalysisStatus",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/components/generation-toolbar/GenerationToolbarContext.tsx",
+          "line": 35,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0023",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "5a1da6c38322",
+        "memberCount": 1,
+        "preview": "'client_auto_scaler' | 'server_auto_scaler'"
+      },
+      "declarations": [
+        {
+          "name": "AutoScalerMode",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/components/generation-toolbar/GenerationToolbarContext.tsx",
+          "line": 26,
+          "domain": "feature:ai",
+          "usageCount": 1
+        },
+        {
+          "name": "AutoScalerMode",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/components/generation-toolbar/GenerationToolbarImageUtils.types.ts",
+          "line": 103,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0026",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "afa360a12622",
+        "memberCount": 8,
+        "preview": "prop:currency:'USD'; prop:estimated:true; prop:imageCostUsdPerOutput:number; prop:outputCount:number; prop:promptCostUsdPerOutput:number; prop:promptCostUsdTotal:number; prop:promptTokens:number; prop:totalCostUsdPerOutput:number"
+      },
+      "declarations": [
+        {
+          "name": "GenerationCostEstimate",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/generation-cost.ts",
+          "line": 6,
+          "domain": "feature:ai",
+          "usageCount": 1
+        },
+        {
+          "name": "GenerationCostEstimate",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/generation-cost.ts",
+          "line": 6,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0042",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "80f1095f42c8",
+        "memberCount": 1,
+        "preview": "ImageStudioSequenceStepBase & { type: 'upscale'; config: { strategy: 'scale' | 'target_resolution'; scale: number; targetWidth: number; targetHeight: number; sm"
+      },
+      "declarations": [
+        {
+          "name": "ImageStudioSequenceUpscaleStep",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
+          "line": 110,
+          "domain": "feature:ai",
+          "usageCount": 1
+        },
+        {
+          "name": "ImageStudioSequenceUpscaleStep",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/studio-sequencing-settings.ts",
+          "line": 110,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0043",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "cb0d485a4f90",
+        "memberCount": 1,
+        "preview": "| ImageStudioSequenceCropStep | ImageStudioSequenceMaskStep | ImageStudioSequenceGenerateStep | ImageStudioSequenceUpscaleStep"
+      },
+      "declarations": [
+        {
+          "name": "ImageStudioSequenceStep",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
+          "line": 121,
+          "domain": "feature:ai",
+          "usageCount": 1
+        },
+        {
+          "name": "ImageStudioSequenceStep",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/studio-sequencing-settings.ts",
+          "line": 121,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0044",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "31d20d8e4b29",
+        "memberCount": 5,
+        "preview": "prop:description:string | null; prop:id:string; prop:name:string; prop:steps:ImageStudioSequenceStep[]; prop:updatedAt:string | null"
+      },
+      "declarations": [
+        {
+          "name": "ImageStudioSequencePreset",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
+          "line": 127,
+          "domain": "feature:ai",
+          "usageCount": 1
+        },
+        {
+          "name": "ImageStudioSequencePreset",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/studio-sequencing-settings.ts",
+          "line": 127,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0045",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "cf5763b59b9a",
+        "memberCount": 15,
+        "preview": "prop:activePresetId:string | null; prop:enabled:boolean; prop:operations:ImageStudioSequenceOperation[]; prop:presets:ImageStudioSequencePreset[]; prop:runtime:'server'; prop:snapshotHash:string | null; prop:snapshotModelId:string | null; prop:snapshotSavedAt:string | null"
+      },
+      "declarations": [
+        {
+          "name": "ImageStudioProjectSequencingSettings",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
+          "line": 135,
+          "domain": "feature:ai",
+          "usageCount": 1
+        },
+        {
+          "name": "ImageStudioProjectSequencingSettings",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/studio-sequencing-settings.ts",
+          "line": 135,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0048",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:case-resolver"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "bec946a6f2e9",
+        "memberCount": 3,
+        "preview": "prop:description?:string | undefined; prop:label:string; prop:value:string"
+      },
+      "declarations": [
+        {
+          "name": "SelectOption",
+          "kind": "type",
+          "path": "src/features/case-resolver/components/CaseResolverViewContext.tsx",
+          "line": 24,
+          "domain": "feature:case-resolver",
+          "usageCount": 1
+        },
+        {
+          "name": "CaseResolverPartySelectOption",
+          "kind": "type",
+          "path": "src/features/case-resolver/components/case-resolver-party-select.ts",
+          "line": 6,
+          "domain": "feature:case-resolver",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0052",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:cms"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "17f969726968",
+        "memberCount": 5,
+        "preview": "prop:fromColumnId:string | null; prop:fromParentBlockId:string | null; prop:fromSectionId:string | null; prop:id:string | null; prop:type:string | null"
+      },
+      "declarations": [
+        {
+          "name": "BlockDragState",
+          "kind": "interface",
+          "path": "src/features/cms/hooks/useDragStateContext.tsx",
+          "line": 18,
+          "domain": "feature:cms",
+          "usageCount": 1
+        },
+        {
+          "name": "BlockDragData",
+          "kind": "type",
+          "path": "src/features/cms/utils/page-builder-dnd.ts",
+          "line": 15,
+          "domain": "feature:cms",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0064",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:products"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "3d48c29e6f1c",
+        "memberCount": 1,
+        "preview": "prop:enabled?:boolean"
+      },
+      "declarations": [
+        {
+          "name": "UseProductsOptions",
+          "kind": "interface",
+          "path": "src/features/products/hooks/useProductsQuery.ts",
+          "line": 24,
+          "domain": "feature:products",
+          "usageCount": 1
+        },
+        {
+          "name": "UseCatalogSyncOptions",
+          "kind": "interface",
+          "path": "src/features/products/hooks/useCatalogSync.ts",
+          "line": 59,
+          "domain": "feature:products",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0070",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
         "shared:contracts"
       ],
       "signature": {
         "shapeKind": "structural-members",
-        "normalizedShapeHash": "b146a6c18baa",
-        "memberCount": 3,
-        "preview": "prop:path:string; prop:points:Array<{ shapeId: string; points: VectorPoint[] }>; prop:shapes:VectorShape[]"
+        "normalizedShapeHash": "d4035b1dfccd",
+        "memberCount": 2,
+        "preview": "prop:description?:string | null; prop:name:string"
       },
       "declarations": [
         {
-          "name": "VectorOverlayResult",
+          "name": "NamedDto",
           "kind": "interface",
-          "path": "src/shared/contracts/vector.ts",
-          "line": 120,
+          "path": "src/shared/contracts/base.ts",
+          "line": 39,
           "domain": "shared:contracts",
           "usageCount": 1
         },
         {
-          "name": "VectorDrawingOutput",
+          "name": "NamedEntity",
+          "kind": "interface",
+          "path": "src/shared/contracts/base.ts",
+          "line": 235,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0078",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "6d2179083885",
+        "memberCount": 1,
+        "preview": "z.infer<typeof importTemplateParameterImportSchema>"
+      },
+      "declarations": [
+        {
+          "name": "ImportTemplateParameterImport",
           "kind": "type",
-          "path": "src/shared/lib/vector-drawing/hooks/useVectorDrawingState.ts",
-          "line": 9,
-          "domain": "shared",
+          "path": "src/shared/contracts/integrations/templates.ts",
+          "line": 13,
+          "domain": "shared:contracts",
           "usageCount": 1
+        },
+        {
+          "name": "ImportTemplateParameterImportDto",
+          "kind": "type",
+          "path": "src/shared/contracts/integrations/import-export.ts",
+          "line": 72,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0084",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "1f8a663aa8c6",
+        "memberCount": 1,
+        "preview": "z.infer< typeof promptExploderRuntimeValidationScopeSchema >"
+      },
+      "declarations": [
+        {
+          "name": "PromptExploderRuntimeValidationScope",
+          "kind": "type",
+          "path": "src/shared/contracts/prompt-exploder-core.ts",
+          "line": 45,
+          "domain": "shared:contracts",
+          "usageCount": 1
+        },
+        {
+          "name": "PromptExploderRuntimeValidationScope",
+          "kind": "type",
+          "path": "src/shared/contracts/prompt-exploder/settings.ts",
+          "line": 149,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0003",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "c526001e8c17",
+        "memberCount": 14,
+        "preview": "prop:candidateDetections:ImageStudioDetectionCandidateSummary; prop:confidence:number; prop:detectionDetails?:CenterDetectionDetails | null; prop:detectionUsed:Exclude<CenterDetectionMode, 'auto'>; prop:fallbackApplied:boolean; prop:height:number; prop:layout:NormalizedImageStudioAnalysisLayoutConfig; prop:objectAreaPercent:number"
+      },
+      "declarations": [
+        {
+          "name": "ClientImageObjectAnalysisResult",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/components/generation-toolbar/GenerationToolbarImageUtils.types.ts",
+          "line": 70,
+          "domain": "feature:ai",
+          "usageCount": 1
+        },
+        {
+          "name": "ImageStudioAnalysisSummary",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/server/auto-scaler-utils.ts",
+          "line": 50,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0009",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:cms"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "e31a21891e64",
+        "memberCount": 4,
+        "preview": "prop:id:string | null; prop:index:number | null; prop:type:string | null; prop:zone:PageZone | null"
+      },
+      "declarations": [
+        {
+          "name": "SectionDragState",
+          "kind": "interface",
+          "path": "src/features/cms/hooks/useDragStateContext.tsx",
+          "line": 26,
+          "domain": "feature:cms",
+          "usageCount": 1
+        },
+        {
+          "name": "SectionDragData",
+          "kind": "type",
+          "path": "src/features/cms/utils/page-builder-dnd.ts",
+          "line": 8,
+          "domain": "feature:cms",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0004",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "app"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "0e3dd268f1a4",
+        "memberCount": 11,
+        "preview": "prop:colorSchemes:ReturnType<typeof buildColorSchemeMap>; prop:hoverEffect:Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverEffect'] | undefined; prop:hoverScale:Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverScale'] | undefined; prop:layout:{ fullWidth: boolean }; prop:mediaStyles:ReturnType<typeof getMediaInlineStyles>; prop:mediaVars:ReturnType<typeof getMediaStyleVars>; prop:menuSettings:Awaited<ReturnType<typeof getCmsMenuSettings>>; prop:rendererComponents:PageComponent[]"
+      },
+      "declarations": [
+        {
+          "name": "SlugRenderData",
+          "kind": "type",
+          "path": "src/app/(frontend)/[...slug]/slug-page-data.ts",
+          "line": 22,
+          "domain": "app",
+          "usageCount": 0
+        },
+        {
+          "name": "PreviewRenderData",
+          "kind": "type",
+          "path": "src/app/(frontend)/preview/[id]/preview-page-data.ts",
+          "line": 16,
+          "domain": "app",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0006",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:admin"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "1a6829867696",
+        "memberCount": 5,
+        "preview": "prop:href:string | null; prop:id:string; prop:isBuiltIn:boolean; prop:label:string; prop:semantic:AdminMenuLayoutNodeSemantic"
+      },
+      "declarations": [
+        {
+          "name": "AdminMenuLayoutNodeState",
+          "kind": "type",
+          "path": "src/features/admin/context/AdminMenuSettingsContext.tsx",
+          "line": 241,
+          "domain": "feature:admin",
+          "usageCount": 0
+        },
+        {
+          "name": "AdminMenuLayoutFallbackEntry",
+          "kind": "type",
+          "path": "src/features/admin/pages/admin-menu-layout-master-tree.ts",
+          "line": 13,
+          "domain": "feature:admin",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0010",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "be7ac048b2fc",
+        "memberCount": 2,
+        "preview": "prop:message:string; prop:path:string"
+      },
+      "declarations": [
+        {
+          "name": "RunEnqueuePayloadIssue",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/payload-validation.ts",
+          "line": 24,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "PathSavePayloadIssue",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.helpers.ts",
+          "line": 104,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0019",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "1386c4baaaf2",
+        "memberCount": 1,
+        "preview": "prop:className?:string | undefined"
+      },
+      "declarations": [
+        {
+          "name": "GenerationHistoryPanelProps",
+          "kind": "interface",
+          "path": "src/features/ai/image-studio/components/GenerationHistoryPanel.tsx",
+          "line": 12,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "ShapeListPanelProps",
+          "kind": "interface",
+          "path": "src/features/ai/image-studio/components/ShapeListPanel.tsx",
+          "line": 61,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0024",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "698dba2154f5",
+        "memberCount": 1,
+        "preview": "SlotsContextType"
+      },
+      "declarations": [
+        {
+          "name": "SlotsState",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/context/SlotsContext.tsx",
+          "line": 553,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "SlotsActions",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/context/SlotsContext.tsx",
+          "line": 554,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0025",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "12457ab01761",
+        "memberCount": 2,
+        "preview": "prop:imageUsdPerImage:number; prop:inputUsdPer1KTokens:number"
+      },
+      "declarations": [
+        {
+          "name": "ModelCostProfile",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/generation-cost.ts",
+          "line": 1,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "ModelCostProfile",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/generation-cost.ts",
+          "line": 1,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0028",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "202ddefa56d7",
+        "memberCount": 13,
+        "preview": "prop:backgroundOptions:ReadonlyArray<'auto' | 'transparent' | 'opaque' | 'white'>; prop:family:'gpt-5.2' | 'gpt-image' | 'dall-e' | 'generic'; prop:formatOptions:ReadonlyArray<'png' | 'jpeg' | 'webp'>; prop:qualityOptions:ReadonlyArray<'auto' | 'low' | 'medium' | 'high' | 'standard' | 'hd'>; prop:sizeOptions:readonly string[]; prop:supportsCount:boolean; prop:supportsModeration:boolean; prop:supportsOutputCompression:boolean"
+      },
+      "declarations": [
+        {
+          "name": "ImageModelCapabilities",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/image-models.ts",
+          "line": 30,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "ImageModelCapabilities",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/image-models.ts",
+          "line": 30,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0030",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "3346c7d52f68",
+        "memberCount": 1,
+        "preview": "(typeof IMAGE_STUDIO_SEQUENCE_OPERATIONS)[number]"
+      },
+      "declarations": [
+        {
+          "name": "ImageStudioSequenceOperation",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/studio-sequencing-settings.ts",
+          "line": 11,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "ImageStudioSequenceOperation",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
+          "line": 11,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0031",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "18399c0ba8f6",
+        "memberCount": 1,
+        "preview": "(typeof IMAGE_STUDIO_SEQUENCE_CROP_KINDS)[number]"
+      },
+      "declarations": [
+        {
+          "name": "ImageStudioSequenceCropKind",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/studio-sequencing-settings.ts",
+          "line": 22,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "ImageStudioSequenceCropKind",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
+          "line": 22,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0032",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "94c30e8fb591",
+        "memberCount": 1,
+        "preview": "(typeof IMAGE_STUDIO_SEQUENCE_MASK_SOURCES)[number]"
+      },
+      "declarations": [
+        {
+          "name": "ImageStudioSequenceMaskSource",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/studio-sequencing-settings.ts",
+          "line": 26,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "ImageStudioSequenceMaskSource",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
+          "line": 26,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0033",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "02098846e6e8",
+        "memberCount": 1,
+        "preview": "(typeof IMAGE_STUDIO_SEQUENCE_PROMPT_MODES)[number]"
+      },
+      "declarations": [
+        {
+          "name": "ImageStudioSequencePromptMode",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/studio-sequencing-settings.ts",
+          "line": 30,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "ImageStudioSequencePromptMode",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
+          "line": 30,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0034",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "dd8d6901f158",
+        "memberCount": 1,
+        "preview": "(typeof IMAGE_STUDIO_SEQUENCE_REFERENCE_POLICIES)[number]"
+      },
+      "declarations": [
+        {
+          "name": "ImageStudioSequenceReferencePolicy",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/studio-sequencing-settings.ts",
+          "line": 34,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "ImageStudioSequenceReferencePolicy",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
+          "line": 34,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0035",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "5aa78886a909",
+        "memberCount": 1,
+        "preview": "(typeof IMAGE_STUDIO_SEQUENCE_FAILURE_MODES)[number]"
+      },
+      "declarations": [
+        {
+          "name": "ImageStudioSequenceFailureMode",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/studio-sequencing-settings.ts",
+          "line": 39,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "ImageStudioSequenceFailureMode",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
+          "line": 39,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0036",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "7a5544f8b55c",
+        "memberCount": 1,
+        "preview": "(typeof IMAGE_STUDIO_SEQUENCE_STEP_RUNTIMES)[number]"
+      },
+      "declarations": [
+        {
+          "name": "ImageStudioSequenceStepRuntime",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/studio-sequencing-settings.ts",
+          "line": 43,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "ImageStudioSequenceStepRuntime",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
+          "line": 43,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0037",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "92f0becb5332",
+        "memberCount": 1,
+        "preview": "(typeof IMAGE_STUDIO_SEQUENCE_STEP_INPUT_SOURCES)[number]"
+      },
+      "declarations": [
+        {
+          "name": "ImageStudioSequenceStepInputSource",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/studio-sequencing-settings.ts",
+          "line": 47,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "ImageStudioSequenceStepInputSource",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
+          "line": 47,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0038",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "5b9af59687bd",
+        "memberCount": 10,
+        "preview": "prop:enabled:boolean; prop:id:string; prop:inputSource:ImageStudioSequenceStepInputSource; prop:label:string | null; prop:onFailure:ImageStudioSequenceFailureMode; prop:retries:number; prop:retryBackoffMs:number; prop:runtime:ImageStudioSequenceStepRuntime"
+      },
+      "declarations": [
+        {
+          "name": "ImageStudioSequenceStepBase",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/studio-sequencing-settings.ts",
+          "line": 62,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "ImageStudioSequenceStepBase",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
+          "line": 62,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0039",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "c0242908896b",
+        "memberCount": 1,
+        "preview": "ImageStudioSequenceStepBase & { type: 'crop_center'; config: { kind: ImageStudioSequenceCropKind; selectedShapeId: string | null; aspectRatio: string | null; pa"
+      },
+      "declarations": [
+        {
+          "name": "ImageStudioSequenceCropStep",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/studio-sequencing-settings.ts",
+          "line": 75,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "ImageStudioSequenceCropStep",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
+          "line": 75,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0040",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "5114f16d3c10",
+        "memberCount": 1,
+        "preview": "ImageStudioSequenceStepBase & { type: 'mask'; config: { source: ImageStudioSequenceMaskSource; polygons: ImageStudioSequencePoint[][]; invert: boolean; feather:"
+      },
+      "declarations": [
+        {
+          "name": "ImageStudioSequenceMaskStep",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/studio-sequencing-settings.ts",
+          "line": 87,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "ImageStudioSequenceMaskStep",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
+          "line": 87,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0041",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "5acb15114cfb",
+        "memberCount": 1,
+        "preview": "ImageStudioSequenceStepBase & { type: 'generate' | 'regenerate'; config: { promptMode: ImageStudioSequencePromptMode; promptTemplate: string | null; modelOverri"
+      },
+      "declarations": [
+        {
+          "name": "ImageStudioSequenceGenerateStep",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/studio-sequencing-settings.ts",
+          "line": 99,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "ImageStudioSequenceGenerateStep",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/utils/studio-sequencing-settings.ts",
+          "line": 99,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0046",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:case-resolver"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "6bdef938246e",
+        "memberCount": 1,
+        "preview": "React.ComponentType<{ className?: string }>"
+      },
+      "declarations": [
+        {
+          "name": "CaseResolverTreeNodeIconComponent",
+          "kind": "type",
+          "path": "src/features/case-resolver/components/CaseResolverTreeNodeRuntimeContext.tsx",
+          "line": 5,
+          "domain": "feature:case-resolver",
+          "usageCount": 0
+        },
+        {
+          "name": "FolderIconComponent",
+          "kind": "type",
+          "path": "src/features/case-resolver/components/list/sections/CaseListNodeRuntimeContext.tsx",
+          "line": 7,
+          "domain": "feature:case-resolver",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0055",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:filemaker"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "6874a0065134",
+        "memberCount": 8,
+        "preview": "prop:addressId:string; prop:city:string; prop:country:string; prop:countryId:string; prop:isDefault:boolean; prop:postalCode:string; prop:street:string; prop:streetNumber:string"
+      },
+      "declarations": [
+        {
+          "name": "EditableAddress",
+          "kind": "type",
+          "path": "src/features/filemaker/hooks/useAdminFilemakerOrganizationEditPageState.ts",
+          "line": 35,
+          "domain": "feature:filemaker",
+          "usageCount": 0
+        },
+        {
+          "name": "EditableAddress",
+          "kind": "type",
+          "path": "src/features/filemaker/hooks/useAdminFilemakerPersonEditPageState.ts",
+          "line": 34,
+          "domain": "feature:filemaker",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0062",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "4cb863ed93ad",
+        "memberCount": 1,
+        "preview": "EntityNameLookup"
+      },
+      "declarations": [
+        {
+          "name": "ProducerLookup",
+          "kind": "type",
+          "path": "src/features/integrations/services/exports/base-exporter/lookup-resolvers.ts",
+          "line": 10,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        },
+        {
+          "name": "TagLookup",
+          "kind": "type",
+          "path": "src/features/integrations/services/exports/base-exporter/lookup-resolvers.ts",
+          "line": 11,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0066",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:prompt-exploder"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "bf0875ddad4c",
+        "memberCount": 7,
+        "preview": "prop:fromSegmentId:string; prop:fromSubsectionId:string; prop:sourceLabel:string; prop:targetLabel:string; prop:toSegmentId:string; prop:toSubsectionId:string; prop:type:PromptExploderBindingType"
+      },
+      "declarations": [
+        {
+          "name": "BindingDraft",
+          "kind": "interface",
+          "path": "src/features/prompt-exploder/context/BindingsContext.tsx",
+          "line": 22,
+          "domain": "feature:prompt-exploder",
+          "usageCount": 0
+        },
+        {
+          "name": "PromptExploderManualBindingDraft",
+          "kind": "type",
+          "path": "src/features/prompt-exploder/manual-bindings.ts",
+          "line": 8,
+          "domain": "feature:prompt-exploder",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0067",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:viewer3d"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "3a7f3853c82d",
+        "memberCount": 1,
+        "preview": "Asset3dViewMode"
+      },
+      "declarations": [
+        {
+          "name": "ViewMode",
+          "kind": "type",
+          "path": "src/features/viewer3d/hooks/useAdmin3DAssetsState.ts",
+          "line": 18,
+          "domain": "feature:viewer3d",
+          "usageCount": 0
+        },
+        {
+          "name": "ViewMode",
+          "kind": "type",
+          "path": "src/features/viewer3d/hooks/useAsset3DListState.ts",
+          "line": 14,
+          "domain": "feature:viewer3d",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0068",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "ce85634fbf9e",
+        "memberCount": 1,
+        "preview": "'warning' | 'error'"
+      },
+      "declarations": [
+        {
+          "name": "DependencyRiskSeverity",
+          "kind": "type",
+          "path": "src/shared/contracts/ai-paths-core/engine.ts",
+          "line": 149,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        },
+        {
+          "name": "DataContractIssueSeverity",
+          "kind": "type",
+          "path": "src/shared/contracts/ai-paths-core/engine.ts",
+          "line": 182,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0069",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "f08505e225bc",
+        "memberCount": 1,
+        "preview": "'full' | 'reachable_from_roots'"
+      },
+      "declarations": [
+        {
+          "name": "DependencyInspectorScopeMode",
+          "kind": "type",
+          "path": "src/shared/contracts/ai-paths-core/engine.ts",
+          "line": 169,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        },
+        {
+          "name": "DataContractPreflightScopeMode",
+          "kind": "type",
+          "path": "src/shared/contracts/ai-paths-core/engine.ts",
+          "line": 181,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0071",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "c0f6bb5a73fe",
+        "memberCount": 1,
+        "preview": "z.infer<typeof caseResolverCaptureRoleSchema>"
+      },
+      "declarations": [
+        {
+          "name": "CaseResolverCaptureRole",
+          "kind": "type",
+          "path": "src/shared/contracts/case-resolver-capture.ts",
+          "line": 16,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        },
+        {
+          "name": "CaseResolverCaptureRole",
+          "kind": "type",
+          "path": "src/shared/contracts/case-resolver/capture.ts",
+          "line": 13,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0072",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "8a1205487aab",
+        "memberCount": 1,
+        "preview": "z.infer<typeof caseResolverCaptureActionSchema>"
+      },
+      "declarations": [
+        {
+          "name": "CaseResolverCaptureAction",
+          "kind": "type",
+          "path": "src/shared/contracts/case-resolver-capture.ts",
+          "line": 26,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        },
+        {
+          "name": "CaseResolverCaptureAction",
+          "kind": "type",
+          "path": "src/shared/contracts/case-resolver/capture.ts",
+          "line": 21,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0073",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "9e8b521b4358",
+        "memberCount": 1,
+        "preview": "CreateChatbotSettingsDto"
+      },
+      "declarations": [
+        {
+          "name": "ChatbotSettingsPayload",
+          "kind": "type",
+          "path": "src/shared/contracts/chatbot.ts",
+          "line": 55,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        },
+        {
+          "name": "UpdateChatbotSettingsDto",
+          "kind": "type",
+          "path": "src/shared/contracts/chatbot.ts",
+          "line": 56,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0074",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "88a5c6c19bb9",
+        "memberCount": 1,
+        "preview": "ChatbotTimelineEntryDto"
+      },
+      "declarations": [
+        {
+          "name": "TimelineEntry",
+          "kind": "type",
+          "path": "src/shared/contracts/chatbot.ts",
+          "line": 427,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        },
+        {
+          "name": "ChatbotTimelineEntry",
+          "kind": "type",
+          "path": "src/shared/contracts/chatbot.ts",
+          "line": 428,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0077",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "03b7fbecf72b",
+        "memberCount": 1,
+        "preview": "ImportExportTemplateMappingDto"
+      },
+      "declarations": [
+        {
+          "name": "ImportExportTemplateMapping",
+          "kind": "type",
+          "path": "src/shared/contracts/integrations/import-export.ts",
+          "line": 60,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        },
+        {
+          "name": "TemplateMapping",
+          "kind": "type",
+          "path": "src/shared/contracts/integrations/import-export.ts",
+          "line": 61,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0079",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "51f89d9d98fb",
+        "memberCount": 1,
+        "preview": "ImportExportTemplateDto"
+      },
+      "declarations": [
+        {
+          "name": "ImportExportTemplate",
+          "kind": "type",
+          "path": "src/shared/contracts/integrations/import-export.ts",
+          "line": 82,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        },
+        {
+          "name": "Template",
+          "kind": "type",
+          "path": "src/shared/contracts/integrations/import-export.ts",
+          "line": 83,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0080",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "f2af66fa7609",
+        "memberCount": 4,
+        "preview": "prop:connectionId:string; prop:externalId:string; prop:metadata?:Record<string, unknown> | null; prop:name:string"
+      },
+      "declarations": [
+        {
+          "name": "ExternalTagSyncInput",
+          "kind": "interface",
+          "path": "src/shared/contracts/integrations/listings.ts",
+          "line": 323,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        },
+        {
+          "name": "ExternalProducerSyncInput",
+          "kind": "interface",
+          "path": "src/shared/contracts/integrations/producers.ts",
+          "line": 62,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0081",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "26b46c1bd612",
+        "memberCount": 5,
+        "preview": "prop:aggregate:PromptExploderBenchmarkAggregate; prop:cases:PromptExploderBenchmarkCaseReport[]; prop:config:{ lowConfidenceThreshold: number; suggestionLimit: number; }; prop:generatedAt:string; prop:suite:'default' | 'extended' | 'custom'"
+      },
+      "declarations": [
+        {
+          "name": "PromptExploderBenchmarkReport",
+          "kind": "type",
+          "path": "src/shared/contracts/prompt-exploder/benchmark.ts",
+          "line": 104,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        },
+        {
+          "name": "PromptExploderBenchmarkReport",
+          "kind": "type",
+          "path": "src/shared/contracts/prompt-exploder/ui.ts",
+          "line": 208,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0082",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "d72b2f6dbfeb",
+        "memberCount": 4,
+        "preview": "prop:expectedTypes:PromptExploderSegmentType[]; prop:id:string; prop:minSegments:number; prop:prompt:string"
+      },
+      "declarations": [
+        {
+          "name": "PromptExploderBenchmarkCase",
+          "kind": "type",
+          "path": "src/shared/contracts/prompt-exploder/benchmark.ts",
+          "line": 115,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        },
+        {
+          "name": "PromptExploderBenchmarkCase",
+          "kind": "type",
+          "path": "src/shared/contracts/prompt-exploder/ui.ts",
+          "line": 201,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0086",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "ec356bbf4a93",
+        "memberCount": 1,
+        "preview": "'off' | 'warn' | 'strict'"
+      },
+      "declarations": [
+        {
+          "name": "PortablePathFingerprintVerificationMode",
+          "kind": "type",
+          "path": "src/shared/lib/ai-paths/portable-engine/index.ts",
+          "line": 124,
+          "domain": "shared",
+          "usageCount": 0
+        },
+        {
+          "name": "PortablePathEnvelopeSignatureVerificationMode",
+          "kind": "type",
+          "path": "src/shared/lib/ai-paths/portable-engine/index.ts",
+          "line": 125,
+          "domain": "shared",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0004",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "c79ba2e12a1d",
+        "memberCount": 3,
+        "preview": "prop:action?:'reused_existing' | 'reused_selected_slot' | 'created' | 'reused_deterministic'; prop:created?:boolean; prop:slot?:ImageStudioSlotRecord"
+      },
+      "declarations": [
+        {
+          "name": "EnsureSlotFromUploadResponse",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/components/single-slot-manager/single-slot-manager-utils.ts",
+          "line": 17,
+          "domain": "feature:ai",
+          "usageCount": 0
+        },
+        {
+          "name": "EnsureImageStudioSlotFromUploadedAssetResult",
+          "kind": "interface",
+          "path": "src/features/ai/image-studio/server/ensure-slot-from-upload.ts",
+          "line": 28,
+          "domain": "feature:ai",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0011",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "850bfd3143a1",
+        "memberCount": 5,
+        "preview": "prop:deleteByConnection:(connectionId: string) => Promise<number>; prop:getByExternalId:(connectionId: string, externalId: string) => Promise<ExternalProducer | null>; prop:getById:(id: string) => Promise<ExternalProducer | null>; prop:listByConnection:(connectionId: string) => Promise<ExternalProducer[]>; prop:syncFromBase:(connectionId: string, producers: BaseProducer[]) => Promise<number>"
+      },
+      "declarations": [
+        {
+          "name": "ExternalProducerRepository",
+          "kind": "type",
+          "path": "src/features/integrations/services/external-producer-repository.ts",
+          "line": 15,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        },
+        {
+          "name": "ExternalTagRepository",
+          "kind": "type",
+          "path": "src/features/integrations/services/external-tag-repository.ts",
+          "line": 6,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0018",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "73739ef5a947",
+        "memberCount": 4,
+        "preview": "prop:data?:T; prop:error?:ApiErrorDto; prop:message?:string; prop:success:boolean"
+      },
+      "declarations": [
+        {
+          "name": "ApiResponseDto",
+          "kind": "type",
+          "path": "src/shared/contracts/base.ts",
+          "line": 159,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        },
+        {
+          "name": "ApiEnvelope",
+          "kind": "type",
+          "path": "src/shared/contracts/http.ts",
+          "line": 14,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0019",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "ad3a46afba74",
+        "memberCount": 2,
+        "preview": "prop:data:Partial<CreateDto<T>>; prop:id?:string"
+      },
+      "declarations": [
+        {
+          "name": "SavePayloadDto",
+          "kind": "interface",
+          "path": "src/shared/contracts/base.ts",
+          "line": 202,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        },
+        {
+          "name": "UpdatePayloadDto",
+          "kind": "interface",
+          "path": "src/shared/contracts/base.ts",
+          "line": 217,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0020",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "f6ae55fb8aef",
+        "memberCount": 5,
+        "preview": "prop:data:unknown; prop:originalIndex?:number; prop:previewUrl:string; prop:slotId:string; prop:type:'file'"
+      },
+      "declarations": [
+        {
+          "name": "ManagedImageSlotFile",
+          "kind": "interface",
+          "path": "src/shared/contracts/image-slots.ts",
+          "line": 29,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        },
+        {
+          "name": "ManagedImageSlotExisting",
+          "kind": "interface",
+          "path": "src/shared/contracts/image-slots.ts",
+          "line": 37,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0022",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "cdc5443937e1",
+        "memberCount": 1,
+        "preview": "prop:event:AnalyticsEvent"
+      },
+      "declarations": [
+        {
+          "name": "AnalyticsEventDetailsProps",
+          "kind": "type",
+          "path": "src/shared/lib/analytics/components/AnalyticsEventDetails.tsx",
+          "line": 8,
+          "domain": "shared",
+          "usageCount": 0
+        },
+        {
+          "name": "TanstackTelemetryEnvelope",
+          "kind": "type",
+          "path": "src/shared/lib/tanstack-factory-v2.types.ts",
+          "line": 102,
+          "domain": "shared",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0024",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "b3708511258b",
+        "memberCount": 5,
+        "preview": "prop:nodeId:MasterTreeId; prop:nodes:MasterTreeNode[]; prop:position?:MasterTreeDropPosition | undefined; prop:profile?:FolderTreeProfileV2 | undefined; prop:targetId:MasterTreeId | null"
+      },
+      "declarations": [
+        {
+          "name": "CanDropMasterTreeNodeInput",
+          "kind": "type",
+          "path": "src/shared/utils/master-folder-tree-engine.ts",
+          "line": 48,
+          "domain": "shared",
+          "usageCount": 0
+        },
+        {
+          "name": "ReorderMasterTreeNodeInput",
+          "kind": "type",
+          "path": "src/shared/utils/master-folder-tree-engine.ts",
+          "line": 64,
+          "domain": "shared",
+          "usageCount": 0
         }
       ],
       "notes": [

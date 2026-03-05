@@ -2,13 +2,13 @@
 
 import React from 'react';
 
-import { useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
+import { useSystemLogsState } from '@/features/observability/context/SystemLogsContext';
 import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 import { Alert, Button, Card, FormSection, LoadingState, StatusBadge } from '@/shared/ui';
 import { formatTimestamp } from '../utils/formatTimestamp';
 
 export function AiLogInterpreter(): React.JSX.Element {
-  const { runInsightMutation, insightsQuery } = useSystemLogsContext();
+  const { runInsightMutation, insightsQuery } = useSystemLogsState();
 
   return (
     <FormSection

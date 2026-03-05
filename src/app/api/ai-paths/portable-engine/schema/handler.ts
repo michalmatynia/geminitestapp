@@ -55,15 +55,15 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const payload =
     kindRaw === 'all'
       ? {
-          specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
-          kind: 'all' as const,
-          schemas,
-        }
+        specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
+        kind: 'all' as const,
+        schemas,
+      }
       : {
-          specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
-          kind: kindRaw as PortablePathJsonSchemaKind,
-          schema: schemas[kindRaw as PortablePathJsonSchemaKind],
-        };
+        specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
+        kind: kindRaw,
+        schema: schemas[kindRaw],
+      };
   const etag = buildSchemaEtag(payload);
   const headers = {
     ETag: etag,

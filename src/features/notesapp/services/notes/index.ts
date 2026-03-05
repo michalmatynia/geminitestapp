@@ -42,7 +42,7 @@ export const invalidateNoteRepositoryCache = (): void => {
 };
 
 const resolveNoteProvider = async (): Promise<'mongodb' | 'prisma'> => {
-  const provider = (await getAppDbProvider()) as 'mongodb' | 'prisma';
+  const provider = (await getAppDbProvider());
   if (process.env['NODE_ENV'] === 'test') {
     void logSystemEvent({
       level: 'info',

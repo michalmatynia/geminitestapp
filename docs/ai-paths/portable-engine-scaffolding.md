@@ -41,12 +41,33 @@ Optional fingerprint:
 }
 ```
 
+Optional signed envelope:
+
+```json
+{
+  "specVersion": "ai-paths.portable-engine.v1",
+  "kind": "path_package_envelope",
+  "signedAt": "2026-03-05T00:00:00.000Z",
+  "package": {
+    "specVersion": "ai-paths.portable-engine.v1",
+    "kind": "path_package"
+  },
+  "signature": {
+    "algorithm": "hmac_sha256",
+    "value": "...",
+    "keyId": "prod-key-1"
+  }
+}
+```
+
 ## Core APIs
 
 ### Build/Serialize
 
 - `buildPortablePathPackage(pathConfig, options)`
 - `serializePortablePathPackage(pathConfig, options)`
+- `buildPortablePathPackageEnvelope(packagePayload, options)` (async)
+- `serializePortablePathPackageEnvelope(packagePayload, options)` (async)
 
 ### Resolve/Import
 
@@ -57,6 +78,7 @@ Optional fingerprint:
 Accepted payloads:
 
 - Portable package (`ai-paths.portable-engine.v1`)
+- Signed portable package envelope (`kind: "path_package_envelope"`)
 - Semantic canvas document (`ai-paths.semantic-grammar.v1`)
 - Raw `PathConfig` JSON
 
@@ -74,7 +96,15 @@ Resolver behavior:
   - `fingerprintVerificationMode: "warn"` emits import warnings and continues.
   - `fingerprintVerificationMode: "strict"` blocks import on missing/mismatched/unsupported fingerprints.
   - For `sha256` fingerprints in strict mode, use the async resolver path for runtime-backed verification.
+- Supports optional envelope signature verification on import:
+  - `envelopeSignatureVerificationMode: "warn"` emits signature warnings and continues.
+  - `envelopeSignatureVerificationMode: "strict"` blocks import on missing/mismatched/unsupported signatures.
+  - For `hmac_sha256` envelope signatures in strict mode, use the async resolver path and pass `envelopeSignatureSecret`.
 - Uses a migration registry keyed by portable package spec version (currently `v1` + `v2` compatibility shim).
+- Exposes custom migration registry APIs:
+  - `registerPortablePathPackageMigrator(specVersion, migrator)`
+  - `unregisterPortablePathPackageMigrator(specVersion)` (built-ins protected)
+  - `listPortablePathPackageMigratorVersions()`
 
 ### Validate
 
@@ -100,6 +130,8 @@ Both run methods support:
 - `reportAiPathsError`
 - `limits` / `enforcePayloadLimits`
 - `fingerprintVerificationMode` (`off` | `warn` | `strict`)
+- `envelopeSignatureVerificationMode` (`off` | `warn` | `strict`)
+- `envelopeSignatureSecret` (required for strict `hmac_sha256` envelope verification)
 
 ### Fingerprinting
 
@@ -112,6 +144,7 @@ These allow stable package integrity tagging across copy/paste surfaces.
 
 - API: `GET /api/ai-paths/portable-engine/schema`
 - Optional query: `kind=all|portable_package|semantic_canvas|path_config` (default `all`)
+- Optional query: `kind=all|portable_envelope|portable_package|semantic_canvas|path_config` (default `all`)
 - Cache support: deterministic `ETag` + `If-None-Match` (`304 Not Modified`) with private SWR cache headers.
 
 Response includes canonical JSON Schema (Draft 2020-12) generated from runtime Zod contracts, suitable for external editor validation.
@@ -146,6 +179,6 @@ import { runPortablePathServer } from '@/shared/lib/ai-paths/portable-engine/ser
 
 ## Next Hardening Steps
 
-1. Add signed package envelope option for tamper-evident cross-surface sharing.
-2. Add compatibility test matrix for custom registered migrators.
-3. Add optional schema-diff endpoint (`current` vs `vNext`) for tooling upgrades.
+1. Add optional schema-diff endpoint (`current` vs `vNext`) for tooling upgrades.
+2. Add custom migrator observability hooks (version/path counts + failure telemetry).
+3. Add pluggable envelope key resolver strategy (rotation + key-id routing).

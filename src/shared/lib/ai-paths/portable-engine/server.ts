@@ -25,6 +25,8 @@ export const runPortablePathServer = async (
     enforcePayloadLimits = true,
     limits,
     fingerprintVerificationMode = 'off',
+    envelopeSignatureVerificationMode = 'off',
+    envelopeSignatureSecret,
     reportAiPathsError,
     ...engineOptions
   } = options;
@@ -34,6 +36,8 @@ export const runPortablePathServer = async (
     enforcePayloadLimits,
     limits,
     fingerprintVerificationMode,
+    envelopeSignatureVerificationMode,
+    envelopeSignatureSecret,
   });
   if (!resolved.ok) {
     throw new Error(`Invalid AI-Path payload: ${resolved.error}`);
@@ -41,9 +45,9 @@ export const runPortablePathServer = async (
 
   const validation = validateBeforeRun
     ? validatePortablePathConfig(resolved.value.pathConfig, {
-        mode: validationMode,
-        triggerNodeId: validationTriggerNodeId,
-      })
+      mode: validationMode,
+      triggerNodeId: validationTriggerNodeId,
+    })
     : null;
   if (validation && !validation.ok) {
     throw new PortablePathValidationError(validation);

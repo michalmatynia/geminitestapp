@@ -2,6 +2,7 @@ import { ObjectId, type Filter } from 'mongodb';
 
 import type { ProducerMapping, ProducerMappingWithDetails } from '@/shared/contracts/integrations';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import type { MongoProducerDoc as SharedMongoProducerDoc } from '@/shared/lib/db/services/database-sync-types';
 
 export type MongoProducerMappingDoc = {
   _id: string | ObjectId;
@@ -24,7 +25,10 @@ export type MongoExternalProducerDoc = {
   updatedAt: Date;
 };
 
-export type MongoInternalProducerDoc = {
+type MongoInternalProducerDoc = Omit<
+  SharedMongoProducerDoc,
+  '_id' | 'id' | 'name' | 'createdAt' | 'updatedAt'
+> & {
   _id: string | ObjectId;
   id: string;
   name: string;
@@ -32,6 +36,8 @@ export type MongoInternalProducerDoc = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+export type { MongoInternalProducerDoc };
 
 export const PRODUCER_MAPPING_COLLECTION = 'producer_mappings';
 export const EXTERNAL_PRODUCER_COLLECTION = 'external_producers';

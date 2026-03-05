@@ -145,14 +145,59 @@ type SystemLogsContextValue = {
   toast: ToastFn;
 };
 
-const SystemLogsContext = createContext<SystemLogsContextValue | null>(null);
+type SystemLogsStateContextValue = Omit<
+  SystemLogsContextValue,
+  | 'setPage'
+  | 'handleFilterChange'
+  | 'handleResetFilters'
+  | 'confirmAction'
+  | 'handleClearLogs'
+  | 'handleRebuildMongoIndexes'
+  | 'handleRunInsight'
+  | 'handleInterpretLog'
+  | 'setIsClearLogsConfirmOpen'
+  | 'setIsRebuildIndexesConfirmOpen'
+  | 'toast'
+>;
 
-export const useSystemLogsContext = (): SystemLogsContextValue => {
-  const context = useContext(SystemLogsContext);
+type SystemLogsActionsContextValue = Pick<
+  SystemLogsContextValue,
+  | 'setPage'
+  | 'handleFilterChange'
+  | 'handleResetFilters'
+  | 'confirmAction'
+  | 'handleClearLogs'
+  | 'handleRebuildMongoIndexes'
+  | 'handleRunInsight'
+  | 'handleInterpretLog'
+  | 'setIsClearLogsConfirmOpen'
+  | 'setIsRebuildIndexesConfirmOpen'
+  | 'toast'
+>;
+
+const SystemLogsStateContext = createContext<SystemLogsStateContextValue | null>(null);
+const SystemLogsActionsContext = createContext<SystemLogsActionsContextValue | null>(null);
+
+export const useSystemLogsState = (): SystemLogsStateContextValue => {
+  const context = useContext(SystemLogsStateContext);
   if (!context) {
-    throw internalError('useSystemLogsContext must be used within SystemLogsProvider');
+    throw internalError('useSystemLogsState must be used within SystemLogsProvider');
   }
   return context;
+};
+
+export const useSystemLogsActions = (): SystemLogsActionsContextValue => {
+  const context = useContext(SystemLogsActionsContext);
+  if (!context) {
+    throw internalError('useSystemLogsActions must be used within SystemLogsProvider');
+  }
+  return context;
+};
+
+export const useSystemLogsContext = (): SystemLogsContextValue => {
+  const state = useSystemLogsState();
+  const actions = useSystemLogsActions();
+  return useMemo((): SystemLogsContextValue => ({ ...state, ...actions }), [state, actions]);
 };
 
 export function SystemLogsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
@@ -463,7 +508,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     }
   };
 
-  const value: SystemLogsContextValue = {
+  const stateValue: SystemLogsStateContextValue = {
     level,
     query,
     source,
@@ -481,9 +526,6 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     page,
     pageSize,
     filterFields,
-    setPage,
-    handleFilterChange,
-    handleResetFilters,
     logs,
     logsJson,
     total,
@@ -501,18 +543,29 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     interpretLogMutation,
     clearLogsMutation,
     rebuildIndexesMutation,
-    confirmAction,
     ConfirmationModal,
+    isClearLogsConfirmOpen,
+    isRebuildIndexesConfirmOpen,
+  };
+  const actionsValue: SystemLogsActionsContextValue = {
+    setPage,
+    handleFilterChange,
+    handleResetFilters,
+    confirmAction,
     handleClearLogs,
     handleRebuildMongoIndexes,
     handleRunInsight,
     handleInterpretLog,
-    isClearLogsConfirmOpen,
     setIsClearLogsConfirmOpen,
-    isRebuildIndexesConfirmOpen,
     setIsRebuildIndexesConfirmOpen,
     toast,
   };
 
-  return <SystemLogsContext.Provider value={value}>{children}</SystemLogsContext.Provider>;
+  return (
+    <SystemLogsActionsContext.Provider value={actionsValue}>
+      <SystemLogsStateContext.Provider value={stateValue}>
+        {children}
+      </SystemLogsStateContext.Provider>
+    </SystemLogsActionsContext.Provider>
+  );
 }

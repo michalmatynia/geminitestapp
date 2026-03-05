@@ -196,6 +196,14 @@ const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
     reason: 'ai-paths run-graph legacy node-identity error channel reintroduced',
   },
   {
+    token: 'legacy_path_config_upgraded',
+    reason: 'ai-paths portable-engine legacy path-config migration warning code reintroduced',
+  },
+  {
+    token: 'Legacy path config payload upgraded to portable package v1.',
+    reason: 'ai-paths portable-engine legacy path-config migration warning message reintroduced',
+  },
+  {
     token: '[chatbot][chat] Ignored legacy requested model in favor of Brain',
     reason: 'chatbot legacy model-override compatibility channel reintroduced',
   },

@@ -10,14 +10,17 @@ import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
   PortablePathValidationError,
   addPortablePathPackageFingerprint,
+  buildPortablePathPackageEnvelope,
   buildPortablePathPackage,
   buildPortablePathJsonSchemaCatalog,
   computePortablePathFingerprintSync,
   listPortablePathPackageMigratorVersions,
   migratePortablePathInput,
+  registerPortablePathPackageMigrator,
   resolvePortablePathInput,
   resolvePortablePathInputAsync,
   runPortablePathClient,
+  unregisterPortablePathPackageMigrator,
   validatePortablePathConfig,
   validatePortablePathInput,
 } from '../index';
@@ -29,18 +32,38 @@ vi.mock('@/shared/lib/ai-paths/core/runtime/engine-client', () => ({
 const mockedEvaluateGraphClient = vi.mocked(evaluateGraphClient);
 
 const ensureCryptoSubtleDigestForTest = (): (() => void) => {
-  if (globalThis.crypto?.subtle && typeof globalThis.crypto.subtle.digest === 'function') {
+  if (
+    globalThis.crypto?.subtle &&
+    typeof globalThis.crypto.subtle.digest === 'function' &&
+    typeof globalThis.crypto.subtle.importKey === 'function' &&
+    typeof globalThis.crypto.subtle.sign === 'function'
+  ) {
     return () => {};
   }
   const previous = globalThis.crypto;
+  const asBytes = (data: BufferSource): Uint8Array =>
+    data instanceof ArrayBuffer
+      ? new Uint8Array(data)
+      : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
   const subtle = {
     digest: async (_algorithm: string, data: BufferSource): Promise<ArrayBuffer> => {
-      const bytes =
-        data instanceof ArrayBuffer
-          ? new Uint8Array(data)
-          : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+      const bytes = asBytes(data);
       const digest = createHash('sha256').update(Buffer.from(bytes)).digest();
       return digest.buffer.slice(digest.byteOffset, digest.byteOffset + digest.byteLength);
+    },
+    importKey: async (_format: string, keyData: BufferSource): Promise<{ key: Buffer }> => ({
+      key: Buffer.from(asBytes(keyData)),
+    }),
+    sign: async (
+      _algorithm: string | { name: string; hash?: string },
+      key: { key: Buffer },
+      data: BufferSource
+    ): Promise<ArrayBuffer> => {
+      const signature = createHash('sha256')
+        .update(createHash('sha256').update(key.key).digest())
+        .update(Buffer.from(asBytes(data)))
+        .digest();
+      return signature.buffer.slice(signature.byteOffset, signature.byteOffset + signature.byteLength);
     },
   };
   Object.defineProperty(globalThis, 'crypto', {
@@ -176,7 +199,7 @@ describe('portable AI-path engine scaffold', () => {
     expect(report.preflightReport?.shouldBlock).toBe(true);
   });
 
-  it('migrates legacy path config payload to portable package v1', () => {
+  it('migrates path config payload to portable package v1', () => {
     const pathConfig = createDefaultPathConfig('path_portable_migrate_legacy');
     const migrated = migratePortablePathInput(pathConfig);
     expect(migrated.ok).toBe(true);
@@ -188,7 +211,7 @@ describe('portable AI-path engine scaffold', () => {
     );
     expect(
       migrated.value.migrationWarnings.some(
-        (warning) => warning.code === 'legacy_path_config_upgraded'
+        (warning) => warning.code === 'path_config_upgraded'
       )
     ).toBe(true);
   });
@@ -230,6 +253,87 @@ describe('portable AI-path engine scaffold', () => {
     const versions = listPortablePathPackageMigratorVersions();
     expect(versions).toContain(AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION);
     expect(versions).toContain('ai-paths.portable-engine.v2');
+  });
+
+  it('supports custom registered migrator success path', () => {
+    const customVersion = 'ai-paths.portable-engine.v15';
+    const pathConfig = createDefaultPathConfig('path_portable_custom_migrator_success');
+    const basePackage = buildPortablePathPackage(pathConfig);
+    const migratedPackage = buildPortablePathPackage({
+      ...pathConfig,
+      name: `${pathConfig.name} migrated`,
+    });
+    let invocationCount = 0;
+
+    registerPortablePathPackageMigrator(customVersion, () => {
+      invocationCount += 1;
+      return {
+        ok: true,
+        value: {
+          portablePackage: migratedPackage,
+          migrationWarnings: [
+            {
+              code: 'portable_package_version_upgraded',
+              message: 'Custom migrator upgraded v15 to v1.',
+            },
+          ],
+        },
+      };
+    });
+
+    try {
+      const migrated = migratePortablePathInput({
+        ...basePackage,
+        specVersion: customVersion,
+      });
+      expect(migrated.ok).toBe(true);
+      if (!migrated.ok) return;
+      expect(invocationCount).toBe(1);
+      expect(migrated.value.portablePackage.name).toBe(`${pathConfig.name} migrated`);
+      expect(
+        migrated.value.migrationWarnings.some(
+          (warning) => warning.code === 'portable_package_version_upgraded'
+        )
+      ).toBe(true);
+    } finally {
+      unregisterPortablePathPackageMigrator(customVersion);
+    }
+  });
+
+  it('surfaces custom migrator failure path', () => {
+    const customVersion = 'ai-paths.portable-engine.v16';
+    const pathConfig = createDefaultPathConfig('path_portable_custom_migrator_failure');
+    const basePackage = buildPortablePathPackage(pathConfig);
+
+    registerPortablePathPackageMigrator(customVersion, () => ({
+      ok: false,
+      error: 'Custom migration exploded.',
+    }));
+
+    try {
+      const migrated = migratePortablePathInput({
+        ...basePackage,
+        specVersion: customVersion,
+      });
+      expect(migrated.ok).toBe(false);
+      if (migrated.ok) return;
+      expect(migrated.error).toContain('Custom migration exploded');
+    } finally {
+      unregisterPortablePathPackageMigrator(customVersion);
+    }
+  });
+
+  it('rejects invalid custom migrator versions and protects built-ins', () => {
+    expect(() =>
+      registerPortablePathPackageMigrator('portable-bad-version', () => ({
+        ok: false,
+        error: 'nope',
+      }))
+    ).toThrow('Invalid portable package spec version');
+
+    expect(() => unregisterPortablePathPackageMigrator(AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION)).toThrow(
+      'Cannot unregister built-in portable package migrator'
+    );
   });
 
   it('warns on missing portable package fingerprint in warn mode', () => {
@@ -386,8 +490,71 @@ describe('portable AI-path engine scaffold', () => {
     ).toBe(true);
   });
 
+  it('resolves signed package envelopes in async strict mode', async () => {
+    const restoreCrypto = ensureCryptoSubtleDigestForTest();
+    try {
+      const pathConfig = createDefaultPathConfig('path_portable_envelope_async_strict');
+      const portablePackage = buildPortablePathPackage(pathConfig);
+      const signedEnvelope = await buildPortablePathPackageEnvelope(portablePackage, {
+        secret: 'portable-test-secret',
+        keyId: 'test-key-1',
+      });
+
+      const parsed = await resolvePortablePathInputAsync(signedEnvelope, {
+        envelopeSignatureVerificationMode: 'strict',
+        envelopeSignatureSecret: 'portable-test-secret',
+      });
+      expect(parsed.ok).toBe(true);
+      if (!parsed.ok) return;
+      expect(parsed.value.source).toBe('portable_envelope');
+      expect(parsed.value.portableEnvelope?.signature.algorithm).toBe('hmac_sha256');
+    } finally {
+      restoreCrypto();
+    }
+  });
+
+  it('requires async envelope verification in sync strict mode for hmac signatures', async () => {
+    const restoreCrypto = ensureCryptoSubtleDigestForTest();
+    try {
+      const pathConfig = createDefaultPathConfig('path_portable_envelope_sync_strict');
+      const portablePackage = buildPortablePathPackage(pathConfig);
+      const signedEnvelope = await buildPortablePathPackageEnvelope(portablePackage, {
+        secret: 'portable-test-secret',
+      });
+      const parsed = resolvePortablePathInput(signedEnvelope, {
+        envelopeSignatureVerificationMode: 'strict',
+        envelopeSignatureSecret: 'portable-test-secret',
+      });
+      expect(parsed.ok).toBe(false);
+      if (parsed.ok) return;
+      expect(parsed.error).toContain('asynchronous verification');
+    } finally {
+      restoreCrypto();
+    }
+  });
+
+  it('fails async strict envelope verification when secret is missing', async () => {
+    const restoreCrypto = ensureCryptoSubtleDigestForTest();
+    try {
+      const pathConfig = createDefaultPathConfig('path_portable_envelope_missing_secret');
+      const portablePackage = buildPortablePathPackage(pathConfig);
+      const signedEnvelope = await buildPortablePathPackageEnvelope(portablePackage, {
+        secret: 'portable-test-secret',
+      });
+      const parsed = await resolvePortablePathInputAsync(signedEnvelope, {
+        envelopeSignatureVerificationMode: 'strict',
+      });
+      expect(parsed.ok).toBe(false);
+      if (parsed.ok) return;
+      expect(parsed.error).toContain('verification secret');
+    } finally {
+      restoreCrypto();
+    }
+  });
+
   it('publishes json schema catalog for portable contracts', () => {
     const catalog = buildPortablePathJsonSchemaCatalog();
+    expect(catalog.portable_envelope['type']).toBe('object');
     expect(catalog.portable_package['type']).toBe('object');
     expect(catalog.semantic_canvas['type']).toBe('object');
     expect(catalog.path_config['type']).toBe('object');

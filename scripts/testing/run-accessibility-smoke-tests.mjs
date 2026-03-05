@@ -5,6 +5,8 @@ import { spawn } from 'node:child_process';
 const args = new Set(process.argv.slice(2));
 const strictMode = args.has('--strict');
 const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
+const warningBudgetArg = [...args].find((arg) => arg.startsWith('--warning-budget='));
+const warningBudget = Number.parseInt(warningBudgetArg?.split('=')[1] ?? '10', 10);
 
 const root = process.cwd();
 const outDir = path.join(root, 'docs', 'metrics');
@@ -46,6 +48,8 @@ const formatDuration = (ms) => {
   return `${(sec / 60).toFixed(1)}m`;
 };
 
+const countActWarnings = (value) => (value.match(/not wrapped in act\(\.\.\.\)/g) ?? []).length;
+
 const runSuite = (suite) =>
   new Promise((resolve) => {
     const startedAt = Date.now();
@@ -75,6 +79,7 @@ const runSuite = (suite) =>
 
     child.on('error', (error) => {
       const durationMs = Date.now() - startedAt;
+      const resolvedOutput = `${output}\n${error.stack ?? String(error)}`.trim();
       resolve({
         id: suite.id,
         name: suite.name,
@@ -83,7 +88,8 @@ const runSuite = (suite) =>
         status: 'fail',
         exitCode: null,
         durationMs,
-        output: `${output}\n${error.stack ?? String(error)}`.trim(),
+        actWarnings: countActWarnings(resolvedOutput),
+        output: resolvedOutput,
       });
     });
 
@@ -97,6 +103,7 @@ const runSuite = (suite) =>
         status: exitCode === 0 ? 'pass' : 'fail',
         exitCode,
         durationMs,
+        actWarnings: countActWarnings(output),
         output: output.trim(),
       });
     });
@@ -113,6 +120,9 @@ const toMarkdown = (payload) => {
   lines.push(`- Suites: ${payload.summary.total}`);
   lines.push(`- Passed: ${payload.summary.passed}`);
   lines.push(`- Failed: ${payload.summary.failed}`);
+  lines.push(`- React act warnings: ${payload.summary.actWarnings}`);
+  lines.push(`- Warning budget: ${payload.summary.warningBudget}`);
+  lines.push(`- Warning budget status: ${payload.summary.warningBudgetStatus}`);
   lines.push('');
   lines.push('## Suite Status');
   lines.push('');
@@ -124,10 +134,19 @@ const toMarkdown = (payload) => {
     );
   }
   lines.push('');
+  lines.push('## Warning Details');
+  lines.push('');
+  lines.push('| Suite | React act warnings |');
+  lines.push('| --- | ---: |');
+  for (const result of payload.results) {
+    lines.push(`| ${result.name} | ${result.actWarnings} |`);
+  }
+  lines.push('');
   lines.push('## Notes');
   lines.push('');
   lines.push('- This smoke suite tracks keyboard/focus/label accessibility checks across critical user flows.');
   lines.push('- Run `npm run test:accessibility-smoke` before UI-facing changes.');
+  lines.push('- React act warnings are tracked as non-failing telemetry for accessibility test hygiene.');
   return `${lines.join('\n')}\n`;
 };
 
@@ -145,7 +164,12 @@ const run = async () => {
     total: results.length,
     passed: results.filter((result) => result.status === 'pass').length,
     failed: results.filter((result) => result.status === 'fail').length,
+    actWarnings: results.reduce((acc, result) => acc + (result.actWarnings ?? 0), 0),
+    warningBudget: Number.isFinite(warningBudget) ? warningBudget : 10,
+    warningBudgetStatus: 'ok',
   };
+  summary.warningBudgetStatus =
+    summary.actWarnings <= summary.warningBudget ? 'ok' : 'exceeded';
 
   const payload = {
     generatedAt: new Date().toISOString(),
@@ -170,7 +194,9 @@ const run = async () => {
     await fs.writeFile(historicalMdPath, toMarkdown(payload), 'utf8');
   }
 
-  console.log(`[a11y-smoke] summary pass=${summary.passed} fail=${summary.failed} total=${summary.total}`);
+  console.log(
+    `[a11y-smoke] summary pass=${summary.passed} fail=${summary.failed} total=${summary.total} actWarnings=${summary.actWarnings} budget=${summary.warningBudget} status=${summary.warningBudgetStatus}`
+  );
   console.log(`Wrote ${path.relative(root, latestJsonPath)}`);
   console.log(`Wrote ${path.relative(root, latestMdPath)}`);
   if (shouldWriteHistory) {

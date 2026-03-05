@@ -23,6 +23,7 @@ Date: 2026-03-05
 17. Critical-path API branch guardrail expansion (Step 17) - completed
 18. Trend index generation for PR/CI observability (Step 18) - completed
 19. Lint-domain optional test-probe evaluation (Step 19) - completed
+20. Accessibility warning-budget telemetry rollout (Step 20) - completed
 
 ## Gate Status Snapshot
 
@@ -43,6 +44,7 @@ Date: 2026-03-05
 - Critical-path branch guardrails: PASS (`10/10` budgets with LOC + branch complexity)
 - Trend index: PASS (`3/3` trend streams indexed)
 - Lint-domain test-probe mode: PASS (`5/5` with `--include-test-probes`)
+- Accessibility warning budget telemetry: PASS (`5/5`, warnings tracked non-failing)
 
 ## Current Risks Captured by Baseline
 
@@ -54,7 +56,7 @@ Date: 2026-03-05
 ## Next Iteration Backlog (Priority)
 
 1. Recalibrate weekly duration budgets after 7-10 more runs to reduce false positives.
-2. Add a lightweight accessibility warning budget (non-failing) to surface recurring `act(...)` warnings.
-3. Add per-domain owner metadata in trend outputs to improve triage routing.
-4. Expose trend-index artifacts in CI job summaries for direct click-through navigation.
-5. Extend lint-domain test-probe mode into full test-tree lint domains once ESLint config support is explicitly added.
+2. Add per-domain owner metadata in trend outputs to improve triage routing.
+3. Expose trend-index artifacts in CI job summaries for direct click-through navigation.
+4. Extend lint-domain test-probe mode into full test-tree lint domains once ESLint config support is explicitly added.
+5. Decide whether accessibility warning budget should eventually become fail-on-exceed in strict mode.

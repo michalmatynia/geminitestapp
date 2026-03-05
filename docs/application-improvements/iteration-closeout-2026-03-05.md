@@ -17,6 +17,7 @@ Date: 2026-03-05
 11. Lint-domain gate rollout and weekly integration (Step 11) - completed
 12. Weekly lane trend report rollout (Step 12) - completed
 13. Unit/lint domain trend reports with rolling deltas (Step 13) - completed
+14. Weekly check duration budgets and strict alerts (Step 14) - completed
 
 ## Gate Status Snapshot
 
@@ -31,18 +32,19 @@ Date: 2026-03-05
 - Weekly lane trend report: PASS (historical aggregation active)
 - Unit-domain trend report: PASS (rolling delta active)
 - Lint-domain trend report: PASS (rolling delta active)
+- Weekly duration budgets: PASS (strict-mode alert enforcement active)
 
 ## Current Risks Captured by Baseline
 
 - Full unit lane remains high-latency compared with domain-split gate runs.
-- Weekly lane has expanded checks; runtime cost needs periodic review to prevent CI slowdown.
+- Weekly lane has expanded checks; duration budgets are enforced but need tuning as history depth grows.
 - Domain lint gate currently ignores `__tests__` trees by ESLint config design, so test-only lint debt remains out-of-band.
 - Trend history depth is currently shallow (single-day baseline), so confidence improves as more runs accumulate.
 
 ## Next Iteration Backlog (Priority)
 
-1. Set explicit timeout budgets per weekly check based on observed trend baselines and enforce alert thresholds.
-2. Add one accessibility smoke test per critical-flow page for keyboard tab-order and visible focus state.
-3. Expand critical-path budgets with route-handler branch-complexity heuristics (not only LOC).
-4. Add trend summaries into weekly report output to reduce context switching across metric files.
-5. Evaluate optional inclusion of `__tests__` trees in lint-domain reporting without destabilizing current ESLint config.
+1. Add one accessibility smoke test per critical-flow page for keyboard tab-order and visible focus state.
+2. Expand critical-path budgets with route-handler branch-complexity heuristics (not only LOC).
+3. Add trend summaries into weekly report output to reduce context switching across metric files.
+4. Evaluate optional inclusion of `__tests__` trees in lint-domain reporting without destabilizing current ESLint config.
+5. Recalibrate weekly duration budgets after 7-10 more runs to reduce false positives.

@@ -18,6 +18,20 @@ const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
 
 const MAX_OUTPUT_BYTES = 160_000;
 const BUILD_LOCK_PATH = path.join(root, '.next', 'lock');
+const DURATION_ALERT_BUDGETS_MS = Object.freeze({
+  build: 3 * 60 * 1000,
+  lint: 4 * 60 * 1000,
+  lintDomains: 3 * 60 * 1000,
+  typecheck: 2 * 60 * 1000,
+  criticalFlows: 60 * 1000,
+  securitySmoke: 60 * 1000,
+  unitDomains: 10 * 60 * 1000,
+  fullUnit: 25 * 60 * 1000,
+  e2e: 40 * 60 * 1000,
+  guardrails: 60 * 1000,
+  uiConsolidation: 60 * 1000,
+  observability: 30 * 1000,
+});
 
 const criticalFlows = [
   {
@@ -306,6 +320,7 @@ const toMarkdown = (report) => {
   lines.push(`- Unit-domain gate pass rate: ${report.passRates.unitDomains ?? 'n/a'}%`);
   lines.push(`- Full unit pass rate: ${report.passRates.fullUnit ?? 'n/a'}%`);
   lines.push(`- E2E test pass rate: ${report.passRates.e2e ?? 'n/a'}%`);
+  lines.push(`- Duration budget alerts: ${report.durationAlerts.length}`);
   lines.push('');
   if (!includeFullUnit) {
     lines.push(
@@ -330,6 +345,22 @@ const toMarkdown = (report) => {
   lines.push('');
 
   lines.push('## Guardrail Snapshot');
+  lines.push('');
+
+  lines.push('## Duration Budget Alerts');
+  lines.push('');
+  if (report.durationAlerts.length === 0) {
+    lines.push('- No duration budget alerts in this run.');
+  } else {
+    lines.push('| Check | Duration | Budget | Delta |');
+    lines.push('| --- | ---: | ---: | ---: |');
+    for (const alert of report.durationAlerts) {
+      const delta = alert.durationMs - alert.budgetMs;
+      lines.push(
+        `| ${alert.label} | ${formatDuration(alert.durationMs)} | ${formatDuration(alert.budgetMs)} | +${formatDuration(delta)} |`
+      );
+    }
+  }
   lines.push('');
   if (report.propDrilling.ok && report.uiConsolidation.ok) {
     lines.push(
@@ -552,6 +583,22 @@ const run = async () => {
   };
 
   const findCheck = (id) => checkResults.find((check) => check.id === id);
+  const durationAlerts = checkResults
+    .filter((check) => check.status !== 'skipped')
+    .map((check) => {
+      const budgetMs = DURATION_ALERT_BUDGETS_MS[check.id];
+      if (!Number.isFinite(budgetMs)) return null;
+      if (!Number.isFinite(check.durationMs)) return null;
+      if (check.durationMs <= budgetMs) return null;
+      return {
+        id: check.id,
+        label: check.label,
+        status: check.status,
+        durationMs: check.durationMs,
+        budgetMs,
+      };
+    })
+    .filter(Boolean);
 
   const report = {
     generatedAt: new Date().toISOString(),
@@ -570,6 +617,7 @@ const run = async () => {
       fullUnit: getPassRate(findCheck('fullUnit')),
       e2e: getPassRate(findCheck('e2e')),
     },
+    durationAlerts,
     checks: checkResults,
     buildPreflight,
     metrics,
@@ -607,6 +655,11 @@ const run = async () => {
 
   if (strictMode && (summary.failed > 0 || summary.timedOut > 0)) {
     console.error('Weekly quality report strict mode failed due check failures/timeouts.');
+    process.exit(1);
+  }
+
+  if (strictMode && durationAlerts.length > 0) {
+    console.error('Weekly quality report strict mode failed due duration budget alerts.');
     process.exit(1);
   }
 };

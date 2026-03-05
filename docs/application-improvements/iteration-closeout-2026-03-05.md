@@ -15,6 +15,8 @@ Date: 2026-03-05
 9. Products domain stabilization for unit-domain gate (Step 9) - completed
 10. Weekly quality lane unit-domain gate integration (Step 10) - completed
 11. Lint-domain gate rollout and weekly integration (Step 11) - completed
+12. Weekly lane trend report rollout (Step 12) - completed
+13. Unit/lint domain trend reports with rolling deltas (Step 13) - completed
 
 ## Gate Status Snapshot
 
@@ -26,17 +28,21 @@ Date: 2026-03-05
 - Lint-domain gate: PASS (`5/5`)
 - Architecture guardrails: PASS
 - UI consolidation guardrail: PASS
+- Weekly lane trend report: PASS (historical aggregation active)
+- Unit-domain trend report: PASS (rolling delta active)
+- Lint-domain trend report: PASS (rolling delta active)
 
 ## Current Risks Captured by Baseline
 
 - Full unit lane remains high-latency compared with domain-split gate runs.
 - Weekly lane has expanded checks; runtime cost needs periodic review to prevent CI slowdown.
 - Domain lint gate currently ignores `__tests__` trees by ESLint config design, so test-only lint debt remains out-of-band.
+- Trend history depth is currently shallow (single-day baseline), so confidence improves as more runs accumulate.
 
 ## Next Iteration Backlog (Priority)
 
-1. Track weekly-lane wall-clock duration trend and set timeout budgets per check to avoid hidden CI regressions.
-2. Add a historical `unit-domain-timings` trend report (rolling 7-day deltas) to surface slowdowns early.
-3. Add a historical `lint-domain-checks` trend report (rolling 7-day deltas) to catch regressions by domain.
-4. Expand accessibility smoke coverage with keyboard tab-order assertions on one additional page per critical flow.
-5. Expand critical-path budgets with route-handler branch-complexity heuristics (not only LOC).
+1. Set explicit timeout budgets per weekly check based on observed trend baselines and enforce alert thresholds.
+2. Add one accessibility smoke test per critical-flow page for keyboard tab-order and visible focus state.
+3. Expand critical-path budgets with route-handler branch-complexity heuristics (not only LOC).
+4. Add trend summaries into weekly report output to reduce context switching across metric files.
+5. Evaluate optional inclusion of `__tests__` trees in lint-domain reporting without destabilizing current ESLint config.

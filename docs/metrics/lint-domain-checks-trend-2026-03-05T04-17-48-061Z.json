@@ -1,0 +1,118 @@
+{
+  "generatedAt": "2026-03-05T04:17:48.061Z",
+  "suite": "lint-domain-checks",
+  "label": "Lint Domain Checks",
+  "windowDays": 7,
+  "summary": {
+    "runCount": 2,
+    "oldestRun": "2026-03-05T04:00:57.270Z",
+    "newestRun": "2026-03-05T04:06:33.027Z"
+  },
+  "domainIds": [
+    "auth",
+    "products",
+    "ai-paths",
+    "image-studio",
+    "case-resolver"
+  ],
+  "runs": [
+    {
+      "sourceFile": "lint-domain-checks-2026-03-05T04-00-57-270Z.json",
+      "generatedAt": "2026-03-05T04:00:57.270Z",
+      "totalDurationMs": 5087,
+      "statusSummary": {
+        "total": 5,
+        "passed": 0,
+        "failed": 5,
+        "timedOut": 0,
+        "skipped": 0
+      },
+      "domains": [
+        {
+          "id": "auth",
+          "name": "Auth",
+          "status": "fail",
+          "durationMs": 1705,
+          "exitCode": 2
+        },
+        {
+          "id": "products",
+          "name": "Products",
+          "status": "fail",
+          "durationMs": 821,
+          "exitCode": 2
+        },
+        {
+          "id": "ai-paths",
+          "name": "AI Paths",
+          "status": "fail",
+          "durationMs": 841,
+          "exitCode": 2
+        },
+        {
+          "id": "image-studio",
+          "name": "Image Studio",
+          "status": "fail",
+          "durationMs": 847,
+          "exitCode": 2
+        },
+        {
+          "id": "case-resolver",
+          "name": "Case Resolver",
+          "status": "fail",
+          "durationMs": 873,
+          "exitCode": 2
+        }
+      ]
+    },
+    {
+      "sourceFile": "lint-domain-checks-latest.json",
+      "generatedAt": "2026-03-05T04:06:33.027Z",
+      "totalDurationMs": 99289,
+      "statusSummary": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "timedOut": 0,
+        "skipped": 0
+      },
+      "domains": [
+        {
+          "id": "auth",
+          "name": "Auth",
+          "status": "pass",
+          "durationMs": 11092,
+          "exitCode": 0
+        },
+        {
+          "id": "products",
+          "name": "Products",
+          "status": "pass",
+          "durationMs": 22563,
+          "exitCode": 0
+        },
+        {
+          "id": "ai-paths",
+          "name": "AI Paths",
+          "status": "pass",
+          "durationMs": 23679,
+          "exitCode": 0
+        },
+        {
+          "id": "image-studio",
+          "name": "Image Studio",
+          "status": "pass",
+          "durationMs": 21621,
+          "exitCode": 0
+        },
+        {
+          "id": "case-resolver",
+          "name": "Case Resolver",
+          "status": "pass",
+          "durationMs": 20334,
+          "exitCode": 0
+        }
+      ]
+    }
+  ]
+}

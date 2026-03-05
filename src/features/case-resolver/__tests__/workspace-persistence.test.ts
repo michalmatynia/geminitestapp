@@ -911,16 +911,61 @@ describe('case-resolver workspace persistence', () => {
     );
   });
 
-  it('skips detached sidecar fetches when required file is a case', async () => {
+  it('fetches detached sidecars without caseResolverFileId when required file is a case', async () => {
     const workspace = {
       ...createDefaultCaseResolverWorkspace(),
       workspaceRevision: 21,
+      lastMutationId: 'case-required-1',
       files: [
         createCaseResolverFile({
           id: 'case-required',
           fileType: 'case',
           name: 'Required Case',
         }),
+        createCaseResolverFile({
+          id: 'doc-under-case',
+          fileType: 'document',
+          name: 'Doc Under Case',
+          parentCaseId: 'case-required',
+          documentContent: '',
+          documentContentHtml: '',
+          documentHistory: [],
+        }),
+      ],
+    };
+    const detachedDocumentsPayload = {
+      schema: 'case_resolver_workspace_detached_documents_v2',
+      workspaceRevision: 21,
+      lastMutationId: 'case-required-1',
+      files: [
+        {
+          id: 'doc-under-case',
+          documentContentHtml: '<p>Case body</p>',
+          documentContentPlainText: 'Case body',
+        },
+      ],
+    };
+    const detachedHistoryPayload = {
+      schema: 'case_resolver_workspace_detached_history_v2',
+      workspaceRevision: 21,
+      lastMutationId: 'case-required-1',
+      files: [
+        {
+          id: 'doc-under-case',
+          documentHistory: [
+            {
+              id: 'case-history-1',
+              savedAt: '2026-03-02T10:00:00.000Z',
+              documentContentVersion: 1,
+              activeDocumentVersion: 'original',
+              editorType: 'wysiwyg',
+              documentContent: '<p>Case body</p>',
+              documentContentMarkdown: 'Case body',
+              documentContentHtml: '<p>Case body</p>',
+              documentContentPlainText: 'Case body',
+            },
+          ],
+        },
       ],
     };
     const fetchMock = vi
@@ -929,6 +974,18 @@ describe('case-resolver workspace persistence', () => {
         toJsonResponse(200, {
           key: CASE_RESOLVER_WORKSPACE_KEY,
           value: JSON.stringify(workspace),
+        })
+      )
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY,
+          value: JSON.stringify(detachedDocumentsPayload),
+        })
+      )
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
+          value: JSON.stringify(detachedHistoryPayload),
         })
       );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
@@ -941,22 +998,78 @@ describe('case-resolver workspace persistence', () => {
     });
 
     expect(result.status).toBe('resolved');
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
       `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
     );
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY)}`
+    );
+    expect(fetchMock.mock.calls[2]?.[0]).toBe(
+      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_HISTORY_KEY)}`
+    );
+    if (result.status === 'resolved') {
+      const hydratedDocument = result.workspace.files.find((file) => file.id === 'doc-under-case');
+      expect(hydratedDocument?.documentContentPlainText).toBe('Case body');
+      expect(hydratedDocument?.documentHistory.length).toBe(1);
+    }
   });
 
-  it('skips conditional detached sidecar fetches when required file is a case', async () => {
+  it('conditionally fetches detached sidecars without caseResolverFileId when required file is a case', async () => {
     const workspace = {
       ...createDefaultCaseResolverWorkspace(),
       workspaceRevision: 25,
+      lastMutationId: 'case-conditional-1',
       files: [
         createCaseResolverFile({
           id: 'case-conditional',
           fileType: 'case',
           name: 'Conditional Case',
         }),
+        createCaseResolverFile({
+          id: 'doc-conditional',
+          fileType: 'document',
+          name: 'Conditional Doc',
+          parentCaseId: 'case-conditional',
+          documentContent: '',
+          documentContentHtml: '',
+          documentHistory: [],
+        }),
+      ],
+    };
+    const detachedDocumentsPayload = {
+      schema: 'case_resolver_workspace_detached_documents_v2',
+      workspaceRevision: 25,
+      lastMutationId: 'case-conditional-1',
+      files: [
+        {
+          id: 'doc-conditional',
+          documentContentHtml: '<p>Conditional body</p>',
+          documentContentPlainText: 'Conditional body',
+        },
+      ],
+    };
+    const detachedHistoryPayload = {
+      schema: 'case_resolver_workspace_detached_history_v2',
+      workspaceRevision: 25,
+      lastMutationId: 'case-conditional-1',
+      files: [
+        {
+          id: 'doc-conditional',
+          documentHistory: [
+            {
+              id: 'conditional-history-1',
+              savedAt: '2026-03-02T12:00:00.000Z',
+              documentContentVersion: 1,
+              activeDocumentVersion: 'original',
+              editorType: 'wysiwyg',
+              documentContent: '<p>Conditional body</p>',
+              documentContentMarkdown: 'Conditional body',
+              documentContentHtml: '<p>Conditional body</p>',
+              documentContentPlainText: 'Conditional body',
+            },
+          ],
+        },
       ],
     };
     const fetchMock = vi
@@ -965,6 +1078,18 @@ describe('case-resolver workspace persistence', () => {
         toJsonResponse(200, {
           key: CASE_RESOLVER_WORKSPACE_KEY,
           value: JSON.stringify(workspace),
+        })
+      )
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY,
+          value: JSON.stringify(detachedDocumentsPayload),
+        })
+      )
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
+          value: JSON.stringify(detachedHistoryPayload),
         })
       );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
@@ -976,10 +1101,21 @@ describe('case-resolver workspace persistence', () => {
     });
 
     expect(result.updated).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
       `/api/settings?key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}&fresh=1&ifRevisionGt=1`
     );
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY)}`
+    );
+    expect(fetchMock.mock.calls[2]?.[0]).toBe(
+      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_HISTORY_KEY)}`
+    );
+    if (result.updated) {
+      const hydratedDocument = result.workspace.files.find((file) => file.id === 'doc-conditional');
+      expect(hydratedDocument?.documentContentPlainText).toBe('Conditional body');
+      expect(hydratedDocument?.documentHistory.length).toBe(1);
+    }
   });
 
 

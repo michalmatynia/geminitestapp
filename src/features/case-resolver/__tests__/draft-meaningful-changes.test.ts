@@ -127,6 +127,30 @@ describe('case resolver meaningful draft changes', () => {
     ).toBe(false);
   });
 
+  it('hydrates non-scan drafts from plain-text fallback when html and markdown are missing', () => {
+    const file = {
+      ...createCaseResolverFile({
+        id: 'plain-text-fallback',
+        fileType: 'document',
+        name: 'Plain Text Fallback',
+        documentContent: '',
+        documentContentHtml: '',
+        documentContentMarkdown: '',
+      }),
+      documentContent: '',
+      documentContentHtml: '',
+      documentContentMarkdown: '',
+      documentContentPlainText: 'Recovered detached text',
+    } as CaseResolverFile;
+
+    const draft = buildFileEditDraft(file);
+
+    expect(draft.editorType).toBe('wysiwyg');
+    expect(draft.documentContentPlainText).toBe('Recovered detached text');
+    expect(draft.documentContentHtml).toContain('Recovered detached text');
+    expect(draft.documentContent).toContain('Recovered detached text');
+  });
+
   it('treats sent flag updates as meaningful changes', () => {
     const file = createCaseResolverFile({
       id: 'sent-flag',

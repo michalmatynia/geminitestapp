@@ -61,17 +61,20 @@ export type WorkspaceRecordAttemptResult =
       budgetExhausted: boolean;
     };
 
-const isDetachedPayloadRelevantForRequiredFile = ({
+const resolveDetachedPayloadRequiredFileId = ({
   workspace,
   requiredFileId,
 }: {
   workspace: CaseResolverWorkspace;
   requiredFileId: string;
-}): boolean => {
-  if (requiredFileId.length === 0) return true;
+}): string => {
+  if (requiredFileId.length === 0) return '';
   const requiredFile = workspace.files.find((file): boolean => file.id === requiredFileId);
-  if (!requiredFile) return true;
-  return requiredFile.fileType === 'document' || requiredFile.fileType === 'scanfile';
+  if (!requiredFile) return requiredFileId;
+  if (requiredFile.fileType === 'document' || requiredFile.fileType === 'scanfile') {
+    return requiredFileId;
+  }
+  return '';
 };
 
 const fetchWorkspaceRecordByKeyAttempts = async ({
@@ -434,12 +437,12 @@ export const fetchCaseResolverWorkspaceRecordDetailed = async (
     logHeavyFallback: fetchStrategy === 'light_then_heavy',
   });
   if (primaryResult.status === 'resolved') {
-    const shouldFetchDetachedPayloads = isDetachedPayloadRelevantForRequiredFile({
+    const detachedPayloadRequiredFileId = resolveDetachedPayloadRequiredFileId({
       workspace: primaryResult.workspace,
       requiredFileId,
     });
     const [detachedDocumentsPayload, detachedHistoryPayload] = await Promise.all([
-      includeDetachedDocuments && shouldFetchDetachedPayloads
+      includeDetachedDocuments
         ? fetchWorkspaceDetachedDocumentsPayloadByKey({
           source,
           scope: primaryResult.scope,
@@ -447,10 +450,10 @@ export const fetchCaseResolverWorkspaceRecordDetailed = async (
           startedAt,
           maxTotalMs,
           attemptTimeoutMs,
-          requiredFileId,
+          requiredFileId: detachedPayloadRequiredFileId,
         })
         : Promise.resolve(null),
-      includeDetachedHistory && shouldFetchDetachedPayloads
+      includeDetachedHistory
         ? fetchWorkspaceDetachedHistoryPayloadByKey({
           source,
           scope: primaryResult.scope,
@@ -458,7 +461,7 @@ export const fetchCaseResolverWorkspaceRecordDetailed = async (
           startedAt,
           maxTotalMs,
           attemptTimeoutMs,
-          requiredFileId,
+          requiredFileId: detachedPayloadRequiredFileId,
         })
         : Promise.resolve(null),
     ]);
@@ -622,12 +625,12 @@ export const fetchCaseResolverWorkspaceIfStale = async (
       return { updated: false, revision: normalizedRevision };
     }
     const workspace = readWorkspaceFromSettingRecord(workspaceRecord, '');
-    const shouldFetchDetachedPayloads = isDetachedPayloadRelevantForRequiredFile({
+    const detachedPayloadRequiredFileId = resolveDetachedPayloadRequiredFileId({
       workspace,
       requiredFileId,
     });
     const [detachedDocumentsPayload, detachedHistoryPayload] = await Promise.all([
-      includeDetachedDocuments && shouldFetchDetachedPayloads
+      includeDetachedDocuments
         ? fetchWorkspaceDetachedDocumentsPayloadByKey({
           source,
           scope: 'light',
@@ -635,10 +638,10 @@ export const fetchCaseResolverWorkspaceIfStale = async (
           startedAt,
           maxTotalMs: CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
           attemptTimeoutMs: CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
-          requiredFileId,
+          requiredFileId: detachedPayloadRequiredFileId,
         })
         : Promise.resolve(null),
-      includeDetachedHistory && shouldFetchDetachedPayloads
+      includeDetachedHistory
         ? fetchWorkspaceDetachedHistoryPayloadByKey({
           source,
           scope: 'light',
@@ -646,7 +649,7 @@ export const fetchCaseResolverWorkspaceIfStale = async (
           startedAt,
           maxTotalMs: CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
           attemptTimeoutMs: CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
-          requiredFileId,
+          requiredFileId: detachedPayloadRequiredFileId,
         })
         : Promise.resolve(null),
     ]);

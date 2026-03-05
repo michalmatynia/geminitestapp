@@ -150,7 +150,16 @@ const buildCanonicalDocumentForDraft = (
     if (typeof file.documentContentMarkdown === 'string' && file.documentContentMarkdown.trim()) {
       return ensureHtmlForPreview(file.documentContentMarkdown, 'markdown');
     }
-    return ensureSafeDocumentHtml(file.documentContent ?? '');
+    if (typeof file.documentContent === 'string' && file.documentContent.trim()) {
+      return ensureSafeDocumentHtml(file.documentContent);
+    }
+    if (
+      typeof file.documentContentPlainText === 'string' &&
+      file.documentContentPlainText.trim()
+    ) {
+      return ensureSafeDocumentHtml(file.documentContentPlainText);
+    }
+    return '';
   })();
   return normalizeSemanticallyEmptyCanonicalContent(
     deriveDocumentContentSync({

@@ -573,9 +573,9 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
           setEditingContentLesson(null);
         }}
         title={editingContentLesson ? `Edit Content: ${editingContentLesson.title}` : 'Edit Lesson Content'}
+        titleTestId='mock-doc-editor-title'
         subtitle='Author lesson pages with text, SVG blocks, uploaded images, activity widgets, and responsive grid layouts. You can also import the current legacy lesson structure into modular pages.'
-        onSave={handleSaveLessonContent}
-        isSaving={updateSetting.isPending}
+        onSave={handleSaveLessonContent}        isSaving={updateSetting.isPending}
         saveText='Save Content'
         size='xl'
         actions={

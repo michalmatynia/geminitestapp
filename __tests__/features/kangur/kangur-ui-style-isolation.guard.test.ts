@@ -16,24 +16,23 @@ const KANGUR_VISUAL_CONTRACTS = [
   },
   {
     file: 'src/features/kangur/ui/pages/Game.tsx',
-    requiredTokens: ['min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100'],
+    requiredTokens: ['tone=\'play\' className=\'min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100\''],
   },
   {
     file: 'src/features/kangur/ui/pages/Lessons.tsx',
-    requiredTokens: ['min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100'],
+    requiredTokens: ['tone=\'learn\' className=\'min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100\''],
   },
   {
     file: 'src/features/kangur/ui/pages/ParentDashboard.tsx',
-    requiredTokens: ['min-h-screen bg-gradient-to-br from-slate-100 to-blue-50'],
+    requiredTokens: ['tone=\'dashboard\' className=\'min-h-screen bg-gradient-to-br from-slate-100 to-blue-50\''],
   },
   {
     file: 'src/features/kangur/ui/pages/LearnerProfile.tsx',
     requiredTokens: [
-      'min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100',
+      'tone=\'profile\' className=\'min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100\'',
       'Statystyki ucznia',
     ],
-  },
-  {
+  },  {
     file: 'src/features/kangur/ui/components/PageNotFound.tsx',
     requiredTokens: [
       'min-h-screen flex items-center justify-center p-6 bg-slate-50',

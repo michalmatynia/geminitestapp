@@ -16,6 +16,7 @@ interface FormModalProps extends Partial<ModalStateProps> {
   isOpen?: boolean;
   onClose: () => void;
   title: string;
+  titleTestId?: string;
   subtitle?: string;
   children: ReactNode;
   onSave: () => void;
@@ -39,6 +40,7 @@ interface FormModalProps extends Partial<ModalStateProps> {
 
 type FormModalHeaderRuntimeValue = {
   title: string;
+  titleTestId?: string;
   subtitle?: string;
   showSaveButton: boolean;
   handleSave: () => void;
@@ -96,7 +98,7 @@ function FormModalHeaderContent(): React.JSX.Element {
               className='mr-2'
             />
           ) : null}
-          <h2 className='truncate text-2xl font-bold tracking-tight text-white'>{runtime.title}</h2>
+          <h2 data-testid={runtime.titleTestId} className='truncate text-2xl font-bold tracking-tight text-white'>{runtime.title}</h2>
         </div>
         {runtime.subtitle ? <p className='mt-1 text-sm text-gray-400'>{runtime.subtitle}</p> : null}
       </div>
@@ -121,6 +123,7 @@ export function FormModal(props: FormModalProps): React.JSX.Element | null {
     isOpen,
     onClose,
     title,
+    titleTestId,
     subtitle,
     children,
     onSave,
@@ -171,6 +174,7 @@ export function FormModal(props: FormModalProps): React.JSX.Element | null {
   const headerRuntimeValue = useMemo<FormModalHeaderRuntimeValue>(
     () => ({
       title,
+      titleTestId,
       subtitle,
       showSaveButton,
       handleSave,
@@ -187,6 +191,7 @@ export function FormModal(props: FormModalProps): React.JSX.Element | null {
     }),
     [
       title,
+      titleTestId,
       subtitle,
       showSaveButton,
       handleSave,

@@ -69,15 +69,19 @@ export class EngineStateManager {
   skippedNodes: Set<string>;
   nodeHashes = new Map<string, string>();
   nodeDurationsMap = new Map<string, number>();
+  nodeAttemptMap = new Map<string, number>();
   effectiveCache: Map<string, RuntimePortValues> | null;
+  incomingEdgesByNode: Map<string, Edge[]>;
 
   constructor(
     private nodes: AiNode[],
     private executableNodeCount: number,
-    options: EvaluateGraphOptions
+    options: EvaluateGraphOptions,
+    incomingEdgesByNode: Map<string, Edge[]>
   ) {
     this.outputs = options.seedOutputs ? cloneValue(options.seedOutputs) : {};
     this.skippedNodes = new Set(options.skipNodeIds ?? []);
+    this.incomingEdgesByNode = incomingEdgesByNode;
 
     // Auto-create an in-run cache Map when any node has cache mode enabled and no external cache
     // was provided.
@@ -88,6 +92,20 @@ export class EngineStateManager {
       )
         ? new Map<string, RuntimePortValues>()
         : null);
+  }
+
+  getNodeAttempt(nodeId: string): number {
+    return Math.max(1, this.nodeAttemptMap.get(nodeId) ?? 1);
+  }
+
+  incrementNodeAttempt(nodeId: string): number {
+    const nextAttempt = (this.nodeAttemptMap.get(nodeId) ?? 0) + 1;
+    this.nodeAttemptMap.set(nodeId, nextAttempt);
+    return nextAttempt;
+  }
+
+  reserveNodeAttempt(nodeId: string): number {
+    return this.incrementNodeAttempt(nodeId);
   }
 
   getOrCreateNodeStats(node: AiNode): RuntimeProfileNodeStats {

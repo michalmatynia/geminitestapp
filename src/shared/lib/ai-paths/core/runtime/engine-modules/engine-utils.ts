@@ -541,3 +541,23 @@ export const evaluateInputReadiness = (
 
   return toReadiness(true);
 };
+
+export function collectNodeInputs(
+  toNodeId: string,
+  outputs: Record<string, RuntimePortValues>,
+  incomingEdgesByNode: Map<string, Edge[]>
+): RuntimePortValues {
+  const incoming = incomingEdgesByNode.get(toNodeId) ?? [];
+  const collected: RuntimePortValues = {};
+  incoming.forEach((edge) => {
+    const fromId = edge.from || edge.source;
+    if (!fromId) return;
+    const fromPort = edge.fromPort || 'result';
+    const toPort = edge.toPort || 'value';
+    const out = outputs[fromId];
+    if (out && out[fromPort] !== undefined) {
+      collected[toPort] = out[fromPort];
+    }
+  });
+  return collected;
+}

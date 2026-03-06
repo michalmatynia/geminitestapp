@@ -4,7 +4,8 @@ import {
   BarChart2,
   BookOpen,
   Flame,
-  LayoutDashboard,
+  Home,
+  LayoutGrid,
   LogIn,
   Target,
 } from 'lucide-react';
@@ -23,6 +24,7 @@ import {
   KangurPageShell,
   KangurPageTopBar,
   KangurPanel,
+  KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
@@ -203,34 +205,37 @@ export default function LearnerProfile() {
   return (
     <KangurPageShell tone='profile'>
       <KangurPageTopBar
+        contentClassName='justify-center'
         left={
-          <>
-            <KangurButton asChild size='sm' variant='ghost'>
-              <Link href={createPageUrl('Game', basePath)}>Strona glowna</Link>
-            </KangurButton>
-            <KangurButton asChild size='sm' variant='ghost'>
-              <Link href={createPageUrl('Lessons', basePath)}>
-                <BookOpen className='w-4 h-4' /> Lekcje
+          <KangurTopNavGroup>
+            <KangurButton asChild size='md' variant='navigation'>
+              <Link href={createPageUrl('Game', basePath)}>
+                <Home className='h-[22px] w-[22px]' strokeWidth={2.1} />
+                <span>Strona glowna</span>
               </Link>
             </KangurButton>
-          </>
-        }
-        right={
-          <>
+            <KangurButton asChild size='md' variant='navigation'>
+              <Link href={createPageUrl('Lessons', basePath)}>
+                <BookOpen className='h-[22px] w-[22px]' strokeWidth={2.1} />
+                <span>Lekcje</span>
+              </Link>
+            </KangurButton>
             <KangurProfileMenu
               basePath={basePath}
               isAuthenticated={Boolean(user)}
               onLogout={() => logout(false)}
               onLogin={navigateToLogin}
+              isActive
             />
             {user?.canManageLearners && (
-              <KangurButton asChild size='sm' variant='ghost'>
+              <KangurButton asChild size='md' variant='navigation'>
                 <Link href={createPageUrl('ParentDashboard', basePath)}>
-                  <LayoutDashboard className='w-4 h-4' /> Rodzic
+                  <LayoutGrid className='h-[22px] w-[22px]' strokeWidth={2.1} />
+                  <span>Rodzic</span>
                 </Link>
               </KangurButton>
             )}
-          </>
+          </KangurTopNavGroup>
         }
       />
 

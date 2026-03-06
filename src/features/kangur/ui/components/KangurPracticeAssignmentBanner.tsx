@@ -2,6 +2,11 @@ import Link from 'next/link';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import {
+  KangurLessonCallout,
+  KangurLessonChip,
+} from '@/features/kangur/ui/design/lesson-primitives';
+import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import {
   buildKangurAssignmentHref,
   formatKangurAssignmentOperationLabel,
   getKangurAssignmentActionLabel,
@@ -22,59 +27,62 @@ export function KangurPracticeAssignmentBanner({
     assignment.priority === 'high'
       ? 'Priorytet wysoki'
       : assignment.priority === 'medium'
-        ? 'Priorytet sredni'
+        ? 'Priorytet średni'
         : 'Priorytet niski';
   const helperLabel =
     mode === 'active'
       ? 'W tej sesji realizujesz przydzielone zadanie.'
       : mode === 'completed'
-        ? 'Zadanie od rodzica zostalo ukonczone w tej sesji.'
-        : `Najblizszy priorytet w praktyce: ${formatKangurAssignmentOperationLabel(
+        ? 'Zadanie od rodzica zostało ukończone w tej sesji.'
+        : `Najbliższy priorytet w praktyce: ${formatKangurAssignmentOperationLabel(
           assignment.target.operation
         )}.`;
 
   return (
-    <section className='w-full max-w-md rounded-3xl border border-amber-200 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 px-4 py-4 shadow-sm'>
-      <div className='text-[11px] font-bold uppercase tracking-[0.18em] text-amber-600'>
+    <KangurPanel
+      className='w-full max-w-md border-amber-200/80 bg-gradient-to-r from-amber-50/95 via-orange-50/90 to-rose-50/90'
+      padding='lg'
+      variant='elevated'
+    >
+      <KangurLessonChip accent='amber' className='text-[11px] uppercase tracking-[0.18em]'>
         Priorytet rodzica
-      </div>
-      <div className='mt-1 text-sm font-semibold text-amber-700'>{helperLabel}</div>
+      </KangurLessonChip>
+      <div className='mt-3 text-sm font-semibold leading-6 text-amber-900'>{helperLabel}</div>
 
-      <div className='mt-3 rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-sm'>
-        <div className='flex items-start justify-between gap-3'>
-          <div>
-            <div className='text-xs font-bold uppercase tracking-wide text-amber-500'>
+      <KangurPanel className='mt-4 border-white/85 bg-white/95' padding='lg' variant='subtle'>
+        <div className='flex flex-wrap items-start justify-between gap-3'>
+          <div className='min-w-0'>
+            <KangurLessonChip accent='amber' className='text-[11px] uppercase tracking-[0.16em]'>
               {statusLabel}
-            </div>
-            <div className='mt-1 text-base font-extrabold text-slate-800'>{assignment.title}</div>
-            <div className='mt-1 text-sm text-slate-600'>{assignment.description}</div>
+            </KangurLessonChip>
+            <div className='mt-3 text-base font-extrabold text-slate-900'>{assignment.title}</div>
+            <div className='mt-1 text-sm leading-6 text-slate-600'>{assignment.description}</div>
           </div>
-          <div className='rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700'>
+          <KangurLessonChip accent='amber' className='text-sm font-bold text-amber-800'>
             {assignment.progress.percent}%
-          </div>
+          </KangurLessonChip>
         </div>
 
-        <div className='mt-3'>
-          <div className='flex items-center justify-between gap-2 text-[11px] text-slate-500'>
+        <KangurLessonCallout accent='amber' className='mt-4' padding='md'>
+          <div className='flex items-center justify-between gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-800/80'>
             <span>{assignment.progress.summary}</span>
-            <span>Postep</span>
+            <span>Postęp</span>
           </div>
-          <div className='mt-1 h-2 overflow-hidden rounded-full bg-amber-100'>
+          <div className='mt-3 h-2.5 overflow-hidden rounded-full bg-white/75'>
             <div
               className='h-full rounded-full bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400'
               style={{ width: `${assignment.progress.percent}%` }}
             />
           </div>
-        </div>
+        </KangurLessonCallout>
 
-        <Link
-          href={buildKangurAssignmentHref(basePath, assignment)}
-          className='mt-3 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 px-4 py-2.5 text-sm font-extrabold text-white shadow transition hover:brightness-105'
-        >
-          {getKangurAssignmentActionLabel(assignment)}
-        </Link>
-      </div>
-    </section>
+        <KangurButton asChild className='mt-4' fullWidth variant='primary'>
+          <Link href={buildKangurAssignmentHref(basePath, assignment)}>
+            {getKangurAssignmentActionLabel(assignment)}
+          </Link>
+        </KangurButton>
+      </KangurPanel>
+    </KangurPanel>
   );
 }
 

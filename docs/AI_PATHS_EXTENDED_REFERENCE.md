@@ -151,6 +151,7 @@ This document is the detailed operator/developer reference for AI Paths:
 ## Cross References
 
 - `docs/AI_PATHS.md`
+- `docs/ai-paths/ai-paths-improvements-plan-2026-03-06.md`
 - `docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md`
 - `docs/PROMPT_EXPLODER_TOOLTIP_GUIDE.md`
 - `docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md`

@@ -44,7 +44,7 @@ describe('KangurPracticeAssignmentBanner', () => {
     );
 
     expect(screen.getByText('Priorytet rodzica')).toBeInTheDocument();
-    expect(screen.getByText('Najblizszy priorytet w praktyce: Dzielenie.')).toBeInTheDocument();
+    expect(screen.getByText('Najbliższy priorytet w praktyce: Dzielenie.')).toBeInTheDocument();
     expect(screen.getByText('Praktyka: Dzielenie')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Trenuj teraz' })).toHaveAttribute(
       'href',
@@ -88,7 +88,7 @@ describe('KangurPracticeAssignmentBanner', () => {
     );
 
     expect(
-      screen.getByText('Zadanie od rodzica zostalo ukonczone w tej sesji.')
+      screen.getByText('Zadanie od rodzica zostało ukończone w tej sesji.')
     ).toBeInTheDocument();
     expect(screen.getByText('100%')).toBeInTheDocument();
   });

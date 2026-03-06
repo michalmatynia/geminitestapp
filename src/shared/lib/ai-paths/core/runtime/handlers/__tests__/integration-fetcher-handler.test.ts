@@ -161,4 +161,95 @@ describe('handleFetcher', () => {
     expect(result['entityType']).toBe('product');
     expect(fetchEntityCached).toHaveBeenCalledWith('product', 'p-live');
   });
+
+  it('prefers the live entity outside the AI Paths canvas even when the fetcher is left in simulation mode', async () => {
+    const fetchEntityCached = vi.fn(async () => null);
+    const node = buildNode({
+      config: {
+        fetcher: {
+          sourceMode: 'simulation_id',
+          entityType: 'product',
+          entityId: 'p-sim',
+        },
+      },
+    });
+    const context = buildContext(node, {
+      trigger: true,
+      context: {
+        entityId: 'p-live',
+        entityType: 'product',
+        entity: { id: 'p-live', sku: 'SKU-1' },
+        location: { pathname: '/admin/products' },
+      },
+    });
+
+    const result = await handleFetcher(context);
+
+    expect(result['entityId']).toBe('p-live');
+    expect(result['entityType']).toBe('product');
+    expect(result['context']).toEqual(
+      expect.objectContaining({
+        entityId: 'p-live',
+        entityType: 'product',
+        contextSource: 'trigger_fetcher',
+      })
+    );
+    expect(result['meta']).toEqual(
+      expect.objectContaining({
+        fetcherSourceMode: 'simulation_id',
+        fetcherResolvedSource: 'live_context_override',
+        entityId: 'p-live',
+        entityType: 'product',
+      })
+    );
+    expect(fetchEntityCached).not.toHaveBeenCalledWith('product', 'p-sim');
+  });
+
+  it('keeps simulation fetches for AI Paths canvas runs configured with simulation mode', async () => {
+    const fetchEntityCached = vi.fn(async (_entityType: string, entityId: string) =>
+      entityId === 'p-sim' ? { id: 'p-sim', sku: 'SIM-1' } : null
+    );
+    const node = buildNode({
+      config: {
+        fetcher: {
+          sourceMode: 'simulation_id',
+          entityType: 'product',
+          entityId: 'p-sim',
+        },
+      },
+    });
+    const context = buildContext(
+      node,
+      {
+        trigger: true,
+        context: {
+          entityId: 'p-live',
+          entityType: 'product',
+          entity: { id: 'p-live', sku: 'LIVE-1' },
+          location: { pathname: '/admin/ai-paths' },
+        },
+      },
+      {
+        fetchEntityCached,
+      }
+    );
+
+    const result = await handleFetcher(context);
+
+    expect(result['entityId']).toBe('p-sim');
+    expect(result['entityType']).toBe('product');
+    expect(result['context']).toEqual(
+      expect.objectContaining({
+        entityId: 'p-sim',
+        entityType: 'product',
+        contextSource: 'simulation_fetcher',
+      })
+    );
+    expect(result['meta']).toEqual(
+      expect.objectContaining({
+        fetcherResolvedSource: 'simulation_id',
+      })
+    );
+    expect(fetchEntityCached).toHaveBeenCalledWith('product', 'p-sim');
+  });
 });

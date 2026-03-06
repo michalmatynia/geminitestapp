@@ -76,12 +76,15 @@ export function RunHistoryEntries(props: RunHistoryEntriesProps): React.JSX.Elem
                 {showNodeLabel ? (
                   <span className='text-gray-200'>
                     Node: {nodeLabel}
-                    {entry.nodeType ? ' ({entry.nodeType})' : ''}
+                    {entry.nodeType ? ` (${entry.nodeType})` : ''}
                   </span>
                 ) : null}
                 <span className='text-gray-500'>Path: {pathLabel}</span>
                 {typeof entry.iteration === 'number' && (
                   <span className='text-gray-500'>Iter {entry.iteration + 1}</span>
+                )}
+                {typeof entry.attempt === 'number' && (
+                  <span className='text-gray-500'>Attempt {entry.attempt}</span>
                 )}
                 {typeof entry.durationMs === 'number' && entry.durationMs > 0 && (
                   <span className='text-[10px] text-gray-500'>
@@ -113,6 +116,12 @@ export function RunHistoryEntries(props: RunHistoryEntriesProps): React.JSX.Elem
                 </Button>
               </div>
             </div>
+            {entry.traceId || entry.spanId ? (
+              <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-500'>
+                {entry.traceId ? <span className='font-mono'>trace={entry.traceId}</span> : null}
+                {entry.spanId ? <span className='font-mono'>span={entry.spanId}</span> : null}
+              </div>
+            ) : null}
             {entry.error && (
               <div className='mt-2 rounded-md border border-rose-500/30 bg-rose-500/10 p-2 text-xs text-rose-200'>
                 <div className='flex flex-wrap items-center justify-between gap-2'>

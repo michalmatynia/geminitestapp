@@ -144,6 +144,7 @@ npm run docs:ai-paths:node-docs:verify
 npm run docs:ai-paths:node-docs:ci
 npm run docs:ai-paths:tooltip:generate
 npm run docs:ai-paths:tooltip:check
+npm run docs:ai-paths:improvements-roadmap:check
 npm run ai-paths:check:canonical
 ```
 
@@ -151,6 +152,7 @@ npm run ai-paths:check:canonical
 
 ## Cross References
 
+- `docs/ai-paths/ai-paths-improvements-plan-2026-03-06.md`
 - `docs/ai-paths/ai-paths-modernization-playbook-2026-03-04.md`
 - `docs/AI_PATHS_EXTENDED_REFERENCE.md`
 - `docs/ai-paths/semantic-grammar/README.md`

@@ -61,10 +61,11 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
     () => parseKangurNarratorSettings(rawNarratorSettings),
     [rawNarratorSettings]
   );
+  const defaultVoice = narratorSettings.voice ?? KANGUR_TTS_DEFAULT_VOICE;
   const voice =
     lesson.contentMode === 'document'
-      ? (lessonDocument?.narration?.voice ?? KANGUR_TTS_DEFAULT_VOICE)
-      : KANGUR_TTS_DEFAULT_VOICE;
+      ? (lessonDocument?.narration?.voice ?? defaultVoice)
+      : defaultVoice;
   const [observedText, setObservedText] = useState('');
   const [status, setStatus] = useState<PlaybackStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);

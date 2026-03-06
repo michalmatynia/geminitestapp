@@ -267,6 +267,51 @@ describe('compileGraph', () => {
     ).toBe(false);
   });
 
+  it('uses declared port kinds when checking wiring compatibility', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'mapper-1',
+        type: 'mapper',
+        outputs: ['result'],
+        outputContracts: {
+          result: {
+            kind: 'string',
+          },
+        },
+      }),
+      buildNode({
+        id: 'model-1',
+        type: 'model',
+        inputs: ['value'],
+        outputs: ['result'],
+        inputContracts: {
+          value: {
+            required: true,
+            kind: 'image_url',
+            cardinality: 'many',
+          },
+        },
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-mapper-model',
+        from: 'mapper-1',
+        to: 'model-1',
+        fromPort: 'result',
+        toPort: 'value',
+      },
+    ];
+
+    const report = compileGraph(nodes, edges);
+
+    expect(
+      report.findings.some(
+        (finding) => finding.code === 'incompatible_wiring' && finding.edgeId === 'edge-mapper-model'
+      )
+    ).toBe(true);
+  });
+
   it('warns when context-bound nodes use session cache scope', () => {
     const nodes: AiNode[] = [
       buildNode({

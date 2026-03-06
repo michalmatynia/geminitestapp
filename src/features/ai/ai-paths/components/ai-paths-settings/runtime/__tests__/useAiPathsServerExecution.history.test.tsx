@@ -53,9 +53,12 @@ vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
   }),
 }));
 
-vi.mock('@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent', () => ({
+vi.mock('@/shared/lib/ai-paths/hooks/trigger-event-utils', () => ({
   createAiPathTriggerRequestId: createAiPathTriggerRequestIdMock,
   isRecoverableTriggerEnqueueError: isRecoverableTriggerEnqueueErrorMock,
+}));
+
+vi.mock('@/shared/lib/ai-paths/hooks/trigger-event-recovery', () => ({
   recoverEnqueuedRunByRequestId: recoverEnqueuedRunByRequestIdMock,
 }));
 
@@ -224,10 +227,13 @@ describe('useAiPathsServerExecution history streaming', () => {
       {
         id: 'run_node_1',
         runId: 'run_server_1',
+        traceId: 'run_server_1',
+        spanId: 'node-fetcher:1:2',
         nodeId: fetcherNode.id,
         nodeType: fetcherNode.type,
         nodeTitle: fetcherNode.title,
         status: 'completed',
+        iteration: 2,
         attempt: 1,
         inputs: {
           trigger: true,
@@ -251,6 +257,10 @@ describe('useAiPathsServerExecution history streaming', () => {
     expect(nodeHistory).toHaveLength(1);
     expect(nodeHistory[0]?.nodeType).toBe('fetcher');
     expect(nodeHistory[0]?.status).toBe('completed');
+    expect(nodeHistory[0]?.traceId).toBe('run_server_1');
+    expect(nodeHistory[0]?.spanId).toBe('node-fetcher:1:2');
+    expect(nodeHistory[0]?.attempt).toBe(1);
+    expect(nodeHistory[0]?.iteration).toBe(2);
     expect(nodeHistory[0]?.outputs?.['value']).toBe(42);
     expect(invalidateAiPathRunsMock).toHaveBeenCalled();
   });

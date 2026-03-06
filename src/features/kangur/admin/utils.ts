@@ -1,7 +1,55 @@
 import type { KangurLessonInlineBlock } from '@/shared/contracts/kangur';
 
+import type { KangurLesson } from '@/shared/contracts/kangur';
+import {
+  hasKangurLessonDocumentContent,
+  parseKangurLessonDocumentStore,
+} from '../lesson-documents';
+
+import { createKangurLessonDraft } from '../settings';
+import type { LessonFormData, LessonTreeMode } from './types';
+import { TREE_MODE_STORAGE_KEY } from './constants';
+
 export const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
+
+export const toLessonFormData = (lesson: KangurLesson): LessonFormData => ({
+  componentId: lesson.componentId,
+  contentMode: lesson.contentMode,
+  title: lesson.title,
+  description: lesson.description,
+  emoji: lesson.emoji,
+  color: lesson.color,
+  activeBg: lesson.activeBg,
+  enabled: lesson.enabled,
+});
+
+export const createInitialLessonFormData = (): LessonFormData => createKangurLessonDraft('clock');
+
+export const upsertLesson = (lessons: KangurLesson[], nextLesson: KangurLesson): KangurLesson[] => {
+  const existingIndex = lessons.findIndex((lesson) => lesson.id === nextLesson.id);
+  if (existingIndex === -1) {
+    return [...lessons, nextLesson];
+  }
+
+  return lessons.map((lesson) => (lesson.id === nextLesson.id ? nextLesson : lesson));
+};
+
+export const readPersistedTreeMode = (): LessonTreeMode => {
+  if (typeof window === 'undefined') return 'ordered';
+  try {
+    const storedValue = window.localStorage.getItem(TREE_MODE_STORAGE_KEY);
+    return storedValue === 'catalog' ? 'catalog' : 'ordered';
+  } catch {
+    return 'ordered';
+  }
+};
+
+export const countLessonsRequiringLegacyImport = (
+  lessons: readonly KangurLesson[],
+  lessonDocuments: ReturnType<typeof parseKangurLessonDocumentStore>
+): number =>
+  lessons.filter((lesson) => !hasKangurLessonDocumentContent(lessonDocuments[lesson.id])).length;
 
 export const moveItem = <T>(items: readonly T[], fromIndex: number, toIndex: number): T[] => {
   if (toIndex < 0 || toIndex >= items.length || fromIndex === toIndex) {
@@ -20,6 +68,15 @@ export const moveItem = <T>(items: readonly T[], fromIndex: number, toIndex: num
 export const parseNumberInput = (value: string, fallback: number): number => {
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+export const readLessonGroupCount = (metadata: unknown): number | null => {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return null;
+  const groupValue = (metadata as Record<string, unknown>)['kangurLessonGroup'];
+  if (!groupValue || typeof groupValue !== 'object' || Array.isArray(groupValue)) return null;
+  const rawCount = (groupValue as Record<string, unknown>)['lessonCount'];
+  if (typeof rawCount !== 'number' || !Number.isFinite(rawCount)) return null;
+  return rawCount;
 };
 
 export const clampGridColumnStart = (

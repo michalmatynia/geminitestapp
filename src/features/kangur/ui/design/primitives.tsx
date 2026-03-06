@@ -8,6 +8,9 @@ import {
   KANGUR_PAGE_CONTAINER_CLASSNAME,
   KANGUR_PAGE_TONE_CLASSNAMES,
   KANGUR_PANEL_CLASSNAMES,
+  KANGUR_TOP_NAV_GROUP_CLASSNAME,
+  KANGUR_TOP_NAV_ITEM_ACTIVE_CLASSNAME,
+  KANGUR_TOP_NAV_ITEM_CLASSNAME,
   KANGUR_TOP_BAR_CLASSNAME,
   KANGUR_TOP_BAR_INNER_CLASSNAME,
   type KangurPageTone,
@@ -19,16 +22,20 @@ const kangurButtonVariants = cva(
     variants: {
       variant: {
         primary:
-          'border-transparent bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-[0_20px_48px_-26px_rgba(99,102,241,0.7)] hover:brightness-105',
+          'border-transparent play-cta text-white hover:brightness-[1.02]',
+        warm:
+          'border-transparent primary-cta text-white hover:brightness-[1.02]',
         secondary:
-          'border-slate-200/85 bg-white/92 text-slate-700 shadow-sm hover:border-slate-300 hover:bg-white',
+          'border-[#eceff7] bg-white text-[#2f467e] shadow-[0_8px_20px_rgba(55,84,170,0.06)] hover:-translate-y-[1px]',
         surface:
-          'border-indigo-200/85 bg-indigo-50/85 text-indigo-700 shadow-sm hover:border-indigo-300 hover:bg-indigo-100/80',
+          'border-[#e7edf8] bg-[#f5f7fe] text-[#2f4db5] shadow-[0_8px_20px_rgba(55,84,170,0.06)] hover:-translate-y-[1px]',
         success:
-          'border-emerald-200/85 bg-emerald-50/90 text-emerald-700 shadow-sm hover:bg-emerald-100',
+          'border-emerald-200/90 bg-emerald-50/90 text-emerald-700 shadow-[0_8px_20px_rgba(16,185,129,0.12)] hover:-translate-y-[1px]',
         warning:
-          'border-amber-200/85 bg-amber-50/90 text-amber-800 shadow-sm hover:bg-amber-100',
-        ghost: 'border-transparent bg-transparent text-indigo-600 hover:bg-white/70 hover:text-indigo-700',
+          'border-[#f2e4c9] bg-[#fcf5e8] text-[#b15a16] shadow-[0_8px_20px_rgba(190,134,55,0.08)] hover:-translate-y-[1px]',
+        navigation: KANGUR_TOP_NAV_ITEM_CLASSNAME,
+        navigationActive: cn(KANGUR_TOP_NAV_ITEM_CLASSNAME, KANGUR_TOP_NAV_ITEM_ACTIVE_CLASSNAME),
+        ghost: 'border-transparent bg-transparent text-[#6e7ee7] hover:bg-white/70 hover:text-[#4f63d8]',
       },
       size: {
         sm: 'px-3 py-1.5 text-sm',
@@ -106,8 +113,14 @@ export const KangurPageShell = ({
 }: React.HTMLAttributes<HTMLDivElement> & {
   tone?: KangurPageTone;
 }): React.JSX.Element => (
-  <div className={cn('flex min-h-screen flex-col items-center', KANGUR_PAGE_TONE_CLASSNAMES[tone], className)}>
-    {children}
+  <div
+    className={cn(
+      'relative isolate flex min-h-screen flex-col items-center overflow-hidden text-slate-800',
+      KANGUR_PAGE_TONE_CLASSNAMES[tone],
+      className
+    )}
+  >
+    <div className='relative z-10 flex min-h-screen w-full flex-col items-center'>{children}</div>
   </div>
 );
 
@@ -115,15 +128,23 @@ export const KangurPageTopBar = ({
   left,
   right,
   className,
+  contentClassName,
 }: {
   left: React.ReactNode;
   right?: React.ReactNode;
   className?: string;
+  contentClassName?: string;
 }): React.JSX.Element => (
   <div className={cn(KANGUR_TOP_BAR_CLASSNAME, className)}>
-    <div className={KANGUR_TOP_BAR_INNER_CLASSNAME}>
-      <div className='flex min-w-0 items-center gap-3'>{left}</div>
-      <div className='flex items-center gap-3'>{right}</div>
+    <div
+      className={cn(
+        KANGUR_TOP_BAR_INNER_CLASSNAME,
+        right ? 'justify-between' : 'justify-center',
+        contentClassName
+      )}
+    >
+      <div className='flex min-w-0 flex-1 items-center'>{left}</div>
+      {right ? <div className='flex shrink-0 items-center gap-3'>{right}</div> : null}
     </div>
   </div>
 );
@@ -133,4 +154,14 @@ export const KangurPageContainer = ({
   children,
 }: React.HTMLAttributes<HTMLDivElement>): React.JSX.Element => (
   <div className={cn(KANGUR_PAGE_CONTAINER_CLASSNAME, className)}>{children}</div>
+);
+
+export const KangurTopNavGroup = ({
+  className,
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>): React.JSX.Element => (
+  <div className={cn(KANGUR_TOP_NAV_GROUP_CLASSNAME, className)} {...props}>
+    {children}
+  </div>
 );

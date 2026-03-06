@@ -55,9 +55,9 @@ describe('AdminKangurSettingsPage', () => {
     vi.clearAllMocks();
     mutateAsyncMock.mockResolvedValue({});
     settingsStoreMock.get.mockImplementation((key: string) => {
-      if (key === KANGUR_NARRATOR_SETTINGS_KEY) {
-        return JSON.stringify({ engine: 'client' });
-      }
+    if (key === KANGUR_NARRATOR_SETTINGS_KEY) {
+      return JSON.stringify({ engine: 'client', voice: 'coral' });
+    }
       return undefined;
     });
   });
@@ -65,8 +65,12 @@ describe('AdminKangurSettingsPage', () => {
   it('loads the persisted narrator engine and saves the updated global selection', async () => {
     render(<AdminKangurSettingsPage />);
 
-    const clientRadio = screen.getByRole('radio', { name: /client narrator/i });
-    const serverRadio = screen.getByRole('radio', { name: /server narrator/i });
+    const clientRadio = screen.getByRole('radio', {
+      name: /client narrator use the browser speech engine on each learner device\./i,
+    });
+    const serverRadio = screen.getByRole('radio', {
+      name: /server narrator use the cached neural narration generated on the server\./i,
+    });
 
     expect(clientRadio).toBeChecked();
     expect(serverRadio).not.toBeChecked();
@@ -77,7 +81,7 @@ describe('AdminKangurSettingsPage', () => {
     await waitFor(() =>
       expect(mutateAsyncMock).toHaveBeenCalledWith({
         key: KANGUR_NARRATOR_SETTINGS_KEY,
-        value: JSON.stringify({ engine: 'server' }),
+        value: JSON.stringify({ engine: 'server', voice: 'coral' }),
       })
     );
 

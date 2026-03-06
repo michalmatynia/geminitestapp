@@ -103,18 +103,18 @@ describe('KangurAssignmentManager', () => {
     render(<KangurAssignmentManager basePath='/kangur' />);
 
     expect(screen.getByText('Przydziel nowe zadanie')).toBeInTheDocument();
-    expect(screen.getByText('Podpowiedzi z postepu ucznia')).toBeInTheDocument();
+    expect(screen.getByText('Podpowiedzi z postępu ucznia')).toBeInTheDocument();
     expect(screen.getByText('Nauka zegara')).toBeInTheDocument();
     expect(screen.getAllByText('Trening mieszany').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Trening: Ulamki')).toBeInTheDocument();
     expect(screen.getByText('Trening: Potegi')).toBeInTheDocument();
     expect(screen.getByText('Trening: Pierwiastki')).toBeInTheDocument();
-    expect(screen.getByText('Monitorowanie zadan')).toBeInTheDocument();
+    expect(screen.getByText('Monitorowanie zadań')).toBeInTheDocument();
     expect(screen.getByText('Aktywne zadania')).toBeInTheDocument();
     expect(screen.getAllByText('Praktyka: Dzielenie').length).toBeGreaterThanOrEqual(1);
 
     await userEvent.type(
-      screen.getByPlaceholderText('Szukaj po temacie, typie zadania lub slowie kluczowym...'),
+      screen.getByPlaceholderText('Szukaj po temacie, typie zadania lub słowie kluczowym...'),
       'dzielenie'
     );
 
@@ -222,7 +222,7 @@ describe('KangurAssignmentManager', () => {
 
     render(<KangurAssignmentManager basePath='/kangur' />);
 
-    expect(screen.getByText('Monitorowanie zadan')).toBeInTheDocument();
+    expect(screen.getByText('Monitorowanie zadań')).toBeInTheDocument();
     expect(screen.getByText('Do uwagi')).toBeInTheDocument();
     expect(screen.getByText('Skutecznosc wykonania')).toBeInTheDocument();
     expect(screen.getByText('33%')).toBeInTheDocument();
@@ -233,7 +233,7 @@ describe('KangurAssignmentManager', () => {
       screen.getByText('Postep jest ponizej polowy celu, warto przypomniec o kontynuacji.')
     ).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Przypisz sugestie' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Przypisz sugestię' }));
 
     expect(createAssignmentMock).toHaveBeenCalledTimes(1);
     expect(screen.getByText('To zadanie jest juz aktywne.')).toBeInTheDocument();

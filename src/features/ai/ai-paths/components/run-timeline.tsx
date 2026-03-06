@@ -9,26 +9,14 @@ import type {
 } from '@/shared/lib/ai-paths';
 import { formatDurationMs } from '@/shared/lib/ai-paths';
 import { Button, Tooltip, StatusBadge, Alert, type StatusVariant } from '@/shared/ui';
-
-type TimelineItem = {
-  id: string;
-  timestamp: Date;
-  label: string;
-  description?: string;
-  status?: string | null;
-  kind: 'run' | 'node';
-  meta?: string | undefined;
-};
+import {
+  buildRuntimeDurationRows,
+  buildRuntimeTimelineItems,
+  type RuntimeTraceDurationRow,
+  type RuntimeTraceTimelineItem,
+} from './run-trace-utils';
 
 type TimelineFilter = 'run' | 'node' | 'event';
-
-type NodeDurationRow = {
-  id: string;
-  label: string;
-  status?: string | null;
-  durationMs: number | null;
-  durationLabel: string | null;
-};
 
 const STATUS_SORT_STORAGE_KEY = 'ai-paths-run-timeline-status-sort';
 const FILTERS_STORAGE_KEY = 'ai-paths-run-timeline-filters';
@@ -59,111 +47,6 @@ const levelToVariant = (level: string): StatusVariant => {
   return 'neutral';
 };
 
-const toDate = (value?: Date | string | null): Date | null => {
-  if (!value) return null;
-  if (value instanceof Date) return value;
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-};
-
-const formatDuration = (
-  start?: Date | string | null,
-  end?: Date | string | null
-): string | null => {
-  const startDate = toDate(start);
-  const endDate = toDate(end);
-  if (!startDate || !endDate) return null;
-  const diffMs = Math.max(endDate.getTime() - startDate.getTime(), 0);
-  if (diffMs < 1000) return `${diffMs}ms`;
-  const seconds = Math.round(diffMs / 1000);
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remaining = seconds % 60;
-  return `${minutes}m ${remaining}s`;
-};
-
-const getDurationMs = (start?: Date | string | null, end?: Date | string | null): number | null => {
-  const startDate = toDate(start);
-  const endDate = toDate(end);
-  if (!startDate || !endDate) return null;
-  return Math.max(endDate.getTime() - startDate.getTime(), 0);
-};
-
-const buildTimelineItems = (run: AiPathRunRecord, nodes: AiPathRunNodeRecord[]): TimelineItem[] => {
-  const items: TimelineItem[] = [];
-  const createdAt = toDate(run.createdAt);
-  if (createdAt) {
-    items.push({
-      id: `run-created-${run.id}`,
-      timestamp: createdAt,
-      label: 'Run queued',
-      description: run.pathName ?? run.pathId ?? 'AI Path',
-      status: 'queued',
-      kind: 'run',
-    });
-  }
-  const startedAt = toDate(run.startedAt);
-  if (startedAt) {
-    items.push({
-      id: `run-started-${run.id}`,
-      timestamp: startedAt,
-      label: 'Run started',
-      description: run.pathName ?? run.pathId ?? 'AI Path',
-      status: 'running',
-      kind: 'run',
-    });
-  }
-
-  nodes.forEach((node: AiPathRunNodeRecord): void => {
-    const nodeLabel = node.nodeTitle ?? node.nodeId;
-    const nodeMeta = node.nodeType ? `${nodeLabel} (${node.nodeType})` : nodeLabel;
-    const startAt = toDate(node.startedAt);
-    if (startAt) {
-      items.push({
-        id: `node-start-${node.id}`,
-        timestamp: startAt,
-        label: 'Node started',
-        description: nodeMeta,
-        status: 'running',
-        kind: 'node',
-      });
-    }
-    const finishAt = toDate(node.finishedAt);
-    if (finishAt) {
-      const duration = formatDuration(node.startedAt, node.finishedAt);
-      const finishDescription = duration ? `${nodeMeta} · ${duration}` : nodeMeta;
-      items.push({
-        id: `node-finish-${node.id}`,
-        timestamp: finishAt,
-        label: `Node ${node.status}`,
-        description: finishDescription,
-        status: node.status,
-        kind: 'node',
-        meta: node.errorMessage ? `Error: ${node.errorMessage}` : undefined,
-      });
-    }
-  });
-
-  const finishedAt = toDate(run.finishedAt);
-  if (finishedAt) {
-    items.push({
-      id: `run-finished-${run.id}`,
-      timestamp: finishedAt,
-      label: `Run ${run.status}`,
-      description: run.pathName ?? run.pathId ?? 'AI Path',
-      status: run.status,
-      kind: 'run',
-      meta: run.errorMessage ? `Error: ${run.errorMessage}` : undefined,
-    });
-  }
-
-  return items
-    .filter((item: TimelineItem): boolean => Number.isFinite(item.timestamp.getTime()))
-    .sort(
-      (a: TimelineItem, b: TimelineItem): number => a.timestamp.getTime() - b.timestamp.getTime()
-    );
-};
-
 const formatMetadata = (metadata?: Record<string, unknown> | null): string | null => {
   if (!metadata || Object.keys(metadata).length === 0) return null;
   try {
@@ -183,7 +66,7 @@ export function RunTimeline(props: {
   const { run, nodes, events, eventsOverflow, eventsBatchLimit } = props;
 
   const timelineItems = React.useMemo(
-    (): TimelineItem[] => buildTimelineItems(run, nodes),
+    (): RuntimeTraceTimelineItem[] => buildRuntimeTimelineItems(run, nodes),
     [run, nodes]
   );
 
@@ -221,37 +104,30 @@ export function RunTimeline(props: {
   }, [visibleSections]);
 
   const filteredTimelineItems = React.useMemo(
-    (): TimelineItem[] =>
-      timelineItems.filter((item: TimelineItem): boolean => visibleSections[item.kind]),
+    (): RuntimeTraceTimelineItem[] =>
+      timelineItems.filter((item: RuntimeTraceTimelineItem): boolean => visibleSections[item.kind]),
     [timelineItems, visibleSections]
   );
 
   const runEntryCount = React.useMemo(
-    (): number => timelineItems.filter((item: TimelineItem): boolean => item.kind === 'run').length,
+    (): number =>
+      timelineItems.filter((item: RuntimeTraceTimelineItem): boolean => item.kind === 'run').length,
     [timelineItems]
   );
 
   const nodeEntryCount = React.useMemo(
     (): number =>
-      timelineItems.filter((item: TimelineItem): boolean => item.kind === 'node').length,
+      timelineItems.filter((item: RuntimeTraceTimelineItem): boolean => item.kind === 'node').length,
     [timelineItems]
   );
 
-  const nodeDurationRows = React.useMemo<NodeDurationRow[]>(
-    (): NodeDurationRow[] =>
-      nodes.map((node: AiPathRunNodeRecord): NodeDurationRow => {
-        const nodeLabel = node.nodeTitle ?? node.nodeId;
-        const nodeMeta = node.nodeType ? `${nodeLabel} (${node.nodeType})` : nodeLabel;
-        const durationMs = getDurationMs(node.startedAt, node.finishedAt);
-        return {
-          id: node.id,
-          label: nodeMeta,
-          status: node.status,
-          durationMs,
-          durationLabel: formatDuration(node.startedAt, node.finishedAt),
-        };
-      }),
-    [nodes]
+  const nodeDurationRows = React.useMemo<RuntimeTraceDurationRow[]>(
+    (): RuntimeTraceDurationRow[] => buildRuntimeDurationRows(run, nodes),
+    [run, nodes]
+  );
+  const traceBackedDurations = React.useMemo(
+    (): boolean => nodeDurationRows.some((row) => row.source === 'trace'),
+    [nodeDurationRows]
   );
 
   const durationStats = React.useMemo((): {
@@ -263,7 +139,7 @@ export function RunTimeline(props: {
     totalCount: number;
   } => {
     const durations = nodeDurationRows
-      .map((row: NodeDurationRow): number | null => row.durationMs)
+      .map((row: RuntimeTraceDurationRow): number | null => row.durationMs)
       .filter((duration: number | null): duration is number => typeof duration === 'number');
     const total = durations.reduce((acc: number, value: number): number => acc + value, 0);
     const average = durations.length > 0 ? Math.round(total / durations.length) : null;
@@ -285,8 +161,8 @@ export function RunTimeline(props: {
     timedCount: number;
     totalMs: number;
     averageMs: number | null;
-    min: NodeDurationRow | null;
-    max: NodeDurationRow | null;
+    min: RuntimeTraceDurationRow | null;
+    max: RuntimeTraceDurationRow | null;
   }> => {
     const buckets = new Map<
       string,
@@ -294,11 +170,11 @@ export function RunTimeline(props: {
         count: number;
         timedCount: number;
         totalMs: number;
-        min: NodeDurationRow | null;
-        max: NodeDurationRow | null;
+        min: RuntimeTraceDurationRow | null;
+        max: RuntimeTraceDurationRow | null;
       }
     >();
-    nodeDurationRows.forEach((row: NodeDurationRow): void => {
+    nodeDurationRows.forEach((row: RuntimeTraceDurationRow): void => {
       const key = row.status ?? 'unknown';
       const bucket = buckets.get(key) ?? {
         count: 0,
@@ -328,8 +204,8 @@ export function RunTimeline(props: {
           count: number;
           timedCount: number;
           totalMs: number;
-          min: NodeDurationRow | null;
-          max: NodeDurationRow | null;
+          min: RuntimeTraceDurationRow | null;
+          max: RuntimeTraceDurationRow | null;
         },
       ]) => ({
         status,
@@ -365,8 +241,8 @@ export function RunTimeline(props: {
     timedCount: number;
     totalMs: number;
     averageMs: number | null;
-    min: NodeDurationRow | null;
-    max: NodeDurationRow | null;
+    min: RuntimeTraceDurationRow | null;
+    max: RuntimeTraceDurationRow | null;
   }> => {
     const list = [...durationByStatus];
     if (statusSort === 'count') {
@@ -402,18 +278,18 @@ export function RunTimeline(props: {
   }, [durationByStatus, statusSort]);
 
   const minMaxNodeDuration = React.useMemo((): {
-    min: NodeDurationRow | null;
-    max: NodeDurationRow | null;
+    min: RuntimeTraceDurationRow | null;
+    max: RuntimeTraceDurationRow | null;
   } => {
     const timed = nodeDurationRows.filter(
-      (row: NodeDurationRow): boolean => typeof row.durationMs === 'number'
+      (row: RuntimeTraceDurationRow): boolean => typeof row.durationMs === 'number'
     );
     if (timed.length === 0) {
       return { min: null, max: null };
     }
-    let min: NodeDurationRow = timed[0]!;
-    let max: NodeDurationRow = timed[0]!;
-    timed.forEach((row: NodeDurationRow): void => {
+    let min: RuntimeTraceDurationRow = timed[0]!;
+    let max: RuntimeTraceDurationRow = timed[0]!;
+    timed.forEach((row: RuntimeTraceDurationRow): void => {
       if ((row.durationMs ?? 0) < (min?.durationMs ?? 0)) min = row;
       if ((row.durationMs ?? 0) > (max?.durationMs ?? 0)) max = row;
     });
@@ -479,8 +355,12 @@ export function RunTimeline(props: {
       {visibleSections.node ? (
         <div className='rounded-md border border-border/70 bg-black/20 p-3'>
           <div className='flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500'>
-            <span className='uppercase'>Node duration summary</span>
-            <span>{nodeDurationRows.length} nodes</span>
+            <span className='uppercase'>
+              {traceBackedDurations ? 'Trace span duration summary' : 'Node duration summary'}
+            </span>
+            <span>
+              {nodeDurationRows.length} {traceBackedDurations ? 'spans' : 'nodes'}
+            </span>
           </div>
           <div className='mt-1 text-[11px] text-gray-500'>
             Total {formatDurationMs(durationStats.total) ?? '—'} · Avg{' '}
@@ -556,8 +436,8 @@ export function RunTimeline(props: {
                     timedCount: number;
                     totalMs: number;
                     averageMs: number | null;
-                    min: NodeDurationRow | null;
-                    max: NodeDurationRow | null;
+                    min: RuntimeTraceDurationRow | null;
+                    max: RuntimeTraceDurationRow | null;
                   }): React.JSX.Element => {
                     const tooltipContent =
                       bucket.min || bucket.max
@@ -607,10 +487,14 @@ export function RunTimeline(props: {
             </div>
           ) : null}
           {nodeDurationRows.length === 0 ? (
-            <div className='mt-2 text-[11px] text-gray-500'>No node timing data available yet.</div>
+            <div className='mt-2 text-[11px] text-gray-500'>
+              {traceBackedDurations
+                ? 'No trace span timing data available yet.'
+                : 'No node timing data available yet.'}
+            </div>
           ) : (
             <div className='mt-2 max-h-[200px] overflow-auto space-y-2'>
-              {nodeDurationRows.map((row: NodeDurationRow): React.JSX.Element => {
+              {nodeDurationRows.map((row: RuntimeTraceDurationRow): React.JSX.Element => {
                 return (
                   <div
                     key={row.id}
@@ -624,7 +508,8 @@ export function RunTimeline(props: {
                         size='sm'
                         className='font-medium'
                       />
-                      <span>{row.durationLabel ?? '—'}</span>
+                      <span>{formatDurationMs(row.durationMs) ?? '—'}</span>
+                      <span className='uppercase text-gray-500'>{row.source}</span>
                     </div>
                   </div>
                 );
@@ -646,8 +531,9 @@ export function RunTimeline(props: {
         ) : (
           <div className='mt-3 max-h-[320px] overflow-auto rounded-md border border-border bg-black/20 p-4'>
             <div className='relative border-l border-border/60 pl-4'>
-              {filteredTimelineItems.map((item: TimelineItem, index: number): React.JSX.Element => {
-                return (
+              {filteredTimelineItems.map(
+                (item: RuntimeTraceTimelineItem, index: number): React.JSX.Element => {
+                  return (
                   <div key={`${item.id}-${index}`} className='relative pb-4'>
                     <div className='absolute -left-[7px] top-2 h-2.5 w-2.5 rounded-full bg-gray-400' />
                     <div className='flex flex-wrap items-center gap-2 text-xs text-gray-300'>
@@ -661,6 +547,7 @@ export function RunTimeline(props: {
                         className='font-medium'
                       />
                       <span className='text-[11px] uppercase text-gray-500'>{item.kind}</span>
+                      <span className='text-[11px] uppercase text-gray-500'>{item.source}</span>
                     </div>
                     <div className='mt-1 text-sm text-white'>{item.label}</div>
                     {item.description ? (
@@ -672,8 +559,9 @@ export function RunTimeline(props: {
                       </Alert>
                     ) : null}
                   </div>
-                );
-              })}
+                  );
+                }
+              )}
             </div>
           </div>
         )}

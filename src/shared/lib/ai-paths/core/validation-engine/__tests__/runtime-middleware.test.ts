@@ -22,6 +22,19 @@ const buildTriggerNode = (): AiNode =>
     position: { x: 0, y: 0 },
   }) as AiNode;
 
+const buildNode = (patch: Partial<AiNode>): AiNode =>
+  ({
+    id: 'node-custom',
+    type: 'custom',
+    title: 'Custom Node',
+    description: '',
+    inputs: [],
+    outputs: [],
+    config: {},
+    position: { x: 0, y: 0 },
+    ...patch,
+  }) as AiNode;
+
 describe('AI Paths runtime validation middleware', () => {
   it('blocks when an error rule fails at node_pre_execute stage', () => {
     const node = buildTriggerNode();
@@ -122,6 +135,107 @@ describe('AI Paths runtime validation middleware', () => {
     expect(nodeStage).toBeNull();
     expect(graphStage).toMatchObject({
       decision: 'block',
+    });
+  });
+
+  it('blocks node_pre_execute when an input contract kind mismatch is detected', () => {
+    const node = buildNode({
+      id: 'node-model',
+      type: 'model',
+      title: 'Model',
+      inputs: ['images'],
+      outputs: ['result'],
+      inputContracts: {
+        images: {
+          required: false,
+          kind: 'image_url',
+          cardinality: 'many',
+        },
+      },
+    });
+
+    const middleware = createAiPathsRuntimeValidationMiddleware({
+      config: {
+        enabled: true,
+        rules: [],
+      } as AiPathsValidationConfig,
+      nodes: [node],
+      edges: [] satisfies Edge[],
+    });
+
+    const result = middleware?.({
+      stage: 'node_pre_execute',
+      runId: 'run-1',
+      runStartedAt: new Date().toISOString(),
+      iteration: 1,
+      nodes: [node],
+      edges: [] satisfies Edge[],
+      node,
+      nodeInputs: {
+        images: ['not-an-image'],
+      },
+    });
+
+    expect(result).toMatchObject({
+      decision: 'block',
+      issues: [
+        expect.objectContaining({
+          message: expect.stringContaining('expected imageUrl[]'),
+        }),
+      ],
+    });
+  });
+
+  it('blocks node_post_execute when an output contract schema check fails', () => {
+    const node = buildNode({
+      id: 'node-poll',
+      type: 'poll',
+      title: 'Poll',
+      inputs: ['jobId'],
+      outputs: ['job'],
+      outputContracts: {
+        job: {
+          required: false,
+          kind: 'job_envelope',
+          schema: {
+            type: 'object',
+            required: ['jobId', 'status'],
+          },
+        },
+      },
+    });
+
+    const middleware = createAiPathsRuntimeValidationMiddleware({
+      config: {
+        enabled: true,
+        rules: [],
+      } as AiPathsValidationConfig,
+      nodes: [node],
+      edges: [] satisfies Edge[],
+    });
+
+    const result = middleware?.({
+      stage: 'node_post_execute',
+      runId: 'run-1',
+      runStartedAt: new Date().toISOString(),
+      iteration: 1,
+      nodes: [node],
+      edges: [] satisfies Edge[],
+      node,
+      nodeOutputs: {
+        job: {
+          status: 'running',
+        },
+      },
+    });
+
+    expect(result).toMatchObject({
+      decision: 'block',
+      issues: [
+        expect.objectContaining({
+          message: expect.stringContaining('value.jobId is required'),
+        }),
+      ],
     });
   });
 });

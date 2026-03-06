@@ -5,6 +5,8 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { KANGUR_TOP_BAR_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+
 const {
   useKangurRoutingMock,
   settingsStoreGetMock,
@@ -180,12 +182,11 @@ describe('Lessons page mastery list', () => {
     expect(await screen.findByRole('heading', { name: '📚 Lekcje' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Wszystkie' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Strona główna' }).closest('div')?.className).toContain(
-      'sticky'
-    );
-    expect(screen.getByRole('link', { name: 'Strona główna' }).closest('div')?.className).toContain(
-      'top-0'
-    );
+    const link = screen.getByRole('link', { name: 'Strona glowna' });
+    const topBar = link.closest('div.sticky');
+    expect(topBar).toBeInTheDocument();
+    expect(topBar?.className).toContain('sticky');
+    expect(topBar?.className).toContain('top-0');
     expect(screen.getByText('Opanowane 92%')).toBeInTheDocument();
     expect(screen.getByText('Powtórz 45%')).toBeInTheDocument();
     expect(screen.getByText('Nowa')).toBeInTheDocument();
@@ -216,11 +217,10 @@ describe('Lessons page mastery list', () => {
     render(<Lessons />);
 
     await screen.findByRole('heading', { name: '📚 Lekcje' });
-    expect(screen.getByRole('link', { name: 'Strona główna' }).closest('div')?.className).toContain(
-      'sticky'
-    );
-    expect(screen.getByRole('link', { name: 'Strona główna' }).closest('div')?.className).toContain(
-      'top-0'
-    );
+    const link = screen.getByRole('link', { name: 'Strona glowna' });
+    const topBar = link.closest('div.sticky');
+    expect(topBar).toBeInTheDocument();
+    expect(topBar?.className).toContain('sticky');
+    expect(topBar?.className).toContain('top-0');
   });
 });

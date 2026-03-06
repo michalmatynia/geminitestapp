@@ -8,6 +8,7 @@ import { isObjectRecord } from '@/shared/utils/object-utils';
 import { coerceInput } from '../../utils';
 
 type FetcherSourceMode = 'live_context' | 'simulation_id' | 'live_then_simulation';
+type FetcherResolvedSource = 'live_context' | 'simulation_id' | 'live_context_override';
 
 const DEFAULT_FETCHER_SOURCE_MODE: FetcherSourceMode = 'live_context';
 
@@ -48,12 +49,50 @@ const readEntityObjectFromContext = (
   return isObjectRecord(candidate) ? candidate : null;
 };
 
+const readLocationPathnameFromContext = (
+  context: Record<string, unknown> | null | undefined
+): string | null => {
+  if (!context) return null;
+  const location = context['location'];
+  if (!isObjectRecord(location)) return null;
+  return readString(location['pathname']);
+};
+
 const readFetcherSourceMode = (node: NodeHandlerContext['node']): FetcherSourceMode => {
   const mode = node.config?.fetcher?.sourceMode;
   if (mode === 'live_context' || mode === 'simulation_id' || mode === 'live_then_simulation') {
     return mode;
   }
   return DEFAULT_FETCHER_SOURCE_MODE;
+};
+
+const shouldPreferLiveEntityOverSimulation = (args: {
+  liveEntityId: string | null;
+  liveEntityType: string | null;
+  simulationEntityId: string | null;
+  simulationEntityType: string | null;
+  incomingContextRecord: Record<string, unknown> | null;
+  triggerContextRecord: Record<string, unknown> | null;
+}): boolean => {
+  if (!args.liveEntityId || !args.liveEntityType) {
+    return false;
+  }
+
+  if (
+    args.liveEntityId === args.simulationEntityId &&
+    args.liveEntityType === args.simulationEntityType
+  ) {
+    return false;
+  }
+
+  const pathname =
+    readLocationPathnameFromContext(args.incomingContextRecord) ??
+    readLocationPathnameFromContext(args.triggerContextRecord);
+  if (pathname?.startsWith('/admin/ai-paths')) {
+    return false;
+  }
+
+  return true;
 };
 
 const buildFetcherContextPayload = (args: {
@@ -210,18 +249,36 @@ export const handleFetcher: NodeHandler = async ({
   let resolvedEntityType = liveEntityType;
   let resolvedEntity = liveEntity;
   let sourceTag: 'trigger_fetcher' | 'simulation_fetcher' = 'trigger_fetcher';
+  let resolvedSource: FetcherResolvedSource = 'live_context';
 
   if (sourceMode === 'simulation_id') {
-    if (!simulationEntityId) {
-      throw new Error(
-        `Fetcher ${node.title ?? node.id} is set to "Simulated entity by ID" but no entity ID is configured.`
-      );
+    if (
+      shouldPreferLiveEntityOverSimulation({
+        liveEntityId,
+        liveEntityType,
+        simulationEntityId,
+        simulationEntityType,
+        incomingContextRecord,
+        triggerContextRecord,
+      })
+    ) {
+      resolvedEntityId = liveEntityId;
+      resolvedEntityType = liveEntityType;
+      resolvedEntity = liveEntity;
+      resolvedSource = 'live_context_override';
+    } else {
+      if (!simulationEntityId) {
+        throw new Error(
+          `Fetcher ${node.title ?? node.id} is set to "Simulated entity by ID" but no entity ID is configured.`
+        );
+      }
+      const simulated = await resolveSimulation();
+      resolvedEntityId = simulated.entityId;
+      resolvedEntityType = simulated.entityType;
+      resolvedEntity = simulated.entity;
+      sourceTag = 'simulation_fetcher';
+      resolvedSource = 'simulation_id';
     }
-    const simulated = await resolveSimulation();
-    resolvedEntityId = simulated.entityId;
-    resolvedEntityType = simulated.entityType;
-    resolvedEntity = simulated.entity;
-    sourceTag = 'simulation_fetcher';
   } else if (sourceMode === 'live_then_simulation') {
     const hasLiveReference = Boolean(liveEntityId && liveEntityType);
     if (!hasLiveReference && simulationEntityId) {
@@ -230,13 +287,14 @@ export const handleFetcher: NodeHandler = async ({
       resolvedEntityType = simulated.entityType;
       resolvedEntity = simulated.entity;
       sourceTag = 'simulation_fetcher';
+      resolvedSource = 'simulation_id';
     }
   }
 
   const hasResolvedEntity =
     isObjectRecord(resolvedEntity) && Object.keys(resolvedEntity).length > 0;
   const shouldFailMissingSimulationEntity =
-    sourceTag === 'simulation_fetcher' &&
+    resolvedSource === 'simulation_id' &&
     Boolean(resolvedEntityId && resolvedEntityType) &&
     (sourceMode === 'simulation_id' || strictFlowMode);
 
@@ -262,7 +320,7 @@ export const handleFetcher: NodeHandler = async ({
     ...incomingMetaRecord,
     fetchedAt: now,
     fetcherSourceMode: sourceMode,
-    fetcherResolvedSource: sourceTag === 'simulation_fetcher' ? 'simulation_id' : 'live_context',
+    fetcherResolvedSource: resolvedSource,
     entityId: resolvedEntityId,
     entityType: resolvedEntityType,
     pathId: activePathId,

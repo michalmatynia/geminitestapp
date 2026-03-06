@@ -28,6 +28,11 @@ export const ROOT_BLOCK_TYPE_OPTIONS = [
   { value: 'activity', label: 'Activity' },
 ] as const;
 
+export const LESSON_CONTENT_MODE_OPTIONS = [
+  { value: 'component', label: 'Legacy component' },
+  { value: 'document', label: 'Custom document' },
+] as const;
+
 export const GRID_TEMPLATE_OPTIONS: Array<{
   id: KangurLessonGridTemplateId;
   label: string;
@@ -54,3 +59,7 @@ export const DOCUMENT_TEMPLATE_OPTIONS: Array<{
   { id: 'svg-gallery-page', label: 'SVG gallery page' },
   { id: 'svg-mosaic-page', label: 'SVG mosaic page' },
 ] as const;
+
+export const ORDERED_TREE_INSTANCE = 'kangur_lessons_manager';
+export const CATALOG_TREE_INSTANCE = 'kangur_lessons_manager_catalog';
+export const TREE_MODE_STORAGE_KEY = 'kangur_lessons_manager_tree_mode_v1';

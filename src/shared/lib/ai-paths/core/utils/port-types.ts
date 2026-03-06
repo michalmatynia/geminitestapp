@@ -1,3 +1,4 @@
+import type { NodePortValueKind } from '@/shared/contracts/ai-paths';
 import { isImageLikeValue } from './image';
 
 export type PortDataType =
@@ -100,6 +101,27 @@ export const getPortDataTypes = (port: string): PortDataType[] => {
   const value = PORT_DATA_TYPES[port];
   if (!value) return ['any'];
   return Array.isArray(value) ? value : [value];
+};
+
+export const getPortDataTypesForValueKind = (kind: NodePortValueKind): PortDataType[] => {
+  switch (kind) {
+    case 'string':
+      return ['string'];
+    case 'number':
+      return ['number'];
+    case 'boolean':
+      return ['boolean'];
+    case 'json':
+      return ['json'];
+    case 'image_url':
+      return ['image'];
+    case 'bundle':
+    case 'job_envelope':
+      return ['object'];
+    case 'unknown':
+    default:
+      return ['any'];
+  }
 };
 
 export const formatPortDataTypes = (types: PortDataType[]): string => {

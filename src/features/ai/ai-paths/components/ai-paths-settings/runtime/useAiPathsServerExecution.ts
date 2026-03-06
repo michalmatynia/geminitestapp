@@ -51,135 +51,21 @@ import {
   collectInvalidRunNodePayloadIssues,
 } from './payload-validation';
 
+import {
+  asString,
+  asNumber,
+  parseSsePayload,
+  type ApiErrorMetadata,
+  readApiErrorMetadata,
+  normalizeRuntimeEventLevel,
+  normalizeNodeStreamPayload,
+  normalizeEventStreamPayload,
+  resolveEntityIdFromContext,
+  resolveEntityTypeFromContext,
+  SERVER_EXECUTION_ENQUEUE_TIMEOUT_MS,
+} from './server-execution-helpers';
+
 import type { ServerExecutionArgs } from './types';
-
-type RuntimeEventLevel = 'debug' | 'info' | 'warn' | 'error';
-const SERVER_EXECUTION_ENQUEUE_TIMEOUT_MS = 90_000;
-
-const asString = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
-const asNumber = (value: unknown): number | null => {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
-  return value;
-};
-
-const parseSsePayload = (event: MessageEvent): unknown => {
-  try {
-    return JSON.parse(event.data as string) as unknown;
-  } catch {
-    return null;
-  }
-};
-
-type ApiErrorMetadata = {
-  code: string | null;
-  category: string | null;
-  errorId: string | null;
-  fingerprint: string | null;
-  retryable: boolean;
-  retryAfterMs: number | null;
-  details: Record<string, unknown> | null;
-  suggestedActions: unknown[] | null;
-};
-
-const readApiErrorMetadata = (value: unknown): ApiErrorMetadata => {
-  if (!isObjectRecord(value)) {
-    return {
-      code: null,
-      category: null,
-      errorId: null,
-      fingerprint: null,
-      retryable: false,
-      retryAfterMs: null,
-      details: null,
-      suggestedActions: null,
-    };
-  }
-  const detailsRaw = value['details'];
-  return {
-    code: asString(value['code']),
-    category: asString(value['category']),
-    errorId: asString(value['errorId']),
-    fingerprint: asString(value['fingerprint']),
-    retryable: value['retryable'] === true,
-    retryAfterMs: asNumber(value['retryAfterMs']),
-    details: isObjectRecord(detailsRaw) ? detailsRaw : null,
-    suggestedActions: Array.isArray(value['suggestedActions']) ? value['suggestedActions'] : null,
-  };
-};
-
-const normalizeRuntimeEventLevel = (value: unknown): RuntimeEventLevel => {
-  if (value === 'debug' || value === 'info' || value === 'warn' || value === 'error') {
-    return value;
-  }
-  if (value === 'fatal') {
-    return 'error';
-  }
-  return 'info';
-};
-
-const parseRunNodeRecord = (value: unknown): AiPathRunNodeRecord | null => {
-  const parsed = aiPathRunNodeSchema.safeParse(value);
-  return parsed.success ? parsed.data : null;
-};
-
-const normalizeNodeStreamPayload = (value: unknown): AiPathRunNodeRecord[] => {
-  if (Array.isArray(value)) {
-    return value.flatMap((entry: unknown): AiPathRunNodeRecord[] => {
-      const parsed = parseRunNodeRecord(entry);
-      return parsed ? [parsed] : [];
-    });
-  }
-  if (!isObjectRecord(value)) return [];
-  if (Array.isArray(value['nodes'])) {
-    return value['nodes'].flatMap((entry: unknown): AiPathRunNodeRecord[] => {
-      const parsed = parseRunNodeRecord(entry);
-      return parsed ? [parsed] : [];
-    });
-  }
-  const parsed = parseRunNodeRecord(value);
-  return parsed ? [parsed] : [];
-};
-
-const normalizeEventStreamPayload = (
-  value: unknown
-): Array<AiPathRunEventRecord | Record<string, unknown>> => {
-  if (Array.isArray(value)) {
-    return value.filter((entry: unknown): boolean => isObjectRecord(entry)) as Array<
-      AiPathRunEventRecord | Record<string, unknown>
-    >;
-  }
-  if (!isObjectRecord(value)) return [];
-  if (Array.isArray(value['events'])) {
-    return value['events'].filter((entry: unknown): boolean => isObjectRecord(entry)) as Array<
-      AiPathRunEventRecord | Record<string, unknown>
-    >;
-  }
-  if (typeof value['message'] === 'string') {
-    return [value];
-  }
-  return [];
-};
-
-const resolveEntityIdFromContext = (triggerContext: Record<string, unknown>): string | null => {
-  return asString(triggerContext['entityId']) ?? asString(triggerContext['productId']) ?? null;
-};
-
-const resolveEntityTypeFromContext = (
-  triggerContext: Record<string, unknown>,
-  entityId: string | null
-): string | null => {
-  const explicit = asString(triggerContext['entityType']);
-  if (explicit) return explicit;
-  if (entityId && asString(triggerContext['productId'])) {
-    return 'product';
-  }
-  return null;
-};
 
 export function useAiPathsServerExecution(args: ServerExecutionArgs) {
   const queryClient = useQueryClient();
@@ -781,7 +667,10 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                 args.currentRunStartedAtRef?.current ??
                 runStartedAt;
               const resolvedRunId = asString(nodeUpdate.runId) ?? runId;
-              const iteration = asNumber(nodeUpdate.attempt);
+              const iteration = asNumber(nodeUpdate.iteration) ?? asNumber(nodeUpdate.attempt);
+              const attempt = asNumber(nodeUpdate.attempt);
+              const traceId = asString(nodeUpdate.traceId) ?? resolvedRunId;
+              const spanId = asString(nodeUpdate.spanId);
               const isFailed = status === 'failed';
               const isWarningStatus = status === 'blocked' || status === 'skipped';
               args.setNodeStatus({
@@ -832,11 +721,14 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                   timestamp: new Date().toISOString(),
                   pathId: args.activePathId ?? null,
                   pathName: args.pathName ?? null,
+                  traceId,
+                  ...(spanId ? { spanId } : {}),
                   nodeId,
                   nodeType,
                   nodeTitle: nodeTitle ?? null,
                   status,
                   iteration: iteration ?? previousNodeHistory.length + 1,
+                  ...(attempt !== null ? { attempt } : {}),
                   inputs: nodeInputs ? { ...nodeInputs } : {},
                   outputs: { ...mergedNodeOutputs },
                   inputHash: null,

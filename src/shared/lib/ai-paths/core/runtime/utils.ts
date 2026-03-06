@@ -19,6 +19,7 @@ export {
   appendInputValue,
   cloneValue,
   getPortDataTypes,
+  getResolvedNodeInputPortContract,
   getValueAtMappingPath,
   isValueCompatibleWithTypes,
   renderTemplate,

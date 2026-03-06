@@ -17,44 +17,10 @@ import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 import { normalizeRunEvents, normalizeRunNodes } from './job-queue-panel-utils';
 import { collectPlaywrightArtifacts } from './playwright-artifacts';
 import { buildHistoryNodeOptions } from './run-history-utils';
+import { readRuntimeTraceSummary } from './run-trace-utils';
 import { RunTimeline } from './run-timeline';
 import { RunHistoryEntries } from './RunHistoryEntries';
 import { useRunHistoryActions, useRunHistoryState } from '../context';
-
-type RuntimeTraceSnapshot = {
-  traceId?: string;
-  profile?: {
-    eventCount?: number;
-    sampledEventCount?: number;
-    droppedEventCount?: number;
-    nodeSpans?: Array<{
-      spanId?: string;
-      nodeId?: string;
-      nodeType?: string;
-      nodeTitle?: string | null;
-      status?: string;
-      iteration?: number;
-      attempt?: number;
-      startedAt?: string | null;
-      finishedAt?: string | null;
-      durationMs?: number | null;
-      error?: string | null;
-      cached?: boolean;
-    }>;
-    summary?: {
-      durationMs?: number;
-      iterationCount?: number;
-      nodeCount?: number;
-      edgeCount?: number;
-      hottestNodes?: Array<{
-        nodeId?: string;
-        nodeType?: string;
-        avgMs?: number;
-        totalMs?: number;
-      }>;
-    } | null;
-  } | null;
-};
 
 export function RunDetailDialog(): React.JSX.Element {
   const {
@@ -108,12 +74,11 @@ export function RunDetailDialog(): React.JSX.Element {
     return runDetailHistory[selectedHistoryNodeId] ?? [];
   }, [selectedHistoryNodeId, runDetailHistory]);
 
-  const runtimeTrace = useMemo((): RuntimeTraceSnapshot | null => {
-    if (!runDetail?.run?.meta || typeof runDetail.run.meta !== 'object') return null;
-    const runtimeTraceRaw = runDetail.run.meta['runtimeTrace'];
-    if (!runtimeTraceRaw || typeof runtimeTraceRaw !== 'object') return null;
-    return runtimeTraceRaw as RuntimeTraceSnapshot;
-  }, [runDetail]);
+  const runtimeTraceSummary = useMemo(
+    () => readRuntimeTraceSummary(runDetail?.run?.meta ?? null),
+    [runDetail?.run?.meta]
+  );
+  const runtimeTrace = runtimeTraceSummary?.snapshot ?? null;
 
   const runtimeFingerprint = useMemo((): string | null => {
     if (!runDetail?.run?.meta || typeof runDetail.run.meta !== 'object') return null;
@@ -128,28 +93,7 @@ export function RunDetailDialog(): React.JSX.Element {
     return runDetail.errorSummary ?? null;
   }, [runDetail]);
 
-  const slowestRuntimeNodeSpan = useMemo(() => {
-    const spans = runtimeTrace?.profile?.nodeSpans;
-    if (!Array.isArray(spans) || spans.length === 0) return null;
-    return spans.reduce<{
-      spanId?: string;
-      nodeId?: string;
-      nodeType?: string;
-      durationMs?: number | null;
-    } | null>((slowest, current) => {
-      const currentDuration =
-        typeof current.durationMs === 'number' && Number.isFinite(current.durationMs)
-          ? current.durationMs
-          : null;
-      if (currentDuration === null) return slowest;
-      const slowestDuration =
-        slowest && typeof slowest.durationMs === 'number' ? slowest.durationMs : null;
-      if (slowestDuration === null || currentDuration > slowestDuration) {
-        return current;
-      }
-      return slowest;
-    }, null);
-  }, [runtimeTrace]);
+  const slowestRuntimeNodeSpan = runtimeTraceSummary?.slowestSpan ?? null;
 
   const playwrightArtifacts = useMemo(() => collectPlaywrightArtifacts(runNodes), [runNodes]);
 
@@ -336,27 +280,33 @@ export function RunDetailDialog(): React.JSX.Element {
               <div className='flex flex-wrap items-center justify-between gap-2 text-[11px] text-sky-100'>
                 <span className='font-semibold'>Runtime Trace</span>
                 <span className='font-mono text-[10px] text-sky-200'>
-                  {runtimeTrace.traceId ?? 'n/a'}
+                  {runtimeTraceSummary?.traceId ?? 'n/a'}
                 </span>
               </div>
               <div className='mt-2 grid gap-2 text-[11px] text-sky-100 sm:grid-cols-2'>
                 <div>
-                  Profiled events: {runtimeTrace.profile?.sampledEventCount ?? 0}
-                  {typeof runtimeTrace.profile?.droppedEventCount === 'number' &&
-                  runtimeTrace.profile.droppedEventCount > 0
-                    ? ` (+${runtimeTrace.profile.droppedEventCount} truncated)`
+                  Profiled events: {runtimeTraceSummary?.profiledEventCount ?? 0}
+                  {runtimeTraceSummary && runtimeTraceSummary.droppedEventCount > 0
+                    ? ` (+${runtimeTraceSummary.droppedEventCount} truncated)`
                     : ''}
                 </div>
-                <div>Engine events: {runtimeTrace.profile?.eventCount ?? 0}</div>
-                <div>Runtime: {runtimeTrace.profile?.summary?.durationMs ?? 0}ms</div>
-                <div>Iterations: {runtimeTrace.profile?.summary?.iterationCount ?? 0}</div>
-                <div>Node spans: {runtimeTrace.profile?.nodeSpans?.length ?? 0}</div>
+                <div>Engine events: {runtimeTraceSummary?.engineEventCount ?? 0}</div>
+                <div>Runtime: {runtimeTraceSummary?.durationMs ?? 0}ms</div>
+                <div>Iterations: {runtimeTraceSummary?.iterationCount ?? 0}</div>
+                <div>Node spans: {runtimeTraceSummary?.nodeSpanCount ?? 0}</div>
+                <div>Source: {runtimeTraceSummary?.source ?? 'unknown'}</div>
+                <div>
+                  Trace finished:{' '}
+                  {runtimeTraceSummary?.finishedAt
+                    ? new Date(runtimeTraceSummary.finishedAt).toLocaleString()
+                    : 'in progress'}
+                </div>
               </div>
-              {runtimeTrace.profile?.summary?.hottestNodes?.[0] ? (
+              {runtimeTraceSummary?.hottestNode ? (
                 <div className='mt-2 text-[11px] text-sky-100'>
-                  Hottest node: {runtimeTrace.profile.summary.hottestNodes[0]?.nodeId ?? 'n/a'} (
-                  {runtimeTrace.profile.summary.hottestNodes[0]?.nodeType ?? 'unknown'}) · avg{' '}
-                  {Math.round(runtimeTrace.profile.summary.hottestNodes[0]?.avgMs ?? 0)}ms
+                  Hottest node: {runtimeTraceSummary.hottestNode.nodeId ?? 'n/a'} (
+                  {runtimeTraceSummary.hottestNode.nodeType ?? 'unknown'}) · avg{' '}
+                  {Math.round(runtimeTraceSummary.hottestNode.avgMs ?? 0)}ms
                 </div>
               ) : null}
               {slowestRuntimeNodeSpan ? (

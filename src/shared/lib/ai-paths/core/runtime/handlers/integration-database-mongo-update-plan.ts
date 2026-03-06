@@ -280,7 +280,9 @@ export async function buildMongoUpdatePlan({
         updates,
         templateInputs,
         languageCode: 'pl',
-        requireFullCoverage: true,
+        // Legacy translation mappings merge by existing parameterId, so recovered
+        // partial payloads can be applied without clobbering untouched parameters.
+        requireFullCoverage: false,
       });
       if (translationMergeResult.applied) {
         updates = translationMergeResult.updates;
@@ -436,7 +438,9 @@ export async function buildMongoUpdatePlan({
             updates,
             templateInputs,
             languageCode: 'pl',
-            requireFullCoverage: true,
+            // Legacy translation mappings merge by existing parameterId, so recovered
+            // partial payloads can be applied without clobbering untouched parameters.
+            requireFullCoverage: false,
           });
           if (translationMergeResult.applied) {
             updates = translationMergeResult.updates;

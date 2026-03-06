@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import { formatDurationMs } from '@/shared/lib/ai-paths';
 import type { AiPathRunRecord, RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
 import {
   Button,
@@ -12,9 +13,12 @@ import {
   EmptyState,
   Card,
   Hint,
+  JsonViewer,
+  CollapsibleSection,
 } from '@/shared/ui';
 
 import { buildHistoryNodeOptions } from './run-history-utils';
+import { buildRunTraceComparison, readRuntimeTraceSummary } from './run-trace-utils';
 import { RunHistoryEntries } from './RunHistoryEntries';
 import { useRunHistoryActions, useRunHistoryState } from '../context';
 
@@ -41,6 +45,7 @@ export function RunHistoryPanel(): React.JSX.Element {
   const [compareMode, setCompareMode] = React.useState(false);
   const [primaryRunId, setPrimaryRunId] = React.useState<string | null>(null);
   const [secondaryRunId, setSecondaryRunId] = React.useState<string | null>(null);
+  const [compareInspectorRowKey, setCompareInspectorRowKey] = React.useState<string | null>(null);
   const handleRefresh = (): void => {
     void refreshRuns().catch(() => {});
   };
@@ -99,30 +104,18 @@ export function RunHistoryPanel(): React.JSX.Element {
     () => filteredRunList.find((run: AiPathRunRecord) => run.id === secondaryRunId) ?? null,
     [filteredRunList, secondaryRunId]
   );
-
-  type RuntimeTraceMeta = {
-    profile?: {
-      summary?: {
-        durationMs?: number | null;
-        iterationCount?: number | null;
-      } | null;
-    } | null;
-  };
+  const traceComparison = React.useMemo(
+    () => buildRunTraceComparison(primaryRun, secondaryRun),
+    [primaryRun, secondaryRun]
+  );
+  React.useEffect(() => {
+    if (!compareMode || !compareInspectorRowKey) return;
+    if (traceComparison?.rows.some((row) => row.key === compareInspectorRowKey)) return;
+    setCompareInspectorRowKey(null);
+  }, [compareInspectorRowKey, compareMode, traceComparison]);
 
   const getRuntimeSummary = (run: AiPathRunRecord | null) => {
-    if (!run?.meta || typeof run.meta !== 'object') {
-      return { durationMs: null as number | null, iterations: null as number | null };
-    }
-    const rawTrace = run.meta['runtimeTrace'] as RuntimeTraceMeta | undefined;
-    const duration =
-      typeof rawTrace?.profile?.summary?.durationMs === 'number'
-        ? rawTrace.profile.summary.durationMs
-        : null;
-    const iterations =
-      typeof rawTrace?.profile?.summary?.iterationCount === 'number'
-        ? rawTrace.profile.summary.iterationCount
-        : null;
-    return { durationMs: duration, iterations };
+    return readRuntimeTraceSummary(run?.meta ?? null);
   };
 
   const getRuntimeFingerprint = (run: AiPathRunRecord | null): string | null => {
@@ -131,6 +124,23 @@ export function RunHistoryPanel(): React.JSX.Element {
     if (typeof raw !== 'string') return null;
     const trimmed = raw.trim();
     return trimmed.length > 0 ? trimmed : null;
+  };
+  const renderPayloadInspectorPane = (
+    title: string,
+    data: unknown,
+    emptyLabel: string
+  ): React.JSX.Element => {
+    if (data === null || data === undefined) {
+      return (
+        <div className='rounded-lg border border-dashed border-border/60 bg-card/20 p-3 text-[11px] text-gray-400'>
+          {emptyLabel}
+        </div>
+      );
+    }
+
+    return (
+      <JsonViewer title={title} data={data} maxHeight='220px' className='bg-card/20' />
+    );
   };
 
   return (
@@ -161,6 +171,7 @@ export function RunHistoryPanel(): React.JSX.Element {
               setCompareMode((prev) => !prev);
               setPrimaryRunId(null);
               setSecondaryRunId(null);
+              setCompareInspectorRowKey(null);
             }}
           >
             {compareMode ? 'Exit compare' : 'Compare runs'}
@@ -423,7 +434,7 @@ export function RunHistoryPanel(): React.JSX.Element {
           <div className='grid gap-3 sm:grid-cols-2'>
             {[primaryRun, secondaryRun].map(
               (run: AiPathRunRecord, index: number): React.JSX.Element => {
-                const { durationMs, iterations } = getRuntimeSummary(run);
+                const traceSummary = getRuntimeSummary(run);
                 const fingerprint = getRuntimeFingerprint(run);
                 const label = index === 0 ? 'Run A' : 'Run B';
                 return (
@@ -444,11 +455,22 @@ export function RunHistoryPanel(): React.JSX.Element {
                       Finished: {run.finishedAt ? new Date(run.finishedAt).toLocaleString() : '–'}
                     </div>
                     <div className='text-[10px] text-gray-400'>
-                      Runtime:{' '}
-                      {typeof durationMs === 'number' ? `${durationMs.toFixed(0)}ms` : 'n/a'}
+                      Runtime: {formatDurationMs(traceSummary?.durationMs ?? null) ?? 'n/a'}
                     </div>
                     <div className='text-[10px] text-gray-400'>
-                      Iterations: {typeof iterations === 'number' ? iterations : 'n/a'}
+                      Iterations:{' '}
+                      {typeof traceSummary?.iterationCount === 'number'
+                        ? traceSummary.iterationCount
+                        : 'n/a'}
+                    </div>
+                    <div className='text-[10px] text-gray-400'>
+                      Trace source: {traceSummary?.source ?? 'n/a'}
+                    </div>
+                    <div className='text-[10px] text-gray-400'>
+                      Node spans:{' '}
+                      {typeof traceSummary?.nodeSpanCount === 'number'
+                        ? traceSummary.nodeSpanCount
+                        : 'n/a'}
                     </div>
                     <div className='text-[10px] text-gray-400'>
                       Retries:{' '}
@@ -460,11 +482,203 @@ export function RunHistoryPanel(): React.JSX.Element {
                       Fingerprint:{' '}
                       <span className='font-mono'>{fingerprint ? fingerprint : 'n/a'}</span>
                     </div>
+                    <div className='text-[10px] text-gray-400'>
+                      Slowest span:{' '}
+                      {traceSummary?.slowestSpan
+                        ? `${traceSummary.slowestSpan.nodeId ?? 'n/a'} · ${formatDurationMs(
+                            traceSummary.slowestSpan.durationMs
+                          )}`
+                        : 'n/a'}
+                    </div>
                   </div>
                 );
               }
             )}
           </div>
+          {traceComparison ? (
+            <div className='mt-3 rounded-md border border-border/60 bg-card/30 p-3'>
+              <div className='flex flex-wrap items-center justify-between gap-2'>
+                <span className='text-[10px] uppercase text-gray-500'>
+                  Trace diff ({traceComparison.dataSource})
+                </span>
+                <div className='flex flex-wrap gap-2 text-[10px] text-gray-400'>
+                  <span>Regressions: {traceComparison.regressedCount}</span>
+                  <span>Improvements: {traceComparison.improvedCount}</span>
+                  <span>Added: {traceComparison.addedCount}</span>
+                  <span>Removed: {traceComparison.removedCount}</span>
+                  <span>Payload changes: {traceComparison.payloadChangedCount}</span>
+                </div>
+              </div>
+              <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-300'>
+                <span className='rounded-full border border-border/60 bg-black/20 px-2 py-px'>
+                  Duration delta (B-A): {formatDurationMs(traceComparison.durationDeltaMs)}
+                </span>
+                <span className='rounded-full border border-border/60 bg-black/20 px-2 py-px'>
+                  Iteration delta: {traceComparison.iterationDelta ?? 'n/a'}
+                </span>
+                <span className='rounded-full border border-border/60 bg-black/20 px-2 py-px'>
+                  Span delta: {traceComparison.spanDelta ?? 'n/a'}
+                </span>
+              </div>
+              {traceComparison.rows.length > 0 ? (
+                <div className='mt-3 space-y-2'>
+                  {traceComparison.rows.slice(0, 6).map((row) => {
+                    const hasPayloadInspectorData = [
+                      row.leftInputs,
+                      row.rightInputs,
+                      row.leftOutputs,
+                      row.rightOutputs,
+                    ].some((value) => value !== null && value !== undefined);
+                    const inspectorDescription = [
+                      `A span: ${row.leftHistorySpanId ?? 'not captured'}`,
+                      `B span: ${row.rightHistorySpanId ?? 'not captured'}`,
+                    ].join(' · ');
+
+                    return (
+                      <div
+                        key={row.key}
+                        className='rounded-md border border-border/50 bg-black/20 px-3 py-2'
+                      >
+                        <div className='flex flex-wrap items-center justify-between gap-2'>
+                          <div className='min-w-[180px] flex-1'>
+                            <div className='text-[11px] text-white'>
+                              {row.nodeTitle ?? row.nodeId}
+                              {row.nodeType ? ` (${row.nodeType})` : ''}
+                            </div>
+                            <div className='text-[10px] text-gray-500'>
+                              A: {row.leftStatus ?? '—'} · B: {row.rightStatus ?? '—'}
+                            </div>
+                            {row.leftHistorySpanId || row.rightHistorySpanId ? (
+                              <div className='text-[10px] text-gray-500'>
+                                hist A: {row.leftHistorySpanId ?? '—'} · hist B:{' '}
+                                {row.rightHistorySpanId ?? '—'}
+                              </div>
+                            ) : null}
+                          </div>
+                          <div className='flex flex-wrap items-center gap-2 text-[10px] text-gray-300'>
+                            <StatusBadge
+                              status={row.classification}
+                              variant={
+                                row.classification === 'regressed'
+                                  ? 'error'
+                                  : row.classification === 'improved'
+                                    ? 'success'
+                                    : row.classification === 'added' ||
+                                        row.classification === 'removed'
+                                      ? 'warning'
+                                      : 'neutral'
+                              }
+                              size='sm'
+                              className='font-bold'
+                            />
+                            <span>A {formatDurationMs(row.leftTotalMs)}</span>
+                            <span>B {formatDurationMs(row.rightTotalMs)}</span>
+                            <span>Δ {formatDurationMs(row.deltaMs)}</span>
+                            <span>
+                              spans {row.leftSpanCount}{'->'}{row.rightSpanCount}
+                            </span>
+                            {row.inputDiff?.hasChanges ? (
+                              <span className='rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-px text-sky-100'>
+                                inputs{' '}
+                                {row.inputDiff.added.length +
+                                  row.inputDiff.removed.length +
+                                  row.inputDiff.changed.length}
+                              </span>
+                            ) : null}
+                            {row.outputDiff?.hasChanges ? (
+                              <span className='rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-px text-emerald-100'>
+                                outputs{' '}
+                                {row.outputDiff.added.length +
+                                  row.outputDiff.removed.length +
+                                  row.outputDiff.changed.length}
+                              </span>
+                            ) : null}
+                            {hasPayloadInspectorData ? (
+                              <Button
+                                type='button'
+                                size='xs'
+                                variant='outline'
+                                className='h-6 px-2 text-[10px]'
+                                onClick={(): void =>
+                                  setCompareInspectorRowKey((current) =>
+                                    current === row.key ? null : row.key
+                                  )
+                                }
+                              >
+                                {compareInspectorRowKey === row.key
+                                  ? 'Hide payloads'
+                                  : 'Inspect payloads'}
+                              </Button>
+                            ) : null}
+                          </div>
+                        </div>
+                        {row.inputDiff?.hasChanges || row.outputDiff?.hasChanges ? (
+                          <div className='mt-2 space-y-2 border-t border-border/40 pt-2 text-[10px] text-gray-300'>
+                            {row.inputDiff?.hasChanges ? (
+                              <div>
+                                <div className='mb-1 uppercase text-sky-200'>Input diff</div>
+                                <pre className='overflow-auto rounded border border-sky-500/30 bg-black/30 p-2 text-[10px] text-sky-50'>
+                                  {row.inputDiff.lines.join('\n')}
+                                </pre>
+                              </div>
+                            ) : null}
+                            {row.outputDiff?.hasChanges ? (
+                              <div>
+                                <div className='mb-1 uppercase text-emerald-200'>
+                                  Output diff
+                                </div>
+                                <pre className='overflow-auto rounded border border-emerald-500/30 bg-black/30 p-2 text-[10px] text-emerald-50'>
+                                  {row.outputDiff.lines.join('\n')}
+                                </pre>
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : null}
+                        {compareInspectorRowKey === row.key ? (
+                          <CollapsibleSection
+                            title='Payload Inspector'
+                            description={inspectorDescription}
+                            open
+                            variant='subtle'
+                            className='mt-3'
+                            triggerClassName='px-0 py-2 hover:bg-transparent'
+                            contentClassName='px-0'
+                          >
+                            <div className='grid gap-3 lg:grid-cols-2'>
+                              {renderPayloadInspectorPane(
+                                'Run A Inputs',
+                                row.leftInputs,
+                                'No captured input payload for Run A.'
+                              )}
+                              {renderPayloadInspectorPane(
+                                'Run B Inputs',
+                                row.rightInputs,
+                                'No captured input payload for Run B.'
+                              )}
+                              {renderPayloadInspectorPane(
+                                'Run A Outputs',
+                                row.leftOutputs,
+                                'No captured output payload for Run A.'
+                              )}
+                              {renderPayloadInspectorPane(
+                                'Run B Outputs',
+                                row.rightOutputs,
+                                'No captured output payload for Run B.'
+                              )}
+                            </div>
+                          </CollapsibleSection>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className='mt-2 text-[10px] text-gray-500'>
+                  No trace-level node deltas available for these runs yet.
+                </div>
+              )}
+            </div>
+          ) : null}
         </Card>
       )}
     </Card>

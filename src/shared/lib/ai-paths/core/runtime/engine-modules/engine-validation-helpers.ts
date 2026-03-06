@@ -10,6 +10,7 @@ import {
   type RuntimeNodeResolutionTelemetry,
 } from './engine-types';
 import { EngineStateManager } from './engine-state-manager';
+import { buildInputLinks } from './engine-utils';
 
 export const buildRuntimeTelemetryFields = (
   telemetry: RuntimeNodeResolutionTelemetry | null
@@ -154,6 +155,7 @@ export type ApplyValidationBlockedNodeStateArgs = {
   node: AiNode;
   nodeInputs: RuntimePortValues;
   iteration: number;
+  attempt: number;
   nodeDurationMs: number;
   runtimeTelemetry: RuntimeNodeResolutionTelemetry | null;
   stage: RuntimeValidationStage;
@@ -163,10 +165,31 @@ export type ApplyValidationBlockedNodeStateArgs = {
   options: EvaluateGraphOptions;
   resolvedRunId: string;
   resolvedRunStartedAt: string;
+  sanitizedEdges: Edge[];
+  nodeById: Map<string, AiNode>;
+  activationHash?: string | null;
 };
 
 export const applyValidationBlockedNodeState = async (args: ApplyValidationBlockedNodeStateArgs): Promise<void> => {
-  const { node, nodeInputs, iteration, nodeDurationMs, runtimeTelemetry, stage, message, issues, state, options, resolvedRunId, resolvedRunStartedAt } = args;
+  const {
+    node,
+    nodeInputs,
+    iteration,
+    attempt,
+    nodeDurationMs,
+    runtimeTelemetry,
+    stage,
+    message,
+    issues,
+    state,
+    options,
+    resolvedRunId,
+    resolvedRunStartedAt,
+    sanitizedEdges,
+    nodeById,
+    activationHash = null,
+  } = args;
+  const spanId = `${node.id}:${attempt}:${iteration}`;
   const blockedOutputs: RuntimePortValues = {
     status: 'blocked',
     skipReason: 'validation',
@@ -186,15 +209,22 @@ export const applyValidationBlockedNodeState = async (args: ApplyValidationBlock
     entries.push({
       timestamp: new Date().toISOString(),
       pathId: options.pathId ?? null,
-      pathName: null,
+      pathName: options.pathName ?? null,
+      traceId: resolvedRunId,
+      spanId,
       nodeId: node.id,
       nodeType: node.type,
       nodeTitle: node.title ?? null,
       status: 'blocked',
       iteration: iteration,
+      attempt,
       inputs: cloneValue(nodeInputs),
       outputs: cloneValue(blockedOutputs),
+      inputHash: activationHash,
       skipReason: 'validation',
+      error: message,
+      inputsFrom: buildInputLinks(node.id, sanitizedEdges, nodeById, nodeInputs),
+      outputsTo: [],
       durationMs: nodeDurationMs,
       ...buildRuntimeTelemetryFields(runtimeTelemetry),
     } as RuntimeHistoryEntry);
@@ -219,7 +249,11 @@ export const applyValidationBlockedNodeState = async (args: ApplyValidationBlock
   if (options.onNodeBlocked) {
     await options.onNodeBlocked({
       runId: resolvedRunId,
+      traceId: resolvedRunId,
+      spanId,
       node: node,
+      iteration,
+      attempt,
       reason: 'validation',
       status: 'blocked',
       message: message,

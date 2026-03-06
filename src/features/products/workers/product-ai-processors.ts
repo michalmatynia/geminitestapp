@@ -39,6 +39,54 @@ const OPENAI_MAX_IMAGE_BASE64_BYTES = 4 * 1024 * 1024;
 const OPENAI_MAX_TOTAL_IMAGE_BASE64_BYTES = 15 * 1024 * 1024;
 // Prompt character cap — ~100 k chars ≈ 25 k tokens, generous for any product prompt.
 const OPENAI_MAX_PROMPT_CHARS = 100_000;
+const GRAPH_MODEL_RETRY_MAX_TOKENS = 4_000;
+
+const extractJsonCandidate = (value: string): string => {
+  const trimmed = value.trim();
+  const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  return fencedMatch?.[1]?.trim() ?? trimmed;
+};
+
+const looksLikeJsonCandidate = (value: string): boolean => {
+  const candidate = extractJsonCandidate(value);
+  return candidate.startsWith('{') || candidate.startsWith('[');
+};
+
+const canParseJsonCandidate = (value: string): boolean => {
+  const candidate = extractJsonCandidate(value);
+  if (!looksLikeJsonCandidate(candidate)) return false;
+  try {
+    JSON.parse(candidate);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const resolveGraphModelRetryReason = (args: {
+  prompt: string;
+  resultText: string;
+}): 'empty_result' | 'invalid_json' | null => {
+  if (!args.resultText) return 'empty_result';
+  if (!/\bjson\b/i.test(args.prompt)) return null;
+  if (!looksLikeJsonCandidate(args.resultText)) return null;
+  return canParseJsonCandidate(args.resultText) ? null : 'invalid_json';
+};
+
+const resolveGraphModelRetryConfig = (args: {
+  temperature: number;
+  maxTokens: number;
+  reason: 'empty_result' | 'invalid_json';
+}): {
+  temperature: number;
+  maxTokens: number;
+} => ({
+  temperature: args.reason === 'empty_result' ? Math.min(args.temperature, 0.2) : args.temperature,
+  maxTokens: Math.min(
+    GRAPH_MODEL_RETRY_MAX_TOKENS,
+    Math.max(args.maxTokens + 400, Math.ceil(args.maxTokens * 1.5))
+  ),
+});
 
 export type JobPayload = {
   isTest?: boolean;
@@ -200,26 +248,63 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
     content.push(...imageParts);
   }
 
-  const completion = await runBrainChatCompletion({
-    modelId,
-    temperature,
-    maxTokens,
-    messages: [
-      { role: 'system', content: systemMessage },
-      { role: 'user', content },
-    ],
+  const messages = [
+    { role: 'system' as const, content: systemMessage },
+    { role: 'user' as const, content },
+  ];
+  const runCompletion = async (input: {
+    temperature: number;
+    maxTokens: number;
+  }): Promise<Awaited<ReturnType<typeof runBrainChatCompletion>>> =>
+    runBrainChatCompletion({
+      modelId,
+      temperature: input.temperature,
+      maxTokens: input.maxTokens,
+      messages,
+    });
+
+  let effectiveTemperature = temperature;
+  let effectiveMaxTokens = maxTokens;
+  let completion = await runCompletion({
+    temperature: effectiveTemperature,
+    maxTokens: effectiveMaxTokens,
   });
-  const resultText = completion.text.trim() || '';
+  let resultText = completion.text.trim() || '';
+  const retryReason = resolveGraphModelRetryReason({
+    prompt: effectivePrompt,
+    resultText,
+  });
+  let completionRetryCount = 0;
+
+  if (retryReason) {
+    const retryConfig = resolveGraphModelRetryConfig({
+      temperature: effectiveTemperature,
+      maxTokens: effectiveMaxTokens,
+      reason: retryReason,
+    });
+    effectiveTemperature = retryConfig.temperature;
+    effectiveMaxTokens = retryConfig.maxTokens;
+    completion = await runCompletion(retryConfig);
+    resultText = completion.text.trim() || '';
+    completionRetryCount = 1;
+  }
+
   return {
     result: resultText,
     modelId,
     prompt: rawPrompt,
     imageUrls,
-    temperature,
-    maxTokens,
+    temperature: effectiveTemperature,
+    maxTokens: effectiveMaxTokens,
     source,
     graph: payload.graph ?? undefined,
     productId,
+    ...(completionRetryCount > 0
+      ? {
+          completionRetryCount,
+          completionRetryReason: retryReason,
+        }
+      : {}),
     ...(brainApplied ? { brainApplied } : {}),
   };
 }

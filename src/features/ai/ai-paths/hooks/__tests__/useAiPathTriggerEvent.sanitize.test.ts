@@ -3,10 +3,8 @@ import { describe, expect, it } from 'vitest';
 import type { AiNode } from '@/shared/contracts/ai-paths';
 import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
-import {
-  buildTriggerContext,
-  sanitizeTriggerPathConfig,
-} from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
+import { buildTriggerContext } from '../trigger-event-context';
+import { sanitizeTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
 
 const buildTriggerNode = (): AiNode =>
   ({

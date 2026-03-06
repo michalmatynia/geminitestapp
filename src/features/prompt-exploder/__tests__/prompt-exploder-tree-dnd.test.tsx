@@ -158,6 +158,15 @@ describe('Prompt Exploder master-tree DnD wiring', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useMasterFolderTreeShellMock.mockImplementation(() => ({
+      capabilities: {
+        multiSelect: { enabled: false },
+        search: { enabled: true },
+      },
+      search: {
+        state: { isActive: false, matchNodeIds: new Set() },
+        resultCountLabel: '',
+        placeholder: 'Search...',
+      },
       appearance: {
         rootDropUi: {
           label: 'Move to Root',

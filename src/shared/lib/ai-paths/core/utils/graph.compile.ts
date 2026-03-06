@@ -2,9 +2,29 @@ import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import type { DependencyInspectorOptions as CompileGraphOptions } from '@/shared/contracts/ai-paths-core/engine';
 import type { GraphCompileFinding, GraphCompileReport } from './graph.types';
 import { sanitizeEdges } from './graph.edges';
-import { getNodeInputPortCardinality, getNodeInputPortContract } from './graph.nodes';
+import {
+  getNodeInputPortCardinality,
+  getNodeInputPortContract,
+  getResolvedNodeInputPortContract,
+  getResolvedNodeOutputPortContract,
+} from './graph.nodes';
 import { normalizePortName } from './graph.ports';
-import { arePortTypesCompatible, getPortDataTypes } from './port-types';
+import { arePortTypesCompatible, getPortDataTypes, getPortDataTypesForValueKind } from './port-types';
+
+const resolvePortCompatibilityTypes = (
+  node: AiNode,
+  port: string,
+  direction: 'input' | 'output'
+) => {
+  const contract =
+    direction === 'input'
+      ? getResolvedNodeInputPortContract(node, port)
+      : getResolvedNodeOutputPortContract(node, port);
+  if (contract.kind !== 'unknown') {
+    return getPortDataTypesForValueKind(contract.kind);
+  }
+  return getPortDataTypes(port);
+};
 
 export const compileGraph = (
   nodes: AiNode[],
@@ -218,8 +238,8 @@ export const compileGraph = (
     if (!fromNode || !toNode) return;
     if (!fromNode.outputs.includes(fromPort) || !toNode.inputs.includes(toPort)) return;
 
-    const fromTypes = getPortDataTypes(fromPort);
-    const toTypes = getPortDataTypes(toPort);
+    const fromTypes = resolvePortCompatibilityTypes(fromNode, fromPort, 'output');
+    const toTypes = resolvePortCompatibilityTypes(toNode, toPort, 'input');
     if (!arePortTypesCompatible(fromTypes, toTypes)) {
       const contract = getNodeInputPortContract(toNode, toPort);
       findings.push({

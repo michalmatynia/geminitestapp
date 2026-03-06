@@ -143,7 +143,7 @@ describe('Kangur accessibility smoke', () => {
     expect(scoreFilterMock).toHaveBeenCalledWith({ player_name: 'Jan' }, '-created_date', 120);
     expect(screen.getByRole('heading', { name: 'Profil ucznia' })).toBeInTheDocument();
 
-    expect(screen.getByRole('link', { name: 'Strona główna' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Strona glowna' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Lekcje' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Profil' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Rodzic' })).toBeVisible();

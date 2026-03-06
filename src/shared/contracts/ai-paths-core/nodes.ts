@@ -804,9 +804,38 @@ export const nodePortCardinalitySchema = z.enum(['single', 'many']);
 export type NodePortCardinalityDto = z.infer<typeof nodePortCardinalitySchema>;
 export type NodePortCardinality = NodePortCardinalityDto;
 
+export const nodePortValueKindSchema = z.enum([
+  'unknown',
+  'string',
+  'number',
+  'boolean',
+  'json',
+  'image_url',
+  'bundle',
+  'job_envelope',
+]);
+export type NodePortValueKindDto = z.infer<typeof nodePortValueKindSchema>;
+export type NodePortValueKind = NodePortValueKindDto;
+
+export const NODE_PORT_VALUE_KIND_VALUES: readonly NodePortValueKind[] =
+  nodePortValueKindSchema.options;
+
+const NODE_PORT_VALUE_KIND_SET: ReadonlySet<NodePortValueKind> = new Set(
+  NODE_PORT_VALUE_KIND_VALUES
+);
+
+export const normalizeNodePortValueKind = (value: unknown): NodePortValueKind | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase().replace(/\s+/g, '_') as NodePortValueKind;
+  return NODE_PORT_VALUE_KIND_SET.has(normalized) ? normalized : null;
+};
+
 export const nodePortContractSchema = z.object({
   required: z.boolean().optional(),
   cardinality: nodePortCardinalitySchema.optional(),
+  kind: nodePortValueKindSchema.optional(),
+  schema: z.record(z.string(), z.unknown()).optional(),
+  schemaRef: z.string().optional(),
 });
 export type NodePortContractDto = z.infer<typeof nodePortContractSchema>;
 export type NodePortContract = NodePortContractDto;

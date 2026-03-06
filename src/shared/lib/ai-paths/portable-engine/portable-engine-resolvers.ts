@@ -9,12 +9,14 @@ import {
 import {
   decodePortablePayload,
   estimatePayloadByteSize,
+  resolvePayloadLimits,
+  validatePayloadObjectSafety,
+} from './portable-engine-resolution-support';
+import {
   finalizeResolvedPath,
   migratePortablePathInput,
-  resolvePayloadLimits,
-  resolvePortablePathVerificationModes,
-  validatePayloadObjectSafety,
 } from './portable-engine-migration';
+import { resolvePortablePathVerificationModes } from './portable-engine-signing-policy';
 import {
   verifyPortablePackageFingerprint,
   verifyPortablePackageFingerprintAsync,

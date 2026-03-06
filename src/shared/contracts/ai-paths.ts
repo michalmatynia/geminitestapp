@@ -583,6 +583,7 @@ export const AI_PATHS_MAINTENANCE_ACTION_IDS = [
   'compact_oversized_configs',
   'repair_path_index',
   'ensure_starter_workflow_defaults',
+  'repair_trigger_button_bindings',
   'normalize_runtime_kernel_settings',
 ] as const;
 

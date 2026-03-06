@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 type TriggerButtonFixture = {
   id: string;
@@ -26,6 +26,12 @@ type ProductFixture = {
   asin: string | null;
   name: Record<string, string | null>;
   description: Record<string, string | null>;
+  name_en?: string | null;
+  name_pl?: string | null;
+  name_de?: string | null;
+  description_en?: string | null;
+  description_pl?: string | null;
+  description_de?: string | null;
   supplierName: string | null;
   supplierLink: string | null;
   priceComment: string | null;
@@ -40,6 +46,8 @@ type ProductFixture = {
   catalogId: string;
   images: unknown[];
   catalogs: unknown[];
+  tags?: unknown[];
+  producers?: unknown[];
   parameters: Array<{ parameterId: string; value?: string | null }>;
   imageLinks: string[];
   imageBase64s: string[];
@@ -91,6 +99,12 @@ const createProductFixture = (
   asin: null,
   name: { en: label },
   description: { en: `${label} description` },
+  name_en: label,
+  name_pl: null,
+  name_de: null,
+  description_en: `${label} description`,
+  description_pl: null,
+  description_de: null,
   supplierName: null,
   supplierLink: null,
   priceComment: null,
@@ -105,6 +119,8 @@ const createProductFixture = (
   catalogId: 'catalog-e2e',
   images: [],
   catalogs: [],
+  tags: [],
+  producers: [],
   parameters: [],
   imageLinks: [],
   imageBase64s: [],
@@ -112,42 +128,7 @@ const createProductFixture = (
 });
 
 test.describe('Products trigger button queue integration', () => {
-  const setupProductTriggerHarness = async (
-    page: Page,
-    options: { enqueueBody: Record<string, unknown> }
-  ): Promise<{
-    triggerButtonName: string;
-    productSku: string;
-    pathId: string;
-    productId: string;
-    triggerEventId: string;
-    getProductsPagedRequestCount: () => number;
-    getEnqueueRequestBody: () => Record<string, unknown> | null;
-  }> => {
-    const now = new Date().toISOString();
-    const triggerEventId = 'manual';
-    const pathId = 'path-e2e-product-trigger';
-    const productId = 'product-e2e-trigger';
-    const productSku = `E2E-TRIGGER-${Date.now()}`;
-    const product = createProductFixture(productId, productSku, 'Trigger Product', now);
-
-    const triggerButton: TriggerButtonFixture = {
-      id: triggerEventId,
-      name: 'Queue Description Path',
-      enabled: true,
-      locations: ['product_row'],
-      mode: 'click',
-      display: 'icon_label',
-      iconId: null,
-      pathId: null,
-      sortIndex: 0,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    let productsPagedRequestCount = 0;
-    let enqueueRequestBody: Record<string, unknown> | null = null;
-
+  const routeSharedProductHarnessApis = async (page: Page, product: ProductFixture): Promise<void> => {
     await page.route('**/api/user/preferences**', async (route) => {
       if (route.request().method() !== 'GET') {
         await route.continue();
@@ -228,7 +209,100 @@ test.describe('Products trigger button queue integration', () => {
       });
     });
 
-    await page.route('**/api/v2/products/paged**', async (route) => {
+    await page.route('**/api/v2/products/producers**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
+        body: JSON.stringify([]),
+      });
+    });
+
+    await page.route('**/api/v2/products/categories/tree*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
+        body: JSON.stringify([]),
+      });
+    });
+
+    await page.route('**/api/v2/products/tags*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
+        body: JSON.stringify([]),
+      });
+    });
+
+    await page.route('**/api/v2/products/parameters*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
+        body: JSON.stringify([]),
+      });
+    });
+
+    await page.route('**/api/v2/products/simple-parameters*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
+        body: JSON.stringify([]),
+      });
+    });
+
+    await page.route(`**/api/v2/products/${product.id}*`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
+        body: JSON.stringify(product),
+      });
+    });
+  };
+
+  const setupProductTriggerHarness = async (
+    page: Page,
+    options: { enqueueBody: Record<string, unknown> }
+  ): Promise<{
+    triggerButtonName: string;
+    productSku: string;
+    pathId: string;
+    productId: string;
+    triggerEventId: string;
+    getProductsPagedRequestCount: () => number;
+    getEnqueueRequestBody: () => Record<string, unknown> | null;
+  }> => {
+    const now = new Date().toISOString();
+    const triggerEventId = 'manual';
+    const pathId = 'path-e2e-product-trigger';
+    const productId = 'product-e2e-trigger';
+    const productSku = `E2E-TRIGGER-${Date.now()}`;
+    const product = createProductFixture(productId, productSku, 'Trigger Product', now);
+
+    const triggerButton: TriggerButtonFixture = {
+      id: triggerEventId,
+      name: 'Queue Description Path',
+      enabled: true,
+      locations: ['product_row'],
+      mode: 'click',
+      display: 'icon_label',
+      iconId: null,
+      pathId: null,
+      sortIndex: 0,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    let productsPagedRequestCount = 0;
+    let enqueueRequestBody: Record<string, unknown> | null = null;
+
+    await routeSharedProductHarnessApis(page, product);
+
+    await page.route('**/api/v2/products/paged*', async (route) => {
       productsPagedRequestCount += 1;
       await route.fulfill({
         status: 200,
@@ -269,7 +343,9 @@ test.describe('Products trigger button queue integration', () => {
               aiPathsValidation: { enabled: false },
               nodes: [
                 {
-                  id: 'node-trigger-e2e',
+                  id: 'node-111111111111111111111111',
+                  instanceId: 'node-111111111111111111111111',
+                  nodeTypeId: 'nt-111111111111111111111111',
                   type: 'trigger',
                   title: 'Trigger',
                   description: 'E2E trigger node',
@@ -298,7 +374,7 @@ test.describe('Products trigger button queue integration', () => {
       });
     });
 
-    await page.route('**/api/ai-paths/runs?**', async (route) => {
+    await page.route('**/api/ai-paths/runs*', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -317,6 +393,153 @@ test.describe('Products trigger button queue integration', () => {
       productId,
       triggerEventId,
       getProductsPagedRequestCount: () => productsPagedRequestCount,
+      getEnqueueRequestBody: () => enqueueRequestBody,
+    };
+  };
+
+  const setupProductModalTriggerHarness = async (
+    page: Page,
+    options: { enqueueBody: Record<string, unknown> }
+  ): Promise<{
+    modal: Locator;
+    triggerButtonName: string;
+    productSku: string;
+    pathId: string;
+    productId: string;
+    triggerEventId: string;
+    getEnqueueRequestBody: () => Record<string, unknown> | null;
+  }> => {
+    const now = new Date().toISOString();
+    const triggerEventId = 'trigger-e2e-product-modal';
+    const pathId = 'path-e2e-product-modal';
+    const productId = 'product-e2e-modal';
+    const productSku = `E2E-MODAL-${Date.now()}`;
+    const product = createProductFixture(productId, productSku, 'Modal Trigger Product', now);
+
+    const triggerButton: TriggerButtonFixture = {
+      id: triggerEventId,
+      name: 'Infer Params',
+      enabled: true,
+      locations: ['product_modal'],
+      mode: 'click',
+      display: 'icon_label',
+      iconId: null,
+      pathId: null,
+      sortIndex: 0,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    let enqueueRequestBody: Record<string, unknown> | null = null;
+
+    await routeSharedProductHarnessApis(page, product);
+
+    await page.route('**/api/v2/products/paged*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
+        body: JSON.stringify({ products: [product], total: 1 }),
+      });
+    });
+
+    await page.route('**/api/ai-paths/trigger-buttons**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
+        body: JSON.stringify([triggerButton]),
+      });
+    });
+
+    await page.route('**/api/ai-paths/settings**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
+        body: JSON.stringify([
+          {
+            key: 'ai_paths_index',
+            value: JSON.stringify([
+              { id: pathId, name: 'E2E Product Modal Trigger Path', createdAt: now, updatedAt: now },
+            ]),
+          },
+          {
+            key: `ai_paths_config_${pathId}`,
+            value: JSON.stringify({
+              id: pathId,
+              name: 'E2E Product Modal Trigger Path',
+              isActive: true,
+              strictFlowMode: true,
+              aiPathsValidation: { enabled: false },
+              nodes: [
+                {
+                  id: 'node-222222222222222222222222',
+                  instanceId: 'node-222222222222222222222222',
+                  nodeTypeId: 'nt-222222222222222222222222',
+                  type: 'trigger',
+                  title: 'Trigger: Infer Params',
+                  description: 'E2E modal trigger node',
+                  position: { x: 120, y: 120 },
+                  inputs: [],
+                  outputs: ['trigger', 'triggerName'],
+                  config: {
+                    trigger: {
+                      event: triggerEventId,
+                    },
+                  },
+                  createdAt: now,
+                  updatedAt: now,
+                },
+              ],
+              edges: [],
+              updatedAt: now,
+            }),
+          },
+        ]),
+      });
+    });
+
+    await page.route('**/api/ai-paths/runs/enqueue', async (route) => {
+      enqueueRequestBody = route.request().postDataJSON() as Record<string, unknown>;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
+        body: JSON.stringify(options.enqueueBody),
+      });
+    });
+
+    await page.route('**/api/ai-paths/runs*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'Cache-Control': 'no-store' },
+        body: JSON.stringify({ runs: [], total: 0 }),
+      });
+    });
+
+    await page.goto('/admin/products');
+    await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible();
+
+    const productRow = page.locator('tr').filter({ hasText: productSku }).first();
+    await expect(productRow).toBeVisible({ timeout: 15_000 });
+    await productRow.getByLabel('Open row actions').click();
+    await page.getByRole('menuitem', { name: 'Edit' }).click();
+
+    const modal = page.locator('[role="dialog"]').last();
+    await expect(modal).toBeVisible({ timeout: 15_000 });
+    await expect(modal.getByRole('button', { name: triggerButton.name })).toBeVisible({
+      timeout: 15_000,
+    });
+
+    return {
+      modal,
+      triggerButtonName: triggerButton.name,
+      productSku,
+      pathId,
+      productId,
+      triggerEventId,
       getEnqueueRequestBody: () => enqueueRequestBody,
     };
   };
@@ -481,5 +704,46 @@ test.describe('Products trigger button queue integration', () => {
       },
     });
     await assertTriggerRunQueued(page, setup);
+  });
+
+  test('enqueues AI Path run from Product modal trigger with entityJson form context', async ({
+    page,
+  }) => {
+    const authenticated = await ensureAdminSession(page);
+    test.skip(!authenticated, 'Admin authentication is required for this e2e test.');
+
+    const setup = await setupProductModalTriggerHarness(page, {
+      enqueueBody: {
+        run: {
+          id: 'run-e2e-product-modal-trigger',
+          status: 'queued',
+        },
+      },
+    });
+
+    await setup.modal.getByRole('button', { name: setup.triggerButtonName }).click();
+
+    await expect.poll(() => setup.getEnqueueRequestBody()).not.toBeNull();
+    const enqueueBody = setup.getEnqueueRequestBody();
+    expect(enqueueBody?.['entityType']).toBe('product');
+    expect(enqueueBody?.['entityId']).toBe(setup.productId);
+    expect(enqueueBody?.['triggerEvent']).toBe(setup.triggerEventId);
+    expect(enqueueBody?.['pathId']).toBe(setup.pathId);
+
+    const triggerContext = enqueueBody?.['triggerContext'] as Record<string, unknown> | undefined;
+    expect(triggerContext?.['entityId']).toBe(setup.productId);
+    expect(triggerContext?.['entityType']).toBe('product');
+    expect(triggerContext?.['productId']).toBe(setup.productId);
+
+    const source = triggerContext?.['source'] as Record<string, unknown> | undefined;
+    expect(source?.['location']).toBe('product_modal');
+    expect(source?.['pathId']).toBe(setup.pathId);
+
+    const entityJson = triggerContext?.['entityJson'] as Record<string, unknown> | undefined;
+    expect(entityJson).toMatchObject({
+      id: setup.productId,
+      sku: setup.productSku,
+      name_en: 'Modal Trigger Product',
+    });
   });
 });

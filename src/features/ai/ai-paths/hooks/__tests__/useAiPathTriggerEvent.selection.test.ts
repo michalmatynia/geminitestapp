@@ -56,9 +56,11 @@ describe('selectTriggerCandidates', () => {
     });
 
     expect(selection.selectedConfig?.id).toBe('path-a');
+    expect(selection.missingPreferredPathId).toBeNull();
+    expect(selection.usedSingleActiveFallback).toBe(false);
   });
 
-  it('returns null when preferred bound path is missing', () => {
+  it('falls back to the single active candidate when preferred bound path is missing', () => {
     const candidates: Candidate[] = [{ id: 'path-a', isActive: true }];
 
     const selection = selectTriggerCandidates<Candidate>({
@@ -67,7 +69,26 @@ describe('selectTriggerCandidates', () => {
       activePathId: null,
     });
 
+    expect(selection.selectedConfig?.id).toBe('path-a');
+    expect(selection.missingPreferredPathId).toBe('path-missing');
+    expect(selection.usedSingleActiveFallback).toBe(true);
+  });
+
+  it('returns null and preserves the missing preferred path when disambiguation is unsafe', () => {
+    const candidates: Candidate[] = [
+      { id: 'path-a', isActive: true },
+      { id: 'path-b', isActive: true },
+    ];
+
+    const selection = selectTriggerCandidates<Candidate>({
+      triggerCandidates: candidates,
+      preferredPathId: 'path-missing',
+      activePathId: null,
+    });
+
     expect(selection.selectedConfig).toBeNull();
+    expect(selection.missingPreferredPathId).toBe('path-missing');
+    expect(selection.usedSingleActiveFallback).toBe(false);
   });
 
   it('selects the configured active path when it is active', () => {
@@ -83,5 +104,7 @@ describe('selectTriggerCandidates', () => {
     });
 
     expect(selection.selectedConfig?.id).toBe('path-b');
+    expect(selection.missingPreferredPathId).toBeNull();
+    expect(selection.usedSingleActiveFallback).toBe(false);
   });
 });

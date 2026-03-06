@@ -12,7 +12,7 @@ import {
   recordPortablePathRunExecutionAttempt,
   recordPortablePathRunExecutionFailure,
   recordPortablePathRunExecutionSuccess,
-} from './portable-engine-observability';
+} from './portable-engine-run-observability';
 import {
   PortablePathValidationError,
   validatePortablePathConfig,

@@ -54,6 +54,7 @@ import {
 } from './kangur-lessons-master-tree';
 import {
   appendMissingGeometryKangurLessons,
+  appendMissingLogicalThinkingKangurLessons,
   KANGUR_LESSONS_SETTING_KEY,
   KANGUR_LESSON_COMPONENT_OPTIONS,
   KANGUR_LESSON_SORT_ORDER_GAP,
@@ -322,6 +323,10 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
   }, [lessonToDelete, lessons, persistLessons, toast]);
 
   const geometryPackResult = useMemo(() => appendMissingGeometryKangurLessons(lessons), [lessons]);
+  const logicalThinkingPackResult = useMemo(
+    () => appendMissingLogicalThinkingKangurLessons(lessons),
+    [lessons]
+  );
 
   const handleAddGeometryPack = useCallback(async (): Promise<void> => {
     if (geometryPackResult.addedCount === 0) {
@@ -339,6 +344,23 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
       });
     }
   }, [geometryPackResult, persistLessons, toast]);
+
+  const handleAddLogicalThinkingPack = useCallback(async (): Promise<void> => {
+    if (logicalThinkingPackResult.addedCount === 0) {
+      toast('Logical thinking lesson pack is already present.', { variant: 'info' });
+      return;
+    }
+
+    try {
+      await persistLessons(logicalThinkingPackResult.lessons, {
+        successMessage: `Added ${logicalThinkingPackResult.addedCount} logical thinking lesson${logicalThinkingPackResult.addedCount === 1 ? '' : 's'}.`,
+      });
+    } catch (error: unknown) {
+      toast(error instanceof Error ? error.message : 'Failed to add logical thinking lessons.', {
+        variant: 'error',
+      });
+    }
+  }, [logicalThinkingPackResult, persistLessons, toast]);
 
   const renderNode = useCallback(
     (input: FolderTreeViewportRenderNodeInput): React.ReactNode => {
@@ -535,6 +557,18 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
                 >
                   <Sparkles className='mr-1 size-3.5' />
                   Add geometry pack
+                </Button>
+                <Button
+                  onClick={(): void => {
+                    void handleAddLogicalThinkingPack();
+                  }}
+                  size='sm'
+                  variant='outline'
+                  className='h-7 border px-2 text-[11px] font-semibold tracking-wide text-violet-200 hover:bg-violet-900/30'
+                  disabled={updateSetting.isPending || logicalThinkingPackResult.addedCount === 0}
+                >
+                  <Sparkles className='mr-1 size-3.5' />
+                  Add logic pack
                 </Button>
                 <Button
                   onClick={openCreateModal}

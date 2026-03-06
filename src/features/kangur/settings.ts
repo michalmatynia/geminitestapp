@@ -31,6 +31,10 @@ const KANGUR_LESSON_COMPONENT_ORDER: readonly KangurLessonComponentId[] = [
   'geometry_shapes',
   'geometry_symmetry',
   'geometry_perimeter',
+  'logical_patterns',
+  'logical_classification',
+  'logical_reasoning',
+  'logical_analogies',
 ] as const;
 
 export const KANGUR_GEOMETRY_LESSON_COMPONENT_IDS = [
@@ -51,6 +55,10 @@ const KANGUR_LEGACY_COMPONENT_ID_BY_ID: Record<string, KangurLessonComponentId> 
   geometry_shapes: 'geometry_shapes',
   geometry_symmetry: 'geometry_symmetry',
   geometry_perimeter: 'geometry_perimeter',
+  logical_patterns: 'logical_patterns',
+  logical_classification: 'logical_classification',
+  logical_reasoning: 'logical_reasoning',
+  logical_analogies: 'logical_analogies',
 };
 
 export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLessonTemplate> = {
@@ -143,6 +151,42 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
     emoji: '📏',
     color: 'from-amber-500 to-orange-500',
     activeBg: 'bg-amber-500',
+  },
+  logical_patterns: {
+    componentId: 'logical_patterns',
+    label: 'Logical Patterns Lesson',
+    title: 'Wzorce i ciągi',
+    description: 'Odkryj zasady kryjące się w ciągach i wzorcach',
+    emoji: '🔢',
+    color: 'from-violet-500 to-purple-600',
+    activeBg: 'bg-violet-500',
+  },
+  logical_classification: {
+    componentId: 'logical_classification',
+    label: 'Logical Classification Lesson',
+    title: 'Klasyfikacja',
+    description: 'Grupuj, sortuj i znajdź intruza',
+    emoji: '📦',
+    color: 'from-teal-500 to-cyan-500',
+    activeBg: 'bg-teal-500',
+  },
+  logical_reasoning: {
+    componentId: 'logical_reasoning',
+    label: 'Logical Reasoning Lesson',
+    title: 'Wnioskowanie',
+    description: 'Jeśli... to... — myśl krok po kroku',
+    emoji: '💡',
+    color: 'from-indigo-500 to-blue-600',
+    activeBg: 'bg-indigo-500',
+  },
+  logical_analogies: {
+    componentId: 'logical_analogies',
+    label: 'Logical Analogies Lesson',
+    title: 'Analogie',
+    description: 'Znajdź tę samą relację w nowym kontekście',
+    emoji: '🔗',
+    color: 'from-pink-500 to-rose-500',
+    activeBg: 'bg-pink-500',
   },
 };
 
@@ -367,3 +411,15 @@ export const appendMissingGeometryKangurLessons = (
   lessons: KangurLesson[]
 ): AppendMissingKangurLessonsResult =>
   appendMissingKangurLessonsByComponent(lessons, KANGUR_GEOMETRY_LESSON_COMPONENT_IDS);
+
+export const KANGUR_LOGICAL_THINKING_LESSON_COMPONENT_IDS = [
+  'logical_patterns',
+  'logical_classification',
+  'logical_reasoning',
+  'logical_analogies',
+] as const satisfies readonly KangurLessonComponentId[];
+
+export const appendMissingLogicalThinkingKangurLessons = (
+  lessons: KangurLesson[]
+): AppendMissingKangurLessonsResult =>
+  appendMissingKangurLessonsByComponent(lessons, KANGUR_LOGICAL_THINKING_LESSON_COMPONENT_IDS);

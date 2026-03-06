@@ -22,7 +22,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   upsertAiPathsSetting: upsertAiPathsSettingMock,
 }));
 
-import { GET_handler } from './handler';
+import { GET_handler, POST_handler } from './handler';
 
 describe('ai-paths trigger-buttons GET handler', () => {
   beforeEach(() => {
@@ -30,6 +30,11 @@ describe('ai-paths trigger-buttons GET handler', () => {
     requireAiPathsRunAccessMock.mockResolvedValue({
       userId: 'user-1',
       permissions: ['products.manage'],
+      isElevated: false,
+    });
+    requireAiPathsAccessMock.mockResolvedValue({
+      userId: 'user-1',
+      permissions: ['ai_paths.manage'],
       isElevated: false,
     });
   });
@@ -143,5 +148,80 @@ describe('ai-paths trigger-buttons GET handler', () => {
 
     expect(getAiPathsSettingMock).toHaveBeenCalledWith('ai_paths_trigger_buttons');
     expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
+  });
+
+  it('POST rejects missing bound AI Paths', async () => {
+    getAiPathsSettingMock.mockImplementation(async (key: string) => {
+      if (key === 'ai_paths_index') {
+        return JSON.stringify([
+          {
+            id: 'path-live',
+            name: 'Live Path',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+          },
+        ]);
+      }
+      if (key === 'ai_paths_trigger_buttons') {
+        return '[]';
+      }
+      return null;
+    });
+
+    const request = new NextRequest('http://localhost/api/ai-paths/trigger-buttons', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'Run Path',
+        pathId: 'path-missing',
+        locations: ['product_modal'],
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    await expect(
+      POST_handler(request, {} as Parameters<typeof POST_handler>[1])
+    ).rejects.toThrow('AI Path "path-missing" does not exist.');
+
+    expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
+  });
+
+  it('POST accepts existing bound AI Paths', async () => {
+    getAiPathsSettingMock.mockImplementation(async (key: string) => {
+      if (key === 'ai_paths_index') {
+        return JSON.stringify([
+          {
+            id: 'path-live',
+            name: 'Live Path',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+          },
+        ]);
+      }
+      if (key === 'ai_paths_trigger_buttons') {
+        return '[]';
+      }
+      return null;
+    });
+
+    const request = new NextRequest('http://localhost/api/ai-paths/trigger-buttons', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'Run Path',
+        pathId: 'path-live',
+        locations: ['product_modal'],
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const response = await POST_handler(request, {} as Parameters<typeof POST_handler>[1]);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        name: 'Run Path',
+        pathId: 'path-live',
+      })
+    );
+    expect(upsertAiPathsSettingMock).toHaveBeenCalledTimes(1);
   });
 });

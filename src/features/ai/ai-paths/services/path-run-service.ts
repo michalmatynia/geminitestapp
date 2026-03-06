@@ -41,7 +41,12 @@ import type {
   UpdaterSampleState,
 } from '@/shared/contracts/ai-paths';
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
-import { validationError } from '@/shared/errors/app-error';
+import {
+  badRequestError,
+  internalError,
+  serviceUnavailableError,
+  validationError,
+} from '@/shared/errors/app-error';
 
 type EnqueueRunInput = {
   userId?: string | null;
@@ -316,11 +321,13 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       mode: 'full',
     });
     if (runPreflight.shouldBlock) {
-      throw new Error(runPreflight.blockMessage ?? 'Run blocked by preflight validation checks.');
+      throw badRequestError(
+        runPreflight.blockMessage ?? 'Run blocked by preflight validation checks.'
+      );
     }
     const policyReport = evaluateDisabledNodeTypesPolicy(nodes);
     if (policyReport.violations.length > 0) {
-      throw new Error(formatDisabledNodeTypesPolicyMessage(policyReport.violations));
+      throw badRequestError(formatDisabledNodeTypesPolicyMessage(policyReport.violations));
     }
     const runtimeFingerprint = getAiPathsRuntimeFingerprint();
     const meta = withRuntimeFingerprintMeta({
@@ -427,7 +434,10 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         durationMs: 0,
         timestamp: finishedAt,
       });
-      throw new Error(message, { cause: setupError });
+      throw internalError(message, {
+        pathId: run.pathId,
+        runId: run.id,
+      });
     }
 
     try {
@@ -518,7 +528,10 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         });
       }
 
-      throw new Error(message, { cause: dispatchError });
+      throw serviceUnavailableError(message, undefined, {
+        pathId: run.pathId,
+        runId: run.id,
+      });
     }
 
     const enqueueTotalMs = performance.now() - enqueueStartedAt;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { AiNode } from '@/shared/contracts/ai-paths';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import { sanitizeTriggerPathConfig } from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
 
@@ -75,39 +76,46 @@ describe('sanitizeTriggerPathConfig', () => {
 
   it('keeps canonical trigger configs unchanged', () => {
     const config = createDefaultPathConfig('path_translation_v2');
-    config.name = 'Translation EN->PL Description + Parameters v2';
+
+    const snapshotBeforeSanitize = JSON.parse(JSON.stringify(config));
+    const sanitized = sanitizeTriggerPathConfig(config);
+
+    expect(sanitized).toEqual(snapshotBeforeSanitize);
+  });
+
+  it('rejects unsupported parameter inference target path aliases in trigger payloads', () => {
+    const config = createDefaultPathConfig('path_trigger_param_guard');
     config.nodes = [
       {
-        id: 'node-regex-translate-en-pl',
-        type: 'regex',
-        title: 'Regex JSON Extract',
+        id: 'node-trigger-param-guard',
+        type: 'trigger',
+        title: 'Trigger',
         description: '',
         position: { x: 0, y: 0 },
         data: {},
-        inputs: ['value', 'prompt', 'regexCallback'],
-        outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
+        inputs: [],
+        outputs: ['trigger'],
+        config: {
+          trigger: { event: 'trigger-param-guard' },
+        },
         createdAt: '2026-03-02T05:57:46.562Z',
         updatedAt: null,
       } as AiNode,
       {
-        id: 'node-db-update-translate-en-pl',
+        id: 'node-db-param-guard',
         type: 'database',
-        title: 'Database Query',
+        title: 'Database Update',
         description: '',
         position: { x: 320, y: 0 },
         data: {},
-        inputs: ['entityId', 'entityType', 'value', 'result', 'bundle'],
+        inputs: ['trigger', 'entityId', 'value'],
         outputs: ['result', 'bundle'],
-        createdAt: '2026-03-02T05:57:46.562Z',
-        updatedAt: null,
         config: {
           database: {
             operation: 'update',
             entityType: 'product',
-            updatePayloadMode: 'mapping',
-            updateTemplate: '',
             query: {
-              provider: 'auto',
+              provider: 'mongodb',
               collection: 'products',
               mode: 'custom',
               preset: 'by_id',
@@ -119,33 +127,84 @@ describe('sanitizeTriggerPathConfig', () => {
               projection: '',
               single: true,
             },
+            parameterInferenceGuard: {
+              enabled: true,
+              targetPath: 'simpleParameters',
+            },
           },
         },
+        createdAt: '2026-03-02T05:57:46.562Z',
+        updatedAt: null,
       } as AiNode,
     ];
     config.edges = [
       {
-        id: 'edge-legacy-regex-db',
-        from: 'node-regex-translate-en-pl',
-        to: 'node-db-update-translate-en-pl',
-        fromPort: 'value',
-        toPort: 'value',
+        id: 'edge-trigger-param-guard',
+        from: 'node-trigger-param-guard',
+        to: 'node-db-param-guard',
+        fromPort: 'trigger',
+        toPort: 'trigger',
       },
     ];
 
-    const snapshotBeforeSanitize = JSON.parse(JSON.stringify(config));
-    const sanitized = sanitizeTriggerPathConfig(config);
-    const databaseNode = sanitized.nodes.find(
-      (node: AiNode): boolean => node.id === 'node-db-update-translate-en-pl'
+    expect(() => sanitizeTriggerPathConfig(config)).toThrowError(
+      /unsupported parameter inference target path/i
     );
+  });
 
-    expect(sanitized).toEqual(snapshotBeforeSanitize);
-    expect(databaseNode?.config?.database?.updatePayloadMode).not.toBe('custom');
-    expect(String(databaseNode?.config?.database?.updateTemplate ?? '')).not.toContain(
-      '"description_pl": "{{value.description_pl}}"'
-    );
-    expect(String(databaseNode?.config?.database?.updateTemplate ?? '')).not.toContain(
-      '"parameters": {{value.parameters}}'
+  it('rejects unsupported trigger data edges in trigger payloads', () => {
+    const config = createDefaultPathConfig('path_trigger_data_guard');
+    config.nodes = normalizeNodes([
+      {
+        id: 'node-trigger-data-guard',
+        type: 'trigger',
+        title: 'Trigger',
+        description: '',
+        position: { x: 0, y: 0 },
+        data: {},
+        inputs: [],
+        outputs: ['trigger', 'context'],
+        config: {
+          trigger: { event: 'trigger-data-guard' },
+        },
+        createdAt: '2026-03-02T05:57:46.562Z',
+        updatedAt: null,
+      } as AiNode,
+      {
+        id: 'node-context-data-guard',
+        type: 'context',
+        title: 'Context Filter',
+        description: '',
+        position: { x: 320, y: 0 },
+        data: {},
+        inputs: ['context'],
+        outputs: ['entityJson'],
+        config: {
+          context: {
+            mode: 'passthrough',
+          },
+        },
+        createdAt: '2026-03-02T05:57:46.562Z',
+        updatedAt: null,
+      } as AiNode,
+    ]);
+    const triggerNode = config.nodes[0];
+    const downstreamNode = config.nodes[1];
+    if (!triggerNode || !downstreamNode) {
+      throw new Error('Expected normalized trigger fixtures to include two nodes.');
+    }
+    config.edges = [
+      {
+        id: 'edge-trigger-data-guard',
+        from: triggerNode.id,
+        to: downstreamNode.id,
+        fromPort: 'context',
+        toPort: downstreamNode.inputs?.[0] ?? 'context',
+      },
+    ];
+
+    expect(() => sanitizeTriggerPathConfig(config)).toThrowError(
+      /unsupported trigger (output ports|data edges)/i
     );
   });
 });

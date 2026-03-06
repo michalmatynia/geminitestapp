@@ -15,6 +15,10 @@ export const kangurLessonComponentIdSchema = z.enum([
   'geometry_shapes',
   'geometry_symmetry',
   'geometry_perimeter',
+  'logical_patterns',
+  'logical_classification',
+  'logical_reasoning',
+  'logical_analogies',
 ]);
 export type KangurLessonComponentId = z.infer<typeof kangurLessonComponentIdSchema>;
 

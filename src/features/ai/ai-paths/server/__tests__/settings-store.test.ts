@@ -188,4 +188,106 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
       (parsed['extensions'] as Record<string, unknown>)?.['aiPathsStarter'] ?? null;
     expect(starterExtension).toBeNull();
   });
+
+  it('does not count or reseed starter trigger buttons for inactive starter paths', () => {
+    const fullySeeded = ensureStarterWorkflowDefaults([
+      {
+        key: AI_PATHS_INDEX_KEY,
+        value: '[]',
+      },
+      {
+        key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+        value: '[]',
+      },
+    ]).nextRecords;
+
+    const inactive = fullySeeded.map((record) => {
+      if (record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_syr8f4`) {
+        const parsed = JSON.parse(record.value) as Record<string, unknown>;
+        return {
+          ...record,
+          value: JSON.stringify({
+            ...parsed,
+            isActive: false,
+          }),
+        };
+      }
+      if (record.key === AI_PATHS_TRIGGER_BUTTONS_KEY) {
+        const parsed = JSON.parse(record.value) as Array<Record<string, unknown>>;
+        return {
+          ...record,
+          value: JSON.stringify(
+            parsed.filter((button) => button['id'] !== '0ef40981-7ac6-416e-9205-7200289f851c')
+          ),
+        };
+      }
+      return record;
+    });
+
+    expect(countPendingStarterWorkflowDefaults(inactive)).toBe(0);
+
+    const refreshed = ensureStarterWorkflowDefaults(inactive);
+    expect(refreshed.affectedCount).toBe(0);
+
+    const triggerButtonsRecord = refreshed.nextRecords.find(
+      (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
+    );
+    if (!triggerButtonsRecord) throw new Error('Expected trigger buttons record');
+    const triggerButtons = JSON.parse(triggerButtonsRecord.value) as Array<Record<string, unknown>>;
+    expect(
+      triggerButtons.some((button) => button['id'] === '0ef40981-7ac6-416e-9205-7200289f851c')
+    ).toBe(false);
+  });
+
+  it('does not reseed starter trigger buttons when an equivalent button already targets the same path and location', () => {
+    const fullySeeded = ensureStarterWorkflowDefaults([
+      {
+        key: AI_PATHS_INDEX_KEY,
+        value: '[]',
+      },
+      {
+        key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+        value: '[]',
+      },
+    ]).nextRecords;
+
+    const withCustomReplacement = fullySeeded.map((record) => {
+      if (record.key !== AI_PATHS_TRIGGER_BUTTONS_KEY) return record;
+      const parsed = JSON.parse(record.value) as Array<Record<string, unknown>>;
+      return {
+        ...record,
+        value: JSON.stringify([
+          ...parsed.filter((button) => button['id'] !== '0ef40981-7ac6-416e-9205-7200289f851c'),
+          {
+            id: 'btn-custom-param',
+            name: 'Infer Params',
+            iconId: null,
+            pathId: 'path_syr8f4',
+            enabled: true,
+            locations: ['product_modal'],
+            mode: 'click',
+            display: 'icon_label',
+            createdAt: '2026-03-06T00:00:00.000Z',
+            updatedAt: '2026-03-06T00:00:00.000Z',
+            sortIndex: 25,
+          },
+        ]),
+      };
+    });
+
+    expect(countPendingStarterWorkflowDefaults(withCustomReplacement)).toBe(0);
+
+    const refreshed = ensureStarterWorkflowDefaults(withCustomReplacement);
+    expect(refreshed.affectedCount).toBe(0);
+
+    const triggerButtonsRecord = refreshed.nextRecords.find(
+      (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
+    );
+    if (!triggerButtonsRecord) throw new Error('Expected trigger buttons record');
+    const triggerButtons = JSON.parse(triggerButtonsRecord.value) as Array<Record<string, unknown>>;
+    expect(
+      triggerButtons.some((button) => button['id'] === '0ef40981-7ac6-416e-9205-7200289f851c')
+    ).toBe(false);
+    expect(triggerButtons.some((button) => button['id'] === 'btn-custom-param')).toBe(true);
+  });
 });

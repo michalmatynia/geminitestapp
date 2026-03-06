@@ -3,6 +3,7 @@ import {
   AI_PATHS_CONFIG_KEY_PREFIX,
   AI_PATHS_INDEX_KEY,
   AI_PATHS_MAINTENANCE_ACTION_IDS,
+  AI_PATHS_TRIGGER_BUTTONS_KEY,
   type AiPathsMaintenanceActionId,
   type AiPathsMaintenanceActionReport,
   type AiPathsMaintenanceReport,
@@ -16,11 +17,13 @@ import {
   AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
 } from '@/shared/lib/ai-paths/core/constants';
 import { compactPathConfigValue } from './settings-store.compaction';
-import { parsePathMetas } from './settings-store.parsing';
+import { parsePathMetas, parseTriggerButtons } from './settings-store.parsing';
 import {
   countPendingStarterWorkflowDefaults,
   ensureStarterWorkflowDefaults,
 } from './starter-workflows-settings';
+import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
+import { serializeAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
 
 const LEGACY_RUNTIME_KERNEL_MODE = 'legacy_only';
 const CANONICAL_RUNTIME_KERNEL_MODE = 'auto';
@@ -118,6 +121,122 @@ const asRecord = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null;
+
+const readTriggerEventsForPathConfig = (value: string): Set<string> => {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    const record = asRecord(parsed);
+    if (!record) return new Set<string>();
+    const nodes = Array.isArray(record['nodes']) ? record['nodes'] : [];
+    const events = nodes
+      .map((node: unknown): string | null => {
+        const nodeRecord = asRecord(node);
+        if (!nodeRecord || nodeRecord['type'] !== 'trigger') return null;
+        const config = asRecord(nodeRecord['config']);
+        const trigger = asRecord(config?.['trigger']);
+        const event = typeof trigger?.['event'] === 'string' ? trigger['event'].trim() : '';
+        return event.length > 0 ? event : 'manual';
+      })
+      .filter((event: string | null): event is string => Boolean(event));
+    return new Set<string>(events);
+  } catch {
+    return new Set<string>();
+  }
+};
+
+const normalizeTriggerButtonPathId = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const repairTriggerButtonBindings = (records: AiPathsSettingRecord[]): {
+  nextRecords: AiPathsSettingRecord[];
+  affectedCount: number;
+} => {
+  const indexEntry = records.find((entry) => entry.key === AI_PATHS_INDEX_KEY);
+  const metas = parsePathMetas(indexEntry?.value);
+  const indexedPathIds = new Set<string>(metas.map((meta) => meta.id));
+  const pathConfigById = new Map<string, AiPathsSettingRecord>();
+  records.forEach((entry) => {
+    if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) return;
+    pathConfigById.set(entry.key.replace(AI_PATHS_CONFIG_KEY_PREFIX, ''), entry);
+  });
+
+  const validIndexedPathIds = new Set<string>(
+    metas
+      .map((meta) => meta.id)
+      .filter((pathId) => pathConfigById.has(pathId))
+  );
+  const triggerEventPathMatches = new Map<string, string[]>();
+
+  metas.forEach((meta) => {
+    const configEntry = pathConfigById.get(meta.id);
+    if (!configEntry) return;
+    const triggerEvents = readTriggerEventsForPathConfig(configEntry.value);
+    triggerEvents.forEach((eventId) => {
+      const nextMatches = triggerEventPathMatches.get(eventId) ?? [];
+      nextMatches.push(meta.id);
+      triggerEventPathMatches.set(eventId, nextMatches);
+    });
+  });
+
+  const triggerButtonsEntry = records.find((entry) => entry.key === AI_PATHS_TRIGGER_BUTTONS_KEY);
+  if (!triggerButtonsEntry) {
+    return {
+      nextRecords: records,
+      affectedCount: 0,
+    };
+  }
+
+  const buttons = parseTriggerButtons(triggerButtonsEntry.value);
+  let affectedCount = 0;
+  const repairedButtons = buttons.map((button: AiTriggerButtonRecord): AiTriggerButtonRecord => {
+    const currentPathId = normalizeTriggerButtonPathId(button.pathId);
+    if (!currentPathId) return button;
+    if (validIndexedPathIds.has(currentPathId)) return button;
+
+    const indexedButMissingConfig = indexedPathIds.has(currentPathId) && !pathConfigById.has(currentPathId);
+    if (indexedButMissingConfig) {
+      return button;
+    }
+
+    const matchingPaths = triggerEventPathMatches.get(button.id) ?? [];
+    const nextPathId = matchingPaths.length === 1 ? matchingPaths[0] ?? null : null;
+    if (nextPathId === currentPathId) return button;
+
+    affectedCount += 1;
+    return {
+      ...button,
+      pathId: nextPathId,
+    };
+  });
+
+  if (affectedCount === 0) {
+    return {
+      nextRecords: records,
+      affectedCount: 0,
+    };
+  }
+
+  const nextRecords = records.map((entry) =>
+    entry.key === AI_PATHS_TRIGGER_BUTTONS_KEY
+      ? {
+          ...entry,
+          value: serializeAiTriggerButtonsRaw(repairedButtons),
+        }
+      : entry
+  );
+
+  return {
+    nextRecords,
+    affectedCount,
+  };
+};
+
+export const countPendingTriggerButtonBindingRepairs = (
+  records: AiPathsSettingRecord[]
+): number => repairTriggerButtonBindings(records).affectedCount;
 
 const toCanonicalRuntimeKernelModeSettingValue = (
   value: string | undefined
@@ -468,6 +587,19 @@ export const buildAiPathsMaintenanceReport = (
     });
   }
 
+  const triggerButtonBindingRepairCount = countPendingTriggerButtonBindingRepairs(records);
+  if (triggerButtonBindingRepairCount > 0) {
+    actions.push({
+      id: 'repair_trigger_button_bindings',
+      title: 'Repair Trigger Button Bindings',
+      description:
+        'Clear or rebind stale trigger button path references so modal/list triggers fall back to valid event routing.',
+      blocking: false,
+      status: 'pending',
+      affectedRecords: triggerButtonBindingRepairCount,
+    });
+  }
+
   const runtimeKernelModeNormalizationCount = countPendingRuntimeKernelModeNormalizations(records);
   if (runtimeKernelModeNormalizationCount > 0) {
     actions.push({
@@ -530,6 +662,13 @@ export const runMaintenanceAction = (args: {
       break;
     }
 
+    case 'repair_trigger_button_bindings': {
+      const result = repairTriggerButtonBindings(args.records);
+      nextRecords.push(...result.nextRecords);
+      affectedCount = result.affectedCount;
+      break;
+    }
+
     case 'repair_path_index': {
       const indexEntry = args.records.find((r) => r.key === AI_PATHS_INDEX_KEY);
       const metas = parsePathMetas(indexEntry?.value);
@@ -582,6 +721,7 @@ export const runFullMaintenance = (records: AiPathsSettingRecord[]): AiPathsMain
       'compact_oversized_configs',
       'repair_path_index',
       'ensure_starter_workflow_defaults',
+      'repair_trigger_button_bindings',
       RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID,
     ] as AiPathsMaintenanceActionId[]
   ).forEach((actionId: AiPathsMaintenanceActionId) => {

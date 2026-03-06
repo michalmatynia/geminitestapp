@@ -99,6 +99,37 @@ describe('ai-paths trigger-buttons [id] handler', () => {
     expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
   });
 
+  it('PATCH rejects updates that bind the button to a missing AI Path', async () => {
+    getAiPathsSettingMock.mockImplementation(async (key: string) => {
+      if (key === 'ai_paths_index') {
+        return JSON.stringify([
+          {
+            id: 'path-live',
+            name: 'Live Path',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+          },
+        ]);
+      }
+      if (key === 'ai_paths_trigger_buttons') {
+        return JSON.stringify([createStoredButton({ id: 'btn-1', pathId: 'path-live' })]);
+      }
+      return null;
+    });
+
+    const request = new NextRequest('http://localhost/api/ai-paths/trigger-buttons/btn-1', {
+      method: 'PATCH',
+      body: JSON.stringify({ pathId: 'path-missing' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    await expect(
+      PATCH_handler(request, {} as Parameters<typeof PATCH_handler>[1], { id: 'btn-1' })
+    ).rejects.toThrow('AI Path "path-missing" does not exist.');
+
+    expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
+  });
+
   it('DELETE removes target from canonical payload', async () => {
     getAiPathsSettingMock.mockResolvedValue(
       JSON.stringify([

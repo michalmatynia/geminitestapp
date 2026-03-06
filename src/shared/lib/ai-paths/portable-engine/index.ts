@@ -111,6 +111,9 @@ export type {
 
 export {
   getPortablePathSigningPolicy,
+} from './portable-engine-signing-policy';
+
+export {
   listPortablePathPackageMigratorVersions,
   migratePortablePathInput,
   registerPortablePathPackageMigrator,

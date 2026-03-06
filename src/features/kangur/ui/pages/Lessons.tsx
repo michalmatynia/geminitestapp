@@ -80,6 +80,22 @@ const GeometryPerimeterLesson = dynamic(
     loading: LessonLoadingFallback,
   }
 );
+const LogicalPatternsLesson = dynamic(
+  () => import('@/features/kangur/ui/components/LogicalPatternsLesson'),
+  { ssr: false, loading: LessonLoadingFallback }
+);
+const LogicalClassificationLesson = dynamic(
+  () => import('@/features/kangur/ui/components/LogicalClassificationLesson'),
+  { ssr: false, loading: LessonLoadingFallback }
+);
+const LogicalReasoningLesson = dynamic(
+  () => import('@/features/kangur/ui/components/LogicalReasoningLesson'),
+  { ssr: false, loading: LessonLoadingFallback }
+);
+const LogicalAnalogiesLesson = dynamic(
+  () => import('@/features/kangur/ui/components/LogicalAnalogiesLesson'),
+  { ssr: false, loading: LessonLoadingFallback }
+);
 
 const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<LessonProps>> = {
   clock: ClockLesson,
@@ -92,6 +108,10 @@ const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<LessonPro
   geometry_shapes: GeometryShapesLesson,
   geometry_symmetry: GeometrySymmetryLesson,
   geometry_perimeter: GeometryPerimeterLesson,
+  logical_patterns: LogicalPatternsLesson,
+  logical_classification: LogicalClassificationLesson,
+  logical_reasoning: LogicalReasoningLesson,
+  logical_analogies: LogicalAnalogiesLesson,
 };
 
 const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
@@ -108,6 +128,15 @@ const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
   geometry_shapes: 'geometry_shapes',
   geometry_symmetry: 'geometry_symmetry',
   geometry_perimeter: 'geometry_perimeter',
+  logical_patterns: 'logical_patterns',
+  patterns: 'logical_patterns',
+  logical_classification: 'logical_classification',
+  classification: 'logical_classification',
+  logical_reasoning: 'logical_reasoning',
+  reasoning: 'logical_reasoning',
+  logical_analogies: 'logical_analogies',
+  analogies: 'logical_analogies',
+  logic: 'logical_patterns',
 };
 
 const resolveFocusedLessonId = (focusToken: string, lessons: KangurLesson[]): string | null => {

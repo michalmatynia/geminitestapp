@@ -294,6 +294,8 @@ export const selectTriggerCandidates = <T extends TriggerSelectionCandidate>(arg
 }): {
   activeTriggerCandidates: T[];
   selectedConfig: T | null;
+  missingPreferredPathId: string | null;
+  usedSingleActiveFallback: boolean;
 } => {
   const { triggerCandidates, preferredPathId, activePathId } = args;
   const activeTriggerCandidates: T[] = triggerCandidates.filter(
@@ -305,9 +307,29 @@ export const selectTriggerCandidates = <T extends TriggerSelectionCandidate>(arg
     : null;
 
   if (preferredPathId) {
+    if (preferredByButton) {
+      return {
+        activeTriggerCandidates,
+        selectedConfig: preferredByButton,
+        missingPreferredPathId: null,
+        usedSingleActiveFallback: false,
+      };
+    }
+
+    if (activeTriggerCandidates.length === 1) {
+      return {
+        activeTriggerCandidates,
+        selectedConfig: activeTriggerCandidates[0] ?? null,
+        missingPreferredPathId: preferredPathId,
+        usedSingleActiveFallback: true,
+      };
+    }
+
     return {
       activeTriggerCandidates,
-      selectedConfig: preferredByButton,
+      selectedConfig: null,
+      missingPreferredPathId: preferredPathId,
+      usedSingleActiveFallback: false,
     };
   }
 
@@ -319,6 +341,8 @@ export const selectTriggerCandidates = <T extends TriggerSelectionCandidate>(arg
     return {
       activeTriggerCandidates,
       selectedConfig: null,
+      missingPreferredPathId: null,
+      usedSingleActiveFallback: false,
     };
   }
 
@@ -326,6 +350,8 @@ export const selectTriggerCandidates = <T extends TriggerSelectionCandidate>(arg
     activeTriggerCandidates,
     selectedConfig:
       preferredByActivePath ?? activeTriggerCandidates[0] ?? triggerCandidates[0] ?? null,
+    missingPreferredPathId: null,
+    usedSingleActiveFallback: false,
   };
 };
 
@@ -341,6 +367,8 @@ const resolveTriggerSelection = async (
   activeTriggerCandidates: PathConfig[];
   selectedConfig: PathConfig | null;
   uiState: Record<string, unknown> | null;
+  missingPreferredPathId: string | null;
+  usedSingleActiveFallback: boolean;
 }> => {
   const { configs, settingsPathOrder } = await loadPathConfigsFromSettings(settingsData);
   const configsList: PathConfig[] = Object.values(configs);
@@ -398,6 +426,8 @@ const resolveTriggerSelection = async (
     activeTriggerCandidates: selection.activeTriggerCandidates,
     selectedConfig: selection.selectedConfig,
     uiState,
+    missingPreferredPathId: selection.missingPreferredPathId,
+    usedSingleActiveFallback: selection.usedSingleActiveFallback,
   };
 };
 
@@ -599,6 +629,8 @@ export function useAiPathTriggerEvent(): {
         let activeTriggerCandidates: PathConfig[] = [];
         let selectedConfig: PathConfig | null = null;
         let uiState: Record<string, unknown> | null = null;
+        let missingPreferredPathId: string | null = null;
+        let usedSingleActiveFallback = false;
         try {
           const selection = await resolveTriggerSelection(settingsData, triggerEventId, {
             preferredPathId: args.preferredPathId,
@@ -608,6 +640,8 @@ export function useAiPathTriggerEvent(): {
           activeTriggerCandidates = selection.activeTriggerCandidates;
           selectedConfig = selection.selectedConfig;
           uiState = selection.uiState;
+          missingPreferredPathId = selection.missingPreferredPathId;
+          usedSingleActiveFallback = selection.usedSingleActiveFallback;
         } catch (selectionError) {
           const message =
             selectionError instanceof Error
@@ -634,7 +668,28 @@ export function useAiPathTriggerEvent(): {
         }
         const selectionDurationMs = performance.now() - selectionStartedAt;
 
+        if (usedSingleActiveFallback && selectedConfig && missingPreferredPathId) {
+          toast(
+            `Trigger button path "${missingPreferredPathId}" no longer exists. Falling back to "${selectedConfig.name}".`,
+            { variant: 'warning' }
+          );
+        }
+
         if (!selectedConfig) {
+          if (missingPreferredPathId) {
+            const missingPreferredMessage = `Trigger button is bound to missing AI Path "${missingPreferredPathId}". Update the button configuration.`;
+            toast(missingPreferredMessage, { variant: 'error' });
+            args.onProgress?.({
+              status: 'error',
+              error: 'preferred_path_missing',
+              message: missingPreferredMessage,
+              progress: 0,
+              completedNodes: 0,
+              totalNodes: 1,
+              node: null,
+            });
+            return;
+          }
           if (triggerCandidates.length === 0) {
             toast(`No AI Path configured for trigger: ${triggerEventId}`, { variant: 'warning' });
             args.onProgress?.({
@@ -771,7 +826,12 @@ export function useAiPathTriggerEvent(): {
           entityId: args.entityId,
           entityType: args.entityType,
           meta: {
+            source: 'trigger_button',
             historyRetentionPasses,
+            strictFlowMode: selectedConfig.strictFlowMode !== false,
+            aiPathsValidation: normalizeAiPathsValidationConfig(
+              selectedConfig.aiPathsValidation ?? null
+            ),
             preflightRuntimeHints: {
               ...(selectedConfig.parserSamples
                 ? { parserSamples: selectedConfig.parserSamples }
@@ -915,6 +975,10 @@ export function useAiPathTriggerEvent(): {
           }
         });
       } catch (error) {
+        const message =
+          error instanceof Error && error.message.trim().length > 0
+            ? error.message
+            : 'An unexpected error occurred while starting AI Path.';
         logClientError(error, {
           context: {
             source: 'useAiPathTriggerEvent',
@@ -922,10 +986,11 @@ export function useAiPathTriggerEvent(): {
             triggerEventId,
           },
         });
-        toast('An unexpected error occurred while starting AI Path.', { variant: 'error' });
+        toast(message, { variant: 'error' });
         args.onProgress?.({
           status: 'error',
           error: 'unexpected_catch',
+          message,
           progress: 0,
           completedNodes: 0,
           totalNodes: 1,

@@ -16,6 +16,8 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
+import { assertTriggerButtonPathExists } from '../path-validation';
+
 const AI_PATHS_TRIGGER_BUTTONS_KEY = 'ai_paths_trigger_buttons';
 const readTriggerButtonsRaw = async (): Promise<string | null> =>
   await getAiPathsSetting(AI_PATHS_TRIGGER_BUTTONS_KEY);
@@ -47,15 +49,20 @@ export async function PATCH_handler(
   const nextName = parsed.data.name ? parsed.data.name.trim() : current.name;
   const currentDisplayMode = current.display.showLabel === false ? 'icon' : 'icon_label';
   const nextDisplayMode = parsed.data.display ?? currentDisplayMode;
+  const nextPathId =
+    parsed.data.pathId !== undefined
+      ? parsed.data.pathId
+        ? parsed.data.pathId.trim()
+        : null
+      : current.pathId;
+  await assertTriggerButtonPathExists(nextPathId);
   const nextRecord: AiTriggerButtonRecord = {
     ...current,
     name: nextName,
     ...(parsed.data.iconId !== undefined
       ? { iconId: parsed.data.iconId ? parsed.data.iconId.trim() : null }
       : {}),
-    ...(parsed.data.pathId !== undefined
-      ? { pathId: parsed.data.pathId ? parsed.data.pathId.trim() : null }
-      : {}),
+    ...(parsed.data.pathId !== undefined ? { pathId: nextPathId } : {}),
     ...(parsed.data.enabled !== undefined ? { enabled: parsed.data.enabled } : {}),
     ...(parsed.data.locations ? { locations: parsed.data.locations } : {}),
     ...(parsed.data.mode ? { mode: parsed.data.mode } : {}),

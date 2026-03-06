@@ -9,7 +9,6 @@ import { compileGraph } from '@/shared/lib/ai-paths/core/utils/graph';
 import { validateCanonicalPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils/node-identity';
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 
-import { coerceSampleStateMap } from './portable-engine-migration';
 import { resolvePortablePathInput } from './portable-engine-resolvers';
 import {
   type PortablePathValidationMode,
@@ -19,6 +18,13 @@ import {
   type ValidatePortablePathInputResult,
 } from './portable-engine-types';
 export { PortablePathValidationError } from './portable-engine-validation-error';
+
+const coerceSampleStateMap = <T>(value: unknown): Record<string, T> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, T>;
+};
 
 export const validatePortablePathConfig = (
   pathConfig: PathConfig,

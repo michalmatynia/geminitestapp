@@ -9,9 +9,9 @@ import {
   recordPortablePathRunExecutionAttempt,
   recordPortablePathRunExecutionFailure,
   recordPortablePathRunExecutionSuccess,
-} from './portable-engine-observability';
+} from './portable-engine-run-observability';
 
-import { normalizePortablePathSigningPolicySurface } from './portable-engine-migration';
+import { normalizePortablePathSigningPolicySurface } from './portable-engine-signing-policy';
 import { resolvePortablePathInputAsync } from './portable-engine-resolvers';
 import {
   PortablePathValidationError,

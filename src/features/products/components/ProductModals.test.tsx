@@ -9,6 +9,11 @@ const { useProductListModalsContextMock } = vi.hoisted(() => ({
   useProductListModalsContextMock: vi.fn(),
 }));
 
+const { useProductFormCoreMock, triggerButtonBarMock } = vi.hoisted(() => ({
+  useProductFormCoreMock: vi.fn(),
+  triggerButtonBarMock: vi.fn(),
+}));
+
 vi.mock('@/features/products/context/ProductListContext', () => ({
   useProductListModalsContext: useProductListModalsContextMock,
 }));
@@ -20,13 +25,7 @@ vi.mock('@/features/products/context/ProductFormContext', () => ({
 }));
 
 vi.mock('@/features/products/context/ProductFormCoreContext', () => ({
-  useProductFormCore: () => ({
-    handleSubmit: vi.fn(),
-    uploading: false,
-    hasUnsavedChanges: false,
-    product: null,
-    getValues: vi.fn().mockReturnValue({}),
-  }),
+  useProductFormCore: () => useProductFormCoreMock(),
 }));
 
 vi.mock('@/features/products/context/ProductFormImageContext', () => ({
@@ -59,7 +58,10 @@ vi.mock('@/shared/ui', () => ({
 }));
 
 vi.mock('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar', () => ({
-  TriggerButtonBar: () => <div data-testid='trigger-button-bar' />,
+  TriggerButtonBar: (props: Record<string, unknown>) => {
+    triggerButtonBarMock(props);
+    return <div data-testid='trigger-button-bar' />;
+  },
 }));
 
 vi.mock('@/features/products/components/ProductForm', () => ({
@@ -174,6 +176,14 @@ const buildContext = (overrides: Record<string, unknown> = {}) => ({
 describe('ProductModals edit hydration guard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useProductFormCoreMock.mockReturnValue({
+      handleSubmit: vi.fn(),
+      uploading: false,
+      hasUnsavedChanges: false,
+      product: null,
+      draft: null,
+      getValues: vi.fn().mockReturnValue({}),
+    });
   });
 
   it('renders a blocking loading modal while edit hydration is in progress', () => {
@@ -215,6 +225,14 @@ describe('ProductModals edit hydration guard', () => {
 
   it('renders edit form when the editing product is hydrated', () => {
     const hydrated = markEditingProductHydrated(createProduct());
+    useProductFormCoreMock.mockReturnValue({
+      handleSubmit: vi.fn(),
+      uploading: false,
+      hasUnsavedChanges: false,
+      product: hydrated,
+      draft: null,
+      getValues: vi.fn().mockReturnValue({ name: { en: 'Updated name' } }),
+    });
     useProductListModalsContextMock.mockReturnValue(
       buildContext({
         editingProduct: hydrated,
@@ -230,12 +248,30 @@ describe('ProductModals edit hydration guard', () => {
     expect(screen.getByTestId('product-form')).toBeInTheDocument();
     // Save button is enabled when form is loaded
     expect(screen.getByRole('button', { name: 'Update' })).not.toBeDisabled();
+    expect(triggerButtonBarMock).toHaveBeenCalled();
+    const triggerButtonBarProps = triggerButtonBarMock.mock.calls[0]?.[0] as
+      | Record<string, unknown>
+      | undefined;
+    expect(triggerButtonBarProps).toMatchObject({
+      location: 'product_modal',
+      entityType: 'product',
+      entityId: hydrated.id,
+    });
+    expect(triggerButtonBarProps?.getEntityJson).toEqual(expect.any(Function));
   });
 });
 
 describe('ProductModals create flows use unified modal shell', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useProductFormCoreMock.mockReturnValue({
+      handleSubmit: vi.fn(),
+      uploading: false,
+      hasUnsavedChanges: false,
+      product: null,
+      draft: null,
+      getValues: vi.fn().mockReturnValue({}),
+    });
   });
 
   it('renders create product inside the shared FormModal + ProductFormProvider path', () => {
@@ -250,10 +286,19 @@ describe('ProductModals create flows use unified modal shell', () => {
   });
 
   it('renders create-from-draft inside the same shared shell', () => {
+    const draft = createDraft();
+    useProductFormCoreMock.mockReturnValue({
+      handleSubmit: vi.fn(),
+      uploading: false,
+      hasUnsavedChanges: false,
+      product: null,
+      draft,
+      getValues: vi.fn().mockReturnValue({ name: draft.name }),
+    });
     useProductListModalsContextMock.mockReturnValue(
       buildContext({
         isCreateOpen: true,
-        createDraft: createDraft(),
+        createDraft: draft,
       })
     );
 
@@ -263,5 +308,13 @@ describe('ProductModals create flows use unified modal shell', () => {
     expect(screen.getByTestId('product-form-provider')).toBeInTheDocument();
     expect(screen.getByTestId('product-form')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create' })).toBeInTheDocument();
+    const triggerButtonBarProps = triggerButtonBarMock.mock.calls[0]?.[0] as
+      | Record<string, unknown>
+      | undefined;
+    expect(triggerButtonBarProps).toMatchObject({
+      location: 'product_modal',
+      entityType: 'product',
+      entityId: null,
+    });
   });
 });

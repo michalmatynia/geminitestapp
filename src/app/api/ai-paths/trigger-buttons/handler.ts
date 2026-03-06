@@ -16,6 +16,8 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { AppErrorCodes, badRequestError, isAppError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
+import { assertTriggerButtonPathExists } from './path-validation';
+
 const AI_PATHS_TRIGGER_BUTTONS_KEY = 'ai_paths_trigger_buttons';
 const readTriggerButtonsRaw = async (): Promise<string | null> =>
   await getAiPathsSetting(AI_PATHS_TRIGGER_BUTTONS_KEY);
@@ -66,6 +68,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   if (!normalizedName) {
     throw badRequestError('Name is required.');
   }
+  await assertTriggerButtonPathExists(pathId ?? null);
 
   const now = new Date().toISOString();
   const isVisible = enabled ?? true;

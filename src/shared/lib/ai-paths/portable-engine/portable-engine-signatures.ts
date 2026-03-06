@@ -3,10 +3,8 @@ import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import type {
   PortablePathEnvelopeVerificationOutcome,
   PortablePathEnvelopeVerificationStatus,
-} from './portable-engine-observability';
-import {
-  recordPortablePathEnvelopeVerificationEvent,
-} from './portable-engine-observability';
+} from './portable-engine-envelope-observability';
+import { recordPortablePathEnvelopeVerificationEvent } from './portable-engine-envelope-observability';
 
 import {
   type PortablePathEnvelopeSignatureVerificationOptions,

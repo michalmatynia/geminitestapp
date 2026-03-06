@@ -351,24 +351,24 @@ export class CachedProductMutations {
     async (data: unknown): Promise<ProductWithImages> => {
       return productService.createProduct(data);
     },
-      {
-        tags: () => ['products:list', 'products:count'],
-        custom: () => ProductCacheHelpers.invalidateAll(),
-      }
-    );
+    {
+      tags: () => ['products:list', 'products:count'],
+      custom: () => ProductCacheHelpers.invalidateAll(),
+    }
+  );
 
   static updateProduct: (
     id: string,
     data: Record<string, unknown>
   ) => Promise<ProductWithImages> = withCacheInvalidation(
-    async (id: string, data: Record<string, unknown>): Promise<ProductWithImages> => {
-      return productService.updateProduct(id, data);
-    },
-    {
-      tags: (id: string) => ProductCacheHelpers.getTags.product(id),
-      custom: (id: string) => ProductCacheHelpers.invalidateProduct(id),
-    }
-  );
+      async (id: string, data: Record<string, unknown>): Promise<ProductWithImages> => {
+        return productService.updateProduct(id, data);
+      },
+      {
+        tags: (id: string) => ProductCacheHelpers.getTags.product(id),
+        custom: (id: string) => ProductCacheHelpers.invalidateProduct(id),
+      }
+    );
 
   static deleteProduct: (id: string) => Promise<ProductRecord | null> = withCacheInvalidation(
     async (id: string): Promise<ProductRecord | null> => {

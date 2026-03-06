@@ -3,6 +3,7 @@ import { serializeAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations
 import {
   getAutoSeedStarterWorkflowEntries,
   materializeStarterWorkflowPathConfig,
+  type StarterWorkflowTriggerPreset,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
 
 import {
@@ -11,7 +12,12 @@ import {
   AI_PATHS_TRIGGER_BUTTONS_KEY,
   type AiPathsSettingRecord,
 } from './settings-store.constants';
-import { parsePathConfigMeta, parsePathMetas, parseTriggerButtons } from './settings-store.parsing';
+import {
+  parsePathConfigFlags,
+  parsePathConfigMeta,
+  parsePathMetas,
+  parseTriggerButtons,
+} from './settings-store.parsing';
 
 const toTriggerButtonRecord = (
   preset: {
@@ -42,6 +48,26 @@ const toTriggerButtonRecord = (
   sortIndex: preset.sortIndex ?? 0,
 });
 
+const shouldSeedStarterTriggerButtons = (
+  configRaw: string | undefined,
+  fallbackIsActive: boolean | undefined
+): boolean => {
+  const flags = parsePathConfigFlags(configRaw);
+  if (flags.isActive === false) return false;
+  if (flags.isActive === true) return true;
+  return fallbackIsActive !== false;
+};
+
+const hasEquivalentStarterTriggerButton = (
+  buttons: AiTriggerButtonRecord[],
+  preset: StarterWorkflowTriggerPreset
+): boolean =>
+  buttons.some((button) => {
+    if (button.id === preset.id) return true;
+    if ((button.pathId ?? null) !== preset.pathId) return false;
+    return button.locations.some((location) => preset.locations.includes(location));
+  });
+
 export const countPendingStarterWorkflowDefaults = (records: AiPathsSettingRecord[]): number => {
   if (records.length === 0) return getAutoSeedStarterWorkflowEntries().length;
 
@@ -58,9 +84,15 @@ export const countPendingStarterWorkflowDefaults = (records: AiPathsSettingRecor
     const existingConfig = records.find((record) => record.key === configKey);
     const hasConfig = Boolean(existingConfig);
     const hasIndexMeta = metas.some((meta) => meta.id === defaultPathId);
-    const missingButtons = (entry.triggerButtonPresets ?? []).some(
-      (preset) => !triggerButtons.some((button) => button.id === preset.id)
+    const shouldSeedButtons = shouldSeedStarterTriggerButtons(
+      existingConfig?.value,
+      entry.seedPolicy?.isActive
     );
+    const missingButtons = shouldSeedButtons
+      ? (entry.triggerButtonPresets ?? []).some(
+          (preset) => !hasEquivalentStarterTriggerButton(triggerButtons, preset)
+        )
+      : false;
     return count + Number(!hasConfig) + Number(!hasIndexMeta) + Number(missingButtons);
   }, 0);
 };
@@ -108,6 +140,7 @@ export const ensureStarterWorkflowDefaults = (
     const configKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${defaultPathId}`;
     const existingConfig = nextRecords.find((record) => record.key === configKey);
     const hasConfig = Boolean(existingConfig);
+    let currentConfigRaw = existingConfig?.value;
     if (!hasConfig) {
       const raw = JSON.stringify(
         materializeStarterWorkflowPathConfig(entry, {
@@ -116,6 +149,7 @@ export const ensureStarterWorkflowDefaults = (
         })
       );
       nextRecords.push({ key: configKey, value: raw });
+      currentConfigRaw = raw;
       affectedCount += 1;
       const meta = parsePathConfigMeta(defaultPathId, raw);
       if (meta && !nextMetas.some((current) => current.id === meta.id)) {
@@ -140,8 +174,12 @@ export const ensureStarterWorkflowDefaults = (
       }
     }
 
+    if (!shouldSeedStarterTriggerButtons(currentConfigRaw, entry.seedPolicy?.isActive)) {
+      return;
+    }
+
     (entry.triggerButtonPresets ?? []).forEach((preset) => {
-      if (nextButtons.some((button) => button.id === preset.id)) return;
+      if (hasEquivalentStarterTriggerButton(nextButtons, preset)) return;
       nextButtons.push(toTriggerButtonRecord(preset, now));
       affectedCount += 1;
     });

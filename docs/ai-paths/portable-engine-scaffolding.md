@@ -59,13 +59,23 @@ npm run docs:ai-paths:node-docs:ci
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-builders.ts`
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-resolvers.ts`
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-signatures.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-envelope-observability.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-migrator-observability.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-signing-policy.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-signing-policy-observability.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-resolution-support.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-run-observability.ts`
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-validation.ts`
 - Server sink ownership:
   - `src/shared/lib/ai-paths/portable-engine/sinks-types.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-shared.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-creators.server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/sinks-trend-state.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-trends.server.ts`
-  - `src/shared/lib/ai-paths/portable-engine/sinks.server.ts` remains the runtime owner for bootstrap/auto-remediation flows.
+  - `src/shared/lib/ai-paths/portable-engine/sinks-auto-remediation-state.server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/sinks-auto-remediation.server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/sinks-bootstrap.server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/sinks.server.ts` is now the public sink barrel.
 
 ## Portable Package Contract
 

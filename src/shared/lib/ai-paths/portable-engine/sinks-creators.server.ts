@@ -7,7 +7,7 @@ import { logSystemEvent, type SystemLogInput } from '@/shared/lib/observability/
 import type {
   PortablePathEnvelopeVerificationAuditEvent,
   PortablePathEnvelopeVerificationObservabilitySnapshot,
-} from './portable-engine-observability';
+} from './portable-engine-envelope-observability';
 import {
   PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
   PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_KIND,

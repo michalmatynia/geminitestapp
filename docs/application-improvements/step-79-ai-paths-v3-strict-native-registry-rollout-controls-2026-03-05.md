@@ -51,7 +51,7 @@ Introduce a strict runtime mode for v3 native code-object contracts so native re
      - Added strict flag coverage in config resolution + telemetry tests.
    - `src/features/ai/ai-paths/services/__tests__/path-run-executor.runtime-kernel-settings.test.ts`
      - Added env/settings/path precedence assertions for strict flag.
-   - `src/features/ai/ai-paths/server/__tests__/settings-store-maintenance.runtime-kernel-mode.test.ts`
+   - `src/features/ai/ai-paths/server/__tests__/settings-store-maintenance.runtime-kernel-settings.test.ts`
      - Added strict setting normalization test.
 
 6. Documentation alignment:
@@ -65,7 +65,7 @@ Introduce a strict runtime mode for v3 native code-object contracts so native re
 ## Validation
 
 1. Focused tests:
-   - `npx vitest run src/shared/lib/ai-paths/core/runtime/__tests__/node-runtime-kernel.test.ts src/shared/lib/ai-paths/core/runtime/__tests__/node-code-object-v3-legacy-bridge.test.ts src/shared/lib/ai-paths/core/runtime/__tests__/engine-server.runtime-kernel.test.ts src/features/ai/ai-paths/services/__tests__/path-run-executor.helpers.test.ts src/features/ai/ai-paths/services/__tests__/path-run-executor.runtime-kernel-settings.test.ts src/features/ai/ai-paths/server/__tests__/settings-store-maintenance.runtime-kernel-mode.test.ts src/shared/lib/ai-paths/core/runtime/__tests__/client-native-code-object-registry-contract-subset.test.ts src/shared/lib/ai-paths/core/runtime/__tests__/server-native-code-object-registry-coverage.test.ts`
+   - `npx vitest run src/shared/lib/ai-paths/core/runtime/__tests__/node-runtime-kernel.test.ts src/shared/lib/ai-paths/core/runtime/__tests__/node-code-object-v3-legacy-bridge.test.ts src/shared/lib/ai-paths/core/runtime/__tests__/engine-server.runtime-kernel.test.ts src/features/ai/ai-paths/services/__tests__/path-run-executor.helpers.test.ts src/features/ai/ai-paths/services/__tests__/path-run-executor.runtime-kernel-settings.test.ts src/features/ai/ai-paths/server/__tests__/settings-store-maintenance.runtime-kernel-settings.test.ts src/shared/lib/ai-paths/core/runtime/__tests__/client-native-code-object-registry-contract-subset.test.ts src/shared/lib/ai-paths/core/runtime/__tests__/server-native-code-object-registry-coverage.test.ts`
    - Result: pass.
 
 2. Docs regeneration:

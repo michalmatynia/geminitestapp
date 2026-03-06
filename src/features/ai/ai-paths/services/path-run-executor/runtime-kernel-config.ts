@@ -8,10 +8,11 @@ import { listAiPathsSettings } from '@/features/ai/ai-paths/server/settings-stor
 import { listAiPathsRuntimeCodeObjectResolverIds } from '@/shared/lib/ai-paths/core/runtime/code-object-resolver-registry';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
+  readRuntimeKernelConfigRecordFromMeta,
   type RuntimeKernelExecutionTelemetry,
   resolveRuntimeKernelConfigForRun,
   toRuntimeKernelExecutionTelemetry,
-} from '../path-run-executor.helpers';
+} from '../path-run-executor.runtime-kernel';
 
 export type ResolvedRuntimeKernelConfig = {
   nodeTypes: string[] | undefined;
@@ -26,19 +27,12 @@ export const resolveRuntimeKernelConfigForPathRun = async (args: {
   runMetaRecord: Record<string, unknown> | null;
 }): Promise<ResolvedRuntimeKernelConfig> => {
   const { runId, runMetaRecord } = args;
-  
-  const runMetaRuntimeKernelConfigRecord =
-    runMetaRecord &&
-    typeof runMetaRecord['runtimeKernelConfig'] === 'object' &&
-    runMetaRecord['runtimeKernelConfig'] !== null &&
-    !Array.isArray(runMetaRecord['runtimeKernelConfig'])
-      ? (runMetaRecord['runtimeKernelConfig'] as Record<string, unknown>)
-      : null;
-      
+
+  const runMetaRuntimeKernelConfigRecord = readRuntimeKernelConfigRecordFromMeta(runMetaRecord);
   const runMetaRuntimeKernelConfigNodeTypes = runMetaRuntimeKernelConfigRecord?.['nodeTypes'];
   const runMetaRuntimeKernelResolverIds =
     runMetaRuntimeKernelConfigRecord?.['codeObjectResolverIds'];
-    
+
   const runtimeKernelSettings = await listAiPathsSettings([
     AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
     AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
@@ -54,7 +48,7 @@ export const resolveRuntimeKernelConfigForPathRun = async (args: {
   const runtimeKernelSettingsMap = new Map(
     runtimeKernelSettings.map((record) => [record.key, record.value])
   );
-  
+
   const runtimeKernelConfig = resolveRuntimeKernelConfigForRun({
     envNodeTypes: process.env['AI_PATHS_RUNTIME_KERNEL_NODE_TYPES'],
     pathNodeTypes: runMetaRuntimeKernelConfigNodeTypes,
@@ -65,19 +59,19 @@ export const resolveRuntimeKernelConfigForPathRun = async (args: {
       AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY
     ),
   });
-  
+
   const nodeTypes = runtimeKernelConfig.nodeTypes;
   const resolverIds = runtimeKernelConfig.resolverIds;
-  
+
   const registeredResolverIds = listAiPathsRuntimeCodeObjectResolverIds();
   const registeredResolverIdSet = new Set(registeredResolverIds);
-  
+
   const missingResolverIds = (resolverIds ?? []).filter(
     (resolverId: string): boolean => !registeredResolverIdSet.has(resolverId)
   );
-  
+
   const executionTelemetry = toRuntimeKernelExecutionTelemetry(runtimeKernelConfig);
-  
+
   return {
     nodeTypes,
     resolverIds,

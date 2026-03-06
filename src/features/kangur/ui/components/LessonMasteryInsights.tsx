@@ -1,4 +1,5 @@
 import { buildLessonMasteryInsights } from '@/features/kangur/ui/services/profile';
+import { KangurPanel } from '@/features/kangur/ui/design/primitives';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 type LessonMasteryInsightsProps = {
@@ -83,7 +84,7 @@ export default function LessonMasteryInsights({
   const insights = buildLessonMasteryInsights(progress);
 
   return (
-    <div className='bg-white/85 backdrop-blur rounded-2xl shadow p-5'>
+    <KangurPanel padding='lg' variant='soft'>
       <div className='flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between'>
         <div>
           <div className='text-sm font-bold uppercase tracking-wide text-slate-500'>
@@ -120,6 +121,6 @@ export default function LessonMasteryInsights({
           />
         </div>
       )}
-    </div>
+    </KangurPanel>
   );
 }

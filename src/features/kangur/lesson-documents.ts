@@ -1,16 +1,23 @@
 import {
+  KANGUR_TTS_DEFAULT_LOCALE,
+  KANGUR_TTS_DEFAULT_VOICE,
   KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
+  type KangurLessonActivityBlock,
   type KangurLessonComponentId,
   type KangurLessonDocument,
+  type KangurLessonDocumentNarration,
   type KangurLessonDocumentStore,
   type KangurLessonGridBlock,
   type KangurLessonGridItem,
+  type KangurLessonImageBlock,
   type KangurLessonInlineBlock,
+  type KangurLessonPage,
   type KangurLessonRootBlock,
   type KangurLessonSvgBlock,
   type KangurLessonTextBlock,
 } from '@/shared/contracts/kangur';
 import { parseJsonSetting, sanitizeHtml, sanitizeSvg } from '@/shared/utils';
+import { applyKangurLessonActivityDefaults } from './lesson-activities';
 
 export { KANGUR_LESSON_DOCUMENTS_SETTING_KEY };
 
@@ -21,6 +28,8 @@ export const KANGUR_LESSON_GRID_TEMPLATE_IDS = [
   'three-column',
   'hero-left',
   'hero-right',
+  'image-gallery',
+  'image-mosaic',
   'svg-duo',
   'svg-trio',
   'svg-gallery',
@@ -31,11 +40,14 @@ export type KangurLessonGridTemplateId = (typeof KANGUR_LESSON_GRID_TEMPLATE_IDS
 export const KANGUR_LESSON_DOCUMENT_TEMPLATE_IDS = [
   'article',
   'text-with-figure',
+  'image-gallery-page',
   'svg-gallery-page',
   'svg-mosaic-page',
 ] as const;
 export type KangurLessonDocumentTemplateId =
   (typeof KANGUR_LESSON_DOCUMENT_TEMPLATE_IDS)[number];
+
+const DEFAULT_IMAGE_SRC = '';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -113,6 +125,28 @@ export const createKangurLessonSvgBlock = (): KangurLessonSvgBlock => ({
   maxWidth: 420,
 });
 
+export const createKangurLessonImageBlock = (): KangurLessonImageBlock => ({
+  id: createKangurLessonBlockId('lesson-image'),
+  type: 'image',
+  title: 'Lesson image',
+  altText: '',
+  caption: '',
+  ttsDescription: '',
+  src: DEFAULT_IMAGE_SRC,
+  align: 'center',
+  fit: 'contain',
+  maxWidth: 480,
+});
+
+export const createKangurLessonActivityBlock = (
+  activityId: KangurLessonActivityBlock['activityId'] = 'clock-training'
+): KangurLessonActivityBlock => ({
+  id: createKangurLessonBlockId('lesson-activity'),
+  type: 'activity',
+  ...applyKangurLessonActivityDefaults(activityId),
+  ttsDescription: '',
+});
+
 export const createKangurLessonGridItem = (
   block: KangurLessonInlineBlock = createKangurLessonTextBlock()
 ): KangurLessonGridItem => ({
@@ -122,6 +156,40 @@ export const createKangurLessonGridItem = (
   columnStart: null,
   rowStart: null,
   block,
+});
+
+export const createKangurLessonPage = (
+  title: string = '',
+  blocks: KangurLessonRootBlock[] = [createKangurLessonTextBlock()],
+  options?: {
+    sectionKey?: string;
+    sectionTitle?: string;
+    sectionDescription?: string;
+    description?: string;
+  }
+): KangurLessonPage => ({
+  id: createKangurLessonBlockId('lesson-page'),
+  sectionKey: options?.sectionKey?.trim() || '',
+  sectionTitle: options?.sectionTitle?.trim() || '',
+  sectionDescription: options?.sectionDescription?.trim() || '',
+  title,
+  description: options?.description?.trim() || '',
+  blocks,
+});
+
+const flattenKangurLessonDocumentPages = (
+  pages: readonly KangurLessonPage[]
+): KangurLessonRootBlock[] => pages.flatMap((page) => page.blocks).slice(0, 256);
+
+const createLessonDocument = (pages: KangurLessonPage[]): KangurLessonDocument => ({
+  version: 1,
+  narration: {
+    voice: KANGUR_TTS_DEFAULT_VOICE,
+    locale: KANGUR_TTS_DEFAULT_LOCALE,
+  },
+  updatedAt: new Date().toISOString(),
+  pages,
+  blocks: flattenKangurLessonDocumentPages(pages),
 });
 
 export const createKangurLessonGridBlockFromTemplate = (
@@ -174,6 +242,56 @@ export const createKangurLessonGridBlockFromTemplate = (
           {
             ...createKangurLessonGridItem(createKangurLessonTextBlock()),
             colSpan: 2,
+          },
+        ],
+      };
+    case 'image-gallery':
+      return {
+        id: createKangurLessonBlockId('lesson-grid'),
+        type: 'grid',
+        columns: 2,
+        gap: 18,
+        rowHeight: 240,
+        denseFill: false,
+        stackOnMobile: true,
+        items: [
+          createKangurLessonGridItem(createKangurLessonImageBlock()),
+          createKangurLessonGridItem(createKangurLessonImageBlock()),
+          createKangurLessonGridItem(createKangurLessonImageBlock()),
+          createKangurLessonGridItem(createKangurLessonImageBlock()),
+        ],
+      };
+    case 'image-mosaic':
+      return {
+        id: createKangurLessonBlockId('lesson-grid'),
+        type: 'grid',
+        columns: 3,
+        gap: 18,
+        rowHeight: 200,
+        denseFill: true,
+        stackOnMobile: true,
+        items: [
+          {
+            ...createKangurLessonGridItem(createKangurLessonImageBlock()),
+            colSpan: 2,
+            rowSpan: 2,
+            columnStart: 1,
+            rowStart: 1,
+          },
+          {
+            ...createKangurLessonGridItem(createKangurLessonImageBlock()),
+            columnStart: 3,
+            rowStart: 1,
+          },
+          {
+            ...createKangurLessonGridItem(createKangurLessonImageBlock()),
+            columnStart: 3,
+            rowStart: 2,
+          },
+          {
+            ...createKangurLessonGridItem(createKangurLessonImageBlock()),
+            columnStart: 1,
+            rowStart: 3,
           },
         ],
       };
@@ -290,11 +408,16 @@ export const convertKangurLessonInlineBlockType = (
     const derivedTitle =
       block.type === 'text'
         ? normalizeText(stripHtmlToText(block.html), nextBlock.title, 120)
-        : nextBlock.title;
+        : normalizeText(block.title, nextBlock.title, 120);
     const derivedDescription =
       block.type === 'text'
         ? normalizeText(block.ttsText ?? stripHtmlToText(block.html), '', 2_000)
-        : nextBlock.ttsDescription;
+        : normalizeText(
+          block.ttsDescription ??
+              (block.type === 'image' ? block.caption ?? block.altText ?? block.title : block.title),
+          '',
+          2_000
+        );
 
     return {
       ...nextBlock,
@@ -305,15 +428,57 @@ export const convertKangurLessonInlineBlockType = (
     };
   }
 
+  if (nextType === 'image') {
+    const nextBlock = createKangurLessonImageBlock();
+    const derivedTitle =
+      block.type === 'text'
+        ? normalizeText(stripHtmlToText(block.html), nextBlock.title, 120)
+        : normalizeText(block.title, nextBlock.title, 120);
+    const derivedAltText =
+      block.type === 'text'
+        ? normalizeText(stripHtmlToText(block.html), '', 300)
+        : normalizeText(
+          block.type === 'svg' ? block.title : block.altText ?? block.title,
+          '',
+          300
+        );
+    const derivedDescription =
+      block.type === 'text'
+        ? normalizeText(block.ttsText ?? stripHtmlToText(block.html), '', 2_000)
+        : normalizeText(
+          block.ttsDescription ??
+              (block.type === 'image' ? block.caption ?? block.altText ?? block.title : block.title),
+          '',
+          2_000
+        );
+
+    return {
+      ...nextBlock,
+      id: block.id,
+      align: block.align,
+      title: derivedTitle,
+      altText: derivedAltText,
+      ttsDescription: derivedDescription,
+    };
+  }
+
   const nextBlock = createKangurLessonTextBlock();
   const derivedHtml =
-    block.type === 'svg' && block.title.trim().length > 0
+    block.type !== 'text' && block.title.trim().length > 0
       ? `<p>${escapeHtmlText(block.title.trim())}</p>`
-      : nextBlock.html;
+      : block.type === 'image' && block.caption?.trim()
+        ? `<p>${escapeHtmlText(block.caption.trim())}</p>`
+        : nextBlock.html;
   const derivedTtsText =
     block.type === 'svg'
       ? normalizeText(block.ttsDescription ?? block.title, '', 10_000)
-      : nextBlock.ttsText;
+      : block.type === 'image'
+        ? normalizeText(
+          block.ttsDescription ?? block.caption ?? block.altText ?? block.title,
+          '',
+          10_000
+        )
+        : nextBlock.ttsText;
 
   return {
     ...nextBlock,
@@ -322,6 +487,73 @@ export const convertKangurLessonInlineBlockType = (
     html: derivedHtml,
     ttsText: derivedTtsText,
   };
+};
+
+export const convertKangurLessonRootBlockType = (
+  block: Exclude<KangurLessonRootBlock, KangurLessonGridBlock>,
+  nextType: Exclude<KangurLessonRootBlock['type'], 'grid'>
+): Exclude<KangurLessonRootBlock, KangurLessonGridBlock> => {
+  if (block.type === nextType) {
+    return block;
+  }
+
+  if (nextType === 'activity') {
+    const nextBlock = createKangurLessonActivityBlock();
+    const derivedTitle =
+      block.type === 'text'
+        ? normalizeText(stripHtmlToText(block.html), nextBlock.title, 120)
+        : normalizeText(block.title, nextBlock.title, 120);
+    const derivedDescription =
+      block.type === 'text'
+        ? normalizeText(block.ttsText ?? stripHtmlToText(block.html), nextBlock.description ?? '', 500)
+        : normalizeText(
+          block.type === 'image'
+            ? block.caption ?? block.altText ?? block.title
+            : block.ttsDescription ?? block.title,
+          nextBlock.description ?? '',
+          500
+        );
+    const derivedTtsDescription =
+      block.type === 'text'
+        ? normalizeText(block.ttsText ?? stripHtmlToText(block.html), '', 2_000)
+        : normalizeText(
+          block.type === 'image'
+            ? block.ttsDescription ?? block.caption ?? block.altText ?? block.title
+            : block.ttsDescription ?? block.title,
+          '',
+          2_000
+        );
+
+    return {
+      ...nextBlock,
+      id: block.id,
+      title: derivedTitle,
+      description: derivedDescription,
+      ttsDescription: derivedTtsDescription,
+    };
+  }
+
+  if (block.type === 'activity') {
+    const nextInlineType = nextType === 'text' || nextType === 'svg' || nextType === 'image' ? nextType : 'text';
+    const nextBlock = convertKangurLessonInlineBlockType(
+      {
+        id: block.id,
+        type: 'text',
+        html: block.description?.trim()
+          ? `<p>${escapeHtmlText(block.description.trim())}</p>`
+          : `<p>${escapeHtmlText(block.title.trim())}</p>`,
+        ttsText: block.ttsDescription ?? block.description ?? block.title,
+        align: 'left',
+      },
+      nextInlineType
+    );
+    return {
+      ...nextBlock,
+      id: block.id,
+    };
+  }
+
+  return convertKangurLessonInlineBlockType(block, nextType);
 };
 
 export const cloneKangurLessonInlineBlock = (
@@ -334,11 +566,25 @@ export const cloneKangurLessonInlineBlock = (
     };
   }
 
+  if (block.type === 'image') {
+    return {
+      ...block,
+      id: createKangurLessonBlockId('lesson-image'),
+    };
+  }
+
   return {
     ...block,
     id: createKangurLessonBlockId('lesson-text'),
   };
 };
+
+export const cloneKangurLessonActivityBlock = (
+  block: KangurLessonActivityBlock
+): KangurLessonActivityBlock => ({
+  ...block,
+  id: createKangurLessonBlockId('lesson-activity'),
+});
 
 export const cloneKangurLessonGridItem = (item: KangurLessonGridItem): KangurLessonGridItem => ({
   ...item,
@@ -357,46 +603,54 @@ export const cloneKangurLessonRootBlock = (
     };
   }
 
+  if (block.type === 'activity') {
+    return cloneKangurLessonActivityBlock(block);
+  }
+
   return cloneKangurLessonInlineBlock(block);
 };
 
-export const createDefaultKangurLessonDocument = (): KangurLessonDocument => ({
-  version: 1,
-  updatedAt: new Date().toISOString(),
-  blocks: [createKangurLessonTextBlock()],
+export const cloneKangurLessonPage = (page: KangurLessonPage): KangurLessonPage => ({
+  ...page,
+  id: createKangurLessonBlockId('lesson-page'),
+  blocks: page.blocks.map(cloneKangurLessonRootBlock),
 });
+
+export const createDefaultKangurLessonDocument = (): KangurLessonDocument =>
+  createLessonDocument([createKangurLessonPage('', [createKangurLessonTextBlock()])]);
 
 export const createKangurLessonDocumentFromTemplate = (
   templateId: KangurLessonDocumentTemplateId = 'article'
 ): KangurLessonDocument => {
   switch (templateId) {
     case 'text-with-figure':
-      return {
-        version: 1,
-        updatedAt: new Date().toISOString(),
-        blocks: [
+      return createLessonDocument([
+        createKangurLessonPage('', [
           createKangurLessonTextBlock(),
           createKangurLessonGridBlockFromTemplate('hero-right'),
-        ],
-      };
+        ]),
+      ]);
+    case 'image-gallery-page':
+      return createLessonDocument([
+        createKangurLessonPage('', [
+          createKangurLessonTextBlock(),
+          createKangurLessonGridBlockFromTemplate('image-gallery'),
+        ]),
+      ]);
     case 'svg-gallery-page':
-      return {
-        version: 1,
-        updatedAt: new Date().toISOString(),
-        blocks: [
+      return createLessonDocument([
+        createKangurLessonPage('', [
           createKangurLessonTextBlock(),
           createKangurLessonGridBlockFromTemplate('svg-gallery'),
-        ],
-      };
+        ]),
+      ]);
     case 'svg-mosaic-page':
-      return {
-        version: 1,
-        updatedAt: new Date().toISOString(),
-        blocks: [
+      return createLessonDocument([
+        createKangurLessonPage('', [
           createKangurLessonTextBlock(),
           createKangurLessonGridBlockFromTemplate('svg-mosaic'),
-        ],
-      };
+        ]),
+      ]);
     case 'article':
     default:
       return createDefaultKangurLessonDocument();
@@ -437,6 +691,43 @@ const normalizeSvgFit = (value: unknown): KangurLessonSvgBlock['fit'] => {
   return 'contain';
 };
 
+const normalizeImageSource = (value: unknown): string => {
+  if (typeof value !== 'string') return DEFAULT_IMAGE_SRC;
+  const trimmed = value.trim().slice(0, 2_000);
+  if (!trimmed || /^javascript:/i.test(trimmed)) {
+    return DEFAULT_IMAGE_SRC;
+  }
+  return trimmed;
+};
+
+const normalizeNarrationVoice = (value: unknown): NonNullable<KangurLessonDocumentNarration>['voice'] => {
+  if (
+    value === 'alloy' ||
+    value === 'ash' ||
+    value === 'ballad' ||
+    value === 'coral' ||
+    value === 'echo' ||
+    value === 'sage' ||
+    value === 'shimmer' ||
+    value === 'verse' ||
+    value === 'marin' ||
+    value === 'cedar'
+  ) {
+    return value;
+  }
+
+  return KANGUR_TTS_DEFAULT_VOICE;
+};
+
+const normalizeDocumentNarration = (value: unknown): NonNullable<KangurLessonDocument['narration']> => {
+  const raw = isRecord(value) ? value : {};
+
+  return {
+    voice: normalizeNarrationVoice(raw['voice']),
+    locale: normalizeText(raw['locale'], KANGUR_TTS_DEFAULT_LOCALE, 16),
+  };
+};
+
 const normalizeTextBlock = (value: unknown): KangurLessonTextBlock | null => {
   if (!isRecord(value)) return null;
   return {
@@ -468,9 +759,53 @@ const normalizeSvgBlock = (value: unknown): KangurLessonSvgBlock | null => {
   };
 };
 
+const normalizeImageBlock = (value: unknown): KangurLessonImageBlock | null => {
+  if (!isRecord(value)) return null;
+
+  return {
+    id: normalizeText(value['id'], createKangurLessonBlockId('lesson-image'), 120),
+    type: 'image',
+    title: normalizeText(value['title'], '', 120),
+    altText: normalizeText(value['altText'], '', 300),
+    caption: normalizeText(value['caption'], '', 300),
+    ttsDescription: normalizeText(value['ttsDescription'], '', 2_000),
+    src: normalizeImageSource(value['src'] ?? value['imageUrl'] ?? value['url']),
+    align: normalizeSvgAlign(value['align']),
+    fit: normalizeSvgFit(value['fit']),
+    maxWidth: clamp(normalizeInteger(value['maxWidth'], 480), 120, 1_200),
+  };
+};
+
+const normalizeActivityBlock = (value: unknown): KangurLessonActivityBlock | null => {
+  if (!isRecord(value)) return null;
+
+  const activityId =
+    value['activityId'] === 'adding-ball' ||
+    value['activityId'] === 'subtracting-game' ||
+    value['activityId'] === 'multiplication-array' ||
+    value['activityId'] === 'multiplication-quiz' ||
+    value['activityId'] === 'division-game' ||
+    value['activityId'] === 'geometry-drawing' ||
+    value['activityId'] === 'calendar-interactive' ||
+    value['activityId'] === 'clock-training'
+      ? value['activityId']
+      : 'clock-training';
+  const defaults = applyKangurLessonActivityDefaults(activityId);
+
+  return {
+    id: normalizeText(value['id'], createKangurLessonBlockId('lesson-activity'), 120),
+    type: 'activity',
+    activityId,
+    title: normalizeText(value['title'], defaults.title, 120),
+    description: normalizeText(value['description'], defaults.description ?? '', 500),
+    ttsDescription: normalizeText(value['ttsDescription'], '', 2_000),
+  };
+};
+
 const normalizeInlineBlock = (value: unknown): KangurLessonInlineBlock | null => {
   if (!isRecord(value)) return null;
   if (value['type'] === 'svg') return normalizeSvgBlock(value);
+  if (value['type'] === 'image') return normalizeImageBlock(value);
   return normalizeTextBlock(value);
 };
 
@@ -529,8 +864,77 @@ const normalizeGridBlock = (value: unknown): KangurLessonGridBlock | null => {
 const normalizeRootBlock = (value: unknown): KangurLessonRootBlock | null => {
   if (!isRecord(value)) return null;
   if (value['type'] === 'svg') return normalizeSvgBlock(value);
+  if (value['type'] === 'image') return normalizeImageBlock(value);
+  if (value['type'] === 'activity') return normalizeActivityBlock(value);
   if (value['type'] === 'grid') return normalizeGridBlock(value);
   return normalizeTextBlock(value);
+};
+
+const normalizePage = (value: unknown): KangurLessonPage | null => {
+  if (!isRecord(value)) return null;
+  const blocks = Array.isArray(value['blocks'])
+    ? value['blocks']
+      .map(normalizeRootBlock)
+      .filter((entry): entry is KangurLessonRootBlock => Boolean(entry))
+      .slice(0, 48)
+    : [];
+
+  return {
+    id: normalizeText(value['id'], createKangurLessonBlockId('lesson-page'), 120),
+    sectionKey: normalizeText(value['sectionKey'], '', 120),
+    sectionTitle: normalizeText(value['sectionTitle'], '', 120),
+    sectionDescription: normalizeText(value['sectionDescription'], '', 240),
+    title: normalizeText(value['title'], '', 120),
+    description: normalizeText(value['description'], '', 240),
+    blocks,
+  };
+};
+
+export const resolveKangurLessonDocumentPages = (
+  document: Pick<KangurLessonDocument, 'pages' | 'blocks'> | null | undefined
+): KangurLessonPage[] => {
+  if (document?.pages && document.pages.length > 0) {
+    return document.pages;
+  }
+
+  if (document?.blocks && document.blocks.length > 0) {
+    return [
+      {
+        id: 'lesson-page-legacy',
+        sectionKey: '',
+        sectionTitle: '',
+        sectionDescription: '',
+        title: '',
+        description: '',
+        blocks: document.blocks,
+      },
+    ];
+  }
+
+  return [
+    {
+      id: 'lesson-page-legacy',
+      sectionKey: '',
+      sectionTitle: '',
+      sectionDescription: '',
+      title: '',
+      description: '',
+      blocks: [],
+    },
+  ];
+};
+
+export const updateKangurLessonDocumentPages = (
+  document: KangurLessonDocument,
+  pages: KangurLessonPage[]
+): KangurLessonDocument => {
+  const normalizedPages = pages.length > 0 ? pages : [createKangurLessonPage('', [])];
+
+  return {
+    ...document,
+    pages: normalizedPages,
+    blocks: flattenKangurLessonDocumentPages(normalizedPages),
+  };
 };
 
 export const normalizeKangurLessonDocument = (value: unknown): KangurLessonDocument => {
@@ -538,12 +942,23 @@ export const normalizeKangurLessonDocument = (value: unknown): KangurLessonDocum
     return createDefaultKangurLessonDocument();
   }
 
-  const blocks = Array.isArray(value['blocks'])
+  const legacyBlocks = Array.isArray(value['blocks'])
     ? value['blocks']
       .map(normalizeRootBlock)
       .filter((entry): entry is KangurLessonRootBlock => Boolean(entry))
-      .slice(0, 64)
+      .slice(0, 256)
     : [];
+  const normalizedPages = Array.isArray(value['pages'])
+    ? value['pages']
+      .map((entry) => normalizePage(entry))
+      .filter((entry): entry is KangurLessonPage => Boolean(entry))
+      .slice(0, 24)
+    : [];
+  const pages =
+    normalizedPages.length > 0
+      ? normalizedPages
+      : [createKangurLessonPage('', legacyBlocks)];
+  const blocks = flattenKangurLessonDocumentPages(pages);
 
   const updatedAt =
     typeof value['updatedAt'] === 'string' && value['updatedAt'].trim()
@@ -553,6 +968,8 @@ export const normalizeKangurLessonDocument = (value: unknown): KangurLessonDocum
   return {
     version: 1,
     blocks,
+    pages,
+    narration: normalizeDocumentNarration(value['narration']),
     updatedAt,
   };
 };
@@ -597,22 +1014,47 @@ export const hasKangurLessonDocumentContent = (
 ): boolean => {
   if (!document) return false;
 
-  return document.blocks.some((block) => {
-    if (block.type === 'text') {
-      return block.html.replace(/<[^>]+>/g, '').trim().length > 0;
-    }
-
-    if (block.type === 'svg') {
-      return block.markup.trim().length > 0;
-    }
-
-    return block.items.some((item) => {
-      if (item.block.type === 'text') {
-        return item.block.html.replace(/<[^>]+>/g, '').trim().length > 0;
+  return resolveKangurLessonDocumentPages(document).some((page) =>
+    page.blocks.some((block) => {
+      if (block.type === 'text') {
+        return block.html.replace(/<[^>]+>/g, '').trim().length > 0;
       }
-      return item.block.markup.trim().length > 0;
-    });
-  });
+
+      if (block.type === 'svg') {
+        return block.markup.trim().length > 0;
+      }
+
+      if (block.type === 'image') {
+        return (
+          block.src.trim().length > 0 ||
+          (block.caption?.trim().length ?? 0) > 0 ||
+          block.title.trim().length > 0
+        );
+      }
+
+      if (block.type === 'activity') {
+        return (
+          block.title.trim().length > 0 ||
+          (block.description?.trim().length ?? 0) > 0 ||
+          (block.ttsDescription?.trim().length ?? 0) > 0
+        );
+      }
+
+      return block.items.some((item) => {
+        if (item.block.type === 'text') {
+          return item.block.html.replace(/<[^>]+>/g, '').trim().length > 0;
+        }
+        if (item.block.type === 'svg') {
+          return item.block.markup.trim().length > 0;
+        }
+        return (
+          item.block.src.trim().length > 0 ||
+          (item.block.caption?.trim().length ?? 0) > 0 ||
+          item.block.title.trim().length > 0
+        );
+      });
+    })
+  );
 };
 
 export const updateKangurLessonDocumentTimestamp = (

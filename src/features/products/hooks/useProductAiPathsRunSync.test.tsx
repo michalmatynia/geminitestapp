@@ -1,31 +1,23 @@
 import { renderHook } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AI_PATH_RUN_ENQUEUED_EVENT_NAME } from '@/shared/contracts/ai-paths';
 
-const { addQueuedProductIdMock, removeQueuedProductIdMock } = vi.hoisted(() => ({
-  addQueuedProductIdMock: vi.fn(),
-  removeQueuedProductIdMock: vi.fn(),
+const { markQueuedProductIdMock } = vi.hoisted(() => ({
+  markQueuedProductIdMock: vi.fn(),
 }));
 
 vi.mock('@/features/products/state/queued-product-ops', () => ({
-  addQueuedProductId: (...args: unknown[]) => addQueuedProductIdMock(...args),
-  removeQueuedProductId: (...args: unknown[]) => removeQueuedProductIdMock(...args),
+  markQueuedProductId: (...args: unknown[]) => markQueuedProductIdMock(...args),
 }));
 
 import { useProductAiPathsRunSync } from './useProductAiPathsRunSync';
 
 describe('useProductAiPathsRunSync', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
-    addQueuedProductIdMock.mockReset();
-    removeQueuedProductIdMock.mockReset();
+    markQueuedProductIdMock.mockReset();
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('queues and clears product badge from canonical ai-path-run-enqueued events', () => {
+  it('marks product badge from canonical ai-path-run-enqueued events', () => {
     renderHook(() => useProductAiPathsRunSync());
 
     window.dispatchEvent(
@@ -34,12 +26,7 @@ describe('useProductAiPathsRunSync', () => {
       })
     );
 
-    expect(addQueuedProductIdMock).toHaveBeenCalledWith('product-1');
-    expect(removeQueuedProductIdMock).not.toHaveBeenCalled();
-
-    vi.advanceTimersByTime(30_000);
-
-    expect(removeQueuedProductIdMock).toHaveBeenCalledWith('product-1');
+    expect(markQueuedProductIdMock).toHaveBeenCalledWith('product-1', 30_000);
   });
 
   it('ignores non-product ai-path-run-enqueued events', () => {
@@ -51,9 +38,7 @@ describe('useProductAiPathsRunSync', () => {
       })
     );
 
-    expect(addQueuedProductIdMock).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(30_000);
-    expect(removeQueuedProductIdMock).not.toHaveBeenCalled();
+    expect(markQueuedProductIdMock).not.toHaveBeenCalled();
   });
 
   it('ignores malformed ai-path-run-enqueued events without runId', () => {
@@ -65,9 +50,7 @@ describe('useProductAiPathsRunSync', () => {
       })
     );
 
-    expect(addQueuedProductIdMock).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(30_000);
-    expect(removeQueuedProductIdMock).not.toHaveBeenCalled();
+    expect(markQueuedProductIdMock).not.toHaveBeenCalled();
   });
 
   it('ignores malformed ai-path-run-enqueued events without entityId', () => {
@@ -79,9 +62,7 @@ describe('useProductAiPathsRunSync', () => {
       })
     );
 
-    expect(addQueuedProductIdMock).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(30_000);
-    expect(removeQueuedProductIdMock).not.toHaveBeenCalled();
+    expect(markQueuedProductIdMock).not.toHaveBeenCalled();
   });
 
   it('ignores removed legacy ai-path-product-run-queued events', () => {
@@ -93,8 +74,6 @@ describe('useProductAiPathsRunSync', () => {
       })
     );
 
-    expect(addQueuedProductIdMock).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(30_000);
-    expect(removeQueuedProductIdMock).not.toHaveBeenCalled();
+    expect(markQueuedProductIdMock).not.toHaveBeenCalled();
   });
 });

@@ -22,12 +22,19 @@ export async function runExecutorPreflight(input: {
   repo: AiPathRunRepository;
   runStartedAt: string;
   traceId: string;
-}) {
+}): Promise<{
+  validationConfig: import('@/shared/contracts/ai-paths-core/nodes-primitives').AiPathsValidationConfig;
+  strictFlowMode: boolean;
+  nodeValidationEnabled: boolean;
+  blockedRunPolicy: 'fail_run' | 'complete_with_warning';
+  requiredProcessingNodeIds: string[];
+}> {
   const { run, nodes, edges, triggerNodeId, runtimeState, repo, runStartedAt, traceId } = input;
   const runMetaRecord = run.meta && typeof run.meta === 'object' ? run.meta : null;
   const strictFlowMode = runMetaRecord?.['strictFlowMode'] !== false;
-  const validationConfig = normalizeAiPathsValidationConfig(
-    runMetaRecord?.['aiPathsValidation'] as Record<string, unknown> | undefined
+  const blockedRunPolicy: 'fail_run' | 'complete_with_warning' =
+    runMetaRecord?.['blockedRunPolicy'] === 'complete_with_warning' ? 'complete_with_warning' : 'fail_run';
+  const validationConfig = normalizeAiPathsValidationConfig(    runMetaRecord?.['aiPathsValidation'] as Record<string, unknown> | undefined
   );
   const nodeValidationEnabled = validationConfig.enabled !== false;
 
@@ -140,6 +147,7 @@ export async function runExecutorPreflight(input: {
     validationConfig,
     strictFlowMode,
     nodeValidationEnabled,
+    blockedRunPolicy: blockedRunPolicy,
     requiredProcessingNodeIds: compileReport.processingNodeIds,
   };
 }

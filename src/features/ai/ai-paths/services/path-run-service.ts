@@ -9,7 +9,7 @@ import {
   stableStringify,
   validateCanonicalPathNodeIdentities,
 } from '@/shared/lib/ai-paths';
-import { parseRuntimeState } from '@/features/ai/ai-paths/services/path-run-executor.helpers';
+import { parseRuntimeState } from '@/features/ai/ai-paths/services/path-run-executor.runtime-state';
 import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
 import {
   evaluateDisabledNodeTypesPolicy,

@@ -3,11 +3,13 @@ import { motion } from 'framer-motion';
 import { Dumbbell } from 'lucide-react';
 
 import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
+import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
 import type {
   KangurDifficulty,
   KangurOperation,
   KangurTrainingSelection,
 } from '@/features/kangur/ui/types';
+import { cn } from '@/shared/utils';
 
 export type TrainingSetupProps = {
   onStart: (selection: KangurTrainingSelection) => void;
@@ -49,20 +51,20 @@ export default function TrainingSetup({ onStart, onBack }: TrainingSetupProps): 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className='flex flex-col items-center gap-6 w-full max-w-lg'
+      className='flex w-full max-w-3xl flex-col items-center gap-6'
     >
-      <div className='bg-white rounded-3xl shadow-xl p-6 w-full flex flex-col gap-5'>
+      <KangurPanel className='w-full flex flex-col gap-5' padding='xl' variant='elevated'>
         <div className='flex items-center gap-3'>
           <Dumbbell className='text-indigo-500 w-7 h-7' />
-          <h2 className='text-2xl font-extrabold text-gray-800'>Tryb treningowy</h2>
+          <h2 className='text-2xl font-extrabold text-slate-800'>Tryb treningowy</h2>
         </div>
 
         <DifficultySelector selected={difficulty} onSelect={setDifficulty} />
 
         <div>
-          <div className='flex items-center justify-between mb-2'>
-            <span className='font-bold text-gray-700 text-sm'>Kategorie pytan</span>
-            <button
+          <div className='mb-2 flex items-center justify-between'>
+            <span className='text-sm font-bold text-slate-700'>Kategorie pytan</span>
+            <KangurButton
               onClick={() =>
                 setSelected(
                   allSelected
@@ -70,68 +72,61 @@ export default function TrainingSetup({ onStart, onBack }: TrainingSetupProps): 
                     : ALL_CATEGORIES.map((category) => category.id)
                 )
               }
-              className='text-xs text-indigo-500 hover:underline font-semibold'
+              size='sm'
+              variant='ghost'
             >
               {allSelected ? 'Odznacz wszystkie' : 'Zaznacz wszystkie'}
-            </button>
+            </KangurButton>
           </div>
-          <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
+          <div className='grid grid-cols-2 gap-2 sm:grid-cols-3'>
             {ALL_CATEGORIES.map((category) => {
               const isActive = selected.includes(category.id);
               return (
-                <button
+                <KangurButton
                   key={category.id}
                   onClick={() => toggle(category.id)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 text-sm font-semibold transition ${
-                    isActive
-                      ? 'bg-indigo-500 border-indigo-500 text-white'
-                      : 'bg-white border-gray-200 text-gray-600 hover:border-indigo-300'
-                  }`}
+                  className={cn('justify-start rounded-xl', isActive ? 'shadow-sm' : '')}
+                  size='md'
+                  variant={isActive ? 'surface' : 'secondary'}
                 >
                   <span>{category.emoji}</span>
                   <span>{category.label}</span>
-                </button>
+                </KangurButton>
               );
             })}
           </div>
         </div>
 
         <div>
-          <span className='font-bold text-gray-700 text-sm block mb-2'>Liczba pytan</span>
-          <div className='flex gap-2 flex-wrap'>
+          <span className='mb-2 block text-sm font-bold text-slate-700'>Liczba pytan</span>
+          <div className='flex flex-wrap gap-2'>
             {QUESTION_COUNTS.map((value) => (
-              <button
+              <KangurButton
                 key={value}
                 onClick={() => setCount(value)}
-                className={`px-4 py-2 rounded-xl border-2 text-sm font-bold transition ${
-                  count === value
-                    ? 'bg-purple-500 border-purple-500 text-white'
-                    : 'bg-white border-gray-200 text-gray-600 hover:border-purple-300'
-                }`}
+                size='md'
+                variant={count === value ? 'surface' : 'secondary'}
               >
                 {value}
-              </button>
+              </KangurButton>
             ))}
           </div>
         </div>
 
         <div className='flex gap-3'>
-          <button
-            onClick={onBack}
-            className='flex-1 py-3 rounded-2xl border-2 border-gray-200 text-gray-500 font-bold hover:bg-gray-50 transition'
-          >
+          <KangurButton className='flex-1' onClick={onBack} size='lg' variant='secondary'>
             ← Wroc
-          </button>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+          </KangurButton>
+          <KangurButton
+            className='flex-grow-[2]'
             onClick={() => onStart({ categories: selected, count, difficulty })}
-            className='flex-2 flex-grow-[2] bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-extrabold text-lg py-3 rounded-2xl shadow-lg transition'
+            size='lg'
+            variant='primary'
           >
             Start! 🚀
-          </motion.button>
+          </KangurButton>
         </div>
-      </div>
+      </KangurPanel>
     </motion.div>
   );
 }

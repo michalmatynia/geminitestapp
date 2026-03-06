@@ -7,8 +7,7 @@ import {
   parseAiPathRunEnqueuedEventPayload,
 } from '@/shared/contracts/ai-paths';
 import {
-  addQueuedProductId,
-  removeQueuedProductId,
+  markQueuedProductId,
 } from '@/features/products/state/queued-product-ops';
 
 // Keep the badge visible longer than the last scheduled product refresh (9 s).
@@ -34,10 +33,7 @@ export function useProductAiPathsRunSync(): void {
     const handler = (event: Event): void => {
       const productId = resolveProductIdFromEvent(event);
       if (!productId) return;
-      addQueuedProductId(productId);
-      setTimeout(() => {
-        removeQueuedProductId(productId);
-      }, AI_PATH_RUN_BADGE_TTL_MS);
+      markQueuedProductId(productId, AI_PATH_RUN_BADGE_TTL_MS);
     };
     window.addEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, handler);
     return () => {

@@ -1,24 +1,38 @@
 import {
+  normalizeRuntimeKernelValueSource,
+  normalizeRuntimeKernelConfigRecordDetailed,
   parseRuntimeKernelCodeObjectResolverIds,
   parseRuntimeKernelNodeTypes,
+  type RuntimeKernelConfigNormalizedField,
+  type RuntimeKernelValueSource,
 } from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-config';
+import {
+  DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_SOURCE_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_TELEMETRY_STRICT_NATIVE_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_TELEMETRY_STRICT_NATIVE_SOURCE_FIELD,
+} from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-legacy-aliases';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
-type RuntimeKernelNodeTypesSource = 'env' | 'path' | 'settings' | 'default';
+export const AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS = {
+  runtimeKernelConfigMode: 'runtimeKernelConfig.mode',
+  runtimeKernelConfigNodeTypes: 'runtimeKernelConfig.nodeTypes',
+  runtimeKernelConfigCodeObjectResolverIds: 'runtimeKernelConfig.codeObjectResolverIds',
+  runtimeKernelConfigStrictNativeRegistry: 'runtimeKernelConfig.strictNativeRegistry',
+  runtimeKernelMode: 'runtimeKernel.mode',
+  runtimeKernelModeSource: 'runtimeKernel.modeSource',
+  runtimeKernelNodeTypes: 'runtimeKernel.nodeTypes',
+  runtimeKernelNodeTypesSource: 'runtimeKernel.nodeTypesSource',
+  runtimeKernelCodeObjectResolverIds: 'runtimeKernel.codeObjectResolverIds',
+  runtimeKernelStrictNativeRegistry: 'runtimeKernel.strictNativeRegistry',
+  runtimeKernelStrictNativeRegistrySource: 'runtimeKernel.strictNativeRegistrySource',
+  runtimeTraceKernelParityStrategyCounts: 'runtimeTrace.kernelParity.strategyCounts',
+} as const;
 
 export type AiPathRunRuntimeKernelMetadataChangedField =
-  | 'runtimeKernelConfig.mode'
-  | 'runtimeKernelConfig.nodeTypes'
-  | 'runtimeKernelConfig.codeObjectResolverIds'
-  | 'runtimeKernelConfig.strictNativeRegistry'
-  | 'runtimeKernel.mode'
-  | 'runtimeKernel.modeSource'
-  | 'runtimeKernel.nodeTypes'
-  | 'runtimeKernel.nodeTypesSource'
-  | 'runtimeKernel.codeObjectResolverIds'
-  | 'runtimeKernel.strictNativeRegistry'
-  | 'runtimeKernel.strictNativeRegistrySource'
-  | 'runtimeTrace.kernelParity.strategyCounts';
+  (typeof AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS)[keyof typeof AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS];
 
 export type NormalizeAiPathRunRuntimeKernelMetadataResult = {
   changed: boolean;
@@ -28,16 +42,10 @@ export type NormalizeAiPathRunRuntimeKernelMetadataResult = {
 
 const normalizeRuntimeKernelNodeTypesSource = (
   value: unknown
-): RuntimeKernelNodeTypesSource | undefined => {
-  if (typeof value !== 'string') return undefined;
-  const normalized = value.trim().toLowerCase();
-  return normalized === 'env' ||
-    normalized === 'path' ||
-    normalized === 'settings' ||
-    normalized === 'default'
-    ? normalized
-    : undefined;
-};
+): RuntimeKernelValueSource | undefined =>
+  normalizeRuntimeKernelValueSource(
+    typeof value === 'string' ? value.trim().toLowerCase() : value
+  ) ?? undefined;
 
 const matchesStringArray = (value: unknown, expected: string[]): boolean =>
   Array.isArray(value) &&
@@ -55,6 +63,18 @@ const appendChangedField = (
   }
 };
 
+const RUNTIME_KERNEL_CONFIG_CHANGED_FIELD_MAP = {
+  mode: AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigMode,
+  nodeTypes: AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigNodeTypes,
+  codeObjectResolverIds:
+    AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigCodeObjectResolverIds,
+  strictNativeRegistry:
+    AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigStrictNativeRegistry,
+} satisfies Record<
+  RuntimeKernelConfigNormalizedField,
+  AiPathRunRuntimeKernelMetadataChangedField
+>;
+
 const normalizeRuntimeKernelConfigRecord = (
   value: Record<string, unknown>,
   options: {
@@ -65,62 +85,15 @@ const normalizeRuntimeKernelConfigRecord = (
   value: Record<string, unknown>;
   changedFields: AiPathRunRuntimeKernelMetadataChangedField[];
 } => {
-  const nextValue: Record<string, unknown> = { ...value };
-  const changedFields: AiPathRunRuntimeKernelMetadataChangedField[] = [];
-
-  if ('mode' in nextValue) {
-    delete nextValue['mode'];
-    appendChangedField(changedFields, 'runtimeKernelConfig.mode');
-  }
-
-  const nodeTypes = parseRuntimeKernelNodeTypes(
-    options.translateLegacyAliases ? value['nodeTypes'] ?? value['pilotNodeTypes'] : value['nodeTypes']
-  );
-  if (nodeTypes) {
-    if (!matchesStringArray(value['nodeTypes'], nodeTypes)) {
-      nextValue['nodeTypes'] = nodeTypes;
-      appendChangedField(changedFields, 'runtimeKernelConfig.nodeTypes');
-    }
-  } else if ('nodeTypes' in nextValue) {
-    delete nextValue['nodeTypes'];
-    appendChangedField(changedFields, 'runtimeKernelConfig.nodeTypes');
-  }
-  if ('pilotNodeTypes' in nextValue) {
-    delete nextValue['pilotNodeTypes'];
-    appendChangedField(changedFields, 'runtimeKernelConfig.nodeTypes');
-  }
-
-  const resolverIds = parseRuntimeKernelCodeObjectResolverIds(
-    options.translateLegacyAliases
-      ? value['codeObjectResolverIds'] ?? value['resolverIds']
-      : value['codeObjectResolverIds']
-  );
-  if (resolverIds) {
-    if (!matchesStringArray(value['codeObjectResolverIds'], resolverIds)) {
-      nextValue['codeObjectResolverIds'] = resolverIds;
-      appendChangedField(changedFields, 'runtimeKernelConfig.codeObjectResolverIds');
-    }
-  } else if ('codeObjectResolverIds' in nextValue) {
-    delete nextValue['codeObjectResolverIds'];
-    appendChangedField(changedFields, 'runtimeKernelConfig.codeObjectResolverIds');
-  }
-  if ('resolverIds' in nextValue) {
-    delete nextValue['resolverIds'];
-    appendChangedField(changedFields, 'runtimeKernelConfig.codeObjectResolverIds');
-  }
-
-  if ('strictNativeRegistry' in nextValue) {
-    delete nextValue['strictNativeRegistry'];
-    appendChangedField(changedFields, 'runtimeKernelConfig.strictNativeRegistry');
-  }
-  if ('strictCodeObjectRegistry' in nextValue) {
-    delete nextValue['strictCodeObjectRegistry'];
-    appendChangedField(changedFields, 'runtimeKernelConfig.strictNativeRegistry');
-  }
+  const normalized = normalizeRuntimeKernelConfigRecordDetailed(value, {
+    translateLegacyAliases: options.translateLegacyAliases,
+  });
+  const changedFields =
+    normalized?.changedFields.map((field) => RUNTIME_KERNEL_CONFIG_CHANGED_FIELD_MAP[field]) ?? [];
 
   return {
-    changed: changedFields.length > 0,
-    value: nextValue,
+    changed: normalized?.changed ?? false,
+    value: normalized?.value ?? value,
     changedFields,
   };
 };
@@ -138,51 +111,76 @@ const normalizeRuntimeKernelTelemetryRecord = (
   const nextValue: Record<string, unknown> = { ...value };
   const changedFields: AiPathRunRuntimeKernelMetadataChangedField[] = [];
 
-  if ('runtimeKernelMode' in nextValue) {
-    delete nextValue['runtimeKernelMode'];
-    appendChangedField(changedFields, 'runtimeKernel.mode');
+  if (DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_FIELD in nextValue) {
+    delete nextValue[DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_FIELD];
+    appendChangedField(
+      changedFields,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelMode
+    );
   }
-  if ('runtimeKernelModeSource' in nextValue) {
-    delete nextValue['runtimeKernelModeSource'];
-    appendChangedField(changedFields, 'runtimeKernel.modeSource');
+  if (DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_SOURCE_FIELD in nextValue) {
+    delete nextValue[DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_SOURCE_FIELD];
+    appendChangedField(
+      changedFields,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelModeSource
+    );
   }
 
   const nodeTypes = parseRuntimeKernelNodeTypes(
     options.translateLegacyAliases
-      ? value['runtimeKernelNodeTypes'] ?? value['runtimeKernelPilotNodeTypes']
+      ? value['runtimeKernelNodeTypes'] ?? value[DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD]
       : value['runtimeKernelNodeTypes']
   );
   if (nodeTypes) {
     if (!matchesStringArray(value['runtimeKernelNodeTypes'], nodeTypes)) {
       nextValue['runtimeKernelNodeTypes'] = nodeTypes;
-      appendChangedField(changedFields, 'runtimeKernel.nodeTypes');
+      appendChangedField(
+        changedFields,
+        AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelNodeTypes
+      );
     }
   } else if ('runtimeKernelNodeTypes' in nextValue) {
     delete nextValue['runtimeKernelNodeTypes'];
-    appendChangedField(changedFields, 'runtimeKernel.nodeTypes');
+    appendChangedField(
+      changedFields,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelNodeTypes
+    );
   }
-  if ('runtimeKernelPilotNodeTypes' in nextValue) {
-    delete nextValue['runtimeKernelPilotNodeTypes'];
-    appendChangedField(changedFields, 'runtimeKernel.nodeTypes');
+  if (DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD in nextValue) {
+    delete nextValue[DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD];
+    appendChangedField(
+      changedFields,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelNodeTypes
+    );
   }
 
   const nodeTypesSource = normalizeRuntimeKernelNodeTypesSource(
     options.translateLegacyAliases
-      ? value['runtimeKernelNodeTypesSource'] ?? value['runtimeKernelPilotNodeTypesSource']
+      ? value['runtimeKernelNodeTypesSource'] ??
+          value[DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD]
       : value['runtimeKernelNodeTypesSource']
   );
   if (nodeTypesSource !== undefined) {
     if (value['runtimeKernelNodeTypesSource'] !== nodeTypesSource) {
       nextValue['runtimeKernelNodeTypesSource'] = nodeTypesSource;
-      appendChangedField(changedFields, 'runtimeKernel.nodeTypesSource');
+      appendChangedField(
+        changedFields,
+        AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelNodeTypesSource
+      );
     }
   } else if ('runtimeKernelNodeTypesSource' in nextValue) {
     delete nextValue['runtimeKernelNodeTypesSource'];
-    appendChangedField(changedFields, 'runtimeKernel.nodeTypesSource');
+    appendChangedField(
+      changedFields,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelNodeTypesSource
+    );
   }
-  if ('runtimeKernelPilotNodeTypesSource' in nextValue) {
-    delete nextValue['runtimeKernelPilotNodeTypesSource'];
-    appendChangedField(changedFields, 'runtimeKernel.nodeTypesSource');
+  if (DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD in nextValue) {
+    delete nextValue[DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD];
+    appendChangedField(
+      changedFields,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelNodeTypesSource
+    );
   }
 
   const resolverIds = parseRuntimeKernelCodeObjectResolverIds(
@@ -191,20 +189,32 @@ const normalizeRuntimeKernelTelemetryRecord = (
   if (resolverIds) {
     if (!matchesStringArray(value['runtimeKernelCodeObjectResolverIds'], resolverIds)) {
       nextValue['runtimeKernelCodeObjectResolverIds'] = resolverIds;
-      appendChangedField(changedFields, 'runtimeKernel.codeObjectResolverIds');
+      appendChangedField(
+        changedFields,
+        AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelCodeObjectResolverIds
+      );
     }
   } else if ('runtimeKernelCodeObjectResolverIds' in nextValue) {
     delete nextValue['runtimeKernelCodeObjectResolverIds'];
-    appendChangedField(changedFields, 'runtimeKernel.codeObjectResolverIds');
+    appendChangedField(
+      changedFields,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelCodeObjectResolverIds
+    );
   }
 
-  if ('runtimeKernelStrictNativeRegistry' in nextValue) {
-    delete nextValue['runtimeKernelStrictNativeRegistry'];
-    appendChangedField(changedFields, 'runtimeKernel.strictNativeRegistry');
+  if (DEPRECATED_RUNTIME_KERNEL_TELEMETRY_STRICT_NATIVE_FIELD in nextValue) {
+    delete nextValue[DEPRECATED_RUNTIME_KERNEL_TELEMETRY_STRICT_NATIVE_FIELD];
+    appendChangedField(
+      changedFields,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelStrictNativeRegistry
+    );
   }
-  if ('runtimeKernelStrictNativeRegistrySource' in nextValue) {
-    delete nextValue['runtimeKernelStrictNativeRegistrySource'];
-    appendChangedField(changedFields, 'runtimeKernel.strictNativeRegistrySource');
+  if (DEPRECATED_RUNTIME_KERNEL_TELEMETRY_STRICT_NATIVE_SOURCE_FIELD in nextValue) {
+    delete nextValue[DEPRECATED_RUNTIME_KERNEL_TELEMETRY_STRICT_NATIVE_SOURCE_FIELD];
+    appendChangedField(
+      changedFields,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelStrictNativeRegistrySource
+    );
   }
 
   return {

@@ -3,35 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from '@/shared/lib/ai-paths/portable-engine';
 
-export const { requireAiPathsAccessMock } = vi.hoisted(() => ({
+const builders = vi.hoisted(() => ({
   requireAiPathsAccessMock: vi.fn(),
-}));
-
-export const { getPortablePathRunExecutionSnapshotMock } = vi.hoisted(() => ({
   getPortablePathRunExecutionSnapshotMock: vi.fn(),
-}));
-
-export const {
-  loadPortablePathAuditSinkAutoRemediationDeadLettersMock,
-  loadPortablePathSigningPolicyTrendSnapshotsMock,
-  loadPortablePathAuditSinkStartupHealthStateMock,
-  resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock,
-} = vi.hoisted(() => ({
   loadPortablePathAuditSinkAutoRemediationDeadLettersMock: vi.fn(),
   loadPortablePathSigningPolicyTrendSnapshotsMock: vi.fn(),
   loadPortablePathAuditSinkStartupHealthStateMock: vi.fn(),
@@ -53,52 +27,53 @@ export const {
   resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock: vi.fn(),
 }));
 
+export { builders };
+
 vi.mock('@/features/ai/ai-paths/server', () => ({
-  requireAiPathsAccess: requireAiPathsAccessMock,
+  requireAiPathsAccess: builders.requireAiPathsAccessMock,
 }));
 
 vi.mock('@/shared/lib/ai-paths/portable-engine/portable-engine-observability', () => ({
-  getPortablePathRunExecutionSnapshot: getPortablePathRunExecutionSnapshotMock,
+  getPortablePathRunExecutionSnapshot: builders.getPortablePathRunExecutionSnapshotMock,
 }));
 
 vi.mock('@/shared/lib/ai-paths/portable-engine/server', () => ({
   loadPortablePathAuditSinkAutoRemediationDeadLetters:
-    loadPortablePathAuditSinkAutoRemediationDeadLettersMock,
-  loadPortablePathSigningPolicyTrendSnapshots: loadPortablePathSigningPolicyTrendSnapshotsMock,
-  loadPortablePathAuditSinkStartupHealthState: loadPortablePathAuditSinkStartupHealthStateMock,
+    builders.loadPortablePathAuditSinkAutoRemediationDeadLettersMock,
+  loadPortablePathSigningPolicyTrendSnapshots: builders.loadPortablePathSigningPolicyTrendSnapshotsMock,
+  loadPortablePathAuditSinkStartupHealthState: builders.loadPortablePathAuditSinkStartupHealthStateMock,
   resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment:
-    resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironmentMock,
+    builders.resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironmentMock,
   resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment:
-    resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironmentMock,
+    builders.resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironmentMock,
   resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironment:
-    resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironmentMock,
+    builders.resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironmentMock,
   resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironment:
-    resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironmentMock,
+    builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironmentMock,
   resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironment:
-    resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironmentMock,
+    builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironmentMock,
   resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironment:
-    resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironmentMock,
+    builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironmentMock,
   resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironment:
-    resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironmentMock,
+    builders.resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironmentMock,
   resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironment:
-    resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironmentMock,
+    builders.resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironmentMock,
   resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironment:
-    resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironmentMock,
+    builders.resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironmentMock,
   resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironment:
-    resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironmentMock,
+    builders.resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironmentMock,
   resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironment:
-    resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironmentMock,
+    builders.resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironmentMock,
   resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment:
-    resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironmentMock,
+    builders.resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironmentMock,
   resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment:
-    resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironmentMock,
+    builders.resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironmentMock,
   resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment:
-    resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironmentMock,
+    builders.resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironmentMock,
   resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment:
-    resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironmentMock,
+    builders.resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironmentMock,
   resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment:
-    resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock,
+    builders.resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock,
 }));
 
 import { GET_handler } from './handler';
-

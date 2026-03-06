@@ -11,7 +11,7 @@ Eliminate client/server runtime asymmetry where local canvas execution ignored p
 1. Local runtime-kernel forwarding in local execution loop:
    - `src/features/ai/ai-paths/components/ai-paths-settings/runtime/segments/useLocalExecutionLoop.ts`
    - Added runtime-kernel config normalization for local execution:
-     - mode normalization (`legacy_only -> auto`)
+     - mode normalization (deprecated legacy-mode alias -> `auto`)
      - pilot node type parsing (array/JSON/comma-delimited)
      - resolver ID parsing (array/JSON/comma-delimited)
      - strict native registry parsing (`strictNativeRegistry` and legacy alias `strictCodeObjectRegistry`)

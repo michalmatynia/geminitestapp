@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 
+import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
 import {
   addXp,
   createLessonPracticeReward,
@@ -118,54 +119,59 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className='flex flex-col items-center gap-4 bg-white rounded-3xl shadow-xl p-8 text-center w-full max-w-sm'
+        className='w-full max-w-sm'
       >
-        <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}</div>
-        <h2 className='text-2xl font-extrabold text-gray-800'>
-          Wynik: {score}/{TOTAL}
-        </h2>
-        {xpEarned > 0 && (
-          <div className='bg-indigo-100 text-indigo-700 font-bold px-4 py-2 rounded-full text-sm'>
-            +{xpEarned} XP ✨
+        <KangurPanel
+          className='flex flex-col items-center gap-4 text-center'
+          padding='xl'
+          variant='elevated'
+        >
+          <div className='text-6xl'>{percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}</div>
+          <h2 className='text-2xl font-extrabold text-gray-800'>
+            Wynik: {score}/{TOTAL}
+          </h2>
+          {xpEarned > 0 && (
+            <div className='bg-indigo-100 text-indigo-700 font-bold px-4 py-2 rounded-full text-sm'>
+              +{xpEarned} XP ✨
+            </div>
+          )}
+          <div className='w-full bg-gray-100 rounded-full h-3'>
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${percent}%` }}
+              transition={{ duration: 0.8 }}
+              className='h-full bg-gradient-to-r from-red-400 to-pink-400 rounded-full'
+            />
           </div>
-        )}
-        <div className='w-full bg-gray-100 rounded-full h-3'>
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${percent}%` }}
-            transition={{ duration: 0.8 }}
-            className='h-full bg-gradient-to-r from-red-400 to-pink-400 rounded-full'
-          />
-        </div>
-        <p className='text-gray-500'>
-          {percent === 100
-            ? 'Idealnie! Mistrz odejmowania!'
-            : percent >= 60
-              ? 'Świetna robota!'
-              : 'Ćwicz dalej!'}
-        </p>
-        <div className='flex gap-3 w-full'>
-          <button
-            onClick={() => {
-              setRoundIndex(0);
-              setScore(0);
-              setDone(false);
-              setXpEarned(0);
-              setQuestion(generateQuestion(0));
-              setSelected(null);
-              setConfirmed(false);
-            }}
-            className='flex-1 flex items-center justify-center gap-2 py-2 rounded-2xl border-2 border-gray-200 text-gray-500 font-bold hover:bg-gray-50 transition'
-          >
-            <RefreshCw className='w-4 h-4' /> Jeszcze raz
-          </button>
-          <button
-            onClick={onFinish}
-            className='flex-1 py-2 rounded-2xl bg-gradient-to-r from-red-400 to-pink-400 text-white font-bold shadow hover:opacity-90 transition'
-          >
-            Wróć do lekcji
-          </button>
-        </div>
+          <p className='text-gray-500'>
+            {percent === 100
+              ? 'Idealnie! Mistrz odejmowania!'
+              : percent >= 60
+                ? 'Świetna robota!'
+                : 'Ćwicz dalej!'}
+          </p>
+          <div className='flex w-full gap-3'>
+            <KangurButton
+              className='flex-1'
+              onClick={() => {
+                setRoundIndex(0);
+                setScore(0);
+                setDone(false);
+                setXpEarned(0);
+                setQuestion(generateQuestion(0));
+                setSelected(null);
+                setConfirmed(false);
+              }}
+              size='lg'
+              variant='secondary'
+            >
+              <RefreshCw className='w-4 h-4' /> Jeszcze raz
+            </KangurButton>
+            <KangurButton className='flex-1' onClick={onFinish} size='lg' variant='primary'>
+              Wróć do lekcji
+            </KangurButton>
+          </div>
+        </KangurPanel>
       </motion.div>
     );
   }
@@ -235,13 +241,15 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
             </motion.div>
           )}
           {!confirmed && (
-            <button
-              onClick={handleConfirm}
+            <KangurButton
+              className='w-full'
               disabled={selected === null}
-              className='w-full py-2 rounded-2xl bg-gradient-to-r from-red-400 to-pink-400 text-white font-extrabold disabled:opacity-40 transition'
+              onClick={handleConfirm}
+              size='lg'
+              variant='primary'
             >
               Sprawdź ✓
-            </button>
+            </KangurButton>
           )}
         </motion.div>
       </AnimatePresence>

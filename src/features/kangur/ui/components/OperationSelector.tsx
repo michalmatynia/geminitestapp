@@ -3,7 +3,13 @@ import { motion } from 'framer-motion';
 
 import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_OPTION_CARD_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 import type { KangurDifficulty, KangurOperation } from '@/features/kangur/ui/types';
+import { cn } from '@/shared/utils';
 
 export type OperationSelectorProps = {
   onSelect: (operation: KangurOperation, difficulty: KangurDifficulty) => void;
@@ -15,18 +21,18 @@ export type OperationSelectorProps = {
 const OPERATIONS: Array<{
   id: KangurOperation;
   label: string;
-  color: string;
+  accent: KangurAccent;
   emoji: string;
 }> = [
-  { id: 'addition', label: 'Dodawanie', color: 'from-green-400 to-emerald-500', emoji: '➕' },
-  { id: 'subtraction', label: 'Odejmowanie', color: 'from-blue-400 to-cyan-500', emoji: '➖' },
-  { id: 'multiplication', label: 'Mnozenie', color: 'from-purple-400 to-violet-500', emoji: '✖️' },
-  { id: 'division', label: 'Dzielenie', color: 'from-orange-400 to-amber-500', emoji: '➗' },
-  { id: 'decimals', label: 'Ulamki', color: 'from-teal-400 to-cyan-600', emoji: '🔢' },
-  { id: 'powers', label: 'Potegi', color: 'from-yellow-400 to-orange-500', emoji: '⚡' },
-  { id: 'roots', label: 'Pierwiastki', color: 'from-indigo-400 to-blue-600', emoji: '√' },
-  { id: 'clock', label: 'Zegar', color: 'from-sky-400 to-blue-500', emoji: '🕐' },
-  { id: 'mixed', label: 'Mieszane', color: 'from-pink-400 to-rose-500', emoji: '🎲' },
+  { id: 'addition', label: 'Dodawanie', accent: 'emerald', emoji: '➕' },
+  { id: 'subtraction', label: 'Odejmowanie', accent: 'sky', emoji: '➖' },
+  { id: 'multiplication', label: 'Mnozenie', accent: 'violet', emoji: '✖️' },
+  { id: 'division', label: 'Dzielenie', accent: 'amber', emoji: '➗' },
+  { id: 'decimals', label: 'Ulamki', accent: 'teal', emoji: '🔢' },
+  { id: 'powers', label: 'Potegi', accent: 'amber', emoji: '⚡' },
+  { id: 'roots', label: 'Pierwiastki', accent: 'indigo', emoji: '√' },
+  { id: 'clock', label: 'Zegar', accent: 'sky', emoji: '🕐' },
+  { id: 'mixed', label: 'Mieszane', accent: 'rose', emoji: '🎲' },
 ];
 
 const PRIORITY_LABELS = {
@@ -65,12 +71,20 @@ export default function OperationSelector({
   );
 
   return (
-    <div className='flex flex-col items-center gap-6 w-full max-w-lg'>
+    <div className='flex w-full max-w-3xl flex-col items-center gap-6'>
       <DifficultySelector selected={difficulty} onSelect={setDifficulty} />
-      <h2 className='text-2xl font-bold text-gray-700'>Wybierz swoje wyzwanie!</h2>
-      <div className='grid grid-cols-2 md:grid-cols-3 gap-4 w-full'>
+      <div className='space-y-2 text-center'>
+        <h2 className='text-2xl font-extrabold tracking-tight text-slate-800'>
+          Wybierz swoje wyzwanie
+        </h2>
+        <p className='text-sm text-slate-500'>
+          Kazda kategoria ma ten sam uklad. Kolor tylko podpowiada temat.
+        </p>
+      </div>
+      <div className='grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3'>
         {sortedOperations.map((operation, index) => {
           const priorityAssignment = priorityAssignmentsByOperation[operation.id] ?? null;
+          const accent = KANGUR_ACCENT_STYLES[operation.accent];
 
           return (
             <motion.button
@@ -82,27 +96,52 @@ export default function OperationSelector({
               whileTap={{ scale: 0.95 }}
               onClick={() => onSelect(operation.id, difficulty)}
               data-testid={`operation-card-${operation.id}`}
-              className={`relative bg-gradient-to-br ${operation.color} text-white rounded-2xl p-5 flex flex-col items-center gap-2 shadow-lg font-bold text-lg ${
-                priorityAssignment ? 'ring-4 ring-amber-200/90 shadow-amber-100' : ''
-              }`}
+              className={cn(
+                KANGUR_OPTION_CARD_CLASSNAME,
+                'relative flex min-h-[180px] flex-col gap-4 rounded-[30px] p-5',
+                accent.hoverCard,
+                priorityAssignment ? accent.activeCard : 'border-slate-200/80'
+              )}
             >
               {priorityAssignment ? (
-                <span className='absolute right-2 top-2 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white'>
+                <span
+                  className={cn(
+                    'absolute right-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em]',
+                    'border border-amber-200 bg-amber-50 text-amber-700'
+                  )}
+                >
                   {PRIORITY_LABELS[priorityAssignment.priority]}
                 </span>
               ) : null}
-              <span className='text-4xl'>{operation.emoji}</span>
-              <span>{operation.label}</span>
-              {priorityAssignment ? (
-                <>
-                  <span className='rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold text-white'>
-                    Zadanie od rodzica
-                  </span>
-                  <span className='text-center text-[11px] font-medium text-white/90'>
-                    {priorityAssignment.progress.percent}% · {priorityAssignment.title}
-                  </span>
-                </>
-              ) : null}
+              <div className='flex items-start justify-between gap-3'>
+                <span
+                  className={cn(
+                    'inline-flex h-12 w-12 items-center justify-center rounded-2xl text-3xl shadow-sm',
+                    accent.icon
+                  )}
+                >
+                  {operation.emoji}
+                </span>
+                <span
+                  className={cn(
+                    'rounded-full px-2.5 py-1 text-[11px] font-semibold',
+                    priorityAssignment ? accent.badge : 'border border-slate-200 bg-slate-50 text-slate-500'
+                  )}
+                >
+                  {priorityAssignment ? 'Zadanie od rodzica' : 'Trening swobodny'}
+                </span>
+              </div>
+              <div className='space-y-1 text-left'>
+                <span className='block text-lg font-extrabold text-slate-800'>{operation.label}</span>
+                <span className='block text-sm text-slate-500'>
+                  {priorityAssignment
+                    ? `${priorityAssignment.progress.percent}% · ${priorityAssignment.title}`
+                    : 'Wejdz do serii pytan i cwicz we wlasnym tempie.'}
+                </span>
+              </div>
+              <span className={cn('mt-auto text-sm font-semibold', accent.activeText)}>
+                Zacznij lekcje
+              </span>
             </motion.button>
           );
         })}

@@ -5,11 +5,12 @@ import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
+import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 
 type DivisionLessonProps = { onBack: () => void };
 type SectionId = 'intro' | 'odwrotnosc' | 'reszta' | 'zapamietaj' | 'game';
 
-const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
+export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
   intro: [
     {
       title: 'Co to znaczy dzielic?',
@@ -37,7 +38,7 @@ const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       content: (
         <div className='flex flex-col items-center gap-4'>
           <p className='text-gray-700 text-center'>Każde mnozenie ma swoje dzielenie!</p>
-          <div className='bg-blue-50 border border-blue-200 rounded-2xl p-4 w-full max-w-xs'>
+          <KangurLessonCallout accent='sky' className='max-w-xs'>
             <div className='flex flex-col gap-2 text-center'>
               <p className='text-gray-700'>4 × 3 = <b>12</b></p>
               <div className='flex gap-3 justify-center text-blue-600 font-bold'>
@@ -45,7 +46,7 @@ const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
                 <p>12 ÷ 3 = 4</p>
               </div>
             </div>
-          </div>
+          </KangurLessonCallout>
           <p className='text-sm text-gray-500 text-center'>
             Znajac tabliczkę mnozenia, znasz tez tabliczkę dzielenia!
           </p>
@@ -61,11 +62,11 @@ const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
           <p className='text-gray-700 text-center'>
             Nie zawsze dzielenie wychodzi równo — wtedy zostaje reszta.
           </p>
-          <div className='bg-teal-50 border border-teal-200 rounded-2xl p-4 text-center w-full max-w-xs'>
+          <KangurLessonCallout accent='teal' className='max-w-xs text-center'>
             <p className='text-3xl font-extrabold text-teal-600'>7 ÷ 2 = ?</p>
             <p className='text-gray-500 mt-2'>2×3=6 (za mało), 2×4=8 (za duzo)</p>
             <p className='text-teal-700 font-bold mt-1'>7 ÷ 2 = <b>3</b> reszta <b>1</b></p>
-          </div>
+          </KangurLessonCallout>
           <div className='flex gap-3 text-3xl'>🍫🍫🍫🍫🍫🍫🍫</div>
           <p className='text-sm text-gray-500'>7 czekolad → 3 dla każdego, 1 zostaje</p>
         </div>
@@ -77,7 +78,7 @@ const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Zapamietaj!',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <div className='bg-yellow-50 border border-yellow-200 rounded-2xl p-4 w-full max-w-xs'>
+          <KangurLessonCallout accent='amber' className='max-w-xs'>
             <ul className='text-gray-700 space-y-2 text-sm'>
               <li>✅ Podziel przez 1 = ta sama liczba: <b>9÷1=9</b></li>
               <li>✅ Podziel przez siebie = 1: <b>5÷5=1</b></li>
@@ -85,14 +86,14 @@ const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <li>✅ Reszta jest zawsze mniejsza od dzielnika</li>
               <li>✅ Sprawdz: wynik × dzielnik + reszta = liczba</li>
             </ul>
-          </div>
+          </KangurLessonCallout>
         </div>
       ),
     },
   ],
 };
 
-const HUB_SECTIONS = [
+export const HUB_SECTIONS = [
   { id: 'intro', emoji: '÷', title: 'Co to dzielenie?', description: 'Podział na równe grupy' },
   { id: 'odwrotnosc', emoji: '🔄', title: 'Dzielenie i mnozenie', description: 'Odwrotne działania' },
   { id: 'reszta', emoji: '🍫', title: 'Reszta z dzielenia', description: 'Gdy nie wychodzi równo' },

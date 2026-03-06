@@ -14,6 +14,7 @@ import {
   Sparkles,
   Trash2,
 } from 'lucide-react';
+import Link from 'next/link';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -77,6 +78,7 @@ import {
   removeKangurLessonDocument,
   updateKangurLessonDocumentTimestamp,
 } from '../lesson-documents';
+import { importLegacyKangurLessonDocument } from '../legacy-lesson-imports';
 import { KangurLessonDocumentEditor } from './KangurLessonDocumentEditor';
 import { KangurLessonNarrationPanel } from './KangurLessonNarrationPanel';
 
@@ -144,6 +146,12 @@ const readPersistedTreeMode = (): LessonTreeMode => {
     return 'ordered';
   }
 };
+
+const countLessonsRequiringLegacyImport = (
+  lessons: readonly KangurLesson[],
+  lessonDocuments: ReturnType<typeof parseKangurLessonDocumentStore>
+): number =>
+  lessons.filter((lesson) => !hasKangurLessonDocumentContent(lessonDocuments[lesson.id])).length;
 
 export function AdminKangurLessonsManagerPage(): React.JSX.Element {
   const settingsStore = useSettingsStore();
@@ -487,6 +495,98 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
     }
   }, [editingContentLesson, lessonDocuments, lessons, persistLessonDocuments, persistLessons, toast]);
 
+  const handleImportLegacyLesson = useCallback((): void => {
+    if (!editingContentLesson) return;
+
+    const imported = importLegacyKangurLessonDocument(editingContentLesson.componentId, {
+      narration: contentDraft.narration,
+    });
+    if (!imported) {
+      toast('Legacy lesson import is not available for this lesson yet.', {
+        variant: 'error',
+      });
+      return;
+    }
+
+    setContentDraft(imported.document);
+    const warningSummary =
+      imported.warnings.length > 0
+        ? ` ${imported.warnings.length} interactive activit${imported.warnings.length === 1 ? 'y was' : 'ies were'} converted into note pages.`
+        : '';
+    toast(
+      `Imported ${imported.importedPageCount} page${imported.importedPageCount === 1 ? '' : 's'} from the legacy lesson.${warningSummary}`,
+      {
+        variant: 'success',
+      }
+    );
+  }, [contentDraft.narration, editingContentLesson, toast]);
+
+  const lessonsNeedingLegacyImport = useMemo(
+    () => countLessonsRequiringLegacyImport(lessons, lessonDocuments),
+    [lessonDocuments, lessons]
+  );
+
+  const handleImportAllLessonsToEditor = useCallback(async (): Promise<void> => {
+    let importedLessonCount = 0;
+    let preservedLessonCount = 0;
+
+    const nextLessonDocuments = { ...lessonDocuments };
+    const nextLessons: KangurLesson[] = lessons.map((lesson) => {
+      const existingDocument = lessonDocuments[lesson.id];
+      if (hasKangurLessonDocumentContent(existingDocument)) {
+        preservedLessonCount += 1;
+        return lesson.contentMode === 'document' ? lesson : { ...lesson, contentMode: 'document' };
+      }
+
+      const imported = importLegacyKangurLessonDocument(lesson.componentId, {
+        narration: existingDocument?.narration,
+      });
+      if (imported) {
+        nextLessonDocuments[lesson.id] = imported.document;
+        importedLessonCount += 1;
+      }
+
+      return lesson.contentMode === 'document' ? lesson : { ...lesson, contentMode: 'document' };
+    });
+
+    const shouldPersistLessonModes = nextLessons.some(
+      (lesson, index) => lesson.contentMode !== lessons[index]?.contentMode
+    );
+    const shouldPersistDocuments = importedLessonCount > 0;
+
+    if (!shouldPersistDocuments && !shouldPersistLessonModes) {
+      toast('All lessons already have modular document drafts.', {
+        variant: 'info',
+      });
+      return;
+    }
+
+    try {
+      if (shouldPersistDocuments) {
+        await persistLessonDocuments(nextLessonDocuments);
+      }
+      if (shouldPersistLessonModes) {
+        await persistLessons(nextLessons);
+      }
+
+      const importedSummary =
+        importedLessonCount > 0
+          ? `Imported ${importedLessonCount} legacy lesson${importedLessonCount === 1 ? '' : 's'}`
+          : 'Switched existing custom lessons';
+      const preservedSummary =
+        preservedLessonCount > 0
+          ? ` Preserved ${preservedLessonCount} lesson${preservedLessonCount === 1 ? '' : 's'} with existing custom content.`
+          : '';
+      toast(`${importedSummary} into modular editor drafts.${preservedSummary}`, {
+        variant: 'success',
+      });
+    } catch (error: unknown) {
+      toast(error instanceof Error ? error.message : 'Failed to import lessons into the editor.', {
+        variant: 'error',
+      });
+    }
+  }, [lessonDocuments, lessons, persistLessonDocuments, persistLessons, toast]);
+
   const geometryPackResult = useMemo(() => appendMissingGeometryKangurLessons(lessons), [lessons]);
   const logicalThinkingPackResult = useMemo(
     () => appendMissingLogicalThinkingKangurLessons(lessons),
@@ -730,6 +830,11 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
             ]}
           />
         }
+        actions={
+          <Button asChild variant='outline'>
+            <Link href='/admin/kangur/settings'>Narrator settings</Link>
+          </Button>
+        }
       />
 
       <FolderTreePanel
@@ -767,6 +872,19 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
                 >
                   <Sparkles className='mr-1 size-3.5' />
                   Add logic pack
+                </Button>
+                <Button
+                  onClick={(): void => {
+                    void handleImportAllLessonsToEditor();
+                  }}
+                  size='sm'
+                  variant='outline'
+                  className='h-7 border px-2 text-[11px] font-semibold tracking-wide text-emerald-200 hover:bg-emerald-900/30'
+                  disabled={updateSetting.isPending || lessons.length === 0}
+                >
+                  <Sparkles className='mr-1 size-3.5' />
+                  Import all to editor
+                  {lessonsNeedingLegacyImport > 0 ? ` (${lessonsNeedingLegacyImport})` : ''}
                 </Button>
                 <Button
                   onClick={openCreateModal}
@@ -963,8 +1081,8 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
 
           <div className='rounded-md border border-sky-400/20 bg-sky-500/10 p-3 text-xs text-sky-100/90'>
             {formData.contentMode === 'document'
-              ? 'This lesson will render through the custom document editor. Use the document icon on the lesson row to author text, SVG blocks, and grid layouts.'
-              : 'This lesson will render through the legacy Kangur component selected above. You can still open the document editor and prepare custom content before switching modes.'}
+              ? 'This lesson will render through the custom document editor. Use the document icon on the lesson row to author modular lesson pages with text, SVG blocks, uploaded images, activity widgets, and grid layouts.'
+              : 'This lesson will render through the legacy Kangur component selected above. You can still open the document editor and prepare custom content before switching modes, or use the bulk import action to transfer the whole lesson library.'}
           </div>
         </div>
       </FormModal>
@@ -976,7 +1094,7 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
           setEditingContentLesson(null);
         }}
         title={editingContentLesson ? `Edit Content: ${editingContentLesson.title}` : 'Edit Lesson Content'}
-        subtitle='Author lesson pages with text, SVG blocks, and responsive grid layouts.'
+        subtitle='Author lesson pages with text, SVG blocks, uploaded images, activity widgets, and responsive grid layouts. You can also import the current legacy lesson structure into modular pages.'
         onSave={(): void => {
           void handleSaveLessonContent();
         }}
@@ -984,24 +1102,42 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
         saveText='Save Content'
         size='xl'
         actions={
-          editingContentLesson && hasKangurLessonDocumentContent(contentDraft) ? (
-            <Button
-              type='button'
-              variant='outline'
-              className='text-rose-300 hover:bg-rose-500/10 hover:text-rose-200'
-              onClick={(): void => {
-                void handleClearLessonContent();
-              }}
-              disabled={updateSetting.isPending}
-            >
-              Clear custom content
-            </Button>
+          editingContentLesson ? (
+            <div className='flex flex-wrap items-center gap-2'>
+              <Button
+                type='button'
+                variant='outline'
+                className='text-sky-200 hover:bg-sky-500/10 hover:text-sky-100'
+                onClick={handleImportLegacyLesson}
+                disabled={updateSetting.isPending}
+              >
+                <Sparkles className='mr-1 size-3.5' />
+                Import legacy lesson
+              </Button>
+              {hasKangurLessonDocumentContent(contentDraft) ? (
+                <Button
+                  type='button'
+                  variant='outline'
+                  className='text-rose-300 hover:bg-rose-500/10 hover:text-rose-200'
+                  onClick={(): void => {
+                    void handleClearLessonContent();
+                  }}
+                  disabled={updateSetting.isPending}
+                >
+                  Clear custom content
+                </Button>
+              ) : null}
+            </div>
           ) : undefined
         }
       >
         {editingContentLesson ? (
           <div className='space-y-6'>
-            <KangurLessonNarrationPanel lesson={editingContentLesson} document={contentDraft} />
+            <KangurLessonNarrationPanel
+              lesson={editingContentLesson}
+              document={contentDraft}
+              onChange={setContentDraft}
+            />
             <KangurLessonDocumentEditor value={contentDraft} onChange={setContentDraft} />
           </div>
         ) : null}

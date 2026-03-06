@@ -1,0 +1,103 @@
+{
+  "generatedAt": "2026-03-06T18:58:07.566Z",
+  "strictMode": false,
+  "summary": {
+    "total": 6,
+    "passed": 5,
+    "failed": 1
+  },
+  "results": [
+    {
+      "id": "auth-session",
+      "name": "Authentication + Session Bootstrap",
+      "kpi": "Successful sign-in completion rate",
+      "tests": [
+        "__tests__/features/auth/pages/signin-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 2967,
+      "output": "\u001b[1m\u001b[46m RUN \u001b[49m\u001b[22m \u001b[36mv4.0.18 \u001b[39m\u001b[90m/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\u001b[39m\n\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m __tests__/features/auth/pages/signin-page.test.tsx \u001b[2m(\u001b[22m\u001b[2m9 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 575\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m1 passed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m9 passed\u001b[39m\u001b[22m\u001b[90m (9)\u001b[39m\n\u001b[2m   Start at \u001b[22m 19:57:48\n\u001b[2m   Duration \u001b[22m 2.15s\u001b[2m (transform 725ms, setup 172ms, import 1.02s, tests 575ms, environment 285ms)\u001b[22m"
+    },
+    {
+      "id": "products-core-crud",
+      "name": "Products CRUD + Listing Refresh",
+      "kpi": "Create/edit success rate without retries",
+      "tests": [
+        "__tests__/features/products/services/getSettingValue.test.ts"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/products/services/getSettingValue.test.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 1499,
+      "output": "\u001b[1m\u001b[46m RUN \u001b[49m\u001b[22m \u001b[36mv4.0.18 \u001b[39m\u001b[90m/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\u001b[39m\n\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m __tests__/features/products/services/getSettingValue.test.ts \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 5\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m1 passed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m5 passed\u001b[39m\u001b[22m\u001b[90m (5)\u001b[39m\n\u001b[2m   Start at \u001b[22m 19:57:51\n\u001b[2m   Duration \u001b[22m 668ms\u001b[2m (transform 118ms, setup 170ms, import 84ms, tests 5ms, environment 313ms)\u001b[22m"
+    },
+    {
+      "id": "image-studio-generate",
+      "name": "Image Studio Generate + Preview",
+      "kpi": "Generation completion under timeout budget",
+      "tests": [
+        "src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 1375,
+      "output": "\u001b[1m\u001b[46m RUN \u001b[49m\u001b[22m \u001b[36mv4.0.18 \u001b[39m\u001b[90m/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\u001b[39m\n\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts \u001b[2m(\u001b[22m\u001b[2m11 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 16\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m1 passed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m11 passed\u001b[39m\u001b[22m\u001b[90m (11)\u001b[39m\n\u001b[2m   Start at \u001b[22m 19:57:53\n\u001b[2m   Duration \u001b[22m 575ms\u001b[2m (transform 90ms, setup 147ms, import 57ms, tests 16ms, environment 264ms)\u001b[22m"
+    },
+    {
+      "id": "ai-paths-runtime",
+      "name": "AI Paths Run Execution",
+      "kpi": "Run completion without fallback/error path",
+      "tests": [
+        "__tests__/features/ai/ai-paths/services/path-run-executor.test.ts"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/ai/ai-paths/services/path-run-executor.test.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3253,
+      "output": "\u001b[1m\u001b[46m RUN \u001b[49m\u001b[22m \u001b[36mv4.0.18 \u001b[39m\u001b[90m/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\u001b[39m\n\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m __tests__/features/ai/ai-paths/services/path-run-executor.test.ts \u001b[2m(\u001b[22m\u001b[2m17 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 130\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m1 passed\u001b[39m\u001b[22m\u001b[90m (1)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m17 passed\u001b[39m\u001b[22m\u001b[90m (17)\u001b[39m\n\u001b[2m   Start at \u001b[22m 19:57:54\n\u001b[2m   Duration \u001b[22m 2.46s\u001b[2m (transform 1.39s, setup 147ms, import 1.84s, tests 130ms, environment 260ms)\u001b[22m"
+    },
+    {
+      "id": "case-resolver-capture",
+      "name": "Case Resolver OCR + Capture Mapping",
+      "kpi": "Queue-to-review completion without manual recovery",
+      "tests": [
+        "src/features/case-resolver/__tests__/workspace-persistence.test.ts"
+      ],
+      "command": "npx vitest run --project unit src/features/case-resolver/__tests__/workspace-persistence.test.ts",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 798,
+      "output": "\u001b[1m\u001b[46m RUN \u001b[49m\u001b[22m \u001b[36mv4.0.18 \u001b[39m\u001b[90m/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\u001b[39m\n\n\u001b[31mNo test files found, exiting with code 1\n\u001b[39m\n\u001b[2mfilter: \u001b[22m\u001b[33msrc/features/case-resolver/__tests__/workspace-persistence.test.ts\u001b[39m\n\u001b[2mprojects: \u001b[22m\u001b[33munit\u001b[39m\n\n\u001b[30m\u001b[42m unit \u001b[49m\u001b[39m \n\n\u001b[2minclude: \u001b[22m\u001b[33m**/*.{test,spec}.?(c|m)[jt]s?(x)\u001b[39m\n\u001b[2mexclude:  \u001b[22m\u001b[33m**/node_modules/**\u001b[2m, \u001b[22m**/.git/**\u001b[2m, \u001b[22me2e/**\u001b[2m, \u001b[22m.next/**\u001b[2m, \u001b[22m__tests__/features/ai/ai-paths/services/path-run-repository.test.ts\u001b[2m, \u001b[22m__tests__/features/ai/ai-paths/services/path-run-service.test.ts\u001b[2m, \u001b[22m__tests__/features/cms/api/cms-pages.test.ts\u001b[2m, \u001b[22m__tests__/features/cms/api/cms.test.ts\u001b[2m, \u001b[22m__tests__/features/drafter/services/draft-repository.test.ts\u001b[2m, \u001b[22m__tests__/features/files/api/files.test.ts\u001b[2m, \u001b[22m__tests__/features/integrations/services/category-mapping-repository.test.ts\u001b[2m, \u001b[22m__tests__/features/integrations/services/export-template-repository.test.ts\u001b[2m, \u001b[22m__tests__/features/internationalization/api/countries.test.ts\u001b[2m, \u001b[22m__tests__/features/internationalization/api/currencies.test.ts\u001b[2m, \u001b[22m__tests__/features/internationalization/api/languages.test.ts\u001b[2m, \u001b[22m__tests__/features/notesapp/api/categories.test.ts\u001b[2m, \u001b[22m__tests__/features/notesapp/api/notes.test.ts\u001b[2m, \u001b[22m__tests__/features/notesapp/api/tags.test.ts\u001b[2m, \u001b[22m__tests__/features/notesapp/services/note-service.test.ts\u001b[2m, \u001b[22m__tests__/features/products/api/pagination.test.ts\u001b[2m, \u001b[22m__tests__/features/products/services/prismaProductRepository.test.ts\u001b[2m, \u001b[22m__tests__/features/products/services/productMigration.test.ts\u001b[2m, \u001b[22m__tests__/features/products/services/productService.test.ts\u001b[2m, \u001b[22m__tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts\u001b[2m, \u001b[22m__tests__/features/cms/services/mongo-cms-repository.test.ts\u001b[2m, \u001b[22m__tests__/features/notesapp/services/mongo-note-repository.test.ts\u001b[2m, \u001b[22m__tests__/features/products/services/mongo-parameter-repository.test.ts\u001b[2m, \u001b[22m__tests__/features/products/services/mongo-product-repository.test.ts\u001b[2m, \u001b[22m__tests__/features/products/services/mongo-product-canonical-shape-guard.test.ts\u001b[2m, \u001b[22m__tests__/features/ai/ai-paths/runtime/handlers/integration-database-mongo-update-plan-helpers.test.ts\u001b[2m, \u001b[22msrc/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-delete-action.test.ts\u001b[2m, \u001b[22msrc/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-action.test.ts\u001b[2m, \u001b[22msrc/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-plan.test.ts\u001b[2m, \u001b[22msrc/shared/lib/products/services/product-repository/__tests__/mongo-product-repository-mappers.test.ts\u001b[39m"
+    },
+    {
+      "id": "products-trigger-queue-integration",
+      "name": "Products Trigger Button Queue Integration",
+      "kpi": "Trigger enqueue updates queue state without invalid run-id regressions",
+      "tests": [
+        "src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx",
+        "src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts",
+        "src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts",
+        "src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts",
+        "src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts",
+        "src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts",
+        "src/features/products/hooks/useProductAiPathsRunSync.test.tsx",
+        "src/features/products/state/queued-product-ops.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts",
+        "src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts src/features/products/hooks/useProductAiPathsRunSync.test.tsx src/features/products/state/queued-product-ops.test.ts src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 9721,
+      "output": "\u001b[1m\u001b[46m RUN \u001b[49m\u001b[22m \u001b[36mv4.0.18 \u001b[39m\u001b[90m/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\u001b[39m\n\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m src/features/products/state/queued-product-ops.test.ts \u001b[2m(\u001b[22m\u001b[2m15 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 61\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 23\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts \u001b[2m(\u001b[22m\u001b[2m13 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 19\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m src/features/products/hooks/useProductAiPathsRunSync.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 16\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts \u001b[2m(\u001b[22m\u001b[2m18 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 16\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts \u001b[2m(\u001b[22m\u001b[2m13 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 16\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts \u001b[2m(\u001b[22m\u001b[2m4 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 10\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts \u001b[2m(\u001b[22m\u001b[2m12 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 11\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 7\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts \u001b[2m(\u001b[22m\u001b[2m15 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 6\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts \u001b[2m(\u001b[22m\u001b[2m20 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 6\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 7\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 8\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 6\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m \u001b[30m\u001b[42m unit \u001b[49m\u001b[39m src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts \u001b[2m(\u001b[22m\u001b[2m14 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 6\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m15 passed\u001b[39m\u001b[22m\u001b[90m (15)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m158 passed\u001b[39m\u001b[22m\u001b[90m (158)\u001b[39m\n\u001b[2m   Start at \u001b[22m 19:57:58\n\u001b[2m   Duration \u001b[22m 8.86s\u001b[2m (transform 1.11s, setup 1.39s, import 2.05s, tests 218ms, environment 3.91s)\u001b[22m"
+    }
+  ]
+}

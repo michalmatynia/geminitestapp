@@ -10,11 +10,12 @@ import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
+import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 
 type GeometryPerimeterLessonProps = { onBack: () => void };
 type SectionId = 'intro' | 'kwadrat' | 'prostokan' | 'podsumowanie';
 
-const SLIDES: Record<SectionId, LessonSlide[]> = {
+export const SLIDES: Record<SectionId, LessonSlide[]> = {
   intro: [
     {
       title: 'Co to jest obwód?',
@@ -23,10 +24,10 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
           <p className='text-gray-700'>
             <strong>Obwód</strong> to długosc całej krawędzi figury. Dodajemy wszystkie boki.
           </p>
-          <div className='rounded-2xl border border-amber-200 bg-amber-50 p-4'>
+          <KangurLessonCallout accent='amber'>
             <div className='mx-auto h-20 w-32 rounded border-4 border-amber-500' />
             <p className='mt-2 text-sm text-amber-700'>Idziemy dookoła figury i sumujemy.</p>
-          </div>
+          </KangurLessonCallout>
           <p className='text-gray-500 text-sm'>
             Obwód mierzymy w centymetrach (cm), metrach (m) itp.
           </p>
@@ -39,15 +40,15 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
       title: 'Obwód kwadratu',
       content: (
         <div className='space-y-3'>
-          <div className='rounded-2xl border border-amber-200 bg-white p-4 text-center'>
+          <KangurLessonCallout accent='slate' className='border-amber-200/85 text-center'>
             <p className='text-gray-700'>Każdy bok ma 3 cm</p>
             <p className='mt-2 text-xl font-bold text-amber-700'>Obwód = 3 + 3 + 3 + 3 = 12 cm</p>
-          </div>
-          <div className='rounded-2xl border border-amber-200 bg-amber-50 p-3 text-center text-sm text-gray-700'>
+          </KangurLessonCallout>
+          <KangurLessonCallout accent='amber' className='text-center text-sm text-gray-700' padding='sm'>
             <p className='font-bold text-amber-700'>Wzór dla kwadratu:</p>
             <p className='text-lg font-extrabold mt-1'>O = 4 × a</p>
             <p className='text-gray-500 text-xs mt-1'>gdzie <b>a</b> to długosc boku</p>
-          </div>
+          </KangurLessonCallout>
           <p className='text-center text-sm text-gray-500'>
             Przykład: a = 5 cm → O = 4 × 5 = 20 cm
           </p>
@@ -60,15 +61,15 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
       title: 'Obwód prostokąta',
       content: (
         <div className='space-y-3'>
-          <div className='rounded-2xl border border-amber-200 bg-white p-4 text-center'>
+          <KangurLessonCallout accent='slate' className='border-amber-200/85 text-center'>
             <p className='text-gray-700'>Boki: 6 cm, 4 cm, 6 cm, 4 cm</p>
             <p className='mt-2 text-xl font-bold text-amber-700'>Obwód = 6 + 4 + 6 + 4 = 20 cm</p>
-          </div>
-          <div className='rounded-2xl border border-amber-200 bg-amber-50 p-3 text-center text-sm text-gray-700'>
+          </KangurLessonCallout>
+          <KangurLessonCallout accent='amber' className='text-center text-sm text-gray-700' padding='sm'>
             <p className='font-bold text-amber-700'>Wzór dla prostokata:</p>
             <p className='text-lg font-extrabold mt-1'>O = 2 × (a + b)</p>
             <p className='text-gray-500 text-xs mt-1'>gdzie <b>a</b> i <b>b</b> to długosci boków</p>
-          </div>
+          </KangurLessonCallout>
           <p className='text-center text-sm text-gray-500'>
             Przykład: a=6, b=4 → O = 2 × (6+4) = 20 cm
           </p>
@@ -88,9 +89,9 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
             'Jednostka obwodu to np. cm lub m.',
             'Zawsze sprawdz, czy dodałes każdy bok tylko raz.',
           ].map((text) => (
-            <div key={text} className='rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-gray-700'>
+            <KangurLessonCallout key={text} accent='amber' className='text-sm text-gray-700' padding='sm'>
               ✅ {text}
-            </div>
+            </KangurLessonCallout>
           ))}
         </div>
       ),
@@ -98,7 +99,7 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
 };
 
-const HUB_SECTIONS = [
+export const HUB_SECTIONS = [
   { id: 'intro', emoji: '📏', title: 'Co to obwód?', description: 'Definicja i zasada liczenia' },
   { id: 'kwadrat', emoji: '🟥', title: 'Obwód kwadratu', description: 'Wzór: 4 × a' },
   { id: 'prostokan', emoji: '▭', title: 'Obwód prostokata', description: 'Wzór: 2 × (a + b)' },

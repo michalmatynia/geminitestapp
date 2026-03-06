@@ -6,6 +6,7 @@ import type {
   RuntimeState,
 } from '@/shared/contracts/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+import { isSerializablePortValue } from './path-run-executor.runtime-state';
 
 type PortBucket = 'inputs' | 'outputs' | 'nodeOutputs';
 
@@ -22,9 +23,6 @@ export type RuntimePortRepairResult = {
   counts: RuntimePortRepairCounts;
   nodesTouched: string[];
 };
-
-const isSerializablePortValue = (value: unknown): boolean =>
-  value !== undefined && typeof value !== 'function' && typeof value !== 'symbol';
 
 const toPortMap = (value: unknown): Record<string, RuntimePortValues> =>
   isObjectRecord(value) ? ({ ...value } as Record<string, RuntimePortValues>) : {};

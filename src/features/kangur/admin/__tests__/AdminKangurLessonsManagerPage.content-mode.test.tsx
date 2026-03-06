@@ -7,12 +7,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   mutateAsyncMock,
+  apiPostMock,
   toastMock,
   settingsStoreMock,
   useMasterFolderTreeShellMock,
   latestNodesState,
 } = vi.hoisted(() => ({
   mutateAsyncMock: vi.fn(),
+  apiPostMock: vi.fn(),
   toastMock: vi.fn(),
   settingsStoreMock: {
     get: vi.fn(),
@@ -83,6 +85,12 @@ vi.mock('@/shared/hooks/use-settings', () => ({
   }),
 }));
 
+vi.mock('@/shared/lib/api-client', () => ({
+  api: {
+    post: apiPostMock,
+  },
+}));
+
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreMock,
 }));
@@ -126,6 +134,10 @@ vi.mock('@/features/kangur/admin/KangurLessonDocumentEditor', () => ({
       </button>
     </div>
   ),
+}));
+
+vi.mock('@/features/kangur/admin/KangurLessonNarrationPanel', () => ({
+  KangurLessonNarrationPanel: () => <div data-testid='mock-narration-panel' />,
 }));
 
 vi.mock('@/shared/ui', () => ({
@@ -261,6 +273,7 @@ const baseLessons = [
 describe('AdminKangurLessonsManagerPage content mode flow', () => {
   beforeEach(() => {
     mutateAsyncMock.mockReset();
+    apiPostMock.mockReset();
     toastMock.mockReset();
     settingsStoreMock.get.mockReset();
     useMasterFolderTreeShellMock.mockReset();
@@ -279,6 +292,13 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
       viewport: {
         scrollToNodeRef: { current: null },
       },
+    });
+    apiPostMock.mockResolvedValue({
+      state: 'missing',
+      voice: 'coral',
+      latestCreatedAt: null,
+      message: 'Audio has not been generated for this lesson draft yet.',
+      segments: [],
     });
   });
 
@@ -426,5 +446,94 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
     expect(screen.getByTestId('mock-doc-editor-json')).toHaveTextContent('"denseFill":true');
     expect(screen.getByTestId('mock-doc-editor-json')).toHaveTextContent('"columnStart":1');
     expect(screen.getByTestId('mock-doc-editor-json')).toHaveTextContent('"rowStart":1');
+  });
+
+  it('imports the legacy lesson structure into the document editor draft', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_LESSONS_SETTING_KEY) {
+        return JSON.stringify(baseLessons);
+      }
+      if (key === KANGUR_LESSON_DOCUMENTS_SETTING_KEY) {
+        return '{}';
+      }
+      return null;
+    });
+
+    render(<AdminKangurLessonsManagerPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /edit lesson content/i }));
+    expect(screen.getByTestId('mock-doc-editor-block-count')).toHaveTextContent('2');
+
+    fireEvent.click(screen.getByRole('button', { name: /import legacy lesson/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-doc-editor-json')).toHaveTextContent('"Overview"');
+    });
+    expect(screen.getByTestId('mock-doc-editor-json')).toHaveTextContent(
+      'Co pokazuje krótka wskazówka?'
+    );
+    expect(screen.getByTestId('mock-doc-editor-json')).toHaveTextContent('"type":"activity"');
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.stringContaining('Imported'),
+      expect.objectContaining({ variant: 'success' })
+    );
+  });
+
+  it('bulk-imports current lessons into document drafts and switches them to document mode', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_LESSONS_SETTING_KEY) {
+        return JSON.stringify([
+          ...baseLessons,
+          {
+            ...baseLessons[0],
+            id: 'kangur-lesson-adding',
+            componentId: 'adding',
+            title: 'Dodawanie',
+            description: 'Dodawaj liczby krok po kroku',
+            emoji: '➕',
+            sortOrder: 2000,
+          },
+        ]);
+      }
+      if (key === KANGUR_LESSON_DOCUMENTS_SETTING_KEY) {
+        return '{}';
+      }
+      return null;
+    });
+    mutateAsyncMock.mockResolvedValue(undefined);
+
+    render(<AdminKangurLessonsManagerPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /import all to editor/i }));
+
+    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(2));
+
+    const documentSave = mutateAsyncMock.mock.calls[0]?.[0] as { key: string; value: string };
+    expect(documentSave.key).toBe(KANGUR_LESSON_DOCUMENTS_SETTING_KEY);
+    const documentStore = JSON.parse(documentSave.value) as Record<
+      string,
+      { pages?: Array<{ title?: string; blocks: Array<{ type: string; activityId?: string }> }> }
+    >;
+    expect(documentStore['kangur-lesson-clock']?.pages?.[0]?.title).toBe('Overview');
+    expect(
+      documentStore['kangur-lesson-clock']?.pages?.some((page) =>
+        page.blocks.some((block) => block.type === 'activity' && block.activityId === 'clock-training')
+      )
+    ).toBe(true);
+    expect(
+      documentStore['kangur-lesson-adding']?.pages?.some((page) =>
+        page.blocks.some((block) => block.type === 'activity' && block.activityId === 'adding-ball')
+      )
+    ).toBe(true);
+
+    const lessonSave = mutateAsyncMock.mock.calls[1]?.[0] as { key: string; value: string };
+    expect(lessonSave.key).toBe(KANGUR_LESSONS_SETTING_KEY);
+    const persistedLessons = JSON.parse(lessonSave.value) as Array<{ id: string; contentMode: string }>;
+    expect(persistedLessons.every((lesson) => lesson.contentMode === 'document')).toBe(true);
+
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.stringContaining('Imported 2 legacy lessons into modular editor drafts.'),
+      expect.objectContaining({ variant: 'success' })
+    );
   });
 });

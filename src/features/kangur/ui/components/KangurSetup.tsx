@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Lock } from 'lucide-react';
 
+import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_ACCENT_STYLES, KANGUR_OPTION_CARD_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import type { KangurMode } from '@/features/kangur/ui/types';
+import { cn } from '@/shared/utils';
 
 type KangurSet = {
   id: KangurMode;
@@ -79,22 +82,19 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
 
   if (!selectedEdition) {
     return (
-      <div className='w-full max-w-sm flex flex-col gap-4'>
-        <button
-          onClick={onBack}
-          className='self-start flex items-center gap-2 text-orange-500 hover:text-orange-700 font-semibold text-sm transition'
-        >
+      <div className='flex w-full max-w-md flex-col gap-4'>
+        <KangurButton onClick={onBack} variant='ghost' size='sm' className='self-start'>
           <ArrowLeft className='w-4 h-4' /> Wroc
-        </button>
+        </KangurButton>
 
-        <div className='bg-white rounded-3xl shadow-xl p-6 flex flex-col items-center gap-5 text-center'>
+        <KangurPanel className='flex flex-col items-center gap-5 text-center' padding='xl' variant='elevated'>
           <div className='text-6xl'>🦘</div>
-          <h2 className='text-2xl font-extrabold text-gray-800'>Kangur Matematyczny</h2>
-          <p className='text-gray-500 text-sm leading-relaxed'>
+          <h2 className='text-2xl font-extrabold text-slate-800'>Kangur Matematyczny</h2>
+          <p className='text-sm leading-relaxed text-slate-500'>
             Wybierz edycje konkursu, z ktorej chcesz rozwiazywac zadania.
           </p>
 
-          <div className='w-full flex flex-col gap-3'>
+          <div className='flex w-full flex-col gap-3'>
             {EDITIONS.map((edition) => (
               <motion.button
                 key={edition.year}
@@ -106,17 +106,26 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
                   }
                 }}
                 disabled={!edition.available}
-                className={`w-full py-4 px-5 rounded-2xl shadow flex items-center gap-4 text-left transition ${
+                className={cn(
+                  KANGUR_OPTION_CARD_CLASSNAME,
+                  'flex w-full items-center gap-4 rounded-[28px] px-5 py-4 text-left',
                   edition.available
-                    ? 'bg-gradient-to-r from-orange-400 to-yellow-400 text-white'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
-                }`}
+                    ? cn(KANGUR_ACCENT_STYLES.amber.activeCard, KANGUR_ACCENT_STYLES.amber.hoverCard)
+                    : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 opacity-70'
+                )}
               >
-                <span className='text-3xl'>{edition.emoji}</span>
+                <span
+                  className={cn(
+                    'flex h-12 w-12 items-center justify-center rounded-2xl text-3xl shadow-sm',
+                    edition.available ? KANGUR_ACCENT_STYLES.amber.icon : 'bg-slate-200 text-slate-500'
+                  )}
+                >
+                  {edition.emoji}
+                </span>
                 <div className='flex flex-col'>
-                  <span className='font-extrabold text-lg'>{edition.label}</span>
+                  <span className='text-lg font-extrabold text-slate-800'>{edition.label}</span>
                   {!edition.available && (
-                    <span className='text-xs flex items-center gap-1 mt-0.5'>
+                    <span className='mt-0.5 flex items-center gap-1 text-xs text-slate-400'>
                       <Lock className='w-3 h-3' /> Wkrotce dostepna
                     </span>
                   )}
@@ -125,33 +134,35 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
             ))}
           </div>
 
-          <div className='bg-orange-50 rounded-2xl p-3 text-xs text-orange-700 text-left w-full'>
+          <div className='w-full rounded-2xl border border-amber-200 bg-amber-50/80 p-3 text-left text-xs text-amber-800'>
             <p className='font-bold mb-1'>ℹ️ O konkursie Kangur:</p>
             <p>
               Kangur Matematyczny to ogolnopolski konkurs dla uczniow szkol podstawowych. Zadania
               sprawdzaja logiczne myslenie i umiejetnosci matematyczne.
             </p>
           </div>
-        </div>
+        </KangurPanel>
       </div>
     );
   }
 
   return (
-    <div className='w-full max-w-sm flex flex-col gap-4'>
-      <button
+    <div className='flex w-full max-w-md flex-col gap-4'>
+      <KangurButton
         onClick={() => setSelectedEdition(null)}
-        className='self-start flex items-center gap-2 text-orange-500 hover:text-orange-700 font-semibold text-sm transition'
+        className='self-start'
+        size='sm'
+        variant='ghost'
       >
         <ArrowLeft className='w-4 h-4' /> Edycje
-      </button>
+      </KangurButton>
 
-      <div className='bg-white rounded-3xl shadow-xl p-6 flex flex-col items-center gap-5 text-center'>
+      <KangurPanel className='flex flex-col items-center gap-5 text-center' padding='xl' variant='elevated'>
         <div className='text-5xl'>{selectedEdition.emoji}</div>
-        <h2 className='text-2xl font-extrabold text-gray-800'>{selectedEdition.label}</h2>
-        <p className='text-gray-500 text-sm'>Wybierz zestaw pytan:</p>
+        <h2 className='text-2xl font-extrabold text-slate-800'>{selectedEdition.label}</h2>
+        <p className='text-sm text-slate-500'>Wybierz zestaw pytan:</p>
 
-        <div className='w-full flex flex-col gap-3'>
+        <div className='flex w-full flex-col gap-3'>
           {selectedEdition.sets.map((setItem) => (
             <motion.button
               key={setItem.id}
@@ -163,23 +174,25 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
                 }
               }}
               disabled={!setItem.available}
-              className={`w-full py-4 px-5 rounded-2xl shadow flex flex-col items-start gap-1 text-left transition ${
+              className={cn(
+                KANGUR_OPTION_CARD_CLASSNAME,
+                'flex w-full flex-col items-start gap-1 rounded-[28px] px-5 py-4 text-left',
                 setItem.available
-                  ? 'bg-gradient-to-r from-orange-400 to-yellow-400 text-white'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
-              }`}
+                  ? cn(KANGUR_ACCENT_STYLES.amber.activeCard, KANGUR_ACCENT_STYLES.amber.hoverCard)
+                  : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 opacity-70'
+              )}
             >
-              <span className='font-extrabold text-base flex items-center gap-2'>
+              <span className='flex items-center gap-2 text-base font-extrabold text-slate-800'>
                 {setItem.label}
                 {!setItem.available && <Lock className='w-3.5 h-3.5' />}
               </span>
-              <span className={`text-xs ${setItem.available ? 'text-white/80' : 'text-gray-400'}`}>
+              <span className={`text-xs ${setItem.available ? 'text-slate-500' : 'text-slate-400'}`}>
                 {setItem.desc}
               </span>
             </motion.button>
           ))}
         </div>
-      </div>
+      </KangurPanel>
     </div>
   );
 }

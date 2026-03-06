@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, Eraser, PencilRuler, RefreshCw, XCircle } from 'lucide-react';
 
+import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
 import {
   evaluateGeometryDrawing,
   type GeometryDrawPoint,
@@ -369,36 +370,36 @@ export default function GeometryDrawingGame({
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className='w-full bg-white rounded-3xl shadow-xl p-6 flex flex-col items-center gap-4 text-center'
+          className='w-full'
         >
-          <div className='text-6xl'>{score === totalRounds ? '🏆' : score >= 3 ? '🌟' : '💪'}</div>
-          <h3 className='text-2xl font-extrabold text-gray-800'>
-            Wynik: {score}/{totalRounds}
-          </h3>
-          <p className='text-gray-500'>Zdobyte XP: +{xpEarned}</p>
-          <div className='w-full h-3 rounded-full bg-gray-100 overflow-hidden'>
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.round((score / totalRounds) * 100)}%` }}
-              transition={{ duration: 0.6 }}
-              className='h-full bg-gradient-to-r from-emerald-500 to-cyan-500'
-            />
-          </div>
-          <div className='flex gap-3 w-full'>
-            <button
-              onClick={handleRestart}
-              className='flex-1 py-2 rounded-2xl border-2 border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition flex items-center justify-center gap-2'
-            >
-              <RefreshCw className='w-4 h-4' />
-              Jeszcze raz
-            </button>
-            <button
-              onClick={onFinish}
-              className='flex-1 py-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-extrabold shadow hover:opacity-90 transition'
-            >
-              Wróć
-            </button>
-          </div>
+          <KangurPanel
+            className='flex flex-col items-center gap-4 text-center'
+            padding='xl'
+            variant='elevated'
+          >
+            <div className='text-6xl'>{score === totalRounds ? '🏆' : score >= 3 ? '🌟' : '💪'}</div>
+            <h3 className='text-2xl font-extrabold text-gray-800'>
+              Wynik: {score}/{totalRounds}
+            </h3>
+            <p className='text-gray-500'>Zdobyte XP: +{xpEarned}</p>
+            <div className='w-full h-3 rounded-full bg-gray-100 overflow-hidden'>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.round((score / totalRounds) * 100)}%` }}
+                transition={{ duration: 0.6 }}
+                className='h-full bg-gradient-to-r from-emerald-500 to-cyan-500'
+              />
+            </div>
+            <div className='flex gap-3 w-full'>
+              <KangurButton className='flex-1' onClick={handleRestart} size='lg' variant='secondary'>
+                <RefreshCw className='w-4 h-4' />
+                Jeszcze raz
+              </KangurButton>
+              <KangurButton className='flex-1' onClick={onFinish} size='lg' variant='primary'>
+                Wróć
+              </KangurButton>
+            </div>
+          </KangurPanel>
         </motion.div>
       ) : (
         <>
@@ -438,75 +439,81 @@ export default function GeometryDrawingGame({
             key={currentRound?.id}
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className='w-full bg-white rounded-3xl shadow-xl p-5 flex flex-col items-center gap-3'
+            className='w-full'
           >
-            <div className='text-5xl'>{currentRound?.emoji}</div>
-            <h3 className='text-xl font-extrabold text-gray-800'>Narysuj: {currentRound?.label}</h3>
-            <p className='text-sm text-gray-500 text-center'>{currentRound?.hint}</p>
+            <KangurPanel className='flex flex-col items-center gap-3' padding='lg' variant='elevated'>
+              <div className='text-5xl'>{currentRound?.emoji}</div>
+              <h3 className='text-xl font-extrabold text-gray-800'>Narysuj: {currentRound?.label}</h3>
+              <p className='text-sm text-gray-500 text-center'>{currentRound?.hint}</p>
 
-            <div className='relative w-full'>
-              <canvas
-                ref={canvasRef}
-                width={CANVAS_WIDTH}
-                height={CANVAS_HEIGHT}
-                className='w-full rounded-2xl border-2 border-slate-200 bg-white touch-none'
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerCancel={handlePointerUp}
-                onPointerLeave={handlePointerUp}
-              />
-              {points.length === 0 && (
-                <div className='pointer-events-none absolute inset-0 flex items-center justify-center text-slate-300 text-sm font-semibold'>
-                  <PencilRuler className='w-4 h-4 mr-2' />
-                  Rysuj tutaj
-                </div>
-              )}
-            </div>
+              <div className='relative w-full'>
+                <canvas
+                  ref={canvasRef}
+                  width={CANVAS_WIDTH}
+                  height={CANVAS_HEIGHT}
+                  className='w-full rounded-2xl border-2 border-slate-200 bg-white touch-none'
+                  onPointerDown={handlePointerDown}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                  onPointerCancel={handlePointerUp}
+                  onPointerLeave={handlePointerUp}
+                />
+                {points.length === 0 && (
+                  <div className='pointer-events-none absolute inset-0 flex items-center justify-center text-slate-300 text-sm font-semibold'>
+                    <PencilRuler className='w-4 h-4 mr-2' />
+                    Rysuj tutaj
+                  </div>
+                )}
+              </div>
 
-            <AnimatePresence>
-              {feedback && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.94 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.94 }}
-                  className={`w-full rounded-2xl px-4 py-2 text-sm font-bold flex items-center justify-center gap-2 ${
-                    feedback.kind === 'success'
-                      ? 'bg-emerald-50 text-emerald-700'
-                      : feedback.kind === 'error'
-                        ? 'bg-rose-50 text-rose-700'
-                        : 'bg-amber-50 text-amber-700'
-                  }`}
+              <AnimatePresence>
+                {feedback && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.94 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.94 }}
+                    className={`w-full rounded-2xl px-4 py-2 text-sm font-bold flex items-center justify-center gap-2 ${
+                      feedback.kind === 'success'
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : feedback.kind === 'error'
+                          ? 'bg-rose-50 text-rose-700'
+                          : 'bg-amber-50 text-amber-700'
+                    }`}
+                  >
+                    {feedback.kind === 'success' ? (
+                      <CheckCircle className='w-4 h-4' />
+                    ) : feedback.kind === 'error' ? (
+                      <XCircle className='w-4 h-4' />
+                    ) : (
+                      <PencilRuler className='w-4 h-4' />
+                    )}
+                    {feedback.text}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className='flex gap-3 w-full'>
+                <KangurButton
+                  className='flex-1'
+                  disabled={feedback !== null || points.length === 0}
+                  onClick={clearDrawing}
+                  size='lg'
+                  variant='secondary'
                 >
-                  {feedback.kind === 'success' ? (
-                    <CheckCircle className='w-4 h-4' />
-                  ) : feedback.kind === 'error' ? (
-                    <XCircle className='w-4 h-4' />
-                  ) : (
-                    <PencilRuler className='w-4 h-4' />
-                  )}
-                  {feedback.text}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <div className='flex gap-3 w-full'>
-              <button
-                onClick={clearDrawing}
-                disabled={feedback !== null || points.length === 0}
-                className='flex-1 py-2 rounded-2xl border-2 border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition disabled:opacity-40 disabled:hover:bg-transparent flex items-center justify-center gap-2'
-              >
-                <Eraser className='w-4 h-4' />
-                Wyczyść
-              </button>
-              <button
-                onClick={handleCheck}
-                disabled={feedback !== null}
-                className={`flex-1 py-2 rounded-2xl bg-gradient-to-r ${currentRound?.accent} text-white font-extrabold shadow hover:opacity-90 transition disabled:opacity-40`}
-              >
-                Sprawdź
-              </button>
-            </div>
+                  <Eraser className='w-4 h-4' />
+                  Wyczyść
+                </KangurButton>
+                <KangurButton
+                  className='flex-1'
+                  disabled={feedback !== null}
+                  onClick={handleCheck}
+                  size='lg'
+                  variant='primary'
+                >
+                  Sprawdź
+                </KangurButton>
+              </div>
+            </KangurPanel>
           </motion.div>
         </>
       )}

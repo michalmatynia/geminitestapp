@@ -1,14 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import {
-  ArrowLeft,
-  ArrowRight,
-  ChevronDown,
-  ChevronRight,
-  Lock,
-  Volume2,
-  VolumeX,
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight, ChevronDown, ChevronRight, Lock } from 'lucide-react';
 
 import ClockTrainingGame from './ClockTrainingGame';
 import {
@@ -17,6 +9,8 @@ import {
   XP_REWARDS,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
 
 type ClockLessonProps = {
   onBack: () => void;
@@ -141,7 +135,7 @@ function AnalogClock({
   );
 }
 
-const LESSON_SECTIONS: LessonSection[] = [
+export const LESSON_SECTIONS: LessonSection[] = [
   {
     id: 'hours',
     title: 'Sekcja 1: Godziny (krótka wskazówka)',
@@ -221,7 +215,7 @@ const LESSON_SECTIONS: LessonSection[] = [
               showMinuteHand={false}
               label='Jaka to godzina?'
             />
-            <div className='bg-red-50 border border-red-200 rounded-2xl p-4 max-w-xs text-left'>
+            <KangurLessonCallout accent='rose' className='max-w-xs text-left'>
               <p className='text-gray-700 font-semibold'>Krok:</p>
               <p className='text-gray-600 text-sm mt-1'>
                 1. Znajdź krótką wskazówkę.
@@ -229,7 +223,7 @@ const LESSON_SECTIONS: LessonSection[] = [
                 2. Odczytaj numer, na który pokazuje.
               </p>
               <p className='text-red-700 font-extrabold mt-2'>Wynik: 9:00</p>
-            </div>
+            </KangurLessonCallout>
           </div>
         ),
       },
@@ -305,14 +299,14 @@ const LESSON_SECTIONS: LessonSection[] = [
               showHourHand={false}
               label='Jaka to liczba minut?'
             />
-            <div className='bg-green-50 border border-green-200 rounded-2xl p-4 max-w-xs text-left'>
+            <KangurLessonCallout accent='emerald' className='max-w-xs text-left'>
               <p className='text-gray-700 font-semibold'>Krok:</p>
               <p className='text-gray-600 text-sm mt-1'>
                 Długa wskazówka stoi przy 7.
                 <br />7 × 5 = 35 minut.
               </p>
               <p className='text-green-700 font-extrabold mt-2'>Wynik: :35</p>
-            </div>
+            </KangurLessonCallout>
           </div>
         ),
       },
@@ -329,12 +323,12 @@ const LESSON_SECTIONS: LessonSection[] = [
         content: (
           <div className='flex flex-col items-center gap-4 text-center'>
             <AnalogClock hours={8} minutes={30} label='Przykład: 8:30' />
-            <div className='bg-indigo-50 rounded-2xl p-4 max-w-xs text-left space-y-2'>
+            <KangurLessonCallout accent='indigo' className='max-w-xs text-left space-y-2'>
               <p className='text-gray-700 font-semibold'>Kroki:</p>
               <p className='text-gray-600 text-sm'>1. Krótka wskazówka: godzina = 8</p>
               <p className='text-gray-600 text-sm'>2. Długa wskazówka: minuty = 30</p>
               <p className='text-indigo-700 font-extrabold'>Wynik: 8:30</p>
-            </div>
+            </KangurLessonCallout>
           </div>
         ),
       },
@@ -374,10 +368,6 @@ const LESSON_SECTIONS: LessonSection[] = [
   },
 ];
 
-function stopSpeech(): void {
-  window.speechSynthesis?.cancel();
-}
-
 export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Element {
   const [openSection, setOpenSection] = useState<number | null>(0);
   const [sectionSlides, setSectionSlides] = useState<number[]>(() => LESSON_SECTIONS.map(() => 0));
@@ -387,7 +377,6 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
   const [unlockedSections, setUnlockedSections] = useState<boolean[]>(() =>
     LESSON_SECTIONS.map((_, index) => index === 0)
   );
-  const [speaking, setSpeaking] = useState(false);
   const [inTraining, setInTraining] = useState(false);
 
   const activeSection = openSection !== null ? LESSON_SECTIONS[openSection] : null;
@@ -413,8 +402,6 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
       if (!unlockedSections[sectionIndex]) {
         return;
       }
-      stopSpeech();
-      setSpeaking(false);
       setOpenSection((current) => (current === sectionIndex ? null : sectionIndex));
     },
     [unlockedSections]
@@ -484,30 +471,6 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
     setInTraining(true);
   }, []);
 
-  const speak = useCallback(() => {
-    if (!activeSection || !activeSlide) {
-      return;
-    }
-    if (!window.speechSynthesis) {
-      return;
-    }
-
-    stopSpeech();
-    const text = `${activeSection.title}. ${activeSlide.title}. ${activeSlide.tts}`;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'pl-PL';
-    utterance.rate = 0.9;
-    utterance.onstart = () => setSpeaking(true);
-    utterance.onend = () => setSpeaking(false);
-    utterance.onerror = () => setSpeaking(false);
-    window.speechSynthesis.speak(utterance);
-  }, [activeSection, activeSlide]);
-
-  const stopSpeaking = useCallback(() => {
-    stopSpeech();
-    setSpeaking(false);
-  }, []);
-
   const goNext = useCallback(() => {
     if (!activeSection || openSection === null) {
       return;
@@ -522,13 +485,11 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
     if (isFinalSlide) {
       markSectionCompleted(openSection);
       const nextSection = openSection + 1;
-      stopSpeaking();
       setOpenSection(nextSection);
       setSectionSlideIndex(nextSection, 0);
       return;
     }
 
-    stopSpeaking();
     setSectionSlideIndex(openSection, activeSlideIndex + 1);
   }, [
     activeSection,
@@ -539,7 +500,6 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
     markSectionCompleted,
     openSection,
     setSectionSlideIndex,
-    stopSpeaking,
   ]);
 
   const goPrev = useCallback(() => {
@@ -548,7 +508,6 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
     }
 
     if (activeSlideIndex > 0) {
-      stopSpeaking();
       setSectionSlideIndex(openSection, activeSlideIndex - 1);
       return;
     }
@@ -569,28 +528,24 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
     openSection,
     openSectionAt,
     setSectionSlideIndex,
-    stopSpeaking,
   ]);
-
-  useEffect(() => {
-    return () => {
-      stopSpeech();
-    };
-  }, []);
 
   if (inTraining) {
     return (
       <div className='flex flex-col items-center w-full max-w-lg gap-4'>
-        <button
+        <KangurButton
           onClick={() => setInTraining(false)}
-          className='self-start flex items-center gap-2 text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
+          className='self-start'
+          size='sm'
+          type='button'
+          variant='ghost'
         >
           <ArrowLeft className='w-4 h-4' /> Wróć do lekcji
-        </button>
-        <div className='bg-white rounded-3xl shadow-xl p-6 w-full flex flex-col items-center gap-5'>
-          <h2 className='text-xl font-extrabold text-indigo-700'>🕐 Ćwiczenie z zegarem</h2>
+        </KangurButton>
+        <KangurPanel className='w-full flex flex-col items-center gap-5' padding='xl' variant='soft'>
+          <h2 className='text-xl font-extrabold text-slate-800'>🕐 Ćwiczenie z zegarem</h2>
           <ClockTrainingGame onFinish={onBack} />
-        </div>
+        </KangurPanel>
       </div>
     );
   }
@@ -598,23 +553,29 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
   if (!activeSection || !activeSlide) {
     return (
       <div className='flex flex-col items-center w-full max-w-lg gap-4'>
-        <button
+        <KangurButton
           onClick={onBack}
-          className='self-start flex items-center gap-2 text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
+          className='self-start'
+          size='sm'
+          type='button'
+          variant='ghost'
         >
           <ArrowLeft className='w-4 h-4' /> Wróć do lekcji
-        </button>
-        <div
+        </KangurButton>
+        <KangurLessonCallout
           data-testid='clock-lesson-collapsed-hint'
-          className='w-full rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/60 px-4 py-5 text-center text-sm font-semibold text-indigo-700'
+          accent='indigo'
+          className='w-full border-dashed py-5 text-center text-sm font-semibold text-indigo-700'
         >
           Wszystkie sekcje są zwinięte. Kliknij nagłówek sekcji, aby kontynuować naukę.
-        </div>
+        </KangurLessonCallout>
 
         {LESSON_SECTIONS.map((section, sectionIndex) => (
-          <div
+          <KangurPanel
             key={section.id}
-            className='bg-white rounded-3xl shadow-xl border border-indigo-100 p-4 w-full flex flex-col gap-3'
+            className='w-full flex flex-col gap-3 border-indigo-100/80'
+            padding='lg'
+            variant='soft'
           >
             {(() => {
               const status = getSectionStatus(sectionIndex, false);
@@ -657,7 +618,7 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
                 </button>
               );
             })()}
-          </div>
+          </KangurPanel>
         ))}
       </div>
     );
@@ -665,12 +626,15 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
 
   return (
     <div className='flex flex-col items-center w-full max-w-lg gap-4'>
-      <button
+      <KangurButton
         onClick={onBack}
-        className='self-start flex items-center gap-2 text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
+        className='self-start'
+        size='sm'
+        type='button'
+        variant='ghost'
       >
         <ArrowLeft className='w-4 h-4' /> Wróć do lekcji
-      </button>
+      </KangurButton>
 
       {LESSON_SECTIONS.map((section, sectionIndex) => {
         const isOpen = sectionIndex === openSection;
@@ -680,9 +644,11 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
         const isLocked = !unlockedSections[sectionIndex];
 
         return (
-          <div
+          <KangurPanel
             key={section.id}
-            className='bg-white rounded-3xl shadow-xl border border-indigo-100 p-4 w-full flex flex-col gap-3'
+            className='w-full flex flex-col gap-3 border-indigo-100/80'
+            padding='lg'
+            variant='soft'
           >
             <button
               data-testid={`clock-lesson-section-toggle-${section.id}`}
@@ -732,7 +698,6 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
                     <button
                       key={`${section.id}-${slideIndex}`}
                       onClick={() => {
-                        stopSpeaking();
                         setSectionSlideIndex(sectionIndex, slideIndex);
                       }}
                       className={`h-2.5 rounded-full transition-all ${
@@ -746,19 +711,7 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
                 </div>
 
                 <div className='flex items-center justify-between gap-3'>
-                  <h4 className='text-lg font-extrabold text-indigo-700'>{activeSlide.title}</h4>
-                  <button
-                    onClick={speaking ? stopSpeaking : speak}
-                    className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-all shadow ${
-                      speaking
-                        ? 'bg-indigo-500 text-white animate-pulse'
-                        : 'bg-indigo-100 text-indigo-600 hover:bg-indigo-200'
-                    }`}
-                    type='button'
-                  >
-                    {speaking ? <VolumeX className='w-4 h-4' /> : <Volume2 className='w-4 h-4' />}
-                    {speaking ? 'Zatrzymaj' : 'Czytaj'}
-                  </button>
+                  <h4 className='text-lg font-extrabold text-slate-800'>{activeSlide.title}</h4>
                 </div>
 
                 <AnimatePresence mode='wait'>
@@ -774,21 +727,22 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
                 </AnimatePresence>
 
                 <div className='flex gap-3 w-full'>
-                  <button
+                  <KangurButton
                     onClick={goPrev}
-                    className='flex items-center gap-2 bg-gray-100 text-gray-600 font-bold px-5 py-2.5 rounded-2xl hover:bg-gray-200 transition'
+                    size='lg'
                     type='button'
+                    variant='secondary'
                   >
                     <ArrowLeft className='w-4 h-4' />
                     {openSection === 0 && activeSlideIndex === 0 ? 'Wróć' : 'Wstecz'}
-                  </button>
+                  </KangurButton>
 
-                  <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
+                  <KangurButton
                     onClick={goNext}
-                    className='flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-extrabold py-2.5 rounded-2xl shadow'
+                    className='flex-1'
+                    size='lg'
                     type='button'
+                    variant='primary'
                   >
                     {isFinalSection && isFinalSlide ? (
                       'Ćwiczenie z zegarem 🕐'
@@ -800,11 +754,11 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
                         <ArrowRight className='w-4 h-4' />
                       </>
                     )}
-                  </motion.button>
+                  </KangurButton>
                 </div>
               </div>
             )}
-          </div>
+          </KangurPanel>
         );
       })}
     </div>

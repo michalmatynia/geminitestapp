@@ -752,7 +752,7 @@ export type AiPathRunQueueStatsOptions = {
 };
 
 export const aiPathRunListResultSchema = z.object({
-  runs: z.array(aiPathRunSchema),
+  runs: z.array(aiPathRunRecordSchema),
   total: z.number(),
 });
 

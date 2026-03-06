@@ -6,9 +6,36 @@ import {
   type AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
 import type { StudioSlotsResponse } from '@/shared/contracts/image-studio';
-import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
+import {
+  aiPathRunMatchesFilters,
+  rememberOptimisticAiPathRun,
+  type OptimisticRunFilters,
+} from '@/shared/lib/ai-paths/optimistic-run-queue';
 
+import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 import { QUERY_KEYS } from './query-keys';
+
+const AI_PATHS_NODE_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
+
+const normalizeString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  return normalized.length > 0 ? normalized : null;
+};
+
+export const resolveQueueRunSource = (
+  meta?: Record<string, unknown> | null
+): string | null => {
+  if (!meta) return null;
+  const source = normalizeString(meta['source']);
+  return source;
+};
+
+export const isAiPathsQueueRunSource = (meta?: Record<string, unknown> | null): boolean =>
+  (() => {
+    const source = resolveQueueRunSource(meta);
+    return source !== null && AI_PATHS_NODE_SOURCES.has(source);
+  })();
 
 /**
  * Standardized invalidation helpers for TanStack Query.
@@ -437,51 +464,6 @@ type AiPathQueueCachePayload = {
   total: number;
 };
 
-const AI_PATHS_NODE_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
-
-const normalizeString = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const normalized = value.trim().toLowerCase();
-  return normalized.length > 0 ? normalized : null;
-};
-
-const readMetaRecord = (meta: AiPathRunRecord['meta']): Record<string, unknown> | null => {
-  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
-  return meta;
-};
-
-const resolveRunSource = (run: AiPathRunRecord): string | null => {
-  const meta = readMetaRecord(run.meta as Record<string, unknown>);
-  if (!meta) return null;
-  return normalizeString(meta['source']);
-};
-
-const isAiPathsNodeSource = (source: string | null): boolean => {
-  if (!source) return false;
-  return AI_PATHS_NODE_SOURCES.has(source);
-};
-
-const matchesSourceFilter = (
-  run: AiPathRunRecord,
-  sourceFilter: string | null,
-  sourceMode: 'include' | 'exclude'
-): boolean => {
-  if (!sourceFilter) return true;
-  const runSource = resolveRunSource(run);
-
-  if (sourceMode === 'exclude') {
-    if (sourceFilter === 'ai_paths_ui') {
-      return !isAiPathsNodeSource(runSource);
-    }
-    return runSource !== sourceFilter;
-  }
-
-  if (sourceFilter === 'ai_paths_ui') {
-    return isAiPathsNodeSource(runSource);
-  }
-  return runSource === sourceFilter;
-};
-
 const parsePositiveInt = (value: unknown): number | null => {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value > 0 ? Math.floor(value) : null;
@@ -502,39 +484,18 @@ const extractJobQueueFilters = (queryKey: QueryKey): Record<string, unknown> => 
   return filters as Record<string, unknown>;
 };
 
-const matchesQueryFilter = (run: AiPathRunRecord, query: string | null): boolean => {
-  if (!query) return true;
-  const haystack = [run.id, run.pathId, run.pathName, run.entityId, run.errorMessage]
-    .map((item: unknown) => (typeof item === 'string' ? item.toLowerCase() : ''))
-    .join(' ');
-  return haystack.includes(query);
-};
-
 const shouldIncludeInQueueCache = (
   run: AiPathRunRecord,
   filters: Record<string, unknown>
 ): boolean => {
-  const statusFilter = normalizeString(filters['status']);
-  if (statusFilter && statusFilter !== 'all') {
-    const runStatus = normalizeString(run.status);
-    if (runStatus !== statusFilter) return false;
-  }
-
-  const pathFilter = normalizeString(filters['pathId']);
-  if (pathFilter) {
-    const runPathId = normalizeString(run.pathId);
-    if (runPathId !== pathFilter) return false;
-  }
-
-  const sourceFilter = normalizeString(filters['source']);
-  const sourceModeRaw = normalizeString(filters['sourceMode']);
-  const sourceMode = sourceModeRaw === 'exclude' ? 'exclude' : 'include';
-  if (!matchesSourceFilter(run, sourceFilter, sourceMode)) {
-    return false;
-  }
-
-  const queryFilter = normalizeString(filters['query']);
-  return matchesQueryFilter(run, queryFilter);
+  const typed: OptimisticRunFilters = {
+    status: typeof filters['status'] === 'string' ? filters['status'] : undefined,
+    pathId: typeof filters['pathId'] === 'string' ? filters['pathId'] : undefined,
+    source: typeof filters['source'] === 'string' ? filters['source'] : undefined,
+    sourceMode: filters['sourceMode'] === 'exclude' ? 'exclude' : 'include',
+    query: typeof filters['query'] === 'string' ? filters['query'] : undefined,
+  };
+  return aiPathRunMatchesFilters(run, typed);
 };
 
 const isQueuePayload = (value: unknown): value is AiPathQueueCachePayload => {
@@ -578,6 +539,8 @@ export const optimisticallyInsertAiPathRunInQueueCache = (
   const runRecord = run as AiPathRunRecord;
   if (typeof runRecord.id !== 'string' || runRecord.id.trim().length === 0) return;
   if (typeof runRecord.status !== 'string' || runRecord.status.trim().length === 0) return;
+
+  rememberOptimisticAiPathRun(runRecord);
 
   const queueKeyPrefix = [...QUERY_KEYS.ai.aiPaths.lists(), 'job-queue'] as const;
   const entries = queryClient.getQueriesData<AiPathQueueCachePayload>({

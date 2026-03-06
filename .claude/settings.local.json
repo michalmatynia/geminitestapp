@@ -83,7 +83,8 @@
       "Bash(npx jest:*)",
       "Bash(\"/Users/michalmatynia/Desktop/NPM/2026/Gemini new:*)",
       "Bash(test:*)",
-      "Bash(xxd:*)"
+      "Bash(xxd:*)",
+      "Bash(npm run:*)"
     ]
   }
 }

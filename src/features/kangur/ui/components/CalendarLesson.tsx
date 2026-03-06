@@ -10,6 +10,8 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
+import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
 
 type CalendarLessonProps = { onBack: () => void };
 type SectionId = 'intro' | 'dni' | 'miesiace' | 'data' | 'game';
@@ -35,7 +37,7 @@ function MiniCalendar({ month = 2, year = 2025, highlightDay }: { month?: number
   for (let i = 0; i < startOffset; i++) cells.push(null);
   for (let d = 1; d <= monthData.days; d++) cells.push(d);
   return (
-    <div className='bg-white rounded-2xl shadow p-3 w-full max-w-xs mx-auto'>
+    <KangurLessonCallout accent='slate' className='mx-auto max-w-xs' padding='sm'>
       <p className='text-center font-extrabold text-indigo-700 mb-2'>{monthData.name} {year}</p>
       <div className='grid grid-cols-7 gap-0.5 text-xs text-center'>
         {DAYS.map((d, i) => (
@@ -47,11 +49,11 @@ function MiniCalendar({ month = 2, year = 2025, highlightDay }: { month?: number
           </div>
         ))}
       </div>
-    </div>
+    </KangurLessonCallout>
   );
 }
 
-const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
+export const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
   intro: [
     {
       title: 'Czym jest kalendarz?',
@@ -76,18 +78,18 @@ const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
         <div className='flex flex-col items-center gap-4 text-center'>
           <div className='flex flex-col gap-2 w-full max-w-xs'>
             {['Poniedzialek', 'Wtorek', 'Sroda', 'Czwartek', 'Piatek'].map((d, i) => (
-              <div key={d} className='flex items-center gap-3 bg-indigo-50 rounded-2xl px-4 py-2'>
+              <KangurLessonCallout key={d} accent='indigo' className='flex items-center gap-3' padding='sm'>
                 <span className='text-indigo-500 font-bold w-5'>{i + 1}.</span>
                 <span className='font-semibold text-gray-700'>{d}</span>
                 <span className='ml-auto text-xs text-indigo-400'>📚 Szkoła</span>
-              </div>
+              </KangurLessonCallout>
             ))}
             {['Sobota', 'Niedziela'].map((d, i) => (
-              <div key={d} className='flex items-center gap-3 bg-pink-50 rounded-2xl px-4 py-2'>
+              <KangurLessonCallout key={d} accent='rose' className='flex items-center gap-3' padding='sm'>
                 <span className='text-pink-500 font-bold w-5'>{i + 6}.</span>
                 <span className='font-semibold text-gray-700'>{d}</span>
                 <span className='ml-auto text-xs text-pink-400'>🎉 Weekend</span>
-              </div>
+              </KangurLessonCallout>
             ))}
           </div>
         </div>
@@ -102,19 +104,19 @@ const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
         <div className='flex flex-col items-center gap-3 text-center'>
           <div className='grid grid-cols-2 gap-3 w-full max-w-sm'>
             {[
-              { season: '🌸 Wiosna', months: [MONTHS[2], MONTHS[3], MONTHS[4]], color: 'bg-green-50 border-green-200' },
-              { season: '☀️ Lato', months: [MONTHS[5], MONTHS[6], MONTHS[7]], color: 'bg-yellow-50 border-yellow-200' },
-              { season: '🍂 Jesien', months: [MONTHS[8], MONTHS[9], MONTHS[10]], color: 'bg-orange-50 border-orange-200' },
-              { season: '❄️ Zima', months: [MONTHS[11], MONTHS[0], MONTHS[1]], color: 'bg-blue-50 border-blue-200' },
+              { season: '🌸 Wiosna', months: [MONTHS[2], MONTHS[3], MONTHS[4]], accent: 'emerald' as const },
+              { season: '☀️ Lato', months: [MONTHS[5], MONTHS[6], MONTHS[7]], accent: 'amber' as const },
+              { season: '🍂 Jesien', months: [MONTHS[8], MONTHS[9], MONTHS[10]], accent: 'rose' as const },
+              { season: '❄️ Zima', months: [MONTHS[11], MONTHS[0], MONTHS[1]], accent: 'sky' as const },
             ].map((g) => (
-              <div key={g.season} className={`rounded-2xl border p-3 ${g.color}`}>
+              <KangurLessonCallout key={g.season} accent={g.accent} padding='sm'>
                 <p className='font-bold text-sm text-gray-600 mb-1'>{g.season}</p>
                 {g.months.map((m) => (
                   <p key={m.name} className='text-sm text-gray-700'>
                     <span className='font-bold'>{m.num}.</span> {m.name} <span className='text-gray-400'>({m.days}d)</span>
                   </p>
                 ))}
-              </div>
+              </KangurLessonCallout>
             ))}
           </div>
         </div>
@@ -127,10 +129,15 @@ const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
         <div className='flex flex-col items-center gap-4 text-center'>
           <div className='grid grid-cols-3 gap-2 w-full max-w-sm'>
             {MONTHS.map((m) => (
-              <div key={m.name} className={`rounded-xl px-3 py-2 text-center text-sm font-semibold border ${m.days === 31 ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : m.days === 30 ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-pink-50 border-pink-200 text-pink-700'}`}>
+              <KangurLessonCallout
+                key={m.name}
+                accent={m.days === 31 ? 'indigo' : m.days === 30 ? 'teal' : 'rose'}
+                className='rounded-xl text-center text-sm font-semibold'
+                padding='sm'
+              >
                 <div className='font-bold'>{m.name}</div>
                 <div className='text-xs'>{m.days} dni</div>
-              </div>
+              </KangurLessonCallout>
             ))}
           </div>
         </div>
@@ -144,12 +151,12 @@ const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
       content: (
         <div className='flex flex-col items-center gap-4 text-center'>
           <MiniCalendar month={3} year={2025} highlightDay={15} />
-          <div className='bg-indigo-50 rounded-2xl p-4 max-w-xs text-left space-y-2'>
+          <KangurLessonCallout accent='indigo' className='max-w-xs text-left space-y-2'>
             <p className='text-gray-700 font-semibold'>Jak zapisac date?</p>
             <p className='text-gray-600'>📅 <strong>15 marca 2025</strong></p>
             <p className='text-gray-600'>📝 Lub: <strong>15/03/2025</strong></p>
             <p className='text-indigo-700 font-bold mt-1'>Dzien / Miesiac / Rok</p>
-          </div>
+          </KangurLessonCallout>
         </div>
       ),
     },
@@ -171,34 +178,50 @@ function SectionView({ sectionId, onBack, onGameStart }: { sectionId: Exclude<Se
 
   return (
     <div className='flex flex-col items-center w-full max-w-lg gap-4'>
-      <div className='bg-white rounded-3xl shadow-xl p-6 w-full flex flex-col items-center gap-5'>
+      <KangurPanel className='w-full flex flex-col items-center gap-5' padding='xl' variant='soft'>
         {slides.length > 1 && (
           <div className='flex gap-2'>
             {slides.map((_, i) => (
-              <button key={i} onClick={() => setSlide(i)} className={`h-2.5 rounded-full transition-all ${i === slide ? 'w-6 bg-green-500' : 'w-2.5 bg-gray-200 hover:bg-green-200'}`} />
+              <button
+                key={i}
+                onClick={() => setSlide(i)}
+                className={`h-2.5 rounded-full transition-all ${i === slide ? 'w-6 bg-emerald-500' : 'w-2.5 bg-gray-200 hover:bg-emerald-200'}`}
+                type='button'
+              />
             ))}
           </div>
         )}
-        <h2 className='text-xl font-extrabold text-green-700 text-center'>{activeSlide.title}</h2>
+        <h2 className='text-xl font-extrabold text-slate-800 text-center'>{activeSlide.title}</h2>
         <AnimatePresence mode='wait'>
           <motion.div key={slide} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className='w-full flex flex-col items-center'>
             {activeSlide.content}
           </motion.div>
         </AnimatePresence>
         <div className='flex gap-3 w-full'>
-          <button onClick={slide === 0 ? onBack : () => setSlide(slide - 1)} className='flex items-center gap-2 bg-gray-100 text-gray-600 font-bold px-5 py-2.5 rounded-2xl hover:bg-gray-200 transition'>
+          <KangurButton
+            onClick={slide === 0 ? onBack : () => setSlide(slide - 1)}
+            size='lg'
+            type='button'
+            variant='secondary'
+          >
             <ArrowLeft className='w-4 h-4' /> {slide === 0 ? 'Menu' : 'Wstecz'}
-          </button>
-          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={handleNext} className='flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-teal-500 text-white font-extrabold py-2.5 rounded-2xl shadow'>
+          </KangurButton>
+          <KangurButton
+            onClick={handleNext}
+            className='flex-1'
+            size='lg'
+            type='button'
+            variant='primary'
+          >
             {isLast ? 'Gra z kalendarzem 📅' : <><span>Dalej</span><ArrowRight className='w-4 h-4' /></>}
-          </motion.button>
+          </KangurButton>
         </div>
-      </div>
+      </KangurPanel>
     </div>
   );
 }
 
-const HUB_SECTIONS = [
+export const HUB_SECTIONS = [
   { id: 'intro', emoji: '📅', title: 'Czym jest kalendarz?', description: 'Rok, miesiace i dni' },
   { id: 'dni', emoji: '🗓️', title: 'Dni tygodnia', description: 'Od poniedzialku do niedzieli' },
   { id: 'miesiace', emoji: '🌸', title: 'Miesiace i pory roku', description: '12 miesiecy — ile dni maja?' },
@@ -221,16 +244,19 @@ export default function CalendarLesson({ onBack }: CalendarLessonProps): React.J
   if (activeSection === 'game') {
     return (
       <div className='flex flex-col items-center w-full max-w-lg gap-4'>
-        <button
+        <KangurButton
           onClick={() => setActiveSection(null)}
-          className='self-start flex items-center gap-2 text-green-600 hover:text-green-800 font-semibold text-sm transition'
+          className='self-start'
+          size='sm'
+          type='button'
+          variant='ghost'
         >
           <ArrowLeft className='w-4 h-4' /> Wróc do menu
-        </button>
-        <div className='bg-white rounded-3xl shadow-xl p-6 w-full flex flex-col items-center gap-5'>
-          <h2 className='text-xl font-extrabold text-green-700'>📅 Gra z kalendarzem</h2>
+        </KangurButton>
+        <KangurPanel className='w-full flex flex-col items-center gap-5' padding='xl' variant='soft'>
+          <h2 className='text-xl font-extrabold text-slate-800'>📅 Gra z kalendarzem</h2>
           <CalendarInteractiveGame onFinish={() => setActiveSection(null)} />
-        </div>
+        </KangurPanel>
       </div>
     );
   }

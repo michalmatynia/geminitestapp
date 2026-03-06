@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { selectTriggerCandidates } from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
+import { selectTriggerCandidates } from '@/shared/lib/ai-paths/hooks/trigger-event-selection';
 
 type Candidate = {
   id: string;

@@ -14,10 +14,12 @@ import type {
 } from '@/shared/contracts/ai-paths-runtime';
 import {
   EMPTY_RUNTIME_STATE,
+  collectDroppedRuntimePorts,
+} from './path-run-executor.runtime-state';
+import {
   RUNTIME_PROFILE_HIGHLIGHT_LIMIT,
   RUNTIME_PROFILE_SLOW_NODE_MS,
-  collectDroppedRuntimePorts,
-} from './path-run-executor.helpers';
+} from './path-run-executor.profiling-config';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import type {
   RuntimeProfileHighlight,
@@ -25,7 +27,7 @@ import type {
   RuntimeProfileSnapshot,
 } from './path-run-executor.types';
 
-export { EMPTY_RUNTIME_STATE } from './path-run-executor.helpers';
+export { EMPTY_RUNTIME_STATE } from './path-run-executor.runtime-state';
 
 let sanitizeDropWarningCount = 0;
 const SANITIZE_DROP_WARNING_LIMIT = 20;

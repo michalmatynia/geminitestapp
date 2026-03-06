@@ -1,11 +1,36 @@
 import { isObjectRecord } from '@/shared/utils/object-utils';
+import {
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_NATIVE_FIELD,
+} from './runtime-kernel-legacy-aliases';
 
-const normalizeRuntimeKernelNodeTypeToken = (value: string): string =>
+export type RuntimeKernelConfigNormalizedField =
+  | 'mode'
+  | 'nodeTypes'
+  | 'codeObjectResolverIds'
+  | 'strictNativeRegistry';
+
+export type RuntimeKernelValueSource = 'env' | 'path' | 'settings' | 'default';
+
+export type NormalizeRuntimeKernelConfigRecordOptions = {
+  translateLegacyAliases?: boolean;
+};
+
+export type NormalizeRuntimeKernelConfigRecordResult = {
+  changed: boolean;
+  value: Record<string, unknown>;
+  changedFields: RuntimeKernelConfigNormalizedField[];
+};
+
+export const normalizeRuntimeKernelNodeTypeToken = (value: string): string =>
   value.trim().toLowerCase().replace(/\s+/g, '_');
 
-const normalizeRuntimeKernelResolverIdToken = (value: string): string => value.trim();
+export const normalizeRuntimeKernelResolverIdToken = (value: string): string => value.trim();
 
-const parseRuntimeKernelListValue = ({
+export const parseRuntimeKernelListValue = ({
   value,
   normalizeToken,
 }: {
@@ -64,6 +89,22 @@ const matchesStringArray = (value: unknown, expected: string[]): boolean =>
     (entry: unknown, index: number): boolean => typeof entry === 'string' && entry === expected[index]
   );
 
+const appendChangedField = (
+  changedFields: RuntimeKernelConfigNormalizedField[],
+  field: RuntimeKernelConfigNormalizedField
+): void => {
+  if (!changedFields.includes(field)) {
+    changedFields.push(field);
+  }
+};
+
+export const normalizeRuntimeKernelValueSource = (
+  value: unknown
+): RuntimeKernelValueSource | null =>
+  value === 'env' || value === 'path' || value === 'settings' || value === 'default'
+    ? value
+    : null;
+
 export const parseRuntimeKernelNodeTypes = (value: unknown): string[] | undefined =>
   parseRuntimeKernelListValue({
     value,
@@ -78,57 +119,79 @@ export const parseRuntimeKernelCodeObjectResolverIds = (
     normalizeToken: normalizeRuntimeKernelResolverIdToken,
   });
 
-export const normalizeRuntimeKernelConfigRecord = (
-  value: unknown
-): Record<string, unknown> | null => {
+export const normalizeRuntimeKernelConfigRecordDetailed = (
+  value: unknown,
+  options?: NormalizeRuntimeKernelConfigRecordOptions
+): NormalizeRuntimeKernelConfigRecordResult | null => {
   if (!isObjectRecord(value)) return null;
 
-  let changed = false;
+  const translateLegacyAliases = options?.translateLegacyAliases ?? false;
   const normalized: Record<string, unknown> = { ...value };
+  const changedFields: RuntimeKernelConfigNormalizedField[] = [];
 
-  if ('mode' in normalized) {
-    delete normalized['mode'];
-    changed = true;
+  if (DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD in normalized) {
+    delete normalized[DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD];
+    appendChangedField(changedFields, 'mode');
   }
 
-  const nodeTypes = parseRuntimeKernelNodeTypes(value['nodeTypes']);
+  const nodeTypes = parseRuntimeKernelNodeTypes(
+    translateLegacyAliases
+      ? value['nodeTypes'] ?? value[DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]
+      : value['nodeTypes']
+  );
   if (nodeTypes) {
     if (!matchesStringArray(value['nodeTypes'], nodeTypes)) {
       normalized['nodeTypes'] = nodeTypes;
-      changed = true;
+      appendChangedField(changedFields, 'nodeTypes');
     }
   } else if ('nodeTypes' in normalized) {
     delete normalized['nodeTypes'];
-    changed = true;
+    appendChangedField(changedFields, 'nodeTypes');
   }
-  if ('pilotNodeTypes' in normalized) {
-    delete normalized['pilotNodeTypes'];
-    changed = true;
+  if (DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD in normalized) {
+    delete normalized[DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD];
+    appendChangedField(changedFields, 'nodeTypes');
   }
 
-  const resolverIds = parseRuntimeKernelCodeObjectResolverIds(value['codeObjectResolverIds']);
+  const resolverIds = parseRuntimeKernelCodeObjectResolverIds(
+    translateLegacyAliases
+      ? value['codeObjectResolverIds'] ?? value[DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]
+      : value['codeObjectResolverIds']
+  );
   if (resolverIds) {
     if (!matchesStringArray(value['codeObjectResolverIds'], resolverIds)) {
       normalized['codeObjectResolverIds'] = resolverIds;
-      changed = true;
+      appendChangedField(changedFields, 'codeObjectResolverIds');
     }
   } else if ('codeObjectResolverIds' in normalized) {
     delete normalized['codeObjectResolverIds'];
-    changed = true;
+    appendChangedField(changedFields, 'codeObjectResolverIds');
   }
-  if ('resolverIds' in normalized) {
-    delete normalized['resolverIds'];
-    changed = true;
-  }
-
-  if ('strictNativeRegistry' in normalized) {
-    delete normalized['strictNativeRegistry'];
-    changed = true;
-  }
-  if ('strictCodeObjectRegistry' in normalized) {
-    delete normalized['strictCodeObjectRegistry'];
-    changed = true;
+  if (DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD in normalized) {
+    delete normalized[DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD];
+    appendChangedField(changedFields, 'codeObjectResolverIds');
   }
 
-  return changed ? normalized : value;
+  if (DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_NATIVE_FIELD in normalized) {
+    delete normalized[DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_NATIVE_FIELD];
+    appendChangedField(changedFields, 'strictNativeRegistry');
+  }
+  if (DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD in normalized) {
+    delete normalized[DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD];
+    appendChangedField(changedFields, 'strictNativeRegistry');
+  }
+
+  return {
+    changed: changedFields.length > 0,
+    value: changedFields.length > 0 ? normalized : value,
+    changedFields,
+  };
+};
+
+export const normalizeRuntimeKernelConfigRecord = (
+  value: unknown,
+  options?: NormalizeRuntimeKernelConfigRecordOptions
+): Record<string, unknown> | null => {
+  const normalized = normalizeRuntimeKernelConfigRecordDetailed(value, options);
+  return normalized?.value ?? null;
 };

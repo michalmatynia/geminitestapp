@@ -19,6 +19,7 @@ import {
   Q16Illustration,
 } from '@/features/kangur/ui/components/KangurIllustrations';
 import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameContext';
+import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
 import { getKangurQuestions, isExamMode } from '@/features/kangur/ui/services/kangur-questions';
 import { XP_REWARDS, addXp, loadProgress } from '@/features/kangur/ui/services/progress';
 import type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
@@ -89,7 +90,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
         </span>
       </div>
 
-      <div className='bg-white rounded-2xl shadow p-5 flex flex-col gap-3'>
+      <KangurPanel className='flex flex-col gap-3' padding='lg' variant='soft'>
         <div className='flex items-center justify-between mb-1'>
           <p className='text-sm font-bold text-orange-500 uppercase tracking-wide'>
             Pytanie {qIndex + 1}
@@ -113,7 +114,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
               </div>
             );
           })()}
-      </div>
+      </KangurPanel>
 
       <div className='flex flex-col gap-2'>
         {choices.map((choice, index) => {
@@ -164,15 +165,15 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
       )}
 
       {!confirmed && (
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={handleConfirm}
+        <KangurButton
+          className='w-full'
           disabled={selected === null}
-          className='w-full py-3 rounded-2xl font-extrabold text-white bg-gradient-to-r from-orange-400 to-yellow-400 shadow disabled:opacity-40 transition'
+          onClick={handleConfirm}
+          size='lg'
+          variant='primary'
         >
           Zatwierdź odpowiedź ✓
-        </motion.button>
+        </KangurButton>
       )}
     </div>
   );
@@ -187,46 +188,44 @@ function ResultView({ score, total, onRestart }: ResultViewProps): React.JSX.Ele
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className='bg-white rounded-3xl shadow-xl p-8 flex flex-col items-center gap-4 text-center w-full'
+      className='w-full'
     >
-      <div className='text-6xl'>{emoji}</div>
-      <h2 className='text-2xl font-extrabold text-gray-800'>
-        Wynik: {score}/{total}
-      </h2>
-      <p className='text-gray-500'>
-        {pct === 100
-          ? 'Idealny wynik! Jesteś mistrzem Kangura! 🦘'
-          : pct >= 70
-            ? 'Świetnie! Gotowy/a na konkurs!'
-            : pct >= 40
-              ? 'Dobra robota! Ćwicz dalej!'
-              : 'Nie poddawaj się! Spróbuj jeszcze raz!'}
-      </p>
-      <div className='w-full bg-gray-100 rounded-full h-4 overflow-hidden'>
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.8 }}
-          className='h-full bg-gradient-to-r from-orange-400 to-yellow-400 rounded-full'
-        />
-      </div>
-      <p className='text-sm text-gray-400'>{pct}% poprawnych odpowiedzi</p>
-      <div className='flex gap-3 w-full'>
-        <button
-          onClick={onBack}
-          className='flex-1 py-2.5 rounded-2xl font-bold border-2 border-gray-200 text-gray-500 hover:bg-gray-50 transition'
-        >
-          Menu
-        </button>
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={onRestart}
-          className='flex-1 py-2.5 rounded-2xl font-extrabold text-white bg-gradient-to-r from-orange-400 to-yellow-400 shadow'
-        >
-          Spróbuj ponownie 🔁
-        </motion.button>
-      </div>
+      <KangurPanel
+        className='flex flex-col items-center gap-4 text-center'
+        padding='xl'
+        variant='elevated'
+      >
+        <div className='text-6xl'>{emoji}</div>
+        <h2 className='text-2xl font-extrabold text-gray-800'>
+          Wynik: {score}/{total}
+        </h2>
+        <p className='text-gray-500'>
+          {pct === 100
+            ? 'Idealny wynik! Jesteś mistrzem Kangura! 🦘'
+            : pct >= 70
+              ? 'Świetnie! Gotowy/a na konkurs!'
+              : pct >= 40
+                ? 'Dobra robota! Ćwicz dalej!'
+                : 'Nie poddawaj się! Spróbuj jeszcze raz!'}
+        </p>
+        <div className='w-full bg-gray-100 rounded-full h-4 overflow-hidden'>
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 0.8 }}
+            className='h-full bg-gradient-to-r from-orange-400 to-yellow-400 rounded-full'
+          />
+        </div>
+        <p className='text-sm text-gray-400'>{pct}% poprawnych odpowiedzi</p>
+        <div className='flex w-full gap-3'>
+          <KangurButton className='flex-1' onClick={onBack} size='lg' variant='secondary'>
+            Menu
+          </KangurButton>
+          <KangurButton className='flex-1' onClick={onRestart} size='lg' variant='primary'>
+            Spróbuj ponownie 🔁
+          </KangurButton>
+        </div>
+      </KangurPanel>
     </motion.div>
   );
 }

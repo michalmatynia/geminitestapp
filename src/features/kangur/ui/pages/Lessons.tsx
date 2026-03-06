@@ -18,8 +18,17 @@ import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
+import {
+  KangurButton,
+  KangurPageContainer,
+  KangurPageShell,
+  KangurPageTopBar,
+  KangurPanel,
+} from '@/features/kangur/ui/design/primitives';
+import { KANGUR_OPTION_CARD_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { cn } from '@/shared/utils';
 import Link from 'next/link';
 
 type LessonProps = {
@@ -393,36 +402,33 @@ export default function Lessons() {
   };
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex flex-col items-center'>
-      {/* Top nav bar */}
-      <div
-        className='sticky top-0 z-20 w-full bg-white/70 backdrop-blur border-b border-indigo-100 px-4 py-2 flex items-center justify-between gap-3'
-      >
-        <Link
-          href={createPageUrl('Game', basePath)}
-          className='inline-flex items-center gap-2 text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
-        >
-          Strona główna
-        </Link>
-        <div className='flex items-center gap-3'>
-          <KangurProfileMenu
-            basePath={basePath}
-            isAuthenticated={Boolean(user)}
-            onLogout={() => logout(false)}
-            onLogin={navigateToLogin}
-          />
-          {user?.canManageLearners && (
-            <Link
-              href={createPageUrl('ParentDashboard', basePath)}
-              className='inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 font-semibold transition'
-            >
-              <LayoutDashboard className='w-4 h-4' /> Rodzic
-            </Link>
-          )}
-        </div>
-      </div>
+    <KangurPageShell tone='learn'>
+      <KangurPageTopBar
+        left={
+          <KangurButton asChild size='sm' variant='ghost'>
+            <Link href={createPageUrl('Game', basePath)}>Strona glowna</Link>
+          </KangurButton>
+        }
+        right={
+          <>
+            <KangurProfileMenu
+              basePath={basePath}
+              isAuthenticated={Boolean(user)}
+              onLogout={() => logout(false)}
+              onLogin={navigateToLogin}
+            />
+            {user?.canManageLearners && (
+              <KangurButton asChild size='sm' variant='ghost'>
+                <Link href={createPageUrl('ParentDashboard', basePath)}>
+                  <LayoutDashboard className='w-4 h-4' /> Rodzic
+                </Link>
+              </KangurButton>
+            )}
+          </>
+        }
+      />
 
-      <div className='flex flex-col items-center py-8 px-4 w-full'>
+      <KangurPageContainer className='flex flex-col items-center'>
         <AnimatePresence mode='wait'>
           {!activeLesson ? (
             <motion.div
@@ -436,22 +442,18 @@ export default function Lessons() {
                 <h1 className='text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 drop-shadow'>
                   📚 Lekcje
                 </h1>
-                <button
-                  type='button'
-                  onClick={handleGoBack}
-                  className='mt-4 inline-flex items-center justify-center rounded-2xl border border-indigo-200 bg-white/90 px-4 py-2 text-sm font-semibold text-indigo-600 shadow-sm transition hover:bg-indigo-50'
-                >
+                <KangurButton className='mt-4' onClick={handleGoBack} size='md' variant='secondary'>
                   Wróć do poprzedniej strony
-                </button>
+                </KangurButton>
               </div>
 
               {orderedLessons.length === 0 ? (
-                <div className='w-full rounded-3xl border border-indigo-200/70 bg-white/80 p-6 text-center shadow-lg'>
+                <KangurPanel className='w-full text-center' padding='xl' variant='soft'>
                   <div className='text-lg font-semibold text-indigo-700'>Brak aktywnych lekcji</div>
                   <div className='mt-1 text-sm text-indigo-500'>
                     Włącz lekcje w panelu admina, aby pojawiły się tutaj.
                   </div>
-                </div>
+                </KangurPanel>
               ) : (
                 orderedLessons.map((lesson, index) => {
                   const masteryPresentation = getLessonMasteryPresentation(lesson, progress);
@@ -470,14 +472,22 @@ export default function Lessons() {
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => setActiveLessonId(lesson.id)}
-                      className={`w-full bg-gradient-to-r ${lesson.color} text-white rounded-3xl p-5 flex items-center gap-4 shadow-lg text-left`}
+                      className={cn(
+                        KANGUR_OPTION_CARD_CLASSNAME,
+                        'w-full rounded-[30px] p-5 text-left',
+                        'border-slate-200/85 hover:border-indigo-200 hover:bg-indigo-50/30'
+                      )}
                     >
-                      <span className='text-5xl'>{lesson.emoji}</span>
+                      <span
+                        className={`flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br ${lesson.color} text-5xl shadow-sm`}
+                      >
+                        {lesson.emoji}
+                      </span>
                       <div className='flex-1'>
                         <div className='flex items-start justify-between gap-3'>
                           <div>
-                            <div className='font-extrabold text-xl'>{lesson.title}</div>
-                            <div className='text-white/80 text-sm mt-0.5'>{lesson.description}</div>
+                            <div className='text-xl font-extrabold text-slate-800'>{lesson.title}</div>
+                            <div className='mt-0.5 text-sm text-slate-500'>{lesson.description}</div>
                             {lesson.contentMode === 'document' &&
                             hasKangurLessonDocumentContent(lessonDocuments[lesson.id]) ? (
                                 <div className='mt-2 inline-flex rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-sky-700'>
@@ -485,7 +495,7 @@ export default function Lessons() {
                                 </div>
                               ) : null}
                             {lessonAssignment ? (
-                              <div className='mt-2 inline-flex rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white'>
+                              <div className='mt-2 inline-flex rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-rose-700'>
                                 Priorytet rodzica
                               </div>
                             ) : completedLessonAssignment ? (
@@ -515,15 +525,15 @@ export default function Lessons() {
                             ) : null}
                           </div>
                         </div>
-                        <div className='mt-3 text-xs font-medium text-white/80'>
+                        <div className='mt-3 text-xs font-medium text-slate-500'>
                           {masteryPresentation.summaryLabel}
                         </div>
                         {lessonAssignment ? (
-                          <div className='mt-2 text-xs font-semibold text-white/90'>
+                          <div className='mt-2 text-xs font-semibold text-rose-600'>
                             {lessonAssignment.description}
                           </div>
                         ) : completedLessonAssignment ? (
-                          <div className='mt-2 text-xs font-semibold text-white/90'>
+                          <div className='mt-2 text-xs font-semibold text-emerald-600'>
                             Zadanie od rodzica zostalo juz wykonane. {completedLessonAssignment.progress.summary}
                           </div>
                         ) : null}
@@ -616,32 +626,32 @@ export default function Lessons() {
               {(prev || next) && (
                 <div className='flex gap-3 w-full max-w-lg mt-2'>
                   {prev ? (
-                    <motion.button
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
+                    <KangurButton
                       onClick={() => setActiveLessonId(prev.id)}
-                      className='flex-1 flex items-center gap-2 bg-white/80 backdrop-blur border border-gray-200 rounded-2xl px-4 py-3 text-gray-600 font-semibold text-sm shadow hover:bg-white transition'
+                      className='flex-1 justify-start'
+                      size='lg'
+                      variant='secondary'
                     >
                       <ChevronLeft className='w-4 h-4 flex-shrink-0' />
                       <span>
                         {prev.emoji} {prev.title}
                       </span>
-                    </motion.button>
+                    </KangurButton>
                   ) : (
                     <div className='flex-1' />
                   )}
                   {next ? (
-                    <motion.button
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
+                    <KangurButton
                       onClick={() => setActiveLessonId(next.id)}
-                      className='flex-1 flex items-center justify-end gap-2 bg-white/80 backdrop-blur border border-gray-200 rounded-2xl px-4 py-3 text-gray-600 font-semibold text-sm shadow hover:bg-white transition'
+                      className='flex-1 justify-end'
+                      size='lg'
+                      variant='secondary'
                     >
                       <span>
                         {next.emoji} {next.title}
                       </span>
                       <ChevronRight className='w-4 h-4 flex-shrink-0' />
-                    </motion.button>
+                    </KangurButton>
                   ) : (
                     <div className='flex-1' />
                   )}
@@ -650,7 +660,7 @@ export default function Lessons() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-    </div>
+      </KangurPageContainer>
+    </KangurPageShell>
   );
 }

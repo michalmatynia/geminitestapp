@@ -3,6 +3,11 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { AiNode, AiPathRuntimeNodeStatus, RuntimeState } from '@/shared/lib/ai-paths';
 import { normalizeAiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
+import {
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD,
+} from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-legacy-aliases';
 
 import type { LocalExecutionArgs } from '../types';
 
@@ -78,7 +83,7 @@ const buildLocalExecutionArgs = (): LocalExecutionArgs => {
     runtimeKernelConfig: {
       nodeTypes: 'Template Node, parser',
       codeObjectResolverIds: ' resolver.primary , resolver.fallback ',
-      strictCodeObjectRegistry: 'yes',
+      [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD]: 'yes',
     },
     parserSamples: {},
     updaterSamples: {},
@@ -159,9 +164,10 @@ describe('useLocalExecutionLoop runtime kernel forwarding', () => {
 
     const args = buildLocalExecutionArgs();
     args.runtimeKernelConfig = {
-      pilotNodeTypes: 'Template Node, parser',
-      resolverIds: ' resolver.primary , resolver.fallback ',
-      strictCodeObjectRegistry: 'yes',
+      [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]: 'Template Node, parser',
+      [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]:
+        ' resolver.primary , resolver.fallback ',
+      [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD]: 'yes',
     };
     const { result } = renderHook(() => useLocalExecutionLoop(args));
 

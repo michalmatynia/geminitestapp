@@ -6,11 +6,12 @@ import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
+import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 
 type MultiplicationLessonProps = { onBack: () => void };
 type SectionId = 'intro' | 'tabela23' | 'tabela45' | 'triki' | 'game_array' | 'game_quiz';
 
-const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, LessonSlide[]> = {
+export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, LessonSlide[]> = {
   intro: [
     {
       title: 'Co to znaczy mnozyc?',
@@ -36,14 +37,14 @@ const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, LessonSlide
         <div className='flex flex-col gap-2 w-full'>
           <div className='grid grid-cols-2 gap-2'>
             {[2, 3].map((base) => (
-              <div key={base} className='bg-purple-50 border border-purple-200 rounded-xl p-2'>
+              <KangurLessonCallout key={base} accent='violet' className='rounded-xl' padding='sm'>
                 <p className='text-xs font-extrabold text-purple-600 mb-1 text-center'>× {base}</p>
                 {[1,2,3,4,5,6,7,8,9,10].map((n) => (
                   <p key={n} className='text-xs text-gray-700 text-center'>
                     {n} × {base} = <b>{n * base}</b>
                   </p>
                 ))}
-              </div>
+              </KangurLessonCallout>
             ))}
           </div>
         </div>
@@ -57,14 +58,14 @@ const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, LessonSlide
         <div className='flex flex-col gap-2 w-full'>
           <div className='grid grid-cols-2 gap-2'>
             {[4, 5].map((base) => (
-              <div key={base} className='bg-indigo-50 border border-indigo-200 rounded-xl p-2'>
+              <KangurLessonCallout key={base} accent='indigo' className='rounded-xl' padding='sm'>
                 <p className='text-xs font-extrabold text-indigo-600 mb-1 text-center'>× {base}</p>
                 {[1,2,3,4,5,6,7,8,9,10].map((n) => (
                   <p key={n} className='text-xs text-gray-700 text-center'>
                     {n} × {base} = <b>{n * base}</b>
                   </p>
                 ))}
-              </div>
+              </KangurLessonCallout>
             ))}
           </div>
         </div>
@@ -76,7 +77,7 @@ const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, LessonSlide
       title: 'Triki do zapamietania',
       content: (
         <div className='flex flex-col items-center gap-3'>
-          <div className='bg-yellow-50 border border-yellow-200 rounded-2xl p-4 w-full max-w-xs'>
+          <KangurLessonCallout accent='amber' className='max-w-xs'>
             <ul className='text-gray-700 space-y-2 text-sm'>
               <li>✖️ × 1 = ta sama liczba: <b>7×1=7</b></li>
               <li>✖️ × 2 = podwojnie: <b>6×2=12</b></li>
@@ -84,14 +85,14 @@ const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, LessonSlide
               <li>✖️ × 10 = dodaj zero: <b>8×10=80</b></li>
               <li>✅ Kolejnosc nie ma znaczenia: <b>3×4=4×3</b></li>
             </ul>
-          </div>
+          </KangurLessonCallout>
         </div>
       ),
     },
   ],
 };
 
-const HUB_SECTIONS = [
+export const HUB_SECTIONS = [
   { id: 'intro', emoji: '🍬', title: 'Co to mnozenie?', description: 'Mnozenie jako powtarzane dodawanie' },
   { id: 'tabela23', emoji: '📋', title: 'Tabliczka × 2 i × 3', description: 'Tabliczka mnozenia dla 2 i 3' },
   { id: 'tabela45', emoji: '📋', title: 'Tabliczka × 4 i × 5', description: 'Tabliczka mnozenia dla 4 i 5' },

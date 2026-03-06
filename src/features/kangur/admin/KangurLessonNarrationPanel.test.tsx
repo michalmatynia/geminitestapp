@@ -17,29 +17,53 @@ vi.mock('@/shared/lib/api-client', () => ({
 }));
 
 import { KangurLessonNarrationPanel } from '@/features/kangur/admin/KangurLessonNarrationPanel';
+import type { KangurLessonDocument } from '@/shared/contracts/kangur';
+
+function StatefulNarrationPanelHarness({
+  lesson,
+  document,
+}: {
+  lesson: { id: string; title: string; description: string };
+  document: KangurLessonDocument;
+}): React.JSX.Element {
+  const [value, setValue] = React.useState(document);
+
+  return <KangurLessonNarrationPanel lesson={lesson} document={value} onChange={setValue} />;
+}
 
 describe('KangurLessonNarrationPanel', () => {
   beforeEach(() => {
     apiPostMock.mockReset();
-    window.localStorage.clear();
   });
 
   it('builds a narration script from the current lesson draft and generates audio preview', async () => {
-    apiPostMock.mockResolvedValue({
-      mode: 'audio',
-      voice: 'sage',
-      segments: [
-        {
-          id: 'geometry-segment-1',
-          text: 'Figury z opisem lektora. Czytaj ten tekst inaczej.',
-          audioUrl: '/uploads/kangur/tts/example.mp3',
-          createdAt: '2026-03-06T12:00:00.000Z',
-        },
-      ],
+    apiPostMock.mockImplementation(async (endpoint: string) => {
+      if (endpoint === '/api/kangur/tts/status') {
+        return {
+          state: 'missing',
+          voice: 'sage',
+          latestCreatedAt: null,
+          message: 'Audio has not been generated for this lesson draft yet.',
+          segments: [],
+        };
+      }
+
+      return {
+        mode: 'audio',
+        voice: 'sage',
+        segments: [
+          {
+            id: 'geometry-segment-1',
+            text: 'Figury z opisem lektora. Czytaj ten tekst inaczej.',
+            audioUrl: '/uploads/kangur/tts/example.mp3',
+            createdAt: '2026-03-06T12:00:00.000Z',
+          },
+        ],
+      };
     });
 
     const { container } = render(
-      <KangurLessonNarrationPanel
+      <StatefulNarrationPanelHarness
         lesson={{
           id: 'geometry-advanced',
           title: 'Figury z opisem lektora',
@@ -47,6 +71,10 @@ describe('KangurLessonNarrationPanel', () => {
         }}
         document={{
           version: 1,
+          narration: {
+            voice: 'coral',
+            locale: 'pl-PL',
+          },
           blocks: [
             {
               id: 'text-1',
@@ -81,17 +109,30 @@ describe('KangurLessonNarrationPanel', () => {
     fireEvent.change(screen.getByLabelText('Narration voice'), {
       target: { value: 'sage' },
     });
+    fireEvent.change(screen.getByLabelText('Narration locale'), {
+      target: { value: 'en-US' },
+    });
     fireEvent.click(screen.getByRole('button', { name: /generate audio preview/i }));
 
-    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(
+        apiPostMock.mock.calls.some((call) => call[0] === '/api/kangur/tts')
+      ).toBe(true)
+    );
 
-    const [endpoint, payload] = apiPostMock.mock.calls[0] as [
+    const generateCall = apiPostMock.mock.calls.find((call) => call[0] === '/api/kangur/tts');
+    const [endpoint, payload] = generateCall as [
       string,
-      { voice: string; forceRegenerate: boolean; script: { segments: Array<{ text: string }> } },
+      {
+        voice: string;
+        forceRegenerate: boolean;
+        script: { locale: string; segments: Array<{ text: string }> };
+      },
     ];
     expect(endpoint).toBe('/api/kangur/tts');
     expect(payload.voice).toBe('sage');
     expect(payload.forceRegenerate).toBe(false);
+    expect(payload.script.locale).toBe('en-US');
     expect(payload.script.segments.map((segment) => segment.text).join(' ')).toContain(
       'Czytaj ten tekst inaczej.'
     );
@@ -110,34 +151,46 @@ describe('KangurLessonNarrationPanel', () => {
   });
 
   it('forces regeneration when requested', async () => {
-    apiPostMock
-      .mockResolvedValueOnce({
-        mode: 'audio',
-        voice: 'coral',
-        segments: [
-          {
-            id: 'clock-segment-1',
-            text: 'Nauka zegara.',
-            audioUrl: '/uploads/kangur/tts/example-a.mp3',
-            createdAt: '2026-03-06T12:00:00.000Z',
-          },
-        ],
-      })
-      .mockResolvedValueOnce({
-        mode: 'audio',
-        voice: 'coral',
-        segments: [
-          {
-            id: 'clock-segment-1',
-            text: 'Nauka zegara.',
-            audioUrl: '/uploads/kangur/tts/example-b.mp3',
-            createdAt: '2026-03-06T12:05:00.000Z',
-          },
-        ],
-      });
+    apiPostMock.mockImplementation(async (endpoint: string, body?: { forceRegenerate?: boolean }) => {
+      if (endpoint === '/api/kangur/tts/status') {
+        return {
+          state: 'missing',
+          voice: 'coral',
+          latestCreatedAt: null,
+          message: 'Audio has not been generated for this lesson draft yet.',
+          segments: [],
+        };
+      }
+
+      return body?.forceRegenerate
+        ? {
+          mode: 'audio',
+          voice: 'coral',
+          segments: [
+            {
+              id: 'clock-segment-1',
+              text: 'Nauka zegara.',
+              audioUrl: '/uploads/kangur/tts/example-b.mp3',
+              createdAt: '2026-03-06T12:05:00.000Z',
+            },
+          ],
+        }
+        : {
+          mode: 'audio',
+          voice: 'coral',
+          segments: [
+            {
+              id: 'clock-segment-1',
+              text: 'Nauka zegara.',
+              audioUrl: '/uploads/kangur/tts/example-a.mp3',
+              createdAt: '2026-03-06T12:00:00.000Z',
+            },
+          ],
+        };
+    });
 
     render(
-      <KangurLessonNarrationPanel
+      <StatefulNarrationPanelHarness
         lesson={{
           id: 'clock',
           title: 'Nauka zegara',
@@ -145,6 +198,10 @@ describe('KangurLessonNarrationPanel', () => {
         }}
         document={{
           version: 1,
+          narration: {
+            voice: 'coral',
+            locale: 'pl-PL',
+          },
           blocks: [
             {
               id: 'text-1',
@@ -158,14 +215,77 @@ describe('KangurLessonNarrationPanel', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /generate audio preview/i }));
-    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(apiPostMock.mock.calls.filter((call) => call[0] === '/api/kangur/tts')).toHaveLength(1)
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /regenerate audio/i }));
-    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(apiPostMock.mock.calls.filter((call) => call[0] === '/api/kangur/tts')).toHaveLength(2)
+    );
 
-    const secondPayload = apiPostMock.mock.calls[1]?.[1] as {
+    const generateCalls = apiPostMock.mock.calls.filter((call) => call[0] === '/api/kangur/tts');
+    const secondPayload = generateCalls[1]?.[1] as {
       forceRegenerate: boolean;
     };
     expect(secondPayload.forceRegenerate).toBe(true);
+  });
+
+  it('loads cached audio preview automatically when status is ready', async () => {
+    apiPostMock.mockImplementation(async (endpoint: string) => {
+      if (endpoint === '/api/kangur/tts/status') {
+        return {
+          state: 'ready',
+          voice: 'coral',
+          latestCreatedAt: '2026-03-06T12:00:00.000Z',
+          message: 'Cached audio is available for this lesson draft.',
+          segments: [
+            {
+              id: 'clock-segment-1',
+              text: 'Nauka zegara.',
+              audioUrl: '/uploads/kangur/tts/cached.mp3',
+              createdAt: '2026-03-06T12:00:00.000Z',
+            },
+          ],
+        };
+      }
+
+      throw new Error('Generate endpoint should not be called in this scenario.');
+    });
+
+    const { container } = render(
+      <StatefulNarrationPanelHarness
+        lesson={{
+          id: 'clock',
+          title: 'Nauka zegara',
+          description: 'Czytamy godziny i minuty.',
+        }}
+        document={{
+          version: 1,
+          narration: {
+            voice: 'coral',
+            locale: 'pl-PL',
+          },
+          blocks: [
+            {
+              id: 'text-1',
+              type: 'text',
+              html: '<p>Zegar ma wskazowki.</p>',
+              align: 'left',
+            },
+          ],
+        }}
+      />
+    );
+
+    await waitFor(() =>
+      expect(apiPostMock.mock.calls.some((call) => call[0] === '/api/kangur/tts/status')).toBe(true)
+    );
+
+    expect(apiPostMock.mock.calls.filter((call) => call[0] === '/api/kangur/tts')).toHaveLength(0);
+    expect(screen.getByText(/Neural preview ready/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /refresh preview/i })).toBeInTheDocument();
+    const audio = container.querySelector('audio');
+    expect(audio?.getAttribute('src')).toBe('/uploads/kangur/tts/cached.mp3');
   });
 });

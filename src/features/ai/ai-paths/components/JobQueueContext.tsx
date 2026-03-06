@@ -24,6 +24,10 @@ import {
   AI_PATH_RUN_QUEUE_CHANNEL,
   parseAiPathRunEnqueuedEventPayload,
 } from '@/shared/contracts/ai-paths';
+import {
+  mergeAiPathQueuePayloadWithOptimisticRuns,
+  patchQueuedCountWithOptimisticRuns,
+} from '@/shared/lib/ai-paths/optimistic-run-queue';
 import { fetchAiPathsSettingsCached } from '@/shared/lib/ai-paths/settings-store-client';
 import {
   createDeleteMutationV2,
@@ -343,7 +347,16 @@ export function JobQueueProvider({
       };
       const response = await listAiPathRuns(options);
       if (!response.ok) throw new Error(response.error);
-      return response.data as { runs: AiPathRunRecord[]; total: number };
+      const payload = response.data as { runs: AiPathRunRecord[]; total: number };
+      return mergeAiPathQueuePayloadWithOptimisticRuns(payload, {
+        pathId: normalizedPathFilter || undefined,
+        source: normalizedSourceFilter || undefined,
+        sourceMode,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        query: normalizedQuery || undefined,
+        limit: pageSize,
+        offset,
+      });
     },
     enabled: isPanelActive,
     refetchInterval: resolveRunsRefetchInterval,
@@ -378,7 +391,10 @@ export function JobQueueProvider({
         ...(fresh ? { fresh: true } : {}),
       });
       if (!response.ok) throw new Error(response.error);
-      return response.data as { status: QueueStatus };
+      const payload = response.data as { status: QueueStatus };
+      return {
+        status: patchQueuedCountWithOptimisticRuns(payload.status),
+      };
     },
     enabled: isPanelActive,
     refetchInterval: effectiveAutoRefreshEnabled

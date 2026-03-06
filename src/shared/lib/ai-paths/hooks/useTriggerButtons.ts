@@ -46,6 +46,14 @@ interface UseTriggerButtonsOptions {
   entityType: 'product' | 'note' | 'custom';
   entityId?: string | null | undefined;
   getEntityJson?: (() => Record<string, unknown> | null) | undefined;
+  onRunQueued?:
+    | ((args: {
+        button: AiTriggerButtonRecord;
+        runId: string;
+        entityId?: string | null | undefined;
+        entityType: 'product' | 'note' | 'custom';
+      }) => void)
+    | undefined;
 }
 
 export function useTriggerButtons({
@@ -53,6 +61,7 @@ export function useTriggerButtons({
   entityType,
   entityId,
   getEntityJson,
+  onRunQueued,
 }: UseTriggerButtonsOptions) {
   const { toast } = useToast();
   const { fireAiPathTriggerEvent } = useAiPathTriggerEvent();
@@ -129,6 +138,14 @@ export function useTriggerButtons({
             mode: options.mode,
             ...(options.mode === 'toggle' ? { checked: options.checked } : {}),
           },
+          onSuccess: (runId: string): void => {
+            onRunQueued?.({
+              button,
+              runId,
+              entityId,
+              entityType,
+            });
+          },
           onProgress: (payload: {
             status: 'running' | 'success' | 'error';
             progress: number;
@@ -163,6 +180,9 @@ export function useTriggerButtons({
             }));
           },
         });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        toast(String(message), { variant: 'error' });
       } finally {
         if (!gotProgress) {
           setRunStates((prev) => ({
@@ -178,7 +198,7 @@ export function useTriggerButtons({
         }
       }
     },
-    [entityId, entityType, fireAiPathTriggerEvent, getEntityJson, location, toast]
+    [entityId, entityType, fireAiPathTriggerEvent, getEntityJson, location, onRunQueued, toast]
   );
 
   return {

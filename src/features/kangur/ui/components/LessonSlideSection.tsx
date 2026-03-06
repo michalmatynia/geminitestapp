@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+
 export type LessonSlide = {
   title: string;
   content: React.JSX.Element;
@@ -22,7 +24,6 @@ export default function LessonSlideSection({
   onComplete,
   dotActiveClass,
   dotDoneClass,
-  gradientClass,
 }: LessonSlideSectionProps): React.JSX.Element {
   const [slide, setSlide] = useState(0);
   const isLast = slide === slides.length - 1;
@@ -36,7 +37,7 @@ export default function LessonSlideSection({
   };
 
   return (
-    <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
+    <div className='flex w-full max-w-md flex-col items-center gap-4'>
       {slides.length > 1 && (
         <div className='flex gap-2'>
           {slides.map((_, i) => (
@@ -56,40 +57,43 @@ export default function LessonSlideSection({
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -30 }}
-          className='bg-white rounded-3xl shadow-xl p-6 w-full flex flex-col gap-4 min-h-[260px]'
+          className='w-full'
         >
-          <h2 className='text-xl font-extrabold text-gray-800'>{activeSlide.title}</h2>
-          <div className='flex-1'>{activeSlide.content}</div>
+          <KangurPanel className='flex min-h-[260px] flex-col gap-4' padding='xl' variant='soft'>
+            <h2 className='text-xl font-extrabold text-slate-800'>{activeSlide.title}</h2>
+            <div className='flex-1'>{activeSlide.content}</div>
+          </KangurPanel>
         </motion.div>
       </AnimatePresence>
 
       <div className='flex gap-3 w-full'>
-        <button
+        <KangurButton
           onClick={slide === 0 ? onBack : () => setSlide(slide - 1)}
-          className='flex items-center gap-1 px-4 py-2 rounded-2xl border-2 border-gray-200 text-gray-500 font-bold hover:bg-gray-50 transition'
+          size='lg'
+          variant='secondary'
         >
           <ChevronLeft className='w-4 h-4' />
           {slide === 0 ? 'Menu' : 'Poprzedni'}
-        </button>
+        </KangurButton>
 
         {isLast ? (
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+          <KangurButton
             onClick={handleDone}
-            className={`flex-1 py-2 rounded-2xl bg-gradient-to-r ${gradientClass} text-white font-extrabold shadow hover:opacity-90 transition`}
+            className='flex-1'
+            size='lg'
+            variant='primary'
           >
             Gotowe!
-          </motion.button>
+          </KangurButton>
         ) : (
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+          <KangurButton
             onClick={() => setSlide(slide + 1)}
-            className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-2xl bg-gradient-to-r ${gradientClass} text-white font-extrabold shadow hover:opacity-90 transition`}
+            className='flex-1'
+            size='lg'
+            variant='primary'
           >
             Nastepny <ChevronRight className='w-4 h-4' />
-          </motion.button>
+          </KangurButton>
         )}
       </div>
     </div>

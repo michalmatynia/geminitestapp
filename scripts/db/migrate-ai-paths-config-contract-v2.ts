@@ -4,7 +4,7 @@ import {
   listAiPathsSettings,
   upsertAiPathsSettingsBulk,
 } from '@/features/ai/ai-paths/server/settings-store';
-import { parseRuntimeState } from '@/features/ai/ai-paths/services/path-run-executor.helpers';
+import { parseRuntimeState } from '@/features/ai/ai-paths/services/path-run-executor.runtime-state';
 import type { PathConfig } from '@/shared/contracts/ai-paths';
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import {

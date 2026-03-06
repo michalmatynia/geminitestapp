@@ -849,7 +849,7 @@
           ]
         },
         {
-          "file": "src/features/ai/ai-paths/services/path-run-executor.helpers.ts",
+          "file": "src/features/ai/ai-paths/services/path-run-executor.runtime-state.ts",
           "forbiddenSnippets": [
             "reason: 'deprecated_runtime_identity_fields'"
           ],

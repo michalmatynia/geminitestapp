@@ -190,7 +190,7 @@ export const handleValidationPattern: NodeHandler = ({
       : normalizeValidationPatternRules(
           config.learnedRules as ValidationPatternRule[],
           includeRuleIdSet
-        );
+      );
 
   if (runtimeRules.length === 0 && runtimeLearnedRules.length === 0) {
     const outputs = buildValidationPatternOutputPorts({

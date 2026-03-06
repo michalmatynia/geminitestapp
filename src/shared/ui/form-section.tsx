@@ -107,7 +107,7 @@ export function FormField(props: FormFieldProps): React.JSX.Element {
                 htmlFor={fieldId}
                 className={cn(
                   'text-[11px] font-medium uppercase tracking-wider text-gray-400',
-                  required && "after:content-['*'] after:ml-0.5 after:text-red-500"
+                  required && 'after:content-[\'*\'] after:ml-0.5 after:text-red-500'
                 )}
               >
                 {label}

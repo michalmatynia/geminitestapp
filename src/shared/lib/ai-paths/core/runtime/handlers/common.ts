@@ -218,9 +218,9 @@ export const handleLogicalCondition: NodeHandler = ({
   const config: LogicalConditionConfig = parsedConfig.success
     ? parsedConfig.data
     : {
-        combinator: 'and',
-        conditions: [],
-      };
+      combinator: 'and',
+      conditions: [],
+    };
   const { combinator, conditions: rawConditions } = config;
   const conditions = rawConditions ?? [];
 

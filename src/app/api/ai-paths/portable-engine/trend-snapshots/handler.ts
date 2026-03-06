@@ -26,9 +26,6 @@ import {
   resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment,
-  type PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry,
-  type PortablePathSigningPolicyTrendPersistedSnapshot,
-  type PortablePathAuditSinkStartupHealthState,
 } from '@/shared/lib/ai-paths/portable-engine/server';
 
 const DEFAULT_TREND_SNAPSHOT_LIMIT = 50;

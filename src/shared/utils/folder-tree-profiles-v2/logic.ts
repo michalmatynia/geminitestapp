@@ -200,9 +200,9 @@ export const toCanonicalProfileV2 = ({
   const hasSearchSettings = Boolean(sourceRecord && 'search' in sourceRecord);
   const mergedSearch = hasSearchSettings
     ? {
-        ...(fallback.search ?? {}),
-        ...(parsed.search ?? {}),
-      }
+      ...(fallback.search ?? {}),
+      ...(parsed.search ?? {}),
+    }
     : fallback.search
       ? { ...fallback.search }
       : undefined;
@@ -247,9 +247,9 @@ export const toCanonicalProfileV2 = ({
     multiSelect: parsed.multiSelect,
     search: mergedSearch
       ? {
-          ...mergedSearch,
-          matchFields: mergedSearch.matchFields ? [...mergedSearch.matchFields] : undefined,
-        }
+        ...mergedSearch,
+        matchFields: mergedSearch.matchFields ? [...mergedSearch.matchFields] : undefined,
+      }
       : undefined,
     statusIcons: parsed.statusIcons,
   };

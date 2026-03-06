@@ -9,7 +9,7 @@ import { jobKeys } from './useJobQueries';
 export function useChatbotJobMutation(): UpdateMutation<
   unknown,
   { jobId: string; action: 'retry' | 'cancel' }
-> {
+  > {
   return createCreateMutationV2({
     mutationFn: ({ jobId, action }) => updateChatbotJob(jobId, action),
     mutationKey: jobKeys.all,

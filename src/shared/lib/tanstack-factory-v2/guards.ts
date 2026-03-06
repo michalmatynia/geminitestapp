@@ -106,8 +106,8 @@ export const applyInfiniteQueryRuntimeGuards = <
   TQueryKey extends QueryKey,
   TPageParam,
 >(
-  options: InfiniteQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey, TPageParam>
-): InfiniteQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey, TPageParam> => {
+    options: InfiniteQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey, TPageParam>
+  ): InfiniteQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey, TPageParam> => {
   const { refetchInterval, ...rest } = options;
   const guardedRefetchInterval = guardRefetchInterval(
     refetchInterval as unknown as AnyRefetchIntervalOption | undefined

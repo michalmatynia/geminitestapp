@@ -35,9 +35,9 @@ export const AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT =
   Number.isFinite(rawHistoryRetentionOptionsMax) &&
   rawHistoryRetentionOptionsMax >= AI_PATHS_HISTORY_RETENTION_MIN
     ? Math.min(
-        AI_PATHS_HISTORY_RETENTION_MAX,
-        Math.max(AI_PATHS_HISTORY_RETENTION_MIN, Math.trunc(rawHistoryRetentionOptionsMax))
-      )
+      AI_PATHS_HISTORY_RETENTION_MAX,
+      Math.max(AI_PATHS_HISTORY_RETENTION_MIN, Math.trunc(rawHistoryRetentionOptionsMax))
+    )
     : AI_PATHS_HISTORY_RETENTION_MAX;
 
 export const STORAGE_VERSION = 1;

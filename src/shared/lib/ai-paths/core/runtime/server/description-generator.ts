@@ -36,11 +36,11 @@ const runBrainChatCompletion = async (input: {
       content: typeof message.content === 'string' ? message.content : '',
       images: Array.isArray(message.content)
         ? message.content
-            .filter(
-              (part): part is { type: 'image_url'; image_url: { url: string } } =>
-                part.type === 'image_url'
-            )
-            .map((part) => part.image_url.url)
+          .filter(
+            (part): part is { type: 'image_url'; image_url: { url: string } } =>
+              part.type === 'image_url'
+          )
+          .map((part) => part.image_url.url)
         : [],
     })),
     modelId: input.modelId,

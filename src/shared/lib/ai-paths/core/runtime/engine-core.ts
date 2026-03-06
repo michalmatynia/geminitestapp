@@ -157,10 +157,10 @@ export async function evaluateGraphInternal(
   } =>
     telemetry
       ? {
-          runtimeStrategy: telemetry.runtimeStrategy,
-          runtimeResolutionSource: telemetry.runtimeResolutionSource,
-          runtimeCodeObjectId: telemetry.runtimeCodeObjectId ?? null,
-        }
+        runtimeStrategy: telemetry.runtimeStrategy,
+        runtimeResolutionSource: telemetry.runtimeResolutionSource,
+        runtimeCodeObjectId: telemetry.runtimeCodeObjectId ?? null,
+      }
       : {};
 
   const normalizeRuntimeValidationIssues = (
@@ -532,8 +532,8 @@ export async function evaluateGraphInternal(
         const blockedStatus =
           readiness.waitingOnDetails.length > 0
             ? resolveMissingInputStatus({
-                waitingOnDetails: readiness.waitingOnDetails,
-              })
+              waitingOnDetails: readiness.waitingOnDetails,
+            })
             : 'blocked';
         let message =
           readiness.waitingOnPorts.length > 0

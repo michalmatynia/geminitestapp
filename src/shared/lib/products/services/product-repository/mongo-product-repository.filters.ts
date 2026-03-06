@@ -430,8 +430,8 @@ const compileAdvancedMongoRule = (
     compiledRules.length === 1
       ? compiledRules[0]!
       : ({
-          [rule.combinator === 'and' ? '$and' : '$or']: compiledRules,
-        } as Filter<ProductDocument>);
+        [rule.combinator === 'and' ? '$and' : '$or']: compiledRules,
+      } as Filter<ProductDocument>);
 
   if (!rule.not) return combined;
   return { $nor: [combined] } as Filter<ProductDocument>;

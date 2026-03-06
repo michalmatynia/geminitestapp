@@ -383,21 +383,21 @@ export const syncNotesPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => 
         assignedAt: entry.assignedAt,
         tag: tag
           ? {
-              id: tag.id,
-              name: tag.name,
-              color: tag.color ?? null,
-              notebookId: tag.notebookId ?? null,
-              createdAt: tag.createdAt,
-              updatedAt: tag.updatedAt,
-            }
+            id: tag.id,
+            name: tag.name,
+            color: tag.color ?? null,
+            notebookId: tag.notebookId ?? null,
+            createdAt: tag.createdAt,
+            updatedAt: tag.updatedAt,
+          }
           : {
-              id: entry.tagId,
-              name: '',
-              color: null,
-              notebookId: null,
-              createdAt: note.createdAt,
-              updatedAt: note.updatedAt,
-            },
+            id: entry.tagId,
+            name: '',
+            color: null,
+            notebookId: null,
+            createdAt: note.createdAt,
+            updatedAt: note.updatedAt,
+          },
       };
     });
     const categoryEntries = note.categories.map((entry) => {
@@ -408,29 +408,29 @@ export const syncNotesPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => 
         assignedAt: entry.assignedAt,
         category: category
           ? {
-              id: category.id,
-              name: category.name,
-              description: category.description ?? null,
-              color: category.color ?? null,
-              parentId: category.parentId ?? null,
-              themeId: category.themeId ?? null,
-              notebookId: category.notebookId ?? null,
-              sortIndex: category.sortIndex,
-              createdAt: category.createdAt,
-              updatedAt: category.updatedAt,
-            }
+            id: category.id,
+            name: category.name,
+            description: category.description ?? null,
+            color: category.color ?? null,
+            parentId: category.parentId ?? null,
+            themeId: category.themeId ?? null,
+            notebookId: category.notebookId ?? null,
+            sortIndex: category.sortIndex,
+            createdAt: category.createdAt,
+            updatedAt: category.updatedAt,
+          }
           : {
-              id: entry.categoryId,
-              name: '',
-              description: null,
-              color: null,
-              parentId: null,
-              themeId: null,
-              notebookId: null,
-              sortIndex: 0,
-              createdAt: note.createdAt,
-              updatedAt: note.updatedAt,
-            },
+            id: entry.categoryId,
+            name: '',
+            description: null,
+            color: null,
+            parentId: null,
+            themeId: null,
+            notebookId: null,
+            sortIndex: 0,
+            createdAt: note.createdAt,
+            updatedAt: note.updatedAt,
+          },
       };
     });
     const relationsFrom = note.relationsFrom.map((entry) => {

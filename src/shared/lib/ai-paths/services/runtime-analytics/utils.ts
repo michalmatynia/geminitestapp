@@ -2,6 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 import { RETENTION_MS } from './config';
+import { normalizeAiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
 
 export const toTimestampMs = (value?: Date | string | number | null): number => {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -14,10 +15,12 @@ export const toTimestampMs = (value?: Date | string | number | null): number => 
 };
 
 export const normalizeNodeStatus = (value: unknown): string | null => {
+  const normalized = normalizeAiPathRuntimeNodeStatus(value);
+  if (normalized) return normalized;
   if (typeof value !== 'string') return null;
-  const normalized = value.trim().toLowerCase();
-  if (!normalized) return null;
-  return normalized;
+  const legacy = value.trim().toLowerCase();
+  if (!legacy) return null;
+  return legacy === 'started' ? legacy : null;
 };
 
 export const buildEventMember = (type: string, id: string, timestampMs: number): string =>

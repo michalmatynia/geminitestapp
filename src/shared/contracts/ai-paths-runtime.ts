@@ -28,6 +28,31 @@ export type AiPathNodeStatus = z.infer<typeof aiPathNodeStatusSchema>;
 export const aiPathRuntimeNodeStatusSchema = aiPathNodeStatusSchema;
 export type AiPathRuntimeNodeStatus = AiPathNodeStatus;
 
+export const AI_PATH_RUNTIME_NODE_STATUS_VALUES: readonly AiPathRuntimeNodeStatus[] =
+  aiPathRuntimeNodeStatusSchema.options;
+
+const AI_PATH_RUNTIME_NODE_STATUS_SET: ReadonlySet<AiPathRuntimeNodeStatus> = new Set(
+  AI_PATH_RUNTIME_NODE_STATUS_VALUES
+);
+
+export const normalizeAiPathRuntimeNodeStatus = (
+  value: unknown
+): AiPathRuntimeNodeStatus | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase() as AiPathRuntimeNodeStatus;
+  return AI_PATH_RUNTIME_NODE_STATUS_SET.has(normalized) ? normalized : null;
+};
+
+export const TERMINAL_RUNTIME_NODE_STATUSES = new Set<AiPathRuntimeNodeStatus>([
+  'completed',
+  'cached',
+  'failed',
+  'canceled',
+  'timeout',
+  'skipped',
+  'blocked',
+]);
+
 export const NON_SETTLED_RUNTIME_NODE_STATUSES = new Set<AiPathRuntimeNodeStatus>([
   'idle',
   'queued',

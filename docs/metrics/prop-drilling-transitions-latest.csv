@@ -1,6 +1,6 @@
 rank,score,from_component,from_file,to_component,to_file,root_fanout,distinct_features,source_prop,target_prop,location
 1,52,CompleteEquation,src/features/kangur/ui/components/AddingBallGame.tsx,SlotZone,src/features/kangur/ui/components/AddingBallGame.tsx,1,1,round,label,src/features/kangur/ui/components/AddingBallGame.tsx:231
 2,52,CalendarLesson,src/features/kangur/ui/components/CalendarLesson.tsx,CalendarInteractiveGame,src/features/kangur/ui/components/CalendarInteractiveGame.tsx,1,1,onBack,onFinish,src/features/kangur/ui/components/CalendarLesson.tsx:302
-3,52,ClockLesson,src/features/kangur/ui/components/ClockLesson.tsx,ClockTrainingGame,src/features/kangur/ui/components/ClockTrainingGame.tsx,1,1,onBack,onFinish,src/features/kangur/ui/components/ClockLesson.tsx:296
-4,44,KangurGame,src/features/kangur/ui/components/KangurGame.tsx,KangurGameProvider,src/features/kangur/ui/context/KangurGameContext.tsx,1,1,mode,mode,src/features/kangur/ui/components/KangurGame.tsx:315
-5,44,KangurGame,src/features/kangur/ui/components/KangurGame.tsx,KangurGameProvider,src/features/kangur/ui/context/KangurGameContext.tsx,1,1,onBack,onBack,src/features/kangur/ui/components/KangurGame.tsx:315
+3,52,ClockLesson,src/features/kangur/ui/components/ClockLesson.tsx,ClockTrainingGame,src/features/kangur/ui/components/ClockTrainingGame.tsx,1,1,onBack,onFinish,src/features/kangur/ui/components/ClockLesson.tsx:565
+4,52,GeometryShapesLesson,src/features/kangur/ui/components/GeometryShapesLesson.tsx,GeometryDrawingGame,src/features/kangur/ui/components/GeometryDrawingGame.tsx,1,1,onBack,onFinish,src/features/kangur/ui/components/GeometryShapesLesson.tsx:107
+5,44,AdminKangurPageShell,src/features/kangur/admin/AdminKangurPageShell.tsx,KangurFeaturePage,src/features/kangur/ui/KangurFeaturePage.tsx,1,1,slug,slug,src/features/kangur/admin/AdminKangurPageShell.tsx:17

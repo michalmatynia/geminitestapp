@@ -93,6 +93,16 @@ export const SYSTEM_LOG_TRIAGE_PRESETS: LogTriagePreset[] = [
       toDate: formatDateInput(now),
     }),
   },
+  {
+    id: 'kangur-source-last7d',
+    label: 'Kangur',
+    description: 'Logs with a Kangur source prefix over the last 7 days.',
+    resolve: (now: Date) => ({
+      source: 'kangur.',
+      fromDate: daysAgo(now, 7),
+      toDate: formatDateInput(now),
+    }),
+  },
 ];
 
 export const resolveSystemLogPresetFilters = (

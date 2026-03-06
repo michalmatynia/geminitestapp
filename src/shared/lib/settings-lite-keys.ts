@@ -3,6 +3,7 @@ import {
   FOLDER_TREE_PROFILE_V2_KEY_PREFIX,
   FOLDER_TREE_UI_STATE_V2_KEY_PREFIX,
 } from '@/shared/contracts/master-folder-tree';
+import { KANGUR_LESSONS_SETTING_KEY } from '@/shared/contracts/kangur';
 import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/shared/contracts/products';
 import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
 import { folderTreeInstanceValues } from '@/shared/utils/folder-tree-profiles-v2';
@@ -26,6 +27,7 @@ export const LITE_SETTINGS_KEYS: readonly string[] = [
   'noteSettings:editorMode',
   'case_resolver_default_document_format_v1',
   'case_resolver_settings_v1',
+  KANGUR_LESSONS_SETTING_KEY,
   ...FOLDER_TREE_UI_STATE_V2_LITE_KEYS,
   ...FOLDER_TREE_PROFILE_V2_LITE_KEYS,
   PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,

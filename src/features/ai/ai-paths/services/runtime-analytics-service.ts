@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
+import { normalizeAiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   AiPathRuntimePortableEngineAnalytics,
@@ -96,10 +97,12 @@ const toTimestampMs = (value?: Date | string | number | null): number => {
 };
 
 const normalizeNodeStatus = (value: unknown): string | null => {
+  const normalized = normalizeAiPathRuntimeNodeStatus(value);
+  if (normalized) return normalized;
   if (typeof value !== 'string') return null;
-  const normalized = value.trim().toLowerCase();
-  if (!normalized) return null;
-  return normalized;
+  const legacy = value.trim().toLowerCase();
+  if (!legacy) return null;
+  return legacy === 'started' ? legacy : null;
 };
 
 const buildEventMember = (type: string, id: string, timestampMs: number): string =>

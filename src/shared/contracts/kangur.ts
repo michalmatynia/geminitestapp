@@ -2,6 +2,38 @@ import { z } from 'zod';
 
 const nonEmptyTrimmedString = z.string().trim().min(1);
 
+export const KANGUR_LESSONS_SETTING_KEY = 'kangur_lessons_v1';
+
+export const kangurLessonComponentIdSchema = z.enum([
+  'clock',
+  'calendar',
+  'adding',
+  'subtracting',
+  'multiplication',
+  'division',
+  'geometry_basics',
+  'geometry_shapes',
+  'geometry_symmetry',
+  'geometry_perimeter',
+]);
+export type KangurLessonComponentId = z.infer<typeof kangurLessonComponentIdSchema>;
+
+export const kangurLessonSchema = z.object({
+  id: nonEmptyTrimmedString.max(120),
+  componentId: kangurLessonComponentIdSchema,
+  title: nonEmptyTrimmedString.max(120),
+  description: nonEmptyTrimmedString.max(240),
+  emoji: nonEmptyTrimmedString.max(12),
+  color: nonEmptyTrimmedString.max(80),
+  activeBg: nonEmptyTrimmedString.max(80),
+  sortOrder: z.number().int(),
+  enabled: z.boolean(),
+});
+export type KangurLesson = z.infer<typeof kangurLessonSchema>;
+
+export const kangurLessonsSchema = z.array(kangurLessonSchema);
+export type KangurLessons = z.infer<typeof kangurLessonsSchema>;
+
 export const kangurScoreSortFieldSchema = z.enum([
   'created_date',
   'score',

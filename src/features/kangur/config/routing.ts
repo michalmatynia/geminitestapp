@@ -3,6 +3,7 @@ export const KANGUR_MAIN_PAGE_KEY = 'Game';
 
 export const KANGUR_PAGE_TO_SLUG: Record<string, string> = Object.freeze({
   Game: 'game',
+  LearnerProfile: 'profile',
   Lessons: 'lessons',
   ParentDashboard: 'parent-dashboard',
 });

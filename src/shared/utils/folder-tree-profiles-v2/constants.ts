@@ -139,6 +139,18 @@ export const folderTreeSettingsMetaByInstance: Record<
     fileHint: 'Not used (menu nodes are folder-type entries).',
     folderHint: 'Example: folder',
   },
+  kangur_lessons_manager: {
+    title: 'Kangur Lessons Manager',
+    description: 'Controls drag/drop ordering for Kangur lessons in admin.',
+    fileHint: 'Example: kangur-lesson',
+    folderHint: 'Not used (flat list at root).',
+  },
+  kangur_lessons_manager_catalog: {
+    title: 'Kangur Lessons Manager Catalog',
+    description: 'Controls grouped catalog tree behavior for Kangur lessons in admin.',
+    fileHint: 'Example: kangur-lesson',
+    folderHint: 'Example: kangur-lesson-group, kangur-lesson-component-group',
+  },
   brain_catalog_tree: {
     title: 'AI Brain Catalog',
     description: 'Controls drag/drop behavior for AI Brain catalog ordering.',
@@ -226,6 +238,16 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifySuccess: false,
     notifyError: true,
     successMessage: 'Admin menu layout updated.',
+  },
+  kangur_lessons_manager: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Kangur lessons reordered.',
+  },
+  kangur_lessons_manager_catalog: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Kangur lessons catalog updated.',
   },
   brain_catalog_tree: {
     notifySuccess: false,

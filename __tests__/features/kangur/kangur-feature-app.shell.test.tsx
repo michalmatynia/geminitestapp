@@ -25,6 +25,7 @@ vi.mock('@/features/kangur/config/pages', () => ({
   KANGUR_MAIN_PAGE: 'Game',
   kangurPages: {
     Game: () => <div data-testid='kangur-game-page'>Game page</div>,
+    LearnerProfile: () => <div data-testid='kangur-profile-page'>Profile page</div>,
     Lessons: () => <div data-testid='kangur-lessons-page'>Lessons page</div>,
   },
 }));
@@ -141,5 +142,17 @@ describe('KangurFeatureApp shell behavior', () => {
     render(<KangurFeatureApp />);
 
     expect(screen.getByTestId('kangur-lessons-page')).toBeInTheDocument();
+  });
+
+  it('renders learner profile shell when route resolves to LearnerProfile', () => {
+    useKangurRoutingMock.mockReturnValue({
+      pageKey: 'profile',
+      requestedPath: '/kangur/profile',
+    });
+    resolveKangurPageKeyMock.mockReturnValue('LearnerProfile');
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-profile-page')).toBeInTheDocument();
   });
 });

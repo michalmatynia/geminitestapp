@@ -26,6 +26,21 @@ describe('mergeRuntimeNodeOutputsForStatus', () => {
     expect(merged['waitingOnPorts']).toEqual(['prompt']);
   });
 
+  it('maps blocked updates with waiting ports and no reason to waiting_callback', () => {
+    const merged = mergeRuntimeNodeOutputsForStatus({
+      previous: {
+        status: 'running',
+      },
+      next: {
+        waitingOnPorts: ['prompt'],
+      },
+      status: 'blocked',
+    });
+
+    expect(merged['status']).toBe('waiting_callback');
+    expect(merged['waitingOnPorts']).toEqual(['prompt']);
+  });
+
   it('keeps waiting diagnostics when status is waiting_callback', () => {
     const merged = mergeRuntimeNodeOutputsForStatus({
       previous: {
@@ -158,6 +173,29 @@ describe('resolveRuntimeNodeDisplayStatus', () => {
     });
 
     expect(status).toBe('waiting_callback');
+  });
+
+  it('maps blocked status with waiting ports and no reason to waiting_callback', () => {
+    const status = resolveRuntimeNodeDisplayStatus({
+      status: 'blocked',
+      metadata: {
+        waitingOnPorts: ['prompt'],
+      },
+    });
+
+    expect(status).toBe('waiting_callback');
+  });
+
+  it('keeps blocked status when blocked reason is not missing_inputs', () => {
+    const status = resolveRuntimeNodeDisplayStatus({
+      status: 'blocked',
+      metadata: {
+        reason: 'missing_prompt',
+        waitingOnPorts: ['prompt'],
+      },
+    });
+
+    expect(status).toBe('blocked');
   });
 });
 

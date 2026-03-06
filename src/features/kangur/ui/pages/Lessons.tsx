@@ -1,87 +1,72 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, LayoutDashboard, UserRound } from 'lucide-react';
+import type { ComponentType } from 'react';
+
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import {
   AddingLesson,
   CalendarLesson,
   ClockLesson,
   DivisionLesson,
+  GeometryBasicsLesson,
+  GeometryPerimeterLesson,
+  GeometryShapesLesson,
+  GeometrySymmetryLesson,
   MultiplicationLesson,
   SubtractingLesson,
 } from '@/features/kangur/ui/components/lessons';
+import {
+  KANGUR_LESSONS_SETTING_KEY,
+  parseKangurLessons,
+} from '@/features/kangur/settings';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import Link from 'next/link';
 
-type LessonId = 'clock' | 'calendar' | 'adding' | 'subtracting' | 'multiplication' | 'division';
-
-type LessonCard = {
-  id: LessonId;
-  title: string;
-  description: string;
-  emoji: string;
-  color: string;
-  activeBg: string;
+type LessonProps = {
+  onBack: () => void;
 };
 
-const LESSONS: LessonCard[] = [
-  {
-    id: 'clock',
-    title: 'Nauka zegara',
-    description: 'Odczytuj godziny z zegara analogowego',
-    emoji: '🕐',
-    color: 'from-indigo-400 to-purple-500',
-    activeBg: 'bg-indigo-500',
-  },
-  {
-    id: 'calendar',
-    title: 'Nauka kalendarza',
-    description: 'Dni, miesiące, daty i pory roku',
-    emoji: '📅',
-    color: 'from-green-400 to-teal-500',
-    activeBg: 'bg-green-500',
-  },
-  {
-    id: 'adding',
-    title: 'Dodawanie',
-    description: 'Jednocyfrowe, dwucyfrowe i gra z piłkami!',
-    emoji: '➕',
-    color: 'from-orange-400 to-yellow-400',
-    activeBg: 'bg-orange-400',
-  },
-  {
-    id: 'subtracting',
-    title: 'Odejmowanie',
-    description: 'Jednocyfrowe, dwucyfrowe i reszta',
-    emoji: '➖',
-    color: 'from-red-400 to-pink-400',
-    activeBg: 'bg-red-400',
-  },
-  {
-    id: 'multiplication',
-    title: 'Mnożenie',
-    description: 'Tabliczka mnożenia i algorytmy',
-    emoji: '✖️',
-    color: 'from-purple-500 to-indigo-500',
-    activeBg: 'bg-purple-500',
-  },
-  {
-    id: 'division',
-    title: 'Dzielenie',
-    description: 'Proste dzielenie i reszta z dzielenia',
-    emoji: '➗',
-    color: 'from-blue-500 to-teal-400',
-    activeBg: 'bg-blue-500',
-  },
-];
+const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<LessonProps>> = {
+  clock: ClockLesson,
+  calendar: CalendarLesson,
+  adding: AddingLesson,
+  subtracting: SubtractingLesson,
+  multiplication: MultiplicationLesson,
+  division: DivisionLesson,
+  geometry_basics: GeometryBasicsLesson,
+  geometry_shapes: GeometryShapesLesson,
+  geometry_symmetry: GeometrySymmetryLesson,
+  geometry_perimeter: GeometryPerimeterLesson,
+};
 
 export default function Lessons() {
   const { basePath } = useKangurRouting();
-  const [activeLesson, setActiveLesson] = useState<LessonId | null>(null);
-  const activeIdx = LESSONS.findIndex((l) => l.id === activeLesson);
+  const settingsStore = useSettingsStore();
 
-  const prev = activeIdx > 0 ? LESSONS[activeIdx - 1] : null;
-  const next = activeIdx < LESSONS.length - 1 ? LESSONS[activeIdx + 1] : null;
+  const rawLessons = settingsStore.get(KANGUR_LESSONS_SETTING_KEY);
+  const lessons = useMemo(
+    (): KangurLesson[] => parseKangurLessons(rawLessons).filter((lesson) => lesson.enabled),
+    [rawLessons]
+  );
+
+  const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+
+  useEffect((): void => {
+    if (!activeLessonId) return;
+    const exists = lessons.some((lesson) => lesson.id === activeLessonId);
+    if (!exists) {
+      setActiveLessonId(null);
+    }
+  }, [activeLessonId, lessons]);
+
+  const activeIdx = lessons.findIndex((lesson) => lesson.id === activeLessonId);
+  const activeLesson = activeIdx >= 0 ? lessons[activeIdx] : null;
+  const prev = activeIdx > 0 ? lessons[activeIdx - 1] : null;
+  const next = activeIdx >= 0 && activeIdx < lessons.length - 1 ? lessons[activeIdx + 1] : null;
+  const ActiveLessonComponent = activeLesson ? LESSON_COMPONENTS[activeLesson.componentId] : null;
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex flex-col items-center'>
@@ -94,34 +79,48 @@ export default function Lessons() {
           >
             <ArrowLeft className='w-4 h-4' /> Strona główna
           </Link>
+          <div className='flex items-center gap-3'>
+            <Link
+              href={createPageUrl('LearnerProfile', basePath)}
+              className='inline-flex items-center gap-1.5 text-sm text-indigo-500 hover:text-indigo-700 font-semibold transition'
+            >
+              <UserRound className='w-4 h-4' /> Profil
+            </Link>
+            <Link
+              href={createPageUrl('ParentDashboard', basePath)}
+              className='inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 font-semibold transition'
+            >
+              <LayoutDashboard className='w-4 h-4' /> Rodzic
+            </Link>
+          </div>
         </div>
-        {/* Lesson tabs – scrollable row */}
+        {/* Lesson tabs - scrollable row */}
         <div
           className='flex items-center gap-1 overflow-x-auto pb-1'
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           <button
-            onClick={() => setActiveLesson(null)}
+            onClick={() => setActiveLessonId(null)}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-semibold transition-all ${
-              activeLesson === null
+              activeLessonId === null
                 ? 'bg-indigo-500 text-white shadow'
                 : 'text-gray-500 hover:bg-indigo-50'
             }`}
           >
             Wszystkie
           </button>
-          {LESSONS.map((l) => (
+          {lessons.map((lesson) => (
             <button
-              key={l.id}
-              onClick={() => setActiveLesson(l.id)}
+              key={lesson.id}
+              onClick={() => setActiveLessonId(lesson.id)}
               className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold transition-all ${
-                activeLesson === l.id
-                  ? `${l.activeBg} text-white shadow`
+                activeLessonId === lesson.id
+                  ? `${lesson.activeBg} text-white shadow`
                   : 'text-gray-500 hover:bg-indigo-50'
               }`}
             >
-              <span>{l.emoji}</span>
-              <span>{l.title}</span>
+              <span>{lesson.emoji}</span>
+              <span>{lesson.title}</span>
             </button>
           ))}
         </div>
@@ -143,47 +142,46 @@ export default function Lessons() {
                 </h1>
                 <p className='text-gray-500 mt-1'>Ucz się krok po kroku!</p>
               </div>
-              {LESSONS.map((lesson, i) => (
-                <motion.button
-                  key={lesson.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => setActiveLesson(lesson.id)}
-                  className={`w-full bg-gradient-to-r ${lesson.color} text-white rounded-3xl p-5 flex items-center gap-4 shadow-lg text-left`}
-                >
-                  <span className='text-5xl'>{lesson.emoji}</span>
-                  <div>
-                    <div className='font-extrabold text-xl'>{lesson.title}</div>
-                    <div className='text-white/80 text-sm mt-0.5'>{lesson.description}</div>
+
+              {lessons.length === 0 ? (
+                <div className='w-full rounded-3xl border border-indigo-200/70 bg-white/80 p-6 text-center shadow-lg'>
+                  <div className='text-lg font-semibold text-indigo-700'>Brak aktywnych lekcji</div>
+                  <div className='mt-1 text-sm text-indigo-500'>
+                    Włącz lekcje w panelu admina, aby pojawiły się tutaj.
                   </div>
-                </motion.button>
-              ))}
+                </div>
+              ) : (
+                lessons.map((lesson, index) => (
+                  <motion.button
+                    key={lesson.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setActiveLessonId(lesson.id)}
+                    className={`w-full bg-gradient-to-r ${lesson.color} text-white rounded-3xl p-5 flex items-center gap-4 shadow-lg text-left`}
+                  >
+                    <span className='text-5xl'>{lesson.emoji}</span>
+                    <div>
+                      <div className='font-extrabold text-xl'>{lesson.title}</div>
+                      <div className='text-white/80 text-sm mt-0.5'>{lesson.description}</div>
+                    </div>
+                  </motion.button>
+                ))
+              )}
             </motion.div>
           ) : (
             <motion.div
-              key={activeLesson}
+              key={activeLesson.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               className='w-full flex flex-col items-center gap-4'
             >
-              {activeLesson === 'clock' && <ClockLesson onBack={() => setActiveLesson(null)} />}
-              {activeLesson === 'calendar' && (
-                <CalendarLesson onBack={() => setActiveLesson(null)} />
-              )}
-              {activeLesson === 'adding' && <AddingLesson onBack={() => setActiveLesson(null)} />}
-              {activeLesson === 'subtracting' && (
-                <SubtractingLesson onBack={() => setActiveLesson(null)} />
-              )}
-              {activeLesson === 'multiplication' && (
-                <MultiplicationLesson onBack={() => setActiveLesson(null)} />
-              )}
-              {activeLesson === 'division' && (
-                <DivisionLesson onBack={() => setActiveLesson(null)} />
-              )}
+              {ActiveLessonComponent ? (
+                <ActiveLessonComponent onBack={() => setActiveLessonId(null)} />
+              ) : null}
 
               {/* Prev / Next lesson navigation */}
               {(prev || next) && (
@@ -192,7 +190,7 @@ export default function Lessons() {
                     <motion.button
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
-                      onClick={() => setActiveLesson(prev.id)}
+                      onClick={() => setActiveLessonId(prev.id)}
                       className='flex-1 flex items-center gap-2 bg-white/80 backdrop-blur border border-gray-200 rounded-2xl px-4 py-3 text-gray-600 font-semibold text-sm shadow hover:bg-white transition'
                     >
                       <ChevronLeft className='w-4 h-4 flex-shrink-0' />
@@ -207,7 +205,7 @@ export default function Lessons() {
                     <motion.button
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
-                      onClick={() => setActiveLesson(next.id)}
+                      onClick={() => setActiveLessonId(next.id)}
                       className='flex-1 flex items-center justify-end gap-2 bg-white/80 backdrop-blur border border-gray-200 rounded-2xl px-4 py-3 text-gray-600 font-semibold text-sm shadow hover:bg-white transition'
                     >
                       <span>

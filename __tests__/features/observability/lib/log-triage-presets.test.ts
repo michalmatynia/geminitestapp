@@ -39,4 +39,16 @@ describe('log-triage-presets', () => {
     };
     expect(isSystemLogPresetActive(changedState, resolved)).toBe(false);
   });
+
+  it('resolves Kangur preset with kangur source prefix filter', () => {
+    const preset = SYSTEM_LOG_TRIAGE_PRESETS.find((item) => item.id === 'kangur-source-last7d');
+    expect(preset).toBeDefined();
+
+    const now = new Date(2026, 1, 10, 12, 0, 0);
+    const resolved = resolveSystemLogPresetFilters(preset, now);
+
+    expect(resolved.source).toBe('kangur.');
+    expect(resolved.fromDate).toBe('2026-02-03');
+    expect(resolved.toDate).toBe('2026-02-10');
+  });
 });

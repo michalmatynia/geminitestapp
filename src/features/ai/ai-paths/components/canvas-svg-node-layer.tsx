@@ -79,7 +79,7 @@ export function CanvasSvgNodeLayer({
     <>
       {renderNodes.map(
         (node: AiNode): React.JSX.Element => (
-          <CanvasSvgNode key={node.id} node={node} ui={ui} />
+          <CanvasSvgNode key={node.id} node={node} />
         )
       )}
     </>

@@ -40,6 +40,7 @@
     "migrate:cms:image-background-target:v2": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-cms-image-background-target-v2.ts",
     "migrate:case-resolver:workspace-detached-contract:v2": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-case-resolver-workspace-detached-contract-v2.ts",
     "migrate:master-folder-tree:profiles:v2": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-master-folder-tree-profiles-v2.ts",
+    "migrate:kangur:lessons:geometry-pack:v2": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-kangur-lessons-geometry-pack-v2.ts",
     "migrate:validator-pattern-feature:v2": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-validator-pattern-feature-v2.ts",
     "wave1:verify:prepare": "node scripts/db/prepare-wave1-dry-run-verification.mjs --env=local",
     "wave1:verify:dry-run": "node scripts/db/prepare-wave1-dry-run-verification.mjs --env=local --run",

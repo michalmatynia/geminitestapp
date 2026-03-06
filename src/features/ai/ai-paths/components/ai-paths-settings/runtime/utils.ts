@@ -1,7 +1,6 @@
 import type * as React from 'react';
 import type {
   AiNode,
-  AiPathRuntimeNodeStatus,
   AiPathRunRecord,
   Edge,
   PathConfig,
@@ -16,6 +15,8 @@ import type {
   RuntimePortValues,
   UpdaterSampleState,
 } from '@/shared/lib/ai-paths';
+import type { AiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
+import { normalizeAiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
 import { STORAGE_VERSION } from '@/shared/lib/ai-paths';
 import { extractImageUrls } from '@/shared/lib/ai-paths/core/runtime/utils';
 
@@ -58,30 +59,7 @@ export const resolveRunAt = (run: AiPathRunRecord): string => {
   );
 };
 
-const normalizeNodeStatusForMerge = (value: unknown): AiPathRuntimeNodeStatus | null => {
-  if (typeof value !== 'string') return null;
-  const status = value.trim().toLowerCase();
-  if (
-    status === 'idle' ||
-    status === 'queued' ||
-    status === 'running' ||
-    status === 'completed' ||
-    status === 'cached' ||
-    status === 'failed' ||
-    status === 'canceled' ||
-    status === 'skipped' ||
-    status === 'blocked' ||
-    status === 'pending' ||
-    status === 'processing' ||
-    status === 'polling' ||
-    status === 'waiting_callback' ||
-    status === 'advance_pending' ||
-    status === 'timeout'
-  ) {
-    return status;
-  }
-  return null;
-};
+const normalizeNodeStatusForMerge = normalizeAiPathRuntimeNodeStatus;
 
 const isObjectValue = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);

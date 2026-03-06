@@ -4,6 +4,7 @@ export type KangurGameScreen =
   | 'kangur_setup'
   | 'kangur'
   | 'calendar_quiz'
+  | 'geometry_quiz'
   | 'operation'
   | 'playing'
   | 'result';
@@ -56,6 +57,7 @@ export type KangurProgressState = {
   lessonsCompleted: number;
   clockPerfect: number;
   calendarPerfect: number;
+  geometryPerfect: number;
   badges: string[];
   operationsPlayed: string[];
 };
@@ -68,6 +70,8 @@ export type KangurXpRewards = {
   lesson_completed: number;
   clock_training_perfect: number;
   clock_training_good: number;
+  geometry_training_perfect: number;
+  geometry_training_good: number;
 };
 
 export type KangurXpToastState = {

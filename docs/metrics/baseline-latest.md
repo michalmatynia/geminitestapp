@@ -1,22 +1,22 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-05T07:24:41.989Z
+Generated at: 2026-03-06T02:57:28.494Z
 
 ## Snapshot
 
-- Source files: 4210
-- Source lines: 677543
-- use client files: 1309
-- Files >= 1000 LOC: 2
-- Files >= 1500 LOC: 2
-- Largest file: `src/shared/lib/ai-paths/portable-engine/sinks.server.ts` (2984 LOC)
-- API routes: 312
+- Source files: 4348
+- Source lines: 714038
+- use client files: 1319
+- Files >= 1000 LOC: 14
+- Files >= 1500 LOC: 3
+- Largest file: `src/shared/lib/ai-paths/portable-engine/sinks.server.ts` (3026 LOC)
+- API routes: 314
 - API delegated server routes: 13
 - API routes without apiHandler/delegation: 0
-- API explicit cache policy coverage: 312/312 (100.0%)
-- Cross-feature dependency pairs: 71
+- API explicit cache policy coverage: 314/314 (100.0%)
+- Cross-feature dependency pairs: 74
 - Shared -> features imports: 11
-- setInterval occurrences: 22
+- setInterval occurrences: 21
 - Prop-drilling chains (depth >= 3): 0
 - Prop-drilling chains (depth >= 4): 0
 
@@ -64,23 +64,23 @@ Generated at: 2026-03-05T07:24:41.989Z
 
 | File | LOC |
 | --- | ---: |
-| `src/shared/lib/ai-paths/portable-engine/sinks.server.ts` | 2984 |
-| `src/shared/lib/ai-paths/portable-engine/index.ts` | 2241 |
-| `src/app/api/ai-paths/portable-engine/trend-snapshots/handler.test.ts` | 993 |
-| `src/features/case-resolver/__tests__/workspace-persistence.test.ts` | 987 |
-| `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 986 |
-| `src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx` | 936 |
-| `src/shared/contracts/image-studio.ts` | 936 |
-| `src/shared/lib/ai-paths/core/runtime/engine-core.ts` | 934 |
-| `src/app/api/image-studio/slots/[slotId]/autoscale/handler.test.ts` | 931 |
-| `src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsServerExecution.ts` | 931 |
-| `src/app/api/image-studio/slots/[slotId]/crop/handler.ts` | 929 |
-| `src/features/ai/ai-paths/components/JobQueueContext.tsx` | 927 |
-| `src/shared/contracts/ai-paths-core/nodes.ts` | 924 |
-| `src/features/ai/ai-paths/services/runtime-analytics-service.ts` | 917 |
-| `src/shared/lib/documentation/catalogs/validator-docs.ts` | 909 |
-| `src/shared/lib/ai-paths/hooks/useAiPathTriggerEvent.ts` | 905 |
-| `src/features/case-resolver-capture/__tests__/proposals.test.ts` | 901 |
-| `src/shared/contracts/cms.ts` | 894 |
-| `src/shared/lib/ai-brain/context/BrainContext.tsx` | 891 |
-| `src/features/notesapp/context/NoteFormContext.tsx` | 890 |
+| `src/shared/lib/ai-paths/portable-engine/sinks.server.ts` | 3026 |
+| `src/shared/lib/ai-paths/portable-engine/index.ts` | 2389 |
+| `src/shared/lib/ai-paths/core/runtime/__tests__/engine-core.v3-pilot-parity.test.ts` | 1832 |
+| `src/shared/lib/ai-paths/core/runtime/__tests__/client-native-code-object-registry-contract-subset.test.ts` | 1366 |
+| `src/shared/lib/ai-paths/core/runtime/engine-core.ts` | 1247 |
+| `src/app/api/ai-paths/portable-engine/trend-snapshots/handler.test.ts` | 1246 |
+| `src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx` | 1201 |
+| `src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx` | 1130 |
+| `src/features/ai/ai-paths/services/path-run-executor/index.ts` | 1119 |
+| `src/features/ai/ai-paths/services/runtime-analytics-service.ts` | 1107 |
+| `src/shared/lib/ai-paths/portable-engine/portable-engine-observability.ts` | 1084 |
+| `src/features/kangur/ui/components/KangurIllustrations.jsx` | 1024 |
+| `src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsServerExecution.ts` | 1001 |
+| `src/features/ai/ai-paths/services/path-run-service.ts` | 1001 |
+| `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 989 |
+| `src/shared/contracts/ai-paths.ts` | 987 |
+| `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 961 |
+| `src/features/ai/ai-paths/components/JobQueueContext.tsx` | 957 |
+| `src/shared/lib/ai-paths/hooks/useAiPathTriggerEvent.ts` | 941 |
+| `src/shared/utils/folder-tree-profiles-v2/defaults.ts` | 940 |

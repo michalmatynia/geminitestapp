@@ -1,35 +1,36 @@
 # Prop Drilling Scan
 
-Generated at: 2026-03-05T15:25:23.969Z
+Generated at: 2026-03-06T02:54:39.519Z
 
 ## Snapshot
 
-- Scanned source files: 3915
-- JSX files scanned: 1413
-- Components detected: 2193
-- Components forwarding parent props (hotspot threshold): 1
-- Components forwarding parent props (any): 4
+- Scanned source files: 3943
+- JSX files scanned: 1426
+- Components detected: 2209
+- Components forwarding parent props (hotspot threshold): 0
+- Components forwarding parent props (any): 5
 - Resolved forwarded transitions: 5
 - Candidate chains (depth >= 2): 5
 - Candidate chains (depth >= 3): 0
 - High-priority chains (depth >= 4): 0
 - Unknown spread forwarding edges: 0
-- Hotspot forwarding components backlog size: 1
+- Hotspot forwarding components backlog size: 0
 
 ## Hot Features
 
 | Feature Scope | Forwarding Components |
 | --- | ---: |
-| `feature:kangur` | 4 |
+| `feature:kangur` | 5 |
 
 ## Top Prop-Drilling Components
 
 | Rank | Component | File | Forwarded Props | Outgoing Transitions | Unknown Spread Forwarding | Hotspot |
 | ---: | --- | --- | ---: | ---: | --- | --- |
-| 1 | `KangurGame` | `src/features/kangur/ui/components/KangurGame.tsx` | 2 | 2 | no | yes |
+| 1 | `AdminKangurPageShell` | `src/features/kangur/admin/AdminKangurPageShell.tsx` | 1 | 1 | no | no |
 | 2 | `CompleteEquation` | `src/features/kangur/ui/components/AddingBallGame.tsx` | 1 | 1 | no | no |
 | 3 | `CalendarLesson` | `src/features/kangur/ui/components/CalendarLesson.tsx` | 1 | 1 | no | no |
 | 4 | `ClockLesson` | `src/features/kangur/ui/components/ClockLesson.tsx` | 1 | 1 | no | no |
+| 5 | `GeometryShapesLesson` | `src/features/kangur/ui/components/GeometryShapesLesson.tsx` | 1 | 1 | no | no |
 
 ## Prioritized Transition Backlog (Depth = 2)
 
@@ -37,9 +38,9 @@ Generated at: 2026-03-05T15:25:23.969Z
 | ---: | ---: | --- | --- | ---: | ---: | --- | --- |
 | 1 | 52 | `CompleteEquation` | `SlotZone` | 1 | 1 | `round -> label` | `src/features/kangur/ui/components/AddingBallGame.tsx:231` |
 | 2 | 52 | `CalendarLesson` | `CalendarInteractiveGame` | 1 | 1 | `onBack -> onFinish` | `src/features/kangur/ui/components/CalendarLesson.tsx:302` |
-| 3 | 52 | `ClockLesson` | `ClockTrainingGame` | 1 | 1 | `onBack -> onFinish` | `src/features/kangur/ui/components/ClockLesson.tsx:296` |
-| 4 | 44 | `KangurGame` | `KangurGameProvider` | 1 | 1 | `mode -> mode` | `src/features/kangur/ui/components/KangurGame.tsx:315` |
-| 5 | 44 | `KangurGame` | `KangurGameProvider` | 1 | 1 | `onBack -> onBack` | `src/features/kangur/ui/components/KangurGame.tsx:315` |
+| 3 | 52 | `ClockLesson` | `ClockTrainingGame` | 1 | 1 | `onBack -> onFinish` | `src/features/kangur/ui/components/ClockLesson.tsx:565` |
+| 4 | 52 | `GeometryShapesLesson` | `GeometryDrawingGame` | 1 | 1 | `onBack -> onFinish` | `src/features/kangur/ui/components/GeometryShapesLesson.tsx:107` |
+| 5 | 44 | `AdminKangurPageShell` | `KangurFeaturePage` | 1 | 1 | `slug -> slug` | `src/features/kangur/admin/AdminKangurPageShell.tsx:17` |
 
 ## Ranked Chain Backlog (Depth >= 3)
 
@@ -72,21 +73,21 @@ Generated at: 2026-03-05T15:25:23.969Z
 - Score: 52
 - Root fanout: 1
 - Prop mapping: onBack -> onFinish
-- Location: src/features/kangur/ui/components/ClockLesson.tsx:296
+- Location: src/features/kangur/ui/components/ClockLesson.tsx:565
 
-### 4. KangurGame -> KangurGameProvider
+### 4. GeometryShapesLesson -> GeometryDrawingGame
+
+- Score: 52
+- Root fanout: 1
+- Prop mapping: onBack -> onFinish
+- Location: src/features/kangur/ui/components/GeometryShapesLesson.tsx:107
+
+### 5. AdminKangurPageShell -> KangurFeaturePage
 
 - Score: 44
 - Root fanout: 1
-- Prop mapping: mode -> mode
-- Location: src/features/kangur/ui/components/KangurGame.tsx:315
-
-### 5. KangurGame -> KangurGameProvider
-
-- Score: 44
-- Root fanout: 1
-- Prop mapping: onBack -> onBack
-- Location: src/features/kangur/ui/components/KangurGame.tsx:315
+- Prop mapping: slug -> slug
+- Location: src/features/kangur/admin/AdminKangurPageShell.tsx:17
 
 ## Execution Notes
 

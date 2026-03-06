@@ -27,6 +27,13 @@ const KANGUR_VISUAL_CONTRACTS = [
     requiredTokens: ['min-h-screen bg-gradient-to-br from-slate-100 to-blue-50'],
   },
   {
+    file: 'src/features/kangur/ui/pages/LearnerProfile.tsx',
+    requiredTokens: [
+      'min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100',
+      'Statystyki ucznia',
+    ],
+  },
+  {
     file: 'src/features/kangur/ui/components/PageNotFound.tsx',
     requiredTokens: [
       'min-h-screen flex items-center justify-center p-6 bg-slate-50',

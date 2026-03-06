@@ -167,7 +167,7 @@ export const executePathRun = async (
   const runtimeState = parseRuntimeState(run.runtimeState);
   const runMetaRecord =
     run.meta && typeof run.meta === 'object' && !Array.isArray(run.meta)
-      ? (run.meta as Record<string, unknown>)
+      ? (run.meta)
       : null;
   const runMetaRuntimeKernelConfigRecord =
     runMetaRecord &&

@@ -175,4 +175,36 @@ describe('Canvas model selection badge', () => {
     expect(screen.getByText('Waiting')).toBeTruthy();
     expect(container.querySelector('.ai-paths-node-halo')).toBeFalsy();
   });
+
+  it('renders Blocked badge without halo for model nodes in blocked status', () => {
+    const node = buildModelNode('gpt-4o-mini');
+    const { container } = render(
+      <svg>
+        <CanvasBoardUIProvider
+          value={buildContextValue(node, { runtimeNodeStatuses: { [node.id]: 'blocked' } })}
+        >
+          <CanvasSvgNodeLayer />
+        </CanvasBoardUIProvider>
+      </svg>
+    );
+
+    expect(screen.getByText('Blocked')).toBeTruthy();
+    expect(container.querySelector('.ai-paths-node-halo')).toBeFalsy();
+  });
+
+  it('renders Skipped badge without halo for model nodes in skipped status', () => {
+    const node = buildModelNode('gpt-4o-mini');
+    const { container } = render(
+      <svg>
+        <CanvasBoardUIProvider
+          value={buildContextValue(node, { runtimeNodeStatuses: { [node.id]: 'skipped' } })}
+        >
+          <CanvasSvgNodeLayer />
+        </CanvasBoardUIProvider>
+      </svg>
+    );
+
+    expect(screen.getByText('Skipped')).toBeTruthy();
+    expect(container.querySelector('.ai-paths-node-halo')).toBeFalsy();
+  });
 });

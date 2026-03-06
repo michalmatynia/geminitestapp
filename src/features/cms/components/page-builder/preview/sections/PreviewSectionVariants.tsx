@@ -6,7 +6,6 @@ import React from 'react';
 
 import {
   getSectionContainerClass,
-  getSectionStyles,
   getVerticalAlign,
 } from '@/features/cms/components/frontend/theme-styles';
 import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';
@@ -22,22 +21,16 @@ import { PreviewSectionFrame } from './PreviewSectionFrame';
 import { PreviewSectionMediaButton } from './PreviewSectionMediaButton';
 
 export function PreviewHeroSection(): React.JSX.Element {
-  const { colorSchemes, layout } = useCmsPageContext();
+  const { layout } = useCmsPageContext();
   const mediaStyles = useMediaStyles();
   const {
     section,
-    selectedRing,
-    renderSectionActions,
-    divider,
-    wrapInspector,
-    handleSelect,
     PreviewBlockItem,
   } = usePreviewSectionContext();
   const { inspectorSettings } = usePreviewEditorState();
   const { onOpenMedia } = usePreviewEditorActions();
 
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
-  const sectionStyles = getSectionStyles(section.settings, colorSchemes);
   const sectionImage = section.settings['image'] as string | undefined;
   const imageHeight = (section.settings['imageHeight'] as string) || 'large';
   const heightClass =
@@ -49,13 +42,6 @@ export function PreviewHeroSection(): React.JSX.Element {
 
   return (
     <PreviewSectionFrame
-      sectionId={section.id}
-      selectedRing={selectedRing}
-      sectionStyles={sectionStyles}
-      onSelect={handleSelect}
-      wrapInspector={wrapInspector}
-      renderSectionActions={renderSectionActions}
-      divider={divider}
       topSlot={
         <PreviewSectionMediaButton
           show={showEditorChrome}
@@ -102,22 +88,16 @@ export function PreviewHeroSection(): React.JSX.Element {
 }
 
 export function PreviewImageWithTextSection(): React.JSX.Element {
-  const { colorSchemes, layout } = useCmsPageContext();
+  const { layout } = useCmsPageContext();
   const mediaStyles = useMediaStyles();
   const {
     section,
-    selectedRing,
-    renderSectionActions,
-    divider,
-    wrapInspector,
-    handleSelect,
     PreviewBlockItem,
   } = usePreviewSectionContext();
   const { inspectorSettings } = usePreviewEditorState();
   const { onOpenMedia } = usePreviewEditorActions();
 
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
-  const sectionStyles = getSectionStyles(section.settings, colorSchemes);
   const sectionImage = section.settings['image'] as string | undefined;
   const placement = section.settings['desktopImagePlacement'] as string | undefined;
   const imageFirst = placement !== 'image-second';
@@ -133,13 +113,6 @@ export function PreviewImageWithTextSection(): React.JSX.Element {
 
   return (
     <PreviewSectionFrame
-      sectionId={section.id}
-      selectedRing={selectedRing}
-      sectionStyles={sectionStyles}
-      onSelect={handleSelect}
-      wrapInspector={wrapInspector}
-      renderSectionActions={renderSectionActions}
-      divider={divider}
       topSlot={
         <PreviewSectionMediaButton
           show={showEditorChrome}
@@ -194,31 +167,18 @@ export function PreviewImageWithTextSection(): React.JSX.Element {
 }
 
 export function PreviewRichTextSection(): React.JSX.Element {
-  const { colorSchemes, layout } = useCmsPageContext();
+  const { layout } = useCmsPageContext();
   const {
     section,
-    selectedRing,
-    renderSectionActions,
-    divider,
-    wrapInspector,
-    handleSelect,
     PreviewBlockItem,
   } = usePreviewSectionContext();
   const { inspectorSettings } = usePreviewEditorState();
   const { onOpenMedia } = usePreviewEditorActions();
 
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
-  const sectionStyles = getSectionStyles(section.settings, colorSchemes);
 
   return (
     <PreviewSectionFrame
-      sectionId={section.id}
-      selectedRing={selectedRing}
-      sectionStyles={sectionStyles}
-      onSelect={handleSelect}
-      wrapInspector={wrapInspector}
-      renderSectionActions={renderSectionActions}
-      divider={divider}
       dividerPosition='after'
       topSlot={
         <PreviewSectionMediaButton

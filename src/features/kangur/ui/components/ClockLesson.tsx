@@ -1,6 +1,15 @@
-import { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Volume2, VolumeX } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronDown,
+  ChevronRight,
+  Lock,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
+
 import ClockTrainingGame from './ClockTrainingGame';
 import { addXp, XP_REWARDS, loadProgress } from '@/features/kangur/ui/services/progress';
 
@@ -14,12 +23,24 @@ type AnalogClockProps = {
   label?: string;
   highlightHour?: boolean;
   highlightMinute?: boolean;
+  showHourHand?: boolean;
+  showMinuteHand?: boolean;
 };
 
 type LessonSlide = {
   title: string;
+  tts: string;
   content: React.JSX.Element;
 };
+
+type LessonSection = {
+  id: 'hours' | 'minutes' | 'combined';
+  title: string;
+  subtitle: string;
+  slides: LessonSlide[];
+};
+
+const LOCKED_SECTION_HINT = 'Najpierw ukończ poprzednią sekcję, aby odblokować ten etap.';
 
 function AnalogClock({
   hours,
@@ -27,6 +48,8 @@ function AnalogClock({
   label,
   highlightHour = false,
   highlightMinute = false,
+  showHourHand = true,
+  showMinuteHand = true,
 }: AnalogClockProps): React.JSX.Element {
   const hourAngle = ((hours % 12) + minutes / 60) * 30;
   const minuteAngle = minutes * 6;
@@ -82,26 +105,30 @@ function AnalogClock({
             </text>
           );
         })}
-        {/* Hour hand */}
-        <line
-          x1='100'
-          y1='100'
-          x2={100 + 48 * Math.cos((hourAngle - 90) * (Math.PI / 180))}
-          y2={100 + 48 * Math.sin((hourAngle - 90) * (Math.PI / 180))}
-          stroke={highlightHour ? '#dc2626' : '#1e1b4b'}
-          strokeWidth={highlightHour ? 8 : 6}
-          strokeLinecap='round'
-        />
-        {/* Minute hand */}
-        <line
-          x1='100'
-          y1='100'
-          x2={100 + 68 * Math.cos((minuteAngle - 90) * (Math.PI / 180))}
-          y2={100 + 68 * Math.sin((minuteAngle - 90) * (Math.PI / 180))}
-          stroke={highlightMinute ? '#16a34a' : '#4f46e5'}
-          strokeWidth={highlightMinute ? 6 : 4}
-          strokeLinecap='round'
-        />
+        {showHourHand && (
+          <line
+            data-testid='clock-lesson-hour-hand'
+            x1='100'
+            y1='100'
+            x2={100 + 48 * Math.cos((hourAngle - 90) * (Math.PI / 180))}
+            y2={100 + 48 * Math.sin((hourAngle - 90) * (Math.PI / 180))}
+            stroke={highlightHour ? '#dc2626' : '#1e1b4b'}
+            strokeWidth={highlightHour ? 8 : 6}
+            strokeLinecap='round'
+          />
+        )}
+        {showMinuteHand && (
+          <line
+            data-testid='clock-lesson-minute-hand'
+            x1='100'
+            y1='100'
+            x2={100 + 68 * Math.cos((minuteAngle - 90) * (Math.PI / 180))}
+            y2={100 + 68 * Math.sin((minuteAngle - 90) * (Math.PI / 180))}
+            stroke={highlightMinute ? '#16a34a' : '#4f46e5'}
+            strokeWidth={highlightMinute ? 6 : 4}
+            strokeLinecap='round'
+          />
+        )}
         <circle cx='100' cy='100' r='5' fill='#6366f1' />
       </svg>
       {label && <p className='text-sm font-semibold text-gray-500 text-center'>{label}</p>}
@@ -109,158 +136,345 @@ function AnalogClock({
   );
 }
 
-const SLIDES: LessonSlide[] = [
+const LESSON_SECTIONS: LessonSection[] = [
   {
-    title: 'Czym jest zegar?',
-    content: (
-      <div className='flex flex-col items-center gap-4 text-center'>
-        <AnalogClock hours={3} minutes={0} />
-        <p className='text-gray-600 leading-relaxed max-w-xs'>
-          Zegar służy do mierzenia czasu. Zegar analogowy ma <strong>tarczę</strong> z cyframi od 1
-          do 12 oraz <strong>dwie wskazówki</strong>, które się obracają.
-        </p>
-      </div>
-    ),
+    id: 'hours',
+    title: 'Sekcja 1: Godziny (krótka wskazówka)',
+    subtitle: 'Uczymy się tylko krótkiej wskazówki i pełnych godzin (:00).',
+    slides: [
+      {
+        title: 'Co pokazuje krótka wskazówka?',
+        tts: 'Krótka wskazówka pokazuje godzinę. Na tej sekcji patrzymy tylko na nią.',
+        content: (
+          <div className='flex flex-col items-center gap-4 text-center'>
+            <div className='flex gap-6 justify-center flex-wrap'>
+              <AnalogClock
+                hours={3}
+                minutes={0}
+                highlightHour
+                showMinuteHand={false}
+                label='Krótka wskazówka na 3'
+              />
+              <AnalogClock
+                hours={8}
+                minutes={0}
+                highlightHour
+                showMinuteHand={false}
+                label='Krótka wskazówka na 8'
+              />
+            </div>
+            <p className='text-gray-600 leading-relaxed max-w-xs'>
+              Patrzymy na <strong className='text-red-600'>krótką wskazówkę</strong>. Ona mówi nam,
+              która jest godzina.
+            </p>
+          </div>
+        ),
+      },
+      {
+        title: 'Pełne godziny (:00)',
+        tts: 'Gdy jest pełna godzina, odczytujemy tylko godzinę z krótkiej wskazówki.',
+        content: (
+          <div className='flex flex-col items-center gap-4 text-center'>
+            <div className='flex gap-6 justify-center flex-wrap'>
+              <AnalogClock hours={1} minutes={0} highlightHour showMinuteHand={false} label='1:00' />
+              <AnalogClock hours={6} minutes={0} highlightHour showMinuteHand={false} label='6:00' />
+              <AnalogClock
+                hours={11}
+                minutes={0}
+                highlightHour
+                showMinuteHand={false}
+                label='11:00'
+              />
+            </div>
+            <p className='text-gray-600 leading-relaxed max-w-xs'>
+              W tej sekcji trenujemy tylko odczyt godziny: 1, 6, 11.
+            </p>
+          </div>
+        ),
+      },
+      {
+        title: 'Szybki test godzin',
+        tts: 'Spójrz na krótką wskazówkę i nazwij godzinę. Minuty pomijamy.',
+        content: (
+          <div className='flex flex-col items-center gap-4 text-center'>
+            <AnalogClock
+              hours={9}
+              minutes={0}
+              highlightHour
+              showMinuteHand={false}
+              label='Jaka to godzina?'
+            />
+            <div className='bg-red-50 border border-red-200 rounded-2xl p-4 max-w-xs text-left'>
+              <p className='text-gray-700 font-semibold'>Krok:</p>
+              <p className='text-gray-600 text-sm mt-1'>
+                1. Znajdź krótką wskazówkę.
+                <br />
+                2. Odczytaj numer, na który pokazuje.
+              </p>
+              <p className='text-red-700 font-extrabold mt-2'>Wynik: 9:00</p>
+            </div>
+          </div>
+        ),
+      },
+    ],
   },
   {
-    title: 'Dwie wskazówki',
-    content: (
-      <div className='flex flex-col items-center gap-4 text-center'>
-        <div className='flex gap-6 justify-center flex-wrap'>
-          <AnalogClock hours={3} minutes={0} highlightHour label='🔴 Krótka = godziny' />
-          <AnalogClock hours={12} minutes={30} highlightMinute label='🟢 Długa = minuty' />
-        </div>
-        <p className='text-gray-600 leading-relaxed max-w-xs'>
-          <span className='text-red-600 font-bold'>Krótka wskazówka</span> wskazuje{' '}
-          <strong>godziny</strong>.<br />
-          <span className='text-green-600 font-bold'>Długa wskazówka</span> wskazuje{' '}
-          <strong>minuty</strong>.
-        </p>
-      </div>
-    ),
+    id: 'minutes',
+    title: 'Sekcja 2: Minuty (długa wskazówka)',
+    subtitle: 'Uczymy się tylko długiej wskazówki i mapy minut.',
+    slides: [
+      {
+        title: 'Co pokazuje długa wskazówka?',
+        tts: 'Długa wskazówka pokazuje minuty. W tej sekcji skupiamy się tylko na minutach.',
+        content: (
+          <div className='flex flex-col items-center gap-4 text-center'>
+            <AnalogClock
+              hours={12}
+              minutes={20}
+              highlightMinute
+              showHourHand={false}
+              label='Długa wskazówka = minuty'
+            />
+            <p className='text-gray-600 leading-relaxed max-w-xs'>
+              <strong className='text-green-600'>Długa wskazówka</strong> chodzi po tarczy i mówi,
+              ile minut minęło.
+            </p>
+          </div>
+        ),
+      },
+      {
+        title: 'Mapa minut co 5',
+        tts: 'Każdy numer to kolejne pięć minut: 1 to 5, 2 to 10, 3 to 15 i tak dalej.',
+        content: (
+          <div className='flex flex-col items-center gap-4 text-center'>
+            <div className='flex gap-6 justify-center flex-wrap'>
+              <AnalogClock
+                hours={12}
+                minutes={15}
+                highlightMinute
+                showHourHand={false}
+                label='3 = 15 min'
+              />
+              <AnalogClock
+                hours={12}
+                minutes={30}
+                highlightMinute
+                showHourHand={false}
+                label='6 = 30 min'
+              />
+              <AnalogClock
+                hours={12}
+                minutes={45}
+                highlightMinute
+                showHourHand={false}
+                label='9 = 45 min'
+              />
+            </div>
+            <p className='text-gray-600 leading-relaxed max-w-xs'>
+              Zapamiętaj: każda kolejna liczba to +5 minut.
+            </p>
+          </div>
+        ),
+      },
+      {
+        title: 'Szybki test minut',
+        tts: 'Patrz tylko na długą wskazówkę i nazwij minuty.',
+        content: (
+          <div className='flex flex-col items-center gap-4 text-center'>
+            <AnalogClock
+              hours={12}
+              minutes={35}
+              highlightMinute
+              showHourHand={false}
+              label='Jaka to liczba minut?'
+            />
+            <div className='bg-green-50 border border-green-200 rounded-2xl p-4 max-w-xs text-left'>
+              <p className='text-gray-700 font-semibold'>Krok:</p>
+              <p className='text-gray-600 text-sm mt-1'>
+                Długa wskazówka stoi przy 7.
+                <br />
+                7 × 5 = 35 minut.
+              </p>
+              <p className='text-green-700 font-extrabold mt-2'>Wynik: :35</p>
+            </div>
+          </div>
+        ),
+      },
+    ],
   },
   {
-    title: 'Pełna godzina (:00)',
-    content: (
-      <div className='flex flex-col items-center gap-4 text-center'>
-        <div className='flex gap-6 justify-center flex-wrap'>
-          <AnalogClock hours={3} minutes={0} label='3:00' />
-          <AnalogClock hours={7} minutes={0} label='7:00' />
-        </div>
-        <p className='text-gray-600 leading-relaxed max-w-xs'>
-          Gdy <strong>długa wskazówka (minuty)</strong> pokazuje na <strong>12</strong>, jest pełna
-          godzina — minuty = <strong>00</strong>.<br />
-          Odczytuj krótką wskazówkę, żeby wiedzieć, która godzina.
-        </p>
-      </div>
-    ),
-  },
-  {
-    title: 'Pół godziny (:30)',
-    content: (
-      <div className='flex flex-col items-center gap-4 text-center'>
-        <div className='flex gap-6 justify-center flex-wrap'>
-          <AnalogClock hours={2} minutes={30} label='2:30' />
-          <AnalogClock hours={9} minutes={30} label='9:30' />
-        </div>
-        <p className='text-gray-600 leading-relaxed max-w-xs'>
-          Gdy długa wskazówka pokazuje na <strong>6</strong>, minęło pół godziny — minuty ={' '}
-          <strong>30</strong>.<br />
-          Krótka wskazówka jest wtedy w połowie między dwiema godzinami.
-        </p>
-      </div>
-    ),
-  },
-  {
-    title: 'Kwadrans (:15 i :45)',
-    content: (
-      <div className='flex flex-col items-center gap-4 text-center'>
-        <div className='flex gap-6 justify-center flex-wrap'>
-          <AnalogClock hours={5} minutes={15} label='5:15 (kwadrans po 5)' />
-          <AnalogClock hours={5} minutes={45} label='5:45 (kwadrans do 6)' />
-        </div>
-        <p className='text-gray-600 leading-relaxed max-w-xs'>
-          Długa wskazówka na <strong>3</strong> → <strong>:15</strong> minut.
-          <br />
-          Długa wskazówka na <strong>9</strong> → <strong>:45</strong> minut.
-        </p>
-      </div>
-    ),
-  },
-  {
-    title: 'Jak odczytać godzinę?',
-    content: (
-      <div className='flex flex-col items-center gap-4 text-center'>
-        <AnalogClock hours={8} minutes={30} />
-        <div className='bg-indigo-50 rounded-2xl p-4 max-w-xs text-left space-y-2'>
-          <p className='text-gray-700 font-semibold'>Kroki:</p>
-          <p className='text-gray-600'>
-            1️⃣ Patrz na <span className='text-red-600 font-bold'>krótką wskazówkę</span> → godzina ={' '}
-            <strong>8</strong>
-          </p>
-          <p className='text-gray-600'>
-            2️⃣ Patrz na <span className='text-green-600 font-bold'>długą wskazówkę</span> → minuty ={' '}
-            <strong>30</strong> (wskazuje na 6)
-          </p>
-          <p className='text-indigo-700 font-extrabold text-lg mt-2'>✅ Wynik: 8:30</p>
-        </div>
-      </div>
-    ),
-  },
-  {
-    title: 'Brawo! Lekcja ukończona! 🎉',
-    content: (
-      <div className='flex flex-col items-center gap-4 text-center'>
-        <div className='text-7xl'>🏆</div>
-        <p className='text-gray-600 leading-relaxed max-w-xs'>
-          Nauczyłeś/aś się odczytywać godziny z zegara analogowego!
-          <br />
-          <br />
-          Pamiętaj:
-          <br />
-          🔴 <strong>Krótka</strong> = godziny
-          <br />
-          🟢 <strong>Długa</strong> = minuty
-        </p>
-      </div>
-    ),
+    id: 'combined',
+    title: 'Sekcja 3: Godziny i Minuty razem',
+    subtitle: 'Łączymy obie wskazówki i odczytujemy pełny czas.',
+    slides: [
+      {
+        title: 'Jak łączyć obie wskazówki?',
+        tts: 'Najpierw czytamy godzinę z krótkiej wskazówki, potem minuty z długiej.',
+        content: (
+          <div className='flex flex-col items-center gap-4 text-center'>
+            <AnalogClock hours={8} minutes={30} label='Przykład: 8:30' />
+            <div className='bg-indigo-50 rounded-2xl p-4 max-w-xs text-left space-y-2'>
+              <p className='text-gray-700 font-semibold'>Kroki:</p>
+              <p className='text-gray-600 text-sm'>1. Krótka wskazówka: godzina = 8</p>
+              <p className='text-gray-600 text-sm'>2. Długa wskazówka: minuty = 30</p>
+              <p className='text-indigo-700 font-extrabold'>Wynik: 8:30</p>
+            </div>
+          </div>
+        ),
+      },
+      {
+        title: 'Kwadrans po i kwadrans do',
+        tts: 'Długa wskazówka na 3 to kwadrans po, a na 9 to kwadrans do następnej godziny.',
+        content: (
+          <div className='flex flex-col items-center gap-4 text-center'>
+            <div className='flex gap-6 justify-center flex-wrap'>
+              <AnalogClock hours={5} minutes={15} label='5:15 - kwadrans po 5' />
+              <AnalogClock hours={5} minutes={45} label='5:45 - kwadrans do 6' />
+            </div>
+            <p className='text-gray-600 leading-relaxed max-w-xs'>
+              Odczytujemy godzinę i minuty jednocześnie.
+            </p>
+          </div>
+        ),
+      },
+      {
+        title: 'Gotowy/a na ćwiczenie',
+        tts: 'Teraz potrafisz czytać godziny i minuty razem. Przejdź do ćwiczenia.',
+        content: (
+          <div className='flex flex-col items-center gap-4 text-center'>
+            <div className='text-7xl'>🏆</div>
+            <p className='text-gray-600 leading-relaxed max-w-xs'>
+              Brawo! Umiesz:
+              <br />
+              🔴 czytać godziny,
+              <br />
+              🟢 czytać minuty,
+              <br />
+              ✅ łączyć obie wskazówki w pełny czas.
+            </p>
+          </div>
+        ),
+      },
+    ],
   },
 ];
 
-function getSlideText(slide: number): string {
-  const texts = [
-    'Zegar służy do mierzenia czasu. Zegar analogowy ma tarczę z cyframi od 1 do 12 oraz dwie wskazówki, które się obracają.',
-    'Krótka wskazówka wskazuje godziny. Długa wskazówka wskazuje minuty.',
-    'Gdy długa wskazówka, czyli minuty, pokazuje na 12, jest pełna godzina. Odczytuj krótką wskazówkę, żeby wiedzieć, która godzina.',
-    'Gdy długa wskazówka pokazuje na 6, minęło pół godziny, czyli minuty równa się 30. Krótka wskazówka jest wtedy w połowie między dwiema godzinami.',
-    'Długa wskazówka na 3 to 15 minut. Długa wskazówka na 9 to 45 minut.',
-    'Krok pierwszy: patrz na krótką wskazówkę, to jest godzina. Krok drugi: patrz na długą wskazówkę, to są minuty. Wynik: 8 i 30.',
-    'Brawo! Nauczyłeś się odczytywać godziny z zegara analogowego! Krótka wskazówka to godziny. Długa wskazówka to minuty.',
-  ];
-  return texts[slide] ?? '';
+function stopSpeech(): void {
+  window.speechSynthesis?.cancel();
 }
 
 export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Element {
-  const [slide, setSlide] = useState(0);
+  const [openSection, setOpenSection] = useState<number | null>(0);
+  const [sectionSlides, setSectionSlides] = useState<number[]>(() => LESSON_SECTIONS.map(() => 0));
+  const [completedSections, setCompletedSections] = useState<boolean[]>(() =>
+    LESSON_SECTIONS.map(() => false)
+  );
+  const [unlockedSections, setUnlockedSections] = useState<boolean[]>(() =>
+    LESSON_SECTIONS.map((_, index) => index === 0)
+  );
   const [speaking, setSpeaking] = useState(false);
   const [inTraining, setInTraining] = useState(false);
-  const activeSlide = SLIDES[slide];
 
-  const handleStartTraining = () => {
-    // Award XP for completing the lesson slides
-    const prog = loadProgress();
+  const activeSection = openSection !== null ? LESSON_SECTIONS[openSection] : null;
+  const activeSlideIndex = openSection !== null ? (sectionSlides[openSection] ?? 0) : 0;
+  const activeSlide = activeSection?.slides[activeSlideIndex] ?? null;
+
+  const isFinalSection = openSection !== null && openSection === LESSON_SECTIONS.length - 1;
+  const isFinalSlide = activeSection ? activeSlideIndex === activeSection.slides.length - 1 : false;
+
+  const setSectionSlideIndex = useCallback((sectionIndex: number, nextIndex: number) => {
+    setSectionSlides((prev) => {
+      const next = [...prev];
+      const slides = LESSON_SECTIONS[sectionIndex]?.slides ?? [];
+      const maxIndex = Math.max(0, slides.length - 1);
+      const clampedIndex = Math.min(Math.max(nextIndex, 0), maxIndex);
+      next[sectionIndex] = clampedIndex;
+      return next;
+    });
+  }, []);
+
+  const openSectionAt = useCallback(
+    (sectionIndex: number) => {
+      if (!unlockedSections[sectionIndex]) {
+        return;
+      }
+      stopSpeech();
+      setSpeaking(false);
+      setOpenSection((current) => (current === sectionIndex ? null : sectionIndex));
+    },
+    [unlockedSections]
+  );
+
+  const unlockNextSection = useCallback((sectionIndex: number) => {
+    const nextSection = sectionIndex + 1;
+    setUnlockedSections((previous) => {
+      if (nextSection >= previous.length || previous[nextSection]) {
+        return previous;
+      }
+      const next = [...previous];
+      next[nextSection] = true;
+      return next;
+    });
+  }, []);
+
+  const markSectionCompleted = useCallback((sectionIndex: number) => {
+    setCompletedSections((previous) => {
+      if (previous[sectionIndex]) {
+        return previous;
+      }
+      const next = [...previous];
+      next[sectionIndex] = true;
+      return next;
+    });
+    unlockNextSection(sectionIndex);
+  }, [unlockNextSection]);
+
+  const getSectionStatus = useCallback(
+    (sectionIndex: number, isOpen: boolean): { label: string; className: string } => {
+      if (!unlockedSections[sectionIndex]) {
+        return {
+          label: 'Zablokowana',
+          className: 'bg-slate-200 text-slate-500',
+        };
+      }
+      if (completedSections[sectionIndex]) {
+        return {
+          label: 'Ukończono',
+          className: 'bg-green-100 text-green-700',
+        };
+      }
+      if (isOpen) {
+        return {
+          label: 'W trakcie',
+          className: 'bg-indigo-100 text-indigo-700',
+        };
+      }
+      return {
+        label: 'Do zrobienia',
+        className: 'bg-slate-100 text-slate-600',
+      };
+    },
+    [completedSections, unlockedSections]
+  );
+
+  const handleStartTraining = useCallback(() => {
+    const progress = loadProgress();
     addXp(XP_REWARDS.lesson_completed, {
-      lessonsCompleted: prog.lessonsCompleted + 1,
+      lessonsCompleted: progress.lessonsCompleted + 1,
     });
     setInTraining(true);
-  };
-  const isLast = slide === SLIDES.length - 1;
+  }, []);
 
   const speak = useCallback(() => {
-    if (!activeSlide) return;
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const text = `${activeSlide.title}. ${getSlideText(slide)}`;
+    if (!activeSection || !activeSlide) {
+      return;
+    }
+    if (!window.speechSynthesis) {
+      return;
+    }
+
+    stopSpeech();
+    const text = `${activeSection.title}. ${activeSlide.title}. ${activeSlide.tts}`;
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'pl-PL';
     utterance.rate = 0.9;
@@ -268,19 +482,74 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
     utterance.onend = () => setSpeaking(false);
     utterance.onerror = () => setSpeaking(false);
     window.speechSynthesis.speak(utterance);
-  }, [activeSlide, slide]);
+  }, [activeSection, activeSlide]);
 
   const stopSpeaking = useCallback(() => {
-    window.speechSynthesis.cancel();
+    stopSpeech();
     setSpeaking(false);
   }, []);
 
-  // Stop speech when slide changes
-  const goToSlide = (s: number) => {
-    window.speechSynthesis?.cancel();
-    setSpeaking(false);
-    setSlide(s);
-  };
+  const goNext = useCallback(() => {
+    if (!activeSection || openSection === null) {
+      return;
+    }
+
+    if (isFinalSection && isFinalSlide) {
+      markSectionCompleted(openSection);
+      handleStartTraining();
+      return;
+    }
+
+    if (isFinalSlide) {
+      markSectionCompleted(openSection);
+      const nextSection = openSection + 1;
+      stopSpeaking();
+      setOpenSection(nextSection);
+      setSectionSlideIndex(nextSection, 0);
+      return;
+    }
+
+    stopSpeaking();
+    setSectionSlideIndex(openSection, activeSlideIndex + 1);
+  }, [
+    activeSection,
+    activeSlideIndex,
+    handleStartTraining,
+    isFinalSection,
+    isFinalSlide,
+    markSectionCompleted,
+    openSection,
+    setSectionSlideIndex,
+    stopSpeaking,
+  ]);
+
+  const goPrev = useCallback(() => {
+    if (!activeSection || openSection === null) {
+      return;
+    }
+
+    if (activeSlideIndex > 0) {
+      stopSpeaking();
+      setSectionSlideIndex(openSection, activeSlideIndex - 1);
+      return;
+    }
+
+    if (openSection > 0) {
+      const previousSection = openSection - 1;
+      const previousSectionLastSlide = (LESSON_SECTIONS[previousSection]?.slides.length ?? 1) - 1;
+      openSectionAt(previousSection);
+      setSectionSlideIndex(previousSection, previousSectionLastSlide);
+      return;
+    }
+
+    onBack();
+  }, [activeSection, activeSlideIndex, onBack, openSection, openSectionAt, setSectionSlideIndex, stopSpeaking]);
+
+  useEffect(() => {
+    return () => {
+      stopSpeech();
+    };
+  }, []);
 
   if (inTraining) {
     return (
@@ -299,8 +568,70 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
     );
   }
 
-  if (!activeSlide) {
-    return <div className='text-sm text-gray-500'>Brak slajdu.</div>;
+  if (!activeSection || !activeSlide) {
+    return (
+      <div className='flex flex-col items-center w-full max-w-lg gap-4'>
+        <button
+          onClick={onBack}
+          className='self-start flex items-center gap-2 text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
+        >
+          <ArrowLeft className='w-4 h-4' /> Wróć do lekcji
+        </button>
+        <div
+          data-testid='clock-lesson-collapsed-hint'
+          className='w-full rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/60 px-4 py-5 text-center text-sm font-semibold text-indigo-700'
+        >
+          Wszystkie sekcje są zwinięte. Kliknij nagłówek sekcji, aby kontynuować naukę.
+        </div>
+
+        {LESSON_SECTIONS.map((section, sectionIndex) => (
+          <div
+            key={section.id}
+            className='bg-white rounded-3xl shadow-xl border border-indigo-100 p-4 w-full flex flex-col gap-3'
+          >
+            {(() => {
+              const status = getSectionStatus(sectionIndex, false);
+              const isLocked = !unlockedSections[sectionIndex];
+              return (
+                <button
+                  data-testid={`clock-lesson-section-toggle-${section.id}`}
+                  onClick={() => openSectionAt(sectionIndex)}
+                  className='w-full flex items-center justify-between text-left gap-4 disabled:opacity-70'
+                  aria-expanded={false}
+                  type='button'
+                  disabled={isLocked}
+                >
+                  <div>
+                    <p className='text-xs font-bold uppercase tracking-wide text-indigo-400'>Nauka Zegara</p>
+                    <h3 className='text-lg font-extrabold text-indigo-700'>{section.title}</h3>
+                    <p className='text-sm text-gray-500 mt-1'>{section.subtitle}</p>
+                    <p
+                      data-testid={`clock-lesson-section-status-${section.id}`}
+                      className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold ${status.className}`}
+                    >
+                      {status.label}
+                    </p>
+                    {isLocked && (
+                      <p
+                        data-testid={`clock-lesson-section-locked-hint-${section.id}`}
+                        className='text-xs text-slate-500 mt-1'
+                      >
+                        {LOCKED_SECTION_HINT}
+                      </p>
+                    )}
+                  </div>
+                  {isLocked ? (
+                    <Lock className='w-5 h-5 text-slate-500 flex-shrink-0' />
+                  ) : (
+                    <ChevronRight className='w-5 h-5 text-indigo-500 flex-shrink-0' />
+                  )}
+                </button>
+              );
+            })()}
+          </div>
+        ))}
+      </div>
+    );
   }
 
   return (
@@ -312,73 +643,137 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
         <ArrowLeft className='w-4 h-4' /> Wróć do lekcji
       </button>
 
-      <div className='bg-white rounded-3xl shadow-xl p-6 w-full flex flex-col items-center gap-5'>
-        {/* Progress dots */}
-        <div className='flex gap-2'>
-          {SLIDES.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => goToSlide(i)}
-              className={`w-2.5 h-2.5 rounded-full transition-all ${i === slide ? 'bg-indigo-500 w-6' : 'bg-gray-200 hover:bg-indigo-200'}`}
-            />
-          ))}
-        </div>
+      {LESSON_SECTIONS.map((section, sectionIndex) => {
+        const isOpen = sectionIndex === openSection;
+        const sectionSlideIndex = sectionSlides[sectionIndex] ?? 0;
+        const sectionProgressText = `${sectionSlideIndex + 1}/${section.slides.length}`;
+        const status = getSectionStatus(sectionIndex, isOpen);
+        const isLocked = !unlockedSections[sectionIndex];
 
-        <div className='flex items-center justify-center gap-3 w-full'>
-          <h2 className='text-xl font-extrabold text-indigo-700 text-center'>
-            {activeSlide.title}
-          </h2>
-          <button
-            onClick={speaking ? stopSpeaking : speak}
-            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-all shadow ${
-              speaking
-                ? 'bg-indigo-500 text-white animate-pulse'
-                : 'bg-indigo-100 text-indigo-600 hover:bg-indigo-200'
-            }`}
+        return (
+          <div
+            key={section.id}
+            className='bg-white rounded-3xl shadow-xl border border-indigo-100 p-4 w-full flex flex-col gap-3'
           >
-            {speaking ? <VolumeX className='w-4 h-4' /> : <Volume2 className='w-4 h-4' />}
-            {speaking ? 'Zatrzymaj' : 'Czytaj'}
-          </button>
-        </div>
-
-        <AnimatePresence mode='wait'>
-          <motion.div
-            key={slide}
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -30 }}
-            className='w-full flex flex-col items-center'
-          >
-            {activeSlide.content}
-          </motion.div>
-        </AnimatePresence>
-
-        <div className='flex gap-3 w-full'>
-          {slide > 0 && (
             <button
-              onClick={() => goToSlide(slide - 1)}
-              className='flex items-center gap-2 bg-gray-100 text-gray-600 font-bold px-5 py-2.5 rounded-2xl hover:bg-gray-200 transition'
+              data-testid={`clock-lesson-section-toggle-${section.id}`}
+              onClick={() => openSectionAt(sectionIndex)}
+              className='w-full flex items-center justify-between text-left gap-4 disabled:opacity-70'
+              aria-expanded={isOpen}
+              type='button'
+              disabled={isLocked}
             >
-              <ArrowLeft className='w-4 h-4' /> Wstecz
+              <div>
+                <p className='text-xs font-bold uppercase tracking-wide text-indigo-400'>Nauka Zegara</p>
+                <h3 className='text-lg font-extrabold text-indigo-700'>{section.title}</h3>
+                <p className='text-sm text-gray-500 mt-1'>{section.subtitle}</p>
+                <p
+                  data-testid={`clock-lesson-section-status-${section.id}`}
+                  className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold ${status.className}`}
+                >
+                  {status.label}
+                </p>
+                {isLocked && (
+                  <p
+                    data-testid={`clock-lesson-section-locked-hint-${section.id}`}
+                    className='text-xs text-slate-500 mt-1'
+                  >
+                    {LOCKED_SECTION_HINT}
+                  </p>
+                )}
+                <p className='text-xs font-semibold text-indigo-500 mt-1'>Postęp sekcji: {sectionProgressText}</p>
+              </div>
+              {isLocked ? (
+                <Lock className='w-5 h-5 text-slate-500 flex-shrink-0' />
+              ) : isOpen ? (
+                <ChevronDown className='w-5 h-5 text-indigo-500 flex-shrink-0' />
+              ) : (
+                <ChevronRight className='w-5 h-5 text-indigo-500 flex-shrink-0' />
+              )}
             </button>
-          )}
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={isLast ? handleStartTraining : () => goToSlide(slide + 1)}
-            className='flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-extrabold py-2.5 rounded-2xl shadow'
-          >
-            {isLast ? (
-              'Ćwiczenie z zegarem 🕐'
-            ) : (
-              <>
-                <span>Dalej</span>
-                <ArrowRight className='w-4 h-4' />
-              </>
+
+            {isOpen && (
+              <div className='pt-2 border-t border-indigo-100 flex flex-col gap-4'>
+                <div className='flex gap-2'>
+                  {section.slides.map((_, slideIndex) => (
+                    <button
+                      key={`${section.id}-${slideIndex}`}
+                      onClick={() => {
+                        stopSpeaking();
+                        setSectionSlideIndex(sectionIndex, slideIndex);
+                      }}
+                      className={`h-2.5 rounded-full transition-all ${
+                        slideIndex === sectionSlideIndex
+                          ? 'w-7 bg-indigo-500'
+                          : 'w-2.5 bg-gray-200 hover:bg-indigo-200'
+                      }`}
+                      type='button'
+                    />
+                  ))}
+                </div>
+
+                <div className='flex items-center justify-between gap-3'>
+                  <h4 className='text-lg font-extrabold text-indigo-700'>{activeSlide.title}</h4>
+                  <button
+                    onClick={speaking ? stopSpeaking : speak}
+                    className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-all shadow ${
+                      speaking
+                        ? 'bg-indigo-500 text-white animate-pulse'
+                        : 'bg-indigo-100 text-indigo-600 hover:bg-indigo-200'
+                    }`}
+                    type='button'
+                  >
+                    {speaking ? <VolumeX className='w-4 h-4' /> : <Volume2 className='w-4 h-4' />}
+                    {speaking ? 'Zatrzymaj' : 'Czytaj'}
+                  </button>
+                </div>
+
+                <AnimatePresence mode='wait'>
+                  <motion.div
+                    key={`${section.id}-${sectionSlideIndex}`}
+                    initial={{ opacity: 0, x: 24 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -24 }}
+                    className='w-full flex flex-col items-center'
+                  >
+                    {activeSlide.content}
+                  </motion.div>
+                </AnimatePresence>
+
+                <div className='flex gap-3 w-full'>
+                  <button
+                    onClick={goPrev}
+                    className='flex items-center gap-2 bg-gray-100 text-gray-600 font-bold px-5 py-2.5 rounded-2xl hover:bg-gray-200 transition'
+                    type='button'
+                  >
+                    <ArrowLeft className='w-4 h-4' />
+                    {openSection === 0 && activeSlideIndex === 0 ? 'Wróć' : 'Wstecz'}
+                  </button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={goNext}
+                    className='flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-extrabold py-2.5 rounded-2xl shadow'
+                    type='button'
+                  >
+                    {isFinalSection && isFinalSlide ? (
+                      'Ćwiczenie z zegarem 🕐'
+                    ) : isFinalSlide ? (
+                      'Następna sekcja'
+                    ) : (
+                      <>
+                        <span>Dalej</span>
+                        <ArrowRight className='w-4 h-4' />
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+              </div>
             )}
-          </motion.button>
-        </div>
-      </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

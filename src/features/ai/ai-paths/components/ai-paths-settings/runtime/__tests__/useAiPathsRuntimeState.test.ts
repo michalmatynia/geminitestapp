@@ -120,4 +120,63 @@ describe('useAiPathsRuntimeState', () => {
 
     expect(result.current.runtimeNodeStatuses['node-db']).toBe('waiting_callback');
   });
+
+  it('maps blocked status with waiting ports metadata and no reason to waiting_callback', () => {
+    const { result } = renderHook(() => useAiPathsRuntimeState());
+
+    act(() => {
+      result.current.setNodeStatus({
+        nodeId: 'node-model',
+        status: 'blocked',
+        source: 'server',
+        metadata: {
+          waitingOnPorts: ['prompt'],
+        },
+      });
+    });
+
+    expect(result.current.runtimeNodeStatuses['node-model']).toBe('waiting_callback');
+  });
+
+  it('keeps blocked status when blocked reason is not missing_inputs', () => {
+    const { result } = renderHook(() => useAiPathsRuntimeState());
+
+    act(() => {
+      result.current.setNodeStatus({
+        nodeId: 'node-model',
+        status: 'blocked',
+        source: 'server',
+        metadata: {
+          reason: 'missing_prompt',
+          waitingOnPorts: ['prompt'],
+        },
+      });
+    });
+
+    expect(result.current.runtimeNodeStatuses['node-model']).toBe('blocked');
+  });
+
+  it('does not settle blocked or skipped node statuses', () => {
+    const { result } = renderHook(() => useAiPathsRuntimeState());
+
+    act(() => {
+      result.current.setNodeStatus({
+        nodeId: 'node-blocked',
+        status: 'blocked',
+        source: 'server',
+      });
+      result.current.setNodeStatus({
+        nodeId: 'node-skipped',
+        status: 'skipped',
+        source: 'server',
+      });
+    });
+
+    act(() => {
+      result.current.settleTransientNodeStatuses('completed', {}, { settleQueued: true });
+    });
+
+    expect(result.current.runtimeNodeStatuses['node-blocked']).toBe('blocked');
+    expect(result.current.runtimeNodeStatuses['node-skipped']).toBe('skipped');
+  });
 });

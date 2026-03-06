@@ -13,22 +13,7 @@ import {
   type ImageStudioSequenceOperation,
   type ImageStudioSequenceStep,
 } from '@/features/ai/image-studio/utils/studio-settings';
-
-type SequenceStackCardProps = {
-  editableSequenceSteps: ImageStudioSequenceStep[];
-  enabledRuntimeSteps: ImageStudioSequenceStep[];
-  activeGenerationModel: string;
-  sequencerFieldTooltipsEnabled: boolean;
-  cropShapeOptions: Array<{ value: string; label: string }>;
-  cropShapeGeometryById: Record<
-    string,
-    {
-      bbox: { x: number; y: number; width: number; height: number } | null;
-      polygon: Array<{ x: number; y: number }> | null;
-    }
-  >;
-  mutateSteps: (updater: (steps: ImageStudioSequenceStep[]) => ImageStudioSequenceStep[]) => void;
-};
+import { useSequencingPanelContext } from './SequencingPanelContext';
 
 const createSequenceStepId = (operation: ImageStudioSequenceOperation, index: number): string => {
   const randomUuid = globalThis.crypto?.randomUUID?.();
@@ -135,15 +120,17 @@ const createStepForOperation = (
   };
 };
 
-export function SequenceStackCard({
-  editableSequenceSteps,
-  enabledRuntimeSteps,
-  activeGenerationModel,
-  sequencerFieldTooltipsEnabled,
-  cropShapeOptions,
-  cropShapeGeometryById,
-  mutateSteps,
-}: SequenceStackCardProps): React.JSX.Element {
+export function SequenceStackCard(): React.JSX.Element {
+  const {
+    editableSequenceSteps,
+    enabledRuntimeSteps,
+    activeGenerationModel,
+    sequencerFieldTooltipsEnabled,
+    cropShapeOptions,
+    cropShapeGeometryById,
+    mutateSteps,
+  } = useSequencingPanelContext();
+
   const { toast } = useToast();
   const [draggingStepId, setDraggingStepId] = useState<string | null>(null);
   const [draggingCatalogOperation, setDraggingCatalogOperation] =

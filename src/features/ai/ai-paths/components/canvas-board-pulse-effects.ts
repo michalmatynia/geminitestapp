@@ -2,6 +2,10 @@ import React from 'react';
 
 import type { AiNode, AiPathRuntimeEvent, Edge } from '@/shared/lib/ai-paths';
 import { hashRuntimeValue } from '@/shared/lib/ai-paths';
+import {
+  normalizeRuntimeStatus,
+  resolveEdgeRuntimeActive,
+} from './canvas/signal-flow-visual-state';
 
 type RuntimeHashes = {
   inputs: Record<string, Record<string, string>>;
@@ -34,13 +38,6 @@ type UseCanvasPulseEffectsResult = {
   inputPulseNodes: Set<string>;
   outputPulseNodes: Set<string>;
 };
-
-const FLOW_START_RUNTIME_STATUSES = new Set<string>([
-  'running',
-  'pending',
-  'processing',
-  'polling',
-]);
 
 export function useCanvasPulseEffects({
   nodes,
@@ -153,13 +150,12 @@ export function useCanvasPulseEffects({
     if (nextEvents.length === 0) return;
 
     nextEvents.forEach((event: AiPathRuntimeEvent) => {
-      const normalizedStatus =
-        typeof event.status === 'string' ? event.status.trim().toLowerCase() : '';
+      const normalizedStatus = normalizeRuntimeStatus(event.status);
       const nodeId = event.nodeId?.trim() ?? '';
       if (!nodeId) return;
 
       const isStartSignal =
-        event.kind === 'node_started' || FLOW_START_RUNTIME_STATUSES.has(normalizedStatus);
+        event.kind === 'node_started' || resolveEdgeRuntimeActive(normalizedStatus);
       const isFinishSignal =
         event.kind === 'node_finished' ||
         normalizedStatus === 'completed' ||

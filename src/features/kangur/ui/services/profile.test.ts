@@ -1,0 +1,100 @@
+import { describe, expect, it } from 'vitest';
+
+import { buildKangurLearnerProfileSnapshot } from '@/features/kangur/ui/services/profile';
+import type { KangurScoreRecord } from '@/features/kangur/services/ports';
+import type { KangurProgressState } from '@/features/kangur/ui/types';
+
+const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord => ({
+  id: 'score-1',
+  player_name: 'Jan',
+  score: 8,
+  operation: 'addition',
+  total_questions: 10,
+  correct_answers: 8,
+  time_taken: 42,
+  created_date: '2026-03-06T12:00:00.000Z',
+  created_by: 'jan@example.com',
+  ...overrides,
+});
+
+const progress: KangurProgressState = {
+  totalXp: 620,
+  gamesPlayed: 22,
+  perfectGames: 6,
+  lessonsCompleted: 9,
+  clockPerfect: 2,
+  calendarPerfect: 1,
+  geometryPerfect: 1,
+  badges: ['first_game', 'perfect_10', 'lesson_hero', 'ten_games'],
+  operationsPlayed: ['addition', 'multiplication', 'division'],
+};
+
+describe('buildKangurLearnerProfileSnapshot', () => {
+  it('builds aggregate learner metrics from score history and progress', () => {
+    const snapshot = buildKangurLearnerProfileSnapshot({
+      progress,
+      scores: [
+        createScore({ id: 's1', operation: 'addition', correct_answers: 8, created_date: '2026-03-06T12:00:00.000Z' }),
+        createScore({ id: 's2', operation: 'multiplication', correct_answers: 10, score: 10, created_date: '2026-03-05T12:00:00.000Z' }),
+        createScore({ id: 's3', operation: 'addition', correct_answers: 7, score: 7, created_date: '2026-03-04T12:00:00.000Z' }),
+        createScore({ id: 's4', operation: 'division', correct_answers: 6, score: 6, created_date: '2026-03-02T12:00:00.000Z' }),
+      ],
+      dailyGoalGames: 2,
+      now: new Date('2026-03-06T15:00:00.000Z'),
+    });
+
+    expect(snapshot.totalXp).toBe(620);
+    expect(snapshot.level.level).toBe(4);
+    expect(snapshot.nextLevel?.level).toBe(5);
+    expect(snapshot.levelProgressPercent).toBeGreaterThan(0);
+    expect(snapshot.averageAccuracy).toBe(78);
+    expect(snapshot.bestAccuracy).toBe(100);
+    expect(snapshot.currentStreakDays).toBe(3);
+    expect(snapshot.longestStreakDays).toBe(3);
+    expect(snapshot.todayGames).toBe(1);
+    expect(snapshot.dailyGoalPercent).toBe(50);
+    expect(snapshot.unlockedBadges).toBe(4);
+    expect(snapshot.operationPerformance.map((entry) => entry.operation)).toContain('addition');
+    expect(snapshot.operationPerformance.find((entry) => entry.operation === 'addition')).toMatchObject({
+      attempts: 2,
+      averageAccuracy: 75,
+      bestScore: 80,
+    });
+    expect(snapshot.recentSessions[0]?.id).toBe('s1');
+    expect(snapshot.weeklyActivity).toHaveLength(7);
+    expect(snapshot.recommendations.length).toBeGreaterThan(0);
+    expect(snapshot.recommendations.map((entry) => entry.id)).toContain('daily_goal');
+    expect(snapshot.recommendations.find((entry) => entry.id === 'daily_goal')).toMatchObject({
+      action: {
+        label: 'Zagraj teraz',
+        page: 'Game',
+        query: {
+          quickStart: 'training',
+        },
+      },
+    });
+  });
+
+  it('returns zeroed runtime values when no scores are present', () => {
+    const snapshot = buildKangurLearnerProfileSnapshot({
+      progress,
+      scores: [],
+      dailyGoalGames: 3,
+      now: new Date('2026-03-06T15:00:00.000Z'),
+    });
+
+    expect(snapshot.averageAccuracy).toBe(0);
+    expect(snapshot.bestAccuracy).toBe(0);
+    expect(snapshot.currentStreakDays).toBe(0);
+    expect(snapshot.longestStreakDays).toBe(0);
+    expect(snapshot.lastPlayedAt).toBeNull();
+    expect(snapshot.todayGames).toBe(0);
+    expect(snapshot.operationPerformance).toEqual([]);
+    expect(snapshot.recentSessions).toEqual([]);
+    expect(snapshot.weeklyActivity).toHaveLength(7);
+    expect(snapshot.recommendations.map((entry) => entry.id)).toContain('daily_goal');
+    expect(snapshot.recommendations.map((entry) => entry.id)).toContain('streak_bootstrap');
+    expect(snapshot.recommendations.every((entry) => Boolean(entry.action?.label))).toBe(true);
+    expect(snapshot.recommendations.every((entry) => typeof entry.action.page === 'string')).toBe(true);
+  });
+});

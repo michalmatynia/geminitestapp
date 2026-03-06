@@ -779,6 +779,84 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       selectionBehavior: 'click_away',
     },
   },
+  kangur_lessons_manager: {
+    version: 2,
+    placeholders: {
+      preset: 'classic',
+      style: 'line',
+      emphasis: 'subtle',
+      rootDropLabel: 'Move lesson',
+      inlineDropLabel: 'Drop lesson',
+    },
+    icons: {
+      slots: {
+        folderClosed: null,
+        folderOpen: null,
+        file: null,
+        root: null,
+        dragHandle: null,
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'file',
+          childKinds: ['kangur-lesson'],
+          targetType: 'root',
+          targetKinds: ['*'],
+          allow: true,
+        },
+      ],
+    },
+    search: {
+      enabled: true,
+      debounceMs: 120,
+      filterMode: 'filter_tree',
+      matchFields: ['name', 'path', 'metadata'],
+      minQueryLength: 1,
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  kangur_lessons_manager_catalog: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Browse lessons',
+      inlineDropLabel: 'Drop lesson',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: null,
+        root: null,
+        dragHandle: null,
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [],
+    },
+    search: {
+      enabled: true,
+      debounceMs: 120,
+      filterMode: 'filter_tree',
+      matchFields: ['name', 'path', 'metadata'],
+      minQueryLength: 1,
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
   brain_catalog_tree: {
     version: 2,
     placeholders: {

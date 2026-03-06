@@ -10,6 +10,9 @@ import type {
 import {
   MAX_RUNTIME_EVENTS,
   NON_SETTLED_RUNTIME_NODE_STATUSES,
+  TERMINAL_RUNTIME_NODE_STATUSES,
+  TRANSIENT_RUNTIME_NODE_STATUSES,
+  normalizeAiPathRuntimeNodeStatus,
   type RunStatus,
   type RuntimeEventInput,
   type SetNodeStatusInput,
@@ -17,24 +20,13 @@ import {
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { resolveRuntimeNodeDisplayStatus } from './utils';
 
-const TERMINAL_NODE_STATUSES: ReadonlySet<AiPathRuntimeNodeStatus> = new Set([
+const DURATION_TERMINAL_NODE_STATUSES: ReadonlySet<AiPathRuntimeNodeStatus> = new Set([
   'completed',
   'cached',
   'failed',
   'canceled',
   'timeout',
   'skipped',
-  'blocked',
-]);
-
-const TRANSIENT_NODE_STATUSES: ReadonlySet<AiPathRuntimeNodeStatus> = new Set([
-  'queued',
-  'pending',
-  'processing',
-  'running',
-  'polling',
-  'waiting_callback',
-  'advance_pending',
 ]);
 
 export function useAiPathsRuntimeState() {
@@ -88,30 +80,10 @@ export function useAiPathsRuntimeState() {
     setNodeDurations({});
   }, []);
 
-  const normalizeNodeStatus = useCallback((value: unknown): AiPathRuntimeNodeStatus | null => {
-    if (!value || typeof value !== 'string') return null;
-    const s = value.toLowerCase();
-    if (
-      s === 'idle' ||
-      s === 'queued' ||
-      s === 'running' ||
-      s === 'pending' ||
-      s === 'processing' ||
-      s === 'completed' ||
-      s === 'failed' ||
-      s === 'canceled' ||
-      s === 'cached' ||
-      s === 'polling' ||
-      s === 'waiting_callback' ||
-      s === 'advance_pending' ||
-      s === 'blocked' ||
-      s === 'skipped' ||
-      s === 'timeout'
-    ) {
-      return s;
-    }
-    return null;
-  }, []);
+  const normalizeNodeStatus = useCallback(
+    (value: unknown): AiPathRuntimeNodeStatus | null => normalizeAiPathRuntimeNodeStatus(value),
+    []
+  );
 
   const formatStatusLabel = useCallback((status: AiPathRuntimeNodeStatus): string => {
     switch (status) {
@@ -168,7 +140,8 @@ export function useAiPathsRuntimeState() {
           prevStatus !== 'queued' &&
           prevStatus !== 'pending';
         const isLateTransientAfterTerminal =
-          TERMINAL_NODE_STATUSES.has(prevStatus) && TRANSIENT_NODE_STATUSES.has(resolvedStatus);
+          TERMINAL_RUNTIME_NODE_STATUSES.has(prevStatus) &&
+          TRANSIENT_RUNTIME_NODE_STATUSES.has(resolvedStatus);
         if (isQueueLikeDowngrade || isLateTransientAfterTerminal) {
           return;
         }
@@ -178,16 +151,8 @@ export function useAiPathsRuntimeState() {
       if (resolvedStatus === 'running') {
         nodeStartTimesRef.current[input.nodeId] = performance.now();
       }
-      const TERMINAL_STATUSES: ReadonlySet<string> = new Set([
-        'completed',
-        'cached',
-        'failed',
-        'canceled',
-        'timeout',
-        'skipped',
-      ]);
       if (
-        TERMINAL_STATUSES.has(resolvedStatus) &&
+        DURATION_TERMINAL_NODE_STATUSES.has(resolvedStatus) &&
         nodeStartTimesRef.current[input.nodeId] != null
       ) {
         const dur = Math.round(performance.now() - nodeStartTimesRef.current[input.nodeId]!);

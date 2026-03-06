@@ -4,28 +4,9 @@ import React from 'react';
 import { Play, Square } from 'lucide-react';
 import { Button } from '@/shared/ui';
 import { StudioCard } from '../StudioCard';
-import type { SequenceRunStatus, SequencerDisplayState } from './sequencing-types';
+import { useSequencingPanelContext } from './SequencingPanelContext';
 
-export interface SequenceRunCardProps {
-  handleStartSequence: () => void;
-  handleCancelSequence: () => void;
-  handleRetryPendingSlotSync: () => void;
-  isSequenceRunning: boolean;
-  projectId: string;
-  workingSlotPresent: boolean;
-  sequencingEnabled: boolean;
-  enabledStepsCount: number;
-  activeSequenceRunId: string | null;
-  activeSequenceStatus: SequenceRunStatus | null;
-  displayState: SequencerDisplayState;
-  activeStepLabel: string | null;
-  slotSyncWarning: string | null;
-  pendingTerminalSlotId: string | null;
-  sequenceError: string | null;
-  sequenceLog: string[];
-}
-
-export function SequenceRunCard(props: SequenceRunCardProps): React.JSX.Element {
+export function SequenceRunCard(): React.JSX.Element {
   const {
     handleStartSequence,
     handleCancelSequence,
@@ -43,7 +24,7 @@ export function SequenceRunCard(props: SequenceRunCardProps): React.JSX.Element 
     pendingTerminalSlotId,
     sequenceError,
     sequenceLog,
-  } = props;
+  } = useSequencingPanelContext();
 
   return (
     <StudioCard label='Run' className='shrink-0'>

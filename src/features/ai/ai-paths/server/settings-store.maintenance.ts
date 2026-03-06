@@ -207,11 +207,9 @@ const toCanonicalRuntimeKernelPathConfigEntryValue = (
     const previous = Array.isArray(runtimeKernel['pilotNodeTypes'])
       ? (runtimeKernel['pilotNodeTypes'] as unknown[])
       : null;
-    const previousJoined =
-      previous &&
-      previous.every((entry: unknown): entry is string => typeof entry === 'string')
-        ? previous.join('|')
-        : '';
+    const previousJoined = previous?.every((entry: unknown): entry is string => typeof entry === 'string')
+      ? previous.join('|')
+      : '';
     const nextJoined = pilotNodeTypes.join('|');
     if (previousJoined !== nextJoined || !Array.isArray(runtimeKernel['pilotNodeTypes'])) {
       nextRuntimeKernel['pilotNodeTypes'] = pilotNodeTypes;
@@ -230,11 +228,9 @@ const toCanonicalRuntimeKernelPathConfigEntryValue = (
     const previous = Array.isArray(runtimeKernel['codeObjectResolverIds'])
       ? (runtimeKernel['codeObjectResolverIds'] as unknown[])
       : null;
-    const previousJoined =
-      previous &&
-      previous.every((entry: unknown): entry is string => typeof entry === 'string')
-        ? previous.join('|')
-        : '';
+    const previousJoined = previous?.every((entry: unknown): entry is string => typeof entry === 'string')
+      ? previous.join('|')
+      : '';
     const nextJoined = resolverIds.join('|');
     if (previousJoined !== nextJoined || !Array.isArray(runtimeKernel['codeObjectResolverIds'])) {
       nextRuntimeKernel['codeObjectResolverIds'] = resolverIds;

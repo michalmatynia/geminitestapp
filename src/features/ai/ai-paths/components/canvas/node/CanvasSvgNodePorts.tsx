@@ -4,8 +4,8 @@ import React from 'react';
 import { NODE_WIDTH, PORT_SIZE, getPortOffsetY, type AiNode } from '@/shared/lib/ai-paths';
 import { INPUT_CONNECTOR_COLORS, OUTPUT_CONNECTOR_COLORS } from './canvas-svg-node-utils';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import { type SvgConnectorTooltipState } from '../../CanvasBoard.utils';
 import { type ConnectorInfo } from '../../canvas-board-connectors';
+import { useCanvasBoardUI } from '../../CanvasBoardUIContext';
 
 const CONNECTOR_TAP_MOVE_THRESHOLD_PX = 4;
 const CONNECTOR_TAP_MOVE_THRESHOLD_SQ = CONNECTOR_TAP_MOVE_THRESHOLD_PX ** 2;
@@ -20,60 +20,37 @@ type ConnectorPressState = {
 export interface CanvasSvgNodePortsProps {
   node: AiNode;
   incomingEdgePortSet: Set<string>;
-  hoveredConnectorKey: string | null;
-  pinnedConnectorKey: string | null;
   connectorHitRadius: number;
   showPortLabels: boolean;
   buildConnectorKey: (direction: 'input' | 'output', nodeId: string, portName: string) => string;
-  onReconnectInput: (
-    event: React.PointerEvent,
-    nodeId: string,
-    portName: string
-  ) => void | Promise<void>;
-  onCompleteConnection: (
-    event: React.PointerEvent,
-    node: AiNode,
-    portName: string
-  ) => void | Promise<void>;
-  onDisconnectPort: (
-    direction: 'input' | 'output',
-    nodeId: string,
-    portName: string
-  ) => void | Promise<void>;
-  onStartConnection: (
-    event: React.PointerEvent,
-    node: AiNode,
-    portName: string
-  ) => void | Promise<void>;
-  setHoveredConnectorKey: (key: string | null) => void;
-  onConnectorHover?: (state: SvgConnectorTooltipState) => void;
-  onConnectorLeave?: () => void;
   getConnectorInfo: (
     direction: 'input' | 'output',
     nodeId: string,
     portName: string
   ) => ConnectorInfo;
-  setPinnedConnectorKey: (key: string | null) => void;
 }
 
 export function CanvasSvgNodePorts({
   node,
   incomingEdgePortSet,
-  hoveredConnectorKey,
-  pinnedConnectorKey,
   connectorHitRadius,
   showPortLabels,
   buildConnectorKey,
-  onReconnectInput,
-  onCompleteConnection,
-  onDisconnectPort,
-  onStartConnection,
-  setHoveredConnectorKey,
-  onConnectorHover,
-  onConnectorLeave,
   getConnectorInfo,
-  setPinnedConnectorKey,
 }: CanvasSvgNodePortsProps): React.JSX.Element {
+  const {
+    hoveredConnectorKey,
+    pinnedConnectorKey,
+    setHoveredConnectorKey,
+    setPinnedConnectorKey,
+    onConnectorHover,
+    onConnectorLeave,
+    onReconnectInput,
+    onCompleteConnection,
+    onDisconnectPort,
+    onStartConnection,
+  } = useCanvasBoardUI();
+
   const connectorPressByPointerIdRef = React.useRef<Map<number, ConnectorPressState>>(new Map());
 
   const beginConnectorPress = React.useCallback(

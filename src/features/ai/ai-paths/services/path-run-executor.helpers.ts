@@ -171,8 +171,8 @@ export const resolveRuntimeKernelConfigForRun = (input: {
     : pathMode
       ? 'path'
       : settingMode
-      ? 'settings'
-      : 'default';
+        ? 'settings'
+        : 'default';
 
   const envPilotNodeTypes = parseRuntimeKernelPilotNodeTypes(input.envPilotNodeTypes);
   const pathPilotNodeTypes = parseRuntimeKernelPilotNodeTypes(input.pathPilotNodeTypes);
@@ -183,8 +183,8 @@ export const resolveRuntimeKernelConfigForRun = (input: {
     : pathPilotNodeTypes
       ? 'path'
       : settingsPilotNodeTypes
-      ? 'settings'
-      : 'default';
+        ? 'settings'
+        : 'default';
   const envResolverIds = parseRuntimeKernelCodeObjectResolverIds(input.envResolverIds);
   const pathResolverIds = parseRuntimeKernelCodeObjectResolverIds(input.pathResolverIds);
   const settingsResolverIds = parseRuntimeKernelCodeObjectResolverIds(input.settingResolverIds);
@@ -194,8 +194,8 @@ export const resolveRuntimeKernelConfigForRun = (input: {
     : pathResolverIds
       ? 'path'
       : settingsResolverIds
-      ? 'settings'
-      : 'default';
+        ? 'settings'
+        : 'default';
   const envStrictNativeRegistry = parseRuntimeKernelStrictNativeRegistry(
     input.envStrictNativeRegistry
   );

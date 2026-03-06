@@ -27,6 +27,7 @@ const triagePresetIcons: Record<
   'client-errors-last7d': Monitor,
   'auth-anomalies-last3d': Shield,
   'system-alerts-last24h': AlertTriangle,
+  'kangur-source-last7d': Monitor,
 };
 
 export function LogTriagePresets(): React.JSX.Element {

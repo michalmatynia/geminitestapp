@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, BarChart2, BookOpen, ClipboardList, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, BarChart2, BookOpen, ClipboardList, Eye, EyeOff, UserRound } from 'lucide-react';
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import Link from 'next/link';
@@ -111,12 +111,20 @@ export default function ParentDashboard() {
     <div className='min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 flex flex-col items-center'>
       {/* Top bar */}
       <div className='w-full bg-white/80 backdrop-blur border-b border-slate-200 px-4 py-3 flex items-center justify-between'>
-        <Link
-          href={createPageUrl('Game', basePath)}
-          className='inline-flex items-center gap-2 text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
-        >
-          <ArrowLeft className='w-4 h-4' /> Wróć do gry
-        </Link>
+        <div className='flex items-center gap-3'>
+          <Link
+            href={createPageUrl('Game', basePath)}
+            className='inline-flex items-center gap-2 text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
+          >
+            <ArrowLeft className='w-4 h-4' /> Wróć do gry
+          </Link>
+          <Link
+            href={createPageUrl('LearnerProfile', basePath)}
+            className='inline-flex items-center gap-1.5 text-sm text-indigo-500 hover:text-indigo-700 font-semibold transition'
+          >
+            <UserRound className='w-4 h-4' /> Profil
+          </Link>
+        </div>
         <button
           onClick={() => setUnlocked(false)}
           className='text-sm text-gray-400 hover:text-gray-600 transition font-semibold'

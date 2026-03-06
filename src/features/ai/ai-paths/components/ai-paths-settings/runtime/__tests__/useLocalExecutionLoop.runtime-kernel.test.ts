@@ -6,6 +6,7 @@ import type {
   AiPathRuntimeNodeStatus,
   RuntimeState,
 } from '@/shared/lib/ai-paths';
+import { normalizeAiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
 
 import type { LocalExecutionArgs } from '../types';
 
@@ -23,30 +24,7 @@ vi.mock('@/shared/lib/ai-paths', async () => {
 
 import { useLocalExecutionLoop } from '../segments/useLocalExecutionLoop';
 
-const normalizeNodeStatus = (value: unknown): AiPathRuntimeNodeStatus | null => {
-  if (typeof value !== 'string') return null;
-  const normalized = value.trim().toLowerCase();
-  if (
-    normalized === 'idle' ||
-    normalized === 'queued' ||
-    normalized === 'running' ||
-    normalized === 'completed' ||
-    normalized === 'cached' ||
-    normalized === 'failed' ||
-    normalized === 'canceled' ||
-    normalized === 'skipped' ||
-    normalized === 'blocked' ||
-    normalized === 'pending' ||
-    normalized === 'processing' ||
-    normalized === 'polling' ||
-    normalized === 'waiting_callback' ||
-    normalized === 'advance_pending' ||
-    normalized === 'timeout'
-  ) {
-    return normalized;
-  }
-  return null;
-};
+const normalizeNodeStatus = normalizeAiPathRuntimeNodeStatus;
 
 const buildLocalExecutionArgs = (): LocalExecutionArgs => {
   const triggerNode = {
@@ -179,4 +157,3 @@ describe('useLocalExecutionLoop runtime kernel forwarding', () => {
     );
   });
 });
-

@@ -9,6 +9,7 @@ import type {
   RuntimePortValues,
   RuntimeState,
 } from '@/shared/lib/ai-paths';
+import { normalizeAiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
 
 const enqueueAiPathRunMock = vi.hoisted(() => vi.fn());
 const streamAiPathRunMock = vi.hoisted(() => vi.fn());
@@ -91,30 +92,7 @@ const buildFetcherNode = (): AiNode =>
     updatedAt: null,
   }) as AiNode;
 
-const normalizeNodeStatus = (value: unknown): AiPathRuntimeNodeStatus | null => {
-  if (typeof value !== 'string') return null;
-  const normalized = value.trim().toLowerCase();
-  if (
-    normalized === 'idle' ||
-    normalized === 'queued' ||
-    normalized === 'running' ||
-    normalized === 'completed' ||
-    normalized === 'cached' ||
-    normalized === 'failed' ||
-    normalized === 'canceled' ||
-    normalized === 'skipped' ||
-    normalized === 'blocked' ||
-    normalized === 'pending' ||
-    normalized === 'processing' ||
-    normalized === 'polling' ||
-    normalized === 'waiting_callback' ||
-    normalized === 'advance_pending' ||
-    normalized === 'timeout'
-  ) {
-    return normalized;
-  }
-  return null;
-};
+const normalizeNodeStatus = normalizeAiPathRuntimeNodeStatus;
 
 describe('useAiPathsServerExecution history streaming', () => {
   it('appends node history entries when SSE node updates arrive', async () => {

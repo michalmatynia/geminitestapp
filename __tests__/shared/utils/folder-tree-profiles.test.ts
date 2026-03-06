@@ -26,6 +26,8 @@ describe('folder-tree-profiles-v2', () => {
       'prompt_exploder_segments',
       'prompt_exploder_hierarchy',
       'admin_menu_layout',
+      'kangur_lessons_manager',
+      'kangur_lessons_manager_catalog',
       'brain_catalog_tree',
       'brain_routing_tree',
     ]);

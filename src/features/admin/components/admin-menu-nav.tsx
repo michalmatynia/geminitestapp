@@ -45,6 +45,19 @@ export const buildAdminNav = (handlers: {
         href: '/admin/kangur',
         icon: <GraduationCapIcon className='size-4' />,
         keywords: ['math', 'education', 'training', 'game', 'competition'],
+        children: [
+          {
+            id: 'workspace/kangur/studio',
+            label: 'Studio',
+            href: '/admin/kangur',
+            exact: true,
+          },
+          {
+            id: 'workspace/kangur/lessons-manager',
+            label: 'Lessons Manager',
+            href: '/admin/kangur/lessons-manager',
+          },
+        ],
       },
       { id: 'workspace/import', label: 'Import', href: '/admin/import' },
       { id: 'workspace/files', label: 'Files', href: '/admin/files' },

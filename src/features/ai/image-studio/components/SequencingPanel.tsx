@@ -50,6 +50,7 @@ import { useSequenceMonitor } from './sequencing/useSequenceMonitor';
 import { SequenceRuntimeCard } from './sequencing/SequenceRuntimeCard';
 import { SequencePresetsCard } from './sequencing/SequencePresetsCard';
 import { SequenceRunCard } from './sequencing/SequenceRunCard';
+import { SequencingPanelProvider, type SequencingPanelContextValue } from './sequencing/SequencingPanelContext';
 
 const SLOT_RESOLUTION_RETRY_MS = 220;
 const SLOT_RESOLUTION_ATTEMPTS = 10;
@@ -783,45 +784,72 @@ export function SequencingPanel(): React.JSX.Element {
     toast,
   ]);
 
+  const contextValue = useMemo<SequencingPanelContextValue>(
+    () => ({
+      handleStartSequence: () => {
+        void handleStartSequence();
+      },
+      handleCancelSequence: () => {
+        void handleCancelSequence();
+      },
+      handleRetryPendingSlotSync: () => {
+        void handleRetryPendingSlotSync();
+      },
+      mutateSteps,
+      isSequenceRunning,
+      projectId,
+      workingSlotPresent: Boolean(workingSlot),
+      sequencingEnabled: studioSettings.projectSequencing.enabled,
+      enabledStepsCount: enabledRuntimeSteps.length,
+      activeSequenceRunId,
+      activeSequenceStatus,
+      displayState,
+      activeStepLabel,
+      slotSyncWarning,
+      pendingTerminalSlotId,
+      sequenceError,
+      sequenceLog,
+      editableSequenceSteps,
+      enabledRuntimeSteps,
+      activeGenerationModel,
+      sequencerFieldTooltipsEnabled: studioSettings.helpTooltips.sequencerFieldsEnabled,
+      cropShapeOptions,
+      cropShapeGeometryById,
+    }),
+    [
+      handleStartSequence,
+      handleCancelSequence,
+      handleRetryPendingSlotSync,
+      mutateSteps,
+      isSequenceRunning,
+      projectId,
+      workingSlot,
+      studioSettings.projectSequencing.enabled,
+      studioSettings.helpTooltips.sequencerFieldsEnabled,
+      enabledRuntimeSteps,
+      activeSequenceRunId,
+      activeSequenceStatus,
+      displayState,
+      activeStepLabel,
+      slotSyncWarning,
+      pendingTerminalSlotId,
+      sequenceError,
+      sequenceLog,
+      editableSequenceSteps,
+      activeGenerationModel,
+      cropShapeOptions,
+      cropShapeGeometryById,
+    ]
+  );
+
   return (
-    <div className='flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-4 pt-2'>
-      <SequenceRuntimeCard />
-      <SequencePresetsCard />
-
-      <SequenceStackCard
-        editableSequenceSteps={editableSequenceSteps}
-        enabledRuntimeSteps={enabledRuntimeSteps}
-        activeGenerationModel={activeGenerationModel}
-        sequencerFieldTooltipsEnabled={studioSettings.helpTooltips.sequencerFieldsEnabled}
-        cropShapeOptions={cropShapeOptions}
-        cropShapeGeometryById={cropShapeGeometryById}
-        mutateSteps={mutateSteps}
-      />
-
-      <SequenceRunCard
-        handleStartSequence={() => {
-          void handleStartSequence();
-        }}
-        handleCancelSequence={() => {
-          void handleCancelSequence();
-        }}
-        handleRetryPendingSlotSync={() => {
-          void handleRetryPendingSlotSync();
-        }}
-        isSequenceRunning={isSequenceRunning}
-        projectId={projectId}
-        workingSlotPresent={Boolean(workingSlot)}
-        sequencingEnabled={studioSettings.projectSequencing.enabled}
-        enabledStepsCount={enabledRuntimeSteps.length}
-        activeSequenceRunId={activeSequenceRunId}
-        activeSequenceStatus={activeSequenceStatus}
-        displayState={displayState}
-        activeStepLabel={activeStepLabel}
-        slotSyncWarning={slotSyncWarning}
-        pendingTerminalSlotId={pendingTerminalSlotId}
-        sequenceError={sequenceError}
-        sequenceLog={sequenceLog}
-      />
-    </div>
+    <SequencingPanelProvider value={contextValue}>
+      <div className='flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-4 pt-2'>
+        <SequenceRuntimeCard />
+        <SequencePresetsCard />
+        <SequenceStackCard />
+        <SequenceRunCard />
+      </div>
+    </SequencingPanelProvider>
   );
 }

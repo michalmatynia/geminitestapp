@@ -24,6 +24,7 @@ const DEFAULT_PROGRESS: KangurProgressState = {
   lessonsCompleted: 0,
   clockPerfect: 0,
   calendarPerfect: 0,
+  geometryPerfect: 0,
   badges: [],
   operationsPlayed: [],
 };
@@ -36,6 +37,8 @@ export const XP_REWARDS: KangurXpRewards = {
   lesson_completed: 40,
   clock_training_perfect: 60,
   clock_training_good: 30,
+  geometry_training_perfect: 70,
+  geometry_training_good: 40,
 };
 
 export const LEVELS: KangurProgressLevel[] = [
@@ -76,6 +79,13 @@ export const BADGES: KangurBadge[] = [
     name: 'Mistrz zegara',
     desc: 'Ukoncz trening zegara z 5/5',
     condition: (progress) => progress.clockPerfect >= 1,
+  },
+  {
+    id: 'geometry_artist',
+    emoji: '🔷',
+    name: 'Artysta figur',
+    desc: 'Ukoncz trening figur geometrycznych na pelny wynik',
+    condition: (progress) => progress.geometryPerfect >= 1,
   },
   {
     id: 'ten_games',

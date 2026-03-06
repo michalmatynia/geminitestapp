@@ -18,19 +18,18 @@ import {
   resolveNodeRuntimeStatusLabel,
 } from './canvas/signal-flow-visual-state';
 import { CanvasSvgNodePorts } from './canvas/node/CanvasSvgNodePorts';
-import { type CanvasBoardUIContextValue } from './CanvasBoardUIContext';
+import { useCanvasBoardUI } from './CanvasBoardUIContext';
 
 const EMPTY_TRIGGER_IDS = new Set<string>();
 
 type CanvasSvgNodeProps = {
   node: AiNode;
-  ui: CanvasBoardUIContextValue;
 };
 
 export const CanvasSvgNode = React.memo(function CanvasSvgNode({
   node,
-  ui,
 }: CanvasSvgNodeProps): React.JSX.Element {
+  const ui = useCanvasBoardUI();
   const {
     detailLevel,
     inputPulseNodes,
@@ -40,10 +39,6 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
     launchingTriggerIds = EMPTY_TRIGGER_IDS,
     enableNodeAnimations,
     connectorHitTargetPx,
-    hoveredConnectorKey,
-    pinnedConnectorKey,
-    setHoveredConnectorKey,
-    setPinnedConnectorKey,
     onPointerDownNode,
     onPointerMoveNode,
     onPointerUpNode,
@@ -51,13 +46,7 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
     onSelectNode,
     onOpenNodeConfig,
     openNodeConfigOnSingleClick,
-    onStartConnection,
-    onCompleteConnection,
-    onReconnectInput,
-    onDisconnectPort,
     onFireTrigger,
-    onConnectorHover,
-    onConnectorLeave,
     onNodeDiagnosticsHover,
     onNodeDiagnosticsLeave,
     onFocusNodeDiagnostics,
@@ -562,20 +551,10 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
         <CanvasSvgNodePorts
           node={nodeForPorts}
           incomingEdgePortSet={incomingEdgePortSet}
-          hoveredConnectorKey={hoveredConnectorKey}
-          pinnedConnectorKey={pinnedConnectorKey}
           connectorHitRadius={connectorHitRadius}
           showPortLabels={showPortLabels}
           buildConnectorKey={buildConnectorKey}
-          onReconnectInput={onReconnectInput}
-          onCompleteConnection={onCompleteConnection}
-          onDisconnectPort={onDisconnectPort}
-          onStartConnection={onStartConnection}
-          setHoveredConnectorKey={setHoveredConnectorKey}
-          onConnectorHover={onConnectorHover}
-          onConnectorLeave={onConnectorLeave}
           getConnectorInfo={getConnectorInfo}
-          setPinnedConnectorKey={setPinnedConnectorKey}
         />
       )}
     </g>

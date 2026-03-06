@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogIn, LogOut, BookOpen, ArrowLeft, LayoutDashboard } from 'lucide-react';
+import { LogIn, LogOut, BookOpen, ArrowLeft, LayoutDashboard, UserRound } from 'lucide-react';
 import Link from 'next/link';
 
 import {
@@ -12,6 +12,7 @@ import {
 } from '@/features/kangur/ui/components/game';
 import { KangurGame, KangurGameProvider, KangurSetup } from '@/features/kangur/ui/components/kangur';
 import { CalendarTrainingGame } from '@/features/kangur/ui/components/lessons';
+import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
 import { PlayerProgressCard, XpToast } from '@/features/kangur/ui/components/progress';
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { logKangurClientError } from '@/features/kangur/observability/client';
@@ -37,14 +38,34 @@ import type {
 
 const TOTAL_QUESTIONS = 10;
 const kangurPlatform: KangurPlatform = getKangurPlatform();
+const KANGUR_OPERATIONS: KangurOperation[] = [
+  'addition',
+  'subtraction',
+  'multiplication',
+  'division',
+  'decimals',
+  'powers',
+  'roots',
+  'clock',
+  'mixed',
+];
+const KANGUR_DIFFICULTIES: KangurDifficulty[] = ['easy', 'medium', 'hard'];
+
 const isStatusError = (value: unknown): value is { status: number } =>
   typeof value === 'object' &&
   value !== null &&
   'status' in value &&
   typeof (value as { status?: unknown }).status === 'number';
 
+const isKangurOperation = (value: string | null): value is KangurOperation =>
+  Boolean(value && KANGUR_OPERATIONS.includes(value as KangurOperation));
+
+const isKangurDifficulty = (value: string | null): value is KangurDifficulty =>
+  Boolean(value && KANGUR_DIFFICULTIES.includes(value as KangurDifficulty));
+
 export default function Game() {
   const { basePath } = useKangurRouting();
+  const quickStartConsumedRef = useRef(false);
   const [screen, setScreen] = useState<KangurGameScreen>('home');
   const [user, setUser] = useState<KangurUser | null>(null);
   const [userLoading, setUserLoading] = useState(true);
@@ -123,6 +144,53 @@ export default function Game() {
     setStartTime(Date.now());
     setScreen('playing');
   };
+
+  useEffect(() => {
+    if (quickStartConsumedRef.current || screen !== 'home' || typeof window === 'undefined') {
+      return;
+    }
+
+    const isReadyForQuickStart = Boolean(user) || playerName.trim().length > 0;
+    if (!isReadyForQuickStart) {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    const quickStart = url.searchParams.get('quickStart');
+    if (!quickStart) {
+      return;
+    }
+
+    const clearQuickStartParams = (): void => {
+      url.searchParams.delete('quickStart');
+      url.searchParams.delete('operation');
+      url.searchParams.delete('difficulty');
+      const nextHref = `${url.pathname}${url.search}${url.hash}`;
+      window.history.replaceState({}, '', nextHref);
+    };
+
+    if (quickStart === 'training') {
+      quickStartConsumedRef.current = true;
+      clearQuickStartParams();
+      setScreen('training');
+      return;
+    }
+
+    if (quickStart === 'operation') {
+      const requestedOperation = url.searchParams.get('operation');
+      const requestedDifficulty = url.searchParams.get('difficulty');
+      const operation = isKangurOperation(requestedOperation) ? requestedOperation : null;
+      const difficulty = isKangurDifficulty(requestedDifficulty) ? requestedDifficulty : 'medium';
+
+      quickStartConsumedRef.current = true;
+      clearQuickStartParams();
+      if (operation) {
+        handleSelectOperation(operation, difficulty);
+      } else {
+        setScreen('operation');
+      }
+    }
+  }, [playerName, screen, user]);
 
   const handleAnswer = (correct: boolean): void => {
     const newScore = correct ? score + 1 : score;
@@ -209,6 +277,12 @@ export default function Game() {
             <BookOpen className='w-4 h-4' /> Lekcje
           </Link>
           <Link
+            href={createPageUrl('LearnerProfile', basePath)}
+            className='inline-flex items-center gap-1.5 text-sm text-indigo-500 hover:text-indigo-700 font-semibold transition'
+          >
+            <UserRound className='w-4 h-4' /> Profil
+          </Link>
+          <Link
             href={createPageUrl('ParentDashboard', basePath)}
             className='inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 font-semibold transition'
           >
@@ -217,7 +291,7 @@ export default function Game() {
         </div>
       </div>
 
-      <div className='flex flex-col items-center py-10 px-4 w-full'>
+      <div className='flex flex-col items-center w-full'>
         {/* Header */}
         <motion.div
           initial={{ y: -30, opacity: 0 }}
@@ -296,6 +370,14 @@ export default function Game() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.97 }}
+                      onClick={() => setScreen('geometry_quiz')}
+                      className='w-full bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white font-extrabold text-lg py-3 rounded-2xl shadow transition'
+                    >
+                      🔷 Trening figur
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.97 }}
                       onClick={() => setScreen('kangur_setup')}
                       className='w-full bg-gradient-to-r from-orange-400 to-yellow-400 text-white font-extrabold text-lg py-3 rounded-2xl shadow transition'
                     >
@@ -343,6 +425,15 @@ export default function Game() {
                       className='w-full bg-gradient-to-r from-teal-400 to-indigo-500 text-white font-extrabold text-lg py-3 rounded-2xl shadow disabled:opacity-40 transition'
                     >
                       🏋️ Trening mieszany
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => playerName.trim() && setScreen('geometry_quiz')}
+                      disabled={!playerName.trim()}
+                      className='w-full bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white font-extrabold text-lg py-3 rounded-2xl shadow disabled:opacity-40 transition'
+                    >
+                      🔷 Trening figur
                     </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
@@ -421,6 +512,21 @@ export default function Game() {
             </motion.div>
           )}
 
+          {screen === 'geometry_quiz' && (
+            <motion.div
+              key='geometry_quiz'
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className='w-full flex flex-col items-center max-w-lg gap-4'
+            >
+              <div className='bg-white rounded-3xl shadow-xl p-6 w-full flex flex-col items-center gap-4'>
+                <h2 className='text-xl font-extrabold text-fuchsia-700'>🔷 Ćwiczenia z Figur</h2>
+                <GeometryDrawingGame onFinish={() => setScreen('home')} />
+              </div>
+            </motion.div>
+          )}
+
           {screen === 'operation' && (
             <motion.div
               key='operation'
@@ -440,6 +546,14 @@ export default function Game() {
                 className='mt-4 w-full max-w-sm bg-gradient-to-r from-teal-500 to-green-400 text-white font-extrabold text-lg py-3 rounded-2xl shadow transition'
               >
                 📅 Ćwiczenia z Kalendarzem
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setScreen('geometry_quiz')}
+                className='mt-3 w-full max-w-sm bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white font-extrabold text-lg py-3 rounded-2xl shadow transition'
+              >
+                🔷 Ćwiczenia z Figurami
               </motion.button>
             </motion.div>
           )}

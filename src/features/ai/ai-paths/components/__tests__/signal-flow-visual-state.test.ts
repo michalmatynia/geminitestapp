@@ -29,6 +29,23 @@ describe('signal flow visual state', () => {
     expect(resolveEdgeRuntimeActive('failed')).toBe(false);
   });
 
+  it('keeps edge runtime flow disabled for terminal and non-flow statuses', () => {
+    [
+      'waiting_callback',
+      'advance_pending',
+      'queued',
+      'completed',
+      'failed',
+      'blocked',
+      'skipped',
+      'cached',
+      'timeout',
+      'canceled',
+    ].forEach((status: string) => {
+      expect(resolveEdgeRuntimeActive(status)).toBe(false);
+    });
+  });
+
   it('marks blocker processing only for processing-capable node types', () => {
     expect(
       resolveNodeBlockerProcessing({
@@ -64,6 +81,21 @@ describe('signal flow visual state', () => {
         status: 'waiting_callback',
       })
     ).toBe('Waiting');
+  });
+
+  it('does not treat blocker terminal statuses as processing', () => {
+    expect(
+      resolveNodeBlockerProcessing({
+        nodeType: 'model',
+        status: 'blocked',
+      })
+    ).toBe(false);
+    expect(
+      resolveNodeBlockerProcessing({
+        nodeType: 'agent',
+        status: 'skipped',
+      })
+    ).toBe(false);
   });
 
   it('keeps status label contract stable for other statuses', () => {

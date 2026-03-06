@@ -41,11 +41,6 @@ type ResultViewProps = {
   onRestart: () => void;
 };
 
-type KangurGameProps = {
-  mode: KangurMode | null;
-  onBack: () => void;
-};
-
 const ILLUSTRATIONS: Record<string, IllustrationComponent | undefined> = {
   '2024_1': Q1Illustration,
   '2024_2': Q2Illustration,
@@ -310,10 +305,6 @@ function KangurGameContent(): React.JSX.Element {
   return <PracticeModeGame />;
 }
 
-export default function KangurGame({ mode, onBack }: KangurGameProps): React.JSX.Element {
-  return (
-    <KangurGameProvider mode={mode} onBack={onBack}>
-      <KangurGameContent />
-    </KangurGameProvider>
-  );
+export default function KangurGame(): React.JSX.Element {
+  return <KangurGameContent />;
 }

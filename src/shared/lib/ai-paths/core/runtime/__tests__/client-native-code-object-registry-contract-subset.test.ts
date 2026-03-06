@@ -658,6 +658,51 @@ describe('client native code-object registry contract subset', () => {
     expect(result.outputs?.['node-model']?.['jobId']).toBe('job-model-1');
   });
 
+  it('blocks model nodes when prompt input is missing', async () => {
+    mockAiJobsEnqueue.mockClear();
+    mockAiJobsPoll.mockClear();
+
+    const result = await evaluateGraphClient({
+      nodes: [buildModelNode()],
+      edges: [],
+      runtimeKernelPilotNodeTypes: ['model'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockAiJobsEnqueue).not.toHaveBeenCalled();
+    expect(mockAiJobsPoll).not.toHaveBeenCalled();
+    expect(result.outputs?.['node-model']?.['status']).toBe('blocked');
+    expect(result.outputs?.['node-model']?.['blockedReason']).toBe('missing_inputs');
+    expect(result.outputs?.['node-model']?.['waitingOnPorts']).toEqual(['prompt']);
+  });
+
+  it('skips model nodes when AI jobs are disabled', async () => {
+    mockAiJobsEnqueue.mockClear();
+    mockAiJobsPoll.mockClear();
+
+    const result = await evaluateGraphClient({
+      nodes: [buildPromptNode(), buildModelNode()],
+      edges: [
+        {
+          id: 'edge-prompt-model-skip-ai-jobs',
+          from: 'node-prompt',
+          to: 'node-model',
+          fromPort: 'prompt',
+          toPort: 'prompt',
+          kind: 'value',
+        },
+      ],
+      runtimeKernelPilotNodeTypes: ['prompt', 'model'],
+      skipAiJobs: true,
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockAiJobsEnqueue).not.toHaveBeenCalled();
+    expect(mockAiJobsPoll).not.toHaveBeenCalled();
+    expect(result.outputs?.['node-model']?.['status']).toBe('skipped');
+    expect(result.outputs?.['node-model']?.['skipReason']).toBe('ai_jobs_disabled');
+  });
+
   it('executes model wait-for-result path through client native contract resolver mapping', async () => {
     mockAiJobsEnqueue.mockClear();
     mockAiJobsPoll.mockClear();
@@ -784,6 +829,58 @@ describe('client native code-object registry contract subset', () => {
     expect(result.outputs?.['node-agent']?.['jobId']).toBe('agent-run-1');
   });
 
+  it('blocks agent nodes when prompt input is missing', async () => {
+    mockSettingsList.mockClear();
+    mockAgentEnqueue.mockClear();
+    mockAgentPoll.mockClear();
+
+    const result = await evaluateGraphClient({
+      nodes: [buildAgentNode()],
+      edges: [],
+      runtimeKernelPilotNodeTypes: ['agent'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockSettingsList).not.toHaveBeenCalled();
+    expect(mockAgentEnqueue).not.toHaveBeenCalled();
+    expect(mockAgentPoll).not.toHaveBeenCalled();
+    expect(result.outputs?.['node-agent']?.['status']).toBe('blocked');
+    expect(result.outputs?.['node-agent']?.['blockedReason']).toBe('missing_inputs');
+    expect(result.outputs?.['node-agent']?.['waitingOnPorts']).toEqual(['prompt']);
+  });
+
+  it('skips agent nodes when AI jobs are disabled', async () => {
+    mockSettingsList.mockClear();
+    mockAgentEnqueue.mockClear();
+    mockAgentPoll.mockClear();
+
+    const result = await evaluateGraphClient({
+      nodes: [buildPromptNode(), buildAgentNode()],
+      edges: [
+        {
+          id: 'edge-prompt-agent-skip-ai-jobs',
+          from: 'node-prompt',
+          to: 'node-agent',
+          fromPort: 'prompt',
+          toPort: 'prompt',
+          kind: 'value',
+        },
+      ],
+      runtimeKernelPilotNodeTypes: ['prompt', 'agent'],
+      skipAiJobs: true,
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockSettingsList).not.toHaveBeenCalled();
+    expect(mockAgentEnqueue).not.toHaveBeenCalled();
+    expect(mockAgentPoll).not.toHaveBeenCalled();
+    expect(result.outputs?.['node-agent']?.['status']).toBe('skipped');
+    expect(result.outputs?.['node-agent']?.['skipReason']).toBe('ai_jobs_disabled');
+    expect(result.outputs?.['node-agent']?.['bundle']).toMatchObject({
+      status: 'skipped',
+    });
+  });
+
   it('executes agent wait-for-result path through client native contract resolver mapping', async () => {
     mockSettingsList.mockClear();
     mockAgentEnqueue.mockClear();
@@ -884,6 +981,104 @@ describe('client native code-object registry contract subset', () => {
     expect(result.outputs?.['node-learner-agent']?.['status']).toBe('completed');
     expect(result.outputs?.['node-learner-agent']?.['result']).toBe('learner-response');
     expect(result.outputs?.['node-learner-agent']?.['sources']).toEqual([{ id: 'source-1' }]);
+  });
+
+  it('blocks learner agent nodes when agent id is missing', async () => {
+    mockLearnerAgentsChat.mockClear();
+    const learnerNodeMissingAgentId: AiNode = {
+      ...buildLearnerAgentNode(),
+      id: 'node-learner-agent-missing-id',
+      config: {
+        learnerAgent: {
+          agentId: '',
+          promptTemplate: '',
+          includeSources: true,
+        },
+      },
+    };
+
+    const result = await evaluateGraphClient({
+      nodes: [buildPromptNode(), learnerNodeMissingAgentId],
+      edges: [
+        {
+          id: 'edge-prompt-learner-agent-missing-id',
+          from: 'node-prompt',
+          to: learnerNodeMissingAgentId.id,
+          fromPort: 'prompt',
+          toPort: 'prompt',
+          kind: 'value',
+        },
+      ],
+      runtimeKernelPilotNodeTypes: ['prompt', 'learner_agent'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockLearnerAgentsChat).not.toHaveBeenCalled();
+    expect(result.outputs?.[learnerNodeMissingAgentId.id]?.['status']).toBe('blocked');
+    expect(result.outputs?.[learnerNodeMissingAgentId.id]?.['blockedReason']).toBe('missing_agent_id');
+    expect(result.outputs?.[learnerNodeMissingAgentId.id]?.['bundle']).toMatchObject({
+      status: 'blocked',
+    });
+  });
+
+  it('skips learner agent nodes when AI jobs are disabled', async () => {
+    mockLearnerAgentsChat.mockClear();
+
+    const result = await evaluateGraphClient({
+      nodes: [buildPromptNode(), buildLearnerAgentNode()],
+      edges: [
+        {
+          id: 'edge-prompt-learner-agent-skip-ai-jobs',
+          from: 'node-prompt',
+          to: 'node-learner-agent',
+          fromPort: 'prompt',
+          toPort: 'prompt',
+          kind: 'value',
+        },
+      ],
+      runtimeKernelPilotNodeTypes: ['prompt', 'learner_agent'],
+      skipAiJobs: true,
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockLearnerAgentsChat).not.toHaveBeenCalled();
+    expect(result.outputs?.['node-learner-agent']?.['status']).toBe('skipped');
+    expect(result.outputs?.['node-learner-agent']?.['skipReason']).toBe('ai_jobs_disabled');
+    expect(result.outputs?.['node-learner-agent']?.['bundle']).toMatchObject({
+      status: 'skipped',
+    });
+  });
+
+  it('fails learner agent nodes when chat API responds with an error', async () => {
+    mockLearnerAgentsChat.mockClear();
+    mockLearnerAgentsChat.mockResolvedValueOnce({
+      ok: false as const,
+      error: 'learner-chat-failed',
+    });
+
+    const result = await evaluateGraphClient({
+      nodes: [buildPromptNode(), buildLearnerAgentNode()],
+      edges: [
+        {
+          id: 'edge-prompt-learner-agent-failed',
+          from: 'node-prompt',
+          to: 'node-learner-agent',
+          fromPort: 'prompt',
+          toPort: 'prompt',
+          kind: 'value',
+        },
+      ],
+      runtimeKernelPilotNodeTypes: ['prompt', 'learner_agent'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockLearnerAgentsChat).toHaveBeenCalledTimes(1);
+    expect(result.outputs?.['node-learner-agent']?.['status']).toBe('failed');
+    expect(result.outputs?.['node-learner-agent']?.['bundle']).toMatchObject({
+      agentId: 'agent-1',
+      status: 'failed',
+      error: 'learner-chat-failed',
+    });
   });
 
   it('executes trigger nodes through client native contract resolver mapping', async () => {

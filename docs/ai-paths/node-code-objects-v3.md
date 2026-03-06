@@ -192,5 +192,5 @@ npm run docs:ai-paths:node-docs:check
 
 ## Next Steps
 
-1. Track and reduce remaining client/server mapping asymmetries for server-only node families.
+1. Keep client/server mapping asymmetry guardrails explicit at `none` and extend parity tests across async failure branches.
 2. Keep generated contracts/migration docs as the source of truth and enforce zero-drift in CI.

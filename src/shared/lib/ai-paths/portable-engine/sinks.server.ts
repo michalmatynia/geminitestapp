@@ -1380,7 +1380,7 @@ type PrismaSettingClient = {
 const readSettingsRawFromPrisma = async (key: string): Promise<string | null> => {
   if (!canUsePrismaSettings()) return null;
   try {
-    const prismaClient = prisma as unknown as PrismaSettingClient;
+    const prismaClient = prisma as PrismaSettingClient;
     if (!prismaClient.setting || typeof prismaClient.setting.findUnique !== 'function') {
       return null;
     }
@@ -1397,7 +1397,7 @@ const readSettingsRawFromPrisma = async (key: string): Promise<string | null> =>
 const writeSettingsRawToPrisma = async (key: string, raw: string): Promise<boolean> => {
   if (!canUsePrismaSettings()) return false;
   try {
-    const prismaClient = prisma as unknown as PrismaSettingClient;
+    const prismaClient = prisma as PrismaSettingClient;
     if (!prismaClient.setting || typeof prismaClient.setting.upsert !== 'function') {
       return false;
     }

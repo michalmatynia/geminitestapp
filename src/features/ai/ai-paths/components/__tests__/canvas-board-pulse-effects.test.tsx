@@ -257,6 +257,174 @@ describe('useCanvasPulseEffects', () => {
     expect(result.current.inputPulseNodes.has(targetNode.id)).toBe(false);
   });
 
+  it('does not activate edge pulses for advance_pending node_status events', () => {
+    const sourceNode = buildNode({
+      id: 'node-source-advance-pending',
+      outputs: ['result'],
+    });
+    const targetNode = buildNode({
+      id: 'node-target-advance-pending',
+      inputs: ['trigger'],
+    });
+    const edge: Edge = {
+      id: 'edge-source-target-advance-pending',
+      from: sourceNode.id,
+      to: targetNode.id,
+      fromPort: 'result',
+      toPort: 'trigger',
+    };
+    const maps = buildPortMaps([edge]);
+    const nodeById = new Map<string, AiNode>([
+      [sourceNode.id, sourceNode],
+      [targetNode.id, targetNode],
+    ]);
+    const runtimeState: RuntimeSnapshot = {
+      inputs: {},
+      outputs: {},
+    };
+    const runtimeEvents: AiPathRuntimeEvent[] = [
+      {
+        id: 'evt-advance-pending-status',
+        source: 'server',
+        kind: 'node_status',
+        level: 'info',
+        message: 'Target advance pending',
+        nodeId: targetNode.id,
+        status: 'advance_pending',
+        timestamp: '2026-03-04T10:02:30.000Z',
+      } as AiPathRuntimeEvent,
+    ];
+
+    const { result } = renderHook(() =>
+      useCanvasPulseEffects({
+        nodes: [sourceNode, targetNode],
+        edges: [edge],
+        runtimeEvents,
+        runtimeState,
+        getPortValue: () => undefined,
+        ...maps,
+        nodeById,
+        flowAnimationMs: 300,
+        nodePulseMs: 250,
+      })
+    );
+
+    expect(result.current.activeEdgeIds.has(edge.id)).toBe(false);
+    expect(result.current.inputPulseNodes.has(targetNode.id)).toBe(false);
+  });
+
+  it('does not activate edge pulses for blocked node_status events', () => {
+    const sourceNode = buildNode({
+      id: 'node-source-blocked',
+      outputs: ['result'],
+    });
+    const targetNode = buildNode({
+      id: 'node-target-blocked',
+      inputs: ['trigger'],
+    });
+    const edge: Edge = {
+      id: 'edge-source-target-blocked',
+      from: sourceNode.id,
+      to: targetNode.id,
+      fromPort: 'result',
+      toPort: 'trigger',
+    };
+    const maps = buildPortMaps([edge]);
+    const nodeById = new Map<string, AiNode>([
+      [sourceNode.id, sourceNode],
+      [targetNode.id, targetNode],
+    ]);
+    const runtimeState: RuntimeSnapshot = {
+      inputs: {},
+      outputs: {},
+    };
+    const runtimeEvents: AiPathRuntimeEvent[] = [
+      {
+        id: 'evt-blocked-status',
+        source: 'server',
+        kind: 'node_status',
+        level: 'warn',
+        message: 'Target blocked',
+        nodeId: targetNode.id,
+        status: 'blocked',
+        timestamp: '2026-03-04T10:03:00.000Z',
+      } as AiPathRuntimeEvent,
+    ];
+
+    const { result } = renderHook(() =>
+      useCanvasPulseEffects({
+        nodes: [sourceNode, targetNode],
+        edges: [edge],
+        runtimeEvents,
+        runtimeState,
+        getPortValue: () => undefined,
+        ...maps,
+        nodeById,
+        flowAnimationMs: 300,
+        nodePulseMs: 250,
+      })
+    );
+
+    expect(result.current.activeEdgeIds.has(edge.id)).toBe(false);
+    expect(result.current.inputPulseNodes.has(targetNode.id)).toBe(false);
+  });
+
+  it('does not activate edge pulses for skipped node_status events', () => {
+    const sourceNode = buildNode({
+      id: 'node-source-skipped',
+      outputs: ['result'],
+    });
+    const targetNode = buildNode({
+      id: 'node-target-skipped',
+      inputs: ['trigger'],
+    });
+    const edge: Edge = {
+      id: 'edge-source-target-skipped',
+      from: sourceNode.id,
+      to: targetNode.id,
+      fromPort: 'result',
+      toPort: 'trigger',
+    };
+    const maps = buildPortMaps([edge]);
+    const nodeById = new Map<string, AiNode>([
+      [sourceNode.id, sourceNode],
+      [targetNode.id, targetNode],
+    ]);
+    const runtimeState: RuntimeSnapshot = {
+      inputs: {},
+      outputs: {},
+    };
+    const runtimeEvents: AiPathRuntimeEvent[] = [
+      {
+        id: 'evt-skipped-status',
+        source: 'server',
+        kind: 'node_status',
+        level: 'info',
+        message: 'Target skipped',
+        nodeId: targetNode.id,
+        status: 'skipped',
+        timestamp: '2026-03-04T10:04:00.000Z',
+      } as AiPathRuntimeEvent,
+    ];
+
+    const { result } = renderHook(() =>
+      useCanvasPulseEffects({
+        nodes: [sourceNode, targetNode],
+        edges: [edge],
+        runtimeEvents,
+        runtimeState,
+        getPortValue: () => undefined,
+        ...maps,
+        nodeById,
+        flowAnimationMs: 300,
+        nodePulseMs: 250,
+      })
+    );
+
+    expect(result.current.activeEdgeIds.has(edge.id)).toBe(false);
+    expect(result.current.inputPulseNodes.has(targetNode.id)).toBe(false);
+  });
+
   it('derives edge and node pulses from output payload changes when runtime events are empty', () => {
     const sourceNode = buildNode({
       id: 'node-source',

@@ -26,6 +26,14 @@ describe('buildAdminNav', () => {
 
     const flattened = flattenNav(nav);
 
+    const kangurRoot = flattened.find((item) => item.id === 'workspace/kangur');
+    expect(kangurRoot?.href).toBe('/admin/kangur');
+
+    const kangurLessonsManager = flattened.find(
+      (item) => item.id === 'workspace/kangur/lessons-manager'
+    );
+    expect(kangurLessonsManager?.href).toBe('/admin/kangur/lessons-manager');
+
     const aiRoot = flattened.find((item) => item.id === 'ai');
     expect(aiRoot?.href).toBe('/admin/ai-paths');
 

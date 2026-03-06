@@ -7,7 +7,7 @@ import type {
   PortablePathAuditSinkAutoRemediationStrategy,
   PortablePathAuditSinkStartupHealthState,
   PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary,
-} from './sinks.server';
+} from './types';
 
 const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_ALGORITHM = 'hmac_sha256' as const;
 const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_VERSION = 'v1' as const;
@@ -311,12 +311,13 @@ export type NotifyPortablePathAuditSinkAutoRemediationDeps = {
 const toPortablePathAuditSinkAutoRemediationNotificationMessage = (
   input: PortablePathAuditSinkAutoRemediationNotificationInput
 ): string => {
-  const failedSinkIds = input.summary.failedSinkIds.join(',') || 'none';
+  const summary = input.summary;
+  const failedSinkIds = summary.failedSinkIds.join(',') || 'none';
   return [
     'Portable audit sink auto-remediation triggered.',
     `action=${input.action}`,
     `strategy=${input.strategy}`,
-    `status=${input.summary.status}`,
+    `status=${summary.status}`,
     `consecutiveFailures=${input.state.consecutiveFailureCount}`,
     `failedSinkIds=${failedSinkIds}`,
   ].join(' ');

@@ -464,8 +464,7 @@ export async function evaluateGraphClient(
       return null;
     },
     mode: resolvedOptions.runtimeKernelMode,
-    runtimeKernelNodeTypes:
-      resolvedOptions.runtimeKernelNodeTypes ?? resolvedOptions.runtimeKernelPilotNodeTypes,
+    runtimeKernelNodeTypes: resolvedOptions.runtimeKernelNodeTypes,
     runtimeKernelStrictNativeRegistry,
   });
 

@@ -265,12 +265,69 @@ describe('path-run-executor runtime-kernel settings integration', () => {
         runtimeKernel: expect.objectContaining({
           runtimeKernelModeSource: 'path',
           runtimeKernelNodeTypesSource: 'path',
-          runtimeKernelPilotNodeTypesSource: 'path',
           runtimeKernelCodeObjectResolverIdsSource: 'path',
           runtimeKernelStrictNativeRegistrySource: 'path',
         }),
       })
     );
+    expect(
+      (finalUpdatePayload?.['meta'] as Record<string, unknown> | undefined)?.['runtimeKernel']
+    ).not.toHaveProperty('runtimeKernelPilotNodeTypesSource');
+  });
+
+  it('normalizes historical run-meta runtime-kernel aliases before execution', async () => {
+    const run = buildRunRecord();
+    run.meta = {
+      runtimeKernelConfig: {
+        mode: 'legacy_only',
+        pilotNodeTypes: ' template ',
+        resolverIds: ' resolver.path ',
+        strictCodeObjectRegistry: 'yes',
+      },
+      runtimeKernel: {
+        runtimeKernelMode: 'legacy_only',
+        runtimeKernelPilotNodeTypes: ['template'],
+        runtimeKernelPilotNodeTypesSource: 'path',
+        runtimeKernelCodeObjectResolverIds: ' resolver.path ',
+        runtimeKernelStrictNativeRegistry: '1',
+      },
+    };
+    const { executePathRun } = await loadModule();
+
+    await executePathRun(run);
+
+    expect(evaluateGraphWithIteratorAutoContinueMock).toHaveBeenCalledTimes(1);
+    const args = evaluateGraphWithIteratorAutoContinueMock.mock.calls[0]?.[0] as
+      | Record<string, unknown>
+      | undefined;
+    expect(args?.['runtimeKernelMode']).toBe('auto');
+    expect(args?.['runtimeKernelNodeTypes']).toEqual(['template']);
+    expect(args?.['runtimeKernelCodeObjectResolverIds']).toEqual(['resolver.path']);
+    expect(args?.['runtimeKernelStrictNativeRegistry']).toBe(true);
+
+    const finalUpdatePayload = updateRunIfStatusMock.mock.calls
+      .map((call) => call[2] as Record<string, unknown>)
+      .find((payload) => payload['status'] === 'completed');
+    expect(finalUpdatePayload?.['meta']).toEqual(
+      expect.objectContaining({
+        runtimeKernel: expect.objectContaining({
+          runtimeKernelMode: 'auto',
+          runtimeKernelModeSource: 'path',
+          runtimeKernelNodeTypes: ['template'],
+          runtimeKernelNodeTypesSource: 'path',
+          runtimeKernelCodeObjectResolverIds: ['resolver.path'],
+          runtimeKernelCodeObjectResolverIdsSource: 'path',
+          runtimeKernelStrictNativeRegistry: true,
+          runtimeKernelStrictNativeRegistrySource: 'path',
+        }),
+      })
+    );
+    expect(
+      (finalUpdatePayload?.['meta'] as Record<string, unknown> | undefined)?.['runtimeKernel']
+    ).not.toHaveProperty('runtimeKernelPilotNodeTypes');
+    expect(
+      (finalUpdatePayload?.['meta'] as Record<string, unknown> | undefined)?.['runtimeKernel']
+    ).not.toHaveProperty('runtimeKernelPilotNodeTypesSource');
   });
 
   it('emits a warning event when configured resolver ids are not registered', async () => {
@@ -409,8 +466,6 @@ describe('path-run-executor runtime-kernel settings integration', () => {
         runtimeKernelModeSource: 'settings',
         runtimeKernelNodeTypes: ['constant', 'template'],
         runtimeKernelNodeTypesSource: 'settings',
-        runtimeKernelPilotNodeTypes: ['constant', 'template'],
-        runtimeKernelPilotNodeTypesSource: 'settings',
         runtimeKernelCodeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
         runtimeKernelCodeObjectResolverIdsSource: 'settings',
         runtimeKernelStrictNativeRegistry: true,
@@ -432,8 +487,6 @@ describe('path-run-executor runtime-kernel settings integration', () => {
           runtimeKernelModeSource: 'settings',
           runtimeKernelNodeTypes: ['constant', 'template'],
           runtimeKernelNodeTypesSource: 'settings',
-          runtimeKernelPilotNodeTypes: ['constant', 'template'],
-          runtimeKernelPilotNodeTypesSource: 'settings',
           runtimeKernelCodeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
           runtimeKernelCodeObjectResolverIdsSource: 'settings',
           runtimeKernelStrictNativeRegistry: true,
@@ -458,6 +511,16 @@ describe('path-run-executor runtime-kernel settings integration', () => {
         }),
       })
     );
+    expect(nodeFinishEventPayload?.['metadata']).not.toHaveProperty('runtimeKernelPilotNodeTypes');
+    expect(nodeFinishEventPayload?.['metadata']).not.toHaveProperty(
+      'runtimeKernelPilotNodeTypesSource'
+    );
+    expect(
+      (finalUpdatePayload?.['meta'] as Record<string, unknown> | undefined)?.['runtimeKernel']
+    ).not.toHaveProperty('runtimeKernelPilotNodeTypes');
+    expect(
+      (finalUpdatePayload?.['meta'] as Record<string, unknown> | undefined)?.['runtimeKernel']
+    ).not.toHaveProperty('runtimeKernelPilotNodeTypesSource');
   });
 
   it('persists runtime validation findings through run events', async () => {

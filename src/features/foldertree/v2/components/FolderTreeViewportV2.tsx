@@ -29,11 +29,12 @@ import { DefaultRow } from './DefaultRow';
 import { FolderTreeViewportRenderNodeInput } from './types';
 import { useFolderTreeViewportSelection } from '../hooks/useFolderTreeViewportSelection';
 import { useFolderTreeViewportDnd } from '../hooks/useFolderTreeViewportDnd';
+import { useOptionalMasterFolderTreeShellContext } from '../shell/MasterFolderTreeShellContext';
 
 export type { FolderTreeViewportRenderNodeInput };
 
 export type FolderTreeViewportV2Props = {
-  controller: MasterFolderTreeController;
+  controller?: MasterFolderTreeController | undefined;
   enableDnd?: boolean | undefined;
   className?: string | undefined;
   emptyLabel?: string | undefined;
@@ -116,28 +117,34 @@ const defaultRootDropIdleClassName = 'border-border/45 bg-card/25 text-gray-400'
 const defaultRootDropActiveClassName = 'border-sky-200/55 bg-sky-500/12 text-sky-100';
 
 export function FolderTreeViewportV2(props: FolderTreeViewportV2Props): React.JSX.Element {
+  const shellContext = useOptionalMasterFolderTreeShellContext();
+
   const {
-    controller,
-    enableDnd = true,
-    className,
-    emptyLabel = 'No items',
-    renderToolbar,
-    renderNode,
-    resolveDraggedNodeId,
-    canDrop,
-    onNodeDrop,
-    resolveDropPosition,
-    onNodeDragStart,
-    canStartDrag,
-    rootDropUi,
-    contextMenuItems,
-    estimateRowHeight,
-    autoExpandOnHoverMs = 600,
-    multiSelectConfig,
-    searchState,
-    scrollToNodeRef,
-    runtime: runtimeOverride,
+    controller = props.controller ?? shellContext?.controller,
+    enableDnd = props.enableDnd ?? true,
+    className = props.className,
+    emptyLabel = props.emptyLabel ?? 'No items',
+    renderToolbar = props.renderToolbar,
+    renderNode = props.renderNode,
+    resolveDraggedNodeId = props.resolveDraggedNodeId,
+    canDrop = props.canDrop,
+    onNodeDrop = props.onNodeDrop,
+    resolveDropPosition = props.resolveDropPosition,
+    onNodeDragStart = props.onNodeDragStart,
+    canStartDrag = props.canStartDrag,
+    rootDropUi = props.rootDropUi ?? shellContext?.appearance.rootDropUi,
+    contextMenuItems = props.contextMenuItems,
+    estimateRowHeight = props.estimateRowHeight,
+    autoExpandOnHoverMs = props.autoExpandOnHoverMs ?? 600,
+    multiSelectConfig = props.multiSelectConfig ?? shellContext?.capabilities.multiSelect,
+    searchState = props.searchState,
+    scrollToNodeRef = props.scrollToNodeRef ?? shellContext?.viewport.scrollToNodeRef,
+    runtime: runtimeOverride = props.runtime,
   } = props;
+
+  if (!controller) {
+    throw new Error('FolderTreeViewportV2: controller is required (via props or context)');
+  }
 
   const runtime = useFolderTreeShellRuntime(runtimeOverride);
   const resolvedMultiSelectConfig = useMemo<ResolvedFolderTreeMultiSelectConfig>(

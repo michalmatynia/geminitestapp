@@ -190,8 +190,6 @@ export type EvaluateGraphOptions = {
   resolveHandlerTelemetry?: (type: string) => RuntimeNodeResolutionTelemetry | null;
   runtimeKernelMode?: 'auto' | undefined;
   runtimeKernelNodeTypes?: string[] | undefined;
-  /** @deprecated Use runtimeKernelNodeTypes. */
-  runtimeKernelPilotNodeTypes?: string[] | undefined;
   runtimeKernelCodeObjectResolverIds?: string[] | undefined;
   runtimeKernelStrictNativeRegistry?: boolean | undefined;
   // Services

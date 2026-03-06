@@ -47,8 +47,6 @@ export const NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES = [
   'validator',
   'viewer',
 ] as const;
-/** @deprecated Use NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES. */
-export const NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES = NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES;
 
 export type NodeRuntimeKernelDescriptor = {
   nodeType: string;
@@ -75,8 +73,6 @@ export type CreateNodeRuntimeKernelArgs = {
     | undefined;
   resolveOverrideHandler?: ((nodeType: string) => NodeHandler | null) | undefined;
   runtimeKernelNodeTypes?: readonly string[] | undefined;
-  /** @deprecated Use runtimeKernelNodeTypes. */
-  v3PilotNodeTypes?: readonly string[] | undefined;
   mode?: NodeRuntimeKernelMode | undefined;
   runtimeKernelStrictNativeRegistry?: boolean | undefined;
 };
@@ -96,19 +92,6 @@ export const isNodeRuntimeKernelCanonicalType = ({
   nodeType: string;
   runtimeKernelNodeTypes: Set<string>;
 }): boolean => runtimeKernelNodeTypes.has(nodeType);
-
-/** @deprecated Use isNodeRuntimeKernelCanonicalType. */
-export const isNodeRuntimeKernelV3PilotType = ({
-  nodeType,
-  v3PilotNodeTypes,
-}: {
-  nodeType: string;
-  v3PilotNodeTypes: Set<string>;
-}): boolean =>
-  isNodeRuntimeKernelCanonicalType({
-    nodeType,
-    runtimeKernelNodeTypes: v3PilotNodeTypes,
-  });
 
 const resolveStrategy = ({
   nodeType,
@@ -155,14 +138,13 @@ export const createNodeRuntimeKernel = ({
   resolveCodeObjectHandler,
   resolveOverrideHandler,
   runtimeKernelNodeTypes,
-  v3PilotNodeTypes,
   mode,
   runtimeKernelStrictNativeRegistry,
 }: CreateNodeRuntimeKernelArgs): NodeRuntimeKernel => {
   // Accept deprecated mode inputs for compatibility, but runtime behavior is always auto.
   resolveNodeRuntimeKernelMode(mode);
   const resolvedRuntimeKernelNodeTypes = new Set<string>(
-    (runtimeKernelNodeTypes ?? v3PilotNodeTypes ?? NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES)
+    (runtimeKernelNodeTypes ?? NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES)
       .map((entry: string): string => normalizeNodeType(entry))
       .filter(Boolean)
   );

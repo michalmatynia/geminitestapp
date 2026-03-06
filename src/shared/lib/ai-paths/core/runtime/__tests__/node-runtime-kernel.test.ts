@@ -166,20 +166,6 @@ describe('node-runtime-kernel', () => {
     expect(descriptor.handler).toBe(databaseHandler);
   });
 
-  it('accepts deprecated v3PilotNodeTypes as a compatibility alias', () => {
-    const databaseHandler = buildHandler('database');
-    const runtimeKernel = createNodeRuntimeKernel({
-      resolveLegacyHandler: (nodeType: string) =>
-        nodeType === 'database' ? databaseHandler : null,
-      v3PilotNodeTypes: ['database'],
-    });
-
-    const descriptor = runtimeKernel.resolveDescriptor('database');
-    expect(descriptor.strategy).toBe('code_object_v3');
-    expect(descriptor.codeObjectId).toBe('ai-paths.node-code-object.database.v3');
-    expect(descriptor.handler).toBe(databaseHandler);
-  });
-
   it('normalizes unknown runtime kernel mode to auto', () => {
     expect(resolveNodeRuntimeKernelMode('auto')).toBe('auto');
     expect(resolveNodeRuntimeKernelMode('unexpected_mode')).toBe('auto');

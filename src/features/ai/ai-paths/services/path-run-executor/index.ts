@@ -72,6 +72,7 @@ import {
   toRuntimeNodeStatus,
   toRuntimeProfileHighlight,
 } from '../path-run-executor.logic';
+import { normalizeAiPathRunRuntimeKernelMetadata } from '../path-run-runtime-kernel-metadata';
 import { extractDatabaseRuntimeMetadata } from '../../components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers';
 
 import { createPathRunProfiling } from './profiling';
@@ -181,8 +182,7 @@ export const executePathRun = async (
   const triggerNodeId =
     resolveTriggerNodeId(nodes, edges, run.triggerEvent, run.triggerNodeId) ?? null;
   const runtimeState = parseRuntimeState(run.runtimeState);
-  const runMetaRecord =
-    run.meta && typeof run.meta === 'object' && !Array.isArray(run.meta) ? run.meta : null;
+  const runMetaRecord = normalizeAiPathRunRuntimeKernelMetadata(run.meta).meta;
   const runMetaRuntimeKernelConfigRecord =
     runMetaRecord &&
     typeof runMetaRecord['runtimeKernelConfig'] === 'object' &&
@@ -191,15 +191,11 @@ export const executePathRun = async (
       ? (runMetaRecord['runtimeKernelConfig'] as Record<string, unknown>)
       : null;
   const runMetaRuntimeKernelMode = runMetaRuntimeKernelConfigRecord?.['mode'];
-  const runMetaRuntimeKernelConfigNodeTypes =
-    runMetaRuntimeKernelConfigRecord?.['nodeTypes'] ??
-    runMetaRuntimeKernelConfigRecord?.['pilotNodeTypes'];
+  const runMetaRuntimeKernelConfigNodeTypes = runMetaRuntimeKernelConfigRecord?.['nodeTypes'];
   const runMetaRuntimeKernelResolverIds =
-    runMetaRuntimeKernelConfigRecord?.['codeObjectResolverIds'] ??
-    runMetaRuntimeKernelConfigRecord?.['resolverIds'];
+    runMetaRuntimeKernelConfigRecord?.['codeObjectResolverIds'];
   const runMetaRuntimeKernelStrictNativeRegistry =
-    runMetaRuntimeKernelConfigRecord?.['strictNativeRegistry'] ??
-    runMetaRuntimeKernelConfigRecord?.['strictCodeObjectRegistry'];
+    runMetaRuntimeKernelConfigRecord?.['strictNativeRegistry'];
   const runtimeKernelSettings = await listAiPathsSettings([
     AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
     AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
@@ -228,9 +224,6 @@ export const executePathRun = async (
     settingNodeTypes:
       runtimeKernelSettingsMap.get(AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY) ??
       runtimeKernelSettingsMap.get(AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY),
-    envPilotNodeTypes: undefined,
-    pathPilotNodeTypes: undefined,
-    settingPilotNodeTypes: undefined,
     envResolverIds: process.env['AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS'],
     pathResolverIds: runMetaRuntimeKernelResolverIds,
     settingResolverIds: runtimeKernelSettingsMap.get(
@@ -361,16 +354,12 @@ export const executePathRun = async (
     !Array.isArray(runMetaRecord['runtimeKernel'])
       ? (runMetaRecord['runtimeKernel'] as Record<string, unknown>)
       : null;
-  const runMetaRuntimeKernelNodeTypesSource =
-    normalizeRuntimeKernelTelemetrySource(
-      runMetaRuntimeKernelRecord?.['runtimeKernelNodeTypesSource']
-    ) ??
-    normalizeRuntimeKernelTelemetrySource(
-      runMetaRuntimeKernelRecord?.['runtimeKernelPilotNodeTypesSource']
-    );
-  const runMetaRuntimeKernelTelemetryNodeTypes =
-    normalizeRuntimeKernelTelemetryArray(runMetaRuntimeKernelRecord?.['runtimeKernelNodeTypes']) ??
-    normalizeRuntimeKernelTelemetryArray(runMetaRuntimeKernelRecord?.['runtimeKernelPilotNodeTypes']);
+  const runMetaRuntimeKernelNodeTypesSource = normalizeRuntimeKernelTelemetrySource(
+    runMetaRuntimeKernelRecord?.['runtimeKernelNodeTypesSource']
+  );
+  const runMetaRuntimeKernelTelemetryNodeTypes = normalizeRuntimeKernelTelemetryArray(
+    runMetaRuntimeKernelRecord?.['runtimeKernelNodeTypes']
+  );
   const runMetaRuntimeKernelTelemetryResolverIds =
     normalizeRuntimeKernelTelemetryArray(
       runMetaRuntimeKernelRecord?.['runtimeKernelCodeObjectResolverIds']

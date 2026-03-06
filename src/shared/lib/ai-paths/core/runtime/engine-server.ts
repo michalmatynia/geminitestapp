@@ -240,8 +240,7 @@ export async function evaluateGraphServer(
         : defaultResolveCodeObjectHandler(args)),
     resolveOverrideHandler: resolvedOptions.resolveHandler,
     mode: resolvedOptions.runtimeKernelMode,
-    runtimeKernelNodeTypes:
-      resolvedOptions.runtimeKernelNodeTypes ?? resolvedOptions.runtimeKernelPilotNodeTypes,
+    runtimeKernelNodeTypes: resolvedOptions.runtimeKernelNodeTypes,
     runtimeKernelStrictNativeRegistry,
   });
 

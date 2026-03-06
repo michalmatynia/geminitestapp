@@ -2,7 +2,7 @@ import 'server-only';
 
 import { evaluateGraphServer } from '@/shared/lib/ai-paths/core/runtime/engine-server';
 import { resolveAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine';
-import type { EvaluateGraphOptions } from '@/shared/lib/ai-paths/core/runtime/engine-modules/engine-types';
+import type { EvaluateGraphOptions, RuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/runtime/engine-modules/engine-types';
 
 import {
   PortablePathValidationError,
@@ -110,9 +110,11 @@ export const runPortablePathServer = async (
 
   const runtimeValidationMiddleware: EvaluateGraphOptions['validationMiddleware'] =
     resolveAiPathsRuntimeValidationMiddleware({
-      validationMiddleware: validationMiddleware as any,
+      validationMiddleware: validationMiddleware as RuntimeValidationMiddleware | null,
       runtimeValidationEnabled,
-      runtimeValidationConfig: (runtimeValidationConfig ?? resolved.value.pathConfig.aiPathsValidation ?? null) as any,
+      runtimeValidationConfig: (runtimeValidationConfig ??
+        resolved.value.pathConfig.aiPathsValidation ??
+        null),
       nodes: resolved.value.pathConfig.nodes,
       edges: resolved.value.pathConfig.edges,
     });

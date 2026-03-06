@@ -13,7 +13,7 @@ Current runtime scope uses the canonical runtime-kernel set (`agent`, `ai_descri
 
 Runtime rollout controls:
 
-- `runtimeKernelNodeTypes` is the canonical scoped runtime-kernel override for parity/canary runs. `runtimeKernelPilotNodeTypes` remains as a deprecated compatibility alias. Omitted or empty persisted values fall back to the canonical approved node set.
+- `runtimeKernelNodeTypes` is the canonical scoped runtime-kernel override for parity/canary runs. Deprecated persisted/env/path-config aliases are still normalized by maintenance and reader fallbacks. Omitted or empty persisted values fall back to the canonical approved node set.
 - `runtimeKernelStrictNativeRegistry` keeps native resolution fail-closed by default and only allows legacy fallback when explicitly disabled.
 - Server runtime resolves approved `code_object_v3` handlers through `contracts.json`.
 - Supported execution adapters:
@@ -36,6 +36,7 @@ Runtime rollout controls:
   - `AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY`
 - `runtimeKernelMode`, `ai_paths_runtime_kernel_mode`, and `AI_PATHS_RUNTIME_KERNEL_MODE` are deprecated compatibility inputs. They normalize to `auto` and are no longer active rollout controls.
 - `npm run cleanup:ai-paths-runtime-kernel-settings` normalizes stale runtime-kernel mode aliases, node-type overrides, resolver ids, and strict-native registry flags. The old `cleanup:ai-paths-runtime-kernel-mode` command remains as a deprecated alias.
+- `npm run cleanup:ai-paths-runtime-kernel-run-metadata` normalizes historical `AiPathRun.meta.runtimeKernelConfig` and `AiPathRun.meta.runtimeKernel` compatibility aliases before removing executor read-side fallback.
 
 Generated migration documentation:
 

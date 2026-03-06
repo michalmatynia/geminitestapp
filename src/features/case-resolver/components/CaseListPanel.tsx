@@ -537,45 +537,20 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   );
 
   const handleRenderNode = useCallback(
-    (input: FolderTreeViewportRenderNodeInput): React.JSX.Element => {
-      const targetCaseId = fromCaseResolverCaseNodeId(input.node.id) ?? '';
-      const canShowNestHeldAction =
-        Boolean(heldCaseId) && targetCaseId.length > 0 && heldCaseId !== targetCaseId;
-      const canNestHeldHere =
-        canShowNestHeldAction &&
-        !isHierarchyLocked &&
-        Boolean(heldCaseFile) &&
-        heldCaseFile?.isLocked !== true &&
-        !isHeldCaseAncestorOf(targetCaseId);
-      const nestHeldDisabledReason = (() => {
-        if (!canShowNestHeldAction) return null;
-        if (isHierarchyLocked) return 'Unlock hierarchy to move held case.';
-        if (!heldCaseFile) return 'Held case is no longer available.';
-        if (heldCaseFile.isLocked === true) return 'Held case is locked.';
-        if (isHeldCaseAncestorOf(targetCaseId))
-          return 'Cannot nest held case under its descendant.';
-        return null;
-      })();
-
-      return (
-        <CaseListNodeItem
-          node={input.node}
-          depth={input.depth}
-          hasChildren={input.hasChildren}
-          isExpanded={input.isExpanded}
-          isRenaming={input.isRenaming}
-          isDragging={input.isDragging}
-          isDropTarget={input.isDropTarget}
-          dropPosition={input.dropPosition}
-          toggleExpand={input.toggleExpand}
-          heldCaseId={heldCaseId}
-          canShowNestHeldAction={canShowNestHeldAction}
-          canNestHeldHere={canNestHeldHere}
-          nestHeldDisabledReason={nestHeldDisabledReason}
-        />
-      );
-    },
-    [heldCaseId, heldCaseFile, isHierarchyLocked, isHeldCaseAncestorOf]
+    (input: FolderTreeViewportRenderNodeInput): React.JSX.Element => (
+      <CaseListNodeItem
+        node={input.node}
+        depth={input.depth}
+        hasChildren={input.hasChildren}
+        isExpanded={input.isExpanded}
+        isRenaming={input.isRenaming}
+        isDragging={input.isDragging}
+        isDropTarget={input.isDropTarget}
+        dropPosition={input.dropPosition}
+        toggleExpand={input.toggleExpand}
+      />
+    ),
+    []
   );
 
   const caseListNodeRuntimeValue = useMemo(
@@ -605,6 +580,10 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
       handleDeleteCase,
       FolderClosedIcon,
       FolderOpenIcon,
+      heldCaseId,
+      isHierarchyLocked,
+      heldCaseFile,
+      isHeldCaseAncestorOf,
     }),
     [
       filesById,
@@ -624,6 +603,10 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
       handleDeleteCase,
       FolderClosedIcon,
       FolderOpenIcon,
+      heldCaseId,
+      isHierarchyLocked,
+      heldCaseFile,
+      isHeldCaseAncestorOf,
     ]
   );
 

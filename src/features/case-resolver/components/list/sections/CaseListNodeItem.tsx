@@ -23,10 +23,6 @@ export interface CaseListNodeItemProps {
   isDropTarget: boolean;
   dropPosition: 'inside' | 'before' | 'after' | null;
   toggleExpand: () => void;
-  heldCaseId: string | null;
-  canNestHeldHere: boolean;
-  canShowNestHeldAction: boolean;
-  nestHeldDisabledReason?: string | null;
 }
 
 export const CaseListNodeItem = React.memo(function CaseListNodeItem(
@@ -42,10 +38,6 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem(
     isDropTarget,
     dropPosition,
     toggleExpand,
-    heldCaseId,
-    canNestHeldHere,
-    canShowNestHeldAction,
-    nestHeldDisabledReason,
   } = props;
 
   const {
@@ -68,7 +60,12 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem(
     handleDeleteCase,
     FolderClosedIcon,
     FolderOpenIcon,
+    heldCaseId,
+    isHierarchyLocked,
+    heldCaseFile,
+    isHeldCaseAncestorOf,
   } = useCaseListNodeRuntimeContext();
+
   const caseId = fromCaseResolverCaseNodeId(node.id) ?? '';
   const caseContentFolderRef = decodeCaseResolverCaseContentFolderNodeId(node.id);
   const caseContentFileRef = decodeCaseResolverCaseContentFileNodeId(node.id);
@@ -93,6 +90,26 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem(
     caseContentFile?.isLocked === true ||
     parseBoolean(node.metadata?.['isLocked']);
   const isStatusToggleDisabled = !caseFile || isLocked;
+
+  const targetCaseId = caseId;
+  const canShowNestHeldAction =
+    Boolean(heldCaseId) && targetCaseId.length > 0 && heldCaseId !== targetCaseId;
+  const canNestHeldHere =
+    canShowNestHeldAction &&
+    !isHierarchyLocked &&
+    Boolean(heldCaseFile) &&
+    heldCaseFile?.isLocked !== true &&
+    !isHeldCaseAncestorOf(targetCaseId);
+  const nestHeldDisabledReason = (() => {
+    if (!canShowNestHeldAction) return null;
+    if (isHierarchyLocked) return 'Unlock hierarchy to move held case.';
+    if (!heldCaseFile) return 'Held case is no longer available.';
+    if (heldCaseFile.isLocked === true) return 'Held case is locked.';
+    if (isHeldCaseAncestorOf(targetCaseId))
+      return 'Cannot nest held case under its descendant.';
+    return null;
+  })();
+
   const stateClassName =
     dropPosition === 'before'
       ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-blue-500/60'

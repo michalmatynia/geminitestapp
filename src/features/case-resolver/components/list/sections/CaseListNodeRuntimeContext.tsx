@@ -8,11 +8,19 @@ import type { CaseResolverTreeIconComponent as FolderIconComponent } from '../..
 export type { FolderIconComponent };
 
 export interface CaseListNodeRuntimeContextValue {
+  // Data Maps
   filesById: Map<string, CaseResolverFile>;
   caseTagPathById: Map<string, string>;
   caseIdentifierPathById: Map<string, string>;
   caseCategoryPathById: Map<string, string>;
+
+  // State
   renameDraft: string;
+  heldCaseId: string | null;
+  isHierarchyLocked: boolean;
+  heldCaseFile: CaseResolverFile | null;
+
+  // Actions
   onUpdateRenameDraft: (value: string) => void;
   onCommitRename: () => void;
   onCancelRename: () => void;
@@ -25,6 +33,9 @@ export interface CaseListNodeRuntimeContextValue {
   handleOpenFile: (id: string) => void;
   handleCreateCase: (parentId: string | null) => void;
   handleDeleteCase: (id: string) => void;
+  isHeldCaseAncestorOf: (candidateCaseId: string) => boolean;
+
+  // Icons
   FolderClosedIcon: FolderIconComponent;
   FolderOpenIcon: FolderIconComponent;
 }

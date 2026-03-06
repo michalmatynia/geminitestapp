@@ -8,7 +8,7 @@ import {
   pruneBefore,
   buildEventMember,
   buildDurationMember,
-  normalizeNodeStatus,
+  resolveRuntimeAnalyticsNodeStatusKey,
 } from './utils';
 
 export const recordRuntimeRunQueued = async (input: {
@@ -126,21 +126,8 @@ export const recordRuntimeNodeStatus = async (input: {
   try {
     const redis = getRedisConnection();
     if (!redis || !input.runId || !input.nodeId) return;
-    const normalizedStatus = normalizeNodeStatus(input.status);
-    if (!normalizedStatus) return;
-
-    const trackedStatuses = new Set<string>([
-      'started',
-      'completed',
-      'failed',
-      'queued',
-      'running',
-      'polling',
-      'cached',
-      'waiting_callback',
-    ]);
-    const statusKey = normalizedStatus === 'running' ? 'started' : normalizedStatus;
-    if (!trackedStatuses.has(statusKey)) return;
+    const statusKey = resolveRuntimeAnalyticsNodeStatusKey(input.status);
+    if (!statusKey) return;
 
     const timestampMs = toTimestampMs(input.timestamp);
     const pruneTo = pruneBefore(timestampMs);

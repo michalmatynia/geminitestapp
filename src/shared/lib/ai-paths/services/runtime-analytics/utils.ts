@@ -23,6 +23,34 @@ export const normalizeNodeStatus = (value: unknown): string | null => {
   return legacy === 'started' ? legacy : null;
 };
 
+export const RUNTIME_ANALYTICS_NODE_STATUS_KEYS = [
+  'started',
+  'completed',
+  'failed',
+  'queued',
+  'polling',
+  'cached',
+  'waiting_callback',
+] as const;
+
+export type RuntimeAnalyticsNodeStatusKey = (typeof RUNTIME_ANALYTICS_NODE_STATUS_KEYS)[number];
+
+const runtimeAnalyticsNodeStatusKeySet = new Set<RuntimeAnalyticsNodeStatusKey>(
+  RUNTIME_ANALYTICS_NODE_STATUS_KEYS
+);
+
+const isRuntimeAnalyticsNodeStatusKey = (value: string): value is RuntimeAnalyticsNodeStatusKey =>
+  runtimeAnalyticsNodeStatusKeySet.has(value as RuntimeAnalyticsNodeStatusKey);
+
+export const resolveRuntimeAnalyticsNodeStatusKey = (
+  value: unknown
+): RuntimeAnalyticsNodeStatusKey | null => {
+  const normalizedStatus = normalizeNodeStatus(value);
+  if (!normalizedStatus) return null;
+  const statusKey = normalizedStatus === 'running' ? 'started' : normalizedStatus;
+  return isRuntimeAnalyticsNodeStatusKey(statusKey) ? statusKey : null;
+};
+
 export const buildEventMember = (type: string, id: string, timestampMs: number): string =>
   `${type}|${id}|${timestampMs}|${randomUUID()}`;
 

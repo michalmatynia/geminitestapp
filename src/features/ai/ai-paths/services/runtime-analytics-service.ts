@@ -4,7 +4,6 @@ import { randomUUID } from 'crypto';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
-import { normalizeAiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   AiPathRuntimePortableEngineAnalytics,
@@ -15,6 +14,7 @@ import type {
 } from '@/shared/contracts/ai-paths';
 import { getPortablePathRunExecutionSnapshot } from '@/shared/lib/ai-paths/portable-engine';
 import { getRedisConnection } from '@/shared/lib/queue';
+import { resolveRuntimeAnalyticsNodeStatusKey } from '@/shared/lib/ai-paths/services/runtime-analytics/utils';
 import type { RuntimeAnalyticsAvailability } from '@/shared/lib/ai-paths/services/runtime-analytics/availability';
 
 const KEY_PREFIX = 'ai_paths:runtime:analytics:v1';
@@ -94,15 +94,6 @@ const toTimestampMs = (value?: Date | string | number | null): number => {
     if (Number.isFinite(parsed)) return parsed;
   }
   return Date.now();
-};
-
-const normalizeNodeStatus = (value: unknown): string | null => {
-  const normalized = normalizeAiPathRuntimeNodeStatus(value);
-  if (normalized) return normalized;
-  if (typeof value !== 'string') return null;
-  const legacy = value.trim().toLowerCase();
-  if (!legacy) return null;
-  return legacy === 'started' ? legacy : null;
 };
 
 const buildEventMember = (type: string, id: string, timestampMs: number): string =>
@@ -846,21 +837,8 @@ export const recordRuntimeNodeStatus = async (input: {
   try {
     const redis = getRedisConnection();
     if (!redis || !input.runId || !input.nodeId) return;
-    const normalizedStatus = normalizeNodeStatus(input.status);
-    if (!normalizedStatus) return;
-
-    const trackedStatuses = new Set<string>([
-      'started',
-      'completed',
-      'failed',
-      'queued',
-      'running',
-      'polling',
-      'cached',
-      'waiting_callback',
-    ]);
-    const statusKey = normalizedStatus === 'running' ? 'started' : normalizedStatus;
-    if (!trackedStatuses.has(statusKey)) return;
+    const statusKey = resolveRuntimeAnalyticsNodeStatusKey(input.status);
+    if (!statusKey) return;
 
     const timestampMs = toTimestampMs(input.timestamp);
     const pruneTo = pruneBefore(timestampMs);

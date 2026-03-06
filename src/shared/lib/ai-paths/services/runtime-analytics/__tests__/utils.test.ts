@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeNodeStatus } from '../utils';
+import {
+  RUNTIME_ANALYTICS_NODE_STATUS_KEYS,
+  normalizeNodeStatus,
+  resolveRuntimeAnalyticsNodeStatusKey,
+} from '../utils';
 
 describe('runtime analytics utils', () => {
   it('normalizes canonical runtime node statuses', () => {
@@ -17,5 +21,21 @@ describe('runtime analytics utils', () => {
     expect(normalizeNodeStatus('dead_lettered')).toBeNull();
     expect(normalizeNodeStatus('')).toBeNull();
     expect(normalizeNodeStatus(null)).toBeNull();
+  });
+
+  it('resolves tracked analytics node status keys', () => {
+    expect(resolveRuntimeAnalyticsNodeStatusKey('running')).toBe('started');
+    expect(resolveRuntimeAnalyticsNodeStatusKey('waiting_callback')).toBe('waiting_callback');
+    expect(resolveRuntimeAnalyticsNodeStatusKey('skipped')).toBeNull();
+    expect(resolveRuntimeAnalyticsNodeStatusKey('dead_lettered')).toBeNull();
+    expect(RUNTIME_ANALYTICS_NODE_STATUS_KEYS).toEqual([
+      'started',
+      'completed',
+      'failed',
+      'queued',
+      'polling',
+      'cached',
+      'waiting_callback',
+    ]);
   });
 });

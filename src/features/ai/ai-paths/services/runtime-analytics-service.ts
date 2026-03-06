@@ -177,6 +177,20 @@ export const recordRuntimeRunStarted = recordRuntimeRunStartedShared;
 export const recordRuntimeRunFinished = recordRuntimeRunFinishedShared;
 export const recordRuntimeNodeStatus = recordRuntimeNodeStatusShared;
 
+const normalizeBrainInsightStatus = (
+  value: string | null | undefined
+): 'success' | 'warning' | 'error' | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized === 'warning') return 'warning';
+  if (normalized === 'error' || normalized === 'failed' || normalized === 'failure') return 'error';
+  if (normalized === 'success' || normalized === 'completed' || normalized === 'complete') {
+    return 'success';
+  }
+  return null;
+};
+
 export const recordBrainInsightAnalytics = async (input: {
   type: 'analytics' | 'logs';
   status?: string | null;
@@ -188,7 +202,7 @@ export const recordBrainInsightAnalytics = async (input: {
     const timestampMs = toTimestampMs(input.timestamp);
     const pruneTo = pruneBefore(timestampMs);
     const typeKey = keyBrain(input.type);
-    const status = typeof input.status === 'string' ? input.status.trim().toLowerCase() : '';
+    const status = normalizeBrainInsightStatus(input.status);
 
     const multi = redis.multi();
     multi.zadd(

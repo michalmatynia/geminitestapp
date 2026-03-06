@@ -67,6 +67,21 @@ const createRedisMock = () => {
   };
 };
 
+const createRecordingRedisMock = () => {
+  const multi = {
+    zadd: vi.fn().mockReturnThis(),
+    zremrangebyscore: vi.fn().mockReturnThis(),
+    hincrby: vi.fn().mockReturnThis(),
+    exec: vi.fn().mockResolvedValue([]),
+  };
+  return {
+    redis: {
+      multi: vi.fn(() => multi),
+    },
+    multi,
+  };
+};
+
 const buildPortableRunSnapshot = () => ({
   totals: {
     attempts: 0,
@@ -495,5 +510,41 @@ describe('runtime analytics service', () => {
       },
       recentFailures: [],
     });
+  });
+
+  it('maps failed brain insight status to error counters', async () => {
+    const { redis, multi } = createRecordingRedisMock();
+    getRedisConnectionMock.mockReturnValue(redis);
+
+    const { recordBrainInsightAnalytics } = await loadModule();
+    await recordBrainInsightAnalytics({
+      type: 'analytics',
+      status: 'failed',
+      timestamp: '2026-03-06T00:00:00.000Z',
+    });
+
+    const incrementedFields = multi.hincrby.mock.calls.map((call) => call[1]);
+    expect(incrementedFields).toContain('brain_analytics_reports');
+    expect(incrementedFields).toContain('brain_reports_total');
+    expect(incrementedFields).toContain('brain_error_reports');
+    expect(incrementedFields).not.toContain('brain_warning_reports');
+  });
+
+  it('maps completed brain insight status to success-only counters', async () => {
+    const { redis, multi } = createRecordingRedisMock();
+    getRedisConnectionMock.mockReturnValue(redis);
+
+    const { recordBrainInsightAnalytics } = await loadModule();
+    await recordBrainInsightAnalytics({
+      type: 'analytics',
+      status: 'completed',
+      timestamp: '2026-03-06T00:00:00.000Z',
+    });
+
+    const incrementedFields = multi.hincrby.mock.calls.map((call) => call[1]);
+    expect(incrementedFields).toContain('brain_analytics_reports');
+    expect(incrementedFields).toContain('brain_reports_total');
+    expect(incrementedFields).not.toContain('brain_error_reports');
+    expect(incrementedFields).not.toContain('brain_warning_reports');
   });
 });

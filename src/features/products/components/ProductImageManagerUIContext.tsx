@@ -1,18 +1,14 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 
-import {
-  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
-  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
-} from '@/shared/lib/products/constants';
 import { ProductFormCoreContext } from '@/features/products/context/ProductFormCoreContext';
 import { ProductFormImageContext } from '@/features/products/context/ProductFormImageContext';
 import { ImageFileSelection } from '@/shared/contracts/files';
 import { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import { DebugInfo } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 
 import { useOptionalProductImageManagerController } from './ProductImageManagerControllerContext';
 
@@ -142,9 +138,7 @@ export function ProductImageManagerUIProvider({
   const isSlotImageLocked = controller.isSlotImageLocked;
   const slotImageLockedReason = controller.slotImageLockedReason || 'Image is locked.';
 
-  const settingsStore = useSettingsStore();
-  const settingsStoreRef = useRef(settingsStore);
-  settingsStoreRef.current = settingsStore;
+  const { getImageExternalBaseUrl } = useProductSettings();
 
   // UI State
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
@@ -445,9 +439,7 @@ export function ProductImageManagerUIProvider({
       isReordering,
       debugInfo,
       showDebug,
-      externalBaseUrl:
-        settingsStoreRef.current.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
-        DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
+      externalBaseUrl: getImageExternalBaseUrl(),
       minimalUi,
       showDragHandle,
       minimalSingleSlotAlign,

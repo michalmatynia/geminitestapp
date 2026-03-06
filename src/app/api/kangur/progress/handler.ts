@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { auth } from '@/features/auth/server';
-import { getKangurProgressRepository } from '@/features/kangur/server';
-import { authError, badRequestError } from '@/shared/errors/app-error';
+import { getKangurProgressRepository, resolveKangurActor } from '@/features/kangur/server';
+import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
+import { badRequestError } from '@/shared/errors/app-error';
 import { parseKangurProgressUpdatePayload } from '@/shared/validations/kangur';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -20,31 +20,43 @@ const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   }
 };
 
-const normalizeUserKeyPart = (value: unknown): string =>
-  typeof value === 'string' ? value.trim() : '';
-
-const resolveProgressUserKey = async (): Promise<string> => {
-  const session = await auth();
-  const email = normalizeUserKeyPart(session?.user?.email).toLowerCase();
-  if (email) {
-    return email;
+const resolveProgressKeys = (input: {
+  learnerId: string;
+  legacyUserKey: string | null;
+}): string[] => {
+  const keys = [input.learnerId];
+  if (input.legacyUserKey) {
+    keys.push(input.legacyUserKey);
   }
+  return keys;
+};
 
-  const id = normalizeUserKeyPart(session?.user?.id);
-  if (id) {
-    return id;
+const loadProgressForLearner = async (input: {
+  learnerId: string;
+  legacyUserKey: string | null;
+}) => {
+  const repository = await getKangurProgressRepository();
+  const [primary, legacy] = await Promise.all(
+    resolveProgressKeys(input).map((key) => repository.getProgress(key))
+  );
+  const defaultProgress = createDefaultKangurProgressState();
+  const primaryEmpty = JSON.stringify(primary) === JSON.stringify(defaultProgress);
+  if (primaryEmpty && legacy && JSON.stringify(legacy) !== JSON.stringify(defaultProgress)) {
+    await repository.saveProgress(input.learnerId, legacy);
+    return legacy;
   }
-
-  throw authError('Authentication required.');
+  return primary ?? defaultProgress;
 };
 
 export async function getKangurProgressHandler(
-  _req: NextRequest,
+  req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  const userKey = await resolveProgressUserKey();
-  const repository = await getKangurProgressRepository();
-  const progress = await repository.getProgress(userKey);
+  const actor = await resolveKangurActor(req);
+  const progress = await loadProgressForLearner({
+    learnerId: actor.activeLearner.id,
+    legacyUserKey: actor.activeLearner.legacyUserKey,
+  });
 
   return NextResponse.json(progress);
 }
@@ -54,9 +66,9 @@ export async function patchKangurProgressHandler(
   _ctx: ApiHandlerContext
 ): Promise<Response> {
   const payload = parseKangurProgressUpdatePayload(await readBodyJson(req));
-  const userKey = await resolveProgressUserKey();
+  const actor = await resolveKangurActor(req);
   const repository = await getKangurProgressRepository();
-  const progress = await repository.saveProgress(userKey, payload);
+  const progress = await repository.saveProgress(actor.activeLearner.id, payload);
 
   return NextResponse.json(progress);
 }

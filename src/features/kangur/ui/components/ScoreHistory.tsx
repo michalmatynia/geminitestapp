@@ -23,6 +23,7 @@ type OperationBreakdown = {
 };
 
 type ScoreHistoryProps = {
+  learnerId?: string | null;
   playerName?: string | null;
   createdBy?: string | null;
   basePath?: string | null;
@@ -93,6 +94,7 @@ const buildLessonFocusHref = (basePath: string, operation: string): string =>
   `${createPageUrl('Lessons', basePath)}?${new URLSearchParams({ focus: operation }).toString()}`;
 
 export default function ScoreHistory({
+  learnerId = null,
   playerName = null,
   createdBy = null,
   basePath = null,
@@ -104,6 +106,7 @@ export default function ScoreHistory({
     let isActive = true;
 
     const loadScores = async (): Promise<void> => {
+      const normalizedLearnerId = learnerId?.trim() || '';
       const normalizedPlayerName = playerName?.trim() || '';
       const normalizedCreatedBy = createdBy?.trim() || '';
       if (isActive) {
@@ -112,6 +115,7 @@ export default function ScoreHistory({
 
       try {
         const loadedScores = await loadScopedKangurScores(kangurPlatform.score, {
+          learnerId: normalizedLearnerId,
           playerName: normalizedPlayerName,
           createdBy: normalizedCreatedBy,
           limit: SCORE_FETCH_LIMIT,
@@ -128,6 +132,7 @@ export default function ScoreHistory({
         logKangurClientError(error, {
           source: 'KangurScoreHistory',
           action: 'loadScores',
+          learnerIdProvided: normalizedLearnerId.length > 0,
           playerNameProvided: normalizedPlayerName.length > 0,
           createdByProvided: normalizedCreatedBy.length > 0,
         });
@@ -144,7 +149,7 @@ export default function ScoreHistory({
     return () => {
       isActive = false;
     };
-  }, [createdBy, playerName]);
+  }, [createdBy, learnerId, playerName]);
 
   const insights = useMemo(() => buildKangurScoreInsights(scores), [scores]);
   const weakestLessonHref =

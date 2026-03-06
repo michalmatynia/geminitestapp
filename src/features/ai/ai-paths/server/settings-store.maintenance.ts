@@ -25,34 +25,12 @@ import {
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { serializeAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
 
-const LEGACY_RUNTIME_KERNEL_MODE = 'legacy_only';
-const CANONICAL_RUNTIME_KERNEL_MODE = 'auto';
 const RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID = 'normalize_runtime_kernel_settings';
-
-const normalizeRuntimeKernelModeValue = (value: string | undefined): string =>
-  typeof value === 'string' ? value.trim().toLowerCase() : '';
 
 const normalizeRuntimeKernelNodeTypeToken = (value: string): string =>
   value.trim().toLowerCase().replace(/\s+/g, '_');
 
 const normalizeRuntimeKernelResolverIdToken = (value: string): string => value.trim();
-const normalizeRuntimeKernelStrictNativeRegistryValue = (
-  value: string | undefined
-): boolean | undefined => {
-  if (typeof value !== 'string') return undefined;
-  const normalized = value.trim().toLowerCase();
-  if (normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on')
-    return true;
-  if (normalized === 'false' || normalized === '0' || normalized === 'no' || normalized === 'off')
-    return false;
-  return undefined;
-};
-
-const normalizeRuntimeKernelStrictNativeRegistryUnknown = (value: unknown): boolean | undefined => {
-  if (typeof value === 'boolean') return value;
-  if (typeof value !== 'string') return undefined;
-  return normalizeRuntimeKernelStrictNativeRegistryValue(value);
-};
 
 const parseRuntimeKernelListValue = ({
   value,
@@ -238,17 +216,6 @@ export const countPendingTriggerButtonBindingRepairs = (
   records: AiPathsSettingRecord[]
 ): number => repairTriggerButtonBindings(records).affectedCount;
 
-const toCanonicalRuntimeKernelModeSettingValue = (
-  value: string | undefined
-): string | undefined => {
-  if (typeof value !== 'string') return value;
-  const normalized = normalizeRuntimeKernelModeValue(value);
-  if (normalized === LEGACY_RUNTIME_KERNEL_MODE || normalized === CANONICAL_RUNTIME_KERNEL_MODE) {
-    return CANONICAL_RUNTIME_KERNEL_MODE;
-  }
-  return value;
-};
-
 const toCanonicalRuntimeKernelListSettingValue = ({
   value,
   normalizeToken,
@@ -265,7 +232,7 @@ const toCanonicalRuntimeKernelSettingEntryValue = (
   entry: AiPathsSettingRecord
 ): string | undefined | null => {
   if (entry.key === AI_PATHS_RUNTIME_KERNEL_MODE_KEY) {
-    return toCanonicalRuntimeKernelModeSettingValue(entry.value);
+    return undefined;
   }
   if (entry.key === AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY) {
     return toCanonicalRuntimeKernelListSettingValue({
@@ -280,8 +247,7 @@ const toCanonicalRuntimeKernelSettingEntryValue = (
     });
   }
   if (entry.key === AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY) {
-    const normalized = normalizeRuntimeKernelStrictNativeRegistryValue(entry.value);
-    return normalized === undefined ? entry.value : normalized ? 'true' : 'false';
+    return undefined;
   }
   return null;
 };
@@ -308,10 +274,8 @@ const toCanonicalRuntimeKernelPathConfigEntryValue = (
   let changed = false;
   const nextRuntimeKernel: Record<string, unknown> = { ...runtimeKernel };
 
-  const rawMode = typeof runtimeKernel['mode'] === 'string' ? runtimeKernel['mode'] : undefined;
-  const normalizedMode = toCanonicalRuntimeKernelModeSettingValue(rawMode);
-  if (normalizedMode !== undefined && normalizedMode !== rawMode) {
-    nextRuntimeKernel['mode'] = normalizedMode;
+  if ('mode' in nextRuntimeKernel) {
+    delete nextRuntimeKernel['mode'];
     changed = true;
   }
 
@@ -369,15 +333,7 @@ const toCanonicalRuntimeKernelPathConfigEntryValue = (
     changed = true;
   }
 
-  const strictNativeRegistry = normalizeRuntimeKernelStrictNativeRegistryUnknown(
-    runtimeKernel['strictNativeRegistry'] ?? runtimeKernel['strictCodeObjectRegistry']
-  );
-  if (strictNativeRegistry !== undefined) {
-    if (runtimeKernel['strictNativeRegistry'] !== strictNativeRegistry) {
-      nextRuntimeKernel['strictNativeRegistry'] = strictNativeRegistry;
-      changed = true;
-    }
-  } else if ('strictNativeRegistry' in nextRuntimeKernel) {
+  if ('strictNativeRegistry' in nextRuntimeKernel) {
     delete nextRuntimeKernel['strictNativeRegistry'];
     changed = true;
   }
@@ -445,6 +401,11 @@ const normalizeRuntimeKernelSettingsRecords = (records: AiPathsSettingRecord[]):
     }
 
     const nextValue = toCanonicalRuntimeKernelSettingEntryValue(entry);
+    if (nextValue === undefined) {
+      deletedKeys.add(entry.key);
+      affectedCount += 1;
+      continue;
+    }
     if (nextValue !== null && nextValue !== entry.value) {
       nextRecords.push({
         ...entry,
@@ -606,7 +567,7 @@ export const buildAiPathsMaintenanceReport = (
       id: RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID,
       title: 'Normalize Runtime Kernel Settings',
       description:
-        'Normalize deprecated runtime-kernel mode aliases, node-type overrides, resolver ids, and strict-native registry flags for forward-compatible execution.',
+        'Prune deprecated runtime-kernel mode/strict settings and normalize node-type overrides plus resolver ids for forward-compatible execution.',
       blocking: false,
       status: 'pending',
       affectedRecords: runtimeKernelModeNormalizationCount,

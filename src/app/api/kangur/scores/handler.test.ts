@@ -3,21 +3,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const { authMock, getKangurScoreRepositoryMock, listScoresMock, createScoreMock } = vi.hoisted(
-  () => ({
-    authMock: vi.fn(),
-    getKangurScoreRepositoryMock: vi.fn(),
-    listScoresMock: vi.fn(),
-    createScoreMock: vi.fn(),
-  })
-);
-
-vi.mock('@/features/auth/server', () => ({
-  auth: authMock,
+const {
+  getKangurScoreRepositoryMock,
+  listScoresMock,
+  createScoreMock,
+  resolveKangurActorMock,
+} = vi.hoisted(() => ({
+  getKangurScoreRepositoryMock: vi.fn(),
+  listScoresMock: vi.fn(),
+  createScoreMock: vi.fn(),
+  resolveKangurActorMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/server', () => ({
   getKangurScoreRepository: getKangurScoreRepositoryMock,
+  resolveKangurActor: resolveKangurActorMock,
 }));
 
 import { getKangurScoresHandler, postKangurScoresHandler } from './handler';
@@ -52,14 +52,34 @@ const createPostRequest = (body: string): NextRequest =>
 
 describe('kangur scores handler', () => {
   beforeEach(() => {
-    authMock.mockReset();
     getKangurScoreRepositoryMock.mockReset();
     listScoresMock.mockReset();
     createScoreMock.mockReset();
+    resolveKangurActorMock.mockReset();
 
     getKangurScoreRepositoryMock.mockResolvedValue({
       listScores: listScoresMock,
       createScore: createScoreMock,
+    });
+    resolveKangurActorMock.mockResolvedValue({
+      ownerUserId: 'parent-1',
+      ownerEmail: 'teacher@example.com',
+      ownerName: 'Teacher',
+      actorId: 'parent-1',
+      actorType: 'parent',
+      canManageLearners: true,
+      role: 'user',
+      activeLearner: {
+        id: 'learner-1',
+        ownerUserId: 'parent-1',
+        displayName: 'Ada',
+        loginName: 'ada-child',
+        status: 'active',
+        legacyUserKey: null,
+        createdAt: '2026-03-06T10:00:00.000Z',
+        updatedAt: '2026-03-06T10:00:00.000Z',
+      },
+      learners: [],
     });
   });
 
@@ -81,6 +101,7 @@ describe('kangur scores handler', () => {
         player_name: 'Ada',
         operation: 'addition',
         created_by: 'teacher@example.com',
+        learner_id: undefined,
       },
     });
     expect(response.status).toBe(200);
@@ -108,7 +129,6 @@ describe('kangur scores handler', () => {
 
   it('creates score and stamps created_by from session email', async () => {
     const created = createScoreRow();
-    authMock.mockResolvedValue({ user: { email: 'teacher@example.com' } });
     createScoreMock.mockResolvedValue(created);
 
     const response = await postKangurScoresHandler(
@@ -133,6 +153,8 @@ describe('kangur scores handler', () => {
       correct_answers: 9,
       time_taken: 33,
       created_by: 'teacher@example.com',
+      learner_id: 'learner-1',
+      owner_user_id: 'parent-1',
     });
     expect(response.status).toBe(201);
     await expect(response.json()).resolves.toEqual(created);

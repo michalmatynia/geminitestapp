@@ -1,14 +1,10 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { getProductColumns } from '@/features/products/components/list/ProductColumns';
 import { ProductTableSkeleton } from '@/features/products/components/list/ProductTableSkeleton';
-import {
-  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
-  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
-} from '@/shared/lib/products/constants';
 import { useCatalogSync } from '@/features/products/hooks/useCatalogSync';
 import { useProductData } from '@/features/products/hooks/useProductData';
 import { useProductSync } from '@/features/products/hooks/useProductEnhancements';
@@ -17,7 +13,7 @@ import { useUserPreferences } from '@/features/products/hooks/useUserPreferences
 import { useQueuedProductIds } from '@/features/products/state/queued-product-ops';
 import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import { useToast } from '@/shared/ui';
 
 import type { ProductListContextType } from '../context/ProductListContext';
@@ -55,9 +51,7 @@ export function useProductListState(): ProductListContextType & {
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
-  const settingsStore = useSettingsStore();
-  const settingsStoreRef = useRef(settingsStore);
-  settingsStoreRef.current = settingsStore;
+  const { imageExternalBaseUrl } = useProductSettings();
 
   const queuedProductIds = useQueuedProductIds();
 
@@ -456,9 +450,7 @@ export function useProductListState(): ProductListContextType & {
     queuedProductIds,
     categoryNameById,
     thumbnailSource: preferences.thumbnailSource ?? 'file',
-    imageExternalBaseUrl:
-        settingsStoreRef.current.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
-        DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
+    imageExternalBaseUrl,
     getRowId: (row) => row.id,
     isLoading: !isMounted || isLoading,
     skeletonRows: tableSkeleton,

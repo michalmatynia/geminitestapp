@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   applyParameterInferenceGuard,
+  mergeTranslatedParameterUpdates,
   materializeParameterInferenceUpdates,
 } from '@/shared/lib/ai-paths/core/runtime/handlers/database-parameter-inference';
 
@@ -217,5 +218,123 @@ describe('applyParameterInferenceGuard', () => {
         { parameterId: 'material', value: '' },
       ],
     });
+  });
+});
+
+describe('mergeTranslatedParameterUpdates', () => {
+  it('preserves existing parameter metadata while merging Polish translations by parameterId', () => {
+    const result = mergeTranslatedParameterUpdates({
+      targetPath: 'parameters',
+      updates: {
+        parameters: [
+          { parameterId: 'color', value: 'Niebieski' },
+          { parameterId: 'material', valuesByLanguage: { pl: 'Stal' } },
+        ],
+      },
+      templateInputs: {
+        context: {
+          entity: {
+            parameters: [
+              {
+                parameterId: 'color',
+                value: 'Blue',
+                selectorType: 'select',
+                optionLabels: ['Blue', 'Black'],
+                valuesByLanguage: { en: 'Blue' },
+              },
+              {
+                parameterId: 'material',
+                value: 'Steel',
+                attributeId: 'attr-material',
+              },
+            ],
+          },
+        },
+      },
+      languageCode: 'pl',
+    });
+
+    expect(result.applied).toBe(true);
+    expect(result.updates).toEqual({
+      parameters: [
+        {
+          parameterId: 'color',
+          value: 'Blue',
+          selectorType: 'select',
+          optionLabels: ['Blue', 'Black'],
+          valuesByLanguage: { en: 'Blue', pl: 'Niebieski' },
+        },
+        {
+          parameterId: 'material',
+          value: 'Steel',
+          attributeId: 'attr-material',
+          valuesByLanguage: { pl: 'Stal' },
+        },
+      ],
+    });
+  });
+
+  it('skips parameter writes when the translation payload does not match existing parameter rows', () => {
+    const result = mergeTranslatedParameterUpdates({
+      targetPath: 'parameters',
+      updates: {
+        parameters: [{ parameterId: 'unknown', value: 'Nowa wartosc' }],
+      },
+      templateInputs: {
+        context: {
+          entity: {
+            parameters: [{ parameterId: 'color', value: 'Blue' }],
+          },
+        },
+      },
+      languageCode: 'pl',
+    });
+
+    expect(result.applied).toBe(true);
+    expect(result.updates).toEqual({});
+    expect(result.meta).toEqual(
+      expect.objectContaining({
+        mergedCount: 0,
+        skipped: expect.objectContaining({
+          unknownParameterIds: 1,
+        }),
+      })
+    );
+  });
+
+  it('skips translation parameter writes when full parameter coverage is required and payload is incomplete', () => {
+    const result = mergeTranslatedParameterUpdates({
+      targetPath: 'parameters',
+      updates: {
+        parameters: [{ parameterId: 'color', value: 'Niebieski' }],
+      },
+      templateInputs: {
+        context: {
+          entity: {
+            parameters: [
+              { parameterId: 'color', value: 'Blue' },
+              { parameterId: 'material', value: 'Steel' },
+            ],
+          },
+        },
+      },
+      languageCode: 'pl',
+      requireFullCoverage: true,
+    });
+
+    expect(result.applied).toBe(true);
+    expect(result.updates).toEqual({});
+    expect(result.meta).toEqual(
+      expect.objectContaining({
+        coverage: expect.objectContaining({
+          requiredCount: 2,
+          matchedCount: 1,
+          complete: false,
+        }),
+        skipped: expect.objectContaining({
+          reason: 'incomplete_coverage',
+        }),
+      })
+    );
   });
 });

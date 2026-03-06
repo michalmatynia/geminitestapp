@@ -1,17 +1,13 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import { Trash2 } from 'lucide-react';
 import { Button, FormSection, LoadingState, StatusBadge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { useProductStudioContext } from '../../../context/ProductStudioContext';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/image-src';
-import {
-  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
-  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
-} from '@/shared/lib/products/constants';
+import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 
 export function StudioVariantsGrid(): React.JSX.Element {
   const context = useProductStudioContext();
@@ -27,12 +23,7 @@ export function StudioVariantsGrid(): React.JSX.Element {
     accepting,
   } = context;
 
-  const settingsStore = useSettingsStore();
-  const settingsStoreRef = useRef(settingsStore);
-  settingsStoreRef.current = settingsStore;
-  const productImagesExternalBaseUrl =
-    settingsStoreRef.current.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
-    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+  const { imageExternalBaseUrl: productImagesExternalBaseUrl } = useProductSettings();
 
   return (
     <FormSection title='Generated Variants' description='Click a generated card to preview it.'>

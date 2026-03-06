@@ -417,6 +417,259 @@ const areParameterRecordArraysEqual = (
   return true;
 };
 
+const coerceParameterRecordArray = (value: unknown): Record<string, unknown>[] => {
+  if (Array.isArray(value)) {
+    return value
+      .map((entry: unknown): Record<string, unknown> | null => toRecord(entry))
+      .filter((entry: Record<string, unknown> | null): entry is Record<string, unknown> =>
+        Boolean(entry)
+      );
+  }
+  const record = toRecord(value);
+  if (record && Array.isArray(record['parameters'])) {
+    return record['parameters']
+      .map((entry: unknown): Record<string, unknown> | null => toRecord(entry))
+      .filter((entry: Record<string, unknown> | null): entry is Record<string, unknown> =>
+        Boolean(entry)
+      );
+  }
+  return coerceArrayLike(value)
+    .map((entry: unknown): Record<string, unknown> | null => toRecord(entry))
+    .filter((entry: Record<string, unknown> | null): entry is Record<string, unknown> =>
+      Boolean(entry)
+    );
+};
+
+const resolveLocalizedValueByLanguage = (
+  valuesByLanguage: Record<string, unknown>,
+  languageCode: string
+): string | null => {
+  const normalizedLanguageCode = languageCode.trim().toLowerCase();
+  if (!normalizedLanguageCode) return null;
+
+  const exact = Object.entries(valuesByLanguage).find(
+    ([key]): boolean => normalizeNonEmptyString(key)?.toLowerCase() === normalizedLanguageCode
+  );
+  if (exact) {
+    return normalizeNonEmptyString(exact[1]);
+  }
+
+  const prefixed = Object.entries(valuesByLanguage).find(([key]): boolean => {
+    const normalizedKey = normalizeNonEmptyString(key)?.toLowerCase() ?? '';
+    return normalizedKey.startsWith(`${normalizedLanguageCode}-`);
+  });
+  if (prefixed) {
+    return normalizeNonEmptyString(prefixed[1]);
+  }
+  return null;
+};
+
+const resolveTranslatedParameterValue = (
+  record: Record<string, unknown>,
+  languageCode: string
+): string | null => {
+  const valuesByLanguage = toRecord(record['valuesByLanguage']);
+  if (valuesByLanguage) {
+    const localized = resolveLocalizedValueByLanguage(valuesByLanguage, languageCode);
+    if (localized) return localized;
+  }
+
+  const directLocalized =
+    normalizeNonEmptyString(record[languageCode]) ??
+    normalizeNonEmptyString(record[languageCode.toLowerCase()]) ??
+    normalizeNonEmptyString(record[languageCode.toUpperCase()]);
+  if (directLocalized) return directLocalized;
+
+  return (
+    resolveParameterValue(record['value']) ??
+    resolveParameterValue(record['translatedValue']) ??
+    null
+  );
+};
+
+export const mergeTranslatedParameterUpdates = (args: {
+  targetPath: string;
+  updates: Record<string, unknown>;
+  templateInputs: RuntimePortValues;
+  languageCode: string;
+  requireFullCoverage?: boolean;
+}): {
+  updates: Record<string, unknown>;
+  applied: boolean;
+  meta?: Record<string, unknown>;
+} => {
+  const targetPath = normalizeNonEmptyString(args.targetPath);
+  const languageCode = normalizeNonEmptyString(args.languageCode)?.toLowerCase() ?? '';
+  const requireFullCoverage = args.requireFullCoverage === true;
+  if (!targetPath || !languageCode) {
+    return { updates: args.updates, applied: false };
+  }
+
+  const rawCandidate = args.updates[targetPath];
+  if (rawCandidate === undefined) {
+    return { updates: args.updates, applied: false };
+  }
+
+  const translatedEntries = coerceParameterRecordArray(rawCandidate);
+  const existingSource = resolveExistingParameterValueFromInputs(args.templateInputs, targetPath);
+  const existingRecords = coerceParameterRecordArray(existingSource);
+  const nextUpdates: Record<string, unknown> = { ...args.updates };
+
+  if (existingRecords.length === 0) {
+    delete nextUpdates[targetPath];
+    return {
+      updates: nextUpdates,
+      applied: true,
+      meta: {
+        targetPath,
+        languageCode,
+        translatedCount: translatedEntries.length,
+        existingCount: 0,
+        mergedCount: 0,
+        skippedCount: translatedEntries.length,
+        writeCandidates: 0,
+        skipped: {
+          reason: 'missing_existing_parameters',
+        },
+      },
+    };
+  }
+
+  const nextRecords = existingRecords.map((entry: Record<string, unknown>) => ({ ...entry }));
+  const indexByParameterId = new Map<string, number>();
+  const existingParameterIds = new Set<string>();
+  existingRecords.forEach((entry: Record<string, unknown>, index: number) => {
+    const parameterId =
+      normalizeParameterId(entry['parameterId']) ??
+      normalizeParameterId(entry['id']) ??
+      normalizeParameterId(entry['_id']);
+    if (!parameterId) return;
+    indexByParameterId.set(parameterId, index);
+    existingParameterIds.add(parameterId);
+  });
+
+  let mergedCount = 0;
+  let unchangedCount = 0;
+  let skippedUnknownCount = 0;
+  let skippedEmptyCount = 0;
+  let skippedInvalidCount = 0;
+  const coveredExistingParameterIds = new Set<string>();
+
+  translatedEntries.forEach((entry: Record<string, unknown>) => {
+    const parameterId =
+      normalizeParameterId(entry['parameterId']) ??
+      normalizeParameterId(entry['id']) ??
+      normalizeParameterId(entry['_id']);
+    if (!parameterId) {
+      skippedInvalidCount += 1;
+      return;
+    }
+
+    const existingIndex = indexByParameterId.get(parameterId);
+    if (existingIndex === undefined) {
+      skippedUnknownCount += 1;
+      return;
+    }
+    coveredExistingParameterIds.add(parameterId);
+
+    const translatedValue = resolveTranslatedParameterValue(entry, languageCode);
+    if (!translatedValue) {
+      skippedEmptyCount += 1;
+      return;
+    }
+
+    const current = nextRecords[existingIndex] ?? {};
+    const currentValuesByLanguage = toRecord(current['valuesByLanguage']) ?? {};
+    const currentLocalizedValue =
+      resolveLocalizedValueByLanguage(currentValuesByLanguage, languageCode) ?? null;
+    const currentDirectValue = resolveParameterValue(current['value']);
+
+    if (currentLocalizedValue === translatedValue) {
+      unchangedCount += 1;
+      return;
+    }
+
+    const nextValuesByLanguage: Record<string, unknown> = {
+      ...currentValuesByLanguage,
+      [languageCode]: translatedValue,
+    };
+
+    nextRecords[existingIndex] = {
+      ...current,
+      ...(!currentDirectValue &&
+      !resolveLocalizedValueByLanguage(currentValuesByLanguage, 'default') &&
+      !resolveLocalizedValueByLanguage(currentValuesByLanguage, 'en')
+        ? { value: translatedValue }
+        : {}),
+      valuesByLanguage: nextValuesByLanguage,
+    };
+    mergedCount += 1;
+  });
+
+  const coverage = {
+    requiredCount: existingParameterIds.size,
+    matchedCount: coveredExistingParameterIds.size,
+    complete:
+      existingParameterIds.size === 0 ||
+      coveredExistingParameterIds.size >= existingParameterIds.size,
+  };
+
+  if (requireFullCoverage && coverage.complete === false) {
+    delete nextUpdates[targetPath];
+    return {
+      updates: nextUpdates,
+      applied: true,
+      meta: {
+        targetPath,
+        languageCode,
+        translatedCount: translatedEntries.length,
+        existingCount: existingRecords.length,
+        finalCount: existingRecords.length,
+        mergedCount,
+        unchangedCount,
+        skippedCount: skippedUnknownCount + skippedEmptyCount + skippedInvalidCount,
+        writeCandidates: 0,
+        coverage,
+        skipped: {
+          reason: 'incomplete_coverage',
+          unknownParameterIds: skippedUnknownCount,
+          emptyValues: skippedEmptyCount,
+          invalidEntries: skippedInvalidCount,
+        },
+      },
+    };
+  }
+
+  const changed = !areParameterRecordArraysEqual(existingRecords, nextRecords);
+  if (changed) {
+    nextUpdates[targetPath] = nextRecords;
+  } else {
+    delete nextUpdates[targetPath];
+  }
+
+  return {
+    updates: nextUpdates,
+    applied: true,
+    meta: {
+      targetPath,
+      languageCode,
+      translatedCount: translatedEntries.length,
+      existingCount: existingRecords.length,
+      finalCount: nextRecords.length,
+      mergedCount,
+      unchangedCount,
+      skippedCount: skippedUnknownCount + skippedEmptyCount + skippedInvalidCount,
+      writeCandidates: changed ? nextRecords.length : 0,
+      coverage,
+      skipped: {
+        unknownParameterIds: skippedUnknownCount,
+        emptyValues: skippedEmptyCount,
+        invalidEntries: skippedInvalidCount,
+      },
+    },
+  };
+};
+
 export const materializeParameterInferenceUpdates = (args: {
   targetPath: string;
   updates: Record<string, unknown>;

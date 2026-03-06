@@ -1,7 +1,6 @@
 import {
   parseRuntimeKernelCodeObjectResolverIds,
   parseRuntimeKernelNodeTypes,
-  parseRuntimeKernelStrictNativeRegistry,
 } from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-config';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
@@ -13,21 +12,17 @@ export type AiPathRunRuntimeKernelMetadataChangedField =
   | 'runtimeKernelConfig.codeObjectResolverIds'
   | 'runtimeKernelConfig.strictNativeRegistry'
   | 'runtimeKernel.mode'
+  | 'runtimeKernel.modeSource'
   | 'runtimeKernel.nodeTypes'
   | 'runtimeKernel.nodeTypesSource'
   | 'runtimeKernel.codeObjectResolverIds'
-  | 'runtimeKernel.strictNativeRegistry';
+  | 'runtimeKernel.strictNativeRegistry'
+  | 'runtimeKernel.strictNativeRegistrySource';
 
 export type NormalizeAiPathRunRuntimeKernelMetadataResult = {
   changed: boolean;
   meta: Record<string, unknown> | null;
   changedFields: AiPathRunRuntimeKernelMetadataChangedField[];
-};
-
-const normalizeRuntimeKernelMode = (value: unknown): 'auto' | undefined => {
-  if (typeof value !== 'string') return undefined;
-  const normalized = value.trim().toLowerCase();
-  return normalized === 'auto' || normalized === 'legacy_only' ? 'auto' : undefined;
 };
 
 const normalizeRuntimeKernelNodeTypesSource = (
@@ -69,12 +64,9 @@ const normalizeRuntimeKernelConfigRecord = (
   const nextValue: Record<string, unknown> = { ...value };
   const changedFields: AiPathRunRuntimeKernelMetadataChangedField[] = [];
 
-  const mode = normalizeRuntimeKernelMode(value['mode']);
-  if (mode !== undefined) {
-    if (value['mode'] !== mode) {
-      nextValue['mode'] = mode;
-      appendChangedField(changedFields, 'runtimeKernelConfig.mode');
-    }
+  if ('mode' in nextValue) {
+    delete nextValue['mode'];
+    appendChangedField(changedFields, 'runtimeKernelConfig.mode');
   }
 
   const nodeTypes = parseRuntimeKernelNodeTypes(value['nodeTypes'] ?? value['pilotNodeTypes']);
@@ -109,15 +101,7 @@ const normalizeRuntimeKernelConfigRecord = (
     appendChangedField(changedFields, 'runtimeKernelConfig.codeObjectResolverIds');
   }
 
-  const strictNativeRegistry = parseRuntimeKernelStrictNativeRegistry(
-    value['strictNativeRegistry'] ?? value['strictCodeObjectRegistry']
-  );
-  if (strictNativeRegistry !== undefined) {
-    if (value['strictNativeRegistry'] !== strictNativeRegistry) {
-      nextValue['strictNativeRegistry'] = strictNativeRegistry;
-      appendChangedField(changedFields, 'runtimeKernelConfig.strictNativeRegistry');
-    }
-  } else if ('strictNativeRegistry' in nextValue) {
+  if ('strictNativeRegistry' in nextValue) {
     delete nextValue['strictNativeRegistry'];
     appendChangedField(changedFields, 'runtimeKernelConfig.strictNativeRegistry');
   }
@@ -143,10 +127,13 @@ const normalizeRuntimeKernelTelemetryRecord = (
   const nextValue: Record<string, unknown> = { ...value };
   const changedFields: AiPathRunRuntimeKernelMetadataChangedField[] = [];
 
-  const mode = normalizeRuntimeKernelMode(value['runtimeKernelMode']);
-  if (mode !== undefined && value['runtimeKernelMode'] !== mode) {
-    nextValue['runtimeKernelMode'] = mode;
+  if ('runtimeKernelMode' in nextValue) {
+    delete nextValue['runtimeKernelMode'];
     appendChangedField(changedFields, 'runtimeKernel.mode');
+  }
+  if ('runtimeKernelModeSource' in nextValue) {
+    delete nextValue['runtimeKernelModeSource'];
+    appendChangedField(changedFields, 'runtimeKernel.modeSource');
   }
 
   const nodeTypes = parseRuntimeKernelNodeTypes(
@@ -196,17 +183,13 @@ const normalizeRuntimeKernelTelemetryRecord = (
     appendChangedField(changedFields, 'runtimeKernel.codeObjectResolverIds');
   }
 
-  const strictNativeRegistry = parseRuntimeKernelStrictNativeRegistry(
-    value['runtimeKernelStrictNativeRegistry']
-  );
-  if (strictNativeRegistry !== undefined) {
-    if (value['runtimeKernelStrictNativeRegistry'] !== strictNativeRegistry) {
-      nextValue['runtimeKernelStrictNativeRegistry'] = strictNativeRegistry;
-      appendChangedField(changedFields, 'runtimeKernel.strictNativeRegistry');
-    }
-  } else if ('runtimeKernelStrictNativeRegistry' in nextValue) {
+  if ('runtimeKernelStrictNativeRegistry' in nextValue) {
     delete nextValue['runtimeKernelStrictNativeRegistry'];
     appendChangedField(changedFields, 'runtimeKernel.strictNativeRegistry');
+  }
+  if ('runtimeKernelStrictNativeRegistrySource' in nextValue) {
+    delete nextValue['runtimeKernelStrictNativeRegistrySource'];
+    appendChangedField(changedFields, 'runtimeKernel.strictNativeRegistrySource');
   }
 
   return {

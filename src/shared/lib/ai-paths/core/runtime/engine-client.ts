@@ -13,6 +13,7 @@ import {
   createNodeCodeObjectV3ContractResolver,
   resolveNodeCodeObjectV3ContractByCodeObjectId,
 } from './node-code-object-v3-legacy-bridge';
+import { createNodeRuntimeHandlerCatalog } from './node-runtime-handler-catalog';
 import { buildPromptOutput } from './utils';
 import { aiGenerationApi, aiJobsApi } from '@/shared/lib/ai-paths/api';
 
@@ -298,7 +299,7 @@ const handleDescriptionUpdater: NodeHandler = async ({
   return { description_en: description };
 };
 
-const CLIENT_HANDLERS: Record<string, NodeHandler> = {
+const CLIENT_HANDLER_CATALOG = createNodeRuntimeHandlerCatalog({
   prompt: handlePrompt,
   template: handleTemplate,
   model: handleModel,
@@ -339,13 +340,13 @@ const CLIENT_HANDLERS: Record<string, NodeHandler> = {
   iterator: handleIterator,
   bounds_normalizer: handleBoundsNormalizer,
   canvas_output: handleCanvasOutput,
-};
+});
 export const CLIENT_LEGACY_HANDLER_NODE_TYPES: readonly string[] = Object.freeze(
-  Object.keys(CLIENT_HANDLERS).sort()
+  [...CLIENT_HANDLER_CATALOG.legacyNodeTypes]
 );
 
 const resolveLegacyHandler = (type: string): NodeHandler | null => {
-  const handler = CLIENT_HANDLERS[type];
+  const handler = CLIENT_HANDLER_CATALOG.resolveLegacyHandler(type);
   if (handler) return handler;
 
   // For unsupported nodes in client, we return a mock handler that fails or skips
@@ -355,62 +356,12 @@ const resolveLegacyHandler = (type: string): NodeHandler | null => {
     );
   };
 };
-const NATIVE_CODE_OBJECT_HANDLERS: Record<string, NodeHandler> = {
-  'ai-paths.node-code-object.bundle.v3': handleBundle,
-  'ai-paths.node-code-object.compare.v3': handleCompare,
-  'ai-paths.node-code-object.constant.v3': handleConstant,
-  'ai-paths.node-code-object.context.v3': handleContext,
-  'ai-paths.node-code-object.delay.v3': handleDelay,
-  'ai-paths.node-code-object.gate.v3': handleGate,
-  'ai-paths.node-code-object.iterator.v3': handleIterator,
-  'ai-paths.node-code-object.mapper.v3': handleMapper,
-  'ai-paths.node-code-object.math.v3': handleMath,
-  'ai-paths.node-code-object.mutator.v3': handleMutator,
-  'ai-paths.node-code-object.notification.v3': handleIntegrationNotification,
-  'ai-paths.node-code-object.fetcher.v3': handleIntegrationFetcher,
-  'ai-paths.node-code-object.db_schema.v3': handleIntegrationDbSchema,
-  'ai-paths.node-code-object.api_advanced.v3': handleIntegrationAdvancedApi,
-  'ai-paths.node-code-object.database.v3': handleIntegrationDatabase,
-  'ai-paths.node-code-object.playwright.v3': handleIntegrationPlaywright,
-  'ai-paths.node-code-object.http.v3': handleIntegrationHttp,
-  'ai-paths.node-code-object.poll.v3': handleIntegrationPoll,
-  'ai-paths.node-code-object.audio_oscillator.v3': handleAudioOscillator,
-  'ai-paths.node-code-object.audio_speaker.v3': handleAudioSpeaker,
-  'ai-paths.node-code-object.parser.v3': handleParser,
-  'ai-paths.node-code-object.prompt.v3': handlePrompt,
-  'ai-paths.node-code-object.model.v3': handleModel,
-  'ai-paths.node-code-object.agent.v3': handleAgent,
-  'ai-paths.node-code-object.learner_agent.v3': handleLearnerAgent,
-  'ai-paths.node-code-object.ai_description.v3': handleAiDescription,
-  'ai-paths.node-code-object.description_updater.v3': handleDescriptionUpdater,
-  'ai-paths.node-code-object.regex.v3': handleRegex,
-  'ai-paths.node-code-object.router.v3': handleRouter,
-  'ai-paths.node-code-object.simulation.v3': handleIntegrationSimulation,
-  'ai-paths.node-code-object.string_mutator.v3': handleStringMutator,
-  'ai-paths.node-code-object.template.v3': handleTemplate,
-  'ai-paths.node-code-object.trigger.v3': handleIntegrationTrigger,
-  'ai-paths.node-code-object.validation_pattern.v3': handleValidationPattern,
-  'ai-paths.node-code-object.validator.v3': handleValidator,
-  'ai-paths.node-code-object.viewer.v3': handleViewer,
-};
 export const CLIENT_NATIVE_CODE_OBJECT_HANDLER_IDS: readonly string[] = Object.freeze(
-  Object.keys(NATIVE_CODE_OBJECT_HANDLERS).sort()
+  [...CLIENT_HANDLER_CATALOG.nativeCodeObjectHandlerIds]
 );
-const resolveNativeCodeObjectHandler = ({
-  nodeType: _nodeType,
-  codeObjectId,
-}: {
-  nodeType: string;
-  codeObjectId: string;
-}): NodeHandler | null => NATIVE_CODE_OBJECT_HANDLERS[codeObjectId] ?? null;
 const defaultResolveCodeObjectHandler = createNodeCodeObjectV3ContractResolver({
   resolveLegacyHandler,
-  resolveNativeCodeObjectHandler,
-});
-const strictDefaultResolveCodeObjectHandler = createNodeCodeObjectV3ContractResolver({
-  resolveLegacyHandler,
-  resolveNativeCodeObjectHandler,
-  strictNativeRegistry: true,
+  resolveNativeCodeObjectHandler: CLIENT_HANDLER_CATALOG.resolveNativeCodeObjectHandler,
 });
 const resolveUnsupportedClientCodeObjectHandler = ({
   nodeType,
@@ -418,10 +369,12 @@ const resolveUnsupportedClientCodeObjectHandler = ({
 }: {
   nodeType: string;
   codeObjectId: string;
-}): NodeHandler | null =>
-  resolveNodeCodeObjectV3ContractByCodeObjectId(codeObjectId)
-    ? null
-    : resolveLegacyHandler(nodeType);
+}): NodeHandler | null => {
+  if (resolveNodeCodeObjectV3ContractByCodeObjectId(codeObjectId)) {
+    return null;
+  }
+  return CLIENT_HANDLER_CATALOG.resolveLegacyHandler(nodeType) ? null : resolveLegacyHandler(nodeType);
+};
 
 export async function evaluateGraphClient(
   argsOrNodes: EvaluateGraphArgs | AiNode[],
@@ -442,8 +395,6 @@ export async function evaluateGraphClient(
     resolvedOptions = argsOrNodes;
   }
 
-  const runtimeKernelStrictNativeRegistry =
-    resolvedOptions.runtimeKernelStrictNativeRegistry ?? true;
   const runtimeKernel = createNodeRuntimeKernel({
     resolveLegacyHandler,
     resolveCodeObjectHandler: (args) => {
@@ -452,20 +403,15 @@ export async function evaluateGraphClient(
         resolveAiPathsRuntimeCodeObjectHandler(args, {
           resolverIds: resolvedOptions.runtimeKernelCodeObjectResolverIds,
         }) ??
-        (runtimeKernelStrictNativeRegistry
-          ? strictDefaultResolveCodeObjectHandler(args)
-          : defaultResolveCodeObjectHandler(args));
+        defaultResolveCodeObjectHandler(args);
       if (resolvedCodeObjectHandler) {
         return resolvedCodeObjectHandler;
       }
-      if (runtimeKernelStrictNativeRegistry) {
-        return resolveUnsupportedClientCodeObjectHandler(args);
-      }
-      return null;
+      return resolveUnsupportedClientCodeObjectHandler(args);
     },
     mode: resolvedOptions.runtimeKernelMode,
     runtimeKernelNodeTypes: resolvedOptions.runtimeKernelNodeTypes,
-    runtimeKernelStrictNativeRegistry,
+    runtimeKernelStrictNativeRegistry: true,
   });
 
   return evaluateGraphInternal(nodes, resolvedEdges, {

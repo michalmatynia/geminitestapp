@@ -1,13 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+ 
+ 
+ 
 
 import { randomUUID } from 'crypto';
+import { Collection, Document, UpdateFilter } from 'mongodb';
 import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
-import { ProductCreateInput, ProductUpdateInput, ProductRecord } from '@/shared/contracts/products';
+import { ProductCreateInput, ProductUpdateInput, ProductRecord, ProductWithImages } from '@/shared/contracts/products';
 import {
   buildProductIdFilter,
   normalizeProductParameterValues,
@@ -16,7 +14,7 @@ import {
 export const mongoProductWriteImpl = {
   async createProduct(
     data: ProductCreateInput,
-    getCollection: () => Promise<any>
+    getCollection: () => Promise<Collection<Document>>
   ): Promise<ProductRecord> {
     const collection = await getCollection();
     const id = data.id || randomUUID();
@@ -48,7 +46,7 @@ export const mongoProductWriteImpl = {
       length: data.length ?? null,
       published: true,
       categoryId: data.categoryId || null,
-      catalogId: (data as any).catalogId || 'default',
+      catalogId: (data as unknown as { catalogId?: string }).catalogId || 'default',
       createdAt: now,
       updatedAt: now,
       images: [],
@@ -61,70 +59,72 @@ export const mongoProductWriteImpl = {
       noteIds: data.noteIds || [],
     };
 
-    await collection.insertOne(doc);
-    return toProductResponse(doc);
+    await collection.insertOne(doc as unknown as Document);
+    return toProductResponse(doc as unknown as Document);
   },
 
   async updateProduct(
     id: string,
     data: ProductUpdateInput,
-    getCollection: () => Promise<any>
+    getCollection: () => Promise<Collection<Document>>
   ): Promise<ProductRecord | null> {
     const collection = await getCollection();
     const filter = buildProductIdFilter(id);
     const now = new Date();
 
-    const updates: any = {
+    const updates: UpdateFilter<Document> = {
       $set: {
         updatedAt: now,
       },
     };
 
-    if (data.sku !== undefined) updates.$set.sku = data.sku;
-    if (data.baseProductId !== undefined) updates.$set.baseProductId = data.baseProductId;
+    const set = updates.$set as Record<string, unknown>;
+
+    if (data.sku !== undefined) set['sku'] = data.sku;
+    if (data.baseProductId !== undefined) set['baseProductId'] = data.baseProductId;
     if (data.defaultPriceGroupId !== undefined)
-      updates.$set.defaultPriceGroupId = data.defaultPriceGroupId;
-    if (data.ean !== undefined) updates.$set.ean = data.ean;
-    if (data.gtin !== undefined) updates.$set.gtin = data.gtin;
-    if (data.asin !== undefined) updates.$set.asin = data.asin;
+      set['defaultPriceGroupId'] = data.defaultPriceGroupId;
+    if (data.ean !== undefined) set['ean'] = data.ean;
+    if (data.gtin !== undefined) set['gtin'] = data.gtin;
+    if (data.asin !== undefined) set['asin'] = data.asin;
 
     if (data.name_en !== undefined) {
-      updates.$set.name_en = data.name_en;
+      set['name_en'] = data.name_en;
     }
     if (data.name_pl !== undefined) {
-      updates.$set.name_pl = data.name_pl;
+      set['name_pl'] = data.name_pl;
     }
     if (data.name_de !== undefined) {
-      updates.$set.name_de = data.name_de;
+      set['name_de'] = data.name_de;
     }
 
     if (data.description_en !== undefined) {
-      updates.$set.description_en = data.description_en;
+      set['description_en'] = data.description_en;
     }
     if (data.description_pl !== undefined) {
-      updates.$set.description_pl = data.description_pl;
+      set['description_pl'] = data.description_pl;
     }
     if (data.description_de !== undefined) {
-      updates.$set.description_de = data.description_de;
+      set['description_de'] = data.description_de;
     }
 
-    if (data.supplierName !== undefined) updates.$set.supplierName = data.supplierName;
-    if (data.supplierLink !== undefined) updates.$set.supplierLink = data.supplierLink;
-    if (data.priceComment !== undefined) updates.$set.priceComment = data.priceComment;
-    if (data.stock !== undefined) updates.$set.stock = data.stock;
-    if (data.price !== undefined) updates.$set.price = data.price;
-    if (data.sizeLength !== undefined) updates.$set.sizeLength = data.sizeLength;
-    if (data.sizeWidth !== undefined) updates.$set.sizeWidth = data.sizeWidth;
-    if (data.weight !== undefined) updates.$set.weight = data.weight;
-    if (data.length !== undefined) updates.$set.length = data.length;
+    if (data.supplierName !== undefined) set['supplierName'] = data.supplierName;
+    if (data.supplierLink !== undefined) set['supplierLink'] = data.supplierLink;
+    if (data.priceComment !== undefined) set['priceComment'] = data.priceComment;
+    if (data.stock !== undefined) set['stock'] = data.stock;
+    if (data.price !== undefined) set['price'] = data.price;
+    if (data.sizeLength !== undefined) set['sizeLength'] = data.sizeLength;
+    if (data.sizeWidth !== undefined) set['sizeWidth'] = data.sizeWidth;
+    if (data.weight !== undefined) set['weight'] = data.weight;
+    if (data.length !== undefined) set['length'] = data.length;
     if (data.categoryId !== undefined) {
-      updates.$set.categoryId = data.categoryId;
+      set['categoryId'] = data.categoryId;
     }
     if (data.parameters !== undefined)
-      updates.$set.parameters = normalizeProductParameterValues(data.parameters);
-    if (data.imageLinks !== undefined) updates.$set.imageLinks = data.imageLinks;
-    if (data.imageBase64s !== undefined) updates.$set.imageBase64s = data.imageBase64s;
-    if (data.noteIds !== undefined) updates.$set.noteIds = data.noteIds;
+      set['parameters'] = normalizeProductParameterValues(data.parameters);
+    if (data.imageLinks !== undefined) set['imageLinks'] = data.imageLinks;
+    if (data.imageBase64s !== undefined) set['imageBase64s'] = data.imageBase64s;
+    if (data.noteIds !== undefined) set['noteIds'] = data.noteIds;
 
     const result = await collection.findOneAndUpdate(filter, updates, {
       returnDocument: 'after',
@@ -136,7 +136,7 @@ export const mongoProductWriteImpl = {
 
   async deleteProduct(
     id: string,
-    getCollection: () => Promise<any>
+    getCollection: () => Promise<Collection<Document>>
   ): Promise<ProductRecord | null> {
     const collection = await getCollection();
     const filter = buildProductIdFilter(id);
@@ -149,7 +149,7 @@ export const mongoProductWriteImpl = {
 
   async bulkCreateProducts(
     data: ProductCreateInput[],
-    createProduct: (d: any) => Promise<any>
+    createProduct: (d: ProductCreateInput) => Promise<ProductRecord>
   ): Promise<number> {
     if (data.length === 0) return 0;
     let count = 0;
@@ -163,16 +163,16 @@ export const mongoProductWriteImpl = {
   async duplicateProduct(
     id: string,
     newSku: string,
-    getProductById: (id: string) => Promise<any>,
-    createProduct: (d: any) => Promise<any>
+    getProductById: (id: string) => Promise<ProductWithImages | null>,
+    createProduct: (d: ProductCreateInput) => Promise<ProductRecord>
   ): Promise<ProductRecord | null> {
     const product = await getProductById(id);
     if (!product) return null;
 
-    const { id: _id, createdAt: _c, updatedAt: _u, sku: _s, ...rest } = product;
+    const { id: _id, createdAt: _c, updatedAt: _u, sku: _s, images: _i, catalogs: _cat, tags: _t, producers: _p, ...rest } = product;
     return await createProduct({
       ...rest,
       sku: newSku,
-    });
+    } as unknown as ProductCreateInput);
   },
 };

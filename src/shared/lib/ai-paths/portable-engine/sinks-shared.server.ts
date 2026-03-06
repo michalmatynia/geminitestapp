@@ -14,8 +14,8 @@ import {
   PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_CATEGORY,
   PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
   PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SOURCE,
-  type PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary,
-} from './sinks-types.server';
+} from './sinks-constants.server';
+import type { PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary } from './sinks-contracts.server';
 
 export type PortablePathEnvelopeVerificationSinkLevel = 'info' | 'warn' | 'error';
 

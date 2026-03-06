@@ -5,16 +5,26 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useKangurRoutingMock, settingsStoreGetMock, useKangurProgressStateMock } = vi.hoisted(
-  () => ({
+const {
+  useKangurRoutingMock,
+  settingsStoreGetMock,
+  useKangurProgressStateMock,
+  useKangurAuthMock,
+  useKangurAssignmentsMock,
+} = vi.hoisted(() => ({
     useKangurRoutingMock: vi.fn(),
     settingsStoreGetMock: vi.fn(),
     useKangurProgressStateMock: vi.fn(),
-  })
-);
+    useKangurAuthMock: vi.fn(),
+    useKangurAssignmentsMock: vi.fn(),
+  }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useKangurAuth: useKangurAuthMock,
 }));
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
@@ -25,6 +35,10 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
   useKangurProgressState: useKangurProgressStateMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
+  useKangurAssignments: useKangurAssignmentsMock,
 }));
 
 import Lessons from '@/features/kangur/ui/pages/Lessons';
@@ -69,7 +83,75 @@ describe('Lessons page mastery list', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useKangurRoutingMock.mockReturnValue({ basePath: '/kangur' });
+    useKangurAuthMock.mockReturnValue({
+      user: null,
+      navigateToLogin: vi.fn(),
+      logout: vi.fn(),
+    });
     settingsStoreGetMock.mockReturnValue(lessonsSettingsValue);
+    useKangurAssignmentsMock.mockReturnValue({
+      assignments: [
+        {
+          id: 'assignment-geometry',
+          learnerKey: 'ada@example.com',
+          title: '🔷 Figury geometryczne',
+          description: 'To zadanie ma priorytet od rodzica.',
+          priority: 'high',
+          archived: false,
+          target: {
+            type: 'lesson',
+            lessonComponentId: 'geometry_shapes',
+            requiredCompletions: 1,
+            baselineCompletions: 0,
+          },
+          assignedByName: 'Ada',
+          assignedByEmail: 'ada@example.com',
+          createdAt: '2026-03-06T10:00:00.000Z',
+          updatedAt: '2026-03-06T10:00:00.000Z',
+          progress: {
+            status: 'not_started',
+            percent: 0,
+            summary: 'Powtorki po przydziale: 0/1.',
+            attemptsCompleted: 0,
+            attemptsRequired: 1,
+            lastActivityAt: null,
+            completedAt: null,
+          },
+        },
+        {
+          id: 'assignment-calendar-completed',
+          learnerKey: 'ada@example.com',
+          title: '📅 Nauka kalendarza',
+          description: 'To zadanie od rodzica zostalo zakonczone.',
+          priority: 'medium',
+          archived: false,
+          target: {
+            type: 'lesson',
+            lessonComponentId: 'calendar',
+            requiredCompletions: 1,
+            baselineCompletions: 0,
+          },
+          assignedByName: 'Ada',
+          assignedByEmail: 'ada@example.com',
+          createdAt: '2026-03-06T09:00:00.000Z',
+          updatedAt: '2026-03-06T10:30:00.000Z',
+          progress: {
+            status: 'completed',
+            percent: 100,
+            summary: 'Powtorki po przydziale: 1/1.',
+            attemptsCompleted: 1,
+            attemptsRequired: 1,
+            lastActivityAt: '2026-03-06T10:30:00.000Z',
+            completedAt: '2026-03-06T10:30:00.000Z',
+          },
+        },
+      ],
+      isLoading: false,
+      error: null,
+      createAssignment: vi.fn(),
+      updateAssignment: vi.fn(),
+      refresh: vi.fn(),
+    });
     useKangurProgressStateMock.mockReturnValue({
       lessonMastery: {
         clock: {
@@ -107,9 +189,25 @@ describe('Lessons page mastery list', () => {
     expect(screen.getByText('Opanowane 92%')).toBeInTheDocument();
     expect(screen.getByText('Powtórz 45%')).toBeInTheDocument();
     expect(screen.getByText('Nowa')).toBeInTheDocument();
+    expect(screen.getByText('Priorytet rodzica')).toBeInTheDocument();
+    expect(screen.getByText('Priorytet wysoki')).toBeInTheDocument();
+    expect(screen.getByText('To zadanie ma priorytet od rodzica.')).toBeInTheDocument();
+    expect(screen.getByText('Ukonczone dla rodzica')).toBeInTheDocument();
+    expect(screen.getByText('Zadanie zamkniete')).toBeInTheDocument();
+    expect(
+      screen.getByText('Zadanie od rodzica zostalo juz wykonane. Powtorki po przydziale: 1/1.')
+    ).toBeInTheDocument();
     expect(screen.getByText('Ukończono 2× · najlepszy wynik 100%')).toBeInTheDocument();
     expect(screen.getByText('Ukończono 1× · ostatni wynik 45%')).toBeInTheDocument();
     expect(screen.getByText('Brak zapisanej praktyki')).toBeInTheDocument();
+    const lessonCards = screen
+      .getAllByRole('button')
+      .filter((button) =>
+        ['Nauka zegara', 'Figury geometryczne', 'Nauka kalendarza'].some((label) =>
+          (button.textContent ?? '').includes(label)
+        )
+      );
+    expect(lessonCards[0]).toHaveTextContent('Figury geometryczne');
   });
 
   it('sticks the header flush to the top inside the admin shell too', async () => {

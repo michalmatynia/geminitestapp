@@ -15,12 +15,14 @@ const {
   useKangurProgressStateMock,
   scoreFilterMock,
   navigateToLoginMock,
+  logoutMock,
 } = vi.hoisted(() => ({
   useKangurRoutingMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
   scoreFilterMock: vi.fn(),
   navigateToLoginMock: vi.fn(),
+  logoutMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -43,6 +45,11 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/components/KangurLearnerAssignmentsPanel', () => ({
+  __esModule: true,
+  default: () => <div data-testid='kangur-learner-assignments-panel' />,
+}));
+
 import LearnerProfile from '@/features/kangur/ui/pages/LearnerProfile';
 
 const baseProgress: KangurProgressState = {
@@ -63,6 +70,27 @@ const createUser = (overrides: Partial<KangurUser> = {}): KangurUser => ({
   full_name: 'Jan',
   email: 'jan@example.com',
   role: 'user',
+  actorType: 'parent',
+  canManageLearners: true,
+  ownerUserId: 'user-jan',
+  activeLearner: {
+    id: 'learner-jan',
+    displayName: 'Jan',
+    loginName: 'jan',
+    status: 'active',
+    createdAt: '2026-03-06T10:00:00.000Z',
+    updatedAt: '2026-03-06T10:00:00.000Z',
+  },
+  learners: [
+    {
+      id: 'learner-jan',
+      displayName: 'Jan',
+      loginName: 'jan',
+      status: 'active',
+      createdAt: '2026-03-06T10:00:00.000Z',
+      updatedAt: '2026-03-06T10:00:00.000Z',
+    },
+  ],
   ...overrides,
 });
 
@@ -90,6 +118,7 @@ describe('Kangur accessibility smoke', () => {
     useKangurAuthMock.mockReturnValue({
       user: createUser(),
       navigateToLogin: navigateToLoginMock,
+      logout: logoutMock,
     });
   });
 
@@ -108,11 +137,15 @@ describe('Kangur accessibility smoke', () => {
 
     render(<LearnerProfile />);
 
-    await waitFor(() => expect(scoreFilterMock).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(scoreFilterMock).toHaveBeenCalledTimes(3));
+    expect(scoreFilterMock).toHaveBeenCalledWith({ learner_id: 'learner-jan' }, '-created_date', 120);
+    expect(scoreFilterMock).toHaveBeenCalledWith({ created_by: 'jan@example.com' }, '-created_date', 120);
+    expect(scoreFilterMock).toHaveBeenCalledWith({ player_name: 'Jan' }, '-created_date', 120);
     expect(screen.getByRole('heading', { name: 'Profil ucznia' })).toBeInTheDocument();
 
-    expect(screen.getByRole('link', { name: /Strona glowna/i })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Strona główna' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Lekcje' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Profil' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Rodzic' })).toBeVisible();
     expect(screen.getByText('Plan na dzis')).toBeVisible();
 
@@ -124,6 +157,7 @@ describe('Kangur accessibility smoke', () => {
     useKangurAuthMock.mockReturnValue({
       user: null,
       navigateToLogin: navigateToLoginMock,
+      logout: logoutMock,
     });
 
     render(<LearnerProfile />);

@@ -2,11 +2,10 @@
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/shared/lib/products/constants';
 import { ProductWithImages } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { internalError } from '@/shared/errors/app-error';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import { useToast } from '@/shared/ui';
 
 export interface ProductFormStudioContextType {
@@ -85,12 +84,8 @@ export function ProductFormStudioProvider({
   product?: ProductWithImages;
 }) {
   const { toast } = useToast();
-  const settingsStore = useSettingsStore();
-  const settingsStoreRef = useRef(settingsStore);
-  settingsStoreRef.current = settingsStore;
-  const defaultStudioProjectIdSettingRaw =
-    settingsStore.get(PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY) ?? '';
-  const defaultStudioProjectId = defaultStudioProjectIdSettingRaw.trim() || null;
+  const { defaultProjectId } = useProductSettings();
+  const defaultStudioProjectId = defaultProjectId || null;
   const [studioProjectId, setStudioProjectIdState] = useState<string | null>(null);
   const [studioConfigLoading, setStudioConfigLoading] = useState<boolean>(Boolean(product?.id));
   const [studioConfigSaving, setStudioConfigSaving] = useState<boolean>(false);

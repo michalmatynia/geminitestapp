@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
+ 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -74,6 +74,7 @@ export async function buildAdaptivePlanReview({
         maxSteps,
       }),
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parsed = parsePlanJson(content) as any;
     if (!parsed) {
       throw new Error('Planner review returned invalid JSON.');
@@ -209,6 +210,7 @@ export async function buildSelfCheckReview({
         maxSteps,
       }),
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parsed = parsePlanJson(content) as any;
     if (!parsed) {
       throw new Error('Self-check returned invalid JSON.');

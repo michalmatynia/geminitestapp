@@ -248,7 +248,7 @@ describe('buildMongoUpdatePlan', () => {
     expect(toast).toHaveBeenCalled();
   });
 
-  it('skips mapping mode when no mapping updates resolve from inputs', async () => {
+  it('blocks legacy translation mappings when no mapping updates resolve from inputs', async () => {
     const reportAiPathsError = vi.fn();
     const toast = vi.fn();
     const result = await buildMongoUpdatePlan({
@@ -317,17 +317,23 @@ describe('buildMongoUpdatePlan', () => {
 
     expect('output' in result).toBe(true);
     if (!('output' in result)) {
-      throw new Error('Expected skip output.');
+      throw new Error('Expected guardrail output.');
     }
     expect(result.output['bundle']).toEqual(
       expect.objectContaining({
-        skipped: true,
-        reason: 'no_mapping_updates',
-        unresolvedSourcePorts: ['value', 'result'],
+        guardrail: 'translation-no-updates',
+        guardrailMeta: expect.objectContaining({
+          unresolvedSourcePorts: ['value', 'result'],
+        }),
       })
     );
-    expect(reportAiPathsError).not.toHaveBeenCalled();
-    expect(toast).not.toHaveBeenCalled();
+    expect(reportAiPathsError).toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining('No safe description or parameter translation updates were resolved'),
+      {
+        variant: 'error',
+      }
+    );
   });
 
   it('builds partial mapping updates when only one translation branch resolves', async () => {
@@ -422,6 +428,485 @@ describe('buildMongoUpdatePlan', () => {
     );
     expect(reportAiPathsError).not.toHaveBeenCalled();
     expect(toast).not.toHaveBeenCalled();
+  });
+
+  it('merges translated parameters into existing product rows for legacy translation mappings', async () => {
+    const reportAiPathsError = vi.fn();
+    const toast = vi.fn();
+    const result = await buildMongoUpdatePlan({
+      actionCategory: 'update',
+      action: 'updateOne',
+      node: {
+        id: 'node-db-update-translate-en-pl',
+        type: 'database',
+        title: 'Database Update: Desc + Params',
+      } as AiNode,
+      prevOutputs: {},
+      reportAiPathsError,
+      toast,
+      resolvedInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+        value: {
+          description_pl: 'Opis produktu',
+        },
+        result: {
+          parameters: [
+            { parameterId: 'color', value: 'Niebieski' },
+            { parameterId: 'material', valuesByLanguage: { pl: 'Stal' } },
+          ],
+        },
+      },
+      nodeInputPorts: ['entityId', 'value', 'result'],
+      dbConfig: {
+        operation: 'update',
+        mode: 'replace',
+        updatePayloadMode: 'mapping',
+        mappings: [
+          {
+            targetPath: 'description_pl',
+            sourcePort: 'value',
+            sourcePath: 'description_pl',
+          },
+          {
+            targetPath: 'parameters',
+            sourcePort: 'result',
+            sourcePath: 'parameters',
+          },
+        ],
+      } as unknown as DatabaseConfig,
+      queryConfig: {
+        provider: 'auto',
+        collection: 'products',
+        mode: 'custom',
+        preset: 'by_id',
+        field: 'id',
+        idType: 'string',
+        queryTemplate: '{"id":"{{entityId}}"}',
+        limit: 1,
+        sort: '',
+        projection: '',
+        single: true,
+      } as DbQueryConfig,
+      collection: 'products',
+      filter: { id: 'product-1' },
+      idType: 'string',
+      updateTemplate: '',
+      templateInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+        value: {
+          description_pl: 'Opis produktu',
+        },
+        result: {
+          parameters: [
+            { parameterId: 'color', value: 'Niebieski' },
+            { parameterId: 'material', valuesByLanguage: { pl: 'Stal' } },
+          ],
+        },
+        context: {
+          entity: {
+            parameters: [
+              {
+                parameterId: 'color',
+                value: 'Blue',
+                selectorType: 'select',
+                optionLabels: ['Blue', 'Black'],
+                valuesByLanguage: { en: 'Blue' },
+              },
+              {
+                parameterId: 'material',
+                value: 'Steel',
+                attributeId: 'attr-material',
+              },
+            ],
+          },
+        },
+      },
+      parseJsonTemplate: (template: string) =>
+        template.includes('"id"')
+          ? {
+              id: 'product-1',
+            }
+          : {},
+      ensureExistingParameterTemplateContext: vi.fn(async () => {}),
+      aiPrompt: '',
+    });
+
+    expect('plan' in result).toBe(true);
+    if (!('plan' in result)) {
+      throw new Error('Expected Mongo update plan.');
+    }
+
+    expect(result.plan.updates).toEqual({
+      description_pl: 'Opis produktu',
+      parameters: [
+        {
+          parameterId: 'color',
+          value: 'Blue',
+          selectorType: 'select',
+          optionLabels: ['Blue', 'Black'],
+          valuesByLanguage: { en: 'Blue', pl: 'Niebieski' },
+        },
+        {
+          parameterId: 'material',
+          value: 'Steel',
+          attributeId: 'attr-material',
+          valuesByLanguage: { pl: 'Stal' },
+        },
+      ],
+    });
+    expect(result.plan.updateDoc).toEqual({
+      $set: {
+        description_pl: 'Opis produktu',
+        parameters: [
+          {
+            parameterId: 'color',
+            value: 'Blue',
+            selectorType: 'select',
+            optionLabels: ['Blue', 'Black'],
+            valuesByLanguage: { en: 'Blue', pl: 'Niebieski' },
+          },
+          {
+            parameterId: 'material',
+            value: 'Steel',
+            attributeId: 'attr-material',
+            valuesByLanguage: { pl: 'Stal' },
+          },
+        ],
+      },
+    });
+    expect(result.plan.debugPayload).toEqual(
+      expect.objectContaining({
+        translationParameterMerge: expect.objectContaining({
+          languageCode: 'pl',
+          mergedCount: 2,
+        }),
+      })
+    );
+    expect(reportAiPathsError).not.toHaveBeenCalled();
+    expect(toast).not.toHaveBeenCalled();
+  });
+
+  it('keeps description-only updates when legacy translation parameter coverage is incomplete', async () => {
+    const reportAiPathsError = vi.fn();
+    const toast = vi.fn();
+    const result = await buildMongoUpdatePlan({
+      actionCategory: 'update',
+      action: 'updateOne',
+      node: {
+        id: 'node-db-update-translate-en-pl',
+        type: 'database',
+        title: 'Database Update: Desc + Params',
+      } as AiNode,
+      prevOutputs: {},
+      reportAiPathsError,
+      toast,
+      resolvedInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+        value: {
+          description_pl: 'Opis produktu',
+        },
+        result: {
+          parameters: [{ parameterId: 'color', value: 'Niebieski' }],
+        },
+      },
+      nodeInputPorts: ['entityId', 'value', 'result'],
+      dbConfig: {
+        operation: 'update',
+        mode: 'replace',
+        updatePayloadMode: 'mapping',
+        mappings: [
+          {
+            targetPath: 'description_pl',
+            sourcePort: 'value',
+            sourcePath: 'description_pl',
+          },
+          {
+            targetPath: 'parameters',
+            sourcePort: 'result',
+            sourcePath: 'parameters',
+          },
+        ],
+      } as unknown as DatabaseConfig,
+      queryConfig: {
+        provider: 'auto',
+        collection: 'products',
+        mode: 'custom',
+        preset: 'by_id',
+        field: 'id',
+        idType: 'string',
+        queryTemplate: '{"id":"{{entityId}}"}',
+        limit: 1,
+        sort: '',
+        projection: '',
+        single: true,
+      } as DbQueryConfig,
+      collection: 'products',
+      filter: { id: 'product-1' },
+      idType: 'string',
+      updateTemplate: '',
+      templateInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+        value: {
+          description_pl: 'Opis produktu',
+        },
+        result: {
+          parameters: [{ parameterId: 'color', value: 'Niebieski' }],
+        },
+        context: {
+          entity: {
+            parameters: [
+              { parameterId: 'color', value: 'Blue' },
+              { parameterId: 'material', value: 'Steel' },
+            ],
+          },
+        },
+      },
+      parseJsonTemplate: (template: string) =>
+        template.includes('"id"')
+          ? {
+              id: 'product-1',
+            }
+          : {},
+      ensureExistingParameterTemplateContext: vi.fn(async () => {}),
+      aiPrompt: '',
+    });
+
+    expect('plan' in result).toBe(true);
+    if (!('plan' in result)) {
+      throw new Error('Expected Mongo update plan.');
+    }
+
+    expect(result.plan.updates).toEqual({
+      description_pl: 'Opis produktu',
+    });
+    expect(result.plan.updateDoc).toEqual({
+      $set: {
+        description_pl: 'Opis produktu',
+      },
+    });
+    expect(result.plan.debugPayload).toEqual(
+      expect.objectContaining({
+        translationParameterMerge: expect.objectContaining({
+          coverage: expect.objectContaining({
+            requiredCount: 2,
+            matchedCount: 1,
+            complete: false,
+          }),
+        }),
+      })
+    );
+    expect(reportAiPathsError).not.toHaveBeenCalled();
+    expect(toast).not.toHaveBeenCalled();
+  });
+
+  it('blocks incomplete legacy translation parameter payloads when description is also unavailable', async () => {
+    const reportAiPathsError = vi.fn();
+    const toast = vi.fn();
+    const result = await buildMongoUpdatePlan({
+      actionCategory: 'update',
+      action: 'updateOne',
+      node: {
+        id: 'node-db-update-translate-en-pl',
+        type: 'database',
+        title: 'Database Update: Desc + Params',
+      } as AiNode,
+      prevOutputs: {},
+      reportAiPathsError,
+      toast,
+      resolvedInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+        result: {
+          parameters: [{ parameterId: 'color', value: 'Niebieski' }],
+        },
+      },
+      nodeInputPorts: ['entityId', 'value', 'result'],
+      dbConfig: {
+        operation: 'update',
+        mode: 'replace',
+        updatePayloadMode: 'mapping',
+        mappings: [
+          {
+            targetPath: 'description_pl',
+            sourcePort: 'value',
+            sourcePath: 'description_pl',
+          },
+          {
+            targetPath: 'parameters',
+            sourcePort: 'result',
+            sourcePath: 'parameters',
+          },
+        ],
+      } as unknown as DatabaseConfig,
+      queryConfig: {
+        provider: 'auto',
+        collection: 'products',
+        mode: 'custom',
+        preset: 'by_id',
+        field: 'id',
+        idType: 'string',
+        queryTemplate: '{"id":"{{entityId}}"}',
+        limit: 1,
+        sort: '',
+        projection: '',
+        single: true,
+      } as DbQueryConfig,
+      collection: 'products',
+      filter: { id: 'product-1' },
+      idType: 'string',
+      updateTemplate: '',
+      templateInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+        result: {
+          parameters: [{ parameterId: 'color', value: 'Niebieski' }],
+        },
+        context: {
+          entity: {
+            parameters: [
+              { parameterId: 'color', value: 'Blue' },
+              { parameterId: 'material', value: 'Steel' },
+            ],
+          },
+        },
+      },
+      parseJsonTemplate: (template: string) =>
+        template.includes('"id"')
+          ? {
+              id: 'product-1',
+            }
+          : {},
+      ensureExistingParameterTemplateContext: vi.fn(async () => {}),
+      aiPrompt: '',
+    });
+
+    expect('output' in result).toBe(true);
+    if (!('output' in result)) {
+      throw new Error('Expected guardrail output.');
+    }
+
+    expect(result.output['bundle']).toEqual(
+      expect.objectContaining({
+        guardrail: 'translation-no-updates',
+        guardrailMeta: expect.objectContaining({
+          translationParameterMerge: expect.objectContaining({
+            coverage: expect.objectContaining({
+              requiredCount: 2,
+              matchedCount: 1,
+              complete: false,
+            }),
+          }),
+        }),
+      })
+    );
+    expect(reportAiPathsError).toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining('No safe description or parameter translation updates were resolved'),
+      {
+        variant: 'error',
+      }
+    );
+  });
+
+  it('blocks legacy translation mappings when no safe translation updates resolve', async () => {
+    const reportAiPathsError = vi.fn();
+    const toast = vi.fn();
+    const result = await buildMongoUpdatePlan({
+      actionCategory: 'update',
+      action: 'updateOne',
+      node: {
+        id: 'node-db-update-translate-en-pl',
+        type: 'database',
+        title: 'Database Update: Desc + Params',
+      } as AiNode,
+      prevOutputs: {},
+      reportAiPathsError,
+      toast,
+      resolvedInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+        result: {
+          parameters: [{ parameterId: 'unknown', value: 'Nowa wartosc' }],
+        },
+      },
+      nodeInputPorts: ['entityId', 'value', 'result'],
+      dbConfig: {
+        operation: 'update',
+        mode: 'replace',
+        updatePayloadMode: 'mapping',
+        mappings: [
+          {
+            targetPath: 'description_pl',
+            sourcePort: 'value',
+            sourcePath: 'description_pl',
+          },
+          {
+            targetPath: 'parameters',
+            sourcePort: 'result',
+            sourcePath: 'parameters',
+          },
+        ],
+      } as unknown as DatabaseConfig,
+      queryConfig: {
+        provider: 'auto',
+        collection: 'products',
+        mode: 'custom',
+        preset: 'by_id',
+        field: 'id',
+        idType: 'string',
+        queryTemplate: '{"id":"{{entityId}}"}',
+        limit: 1,
+        sort: '',
+        projection: '',
+        single: true,
+      } as DbQueryConfig,
+      collection: 'products',
+      filter: { id: 'product-1' },
+      idType: 'string',
+      updateTemplate: '',
+      templateInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+        result: {
+          parameters: [{ parameterId: 'unknown', value: 'Nowa wartosc' }],
+        },
+        context: {
+          entity: {
+            parameters: [{ parameterId: 'color', value: 'Blue' }],
+          },
+        },
+      },
+      parseJsonTemplate: (template: string) =>
+        template.includes('"id"')
+          ? {
+              id: 'product-1',
+            }
+          : {},
+      ensureExistingParameterTemplateContext: vi.fn(async () => {}),
+      aiPrompt: '',
+    });
+
+    expect('output' in result).toBe(true);
+    if (!('output' in result)) {
+      throw new Error('Expected guardrail output.');
+    }
+
+    expect(result.output['bundle']).toEqual(
+      expect.objectContaining({
+        guardrail: 'translation-no-updates',
+      })
+    );
+    expect(reportAiPathsError).toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining('No safe description or parameter translation updates were resolved'),
+      {
+        variant: 'error',
+      }
+    );
   });
 
   it('does not fallback to mappings when custom template guardrail fails', async () => {

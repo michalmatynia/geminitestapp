@@ -7,7 +7,7 @@ import {
 } from '@/shared/contracts/ai-paths-runtime';
 import { ToastOptions } from '@/shared/contracts/ui';
 
-import { cloneValue, sanitizeEdges } from '../utils';
+import { cloneValue } from '../utils';
 import { nowMs, resolveNodeTimeoutMs, withTimeout, withRetries } from './execution-helpers';
 
 // Modular imports
@@ -15,29 +15,19 @@ import {
   GraphExecutionError,
   GraphExecutionCancelled,
   type EvaluateGraphOptions,
-  type RuntimeValidationIssue,
-  type RuntimeValidationStage,
-  type RuntimeNodeResolutionTelemetry,
 } from './engine-modules/engine-types';
 import {
   buildNodeInputHash,
-  buildDatabaseInputHash,
-  buildModelInputHash,
-  buildPromptInputHash,
+  buildNodeHash,
 } from './engine-modules/engine-hashing';
 import {
-  orderNodesByDependencies,
   evaluateInputReadiness,
   resolveMissingInputStatus,
   pickString,
-  resolveEdgeFromNodeId,
   resolveEdgeToNodeId,
-  checkContextMatchesSimulation,
-  hasValuableSimulationContext,
-  isSimulationCapableFetcher,
 } from './engine-modules/engine-utils';
 import { EngineStateManager, resolveNodeCacheScope } from './engine-modules/engine-state-manager';
-import { resolveScopedNodeIds } from './engine-modules/engine-reachability';
+import { MAX_ITERATIONS } from './engine-modules/engine-constants';
 import { collectNodeInputs } from './engine-modules/engine-input-collector';
 import { deriveNodeInputs } from './engine-modules/engine-node-input-deriver';
 import {
@@ -47,10 +37,26 @@ import {
   resolveDeclaredNodeStatus,
   resolveRecoverableNodeWaitState,
 } from './engine-modules/engine-runtime-status';
+import {
+  applyValidationBlockedNodeState,
+  runRuntimeValidation,
+} from './engine-modules/engine-validation-helpers';
+import {
+  prepareGraphForExecution,
+} from './engine-modules/engine-execution-preparation';
+import {
+  checkTriggerProvenance,
+  validateTriggerProvenanceFeasibility,
+} from './engine-modules/engine-execution-provenance';
+import {
+  resolveNodeHandlerOrThrow,
+} from './engine-modules/engine-execution-handlers';
+import {
+  buildRuntimeTelemetryFields,
+  RuntimeTelemetryResolver,
+} from './engine-modules/engine-execution-telemetry';
 
 export { GraphExecutionError, GraphExecutionCancelled };
-
-const MAX_ITERATIONS = process.env['NODE_ENV'] === 'test' ? 10 : 500;
 
 export async function evaluateGraphInternal(
   nodes: AiNode[],
@@ -61,32 +67,20 @@ export async function evaluateGraphInternal(
   const resolvedRunStartedAtMs = nowMs();
   const resolvedRunStartedAt = new Date(resolvedRunStartedAtMs).toISOString();
 
-  const nodeById = new Map(nodes.map((n) => [n.id, n]));
-  const incomingEdgesByNode = new Map<string, Edge[]>();
-  const outgoingEdgesByNode = new Map<string, Edge[]>();
-
-  const sanitizedEdges = sanitizeEdges(nodes, edges);
-  sanitizedEdges.forEach((edge) => {
-    const fromNodeId = resolveEdgeFromNodeId(edge);
-    const toNodeId = resolveEdgeToNodeId(edge);
-    if (!fromNodeId || !toNodeId) return;
-    if (!incomingEdgesByNode.has(toNodeId)) incomingEdgesByNode.set(toNodeId, []);
-    incomingEdgesByNode.get(toNodeId)!.push(edge);
-    if (!outgoingEdgesByNode.has(fromNodeId)) outgoingEdgesByNode.set(fromNodeId, []);
-    outgoingEdgesByNode.get(fromNodeId)!.push(edge);
-  });
-
-  const orderedNodes = orderNodesByDependencies(nodes, sanitizedEdges);
-  const seedHashes = options.seedHashes ?? {};
-
-  const scopedNodeIds = resolveScopedNodeIds({
-    nodes,
-    triggerNodeId: options.triggerNodeId,
+  const {
+    sanitizedEdges,
     nodeById,
-    outgoingEdgesByNode,
     incomingEdgesByNode,
-    seedHashes,
+    outgoingEdgesByNode,
+    orderedNodes,
+    scopedNodeIds,
+  } = prepareGraphForExecution({
+    nodes,
+    edges,
+    triggerNodeId: options.triggerNodeId,
+    seedHashes: options.seedHashes,
   });
+  const seedHashes: Record<string, string> = options.seedHashes ?? {};
 
   const state = new EngineStateManager(nodes, scopedNodeIds.size, options);
 
@@ -118,241 +112,10 @@ export async function evaluateGraphInternal(
     mapper: new Set<string>(),
   };
 
-  const throwAbortIfCancelled = (nodeId?: string): void => {
-    if (options.abortSignal?.aborted) {
-      throw new GraphExecutionError(
-        'Execution aborted by signal.',
-        state.buildRuntimeStateSnapshot(state.inputs),
-        nodeId
-      );
-    }
-  };
-
   const triggerContext = options.triggerContext ?? null;
-  const triggerSource = options.triggerNodeId ? nodeById.get(options.triggerNodeId) : null;
+  const triggerSource = options.triggerNodeId ? (nodeById.get(options.triggerNodeId) ?? null) : null;
   const resolvedOnHalt = options.onHalt;
-  const runtimeTelemetryByNodeType = new Map<string, RuntimeNodeResolutionTelemetry | null>();
-
-  const resolveRuntimeTelemetry = (
-    nodeTypeInput: string
-  ): RuntimeNodeResolutionTelemetry | null => {
-    const nodeType = typeof nodeTypeInput === 'string' ? nodeTypeInput.trim() : '';
-    if (!nodeType) return null;
-    if (runtimeTelemetryByNodeType.has(nodeType)) {
-      return runtimeTelemetryByNodeType.get(nodeType) ?? null;
-    }
-    const telemetry = options.resolveHandlerTelemetry
-      ? options.resolveHandlerTelemetry(nodeType)
-      : null;
-    runtimeTelemetryByNodeType.set(nodeType, telemetry ?? null);
-    return telemetry ?? null;
-  };
-
-  const buildRuntimeTelemetryFields = (
-    telemetry: RuntimeNodeResolutionTelemetry | null
-  ): {
-    runtimeStrategy?: RuntimeNodeResolutionTelemetry['runtimeStrategy'];
-    runtimeResolutionSource?: RuntimeNodeResolutionTelemetry['runtimeResolutionSource'];
-    runtimeCodeObjectId?: string | null;
-  } =>
-    telemetry
-      ? {
-        runtimeStrategy: telemetry.runtimeStrategy,
-        runtimeResolutionSource: telemetry.runtimeResolutionSource,
-        runtimeCodeObjectId: telemetry.runtimeCodeObjectId ?? null,
-      }
-      : {};
-
-  const normalizeRuntimeValidationIssues = (
-    issues: RuntimeValidationIssue[] | undefined,
-    stage: RuntimeValidationStage,
-    node: AiNode | null
-  ): RuntimeValidationIssue[] => {
-    if (!Array.isArray(issues)) return [];
-    return issues
-      .filter(
-        (issue: RuntimeValidationIssue | null | undefined): issue is RuntimeValidationIssue => {
-          if (!issue) return false;
-          return typeof issue.message === 'string' && issue.message.trim().length > 0;
-        }
-      )
-      .map(
-        (issue: RuntimeValidationIssue): RuntimeValidationIssue => ({
-          ...issue,
-          stage,
-          nodeId: issue.nodeId ?? node?.id ?? null,
-          nodeTitle: issue.nodeTitle ?? node?.title ?? null,
-        })
-      );
-  };
-
-  const runRuntimeValidation = async (args: {
-    stage: RuntimeValidationStage;
-    iteration: number;
-    node?: AiNode | null;
-    nodeInputs?: RuntimePortValues;
-    nodeOutputs?: RuntimePortValues;
-    runtimeTelemetry?: RuntimeNodeResolutionTelemetry | null;
-  }): Promise<{
-    decision: 'warn' | 'block';
-    message: string;
-    issues: RuntimeValidationIssue[];
-  } | null> => {
-    if (!options.validationMiddleware) return null;
-
-    const stage = args.stage;
-    const node = args.node ?? null;
-    let validationResult:
-      | {
-          decision: 'pass' | 'warn' | 'block';
-          message?: string;
-          issues?: RuntimeValidationIssue[];
-        }
-      | null
-      | undefined = null;
-    try {
-      validationResult = await options.validationMiddleware({
-        stage,
-        runId: resolvedRunId,
-        runStartedAt: resolvedRunStartedAt,
-        iteration: args.iteration,
-        node,
-        nodeInputs: args.nodeInputs,
-        nodeOutputs: args.nodeOutputs,
-        nodes,
-        edges: sanitizedEdges,
-      });
-    } catch (error) {
-      options.reportAiPathsError(error, {
-        action: 'runtime_validation_middleware',
-        stage,
-        nodeId: node?.id ?? null,
-        iteration: args.iteration,
-        runId: resolvedRunId,
-      });
-      throw error;
-    }
-
-    if (!validationResult || validationResult.decision === 'pass') {
-      return null;
-    }
-
-    const decision = validationResult.decision === 'block' ? 'block' : 'warn';
-    const issues = normalizeRuntimeValidationIssues(validationResult.issues, stage, node);
-    const fallbackMessage =
-      decision === 'block'
-        ? `Runtime validation blocked ${node ? `node ${node.id}` : 'graph'} at stage ${stage}.`
-        : `Runtime validation warning for ${node ? `node ${node.id}` : 'graph'} at stage ${stage}.`;
-    const message =
-      typeof validationResult.message === 'string' && validationResult.message.trim().length > 0
-        ? validationResult.message.trim()
-        : (issues[0]?.message ?? fallbackMessage);
-
-    if (options.onRuntimeValidation) {
-      try {
-        await options.onRuntimeValidation({
-          runId: resolvedRunId,
-          runStartedAt: resolvedRunStartedAt,
-          iteration: args.iteration,
-          stage,
-          decision,
-          node,
-          nodeInputs: args.nodeInputs,
-          nodeOutputs: args.nodeOutputs,
-          message,
-          issues,
-          ...buildRuntimeTelemetryFields(args.runtimeTelemetry ?? null),
-        });
-      } catch (error) {
-        options.reportAiPathsError(error, {
-          action: 'onRuntimeValidation',
-          stage,
-          nodeId: node?.id ?? null,
-          iteration: args.iteration,
-          runId: resolvedRunId,
-        });
-      }
-    }
-
-    return {
-      decision,
-      message,
-      issues,
-    };
-  };
-
-  const applyValidationBlockedNodeState = async (args: {
-    node: AiNode;
-    nodeInputs: RuntimePortValues;
-    iteration: number;
-    nodeDurationMs: number;
-    runtimeTelemetry: RuntimeNodeResolutionTelemetry | null;
-    stage: RuntimeValidationStage;
-    message: string;
-    issues: RuntimeValidationIssue[];
-  }): Promise<void> => {
-    const blockedOutputs: RuntimePortValues = {
-      status: 'blocked',
-      skipReason: 'validation',
-      blockedReason: 'validation',
-      message: args.message,
-      validationStage: args.stage,
-      validationIssues: cloneValue(args.issues),
-    };
-    state.blockedNodes.add(args.node.id);
-    state.errorNodes.delete(args.node.id);
-    state.timeoutNodes.delete(args.node.id);
-    state.finishedNodes.delete(args.node.id);
-    state.outputs[args.node.id] = blockedOutputs;
-
-    if (options['recordHistory']) {
-      const entries = state.history.get(args.node.id) ?? [];
-      entries.push({
-        timestamp: new Date().toISOString(),
-        pathId: options.pathId ?? null,
-        pathName: null,
-        nodeId: args.node.id,
-        nodeType: args.node.type,
-        nodeTitle: args.node.title ?? null,
-        status: 'blocked',
-        iteration: args.iteration,
-        inputs: cloneValue(args.nodeInputs),
-        outputs: cloneValue(blockedOutputs),
-        skipReason: 'validation',
-        durationMs: args.nodeDurationMs,
-        ...buildRuntimeTelemetryFields(args.runtimeTelemetry),
-      } as RuntimeHistoryEntry);
-      state.history.set(args.node.id, entries);
-    }
-
-    if (options.profile?.onEvent) {
-      options.profile.onEvent({
-        type: 'node',
-        runId: resolvedRunId,
-        runStartedAt: resolvedRunStartedAt,
-        nodeId: args.node.id,
-        nodeType: args.node.type,
-        iteration: args.iteration,
-        status: 'skipped',
-        durationMs: args.nodeDurationMs,
-        reason: 'validation',
-        ...buildRuntimeTelemetryFields(args.runtimeTelemetry),
-      });
-    }
-
-    if (options.onNodeBlocked) {
-      await options.onNodeBlocked({
-        runId: resolvedRunId,
-        node: args.node,
-        reason: 'validation',
-        status: 'blocked',
-        message: args.message,
-        waitingOnPorts: [],
-        waitingOnDetails: [],
-        ...buildRuntimeTelemetryFields(args.runtimeTelemetry),
-      });
-    }
-  };
+  const telemetryResolver = new RuntimeTelemetryResolver(options);
 
   const emitHalt = async (
     reason: 'blocked' | 'max_iterations' | 'completed' | 'failed'
@@ -374,70 +137,41 @@ export async function evaluateGraphInternal(
     }
   };
 
-  const buildNodeHash = (node: AiNode, nodeInputs: RuntimePortValues): string | null => {
+  const resolveCacheScopeFingerprint = (node: AiNode): Record<string, unknown> | undefined => {
     const cacheScope = resolveNodeCacheScope(node);
-    let cacheScopeFingerprint: Record<string, unknown> | undefined;
-
     if (cacheScope === 'run') {
-      cacheScopeFingerprint = { runId: resolvedRunId };
-    } else if (cacheScope === 'session' || cacheScope === 'activation') {
+      return { runId: resolvedRunId };
+    }
+    if (cacheScope === 'session' || cacheScope === 'activation') {
       const entityId =
         pickString(triggerContext?.['entityId']) ?? pickString(triggerContext?.['productId']);
       if (entityId) {
-        cacheScopeFingerprint = { entityId };
+        return { entityId };
       }
     }
-
-    return node.type === 'database'
-      ? buildDatabaseInputHash(node, nodeInputs, cacheScopeFingerprint)
-      : node.type === 'model'
-        ? buildModelInputHash(node, nodeInputs, cacheScopeFingerprint)
-        : node.type === 'prompt'
-          ? buildPromptInputHash(node, nodeInputs, cacheScopeFingerprint)
-          : buildNodeInputHash(node, nodeInputs, cacheScopeFingerprint);
+    return undefined;
   };
 
-  const checkTriggerProvenance = (): boolean => {
-    const simulationNodesInScope = Array.from(scopedNodeIds)
-      .map((id) => nodeById.get(id))
-      .filter((n) => n && (n.type === 'simulation' || isSimulationCapableFetcher(n)));
-    const finishedSimulationNodes = simulationNodesInScope.filter((n) =>
-      state.finishedNodes.has(n!.id)
-    );
-    const simulationOutputs = finishedSimulationNodes
-      .map((n) => state.outputs[n!.id])
-      .filter(Boolean);
+  const internalBuildNodeHash = (node: AiNode, nodeInputs: RuntimePortValues): string =>
+    buildNodeHash(node, nodeInputs, resolveCacheScopeFingerprint(node));
 
-    const hasLiveProvenance = triggerContext && checkContextMatchesSimulation(triggerContext);
-    const hasSimNodeProvenance = simulationOutputs.some(
-      (out) =>
-        out && hasValuableSimulationContext((out['context'] as Record<string, unknown>) ?? {})
-    );
-
-    if (triggerSource?.type === 'simulation' || hasLiveProvenance || hasSimNodeProvenance) {
-      return true;
-    }
-
-    const hasPotentialSimNode = simulationNodesInScope.some((n) => !state.finishedNodes.has(n!.id));
-    return hasPotentialSimNode;
+  const provenanceContext = {
+    scopedNodeIds,
+    nodeById,
+    state,
+    triggerContext,
+    triggerSource,
   };
 
-  // Pre-Execution Simulation Context Feasibility Check
-  if (
-    triggerSource?.config?.trigger?.contextMode === 'simulation_required' &&
-    !(
-      triggerSource?.type === 'simulation' ||
-      (triggerContext && checkContextMatchesSimulation(triggerContext)) ||
-      Array.from(scopedNodeIds).some((id) => {
-        const n = nodeById.get(id);
-        return n && (n.type === 'simulation' || isSimulationCapableFetcher(n));
-      })
-    )
-  ) {
+  const internalCheckTriggerProvenance = (): boolean => checkTriggerProvenance(provenanceContext);
+
+  try {
+    validateTriggerProvenanceFeasibility(provenanceContext);
+  } catch (error) {
     throw new GraphExecutionError(
-      `Trigger "${triggerSource.title || triggerSource.id}" requires simulation context but none was provided or resolved.`,
+      (error as Error).message,
       state.buildRuntimeStateSnapshot(state.inputs),
-      triggerSource.id
+      triggerSource?.id
     );
   }
 
@@ -445,6 +179,11 @@ export async function evaluateGraphInternal(
     stage: 'graph_parse',
     iteration: 0,
     node: null,
+    options,
+    resolvedRunId,
+    resolvedRunStartedAt,
+    nodes,
+    sanitizedEdges,
   });
   if (graphParseValidation?.decision === 'block') {
     throw new GraphExecutionError(
@@ -457,6 +196,11 @@ export async function evaluateGraphInternal(
     stage: 'graph_bind',
     iteration: 0,
     node: null,
+    options,
+    resolvedRunId,
+    resolvedRunStartedAt,
+    nodes,
+    sanitizedEdges,
   });
   if (graphBindValidation?.decision === 'block') {
     throw new GraphExecutionError(
@@ -501,9 +245,9 @@ export async function evaluateGraphInternal(
         node,
         rawInputs,
         triggerContext,
-        checkTriggerProvenance,
+        checkTriggerProvenance: internalCheckTriggerProvenance
       });
-      const runtimeTelemetry = resolveRuntimeTelemetry(node.type);
+      const runtimeTelemetry = telemetryResolver.resolve(node.type);
 
       const readiness = evaluateInputReadiness(
         node,
@@ -649,19 +393,25 @@ export async function evaluateGraphInternal(
     if (readyNodes.length > 0) {
       await Promise.all(
         readyNodes.map(async (node) => {
-          throwAbortIfCancelled(node.id);
+          if (options.abortSignal?.aborted) {
+            throw new GraphExecutionError(
+              'Execution aborted by signal.',
+              state.buildRuntimeStateSnapshot(state.inputs),
+              node.id
+            );
+          }
 
           const rawInputs = state.inputs[node.id] ?? {};
           const nodeInputs = deriveNodeInputs({
             node,
             rawInputs,
             triggerContext,
-            checkTriggerProvenance,
+            checkTriggerProvenance: internalCheckTriggerProvenance
           });
-          const runtimeTelemetry = resolveRuntimeTelemetry(node.type);
+          const runtimeTelemetry = telemetryResolver.resolve(node.type);
 
           // --- Cache Check Start ---
-          const nodeHash = buildNodeHash(node, nodeInputs);
+          const nodeHash = internalBuildNodeHash(node, nodeInputs);
 
           if (nodeHash) {
             state.nodeHashes.set(node.id, nodeHash);
@@ -762,7 +512,7 @@ export async function evaluateGraphInternal(
             node.id === options.triggerNodeId &&
             node.config?.trigger?.contextMode === 'simulation_required'
           ) {
-            if (!checkTriggerProvenance()) {
+            if (!internalCheckTriggerProvenance()) {
               throw new GraphExecutionError(
                 `Trigger "${node.title || node.id}" requires simulation context but none was provided or resolved.`,
                 state.buildRuntimeStateSnapshot(state.inputs),
@@ -774,36 +524,17 @@ export async function evaluateGraphInternal(
           state.blockedNodes.delete(node.id);
           state.activeNodes.add(node.id);
 
-          const handler = options.resolveHandler ? options.resolveHandler(node.type) : null;
-          if (!handler) {
-            state.errorNodes.add(node.id);
-            state.finishedNodes.delete(node.id);
-            state.blockedNodes.delete(node.id);
-            state.timeoutNodes.delete(node.id);
-            const handlerMissingMessage = `No handler found for node type: ${node.type}`;
-            state.outputs[node.id] = {
-              status: 'failed',
-              error: handlerMissingMessage,
-            };
-            const handlerMissingError = new GraphExecutionError(
-              handlerMissingMessage,
-              state.buildRuntimeStateSnapshot(state.inputs),
-              node.id
-            );
-            if (options.onNodeError) {
-              await options.onNodeError({
-                runId: resolvedRunId,
-                runStartedAt: resolvedRunStartedAt,
-                node,
-                nodeInputs,
-                prevOutputs,
-                error: handlerMissingError,
-                iteration,
-                ...buildRuntimeTelemetryFields(runtimeTelemetry),
-              });
-            }
-            throw handlerMissingError;
-          }
+          const handler = await resolveNodeHandlerOrThrow({
+            node,
+            options,
+            state,
+            resolvedRunId,
+            resolvedRunStartedAt,
+            iteration,
+            nodeInputs,
+            prevOutputs,
+            runtimeTelemetry,
+          });
 
           const stats = state.getOrCreateNodeStats(node);
           stats.count += 1;
@@ -829,6 +560,11 @@ export async function evaluateGraphInternal(
               nodeInputs,
               nodeOutputs: prevOutputs ?? undefined,
               runtimeTelemetry,
+              options,
+              resolvedRunId,
+              resolvedRunStartedAt,
+              nodes,
+              sanitizedEdges,
             });
             if (preExecuteValidation?.decision === 'block') {
               const nodeDurationMs = nowMs() - nodeStartedAt;
@@ -843,6 +579,10 @@ export async function evaluateGraphInternal(
                 stage: 'node_pre_execute',
                 message: preExecuteValidation.message,
                 issues: preExecuteValidation.issues,
+                state,
+                options,
+                resolvedRunId,
+                resolvedRunStartedAt,
               });
               return;
             }
@@ -953,6 +693,11 @@ export async function evaluateGraphInternal(
               nodeInputs,
               nodeOutputs: nextOutputs,
               runtimeTelemetry,
+              options,
+              resolvedRunId,
+              resolvedRunStartedAt,
+              nodes,
+              sanitizedEdges,
             });
             if (postExecuteValidation?.decision === 'block') {
               const nodeDurationMs = nowMs() - nodeStartedAt;
@@ -967,6 +712,10 @@ export async function evaluateGraphInternal(
                 stage: 'node_post_execute',
                 message: postExecuteValidation.message,
                 issues: postExecuteValidation.issues,
+                state,
+                options,
+                resolvedRunId,
+                resolvedRunStartedAt,
               });
               return;
             }
@@ -1058,10 +807,10 @@ export async function evaluateGraphInternal(
                       node: targetNode,
                       rawInputs: state.inputs[toNodeId] ?? {},
                       triggerContext,
-                      checkTriggerProvenance,
+                      checkTriggerProvenance: internalCheckTriggerProvenance
                     });
                     const previousHash = state.nodeHashes.get(toNodeId) ?? null;
-                    const nextHash = buildNodeHash(targetNode, targetInputs);
+                    const nextHash = internalBuildNodeHash(targetNode, targetInputs);
                     if (previousHash && nextHash && previousHash !== nextHash) {
                       state.finishedNodes.delete(toNodeId);
                       state.blockedNodes.delete(toNodeId);

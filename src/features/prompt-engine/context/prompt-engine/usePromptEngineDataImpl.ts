@@ -1,11 +1,5 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { useState, useEffect, useMemo } from 'react';
 import {
   parsePromptEngineSettings,
@@ -17,8 +11,12 @@ import {
   createRuleDraft,
   sortRuleDraftsBySequence,
 } from '../prompt-engine-context-utils';
+import type { SingleQuery } from '@/shared/contracts/ui';
 
-export function usePromptEngineDataImpl(args: { settingsQuery: any; rawSettings: any }) {
+export function usePromptEngineDataImpl(args: {
+  settingsQuery: SingleQuery<Map<string, string>>;
+  rawSettings: string | null | undefined;
+}) {
   const { settingsQuery, rawSettings } = args;
 
   const [drafts, setDrafts] = useState<RuleDraft[]>([]);

@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
@@ -189,9 +189,15 @@ describe('EditProductForm', () => {
         : null;
 
     expect(generalPanel).not.toBeNull();
-    generalTab.focus();
+    
+    act(() => {
+      generalTab.focus();
+    });
     expect(generalTab).toHaveFocus();
-    await user.tab();
+    
+    await act(async () => {
+      await user.tab();
+    });
     expect(generalPanel).toHaveFocus();
   });
 });

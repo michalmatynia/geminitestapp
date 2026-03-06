@@ -20,8 +20,8 @@ import {
   PORTABLE_PATH_SIGNING_POLICY_TREND_PERSISTENCE_MAX_SNAPSHOTS_ENV,
   PORTABLE_PATH_SIGNING_POLICY_TREND_REPORT_EVERY_USES_ENV,
   PORTABLE_PATH_SIGNING_POLICY_TREND_SETTINGS_KEY,
-  type PortablePathSigningPolicyAlertLevel,
-} from './sinks-types.server';
+} from './sinks-constants.server';
+import type { PortablePathSigningPolicyAlertLevel } from './sinks-contracts.server';
 
 const PORTABLE_PATH_SIGNING_POLICY_SURFACES = ['canvas', 'product', 'api'] as const;
 const PORTABLE_PATH_SIGNING_POLICY_PROFILES = ['dev', 'staging', 'prod'] as const;

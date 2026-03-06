@@ -35,7 +35,7 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
     );
   });
 
-  it('normalizes deprecated runtime mode to auto', () => {
+  it('prunes deprecated runtime mode setting', () => {
     const records: AiPathsSettingRecord[] = [
       {
         key: AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
@@ -50,12 +50,8 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
 
     expect(result.success).toBe(true);
     expect(result.affectedCount).toBe(1);
-    expect(result.nextRecords).toEqual([
-      {
-        key: AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
-        value: 'auto',
-      },
-    ]);
+    expect(result.deletedKeys).toEqual([AI_PATHS_RUNTIME_KERNEL_MODE_KEY]);
+    expect(result.nextRecords).toEqual([]);
   });
 
   it('normalizes runtime-kernel node type and resolver id list values', () => {
@@ -101,7 +97,7 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
     ]);
   });
 
-  it('normalizes runtime-kernel strict native registry boolean setting values', () => {
+  it('prunes deprecated runtime-kernel strict native registry setting', () => {
     const records: AiPathsSettingRecord[] = [
       {
         key: AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
@@ -127,13 +123,8 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
 
     expect(result.success).toBe(true);
     expect(result.affectedCount).toBe(1);
-    expect(result.deletedKeys).toEqual([]);
-    expect(result.nextRecords).toEqual([
-      {
-        key: AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
-        value: 'true',
-      },
-    ]);
+    expect(result.deletedKeys).toEqual([AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY]);
+    expect(result.nextRecords).toEqual([]);
   });
 
   it('surfaces normalization action when path runtime-kernel extensions use legacy aliases', () => {
@@ -173,7 +164,7 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
     );
   });
 
-  it('normalizes path runtime-kernel legacy fields into canonical extension values', () => {
+  it('prunes path runtime-kernel legacy mode/strict fields while normalizing live extension values', () => {
     const records: AiPathsSettingRecord[] = [
       {
         key: `${AI_PATHS_CONFIG_KEY_PREFIX}path-main`,
@@ -210,10 +201,8 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
     const extensions = parsed['extensions'] as Record<string, unknown>;
     const runtimeKernel = extensions?.['runtimeKernel'] as Record<string, unknown>;
     expect(runtimeKernel).toEqual({
-      mode: 'auto',
       nodeTypes: ['template_node', 'parser'],
       codeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
-      strictNativeRegistry: true,
     });
   });
 });

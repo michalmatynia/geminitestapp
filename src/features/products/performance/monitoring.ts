@@ -1,3 +1,87 @@
+// ---------------------------------------------------------------------------
+// Ring buffer — O(1) push, O(n) drain; bounded, no slice on every overflow
+// ---------------------------------------------------------------------------
+
+class RingBuffer<T> {
+  private readonly buf: (T | undefined)[];
+  private head: number = 0; // next write slot
+  private count: number = 0;
+
+  constructor(private readonly capacity: number) {
+    this.buf = new Array<T | undefined>(capacity);
+  }
+
+  push(item: T): void {
+    this.buf[this.head] = item;
+    this.head = (this.head + 1) % this.capacity;
+    if (this.count < this.capacity) this.count++;
+  }
+
+  /** Returns all entries in insertion order (oldest → newest). */
+  toArray(): T[] {
+    if (this.count < this.capacity) {
+      return this.buf.slice(0, this.count) as T[];
+    }
+    // Fully wrapped: head points at the oldest slot.
+    return [...this.buf.slice(this.head), ...this.buf.slice(0, this.head)] as T[];
+  }
+
+  get size(): number {
+    return this.count;
+  }
+
+  reset(): void {
+    this.buf.fill(undefined);
+    this.head = 0;
+    this.count = 0;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Threshold-based log shipping (server-side only, fire-and-forget)
+// ---------------------------------------------------------------------------
+
+/** Thresholds above which a metric is promoted to a structured log entry. */
+const SHIP_THRESHOLDS: Record<string, number> = {
+  'db.query': 500,
+  'image.optimize': 1000,
+  request: 2000,
+};
+
+function shouldShip(name: string, value: number, tags?: Record<string, string>): boolean {
+  if (name === 'error') return true;
+  if (tags?.['status'] === 'error') return true;
+  const threshold = SHIP_THRESHOLDS[name];
+  return threshold !== undefined && value >= threshold;
+}
+
+/** Fire-and-forget: ships a metric to the structured log pipeline. */
+function shipMetric(name: string, value: number, tags?: Record<string, string>): void {
+  if (typeof window !== 'undefined') return; // client-side: skip
+  void (async () => {
+    try {
+      const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
+      const isError = name === 'error' || tags?.['status'] === 'error';
+      await logSystemEvent({
+        level: isError ? 'warn' : 'info',
+        message: `[perf] ${name} ${value.toFixed(1)}ms`,
+        source: 'products.performance.monitor',
+        context: {
+          metric: name,
+          value,
+          ...(tags ?? {}),
+        },
+      });
+    } catch {
+      // Never let observability failures propagate
+    }
+  })();
+}
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
 type PerformanceMetric = {
   name: string;
   value: number;
@@ -13,21 +97,21 @@ type CacheMetrics = {
   memory: number;
 };
 
+// ---------------------------------------------------------------------------
+// PerformanceMonitor
+// ---------------------------------------------------------------------------
+
 export class PerformanceMonitor {
-  private metrics: PerformanceMetric[] = [];
-  private readonly maxMetrics: number = 1000;
+  private readonly metrics: RingBuffer<PerformanceMetric>;
+
+  constructor(capacity: number = 500) {
+    this.metrics = new RingBuffer<PerformanceMetric>(capacity);
+  }
 
   record(name: string, value: number, tags?: Record<string, string>): void {
-    this.metrics.push({
-      name,
-      value,
-      timestamp: Date.now(),
-      tags,
-    });
-
-    // Keep only recent metrics
-    if (this.metrics.length > this.maxMetrics) {
-      this.metrics = this.metrics.slice(-this.maxMetrics);
+    this.metrics.push({ name, value, timestamp: Date.now(), tags });
+    if (shouldShip(name, value, tags)) {
+      shipMetric(name, value, tags);
     }
   }
 
@@ -52,18 +136,18 @@ export class PerformanceMonitor {
   }
 
   getMetrics(name?: string, timeWindow?: number): PerformanceMetric[] {
-    let filtered = this.metrics;
+    let entries = this.metrics.toArray();
 
     if (name) {
-      filtered = filtered.filter((m: PerformanceMetric) => m.name === name);
+      entries = entries.filter((m) => m.name === name);
     }
 
     if (timeWindow) {
       const cutoff = Date.now() - timeWindow;
-      filtered = filtered.filter((m: PerformanceMetric) => m.timestamp > cutoff);
+      entries = entries.filter((m) => m.timestamp > cutoff);
     }
 
-    return filtered;
+    return entries;
   }
 
   getStats(
@@ -77,16 +161,14 @@ export class PerformanceMonitor {
     p95: number;
     p99: number;
   } {
-    const metrics = this.getMetrics(name, timeWindow);
+    const entries = this.getMetrics(name, timeWindow);
 
-    if (metrics.length === 0) {
+    if (entries.length === 0) {
       return { count: 0, avg: 0, min: 0, max: 0, p95: 0, p99: 0 };
     }
 
-    const values = metrics
-      .map((m: PerformanceMetric) => m.value)
-      .sort((a: number, b: number) => a - b);
-    const sum = values.reduce((a: number, b: number) => a + b, 0);
+    const values = entries.map((m) => m.value).sort((a, b) => a - b);
+    const sum = values.reduce((a, b) => a + b, 0);
 
     return {
       count: values.length,
@@ -105,7 +187,6 @@ export class PerformanceMonitor {
     const queryStats = queryCache.getStats();
     const imageStats = imageOptimizer.getCacheStats();
 
-    // Calculate hit rates from recent metrics
     const cacheHits = this.getMetrics('cache.hit', 300000).length;
     const cacheMisses = this.getMetrics('cache.miss', 300000).length;
     const total = cacheHits + cacheMisses;
@@ -145,25 +226,21 @@ export class PerformanceMonitor {
     const issues: string[] = [];
     let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
 
-    // Check query performance
     if (metrics.avgQueryTime > 1000) {
       status = 'degraded';
       issues.push(`Slow database queries: ${metrics.avgQueryTime.toFixed(0)}ms avg`);
     }
 
-    // Check image optimization performance
     if (metrics.avgImageOptTime > 2000) {
       status = 'degraded';
       issues.push(`Slow image optimization: ${metrics.avgImageOptTime.toFixed(0)}ms avg`);
     }
 
-    // Check cache hit rate
     if (metrics.cacheHitRate < 0.7) {
       status = 'degraded';
       issues.push(`Low cache hit rate: ${(metrics.cacheHitRate * 100).toFixed(1)}%`);
     }
 
-    // Check error rate
     if (metrics.errorRate > 0.05) {
       status = metrics.errorRate > 0.1 ? 'unhealthy' : 'degraded';
       issues.push(`High error rate: ${(metrics.errorRate * 100).toFixed(1)}%`);
@@ -173,7 +250,7 @@ export class PerformanceMonitor {
   }
 
   clear(): void {
-    this.metrics = [];
+    this.metrics.reset();
   }
 }
 

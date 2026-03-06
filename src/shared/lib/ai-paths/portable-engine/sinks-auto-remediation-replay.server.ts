@@ -5,9 +5,11 @@ import {
   postPortablePathAuditSinkAutoRemediationNotification,
   toPortablePathAuditSinkAutoRemediationNotificationStatusCode,
   toPortablePathAuditSinkAutoRemediationNotificationTimestamp,
-  type PortablePathAuditSinkAutoRemediationNotificationChannel,
-  type PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry,
-} from './sinks-auto-remediation-notifications.server';
+} from './sinks-auto-remediation-delivery.server';
+import type {
+  PortablePathAuditSinkAutoRemediationNotificationChannel,
+  PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry,
+} from './sinks-auto-remediation-dead-letters.server';
 import type { SystemLogInput } from '@/shared/lib/observability/system-logger';
 
 export type PortablePathAuditSinkAutoRemediationDeadLetterReplayAttempt = {

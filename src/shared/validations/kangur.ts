@@ -1,10 +1,22 @@
 import { z } from 'zod';
 
 import {
+  kangurAssignmentCreateInputSchema,
+  kangurAssignmentListQuerySchema,
+  kangurAssignmentUpdateInputSchema,
+  kangurLearnerCreateInputSchema,
+  kangurLearnerSignInInputSchema,
+  kangurLearnerUpdateInputSchema,
   kangurProgressStateSchema,
   kangurScoreCreateInputSchema,
   kangurScoreListQuerySchema,
   kangurScoreSortFieldSchema,
+  type KangurAssignmentCreateInput,
+  type KangurAssignmentListQuery,
+  type KangurAssignmentUpdateInput,
+  type KangurLearnerCreateInput,
+  type KangurLearnerSignInInput,
+  type KangurLearnerUpdateInput,
   type KangurProgressState,
   type KangurScoreCreateInput,
   type KangurScoreListQuery,
@@ -67,6 +79,7 @@ export const parseKangurScoreListQuery = (
     player_name: payload['player_name'],
     operation: payload['operation'],
     created_by: payload['created_by'],
+    learner_id: payload['learner_id'],
   });
 
   if (!parsed.success) {
@@ -79,4 +92,74 @@ export const parseKangurScoreListQuery = (
     ...parsed.data,
     sort: normalizeKangurSort(parsed.data.sort),
   };
+};
+
+export const parseKangurAssignmentCreatePayload = (
+  payload: unknown
+): KangurAssignmentCreateInput => {
+  const parsed = kangurAssignmentCreateInputSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw validationError('Invalid Kangur assignment payload.', {
+      issues: extractValidationIssues(parsed.error),
+    });
+  }
+  return parsed.data;
+};
+
+export const parseKangurLearnerCreatePayload = (payload: unknown): KangurLearnerCreateInput => {
+  const parsed = kangurLearnerCreateInputSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw validationError('Invalid Kangur learner payload.', {
+      issues: extractValidationIssues(parsed.error),
+    });
+  }
+  return parsed.data;
+};
+
+export const parseKangurLearnerUpdatePayload = (payload: unknown): KangurLearnerUpdateInput => {
+  const parsed = kangurLearnerUpdateInputSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw validationError('Invalid Kangur learner update payload.', {
+      issues: extractValidationIssues(parsed.error),
+    });
+  }
+  return parsed.data;
+};
+
+export const parseKangurLearnerSignInPayload = (payload: unknown): KangurLearnerSignInInput => {
+  const parsed = kangurLearnerSignInInputSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw validationError('Invalid Kangur learner sign-in payload.', {
+      issues: extractValidationIssues(parsed.error),
+    });
+  }
+  return parsed.data;
+};
+
+export const parseKangurAssignmentUpdatePayload = (
+  payload: unknown
+): KangurAssignmentUpdateInput => {
+  const parsed = kangurAssignmentUpdateInputSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw validationError('Invalid Kangur assignment update payload.', {
+      issues: extractValidationIssues(parsed.error),
+    });
+  }
+  return parsed.data;
+};
+
+export const parseKangurAssignmentListQuery = (
+  payload: Record<string, string | undefined>
+): KangurAssignmentListQuery => {
+  const parsed = kangurAssignmentListQuerySchema.safeParse({
+    includeArchived: payload['includeArchived'] === 'true',
+  });
+
+  if (!parsed.success) {
+    throw validationError('Invalid Kangur assignment query.', {
+      issues: extractValidationIssues(parsed.error),
+    });
+  }
+
+  return parsed.data;
 };

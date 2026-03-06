@@ -3,6 +3,7 @@ import type { KangurScorePort, KangurScoreRecord } from '@/features/kangur/servi
 export const LEARNER_PROFILE_SCORE_FETCH_LIMIT = 120;
 
 type LoadScopedKangurScoresInput = {
+  learnerId?: string | null;
   playerName?: string | null;
   createdBy?: string | null;
   limit?: number;
@@ -10,6 +11,7 @@ type LoadScopedKangurScoresInput = {
 };
 
 type LoadLearnerProfileScoresInput = {
+  learnerId?: string | null;
   userName: string;
   userEmail: string;
   limit?: number;
@@ -28,10 +30,11 @@ export const loadScopedKangurScores = async (
   scorePort: KangurScorePort,
   input: LoadScopedKangurScoresInput
 ): Promise<KangurScoreRecord[]> => {
+  const learnerId = input.learnerId?.trim() ?? '';
   const playerName = input.playerName?.trim() ?? '';
   const createdBy = input.createdBy?.trim() ?? '';
   const limit = input.limit ?? LEARNER_PROFILE_SCORE_FETCH_LIMIT;
-  if (playerName.length === 0 && createdBy.length === 0) {
+  if (learnerId.length === 0 && playerName.length === 0 && createdBy.length === 0) {
     if (!input.fallbackToAll) {
       return [];
     }
@@ -40,7 +43,10 @@ export const loadScopedKangurScores = async (
     return [...rows].sort(sortScoresByCreatedDateDesc);
   }
 
-  const [rowsByEmail, rowsByName] = await Promise.all([
+  const [rowsByLearner, rowsByEmail, rowsByName] = await Promise.all([
+    learnerId.length > 0
+      ? scorePort.filter({ learner_id: learnerId }, '-created_date', limit)
+      : Promise.resolve([]),
     createdBy.length > 0
       ? scorePort.filter({ created_by: createdBy }, '-created_date', limit)
       : Promise.resolve([]),
@@ -49,7 +55,7 @@ export const loadScopedKangurScores = async (
       : Promise.resolve([]),
   ]);
 
-  return dedupeScoresById([...rowsByEmail, ...rowsByName]);
+  return dedupeScoresById([...rowsByLearner, ...rowsByEmail, ...rowsByName]);
 };
 
 export const loadLearnerProfileScores = async (
@@ -57,6 +63,7 @@ export const loadLearnerProfileScores = async (
   input: LoadLearnerProfileScoresInput
 ): Promise<KangurScoreRecord[]> =>
   loadScopedKangurScores(scorePort, {
+    learnerId: input.learnerId,
     playerName: input.userName,
     createdBy: input.userEmail,
     limit: input.limit,

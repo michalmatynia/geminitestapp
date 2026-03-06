@@ -1,12 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
+ 
+ 
+ 
+ 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
-import { Document } from 'mongodb';
-import { toProductResponse } from '../mongo-product-repository-mappers';
+import { Document, Collection, WithId } from 'mongodb';
+import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
 import { ProductFilters, ProductWithImages } from '@/shared/contracts/products';
 import { buildProductIdFilter, isEmptyFilter } from '../mongo-product-repository.helpers';
 import { buildMongoWhere } from '../mongo-product-repository.filters';
@@ -64,7 +63,7 @@ export const buildListProjectStage = (filters: ProductFilters): Document | null 
 };
 
 export const mongoProductReadImpl = {
-  async getProducts(filters: ProductFilters, getCollection: () => Promise<any>) {
+  async getProducts(filters: ProductFilters, getCollection: () => Promise<Collection<ProductDocument>>) {
     const collection = await getCollection();
     const page = filters.page ?? 1;
     const pageSize = filters.pageSize ?? 20;
@@ -86,7 +85,7 @@ export const mongoProductReadImpl = {
         : undefined;
       const docs = await collection.aggregate(pipeline, aggregateOptions).toArray();
 
-      return docs.map((doc: any) => toProductResponse(doc));
+      return docs.map(doc => toProductResponse(doc as unknown as WithId<ProductDocument>));
     }
 
     let cursor = collection.find(searchFilter).sort({ createdAt: -1 });
@@ -96,10 +95,10 @@ export const mongoProductReadImpl = {
     cursor = cursor.skip(skip).limit(limit);
     const docs = await cursor.toArray();
 
-    return docs.map((doc: any) => toProductResponse(doc));
+    return docs.map(doc => toProductResponse(doc));
   },
 
-  async countProducts(filters: ProductFilters, getCollection: () => Promise<any>) {
+  async countProducts(filters: ProductFilters, getCollection: () => Promise<Collection<ProductDocument>>) {
     const collection = await getCollection();
     const searchFilter = await buildMongoWhere(filters);
     if (isEmptyFilter(searchFilter)) {
@@ -110,7 +109,7 @@ export const mongoProductReadImpl = {
 
   async getProductsWithCount(
     filters: ProductFilters,
-    getCollection: () => Promise<any>
+    getCollection: () => Promise<Collection<ProductDocument>>
   ): Promise<{ products: ProductWithImages[]; total: number }> {
     const collection = await getCollection();
     const page = filters.page ?? 1;
@@ -145,7 +144,7 @@ export const mongoProductReadImpl = {
       ]);
 
       return {
-        products: docs.map((doc: any) => toProductResponse(doc)),
+        products: docs.map(doc => toProductResponse(doc as unknown as WithId<ProductDocument>)),
         total,
       };
     }
@@ -171,18 +170,18 @@ export const mongoProductReadImpl = {
       ])
       .toArray();
 
-    const docs = result?.products ?? [];
-    const total = result?.meta?.[0]?.total ?? 0;
+    const docs = (result?.['products'] as Document[]) ?? [];
+    const total = (result?.['meta']?.[0]?.['total'] as number) ?? 0;
 
     return {
-      products: docs.map((doc: any) => toProductResponse(doc)),
+      products: docs.map(doc => toProductResponse(doc as unknown as WithId<ProductDocument>)),
       total,
     };
   },
 
   async getProductById(
     id: string,
-    getCollection: () => Promise<any>
+    getCollection: () => Promise<Collection<ProductDocument>>
   ): Promise<ProductWithImages | null> {
     const collection = await getCollection();
     const doc = await collection.findOne(buildProductIdFilter(id));
@@ -190,29 +189,29 @@ export const mongoProductReadImpl = {
     return toProductResponse(doc);
   },
 
-  async getProductBySku(sku: string, getCollection: () => Promise<any>) {
+  async getProductBySku(sku: string, getCollection: () => Promise<Collection<ProductDocument>>) {
     const collection = await getCollection();
     const doc = await collection.findOne({ sku });
     if (!doc) return null;
     return toProductResponse(doc);
   },
 
-  async getProductsBySkus(skus: string[], getCollection: () => Promise<any>) {
+  async getProductsBySkus(skus: string[], getCollection: () => Promise<Collection<ProductDocument>>) {
     const collection = await getCollection();
     const docs = await collection.find({ sku: { $in: skus } }).toArray();
-    return docs.map((doc: any) => toProductResponse(doc));
+    return docs.map(doc => toProductResponse(doc));
   },
 
-  async findProductByBaseId(baseProductId: string, getCollection: () => Promise<any>) {
+  async findProductByBaseId(baseProductId: string, getCollection: () => Promise<Collection<ProductDocument>>) {
     const collection = await getCollection();
     const doc = await collection.findOne({ baseProductId });
     if (!doc) return null;
     return toProductResponse(doc);
   },
 
-  async findProductsByBaseIds(baseIds: string[], getCollection: () => Promise<any>) {
+  async findProductsByBaseIds(baseIds: string[], getCollection: () => Promise<Collection<ProductDocument>>) {
     const collection = await getCollection();
     const docs = await collection.find({ baseProductId: { $in: baseIds } }).toArray();
-    return docs.map((doc: any) => toProductResponse(doc));
+    return docs.map(doc => toProductResponse(doc));
   },
 };

@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, LayoutDashboard, UserRound } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutDashboard } from 'lucide-react';
 import type { ComponentType } from 'react';
 import dynamic from 'next/dynamic';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
+import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
+import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -200,16 +203,122 @@ const getLessonMasteryPresentation = (
   };
 };
 
+const LESSON_ASSIGNMENT_PRIORITY_ORDER = {
+  high: 0,
+  medium: 1,
+  low: 2,
+} as const;
+
+const getLessonAssignmentTimestamp = (primaryValue: string | null, fallbackValue: string): number => {
+  const primaryTimestamp = primaryValue ? Date.parse(primaryValue) : Number.NaN;
+  if (!Number.isNaN(primaryTimestamp)) {
+    return primaryTimestamp;
+  }
+
+  const fallbackTimestamp = Date.parse(fallbackValue);
+  return Number.isNaN(fallbackTimestamp) ? 0 : fallbackTimestamp;
+};
+
 export default function Lessons() {
   const { basePath } = useKangurRouting();
+  const { user, navigateToLogin, logout } = useKangurAuth();
   const settingsStore = useSettingsStore();
   const progress = useKangurProgressState();
+  const { assignments } = useKangurAssignments({
+    enabled: Boolean(user),
+    query: {
+      includeArchived: false,
+    },
+  });
 
   const rawLessons = settingsStore.get(KANGUR_LESSONS_SETTING_KEY);
   const lessons = useMemo(
     (): KangurLesson[] => parseKangurLessons(rawLessons).filter((lesson) => lesson.enabled),
     [rawLessons]
   );
+  const lessonAssignmentsByComponent = useMemo(() => {
+    const nextMap = new Map<
+      KangurLessonComponentId,
+      (typeof assignments)[number]
+    >();
+    assignments
+      .filter((assignment) => !assignment.archived)
+      .filter((assignment) => assignment.progress.status !== 'completed')
+      .filter(
+        (assignment): assignment is (typeof assignments)[number] & { target: { type: 'lesson' } } =>
+          assignment.target.type === 'lesson'
+      )
+      .forEach((assignment) => {
+        const componentId = assignment.target.lessonComponentId;
+        const existing = nextMap.get(componentId);
+        if (!existing) {
+          nextMap.set(componentId, assignment);
+          return;
+        }
+
+        if (LESSON_ASSIGNMENT_PRIORITY_ORDER[assignment.priority] < LESSON_ASSIGNMENT_PRIORITY_ORDER[existing.priority]) {
+          nextMap.set(componentId, assignment);
+        }
+      });
+
+    return nextMap;
+  }, [assignments]);
+  const completedLessonAssignmentsByComponent = useMemo(() => {
+    const nextMap = new Map<
+      KangurLessonComponentId,
+      (typeof assignments)[number]
+    >();
+
+    assignments
+      .filter((assignment) => !assignment.archived)
+      .filter((assignment) => assignment.progress.status === 'completed')
+      .filter(
+        (assignment): assignment is (typeof assignments)[number] & { target: { type: 'lesson' } } =>
+          assignment.target.type === 'lesson'
+      )
+      .forEach((assignment) => {
+        const componentId = assignment.target.lessonComponentId;
+        const existing = nextMap.get(componentId);
+        if (!existing) {
+          nextMap.set(componentId, assignment);
+          return;
+        }
+
+        const assignmentTimestamp = getLessonAssignmentTimestamp(
+          assignment.progress.completedAt,
+          assignment.updatedAt
+        );
+        const existingTimestamp = getLessonAssignmentTimestamp(
+          existing.progress.completedAt,
+          existing.updatedAt
+        );
+
+        if (assignmentTimestamp > existingTimestamp) {
+          nextMap.set(componentId, assignment);
+        }
+      });
+
+    return nextMap;
+  }, [assignments]);
+  const orderedLessons = useMemo(() => {
+    return [...lessons].sort((left, right) => {
+      const leftAssignment = lessonAssignmentsByComponent.get(left.componentId);
+      const rightAssignment = lessonAssignmentsByComponent.get(right.componentId);
+
+      if (leftAssignment && !rightAssignment) return -1;
+      if (!leftAssignment && rightAssignment) return 1;
+      if (leftAssignment && rightAssignment) {
+        const priorityDelta =
+          LESSON_ASSIGNMENT_PRIORITY_ORDER[leftAssignment.priority] -
+          LESSON_ASSIGNMENT_PRIORITY_ORDER[rightAssignment.priority];
+        if (priorityDelta !== 0) {
+          return priorityDelta;
+        }
+      }
+
+      return left.sortOrder - right.sortOrder;
+    });
+  }, [lessonAssignmentsByComponent, lessons]);
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
 
@@ -243,11 +352,19 @@ export default function Lessons() {
     window.history.replaceState({}, '', nextHref);
   }, [activeLessonId, lessons]);
 
-  const activeIdx = lessons.findIndex((lesson) => lesson.id === activeLessonId);
-  const activeLesson = activeIdx >= 0 ? lessons[activeIdx] : null;
-  const prev = activeIdx > 0 ? lessons[activeIdx - 1] : null;
-  const next = activeIdx >= 0 && activeIdx < lessons.length - 1 ? lessons[activeIdx + 1] : null;
+  const activeIdx = orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
+  const activeLesson = activeIdx >= 0 ? orderedLessons[activeIdx] : null;
+  const prev = activeIdx > 0 ? orderedLessons[activeIdx - 1] : null;
+  const next =
+    activeIdx >= 0 && activeIdx < orderedLessons.length - 1 ? orderedLessons[activeIdx + 1] : null;
   const ActiveLessonComponent = activeLesson ? LESSON_COMPONENTS[activeLesson.componentId] : null;
+  const activeLessonAssignment = activeLesson
+    ? lessonAssignmentsByComponent.get(activeLesson.componentId) ?? null
+    : null;
+  const completedActiveLessonAssignment =
+    activeLesson && !activeLessonAssignment
+      ? completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null
+      : null;
   const handleGoBack = (): void => {
     if (typeof window === 'undefined') return;
     if (window.history.length > 1) {
@@ -271,18 +388,20 @@ export default function Lessons() {
           Strona główna
         </Link>
         <div className='flex items-center gap-3'>
-          <Link
-            href={createPageUrl('LearnerProfile', basePath)}
-            className='inline-flex items-center gap-1.5 text-sm text-indigo-500 hover:text-indigo-700 font-semibold transition'
-          >
-            <UserRound className='w-4 h-4' /> Profil
-          </Link>
-          <Link
-            href={createPageUrl('ParentDashboard', basePath)}
-            className='inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 font-semibold transition'
-          >
-            <LayoutDashboard className='w-4 h-4' /> Rodzic
-          </Link>
+          <KangurProfileMenu
+            basePath={basePath}
+            isAuthenticated={Boolean(user)}
+            onLogout={() => logout(false)}
+            onLogin={navigateToLogin}
+          />
+          {user?.canManageLearners && (
+            <Link
+              href={createPageUrl('ParentDashboard', basePath)}
+              className='inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 font-semibold transition'
+            >
+              <LayoutDashboard className='w-4 h-4' /> Rodzic
+            </Link>
+          )}
         </div>
       </div>
 
@@ -300,7 +419,6 @@ export default function Lessons() {
                 <h1 className='text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 drop-shadow'>
                   📚 Lekcje
                 </h1>
-                <p className='text-gray-500 mt-1'>Ucz się krok po kroku!</p>
                 <button
                   type='button'
                   onClick={handleGoBack}
@@ -310,7 +428,7 @@ export default function Lessons() {
                 </button>
               </div>
 
-              {lessons.length === 0 ? (
+              {orderedLessons.length === 0 ? (
                 <div className='w-full rounded-3xl border border-indigo-200/70 bg-white/80 p-6 text-center shadow-lg'>
                   <div className='text-lg font-semibold text-indigo-700'>Brak aktywnych lekcji</div>
                   <div className='mt-1 text-sm text-indigo-500'>
@@ -318,8 +436,13 @@ export default function Lessons() {
                   </div>
                 </div>
               ) : (
-                lessons.map((lesson, index) => {
+                orderedLessons.map((lesson, index) => {
                   const masteryPresentation = getLessonMasteryPresentation(lesson, progress);
+                  const lessonAssignment = lessonAssignmentsByComponent.get(lesson.componentId) ?? null;
+                  const completedLessonAssignment =
+                    !lessonAssignment
+                      ? completedLessonAssignmentsByComponent.get(lesson.componentId) ?? null
+                      : null;
 
                   return (
                     <motion.button
@@ -338,16 +461,49 @@ export default function Lessons() {
                           <div>
                             <div className='font-extrabold text-xl'>{lesson.title}</div>
                             <div className='text-white/80 text-sm mt-0.5'>{lesson.description}</div>
+                            {lessonAssignment ? (
+                              <div className='mt-2 inline-flex rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white'>
+                                Priorytet rodzica
+                              </div>
+                            ) : completedLessonAssignment ? (
+                              <div className='mt-2 inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-700'>
+                                Ukonczone dla rodzica
+                              </div>
+                            ) : null}
                           </div>
-                          <span
-                            className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${masteryPresentation.badgeClassName}`}
-                          >
-                            {masteryPresentation.statusLabel}
-                          </span>
+                          <div className='flex flex-col items-end gap-2'>
+                            <span
+                              className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${masteryPresentation.badgeClassName}`}
+                            >
+                              {masteryPresentation.statusLabel}
+                            </span>
+                            {lessonAssignment ? (
+                              <span className='inline-flex whitespace-nowrap rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-rose-700'>
+                                {lessonAssignment.priority === 'high'
+                                  ? 'Priorytet wysoki'
+                                  : lessonAssignment.priority === 'medium'
+                                    ? 'Priorytet sredni'
+                                    : 'Priorytet niski'}
+                              </span>
+                            ) : completedLessonAssignment ? (
+                              <span className='inline-flex whitespace-nowrap rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-700'>
+                                Zadanie zamkniete
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
                         <div className='mt-3 text-xs font-medium text-white/80'>
                           {masteryPresentation.summaryLabel}
                         </div>
+                        {lessonAssignment ? (
+                          <div className='mt-2 text-xs font-semibold text-white/90'>
+                            {lessonAssignment.description}
+                          </div>
+                        ) : completedLessonAssignment ? (
+                          <div className='mt-2 text-xs font-semibold text-white/90'>
+                            Zadanie od rodzica zostalo juz wykonane. {completedLessonAssignment.progress.summary}
+                          </div>
+                        ) : null}
                       </div>
                     </motion.button>
                   );
@@ -362,6 +518,23 @@ export default function Lessons() {
               exit={{ opacity: 0, y: -20 }}
               className='w-full flex flex-col items-center gap-4'
             >
+              {activeLessonAssignment ? (
+                <div className='w-full max-w-2xl rounded-2xl border border-rose-200 bg-rose-50/90 px-4 py-3 text-sm text-rose-700 shadow-sm'>
+                  <div className='font-bold uppercase tracking-[0.14em] text-[11px]'>Priorytet rodzica</div>
+                  <div className='mt-1 font-semibold'>{activeLessonAssignment.title}</div>
+                  <div className='mt-1 text-rose-600'>{activeLessonAssignment.description}</div>
+                </div>
+              ) : completedActiveLessonAssignment ? (
+                <div className='w-full max-w-2xl rounded-2xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-700 shadow-sm'>
+                  <div className='font-bold uppercase tracking-[0.14em] text-[11px]'>
+                    Ukonczone zadanie od rodzica
+                  </div>
+                  <div className='mt-1 font-semibold'>{completedActiveLessonAssignment.title}</div>
+                  <div className='mt-1 text-emerald-600'>
+                    To zadanie zostalo juz wykonane. {completedActiveLessonAssignment.progress.summary}
+                  </div>
+                </div>
+              ) : null}
               {ActiveLessonComponent ? (
                 <ActiveLessonComponent onBack={() => setActiveLessonId(null)} />
               ) : null}

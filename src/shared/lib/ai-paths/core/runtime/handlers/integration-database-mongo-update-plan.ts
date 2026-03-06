@@ -9,6 +9,7 @@ import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import {
   applyParameterInferenceGuard,
+  mergeTranslatedParameterUpdates,
   materializeParameterInferenceUpdates,
   normalizeNonEmptyString,
   toRecord,
@@ -53,6 +54,133 @@ export type BuildMongoUpdatePlanInput = {
   parseJsonTemplate: (template: string) => unknown;
   ensureExistingParameterTemplateContext: (targetPath: string) => Promise<void>;
   aiPrompt: string;
+};
+
+const hasTranslationDescriptionMapping = (dbConfig: DatabaseConfig): boolean =>
+  (dbConfig.mappings ?? []).some(
+    (mapping): boolean =>
+      mapping.targetPath === 'description_pl' &&
+      mapping.sourcePort === 'value' &&
+      (mapping.sourcePath === 'description_pl' || !mapping.sourcePath)
+  );
+
+const hasTranslationParameterMapping = (dbConfig: DatabaseConfig): boolean =>
+  (dbConfig.mappings ?? []).some(
+    (mapping): boolean =>
+      mapping.targetPath === 'parameters' &&
+      (mapping.sourcePort === 'result' || mapping.sourcePort === 'value')
+  );
+
+const isLegacyTranslationParameterUpdate = (dbConfig: DatabaseConfig): boolean =>
+  hasTranslationDescriptionMapping(dbConfig) && hasTranslationParameterMapping(dbConfig);
+
+const pruneEmptyTranslationDescriptionUpdate = (
+  updates: Record<string, unknown>
+): {
+  updates: Record<string, unknown>;
+  pruned: boolean;
+} => {
+  if (!Object.prototype.hasOwnProperty.call(updates, 'description_pl')) {
+    return { updates, pruned: false };
+  }
+  const description = normalizeNonEmptyString(updates['description_pl']);
+  if (description) {
+    return { updates: { ...updates, description_pl: description }, pruned: false };
+  }
+  const nextUpdates = { ...updates };
+  delete nextUpdates['description_pl'];
+  return { updates: nextUpdates, pruned: true };
+};
+
+const patchTargetPathInUpdateDoc = (
+  value: unknown,
+  targetPath: string,
+  nextUpdates: Record<string, unknown>
+): unknown => {
+  const record = toRecord(value);
+  if (!record) return value;
+  const hasTarget = Object.prototype.hasOwnProperty.call(nextUpdates, targetPath);
+  const nextTargetValue = nextUpdates[targetPath];
+  const setRecord = toRecord(record['$set']);
+  if (setRecord) {
+    const nextSet: Record<string, unknown> = { ...setRecord };
+    if (hasTarget) {
+      nextSet[targetPath] = nextTargetValue;
+    } else {
+      delete nextSet[targetPath];
+    }
+    return { ...record, $set: nextSet };
+  }
+  const hasOperator = Object.keys(record).some((key: string): boolean => key.startsWith('$'));
+  if (hasOperator) return value;
+  const nextRecord: Record<string, unknown> = { ...record };
+  if (hasTarget) {
+    nextRecord[targetPath] = nextTargetValue;
+  } else {
+    delete nextRecord[targetPath];
+  }
+  return nextRecord;
+};
+
+const createTranslationNoUpdatesOutput = (args: {
+  error: string;
+  aiPrompt: string;
+  collection: string;
+  resolvedFilter: Record<string, unknown>;
+  unresolvedSourcePorts?: string[];
+  translationParameterMergeMeta?: Record<string, unknown>;
+  reportAiPathsError: BuildMongoUpdatePlanInput['reportAiPathsError'];
+  toast: BuildMongoUpdatePlanInput['toast'];
+  nodeId: string;
+  mode?: 'mapping' | 'custom';
+}): BuildMongoUpdatePlanResult => {
+  args.reportAiPathsError(
+    new Error(args.error),
+    {
+      action: 'dbTranslationUpdate',
+      nodeId: args.nodeId,
+      ...(args.unresolvedSourcePorts && args.unresolvedSourcePorts.length > 0
+        ? { unresolvedSourcePorts: args.unresolvedSourcePorts }
+        : {}),
+      ...(args.translationParameterMergeMeta
+        ? { translationParameterMerge: args.translationParameterMergeMeta }
+        : {}),
+    },
+    'Database update blocked:'
+  );
+  args.toast(args.error, { variant: 'error' });
+  return {
+    output: {
+      result: null,
+      bundle: {
+        error: args.error,
+        guardrail: 'translation-no-updates',
+        guardrailMeta: {
+          code: 'translation-no-updates',
+          severity: 'error',
+          message: args.error,
+          ...(args.unresolvedSourcePorts && args.unresolvedSourcePorts.length > 0
+            ? { unresolvedSourcePorts: args.unresolvedSourcePorts }
+            : {}),
+          ...(args.translationParameterMergeMeta
+            ? { translationParameterMerge: args.translationParameterMergeMeta }
+            : {}),
+        },
+      },
+      debugPayload: {
+        mode: args.mode ?? 'mapping',
+        collection: args.collection,
+        filter: args.resolvedFilter,
+        ...(args.unresolvedSourcePorts && args.unresolvedSourcePorts.length > 0
+          ? { unresolvedSourcePorts: args.unresolvedSourcePorts }
+          : {}),
+        ...(args.translationParameterMergeMeta
+          ? { translationParameterMerge: args.translationParameterMergeMeta }
+          : {}),
+      },
+      aiPrompt: args.aiPrompt,
+    },
+  };
 };
 
 export async function buildMongoUpdatePlan({
@@ -122,9 +250,11 @@ export async function buildMongoUpdatePlan({
 
   const parameterTargetPath =
     normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ?? 'parameters';
+  const isTranslationParameterUpdate = isLegacyTranslationParameterUpdate(dbConfig);
 
   let updates: Record<string, unknown> = {};
   let updateDoc: unknown = null;
+  let translationParameterMergeMeta: Record<string, unknown> | undefined;
 
   if (updatePayloadMode === 'mapping') {
     const mappingResult = resolveDatabaseUpdateMappings({
@@ -134,7 +264,46 @@ export async function buildMongoUpdatePlan({
       parameterTargetPath,
     });
     updates = mappingResult.updates;
+
+    if (isTranslationParameterUpdate) {
+      const descriptionPruneResult = pruneEmptyTranslationDescriptionUpdate(updates);
+      updates = descriptionPruneResult.updates;
+    }
+
+    if (
+      isTranslationParameterUpdate &&
+      Object.prototype.hasOwnProperty.call(updates, parameterTargetPath)
+    ) {
+      await ensureExistingParameterTemplateContext(parameterTargetPath);
+      const translationMergeResult = mergeTranslatedParameterUpdates({
+        targetPath: parameterTargetPath,
+        updates,
+        templateInputs,
+        languageCode: 'pl',
+        requireFullCoverage: true,
+      });
+      if (translationMergeResult.applied) {
+        updates = translationMergeResult.updates;
+        translationParameterMergeMeta = translationMergeResult.meta;
+      }
+    }
+
     if (Object.keys(updates).length === 0) {
+      if (isTranslationParameterUpdate) {
+        return createTranslationNoUpdatesOutput({
+          error:
+            'Translation update blocked. No safe description or parameter translation updates were resolved.',
+          aiPrompt,
+          collection,
+          resolvedFilter,
+          unresolvedSourcePorts: Array.from(mappingResult.unresolvedSourcePorts),
+          translationParameterMergeMeta,
+          reportAiPathsError,
+          toast,
+          nodeId: node.id,
+          mode: 'mapping',
+        });
+      }
       return {
         output: {
           result: null,
@@ -252,6 +421,45 @@ export async function buildMongoUpdatePlan({
         return record;
       };
       updates = extractUpdates(updateDoc);
+
+      if (isTranslationParameterUpdate) {
+        const descriptionPruneResult = pruneEmptyTranslationDescriptionUpdate(updates);
+        updates = descriptionPruneResult.updates;
+        if (descriptionPruneResult.pruned) {
+          updateDoc = patchTargetPathInUpdateDoc(updateDoc, 'description_pl', updates);
+        }
+
+        if (Object.prototype.hasOwnProperty.call(updates, parameterTargetPath)) {
+          await ensureExistingParameterTemplateContext(parameterTargetPath);
+          const translationMergeResult = mergeTranslatedParameterUpdates({
+            targetPath: parameterTargetPath,
+            updates,
+            templateInputs,
+            languageCode: 'pl',
+            requireFullCoverage: true,
+          });
+          if (translationMergeResult.applied) {
+            updates = translationMergeResult.updates;
+            translationParameterMergeMeta = translationMergeResult.meta;
+            updateDoc = patchTargetPathInUpdateDoc(updateDoc, parameterTargetPath, updates);
+          }
+        }
+
+        if (Object.keys(updates).length === 0) {
+          return createTranslationNoUpdatesOutput({
+            error:
+              'Translation update blocked. No safe description or parameter translation updates were resolved.',
+            aiPrompt,
+            collection,
+            resolvedFilter,
+            translationParameterMergeMeta,
+            reportAiPathsError,
+            toast,
+            nodeId: node.id,
+            mode: 'custom',
+          });
+        }
+      }
     }
   }
 
@@ -264,6 +472,9 @@ export async function buildMongoUpdatePlan({
     idType,
     resolvedInputs,
   });
+  if (translationParameterMergeMeta) {
+    debugPayload['translationParameterMerge'] = translationParameterMergeMeta;
+  }
 
   if (!resolvedFilter || Object.keys(resolvedFilter).length === 0) {
     const error = 'No explicit update filter provided.';
@@ -349,35 +560,6 @@ export async function buildMongoUpdatePlan({
 
     // Patch updateDoc if it was custom
     if (updatePayloadMode !== 'mapping') {
-      const patchTargetPathInUpdateDoc = (
-        value: unknown,
-        targetPath: string,
-        nextUpdates: Record<string, unknown>
-      ): unknown => {
-        const record = toRecord(value);
-        if (!record) return value;
-        const hasTarget = Object.prototype.hasOwnProperty.call(nextUpdates, targetPath);
-        const nextTargetValue = nextUpdates[targetPath];
-        const setRecord = toRecord(record['$set']);
-        if (setRecord) {
-          const nextSet: Record<string, unknown> = { ...setRecord };
-          if (hasTarget) {
-            nextSet[targetPath] = nextTargetValue;
-          } else {
-            delete nextSet[targetPath];
-          }
-          return { ...record, $set: nextSet };
-        }
-        const hasOperator = Object.keys(record).some((key: string): boolean => key.startsWith('$'));
-        if (hasOperator) return value;
-        const nextRecord: Record<string, unknown> = { ...record };
-        if (hasTarget) {
-          nextRecord[targetPath] = nextTargetValue;
-        } else {
-          delete nextRecord[targetPath];
-        }
-        return nextRecord;
-      };
       updateDoc = patchTargetPathInUpdateDoc(updateDoc, parameterTargetPath, updates);
     } else {
       updateDoc = { $set: updates };

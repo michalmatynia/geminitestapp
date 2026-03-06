@@ -1,6 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY } from '@/shared/lib/ai-paths';
+import {
+  AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
+  AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
+} from '@/shared/lib/ai-paths';
 import { fetchAiPathsSettingsByKeysCached } from '@/shared/lib/ai-paths/settings-store-client';
 
 import { AiPathsCanvasView } from '../sections/AiPathsCanvasView';
@@ -76,10 +79,8 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
 }));
 
 describe('AiPathsCanvasView switch guard', () => {
-  it('shows effective strict-native source from settings while path settings inherit', async () => {
-    mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([
-      { key: AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY, value: 'true' },
-    ]);
+  it('loads canonical runtime-kernel controls without strict-native compatibility settings', async () => {
+    mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([]);
     pageContextMock = {
       activeTab: 'canvas',
       isFocusMode: false,
@@ -155,14 +156,19 @@ describe('AiPathsCanvasView switch guard', () => {
     render(<AiPathsCanvasView />);
 
     await waitFor(() => {
-      expect(screen.getAllByText('Strict Native: On (settings)').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Strict Native: On (fixed)').length).toBeGreaterThan(0);
     });
+    expect(mockedFetchAiPathsSettingsByKeysCached).toHaveBeenCalledWith(
+      [
+        AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
+        AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
+      ],
+      { timeoutMs: 8_000, bypassCache: true }
+    );
   });
 
-  it('shows path strict-native-registry override above global settings (including legacy alias)', async () => {
-    mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([
-      { key: AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY, value: 'true' },
-    ]);
+  it('keeps fixed strict-native badges even when stale path compatibility fields are present', async () => {
+    mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([]);
     pageContextMock = {
       activeTab: 'canvas',
       isFocusMode: false,
@@ -242,8 +248,7 @@ describe('AiPathsCanvasView switch guard', () => {
     render(<AiPathsCanvasView />);
 
     await waitFor(() => {
-      expect(screen.getByText('Strict Native: On (settings)')).toBeInTheDocument();
-      expect(screen.getByText('Strict Native: Off (path)')).toBeInTheDocument();
+      expect(screen.getAllByText('Strict Native: On (fixed)').length).toBe(2);
     });
   });
 
@@ -418,7 +423,6 @@ describe('AiPathsCanvasView switch guard', () => {
     expect(runtimeKernel).toEqual({
       nodeTypes: ['template', 'parser'],
       codeObjectResolverIds: ['resolver.path'],
-      strictNativeRegistry: true,
     });
   });
 });

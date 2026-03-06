@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft,
   BarChart2,
   BookOpen,
   Flame,
@@ -12,9 +11,11 @@ import {
 import Link from 'next/link';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import KangurLearnerAssignmentsPanel from '@/features/kangur/ui/components/KangurLearnerAssignmentsPanel';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
+import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
 import LessonMasteryInsights from '@/features/kangur/ui/components/LessonMasteryInsights';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
@@ -112,7 +113,7 @@ const buildRecommendationHref = (
 
 export default function LearnerProfile() {
   const { basePath } = useKangurRouting();
-  const { user, navigateToLogin } = useKangurAuth();
+  const { user, navigateToLogin, logout } = useKangurAuth();
   const progress = useKangurProgressState();
   const [scores, setScores] = useState<KangurScoreRecord[]>([]);
   const [isLoadingScores, setIsLoadingScores] = useState(true);
@@ -122,9 +123,10 @@ export default function LearnerProfile() {
     let isActive = true;
 
     const loadScores = async (): Promise<void> => {
+      const learnerId = user?.activeLearner?.id?.trim() ?? '';
       const userName = user?.full_name?.trim() ?? '';
       const userEmail = user?.email?.trim() ?? '';
-      if (!userName && !userEmail) {
+      if (!learnerId && !userName && !userEmail) {
         if (isActive) {
           setScores([]);
           setIsLoadingScores(false);
@@ -138,6 +140,7 @@ export default function LearnerProfile() {
 
       try {
         const loadedScores = await loadLearnerProfileScores(kangurPlatform.score, {
+          learnerId,
           userName,
           userEmail,
           limit: LEARNER_PROFILE_SCORE_FETCH_LIMIT,
@@ -173,7 +176,7 @@ export default function LearnerProfile() {
     return () => {
       isActive = false;
     };
-  }, [user?.email, user?.full_name]);
+  }, [user?.activeLearner?.id, user?.email, user?.full_name]);
 
   const snapshot = useMemo(
     () =>
@@ -193,25 +196,35 @@ export default function LearnerProfile() {
   return (
     <div className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex flex-col items-center'>
       <div className='sticky top-0 z-20 w-full bg-white/70 backdrop-blur border-b border-indigo-100 px-4 py-3 flex items-center justify-between gap-3'>
-        <Link
-          href={createPageUrl('Game', basePath)}
-          className='inline-flex items-center gap-2 text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
-        >
-          <ArrowLeft className='w-4 h-4' /> Strona glowna
-        </Link>
         <div className='flex items-center gap-3'>
+          <Link
+            href={createPageUrl('Game', basePath)}
+            className='inline-flex items-center text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
+          >
+            Strona główna
+          </Link>
           <Link
             href={createPageUrl('Lessons', basePath)}
             className='inline-flex items-center gap-1.5 text-sm text-purple-500 hover:text-purple-700 font-semibold transition'
           >
             <BookOpen className='w-4 h-4' /> Lekcje
           </Link>
-          <Link
-            href={createPageUrl('ParentDashboard', basePath)}
-            className='inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 font-semibold transition'
-          >
-            <LayoutDashboard className='w-4 h-4' /> Rodzic
-          </Link>
+        </div>
+        <div className='flex items-center gap-3'>
+          <KangurProfileMenu
+            basePath={basePath}
+            isAuthenticated={Boolean(user)}
+            onLogout={() => logout(false)}
+            onLogin={navigateToLogin}
+          />
+          {user?.canManageLearners && (
+            <Link
+              href={createPageUrl('ParentDashboard', basePath)}
+              className='inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 font-semibold transition'
+            >
+              <LayoutDashboard className='w-4 h-4' /> Rodzic
+            </Link>
+          )}
         </div>
       </div>
 
@@ -221,7 +234,7 @@ export default function LearnerProfile() {
             Profil ucznia
           </h1>
           <p className='text-gray-500 mt-1'>
-            Statystyki ucznia: {user?.full_name?.trim() || 'Tryb lokalny'}.
+            Statystyki ucznia: {user?.activeLearner?.displayName?.trim() || user?.full_name?.trim() || 'Tryb lokalny'}.
           </p>
           {!user && (
             <button
@@ -342,6 +355,11 @@ export default function LearnerProfile() {
             ))}
           </div>
         </section>
+
+        <KangurLearnerAssignmentsPanel
+          basePath={basePath}
+          enabled={Boolean(user)}
+        />
 
         <LessonMasteryInsights progress={progress} />
 

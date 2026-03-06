@@ -1,16 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
 
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 import { api } from '@/shared/lib/api-client';
-
-import {
-  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
-  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
-  PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
-} from '@/shared/lib/products/constants';
+import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import { useProductFormCore } from './ProductFormCoreContext';
 import { useProductFormImages } from './ProductFormImageContext';
 import { useProductFormStudio } from './ProductFormStudioContext';
@@ -211,16 +205,13 @@ export function ProductStudioProvider({
   );
 
   const { toast } = useToast();
-  const settingsStore = useSettingsStore();
-  const settingsStoreRef = useRef(settingsStore);
-  settingsStoreRef.current = settingsStore;
+  const { defaultProjectId, getImageExternalBaseUrl } = useProductSettings();
 
   const sendToStudioMutation = useSendToStudioMutation();
   const acceptVariantMutation = useAcceptVariantMutation();
   const rotateImageSlotMutation = useRotateImageSlotMutation();
 
-  const configuredDefaultStudioProjectId =
-    settingsStore.get(PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY)?.trim() ?? '';
+  const configuredDefaultStudioProjectId = defaultProjectId;
 
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [variantsData, setVariantsData] = useState<ProductStudioVariantsResponse | null>(null);
@@ -239,8 +230,7 @@ export function ProductStudioProvider({
 
   const imageSlotPreviews = useMemo((): ProductImageSlotPreview[] => {
     const productImagesExternalBaseUrl =
-      settingsStoreRef.current.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
-      DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+      getImageExternalBaseUrl();
     return (imageSlots || [])
       .map((slot, index): ProductImageSlotPreview | null => {
         if (!slot) return null;
@@ -463,9 +453,7 @@ export function ProductStudioProvider({
     () => imageSlotPreviews.find((p) => p.index === selectedImageIndex) ?? null,
     [imageSlotPreviews, selectedImageIndex]
   );
-  const productImagesExternalBaseUrl =
-    settingsStoreRef.current.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
-    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+  const productImagesExternalBaseUrl = getImageExternalBaseUrl();
   const sourceImageSrc =
     getImageStudioSlotImageSrc(variantsData?.sourceSlot, productImagesExternalBaseUrl) ??
     selectedSourcePreview?.src ??

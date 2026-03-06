@@ -235,6 +235,55 @@ describe('handleDatabase', () => {
     expect((caughtError as { nodeOutput?: unknown }).nodeOutput).toEqual(mongoResult);
   });
 
+  it('throws when a translation guardrail blocks all safe mapping updates', async () => {
+    const mongoResult = {
+      result: null,
+      bundle: {
+        error:
+          'Translation update blocked. No safe description or parameter translation updates were resolved.',
+        guardrail: 'translation-no-updates',
+        guardrailMeta: {
+          code: 'translation-no-updates',
+          severity: 'error',
+          message:
+            'Translation update blocked. No safe description or parameter translation updates were resolved.',
+          unresolvedSourcePorts: ['value', 'result'],
+        },
+      },
+    };
+    handleDatabaseMongoActionMock.mockResolvedValue(mongoResult);
+
+    let caughtError: unknown = null;
+    try {
+      await handleDatabase({
+        ...baseContext,
+        node: {
+          id: 'node-db-translation-guardrail',
+          type: 'database',
+          title: 'Database Update',
+          inputs: [],
+          outputs: [],
+          description: '',
+          position: { x: 0, y: 0 },
+          config: {
+            database: {
+              operation: 'update',
+              useMongoActions: true,
+              actionCategory: 'update',
+              action: 'updateOne',
+            },
+          },
+        } as AiNode,
+      } as NodeHandlerContext);
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(Error);
+    expect((caughtError as Error).message).toContain('Translation update blocked');
+    expect((caughtError as { nodeOutput?: unknown }).nodeOutput).toEqual(mongoResult);
+  });
+
   it('does not throw when write outcome is warning only', async () => {
     handleDatabaseMongoActionMock.mockResolvedValue({
       result: { matchedCount: 0, modifiedCount: 0 },

@@ -10,6 +10,7 @@ type ProgressOverviewProps = {
 };
 
 type ScoreHistoryProps = {
+  learnerId?: string | null;
   playerName?: string | null;
   createdBy?: string | null;
   basePath?: string | null;

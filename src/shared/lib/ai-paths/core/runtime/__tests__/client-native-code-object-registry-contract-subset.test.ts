@@ -223,6 +223,22 @@ const buildUnsupportedClientNode = (): AiNode => ({
   position: { x: 0, y: 0 },
 });
 
+const buildFunctionNode = (): AiNode => ({
+  id: 'node-function',
+  type: 'function',
+  title: 'Function',
+  description: '',
+  inputs: [],
+  outputs: ['value'],
+  config: {
+    function: {
+      script: 'return { value: "ok" };',
+      safeMode: true,
+    },
+  },
+  position: { x: 0, y: 0 },
+});
+
 const buildPromptNode = (): AiNode => ({
   id: 'node-prompt',
   type: 'prompt',
@@ -1356,6 +1372,19 @@ describe('client native code-object registry contract subset', () => {
     });
 
     expect(result.outputs?.['node-poll']).toEqual({});
+  });
+
+  it('blocks legacy-backed nodes forced into runtime-kernel mode when no v3 contract exists', async () => {
+    await expect(
+      evaluateGraphClient({
+        nodes: [buildFunctionNode()],
+        edges: [],
+        runtimeKernelNodeTypes: ['function'],
+        reportAiPathsError: (): void => {},
+      })
+    ).rejects.toThrow(
+      `Node type 'function' is not supported in client-side execution. Use Server execution.`
+    );
   });
 
   it('keeps unsupported server-only nodes blocked in client execution', async () => {

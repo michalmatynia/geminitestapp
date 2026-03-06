@@ -21,9 +21,9 @@ import {
 const kangurPlatform = getKangurPlatform();
 
 const resolveUserProgressKey = (user: KangurUser | null): string | null => {
-  const email = user?.email?.trim().toLowerCase();
-  if (email) {
-    return email;
+  const activeLearnerId = user?.activeLearner?.id?.trim();
+  if (activeLearnerId) {
+    return activeLearnerId;
   }
 
   const id = user?.id?.trim();

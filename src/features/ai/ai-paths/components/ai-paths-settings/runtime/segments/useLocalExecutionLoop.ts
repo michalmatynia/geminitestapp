@@ -9,7 +9,6 @@ import {
   normalizeRuntimeKernelConfigRecord,
   parseRuntimeKernelCodeObjectResolverIds,
   parseRuntimeKernelNodeTypes,
-  parseRuntimeKernelStrictNativeRegistry,
 } from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-config';
 import { resolveAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine/runtime-middleware';
 
@@ -33,8 +32,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
   const runtimeKernelCodeObjectResolverIds = parseRuntimeKernelCodeObjectResolverIds(
     runtimeKernelConfig?.['codeObjectResolverIds']
   );
-  const runtimeKernelStrictNativeRegistry =
-    parseRuntimeKernelStrictNativeRegistry(runtimeKernelConfig?.['strictNativeRegistry']) ?? true;
+  const runtimeKernelStrictNativeRegistry = true;
   const runLocalLoop = useCallback(
     async (
       mode: 'run' | 'step'

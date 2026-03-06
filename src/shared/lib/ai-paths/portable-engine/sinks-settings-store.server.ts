@@ -3,6 +3,7 @@ import 'server-only';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { type PrismaSettingClient, canUsePrismaSettings } from './types';
 
 type PortablePathSettingsStoreSettingRecord = {
   _id?: string;
@@ -12,26 +13,11 @@ type PortablePathSettingsStoreSettingRecord = {
   updatedAt?: Date;
 };
 
-type PrismaSettingClient = {
-  setting?: {
-    findUnique: (input: {
-      where: { key: string };
-      select: { value: true };
-    }) => Promise<{ value: string } | null>;
-    upsert: (input: {
-      where: { key: string };
-      create: { key: string; value: string };
-      update: { value: string };
-    }) => Promise<unknown>;
-  };
-};
-
-const canUsePrismaSettings = (): boolean => Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
-
 const readSettingsRawFromPrisma = async (key: string): Promise<string | null> => {
-  if (!canUsePrismaSettings()) return null;
+  if (!canUsePrismaSettings(prisma)) return null;
   try {
-    const prismaClient = prisma as PrismaSettingClient;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const prismaClient = (prisma as any) as PrismaSettingClient;
     if (!prismaClient.setting || typeof prismaClient.setting.findUnique !== 'function') {
       return null;
     }
@@ -46,9 +32,10 @@ const readSettingsRawFromPrisma = async (key: string): Promise<string | null> =>
 };
 
 const writeSettingsRawToPrisma = async (key: string, raw: string): Promise<boolean> => {
-  if (!canUsePrismaSettings()) return false;
+  if (!canUsePrismaSettings(prisma)) return false;
   try {
-    const prismaClient = prisma as PrismaSettingClient;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const prismaClient = (prisma as any) as PrismaSettingClient;
     if (!prismaClient.setting || typeof prismaClient.setting.upsert !== 'function') {
       return false;
     }

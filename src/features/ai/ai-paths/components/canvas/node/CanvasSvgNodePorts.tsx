@@ -193,7 +193,7 @@ export function CanvasSvgNodePorts({
                 event.stopPropagation();
                 trackConnectorPressMove(event, key);
                 const isConnectorTap = consumeConnectorTap(event, key);
-                void onCompleteConnection(event, node, port);
+                onCompleteConnection(event, node, port);
                 if (isConnectorTap) {
                   handleConnectorTap(event, 'input', node.id, port, key, isPinned);
                 }
@@ -205,7 +205,7 @@ export function CanvasSvgNodePorts({
               onContextMenu={(event: React.MouseEvent<SVGCircleElement>) => {
                 event.preventDefault();
                 event.stopPropagation();
-                void onDisconnectPort('input', node.id, port);
+                onDisconnectPort('input', node.id, port);
               }}
               onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
                 updateConnectorHover(event, 'input', node.id, port, key);
@@ -236,7 +236,7 @@ export function CanvasSvgNodePorts({
                 event.stopPropagation();
                 trackConnectorPressMove(event, key);
                 const isConnectorTap = consumeConnectorTap(event, key);
-                void onCompleteConnection(event, node, port);
+                onCompleteConnection(event, node, port);
                 if (isConnectorTap) {
                   handleConnectorTap(event, 'input', node.id, port, key, isPinned);
                 }
@@ -298,7 +298,7 @@ export function CanvasSvgNodePorts({
                 event.stopPropagation();
                 trackConnectorPressMove(event, key);
                 const isConnectorTap = consumeConnectorTap(event, key);
-                void onCompleteConnection(event, node, port);
+                onCompleteConnection(event, node, port);
                 if (isConnectorTap) {
                   handleConnectorTap(event, 'output', node.id, port, key, isPinned);
                 }
@@ -306,7 +306,7 @@ export function CanvasSvgNodePorts({
               onContextMenu={(event: React.MouseEvent<SVGCircleElement>) => {
                 event.preventDefault();
                 event.stopPropagation();
-                void onDisconnectPort('output', node.id, port);
+                onDisconnectPort('output', node.id, port);
               }}
               onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
                 updateConnectorHover(event, 'output', node.id, port, key);
@@ -341,7 +341,7 @@ export function CanvasSvgNodePorts({
                 event.stopPropagation();
                 trackConnectorPressMove(event, key);
                 const isConnectorTap = consumeConnectorTap(event, key);
-                void onCompleteConnection(event, node, port);
+                onCompleteConnection(event, node, port);
                 if (isConnectorTap) {
                   handleConnectorTap(event, 'output', node.id, port, key, isPinned);
                 }

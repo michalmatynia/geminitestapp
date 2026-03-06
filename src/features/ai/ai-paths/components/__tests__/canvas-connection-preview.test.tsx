@@ -96,6 +96,59 @@ const buildContextValue = (): CanvasBoardUIContextValue => {
   };
 };
 
+const buildConnectorInfo = (nodeId: string) => ({
+  direction: 'output' as 'output' | 'input',
+  nodeId,
+  port: 'result',
+  expectedTypes: ['string'] as PortDataType[],
+  expectedLabel: 'string',
+  rawValue: 'ok',
+  value: 'ok',
+  isHistory: false,
+  historyLength: 0,
+  actualType: 'string',
+  runtimeMismatch: false,
+  connectionMismatches: [],
+  hasMismatch: false,
+  nodeInputs: {},
+  nodeOutputs: { result: 'ok' },
+});
+
+const renderNodePorts = (input?: {
+  node?: AiNode;
+  contextOverrides?: Partial<CanvasBoardUIContextValue>;
+}) => {
+  const node = input?.node ?? buildNode();
+  const value = buildContextValue();
+  value.nodes = [node];
+  value.nodeById = new Map([[node.id, node]]);
+  if (input?.contextOverrides) {
+    Object.assign(value, input.contextOverrides);
+  }
+  const getConnectorInfo = vi.fn(() => buildConnectorInfo(node.id));
+
+  const renderResult = render(
+    <svg>
+      <CanvasBoardUIProvider value={value}>
+        <CanvasSvgNodePorts
+          node={node}
+          incomingEdgePortSet={new Set<string>()}
+          connectorHitRadius={16}
+          showPortLabels={false}
+          buildConnectorKey={(
+            direction: 'input' | 'output',
+            nodeId: string,
+            port: string
+          ): string => `${direction}:${nodeId}:${port}`}
+          getConnectorInfo={getConnectorInfo}
+        />
+      </CanvasBoardUIProvider>
+    </svg>
+  );
+
+  return { ...renderResult, node, value, getConnectorInfo };
+};
+
 describe('canvas connection preview', () => {
   it('renders transient connecting preview path while dragging a connection', () => {
     const value = buildContextValue();
@@ -115,50 +168,12 @@ describe('canvas connection preview', () => {
   });
 
   it('forwards real pointer events from output connector start handlers', () => {
-    const node = buildNode();
     const onStartConnection = vi.fn();
-    const { container } = render(
-      <svg>
-        <CanvasSvgNodePorts
-          node={node}
-          incomingEdgePortSet={new Set<string>()}
-          hoveredConnectorKey={null}
-          pinnedConnectorKey={null}
-          connectorHitRadius={16}
-          showPortLabels={false}
-          buildConnectorKey={(
-            direction: 'input' | 'output',
-            nodeId: string,
-            port: string
-          ): string => `${direction}:${nodeId}:${port}`}
-          onReconnectInput={vi.fn()}
-          onCompleteConnection={vi.fn()}
-          onDisconnectPort={vi.fn()}
-          onStartConnection={onStartConnection}
-          setHoveredConnectorKey={vi.fn()}
-          onConnectorHover={vi.fn()}
-          onConnectorLeave={vi.fn()}
-          getConnectorInfo={vi.fn(() => ({
-            direction: 'output' as 'output' | 'input',
-            nodeId: node.id,
-            port: 'result',
-            expectedTypes: ['string'] as PortDataType[],
-            expectedLabel: 'string',
-            rawValue: 'ok',
-            value: 'ok',
-            isHistory: false,
-            historyLength: 0,
-            actualType: 'string',
-            runtimeMismatch: false,
-            connectionMismatches: [],
-            hasMismatch: false,
-            nodeInputs: {},
-            nodeOutputs: { result: 'ok' },
-          }))}
-          setPinnedConnectorKey={vi.fn()}
-        />
-      </svg>
-    );
+    const { container, node } = renderNodePorts({
+      contextOverrides: {
+        onStartConnection,
+      },
+    });
 
     const outputPort = container.querySelector('circle[data-port="output"]');
     expect(outputPort).toBeTruthy();
@@ -173,52 +188,16 @@ describe('canvas connection preview', () => {
   });
 
   it('pins output connector tooltip on pointer tap without drag movement', () => {
-    const node = buildNode();
     const onStartConnection = vi.fn();
     const onCompleteConnection = vi.fn();
     const setPinnedConnectorKey = vi.fn();
-    const { container } = render(
-      <svg>
-        <CanvasSvgNodePorts
-          node={node}
-          incomingEdgePortSet={new Set<string>()}
-          hoveredConnectorKey={null}
-          pinnedConnectorKey={null}
-          connectorHitRadius={16}
-          showPortLabels={false}
-          buildConnectorKey={(
-            direction: 'input' | 'output',
-            nodeId: string,
-            port: string
-          ): string => `${direction}:${nodeId}:${port}`}
-          onReconnectInput={vi.fn()}
-          onCompleteConnection={onCompleteConnection}
-          onDisconnectPort={vi.fn()}
-          onStartConnection={onStartConnection}
-          setHoveredConnectorKey={vi.fn()}
-          onConnectorHover={vi.fn()}
-          onConnectorLeave={vi.fn()}
-          getConnectorInfo={vi.fn(() => ({
-            direction: 'output' as 'output' | 'input',
-            nodeId: node.id,
-            port: 'result',
-            expectedTypes: ['string'] as PortDataType[],
-            expectedLabel: 'string',
-            rawValue: 'ok',
-            value: 'ok',
-            isHistory: false,
-            historyLength: 0,
-            actualType: 'string',
-            runtimeMismatch: false,
-            connectionMismatches: [],
-            hasMismatch: false,
-            nodeInputs: {},
-            nodeOutputs: { result: 'ok' },
-          }))}
-          setPinnedConnectorKey={setPinnedConnectorKey}
-        />
-      </svg>
-    );
+    const { container } = renderNodePorts({
+      contextOverrides: {
+        onStartConnection,
+        onCompleteConnection,
+        setPinnedConnectorKey,
+      },
+    });
 
     const outputPort = container.querySelector('circle[data-port="output"]');
     expect(outputPort).toBeTruthy();
@@ -245,51 +224,14 @@ describe('canvas connection preview', () => {
   });
 
   it('does not pin output connector tooltip when pointer drag movement exceeds threshold', () => {
-    const node = buildNode();
     const onCompleteConnection = vi.fn();
     const setPinnedConnectorKey = vi.fn();
-    const { container } = render(
-      <svg>
-        <CanvasSvgNodePorts
-          node={node}
-          incomingEdgePortSet={new Set<string>()}
-          hoveredConnectorKey={null}
-          pinnedConnectorKey={null}
-          connectorHitRadius={16}
-          showPortLabels={false}
-          buildConnectorKey={(
-            direction: 'input' | 'output',
-            nodeId: string,
-            port: string
-          ): string => `${direction}:${nodeId}:${port}`}
-          onReconnectInput={vi.fn()}
-          onCompleteConnection={onCompleteConnection}
-          onDisconnectPort={vi.fn()}
-          onStartConnection={vi.fn()}
-          setHoveredConnectorKey={vi.fn()}
-          onConnectorHover={vi.fn()}
-          onConnectorLeave={vi.fn()}
-          getConnectorInfo={vi.fn(() => ({
-            direction: 'output' as 'output' | 'input',
-            nodeId: node.id,
-            port: 'result',
-            expectedTypes: ['string'] as PortDataType[],
-            expectedLabel: 'string',
-            rawValue: 'ok',
-            value: 'ok',
-            isHistory: false,
-            historyLength: 0,
-            actualType: 'string',
-            runtimeMismatch: false,
-            connectionMismatches: [],
-            hasMismatch: false,
-            nodeInputs: {},
-            nodeOutputs: { result: 'ok' },
-          }))}
-          setPinnedConnectorKey={setPinnedConnectorKey}
-        />
-      </svg>
-    );
+    const { container } = renderNodePorts({
+      contextOverrides: {
+        onCompleteConnection,
+        setPinnedConnectorKey,
+      },
+    });
 
     const outputPort = container.querySelector('circle[data-port="output"]');
     expect(outputPort).toBeTruthy();
@@ -322,50 +264,13 @@ describe('canvas connection preview', () => {
   });
 
   it('freezes connector hover payload updates while a connector is pinned', () => {
-    const node = buildNode();
     const onConnectorHover = vi.fn();
-    const { container } = render(
-      <svg>
-        <CanvasSvgNodePorts
-          node={node}
-          incomingEdgePortSet={new Set<string>()}
-          hoveredConnectorKey={null}
-          pinnedConnectorKey='output:node-preview:result'
-          connectorHitRadius={16}
-          showPortLabels={false}
-          buildConnectorKey={(
-            direction: 'input' | 'output',
-            nodeId: string,
-            port: string
-          ): string => `${direction}:${nodeId}:${port}`}
-          onReconnectInput={vi.fn()}
-          onCompleteConnection={vi.fn()}
-          onDisconnectPort={vi.fn()}
-          onStartConnection={vi.fn()}
-          setHoveredConnectorKey={vi.fn()}
-          onConnectorHover={onConnectorHover}
-          onConnectorLeave={vi.fn()}
-          getConnectorInfo={vi.fn(() => ({
-            direction: 'output' as 'output' | 'input',
-            nodeId: node.id,
-            port: 'result',
-            expectedTypes: ['string'] as PortDataType[],
-            expectedLabel: 'string',
-            rawValue: 'ok',
-            value: 'ok',
-            isHistory: false,
-            historyLength: 0,
-            actualType: 'string',
-            runtimeMismatch: false,
-            connectionMismatches: [],
-            hasMismatch: false,
-            nodeInputs: {},
-            nodeOutputs: { result: 'ok' },
-          }))}
-          setPinnedConnectorKey={vi.fn()}
-        />
-      </svg>
-    );
+    const { container } = renderNodePorts({
+      contextOverrides: {
+        pinnedConnectorKey: 'output:node-preview:result',
+        onConnectorHover,
+      },
+    });
 
     const outputPort = container.querySelector('circle[data-port="output"]');
     expect(outputPort).toBeTruthy();
@@ -390,51 +295,15 @@ describe('canvas connection preview', () => {
   });
 
   it('captures a fresh tooltip payload when tapping a new connector while another is pinned', () => {
-    const node = buildNode();
     const onConnectorHover = vi.fn();
     const setPinnedConnectorKey = vi.fn();
-    const { container } = render(
-      <svg>
-        <CanvasSvgNodePorts
-          node={node}
-          incomingEdgePortSet={new Set<string>()}
-          hoveredConnectorKey={null}
-          pinnedConnectorKey='output:node-other:result'
-          connectorHitRadius={16}
-          showPortLabels={false}
-          buildConnectorKey={(
-            direction: 'input' | 'output',
-            nodeId: string,
-            port: string
-          ): string => `${direction}:${nodeId}:${port}`}
-          onReconnectInput={vi.fn()}
-          onCompleteConnection={vi.fn()}
-          onDisconnectPort={vi.fn()}
-          onStartConnection={vi.fn()}
-          setHoveredConnectorKey={vi.fn()}
-          onConnectorHover={onConnectorHover}
-          onConnectorLeave={vi.fn()}
-          getConnectorInfo={vi.fn(() => ({
-            direction: 'output' as 'output' | 'input',
-            nodeId: node.id,
-            port: 'result',
-            expectedTypes: ['string'] as PortDataType[],
-            expectedLabel: 'string',
-            rawValue: 'ok',
-            value: 'ok',
-            isHistory: false,
-            historyLength: 0,
-            actualType: 'string',
-            runtimeMismatch: false,
-            connectionMismatches: [],
-            hasMismatch: false,
-            nodeInputs: {},
-            nodeOutputs: { result: 'ok' },
-          }))}
-          setPinnedConnectorKey={setPinnedConnectorKey}
-        />
-      </svg>
-    );
+    const { container } = renderNodePorts({
+      contextOverrides: {
+        pinnedConnectorKey: 'output:node-other:result',
+        onConnectorHover,
+        setPinnedConnectorKey,
+      },
+    });
 
     const outputPort = container.querySelector('circle[data-port="output"]');
     expect(outputPort).toBeTruthy();

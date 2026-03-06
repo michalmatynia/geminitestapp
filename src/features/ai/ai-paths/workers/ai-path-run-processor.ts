@@ -5,6 +5,7 @@ import { recoverStaleRunningRuns } from '@/features/ai/ai-paths/services/path-ru
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import { recordRuntimeRunFinished } from '@/features/ai/ai-paths/services/runtime-analytics-service';
+import { isTerminalAiPathRunStatus } from '@/features/ai/ai-paths/lib/path-run-status';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { isObjectRecord } from '@/shared/utils/object-utils';
@@ -23,7 +24,6 @@ const ORPHAN_QUEUED_RECOVERY_BATCH_SIZE = Math.max(
   1,
   Number.parseInt(process.env['AI_PATHS_ORPHAN_QUEUED_RECOVERY_BATCH_SIZE'] ?? '25', 10) || 25
 );
-const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 const DEBUG_AI_PATH_QUEUE = process.env['AI_PATHS_QUEUE_DEBUG'] === 'true';
 const LOG_SOURCE = 'ai-path-run-processor';
 
@@ -231,7 +231,7 @@ export const processRun = async (
       pathId: run.pathId,
     });
     const latest = await repo.findRunById(run.id);
-    if (latest && TERMINAL_RUN_STATUSES.has(latest.status)) {
+    if (latest && isTerminalAiPathRunStatus(latest.status)) {
       // Another flow (e.g. cancel endpoint) already finalized the run.
       return;
     }

@@ -34,6 +34,10 @@ import { queryCache, ProductCacheHelpers } from '@/features/products/performance
 import { CachedProductMutations, withCacheInvalidation } from '@/features/products/performance/cached-service';
 import { productService } from '@/shared/lib/products/services/productService';
 
+const createProductMock = productService.createProduct as ReturnType<typeof vi.fn>;
+const updateProductMock = productService.updateProduct as ReturnType<typeof vi.fn>;
+const deleteProductMock = productService.deleteProduct as ReturnType<typeof vi.fn>;
+
 const PRODUCT_ID = 'prod-abc-123';
 
 const mockProduct = {

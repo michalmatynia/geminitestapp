@@ -9,20 +9,24 @@ import {
   AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
   AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
 } from '@/shared/lib/ai-paths/core/constants';
+import {
+  DEPRECATED_AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
+  DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
+  DEPRECATED_AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD,
+} from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-legacy-aliases';
 import { AI_PATHS_CONFIG_KEY_PREFIX } from '@/features/ai/ai-paths/server/settings-store.constants';
-
-const DEPRECATED_AI_PATHS_RUNTIME_KERNEL_MODE_KEY = 'ai_paths_runtime_kernel_mode';
-const DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY =
-  'ai_paths_runtime_kernel_pilot_node_types';
-const DEPRECATED_AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY =
-  'ai_paths_runtime_kernel_strict_native_registry';
 
 describe('AI Paths maintenance runtime-kernel settings normalization', () => {
   it('surfaces normalization action when deprecated runtime mode is stored', () => {
     const records: AiPathsSettingRecord[] = [
       {
         key: DEPRECATED_AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
-        value: 'legacy_only',
+        value: DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
       },
     ];
 
@@ -42,7 +46,7 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
     const records: AiPathsSettingRecord[] = [
       {
         key: DEPRECATED_AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
-        value: 'legacy_only',
+        value: DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
       },
     ];
 
@@ -147,10 +151,13 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
           edges: [],
           extensions: {
             runtimeKernel: {
-              mode: 'legacy_only',
-              pilotNodeTypes: ' Template Node, parser ',
-              resolverIds: ' resolver.primary , resolver.fallback ',
-              strictCodeObjectRegistry: ' YES ',
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]:
+                DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]:
+                ' Template Node, parser ',
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]:
+                ' resolver.primary , resolver.fallback ',
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD]: ' YES ',
             },
           },
         }),
@@ -184,10 +191,13 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
           edges: [],
           extensions: {
             runtimeKernel: {
-              mode: 'legacy_only',
-              pilotNodeTypes: ' Template Node, parser ',
-              resolverIds: ' resolver.primary , resolver.fallback ',
-              strictCodeObjectRegistry: ' YES ',
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]:
+                DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]:
+                ' Template Node, parser ',
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]:
+                ' resolver.primary , resolver.fallback ',
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD]: ' YES ',
             },
           },
         }),

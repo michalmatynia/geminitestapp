@@ -4,6 +4,7 @@ import type { DropResult } from '@hello-pangea/dnd';
 import { AnimatePresence, motion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import {
   addXp,
   createLessonPracticeReward,
@@ -278,13 +279,14 @@ function CompleteEquation({
         </Droppable>
 
         {!checked && (
-          <button
-            onClick={check}
+          <KangurButton
             disabled={state.slotA.length === 0 || state.slotB.length === 0}
-            className='px-6 py-2 rounded-2xl bg-orange-400 text-white font-bold disabled:opacity-40 hover:bg-orange-500 transition'
+            onClick={check}
+            size='lg'
+            variant='primary'
           >
             Sprawdź ✓
-          </button>
+          </KangurButton>
         )}
         {checked && (
           <motion.div
@@ -487,13 +489,14 @@ function GroupSum({
         </Droppable>
 
         {!checked && (
-          <button
-            onClick={check}
+          <KangurButton
             disabled={state.group1.length === 0 || state.group2.length === 0}
-            className='px-6 py-2 rounded-2xl bg-orange-400 text-white font-bold disabled:opacity-40 hover:bg-orange-500 transition'
+            onClick={check}
+            size='lg'
+            variant='primary'
           >
             Sprawdź ✓
-          </button>
+          </KangurButton>
         )}
         {checked && (
           <motion.div
@@ -686,7 +689,8 @@ export default function AddingBallGame({ onFinish }: AddingBallGameProps): React
               : 'Nie poddawaj się!'}
         </p>
         <div className='flex gap-3 w-full'>
-          <button
+          <KangurButton
+            className='flex-1'
             onClick={() => {
               setRoundIdx(0);
               setScore(0);
@@ -694,16 +698,14 @@ export default function AddingBallGame({ onFinish }: AddingBallGameProps): React
               setXpEarned(0);
               setRound(generateRound(MODES[0] ?? 'complete_equation'));
             }}
-            className='flex-1 flex items-center justify-center gap-2 py-2 rounded-2xl border-2 border-gray-200 text-gray-500 font-bold hover:bg-gray-50 transition'
+            size='lg'
+            variant='secondary'
           >
             <RefreshCw className='w-4 h-4' /> Jeszcze raz
-          </button>
-          <button
-            onClick={onFinish}
-            className='flex-1 py-2 rounded-2xl bg-gradient-to-r from-orange-400 to-yellow-400 text-white font-bold shadow hover:opacity-90 transition'
-          >
+          </KangurButton>
+          <KangurButton className='flex-1' onClick={onFinish} size='lg' variant='primary'>
             Wróć do lekcji
-          </button>
+          </KangurButton>
         </div>
       </motion.div>
     );

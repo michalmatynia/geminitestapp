@@ -11,6 +11,8 @@ import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
+import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
 
 type GeometryShapesLessonProps = { onBack: () => void };
 type SectionId = 'podstawowe' | 'ile_bokow' | 'game';
@@ -24,21 +26,23 @@ const SHAPE_CARDS = [
   { emoji: '⬢', name: 'Szesciokąt', details: '6 boków i 6 rogów' },
 ] as const;
 
-const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
+export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
   podstawowe: [
     {
       title: 'Poznaj figury',
       content: (
         <div className='grid grid-cols-2 gap-2'>
           {SHAPE_CARDS.slice(0, 4).map((shape) => (
-            <div
+            <KangurLessonCallout
               key={shape.name}
-              className='rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-3 text-center'
+              accent='violet'
+              className='text-center'
+              padding='sm'
             >
               <div className='text-3xl'>{shape.emoji}</div>
               <div className='mt-1 text-sm font-bold text-fuchsia-700'>{shape.name}</div>
               <div className='text-xs text-fuchsia-600'>{shape.details}</div>
-            </div>
+            </KangurLessonCallout>
           ))}
         </div>
       ),
@@ -50,9 +54,11 @@ const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       content: (
         <div className='space-y-2'>
           {SHAPE_CARDS.map((shape) => (
-            <div
+            <KangurLessonCallout
               key={shape.name}
-              className='rounded-2xl border border-fuchsia-200 bg-white px-3 py-2'
+              accent='slate'
+              className='border-fuchsia-200/85'
+              padding='sm'
             >
               <div className='flex items-center gap-2'>
                 <span className='text-2xl'>{shape.emoji}</span>
@@ -61,7 +67,7 @@ const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
                   <p className='text-xs text-gray-500'>{shape.details}</p>
                 </div>
               </div>
-            </div>
+            </KangurLessonCallout>
           ))}
         </div>
       ),
@@ -69,7 +75,7 @@ const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
   ],
 };
 
-const HUB_SECTIONS = [
+export const HUB_SECTIONS = [
   { id: 'podstawowe', emoji: '🔺', title: 'Podstawowe figury', description: 'Koło, trójkąt, kwadrat, prostokąt' },
   { id: 'ile_bokow', emoji: '🔢', title: 'Boki i rogi', description: 'Każda figura pod lupą' },
   { id: 'game', emoji: '✍️', title: 'Rysuj figury', description: 'Narysuj kształt i zdobadz XP', isGame: true },
@@ -94,18 +100,21 @@ export default function GeometryShapesLesson({ onBack }: GeometryShapesLessonPro
   if (activeSection === 'game') {
     return (
       <div className='flex w-full max-w-md flex-col items-center gap-4'>
-        <button
+        <KangurButton
           onClick={() => setActiveSection(null)}
-          className='self-start rounded-xl border border-fuchsia-200 px-3 py-1 text-sm font-semibold text-fuchsia-700 hover:bg-fuchsia-50'
+          className='self-start'
+          size='sm'
+          type='button'
+          variant='ghost'
         >
           Wróc do menu
-        </button>
-        <div className='w-full rounded-3xl bg-white p-5 shadow-xl'>
-          <h2 className='mb-4 text-center text-xl font-extrabold text-fuchsia-700'>
+        </KangurButton>
+        <KangurPanel className='w-full' padding='xl' variant='soft'>
+          <h2 className='mb-4 text-center text-xl font-extrabold text-slate-800'>
             🔷 Trening figur
           </h2>
           <GeometryDrawingGame onFinish={() => setActiveSection(null)} />
-        </div>
+        </KangurPanel>
       </div>
     );
   }

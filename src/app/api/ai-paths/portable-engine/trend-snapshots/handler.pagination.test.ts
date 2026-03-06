@@ -3,56 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from '@/shared/lib/ai-paths/portable-engine';
 
-const { builders.requireAiPathsAccessMock } = vi.hoisted(() => ({
-  builders.requireAiPathsAccessMock: vi.fn(),
-}));
-
-const { builders.getPortablePathRunExecutionSnapshotMock } = vi.hoisted(() => ({
-  builders.getPortablePathRunExecutionSnapshotMock: vi.fn(),
-}));
-
-const {
-  builders.loadPortablePathAuditSinkAutoRemediationDeadLettersMock,
-  builders.loadPortablePathSigningPolicyTrendSnapshotsMock,
-  builders.loadPortablePathAuditSinkStartupHealthStateMock,
-  builders.resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironmentMock,
-  builders.resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironmentMock,
-  builders.resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironmentMock,
-  builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironmentMock,
-  builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironmentMock,
-  builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironmentMock,
-  builders.resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironmentMock,
-  builders.resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironmentMock,
-  builders.resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironmentMock,
-  builders.resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironmentMock,
-  builders.resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironmentMock,
-  builders.resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironmentMock,
-  builders.resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironmentMock,
-  builders.resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironmentMock,
-  builders.resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironmentMock,
-  builders.resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock,
-} = vi.hoisted(() => ({
-  builders.loadPortablePathAuditSinkAutoRemediationDeadLettersMock: vi.fn(),
-  builders.loadPortablePathSigningPolicyTrendSnapshotsMock: vi.fn(),
-  builders.loadPortablePathAuditSinkStartupHealthStateMock: vi.fn(),
-  builders.resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironmentMock: vi.fn(),
-  builders.resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironmentMock: vi.fn(),
-  builders.resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironmentMock: vi.fn(),
-  builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironmentMock: vi.fn(),
-  builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironmentMock: vi.fn(),
-  builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironmentMock: vi.fn(),
-  builders.resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironmentMock: vi.fn(),
-  builders.resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironmentMock: vi.fn(),
-  builders.resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironmentMock: vi.fn(),
-  builders.resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironmentMock: vi.fn(),
-  builders.resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironmentMock: vi.fn(),
-  builders.resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironmentMock: vi.fn(),
-  builders.resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironmentMock: vi.fn(),
-  builders.resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironmentMock: vi.fn(),
-  builders.resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironmentMock: vi.fn(),
-  builders.resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock: vi.fn(),
-}));
-
 vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsAccess: builders.requireAiPathsAccessMock,
 }));

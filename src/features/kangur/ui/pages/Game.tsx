@@ -17,6 +17,13 @@ import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/Kang
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
 import { PlayerProgressCard, XpToast } from '@/features/kangur/ui/components/progress';
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import {
+  KangurButton,
+  KangurPageContainer,
+  KangurPageShell,
+  KangurPageTopBar,
+  KangurPanel,
+} from '@/features/kangur/ui/design/primitives';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurPlatform, KangurUser } from '@/features/kangur/services/ports';
@@ -346,52 +353,47 @@ export default function Game() {
   );
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex flex-col items-center'>
+    <KangurPageShell tone='play'>
       <XpToast
         xpGained={xpToast.xpGained}
         newBadges={xpToast.newBadges}
         visible={xpToast.visible}
       />
-      {/* Top nav bar */}
-      <div
-        className='sticky top-0 z-20 w-full bg-white/70 backdrop-blur border-b border-indigo-100 px-6 py-3 flex items-center justify-between'
-      >
-        <div className='flex items-center gap-3'>
-          {screen !== 'home' && (
-            <button
-              onClick={handleHome}
-              className='inline-flex items-center text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
-            >
-              Strona główna
-            </button>
-          )}
-          <Link
-            href={createPageUrl('Lessons', basePath)}
-            className='inline-flex items-center gap-1.5 text-sm text-purple-500 hover:text-purple-700 font-semibold transition'
-          >
-            <BookOpen className='w-4 h-4' /> Lekcje
-          </Link>
-        </div>
-        <div className='flex items-center gap-3'>
-          <KangurProfileMenu
-            basePath={basePath}
-            isAuthenticated={Boolean(user)}
-            onLogout={handleLogout}
-            onLogin={handleLogin}
-          />
-          {user?.canManageLearners && (
-            <Link
-              href={createPageUrl('ParentDashboard', basePath)}
-              className='inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 font-semibold transition'
-            >
-              <LayoutDashboard className='w-4 h-4' /> Rodzic
-            </Link>
-          )}
-        </div>
-      </div>
+      <KangurPageTopBar
+        left={
+          <>
+            {screen !== 'home' && (
+              <KangurButton onClick={handleHome} size='sm' variant='ghost'>
+                Strona glowna
+              </KangurButton>
+            )}
+            <KangurButton asChild size='sm' variant='ghost'>
+              <Link href={createPageUrl('Lessons', basePath)}>
+                <BookOpen className='w-4 h-4' /> Lekcje
+              </Link>
+            </KangurButton>
+          </>
+        }
+        right={
+          <>
+            <KangurProfileMenu
+              basePath={basePath}
+              isAuthenticated={Boolean(user)}
+              onLogout={handleLogout}
+              onLogin={handleLogin}
+            />
+            {user?.canManageLearners && (
+              <KangurButton asChild size='sm' variant='ghost'>
+                <Link href={createPageUrl('ParentDashboard', basePath)}>
+                  <LayoutDashboard className='w-4 h-4' /> Rodzic
+                </Link>
+              </KangurButton>
+            )}
+          </>
+        }
+      />
 
-      <div className='flex flex-col items-center w-full'>
-        {/* Header */}
+      <KangurPageContainer className='flex flex-col items-center'>
         <motion.div
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -403,12 +405,9 @@ export default function Game() {
           </h1>
           {!userLoading && !user ? (
             <div className='mt-3 flex justify-center'>
-              <button
-                onClick={handleLogin}
-                className='flex items-center gap-2 text-sm bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-2xl shadow transition font-semibold'
-              >
+              <KangurButton onClick={handleLogin} size='md' variant='secondary'>
                 <LogIn className='w-4 h-4' /> Zaloguj się, aby wejść na tablicę wyników
-              </button>
+              </KangurButton>
             </div>
           ) : null}
         </motion.div>
@@ -420,59 +419,48 @@ export default function Game() {
               {...screenMotionProps}
               className='flex flex-col items-center gap-6 w-full'
             >
-              <div className='bg-white rounded-3xl shadow-xl p-8 flex flex-col items-center gap-4 w-full max-w-sm'>
+              <KangurPanel className='flex w-full max-w-sm flex-col items-center gap-4' padding='xl' variant='elevated'>
                 <div className='text-4xl'>👋</div>
                 {user ? (
                   <>
-                    <h2 className='text-2xl font-bold text-gray-700'>
+                    <h2 className='text-2xl font-bold text-slate-700'>
                       Cześć, {user.full_name}! 🎉
                     </h2>
                     <KangurAssignmentSpotlight basePath={basePath} />
-                    <Link href={createPageUrl('Lessons', basePath)} className='w-full'>
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.97 }}
-                        className='w-full bg-gradient-to-r from-purple-400 to-pink-400 text-white font-extrabold text-lg py-3 rounded-2xl shadow text-center transition'
-                      >
-                        📚 Lekcje
-                      </motion.div>
-                    </Link>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={handleStartGame}
-                      className='w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-extrabold text-xl py-3 rounded-2xl shadow-lg transition'
-                    >
+                    <KangurButton asChild className='w-full' size='lg' variant='secondary'>
+                      <Link href={createPageUrl('Lessons', basePath)}>📚 Lekcje</Link>
+                    </KangurButton>
+                    <KangurButton className='w-full' onClick={handleStartGame} size='xl' variant='primary'>
                       Grajmy! 🚀
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.97 }}
+                    </KangurButton>
+                    <KangurButton
+                      className='w-full'
                       onClick={() => setScreen('training')}
-                      className='w-full bg-gradient-to-r from-teal-400 to-indigo-500 text-white font-extrabold text-lg py-3 rounded-2xl shadow transition'
+                      size='lg'
+                      variant='surface'
                     >
                       🏋️ Trening mieszany
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.97 }}
+                    </KangurButton>
+                    <KangurButton
+                      className='w-full'
                       onClick={() => setScreen('geometry_quiz')}
-                      className='w-full bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white font-extrabold text-lg py-3 rounded-2xl shadow transition'
+                      size='lg'
+                      variant='secondary'
                     >
                       🔷 Trening figur
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.97 }}
+                    </KangurButton>
+                    <KangurButton
+                      className='w-full'
                       onClick={() => setScreen('kangur_setup')}
-                      className='w-full bg-gradient-to-r from-orange-400 to-yellow-400 text-white font-extrabold text-lg py-3 rounded-2xl shadow transition'
+                      size='lg'
+                      variant='warning'
                     >
                       🦘 Kangur Matematyczny
-                    </motion.button>
+                    </KangurButton>
                   </>
                 ) : (
                   <>
-                    <h2 className='text-2xl font-bold text-gray-700'>Jak masz na imię?</h2>
+                    <h2 className='text-2xl font-bold text-slate-700'>Jak masz na imię?</h2>
                     <input
                       type='text'
                       placeholder='Wpisz swoje imię...'
@@ -482,63 +470,54 @@ export default function Game() {
                       className='w-full border-2 border-indigo-200 rounded-2xl px-4 py-3 text-lg text-gray-700 focus:outline-none focus:border-indigo-400'
                       maxLength={20}
                     />
-                    <p className='text-xs text-gray-400 text-center'>
+                    <p className='text-center text-xs text-slate-400'>
                       Zaloguj się, aby Twój wynik pojawił się na tablicy!
                     </p>
-                    <Link href={createPageUrl('Lessons', basePath)} className='w-full'>
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.97 }}
-                        className='w-full bg-gradient-to-r from-purple-400 to-pink-400 text-white font-extrabold text-lg py-3 rounded-2xl shadow text-center transition'
-                      >
-                        📚 Lekcje
-                      </motion.div>
-                    </Link>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={handleStartGame}
+                    <KangurButton asChild className='w-full' size='lg' variant='secondary'>
+                      <Link href={createPageUrl('Lessons', basePath)}>📚 Lekcje</Link>
+                    </KangurButton>
+                    <KangurButton
+                      className='w-full'
                       disabled={!playerName.trim()}
-                      className='w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-extrabold text-xl py-3 rounded-2xl shadow-lg disabled:opacity-40 transition'
+                      onClick={handleStartGame}
+                      size='xl'
+                      variant='primary'
                     >
                       Grajmy! 🚀
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => playerName.trim() && setScreen('training')}
+                    </KangurButton>
+                    <KangurButton
+                      className='w-full'
                       disabled={!playerName.trim()}
-                      className='w-full bg-gradient-to-r from-teal-400 to-indigo-500 text-white font-extrabold text-lg py-3 rounded-2xl shadow disabled:opacity-40 transition'
+                      onClick={() => playerName.trim() && setScreen('training')}
+                      size='lg'
+                      variant='surface'
                     >
                       🏋️ Trening mieszany
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => playerName.trim() && setScreen('geometry_quiz')}
+                    </KangurButton>
+                    <KangurButton
+                      className='w-full'
                       disabled={!playerName.trim()}
-                      className='w-full bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white font-extrabold text-lg py-3 rounded-2xl shadow disabled:opacity-40 transition'
+                      onClick={() => playerName.trim() && setScreen('geometry_quiz')}
+                      size='lg'
+                      variant='secondary'
                     >
                       🔷 Trening figur
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => playerName.trim() && setScreen('kangur_setup')}
+                    </KangurButton>
+                    <KangurButton
+                      className='w-full'
                       disabled={!playerName.trim()}
-                      className='w-full bg-gradient-to-r from-orange-400 to-yellow-400 text-white font-extrabold text-lg py-3 rounded-2xl shadow disabled:opacity-40 transition'
+                      onClick={() => playerName.trim() && setScreen('kangur_setup')}
+                      size='lg'
+                      variant='warning'
                     >
                       🦘 Kangur Matematyczny
-                    </motion.button>
-                    <button
-                      onClick={handleLogin}
-                      className='flex items-center gap-2 text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
-                    >
+                    </KangurButton>
+                    <KangurButton onClick={handleLogin} size='sm' variant='ghost'>
                       <LogIn className='w-4 h-4' /> Zaloguj się
-                    </button>
+                    </KangurButton>
                   </>
                 )}
-              </div>
+              </KangurPanel>
               <div className='w-full max-w-2xl'>
                 <KangurPriorityAssignments
                   basePath={basePath}
@@ -598,12 +577,12 @@ export default function Game() {
               {...screenMotionProps}
               className='w-full flex flex-col items-center max-w-lg gap-4'
             >
-              <div className='bg-white rounded-3xl shadow-xl p-6 w-full flex flex-col items-center gap-4'>
+              <KangurPanel className='w-full flex flex-col items-center gap-4' padding='xl' variant='elevated'>
                 <h2 className='text-xl font-extrabold text-green-700'>
                   📅 Ćwiczenia z Kalendarzem
                 </h2>
                 <CalendarTrainingGame onFinish={() => setScreen('home')} />
-              </div>
+              </KangurPanel>
             </motion.div>
           )}
 
@@ -613,10 +592,10 @@ export default function Game() {
               {...screenMotionProps}
               className='w-full flex flex-col items-center max-w-lg gap-4'
             >
-              <div className='bg-white rounded-3xl shadow-xl p-6 w-full flex flex-col items-center gap-4'>
+              <KangurPanel className='w-full flex flex-col items-center gap-4' padding='xl' variant='elevated'>
                 <h2 className='text-xl font-extrabold text-fuchsia-700'>🔷 Ćwiczenia z Figur</h2>
                 <GeometryDrawingGame onFinish={() => setScreen('home')} />
-              </div>
+              </KangurPanel>
             </motion.div>
           )}
 
@@ -642,22 +621,22 @@ export default function Game() {
                 onSelect={handleSelectOperation}
                 priorityAssignmentsByOperation={practiceAssignmentsByOperation}
               />
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.97 }}
+              <KangurButton
+                className='mt-4 w-full max-w-sm'
                 onClick={() => setScreen('calendar_quiz')}
-                className='mt-4 w-full max-w-sm bg-gradient-to-r from-teal-500 to-green-400 text-white font-extrabold text-lg py-3 rounded-2xl shadow transition'
+                size='lg'
+                variant='surface'
               >
                 📅 Ćwiczenia z Kalendarzem
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.97 }}
+              </KangurButton>
+              <KangurButton
+                className='mt-3 w-full max-w-sm'
                 onClick={() => setScreen('geometry_quiz')}
-                className='mt-3 w-full max-w-sm bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white font-extrabold text-lg py-3 rounded-2xl shadow transition'
+                size='lg'
+                variant='secondary'
               >
                 🔷 Ćwiczenia z Figurami
-              </motion.button>
+              </KangurButton>
             </motion.div>
           )}
 
@@ -737,7 +716,7 @@ export default function Game() {
             <PlayerProgressCard progress={progress} />
           </motion.div>
         )}
-      </div>
-    </div>
+      </KangurPageContainer>
+    </KangurPageShell>
   );
 }

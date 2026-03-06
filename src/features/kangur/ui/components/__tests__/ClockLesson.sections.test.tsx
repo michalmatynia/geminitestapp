@@ -44,6 +44,7 @@ describe('ClockLesson sectioned structure', () => {
     expect(screen.queryByText('Co pokazuje długa wskazówka?')).toBeNull();
     expect(screen.queryAllByTestId('clock-lesson-hour-hand').length).toBeGreaterThan(0);
     expect(screen.queryAllByTestId('clock-lesson-minute-hand')).toHaveLength(0);
+    expect(screen.queryByRole('button', { name: /czytaj/i })).toBeNull();
     expect(screen.getByTestId('clock-lesson-section-status-hours')).toHaveTextContent('W trakcie');
     expect(screen.getByTestId('clock-lesson-section-status-minutes')).toHaveTextContent(
       'Zablokowana'

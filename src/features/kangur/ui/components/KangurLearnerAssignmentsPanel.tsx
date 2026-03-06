@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
+import { KangurPanel } from '@/features/kangur/ui/design/primitives';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { selectKangurPriorityAssignments } from '@/features/kangur/ui/services/delegated-assignments';
 
@@ -64,36 +65,36 @@ export function KangurLearnerAssignmentsPanel({
 
   if (!enabled) {
     return (
-      <section className='bg-white/85 backdrop-blur rounded-2xl shadow p-5'>
+      <KangurPanel padding='lg' variant='soft'>
         <div className='text-sm font-bold text-gray-500 uppercase tracking-wide'>
           Przebieg przydzielonych zadan
         </div>
         <div className='mt-2 text-sm text-gray-500'>
           Po zalogowaniu zobaczysz zadania przypisane przez rodzica oraz historie ich wykonania.
         </div>
-      </section>
+      </KangurPanel>
     );
   }
 
   if (isLoading) {
     return (
-      <section className='bg-white/85 backdrop-blur rounded-2xl shadow p-5 text-sm text-slate-400'>
+      <KangurPanel padding='lg' variant='soft' className='text-sm text-slate-400'>
         Ladowanie przydzielonych zadan...
-      </section>
+      </KangurPanel>
     );
   }
 
   if (error) {
     return (
-      <section className='bg-white/85 backdrop-blur rounded-2xl shadow p-5 text-sm text-rose-500'>
+      <KangurPanel padding='lg' variant='soft' className='text-sm text-rose-500'>
         {error}
-      </section>
+      </KangurPanel>
     );
   }
 
   return (
     <div className='flex flex-col gap-4'>
-      <section className='bg-white/85 backdrop-blur rounded-2xl shadow p-5'>
+      <KangurPanel padding='lg' variant='soft'>
         <div className='text-sm font-bold text-gray-500 uppercase tracking-wide'>
           Przebieg przydzielonych zadan
         </div>
@@ -147,7 +148,7 @@ export function KangurLearnerAssignmentsPanel({
           </div>
           <div className='mt-1 text-sm font-semibold text-indigo-700'>{latestCompletedTitle}</div>
         </div>
-      </section>
+      </KangurPanel>
 
       <KangurAssignmentsList
         assignments={activeAssignments}

@@ -6,6 +6,20 @@ import {
   AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
   createDefaultPathConfig,
 } from '@/shared/lib/ai-paths';
+import {
+  DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_ENV,
+  DEPRECATED_AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_ENV,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_NATIVE_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_TELEMETRY_STRICT_NATIVE_FIELD,
+} from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-legacy-aliases';
 
 const {
   evaluateGraphWithIteratorAutoContinueMock,
@@ -132,9 +146,9 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     vi.resetModules();
     vi.clearAllMocks();
     delete process.env['AI_PATHS_RUNTIME_KERNEL_NODE_TYPES'];
-    delete process.env['AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES'];
+    delete process.env[DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_ENV];
     delete process.env['AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS'];
-    delete process.env['AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY'];
+    delete process.env[DEPRECATED_AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_ENV];
 
     evaluateGraphWithIteratorAutoContinueMock.mockResolvedValue(RUNTIME_STATE_IDLE);
     listAiPathsSettingsMock.mockResolvedValue([]);
@@ -212,7 +226,7 @@ describe('path-run-executor runtime-kernel settings integration', () => {
   });
 
   it('ignores deprecated env pilot-node-type aliases in live execution', async () => {
-    process.env['AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES'] = 'template';
+    process.env[DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_ENV] = 'template';
     const run = buildRunRecord();
     const { executePathRun } = await loadModule();
 
@@ -249,10 +263,10 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     const run = buildRunRecord();
     run.meta = {
       runtimeKernelConfig: {
-        mode: 'auto',
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]: 'auto',
         nodeTypes: ['template'],
         codeObjectResolverIds: ['resolver.path'],
-        strictNativeRegistry: true,
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_NATIVE_FIELD]: true,
       },
     };
     const { executePathRun } = await loadModule();
@@ -279,24 +293,26 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     );
     expect(
       (finalUpdatePayload?.['meta'] as Record<string, unknown> | undefined)?.['runtimeKernel']
-    ).not.toHaveProperty('runtimeKernelPilotNodeTypesSource');
+    ).not.toHaveProperty(DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD);
   });
 
   it('ignores historical run-meta runtime-kernel aliases during live execution', async () => {
     const run = buildRunRecord();
     run.meta = {
       runtimeKernelConfig: {
-        mode: 'legacy_only',
-        pilotNodeTypes: ' template ',
-        resolverIds: ' resolver.path ',
-        strictCodeObjectRegistry: 'yes',
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]:
+          DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]: ' template ',
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]: ' resolver.path ',
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD]: 'yes',
       },
       runtimeKernel: {
-        runtimeKernelMode: 'legacy_only',
-        runtimeKernelPilotNodeTypes: ['template'],
-        runtimeKernelPilotNodeTypesSource: 'path',
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_FIELD]:
+          DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD]: ['template'],
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD]: 'path',
         runtimeKernelCodeObjectResolverIds: ' resolver.path ',
-        runtimeKernelStrictNativeRegistry: '1',
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_STRICT_NATIVE_FIELD]: '1',
       },
     };
     const { executePathRun } = await loadModule();
@@ -328,10 +344,10 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     ).not.toHaveProperty('runtimeKernelConfig');
     expect(
       (finalUpdatePayload?.['meta'] as Record<string, unknown> | undefined)?.['runtimeKernel']
-    ).not.toHaveProperty('runtimeKernelPilotNodeTypes');
+    ).not.toHaveProperty(DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD);
     expect(
       (finalUpdatePayload?.['meta'] as Record<string, unknown> | undefined)?.['runtimeKernel']
-    ).not.toHaveProperty('runtimeKernelPilotNodeTypesSource');
+    ).not.toHaveProperty(DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD);
   });
 
   it('emits a warning event when configured resolver ids are not registered', async () => {
@@ -503,16 +519,18 @@ describe('path-run-executor runtime-kernel settings integration', () => {
         }),
       })
     );
-    expect(nodeFinishEventPayload?.['metadata']).not.toHaveProperty('runtimeKernelPilotNodeTypes');
     expect(nodeFinishEventPayload?.['metadata']).not.toHaveProperty(
-      'runtimeKernelPilotNodeTypesSource'
+      DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD
+    );
+    expect(nodeFinishEventPayload?.['metadata']).not.toHaveProperty(
+      DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD
     );
     expect(
       (finalUpdatePayload?.['meta'] as Record<string, unknown> | undefined)?.['runtimeKernel']
-    ).not.toHaveProperty('runtimeKernelPilotNodeTypes');
+    ).not.toHaveProperty(DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD);
     expect(
       (finalUpdatePayload?.['meta'] as Record<string, unknown> | undefined)?.['runtimeKernel']
-    ).not.toHaveProperty('runtimeKernelPilotNodeTypesSource');
+    ).not.toHaveProperty(DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD);
   });
 
   it('persists runtime validation findings through run events', async () => {

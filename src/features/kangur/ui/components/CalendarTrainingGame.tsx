@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
 import {
   addXp,
   buildLessonMasteryUpdate,
@@ -184,22 +185,12 @@ export default function CalendarTrainingGame({
             : 'Ćwicz dalej, a zostaniesz mistrzem kalendarza!'}
         </p>
         <div className='flex gap-3'>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={handleRestart}
-            className='flex items-center gap-2 bg-green-100 text-green-700 font-bold px-5 py-2.5 rounded-2xl hover:bg-green-200 transition'
-          >
+          <KangurButton onClick={handleRestart} size='lg' variant='secondary'>
             <RefreshCw className='w-4 h-4' /> Jeszcze raz
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={onFinish}
-            className='bg-gradient-to-r from-green-500 to-teal-500 text-white font-bold px-5 py-2.5 rounded-2xl shadow'
-          >
+          </KangurButton>
+          <KangurButton onClick={onFinish} size='lg' variant='primary'>
             Zakończ lekcję ✅
-          </motion.button>
+          </KangurButton>
         </div>
       </motion.div>
     );
@@ -223,9 +214,9 @@ export default function CalendarTrainingGame({
         ))}
       </div>
 
-      <div className='bg-green-50 border border-green-200 rounded-2xl px-6 py-4 text-center w-full'>
+      <KangurPanel className='w-full text-center' padding='lg' variant='soft'>
         <p className='text-lg font-extrabold text-green-800'>{question.question}</p>
-      </div>
+      </KangurPanel>
 
       <div className='grid grid-cols-2 gap-3 w-full'>
         {question.choices.map((choice) => {

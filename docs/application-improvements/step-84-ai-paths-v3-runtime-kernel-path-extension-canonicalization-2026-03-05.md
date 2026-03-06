@@ -12,7 +12,7 @@ Extend AI-Paths maintenance normalization so legacy runtime-kernel aliases embed
    - `src/features/ai/ai-paths/server/settings-store.maintenance.ts`
    - Extended `normalize_runtime_kernel_mode` action to also inspect `ai_paths_config_*` records.
    - Added canonicalization for `extensions.runtimeKernel`:
-     - `mode: legacy_only -> auto`
+     - `mode`: deprecated legacy-mode alias -> `auto`
      - `pilotNodeTypes`: canonical token array normalization
      - `resolverIds -> codeObjectResolverIds` canonical alias migration
      - `strictCodeObjectRegistry -> strictNativeRegistry` canonical alias migration
@@ -22,7 +22,7 @@ Extend AI-Paths maintenance normalization so legacy runtime-kernel aliases embed
    - Normalization pending-count now includes path-config runtime-kernel alias drift, not only global settings keys.
 
 3. Regression tests:
-   - `src/features/ai/ai-paths/server/__tests__/settings-store-maintenance.runtime-kernel-mode.test.ts`
+   - `src/features/ai/ai-paths/server/__tests__/settings-store-maintenance.runtime-kernel-settings.test.ts`
    - Added test cases for:
      - pending action surfaced from legacy path extension payloads
      - canonical output for migrated path runtime-kernel extension payloads
@@ -30,7 +30,7 @@ Extend AI-Paths maintenance normalization so legacy runtime-kernel aliases embed
 ## Validation
 
 1. Maintenance suite:
-   - `npx vitest run src/features/ai/ai-paths/server/__tests__/settings-store-maintenance.runtime-kernel-mode.test.ts`
+   - `npx vitest run src/features/ai/ai-paths/server/__tests__/settings-store-maintenance.runtime-kernel-settings.test.ts`
    - Result: pass.
 
 2. Runtime-kernel regression subset:

@@ -4,6 +4,7 @@ import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } fro
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, RefreshCw, XCircle } from 'lucide-react';
 
+import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
 import {
   addXp,
   buildLessonMasteryUpdate,
@@ -555,14 +556,9 @@ function DraggableClock({
         </span>
       </div>
 
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.97 }}
-        onClick={() => onSubmit(displayHour, displayMinutes)}
-        className='bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-extrabold px-8 py-3 rounded-2xl shadow-lg text-lg'
-      >
+      <KangurButton onClick={() => onSubmit(displayHour, displayMinutes)} size='xl' variant='primary'>
         Sprawdź! ✅
-      </motion.button>
+      </KangurButton>
     </div>
   );
 }
@@ -755,53 +751,49 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className='flex flex-col items-center gap-5 py-4'
+        className='py-4'
       >
-        <div className='text-6xl'>{score >= 4 ? '🏆' : score >= 2 ? '😊' : '💪'}</div>
-        <h3 className='text-2xl font-extrabold text-indigo-700'>
-          Wynik: {score}/{tasks.length}
-        </h3>
-        <p className='text-xs font-semibold text-indigo-600'>
-          Tryb: {gameMode === 'challenge' ? 'Wyzwanie' : 'Nauka'}
-        </p>
-        {gameMode === 'challenge' && (
-          <p data-testid='clock-challenge-summary' className='text-xs font-semibold text-amber-600'>
-            Najlepsza seria: {challengeBestStreak}
-          </p>
-        )}
-        {gameMode === 'practice' && retryAddedCount > 0 && (
+        <KangurPanel
+          className='flex flex-col items-center gap-5 text-center'
+          padding='xl'
+          variant='elevated'
+        >
+          <div className='text-6xl'>{score >= 4 ? '🏆' : score >= 2 ? '😊' : '💪'}</div>
+          <h3 className='text-2xl font-extrabold text-indigo-700'>
+            Wynik: {score}/{tasks.length}
+          </h3>
           <p className='text-xs font-semibold text-indigo-600'>
-            Powtórki adaptacyjne: {retryAddedCount}
+            Tryb: {gameMode === 'challenge' ? 'Wyzwanie' : 'Nauka'}
           </p>
-        )}
-        {xpEarned > 0 && (
-          <div className='bg-indigo-100 text-indigo-700 font-bold px-4 py-2 rounded-full text-sm'>
-            +{xpEarned} XP ✨
+          {gameMode === 'challenge' && (
+            <p data-testid='clock-challenge-summary' className='text-xs font-semibold text-amber-600'>
+              Najlepsza seria: {challengeBestStreak}
+            </p>
+          )}
+          {gameMode === 'practice' && retryAddedCount > 0 && (
+            <p className='text-xs font-semibold text-indigo-600'>
+              Powtórki adaptacyjne: {retryAddedCount}
+            </p>
+          )}
+          {xpEarned > 0 && (
+            <div className='bg-indigo-100 text-indigo-700 font-bold px-4 py-2 rounded-full text-sm'>
+              +{xpEarned} XP ✨
+            </div>
+          )}
+          <p className='text-gray-500 text-center max-w-xs'>
+            {score === tasks.length
+              ? 'Idealnie! Świetnie znasz zegar!'
+              : 'Ćwicz dalej, a będziesz mistrzem zegara!'}
+          </p>
+          <div className='flex gap-3'>
+            <KangurButton onClick={() => resetSession(gameMode)} size='lg' variant='secondary'>
+              <RefreshCw className='w-4 h-4' /> Jeszcze raz
+            </KangurButton>
+            <KangurButton onClick={onFinish} size='lg' variant='primary'>
+              Zakończ lekcję ✅
+            </KangurButton>
           </div>
-        )}
-        <p className='text-gray-500 text-center max-w-xs'>
-          {score === tasks.length
-            ? 'Idealnie! Świetnie znasz zegar!'
-            : 'Ćwicz dalej, a będziesz mistrzem zegara!'}
-        </p>
-        <div className='flex gap-3'>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => resetSession(gameMode)}
-            className='flex items-center gap-2 bg-indigo-100 text-indigo-700 font-bold px-5 py-2.5 rounded-2xl hover:bg-indigo-200 transition'
-          >
-            <RefreshCw className='w-4 h-4' /> Jeszcze raz
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={onFinish}
-            className='bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold px-5 py-2.5 rounded-2xl shadow'
-          >
-            Zakończ lekcję ✅
-          </motion.button>
-        </div>
+        </KangurPanel>
       </motion.div>
     );
   }
@@ -810,32 +802,24 @@ export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps):
     <div className='flex flex-col items-center gap-4 w-full'>
       <div
         data-testid='clock-mode-switch'
-        className='inline-flex items-center gap-1 rounded-2xl bg-white/80 border border-indigo-100 p-1 text-xs font-semibold text-gray-500'
+        className='inline-flex items-center gap-2 rounded-2xl border border-white/70 bg-white/85 p-1.5 shadow-sm'
       >
-        <button
-          type='button'
+        <KangurButton
           data-testid='clock-mode-practice'
           onClick={() => resetSession('practice')}
-          className={`px-3 py-1.5 rounded-xl transition ${
-            gameMode === 'practice'
-              ? 'bg-indigo-500 text-white shadow'
-              : 'hover:bg-indigo-50 text-gray-500'
-          }`}
+          size='sm'
+          variant={gameMode === 'practice' ? 'primary' : 'secondary'}
         >
           Tryb Nauka
-        </button>
-        <button
-          type='button'
+        </KangurButton>
+        <KangurButton
           data-testid='clock-mode-challenge'
           onClick={() => resetSession('challenge')}
-          className={`px-3 py-1.5 rounded-xl transition ${
-            gameMode === 'challenge'
-              ? 'bg-amber-500 text-white shadow'
-              : 'hover:bg-amber-50 text-gray-500'
-          }`}
+          size='sm'
+          variant={gameMode === 'challenge' ? 'warning' : 'secondary'}
         >
           Tryb Wyzwanie
-        </button>
+        </KangurButton>
       </div>
       {gameMode === 'challenge' ? (
         <div className='inline-flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700'>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
+import { KangurPanel } from '@/features/kangur/ui/design/primitives';
 import type { KangurQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
 
 export type QuestionCardProps = {
@@ -150,31 +151,31 @@ export default function QuestionCard({
         ⏱ {timeLeft}s
       </div>
 
-      <div className='bg-white rounded-3xl shadow-xl px-10 py-8 text-center w-full'>
+      <KangurPanel className='w-full text-center' padding='xl' variant='elevated'>
         {isClockQuestion ? (
           <div className='flex flex-col items-center gap-2'>
             <AnalogClockSmall hours={clockHours} minutes={clockMinutes} />
-            <div className='text-gray-400 text-sm'>Ktora godzine pokazuje zegar?</div>
+            <div className='text-sm text-slate-400'>Ktora godzine pokazuje zegar?</div>
           </div>
         ) : (
           <>
-            <div className='text-5xl font-extrabold text-gray-800 mb-2'>{question.question}</div>
-            <div className='text-gray-400 text-sm'>Jaka jest odpowiedz?</div>
+            <div className='mb-2 text-5xl font-extrabold text-slate-800'>{question.question}</div>
+            <div className='text-sm text-slate-400'>Jaka jest odpowiedz?</div>
           </>
         )}
-      </div>
+      </KangurPanel>
 
       <div className='grid grid-cols-2 gap-4 w-full'>
         {question.choices.map((choice) => {
           let cardClass =
-            'bg-white border-2 border-gray-200 text-gray-700 hover:border-indigo-400 hover:bg-indigo-50';
+            'bg-white border-2 border-slate-200 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/80';
           if (showResult) {
             if (choice === question.answer) {
-              cardClass = 'bg-green-400 border-2 border-green-500 text-white';
+              cardClass = 'bg-emerald-50 border-2 border-emerald-400 text-emerald-700';
             } else if (choice === selected) {
-              cardClass = 'bg-red-400 border-2 border-red-500 text-white';
+              cardClass = 'bg-rose-50 border-2 border-rose-400 text-rose-700';
             } else {
-              cardClass = 'bg-white border-2 border-gray-200 text-gray-400 opacity-60';
+              cardClass = 'bg-white border-2 border-slate-200 text-slate-400 opacity-60';
             }
           }
           return (

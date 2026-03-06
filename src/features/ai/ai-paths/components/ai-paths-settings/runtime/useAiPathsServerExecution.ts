@@ -27,6 +27,7 @@ import {
   optimisticallyInsertAiPathRunInQueueCache,
 } from '@/shared/lib/query-invalidation';
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
+import { isTerminalAiPathRunStatus } from '@/features/ai/ai-paths/lib/path-run-status';
 
 import {
   mergeRuntimeStateSnapshot,
@@ -40,8 +41,10 @@ import { parseRuntimeState } from '../../AiPathsSettingsUtils';
 import {
   createAiPathTriggerRequestId,
   isRecoverableTriggerEnqueueError,
+} from '@/shared/lib/ai-paths/hooks/trigger-event-utils';
+import {
   recoverEnqueuedRunByRequestId,
-} from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
+} from '@/shared/lib/ai-paths/hooks/trigger-event-recovery';
 import {
   collectInvalidRunEnqueuePayloadIssues,
   collectInvalidRunEnqueueSerializationIssues,
@@ -51,14 +54,6 @@ import {
 import type { ServerExecutionArgs } from './types';
 
 type RuntimeEventLevel = 'debug' | 'info' | 'warn' | 'error';
-type TerminalRunStatus = 'completed' | 'failed' | 'canceled' | 'dead_lettered';
-
-const TERMINAL_RUN_STATUSES = new Set<TerminalRunStatus>([
-  'completed',
-  'failed',
-  'canceled',
-  'dead_lettered',
-]);
 const SERVER_EXECUTION_ENQUEUE_TIMEOUT_MS = 90_000;
 
 const asString = (value: unknown): string | null => {
@@ -720,7 +715,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             if (runStatus === 'running') {
               return;
             }
-            if (!runStatus || !TERMINAL_RUN_STATUSES.has(runStatus as TerminalRunStatus)) {
+            if (!isTerminalAiPathRunStatus(runStatus)) {
               return;
             }
             if (runStatus === 'completed') {

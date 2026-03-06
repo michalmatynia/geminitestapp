@@ -1,7 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS } from '../../../../../../scripts/db/ai-paths-runtime-compatibility-normalization';
+import {
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_NATIVE_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_SOURCE_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_TELEMETRY_STRICT_NATIVE_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_TELEMETRY_STRICT_NATIVE_SOURCE_FIELD,
+} from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-legacy-aliases';
 
 import {
+  AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS,
   normalizeAiPathRunRuntimeKernelMetadataForCleanup,
   normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead,
 } from '@/features/ai/ai-paths/services/path-run-runtime-kernel-metadata';
@@ -10,19 +25,21 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
   it('normalizes legacy runtime-kernel config aliases into canonical fields', () => {
     const result = normalizeAiPathRunRuntimeKernelMetadataForCleanup({
       runtimeKernelConfig: {
-        mode: ' legacy_only ',
-        pilotNodeTypes: ' Template Node, parser ',
-        resolverIds: ' resolver.primary , resolver.fallback ',
-        strictCodeObjectRegistry: ' YES ',
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]:
+          ` ${DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS} `,
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]: ' Template Node, parser ',
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]:
+          ' resolver.primary , resolver.fallback ',
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD]: ' YES ',
       },
     });
 
     expect(result.changed).toBe(true);
     expect(result.changedFields).toEqual([
-      'runtimeKernelConfig.mode',
-      'runtimeKernelConfig.nodeTypes',
-      'runtimeKernelConfig.codeObjectResolverIds',
-      'runtimeKernelConfig.strictNativeRegistry',
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigMode,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigNodeTypes,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigCodeObjectResolverIds,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigStrictNativeRegistry,
     ]);
     expect(result.meta).toEqual({
       runtimeKernelConfig: {
@@ -35,25 +52,26 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
   it('prunes deprecated runtime-kernel telemetry aliases and typed values', () => {
     const result = normalizeAiPathRunRuntimeKernelMetadataForCleanup({
       runtimeKernel: {
-        runtimeKernelMode: 'legacy_only',
-        runtimeKernelModeSource: 'default',
-        runtimeKernelPilotNodeTypes: ['constant', 'template'],
-        runtimeKernelPilotNodeTypesSource: ' path ',
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_FIELD]:
+          DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_SOURCE_FIELD]: 'default',
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD]: ['constant', 'template'],
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD]: ' path ',
         runtimeKernelCodeObjectResolverIds: ' resolver.primary , resolver.fallback ',
-        runtimeKernelStrictNativeRegistry: '1',
-        runtimeKernelStrictNativeRegistrySource: 'default',
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_STRICT_NATIVE_FIELD]: '1',
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_STRICT_NATIVE_SOURCE_FIELD]: 'default',
       },
     });
 
     expect(result.changed).toBe(true);
     expect(result.changedFields).toEqual([
-      'runtimeKernel.mode',
-      'runtimeKernel.modeSource',
-      'runtimeKernel.nodeTypes',
-      'runtimeKernel.nodeTypesSource',
-      'runtimeKernel.codeObjectResolverIds',
-      'runtimeKernel.strictNativeRegistry',
-      'runtimeKernel.strictNativeRegistrySource',
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelMode,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelModeSource,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelNodeTypes,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelNodeTypesSource,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelCodeObjectResolverIds,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelStrictNativeRegistry,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelStrictNativeRegistrySource,
     ]);
     expect(result.meta).toEqual({
       runtimeKernel: {
@@ -117,35 +135,38 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
   it('ignores legacy runtime-kernel aliases during live runtime reads', () => {
     const result = normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead({
       runtimeKernelConfig: {
-        mode: ' legacy_only ',
-        pilotNodeTypes: ' Template Node, parser ',
-        resolverIds: ' resolver.primary , resolver.fallback ',
-        strictCodeObjectRegistry: ' YES ',
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]:
+          ` ${DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS} `,
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]: ' Template Node, parser ',
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]:
+          ' resolver.primary , resolver.fallback ',
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD]: ' YES ',
       },
       runtimeKernel: {
-        runtimeKernelMode: 'legacy_only',
-        runtimeKernelModeSource: 'default',
-        runtimeKernelPilotNodeTypes: ['constant', 'template'],
-        runtimeKernelPilotNodeTypesSource: ' path ',
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_FIELD]:
+          DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_SOURCE_FIELD]: 'default',
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_FIELD]: ['constant', 'template'],
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_NODE_TYPES_SOURCE_FIELD]: ' path ',
         runtimeKernelCodeObjectResolverIds: ' resolver.primary , resolver.fallback ',
-        runtimeKernelStrictNativeRegistry: '1',
-        runtimeKernelStrictNativeRegistrySource: 'default',
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_STRICT_NATIVE_FIELD]: '1',
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_STRICT_NATIVE_SOURCE_FIELD]: 'default',
       },
     });
 
     expect(result.changed).toBe(true);
     expect(result.changedFields).toEqual([
-      'runtimeKernelConfig.mode',
-      'runtimeKernelConfig.nodeTypes',
-      'runtimeKernelConfig.codeObjectResolverIds',
-      'runtimeKernelConfig.strictNativeRegistry',
-      'runtimeKernel.mode',
-      'runtimeKernel.modeSource',
-      'runtimeKernel.nodeTypes',
-      'runtimeKernel.nodeTypesSource',
-      'runtimeKernel.codeObjectResolverIds',
-      'runtimeKernel.strictNativeRegistry',
-      'runtimeKernel.strictNativeRegistrySource',
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigMode,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigNodeTypes,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigCodeObjectResolverIds,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigStrictNativeRegistry,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelMode,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelModeSource,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelNodeTypes,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelNodeTypesSource,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelCodeObjectResolverIds,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelStrictNativeRegistry,
+      AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelStrictNativeRegistrySource,
     ]);
     expect(result.meta).toEqual({
       runtimeKernel: {
@@ -157,17 +178,18 @@ describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
   it('preserves canonical runtime-kernel metadata during live runtime reads', () => {
     const result = normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead({
       runtimeKernelConfig: {
-        mode: 'auto',
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]: 'auto',
         nodeTypes: ' Template Node, parser ',
         codeObjectResolverIds: ' resolver.primary , resolver.fallback ',
-        strictNativeRegistry: true,
+        [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_NATIVE_FIELD]: true,
       },
       runtimeKernel: {
-        runtimeKernelMode: 'legacy_only',
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_MODE_FIELD]:
+          DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
         runtimeKernelNodeTypes: ' constant, template ',
         runtimeKernelNodeTypesSource: ' path ',
         runtimeKernelCodeObjectResolverIds: ' resolver.primary , resolver.fallback ',
-        runtimeKernelStrictNativeRegistry: '1',
+        [DEPRECATED_RUNTIME_KERNEL_TELEMETRY_STRICT_NATIVE_FIELD]: '1',
       },
     });
 

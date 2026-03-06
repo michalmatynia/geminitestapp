@@ -17,6 +17,13 @@ import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
 import LessonMasteryInsights from '@/features/kangur/ui/components/LessonMasteryInsights';
+import {
+  KangurButton,
+  KangurPageContainer,
+  KangurPageShell,
+  KangurPageTopBar,
+  KangurPanel,
+} from '@/features/kangur/ui/design/primitives';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
@@ -194,96 +201,93 @@ export default function LearnerProfile() {
     : 0;
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex flex-col items-center'>
-      <div className='sticky top-0 z-20 w-full bg-white/70 backdrop-blur border-b border-indigo-100 px-4 py-3 flex items-center justify-between gap-3'>
-        <div className='flex items-center gap-3'>
-          <Link
-            href={createPageUrl('Game', basePath)}
-            className='inline-flex items-center text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
-          >
-            Strona główna
-          </Link>
-          <Link
-            href={createPageUrl('Lessons', basePath)}
-            className='inline-flex items-center gap-1.5 text-sm text-purple-500 hover:text-purple-700 font-semibold transition'
-          >
-            <BookOpen className='w-4 h-4' /> Lekcje
-          </Link>
-        </div>
-        <div className='flex items-center gap-3'>
-          <KangurProfileMenu
-            basePath={basePath}
-            isAuthenticated={Boolean(user)}
-            onLogout={() => logout(false)}
-            onLogin={navigateToLogin}
-          />
-          {user?.canManageLearners && (
-            <Link
-              href={createPageUrl('ParentDashboard', basePath)}
-              className='inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 font-semibold transition'
-            >
-              <LayoutDashboard className='w-4 h-4' /> Rodzic
-            </Link>
-          )}
-        </div>
-      </div>
+    <KangurPageShell tone='profile'>
+      <KangurPageTopBar
+        left={
+          <>
+            <KangurButton asChild size='sm' variant='ghost'>
+              <Link href={createPageUrl('Game', basePath)}>Strona glowna</Link>
+            </KangurButton>
+            <KangurButton asChild size='sm' variant='ghost'>
+              <Link href={createPageUrl('Lessons', basePath)}>
+                <BookOpen className='w-4 h-4' /> Lekcje
+              </Link>
+            </KangurButton>
+          </>
+        }
+        right={
+          <>
+            <KangurProfileMenu
+              basePath={basePath}
+              isAuthenticated={Boolean(user)}
+              onLogout={() => logout(false)}
+              onLogin={navigateToLogin}
+            />
+            {user?.canManageLearners && (
+              <KangurButton asChild size='sm' variant='ghost'>
+                <Link href={createPageUrl('ParentDashboard', basePath)}>
+                  <LayoutDashboard className='w-4 h-4' /> Rodzic
+                </Link>
+              </KangurButton>
+            )}
+          </>
+        }
+      />
 
-      <div className='w-full max-w-6xl px-4 py-8 flex flex-col gap-6'>
+      <KangurPageContainer className='flex flex-col gap-6'>
         <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className='text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 drop-shadow'>
             Profil ucznia
           </h1>
-          <p className='text-gray-500 mt-1'>
+          <p className='mt-1 text-slate-500'>
             Statystyki ucznia: {user?.activeLearner?.displayName?.trim() || user?.full_name?.trim() || 'Tryb lokalny'}.
           </p>
           {!user && (
-            <button
-              onClick={navigateToLogin}
-              className='mt-4 inline-flex items-center gap-2 bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-2xl shadow font-semibold text-sm transition'
-            >
+            <KangurButton className='mt-4' onClick={navigateToLogin} size='md' variant='secondary'>
               <LogIn className='w-4 h-4' /> Zaloguj sie, aby synchronizowac postep
-            </button>
+            </KangurButton>
           )}
         </motion.div>
 
-        <motion.section
+        <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className='bg-white/85 backdrop-blur rounded-3xl shadow-xl p-6 flex flex-col gap-4'
         >
-          <div className='flex flex-col md:flex-row md:items-end md:justify-between gap-4'>
-            <div>
-              <div className={`text-2xl font-extrabold ${snapshot.level.color}`}>
-                {snapshot.level.title}
+          <KangurPanel className='flex flex-col gap-4' padding='xl' variant='elevated'>
+            <div className='flex flex-col gap-4 md:flex-row md:items-end md:justify-between'>
+              <div>
+                <div className={`text-2xl font-extrabold ${snapshot.level.color}`}>
+                  {snapshot.level.title}
+                </div>
+                <p className='text-sm text-slate-500'>
+                  Poziom {snapshot.level.level} · {snapshot.totalXp} XP lacznie
+                </p>
               </div>
-              <p className='text-sm text-gray-500'>
-                Poziom {snapshot.level.level} · {snapshot.totalXp} XP lacznie
-              </p>
+              <div className='text-sm text-slate-500'>
+                {snapshot.nextLevel
+                  ? `Do poziomu ${snapshot.nextLevel.level}: ${xpToNextLevel} XP`
+                  : 'Maksymalny poziom osiagniety'}
+              </div>
             </div>
-            <div className='text-sm text-gray-500'>
-              {snapshot.nextLevel
-                ? `Do poziomu ${snapshot.nextLevel.level}: ${xpToNextLevel} XP`
-                : 'Maksymalny poziom osiagniety'}
-            </div>
-          </div>
 
-          <div>
-            <div className='w-full h-3 bg-indigo-100 rounded-full overflow-hidden'>
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${snapshot.levelProgressPercent}%` }}
-                transition={{ duration: 0.7, ease: 'easeOut' }}
-                className='h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500'
-              />
+            <div>
+              <div className='h-3 w-full overflow-hidden rounded-full bg-indigo-100'>
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${snapshot.levelProgressPercent}%` }}
+                  transition={{ duration: 0.7, ease: 'easeOut' }}
+                  className='h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500'
+                />
+              </div>
+              <div className='mt-1 text-right text-xs text-slate-500'>
+                {snapshot.levelProgressPercent}%
+              </div>
             </div>
-            <div className='mt-1 text-xs text-gray-500 text-right'>
-              {snapshot.levelProgressPercent}%
-            </div>
-          </div>
-        </motion.section>
+          </KangurPanel>
+        </motion.div>
 
         <section className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4'>
-          <div className='bg-white/85 backdrop-blur rounded-2xl shadow p-4'>
+          <KangurPanel padding='md' variant='soft'>
             <div className='inline-flex items-center gap-2 text-indigo-600 text-sm font-semibold'>
               <BarChart2 className='w-4 h-4' /> Srednia skutecznosc
             </div>
@@ -291,9 +295,9 @@ export default function LearnerProfile() {
               {snapshot.averageAccuracy}%
             </p>
             <p className='text-xs text-gray-500 mt-1'>Najlepsza sesja: {snapshot.bestAccuracy}%</p>
-          </div>
+          </KangurPanel>
 
-          <div className='bg-white/85 backdrop-blur rounded-2xl shadow p-4'>
+          <KangurPanel padding='md' variant='soft'>
             <div className='inline-flex items-center gap-2 text-orange-500 text-sm font-semibold'>
               <Flame className='w-4 h-4' /> Seria dni
             </div>
@@ -303,9 +307,9 @@ export default function LearnerProfile() {
             <p className='text-xs text-gray-500 mt-1'>
               Najdluzsza: {snapshot.longestStreakDays} dni
             </p>
-          </div>
+          </KangurPanel>
 
-          <div className='bg-white/85 backdrop-blur rounded-2xl shadow p-4'>
+          <KangurPanel padding='md' variant='soft'>
             <div className='inline-flex items-center gap-2 text-teal-600 text-sm font-semibold'>
               <Target className='w-4 h-4' /> Cel dzienny
             </div>
@@ -313,9 +317,9 @@ export default function LearnerProfile() {
               {snapshot.todayGames}/{snapshot.dailyGoalGames}
             </p>
             <p className='text-xs text-gray-500 mt-1'>Wypelnienie: {snapshot.dailyGoalPercent}%</p>
-          </div>
+          </KangurPanel>
 
-          <div className='bg-white/85 backdrop-blur rounded-2xl shadow p-4'>
+          <KangurPanel padding='md' variant='soft'>
             <div className='inline-flex items-center gap-2 text-amber-600 text-sm font-semibold'>
               🏅 Odznaki
             </div>
@@ -323,10 +327,10 @@ export default function LearnerProfile() {
               {snapshot.unlockedBadges}/{snapshot.totalBadges}
             </p>
             <p className='text-xs text-gray-500 mt-1'>Odblokowane osiagniecia</p>
-          </div>
+          </KangurPanel>
         </section>
 
-        <section className='bg-white/85 backdrop-blur rounded-2xl shadow p-5'>
+        <KangurPanel padding='lg' variant='soft'>
           <div className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
             Plan na dzis
           </div>
@@ -345,16 +349,15 @@ export default function LearnerProfile() {
                 </div>
                 <div className='mt-1 text-sm font-semibold'>{recommendation.title}</div>
                 <div className='mt-1 text-xs opacity-80'>{recommendation.description}</div>
-                <Link
-                  href={buildRecommendationHref(basePath, recommendation.action)}
-                  className='mt-2 inline-flex items-center rounded-lg border border-current/30 px-2 py-1 text-xs font-semibold hover:bg-white/50 transition'
-                >
-                  {recommendation.action.label}
-                </Link>
+                <KangurButton asChild className='mt-2' size='sm' variant='secondary'>
+                  <Link href={buildRecommendationHref(basePath, recommendation.action)}>
+                    {recommendation.action.label}
+                  </Link>
+                </KangurButton>
               </div>
             ))}
           </div>
-        </section>
+        </KangurPanel>
 
         <KangurLearnerAssignmentsPanel
           basePath={basePath}
@@ -364,7 +367,7 @@ export default function LearnerProfile() {
         <LessonMasteryInsights progress={progress} />
 
         <section className='grid grid-cols-1 xl:grid-cols-5 gap-4'>
-          <div className='xl:col-span-3 bg-white/85 backdrop-blur rounded-2xl shadow p-5'>
+          <KangurPanel className='xl:col-span-3' padding='lg' variant='soft'>
             <div className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
               Aktywnosc 7 dni
             </div>
@@ -393,9 +396,9 @@ export default function LearnerProfile() {
                 );
               })}
             </div>
-          </div>
+          </KangurPanel>
 
-          <div className='xl:col-span-2 bg-white/85 backdrop-blur rounded-2xl shadow p-5'>
+          <KangurPanel className='xl:col-span-2' padding='lg' variant='soft'>
             <div className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
               Wyniki wg operacji
             </div>
@@ -413,16 +416,17 @@ export default function LearnerProfile() {
                     </span>
                     <div className='flex items-center gap-2'>
                       <span>{item.averageAccuracy}%</span>
-                      <Link
-                        href={buildOperationPracticeHref(
-                          basePath,
-                          item.operation,
-                          item.averageAccuracy
-                        )}
-                        className='inline-flex items-center rounded-md border border-indigo-200 px-2 py-0.5 text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 transition'
-                      >
-                        Trenuj
-                      </Link>
+                      <KangurButton asChild size='sm' variant='secondary'>
+                        <Link
+                          href={buildOperationPracticeHref(
+                            basePath,
+                            item.operation,
+                            item.averageAccuracy
+                          )}
+                        >
+                          Trenuj
+                        </Link>
+                      </KangurButton>
                     </div>
                   </div>
                   <div className='w-full h-2 bg-slate-100 rounded-full overflow-hidden'>
@@ -437,11 +441,11 @@ export default function LearnerProfile() {
                 </div>
               ))}
             </div>
-          </div>
+          </KangurPanel>
         </section>
 
         <section className='grid grid-cols-1 xl:grid-cols-5 gap-4'>
-          <div className='xl:col-span-3 bg-white/85 backdrop-blur rounded-2xl shadow p-5'>
+          <KangurPanel className='xl:col-span-3' padding='lg' variant='soft'>
             <div className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
               Ostatnie sesje
             </div>
@@ -479,9 +483,9 @@ export default function LearnerProfile() {
                 ))}
               </div>
             )}
-          </div>
+          </KangurPanel>
 
-          <div className='xl:col-span-2 bg-white/85 backdrop-blur rounded-2xl shadow p-5'>
+          <KangurPanel className='xl:col-span-2' padding='lg' variant='soft'>
             <div className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
               Odznaki
             </div>
@@ -502,9 +506,9 @@ export default function LearnerProfile() {
                 );
               })}
             </div>
-          </div>
+          </KangurPanel>
         </section>
-      </div>
-    </div>
+      </KangurPageContainer>
+    </KangurPageShell>
   );
 }

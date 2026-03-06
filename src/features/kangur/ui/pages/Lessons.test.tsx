@@ -128,6 +128,10 @@ vi.mock('@/features/kangur/ui/components/KangurLessonDocumentRenderer', () => ({
   }) => <div data-testid='lesson-document-renderer'>Document blocks: {document.blocks.length}</div>,
 }));
 
+vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
+  KangurLessonNarrator: () => <div data-testid='kangur-lesson-narrator' />,
+}));
+
 import { KANGUR_LESSON_DOCUMENTS_SETTING_KEY } from '@/features/kangur/lesson-documents';
 import { KANGUR_LESSONS_SETTING_KEY } from '@/features/kangur/settings';
 import Lessons from '@/features/kangur/ui/pages/Lessons';

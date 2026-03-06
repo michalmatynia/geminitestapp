@@ -7,7 +7,7 @@ import {
   KANGUR_TTS_DEFAULT_VOICE,
   KANGUR_TTS_VOICE_OPTIONS,
   type KangurLessonTtsResponse,
-  type KangurLessonTtsVoice,
+  type KangurLessonTtsStatusResponse,
 } from '@/features/kangur/tts/contracts';
 import {
   buildKangurLessonDocumentNarrationScript,
@@ -20,27 +20,11 @@ import { cn } from '@/shared/utils';
 type KangurLessonNarrationPanelProps = {
   lesson: Pick<KangurLesson, 'id' | 'title' | 'description'>;
   document: KangurLessonDocument;
+  onChange?: ((nextDocument: KangurLessonDocument) => void) | undefined;
   className?: string | undefined;
 };
 
 type RequestStatus = 'idle' | 'loading' | 'ready' | 'error';
-
-const ADMIN_TTS_VOICE_STORAGE_KEY = 'kangur.lesson.admin.narration.voice.v1';
-
-const loadStoredVoice = (): KangurLessonTtsVoice => {
-  if (typeof window === 'undefined') {
-    return KANGUR_TTS_DEFAULT_VOICE;
-  }
-
-  try {
-    const raw = window.localStorage.getItem(ADMIN_TTS_VOICE_STORAGE_KEY);
-    return KANGUR_TTS_VOICE_OPTIONS.some((option) => option.value === raw)
-      ? (raw as KangurLessonTtsVoice)
-      : KANGUR_TTS_DEFAULT_VOICE;
-  } catch {
-    return KANGUR_TTS_DEFAULT_VOICE;
-  }
-};
 
 const formatDateTime = (value: string | null): string | null => {
   if (!value) return null;
@@ -56,7 +40,7 @@ const formatDateTime = (value: string | null): string | null => {
 };
 
 const getLatestAudioCreatedAt = (response: KangurLessonTtsResponse | null): string | null => {
-  if (!response || response.mode !== 'audio' || response.segments.length === 0) {
+  if (response?.mode !== 'audio' || response.segments.length === 0) {
     return null;
   }
 
@@ -69,18 +53,20 @@ const getLatestAudioCreatedAt = (response: KangurLessonTtsResponse | null): stri
 export function KangurLessonNarrationPanel(
   props: KangurLessonNarrationPanelProps
 ): React.JSX.Element {
-  const { lesson, document, className } = props;
-  const [voice, setVoice] = useState<KangurLessonTtsVoice>(loadStoredVoice);
+  const { lesson, document, onChange, className } = props;
   const [status, setStatus] = useState<RequestStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [response, setResponse] = useState<KangurLessonTtsResponse | null>(null);
+  const [cacheStatus, setCacheStatus] = useState<KangurLessonTtsStatusResponse | null>(null);
+  const [isCheckingCache, setIsCheckingCache] = useState(false);
+  const voice = document.narration?.voice ?? KANGUR_TTS_DEFAULT_VOICE;
 
   const script = useMemo(
     () =>
       buildKangurLessonDocumentNarrationScript({
         lessonId: lesson.id,
         title: lesson.title,
-        description: lesson.description,
+        description: lesson.description ?? '',
         document,
       }),
     [document, lesson.description, lesson.id, lesson.title]
@@ -91,6 +77,7 @@ export function KangurLessonNarrationPanel(
     () =>
       JSON.stringify({
         voice,
+        locale: script.locale,
         lessonId: script.lessonId,
         segments: script.segments.map((segment) => segment.text),
       }),
@@ -98,15 +85,78 @@ export function KangurLessonNarrationPanel(
   );
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(ADMIN_TTS_VOICE_STORAGE_KEY, voice);
-  }, [voice]);
-
-  useEffect(() => {
     setStatus('idle');
     setErrorMessage(null);
     setResponse(null);
+    setCacheStatus(null);
   }, [scriptKey]);
+
+  useEffect(() => {
+    if (!hasScriptContent) {
+      setIsCheckingCache(false);
+      setCacheStatus(null);
+      return;
+    }
+
+    let active = true;
+    setIsCheckingCache(true);
+
+    void api
+      .post<KangurLessonTtsStatusResponse>(
+        '/api/kangur/tts/status',
+        {
+          script,
+          voice,
+        },
+        { logError: false }
+      )
+      .then((nextStatus) => {
+        if (!active) return;
+        setCacheStatus(nextStatus);
+        if (nextStatus.state === 'ready') {
+          setResponse({
+            mode: 'audio',
+            voice: nextStatus.voice,
+            segments: nextStatus.segments,
+          });
+        }
+      })
+      .catch(() => {
+        if (!active) return;
+        setCacheStatus(null);
+      })
+      .finally(() => {
+        if (!active) return;
+        setIsCheckingCache(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [hasScriptContent, script, voice]);
+
+  const handleVoiceChange = (nextVoice: string): void => {
+    const normalizedVoice = KANGUR_TTS_VOICE_OPTIONS.find((option) => option.value === nextVoice)?.value;
+    if (!normalizedVoice) return;
+
+    onChange?.({
+      ...document,
+      narration: {
+        ...(document.narration ?? {}),
+        voice: normalizedVoice,
+      },
+    });
+  };
+
+  const handleLocaleChange = (nextLocale: string): void => {
+    onChange?.({
+      ...document,
+      narration: {
+        ...document.narration,
+        locale: nextLocale,
+      },
+    });
+  };
 
   const handlePreparePreview = async (forceRegenerate: boolean): Promise<void> => {
     if (!hasScriptContent) return;
@@ -121,6 +171,19 @@ export function KangurLessonNarrationPanel(
         forceRegenerate,
       });
       setResponse(nextResponse);
+      if (nextResponse.mode === 'audio') {
+        const latestCreatedAt = nextResponse.segments.reduce<string | null>(
+          (latest, segment) => (!latest || segment.createdAt > latest ? segment.createdAt : latest),
+          null
+        );
+        setCacheStatus({
+          state: 'ready',
+          voice: nextResponse.voice,
+          latestCreatedAt,
+          message: 'Cached audio is available for this lesson draft.',
+          segments: nextResponse.segments,
+        });
+      }
       setStatus('ready');
     } catch (error) {
       setStatus('error');
@@ -135,13 +198,19 @@ export function KangurLessonNarrationPanel(
   const statusLabel =
     status === 'loading'
       ? 'Preparing audio preview...'
-      : status === 'error'
-        ? 'Narration preview failed.'
-        : response?.mode === 'audio'
-          ? 'Neural preview ready.'
-          : response?.mode === 'fallback'
-            ? 'Neural preview unavailable. Browser fallback would be used.'
-            : 'Review the narration script and generate audio when ready.';
+      : isCheckingCache
+        ? 'Checking cached narration...'
+        : status === 'error'
+          ? 'Narration preview failed.'
+          : response?.mode === 'audio'
+            ? 'Neural preview ready.'
+            : cacheStatus?.state === 'tts_unavailable'
+              ? 'Neural TTS is not configured for this workspace.'
+              : cacheStatus?.state === 'missing'
+                ? 'Audio has not been generated for this lesson draft yet.'
+                : response?.mode === 'fallback'
+                  ? 'Neural preview unavailable. Browser fallback would be used.'
+                  : 'Review the narration script and generate audio when ready.';
 
   return (
     <section
@@ -175,21 +244,34 @@ export function KangurLessonNarrationPanel(
         </div>
 
         <div className='flex w-full flex-col gap-3 rounded-2xl border border-white/80 bg-white/80 p-4 lg:max-w-sm'>
-          <label className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'>
-            Voice
-          </label>
-          <select
-            aria-label='Narration voice'
-            value={voice}
-            onChange={(event): void => setVoice(event.target.value as KangurLessonTtsVoice)}
-            className='h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none ring-0'
-          >
-            {KANGUR_TTS_VOICE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <div className='grid gap-3 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2'>
+            <label className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'>
+              Voice
+              <select
+                aria-label='Narration voice'
+                value={voice}
+                onChange={(event): void => handleVoiceChange(event.target.value)}
+                className='mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal tracking-normal text-slate-900 outline-none ring-0'
+              >
+                {KANGUR_TTS_VOICE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'>
+              Locale
+              <input
+                aria-label='Narration locale'
+                value={document.narration?.locale ?? ''}
+                onChange={(event): void => handleLocaleChange(event.target.value)}
+                placeholder='pl-PL'
+                className='mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal tracking-normal text-slate-900 outline-none ring-0'
+              />
+            </label>
+          </div>
 
           <div className='flex flex-wrap gap-2'>
             <button
@@ -224,6 +306,11 @@ export function KangurLessonNarrationPanel(
           {errorMessage ? (
             <div className='rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700'>
               {errorMessage}
+            </div>
+          ) : null}
+          {!errorMessage && cacheStatus && cacheStatus.state !== 'ready' ? (
+            <div className='rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600'>
+              {cacheStatus.message}
             </div>
           ) : null}
           {response?.mode === 'fallback' ? (

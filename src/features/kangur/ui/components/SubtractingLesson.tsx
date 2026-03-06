@@ -5,11 +5,12 @@ import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
+import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 
 type SubtractingLessonProps = { onBack: () => void };
 type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 'game';
 
-const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
+export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
   podstawy: [
     {
       title: 'Co to znaczy odejmowac?',
@@ -36,12 +37,12 @@ const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
           <p className='text-gray-700 text-center'>
             Cofaj sie na osi liczbowej lub licz, ile brakuje do wyniku.
           </p>
-          <div className='bg-red-50 border border-red-200 rounded-2xl p-4 text-center'>
+          <KangurLessonCallout accent='rose' className='text-center'>
             <p className='text-3xl font-extrabold text-red-500'>9 − 4 = ?</p>
             <p className='text-gray-500 mt-2'>
               Zacznij od <b>9</b>, cofnij sie 4: 8, 7, 6, <b>5</b> ✓
             </p>
-          </div>
+          </KangurLessonCallout>
           <div className='flex gap-1 flex-wrap justify-center'>
             {[1,2,3,4,5,6,7,8,9].map((n) => (
               <span key={n} className='w-9 h-9 rounded-full bg-red-100 flex items-center justify-center text-red-700 font-bold text-sm'>
@@ -61,15 +62,15 @@ const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
           <p className='text-gray-700 text-center'>
             Rozdziel odjemnik na dwie czesci: najpierw zejdz do 10, potem odejmij reszte.
           </p>
-          <div className='bg-pink-50 border border-pink-200 rounded-2xl p-4 text-center'>
+          <KangurLessonCallout accent='rose' className='text-center'>
             <p className='text-3xl font-extrabold text-pink-500'>13 − 5 = ?</p>
             <p className='text-gray-500 mt-2'>13 − <b>3</b> = 10, 10 − <b>2</b> = <b>8</b> ✓</p>
-          </div>
-          <div className='bg-white border border-gray-200 rounded-xl p-3 text-sm text-gray-600 w-full max-w-xs'>
+          </KangurLessonCallout>
+          <KangurLessonCallout accent='slate' className='max-w-xs text-sm text-gray-600' padding='sm'>
             <p>🔹 Rozłóz 5 = 3 + 2</p>
             <p>🔹 Odejmij 3: 13 − 3 = 10</p>
             <p>🔹 Odejmij 2: 10 − 2 = <b>8</b></p>
-          </div>
+          </KangurLessonCallout>
         </div>
       ),
     },
@@ -80,14 +81,14 @@ const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       content: (
         <div className='flex flex-col items-center gap-4'>
           <p className='text-gray-700 text-center'>Odejmuj osobno dziesiatki i jednosci!</p>
-          <div className='bg-orange-50 border border-orange-200 rounded-2xl p-4 text-center w-full max-w-xs'>
+          <KangurLessonCallout accent='amber' className='max-w-xs text-center'>
             <p className='text-3xl font-extrabold text-orange-500'>47 − 23 = ?</p>
             <div className='mt-2 text-gray-600 text-left'>
               <p>🔹 Dziesiatki: <b>40 − 20 = 20</b></p>
               <p>🔹 Jednosci: <b>7 − 3 = 4</b></p>
               <p className='mt-1 text-orange-700 font-bold'>20 + 4 = <span className='text-2xl'>24</span> ✓</p>
             </div>
-          </div>
+          </KangurLessonCallout>
         </div>
       ),
     },
@@ -97,21 +98,21 @@ const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Zapamietaj!',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <div className='bg-yellow-50 border border-yellow-200 rounded-2xl p-4 w-full max-w-xs'>
+          <KangurLessonCallout accent='amber' className='max-w-xs'>
             <ul className='text-gray-700 space-y-2 text-sm'>
               <li>✅ Odejmowanie NIE jest przemienne: <b>7−3 ≠ 3−7</b></li>
               <li>✅ Odejmowanie 0 nic nie zmienia: <b>8−0 = 8</b></li>
               <li>✅ Cofaj sie na osi lub rozkładaj na składniki</li>
               <li>✅ Sprawdz wynik dodawaniem: <b>5+3=8 → 8−3=5</b></li>
             </ul>
-          </div>
+          </KangurLessonCallout>
         </div>
       ),
     },
   ],
 };
 
-const HUB_SECTIONS = [
+export const HUB_SECTIONS = [
   { id: 'podstawy', emoji: '➖', title: 'Podstawy odejmowania', description: 'Co to odejmowanie? Jednocyfrowe' },
   { id: 'przekroczenie', emoji: '🔟', title: 'Odejmowanie przez 10', description: 'Rozklad przez dziesiec' },
   { id: 'dwucyfrowe', emoji: '💡', title: 'Odejmowanie dwucyfrowe', description: 'Dziesiatki i jednosci osobno' },

@@ -22,6 +22,24 @@ vi.mock('@/features/document-editor', () => ({
   ),
 }));
 
+vi.mock('@/features/cms/components/page-builder/MediaLibraryPanel', () => ({
+  MediaLibraryPanel: ({
+    open,
+    onSelect,
+  }: {
+    open: boolean;
+    onSelect: (filepaths: string[]) => void;
+  }) =>
+    open ? (
+      <button
+        type='button'
+        onClick={(): void => onSelect(['/uploads/kangur/mock-image.png'])}
+      >
+        Pick library image
+      </button>
+    ) : null,
+}));
+
 import { KangurLessonDocumentEditor } from '@/features/kangur/admin/KangurLessonDocumentEditor';
 import type { KangurLessonDocument } from '@/shared/contracts/kangur';
 
@@ -46,6 +64,42 @@ function StatefulEditorHarness({
 }
 
 describe('KangurLessonDocumentEditor', () => {
+  it('adds an activity block to the lesson document', () => {
+    const handleChange = vi.fn();
+
+    render(
+      <KangurLessonDocumentEditor
+        value={{ version: 1, blocks: [] }}
+        onChange={handleChange}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /add activity block/i }));
+
+    expect(handleChange).toHaveBeenCalledTimes(1);
+    const nextDocument = handleChange.mock.calls[0]?.[0] as { blocks: Array<{ type: string }> };
+    expect(nextDocument.blocks).toHaveLength(1);
+    expect(nextDocument.blocks[0]?.type).toBe('activity');
+  });
+
+  it('adds an image block to the lesson document', () => {
+    const handleChange = vi.fn();
+
+    render(
+      <KangurLessonDocumentEditor
+        value={{ version: 1, blocks: [] }}
+        onChange={handleChange}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /add image block/i }));
+
+    expect(handleChange).toHaveBeenCalledTimes(1);
+    const nextDocument = handleChange.mock.calls[0]?.[0] as { blocks: Array<{ type: string }> };
+    expect(nextDocument.blocks).toHaveLength(1);
+    expect(nextDocument.blocks[0]?.type).toBe('image');
+  });
+
   it('adds an SVG block to the lesson document', () => {
     const handleChange = vi.fn();
 
@@ -62,6 +116,201 @@ describe('KangurLessonDocumentEditor', () => {
     const nextDocument = handleChange.mock.calls[0]?.[0] as { blocks: Array<{ type: string }> };
     expect(nextDocument.blocks).toHaveLength(1);
     expect(nextDocument.blocks[0]?.type).toBe('svg');
+  });
+
+  it('adds a new modular page from the image gallery template', () => {
+    const handleChange = vi.fn();
+
+    render(
+      <KangurLessonDocumentEditor
+        value={{ version: 1, blocks: [] }}
+        onChange={handleChange}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /add image page/i }));
+
+    const nextDocument = handleChange.mock.calls[0]?.[0] as {
+      pages?: Array<{ blocks: Array<{ type: string }> }>;
+      blocks: Array<{ type: string }>;
+    };
+
+    expect(nextDocument.pages).toHaveLength(2);
+    expect(nextDocument.pages?.[1]?.blocks[0]?.type).toBe('text');
+    expect(nextDocument.pages?.[1]?.blocks[1]?.type).toBe('grid');
+    expect(nextDocument.blocks[0]?.type).toBe('text');
+    expect(nextDocument.blocks[1]?.type).toBe('grid');
+  });
+
+  it('inserts a blank page after the active page and inherits its section metadata', () => {
+    const handleChange = vi.fn();
+
+    render(
+      <StatefulEditorHarness
+        value={{
+          version: 1,
+          pages: [
+            {
+              id: 'page-1',
+              sectionKey: 'numbers',
+              sectionTitle: 'Numbers',
+              sectionDescription: 'Count objects before solving tasks.',
+              title: 'Counting intro',
+              blocks: [
+                {
+                  id: 'text-1',
+                  type: 'text',
+                  html: '<p>Start here</p>',
+                  align: 'left',
+                },
+              ],
+            },
+            {
+              id: 'page-2',
+              sectionKey: 'practice',
+              sectionTitle: 'Practice',
+              sectionDescription: 'Try the worksheet tasks.',
+              title: 'Quiz',
+              blocks: [
+                {
+                  id: 'text-2',
+                  type: 'text',
+                  html: '<p>Practice page</p>',
+                  align: 'left',
+                },
+              ],
+            },
+          ],
+          blocks: [
+            {
+              id: 'text-1',
+              type: 'text',
+              html: '<p>Start here</p>',
+              align: 'left',
+            },
+            {
+              id: 'text-2',
+              type: 'text',
+              html: '<p>Practice page</p>',
+              align: 'left',
+            },
+          ],
+        }}
+        onChange={handleChange}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^new page$/i }));
+
+    const nextDocument = handleChange.mock.calls.at(-1)?.[0] as {
+      pages?: Array<{
+        sectionKey?: string;
+        sectionTitle?: string;
+        sectionDescription?: string;
+        title?: string;
+        blocks: Array<{ type: string }>;
+      }>;
+    };
+
+    expect(nextDocument.pages).toHaveLength(3);
+    expect(nextDocument.pages?.[1]?.sectionKey).toBe('numbers');
+    expect(nextDocument.pages?.[1]?.sectionTitle).toBe('Numbers');
+    expect(nextDocument.pages?.[1]?.sectionDescription).toBe(
+      'Count objects before solving tasks.'
+    );
+    expect(nextDocument.pages?.[1]?.title).toBe('');
+    expect(nextDocument.pages?.[1]?.blocks).toHaveLength(0);
+    expect(nextDocument.pages?.[2]?.sectionTitle).toBe('Practice');
+  });
+
+  it('inherits the active section when adding a templated page', () => {
+    const handleChange = vi.fn();
+
+    render(
+      <StatefulEditorHarness
+        value={{
+          version: 1,
+          pages: [
+            {
+              id: 'page-1',
+              sectionKey: 'shapes',
+              sectionTitle: 'Shapes',
+              sectionDescription: 'Learn names and examples.',
+              title: 'Overview',
+              blocks: [
+                {
+                  id: 'text-1',
+                  type: 'text',
+                  html: '<p>Overview</p>',
+                  align: 'left',
+                },
+              ],
+            },
+          ],
+          blocks: [
+            {
+              id: 'text-1',
+              type: 'text',
+              html: '<p>Overview</p>',
+              align: 'left',
+            },
+          ],
+        }}
+        onChange={handleChange}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /add image page/i }));
+
+    const nextDocument = handleChange.mock.calls.at(-1)?.[0] as {
+      pages?: Array<{
+        sectionKey?: string;
+        sectionTitle?: string;
+        sectionDescription?: string;
+        blocks: Array<{ type: string }>;
+      }>;
+    };
+
+    expect(nextDocument.pages).toHaveLength(2);
+    expect(nextDocument.pages?.[1]?.sectionKey).toBe('shapes');
+    expect(nextDocument.pages?.[1]?.sectionTitle).toBe('Shapes');
+    expect(nextDocument.pages?.[1]?.sectionDescription).toBe('Learn names and examples.');
+    expect(nextDocument.pages?.[1]?.blocks[0]?.type).toBe('text');
+    expect(nextDocument.pages?.[1]?.blocks[1]?.type).toBe('grid');
+  });
+
+  it('applies a media-library selection to an image block source', () => {
+    const handleChange = vi.fn();
+
+    render(
+      <StatefulEditorHarness
+        value={{
+          version: 1,
+          blocks: [
+            {
+              id: 'image-1',
+              type: 'image',
+              title: 'Photo',
+              src: '',
+              align: 'center',
+              fit: 'contain',
+              maxWidth: 360,
+            },
+          ],
+        }}
+        onChange={handleChange}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /choose from library/i }));
+    fireEvent.click(screen.getByRole('button', { name: /pick library image/i }));
+
+    const nextDocument = handleChange.mock.calls.at(-1)?.[0] as {
+      blocks: Array<{ type: string; src?: string }>;
+    };
+
+    expect(nextDocument.blocks[0]?.type).toBe('image');
+    expect(nextDocument.blocks[0]?.src).toBe('/uploads/kangur/mock-image.png');
   });
 
   it('adds a grid block with starter items', () => {

@@ -4,6 +4,12 @@ import {
   AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
   AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
 } from '@/shared/lib/ai-paths';
+import {
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_NATIVE_FIELD,
+} from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-legacy-aliases';
 import { fetchAiPathsSettingsByKeysCached } from '@/shared/lib/ai-paths/settings-store-client';
 
 import { AiPathsCanvasView } from '../sections/AiPathsCanvasView';
@@ -237,7 +243,7 @@ describe('AiPathsCanvasView switch guard', () => {
           id: 'path-main',
           extensions: {
             runtimeKernel: {
-              strictCodeObjectRegistry: false,
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD]: false,
             },
           },
         },
@@ -322,9 +328,9 @@ describe('AiPathsCanvasView switch guard', () => {
           id: 'path-main',
           extensions: {
             runtimeKernel: {
-              pilotNodeTypes: ['template'],
-              resolverIds: ['resolver.path'],
-              strictCodeObjectRegistry: true,
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]: ['template'],
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]: ['resolver.path'],
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD]: true,
             },
           },
         },
@@ -485,7 +491,7 @@ describe('AiPathsCanvasView switch guard', () => {
           edges: [],
           extensions: {
             runtimeKernel: {
-              strictNativeRegistry: true,
+              [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_NATIVE_FIELD]: true,
             },
           },
         },

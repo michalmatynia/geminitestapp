@@ -12,6 +12,30 @@ import { parseJsonSetting } from '@/shared/utils/settings-json';
 export { KANGUR_LESSONS_SETTING_KEY, KANGUR_LESSON_DOCUMENTS_SETTING_KEY };
 
 export const KANGUR_LESSON_SORT_ORDER_GAP = 1000;
+export const KANGUR_NARRATOR_SETTINGS_KEY = 'kangur_narrator_settings_v1';
+
+export type KangurNarratorEngine = 'server' | 'client';
+
+export type KangurNarratorSettings = {
+  engine: KangurNarratorEngine;
+};
+
+export const KANGUR_NARRATOR_ENGINE_OPTIONS: ReadonlyArray<{
+  value: KangurNarratorEngine;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'server',
+    label: 'Server narrator',
+    description: 'Use the cached neural narration generated on the server.',
+  },
+  {
+    value: 'client',
+    label: 'Client narrator',
+    description: 'Use the browser speech engine on each learner device.',
+  },
+] as const;
 
 type KangurLessonTemplate = {
   componentId: KangurLessonComponentId;
@@ -246,6 +270,11 @@ const resolveKangurLessonContentMode = (value: unknown): KangurLessonContentMode
   return parsed.success ? parsed.data : 'component';
 };
 
+const resolveKangurNarratorEngine = (value: unknown): KangurNarratorEngine => {
+  if (typeof value !== 'string') return 'server';
+  return value.trim().toLowerCase() === 'client' ? 'client' : 'server';
+};
+
 const ensureUniqueLessonId = (requestedId: string, usedIds: Set<string>): string => {
   let nextId = requestedId;
   let suffix = 1;
@@ -311,6 +340,20 @@ export const createDefaultKangurLessons = (): KangurLesson[] =>
     };
   });
 
+export const createDefaultKangurNarratorSettings = (): KangurNarratorSettings => ({
+  engine: 'server',
+});
+
+export const normalizeKangurNarratorSettings = (value: unknown): KangurNarratorSettings => {
+  if (!isRecord(value)) {
+    return createDefaultKangurNarratorSettings();
+  }
+
+  return {
+    engine: resolveKangurNarratorEngine(value['engine']),
+  };
+};
+
 export const normalizeKangurLessons = (value: unknown): KangurLesson[] => {
   if (!Array.isArray(value)) {
     return createDefaultKangurLessons();
@@ -369,6 +412,13 @@ export const canonicalizeKangurLessons = (lessons: KangurLesson[]): KangurLesson
 
 export const parseKangurLessons = (raw: string | null | undefined): KangurLesson[] =>
   normalizeKangurLessons(parseJsonSetting<unknown>(raw, createDefaultKangurLessons()));
+
+export const parseKangurNarratorSettings = (
+  raw: string | null | undefined
+): KangurNarratorSettings =>
+  normalizeKangurNarratorSettings(
+    parseJsonSetting<unknown>(raw, createDefaultKangurNarratorSettings())
+  );
 
 const ensureUniqueAppendedLessonId = (baseId: string, usedIds: Set<string>): string => {
   let nextId = baseId;

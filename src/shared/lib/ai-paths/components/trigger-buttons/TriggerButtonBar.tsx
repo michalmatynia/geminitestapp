@@ -18,6 +18,14 @@ type TriggerButtonBarProps = {
   entityType: 'product' | 'note' | 'custom';
   entityId?: string | null | undefined;
   getEntityJson?: (() => Record<string, unknown> | null) | undefined;
+  onRunQueued?:
+    | ((args: {
+        button: AiTriggerButtonRecord;
+        runId: string;
+        entityId?: string | null | undefined;
+        entityType: 'product' | 'note' | 'custom';
+      }) => void)
+    | undefined;
   className?: string;
 };
 
@@ -76,6 +84,7 @@ export function TriggerButtonBar({
   entityType,
   entityId,
   getEntityJson,
+  onRunQueued,
   className,
 }: TriggerButtonBarProps): React.JSX.Element | null {
   const { buttons, toggleMap, successMap, runStates, handleTrigger } = useTriggerButtons({
@@ -83,6 +92,7 @@ export function TriggerButtonBar({
     entityType,
     entityId,
     getEntityJson,
+    onRunQueued,
   });
 
   if (buttons.length === 0) return null;

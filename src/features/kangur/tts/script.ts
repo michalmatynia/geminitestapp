@@ -1,9 +1,13 @@
 import type {
+  KangurLessonActivityBlock,
   KangurLessonDocument,
   KangurLessonGridBlock,
   KangurLessonInlineBlock,
+  KangurLessonPage,
   KangurLessonRootBlock,
 } from '@/shared/contracts/kangur';
+import { getKangurLessonActivityDefinition } from '@/features/kangur/lesson-activities';
+import { resolveKangurLessonDocumentPages } from '@/features/kangur/lesson-documents';
 import { stripHtmlToPlainText } from '@/features/document-editor/content-format';
 
 import type { KangurLessonNarrationScript, KangurLessonNarrationSegment } from './contracts';
@@ -193,6 +197,25 @@ const collectInlineBlockParts = (block: KangurLessonInlineBlock): string[] => {
     return block.title ? [`Ilustracja. ${block.title}.`] : [];
   }
 
+  if (block.type === 'image') {
+    const description = block.ttsDescription?.trim();
+    if (description) {
+      return [description];
+    }
+
+    const caption = block.caption?.trim();
+    if (caption) {
+      return [caption];
+    }
+
+    const altText = block.altText?.trim();
+    if (altText) {
+      return [altText];
+    }
+
+    return block.title ? [`Obraz. ${block.title}.`] : [];
+  }
+
   const plainText = block.ttsText?.trim() || stripHtmlToPlainText(block.html);
   return plainText ? [plainText] : [];
 };
@@ -200,15 +223,58 @@ const collectInlineBlockParts = (block: KangurLessonInlineBlock): string[] => {
 const collectGridBlockParts = (block: KangurLessonGridBlock): string[] =>
   block.items.flatMap((item) => collectInlineBlockParts(item.block));
 
+const collectActivityBlockParts = (block: KangurLessonActivityBlock): string[] => {
+  const definition = getKangurLessonActivityDefinition(block.activityId);
+  const spokenDescription = block.ttsDescription?.trim();
+  if (spokenDescription) {
+    return [spokenDescription];
+  }
+
+  return [
+    block.title.trim() || definition.title,
+    block.description?.trim() || definition.description,
+  ].filter((entry): entry is string => entry.trim().length > 0);
+};
+
 const collectRootBlockParts = (block: KangurLessonRootBlock): string[] => {
   if (block.type === 'grid') {
     return collectGridBlockParts(block);
   }
+  if (block.type === 'activity') {
+    return collectActivityBlockParts(block);
+  }
   return collectInlineBlockParts(block);
 };
 
-const collectDocumentParts = (document: KangurLessonDocument): string[] =>
-  document.blocks.flatMap((block) => collectRootBlockParts(block));
+const collectPageParts = (page: KangurLessonPage): string[] => [
+  page.sectionTitle?.trim() ?? '',
+  page.sectionDescription?.trim() ?? '',
+  page.title?.trim() ?? '',
+  page.description?.trim() ?? '',
+  ...page.blocks.flatMap((block) => collectRootBlockParts(block)),
+].filter((entry): entry is string => entry.trim().length > 0);
+
+const collectDocumentParts = (document: KangurLessonDocument): string[] => {
+  let previousSectionIdentity = '';
+
+  return resolveKangurLessonDocumentPages(document).flatMap((page) => {
+    const sectionIdentity = page.sectionKey?.trim() || page.sectionTitle?.trim() || '';
+    const sectionParts =
+      sectionIdentity.length > 0 && sectionIdentity !== previousSectionIdentity
+        ? [page.sectionTitle?.trim() ?? '', page.sectionDescription?.trim() ?? '']
+        : [];
+    previousSectionIdentity = sectionIdentity;
+
+    return [
+      ...sectionParts.filter((entry): entry is string => entry.trim().length > 0),
+      ...collectPageParts({
+        ...page,
+        sectionTitle: '',
+        sectionDescription: '',
+      }),
+    ];
+  });
+};
 
 export const buildKangurLessonNarrationScriptFromText = (input: {
   lessonId: string;
@@ -231,7 +297,7 @@ export const buildKangurLessonNarrationScriptFromText = (input: {
     description: (input.description ?? '').trim(),
     locale: input.locale?.trim() || KANGUR_TTS_DEFAULT_LOCALE,
     segments,
-  };
+  } as KangurLessonNarrationScript;
 };
 
 export const buildKangurLessonDocumentNarrationScript = (input: {
@@ -247,9 +313,9 @@ export const buildKangurLessonDocumentNarrationScript = (input: {
     lessonId: input.lessonId,
     title: input.title.trim(),
     description: (input.description ?? '').trim(),
-    locale: input.locale?.trim() || KANGUR_TTS_DEFAULT_LOCALE,
+    locale: input.locale?.trim() || input.document.narration?.locale?.trim() || KANGUR_TTS_DEFAULT_LOCALE,
     segments,
-  };
+  } as KangurLessonNarrationScript;
 };
 
 export const hasKangurLessonNarrationContent = (

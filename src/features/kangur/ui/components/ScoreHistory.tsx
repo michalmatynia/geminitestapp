@@ -5,6 +5,7 @@ import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/rou
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
+import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
 import { loadScopedKangurScores } from '@/features/kangur/ui/services/learner-profile-scores';
 import {
   SCORE_INSIGHT_WINDOW_DAYS,
@@ -158,11 +159,11 @@ export default function ScoreHistory({
       : null;
 
   if (loading) {
-    return <div className='text-center text-gray-400 py-8'>Ladowanie wynikow...</div>;
+    return <KangurPanel className='py-8 text-center text-gray-400' padding='lg' variant='soft'>Ladowanie wynikow...</KangurPanel>;
   }
 
   if (scores.length === 0) {
-    return <div className='text-center text-gray-400 py-8'>Brak zapisanych wynikow.</div>;
+    return <KangurPanel className='py-8 text-center text-gray-400' padding='lg' variant='soft'>Brak zapisanych wynikow.</KangurPanel>;
   }
 
   const avgAccuracy = Math.round(
@@ -185,23 +186,23 @@ export default function ScoreHistory({
   return (
     <div className='flex flex-col gap-5'>
       <div className='grid grid-cols-3 gap-3'>
-        <div className='bg-blue-50 rounded-2xl p-4 text-center'>
+        <KangurPanel className='bg-blue-50 text-center' padding='md' variant='subtle'>
           <p className='text-3xl font-extrabold text-blue-600'>{scores.length}</p>
           <p className='text-xs text-gray-500 mt-0.5'>Gier lacznie</p>
-        </div>
-        <div className='bg-green-50 rounded-2xl p-4 text-center'>
+        </KangurPanel>
+        <KangurPanel className='bg-green-50 text-center' padding='md' variant='subtle'>
           <p className='text-3xl font-extrabold text-green-600'>{avgAccuracy}%</p>
           <p className='text-xs text-gray-500 mt-0.5'>Sr. skutecznosc</p>
-        </div>
-        <div className='bg-amber-50 rounded-2xl p-4 text-center'>
+        </KangurPanel>
+        <KangurPanel className='bg-amber-50 text-center' padding='md' variant='subtle'>
           <p className='text-3xl font-extrabold text-amber-600'>
             {scores.filter((score) => score.correct_answers === score.total_questions).length}
           </p>
           <p className='text-xs text-gray-500 mt-0.5'>Idealne wyniki</p>
-        </div>
+        </KangurPanel>
       </div>
 
-      <div className='bg-white rounded-2xl shadow p-4'>
+      <KangurPanel padding='md' variant='soft'>
         <p className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
           Obraz ostatnich {SCORE_INSIGHT_WINDOW_DAYS} dni
         </p>
@@ -258,12 +259,9 @@ export default function ScoreHistory({
                   {insights.weakestOperation.attempts}
                 </p>
                 {weakestLessonHref && (
-                  <Link
-                    href={weakestLessonHref}
-                    className='mt-3 inline-flex items-center rounded-lg border border-rose-200 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-white/70 transition'
-                  >
-                    Powtorz lekcje
-                  </Link>
+                  <KangurButton asChild className='mt-3' size='sm' variant='secondary'>
+                    <Link href={weakestLessonHref}>Powtorz lekcje</Link>
+                  </KangurButton>
                 )}
               </>
             ) : (
@@ -273,9 +271,9 @@ export default function ScoreHistory({
             )}
           </div>
         </div>
-      </div>
+      </KangurPanel>
 
-      <div className='bg-white rounded-2xl shadow p-4'>
+      <KangurPanel padding='md' variant='soft'>
         <p className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
           Wyniki wg operacji
         </p>
@@ -304,9 +302,9 @@ export default function ScoreHistory({
             );
           })}
         </div>
-      </div>
+      </KangurPanel>
 
-      <div className='bg-white rounded-2xl shadow p-4'>
+      <KangurPanel padding='md' variant='soft'>
         <p className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>Ostatnie gry</p>
         <div className='flex flex-col gap-2 max-h-64 overflow-y-auto'>
           {scores.map((score) => {
@@ -340,7 +338,7 @@ export default function ScoreHistory({
             );
           })}
         </div>
-      </div>
+      </KangurPanel>
     </div>
   );
 }

@@ -2,7 +2,13 @@ import { motion } from 'framer-motion';
 import { Clock } from 'lucide-react';
 
 import { DIFFICULTY_CONFIG } from '@/features/kangur/ui/services/math-questions';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_OPTION_CARD_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 import type { KangurDifficulty } from '@/features/kangur/ui/types';
+import { cn } from '@/shared/utils';
 
 type DifficultySelectorProps = {
   selected: KangurDifficulty;
@@ -11,12 +17,11 @@ type DifficultySelectorProps = {
 
 const DIFFICULTIES: Array<{
   id: KangurDifficulty;
-  color: string;
-  border: string;
+  accent: KangurAccent;
 }> = [
-  { id: 'easy', color: 'from-green-400 to-emerald-500', border: 'border-green-300' },
-  { id: 'medium', color: 'from-yellow-400 to-amber-500', border: 'border-yellow-300' },
-  { id: 'hard', color: 'from-red-400 to-rose-500', border: 'border-red-300' },
+  { id: 'easy', accent: 'emerald' },
+  { id: 'medium', accent: 'amber' },
+  { id: 'hard', accent: 'rose' },
 ];
 
 export default function DifficultySelector({
@@ -24,12 +29,18 @@ export default function DifficultySelector({
   onSelect,
 }: DifficultySelectorProps): React.JSX.Element {
   return (
-    <div className='flex flex-col items-center gap-4 w-full'>
-      <h2 className='text-xl font-bold text-gray-600'>Wybierz poziom trudnosci</h2>
-      <div className='flex gap-3 w-full max-w-lg justify-center'>
+    <div className='flex w-full flex-col items-center gap-4'>
+      <div className='space-y-1 text-center'>
+        <h2 className='text-xl font-extrabold tracking-tight text-slate-800'>
+          Wybierz poziom trudnosci
+        </h2>
+        <p className='text-sm text-slate-500'>Ten sam uklad, tylko rosnacy poziom wyzwania.</p>
+      </div>
+      <div className='grid w-full max-w-3xl gap-3 md:grid-cols-3'>
         {DIFFICULTIES.map((difficulty, index) => {
           const config = DIFFICULTY_CONFIG[difficulty.id];
           const isSelected = selected === difficulty.id;
+          const accent = KANGUR_ACCENT_STYLES[difficulty.accent];
           return (
             <motion.button
               key={difficulty.id}
@@ -39,14 +50,25 @@ export default function DifficultySelector({
               whileHover={{ scale: 1.06 }}
               whileTap={{ scale: 0.96 }}
               onClick={() => onSelect(difficulty.id)}
-              className={`flex-1 bg-gradient-to-br ${difficulty.color} text-white rounded-2xl py-4 px-2 flex flex-col items-center gap-1 shadow-lg font-bold transition-all border-4 ${isSelected ? difficulty.border : 'border-transparent'}`}
+              className={cn(
+                KANGUR_OPTION_CARD_CLASSNAME,
+                'flex flex-col items-center gap-2 rounded-[28px] px-4 py-5 text-center',
+                isSelected ? accent.activeCard : cn('border-slate-200/80', accent.hoverCard)
+              )}
             >
-              <span className='text-3xl'>{config.emoji}</span>
-              <span className='text-lg'>{config.label}</span>
-              <span className='flex items-center gap-1 text-xs opacity-90 font-normal'>
+              <span
+                className={cn(
+                  'inline-flex h-12 w-12 items-center justify-center rounded-2xl text-3xl shadow-sm',
+                  accent.icon
+                )}
+              >
+                {config.emoji}
+              </span>
+              <span className='text-lg font-extrabold text-slate-800'>{config.label}</span>
+              <span className={cn('flex items-center gap-1 text-xs font-semibold', accent.mutedText)}>
                 <Clock className='w-3 h-3' /> {config.timeLimit}s
               </span>
-              <span className='text-xs opacity-80 font-normal'>1-{config.range}</span>
+              <span className='text-xs text-slate-500'>Zakres 1-{config.range}</span>
             </motion.button>
           );
         })}

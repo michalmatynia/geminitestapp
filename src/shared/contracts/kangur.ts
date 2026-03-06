@@ -27,6 +27,36 @@ export type KangurLessonComponentId = z.infer<typeof kangurLessonComponentIdSche
 export const kangurLessonContentModeSchema = z.enum(['component', 'document']);
 export type KangurLessonContentMode = z.infer<typeof kangurLessonContentModeSchema>;
 
+export const KANGUR_TTS_DEFAULT_LOCALE = 'pl-PL';
+export const KANGUR_TTS_DEFAULT_VOICE = 'coral';
+
+export const KANGUR_LESSON_ACTIVITY_IDS = [
+  'adding-ball',
+  'subtracting-game',
+  'multiplication-array',
+  'multiplication-quiz',
+  'division-game',
+  'geometry-drawing',
+  'calendar-interactive',
+  'clock-training',
+] as const;
+export const kangurLessonActivityIdSchema = z.enum(KANGUR_LESSON_ACTIVITY_IDS);
+export type KangurLessonActivityId = z.infer<typeof kangurLessonActivityIdSchema>;
+
+export const kangurLessonNarrationVoiceSchema = z.enum([
+  'alloy',
+  'ash',
+  'ballad',
+  'coral',
+  'echo',
+  'sage',
+  'shimmer',
+  'verse',
+  'marin',
+  'cedar',
+]);
+export type KangurLessonNarrationVoice = z.infer<typeof kangurLessonNarrationVoiceSchema>;
+
 export const kangurLessonSchema = z.object({
   id: nonEmptyTrimmedString.max(120),
   componentId: kangurLessonComponentIdSchema,
@@ -46,7 +76,7 @@ export type KangurLessons = z.infer<typeof kangurLessonsSchema>;
 
 const kangurLessonBlockIdSchema = nonEmptyTrimmedString.max(120);
 const kangurLessonBlockAlignSchema = z.enum(['left', 'center', 'right']);
-const kangurLessonSvgFitSchema = z.enum(['contain', 'cover', 'none']);
+const kangurLessonMediaFitSchema = z.enum(['contain', 'cover', 'none']);
 const kangurLessonGridColumnsSchema = z.number().int().min(1).max(4);
 const kangurLessonGridGapSchema = z.number().int().min(0).max(48);
 const kangurLessonGridSpanSchema = z.number().int().min(1).max(4);
@@ -70,14 +100,39 @@ export const kangurLessonSvgBlockSchema = z.object({
   markup: z.string().max(200_000).default(''),
   viewBox: z.string().trim().max(80).default('0 0 100 100'),
   align: kangurLessonBlockAlignSchema.default('center'),
-  fit: kangurLessonSvgFitSchema.default('contain'),
+  fit: kangurLessonMediaFitSchema.default('contain'),
   maxWidth: z.number().int().min(120).max(1_200).default(420),
 });
 export type KangurLessonSvgBlock = z.infer<typeof kangurLessonSvgBlockSchema>;
 
+export const kangurLessonImageBlockSchema = z.object({
+  id: kangurLessonBlockIdSchema,
+  type: z.literal('image'),
+  title: z.string().trim().max(120).default(''),
+  altText: z.string().trim().max(300).optional(),
+  caption: z.string().trim().max(300).optional(),
+  ttsDescription: z.string().trim().max(2_000).optional(),
+  src: z.string().trim().max(2_000).default(''),
+  align: kangurLessonBlockAlignSchema.default('center'),
+  fit: kangurLessonMediaFitSchema.default('contain'),
+  maxWidth: z.number().int().min(120).max(1_200).default(480),
+});
+export type KangurLessonImageBlock = z.infer<typeof kangurLessonImageBlockSchema>;
+
+export const kangurLessonActivityBlockSchema = z.object({
+  id: kangurLessonBlockIdSchema,
+  type: z.literal('activity'),
+  activityId: kangurLessonActivityIdSchema,
+  title: z.string().trim().max(120).default(''),
+  description: z.string().trim().max(500).optional(),
+  ttsDescription: z.string().trim().max(2_000).optional(),
+});
+export type KangurLessonActivityBlock = z.infer<typeof kangurLessonActivityBlockSchema>;
+
 export const kangurLessonInlineBlockSchema = z.discriminatedUnion('type', [
   kangurLessonTextBlockSchema,
   kangurLessonSvgBlockSchema,
+  kangurLessonImageBlockSchema,
 ]);
 export type KangurLessonInlineBlock = z.infer<typeof kangurLessonInlineBlockSchema>;
 
@@ -106,13 +161,36 @@ export type KangurLessonGridBlock = z.infer<typeof kangurLessonGridBlockSchema>;
 export const kangurLessonRootBlockSchema = z.discriminatedUnion('type', [
   kangurLessonTextBlockSchema,
   kangurLessonSvgBlockSchema,
+  kangurLessonImageBlockSchema,
+  kangurLessonActivityBlockSchema,
   kangurLessonGridBlockSchema,
 ]);
 export type KangurLessonRootBlock = z.infer<typeof kangurLessonRootBlockSchema>;
 
+export const kangurLessonPageSchema = z.object({
+  id: kangurLessonBlockIdSchema,
+  sectionKey: z.string().trim().max(120).optional(),
+  sectionTitle: z.string().trim().max(120).optional(),
+  sectionDescription: z.string().trim().max(240).optional(),
+  title: z.string().trim().max(120).optional(),
+  description: z.string().trim().max(240).optional(),
+  blocks: z.array(kangurLessonRootBlockSchema).max(48).default([]),
+});
+export type KangurLessonPage = z.infer<typeof kangurLessonPageSchema>;
+
+export const kangurLessonDocumentNarrationSchema = z
+  .object({
+    voice: kangurLessonNarrationVoiceSchema.optional(),
+    locale: z.string().trim().min(2).max(16).optional(),
+  })
+  .optional();
+export type KangurLessonDocumentNarration = z.infer<typeof kangurLessonDocumentNarrationSchema>;
+
 export const kangurLessonDocumentSchema = z.object({
   version: z.literal(1).default(1),
-  blocks: z.array(kangurLessonRootBlockSchema).max(64).default([]),
+  blocks: z.array(kangurLessonRootBlockSchema).max(256).default([]),
+  pages: z.array(kangurLessonPageSchema).max(24).optional(),
+  narration: kangurLessonDocumentNarrationSchema,
   updatedAt: z.string().datetime({ offset: true }).optional(),
 });
 export type KangurLessonDocument = z.infer<typeof kangurLessonDocumentSchema>;

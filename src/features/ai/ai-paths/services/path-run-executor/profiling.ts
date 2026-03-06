@@ -2,7 +2,7 @@ import type { AiPathRuntimeProfileEvent } from '@/shared/contracts/ai-paths-runt
 import {
   RUNTIME_PROFILE_SAMPLE_LIMIT,
   RUNTIME_TRACE_SPAN_LIMIT,
-} from '../path-run-executor.helpers';
+} from '../path-run-executor.profiling-config';
 import type {
   RuntimeProfileNodeSpan,
   RuntimeProfileNodeSpanStatus,

@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import {
+  AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS,
   normalizeAiPathRunRuntimeKernelMetadataForCleanup,
   type AiPathRunRuntimeKernelMetadataChangedField,
 } from '@/features/ai/ai-paths/services/path-run-runtime-kernel-metadata';
@@ -77,18 +78,18 @@ const parseArgs = (argv: string[]): CliOptions => {
 };
 
 const buildChangedFieldCounts = (): Record<AiPathRunRuntimeKernelMetadataChangedField, number> => ({
-  'runtimeKernelConfig.mode': 0,
-  'runtimeKernelConfig.nodeTypes': 0,
-  'runtimeKernelConfig.codeObjectResolverIds': 0,
-  'runtimeKernelConfig.strictNativeRegistry': 0,
-  'runtimeKernel.mode': 0,
-  'runtimeKernel.modeSource': 0,
-  'runtimeKernel.nodeTypes': 0,
-  'runtimeKernel.nodeTypesSource': 0,
-  'runtimeKernel.codeObjectResolverIds': 0,
-  'runtimeKernel.strictNativeRegistry': 0,
-  'runtimeKernel.strictNativeRegistrySource': 0,
-  'runtimeTrace.kernelParity.strategyCounts': 0,
+  [AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigMode]: 0,
+  [AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigNodeTypes]: 0,
+  [AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigCodeObjectResolverIds]: 0,
+  [AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelConfigStrictNativeRegistry]: 0,
+  [AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelMode]: 0,
+  [AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelModeSource]: 0,
+  [AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelNodeTypes]: 0,
+  [AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelNodeTypesSource]: 0,
+  [AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelCodeObjectResolverIds]: 0,
+  [AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelStrictNativeRegistry]: 0,
+  [AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeKernelStrictNativeRegistrySource]: 0,
+  [AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeTraceKernelParityStrategyCounts]: 0,
 });
 
 const maybeCollectSample = (sampleRunIds: string[], sampleLimit: number, runId: string): void => {
@@ -176,7 +177,9 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
       if (metadataChanged) {
         const metadataChangedFields = normalized.changedFields.slice();
         if (normalizedCompatibilityMeta.changed) {
-          metadataChangedFields.push('runtimeTrace.kernelParity.strategyCounts');
+          metadataChangedFields.push(
+            AI_PATH_RUN_RUNTIME_KERNEL_METADATA_CHANGED_FIELDS.runtimeTraceKernelParityStrategyCounts
+          );
         }
         metadataChangedFields.forEach((field) => {
           summary.changedFieldCounts[field] += 1;

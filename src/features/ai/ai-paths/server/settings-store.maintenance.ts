@@ -13,6 +13,17 @@ import {
   AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
   AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
 } from '@/shared/lib/ai-paths/core/constants';
+import {
+  normalizeRuntimeKernelConfigRecord,
+  normalizeRuntimeKernelNodeTypeToken,
+  normalizeRuntimeKernelResolverIdToken,
+  parseRuntimeKernelListValue,
+} from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-config';
+import {
+  DEPRECATED_AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
+  DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
+  DEPRECATED_AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
+} from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-legacy-aliases';
 import { compactPathConfigValue } from './settings-store.compaction';
 import { parsePathMetas, parseTriggerButtons } from './settings-store.parsing';
 import {
@@ -23,79 +34,6 @@ import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-button
 import { serializeAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
 
 const RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID = 'normalize_runtime_kernel_settings';
-const DEPRECATED_AI_PATHS_RUNTIME_KERNEL_MODE_KEY = 'ai_paths_runtime_kernel_mode';
-const DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY =
-  'ai_paths_runtime_kernel_pilot_node_types';
-const DEPRECATED_AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY =
-  'ai_paths_runtime_kernel_strict_native_registry';
-
-const normalizeRuntimeKernelNodeTypeToken = (value: string): string =>
-  value.trim().toLowerCase().replace(/\s+/g, '_');
-
-const normalizeRuntimeKernelResolverIdToken = (value: string): string => value.trim();
-
-const parseRuntimeKernelListValue = ({
-  value,
-  normalizeToken,
-}: {
-  value: string | undefined;
-  normalizeToken: (token: string) => string;
-}): string[] | undefined => {
-  if (typeof value !== 'string') return undefined;
-  const trimmed = value.trim();
-  if (!trimmed) return undefined;
-
-  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-    try {
-      const parsed = JSON.parse(trimmed) as unknown;
-      if (Array.isArray(parsed)) {
-        const normalized = Array.from(
-          new Set(
-            parsed
-              .filter((entry): entry is string => typeof entry === 'string')
-              .map((entry: string): string => normalizeToken(entry))
-              .filter(Boolean)
-          )
-        );
-        return normalized.length > 0 ? normalized : undefined;
-      }
-    } catch {
-      // Fall through to tokenized parsing.
-    }
-  }
-
-  const normalized = Array.from(
-    new Set(
-      trimmed
-        .split(/[,\n]/g)
-        .map((entry: string): string => normalizeToken(entry))
-        .filter(Boolean)
-    )
-  );
-  return normalized.length > 0 ? normalized : undefined;
-};
-
-const parseRuntimeKernelListValueFromUnknown = ({
-  value,
-  normalizeToken,
-}: {
-  value: unknown;
-  normalizeToken: (token: string) => string;
-}): string[] | undefined => {
-  if (Array.isArray(value)) {
-    const normalized = Array.from(
-      new Set(
-        value
-          .filter((entry): entry is string => typeof entry === 'string')
-          .map((entry: string): string => normalizeToken(entry))
-          .filter(Boolean)
-      )
-    );
-    return normalized.length > 0 ? normalized : undefined;
-  }
-  if (typeof value !== 'string') return undefined;
-  return parseRuntimeKernelListValue({ value, normalizeToken });
-};
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' && !Array.isArray(value)
@@ -273,78 +211,10 @@ const toCanonicalRuntimeKernelPathConfigEntryValue = (
   const runtimeKernel = asRecord(extensions['runtimeKernel']);
   if (!runtimeKernel) return null;
 
-  let changed = false;
-  const nextRuntimeKernel: Record<string, unknown> = { ...runtimeKernel };
-
-  if ('mode' in nextRuntimeKernel) {
-    delete nextRuntimeKernel['mode'];
-    changed = true;
-  }
-
-  const nodeTypes = parseRuntimeKernelListValueFromUnknown({
-    value: runtimeKernel['nodeTypes'] ?? runtimeKernel['pilotNodeTypes'],
-    normalizeToken: normalizeRuntimeKernelNodeTypeToken,
+  const nextRuntimeKernel = normalizeRuntimeKernelConfigRecord(runtimeKernel, {
+    translateLegacyAliases: true,
   });
-  if (nodeTypes) {
-    const previous = Array.isArray(runtimeKernel['nodeTypes'])
-      ? (runtimeKernel['nodeTypes'] as unknown[])
-      : null;
-    const previousJoined = previous?.every(
-      (entry: unknown): entry is string => typeof entry === 'string'
-    )
-      ? previous.join('|')
-      : '';
-    const nextJoined = nodeTypes.join('|');
-    if (previousJoined !== nextJoined || !Array.isArray(runtimeKernel['nodeTypes'])) {
-      nextRuntimeKernel['nodeTypes'] = nodeTypes;
-      changed = true;
-    }
-  } else if ('nodeTypes' in nextRuntimeKernel) {
-    delete nextRuntimeKernel['nodeTypes'];
-    changed = true;
-  }
-  if ('pilotNodeTypes' in nextRuntimeKernel) {
-    delete nextRuntimeKernel['pilotNodeTypes'];
-    changed = true;
-  }
-
-  const resolverIds = parseRuntimeKernelListValueFromUnknown({
-    value: runtimeKernel['codeObjectResolverIds'] ?? runtimeKernel['resolverIds'],
-    normalizeToken: normalizeRuntimeKernelResolverIdToken,
-  });
-  if (resolverIds) {
-    const previous = Array.isArray(runtimeKernel['codeObjectResolverIds'])
-      ? (runtimeKernel['codeObjectResolverIds'] as unknown[])
-      : null;
-    const previousJoined = previous?.every(
-      (entry: unknown): entry is string => typeof entry === 'string'
-    )
-      ? previous.join('|')
-      : '';
-    const nextJoined = resolverIds.join('|');
-    if (previousJoined !== nextJoined || !Array.isArray(runtimeKernel['codeObjectResolverIds'])) {
-      nextRuntimeKernel['codeObjectResolverIds'] = resolverIds;
-      changed = true;
-    }
-  } else if ('codeObjectResolverIds' in nextRuntimeKernel) {
-    delete nextRuntimeKernel['codeObjectResolverIds'];
-    changed = true;
-  }
-  if ('resolverIds' in nextRuntimeKernel) {
-    delete nextRuntimeKernel['resolverIds'];
-    changed = true;
-  }
-
-  if ('strictNativeRegistry' in nextRuntimeKernel) {
-    delete nextRuntimeKernel['strictNativeRegistry'];
-    changed = true;
-  }
-  if ('strictCodeObjectRegistry' in nextRuntimeKernel) {
-    delete nextRuntimeKernel['strictCodeObjectRegistry'];
-    changed = true;
-  }
-
-  if (!changed) return null;
+  if (!nextRuntimeKernel || nextRuntimeKernel === runtimeKernel) return null;
 
   const nextExtensions = {
     ...extensions,
@@ -438,7 +308,7 @@ const normalizeRuntimeKernelSettingsRecords = (records: AiPathsSettingRecord[]):
   };
 };
 
-export const countPendingRuntimeKernelModeNormalizations = (
+export const countPendingRuntimeKernelSettingsNormalizations = (
   records: AiPathsSettingRecord[]
 ): number => normalizeRuntimeKernelSettingsRecords(records).affectedCount;
 
@@ -564,8 +434,9 @@ export const buildAiPathsMaintenanceReport = (
     });
   }
 
-  const runtimeKernelModeNormalizationCount = countPendingRuntimeKernelModeNormalizations(records);
-  if (runtimeKernelModeNormalizationCount > 0) {
+  const runtimeKernelSettingsNormalizationCount =
+    countPendingRuntimeKernelSettingsNormalizations(records);
+  if (runtimeKernelSettingsNormalizationCount > 0) {
     actions.push({
       id: RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID,
       title: 'Normalize Runtime Kernel Settings',
@@ -573,7 +444,7 @@ export const buildAiPathsMaintenanceReport = (
         'Prune deprecated runtime-kernel mode/strict settings and normalize node-type overrides plus resolver ids for forward-compatible execution.',
       blocking: false,
       status: 'pending',
-      affectedRecords: runtimeKernelModeNormalizationCount,
+      affectedRecords: runtimeKernelSettingsNormalizationCount,
     });
   }
 

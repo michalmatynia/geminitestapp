@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 
+import { KangurPanel } from '@/features/kangur/ui/design/primitives';
 import LessonMasteryInsights from '@/features/kangur/ui/components/LessonMasteryInsights';
 import { BADGES, getCurrentLevel, getNextLevel } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
@@ -51,7 +52,7 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
 
   return (
     <div className='flex flex-col gap-5'>
-      <div className='bg-white rounded-2xl shadow p-5 flex items-center gap-4'>
+      <KangurPanel className='flex items-center gap-4' padding='lg' variant='soft'>
         <div className='text-5xl'>🎖️</div>
         <div className='flex-1'>
           <p className={`font-extrabold text-xl ${currentLevel.color}`}>{currentLevel.title}</p>
@@ -72,21 +73,21 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
               : 'Osiagnieto maksymalny poziom!'}
           </p>
         </div>
-      </div>
+      </KangurPanel>
 
       <div className='grid grid-cols-2 sm:grid-cols-3 gap-3'>
         {stats.map((stat) => (
-          <div key={stat.label} className={`rounded-2xl ${stat.bg} p-4 text-center`}>
+          <KangurPanel key={stat.label} className={`${stat.bg} text-center`} padding='md' variant='subtle'>
             <p className={`text-3xl font-extrabold ${stat.color}`}>{stat.value}</p>
             <p className='text-xs text-gray-500 mt-0.5'>{stat.label}</p>
-          </div>
+          </KangurPanel>
         ))}
       </div>
 
       <LessonMasteryInsights progress={progress} />
 
       {operationsPlayed.length > 0 && (
-        <div className='bg-white rounded-2xl shadow p-4'>
+        <KangurPanel padding='md' variant='soft'>
           <p className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
             Cwiczone operacje
           </p>
@@ -100,10 +101,10 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
               </span>
             ))}
           </div>
-        </div>
+        </KangurPanel>
       )}
 
-      <div className='bg-white rounded-2xl shadow p-4'>
+      <KangurPanel padding='md' variant='soft'>
         <p className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>Odznaki</p>
         <div className='flex flex-wrap gap-2'>
           {BADGES.map((badge) => {
@@ -124,7 +125,7 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
             );
           })}
         </div>
-      </div>
+      </KangurPanel>
     </div>
   );
 }

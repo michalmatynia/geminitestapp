@@ -18,6 +18,7 @@ import type {
   KangurLessonAudioCacheEntry,
   KangurLessonNarrationScript,
   KangurLessonTtsResponse,
+  KangurLessonTtsStatusResponse,
   KangurLessonTtsVoice,
 } from './contracts';
 import {
@@ -26,17 +27,31 @@ import {
   KANGUR_TTS_DEFAULT_MODEL,
 } from './contracts';
 
-const KANGUR_TTS_SYSTEM_INSTRUCTIONS = [
-  'Speak in natural Polish for children learning math.',
-  'Use a warm, realistic, calm teaching voice.',
-  'Keep the pacing patient and clear.',
-  'Read numbers, dates, and short lists carefully.',
-  'Avoid sounding robotic or overly dramatic.',
-].join(' ');
+const resolveLocaleInstruction = (locale: string): string => {
+  const normalizedLocale = locale.trim().toLowerCase();
+  if (!normalizedLocale || normalizedLocale.startsWith('pl')) {
+    return 'Speak in natural Polish for children learning math.';
+  }
+  if (normalizedLocale.startsWith('en')) {
+    return 'Speak in natural English for children learning math.';
+  }
+
+  return `Speak naturally in the requested locale ${locale.trim()}.`;
+};
+
+const buildTtsInstructions = (locale: string): string =>
+  [
+    resolveLocaleInstruction(locale),
+    'Use a warm, realistic, calm teaching voice.',
+    'Keep the pacing patient and clear.',
+    'Read numbers, dates, and short lists carefully.',
+    'Avoid sounding robotic or overly dramatic.',
+  ].join(' ');
 
 const createSha256 = (value: string): string => createHash('sha256').update(value).digest('hex');
 
 const buildSegmentCacheKey = (input: {
+  locale: string;
   voice: KangurLessonTtsVoice;
   text: string;
 }): string =>
@@ -44,6 +59,7 @@ const buildSegmentCacheKey = (input: {
     JSON.stringify({
       version: 1,
       model: KANGUR_TTS_DEFAULT_MODEL,
+      locale: input.locale,
       voice: input.voice,
       text: input.text,
     })
@@ -112,6 +128,7 @@ const persistAudioBuffer = async (input: {
 const synthesizeSegmentAudio = async (input: {
   client: OpenAI;
   lessonId: string;
+  locale: string;
   voice: KangurLessonTtsVoice;
   text: string;
   cacheKey: string;
@@ -120,7 +137,7 @@ const synthesizeSegmentAudio = async (input: {
     model: KANGUR_TTS_DEFAULT_MODEL,
     voice: input.voice,
     input: input.text,
-    instructions: KANGUR_TTS_SYSTEM_INSTRUCTIONS,
+    instructions: buildTtsInstructions(input.locale),
     response_format: 'mp3',
   });
   const audioBuffer = Buffer.from(await response.arrayBuffer());
@@ -129,6 +146,91 @@ const synthesizeSegmentAudio = async (input: {
     cacheKey: input.cacheKey,
     buffer: audioBuffer,
   });
+};
+
+const resolveCachedAudioSegments = async (input: {
+  script: KangurLessonNarrationScript;
+  voice: KangurLessonTtsVoice;
+}): Promise<KangurLessonAudioSegment[] | null> => {
+  const cache = parseAudioCache(await readStoredSettingValue(KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY));
+  const segments: KangurLessonAudioSegment[] = [];
+
+  for (const segment of input.script.segments) {
+    const cacheKey = buildSegmentCacheKey({
+      locale: input.script.locale,
+      voice: input.voice,
+      text: segment.text,
+    });
+    const existingEntry = cache[cacheKey] ?? null;
+    const canReuseEntry =
+      existingEntry?.voice === input.voice &&
+      existingEntry.model === KANGUR_TTS_DEFAULT_MODEL &&
+      existingEntry.textHash === createSha256(segment.text) &&
+      (await doesCachedAudioExist(existingEntry));
+
+    if (!canReuseEntry) {
+      return null;
+    }
+
+    segments.push({
+      id: segment.id,
+      text: segment.text,
+      audioUrl: existingEntry.audioUrl,
+      createdAt: existingEntry.createdAt,
+    });
+  }
+
+  return segments;
+};
+
+export const inspectKangurLessonNarrationAudio = async (input: {
+  script: KangurLessonNarrationScript;
+  voice: KangurLessonTtsVoice;
+}): Promise<KangurLessonTtsStatusResponse> => {
+  if (input.script.segments.length === 0) {
+    return {
+      state: 'missing',
+      voice: input.voice,
+      latestCreatedAt: null,
+      message: 'No lesson narration text is available for this lesson yet.',
+      segments: [],
+    };
+  }
+
+  const segments = await resolveCachedAudioSegments(input);
+  if (segments) {
+    const latestCreatedAt = segments.reduce<string | null>(
+      (latest, segment) => (!latest || segment.createdAt > latest ? segment.createdAt : latest),
+      null
+    );
+
+    return {
+      state: 'ready',
+      voice: input.voice,
+      latestCreatedAt,
+      message: 'Cached audio is available for this lesson draft.',
+      segments,
+    };
+  }
+
+  const apiKey = await resolveOpenAiApiKey();
+  if (!apiKey) {
+    return {
+      state: 'tts_unavailable',
+      voice: input.voice,
+      latestCreatedAt: null,
+      message: 'Neural TTS is not configured, so audio has not been generated for this lesson yet.',
+      segments: [],
+    };
+  }
+
+  return {
+    state: 'missing',
+    voice: input.voice,
+    latestCreatedAt: null,
+    message: 'Audio has not been generated for this lesson draft yet.',
+    segments: [],
+  };
 };
 
 export const ensureKangurLessonNarrationAudio = async (input: {
@@ -164,6 +266,7 @@ export const ensureKangurLessonNarrationAudio = async (input: {
 
     for (const segment of input.script.segments) {
       const cacheKey = buildSegmentCacheKey({
+        locale: input.script.locale,
         voice: input.voice,
         text: segment.text,
       });
@@ -179,6 +282,7 @@ export const ensureKangurLessonNarrationAudio = async (input: {
         : await synthesizeSegmentAudio({
           client,
           lessonId: input.script.lessonId,
+          locale: input.script.locale,
           voice: input.voice,
           text: segment.text,
           cacheKey,

@@ -1,25 +1,19 @@
 import { z } from 'zod';
 
+import {
+  KANGUR_TTS_DEFAULT_LOCALE,
+  KANGUR_TTS_DEFAULT_VOICE,
+  kangurLessonNarrationVoiceSchema,
+  type KangurLessonNarrationVoice,
+} from '@/shared/contracts/kangur';
+
 const nonEmptyTrimmedString = z.string().trim().min(1);
 
 export const KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY = 'kangur_lesson_audio_v1';
 export const KANGUR_TTS_DEFAULT_MODEL = 'gpt-4o-mini-tts';
-export const KANGUR_TTS_DEFAULT_LOCALE = 'pl-PL';
-export const KANGUR_TTS_DEFAULT_VOICE = 'coral';
-
-export const kangurLessonTtsVoiceSchema = z.enum([
-  'alloy',
-  'ash',
-  'ballad',
-  'coral',
-  'echo',
-  'sage',
-  'shimmer',
-  'verse',
-  'marin',
-  'cedar',
-]);
-export type KangurLessonTtsVoice = z.infer<typeof kangurLessonTtsVoiceSchema>;
+export { KANGUR_TTS_DEFAULT_LOCALE, KANGUR_TTS_DEFAULT_VOICE };
+export const kangurLessonTtsVoiceSchema = kangurLessonNarrationVoiceSchema;
+export type KangurLessonTtsVoice = KangurLessonNarrationVoice;
 
 export const KANGUR_TTS_VOICE_OPTIONS: ReadonlyArray<{
   value: KangurLessonTtsVoice;
@@ -52,6 +46,12 @@ export const kangurLessonTtsRequestSchema = z.object({
   forceRegenerate: z.boolean().optional().default(false),
 });
 export type KangurLessonTtsRequest = z.infer<typeof kangurLessonTtsRequestSchema>;
+
+export const kangurLessonTtsStatusRequestSchema = z.object({
+  script: kangurLessonNarrationScriptSchema,
+  voice: kangurLessonTtsVoiceSchema.default(KANGUR_TTS_DEFAULT_VOICE),
+});
+export type KangurLessonTtsStatusRequest = z.infer<typeof kangurLessonTtsStatusRequestSchema>;
 
 export const kangurLessonAudioSegmentSchema = kangurLessonNarrationSegmentSchema.extend({
   audioUrl: nonEmptyTrimmedString.max(2_048),
@@ -90,6 +90,22 @@ export const kangurLessonTtsResponseSchema = z.union([
   kangurLessonTtsFallbackResponseSchema,
 ]);
 export type KangurLessonTtsResponse = z.infer<typeof kangurLessonTtsResponseSchema>;
+
+export const kangurLessonTtsStatusStateSchema = z.enum([
+  'ready',
+  'missing',
+  'tts_unavailable',
+]);
+export type KangurLessonTtsStatusState = z.infer<typeof kangurLessonTtsStatusStateSchema>;
+
+export const kangurLessonTtsStatusResponseSchema = z.object({
+  state: kangurLessonTtsStatusStateSchema,
+  voice: kangurLessonTtsVoiceSchema,
+  latestCreatedAt: z.string().datetime({ offset: true }).nullable(),
+  message: z.string().trim().max(240),
+  segments: z.array(kangurLessonAudioSegmentSchema).max(32).default([]),
+});
+export type KangurLessonTtsStatusResponse = z.infer<typeof kangurLessonTtsStatusResponseSchema>;
 
 export const kangurLessonAudioCacheEntrySchema = z.object({
   audioUrl: nonEmptyTrimmedString.max(2_048),

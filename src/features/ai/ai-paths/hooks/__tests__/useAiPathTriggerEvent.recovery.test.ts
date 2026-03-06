@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { recoverEnqueuedRunByRequestId } from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
+import { recoverEnqueuedRunByRequestId } from '@/shared/lib/ai-paths/hooks/trigger-event-recovery';
 
 describe('recoverEnqueuedRunByRequestId', () => {
   it('returns a recovered run after a transient lookup miss', async () => {

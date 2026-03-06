@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 
 const STORAGE_KEY = 'queued-product-ids';
+const DEFAULT_QUEUED_PRODUCT_TTL_MS = 30_000;
 let cachedIds: Set<string> | null = null;
 const listeners = new Set<() => void>();
+const removalTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 const loadFromStorage = (): void => {
   if (cachedIds) return;
@@ -66,10 +68,34 @@ export const removeQueuedProductId = (id: string): void => {
   if (!id) return;
   loadFromStorage();
   if (!cachedIds) return;
+  const existingTimer = removalTimers.get(id);
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+    removalTimers.delete(id);
+  }
   if (cachedIds.delete(id)) {
     saveToStorage();
     emitChange();
   }
+};
+
+export const markQueuedProductId = (
+  id: string,
+  ttlMs: number = DEFAULT_QUEUED_PRODUCT_TTL_MS
+): void => {
+  if (!id) return;
+  addQueuedProductId(id);
+
+  const existingTimer = removalTimers.get(id);
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+  }
+
+  const nextTimer = setTimeout(() => {
+    removalTimers.delete(id);
+    removeQueuedProductId(id);
+  }, Math.max(1_000, ttlMs));
+  removalTimers.set(id, nextTimer);
 };
 
 export const useQueuedProductIds = (): Set<string> => {

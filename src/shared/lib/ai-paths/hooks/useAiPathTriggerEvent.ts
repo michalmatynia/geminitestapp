@@ -4,11 +4,7 @@ import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
-  AI_PATHS_HISTORY_RETENTION_KEY,
   AI_PATHS_UI_STATE_KEY,
-  PATH_CONFIG_PREFIX,
-  PATH_INDEX_KEY,
-  TRIGGER_EVENTS,
 } from '@/shared/lib/ai-paths/core/constants';
 import {
   enqueueAiPathRun,
@@ -16,700 +12,52 @@ import {
   resolveAiPathRunFromEnqueueResponseData,
 } from '@/shared/lib/ai-paths/api/client';
 import {
-  normalizeLoadedPathName,
-  normalizeLoadedPathMetas,
   resolveHistoryRetentionPasses,
-  sanitizeTriggerPathConfig,
 } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
-import { safeParseJson } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine/defaults';
 import {
-  fetchAiPathsSettingsCached,
-  fetchAiPathsSettingsByKeysCached,
   invalidateAiPathsSettingsCache,
   updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { AiNode, AiPathRunRecord, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import type { AiNode, AiPathRunRecord, PathConfig } from '@/shared/contracts/ai-paths';
 import type { ParserSampleState, UpdaterSampleState } from '@/shared/contracts/ai-paths-core/nodes';
-import { validationError } from '@/shared/errors/app-error';
 import {
-  invalidateAiPathQueue,
   invalidateAiPathSettings,
-  invalidateNotes,
-  notifyAiPathRunEnqueued,
   optimisticallyInsertAiPathRunInQueueCache,
-  invalidateProductsCountsAndDetail,
-  invalidateProductsAndCounts,
-  invalidateIntegrationJobs,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   type FireAiPathTriggerEventArgs,
-  type TriggerEventEntityType,
 } from '@/shared/contracts/ai-trigger-buttons';
 import { useToast } from '@/shared/ui';
 
-const TRIGGER_SETTINGS_PRELOAD_TIMEOUT_MS = 8_000;
+import {
+  isTimeoutMessage,
+  isRecoverableTriggerEnqueueError,
+  createAiPathTriggerRequestId,
+} from './trigger-event-utils';
+import {
+  recoverEnqueuedRunByRequestId,
+} from './trigger-event-recovery';
+import {
+  loadTriggerSettingsData,
+  resolveRuntimeStateHint,
+  coerceSampleStateMap,
+  resolvePreferredPathId,
+} from './trigger-event-settings';
+import {
+  resolveTriggerSelection,
+} from './trigger-event-selection';
+import {
+  buildTriggerContext,
+} from './trigger-event-context';
+import {
+  handleAiPathTriggerInvalidation,
+} from './trigger-event-invalidation';
+
 const TRIGGER_ENQUEUE_TIMEOUT_MS = 90_000;
-const TRIGGER_ENQUEUE_RECOVERY_TIMEOUT_MS = 10_000;
-const TRIGGER_ENQUEUE_RECOVERY_DELAYS_MS = [0, 350, 1_200] as const;
-
-const isTimeoutMessage = (message: string | null | undefined): boolean => {
-  if (!message || typeof message !== 'string') return false;
-  const normalized = message.toLowerCase();
-  return normalized.includes('timed out') || normalized.includes('timeout');
-};
-
-export const isRecoverableTriggerEnqueueError = (
-  message: string | null | undefined
-): boolean => {
-  if (!message || typeof message !== 'string') return false;
-  const normalized = message.toLowerCase();
-  return (
-    normalized.includes('failed to fetch') ||
-    normalized.includes('networkerror') ||
-    normalized.includes('load failed') ||
-    normalized.includes('network request failed') ||
-    isTimeoutMessage(message)
-  );
-};
-
-export const createAiPathTriggerRequestId = (args: {
-  pathId: string;
-  triggerEventId: string;
-  entityType: TriggerEventEntityType;
-  entityId?: string | null | undefined;
-}): string => {
-  const randomPart =
-    typeof globalThis.crypto?.randomUUID === 'function'
-      ? globalThis.crypto.randomUUID().replace(/-/g, '')
-      : `${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
-  const entityPart =
-    typeof args.entityId === 'string' && args.entityId.trim().length > 0
-      ? args.entityId.trim()
-      : 'entity';
-  return `trigger:${args.pathId}:${args.triggerEventId}:${args.entityType}:${entityPart}:${randomPart}`;
-};
-
-const toNonEmptyString = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const normalized = value.trim();
-  return normalized.length > 0 ? normalized : null;
-};
-
-const extractAiPathRunIdFromListedRun = (value: unknown): string | null => {
-  const record = toRecord(value);
-  if (!record) return null;
-  return (
-    toNonEmptyString(record['id']) ??
-    toNonEmptyString(record['runId']) ??
-    toNonEmptyString(record['_id']) ??
-    null
-  );
-};
-
-const toAiPathRunRecord = (value: unknown, runId: string): AiPathRunRecord | null => {
-  const record = toRecord(value);
-  if (!record) return null;
-  return {
-    ...record,
-    id: runId,
-    status: toNonEmptyString(record['status']) ?? 'queued',
-  } as AiPathRunRecord;
-};
-
-const waitForMs = async (durationMs: number): Promise<void> => {
-  if (!Number.isFinite(durationMs) || durationMs <= 0) return;
-  await new Promise((resolve) => {
-    setTimeout(resolve, durationMs);
-  });
-};
-
-export const recoverEnqueuedRunByRequestId = async (args: {
-  pathId: string;
-  requestId: string;
-  lookupRuns?: typeof listAiPathRuns;
-  retryDelaysMs?: readonly number[];
-}): Promise<{ runId: string; runRecord: AiPathRunRecord | null } | null> => {
-  const lookupRuns = args.lookupRuns ?? listAiPathRuns;
-  const retryDelaysMs = args.retryDelaysMs ?? TRIGGER_ENQUEUE_RECOVERY_DELAYS_MS;
-  for (const delayMs of retryDelaysMs) {
-    await waitForMs(delayMs);
-    const lookupResult = await lookupRuns({
-      pathId: args.pathId,
-      requestId: args.requestId,
-      limit: 1,
-      includeTotal: false,
-      fresh: true,
-      timeoutMs: TRIGGER_ENQUEUE_RECOVERY_TIMEOUT_MS,
-    });
-    if (!lookupResult.ok) continue;
-    const candidate = lookupResult.data.runs[0];
-    const runId = extractAiPathRunIdFromListedRun(candidate);
-    if (!runId) continue;
-    return {
-      runId,
-      runRecord: toAiPathRunRecord(candidate, runId),
-    };
-  }
-  return null;
-};
-
-const resolvePreferredPathId = (value: string | null | undefined): string | null => {
-  if (typeof value !== 'string') return null;
-  const normalized = value.trim();
-  return normalized.length > 0 ? normalized : null;
-};
-
-const buildSelectiveTriggerSettingsData = async (
-  preferredPathId: string
-): Promise<Array<{ key: string; value: string }>> => {
-  const preferredConfigKey = `${PATH_CONFIG_PREFIX}${preferredPathId}`;
-  const selectiveRecords = await fetchAiPathsSettingsByKeysCached(
-    [AI_PATHS_HISTORY_RETENTION_KEY, AI_PATHS_UI_STATE_KEY, preferredConfigKey],
-    { timeoutMs: TRIGGER_SETTINGS_PRELOAD_TIMEOUT_MS }
-  );
-  const configRecord =
-    selectiveRecords.find((item: { key: string }) => item.key === preferredConfigKey) ?? null;
-  if (!configRecord || typeof configRecord.value !== 'string' || configRecord.value.length === 0) {
-    throw new Error(`Missing preferred path config for ${preferredPathId}.`);
-  }
-
-  let preferredPathName = `Path ${preferredPathId.slice(0, 6)}`;
-  try {
-    const parsed = JSON.parse(configRecord.value) as { name?: unknown };
-    if (typeof parsed?.name === 'string' && parsed.name.trim().length > 0) {
-      preferredPathName = parsed.name.trim();
-    }
-  } catch {
-    // Keep fallback name when config is malformed.
-  }
-
-  const timestamp = new Date().toISOString();
-  const syntheticIndex = JSON.stringify([
-    {
-      id: preferredPathId,
-      name: preferredPathName,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    },
-  ]);
-  const baseRecords = selectiveRecords.filter(
-    (item: { key: string }) => item.key !== PATH_INDEX_KEY && item.key !== preferredConfigKey
-  );
-  return [
-    ...baseRecords,
-    { key: PATH_INDEX_KEY, value: syntheticIndex },
-    { key: preferredConfigKey, value: configRecord.value },
-  ];
-};
-
-const loadTriggerSettingsData = async (args: {
-  preferredPathId?: string | null | undefined;
-}): Promise<{
-  mode: 'selective' | 'full';
-  settingsData: Array<{ key: string; value: string }>;
-}> => {
-  const preferredPathId = resolvePreferredPathId(args.preferredPathId ?? null);
-  if (!preferredPathId) {
-    return {
-      mode: 'full',
-      settingsData: await fetchAiPathsSettingsCached(),
-    };
-  }
-
-  try {
-    return {
-      mode: 'selective',
-      settingsData: await buildSelectiveTriggerSettingsData(preferredPathId),
-    };
-  } catch (error) {
-    logClientError(error, {
-      context: {
-        source: 'useAiPathTriggerEvent',
-        action: 'selectiveSettingsFallback',
-        preferredPathId,
-      },
-    });
-    return {
-      mode: 'full',
-      settingsData: await fetchAiPathsSettingsCached(),
-    };
-  }
-};
-
-const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig =>
-  sanitizeTriggerPathConfig(config);
-
-export { sanitizeTriggerPathConfig };
-
-const toRecord = (value: unknown): Record<string, unknown> | null =>
-  value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-
-const TRIGGER_ENTITY_SNAPSHOT_MAX_DEPTH = 6;
-const TRIGGER_ENTITY_OMITTED_VALUE = '[omitted_large_field]';
-const TRIGGER_ENTITY_HEAVY_KEY_PATTERNS: RegExp[] = [
-  /^imagebase64s?$/i,
-  /^base64s?$/i,
-  /(?:^|[_-])base64(?:$|[_-])/i,
-  /(?:^|[_-])binary(?:$|[_-])/i,
-  /(?:^|[_-])buffer(?:$|[_-])/i,
-  /(?:^|[_-])blob(?:$|[_-])/i,
-  /(?:^|[_-])arraybuffer(?:$|[_-])/i,
-];
-
-const shouldOmitTriggerEntityKey = (key: string): boolean =>
-  TRIGGER_ENTITY_HEAVY_KEY_PATTERNS.some((pattern) => pattern.test(key));
-
-const isBase64DataUrl = (value: string): boolean => /^data:[^;]+;base64,/i.test(value.trim());
-
-const sanitizeTriggerEntityValue = (
-  value: unknown,
-  depth: number,
-  key?: string
-): unknown => {
-  if (value === null || value === undefined) return value;
-  if (typeof value === 'string') {
-    if ((key && shouldOmitTriggerEntityKey(key)) || isBase64DataUrl(value)) {
-      return TRIGGER_ENTITY_OMITTED_VALUE;
-    }
-    return value;
-  }
-  if (typeof value === 'number' || typeof value === 'boolean') return value;
-  if (Array.isArray(value)) {
-    return value
-      .map((item: unknown) => sanitizeTriggerEntityValue(item, depth + 1, key))
-      .filter((item: unknown) => item !== undefined);
-  }
-  if (typeof value !== 'object') return undefined;
-  if (depth >= TRIGGER_ENTITY_SNAPSHOT_MAX_DEPTH) {
-    return {};
-  }
-
-  const next: Record<string, unknown> = {};
-  Object.entries(value as Record<string, unknown>).forEach(([entryKey, entryValue]) => {
-    if (shouldOmitTriggerEntityKey(entryKey)) return;
-    const sanitized = sanitizeTriggerEntityValue(entryValue, depth + 1, entryKey);
-    if (sanitized !== undefined) {
-      next[entryKey] = sanitized;
-    }
-  });
-  return next;
-};
-
-export const sanitizeTriggerEntitySnapshot = (
-  entityJson?: Record<string, unknown> | null
-): Record<string, unknown> | null => {
-  if (!entityJson) return null;
-  return toRecord(sanitizeTriggerEntityValue(entityJson, 0));
-};
-
-const shouldEmbedTriggerEntitySnapshot = (args: {
-  entityType: TriggerEventEntityType;
-  entityId?: string | null | undefined;
-}): boolean => {
-  if (args.entityType === 'custom') return true;
-  return typeof args.entityId !== 'string' || args.entityId.trim().length === 0;
-};
-
-const resolveRuntimeStateHint = (value: unknown): Record<string, unknown> | null => {
-  if (typeof value === 'string') {
-    const parsed = safeParseJson<Record<string, unknown>>(value);
-    if (parsed.error) return null;
-    return toRecord(parsed.value);
-  }
-  return toRecord(value);
-};
-
-const coerceSampleStateMap = <T>(value: unknown): Record<string, T> | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return null;
-  }
-  return value as Record<string, T>;
-};
-
-const loadPathConfigsFromSettings = async (
-  settingsData?: Array<{ key: string; value: string }>
-): Promise<{
-  configs: Record<string, PathConfig>;
-  settingsPathOrder: string[];
-}> => {
-  const data =
-    settingsData ??
-    (await (async (): Promise<Array<{ key: string; value: string }> | null> => {
-      return await fetchAiPathsSettingsCached();
-    })()) ??
-    [];
-  if (!data.length) return { configs: {}, settingsPathOrder: [] };
-
-  const map = new Map<string, string>(
-    data.map((item: { key: string; value: string }) => [item.key, item.value])
-  );
-  const indexRaw = map.get(PATH_INDEX_KEY);
-  if (!indexRaw?.trim()) {
-    return { configs: {}, settingsPathOrder: [] };
-  }
-
-  let parsedIndex: unknown;
-  try {
-    parsedIndex = JSON.parse(indexRaw) as unknown;
-  } catch (error) {
-    throw validationError('Invalid AI Paths index payload.', {
-      source: 'ai_paths.trigger_payload',
-      reason: 'index_invalid_json',
-      cause: error instanceof Error ? error.message : 'unknown_error',
-    });
-  }
-  if (!Array.isArray(parsedIndex)) {
-    throw validationError('Invalid AI Paths index payload.', {
-      source: 'ai_paths.trigger_payload',
-      reason: 'index_not_array',
-    });
-  }
-
-  const metas = parsedIndex.map((meta: unknown, index: number): PathMeta => {
-    if (!meta || typeof meta !== 'object' || Array.isArray(meta)) {
-      throw validationError('Invalid AI Paths index entry.', {
-        source: 'ai_paths.trigger_payload',
-        reason: 'index_entry_not_object',
-        index,
-      });
-    }
-    return meta as PathMeta;
-  });
-  const normalizedMetas = normalizeLoadedPathMetas(metas);
-  const settingsPathOrder = normalizedMetas
-    .map((meta: PathMeta) => meta?.id)
-    .filter((id: string | undefined): id is string => typeof id === 'string' && id.length > 0);
-  const configs: Record<string, PathConfig> = {};
-
-  normalizedMetas.forEach((meta: PathMeta): void => {
-    if (!meta?.id) return;
-    const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
-    if (!configRaw?.trim()) {
-      throw validationError('AI Paths index references missing config payload.', {
-        source: 'ai_paths.trigger_payload',
-        reason: 'missing_path_config',
-        pathId: meta.id,
-      });
-    }
-
-    let parsedConfig: unknown;
-    try {
-      parsedConfig = JSON.parse(configRaw) as unknown;
-    } catch (error) {
-      throw validationError('Invalid AI Path config payload.', {
-        source: 'ai_paths.trigger_payload',
-        reason: 'config_invalid_json',
-        pathId: meta.id,
-        cause: error instanceof Error ? error.message : 'unknown_error',
-      });
-    }
-    if (!parsedConfig || typeof parsedConfig !== 'object' || Array.isArray(parsedConfig)) {
-      throw validationError('Invalid AI Path config payload.', {
-        source: 'ai_paths.trigger_payload',
-        reason: 'config_not_object',
-        pathId: meta.id,
-      });
-    }
-
-    const config = parsedConfig as PathConfig;
-    const normalizedConfig = sanitizeLoadedPathConfig(config);
-    const normalizedId = typeof normalizedConfig.id === 'string' ? normalizedConfig.id.trim() : '';
-    if (!normalizedId || normalizedId !== meta.id) {
-      throw validationError('AI Path config id does not match index entry.', {
-        source: 'ai_paths.trigger_payload',
-        reason: 'config_id_mismatch',
-        expectedPathId: meta.id,
-        actualPathId: normalizedId || null,
-      });
-    }
-    const normalizedName =
-      normalizeLoadedPathName(meta.id, normalizedConfig.name) ||
-      normalizeLoadedPathName(meta.id, meta.name);
-    if (!normalizedName) {
-      throw validationError('AI Path config name is required.', {
-        source: 'ai_paths.trigger_payload',
-        reason: 'missing_path_name',
-        pathId: meta.id,
-      });
-    }
-
-    configs[meta.id] = {
-      ...normalizedConfig,
-      id: meta.id,
-      name: normalizedName,
-    };
-  });
-
-  return { configs, settingsPathOrder };
-};
-
-type TriggerSelectionCandidate = Pick<PathConfig, 'id' | 'isActive'>;
-
-export const selectTriggerCandidates = <T extends TriggerSelectionCandidate>(args: {
-  triggerCandidates: T[];
-  preferredPathId: string | null;
-  activePathId: string | null;
-}): {
-  activeTriggerCandidates: T[];
-  selectedConfig: T | null;
-  missingPreferredPathId: string | null;
-  usedSingleActiveFallback: boolean;
-} => {
-  const { triggerCandidates, preferredPathId, activePathId } = args;
-  const activeTriggerCandidates: T[] = triggerCandidates.filter(
-    (config: T): boolean => config.isActive !== false
-  );
-
-  const preferredByButton = preferredPathId
-    ? (triggerCandidates.find((config: T): boolean => config.id === preferredPathId) ?? null)
-    : null;
-
-  if (preferredPathId) {
-    if (preferredByButton) {
-      return {
-        activeTriggerCandidates,
-        selectedConfig: preferredByButton,
-        missingPreferredPathId: null,
-        usedSingleActiveFallback: false,
-      };
-    }
-
-    if (activeTriggerCandidates.length === 1) {
-      return {
-        activeTriggerCandidates,
-        selectedConfig: activeTriggerCandidates[0] ?? null,
-        missingPreferredPathId: preferredPathId,
-        usedSingleActiveFallback: true,
-      };
-    }
-
-    return {
-      activeTriggerCandidates,
-      selectedConfig: null,
-      missingPreferredPathId: preferredPathId,
-      usedSingleActiveFallback: false,
-    };
-  }
-
-  const preferredByActivePath = activePathId
-    ? (activeTriggerCandidates.find((config: T): boolean => config.id === activePathId) ?? null)
-    : null;
-
-  if (activeTriggerCandidates.length > 1 && !preferredByActivePath) {
-    return {
-      activeTriggerCandidates,
-      selectedConfig: null,
-      missingPreferredPathId: null,
-      usedSingleActiveFallback: false,
-    };
-  }
-
-  return {
-    activeTriggerCandidates,
-    selectedConfig:
-      preferredByActivePath ?? activeTriggerCandidates[0] ?? triggerCandidates[0] ?? null,
-    missingPreferredPathId: null,
-    usedSingleActiveFallback: false,
-  };
-};
-
-const resolveTriggerSelection = async (
-  settingsData: Array<{ key: string; value: string }>,
-  triggerEventId: string,
-  options?: {
-    preferredPathId?: string | null | undefined;
-    preferredActivePathId?: string | null | undefined;
-  }
-): Promise<{
-  triggerCandidates: PathConfig[];
-  activeTriggerCandidates: PathConfig[];
-  selectedConfig: PathConfig | null;
-  uiState: Record<string, unknown> | null;
-  missingPreferredPathId: string | null;
-  usedSingleActiveFallback: boolean;
-}> => {
-  const { configs, settingsPathOrder } = await loadPathConfigsFromSettings(settingsData);
-  const configsList: PathConfig[] = Object.values(configs);
-  const pathOrder: string[] = settingsPathOrder;
-  const map = new Map<string, string>(
-    settingsData.map((item: { key: string; value: string }) => [item.key, item.value])
-  );
-  const uiStateRaw = map.get(AI_PATHS_UI_STATE_KEY);
-  const uiStateEnvelope = uiStateRaw ? safeParseJson<{ value?: unknown }>(uiStateRaw).value : null;
-  const uiStateParsed =
-    uiStateEnvelope && typeof uiStateEnvelope === 'object' ? uiStateEnvelope['value'] : null;
-  const uiState =
-    uiStateParsed && typeof uiStateParsed === 'object'
-      ? (uiStateParsed as Record<string, unknown>)
-      : null;
-
-  const orderedConfigs: PathConfig[] = pathOrder.length
-    ? pathOrder
-      .map((id: string) => configs[id])
-      .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
-    : configsList;
-
-  const fallbackTriggerEventId = (TRIGGER_EVENTS[0]?.id as string) ?? 'manual';
-  const triggerCandidates: PathConfig[] = orderedConfigs.filter((config: PathConfig) =>
-    Array.isArray(config?.nodes)
-      ? config.nodes.some((node: AiNode) => {
-        if (node.type !== 'trigger') return false;
-        const configuredEvent = node.config?.trigger?.event ?? fallbackTriggerEventId;
-        return configuredEvent === triggerEventId;
-      })
-      : false
-  );
-
-  const preferredPathId =
-    typeof options?.preferredPathId === 'string' && options.preferredPathId.trim().length > 0
-      ? options.preferredPathId.trim()
-      : null;
-  const activePathId =
-    (typeof options?.preferredActivePathId === 'string' &&
-    options.preferredActivePathId.trim().length > 0
-      ? options.preferredActivePathId.trim()
-      : null) ??
-    (typeof uiState?.['activePathId'] === 'string' && uiState['activePathId'].trim().length > 0
-      ? uiState['activePathId'].trim()
-      : null);
-
-  const selection = selectTriggerCandidates<PathConfig>({
-    triggerCandidates,
-    preferredPathId,
-    activePathId,
-  });
-
-  return {
-    triggerCandidates,
-    activeTriggerCandidates: selection.activeTriggerCandidates,
-    selectedConfig: selection.selectedConfig,
-    uiState,
-    missingPreferredPathId: selection.missingPreferredPathId,
-    usedSingleActiveFallback: selection.usedSingleActiveFallback,
-  };
-};
-
-export const buildTriggerContext = (args: {
-  triggerNode: AiNode;
-  triggerEventId: string;
-  triggerLabel?: string | null | undefined;
-  entityType: TriggerEventEntityType;
-  entityId?: string | null | undefined;
-  entityJson?: Record<string, unknown> | null;
-  event?: React.MouseEvent;
-  pathInfo?: { id?: string | undefined; name?: string | undefined } | null | undefined;
-  source?:
-    | { tab?: string | undefined; location?: string | undefined; page?: string | undefined }
-    | null
-    | undefined;
-  extras?: Record<string, unknown> | null | undefined;
-}): Record<string, unknown> => {
-  const timestamp = new Date().toISOString();
-  const sanitizedEntitySnapshot = sanitizeTriggerEntitySnapshot(args.entityJson);
-  const shouldEmbedEntitySnapshot =
-    sanitizedEntitySnapshot !== null && shouldEmbedTriggerEntitySnapshot(args);
-  const nativeEvent = args.event?.nativeEvent;
-  const pointer = nativeEvent
-    ? {
-      clientX: nativeEvent.clientX,
-      clientY: nativeEvent.clientY,
-      pageX: nativeEvent.pageX,
-      pageY: nativeEvent.pageY,
-      screenX: nativeEvent.screenX,
-      screenY: nativeEvent.screenY,
-      offsetX: nativeEvent.offsetX,
-      offsetY: nativeEvent.offsetY,
-      button: nativeEvent.button,
-      buttons: nativeEvent.buttons,
-      altKey: nativeEvent.altKey,
-      ctrlKey: nativeEvent.ctrlKey,
-      shiftKey: nativeEvent.shiftKey,
-      metaKey: nativeEvent.metaKey,
-    }
-    : undefined;
-
-  const location =
-    typeof window !== 'undefined'
-      ? {
-        href: window.location.href,
-        origin: window.location.origin,
-        pathname: window.location.pathname,
-        search: window.location.search,
-        hash: window.location.hash,
-        referrer: document.referrer || undefined,
-      }
-      : {};
-
-  const ui =
-    typeof window !== 'undefined'
-      ? {
-        viewport: {
-          width: window.innerWidth,
-          height: window.innerHeight,
-          devicePixelRatio: window.devicePixelRatio,
-        },
-        screen: {
-          width: window.screen?.width,
-          height: window.screen?.height,
-          availWidth: window.screen?.availWidth,
-          availHeight: window.screen?.availHeight,
-        },
-        userAgent: navigator.userAgent,
-        platform: navigator.platform,
-        language: navigator.language,
-        languages: navigator.languages,
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        documentTitle: document.title,
-        visibilityState: document.visibilityState,
-        scroll: {
-          x: window.scrollX,
-          y: window.scrollY,
-        },
-      }
-      : {};
-
-  const base: Record<string, unknown> = {
-    timestamp,
-    location,
-    ui,
-    user: null,
-    event: {
-      id: args.triggerEventId,
-      nodeId: args.triggerNode.id,
-      nodeTitle: args.triggerNode.title,
-      type: args.event?.type,
-      pointer,
-    },
-    source: {
-      pathId: args.pathInfo?.id,
-      pathName: args.pathInfo?.name ?? 'AI Trigger Button',
-      tab: args.source?.tab ?? args.entityType,
-      location: args.source?.location ?? null,
-      page: args.source?.page ?? null,
-    },
-    extras: {
-      triggerLabel: args.triggerLabel ?? null,
-      ...(args.extras ?? {}),
-    },
-    entityId: args.entityId ?? null,
-    entityType: args.entityType,
-    ...(args.entityType === 'product' && args.entityId ? { productId: args.entityId } : {}),
-  };
-
-  if (shouldEmbedEntitySnapshot && sanitizedEntitySnapshot) {
-    base['entityJson'] = sanitizedEntitySnapshot;
-    base['entity'] = sanitizedEntitySnapshot;
-    if (args.entityType === 'product') base['product'] = sanitizedEntitySnapshot;
-  }
-
-  return base;
-};
 
 export function useAiPathTriggerEvent(): {
   fireAiPathTriggerEvent: (args: FireAiPathTriggerEventArgs) => Promise<void>;
@@ -1131,29 +479,24 @@ export function useAiPathTriggerEvent(): {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           progress: 0,
+          requestId,
+          triggerNodeId: triggerNode.id,
+          triggerEvent: triggerEventId,
+          entityId: args.entityId ?? null,
+          entityType: args.entityType,
+          meta: {
+            source: 'trigger_button',
+            requestId,
+          },
         };
         optimisticallyInsertAiPathRunInQueueCache(queryClient, queuedRunForCache);
 
-        void invalidateAiPathQueue(queryClient);
-        notifyAiPathRunEnqueued(runId, {
-          entityId: args.entityId ?? null,
+        await handleAiPathTriggerInvalidation({
+          queryClient,
+          runId,
           entityType: args.entityType,
+          entityId: args.entityId,
         });
-
-        if (args.entityType === 'product') {
-          if (args.entityId) {
-            void invalidateProductsCountsAndDetail(queryClient, args.entityId);
-          } else {
-            void invalidateProductsAndCounts(queryClient);
-          }
-        }
-        if (args.entityType === 'note') {
-          void invalidateNotes(queryClient);
-        }
-        // @ts-ignore - integration is a valid entity type in the contract but TypeScript is being overly restrictive here.
-        if (args.entityType === 'integration') {
-          void invalidateIntegrationJobs(queryClient);
-        }
 
         if (selectedConfig.id !== preferredActivePathId) {
           const nextUiState = {
@@ -1193,14 +536,14 @@ export function useAiPathTriggerEvent(): {
         logClientError(error, {
           context: {
             source: 'useAiPathTriggerEvent',
-            action: 'fireAiPathTriggerEventCatch',
+            action: 'fireError',
             triggerEventId,
           },
         });
         toast(message, { variant: 'error' });
         args.onProgress?.({
           status: 'error',
-          error: 'unexpected_catch',
+          error: 'unexpected_error',
           message,
           progress: 0,
           completedNodes: 0,
@@ -1212,7 +555,5 @@ export function useAiPathTriggerEvent(): {
     [queryClient, toast, resolvePreferredActivePathId]
   );
 
-  return {
-    fireAiPathTriggerEvent,
-  };
+  return { fireAiPathTriggerEvent };
 }

@@ -10,6 +10,12 @@ import type {
   RuntimeState,
 } from '@/shared/lib/ai-paths';
 import { normalizeAiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
+import {
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD,
+  DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD,
+} from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-legacy-aliases';
 
 const enqueueAiPathRunMock = vi.hoisted(() => vi.fn());
 const streamAiPathRunMock = vi.hoisted(() => vi.fn());
@@ -299,10 +305,10 @@ describe('useAiPathsServerExecution history streaming', () => {
           pathName: 'Main Path',
           pathDescription: '',
           runtimeKernelConfig: {
-            mode: 'auto',
-            pilotNodeTypes: ['template'],
-            resolverIds: ['resolver.path'],
-            strictCodeObjectRegistry: true,
+            [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]: 'auto',
+            [DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD]: ['template'],
+            [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]: ['resolver.path'],
+            [DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD]: true,
           },
           activeTrigger: 'manual',
           executionMode: 'server',

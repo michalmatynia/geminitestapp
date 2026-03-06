@@ -11,15 +11,27 @@ import {
   normalizeLoadedPathMetas,
   sanitizeTriggerPathConfig,
 } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
-import {
-  fetchAiPathsSettingsCached,
-  fetchAiPathsSettingsByKeysCached,
-} from '@/shared/lib/ai-paths/settings-store-client';
+import { fetchAiPathsSettingsCached, fetchAiPathsSettingsByKeysCached } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 import { validationError } from '@/shared/errors/app-error';
 
 export const TRIGGER_SETTINGS_PRELOAD_TIMEOUT_MS = 8_000;
+
+export const resolveRuntimeStateHint = (value: unknown): RuntimeState | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  return value as RuntimeState;
+};
+
+export const coerceSampleStateMap = <T>(value: unknown): Record<string, T> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, T>;
+};
 
 export const resolvePreferredPathId = (value: string | null | undefined): string | null => {
   if (typeof value !== 'string') return null;

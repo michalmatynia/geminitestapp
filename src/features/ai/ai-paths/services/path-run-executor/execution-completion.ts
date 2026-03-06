@@ -15,7 +15,7 @@ import {
 } from '../path-run-executor.diagnostics';
 import {
   summarizeRuntimeKernelParityFromHistory,
-} from '../path-run-executor.helpers';
+} from '../path-run-executor.runtime-kernel';
 import { PathRunRuntimeStateManager } from './runtime-state-manager';
 import { RuntimeProfileSnapshot } from '../path-run-executor.types';
 
@@ -25,6 +25,7 @@ export type ExecutionCompletionArgs = {
   accOutputs: Record<string, RuntimePortValues>;
   runtimeHaltReason: 'completed' | 'blocked' | 'max_iterations' | 'failed' | null;
   nodeValidationEnabled: boolean;
+  blockedRunPolicy: 'fail_run' | 'complete_with_warning';
   requiredProcessingNodeIds: string[];
   runMetaWithRuntimeContext: Record<string, unknown>;
   runStartedAt: string;
@@ -33,10 +34,10 @@ export type ExecutionCompletionArgs = {
   stateManager: PathRunRuntimeStateManager;
   updateRunSnapshot: (input: {
     status: AiPathRunStatus;
-    runtimeState: any;
+    runtimeState: unknown;
     errorMessage: string | null;
     meta: Record<string, unknown>;
-  }) => Promise<void>;
+  }) => Promise<boolean | void>;
 };
 
 export const handleExecutionCompletion = async (
@@ -47,35 +48,46 @@ export const handleExecutionCompletion = async (
     accOutputs,
     runtimeHaltReason,
     nodeValidationEnabled,
-    requiredProcessingNodeIds,
+    blockedRunPolicy,
     runMetaWithRuntimeContext,
     runStartedAt,
-    traceId,
     profileSnapshot,
     stateManager,
     updateRunSnapshot,
   } = args;
 
   let finalStatus: AiPathRunStatus = 'completed';
-  let finalError: string | null = null;
+  let finalError = null;
 
   if (runtimeHaltReason === 'failed') {
     finalStatus = 'failed';
-    finalError = buildFailedRunFailureMessage(collectFailedNodeDiagnostics(accOutputs, nodes));
+    finalError = buildFailedRunFailureMessage(collectFailedNodeDiagnostics(nodes, accOutputs));
   } else if (runtimeHaltReason === 'max_iterations') {
     finalStatus = 'failed';
     finalError = 'Maximum iteration limit reached.';
   } else if (
     runtimeHaltReason === 'blocked' &&
-    shouldFailBlockedRun(accOutputs, nodes, {
+    shouldFailBlockedRun({
+      runBlocked: true,
+      blockedRunPolicy,
       nodeValidationEnabled,
-      requiredProcessingNodeIds,
     })
   ) {
-    finalStatus = 'failed';
-    finalError = buildBlockedRunFailureMessage(collectBlockedNodeDiagnostics(accOutputs, nodes));
+    const blockedDiagnostics = collectBlockedNodeDiagnostics(nodes, accOutputs);
+    if (blockedDiagnostics.length > 0) {
+      finalStatus = 'failed';
+      finalError = buildBlockedRunFailureMessage(blockedDiagnostics);
+    }
   } else if (runtimeHaltReason === 'blocked') {
-    finalStatus = 'blocked';
+    finalStatus = 'completed';
+  }
+
+  if (finalStatus === 'completed') {
+    const failedNodeDiagnostics = collectFailedNodeDiagnostics(nodes, accOutputs);
+    if (failedNodeDiagnostics.length > 0) {
+      finalStatus = 'failed';
+      finalError = buildFailedRunFailureMessage(failedNodeDiagnostics);
+    }
   }
 
   const finishedAt = new Date().toISOString();
@@ -86,7 +98,7 @@ export const handleExecutionCompletion = async (
     !Array.isArray(runMetaWithRuntimeContext['runtimeTrace'])
       ? (runMetaWithRuntimeContext['runtimeTrace'] as Record<string, unknown>)
       : {};
-  const runtimeKernelParity = summarizeRuntimeKernelParityFromHistory(finalRuntimeState.history as unknown);
+  const runtimeKernelParity = summarizeRuntimeKernelParityFromHistory(finalRuntimeState.history);
 
   const startMs = Date.parse(runStartedAt);
   const finishMs = Date.parse(finishedAt);

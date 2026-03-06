@@ -4,6 +4,7 @@ import {
   appendMissingGeometryKangurLessons,
   appendMissingLogicalThinkingKangurLessons,
   createDefaultKangurLessons,
+  parseKangurNarratorSettings,
   normalizeKangurLessons,
 } from '@/features/kangur/settings';
 
@@ -68,6 +69,17 @@ describe('kangur lesson settings', () => {
     ]);
 
     expect(parsed[0]?.contentMode).toBe('document');
+  });
+
+  it('defaults narrator settings to server mode', () => {
+    expect(parseKangurNarratorSettings(undefined)).toEqual({ engine: 'server' });
+    expect(parseKangurNarratorSettings(JSON.stringify({}))).toEqual({ engine: 'server' });
+  });
+
+  it('parses persisted client narrator mode', () => {
+    expect(parseKangurNarratorSettings(JSON.stringify({ engine: 'client' }))).toEqual({
+      engine: 'client',
+    });
   });
 
   it('appends missing geometry lessons to an existing legacy-like list', () => {

@@ -15,6 +15,14 @@ import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfile
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
+import {
+  KangurButton,
+  KangurPageContainer,
+  KangurPageShell,
+  KangurPageTopBar,
+  KangurPanel,
+} from '@/features/kangur/ui/design/primitives';
+import { cn } from '@/shared/utils';
 import Link from 'next/link';
 import { ProgressOverview, ScoreHistory } from '@/features/kangur/ui/components/dashboard';
 
@@ -33,6 +41,8 @@ const TABS: ParentDashboardTab[] = [
 ];
 
 const kangurPlatform = getKangurPlatform();
+const FORM_CONTROL_CLASSNAME =
+  'rounded-xl border border-slate-200 bg-white/95 px-3 py-2 text-sm text-slate-700 shadow-sm outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100';
 
 export default function ParentDashboard() {
   const { basePath } = useKangurRouting();
@@ -114,102 +124,89 @@ export default function ParentDashboard() {
 
   if (!isAuthenticated) {
     return (
-      <div className='min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 flex flex-col items-center justify-center px-4'>
+      <KangurPageShell tone='dashboard' className='justify-center px-4'>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          className='bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm flex flex-col items-center gap-5'
+          className='w-full max-w-sm'
         >
-          <div className='text-6xl'>🪪</div>
-          <h1 className='text-2xl font-extrabold text-gray-800 text-center'>
-            Panel Rodzica / Nauczyciela
-          </h1>
-          <p className='text-gray-500 text-sm text-center'>
-            Ten widok pokazuje prywatne postępy ucznia, więc dostęp wymaga zalogowanego konta.
-          </p>
+          <KangurPanel className='flex flex-col items-center gap-5 text-center' padding='xl' variant='elevated'>
+            <div className='text-6xl'>🪪</div>
+            <h1 className='text-2xl font-extrabold text-gray-800 text-center'>
+              Panel Rodzica / Nauczyciela
+            </h1>
+            <p className='text-gray-500 text-sm text-center'>
+              Ten widok pokazuje prywatne postępy ucznia, więc dostęp wymaga zalogowanego konta.
+            </p>
 
-          <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={navigateToLogin}
-            className='w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-extrabold py-3 rounded-2xl shadow-lg text-lg'
-          >
-            <span className='inline-flex items-center justify-center gap-2'>
+            <KangurButton className='w-full' onClick={navigateToLogin} size='lg' variant='primary'>
               <LogIn className='w-5 h-5' />
               Zaloguj się
-            </span>
-          </motion.button>
+            </KangurButton>
 
-          <Link
-            href={createPageUrl('Game', basePath)}
-            className='text-sm text-gray-400 hover:text-gray-600 transition flex items-center gap-1'
-          >
-            <ArrowLeft className='w-4 h-4' /> Wróć do gry
-          </Link>
+            <KangurButton asChild size='sm' variant='ghost'>
+              <Link href={createPageUrl('Game', basePath)}>
+                <ArrowLeft className='w-4 h-4' /> Wróć do gry
+              </Link>
+            </KangurButton>
+          </KangurPanel>
         </motion.div>
-      </div>
+      </KangurPageShell>
     );
   }
 
   if (!user?.canManageLearners) {
     return (
-      <div className='min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 flex flex-col items-center justify-center px-4'>
+      <KangurPageShell tone='dashboard' className='justify-center px-4'>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          className='bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm flex flex-col items-center gap-5'
+          className='w-full max-w-sm'
         >
-          <div className='text-6xl'>🔒</div>
-          <h1 className='text-2xl font-extrabold text-gray-800 text-center'>Panel Rodzica</h1>
-          <p className='text-gray-500 text-sm text-center'>
-            Ten widok jest dostepny tylko dla konta rodzica, ktore zarzadza profilami uczniow.
-          </p>
-          <Link
-            href={createPageUrl('LearnerProfile', basePath)}
-            className='inline-flex items-center gap-2 rounded-2xl bg-indigo-500 px-4 py-3 text-sm font-bold text-white shadow'
-          >
-            Wroc do profilu ucznia
-          </Link>
+          <KangurPanel className='flex flex-col items-center gap-5 text-center' padding='xl' variant='elevated'>
+            <div className='text-6xl'>🔒</div>
+            <h1 className='text-2xl font-extrabold text-gray-800 text-center'>Panel Rodzica</h1>
+            <p className='text-gray-500 text-sm text-center'>
+              Ten widok jest dostepny tylko dla konta rodzica, ktore zarzadza profilami uczniow.
+            </p>
+            <KangurButton asChild size='lg' variant='primary'>
+              <Link href={createPageUrl('LearnerProfile', basePath)}>Wroc do profilu ucznia</Link>
+            </KangurButton>
+          </KangurPanel>
         </motion.div>
-      </div>
+      </KangurPageShell>
     );
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 flex flex-col items-center'>
-      {/* Top bar */}
-      <div
-        className='sticky top-0 z-20 w-full bg-white/80 backdrop-blur border-b border-slate-200 px-4 py-3 flex items-center justify-between'
-      >
-        <div className='flex items-center gap-3'>
-          <Link
-            href={createPageUrl('Game', basePath)}
-            className='inline-flex items-center text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
-          >
-            Strona główna
-          </Link>
-          <KangurProfileMenu
-            basePath={basePath}
-            isAuthenticated={isAuthenticated}
-            onLogout={() => logout(false)}
-            onLogin={navigateToLogin}
-          />
-        </div>
-        <div className='flex items-center gap-3'>
-          <span className='hidden sm:inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-500'>
-            {viewerRoleLabel}
-          </span>
-          <button
-            onClick={() => logout(false)}
-            className='inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 transition font-semibold'
-          >
-            <LogOut className='w-4 h-4' /> Wyloguj
-          </button>
-        </div>
-      </div>
+    <KangurPageShell tone='dashboard'>
+      <KangurPageTopBar
+        left={
+          <>
+            <KangurButton asChild size='sm' variant='ghost'>
+              <Link href={createPageUrl('Game', basePath)}>Strona glowna</Link>
+            </KangurButton>
+            <KangurProfileMenu
+              basePath={basePath}
+              isAuthenticated={isAuthenticated}
+              onLogout={() => logout(false)}
+              onLogin={navigateToLogin}
+            />
+          </>
+        }
+        right={
+          <>
+            <span className='hidden sm:inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-500'>
+              {viewerRoleLabel}
+            </span>
+            <KangurButton onClick={() => logout(false)} size='sm' variant='ghost'>
+              <LogOut className='w-4 h-4' /> Wyloguj
+            </KangurButton>
+          </>
+        }
+      />
 
-      <div className='w-full max-w-2xl px-4 py-8 flex flex-col gap-6'>
-        {/* Header */}
+      <KangurPageContainer className='max-w-2xl flex flex-col gap-6'>
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className='text-3xl font-extrabold text-gray-800'>📊 Panel Rodzica</h1>
           <p className='text-gray-500 mt-1'>
@@ -222,7 +219,7 @@ export default function ParentDashboard() {
           </p>
         </motion.div>
 
-        <section className='bg-white rounded-2xl shadow p-5 flex flex-col gap-4'>
+        <KangurPanel className='flex flex-col gap-4' padding='lg' variant='soft'>
           <div className='flex flex-col gap-1'>
             <div className='text-sm font-bold text-gray-500 uppercase tracking-wide'>
               Profile uczniow
@@ -242,7 +239,7 @@ export default function ParentDashboard() {
                   onClick={() => void selectLearner(learner.id)}
                   className={`rounded-2xl border px-4 py-3 text-left transition ${
                     isActiveLearner
-                      ? 'border-indigo-500 bg-indigo-50 shadow'
+                      ? 'border-indigo-300 bg-indigo-50 shadow-sm'
                       : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50'
                   }`}
                 >
@@ -273,7 +270,7 @@ export default function ParentDashboard() {
                 setCreateForm((current) => ({ ...current, displayName: event.target.value }))
               }
               placeholder='Imie ucznia'
-              className='rounded-xl border border-slate-200 px-3 py-2 text-sm'
+              className={FORM_CONTROL_CLASSNAME}
             />
             <input
               value={createForm.loginName}
@@ -281,7 +278,7 @@ export default function ParentDashboard() {
                 setCreateForm((current) => ({ ...current, loginName: event.target.value }))
               }
               placeholder='Login ucznia'
-              className='rounded-xl border border-slate-200 px-3 py-2 text-sm'
+              className={FORM_CONTROL_CLASSNAME}
             />
             <input
               type='password'
@@ -290,25 +287,25 @@ export default function ParentDashboard() {
                 setCreateForm((current) => ({ ...current, password: event.target.value }))
               }
               placeholder='Haslo ucznia'
-              className='rounded-xl border border-slate-200 px-3 py-2 text-sm'
+              className={FORM_CONTROL_CLASSNAME}
             />
           </div>
 
           <div className='flex flex-wrap items-center gap-3'>
-            <button
-              type='button'
+            <KangurButton
               disabled={isSubmitting}
               onClick={() => void handleCreateLearner()}
-              className='rounded-xl bg-indigo-500 px-4 py-2 text-sm font-bold text-white shadow hover:bg-indigo-600 disabled:opacity-60'
+              size='md'
+              variant='primary'
             >
               Dodaj ucznia
-            </button>
+            </KangurButton>
             {feedback && <div className='text-sm text-slate-500'>{feedback}</div>}
           </div>
-        </section>
+        </KangurPanel>
 
         {activeLearner && (
-          <section className='bg-white rounded-2xl shadow p-5 flex flex-col gap-4'>
+          <KangurPanel className='flex flex-col gap-4' padding='lg' variant='soft'>
             <div className='text-sm font-bold text-gray-500 uppercase tracking-wide'>
               Ustawienia wybranego ucznia
             </div>
@@ -319,7 +316,7 @@ export default function ParentDashboard() {
                   setEditForm((current) => ({ ...current, displayName: event.target.value }))
                 }
                 placeholder='Imie ucznia'
-                className='rounded-xl border border-slate-200 px-3 py-2 text-sm'
+                className={FORM_CONTROL_CLASSNAME}
               />
               <input
                 value={editForm.loginName}
@@ -327,7 +324,7 @@ export default function ParentDashboard() {
                   setEditForm((current) => ({ ...current, loginName: event.target.value }))
                 }
                 placeholder='Login ucznia'
-                className='rounded-xl border border-slate-200 px-3 py-2 text-sm'
+                className={FORM_CONTROL_CLASSNAME}
               />
               <input
                 type='password'
@@ -336,55 +333,53 @@ export default function ParentDashboard() {
                   setEditForm((current) => ({ ...current, password: event.target.value }))
                 }
                 placeholder='Nowe haslo (opcjonalnie)'
-                className='rounded-xl border border-slate-200 px-3 py-2 text-sm'
+                className={FORM_CONTROL_CLASSNAME}
               />
               <select
                 value={editForm.status}
                 onChange={(event) =>
                   setEditForm((current) => ({ ...current, status: event.target.value }))
                 }
-                className='rounded-xl border border-slate-200 px-3 py-2 text-sm'
+                className={FORM_CONTROL_CLASSNAME}
               >
                 <option value='active'>Aktywny</option>
                 <option value='disabled'>Wylaczony</option>
               </select>
             </div>
             <div className='flex flex-wrap items-center gap-3'>
-              <button
-                type='button'
+              <KangurButton
                 disabled={isSubmitting}
                 onClick={() => void handleSaveLearner()}
-                className='rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-60'
+                size='md'
+                variant='secondary'
               >
                 Zapisz ucznia
-              </button>
+              </KangurButton>
               <div className='text-xs text-slate-500'>
                 Login i haslo naleza do ucznia, ale konto pozostaje wlasnoscia rodzica.
               </div>
             </div>
-          </section>
+          </KangurPanel>
         )}
 
         {/* Tabs */}
-        <div className='flex gap-2 bg-white rounded-2xl shadow p-1.5'>
+        <KangurPanel className='flex gap-2 p-1.5' padding='md' variant='soft'>
           {TABS.map((tab) => {
             const Icon = tab.icon;
             return (
-              <button
+              <KangurButton
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                  activeTab === tab.id
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow'
-                    : 'text-gray-500 hover:bg-gray-50'
-                }`}
+                className={cn('flex-1 justify-center', activeTab === tab.id ? 'shadow-sm' : '')}
+                size='md'
+                variant={activeTab === tab.id ? 'primary' : 'secondary'}
               >
                 <Icon className='w-4 h-4' />
                 <span className='hidden sm:inline'>{tab.label}</span>
-              </button>
+              </KangurButton>
             );
           })}
-        </div>
+        </KangurPanel>
 
         {/* Tab content */}
         <AnimatePresence mode='wait'>
@@ -406,7 +401,7 @@ export default function ParentDashboard() {
             {activeTab === 'assign' && <KangurAssignmentManager basePath={basePath} />}
           </motion.div>
         </AnimatePresence>
-      </div>
-    </div>
+      </KangurPageContainer>
+    </KangurPageShell>
   );
 }

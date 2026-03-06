@@ -82,6 +82,40 @@ const ensureAdminSession = async (page: Page): Promise<boolean> => {
   return authSucceeded;
 };
 
+const openAdminProductsPage = async (page: Page): Promise<void> => {
+  const productsHeading = page.getByRole('heading', { name: 'Products', exact: true });
+  const signInHeading = page.getByRole('heading', { name: 'Sign in' });
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await page
+      .goto('/admin/products', {
+        waitUntil: 'domcontentloaded',
+      })
+      .catch(() => null);
+
+    if (await productsHeading.isVisible().catch(() => false)) {
+      await expect(productsHeading).toBeVisible();
+      return;
+    }
+
+    const needsAuth =
+      page.url().includes('/auth/signin') || (await signInHeading.isVisible().catch(() => false));
+    if (needsAuth) {
+      const authenticated = await ensureAdminSession(page);
+      if (!authenticated) {
+        throw new Error('Admin authentication failed while opening /admin/products.');
+      }
+      continue;
+    }
+
+    if (attempt < 2) {
+      await page.waitForTimeout(500);
+    }
+  }
+
+  await expect(productsHeading).toBeVisible({ timeout: 15_000 });
+};
+
 const createProductFixture = (
   id: string,
   sku: string,
@@ -383,8 +417,7 @@ test.describe('Products trigger button queue integration', () => {
       });
     });
 
-    await page.goto('/admin/products');
-    await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible();
+    await openAdminProductsPage(page);
 
     return {
       triggerButtonName: triggerButton.name,
@@ -519,8 +552,7 @@ test.describe('Products trigger button queue integration', () => {
       });
     });
 
-    await page.goto('/admin/products');
-    await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible();
+    await openAdminProductsPage(page);
 
     const productRow = page.locator('tr').filter({ hasText: productSku }).first();
     await expect(productRow).toBeVisible({ timeout: 15_000 });

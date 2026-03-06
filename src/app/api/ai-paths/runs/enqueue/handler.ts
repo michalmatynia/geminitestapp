@@ -175,7 +175,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     throw badRequestError('Nodes and edges are required to enqueue a run.');
   }
 
-  const normalizedNodes = normalizeNodes(resolvedNodesInput as unknown[]);
+  const normalizedNodes = normalizeNodes(resolvedNodesInput);
   const validationConfig: PathConfig = {
     id: rest.pathId,
     version: 1,
@@ -183,7 +183,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     description: '',
     trigger: rest.triggerEvent?.trim() || 'manual',
     nodes: normalizedNodes,
-    edges: resolvedEdgesInput as unknown[],
+    edges: resolvedEdgesInput,
     updatedAt: new Date().toISOString(),
   };
   const identityIssues = validateCanonicalPathNodeIdentities(validationConfig, {

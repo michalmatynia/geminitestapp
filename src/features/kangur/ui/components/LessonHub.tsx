@@ -1,6 +1,10 @@
 import { motion } from 'framer-motion';
 import { ChevronLeft } from 'lucide-react';
 
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_ACCENT_STYLES, KANGUR_OPTION_CARD_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { cn } from '@/shared/utils';
+
 export type HubSection = {
   id: string;
   emoji: string;
@@ -27,11 +31,11 @@ export default function LessonHub({
   onBack,
 }: LessonHubProps): React.JSX.Element {
   return (
-    <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
+    <div className='flex w-full max-w-md flex-col items-center gap-4'>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className='w-full flex flex-col gap-3'
+        className='flex w-full flex-col gap-3'
       >
         <div className='text-center mb-2'>
           <p className='text-5xl mb-1'>{lessonEmoji}</p>
@@ -40,7 +44,7 @@ export default function LessonHub({
           >
             {lessonTitle}
           </h1>
-          <p className='text-gray-400 text-sm mt-1'>Wybierz temat</p>
+          <p className='mt-1 text-sm text-slate-500'>Wybierz temat</p>
         </div>
 
         {sections.map((section, i) => (
@@ -52,36 +56,48 @@ export default function LessonHub({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onSelect(section.id)}
-            className={
+            className={cn(
+              KANGUR_OPTION_CARD_CLASSNAME,
+              'flex w-full items-center gap-4 rounded-[28px] p-4 text-left',
               section.isGame
-                ? `w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r ${gradientClass} text-white shadow-lg text-left`
-                : 'w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-100 bg-white hover:border-gray-200 shadow-sm text-left hover:shadow-md transition-shadow'
-            }
+                ? cn(
+                  KANGUR_ACCENT_STYLES.indigo.activeCard,
+                  KANGUR_ACCENT_STYLES.indigo.hoverCard
+                )
+                : cn(
+                  'border-slate-200/80',
+                  KANGUR_ACCENT_STYLES.slate.hoverCard
+                )
+            )}
           >
-            <span className='text-3xl flex-shrink-0'>{section.emoji}</span>
+            <span
+              className={cn(
+                'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl text-3xl shadow-sm',
+                section.isGame ? KANGUR_ACCENT_STYLES.indigo.icon : KANGUR_ACCENT_STYLES.slate.icon
+              )}
+            >
+              {section.emoji}
+            </span>
             <div className='min-w-0'>
-              <p
-                className={`font-extrabold text-base leading-tight ${section.isGame ? 'text-white' : 'text-gray-800'}`}
-              >
-                {section.title}
-              </p>
-              <p
-                className={`text-sm mt-0.5 ${section.isGame ? 'text-white/80' : 'text-gray-500'}`}
-              >
-                {section.description}
-              </p>
+              <p className='text-base font-extrabold leading-tight text-slate-800'>{section.title}</p>
+              <p className='mt-0.5 text-sm text-slate-500'>{section.description}</p>
             </div>
+            <span
+              className={cn(
+                'ml-auto rounded-full px-2.5 py-1 text-[11px] font-semibold',
+                section.isGame ? KANGUR_ACCENT_STYLES.indigo.badge : KANGUR_ACCENT_STYLES.slate.badge
+              )}
+            >
+              {section.isGame ? 'Gra' : 'Lekcja'}
+            </span>
           </motion.button>
         ))}
       </motion.div>
 
-      <button
-        onClick={onBack}
-        className='flex items-center gap-1 px-4 py-2 rounded-2xl border-2 border-gray-200 text-gray-500 font-bold hover:bg-gray-50 transition'
-      >
+      <KangurButton onClick={onBack} variant='secondary' size='md'>
         <ChevronLeft className='w-4 h-4' />
         Wróc do listy
-      </button>
+      </KangurButton>
     </div>
   );
 }

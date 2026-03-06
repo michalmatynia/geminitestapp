@@ -18,8 +18,8 @@ import {
 import {
   createAiPathTriggerRequestId,
   isRecoverableTriggerEnqueueError,
-  recoverEnqueuedRunByRequestId,
-} from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
+} from '@/shared/lib/ai-paths/hooks/trigger-event-utils';
+import { recoverEnqueuedRunByRequestId } from '@/shared/lib/ai-paths/hooks/trigger-event-recovery';
 import { useToast } from '@/shared/ui';
 
 import { fetchPathSettings, findTriggerPath } from './useAiPathSettings';
@@ -396,6 +396,13 @@ export function useAiPathTrigger(): {
         updatedAt: new Date().toISOString(),
         entityId: product.id,
         entityType: 'product',
+        requestId,
+        triggerNodeId: triggerNode.id,
+        triggerEvent,
+        meta: {
+          source: 'product_panel',
+          requestId,
+        },
       };
       optimisticallyInsertAiPathRunInQueueCache(queryClient, queuedRunForCache);
       void invalidateAiPathQueue(queryClient);

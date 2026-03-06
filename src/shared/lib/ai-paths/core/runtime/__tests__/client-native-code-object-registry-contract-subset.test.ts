@@ -3,8 +3,13 @@ import path from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
-const { mockDbApiSchema, mockAiGenerationGenerate, mockAiGenerationUpdateProductDescription } =
-  vi.hoisted(() => ({
+const {
+  mockDbApiSchema,
+  mockAiGenerationGenerate,
+  mockAiGenerationUpdateProductDescription,
+  mockPlaywrightEnqueue,
+  mockPlaywrightPoll,
+} = vi.hoisted(() => ({
   mockDbApiSchema: vi.fn(async () => ({
     ok: true as const,
     data: {
@@ -35,6 +40,36 @@ const { mockDbApiSchema, mockAiGenerationGenerate, mockAiGenerationUpdateProduct
     ok: true as const,
     data: {},
   })),
+  mockPlaywrightEnqueue: vi.fn(async () => ({
+    ok: true as const,
+    data: {
+      run: {
+        runId: 'pw-run-1',
+        status: 'queued',
+        result: null,
+        error: null,
+        artifacts: [],
+        logs: [],
+        startedAt: null,
+        completedAt: null,
+      },
+    },
+  })),
+  mockPlaywrightPoll: vi.fn(async () => ({
+    ok: true as const,
+    data: {
+      run: {
+        runId: 'pw-run-1',
+        status: 'completed',
+        result: { outputs: { result: 'ok' } },
+        error: null,
+        artifacts: [],
+        logs: [],
+        startedAt: null,
+        completedAt: null,
+      },
+    },
+  })),
 }));
 
 vi.mock('@/shared/lib/ai-paths/api', async () => {
@@ -51,6 +86,11 @@ vi.mock('@/shared/lib/ai-paths/api', async () => {
       ...actual.aiGenerationApi,
       generate: mockAiGenerationGenerate,
       updateProductDescription: mockAiGenerationUpdateProductDescription,
+    },
+    playwrightNodeApi: {
+      ...actual.playwrightNodeApi,
+      enqueue: mockPlaywrightEnqueue,
+      poll: mockPlaywrightPoll,
     },
   };
 });
@@ -223,6 +263,30 @@ const buildDescriptionUpdaterNode = (): AiNode => ({
   outputs: ['description_en'],
   config: {},
   position: { x: 182, y: 0 },
+});
+
+const buildPlaywrightNode = (): AiNode => ({
+  id: 'node-playwright',
+  type: 'playwright',
+  title: 'Playwright',
+  description: '',
+  inputs: ['url', 'bundle', 'context'],
+  outputs: ['result', 'jobId', 'screenshot', 'html'],
+  config: {
+    playwright: {
+      script: '',
+      waitForResult: true,
+      timeoutMs: 120000,
+      browserEngine: 'chromium',
+      capture: {
+        screenshot: false,
+        html: false,
+        video: false,
+        trace: false,
+      },
+    },
+  },
+  position: { x: 186, y: 0 },
 });
 
 const buildConstantNode = (input: { id: string; value: unknown; title?: string }): AiNode => ({
@@ -408,7 +472,6 @@ describe('client native code-object registry contract subset', () => {
       'agent',
       'learner_agent',
       'model',
-      'playwright',
     ]);
   });
 
@@ -544,6 +607,35 @@ describe('client native code-object registry contract subset', () => {
 
     expect(mockAiGenerationUpdateProductDescription).not.toHaveBeenCalled();
     expect(result.outputs?.['node-description-updater']).toEqual({});
+  });
+
+  it('executes playwright nodes through client native contract resolver mapping', async () => {
+    mockPlaywrightEnqueue.mockClear();
+    mockPlaywrightPoll.mockClear();
+
+    const result = await evaluateGraphClient({
+      nodes: [buildPromptNode(), buildPlaywrightNode()],
+      edges: [
+        {
+          id: 'edge-prompt-playwright',
+          from: 'node-prompt',
+          to: 'node-playwright',
+          fromPort: 'prompt',
+          toPort: 'prompt',
+          kind: 'value',
+        },
+      ],
+      runtimeKernelPilotNodeTypes: ['prompt', 'playwright'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockPlaywrightEnqueue).not.toHaveBeenCalled();
+    expect(mockPlaywrightPoll).not.toHaveBeenCalled();
+    expect(result.outputs?.['node-playwright']?.['status']).toBe('failed');
+    expect(result.outputs?.['node-playwright']?.['bundle']).toMatchObject({
+      status: 'failed',
+      error: 'Playwright script is empty.',
+    });
   });
 
   it('executes api advanced nodes through client native contract resolver mapping', async () => {

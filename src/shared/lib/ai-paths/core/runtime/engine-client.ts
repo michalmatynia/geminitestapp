@@ -49,6 +49,7 @@ import { handleAdvancedApi as handleIntegrationAdvancedApi } from './handlers/in
 import { handleDatabase as handleIntegrationDatabase } from './handlers/integration-database-handler';
 import { handleHttp as handleIntegrationHttp } from './handlers/integration-http-handler';
 import { handlePoll as handleIntegrationPoll } from './handlers/integration-poll-handler';
+import { handlePlaywright as handleIntegrationPlaywright } from './handlers/integration-playwright-handler';
 import { handleSimulation as handleIntegrationSimulation } from './handlers/integration-simulation-handler';
 import { handleTrigger as handleIntegrationTrigger } from './handlers/integration-trigger-handler';
 
@@ -137,6 +138,7 @@ const CLIENT_HANDLERS: Record<string, NodeHandler> = {
   db_schema: handleIntegrationDbSchema,
   api_advanced: handleIntegrationAdvancedApi,
   database: handleIntegrationDatabase,
+  playwright: handleIntegrationPlaywright,
   http: handleIntegrationHttp,
   poll: handleIntegrationPoll,
   simulation: handleIntegrationSimulation,
@@ -195,6 +197,7 @@ const NATIVE_CODE_OBJECT_HANDLERS: Record<string, NodeHandler> = {
   'ai-paths.node-code-object.db_schema.v3': handleIntegrationDbSchema,
   'ai-paths.node-code-object.api_advanced.v3': handleIntegrationAdvancedApi,
   'ai-paths.node-code-object.database.v3': handleIntegrationDatabase,
+  'ai-paths.node-code-object.playwright.v3': handleIntegrationPlaywright,
   'ai-paths.node-code-object.http.v3': handleIntegrationHttp,
   'ai-paths.node-code-object.poll.v3': handleIntegrationPoll,
   'ai-paths.node-code-object.audio_oscillator.v3': handleAudioOscillator,

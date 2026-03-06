@@ -2,287 +2,61 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   AiPathRuntimePortableEngineAnalytics,
   AiPathRuntimeAnalyticsRange,
   AiPathRuntimeAnalyticsSummary,
-  AiPathRuntimeTraceAnalytics,
-  AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
 import { getPortablePathRunExecutionSnapshot } from '@/shared/lib/ai-paths/portable-engine';
 import { getRedisConnection } from '@/shared/lib/queue';
-import { resolveRuntimeAnalyticsNodeStatusKey } from '@/shared/lib/ai-paths/services/runtime-analytics/utils';
-import type { RuntimeAnalyticsAvailability } from '@/shared/lib/ai-paths/services/runtime-analytics/availability';
-
-const KEY_PREFIX = 'ai_paths:runtime:analytics:v1';
-const RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
-
-const keyRuns = (
-  status: 'all' | 'queued' | 'started' | 'completed' | 'failed' | 'canceled' | 'dead_lettered'
-): string => `${KEY_PREFIX}:runs:${status}`;
-const keyDurations = (): string => `${KEY_PREFIX}:runs:durations`;
-const keyNodes = (status: string): string => `${KEY_PREFIX}:nodes:${status}`;
-const keyBrain = (scope: 'all' | 'analytics' | 'logs' | 'warning' | 'error'): string =>
-  `${KEY_PREFIX}:brain:${scope}`;
-const keyTotals = (): string => `${KEY_PREFIX}:totals`;
-
-const parseEnvNumber = (name: string, fallback: number, min: number, max: number): number => {
-  const raw = process.env[name];
-  if (!raw) return fallback;
-  const parsed = Number.parseInt(raw, 10);
-  if (!Number.isFinite(parsed)) return fallback;
-  return Math.max(min, Math.min(max, parsed));
-};
-
-const SUMMARY_CACHE_TTL_MS = parseEnvNumber(
-  'AI_PATHS_RUNTIME_SUMMARY_CACHE_TTL_MS',
-  5_000,
-  500,
-  120_000
-);
-const SUMMARY_QUERY_TIMEOUT_MS = parseEnvNumber(
-  'AI_PATHS_RUNTIME_SUMMARY_TIMEOUT_MS',
-  5_000,
-  250,
-  60_000
-);
-const DURATION_SAMPLE_LIMIT = parseEnvNumber(
-  'AI_PATHS_RUNTIME_DURATION_SAMPLE_LIMIT',
-  2_000,
-  50,
-  50_000
-);
-const TRACE_RUN_SAMPLE_LIMIT = parseEnvNumber(
-  'AI_PATHS_RUNTIME_TRACE_RUN_SAMPLE_LIMIT',
-  100,
-  20,
-  10_000
-);
-const TRACE_NODE_HIGHLIGHT_LIMIT = parseEnvNumber(
-  'AI_PATHS_RUNTIME_TRACE_NODE_HIGHLIGHT_LIMIT',
-  5,
-  1,
-  25
-);
-const SUMMARY_RANGE_BUCKET_MS = Math.max(1_000, SUMMARY_CACHE_TTL_MS);
-const RUNTIME_ANALYTICS_CAPABILITY_CACHE_TTL_MS = parseEnvNumber(
-  'AI_PATHS_RUNTIME_ANALYTICS_CAPABILITY_CACHE_TTL_MS',
-  5_000,
-  500,
-  60_000
-);
-
-type SummaryCacheEntry = {
-  value: AiPathRuntimeAnalyticsSummary;
-  expiresAt: number;
-};
+import {
+  DURATION_SAMPLE_LIMIT,
+  SUMMARY_QUERY_TIMEOUT_MS,
+  keyBrain,
+  keyDurations,
+  keyNodes,
+  keyRuns,
+  keyTotals,
+} from '@/shared/lib/ai-paths/services/runtime-analytics/config';
+import {
+  buildSummaryCacheKey,
+  readCachedSummary,
+  readStaleSummary,
+  setCachedSummary,
+  summaryInFlight,
+} from '@/shared/lib/ai-paths/services/runtime-analytics/cache';
+import {
+  getRuntimeAnalyticsAvailability as getRuntimeAnalyticsAvailabilityShared,
+  type RuntimeAnalyticsAvailability,
+} from '@/shared/lib/ai-paths/services/runtime-analytics/availability';
+import {
+  emptySummary as buildRuntimeAnalyticsEmptySummary,
+  emptyTraceAnalytics,
+  loadRuntimeTraceAnalytics,
+  summarizeRuntimeTraceAnalytics,
+} from '@/shared/lib/ai-paths/services/runtime-analytics/trace';
+import {
+  buildEventMember,
+  clampRate,
+  parseDurationMember,
+  pruneBefore,
+  toPipelineCount,
+  toPipelineStrings,
+  toTimestampMs,
+  withTimeout,
+} from '@/shared/lib/ai-paths/services/runtime-analytics/utils';
+import {
+  recordRuntimeNodeStatus as recordRuntimeNodeStatusShared,
+  recordRuntimeRunFinished as recordRuntimeRunFinishedShared,
+  recordRuntimeRunQueued as recordRuntimeRunQueuedShared,
+  recordRuntimeRunStarted as recordRuntimeRunStartedShared,
+} from '@/shared/lib/ai-paths/services/runtime-analytics/recording';
 
 export type { RuntimeAnalyticsAvailability };
+export { summarizeRuntimeTraceAnalytics };
 
-const summaryCache = new Map<string, SummaryCacheEntry>();
-const summaryInFlight = new Map<string, Promise<AiPathRuntimeAnalyticsSummary>>();
-let runtimeAnalyticsCapabilityCache: { enabled: boolean; expiresAt: number } | null = null;
-
-const toTimestampMs = (value?: Date | string | number | null): number => {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (value instanceof Date) return value.getTime();
-  if (typeof value === 'string') {
-    const parsed = Date.parse(value);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return Date.now();
-};
-
-const buildEventMember = (type: string, id: string, timestampMs: number): string =>
-  `${type}|${id}|${timestampMs}|${randomUUID()}`;
-
-const buildDurationMember = (runId: string, durationMs: number, timestampMs: number): string =>
-  `${timestampMs}|${Math.max(0, Math.round(durationMs))}|${runId}|${randomUUID()}`;
-
-const pruneBefore = (timestampMs: number): number => Math.max(0, timestampMs - RETENTION_MS);
-
-const clampRate = (value: number): number => {
-  if (!Number.isFinite(value)) return 0;
-  return Math.max(0, Math.min(100, value));
-};
-
-const withTimeout = async <T>(
-  promise: Promise<T>,
-  timeoutMs: number,
-  label: string
-): Promise<T> => {
-  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return promise;
-  let timer: NodeJS.Timeout | null = null;
-  try {
-    return await Promise.race<T>([
-      promise,
-      new Promise<T>((_resolve, reject) => {
-        timer = setTimeout(
-          () => reject(new Error(`${label} timed out after ${timeoutMs}ms`)),
-          timeoutMs
-        );
-      }),
-    ]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-};
-
-const buildSummaryCacheKey = (
-  fromMs: number,
-  toMs: number,
-  range: AiPathRuntimeAnalyticsRange | 'custom'
-): string => {
-  if (range === 'custom') {
-    return `custom:${fromMs}:${toMs}`;
-  }
-  const bucket = Math.floor(toMs / SUMMARY_RANGE_BUCKET_MS);
-  return `${range}:${bucket}`;
-};
-
-const pruneSummaryCache = (now: number): void => {
-  summaryCache.forEach((entry, key) => {
-    if (entry.expiresAt <= now) {
-      summaryCache.delete(key);
-    }
-  });
-};
-
-const readCachedSummary = (cacheKey: string, now: number): AiPathRuntimeAnalyticsSummary | null => {
-  const cached = summaryCache.get(cacheKey);
-  if (!cached) return null;
-  if (cached.expiresAt <= now) {
-    summaryCache.delete(cacheKey);
-    return null;
-  }
-  return cached.value;
-};
-
-const readStaleSummary = (cacheKey: string): AiPathRuntimeAnalyticsSummary | null => {
-  const cached = summaryCache.get(cacheKey);
-  return cached?.value ?? null;
-};
-
-const setCachedSummary = (
-  cacheKey: string,
-  summary: AiPathRuntimeAnalyticsSummary,
-  now: number
-): void => {
-  summaryCache.set(cacheKey, {
-    value: summary,
-    expiresAt: now + SUMMARY_CACHE_TTL_MS,
-  });
-  pruneSummaryCache(now);
-};
-
-const resolveRuntimeAnalyticsCapabilityEnabled = async (): Promise<boolean> => {
-  const now = Date.now();
-  if (runtimeAnalyticsCapabilityCache && runtimeAnalyticsCapabilityCache.expiresAt > now) {
-    return runtimeAnalyticsCapabilityCache.enabled;
-  }
-  try {
-    const [runtimeAnalyticsAssignment, aiPathsAssignment] = await Promise.all([
-      getBrainAssignmentForCapability('insights.runtime_analytics'),
-      getBrainAssignmentForCapability('ai_paths.model'),
-    ]);
-    const enabled = runtimeAnalyticsAssignment.enabled && aiPathsAssignment.enabled;
-    runtimeAnalyticsCapabilityCache = {
-      enabled,
-      expiresAt: now + RUNTIME_ANALYTICS_CAPABILITY_CACHE_TTL_MS,
-    };
-    return enabled;
-  } catch (error) {
-    // Fail closed to avoid analytics execution leaks when Brain settings are unavailable.
-    void ErrorSystem.logWarning('Failed to resolve Brain runtime analytics capability gate.', {
-      service: 'ai-paths-analytics',
-      error,
-    });
-    runtimeAnalyticsCapabilityCache = {
-      enabled: false,
-      expiresAt: now + Math.min(1_000, RUNTIME_ANALYTICS_CAPABILITY_CACHE_TTL_MS),
-    };
-    return false;
-  }
-};
-
-export const getRuntimeAnalyticsAvailability = async (): Promise<RuntimeAnalyticsAvailability> => {
-  const capabilityEnabled = await resolveRuntimeAnalyticsCapabilityEnabled();
-  if (!capabilityEnabled) {
-    return {
-      enabled: false,
-      storage: 'disabled',
-    };
-  }
-
-  const redis = getRedisConnection();
-  if (!redis) {
-    return {
-      enabled: false,
-      storage: 'disabled',
-    };
-  }
-
-  return {
-    enabled: true,
-    storage: 'redis',
-  };
-};
-
-const toPipelineCount = (value: unknown): number => {
-  if (typeof value === 'number' && Number.isFinite(value)) return Math.max(0, value);
-  if (typeof value === 'string') {
-    const parsed = Number.parseInt(value, 10);
-    return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
-  }
-  return 0;
-};
-
-const toPipelineStrings = (value: unknown): string[] => {
-  if (!Array.isArray(value)) return [];
-  return value.filter((item: unknown): item is string => typeof item === 'string');
-};
-
-const parseDurationMember = (member: string): number | null => {
-  const parts = member.split('|');
-  if (parts.length < 2) return null;
-  const value = Number(parts[1]);
-  return Number.isFinite(value) ? Math.max(0, value) : null;
-};
-
-const emptyTraceAnalytics = (): AiPathRuntimeTraceAnalytics => ({
-  source: 'none',
-  sampledRuns: 0,
-  sampledSpans: 0,
-  completedSpans: 0,
-  failedSpans: 0,
-  cachedSpans: 0,
-  avgDurationMs: null,
-  p95DurationMs: null,
-  slowestSpan: null,
-  topSlowNodes: [],
-  topFailedNodes: [],
-  kernelParity: {
-    sampledRuns: 0,
-    runsWithKernelParity: 0,
-    sampledHistoryEntries: 0,
-    strategyCounts: {
-      legacy_adapter: 0,
-      code_object_v3: 0,
-      unknown: 0,
-    },
-    resolutionSourceCounts: {
-      override: 0,
-      registry: 0,
-      missing: 0,
-      unknown: 0,
-    },
-    codeObjectIds: [],
-  },
-  truncated: false,
-});
+export const getRuntimeAnalyticsAvailability = getRuntimeAnalyticsAvailabilityShared;
 
 const toPortableEngineRates = (
   counts: Pick<AiPathRuntimePortableEngineAnalytics['totals'], 'attempts' | 'successes' | 'failures'>
@@ -373,337 +147,13 @@ const buildPortableEngineAnalytics = (): AiPathRuntimePortableEngineAnalytics =>
   }
 };
 
-const asRecord = (value: unknown): Record<string, unknown> | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  return value as Record<string, unknown>;
-};
-
-const extractRuntimeTraceNodeSpans = (run: AiPathRunRecord): unknown[] => {
-  const meta = asRecord(run.meta);
-  if (!meta) return [];
-  const runtimeTrace = asRecord(meta['runtimeTrace']);
-  if (!runtimeTrace) return [];
-  const profile = asRecord(runtimeTrace['profile']);
-  if (!profile) return [];
-  const nodeSpans = profile['nodeSpans'];
-  return Array.isArray(nodeSpans) ? nodeSpans : [];
-};
-
-const normalizeNonNegativeInteger = (value: unknown): number =>
-  typeof value === 'number' && Number.isFinite(value) && value >= 0 ? Math.round(value) : 0;
-
-const extractRuntimeTraceKernelParity = (
-  run: AiPathRunRecord
-): AiPathRuntimeTraceAnalytics['kernelParity'] | null => {
-  const meta = asRecord(run.meta);
-  if (!meta) return null;
-  const runtimeTrace = asRecord(meta['runtimeTrace']);
-  if (!runtimeTrace) return null;
-  const kernelParity = asRecord(runtimeTrace['kernelParity']);
-  if (!kernelParity) return null;
-
-  const strategyCounts = asRecord(kernelParity['strategyCounts']);
-  const resolutionSourceCounts = asRecord(kernelParity['resolutionSourceCounts']);
-  const rawCodeObjectIds = Array.isArray(kernelParity['codeObjectIds'])
-    ? kernelParity['codeObjectIds']
-    : [];
-
-  return {
-    sampledRuns: 0,
-    runsWithKernelParity: 0,
-    sampledHistoryEntries: normalizeNonNegativeInteger(kernelParity['sampledHistoryEntries']),
-    strategyCounts: {
-      legacy_adapter: normalizeNonNegativeInteger(strategyCounts?.['legacy_adapter']),
-      code_object_v3: normalizeNonNegativeInteger(strategyCounts?.['code_object_v3']),
-      unknown: normalizeNonNegativeInteger(strategyCounts?.['unknown']),
-    },
-    resolutionSourceCounts: {
-      override: normalizeNonNegativeInteger(resolutionSourceCounts?.['override']),
-      registry: normalizeNonNegativeInteger(resolutionSourceCounts?.['registry']),
-      missing: normalizeNonNegativeInteger(resolutionSourceCounts?.['missing']),
-      unknown: normalizeNonNegativeInteger(resolutionSourceCounts?.['unknown']),
-    },
-    codeObjectIds: rawCodeObjectIds
-      .filter((entry: unknown): entry is string => typeof entry === 'string' && entry.trim().length > 0)
-      .map((entry: string) => entry.trim())
-      .slice(0, 25),
-  };
-};
-
-const toNonEmptyString = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
-const toFiniteDurationMs = (
-  value: unknown,
-  startedAt: unknown,
-  finishedAt: unknown
-): number | null => {
-  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
-    return Math.round(value);
-  }
-  const startedAtValue = toNonEmptyString(startedAt);
-  const finishedAtValue = toNonEmptyString(finishedAt);
-  if (!startedAtValue || !finishedAtValue) return null;
-  const startedAtMs = Date.parse(startedAtValue);
-  const finishedAtMs = Date.parse(finishedAtValue);
-  if (!Number.isFinite(startedAtMs) || !Number.isFinite(finishedAtMs)) return null;
-  return Math.max(0, Math.round(finishedAtMs - startedAtMs));
-};
-
-export const summarizeRuntimeTraceAnalytics = (input: {
-  runs: AiPathRunRecord[];
-  total?: number;
-}): AiPathRuntimeTraceAnalytics => {
-  const runs = input.runs ?? [];
-  const durations: number[] = [];
-  type NodeAggregate = {
-    nodeId: string;
-    nodeType: string;
-    spanCount: number;
-    failedCount: number;
-    durationCount: number;
-    totalDurationMs: number;
-    maxDurationMs: number;
-  };
-  const nodeAggregates = new Map<string, NodeAggregate>();
-  let sampledSpans = 0;
-  let completedSpans = 0;
-  let failedSpans = 0;
-  let cachedSpans = 0;
-  let slowestSpan: AiPathRuntimeTraceAnalytics['slowestSpan'] = null;
-  const kernelParity: AiPathRuntimeTraceAnalytics['kernelParity'] = {
-    sampledRuns: runs.length,
-    runsWithKernelParity: 0,
-    sampledHistoryEntries: 0,
-    strategyCounts: {
-      legacy_adapter: 0,
-      code_object_v3: 0,
-      unknown: 0,
-    },
-    resolutionSourceCounts: {
-      override: 0,
-      registry: 0,
-      missing: 0,
-      unknown: 0,
-    },
-    codeObjectIds: [],
-  };
-  const codeObjectIdSet = new Set<string>();
-
-  runs.forEach((run: AiPathRunRecord): void => {
-    const parity = extractRuntimeTraceKernelParity(run);
-    if (parity) {
-      kernelParity.runsWithKernelParity += 1;
-      kernelParity.sampledHistoryEntries += parity.sampledHistoryEntries;
-      kernelParity.strategyCounts.legacy_adapter += parity.strategyCounts.legacy_adapter;
-      kernelParity.strategyCounts.code_object_v3 += parity.strategyCounts.code_object_v3;
-      kernelParity.strategyCounts.unknown += parity.strategyCounts.unknown;
-      kernelParity.resolutionSourceCounts.override += parity.resolutionSourceCounts.override;
-      kernelParity.resolutionSourceCounts.registry += parity.resolutionSourceCounts.registry;
-      kernelParity.resolutionSourceCounts.missing += parity.resolutionSourceCounts.missing;
-      kernelParity.resolutionSourceCounts.unknown += parity.resolutionSourceCounts.unknown;
-      parity.codeObjectIds.forEach((codeObjectId: string) => {
-        codeObjectIdSet.add(codeObjectId);
-      });
-    }
-
-    const spans = extractRuntimeTraceNodeSpans(run);
-    spans.forEach((spanValue: unknown): void => {
-      const span = asRecord(spanValue);
-      if (!span) return;
-
-      sampledSpans += 1;
-      const nodeId = toNonEmptyString(span['nodeId']) ?? 'unknown';
-      const nodeType = toNonEmptyString(span['nodeType']) ?? 'unknown';
-      const status = toNonEmptyString(span['status']) ?? 'unknown';
-      if (status === 'completed') completedSpans += 1;
-      if (status === 'failed') failedSpans += 1;
-      if (status === 'cached') cachedSpans += 1;
-      const aggregateKey = `${nodeId}::${nodeType}`;
-      const aggregate = nodeAggregates.get(aggregateKey) ?? {
-        nodeId,
-        nodeType,
-        spanCount: 0,
-        failedCount: 0,
-        durationCount: 0,
-        totalDurationMs: 0,
-        maxDurationMs: 0,
-      };
-      aggregate.spanCount += 1;
-      if (status === 'failed') {
-        aggregate.failedCount += 1;
-      }
-
-      const durationMs = toFiniteDurationMs(
-        span['durationMs'],
-        span['startedAt'],
-        span['finishedAt']
-      );
-      if (durationMs !== null) {
-        durations.push(durationMs);
-        aggregate.durationCount += 1;
-        aggregate.totalDurationMs += durationMs;
-        aggregate.maxDurationMs = Math.max(aggregate.maxDurationMs, durationMs);
-
-        if (!slowestSpan || durationMs > slowestSpan.durationMs) {
-          slowestSpan = {
-            runId: toNonEmptyString(run.id) ?? 'unknown',
-            spanId: toNonEmptyString(span['spanId']) ?? 'unknown',
-            nodeId,
-            nodeType,
-            status,
-            durationMs,
-          };
-        }
-      }
-      nodeAggregates.set(aggregateKey, aggregate);
-    });
-  });
-
-  durations.sort((a: number, b: number): number => a - b);
-  const avgDurationMs =
-    durations.length > 0
-      ? Math.round(
-        durations.reduce((sum: number, value: number) => sum + value, 0) / durations.length
-      )
-      : null;
-  const p95DurationMs =
-    durations.length > 0
-      ? durations[
-        Math.min(durations.length - 1, Math.max(0, Math.ceil(durations.length * 0.95) - 1))
-      ]!
-      : null;
-  const topSlowNodes = Array.from(nodeAggregates.values())
-    .filter((aggregate) => aggregate.durationCount > 0)
-    .map((aggregate) => ({
-      nodeId: aggregate.nodeId,
-      nodeType: aggregate.nodeType,
-      spanCount: aggregate.spanCount,
-      avgDurationMs: Math.round(aggregate.totalDurationMs / aggregate.durationCount),
-      maxDurationMs: aggregate.maxDurationMs,
-      totalDurationMs: aggregate.totalDurationMs,
-    }))
-    .sort((left, right) => {
-      if (right.totalDurationMs !== left.totalDurationMs) {
-        return right.totalDurationMs - left.totalDurationMs;
-      }
-      return right.maxDurationMs - left.maxDurationMs;
-    })
-    .slice(0, TRACE_NODE_HIGHLIGHT_LIMIT);
-  const topFailedNodes = Array.from(nodeAggregates.values())
-    .filter((aggregate) => aggregate.failedCount > 0)
-    .map((aggregate) => ({
-      nodeId: aggregate.nodeId,
-      nodeType: aggregate.nodeType,
-      failedCount: aggregate.failedCount,
-      spanCount: aggregate.spanCount,
-    }))
-    .sort((left, right) => {
-      if (right.failedCount !== left.failedCount) {
-        return right.failedCount - left.failedCount;
-      }
-      return right.spanCount - left.spanCount;
-    })
-    .slice(0, TRACE_NODE_HIGHLIGHT_LIMIT);
-
-  const total = typeof input.total === 'number' ? Math.max(0, input.total) : runs.length;
-  const sampledRuns = runs.length;
-  kernelParity.codeObjectIds = Array.from(codeObjectIdSet).slice(0, 25);
-  return {
-    source: 'db_sample',
-    sampledRuns,
-    sampledSpans,
-    completedSpans,
-    failedSpans,
-    cachedSpans,
-    avgDurationMs,
-    p95DurationMs,
-    slowestSpan,
-    topSlowNodes,
-    topFailedNodes,
-    kernelParity,
-    truncated: total > sampledRuns,
-  };
-};
-
-const loadRuntimeTraceAnalytics = async (input: {
-  from: Date;
-  to: Date;
-}): Promise<AiPathRuntimeTraceAnalytics> => {
-  try {
-    const repo = await getPathRunRepository();
-    const result = await withTimeout(
-      repo.listRuns({
-        statuses: ['completed', 'failed', 'canceled', 'dead_lettered'],
-        createdAfter: input.from.toISOString(),
-        createdBefore: input.to.toISOString(),
-        limit: TRACE_RUN_SAMPLE_LIMIT,
-        offset: 0,
-        // Skip countDocuments — we only need the sample for trace analysis, not the total.
-        includeTotal: false,
-      }),
-      SUMMARY_QUERY_TIMEOUT_MS,
-      'ai-paths runtime trace analytics query'
-    );
-    return summarizeRuntimeTraceAnalytics({
-      runs: result.runs,
-      total: result.total,
-    });
-  } catch (error) {
-    void ErrorSystem.logWarning('Failed to load runtime trace analytics sample', {
-      service: 'ai-paths-analytics',
-      error,
-    });
-    return emptyTraceAnalytics();
-  }
-};
-
 const emptySummary = (
   from: Date,
   to: Date,
   range: AiPathRuntimeAnalyticsRange | 'custom'
 ): AiPathRuntimeAnalyticsSummary => ({
-  from: from.toISOString(),
-  to: to.toISOString(),
-  range,
-  storage: 'disabled',
-  runs: {
-    total: 0,
-    queued: 0,
-    started: 0,
-    completed: 0,
-    failed: 0,
-    canceled: 0,
-    deadLettered: 0,
-    successRate: 0,
-    failureRate: 0,
-    deadLetterRate: 0,
-    avgDurationMs: null,
-    p95DurationMs: null,
-  },
-  nodes: {
-    started: 0,
-    completed: 0,
-    failed: 0,
-    queued: 0,
-    running: 0,
-    polling: 0,
-    cached: 0,
-    waitingCallback: 0,
-  },
-  brain: {
-    analyticsReports: 0,
-    logReports: 0,
-    totalReports: 0,
-    warningReports: 0,
-    errorReports: 0,
-  },
-  traces: emptyTraceAnalytics(),
+  ...buildRuntimeAnalyticsEmptySummary(from, to, range),
   portableEngine: buildPortableEngineAnalytics(),
-  generatedAt: new Date().toISOString(),
 });
 
 export const resolveRuntimeAnalyticsRangeWindow = (
@@ -722,144 +172,10 @@ export const resolveRuntimeAnalyticsRangeWindow = (
   };
 };
 
-export const recordRuntimeRunQueued = async (input: {
-  runId: string;
-  timestamp?: Date | string | number | null;
-}): Promise<void> => {
-  try {
-    const redis = getRedisConnection();
-    if (!redis || !input.runId) return;
-    const timestampMs = toTimestampMs(input.timestamp);
-    const pruneTo = pruneBefore(timestampMs);
-    const multi = redis.multi();
-    multi.zadd(
-      keyRuns('all'),
-      String(timestampMs),
-      buildEventMember('run_queued', input.runId, timestampMs)
-    );
-    multi.zadd(
-      keyRuns('queued'),
-      String(timestampMs),
-      buildEventMember('queued', input.runId, timestampMs)
-    );
-    multi.zremrangebyscore(keyRuns('all'), 0, pruneTo);
-    multi.zremrangebyscore(keyRuns('queued'), 0, pruneTo);
-    multi.hincrby(keyTotals(), 'runs_total', 1);
-    multi.hincrby(keyTotals(), 'runs_queued', 1);
-    await multi.exec();
-  } catch (error) {
-    void ErrorSystem.logWarning('Failed to record run queued analytics', {
-      service: 'ai-paths-analytics',
-      error,
-      runId: input.runId,
-    });
-  }
-};
-
-export const recordRuntimeRunStarted = async (input: {
-  runId: string;
-  timestamp?: Date | string | number | null;
-}): Promise<void> => {
-  try {
-    const redis = getRedisConnection();
-    if (!redis || !input.runId) return;
-    const timestampMs = toTimestampMs(input.timestamp);
-    const pruneTo = pruneBefore(timestampMs);
-    const multi = redis.multi();
-    multi.zadd(
-      keyRuns('started'),
-      String(timestampMs),
-      buildEventMember('started', input.runId, timestampMs)
-    );
-    multi.zremrangebyscore(keyRuns('started'), 0, pruneTo);
-    multi.hincrby(keyTotals(), 'runs_started', 1);
-    await multi.exec();
-  } catch (error) {
-    void ErrorSystem.logWarning('Failed to record run started analytics', {
-      service: 'ai-paths-analytics',
-      error,
-      runId: input.runId,
-    });
-  }
-};
-
-export const recordRuntimeRunFinished = async (input: {
-  runId: string;
-  status: 'completed' | 'failed' | 'canceled' | 'dead_lettered';
-  durationMs?: number | null;
-  timestamp?: Date | string | number | null;
-}): Promise<void> => {
-  try {
-    const redis = getRedisConnection();
-    if (!redis || !input.runId) return;
-    const timestampMs = toTimestampMs(input.timestamp);
-    const pruneTo = pruneBefore(timestampMs);
-    const runStatusKey = keyRuns(input.status);
-    const multi = redis.multi();
-    multi.zadd(
-      runStatusKey,
-      String(timestampMs),
-      buildEventMember(input.status, input.runId, timestampMs)
-    );
-    multi.zremrangebyscore(runStatusKey, 0, pruneTo);
-    multi.hincrby(keyTotals(), `runs_${input.status}`, 1);
-
-    const durationMs =
-      typeof input.durationMs === 'number' && Number.isFinite(input.durationMs)
-        ? Math.max(0, Math.round(input.durationMs))
-        : null;
-    if (durationMs !== null) {
-      multi.zadd(
-        keyDurations(),
-        String(timestampMs),
-        buildDurationMember(input.runId, durationMs, timestampMs)
-      );
-      multi.zremrangebyscore(keyDurations(), 0, pruneTo);
-      multi.hincrby(keyTotals(), 'runs_duration_count', 1);
-      multi.hincrby(keyTotals(), 'runs_duration_total_ms', durationMs);
-    }
-    await multi.exec();
-  } catch (error) {
-    void ErrorSystem.logWarning('Failed to record run finished analytics', {
-      service: 'ai-paths-analytics',
-      error,
-      runId: input.runId,
-    });
-  }
-};
-
-export const recordRuntimeNodeStatus = async (input: {
-  runId: string;
-  nodeId: string;
-  status: unknown;
-  timestamp?: Date | string | number | null;
-}): Promise<void> => {
-  try {
-    const redis = getRedisConnection();
-    if (!redis || !input.runId || !input.nodeId) return;
-    const statusKey = resolveRuntimeAnalyticsNodeStatusKey(input.status);
-    if (!statusKey) return;
-
-    const timestampMs = toTimestampMs(input.timestamp);
-    const pruneTo = pruneBefore(timestampMs);
-    const multi = redis.multi();
-    multi.zadd(
-      keyNodes(statusKey),
-      String(timestampMs),
-      buildEventMember(`node_${statusKey}`, `${input.runId}:${input.nodeId}`, timestampMs)
-    );
-    multi.zremrangebyscore(keyNodes(statusKey), 0, pruneTo);
-    multi.hincrby(keyTotals(), `nodes_${statusKey}`, 1);
-    await multi.exec();
-  } catch (error) {
-    void ErrorSystem.logWarning('Failed to record node status analytics', {
-      service: 'ai-paths-analytics',
-      error,
-      runId: input.runId,
-      nodeId: input.nodeId,
-    });
-  }
-};
+export const recordRuntimeRunQueued = recordRuntimeRunQueuedShared;
+export const recordRuntimeRunStarted = recordRuntimeRunStartedShared;
+export const recordRuntimeRunFinished = recordRuntimeRunFinishedShared;
+export const recordRuntimeNodeStatus = recordRuntimeNodeStatusShared;
 
 export const recordBrainInsightAnalytics = async (input: {
   type: 'analytics' | 'logs';
@@ -995,14 +311,14 @@ export const getRuntimeAnalyticsSummary = async (input: {
       const avgDurationMs =
         durations.length > 0
           ? Math.round(
-            durations.reduce((sum: number, value: number) => sum + value, 0) / durations.length
-          )
+              durations.reduce((sum: number, value: number) => sum + value, 0) / durations.length
+            )
           : null;
       const p95DurationMs =
         durations.length > 0
           ? durations[
-            Math.min(durations.length - 1, Math.max(0, Math.ceil(durations.length * 0.95) - 1))
-          ]!
+              Math.min(durations.length - 1, Math.max(0, Math.ceil(durations.length * 0.95) - 1))
+            ]!
           : null;
 
       const runsCompleted = readCountAt(3);

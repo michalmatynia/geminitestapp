@@ -205,8 +205,7 @@
       ],
       "adapterArtifact": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/segments/useLocalExecutionLoop.ts",
       "flags": [
-        "AI_PATHS_RUNTIME_KERNEL_NODE_TYPES",
-        "AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY"
+        "AI_PATHS_RUNTIME_KERNEL_NODE_TYPES"
       ]
     },
     {
@@ -217,8 +216,7 @@
       ],
       "adapterArtifact": "src/features/ai/ai-paths/services/path-run-executor/index.ts",
       "flags": [
-        "AI_PATHS_RUNTIME_KERNEL_NODE_TYPES",
-        "AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY"
+        "AI_PATHS_RUNTIME_KERNEL_NODE_TYPES"
       ]
     },
     {
@@ -228,15 +226,13 @@
       ],
       "adapterArtifact": "src/shared/lib/ai-paths/portable-engine/index.ts",
       "flags": [
-        "AI_PATHS_RUNTIME_KERNEL_NODE_TYPES",
-        "AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY"
+        "AI_PATHS_RUNTIME_KERNEL_NODE_TYPES"
       ]
     }
   ],
   "rollout": {
     "killSwitches": [
-      "AI_PATHS_RUNTIME_KERNEL_NODE_TYPES",
-      "AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY"
+      "AI_PATHS_RUNTIME_KERNEL_NODE_TYPES"
     ],
     "waves": [
       {
@@ -248,7 +244,7 @@
         ]
       },
       {
-        "id": "wave_pilot_pages",
+        "id": "wave_runtime_kernel_pages",
         "order": 2,
         "description": "Enable kernel primary execution for runtime-kernel pages and node families.",
         "gateRefs": [

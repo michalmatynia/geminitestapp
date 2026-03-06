@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "ai-paths.node-migration-rollout-eligibility.v1",
+  "schemaVersion": "ai-paths.node-migration-rollout-eligibility.v2",
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "criteria": [
     "runtime_strategy=code_object_v3",

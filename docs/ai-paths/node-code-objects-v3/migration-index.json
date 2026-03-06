@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "ai-paths.node-migration-doc-index.v3",
+  "schemaVersion": "ai-paths.node-migration-doc-index.v4",
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "totalNodes": 36,
   "runtimeKernelNodeTypes": [
@@ -51,7 +51,7 @@
       "not_ready": 0,
       "cataloged": 0,
       "scaffolded": 0,
-      "pilot_indexed": 0,
+      "runtime_kernel_indexed": 0,
       "rollout_candidate": 0,
       "rollout_approved": 36
     },
@@ -59,7 +59,7 @@
   },
   "parityEvidence": {
     "sourceFile": "docs/ai-paths/node-code-objects-v3/parity-evidence.json",
-    "schemaVersion": "ai-paths.node-migration-parity-evidence.v1",
+    "schemaVersion": "ai-paths.node-migration-parity-evidence.v2",
     "generatedAt": "2026-03-05T00:00:00.000Z",
     "suiteCount": 2,
     "suiteIds": [
@@ -151,7 +151,7 @@
   },
   "rolloutEligibility": {
     "sourceFile": "docs/ai-paths/node-code-objects-v3/rollout-eligibility.json",
-    "schemaVersion": "ai-paths.node-migration-rollout-eligibility.v1",
+    "schemaVersion": "ai-paths.node-migration-rollout-eligibility.v2",
     "generatedAt": "2026-03-05T00:00:00.000Z",
     "criteria": [
       "runtime_strategy=code_object_v3",

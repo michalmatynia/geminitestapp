@@ -278,9 +278,9 @@ try {
 
 const errors: string[] = [];
 
-if (parityEvidenceSummary.schemaVersion !== 'ai-paths.node-migration-parity-evidence.v1') {
+if (parityEvidenceSummary.schemaVersion !== 'ai-paths.node-migration-parity-evidence.v2') {
   errors.push(
-    `parity-evidence schemaVersion must be "ai-paths.node-migration-parity-evidence.v1" (got ${parityEvidenceSummary.schemaVersion ?? 'null'}).`
+    `parity-evidence schemaVersion must be "ai-paths.node-migration-parity-evidence.v2" (got ${parityEvidenceSummary.schemaVersion ?? 'null'}).`
   );
 }
 if (rolloutApprovalsSummary.schemaVersion !== NODE_MIGRATION_ROLLOUT_APPROVALS_SCHEMA_VERSION) {
@@ -294,8 +294,8 @@ if (rolloutEligibilitySummary.schemaVersion !== NODE_MIGRATION_ROLLOUT_ELIGIBILI
   );
 }
 
-if (indexPayload.schemaVersion !== 'ai-paths.node-migration-doc-index.v3') {
-  errors.push('migration-index.json schemaVersion must be "ai-paths.node-migration-doc-index.v3".');
+if (indexPayload.schemaVersion !== 'ai-paths.node-migration-doc-index.v4') {
+  errors.push('migration-index.json schemaVersion must be "ai-paths.node-migration-doc-index.v4".');
 }
 
 if (!Array.isArray(indexPayload.nodes)) {

@@ -410,7 +410,6 @@ export async function evaluateGraphClient(
       return resolveUnsupportedClientCodeObjectHandler(args);
     },
     runtimeKernelNodeTypes: resolvedOptions.runtimeKernelNodeTypes,
-    runtimeKernelStrictNativeRegistry: true,
   });
 
   return evaluateGraphInternal(nodes, resolvedEdges, {

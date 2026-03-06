@@ -82,7 +82,7 @@ type NodeMigrationIndexRow = {
 };
 
 type NodeMigrationIndexPayload = {
-  schemaVersion: 'ai-paths.node-migration-doc-index.v3';
+  schemaVersion: 'ai-paths.node-migration-doc-index.v4';
   generatedAt: string;
   totalNodes: number;
   runtimeKernelNodeTypes: string[];
@@ -416,7 +416,7 @@ const rolloutEligibilityPayload: NodeMigrationRolloutEligibilityPayload = {
 };
 
 const payload: NodeMigrationIndexPayload = {
-  schemaVersion: 'ai-paths.node-migration-doc-index.v3',
+  schemaVersion: 'ai-paths.node-migration-doc-index.v4',
   generatedAt,
   totalNodes: rows.length,
   runtimeKernelNodeTypes,

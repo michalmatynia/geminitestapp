@@ -351,7 +351,7 @@ export function useAiPathTrigger(): {
           return;
         }
       }
-      if (!runId) {
+      if (enqueueResult.ok && !runId) {
         const resolved = resolveAiPathRunFromEnqueueResponseData(enqueueResult.data);
         runId = resolved.runId;
         runRecord = resolved.runRecord;

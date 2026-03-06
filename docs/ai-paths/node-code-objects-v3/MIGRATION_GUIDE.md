@@ -41,14 +41,14 @@ Generated at: 2026-03-05T00:00:00.000Z
 | `not_ready` | 0 |
 | `cataloged` | 0 |
 | `scaffolded` | 0 |
-| `pilot_indexed` | 0 |
+| `runtime_kernel_indexed` | 0 |
 | `rollout_candidate` | 0 |
 | `rollout_approved` | 36 |
 
 ## Parity Evidence
 
 - Source file: `docs/ai-paths/node-code-objects-v3/parity-evidence.json`
-- Schema version: `ai-paths.node-migration-parity-evidence.v1`
+- Schema version: `ai-paths.node-migration-parity-evidence.v2`
 - Generated at: `2026-03-05T00:00:00.000Z`
 - Evidence suites: 2
 - Validated node types: `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`
@@ -63,7 +63,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 ## Rollout Eligibility
 
 - Source file: `docs/ai-paths/node-code-objects-v3/rollout-eligibility.json`
-- Schema version: `ai-paths.node-migration-rollout-eligibility.v1`
+- Schema version: `ai-paths.node-migration-rollout-eligibility.v2`
 - Generated at: `2026-03-05T00:00:00.000Z`
 - Eligibility criteria: `runtime_strategy=code_object_v3`, `has_semantic_contract_hash`, `has_v2_object_contract`, `has_v3_scaffold`, `has_v3_object_artifacts`, `dual_run_parity_validated`
 - Eligible node types: `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`

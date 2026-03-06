@@ -4,7 +4,7 @@ import path from 'node:path';
 export const NODE_MIGRATION_ROLLOUT_ELIGIBILITY_FILE =
   'docs/ai-paths/node-code-objects-v3/rollout-eligibility.json';
 export const NODE_MIGRATION_ROLLOUT_ELIGIBILITY_SCHEMA_VERSION =
-  'ai-paths.node-migration-rollout-eligibility.v1';
+  'ai-paths.node-migration-rollout-eligibility.v2';
 
 type NodeMigrationRolloutEligibilityNode = {
   nodeType?: unknown;

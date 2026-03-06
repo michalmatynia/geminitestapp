@@ -70,4 +70,14 @@ describe('node migration parity evidence', () => {
     expect(suite?.modes).toContain('code_object_v3');
     expect(suite?.nodeTypes).toContain('trigger');
   });
+
+  it('labels core dual-run parity using compatibility and code_object_v3 modes', () => {
+    const summary = loadNodeMigrationParityEvidenceSummary({
+      workspaceRoot: process.cwd(),
+    });
+
+    const suite = summary.suites.find((entry) => entry.suiteId === 'runtime-kernel-parity-core');
+    expect(suite).toBeTruthy();
+    expect(suite?.modes).toEqual(['code_object_v3', 'compatibility']);
+  });
 });

@@ -25,6 +25,8 @@ import {
   aiPathRunEnqueueResponseSchema,
   edgeSchema,
   pathConfigSchema,
+  type AiNode,
+  type Edge,
   type PathConfig,
 } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -150,8 +152,8 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       : null;
   const requestContentLength = Number.parseInt(req.headers.get('content-length') ?? '', 10);
   let resolvedPathName = rest.pathName?.trim() || rest.pathId;
-  let resolvedNodesInput: unknown[] | undefined = nodes;
-  let resolvedEdgesInput: unknown[] | undefined = edges;
+  let resolvedNodesInput: AiNode[] | undefined = nodes;
+  let resolvedEdgesInput: Edge[] | undefined = edges;
   let graphSource: 'payload' | 'settings' = 'payload';
   if (!Array.isArray(nodes) || !Array.isArray(edges)) {
     const storedConfig = await withTiming('loadStoredPathMs', async () => {
@@ -190,7 +192,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   if (identityIssues.length > 0) {
     throw badRequestError('AI Paths run graph contains unsupported node identities.');
   }
-  const normalizedEdges = sanitizeEdges(normalizedNodes, resolvedEdgesInput as any[]);
+  const normalizedEdges = sanitizeEdges(normalizedNodes, resolvedEdgesInput);
   if (stableStringify(normalizedEdges) !== stableStringify(resolvedEdgesInput)) {
     throw badRequestError('AI Paths run graph contains invalid or non-canonical edges.');
   }

@@ -13,7 +13,7 @@ export type RuntimeKernelParityAssessment = {
   riskLevel: RuntimeKernelParityRiskLevel;
   coverageRate: number;
   v3Rate: number;
-  legacyRate: number;
+  compatibilityRate: number;
   unknownRate: number;
   missingResolutionRate: number;
   signals: string[];
@@ -36,7 +36,7 @@ export const assessRuntimeKernelParityRisk = (
 
   const coverageRate = safeRate(runsWithKernelParity, sampledRuns);
   const v3Rate = safeRate(strategyCounts.code_object_v3, sampledHistoryEntries);
-  const legacyRate = safeRate(strategyCounts.legacy_adapter, sampledHistoryEntries);
+  const compatibilityRate = safeRate(strategyCounts.compatibility, sampledHistoryEntries);
   const unknownRate = safeRate(strategyCounts.unknown, sampledHistoryEntries);
   const missingResolutionRate = safeRate(resolutionSourceCounts.missing, resolutionSourceTotal);
 
@@ -80,7 +80,7 @@ export const assessRuntimeKernelParityRisk = (
     riskLevel,
     coverageRate,
     v3Rate,
-    legacyRate,
+    compatibilityRate,
     unknownRate,
     missingResolutionRate,
     signals,
@@ -97,7 +97,7 @@ export const buildRuntimeKernelParityMetadata = (
   runtimeKernelParityRiskLevel: assessment.riskLevel,
   runtimeKernelParityCoverageRate: Number(assessment.coverageRate.toFixed(1)),
   runtimeKernelParityV3Rate: Number(assessment.v3Rate.toFixed(1)),
-  runtimeKernelParityLegacyRate: Number(assessment.legacyRate.toFixed(1)),
+  runtimeKernelParityCompatibilityRate: Number(assessment.compatibilityRate.toFixed(1)),
   runtimeKernelParityUnknownRate: Number(assessment.unknownRate.toFixed(1)),
   runtimeKernelParityMissingResolutionRate: Number(assessment.missingResolutionRate.toFixed(1)),
   runtimeKernelParitySignals: assessment.signals,
@@ -115,7 +115,7 @@ export const buildRuntimeKernelParityPrompt = (
   const resolutionSourceCounts = kernelParity.resolutionSourceCounts;
   const coverageRate = assessment.coverageRate;
   const v3Rate = assessment.v3Rate;
-  const legacyRate = assessment.legacyRate;
+  const compatibilityRate = assessment.compatibilityRate;
   const unknownRate = assessment.unknownRate;
   const codeObjectIds = kernelParity.codeObjectIds.slice(0, 5);
 
@@ -124,7 +124,7 @@ export const buildRuntimeKernelParityPrompt = (
     `- Sampled runs: ${sampledRuns}`,
     `- Runs with kernel parity telemetry: ${runsWithKernelParity} (${formatPercent(coverageRate)})`,
     `- Sampled runtime history entries: ${sampledHistoryEntries}`,
-    `- Strategy split: code_object_v3=${strategyCounts.code_object_v3} (${formatPercent(v3Rate)}), legacy_adapter=${strategyCounts.legacy_adapter} (${formatPercent(legacyRate)}), unknown=${strategyCounts.unknown} (${formatPercent(unknownRate)})`,
+    `- Strategy split: code_object_v3=${strategyCounts.code_object_v3} (${formatPercent(v3Rate)}), compatibility=${strategyCounts.compatibility} (${formatPercent(compatibilityRate)}), unknown=${strategyCounts.unknown} (${formatPercent(unknownRate)})`,
     `- Resolution source counts: override=${resolutionSourceCounts.override}, registry=${resolutionSourceCounts.registry}, missing=${resolutionSourceCounts.missing}, unknown=${resolutionSourceCounts.unknown}`,
   ];
 

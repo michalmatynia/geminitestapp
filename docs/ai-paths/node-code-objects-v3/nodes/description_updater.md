@@ -1,6 +1,6 @@
 # Description Updater (Deprecated) Migration Sheet (`description_updater`)
 
-Generated at: 2026-03-06T00:00:00.000Z
+Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
@@ -21,7 +21,7 @@ Generated at: 2026-03-06T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/description_updater.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/description_updater.scaffold.json`
 - v3 object id: `node_obj_description_updater_portable_v3`
-- v3 object hash: `b85928b5972acd198ff9da2a4df5c68b08b2a8435643be55f9feb338b97b84cb`
+- v3 object hash: `4706503301a91755619235ae20e8440314dbd609b5e1085744ef7c0c57dac051`
 
 ## Ports
 

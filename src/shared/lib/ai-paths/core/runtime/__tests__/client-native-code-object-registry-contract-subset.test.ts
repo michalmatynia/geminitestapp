@@ -1,7 +1,10 @@
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import * as builders from './client-native-code-object-registry-contract-subset.builders';
+import {
+  CLIENT_LEGACY_HANDLER_NODE_TYPES,
+  CLIENT_NATIVE_CODE_OBJECT_HANDLER_IDS,
+  evaluateGraphClient,
+} from '../engine-client';
 
 const {
   mockDbApiSchema,
@@ -15,594 +18,11 @@ const {
   mockLearnerAgentsChat,
   mockPlaywrightEnqueue,
   mockPlaywrightPoll,
-} = vi.hoisted(() => ({
-  mockDbApiSchema: vi.fn(async () => ({
-    ok: true as const,
-    data: {
-      provider: 'prisma',
-      collections: [
-        {
-          name: 'products',
-          fields: [
-            {
-              name: 'id',
-              type: 'String',
-              isId: true,
-              isRequired: true,
-              isUnique: true,
-              hasDefault: false,
-            },
-          ],
-          relations: ['categories'],
-        },
-      ],
-    },
-  })),
-  mockAiJobsEnqueue: vi.fn(async () => ({
-    ok: true as const,
-    data: { jobId: 'job-model-1' },
-  })),
-  mockAiJobsPoll: vi.fn(async () => ({
-    ok: true as const,
-    data: {
-      status: 'completed',
-      result: 'model-result',
-    },
-  })),
-  mockAiGenerationGenerate: vi.fn(async () => ({
-    ok: true as const,
-    data: { result: 'generated-description' },
-  })),
-  mockAiGenerationUpdateProductDescription: vi.fn(async () => ({
-    ok: true as const,
-    data: {},
-  })),
-  mockAgentEnqueue: vi.fn(async () => ({
-    ok: true as const,
-    data: { runId: 'agent-run-1' },
-  })),
-  mockAgentPoll: vi.fn(async () => ({
-    ok: true as const,
-    data: {
-      run: {
-        id: 'agent-run-1',
-        status: 'completed',
-        errorMessage: null,
-        logLines: ['done'],
-      },
-    },
-  })),
-  mockSettingsList: vi.fn(async () => ({
-    ok: true as const,
-    data: [],
-  })),
-  mockLearnerAgentsChat: vi.fn(async () => ({
-    ok: true as const,
-    data: { message: 'learner-response', sources: [{ id: 'source-1' }] },
-  })),
-  mockPlaywrightEnqueue: vi.fn(async () => ({
-    ok: true as const,
-    data: {
-      run: {
-        runId: 'pw-run-1',
-        status: 'queued',
-        result: null,
-        error: null,
-        artifacts: [],
-        logs: [],
-        startedAt: null,
-        completedAt: null,
-      },
-    },
-  })),
-  mockPlaywrightPoll: vi.fn(async () => ({
-    ok: true as const,
-    data: {
-      run: {
-        runId: 'pw-run-1',
-        status: 'completed',
-        result: { outputs: { result: 'ok' } },
-        error: null,
-        artifacts: [],
-        logs: [],
-        startedAt: null,
-        completedAt: null,
-      },
-    },
-  })),
-}));
-
-vi.mock('@/shared/lib/ai-paths/api', async () => {
-  const actual = await vi.importActual<typeof import('@/shared/lib/ai-paths/api')>(
-    '@/shared/lib/ai-paths/api'
-  );
-  return {
-    ...actual,
-    dbApi: {
-      ...actual.dbApi,
-      schema: mockDbApiSchema,
-    },
-    aiJobsApi: {
-      ...actual.aiJobsApi,
-      enqueue: mockAiJobsEnqueue,
-      poll: mockAiJobsPoll,
-    },
-    aiGenerationApi: {
-      ...actual.aiGenerationApi,
-      generate: mockAiGenerationGenerate,
-      updateProductDescription: mockAiGenerationUpdateProductDescription,
-    },
-    agentApi: {
-      ...actual.agentApi,
-      enqueue: mockAgentEnqueue,
-      poll: mockAgentPoll,
-    },
-    settingsApi: {
-      ...actual.settingsApi,
-      list: mockSettingsList,
-    },
-    learnerAgentsApi: {
-      ...actual.learnerAgentsApi,
-      chat: mockLearnerAgentsChat,
-    },
-    playwrightNodeApi: {
-      ...actual.playwrightNodeApi,
-      enqueue: mockPlaywrightEnqueue,
-      poll: mockPlaywrightPoll,
-    },
-  };
-});
-
-import type { AiNode } from '@/shared/contracts/ai-paths';
-import {
-  CLIENT_LEGACY_HANDLER_NODE_TYPES,
-  CLIENT_NATIVE_CODE_OBJECT_HANDLER_IDS,
-  evaluateGraphClient,
-} from '@/shared/lib/ai-paths/core/runtime/engine-client';
-
-type NodeCodeObjectContractEntry = {
-  executionAdapter?: unknown;
-  codeObjectId?: unknown;
-};
-
-const readNativeContractCodeObjectIdSet = (): Set<string> => {
-  const contractsPath = path.join(
-    process.cwd(),
-    'docs',
-    'ai-paths',
-    'node-code-objects-v3',
-    'contracts.json'
-  );
-  const payload = JSON.parse(readFileSync(contractsPath, 'utf8')) as {
-    contracts?: Record<string, NodeCodeObjectContractEntry>;
-  };
-  const contracts = payload.contracts ?? {};
-  const ids = Object.values(contracts)
-    .filter(
-      (entry: NodeCodeObjectContractEntry): boolean =>
-        entry.executionAdapter === 'native_handler_registry' &&
-        typeof entry.codeObjectId === 'string'
-    )
-    .map((entry: NodeCodeObjectContractEntry): string => entry.codeObjectId as string);
-  return new Set(ids);
-};
-
-const readNativeContractCodeObjectIdByNodeType = (): Map<string, string> => {
-  const contractsPath = path.join(
-    process.cwd(),
-    'docs',
-    'ai-paths',
-    'node-code-objects-v3',
-    'contracts.json'
-  );
-  const payload = JSON.parse(readFileSync(contractsPath, 'utf8')) as {
-    contracts?: Record<string, NodeCodeObjectContractEntry>;
-  };
-  const contracts = payload.contracts ?? {};
-  const entries = Object.entries(contracts)
-    .filter(
-      ([, entry]: [string, NodeCodeObjectContractEntry]): boolean =>
-        entry.executionAdapter === 'native_handler_registry' &&
-        typeof entry.codeObjectId === 'string'
-    )
-    .map(([nodeType, entry]: [string, NodeCodeObjectContractEntry]): [string, string] => [
-      nodeType,
-      entry.codeObjectId as string,
-    ]);
-  return new Map(entries);
-};
-
-const buildUnsupportedClientNode = (): AiNode => ({
-  id: 'node-unsupported',
-  type: 'unsupported_client_node',
-  title: 'Unsupported',
-  description: '',
-  inputs: [],
-  outputs: ['result'],
-  config: {},
-  position: { x: 0, y: 0 },
-});
-
-const buildFunctionNode = (): AiNode => ({
-  id: 'node-function',
-  type: 'function',
-  title: 'Function',
-  description: '',
-  inputs: [],
-  outputs: ['value'],
-  config: {
-    function: {
-      script: 'return { value: "ok" };',
-      safeMode: true,
-    },
-  },
-  position: { x: 0, y: 0 },
-});
-
-const buildPromptNode = (): AiNode => ({
-  id: 'node-prompt',
-  type: 'prompt',
-  title: 'Prompt',
-  description: '',
-  inputs: [],
-  outputs: ['prompt'],
-  config: {
-    prompt: {
-      template: 'hello-from-prompt',
-    },
-  },
-  position: { x: 0, y: 0 },
-});
-
-const buildModelNode = (): AiNode => ({
-  id: 'node-model',
-  type: 'model',
-  title: 'Model',
-  description: '',
-  inputs: ['prompt', 'images'],
-  outputs: ['result', 'jobId'],
-  config: {
-    model: {
-      waitForResult: false,
-      temperature: 0.7,
-      maxTokens: 256,
-      vision: false,
-    },
-  },
-  position: { x: 10, y: 0 },
-});
-
-const buildModelWaitNode = (): AiNode => ({
-  id: 'node-model-wait',
-  type: 'model',
-  title: 'Model Wait',
-  description: '',
-  inputs: ['prompt', 'images'],
-  outputs: ['result', 'jobId'],
-  config: {
-    model: {
-      waitForResult: true,
-      temperature: 0.7,
-      maxTokens: 256,
-      vision: false,
-    },
-  },
-  position: { x: 12, y: 0 },
-});
-
-const buildAgentNode = (): AiNode => ({
-  id: 'node-agent',
-  type: 'agent',
-  title: 'Agent',
-  description: '',
-  inputs: ['prompt'],
-  outputs: ['result', 'jobId', 'status', 'bundle'],
-  config: {
-    agent: {
-      personaId: '',
-      promptTemplate: '',
-      waitForResult: false,
-    },
-  },
-  position: { x: 20, y: 0 },
-});
-
-const buildAgentWaitNode = (): AiNode => ({
-  id: 'node-agent-wait',
-  type: 'agent',
-  title: 'Agent Wait',
-  description: '',
-  inputs: ['prompt'],
-  outputs: ['result', 'jobId', 'status', 'bundle'],
-  config: {
-    agent: {
-      personaId: '',
-      promptTemplate: '',
-      waitForResult: true,
-    },
-  },
-  position: { x: 22, y: 0 },
-});
-
-const buildLearnerAgentNode = (): AiNode => ({
-  id: 'node-learner-agent',
-  type: 'learner_agent',
-  title: 'Learner Agent',
-  description: '',
-  inputs: ['prompt'],
-  outputs: ['result', 'sources', 'status', 'bundle'],
-  config: {
-    learnerAgent: {
-      agentId: 'agent-1',
-      promptTemplate: '',
-      includeSources: true,
-    },
-  },
-  position: { x: 40, y: 0 },
-});
-
-const buildTriggerNode = (): AiNode => ({
-  id: 'node-trigger',
-  type: 'trigger',
-  title: 'Trigger',
-  description: '',
-  inputs: [],
-  outputs: ['trigger', 'triggerName', 'context', 'entityJson'],
-  config: {
-    trigger: {
-      event: 'manual',
-    },
-  },
-  position: { x: 0, y: 0 },
-});
-
-const buildSimulationNode = (): AiNode => ({
-  id: 'node-simulation',
-  type: 'simulation',
-  title: 'Simulation',
-  description: '',
-  inputs: ['trigger'],
-  outputs: ['context', 'entityId', 'entityType', 'entityJson'],
-  config: {},
-  position: { x: 0, y: 0 },
-});
-
-const buildFetcherNode = (): AiNode => ({
-  id: 'node-fetcher',
-  type: 'fetcher',
-  title: 'Fetcher',
-  description: '',
-  inputs: ['trigger', 'context'],
-  outputs: ['context', 'meta', 'entityId', 'entityType'],
-  config: {
-    fetcher: {
-      sourceMode: 'live_context',
-    },
-  },
-  position: { x: 120, y: 0 },
-});
-
-const buildDbSchemaNode = (): AiNode => ({
-  id: 'node-db-schema',
-  type: 'db_schema',
-  title: 'DB Schema',
-  description: '',
-  inputs: [],
-  outputs: ['schema', 'context'],
-  config: {
-    db_schema: {
-      mode: 'selected',
-      collections: ['products'],
-      includeFields: true,
-      includeRelations: true,
-      formatAs: 'text',
-    },
-  },
-  position: { x: 160, y: 0 },
-});
-
-const buildAiDescriptionNode = (): AiNode => ({
-  id: 'node-ai-description',
-  type: 'ai_description',
-  title: 'AI Description',
-  description: '',
-  inputs: ['entityJson', 'images'],
-  outputs: ['description_en'],
-  config: {
-    description: {
-      visionOutputEnabled: true,
-      generationOutputEnabled: true,
-    },
-  },
-  position: { x: 175, y: 0 },
-});
-
-const buildDescriptionUpdaterNode = (): AiNode => ({
-  id: 'node-description-updater',
-  type: 'description_updater',
-  title: 'Description Updater',
-  description: '',
-  inputs: ['productId', 'description_en'],
-  outputs: ['description_en'],
-  config: {},
-  position: { x: 182, y: 0 },
-});
-
-const buildPlaywrightNode = (): AiNode => ({
-  id: 'node-playwright',
-  type: 'playwright',
-  title: 'Playwright',
-  description: '',
-  inputs: ['url', 'bundle', 'context'],
-  outputs: ['result', 'jobId', 'screenshot', 'html'],
-  config: {
-    playwright: {
-      script: '',
-      waitForResult: true,
-      timeoutMs: 120000,
-      browserEngine: 'chromium',
-      capture: {
-        screenshot: false,
-        html: false,
-        video: false,
-        trace: false,
-      },
-    },
-  },
-  position: { x: 186, y: 0 },
-});
-
-const buildConstantNode = (input: { id: string; value: unknown; title?: string }): AiNode => ({
-  id: input.id,
-  type: 'constant',
-  title: input.title ?? 'Constant',
-  description: '',
-  inputs: [],
-  outputs: ['value'],
-  config: {
-    constant: {
-      value: input.value,
-    },
-  },
-  position: { x: 170, y: 0 },
-});
-
-const buildApiAdvancedNode = (): AiNode => ({
-  id: 'node-api-advanced',
-  type: 'api_advanced',
-  title: 'API Advanced',
-  description: '',
-  inputs: [],
-  outputs: ['value', 'bundle', 'status', 'headers', 'items', 'route', 'error', 'success'],
-  config: {
-    apiAdvanced: {
-      url: '',
-      method: 'GET',
-      pathParamsJson: '{}',
-      queryParamsJson: '{}',
-      headersJson: '{}',
-      bodyTemplate: '',
-      bodyMode: 'none',
-      timeoutMs: 5000,
-      authMode: 'none',
-      responseMode: 'json',
-      responsePath: '',
-      outputMappingsJson: '{}',
-      retryEnabled: false,
-      retryAttempts: 1,
-      paginationMode: 'none',
-      paginationAggregateMode: 'first_page',
-      errorRoutesJson: '[]',
-    },
-  },
-  position: { x: 190, y: 0 },
-});
-
-const buildDatabaseNode = (): AiNode => ({
-  id: 'node-database',
-  type: 'database',
-  title: 'Database',
-  description: '',
-  inputs: [],
-  outputs: ['result', 'bundle', 'query', 'queryMode', 'querySource'],
-  config: {
-    database: {
-      operation: 'query',
-      query: {
-        provider: 'auto',
-        collection: 'products',
-        mode: 'custom',
-        preset: 'by_id',
-        field: '_id',
-        idType: 'string',
-        queryTemplate: '',
-        limit: 20,
-        sort: '',
-        sortPresetId: 'custom',
-        projection: '',
-        projectionPresetId: 'custom',
-        single: false,
-      },
-    },
-  },
-  position: { x: 220, y: 0 },
-});
-
-const buildAudioOscillatorNode = (): AiNode => ({
-  id: 'node-audio-oscillator',
-  type: 'audio_oscillator',
-  title: 'Audio Oscillator',
-  description: '',
-  inputs: ['trigger', 'frequency', 'waveform', 'gain', 'durationMs'],
-  outputs: ['audioSignal', 'frequency', 'waveform', 'gain', 'durationMs', 'status'],
-  config: {
-    audioOscillator: {
-      waveform: 'triangle',
-      frequencyHz: 512,
-      gain: 0.3,
-      durationMs: 640,
-    },
-  },
-  position: { x: 240, y: 0 },
-});
-
-const buildAudioSpeakerNode = (): AiNode => ({
-  id: 'node-audio-speaker',
-  type: 'audio_speaker',
-  title: 'Audio Speaker',
-  description: '',
-  inputs: ['audioSignal', 'trigger'],
-  outputs: ['status', 'audioSignal', 'frequency', 'waveform', 'gain', 'durationMs'],
-  config: {
-    audioSpeaker: {
-      enabled: true,
-      autoPlay: true,
-      gain: 0.8,
-      stopPrevious: true,
-    },
-  },
-  position: { x: 360, y: 0 },
-});
-
-const buildHttpNode = (): AiNode => ({
-  id: 'node-http',
-  type: 'http',
-  title: 'HTTP',
-  description: '',
-  inputs: ['url', 'body', 'headers', 'bundle'],
-  outputs: ['value', 'bundle'],
-  config: {
-    http: {
-      url: '',
-      method: 'GET',
-      headers: '{}',
-      responseMode: 'json',
-      responsePath: '',
-    },
-  },
-  position: { x: 480, y: 0 },
-});
-
-const buildPollNode = (): AiNode => ({
-  id: 'node-poll',
-  type: 'poll',
-  title: 'Poll',
-  description: '',
-  inputs: ['jobId'],
-  outputs: ['result', 'status', 'jobId', 'bundle'],
-  config: {
-    poll: {
-      intervalMs: 1000,
-      maxAttempts: 2,
-      mode: 'job',
-    },
-  },
-  position: { x: 600, y: 0 },
-});
+} = builders;
 
 describe('client native code-object registry contract subset', () => {
   it('only contains codeObjectIds that exist in native contracts', () => {
-    const nativeContractIds = readNativeContractCodeObjectIdSet();
+    const nativeContractIds = builders.readNativeContractCodeObjectIdSet();
 
     expect(CLIENT_NATIVE_CODE_OBJECT_HANDLER_IDS.length).toBeGreaterThan(0);
     CLIENT_NATIVE_CODE_OBJECT_HANDLER_IDS.forEach((codeObjectId: string) => {
@@ -611,7 +31,7 @@ describe('client native code-object registry contract subset', () => {
   });
 
   it('covers all client-supported runtime-kernel node types with native mappings', () => {
-    const byNodeType = readNativeContractCodeObjectIdByNodeType();
+    const byNodeType = builders.readNativeContractCodeObjectIdByNodeType();
     const clientNativeIdSet = new Set<string>(CLIENT_NATIVE_CODE_OBJECT_HANDLER_IDS);
     const missingNodeTypes = CLIENT_LEGACY_HANDLER_NODE_TYPES.filter(
       (nodeType: string): boolean => {
@@ -625,7 +45,7 @@ describe('client native code-object registry contract subset', () => {
   });
 
   it('tracks remaining server-only native node-type asymmetries explicitly', () => {
-    const byNodeType = readNativeContractCodeObjectIdByNodeType();
+    const byNodeType = builders.readNativeContractCodeObjectIdByNodeType();
     const clientNativeIdSet = new Set<string>(CLIENT_NATIVE_CODE_OBJECT_HANDLER_IDS);
 
     const unsupportedOnClientNodeTypes = Array.from(byNodeType.entries())
@@ -638,7 +58,7 @@ describe('client native code-object registry contract subset', () => {
 
   it('executes prompt nodes through client native contract resolver mapping', async () => {
     const result = await evaluateGraphClient({
-      nodes: [buildPromptNode()],
+      nodes: [builders.buildPromptNode()],
       edges: [],
       runtimeKernelNodeTypes: ['prompt'],
       reportAiPathsError: (): void => {},
@@ -652,7 +72,7 @@ describe('client native code-object registry contract subset', () => {
     mockAiJobsPoll.mockClear();
 
     const result = await evaluateGraphClient({
-      nodes: [buildPromptNode(), buildModelNode()],
+      nodes: [builders.buildPromptNode(), builders.buildModelNode()],
       edges: [
         {
           id: 'edge-prompt-model',
@@ -683,7 +103,7 @@ describe('client native code-object registry contract subset', () => {
     mockAiJobsPoll.mockClear();
 
     const result = await evaluateGraphClient({
-      nodes: [buildModelNode()],
+      nodes: [builders.buildModelNode()],
       edges: [],
       runtimeKernelNodeTypes: ['model'],
       reportAiPathsError: (): void => {},
@@ -701,7 +121,7 @@ describe('client native code-object registry contract subset', () => {
     mockAiJobsPoll.mockClear();
 
     const result = await evaluateGraphClient({
-      nodes: [buildPromptNode(), buildModelNode()],
+      nodes: [builders.buildPromptNode(), builders.buildModelNode()],
       edges: [
         {
           id: 'edge-prompt-model-skip-ai-jobs',
@@ -728,7 +148,7 @@ describe('client native code-object registry contract subset', () => {
     mockAiJobsPoll.mockClear();
 
     const result = await evaluateGraphClient({
-      nodes: [buildPromptNode(), buildModelWaitNode()],
+      nodes: [builders.buildPromptNode(), builders.buildModelWaitNode()],
       edges: [
         {
           id: 'edge-prompt-model-wait',
@@ -762,7 +182,7 @@ describe('client native code-object registry contract subset', () => {
     });
 
     const result = await evaluateGraphClient({
-      nodes: [buildPromptNode(), buildModelWaitNode()],
+      nodes: [builders.buildPromptNode(), builders.buildModelWaitNode()],
       edges: [
         {
           id: 'edge-prompt-model-wait-failed',
@@ -793,7 +213,7 @@ describe('client native code-object registry contract subset', () => {
     });
 
     const result = await evaluateGraphClient({
-      nodes: [buildPromptNode(), buildModelNode()],
+      nodes: [builders.buildPromptNode(), builders.buildModelNode()],
       edges: [
         {
           id: 'edge-prompt-model-missing-job-id',
@@ -822,7 +242,7 @@ describe('client native code-object registry contract subset', () => {
     mockAgentPoll.mockClear();
 
     const result = await evaluateGraphClient({
-      nodes: [buildPromptNode(), buildAgentNode()],
+      nodes: [builders.buildPromptNode(), builders.buildAgentNode()],
       edges: [
         {
           id: 'edge-prompt-agent',
@@ -855,7 +275,7 @@ describe('client native code-object registry contract subset', () => {
     mockAgentPoll.mockClear();
 
     const result = await evaluateGraphClient({
-      nodes: [buildAgentNode()],
+      nodes: [builders.buildAgentNode()],
       edges: [],
       runtimeKernelNodeTypes: ['agent'],
       reportAiPathsError: (): void => {},
@@ -875,7 +295,7 @@ describe('client native code-object registry contract subset', () => {
     mockAgentPoll.mockClear();
 
     const result = await evaluateGraphClient({
-      nodes: [buildPromptNode(), buildAgentNode()],
+      nodes: [builders.buildPromptNode(), builders.buildAgentNode()],
       edges: [
         {
           id: 'edge-prompt-agent-skip-ai-jobs',
@@ -907,7 +327,7 @@ describe('client native code-object registry contract subset', () => {
     mockAgentPoll.mockClear();
 
     const result = await evaluateGraphClient({
-      nodes: [buildPromptNode(), buildAgentWaitNode()],
+      nodes: [builders.buildPromptNode(), builders.buildAgentWaitNode()],
       edges: [
         {
           id: 'edge-prompt-agent-wait',
@@ -947,7 +367,7 @@ describe('client native code-object registry contract subset', () => {
     });
 
     const result = await evaluateGraphClient({
-      nodes: [buildPromptNode(), buildAgentWaitNode()],
+      nodes: [builders.buildPromptNode(), builders.buildAgentWaitNode()],
       edges: [
         {
           id: 'edge-prompt-agent-wait-failed',
@@ -977,7 +397,7 @@ describe('client native code-object registry contract subset', () => {
     mockLearnerAgentsChat.mockClear();
 
     const result = await evaluateGraphClient({
-      nodes: [buildPromptNode(), buildLearnerAgentNode()],
+      nodes: [builders.buildPromptNode(), builders.buildLearnerAgentNode()],
       edges: [
         {
           id: 'edge-prompt-learner-agent',
@@ -1006,7 +426,7 @@ describe('client native code-object registry contract subset', () => {
   it('blocks learner agent nodes when agent id is missing', async () => {
     mockLearnerAgentsChat.mockClear();
     const learnerNodeMissingAgentId: AiNode = {
-      ...buildLearnerAgentNode(),
+      ...builders.buildLearnerAgentNode(),
       id: 'node-learner-agent-missing-id',
       config: {
         learnerAgent: {
@@ -1018,7 +438,7 @@ describe('client native code-object registry contract subset', () => {
     };
 
     const result = await evaluateGraphClient({
-      nodes: [buildPromptNode(), learnerNodeMissingAgentId],
+      nodes: [builders.buildPromptNode(), learnerNodeMissingAgentId],
       edges: [
         {
           id: 'edge-prompt-learner-agent-missing-id',
@@ -1047,7 +467,7 @@ describe('client native code-object registry contract subset', () => {
     mockLearnerAgentsChat.mockClear();
 
     const result = await evaluateGraphClient({
-      nodes: [buildPromptNode(), buildLearnerAgentNode()],
+      nodes: [builders.buildPromptNode(), builders.buildLearnerAgentNode()],
       edges: [
         {
           id: 'edge-prompt-learner-agent-skip-ai-jobs',
@@ -1079,7 +499,7 @@ describe('client native code-object registry contract subset', () => {
     });
 
     const result = await evaluateGraphClient({
-      nodes: [buildPromptNode(), buildLearnerAgentNode()],
+      nodes: [builders.buildPromptNode(), builders.buildLearnerAgentNode()],
       edges: [
         {
           id: 'edge-prompt-learner-agent-failed',
@@ -1105,7 +525,7 @@ describe('client native code-object registry contract subset', () => {
 
   it('executes trigger nodes through client native contract resolver mapping', async () => {
     const result = await evaluateGraphClient({
-      nodes: [buildTriggerNode()],
+      nodes: [builders.buildTriggerNode()],
       edges: [],
       runtimeKernelNodeTypes: ['trigger'],
       reportAiPathsError: (): void => {},
@@ -1117,7 +537,7 @@ describe('client native code-object registry contract subset', () => {
 
   it('executes simulation nodes through client native contract resolver mapping', async () => {
     const result = await evaluateGraphClient({
-      nodes: [buildSimulationNode()],
+      nodes: [builders.buildSimulationNode()],
       edges: [],
       runtimeKernelNodeTypes: ['simulation'],
       reportAiPathsError: (): void => {},
@@ -1133,7 +553,7 @@ describe('client native code-object registry contract subset', () => {
 
   it('executes fetcher nodes through client native contract resolver mapping', async () => {
     const result = await evaluateGraphClient({
-      nodes: [buildTriggerNode(), buildFetcherNode()],
+      nodes: [builders.buildTriggerNode(), builders.buildFetcherNode()],
       edges: [
         {
           id: 'edge-trigger-fetcher',
@@ -1161,7 +581,7 @@ describe('client native code-object registry contract subset', () => {
     mockDbApiSchema.mockClear();
 
     const result = await evaluateGraphClient({
-      nodes: [buildDbSchemaNode()],
+      nodes: [builders.buildDbSchemaNode()],
       edges: [],
       runtimeKernelNodeTypes: ['db_schema'],
       reportAiPathsError: (): void => {},
@@ -1186,14 +606,14 @@ describe('client native code-object registry contract subset', () => {
 
   it('executes ai description nodes through client native contract resolver mapping', async () => {
     mockAiGenerationGenerate.mockClear();
-    const entityJsonNode = buildConstantNode({
+    const entityJsonNode = builders.buildConstantNode({
       id: 'node-entity-json',
       title: 'Entity JSON',
       value: { id: 'product-42', imageLinks: [] },
     });
 
     const result = await evaluateGraphClient({
-      nodes: [entityJsonNode, buildAiDescriptionNode()],
+      nodes: [entityJsonNode, builders.buildAiDescriptionNode()],
       edges: [
         {
           id: 'edge-entity-json-ai-description',
@@ -1218,7 +638,7 @@ describe('client native code-object registry contract subset', () => {
     mockAiGenerationUpdateProductDescription.mockClear();
 
     const result = await evaluateGraphClient({
-      nodes: [buildDescriptionUpdaterNode()],
+      nodes: [builders.buildDescriptionUpdaterNode()],
       edges: [],
       runtimeKernelNodeTypes: ['description_updater'],
       reportAiPathsError: (): void => {},
@@ -1233,7 +653,7 @@ describe('client native code-object registry contract subset', () => {
     mockPlaywrightPoll.mockClear();
 
     const result = await evaluateGraphClient({
-      nodes: [buildPromptNode(), buildPlaywrightNode()],
+      nodes: [builders.buildPromptNode(), builders.buildPlaywrightNode()],
       edges: [
         {
           id: 'edge-prompt-playwright',
@@ -1263,7 +683,7 @@ describe('client native code-object registry contract subset', () => {
 
     try {
       const result = await evaluateGraphClient({
-        nodes: [buildApiAdvancedNode()],
+        nodes: [builders.buildApiAdvancedNode()],
         edges: [],
         runtimeKernelNodeTypes: ['api_advanced'],
         reportAiPathsError: (): void => {},
@@ -1285,7 +705,7 @@ describe('client native code-object registry contract subset', () => {
 
     try {
       const result = await evaluateGraphClient({
-        nodes: [buildDatabaseNode()],
+        nodes: [builders.buildDatabaseNode()],
         edges: [],
         runtimeKernelNodeTypes: ['database'],
         reportAiPathsError: (): void => {},
@@ -1308,7 +728,7 @@ describe('client native code-object registry contract subset', () => {
 
   it('executes audio oscillator nodes through client native contract resolver mapping', async () => {
     const result = await evaluateGraphClient({
-      nodes: [buildAudioOscillatorNode()],
+      nodes: [builders.buildAudioOscillatorNode()],
       edges: [],
       runtimeKernelNodeTypes: ['audio_oscillator'],
       reportAiPathsError: (): void => {},
@@ -1324,7 +744,7 @@ describe('client native code-object registry contract subset', () => {
 
   it('executes audio speaker nodes through client native contract resolver mapping', async () => {
     const result = await evaluateGraphClient({
-      nodes: [buildAudioOscillatorNode(), buildAudioSpeakerNode()],
+      nodes: [builders.buildAudioOscillatorNode(), builders.buildAudioSpeakerNode()],
       edges: [
         {
           id: 'edge-osc-speaker-audio-signal',
@@ -1349,7 +769,7 @@ describe('client native code-object registry contract subset', () => {
 
   it('executes http nodes through client native contract resolver mapping', async () => {
     const result = await evaluateGraphClient({
-      nodes: [buildHttpNode()],
+      nodes: [builders.buildHttpNode()],
       edges: [],
       runtimeKernelNodeTypes: ['http'],
       reportAiPathsError: (): void => {},
@@ -1365,7 +785,7 @@ describe('client native code-object registry contract subset', () => {
 
   it('executes poll nodes through client native contract resolver mapping', async () => {
     const result = await evaluateGraphClient({
-      nodes: [buildPollNode()],
+      nodes: [builders.buildPollNode()],
       edges: [],
       runtimeKernelNodeTypes: ['poll'],
       reportAiPathsError: (): void => {},
@@ -1377,7 +797,7 @@ describe('client native code-object registry contract subset', () => {
   it('blocks legacy-backed nodes forced into runtime-kernel mode when no v3 contract exists', async () => {
     await expect(
       evaluateGraphClient({
-        nodes: [buildFunctionNode()],
+        nodes: [builders.buildFunctionNode()],
         edges: [],
         runtimeKernelNodeTypes: ['function'],
         reportAiPathsError: (): void => {},
@@ -1390,7 +810,7 @@ describe('client native code-object registry contract subset', () => {
   it('keeps unsupported server-only nodes blocked in client execution', async () => {
     await expect(
       evaluateGraphClient({
-        nodes: [buildUnsupportedClientNode()],
+        nodes: [builders.buildUnsupportedClientNode()],
         edges: [],
         runtimeKernelNodeTypes: ['unsupported_client_node'],
         reportAiPathsError: (): void => {},

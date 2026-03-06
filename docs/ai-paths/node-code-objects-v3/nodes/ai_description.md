@@ -1,6 +1,6 @@
 # AI Description Generator Migration Sheet (`ai_description`)
 
-Generated at: 2026-03-06T00:00:00.000Z
+Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
@@ -21,7 +21,7 @@ Generated at: 2026-03-06T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/ai_description.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/ai_description.scaffold.json`
 - v3 object id: `node_obj_ai_description_portable_v3`
-- v3 object hash: `2d0c32b67d2dda1e1a9fa942bf88cf5b1c693d373b9023abad73dafdc441e52e`
+- v3 object hash: `061517ae24c85f7985d79ed4f5fb8615e57cbfcfffbb05bcc22d3781898daf0d`
 
 ## Ports
 

@@ -246,7 +246,7 @@ describe('runtime analytics service', () => {
               kernelParity: {
                 sampledHistoryEntries: 3,
                 strategyCounts: {
-                  legacy_adapter: 2,
+                  compatibility: 2,
                   code_object_v3: 1,
                   unknown: 0,
                 },
@@ -271,7 +271,7 @@ describe('runtime analytics service', () => {
               kernelParity: {
                 sampledHistoryEntries: 2,
                 strategyCounts: {
-                  legacy_adapter: 0,
+                  compatibility: 0,
                   code_object_v3: 2,
                   unknown: 0,
                 },
@@ -317,7 +317,7 @@ describe('runtime analytics service', () => {
       runsWithKernelParity: 2,
       sampledHistoryEntries: 5,
       strategyCounts: {
-        legacy_adapter: 2,
+        compatibility: 2,
         code_object_v3: 3,
         unknown: 0,
       },

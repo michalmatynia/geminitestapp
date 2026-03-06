@@ -5,7 +5,30 @@ import { DEFAULT_DB_QUERY } from '../../constants';
 import { coerceInput, hashRuntimeValue } from '../../utils';
 import { buildDbQueryPayload } from '../utils';
 
+import { resolveNodeCacheScope } from './engine-state-manager';
+import { pickString } from './engine-utils';
+
 export const CACHE_VERSION = 2;
+
+export const resolveCacheScopeFingerprint = (args: {
+  node: AiNode;
+  runId: string;
+  triggerContext: Record<string, unknown> | null;
+}): Record<string, unknown> | undefined => {
+  const { node, runId, triggerContext } = args;
+  const cacheScope = resolveNodeCacheScope(node);
+  if (cacheScope === 'run') {
+    return { runId };
+  }
+  if (cacheScope === 'session' || cacheScope === 'activation') {
+    const entityId =
+      pickString(triggerContext?.['entityId']) ?? pickString(triggerContext?.['productId']);
+    if (entityId) {
+      return { entityId };
+    }
+  }
+  return undefined;
+};
 
 export const buildNodeInputHash = (
   node: AiNode,

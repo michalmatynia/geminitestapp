@@ -1,6 +1,6 @@
 # Audio Speaker (Mono) Migration Sheet (`audio_speaker`)
 
-Generated at: 2026-03-06T00:00:00.000Z
+Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
@@ -21,7 +21,7 @@ Generated at: 2026-03-06T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/audio_speaker.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/audio_speaker.scaffold.json`
 - v3 object id: `node_obj_audio_speaker_portable_v3`
-- v3 object hash: `37a69c75b8bbef7d295d7ea8ed0af058729a3bf62bbd8b39e22e4d621bd6286a`
+- v3 object hash: `bd68ece9ae085f72960a502d939ad1ed30ce6eb4d4987efb6c9ae91907d03eb5`
 
 ## Ports
 

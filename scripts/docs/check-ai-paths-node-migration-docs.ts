@@ -60,7 +60,7 @@ type NodeMigrationIndexPayload = {
   runtimeKernelNodeTypes?: string[];
   pilotNodeTypes?: string[];
   strategyTotals: {
-    legacy_adapter: number;
+    compatibility: number;
     code_object_v3: number;
   };
   v3ContractsHash?: string | null;
@@ -98,7 +98,7 @@ type NodeMigrationIndexPayload = {
   familyTotals: Array<{
     nodeFamily: string;
     total: number;
-    legacy_adapter: number;
+    compatibility: number;
     code_object_v3: number;
   }>;
   nodes: NodeMigrationIndexRow[];
@@ -294,8 +294,8 @@ if (rolloutEligibilitySummary.schemaVersion !== NODE_MIGRATION_ROLLOUT_ELIGIBILI
   );
 }
 
-if (indexPayload.schemaVersion !== 'ai-paths.node-migration-doc-index.v2') {
-  errors.push('migration-index.json schemaVersion must be "ai-paths.node-migration-doc-index.v2".');
+if (indexPayload.schemaVersion !== 'ai-paths.node-migration-doc-index.v3') {
+  errors.push('migration-index.json schemaVersion must be "ai-paths.node-migration-doc-index.v3".');
 }
 
 if (!Array.isArray(indexPayload.nodes)) {
@@ -669,7 +669,7 @@ if (indexPayload.totalNodes !== rows.length) {
 }
 
 if (
-  indexPayload.strategyTotals?.legacy_adapter !== countedStrategies.legacy_adapter ||
+  indexPayload.strategyTotals?.compatibility !== countedStrategies.legacy_adapter ||
   indexPayload.strategyTotals?.code_object_v3 !== countedStrategies.code_object_v3
 ) {
   errors.push(

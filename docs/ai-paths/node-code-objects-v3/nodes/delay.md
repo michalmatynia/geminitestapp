@@ -1,6 +1,6 @@
 # Delay Migration Sheet (`delay`)
 
-Generated at: 2026-03-06T00:00:00.000Z
+Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
@@ -21,7 +21,7 @@ Generated at: 2026-03-06T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/delay.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/delay.scaffold.json`
 - v3 object id: `node_obj_delay_portable_v3`
-- v3 object hash: `caad0a7230e5120fd9a118bcad7586223194ec34c5ddb1a844954a902a6a4c1f`
+- v3 object hash: `b0e3ddc142991c5842e6f96f6b3b736ecf709ec85f61a2da89e620389e5dc1ce`
 
 ## Ports
 

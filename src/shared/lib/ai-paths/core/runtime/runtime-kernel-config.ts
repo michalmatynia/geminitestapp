@@ -78,17 +78,6 @@ export const parseRuntimeKernelCodeObjectResolverIds = (
     normalizeToken: normalizeRuntimeKernelResolverIdToken,
   });
 
-export const parseRuntimeKernelStrictNativeRegistry = (value: unknown): boolean | undefined => {
-  if (typeof value === 'boolean') return value;
-  if (typeof value !== 'string') return undefined;
-  const normalized = value.trim().toLowerCase();
-  if (normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on')
-    return true;
-  if (normalized === 'false' || normalized === '0' || normalized === 'no' || normalized === 'off')
-    return false;
-  return undefined;
-};
-
 export const normalizeRuntimeKernelConfigRecord = (
   value: unknown
 ): Record<string, unknown> | null => {
@@ -97,7 +86,12 @@ export const normalizeRuntimeKernelConfigRecord = (
   let changed = false;
   const normalized: Record<string, unknown> = { ...value };
 
-  const nodeTypes = parseRuntimeKernelNodeTypes(value['nodeTypes'] ?? value['pilotNodeTypes']);
+  if ('mode' in normalized) {
+    delete normalized['mode'];
+    changed = true;
+  }
+
+  const nodeTypes = parseRuntimeKernelNodeTypes(value['nodeTypes']);
   if (nodeTypes) {
     if (!matchesStringArray(value['nodeTypes'], nodeTypes)) {
       normalized['nodeTypes'] = nodeTypes;
@@ -112,9 +106,7 @@ export const normalizeRuntimeKernelConfigRecord = (
     changed = true;
   }
 
-  const resolverIds = parseRuntimeKernelCodeObjectResolverIds(
-    value['codeObjectResolverIds'] ?? value['resolverIds']
-  );
+  const resolverIds = parseRuntimeKernelCodeObjectResolverIds(value['codeObjectResolverIds']);
   if (resolverIds) {
     if (!matchesStringArray(value['codeObjectResolverIds'], resolverIds)) {
       normalized['codeObjectResolverIds'] = resolverIds;
@@ -129,15 +121,7 @@ export const normalizeRuntimeKernelConfigRecord = (
     changed = true;
   }
 
-  const strictNativeRegistry = parseRuntimeKernelStrictNativeRegistry(
-    value['strictNativeRegistry'] ?? value['strictCodeObjectRegistry']
-  );
-  if (strictNativeRegistry !== undefined) {
-    if (value['strictNativeRegistry'] !== strictNativeRegistry) {
-      normalized['strictNativeRegistry'] = strictNativeRegistry;
-      changed = true;
-    }
-  } else if ('strictNativeRegistry' in normalized) {
+  if ('strictNativeRegistry' in normalized) {
     delete normalized['strictNativeRegistry'];
     changed = true;
   }

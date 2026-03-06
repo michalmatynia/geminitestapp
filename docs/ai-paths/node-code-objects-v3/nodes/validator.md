@@ -1,6 +1,6 @@
 # Validator Migration Sheet (`validator`)
 
-Generated at: 2026-03-06T00:00:00.000Z
+Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
@@ -21,7 +21,7 @@ Generated at: 2026-03-06T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/validator.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/validator.scaffold.json`
 - v3 object id: `node_obj_validator_portable_v3`
-- v3 object hash: `bff39935f9242995d8cbef98ec09de40097857a53f774528c83b05dbe6ac12a7`
+- v3 object hash: `81f650d8c5f96b78f2e0635bf418536071d8df90e8a02fb0e74be9e9cb1db6c6`
 
 ## Ports
 

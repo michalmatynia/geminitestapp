@@ -1,6 +1,6 @@
 # Prompt Migration Sheet (`prompt`)
 
-Generated at: 2026-03-06T00:00:00.000Z
+Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
@@ -21,7 +21,7 @@ Generated at: 2026-03-06T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/prompt.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/prompt.scaffold.json`
 - v3 object id: `node_obj_prompt_portable_v3`
-- v3 object hash: `8215f876a4919bf496fe633f8407a47be0da240a4c25efea53794f488118ac21`
+- v3 object hash: `23711dacb5763f7eebf19f39d9c1155d0da28b71f215990ef3e835745a7fb1bc`
 
 ## Ports
 

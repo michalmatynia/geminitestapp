@@ -14,7 +14,7 @@ Current runtime scope uses the canonical runtime-kernel set (`agent`, `ai_descri
 Runtime rollout controls:
 
 - `runtimeKernelNodeTypes` is the canonical scoped runtime-kernel override for parity/canary runs. Deprecated persisted/env/path-config aliases are still normalized by cleanup and historical metadata readers, but live executor and Canvas settings reads now use only the canonical node-type controls. Omitted or empty persisted values fall back to the canonical approved node set.
-- `runtimeKernelStrictNativeRegistry` is now a direct-kernel compatibility/testing control only. Product executor, Canvas local execution, and server/client runtime entrypoints pin strict native behavior on, and contract-backed `code_object_v3` nodes fail closed when native/registered handlers are missing regardless of this flag.
+- `runtimeKernelStrictNativeRegistry` remains available only on `createNodeRuntimeKernel(...)` compatibility/testing paths. It is no longer part of the live graph-evaluation API used by product executor, Canvas local execution, or server/client runtime entrypoints, and contract-backed `code_object_v3` nodes fail closed when native/registered handlers are missing regardless.
 - Server runtime resolves approved `code_object_v3` handlers through `contracts.json`.
 - Supported execution adapters:
   - `legacy_handler_bridge`
@@ -35,9 +35,14 @@ Runtime rollout controls:
   - `AI_PATHS_RUNTIME_KERNEL_NODE_TYPES`
 - Deprecated env alias `AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY` is cleanup-only compatibility data and is no longer read by the live executor, Canvas local execution loop, or server runtime entrypoint.
 - Deprecated env alias `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES` is cleanup-only compatibility data and is no longer read by the live executor.
-- `runtimeKernelMode`, `ai_paths_runtime_kernel_mode`, and `AI_PATHS_RUNTIME_KERNEL_MODE` are deprecated compatibility inputs. Cleanup may still normalize them to `auto`, but the live path-run executor no longer reads them for execution control.
+- Deprecated path-config aliases under `extensions.runtimeKernel` (`pilotNodeTypes`, `resolverIds`, `mode`, `strictNativeRegistry`, `strictCodeObjectRegistry`) are cleanup-only compatibility data and are no longer read by Canvas runtime settings, Canvas local execution, or server enqueue/runtime reads.
+- Deprecated run-meta aliases under `AiPathRun.meta.runtimeKernelConfig` / `AiPathRun.meta.runtimeKernel` are cleanup-only compatibility data and are no longer translated into live execution overrides. Run the runtime-kernel metadata cleanup before relying on historical path-scoped overrides in queued runs.
+- Runtime Analysis UI now labels any residual `legacy_adapter` history as compatibility traces only; that analytics bucket remains for historical rollout evidence and does not represent a live execution mode.
+- Aggregated runtime analytics summaries now expose `kernelParity.strategyCounts.compatibility` as the only live bucket name. Historical `legacy_adapter` snapshots must be rewritten through runtime-kernel metadata cleanup before they affect analytics again.
+- Fresh `AiPathRun.meta.runtimeTrace.kernelParity.strategyCounts` snapshots now also write `compatibility` as the canonical bucket name; only historical run records may still contain `legacy_adapter`.
+- `runtimeKernelMode`, `ai_paths_runtime_kernel_mode`, and `AI_PATHS_RUNTIME_KERNEL_MODE` are historical compatibility inputs only. Cleanup prunes persisted/runtime metadata variants, and the live runtime evaluation API no longer accepts `runtimeKernelMode`.
 - `npm run cleanup:ai-paths-runtime-kernel-settings` normalizes node-type/resolver overrides and prunes deprecated runtime-kernel mode plus strict-native compatibility settings. The old `cleanup:ai-paths-runtime-kernel-mode` command remains as a deprecated alias.
-- `npm run cleanup:ai-paths-runtime-kernel-run-metadata` normalizes historical `AiPathRun.meta.runtimeKernelConfig` and `AiPathRun.meta.runtimeKernel` compatibility aliases while pruning deprecated mode/strict metadata fields.
+- `npm run cleanup:ai-paths-runtime-kernel-run-metadata` normalizes historical `AiPathRun.meta.runtimeKernelConfig`, `AiPathRun.meta.runtimeKernel`, and legacy `AiPathRun.meta.runtimeTrace.kernelParity.strategyCounts.legacy_adapter` snapshots while pruning deprecated mode/strict metadata fields.
 
 Generated migration documentation:
 

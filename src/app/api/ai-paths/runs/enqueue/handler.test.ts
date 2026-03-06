@@ -6,12 +6,14 @@ import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factor
 const {
   requireAiPathsRunAccessMock,
   enforceAiPathsRunRateLimitMock,
+  getAiPathsSettingMock,
   enqueuePathRunMock,
   assertAiPathRunQueueReadyForEnqueueMock,
   logSystemEventMock,
 } = vi.hoisted(() => ({
   requireAiPathsRunAccessMock: vi.fn(),
   enforceAiPathsRunRateLimitMock: vi.fn(),
+  getAiPathsSettingMock: vi.fn(),
   enqueuePathRunMock: vi.fn(),
   assertAiPathRunQueueReadyForEnqueueMock: vi.fn(),
   logSystemEventMock: vi.fn(),
@@ -20,6 +22,7 @@ const {
 vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsRunAccess: requireAiPathsRunAccessMock,
   enforceAiPathsRunRateLimit: enforceAiPathsRunRateLimitMock,
+  getAiPathsSetting: getAiPathsSettingMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/services/path-run-service', () => ({
@@ -49,6 +52,7 @@ describe('ai-paths runs enqueue handler', () => {
   beforeEach(() => {
     requireAiPathsRunAccessMock.mockReset().mockResolvedValue({ userId: 'user-1' });
     enforceAiPathsRunRateLimitMock.mockReset().mockResolvedValue(undefined);
+    getAiPathsSettingMock.mockReset().mockResolvedValue(null);
     enqueuePathRunMock.mockReset().mockResolvedValue({ id: 'run-1', status: 'queued' });
     assertAiPathRunQueueReadyForEnqueueMock.mockReset().mockResolvedValue(undefined);
     logSystemEventMock.mockReset().mockResolvedValue(undefined);
@@ -152,6 +156,44 @@ describe('ai-paths runs enqueue handler', () => {
         edges: config.edges,
         meta: expect.not.objectContaining({
           identityRepair: expect.anything(),
+        }),
+      })
+    );
+  });
+
+  it('loads stored path config when nodes and edges are omitted', async () => {
+    const config = createDefaultPathConfig('path-stored-config');
+    getAiPathsSettingMock.mockResolvedValueOnce(JSON.stringify(config));
+
+    const response = await POST_handler(
+      makeRequest({
+        pathId: config.id,
+        triggerEvent: 'manual',
+        triggerNodeId: config.nodes.find((node) => node.type === 'trigger')?.id,
+        meta: {
+          aiPathsValidation: {
+            enabled: false,
+          },
+        },
+      }),
+      {} as Parameters<typeof POST_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    expect(getAiPathsSettingMock).toHaveBeenCalledWith(`ai_paths_config_${config.id}`);
+    expect(enqueuePathRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pathId: config.id,
+        pathName: config.name,
+        nodes: config.nodes,
+        edges: config.edges,
+      })
+    );
+    expect(logSystemEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'ai-paths.runs.enqueue',
+        context: expect.objectContaining({
+          graphSource: 'settings',
         }),
       })
     );

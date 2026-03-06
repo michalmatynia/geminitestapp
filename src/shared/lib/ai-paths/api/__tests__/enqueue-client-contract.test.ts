@@ -19,7 +19,7 @@ vi.mock('@/shared/lib/ai-paths/api/client/base', () => ({
   withApiCsrfHeaders: vi.fn(),
 }));
 
-import { enqueueAiPathRun } from '@/shared/lib/ai-paths/api/client';
+import { enqueueAiPathRun, listAiPathRuns } from '@/shared/lib/ai-paths/api/client';
 
 const enqueuePayload = {
   pathId: 'path-contract-test',
@@ -136,5 +136,27 @@ describe('enqueueAiPathRun response contract boundary', () => {
       ok: false,
       error: 'Request failed with status 500',
     });
+  });
+
+  it('includes requestId in runs list queries', async () => {
+    apiFetchMock.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        runs: [],
+        total: 0,
+      },
+    });
+
+    await listAiPathRuns({
+      pathId: 'path-contract-test',
+      requestId: 'trigger:path-contract-test:req-1',
+      includeTotal: false,
+      fresh: true,
+    });
+
+    expect(apiFetchMock).toHaveBeenCalledWith(
+      '/api/ai-paths/runs?pathId=path-contract-test&requestId=trigger%3Apath-contract-test%3Areq-1&includeTotal=0&fresh=1',
+      {}
+    );
   });
 });

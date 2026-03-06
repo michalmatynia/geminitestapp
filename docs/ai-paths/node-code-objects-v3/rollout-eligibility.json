@@ -1,6 +1,6 @@
 {
   "schemaVersion": "ai-paths.node-migration-rollout-eligibility.v1",
-  "generatedAt": "2026-03-06T00:00:00.000Z",
+  "generatedAt": "2026-03-05T00:00:00.000Z",
   "criteria": [
     "runtime_strategy=code_object_v3",
     "has_semantic_contract_hash",

@@ -7,8 +7,6 @@ import type {
 import { resolveNodeCodeObjectV3ContractByCodeObjectId } from './node-code-object-v3-legacy-bridge';
 
 export const NODE_RUNTIME_KERNEL_STRATEGIES = ['legacy_adapter', 'code_object_v3'] as const;
-export const NODE_RUNTIME_KERNEL_MODES = ['auto'] as const;
-export type NodeRuntimeKernelMode = (typeof NODE_RUNTIME_KERNEL_MODES)[number];
 
 export const NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES = [
   'agent',
@@ -74,17 +72,13 @@ export type CreateNodeRuntimeKernelArgs = {
     | undefined;
   resolveOverrideHandler?: ((nodeType: string) => NodeHandler | null) | undefined;
   runtimeKernelNodeTypes?: readonly string[] | undefined;
-  mode?: NodeRuntimeKernelMode | undefined;
   runtimeKernelStrictNativeRegistry?: boolean | undefined;
 };
 
 const normalizeNodeType = (nodeType: string): string =>
   typeof nodeType === 'string' ? nodeType.trim() : '';
 
-const buildV3CodeObjectId = (nodeType: string): string =>
-  `ai-paths.node-code-object.${nodeType}.v3`;
-
-export const resolveNodeRuntimeKernelMode = (_mode: unknown): NodeRuntimeKernelMode => 'auto';
+const buildV3CodeObjectId = (nodeType: string): string => `ai-paths.node-code-object.${nodeType}.v3`;
 
 export const isNodeRuntimeKernelCanonicalType = ({
   nodeType,
@@ -139,11 +133,8 @@ export const createNodeRuntimeKernel = ({
   resolveCodeObjectHandler,
   resolveOverrideHandler,
   runtimeKernelNodeTypes,
-  mode,
   runtimeKernelStrictNativeRegistry,
 }: CreateNodeRuntimeKernelArgs): NodeRuntimeKernel => {
-  // Accept deprecated mode inputs for compatibility, but runtime behavior is always auto.
-  resolveNodeRuntimeKernelMode(mode);
   // Keep the strict flag for experimental node types that do not have a v3 contract entry yet.
   // Contract-backed code_object_v3 nodes fail closed regardless of the flag value.
   const resolvedRuntimeKernelNodeTypes = new Set<string>(

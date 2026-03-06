@@ -140,8 +140,39 @@ describe('useLocalExecutionLoop runtime kernel forwarding', () => {
       expect.objectContaining({
         runtimeKernelNodeTypes: ['template_node', 'parser'],
         runtimeKernelCodeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
-        runtimeKernelStrictNativeRegistry: true,
       })
     );
+  });
+
+  it('ignores legacy path-config runtime-kernel aliases during local execution', async () => {
+    evaluateGraphClientMock.mockResolvedValue({
+      status: 'idle',
+      nodeStatuses: {},
+      nodeOutputs: {},
+      variables: {},
+      events: [],
+      currentRun: null,
+      inputs: {},
+      outputs: {},
+      history: {},
+    } satisfies RuntimeState);
+
+    const args = buildLocalExecutionArgs();
+    args.runtimeKernelConfig = {
+      pilotNodeTypes: 'Template Node, parser',
+      resolverIds: ' resolver.primary , resolver.fallback ',
+      strictCodeObjectRegistry: 'yes',
+    };
+    const { result } = renderHook(() => useLocalExecutionLoop(args));
+
+    await act(async () => {
+      await result.current.runLocalLoop('run');
+    });
+
+    const forwardedArgs = evaluateGraphClientMock.mock.calls.at(-1)?.[0] as
+      | Record<string, unknown>
+      | undefined;
+    expect(forwardedArgs?.['runtimeKernelNodeTypes']).toBeUndefined();
+    expect(forwardedArgs?.['runtimeKernelCodeObjectResolverIds']).toBeUndefined();
   });
 });

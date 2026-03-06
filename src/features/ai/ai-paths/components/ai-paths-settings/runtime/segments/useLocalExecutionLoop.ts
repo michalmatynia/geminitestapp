@@ -32,7 +32,6 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
   const runtimeKernelCodeObjectResolverIds = parseRuntimeKernelCodeObjectResolverIds(
     runtimeKernelConfig?.['codeObjectResolverIds']
   );
-  const runtimeKernelStrictNativeRegistry = true;
   const runLocalLoop = useCallback(
     async (
       mode: 'run' | 'step'
@@ -505,9 +504,6 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               ? { runtimeKernelNodeTypes }
               : {}),
             ...(runtimeKernelCodeObjectResolverIds ? { runtimeKernelCodeObjectResolverIds } : {}),
-            ...(runtimeKernelStrictNativeRegistry !== undefined
-              ? { runtimeKernelStrictNativeRegistry }
-              : {}),
           });
           state = nextState;
           args.runtimeStateRef.current = nextState;
@@ -602,7 +598,6 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
       args,
       runtimeKernelCodeObjectResolverIds,
       runtimeKernelNodeTypes,
-      runtimeKernelStrictNativeRegistry,
     ]
   );
 

@@ -4,7 +4,6 @@ import {
   normalizeRuntimeKernelConfigRecord,
   parseRuntimeKernelCodeObjectResolverIds,
   parseRuntimeKernelNodeTypes,
-  parseRuntimeKernelStrictNativeRegistry,
 } from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-config';
 
 describe('runtime-kernel-config helpers', () => {
@@ -19,26 +18,35 @@ describe('runtime-kernel-config helpers', () => {
     ]);
   });
 
-  it('parses runtime-kernel resolver ids and strict-native flags', () => {
+  it('parses runtime-kernel resolver ids', () => {
     expect(parseRuntimeKernelCodeObjectResolverIds(' resolver.primary , resolver.fallback ')).toEqual([
       'resolver.primary',
       'resolver.fallback',
     ]);
-    expect(parseRuntimeKernelStrictNativeRegistry('yes')).toBe(true);
-    expect(parseRuntimeKernelStrictNativeRegistry('0')).toBe(false);
   });
 
-  it('normalizes legacy runtime-kernel config aliases into canonical fields', () => {
+  it('normalizes canonical live runtime-kernel config to node/resolver fields only', () => {
     expect(
       normalizeRuntimeKernelConfigRecord({
-        pilotNodeTypes: ' Template Node, parser ',
-        resolverIds: ' resolver.primary , resolver.fallback ',
+        mode: 'legacy_only',
+        nodeTypes: ' Template Node, parser ',
+        codeObjectResolverIds: ' resolver.primary , resolver.fallback ',
         strictCodeObjectRegistry: 'yes',
       })
     ).toEqual({
       nodeTypes: ['template_node', 'parser'],
       codeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
-      strictNativeRegistry: true,
     });
+  });
+
+  it('drops legacy path-config alias fields without translating them on live reads', () => {
+    expect(
+      normalizeRuntimeKernelConfigRecord({
+        mode: 'legacy_only',
+        pilotNodeTypes: ' Template Node, parser ',
+        resolverIds: ' resolver.primary , resolver.fallback ',
+        strictCodeObjectRegistry: 'yes',
+      })
+    ).toEqual({});
   });
 });

@@ -1,6 +1,6 @@
 # Poll Job Migration Sheet (`poll`)
 
-Generated at: 2026-03-06T00:00:00.000Z
+Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
@@ -21,7 +21,7 @@ Generated at: 2026-03-06T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/poll.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/poll.scaffold.json`
 - v3 object id: `node_obj_poll_portable_v3`
-- v3 object hash: `9cad4badd18cff9ae65eb54f2adb78fb3bbbc42c72c6bee5913bdecd9aa2ed85`
+- v3 object hash: `dc22572b507d6f585c827ba13dac9de96bddd3b79fddd0a176ddbb58bf3f6cbe`
 
 ## Ports
 

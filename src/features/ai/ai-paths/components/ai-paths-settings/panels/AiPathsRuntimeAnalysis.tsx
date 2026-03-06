@@ -40,7 +40,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
   const runtimeKernelRunsWithParity = runtimeKernelParity?.runsWithKernelParity ?? 0;
   const runtimeKernelSampledHistoryEntries = runtimeKernelParity?.sampledHistoryEntries ?? 0;
   const runtimeKernelV3Entries = runtimeKernelParity?.strategyCounts.code_object_v3 ?? 0;
-  const runtimeKernelLegacyEntries = runtimeKernelParity?.strategyCounts.legacy_adapter ?? 0;
+  const runtimeKernelCompatibilityEntries = runtimeKernelParity?.strategyCounts.compatibility ?? 0;
   const runtimeKernelUnknownEntries = runtimeKernelParity?.strategyCounts.unknown ?? 0;
   const runtimeKernelResolutionOverride = runtimeKernelParity?.resolutionSourceCounts.override ?? 0;
   const runtimeKernelResolutionRegistry = runtimeKernelParity?.resolutionSourceCounts.registry ?? 0;
@@ -56,9 +56,9 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
     runtimeKernelSampledHistoryEntries > 0
       ? (runtimeKernelV3Entries / runtimeKernelSampledHistoryEntries) * 100
       : 0;
-  const runtimeKernelLegacyRate =
+  const runtimeKernelCompatibilityRate =
     runtimeKernelSampledHistoryEntries > 0
-      ? (runtimeKernelLegacyEntries / runtimeKernelSampledHistoryEntries) * 100
+      ? (runtimeKernelCompatibilityEntries / runtimeKernelSampledHistoryEntries) * 100
       : 0;
   const runtimeKernelUnknownRate =
     runtimeKernelSampledHistoryEntries > 0
@@ -386,7 +386,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
             padding='sm'
             className='border-border/60 bg-card/60 text-[11px] text-gray-300'
           >
-            <div className='text-[10px] uppercase text-gray-500'>Kernel parity (24h)</div>
+            <div className='text-[10px] uppercase text-gray-500'>Kernel coverage (24h)</div>
             <div className='mt-1 text-gray-200'>
               Coverage {runtimeKernelRunsWithParity}/{runtimeKernelSampledRuns} (
               {formatPercent(runtimeKernelRunsCoverageRate)})
@@ -395,8 +395,8 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
               History entries {runtimeKernelSampledHistoryEntries}
             </div>
             <div className='mt-2 text-gray-200'>
-              v3 {formatPercent(runtimeKernelV3Rate)} · legacy{' '}
-              {formatPercent(runtimeKernelLegacyRate)} · unknown{' '}
+              v3 {formatPercent(runtimeKernelV3Rate)} · compatibility{' '}
+              {formatPercent(runtimeKernelCompatibilityRate)} · unknown{' '}
               {formatPercent(runtimeKernelUnknownRate)}
             </div>
             <div className='mt-1 flex h-2 overflow-hidden rounded bg-card/80 ring-1 ring-border/30'>
@@ -407,7 +407,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
               />
               <div
                 className='bg-amber-400/70'
-                style={{ width: `${Math.max(0, Math.min(100, runtimeKernelLegacyRate))}%` }}
+                style={{ width: `${Math.max(0, Math.min(100, runtimeKernelCompatibilityRate))}%` }}
                 aria-hidden
               />
               <div
@@ -416,6 +416,12 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
                 aria-hidden
               />
             </div>
+            {runtimeKernelCompatibilityEntries > 0 ? (
+              <div className='mt-2 text-[10px] text-amber-200/90'>
+                Compatibility traces are historical rollout evidence only. Live execution is
+                strict native.
+              </div>
+            ) : null}
             <div className='mt-2 text-gray-400'>
               Resolution O/R/M/U: {runtimeKernelResolutionOverride}/
               {runtimeKernelResolutionRegistry}/{runtimeKernelResolutionMissing}/

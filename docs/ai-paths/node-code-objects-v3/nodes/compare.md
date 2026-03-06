@@ -1,6 +1,6 @@
 # Compare Migration Sheet (`compare`)
 
-Generated at: 2026-03-06T00:00:00.000Z
+Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
@@ -21,7 +21,7 @@ Generated at: 2026-03-06T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/compare.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/compare.scaffold.json`
 - v3 object id: `node_obj_compare_portable_v3`
-- v3 object hash: `5ab8c593494171b48a3c7f01829a11b03f52fae56df93e41cb0129efae2cee4c`
+- v3 object hash: `27cd022de9a91da8088d4845d0bcc7da25818e41ca6ab312523b59477a9e6265`
 
 ## Ports
 

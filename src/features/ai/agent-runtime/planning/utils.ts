@@ -7,33 +7,10 @@ import type {
   PlannerAlternative,
   PlannerCritique,
   PlannerMeta,
+  PlanHierarchy,
 } from '@/shared/contracts/agent-runtime';
 
-export type PlanHierarchy = {
-  goals: Array<{
-    id: string;
-    title: string;
-    successCriteria?: string | null;
-    priority?: number | null;
-    dependsOn?: number[] | string[] | null;
-    subgoals: Array<{
-      id: string;
-      title: string;
-      successCriteria?: string | null;
-      priority?: number | null;
-      dependsOn?: number[] | string[] | null;
-      steps: Array<{
-        title: string;
-        tool?: 'playwright' | 'none';
-        expectedObservation?: string | null;
-        successCriteria?: string | null;
-        phase?: string | null;
-        priority?: number | null;
-        dependsOn?: number[] | string[] | null;
-      }>;
-    }>;
-  }>;
-};
+export type { PlanHierarchy };
 
 export function parsePlanJson(content: string): unknown {
   if (!content) return null;

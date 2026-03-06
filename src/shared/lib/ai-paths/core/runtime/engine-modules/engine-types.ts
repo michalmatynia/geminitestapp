@@ -188,10 +188,8 @@ export type EvaluateGraphOptions = {
     | ((args: { nodeType: string; codeObjectId: string }) => NodeHandler | null)
     | undefined;
   resolveHandlerTelemetry?: (type: string) => RuntimeNodeResolutionTelemetry | null;
-  runtimeKernelMode?: 'auto' | undefined;
   runtimeKernelNodeTypes?: string[] | undefined;
   runtimeKernelCodeObjectResolverIds?: string[] | undefined;
-  runtimeKernelStrictNativeRegistry?: boolean | undefined;
   // Services
   fetchEntityByType?: (type: string, id: string) => Promise<Record<string, unknown> | null>;
   fetchEntityCached?: (type: string, id: string) => Promise<Record<string, unknown> | null>;

@@ -1,6 +1,6 @@
 # JSON Mapper Migration Sheet (`mapper`)
 
-Generated at: 2026-03-06T00:00:00.000Z
+Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
@@ -21,7 +21,7 @@ Generated at: 2026-03-06T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/mapper.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/mapper.scaffold.json`
 - v3 object id: `node_obj_mapper_portable_v3`
-- v3 object hash: `66263e28955a1dc1ae6ed3f34c2f58e7f7508392314cc01eafdaa9fd3cfe48d7`
+- v3 object hash: `b5d41c750522b971eb7bd7d852f8502d89002b6fb202af30456f598fa38e93bf`
 
 ## Ports
 

@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { NodeHandler } from '@/shared/contracts/ai-paths-runtime';
-import {
-  createNodeRuntimeKernel,
-  resolveNodeRuntimeKernelMode,
-} from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
+import { createNodeRuntimeKernel } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
 
 const buildHandler = (label: string): NodeHandler =>
   vi.fn(async () => ({
@@ -193,11 +190,5 @@ describe('node-runtime-kernel', () => {
     expect(descriptor.codeObjectId).toBe('ai-paths.node-code-object.database.v3');
     expect(descriptor.handler).toBe(databaseHandler);
     expect(descriptor.source).toBe('registry');
-  });
-
-  it('normalizes unknown runtime kernel mode to auto', () => {
-    expect(resolveNodeRuntimeKernelMode('auto')).toBe('auto');
-    expect(resolveNodeRuntimeKernelMode('unexpected_mode')).toBe('auto');
-    expect(resolveNodeRuntimeKernelMode(undefined)).toBe('auto');
   });
 });

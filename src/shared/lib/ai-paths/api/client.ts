@@ -127,13 +127,14 @@ export async function enqueueAiPathRun(
   payload: {
     pathId: string;
     pathName?: string;
-    nodes: unknown[];
-    edges: unknown[];
+    nodes?: unknown[];
+    edges?: unknown[];
     triggerEvent?: string;
     triggerNodeId?: string;
     triggerContext?: Record<string, unknown> | null;
     entityId?: string | null;
     entityType?: string | null;
+    requestId?: string;
     maxAttempts?: number | null;
     backoffMs?: number | null;
     backoffMaxMs?: number | null;
@@ -325,6 +326,7 @@ export const resolveAiPathRunFromEnqueueResponseData = (
 export async function listAiPathRuns(options?: {
   pathId?: string;
   nodeId?: string;
+  requestId?: string;
   source?: string;
   sourceMode?: 'include' | 'exclude';
   visibility?: 'scoped' | 'global';
@@ -340,6 +342,7 @@ export async function listAiPathRuns(options?: {
   const params = new URLSearchParams();
   if (options?.pathId) params.set('pathId', options.pathId);
   if (options?.nodeId) params.set('nodeId', options.nodeId);
+  if (options?.requestId) params.set('requestId', options.requestId);
   if (options?.source) params.set('source', options.source);
   if (options?.sourceMode) params.set('sourceMode', options.sourceMode);
   if (options?.visibility) params.set('visibility', options.visibility);

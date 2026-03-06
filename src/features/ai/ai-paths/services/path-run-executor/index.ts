@@ -167,8 +167,8 @@ export const executePathRun = async (
   const runMetaRecord = normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead(run.meta).meta;
 
   const {
-    nodeTypes: runtimeKernelNodeTypes,
-    resolverIds: runtimeKernelCodeObjectResolverIds,
+    nodeTypes: runtimeKernelNodeTypesRaw,
+    resolverIds: runtimeKernelCodeObjectResolverIdsRaw,
     missingResolverIds: runtimeKernelMissingCodeObjectResolverIds,
     registeredResolverIds: registeredRuntimeKernelCodeObjectResolverIds,
     executionTelemetry: runtimeKernelExecutionTelemetry,
@@ -176,6 +176,8 @@ export const executePathRun = async (
     runId: run.id,
     runMetaRecord,
   });
+  const runtimeKernelNodeTypes = runtimeKernelNodeTypesRaw ?? undefined;
+  const runtimeKernelCodeObjectResolverIds = runtimeKernelCodeObjectResolverIdsRaw ?? undefined;
 
   const toRunEventRuntimeKernelMetadata = (input?: {
     runtimeStrategy?: unknown;

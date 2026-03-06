@@ -14,7 +14,7 @@ Goal:
 
 Runtime now includes a kernel adapter (`node-runtime-kernel`) with two strategies:
 
-- `legacy_adapter`: uses current hardcoded handler registry
+- `legacy_adapter`: compatibility strategy backed by the legacy handler registry
 - `code_object_v3`: marks node types that are migrated to v3 contracts
 
 Current runtime-kernel set:
@@ -68,7 +68,7 @@ Remaining server-only native node families are tracked explicitly in runtime gua
 Rollout control:
 
 - runtime option `runtimeKernelNodeTypes: string[]` is the canonical way to scope runtime-kernel overrides for test/canary execution. Deprecated persisted/env/path-config aliases are still normalized by cleanup and historical metadata readers, but live executor and Canvas settings reads now use only the canonical node-type controls. Omitted or empty persisted values fall back to the canonical approved node set.
-- direct-kernel option `runtimeKernelStrictNativeRegistry: boolean` remains available only on `createNodeRuntimeKernel(...)` compatibility/testing paths. It is no longer part of the live graph-evaluation API used by product executor, Canvas local execution, or server/client runtime entrypoints, and contract-backed `code_object_v3` nodes fail closed when native/registered handlers are missing regardless.
+- `runtimeKernelStrictNativeRegistry` has been fully removed from the runtime-kernel constructor and live graph-evaluation paths. Contract-backed `code_object_v3` nodes fail closed when native/registered handlers are missing, while non-contract experimental overrides continue to fall back through compatibility handlers until they are migrated.
 - product-run executor supports global persisted settings:
   - `ai_paths_runtime_kernel_node_types`: JSON array or comma-delimited node types
 - fresh `AiPathRun.meta.runtimeKernel` snapshots and runtime event payloads now persist only canonical node-type and resolver-id context. Deprecated mode/strict fields remain cleanup-only historical metadata.

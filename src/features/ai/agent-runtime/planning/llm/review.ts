@@ -78,8 +78,13 @@ export async function buildAdaptivePlanReview({
     const meta = normalizePlannerMeta(rawParsed);
     const hierarchy = normalizePlanHierarchy(rawParsed);
     const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
-    const stepSpecs = hierarchySteps.length > 0 ? hierarchySteps : ((rawParsed as Record<string, unknown>).steps ?? []);
-    const normalizedStepSpecs = normalizePlanStepSpecs(stepSpecs as unknown[]);
+    const rawParsedRecord = rawParsed as Record<string, unknown>;
+    const rawStepSpecs = Array.isArray(rawParsedRecord['steps']) ? rawParsedRecord['steps'] : [];
+    const stepSpecs: Parameters<typeof normalizePlanStepSpecs>[0] =
+      hierarchySteps.length > 0
+        ? hierarchySteps
+        : (rawStepSpecs as Parameters<typeof normalizePlanStepSpecs>[0]);
+    const normalizedStepSpecs = normalizePlanStepSpecs(stepSpecs);
     let steps = shouldReplan
       ? buildPlanStepsFromSpecs(normalizedStepSpecs, meta, true, maxStepAttempts).slice(0, maxSteps)
       : [];
@@ -196,8 +201,13 @@ export async function buildSelfCheckReview({
     const meta = normalizePlannerMeta(rawParsed);
     const hierarchy = normalizePlanHierarchy(rawParsed);
     const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
-    const stepSpecs = hierarchySteps.length > 0 ? hierarchySteps : ((rawParsed as Record<string, unknown>).steps ?? []);
-    const normalizedStepSpecs = normalizePlanStepSpecs(stepSpecs as unknown[]);
+    const rawParsedRecord = rawParsed as Record<string, unknown>;
+    const rawStepSpecs = Array.isArray(rawParsedRecord['steps']) ? rawParsedRecord['steps'] : [];
+    const stepSpecs: Parameters<typeof normalizePlanStepSpecs>[0] =
+      hierarchySteps.length > 0
+        ? hierarchySteps
+        : (rawStepSpecs as Parameters<typeof normalizePlanStepSpecs>[0]);
+    const normalizedStepSpecs = normalizePlanStepSpecs(stepSpecs);
     let steps =
       action === 'replan'
         ? buildPlanStepsFromSpecs(normalizedStepSpecs, meta, true, maxStepAttempts).slice(

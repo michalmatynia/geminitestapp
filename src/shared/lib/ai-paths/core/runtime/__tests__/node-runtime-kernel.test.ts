@@ -108,29 +108,6 @@ describe('node-runtime-kernel', () => {
     });
   });
 
-  it('keeps experimental runtime-kernel node types missing when strict native registry mode is enabled', () => {
-    const legacyExperimentalHandler = buildHandler('legacy-experimental');
-    const resolveCodeObjectHandler = vi.fn(() => null);
-
-    const runtimeKernel = createNodeRuntimeKernel({
-      resolveLegacyHandler: (nodeType: string) =>
-        nodeType === 'experimental_type' ? legacyExperimentalHandler : null,
-      resolveCodeObjectHandler,
-      runtimeKernelNodeTypes: ['experimental_type'],
-      runtimeKernelStrictNativeRegistry: true,
-    });
-
-    const descriptor = runtimeKernel.resolveDescriptor('experimental_type');
-    expect(descriptor.strategy).toBe('code_object_v3');
-    expect(descriptor.source).toBe('missing');
-    expect(descriptor.handler).toBeNull();
-    expect(runtimeKernel.resolveHandler('experimental_type')).toBeNull();
-    expect(resolveCodeObjectHandler).toHaveBeenCalledWith({
-      nodeType: 'experimental_type',
-      codeObjectId: 'ai-paths.node-code-object.experimental_type.v3',
-    });
-  });
-
   it('keeps non-runtime-kernel node types on legacy_adapter strategy', () => {
     const legacyCustomHandler = buildHandler('legacy_custom');
     const runtimeKernel = createNodeRuntimeKernel({

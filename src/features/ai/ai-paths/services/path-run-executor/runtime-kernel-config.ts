@@ -14,8 +14,8 @@ import {
 } from '../path-run-executor.helpers';
 
 export type ResolvedRuntimeKernelConfig = {
-  nodeTypes: string[] | null;
-  resolverIds: string[] | null;
+  nodeTypes: string[] | undefined;
+  resolverIds: string[] | undefined;
   missingResolverIds: string[];
   registeredResolverIds: string[];
   executionTelemetry: RuntimeKernelExecutionTelemetry;

@@ -14,7 +14,7 @@ Current runtime scope uses the canonical runtime-kernel set (`agent`, `ai_descri
 Runtime rollout controls:
 
 - `runtimeKernelNodeTypes` is the canonical scoped runtime-kernel override for parity/canary runs. Deprecated persisted/env/path-config aliases are still normalized by cleanup and historical metadata readers, but live executor and Canvas settings reads now use only the canonical node-type controls. Omitted or empty persisted values fall back to the canonical approved node set.
-- `runtimeKernelStrictNativeRegistry` remains available only on `createNodeRuntimeKernel(...)` compatibility/testing paths. It is no longer part of the live graph-evaluation API used by product executor, Canvas local execution, or server/client runtime entrypoints, and contract-backed `code_object_v3` nodes fail closed when native/registered handlers are missing regardless.
+- `runtimeKernelStrictNativeRegistry` has been fully removed from the runtime-kernel constructor and live graph-evaluation paths. Contract-backed `code_object_v3` nodes fail closed when native/registered handlers are missing, while non-contract experimental overrides continue to fall back through compatibility handlers until they are migrated.
 - Server runtime resolves approved `code_object_v3` handlers through `contracts.json`.
 - Supported execution adapters:
   - `legacy_handler_bridge`

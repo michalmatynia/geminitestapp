@@ -234,6 +234,9 @@ export const planHierarchySchema = z.object({
               tool: z.enum(['playwright', 'none']).optional(),
               expectedObservation: z.string().nullable().optional(),
               successCriteria: z.string().nullable().optional(),
+              phase: z.string().nullable().optional(),
+              priority: z.number().nullable().optional(),
+              dependsOn: z.union([z.array(z.number()), z.array(z.string())]).nullable().optional(),
             })
           ),
         })

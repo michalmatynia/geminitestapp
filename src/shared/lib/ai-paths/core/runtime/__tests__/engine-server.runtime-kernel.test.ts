@@ -240,24 +240,23 @@ describe('engine-server runtime-kernel resolver wiring', () => {
     expect(result.outputs?.['node-compare']?.['value']).toBe('legacy');
   });
 
-  it('fails fast on unresolved code-object handlers by default for runtime-kernel entrypoints', async () => {
+  it('falls back through compatibility handlers for unresolved non-contract runtime-kernel overrides', async () => {
     const resolveCodeObjectHandler = vi.fn(() => null);
 
-    await expect(
-      evaluateGraphServer({
-        nodes: [buildFunctionNode()],
-        edges: [],
-        runtimeKernelNodeTypes: ['function'],
-        resolveCodeObjectHandler,
-        reportAiPathsError: (): void => {},
-      })
-    ).rejects.toThrow('No handler found for node type: function');
+    const result = await evaluateGraphServer({
+      nodes: [buildFunctionNode()],
+      edges: [],
+      runtimeKernelNodeTypes: ['function'],
+      resolveCodeObjectHandler,
+      reportAiPathsError: (): void => {},
+    });
 
     expect(getMongoClientMock).toHaveBeenCalledTimes(1);
     expect(resolveCodeObjectHandler).toHaveBeenCalledWith({
       nodeType: 'function',
       codeObjectId: 'ai-paths.node-code-object.function.v3',
     });
+    expect(result.outputs?.['node-function']?.['value']).toBe('ok');
   });
 
   it('executes trigger nodes through default contract resolver bridge', async () => {

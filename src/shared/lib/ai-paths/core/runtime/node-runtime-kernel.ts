@@ -72,7 +72,6 @@ export type CreateNodeRuntimeKernelArgs = {
     | undefined;
   resolveOverrideHandler?: ((nodeType: string) => NodeHandler | null) | undefined;
   runtimeKernelNodeTypes?: readonly string[] | undefined;
-  runtimeKernelStrictNativeRegistry?: boolean | undefined;
 };
 
 const normalizeNodeType = (nodeType: string): string =>
@@ -133,10 +132,7 @@ export const createNodeRuntimeKernel = ({
   resolveCodeObjectHandler,
   resolveOverrideHandler,
   runtimeKernelNodeTypes,
-  runtimeKernelStrictNativeRegistry,
 }: CreateNodeRuntimeKernelArgs): NodeRuntimeKernel => {
-  // Keep the strict flag for experimental node types that do not have a v3 contract entry yet.
-  // Contract-backed code_object_v3 nodes fail closed regardless of the flag value.
   const resolvedRuntimeKernelNodeTypes = new Set<string>(
     (runtimeKernelNodeTypes ?? NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES)
       .map((entry: string): string => normalizeNodeType(entry))
@@ -189,16 +185,6 @@ export const createNodeRuntimeKernel = ({
       }
 
       if (resolveNodeCodeObjectV3ContractByCodeObjectId(codeObjectId)) {
-        return buildDescriptor({
-          nodeType,
-          handler: null,
-          source: 'missing',
-          runtimeKernelNodeTypes: resolvedRuntimeKernelNodeTypes,
-        });
-      }
-
-      // If strict mode is enabled, we fail closed for canonical types even if legacy handler is available.
-      if (runtimeKernelStrictNativeRegistry) {
         return buildDescriptor({
           nodeType,
           handler: null,

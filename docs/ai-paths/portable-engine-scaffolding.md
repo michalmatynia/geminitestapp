@@ -10,7 +10,7 @@ This scaffold introduces a portable package wrapper around semantic canvas JSON 
 
 Runtime dispatch now has a kernel scaffold (`src/shared/lib/ai-paths/core/runtime/node-runtime-kernel.ts`) with staged strategies:
 
-- `legacy_adapter` (compatibility/parity strategy retained for legacy telemetry and fallback coverage)
+- `legacy_adapter` (compatibility/parity strategy backed by the legacy handler registry; retained for historical telemetry and non-canonical fallback semantics)
 - `code_object_v3` (current primary execution path for the canonical runtime-kernel node set)
 
 Runtime-kernel node types now cover all registered node types (36 total), and server runtime resolves their `code_object_v3` contracts via native handler registry mappings declared in `docs/ai-paths/node-code-objects-v3/contracts.json`.

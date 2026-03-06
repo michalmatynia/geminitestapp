@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 export const NODE_MIGRATION_PARITY_EVIDENCE_SCHEMA_VERSION =
-  'ai-paths.node-migration-parity-evidence.v1' as const;
+  'ai-paths.node-migration-parity-evidence.v2' as const;
 
 export const NODE_MIGRATION_PARITY_EVIDENCE_FILE =
   'docs/ai-paths/node-code-objects-v3/parity-evidence.json' as const;

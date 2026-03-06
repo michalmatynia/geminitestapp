@@ -2,7 +2,7 @@ export const NODE_MIGRATION_READINESS_STAGES = [
   'not_ready',
   'cataloged',
   'scaffolded',
-  'pilot_indexed',
+  'runtime_kernel_indexed',
   'rollout_candidate',
   'rollout_approved',
 ] as const;
@@ -13,7 +13,7 @@ export const NODE_MIGRATION_READINESS_STAGE_SCORE: Record<NodeMigrationReadiness
   not_ready: 0,
   cataloged: 35,
   scaffolded: 60,
-  pilot_indexed: 80,
+  runtime_kernel_indexed: 80,
   rollout_candidate: 90,
   rollout_approved: 100,
 };
@@ -22,7 +22,7 @@ export const NODE_MIGRATION_READINESS_BLOCKER_CODES = [
   'missing_semantic_contract_hash',
   'missing_v2_object_contract',
   'missing_v3_scaffold',
-  'not_in_v3_pilot',
+  'not_in_runtime_kernel',
   'missing_v3_object_artifacts',
   'parity_not_validated',
   'rollout_not_approved',
@@ -83,7 +83,7 @@ export const computeNodeMigrationReadiness = (
   }
 
   if (input.runtimeStrategy !== 'code_object_v3') {
-    blockers.add('not_in_v3_pilot');
+    blockers.add('not_in_runtime_kernel');
   } else if (!input.hasV3ObjectArtifacts) {
     blockers.add('missing_v3_object_artifacts');
   } else if (!input.checklist.dualRunParityValidated) {
@@ -104,9 +104,9 @@ export const computeNodeMigrationReadiness = (
     input.runtimeStrategy === 'code_object_v3' &&
     input.hasV3ObjectArtifacts
   ) {
-    stage = 'pilot_indexed';
+    stage = 'runtime_kernel_indexed';
   }
-  if (stage === 'pilot_indexed' && input.checklist.dualRunParityValidated) {
+  if (stage === 'runtime_kernel_indexed' && input.checklist.dualRunParityValidated) {
     stage = 'rollout_candidate';
   }
   if (stage === 'rollout_candidate' && input.checklist.rolloutApproved) {

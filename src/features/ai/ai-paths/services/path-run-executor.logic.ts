@@ -25,6 +25,8 @@ import type {
   RuntimeProfileSnapshot,
 } from './path-run-executor.types';
 
+export { EMPTY_RUNTIME_STATE } from './path-run-executor.helpers';
+
 let sanitizeDropWarningCount = 0;
 const SANITIZE_DROP_WARNING_LIMIT = 20;
 

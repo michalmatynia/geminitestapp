@@ -1,12 +1,12 @@
 {
-  "schemaVersion": "ai-paths.node-migration-parity-evidence.v1",
+  "schemaVersion": "ai-paths.node-migration-parity-evidence.v2",
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "suites": [
     {
       "suiteId": "runtime-kernel-parity-core",
       "testFile": "src/shared/lib/ai-paths/core/runtime/__tests__/engine-core.runtime-kernel-parity.test.ts",
       "modes": [
-        "legacy_adapter",
+        "compatibility",
         "code_object_v3"
       ],
       "nodeTypes": [

@@ -175,7 +175,6 @@ export async function evaluateGraphServer(
       defaultResolveCodeObjectHandler(args),
     resolveOverrideHandler: resolvedOptions.resolveHandler,
     runtimeKernelNodeTypes: resolvedOptions.runtimeKernelNodeTypes,
-    runtimeKernelStrictNativeRegistry: true,
   });
 
   const result = await evaluateGraphInternal(nodes, resolvedEdges, {

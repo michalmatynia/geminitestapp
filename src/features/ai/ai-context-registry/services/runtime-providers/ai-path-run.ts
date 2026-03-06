@@ -264,8 +264,8 @@ const buildAiPathRunRuntimeSummary = (
     entityType && entityId ? `on ${entityType} ${entityId}` : null,
     failedNodes || errorEvents
       ? `with ${failedNodes} failed node${failedNodes === 1 ? '' : 's'} and ${errorEvents} error event${
-          errorEvents === 1 ? '' : 's'
-        }`
+        errorEvents === 1 ? '' : 's'
+      }`
       : null,
   ].filter((part): part is string => Boolean(part));
 

@@ -3,8 +3,8 @@
   "generatedAt": "2026-03-05T00:00:00.000Z",
   "suites": [
     {
-      "suiteId": "v3-pilot-parity-core",
-      "testFile": "src/shared/lib/ai-paths/core/runtime/__tests__/engine-core.v3-pilot-parity.test.ts",
+      "suiteId": "runtime-kernel-parity-core",
+      "testFile": "src/shared/lib/ai-paths/core/runtime/__tests__/engine-core.runtime-kernel-parity.test.ts",
       "modes": [
         "legacy_adapter",
         "code_object_v3"
@@ -47,10 +47,10 @@
         "validator",
         "viewer"
       ],
-      "notes": "Core dual-run parity for active v3 pilot transform/math nodes."
+      "notes": "Core dual-run parity for active runtime-kernel transform/math nodes."
     },
     {
-      "suiteId": "v3-pilot-product-trigger-queue-e2e",
+      "suiteId": "runtime-kernel-product-trigger-queue-e2e",
       "testFile": "e2e/features/products/products-trigger-queue-integration.spec.ts",
       "modes": [
         "code_object_v3"

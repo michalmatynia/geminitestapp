@@ -259,9 +259,9 @@ export const inferTypeFromLearnedTemplates = (
     );
     const sampleScore = template.sampleText
       ? Math.max(
-          diceSimilarity(sourceText, template.sampleText),
-          jaccardSimilarity(sourceText, template.sampleText)
-        )
+        diceSimilarity(sourceText, template.sampleText),
+        jaccardSimilarity(sourceText, template.sampleText)
+      )
       : 0;
     const anchorScore = anchorCoverageScore(sourceText, template.anchorTokens || []);
     const totalScore = Math.max(titleScore, sampleScore * 0.8 + anchorScore * 0.2);

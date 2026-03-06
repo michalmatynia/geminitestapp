@@ -191,9 +191,9 @@ export function useCanvasInteractionsNodes({
             (item: AiNode): AiNode =>
               item.id === id
                 ? {
-                    ...item,
-                    position: { x, y },
-                  }
+                  ...item,
+                  position: { x, y },
+                }
                 : item
           ),
         { reason: 'drag', source: 'canvas.drag.flush' }
@@ -448,9 +448,9 @@ export function useCanvasInteractionsNodes({
                   (item: AiNode): AiNode =>
                     item.id === id
                       ? {
-                          ...item,
-                          position: { x, y },
-                        }
+                        ...item,
+                        position: { x, y },
+                      }
                       : item
                 ),
               { reason: 'drag', source: 'canvas.drag.raf' }

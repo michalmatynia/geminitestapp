@@ -36,9 +36,9 @@ export const resolvePriceGroupContext = async (
     const priceGroupCollection = mongo.collection<PriceGroupLookup>('price_groups');
     const byId = preferredPriceGroupId?.trim()
       ? await priceGroupCollection.findOne(
-          { id: preferredPriceGroupId.trim() },
-          { projection: projectedFields }
-        )
+        { id: preferredPriceGroupId.trim() },
+        { projection: projectedFields }
+      )
       : null;
     const fallbackDefault = byId
       ? null
@@ -77,26 +77,26 @@ export const resolvePriceGroupContext = async (
 
   const byId = preferredPriceGroupId?.trim()
     ? await prisma.priceGroup.findUnique({
-        where: { id: preferredPriceGroupId.trim() },
-        select: {
-          id: true,
-          groupId: true,
-          currencyId: true,
-          currency: { select: { code: true } },
-        },
-      })
+      where: { id: preferredPriceGroupId.trim() },
+      select: {
+        id: true,
+        groupId: true,
+        currencyId: true,
+        currency: { select: { code: true } },
+      },
+    })
     : null;
   const fallbackDefault = byId
     ? null
     : await prisma.priceGroup.findFirst({
-        where: { isDefault: true },
-        select: {
-          id: true,
-          groupId: true,
-          currencyId: true,
-          currency: { select: { code: true } },
-        },
-      });
+      where: { isDefault: true },
+      select: {
+        id: true,
+        groupId: true,
+        currencyId: true,
+        currency: { select: { code: true } },
+      },
+    });
   const resolved = byId ?? fallbackDefault;
   if (!resolved?.id) {
     return { defaultPriceGroupId: null, preferredCurrencies: [] };
@@ -131,8 +131,8 @@ export const resolveCatalogLanguageContext = async (
 ): Promise<{ languageCodes: string[]; defaultLanguageCode: string | null }> => {
   const catalogLanguageIds = Array.isArray(catalog.languageIds)
     ? catalog.languageIds
-        .map((id: string) => (typeof id === 'string' ? id.trim() : ''))
-        .filter((id: string): boolean => id.length > 0)
+      .map((id: string) => (typeof id === 'string' ? id.trim() : ''))
+      .filter((id: string): boolean => id.length > 0)
     : [];
   const defaultLanguageId = catalog.defaultLanguageId?.trim() ?? '';
 

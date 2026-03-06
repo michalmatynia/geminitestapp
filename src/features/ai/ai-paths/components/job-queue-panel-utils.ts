@@ -238,15 +238,15 @@ export const normalizeRunDetail = (
   if (!value || typeof value !== 'object') {
     return fallbackRun
       ? {
+        run: fallbackRun,
+        nodes: [],
+        events: [],
+        errorSummary: buildAiPathRunErrorSummary({
           run: fallbackRun,
           nodes: [],
           events: [],
-          errorSummary: buildAiPathRunErrorSummary({
-            run: fallbackRun,
-            nodes: [],
-            events: [],
-          }),
-        }
+        }),
+      }
       : null;
   }
   const detail = value as {

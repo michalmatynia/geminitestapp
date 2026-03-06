@@ -55,7 +55,7 @@ type NodeMigrationIndexRow = {
   title: string;
   nodeFamily: string;
   runtimeStrategy: 'legacy_adapter' | 'code_object_v3';
-  migrationWave: 'pilot' | 'backlog';
+  migrationWave: 'runtime_kernel' | 'backlog';
   codeObjectId: string | null;
   ports: {
     inputs: string[];
@@ -313,7 +313,7 @@ const rows: NodeMigrationIndexRow[] = [...AI_PATHS_NODE_DOCS]
       title: doc.title,
       nodeFamily: v2Info?.nodeFamily ?? 'general',
       runtimeStrategy,
-      migrationWave: isRuntimeKernelNodeType ? 'pilot' : 'backlog',
+      migrationWave: isRuntimeKernelNodeType ? 'runtime_kernel' : 'backlog',
       codeObjectId: isRuntimeKernelNodeType ? buildCodeObjectId(nodeType) : null,
       ports: {
         inputs: doc.inputs,

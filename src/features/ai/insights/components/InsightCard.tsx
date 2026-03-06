@@ -29,10 +29,10 @@ export function InsightCard(props: { insight: AiInsightRecord }): React.JSX.Elem
   const runtimeSignalsRaw = metadata?.['runtimeKernelParitySignals'];
   const runtimeSignals = Array.isArray(runtimeSignalsRaw)
     ? runtimeSignalsRaw
-        .filter((entry): entry is string => typeof entry === 'string')
-        .map((entry) => entry.trim())
-        .filter((entry) => entry.length > 0)
-        .slice(0, 4)
+      .filter((entry): entry is string => typeof entry === 'string')
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0)
+      .slice(0, 4)
     : [];
 
   return (

@@ -226,19 +226,19 @@ const applyLearnedTemplateTypes = (
     }
     const nextPatternLabels = inferred.matchedTemplateId
       ? [
-          ...new Set([
-            ...(segment.matchedPatternLabels ?? []),
-            `Learned Template: ${inferred.type.replaceAll('_', ' ')}`,
-          ]),
-        ]
+        ...new Set([
+          ...(segment.matchedPatternLabels ?? []),
+          `Learned Template: ${inferred.type.replaceAll('_', ' ')}`,
+        ]),
+      ]
       : (segment.matchedPatternLabels ?? []);
     const nextPatternIds = inferred.matchedTemplateId
       ? [
-          ...new Set([
-            ...segment.matchedPatternIds,
-            `segment.learned.${inferred.type}.${inferred.matchedTemplateId}`,
-          ]),
-        ]
+        ...new Set([
+          ...segment.matchedPatternIds,
+          `segment.learned.${inferred.type}.${inferred.matchedTemplateId}`,
+        ]),
+      ]
       : segment.matchedPatternIds;
     return {
       ...segment,

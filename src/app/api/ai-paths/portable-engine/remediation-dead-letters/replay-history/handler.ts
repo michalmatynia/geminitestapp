@@ -376,13 +376,13 @@ const withReplayHistoryRedactionHeaders = (
 const resolveReplayHistoryExportRedactionMode =
   (): PortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode =>
     resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionModeFromEnvironment() ??
-    'none';
+    'off';
 
 const applyReplayHistoryRecordRedaction = (
   entry: ReplayHistoryRecord,
   redactionMode: PortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode
 ): ReplayHistoryRecord => {
-  if (redactionMode === 'none') return entry;
+  if (redactionMode === 'off') return entry;
   return {
     ...entry,
     filters: {
@@ -605,7 +605,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     },
     redaction: {
       mode: redactionMode,
-      applied: redactionMode !== 'none',
+      applied: redactionMode !== 'off',
     },
     summary: {
       scannedLogCount,

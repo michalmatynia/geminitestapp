@@ -37,7 +37,7 @@ export { agentTeachingKeys };
 export function useSearchEmbeddingCollectionMutation(): MutationResult<
   AgentTeachingChatSource[],
   { collectionId: string; queryText: string; topK?: number; minScore?: number }
-> {
+  > {
   const mutationKey = agentTeachingKeys.collections();
   return createMutationV2<
     AgentTeachingChatSource[],
@@ -74,7 +74,7 @@ export function useSearchEmbeddingCollectionMutation(): MutationResult<
 export function useTeachingChatMutation(): MutationResult<
   { message: string; sources: AgentTeachingChatSource[] },
   { agentId: string; messages: SimpleChatMessage[] }
-> {
+  > {
   const mutationKey = agentTeachingKeys.agents();
   return createMutationV2<
     { message: string; sources: AgentTeachingChatSource[] },
@@ -132,7 +132,7 @@ export function useTeachingCollections(): ListQuery<AgentTeachingEmbeddingCollec
 export function useUpsertTeachingAgentMutation(): MutationResult<
   AgentTeachingAgentRecord,
   Partial<AgentTeachingAgentRecord> & { name: string }
-> {
+  > {
   const mutationKey = agentTeachingKeys.agents();
   return createUpdateMutationV2<
     AgentTeachingAgentRecord,
@@ -172,7 +172,7 @@ export function useDeleteTeachingAgentMutation(): MutationResult<void, { id: str
 export function useUpsertEmbeddingCollectionMutation(): MutationResult<
   AgentTeachingEmbeddingCollectionRecord,
   Partial<AgentTeachingEmbeddingCollectionRecord> & { name: string }
-> {
+  > {
   const mutationKey = agentTeachingKeys.collections();
   return createUpdateMutationV2<
     AgentTeachingEmbeddingCollectionRecord,
@@ -250,7 +250,7 @@ export function useAddEmbeddingDocumentMutation(): MutationResult<
     source?: string | null;
     tags?: string[];
   }
-> {
+  > {
   const mutationKey = agentTeachingKeys.collections();
   return createCreateMutationV2<
     AgentTeachingEmbeddingDocumentListItem,
@@ -299,7 +299,7 @@ export function useAddEmbeddingDocumentMutation(): MutationResult<
 export function useDeleteEmbeddingDocumentMutation(): MutationResult<
   void,
   { collectionId: string; documentId: string }
-> {
+  > {
   const mutationKey = agentTeachingKeys.collections();
   return createDeleteMutationV2<void, { collectionId: string; documentId: string }>({
     mutationFn: ({ collectionId, documentId }: { collectionId: string; documentId: string }) =>

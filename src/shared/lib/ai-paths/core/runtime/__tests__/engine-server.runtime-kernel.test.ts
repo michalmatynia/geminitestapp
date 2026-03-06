@@ -147,7 +147,7 @@ describe('engine-server runtime-kernel resolver wiring', () => {
     const result = await evaluateGraphServer({
       nodes: [buildConstantNode()],
       edges: [],
-      runtimeKernelPilotNodeTypes: ['constant'],
+      runtimeKernelNodeTypes: ['constant'],
       resolveCodeObjectHandler,
       reportAiPathsError: (): void => {},
     });
@@ -177,7 +177,7 @@ describe('engine-server runtime-kernel resolver wiring', () => {
     const result = await evaluateGraphServer({
       nodes: [buildConstantNode()],
       edges: [],
-      runtimeKernelPilotNodeTypes: ['constant'],
+      runtimeKernelNodeTypes: ['constant'],
       reportAiPathsError: (): void => {},
     });
 
@@ -208,7 +208,7 @@ describe('engine-server runtime-kernel resolver wiring', () => {
     const result = await evaluateGraphServer({
       nodes: [buildConstantNode()],
       edges: [],
-      runtimeKernelPilotNodeTypes: ['constant'],
+      runtimeKernelNodeTypes: ['constant'],
       runtimeKernelCodeObjectResolverIds: ['test.server.registry.selected'],
       reportAiPathsError: (): void => {},
     });
@@ -231,7 +231,7 @@ describe('engine-server runtime-kernel resolver wiring', () => {
           toPort: 'value',
         },
       ],
-      runtimeKernelPilotNodeTypes: ['constant', 'compare'],
+      runtimeKernelNodeTypes: ['constant', 'compare'],
       reportAiPathsError: (): void => {},
     });
 
@@ -247,7 +247,7 @@ describe('engine-server runtime-kernel resolver wiring', () => {
       evaluateGraphServer({
         nodes: [buildFunctionNode()],
         edges: [],
-        runtimeKernelPilotNodeTypes: ['function'],
+        runtimeKernelNodeTypes: ['function'],
         runtimeKernelStrictNativeRegistry: true,
         resolveCodeObjectHandler,
         reportAiPathsError: (): void => {},
@@ -265,7 +265,7 @@ describe('engine-server runtime-kernel resolver wiring', () => {
     const result = await evaluateGraphServer({
       nodes: [buildTriggerNode()],
       edges: [],
-      runtimeKernelPilotNodeTypes: ['trigger'],
+      runtimeKernelNodeTypes: ['trigger'],
       reportAiPathsError: (): void => {},
     });
 
@@ -278,7 +278,7 @@ describe('engine-server runtime-kernel resolver wiring', () => {
     const result = await evaluateGraphServer({
       nodes: [buildPromptNode()],
       edges: [],
-      runtimeKernelPilotNodeTypes: ['prompt'],
+      runtimeKernelNodeTypes: ['prompt'],
       reportAiPathsError: (): void => {},
     });
 
@@ -290,7 +290,7 @@ describe('engine-server runtime-kernel resolver wiring', () => {
     const result = await evaluateGraphServer({
       nodes: [buildAudioOscillatorNode()],
       edges: [],
-      runtimeKernelPilotNodeTypes: ['audio_oscillator'],
+      runtimeKernelNodeTypes: ['audio_oscillator'],
       reportAiPathsError: (): void => {},
     });
 

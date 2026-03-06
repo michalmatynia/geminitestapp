@@ -198,7 +198,7 @@ export function ThemeCollectionCardsSection(): React.JSX.Element {
             label: 'Overlay color',
             type: 'color',
           } as SettingsField<ThemeSettings>,
-        ]
+      ]
       : []),
     {
       key: 'collectionBorderWidth',
@@ -324,7 +324,7 @@ export function ThemeBlogCardsSection(): React.JSX.Element {
             min: 1,
             max: 5,
           } as SettingsField<ThemeSettings>,
-        ]
+      ]
       : []),
     {
       key: 'blogBorderWidth',

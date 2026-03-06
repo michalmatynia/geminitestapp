@@ -284,9 +284,9 @@ export const mongoCmsRepository: CmsRepository = {
     const slugDocs =
       slugIds.length > 0
         ? await db
-            .collection<SlugDocument>(slugsCollection)
-            .find({ id: { $in: slugIds } })
-            .toArray()
+          .collection<SlugDocument>(slugsCollection)
+          .find({ id: { $in: slugIds } })
+          .toArray()
         : [];
 
     return mapPageDocumentToPage(result, slugDocs);

@@ -206,9 +206,9 @@ export async function processAutoScalerPayload(input: {
     throw sourceLoadError instanceof Error
       ? sourceLoadError
       : autoScaleBadRequest(
-          IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.SOURCE_IMAGE_MISSING,
-          'Server auto scaler requires a resolvable source image.'
-        );
+        IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.SOURCE_IMAGE_MISSING,
+        'Server auto scaler requires a resolvable source image.'
+      );
   }
 
   if (uploadedClientImage) {

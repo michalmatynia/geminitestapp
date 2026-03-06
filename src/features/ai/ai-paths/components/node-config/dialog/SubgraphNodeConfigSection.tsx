@@ -24,14 +24,14 @@ export function SubgraphNodeConfigSection(): React.JSX.Element | null {
 
   const handleFieldChange =
     (field: keyof SubgraphConfig) =>
-    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
-      updateSelectedNodeConfig({
-        subgraph: {
-          ...subgraphConfig,
-          [field]: event.target.value,
-        },
-      });
-    };
+      (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
+        updateSelectedNodeConfig({
+          subgraph: {
+            ...subgraphConfig,
+            [field]: event.target.value,
+          },
+        });
+      };
 
   return (
     <div className='space-y-4'>

@@ -55,13 +55,13 @@ export function AllegroApiConsole(): React.JSX.Element {
         error: allegroApiError,
         response: allegroApiResponse
           ? {
-              status: allegroApiResponse.status,
-              statusText: allegroApiResponse.statusText,
-              data: allegroApiResponse.data,
-              ...(allegroApiResponse.refreshed !== undefined && {
-                refreshed: allegroApiResponse.refreshed,
-              }),
-            }
+            status: allegroApiResponse.status,
+            statusText: allegroApiResponse.statusText,
+            data: allegroApiResponse.data,
+            ...(allegroApiResponse.refreshed !== undefined && {
+              refreshed: allegroApiResponse.refreshed,
+            }),
+          }
           : null,
       }}
       presets={allegroApiPresets}

@@ -345,9 +345,9 @@ export const createCaseResolverFile = (input: CreateCaseResolverFileInput): Case
   const documentContentVersion = normalizeDocumentContentVersion(input.documentContentVersion);
   const documentConversionWarnings = Array.isArray(input.documentConversionWarnings)
     ? input.documentConversionWarnings
-        .filter((entry: string | unknown): entry is string => typeof entry === 'string')
-        .map((entry: string) => entry.trim())
-        .filter((entry: string) => entry.length > 0)
+      .filter((entry: string | unknown): entry is string => typeof entry === 'string')
+      .map((entry: string) => entry.trim())
+      .filter((entry: string) => entry.length > 0)
     : canonicalDocument.warnings;
   const lastContentConversionAt = normalizeTimestamp(input.lastContentConversionAt, updatedAt);
   const parentCaseId = sanitizeOptionalId(input.parentCaseId);

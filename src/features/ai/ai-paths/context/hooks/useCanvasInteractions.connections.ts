@@ -313,9 +313,9 @@ export function useCanvasInteractionsConnections({
       const viewport = viewportRef.current?.getBoundingClientRect();
       const nextPos = viewport
         ? {
-            x: (event.clientX - viewport.left - view.x) / view.scale,
-            y: (event.clientY - viewport.top - view.y) / view.scale,
-          }
+          x: (event.clientX - viewport.left - view.x) / view.scale,
+          y: (event.clientY - viewport.top - view.y) / view.scale,
+        }
         : start;
 
       const remaining = currentEdges.filter((e) => e.id !== edgeToMove.id);

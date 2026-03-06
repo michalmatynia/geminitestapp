@@ -148,8 +148,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     return true;
   });
   const sliced = filtered.slice(-limit);
-  const latestEntry = sliced.length > 0 ? sliced[sliced.length - 1] : null;
-  const latestQueuedAt = latestEntry ? latestEntry.at : null;
+  const latestEntry = sliced.length > 0 ? (sliced[sliced.length - 1] as PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry) : null;
+  const latestQueuedAt = latestEntry ? latestEntry.queuedAt : null;
   const byChannel = {
     webhook: sliced.filter((entry) => entry.channel === 'webhook').length,
     email: sliced.filter((entry) => entry.channel === 'email').length,

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import {
+  type AiPathsValidationConfig,
   type Edge,
   type GraphCompileReport,
   type PathConfig,
@@ -227,12 +228,30 @@ export type PortablePathFingerprintVerificationMode = 'off' | 'warn' | 'strict';
 export type PortablePathEnvelopeSignatureVerificationMode = PortablePathFingerprintVerificationMode;
 export type PortablePathNodeCodeObjectHashVerificationMode =
   PortableNodeCodeObjectHashVerificationMode;
+import type {
+  PortablePathSigningPolicyProfile,
+  PortablePathSigningPolicySurface,
+  PortablePathEnvelopeVerificationAuditSinkProfile,
+  PortablePathEnvelopeVerificationAuditSinkHealthPolicy,
+  PortablePathEnvelopeVerificationAuditSinkStartupHealthStatus,
+  PortablePathEnvelopeVerificationAuditSinkHealthDiagnosticStatus,
+  PortablePathEnvelopeVerificationAuditSinkHealthDiagnostic,
+  PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary,
+} from './types';
+
+export type {
+  PortablePathSigningPolicyProfile,
+  PortablePathSigningPolicySurface,
+  PortablePathEnvelopeVerificationAuditSinkProfile,
+  PortablePathEnvelopeVerificationAuditSinkHealthPolicy,
+  PortablePathEnvelopeVerificationAuditSinkStartupHealthStatus,
+  PortablePathEnvelopeVerificationAuditSinkHealthDiagnosticStatus,
+  PortablePathEnvelopeVerificationAuditSinkHealthDiagnostic,
+  PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary,
+};
+
 export const PORTABLE_PATH_SIGNING_POLICY_PROFILES = ['dev', 'staging', 'prod'] as const;
-export type PortablePathSigningPolicyProfile =
-  (typeof PORTABLE_PATH_SIGNING_POLICY_PROFILES)[number];
 export const PORTABLE_PATH_SIGNING_POLICY_SURFACES = ['canvas', 'product', 'api'] as const;
-export type PortablePathSigningPolicySurface =
-  (typeof PORTABLE_PATH_SIGNING_POLICY_SURFACES)[number];
 export type PortablePathSigningPolicy = {
   profile: PortablePathSigningPolicyProfile;
   fingerprintVerificationMode: PortablePathFingerprintVerificationMode;
@@ -401,6 +420,8 @@ export type PortablePathRunOptions = Omit<EvaluateGraphOptions, 'reportAiPathsEr
   validateBeforeRun?: boolean;
   validationMode?: PortablePathValidationMode;
   validationTriggerNodeId?: string | null;
+  runtimeValidationEnabled?: boolean;
+  runtimeValidationConfig?: AiPathsValidationConfig | null;
   signingPolicyProfile?: PortablePathSigningPolicyProfile;
   signingPolicyTelemetrySurface?: PortablePathSigningPolicySurface;
   repairIdentities?: boolean;

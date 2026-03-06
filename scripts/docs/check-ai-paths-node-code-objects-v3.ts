@@ -415,7 +415,7 @@ for (const row of indexRows) {
 
 for (const runtimeKernelNodeType of runtimeKernelNodeTypes) {
   if (!seenIndexNodeTypes.has(runtimeKernelNodeType)) {
-    errors.push(`index.json missing pilot nodeType=${runtimeKernelNodeType}.`);
+    errors.push(`index.json missing runtime-kernel nodeType=${runtimeKernelNodeType}.`);
   }
 }
 
@@ -427,7 +427,7 @@ for (const contractNodeType of contractNodeTypes) {
 }
 for (const runtimeKernelNodeType of runtimeKernelNodeTypes) {
   if (!contractNodeTypes.has(runtimeKernelNodeType)) {
-    errors.push(`contracts.json missing pilot nodeType=${runtimeKernelNodeType}.`);
+    errors.push(`contracts.json missing runtime-kernel nodeType=${runtimeKernelNodeType}.`);
   }
 }
 

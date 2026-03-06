@@ -301,7 +301,7 @@ const normalizeRuntimeKernelSettingsRecords = (records: AiPathsSettingRecord[]):
   const shouldManageNodeTypesEntry = canonicalNodeTypesEntry !== null || legacyNodeTypesEntry !== null;
   const shouldUpdateCanonicalNodeTypesEntry =
     shouldManageNodeTypesEntry &&
-    (!canonicalNodeTypesEntry || canonicalNodeTypesEntry.value !== canonicalNodeTypesValue);
+    (canonicalNodeTypesEntry?.value !== canonicalNodeTypesValue);
   const shouldDeleteLegacyNodeTypesEntry = legacyNodeTypesEntry !== null;
   let affectedCount =
     shouldUpdateCanonicalNodeTypesEntry || shouldDeleteLegacyNodeTypesEntry ? 1 : 0;

@@ -427,8 +427,8 @@ export function useCaseResolverCaseSearchIndex({
         searchTokens.length === 0
           ? true
           : searchTokens.every((token: ParsedCaseSearchToken): boolean =>
-              resolveCaseRowMatchesToken(row, token, caseSearchScope)
-            );
+            resolveCaseRowMatchesToken(row, token, caseSearchScope)
+          );
       if (!searchMatches) return;
 
       nextMatchedCaseIds.add(row.file.id);

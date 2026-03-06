@@ -158,11 +158,11 @@ function normalizeRunListResponse(response: Awaited<ReturnType<typeof listAiPath
   }
   const runs = Array.isArray(response.data.runs)
     ? response.data.runs.flatMap((run): AiPathRunRecord[] => {
-        const parsed = aiPathRunRecordSchema.safeParse(run);
-        if (parsed.success) return [parsed.data];
-        const coerced = coerceRunRecord(run);
-        return coerced ? [coerced] : [];
-      })
+      const parsed = aiPathRunRecordSchema.safeParse(run);
+      if (parsed.success) return [parsed.data];
+      const coerced = coerceRunRecord(run);
+      return coerced ? [coerced] : [];
+    })
     : [];
   return {
     ok: true,
@@ -193,15 +193,15 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
     const params = new URLSearchParams();
     const latestEventTimestamp = runDetail.events?.length
       ? runDetail.events.reduce<string | null>(
-          (max: string | null, event: AiPathRunEventRecord) => {
-            if (!event.createdAt) return max;
-            const time = new Date(event.createdAt).getTime();
-            if (!Number.isFinite(time)) return max;
-            if (!max) return new Date(time).toISOString();
-            return time > new Date(max).getTime() ? new Date(time).toISOString() : max;
-          },
-          null
-        )
+        (max: string | null, event: AiPathRunEventRecord) => {
+          if (!event.createdAt) return max;
+          const time = new Date(event.createdAt).getTime();
+          if (!Number.isFinite(time)) return max;
+          if (!max) return new Date(time).toISOString();
+          return time > new Date(max).getTime() ? new Date(time).toISOString() : max;
+        },
+        null
+      )
       : null;
     if (latestEventTimestamp) {
       params.set('since', latestEventTimestamp);

@@ -385,15 +385,15 @@ export const handleUpdateCaseImpl = async (args: {
       files: workspace.files.map((file) =>
         file.id === editingCaseId
           ? {
-              ...file,
-              name: editingCaseName.trim(),
-              parentCaseId: editingCaseParentId,
-              referenceCaseIds: editingCaseReferenceCaseIds,
-              tagId: editingCaseTagId,
-              caseIdentifierId: editingCaseCaseIdentifierId,
-              categoryId: editingCaseCategoryId,
-              updatedAt: new Date().toISOString(),
-            }
+            ...file,
+            name: editingCaseName.trim(),
+            parentCaseId: editingCaseParentId,
+            referenceCaseIds: editingCaseReferenceCaseIds,
+            tagId: editingCaseTagId,
+            caseIdentifierId: editingCaseCaseIdentifierId,
+            categoryId: editingCaseCategoryId,
+            updatedAt: new Date().toISOString(),
+          }
           : file
       ),
     };

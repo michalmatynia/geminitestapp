@@ -18,8 +18,8 @@ export const fetchSettingsPayloadWithTimeout = async (input: {
   const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
   const timeoutId = controller
     ? setTimeout((): void => {
-        controller.abort();
-      }, input.timeoutMs)
+      controller.abort();
+    }, input.timeoutMs)
     : null;
   try {
     return await fetch(input.url, {

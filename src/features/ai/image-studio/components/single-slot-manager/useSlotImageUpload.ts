@@ -79,12 +79,12 @@ export function useSlotImageUpload({
         const importedFile = result.importedFiles[0];
         const uploaded: ImageStudioUploadedAsset | null = importedFile
           ? {
-              id: importedFile.id,
-              filepath: importedFile.filepath,
-              filename: importedFile.filename,
-              width: importedFile.width ?? null,
-              height: importedFile.height ?? null,
-            }
+            id: importedFile.id,
+            filepath: importedFile.filepath,
+            filename: importedFile.filename,
+            width: importedFile.width ?? null,
+            height: importedFile.height ?? null,
+          }
           : null;
         if (!uploaded) {
           throw new Error(result.warnings[0] || 'Upload failed');

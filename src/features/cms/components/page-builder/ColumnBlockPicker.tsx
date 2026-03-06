@@ -43,8 +43,8 @@ export function ColumnBlockPicker({
   const resolvedTypes = useMemo(() => {
     const defs = allowedBlockTypes
       ? allowedBlockTypes
-          .map((type: string) => getBlockDefinition(type))
-          .filter((def: BlockDefinition | undefined): def is BlockDefinition => Boolean(def))
+        .map((type: string) => getBlockDefinition(type))
+        .filter((def: BlockDefinition | undefined): def is BlockDefinition => Boolean(def))
       : getColumnAllowedBlockTypes();
     return defs.filter((def: BlockDefinition) => def.type !== 'AppEmbed' || hasAppEmbeds);
   }, [allowedBlockTypes, hasAppEmbeds]);

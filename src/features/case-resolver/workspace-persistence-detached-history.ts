@@ -94,19 +94,19 @@ export const buildCaseResolverWorkspaceDetachedHistoryPayload = (
       : null,
   files: Array.isArray(workspace.files)
     ? workspace.files
-        .map((file): CaseResolverWorkspaceDetachedHistoryFileEntry | null => {
-          const documentHistory = Array.isArray(file.documentHistory) ? file.documentHistory : [];
-          if (documentHistory.length === 0) return null;
-          return {
-            id: file.id,
-            documentHistory,
-          };
-        })
-        .filter(
-          (
-            entry: CaseResolverWorkspaceDetachedHistoryFileEntry | null
-          ): entry is CaseResolverWorkspaceDetachedHistoryFileEntry => Boolean(entry)
-        )
+      .map((file): CaseResolverWorkspaceDetachedHistoryFileEntry | null => {
+        const documentHistory = Array.isArray(file.documentHistory) ? file.documentHistory : [];
+        if (documentHistory.length === 0) return null;
+        return {
+          id: file.id,
+          documentHistory,
+        };
+      })
+      .filter(
+        (
+          entry: CaseResolverWorkspaceDetachedHistoryFileEntry | null
+        ): entry is CaseResolverWorkspaceDetachedHistoryFileEntry => Boolean(entry)
+      )
     : [],
 });
 
@@ -206,8 +206,8 @@ export const applyCaseResolverWorkspaceDetachedHistoryPayload = ({
   });
   return updated
     ? {
-        ...workspace,
-        files,
-      }
+      ...workspace,
+      files,
+    }
     : workspace;
 };

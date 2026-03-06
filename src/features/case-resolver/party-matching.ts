@@ -447,8 +447,8 @@ export const resolveCountryFromCandidateValue = (
 
   const byCode = canonicalCode
     ? countries.find(
-        (country: CountryOption): boolean => country.code.trim().toUpperCase() === canonicalCode
-      )
+      (country: CountryOption): boolean => country.code.trim().toUpperCase() === canonicalCode
+    )
     : null;
   if (byCode) {
     return {

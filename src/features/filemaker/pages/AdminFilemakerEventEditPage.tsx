@@ -150,17 +150,17 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
       linkedAddresses.length > 0
         ? linkedAddresses
         : [
-            {
-              addressId: event.addressId || createId('address'),
-              street: event.street,
-              streetNumber: event.streetNumber,
-              city: event.city,
-              postalCode: event.postalCode,
-              countryId: resolveCountryId(event.countryId, event.country, countries, countryById),
-              country: event.country,
-              isDefault: true,
-            },
-          ];
+          {
+            addressId: event.addressId || createId('address'),
+            street: event.street,
+            streetNumber: event.streetNumber,
+            city: event.city,
+            postalCode: event.postalCode,
+            countryId: resolveCountryId(event.countryId, event.country, countries, countryById),
+            country: event.country,
+            isDefault: true,
+          },
+        ];
     let defaultAddressId =
       nextAddresses.find((entry: EditableAddress): boolean => entry.isDefault)?.addressId ?? '';
     if (!defaultAddressId && nextAddresses[0]) {
@@ -203,9 +203,9 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
           (entry: EditableAddress): EditableAddress =>
             entry.addressId === targetId
               ? {
-                  ...entry,
-                  ...patch,
-                }
+                ...entry,
+                ...patch,
+              }
               : entry
         )
       );
@@ -383,18 +383,18 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
       events: database.events.map((entry: FilemakerEvent) =>
         entry.id === event.id
           ? createFilemakerEvent({
-              id: entry.id,
-              eventName: normalizedEventName,
-              addressId: defaultAddress.addressId,
-              street: defaultAddress.street,
-              streetNumber: defaultAddress.streetNumber,
-              city: defaultAddress.city,
-              postalCode: defaultAddress.postalCode,
-              country: defaultAddress.country,
-              countryId: defaultAddress.countryId,
-              createdAt: entry.createdAt,
-              updatedAt: new Date().toISOString(),
-            })
+            id: entry.id,
+            eventName: normalizedEventName,
+            addressId: defaultAddress.addressId,
+            street: defaultAddress.street,
+            streetNumber: defaultAddress.streetNumber,
+            city: defaultAddress.city,
+            postalCode: defaultAddress.postalCode,
+            country: defaultAddress.country,
+            countryId: defaultAddress.countryId,
+            createdAt: entry.createdAt,
+            updatedAt: new Date().toISOString(),
+          })
           : entry
       ),
       addresses: Array.from(addressesById.values()),

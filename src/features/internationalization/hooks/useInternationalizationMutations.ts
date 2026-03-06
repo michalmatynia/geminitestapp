@@ -70,7 +70,7 @@ export function useDeleteLanguageMutation(): DeleteMutation<void, string> {
 export function useSaveCurrencyMutation(): SaveMutation<
   CurrencyOption,
   { id?: string; data: SaveCurrencyInput }
-> {
+  > {
   const mutationKey = i18nKeys.currencies();
   return createSaveMutationV2<CurrencyOption, { id?: string; data: SaveCurrencyInput }>({
     createFn: (variables) => api.post<CurrencyOption>(CURRENCIES_ENDPOINT, variables),
@@ -90,7 +90,7 @@ export function useSaveCurrencyMutation(): SaveMutation<
 export function useSaveCountryMutation(): SaveMutation<
   CountryOption,
   { id?: string; data: SaveCountryInput }
-> {
+  > {
   const mutationKey = i18nKeys.countries();
   return createSaveMutationV2<CountryOption, { id?: string; data: SaveCountryInput }>({
     createFn: (variables) => api.post<CountryOption>(COUNTRIES_ENDPOINT, variables),
@@ -110,7 +110,7 @@ export function useSaveCountryMutation(): SaveMutation<
 export function useSaveLanguageMutation(): SaveMutation<
   Language,
   { id?: string; data: SaveLanguageInput }
-> {
+  > {
   const mutationKey = i18nKeys.languages();
   return createSaveMutationV2<Language, { id?: string; data: SaveLanguageInput }>({
     createFn: (variables) => api.post<Language>(LANGUAGES_ENDPOINT, variables),

@@ -205,8 +205,8 @@ const toRecord = (doc: ImageStudioSequenceRunDocument): ImageStudioSequenceRunRe
   finishedAt: doc.finishedAt ?? null,
   historyEvents: Array.isArray(doc.historyEvents)
     ? doc.historyEvents
-        .map((event) => toHistoryEvent(event, doc.updatedAt))
-        .filter((event): event is ImageStudioSequenceRunHistoryEvent => Boolean(event))
+      .map((event) => toHistoryEvent(event, doc.updatedAt))
+      .filter((event): event is ImageStudioSequenceRunHistoryEvent => Boolean(event))
     : [],
 });
 
@@ -294,8 +294,8 @@ export async function updateImageStudioSequenceRun(
 
   const nextHistoryEvents = Array.isArray(update.appendHistoryEvents)
     ? update.appendHistoryEvents
-        .map((event) => buildHistoryEventDocument(event, now))
-        .filter((event): event is ImageStudioSequenceRunHistoryEventDocument => Boolean(event))
+      .map((event) => buildHistoryEventDocument(event, now))
+      .filter((event): event is ImageStudioSequenceRunHistoryEventDocument => Boolean(event))
     : [];
 
   const collection = db.collection<ImageStudioSequenceRunDocument>(COLLECTION);

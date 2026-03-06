@@ -319,13 +319,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment() ??
     DEFAULT_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES;
 
-  const [snapshotsRaw, autoRemediationState, deadLettersRaw] = await Promise.all<
-    [
-      PortablePathSigningPolicyTrendPersistedSnapshot[],
-      PortablePathAuditSinkStartupHealthState,
-      PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry[],
-    ]
-  >([
+  const [snapshotsRaw, autoRemediationState, deadLettersRaw] = await Promise.all([
     loadPortablePathSigningPolicyTrendSnapshots({ maxSnapshots: loadLimit }),
     loadPortablePathAuditSinkStartupHealthState(),
     loadPortablePathAuditSinkAutoRemediationDeadLetters({
@@ -364,7 +358,10 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     0
   );
   const sinkWritesFailedTotal = pageSnapshots.reduce(
-    (sum, snapshot) => sum + (snapshot.sinkTotals?.writesFailed ?? 0),
+    (sum, snapshot) => {
+      const sinkTotals = snapshot.sinkTotals as { writesFailed?: number };
+      return sum + (sinkTotals?.writesFailed ?? 0);
+    },
     0
   );
   const lastSnapshot = snapshotCount > 0 ? pageSnapshots[snapshotCount - 1] : null;
@@ -382,12 +379,12 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       : null;
   const notificationDeadLetterCount = deadLetters.length;
   const lastDeadLetter = notificationDeadLetterCount > 0 ? deadLetters[notificationDeadLetterCount - 1] : null;
-  const latestNotificationDeadLetterAt = lastDeadLetter?.at ?? null;
+  const latestNotificationDeadLetterAt = lastDeadLetter?.queuedAt ?? null;
   const deadLetterErrorCounts: Record<string, number> = {};
   const deadLetterReplayPolicySkipCounts: Record<string, number> = {};
   for (const entry of deadLetters) {
     const reason =
-      typeof entry.reason === 'string' && entry.reason.trim().length > 0 ? entry.reason : 'unknown';
+      typeof entry.error === 'string' && entry.error.trim().length > 0 ? entry.error : 'unknown';
     deadLetterErrorCounts[reason] = (deadLetterErrorCounts[reason] ?? 0) + 1;
     if (DEAD_LETTER_REPLAY_POLICY_SKIP_REASONS.has(reason)) {
       deadLetterReplayPolicySkipCounts[reason] =

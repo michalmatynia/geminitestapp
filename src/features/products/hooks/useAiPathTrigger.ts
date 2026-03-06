@@ -49,65 +49,65 @@ function buildTriggerContext(
   const nativeEvent = event?.nativeEvent;
   const pointer = nativeEvent
     ? {
-        clientX: nativeEvent.clientX,
-        clientY: nativeEvent.clientY,
-        pageX: nativeEvent.pageX,
-        pageY: nativeEvent.pageY,
-        screenX: nativeEvent.screenX,
-        screenY: nativeEvent.screenY,
-        offsetX:
+      clientX: nativeEvent.clientX,
+      clientY: nativeEvent.clientY,
+      pageX: nativeEvent.pageX,
+      pageY: nativeEvent.pageY,
+      screenX: nativeEvent.screenX,
+      screenY: nativeEvent.screenY,
+      offsetX:
           'offsetX' in nativeEvent
             ? (nativeEvent as unknown as { offsetX: number }).offsetX
             : undefined,
-        offsetY:
+      offsetY:
           'offsetY' in nativeEvent
             ? (nativeEvent as unknown as { offsetY: number }).offsetY
             : undefined,
-        button: nativeEvent.button,
-        buttons: nativeEvent.buttons,
-        altKey: nativeEvent.altKey,
-        ctrlKey: nativeEvent.ctrlKey,
-        shiftKey: nativeEvent.shiftKey,
-        metaKey: nativeEvent.metaKey,
-      }
+      button: nativeEvent.button,
+      buttons: nativeEvent.buttons,
+      altKey: nativeEvent.altKey,
+      ctrlKey: nativeEvent.ctrlKey,
+      shiftKey: nativeEvent.shiftKey,
+      metaKey: nativeEvent.metaKey,
+    }
     : undefined;
   const location =
     typeof window !== 'undefined'
       ? {
-          href: window.location.href,
-          origin: window.location.origin,
-          pathname: window.location.pathname,
-          search: window.location.search,
-          hash: window.location.hash,
-          referrer: document.referrer || undefined,
-        }
+        href: window.location.href,
+        origin: window.location.origin,
+        pathname: window.location.pathname,
+        search: window.location.search,
+        hash: window.location.hash,
+        referrer: document.referrer || undefined,
+      }
       : {};
   const ui =
     typeof window !== 'undefined'
       ? {
-          viewport: {
-            width: window.innerWidth,
-            height: window.innerHeight,
-            devicePixelRatio: window.devicePixelRatio,
-          },
-          screen: {
-            width: window.screen?.width,
-            height: window.screen?.height,
-            availWidth: window.screen?.availWidth,
-            availHeight: window.screen?.availHeight,
-          },
-          userAgent: navigator.userAgent,
-          platform: navigator.platform,
-          language: navigator.language,
-          languages: navigator.languages,
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          documentTitle: document.title,
-          visibilityState: document.visibilityState,
-          scroll: {
-            x: window.scrollX,
-            y: window.scrollY,
-          },
-        }
+        viewport: {
+          width: window.innerWidth,
+          height: window.innerHeight,
+          devicePixelRatio: window.devicePixelRatio,
+        },
+        screen: {
+          width: window.screen?.width,
+          height: window.screen?.height,
+          availWidth: window.screen?.availWidth,
+          availHeight: window.screen?.availHeight,
+        },
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        language: navigator.language,
+        languages: navigator.languages,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        documentTitle: document.title,
+        visibilityState: document.visibilityState,
+        scroll: {
+          x: window.scrollX,
+          y: window.scrollY,
+        },
+      }
       : {};
   return {
     timestamp,
@@ -140,7 +140,7 @@ export function useAiPathTrigger(): {
     product: { id: string } | null,
     event?: React.MouseEvent<HTMLButtonElement>
   ) => Promise<void>;
-} {
+  } {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 

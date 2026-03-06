@@ -78,9 +78,9 @@ export async function recoverStuckRuns(): Promise<void> {
     const resumePlanState =
       run.planState && typeof run.planState === 'object'
         ? {
-            ...(run.planState as Record<string, unknown>),
-            resumeRequestedAt: new Date().toISOString(),
-          }
+          ...(run.planState as Record<string, unknown>),
+          resumeRequestedAt: new Date().toISOString(),
+        }
         : { resumeRequestedAt: new Date().toISOString() };
     await prisma.chatbotAgentRun.update({
       where: { id: run.id },

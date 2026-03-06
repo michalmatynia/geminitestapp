@@ -33,7 +33,7 @@ const decodeXmlEntities = (value: string): string =>
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
+    .replace(/&apos;/g, '\'')
     .replace(/&amp;/g, '&');
 
 const escapeXml = (value: string): string =>

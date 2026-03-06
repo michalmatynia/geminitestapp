@@ -173,7 +173,7 @@ function ThemeSettingsPanelContent({
         }
       }
     },
-    [applyThemePatch, theme, themePresetOptions]
+  [applyThemePatch, theme, themePresetOptions]
   );
 
   return (

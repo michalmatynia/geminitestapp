@@ -249,7 +249,7 @@
       {
         "id": "wave_pilot_pages",
         "order": 2,
-        "description": "Enable kernel primary execution for pilot pages and node families.",
+        "description": "Enable kernel primary execution for runtime-kernel pages and node families.",
         "gateRefs": [
           "page_integration_stabilization"
         ]

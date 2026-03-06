@@ -82,11 +82,11 @@ export const buildCaseResolverNodeFileRelationIndex = ({
   );
   const validDocumentFileIds = files
     ? new Set(
-        files
-          .filter((file: CaseResolverFile): boolean => file.fileType !== 'case')
-          .map((file: CaseResolverFile): string => file.id.trim())
-          .filter(Boolean)
-      )
+      files
+        .filter((file: CaseResolverFile): boolean => file.fileType !== 'case')
+        .map((file: CaseResolverFile): string => file.id.trim())
+        .filter(Boolean)
+    )
     : null;
 
   const sourceByNode = normalizeRecord(graph.documentSourceFileIdByNode);

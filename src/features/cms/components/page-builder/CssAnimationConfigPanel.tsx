@@ -59,7 +59,7 @@ export function CssAnimationConfigPanel(): React.ReactNode {
               label: 'Replay when leaving/entering',
               type: 'checkbox',
             } as SettingsField<CssAnimationConfig>,
-          ]
+        ]
         : []),
       {
         key: 'duration',
@@ -130,7 +130,7 @@ export function CssAnimationConfigPanel(): React.ReactNode {
               max: 50,
               step: 1,
             } as SettingsField<CssAnimationConfig>,
-          ]
+        ]
         : []),
       {
         key: 'direction',

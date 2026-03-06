@@ -138,19 +138,19 @@ export function CaseResolverPageView(): React.JSX.Element {
   const menuToggleButton = !mounted
     ? null
     : createPortal(
-        <Button
-          size='xs'
-          type='button'
-          variant='outline'
-          onClick={(): void => setIsMenuCollapsed(!isMenuCollapsed)}
-          title={isMenuCollapsed ? 'Show side admin menu' : 'Hide side admin menu'}
-          aria-label={isMenuCollapsed ? 'Show side admin menu' : 'Hide side admin menu'}
-          className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2'
-        >
-          {isMenuCollapsed ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
-        </Button>,
-        document.body
-      );
+      <Button
+        size='xs'
+        type='button'
+        variant='outline'
+        onClick={(): void => setIsMenuCollapsed(!isMenuCollapsed)}
+        title={isMenuCollapsed ? 'Show side admin menu' : 'Hide side admin menu'}
+        aria-label={isMenuCollapsed ? 'Show side admin menu' : 'Hide side admin menu'}
+        className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2'
+      >
+        {isMenuCollapsed ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
+      </Button>,
+      document.body
+    );
 
   return (
     <CaseResolverRuntimeProvider

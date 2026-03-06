@@ -74,15 +74,15 @@ const normalizeComparableParameterValues = (
         typeof entry.valuesByLanguage === 'object' &&
         !Array.isArray(entry.valuesByLanguage)
           ? Object.entries(entry.valuesByLanguage).reduce(
-              (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
-                const normalizedLang = normalizeComparableString(lang).toLowerCase();
-                const normalizedValue = normalizeComparableString(value);
-                if (!normalizedLang || !normalizedValue) return acc;
-                acc[normalizedLang] = normalizedValue;
-                return acc;
-              },
+            (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
+              const normalizedLang = normalizeComparableString(lang).toLowerCase();
+              const normalizedValue = normalizeComparableString(value);
+              if (!normalizedLang || !normalizedValue) return acc;
+              acc[normalizedLang] = normalizedValue;
+              return acc;
+            },
               {} as Record<string, string>
-            )
+          )
           : {};
       const directValue = normalizeComparableString(entry.value);
       const fallbackLocalizedValue =

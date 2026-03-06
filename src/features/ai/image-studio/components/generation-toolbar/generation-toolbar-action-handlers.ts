@@ -114,11 +114,11 @@ const toCropDiagnosticsPayload = (
     mappedImageBounds: diagnostics.mappedImageBounds ?? null,
     imageContentFrame: diagnostics.imageContentFrame
       ? {
-          x: diagnostics.imageContentFrame.x,
-          y: diagnostics.imageContentFrame.y,
-          width: diagnostics.imageContentFrame.width,
-          height: diagnostics.imageContentFrame.height,
-        }
+        x: diagnostics.imageContentFrame.x,
+        y: diagnostics.imageContentFrame.y,
+        width: diagnostics.imageContentFrame.width,
+        height: diagnostics.imageContentFrame.height,
+      }
       : null,
     usedImageContentFrameMapping: diagnostics.usedImageContentFrameMapping,
   };
@@ -384,11 +384,11 @@ export const createGenerationToolbarActionHandlers = (
         effectiveStrategy === 'target_resolution'
           ? `${response.targetWidth ?? fallbackTargetWidth}x${response.targetHeight ?? fallbackTargetHeight}`
           : `${Number(
-              (
-                response.scale ??
+            (
+              response.scale ??
                 (upscaleRequestPayload.strategy === 'scale' ? upscaleRequestPayload.scale : 2)
-              ).toFixed(2)
-            )}x`;
+            ).toFixed(2)
+          )}x`;
       const createdLabel = response.slot?.name?.trim() || `Upscale ${upscaleLabel}`;
       deps.toast(`Created ${createdLabel} (${modeLabel} upscale).`, { variant: 'success' });
     } catch (error) {

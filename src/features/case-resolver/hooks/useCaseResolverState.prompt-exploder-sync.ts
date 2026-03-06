@@ -203,12 +203,12 @@ const buildPromptExploderPayloadKey = (payload: PromptExploderBridgePayload): st
   payload.transferId?.trim()
     ? payload.transferId.trim()
     : [
-        normalizePayloadCreatedAt(payload.createdAt),
-        payload.caseResolverContext?.fileId ?? '',
-        payload.prompt,
-        JSON.stringify(payload.caseResolverParties ?? null),
-        JSON.stringify(payload.caseResolverMetadata ?? null),
-      ].join('|');
+      normalizePayloadCreatedAt(payload.createdAt),
+      payload.caseResolverContext?.fileId ?? '',
+      payload.prompt,
+      JSON.stringify(payload.caseResolverParties ?? null),
+      JSON.stringify(payload.caseResolverMetadata ?? null),
+    ].join('|');
 
 export const resolvePromptExploderPendingPayloadIdentity = (
   payload: Pick<

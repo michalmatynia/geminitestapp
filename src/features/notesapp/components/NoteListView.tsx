@@ -114,8 +114,8 @@ export function NoteListView(): React.JSX.Element {
               <span className='text-xs'>
                 {selectedFolderThemeId
                   ? themeGroups
-                      .flatMap((g) => g.options)
-                      .find((o) => o.key === selectedFolderThemeId)?.label
+                    .flatMap((g) => g.options)
+                    .find((o) => o.key === selectedFolderThemeId)?.label
                   : 'Select theme'}
               </span>
             }

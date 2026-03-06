@@ -101,16 +101,16 @@ async function POST_handler(
     const resumePlanState =
       run.planState && typeof run.planState === 'object'
         ? {
-            ...(run.planState as Record<string, unknown>),
-            resumeRequestedAt: new Date().toISOString(),
-            ...(nextPrompt ? { promptUpdatedAt: new Date().toISOString() } : {}),
-            ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
-          }
+          ...(run.planState as Record<string, unknown>),
+          resumeRequestedAt: new Date().toISOString(),
+          ...(nextPrompt ? { promptUpdatedAt: new Date().toISOString() } : {}),
+          ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
+        }
         : {
-            resumeRequestedAt: new Date().toISOString(),
-            ...(nextPrompt ? { promptUpdatedAt: new Date().toISOString() } : {}),
-            ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
-          };
+          resumeRequestedAt: new Date().toISOString(),
+          ...(nextPrompt ? { promptUpdatedAt: new Date().toISOString() } : {}),
+          ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
+        };
     const updated = await prisma.chatbotAgentRun.update({
       where: { id: runId },
       data: {
@@ -247,7 +247,7 @@ async function POST_handler(
                 typeof step === 'object' &&
                 (step as { status?: string }).status !== 'completed'
             ) as { id?: string } | undefined
-          )?.id ?? null)
+        )?.id ?? null)
         : body.stepId;
     const now = new Date().toISOString();
     const nextPlanState = {

@@ -64,12 +64,12 @@ export const parseFolderTreeUiStateV2Entry = (
   }
   const expandedNodeIds = Array.isArray(rawExpandedNodeIds)
     ? Array.from(
-        new Set(
-          rawExpandedNodeIds
-            .map((value: unknown): string => (typeof value === 'string' ? value.trim() : ''))
-            .filter(Boolean)
-        )
+      new Set(
+        rawExpandedNodeIds
+          .map((value: unknown): string => (typeof value === 'string' ? value.trim() : ''))
+          .filter(Boolean)
       )
+    )
     : [];
   const panelCollapsed = record['panelCollapsed'];
   if (panelCollapsed !== undefined && typeof panelCollapsed !== 'boolean') {

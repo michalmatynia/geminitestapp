@@ -10,7 +10,7 @@ import {
 
 type RuntimeMode = 'legacy_adapter' | 'code_object_v3';
 
-const buildPilotNodes = (value: unknown): AiNode[] => [
+const buildKernelNodes = (value: unknown): AiNode[] => [
   {
     id: 'node-constant',
     type: 'constant',
@@ -57,7 +57,7 @@ const buildPilotNodes = (value: unknown): AiNode[] => [
   } as AiNode,
 ];
 
-const buildPilotEdges = (): Edge[] => [
+const buildKernelEdges = (): Edge[] => [
   {
     id: 'edge-constant-math',
     from: 'node-constant',
@@ -74,7 +74,7 @@ const buildPilotEdges = (): Edge[] => [
   },
 ];
 
-const buildTransformPilotNodes = (title: string): AiNode[] => [
+const buildTransformKernelNodes = (title: string): AiNode[] => [
   {
     id: 'node-constant',
     type: 'constant',
@@ -820,7 +820,7 @@ const buildTransformPilotNodes = (title: string): AiNode[] => [
   } as AiNode,
 ];
 
-const buildTransformPilotEdges = (): Edge[] => [
+const buildTransformKernelEdges = (): Edge[] => [
   {
     id: 'edge-constant-parser',
     from: 'node-constant',
@@ -1681,14 +1681,14 @@ const stripRuntimeTelemetry = (
   );
 };
 
-const runPilotPath = async (mode: RuntimeMode, value: unknown) => {
-  const nodes = buildPilotNodes(value);
-  const edges = buildPilotEdges();
+const runKernelPath = async (mode: RuntimeMode, value: unknown) => {
+  const nodes = buildKernelNodes(value);
+  const edges = buildKernelEdges();
   const profileNodeEvents: Array<Record<string, unknown>> = [];
 
   const runtimeKernel = createNodeRuntimeKernel({
     resolveLegacyHandler: (nodeType: string) => pilotHandlers[nodeType] ?? null,
-    ...(mode === 'legacy_adapter' ? { v3PilotNodeTypes: [] } : {}),
+    ...(mode === 'legacy_adapter' ? { runtimeKernelNodeTypes: [] } : {}),
   });
 
   const result = await evaluateGraphInternal(nodes, edges, {
@@ -1713,14 +1713,14 @@ const runPilotPath = async (mode: RuntimeMode, value: unknown) => {
   };
 };
 
-const runTransformPilotPath = async (mode: RuntimeMode, title: string) => {
-  const nodes = buildTransformPilotNodes(title);
-  const edges = buildTransformPilotEdges();
+const runTransformKernelPath = async (mode: RuntimeMode, title: string) => {
+  const nodes = buildTransformKernelNodes(title);
+  const edges = buildTransformKernelEdges();
   const profileNodeEvents: Array<Record<string, unknown>> = [];
 
   const runtimeKernel = createNodeRuntimeKernel({
     resolveLegacyHandler: (nodeType: string) => pilotHandlers[nodeType] ?? null,
-    ...(mode === 'legacy_adapter' ? { v3PilotNodeTypes: [] } : {}),
+    ...(mode === 'legacy_adapter' ? { runtimeKernelNodeTypes: [] } : {}),
   });
 
   const result = await evaluateGraphInternal(nodes, edges, {
@@ -1746,10 +1746,10 @@ const runTransformPilotPath = async (mode: RuntimeMode, title: string) => {
   };
 };
 
-describe('engine-core v3 pilot dual-run parity', () => {
-  it('keeps outputs and node statuses identical for numeric pilot path', async () => {
-    const legacy = await runPilotPath('legacy_adapter', 7);
-    const v3 = await runPilotPath('code_object_v3', 7);
+describe('engine-core runtime-kernel dual-run parity', () => {
+  it('keeps outputs and node statuses identical for numeric runtime-kernel path', async () => {
+    const legacy = await runKernelPath('legacy_adapter', 7);
+    const v3 = await runKernelPath('code_object_v3', 7);
 
     expect(legacy.result.status).toBe('completed');
     expect(v3.result.status).toBe('completed');
@@ -1785,8 +1785,8 @@ describe('engine-core v3 pilot dual-run parity', () => {
   });
 
   it('keeps outputs and node statuses identical for non-numeric fallback path', async () => {
-    const legacy = await runPilotPath('legacy_adapter', 'abc');
-    const v3 = await runPilotPath('code_object_v3', 'abc');
+    const legacy = await runKernelPath('legacy_adapter', 'abc');
+    const v3 = await runKernelPath('code_object_v3', 'abc');
 
     expect(legacy.result.status).toBe('completed');
     expect(v3.result.status).toBe('completed');
@@ -1800,9 +1800,9 @@ describe('engine-core v3 pilot dual-run parity', () => {
     expect(v3.result.outputs['node-template']?.['prompt']).toBe('sum=abc');
   });
 
-  it('keeps outputs, statuses, and strategy telemetry identical for transform pilot path', async () => {
-    const legacy = await runTransformPilotPath('legacy_adapter', 'Wave A Kernel');
-    const v3 = await runTransformPilotPath('code_object_v3', 'Wave A Kernel');
+  it('keeps outputs, statuses, and strategy telemetry identical for transform runtime-kernel path', async () => {
+    const legacy = await runTransformKernelPath('legacy_adapter', 'Wave A Kernel');
+    const v3 = await runTransformKernelPath('code_object_v3', 'Wave A Kernel');
 
     expect(legacy.result.status).toBe('completed');
     expect(v3.result.status).toBe('completed');

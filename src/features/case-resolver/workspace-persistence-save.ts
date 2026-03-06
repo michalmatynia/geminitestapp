@@ -139,79 +139,51 @@ export const compactCaseResolverWorkspaceForPersist = (
   type PersistedHistoryEntry = CaseResolverWorkspace['files'][number]['documentHistory'][number];
   const compactedFiles = Array.isArray(workspace.files)
     ? workspace.files.map((file): CaseResolverWorkspace['files'][number] => {
-        const fileRecord = file as unknown as Record<string, unknown>;
-        const isScanFile = file.fileType === 'scanfile';
-        const rawHistory = fileRecord['documentHistory'];
-        const compactedHistory: PersistedHistoryEntry[] = Array.isArray(rawHistory)
-          ? rawHistory
-              .slice(0, CASE_RESOLVER_WORKSPACE_PERSISTED_HISTORY_LIMIT)
-              .filter(
-                (entry: unknown): entry is Record<string, unknown> =>
-                  Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
-              )
-              .map((entryRecord): PersistedHistoryEntry => {
-                const rest = { ...entryRecord };
-                // Keep history snapshots lightweight in persisted workspace.
-                delete rest['changes'];
-                delete rest['timestamp'];
-                delete rest['documentId'];
-                delete rest['userId'];
-                delete rest['action'];
-                if (isScanFile) {
-                  delete rest['documentContent'];
-                  delete rest['documentContentHtml'];
-                  delete rest['documentContentPlainText'];
-                } else {
-                  const htmlValue =
+      const fileRecord = file as unknown as Record<string, unknown>;
+      const isScanFile = file.fileType === 'scanfile';
+      const rawHistory = fileRecord['documentHistory'];
+      const compactedHistory: PersistedHistoryEntry[] = Array.isArray(rawHistory)
+        ? rawHistory
+          .slice(0, CASE_RESOLVER_WORKSPACE_PERSISTED_HISTORY_LIMIT)
+          .filter(
+            (entry: unknown): entry is Record<string, unknown> =>
+              Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
+          )
+          .map((entryRecord): PersistedHistoryEntry => {
+            const rest = { ...entryRecord };
+            // Keep history snapshots lightweight in persisted workspace.
+            delete rest['changes'];
+            delete rest['timestamp'];
+            delete rest['documentId'];
+            delete rest['userId'];
+            delete rest['action'];
+            if (isScanFile) {
+              delete rest['documentContent'];
+              delete rest['documentContentHtml'];
+              delete rest['documentContentPlainText'];
+            } else {
+              const htmlValue =
                     typeof rest['documentContentHtml'] === 'string'
                       ? rest['documentContentHtml']
                       : '';
-                  if (htmlValue.trim().length > 0) {
-                    delete rest['documentContent'];
-                  }
-                  delete rest['documentContentMarkdown'];
-                  delete rest['documentContentPlainText'];
-                }
-                return rest as unknown as PersistedHistoryEntry;
-              })
-          : [];
-        if (isScanFile) {
-          const {
-            documentContent: _content,
-            documentContentHtml: _html,
-            documentContentPlainText: _plainText,
-            originalDocumentContent: _original,
-            explodedDocumentContent: _exploded,
-            ...fileRest
-          } = file;
-          const compactedFile = {
-            ...fileRest,
-          } as CaseResolverWorkspace['files'][number];
-          if (compactedHistory.length > 0) {
-            compactedFile.documentHistory = compactedHistory;
-          }
-          if (
-            Array.isArray(compactedFile.documentConversionWarnings) &&
-            compactedFile.documentConversionWarnings.length === 0
-          ) {
-            delete (compactedFile as unknown as Record<string, unknown>)[
-              'documentConversionWarnings'
-            ];
-          }
-          return compactedFile;
-        }
+              if (htmlValue.trim().length > 0) {
+                delete rest['documentContent'];
+              }
+              delete rest['documentContentMarkdown'];
+              delete rest['documentContentPlainText'];
+            }
+            return rest as unknown as PersistedHistoryEntry;
+          })
+        : [];
+      if (isScanFile) {
         const {
-          documentContentMarkdown: _markdown,
+          documentContent: _content,
+          documentContentHtml: _html,
           documentContentPlainText: _plainText,
+          originalDocumentContent: _original,
+          explodedDocumentContent: _exploded,
           ...fileRest
         } = file;
-        if (
-          typeof file.documentContentHtml === 'string' &&
-          file.documentContentHtml.trim().length > 0 &&
-          'documentContent' in fileRest
-        ) {
-          delete (fileRest as unknown as Record<string, unknown>)['documentContent'];
-        }
         const compactedFile = {
           ...fileRest,
         } as CaseResolverWorkspace['files'][number];
@@ -220,31 +192,59 @@ export const compactCaseResolverWorkspaceForPersist = (
         }
         if (
           Array.isArray(compactedFile.documentConversionWarnings) &&
-          compactedFile.documentConversionWarnings.length === 0
+            compactedFile.documentConversionWarnings.length === 0
         ) {
           delete (compactedFile as unknown as Record<string, unknown>)[
             'documentConversionWarnings'
           ];
         }
         return compactedFile;
-      })
+      }
+      const {
+        documentContentMarkdown: _markdown,
+        documentContentPlainText: _plainText,
+        ...fileRest
+      } = file;
+      if (
+        typeof file.documentContentHtml === 'string' &&
+          file.documentContentHtml.trim().length > 0 &&
+          'documentContent' in fileRest
+      ) {
+        delete (fileRest as unknown as Record<string, unknown>)['documentContent'];
+      }
+      const compactedFile = {
+        ...fileRest,
+      } as CaseResolverWorkspace['files'][number];
+      if (compactedHistory.length > 0) {
+        compactedFile.documentHistory = compactedHistory;
+      }
+      if (
+        Array.isArray(compactedFile.documentConversionWarnings) &&
+          compactedFile.documentConversionWarnings.length === 0
+      ) {
+        delete (compactedFile as unknown as Record<string, unknown>)[
+          'documentConversionWarnings'
+        ];
+      }
+      return compactedFile;
+    })
     : workspace.files;
 
   const compactedAssets = Array.isArray(workspace.assets)
     ? workspace.assets.map((asset): CaseResolverWorkspace['assets'][number] => {
-        if (asset.kind !== 'node_file') return asset;
-        if (typeof asset.textContent === 'string' && asset.textContent.trim().length > 0) {
-          throw validationError('Case Resolver inline node-file snapshots are unsupported.', {
-            source: 'case_resolver.workspace',
-            assetId: asset.id,
-            reason: 'inline_node_file_snapshot_not_supported',
-          });
-        }
-        const { textContent: _textContent, ...assetRest } = asset;
-        return {
-          ...assetRest,
-        } as CaseResolverWorkspace['assets'][number];
-      })
+      if (asset.kind !== 'node_file') return asset;
+      if (typeof asset.textContent === 'string' && asset.textContent.trim().length > 0) {
+        throw validationError('Case Resolver inline node-file snapshots are unsupported.', {
+          source: 'case_resolver.workspace',
+          assetId: asset.id,
+          reason: 'inline_node_file_snapshot_not_supported',
+        });
+      }
+      const { textContent: _textContent, ...assetRest } = asset;
+      return {
+        ...assetRest,
+      } as CaseResolverWorkspace['assets'][number];
+    })
     : workspace.assets;
 
   return {
@@ -283,10 +283,10 @@ export const persistCaseResolverWorkspaceSnapshot = async (
   let workspaceForPersistPipeline =
     normalizedMutationId.length > 0 && normalizedWorkspace.lastMutationId !== normalizedMutationId
       ? {
-          ...normalizedWorkspace,
-          lastMutationId: normalizedMutationId,
-          lastMutationAt: normalizedWorkspace.lastMutationAt ?? new Date().toISOString(),
-        }
+        ...normalizedWorkspace,
+        lastMutationId: normalizedMutationId,
+        lastMutationAt: normalizedWorkspace.lastMutationAt ?? new Date().toISOString(),
+      }
       : normalizedWorkspace;
   const normalizationDiagnostics =
     getCaseResolverWorkspaceNormalizationDiagnostics(normalizedWorkspace);

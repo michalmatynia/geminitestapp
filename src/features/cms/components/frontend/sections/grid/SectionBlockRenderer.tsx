@@ -152,12 +152,12 @@ export function SectionBlockRenderer({ block }: { block: BlockInstance }): React
       const letters = (block.blocks ?? []).length
         ? (block.blocks ?? [])
         : Array.from(text).map(
-            (char: string, index: number): BlockInstance => ({
-              id: `text-atom-${block.id}-${index}`,
-              type: 'TextAtomLetter',
-              settings: { textContent: char },
-            })
-          );
+          (char: string, index: number): BlockInstance => ({
+            id: `text-atom-${block.id}-${index}`,
+            type: 'TextAtomLetter',
+            settings: { textContent: char },
+          })
+        );
 
       const justifyContent =
         alignment === 'center' ? 'center' : alignment === 'right' ? 'flex-end' : 'flex-start';

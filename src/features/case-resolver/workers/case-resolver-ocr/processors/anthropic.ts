@@ -20,22 +20,22 @@ export const runAnthropicOcrRequest = async (input: {
         typeof input.base64Image === 'string'
           ? input.prompt
           : buildOcrPromptContent({
-              prompt: input.prompt,
-              filepath: input.filepath,
-              extractedDocumentText: input.extractedDocumentText,
-            }),
+            prompt: input.prompt,
+            filepath: input.filepath,
+            extractedDocumentText: input.extractedDocumentText,
+          }),
     },
     ...(typeof input.base64Image === 'string' && input.base64Image.length > 0
       ? [
-          {
-            type: 'image',
-            source: {
-              type: 'base64',
-              media_type: input.mimeType || 'image/jpeg',
-              data: input.base64Image,
-            },
+        {
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: input.mimeType || 'image/jpeg',
+            data: input.base64Image,
           },
-        ]
+        },
+      ]
       : []),
   ];
   const response = await fetchWithTimeout(

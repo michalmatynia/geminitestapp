@@ -11,16 +11,16 @@ This scaffold introduces a portable package wrapper around semantic canvas JSON 
 Runtime dispatch now has a kernel scaffold (`src/shared/lib/ai-paths/core/runtime/node-runtime-kernel.ts`) with staged strategies:
 
 - `legacy_adapter` (current default execution path)
-- `code_object_v3` (pilot migration strategy)
+- `code_object_v3` (runtime-kernel migration strategy)
 
-Pilot node types now cover all registered node types (36 total), and server runtime resolves their `code_object_v3` contracts via native handler registry mappings declared in `docs/ai-paths/node-code-objects-v3/contracts.json`.
+Runtime-kernel node types now cover all registered node types (36 total), and server runtime resolves their `code_object_v3` contracts via native handler registry mappings declared in `docs/ai-paths/node-code-objects-v3/contracts.json`.
 
 ## Node Migration Documentation (v3)
 
 Migration planning and rollout status are tracked in generated node-doc artifacts:
 
-- `docs/ai-paths/node-code-objects-v3/index.json` (pilot executable object index)
-- `docs/ai-paths/node-code-objects-v3/contracts.json` (pilot contract hash catalog)
+- `docs/ai-paths/node-code-objects-v3/index.json` (runtime-kernel executable object index)
+- `docs/ai-paths/node-code-objects-v3/contracts.json` (runtime-kernel contract hash catalog)
 - `docs/ai-paths/node-code-objects-v3/migration-index.json` (all-node migration matrix)
 - `docs/ai-paths/node-code-objects-v3/MIGRATION_GUIDE.md` (migration workflow)
 - `docs/ai-paths/node-code-objects-v3/nodes/<nodeType>.md` (per-node sheets)

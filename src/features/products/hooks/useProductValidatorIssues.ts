@@ -183,11 +183,11 @@ export const useProductValidatorIssues = ({
     () =>
       validatorEnabled
         ? buildFieldIssues({
-            values,
-            patterns,
-            latestProductValues,
-            validationScope,
-          })
+          values,
+          patterns,
+          latestProductValues,
+          validationScope,
+        })
         : ({} as Record<string, FieldValidatorIssue[]>),
     [latestProductValues, patterns, validationScope, validatorEnabled, values]
   );

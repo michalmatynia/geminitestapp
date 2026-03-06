@@ -150,7 +150,8 @@ Runtime-kernel nodes are required to have parity-evidence suite coverage; missin
 Dual-run parity suite for approved kernel nodes:
 
 ```bash
-npm run test:ai-paths:v3-pilot-parity
+npm run test:ai-paths:runtime-kernel-parity
+
 ```
 
 Runtime-kernel parity-evidence coverage regression suite:

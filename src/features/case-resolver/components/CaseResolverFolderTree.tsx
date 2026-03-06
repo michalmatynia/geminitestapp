@@ -343,8 +343,8 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
               if (draggedNode && isCaseResolverVirtualSectionNode(draggedNode)) return false;
               const targetNode = targetId
                 ? controller.nodes.find(
-                    (candidate: MasterTreeNode): boolean => candidate.id === targetId
-                  )
+                  (candidate: MasterTreeNode): boolean => candidate.id === targetId
+                )
                 : null;
               if (targetNode && isCaseResolverVirtualSectionNode(targetNode)) return false;
               if (defaultAllowed) return true;

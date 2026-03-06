@@ -351,10 +351,10 @@ export const mapLinkedMaskSlots = (
         typeof metadata['sourceSlotId'] === 'string' ? metadata['sourceSlotId'].trim() : '';
       const sourceSlotIds = Array.isArray(metadata['sourceSlotIds'])
         ? (metadata['sourceSlotIds'] as unknown[])
-            .filter(
-              (value): value is string => typeof value === 'string' && value.trim().length > 0
-            )
-            .map((value: string) => value.trim())
+          .filter(
+            (value): value is string => typeof value === 'string' && value.trim().length > 0
+          )
+          .map((value: string) => value.trim())
         : [];
       const linkedToSelected =
         sourceSlotId === normalizedSelectedSlotId ||

@@ -37,18 +37,18 @@ const readQueueHealthSnapshot = async () => {
   return aiPathRunQueueState.workerStarted
     ? await queue.getHealthStatus()
     : {
-        running: false,
-        healthy: false,
-        processing: false,
-        activeCount: 0,
-        waitingCount: 0,
-        failedCount: 0,
-        completedCount: 0,
-        delayedCount: 0,
-        pausedCount: 0,
-        lastPollTime: 0,
-        timeSinceLastPoll: 0,
-      };
+      running: false,
+      healthy: false,
+      processing: false,
+      activeCount: 0,
+      waitingCount: 0,
+      failedCount: 0,
+      completedCount: 0,
+      delayedCount: 0,
+      pausedCount: 0,
+      lastPollTime: 0,
+      timeSinceLastPoll: 0,
+    };
 };
 
 const readAiPathRunQueueBaseStatus = async (

@@ -45,9 +45,9 @@ export const formatStatusLabel = (status: string): string =>
     : status === 'advance_pending'
       ? 'Processing'
       : status
-          .split('_')
-          .map((part: string) => (part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part))
-          .join(' ');
+        .split('_')
+        .map((part: string) => (part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part))
+        .join(' ');
 
 export const statusToVariant = (status: string): StatusVariant => {
   const s = status.toLowerCase();

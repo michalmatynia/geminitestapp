@@ -472,12 +472,12 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
                   setDraft((prev) =>
                     prev
                       ? {
-                          ...prev,
-                          ai: {
-                            ...prev.ai,
-                            operationMode: value as PromptExploderOperationMode,
-                          },
-                        }
+                        ...prev,
+                        ai: {
+                          ...prev.ai,
+                          operationMode: value as PromptExploderOperationMode,
+                        },
+                      }
                       : null
                   );
                 }}

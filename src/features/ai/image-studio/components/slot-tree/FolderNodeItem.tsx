@@ -86,14 +86,14 @@ export function FolderNodeItem(props: FolderNodeItemProps): React.JSX.Element | 
         },
         ...(allowMoveFolderToRoot
           ? [
-              {
-                id: 'move-folder-root',
-                label: 'Move to root',
-                onSelect: (): void => {
-                  void onMoveFolder(folderPath, '');
-                },
+            {
+              id: 'move-folder-root',
+              label: 'Move to root',
+              onSelect: (): void => {
+                void onMoveFolder(folderPath, '');
               },
-            ]
+            },
+          ]
           : []),
       ]}
     >

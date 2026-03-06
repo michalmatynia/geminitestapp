@@ -63,7 +63,7 @@ describe('node migration parity evidence', () => {
     });
 
     const suite = summary.suites.find(
-      (entry) => entry.suiteId === 'v3-pilot-product-trigger-queue-e2e'
+      (entry) => entry.suiteId === 'runtime-kernel-product-trigger-queue-e2e'
     );
     expect(suite).toBeTruthy();
     expect(suite?.testFile).toBe('e2e/features/products/products-trigger-queue-integration.spec.ts');

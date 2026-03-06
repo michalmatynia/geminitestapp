@@ -47,20 +47,20 @@ const COLOR_SCHEME_FALLBACK = [{ label: 'Custom colors', value: 'custom' }];
 
 const FONT_FAMILY_OPTIONS = [
   { label: 'Inter', value: 'Inter, sans-serif' },
-  { label: 'Bebas Neue', value: "'Bebas Neue', sans-serif" },
-  { label: 'Space Grotesk', value: "'Space Grotesk', sans-serif" },
+  { label: 'Bebas Neue', value: '\'Bebas Neue\', sans-serif' },
+  { label: 'Space Grotesk', value: '\'Space Grotesk\', sans-serif' },
   { label: 'Manrope', value: 'Manrope, sans-serif' },
   { label: 'Outfit', value: 'Outfit, sans-serif' },
-  { label: 'Plus Jakarta Sans', value: "'Plus Jakarta Sans', sans-serif" },
-  { label: 'DM Sans', value: "'DM Sans', sans-serif" },
+  { label: 'Plus Jakarta Sans', value: '\'Plus Jakarta Sans\', sans-serif' },
+  { label: 'DM Sans', value: '\'DM Sans\', sans-serif' },
   { label: 'Sora', value: 'Sora, sans-serif' },
   { label: 'Arial', value: 'Arial, sans-serif' },
   { label: 'Georgia', value: 'Georgia, serif' },
-  { label: 'Times New Roman', value: "'Times New Roman', serif" },
-  { label: 'Courier New', value: "'Courier New', monospace" },
+  { label: 'Times New Roman', value: '\'Times New Roman\', serif' },
+  { label: 'Courier New', value: '\'Courier New\', monospace' },
   { label: 'Verdana', value: 'Verdana, sans-serif' },
-  { label: 'Trebuchet MS', value: "'Trebuchet MS', sans-serif" },
-  { label: 'Palatino', value: "'Palatino Linotype', serif" },
+  { label: 'Trebuchet MS', value: '\'Trebuchet MS\', sans-serif' },
+  { label: 'Palatino', value: '\'Palatino Linotype\', serif' },
   { label: 'System UI', value: 'system-ui, sans-serif' },
 ];
 
@@ -213,7 +213,7 @@ export function MenuSettingsPanel({
                     label: 'Collapsed by default',
                     type: 'checkbox',
                   } as SettingsField<MenuSettings>,
-                ]
+              ]
               : []),
             ...(settings.menuPlacement === 'left' || settings.menuPlacement === 'right'
               ? [
@@ -225,7 +225,7 @@ export function MenuSettingsPanel({
                     max: 420,
                     suffix: 'px',
                   } as SettingsField<MenuSettings>,
-                ]
+              ]
               : []),
             ...(settings.collapsible
               ? [
@@ -237,7 +237,7 @@ export function MenuSettingsPanel({
                     max: 120,
                     suffix: 'px',
                   } as SettingsField<MenuSettings>,
-                ]
+              ]
               : []),
           ];
 
@@ -288,7 +288,7 @@ export function MenuSettingsPanel({
                     max: 48,
                     suffix: 'px',
                   } as SettingsField<MenuSettings>,
-                ]
+              ]
               : []),
           ];
 
@@ -345,11 +345,11 @@ export function MenuSettingsPanel({
             },
             ...(menuColorSchemeId === 'custom'
               ? ([
-                  { key: 'backgroundColor', label: 'Background', type: 'color' },
-                  { key: 'textColor', label: 'Text color', type: 'color' },
-                  { key: 'activeItemColor', label: 'Active item', type: 'color' },
-                  { key: 'borderColor', label: 'Border', type: 'color' },
-                ] as SettingsField<MenuSettings>[])
+                { key: 'backgroundColor', label: 'Background', type: 'color' },
+                { key: 'textColor', label: 'Text color', type: 'color' },
+                { key: 'activeItemColor', label: 'Active item', type: 'color' },
+                { key: 'borderColor', label: 'Border', type: 'color' },
+              ] as SettingsField<MenuSettings>[])
               : []),
           ];
 
@@ -474,34 +474,34 @@ export function MenuSettingsPanel({
             },
             ...(isSticky
               ? ([
-                  {
-                    key: 'stickyOffset',
-                    label: 'Sticky offset',
-                    type: 'number',
-                    min: 0,
-                    max: 200,
-                    suffix: 'px',
-                  },
-                  { key: 'shrinkOnScroll', label: 'Shrink on scroll', type: 'checkbox' },
-                  { key: 'stickyBackground', label: 'Sticky background', type: 'color' },
-                ] as SettingsField<MenuSettings>[])
+                {
+                  key: 'stickyOffset',
+                  label: 'Sticky offset',
+                  type: 'number',
+                  min: 0,
+                  max: 200,
+                  suffix: 'px',
+                },
+                { key: 'shrinkOnScroll', label: 'Shrink on scroll', type: 'checkbox' },
+                { key: 'stickyBackground', label: 'Sticky background', type: 'color' },
+              ] as SettingsField<MenuSettings>[])
               : []),
             ...(canHideOnScroll
               ? ([
-                  { key: 'hideOnScroll', label: 'Hide on scroll', type: 'checkbox' },
-                  ...(settings.hideOnScroll
-                    ? ([
-                        {
-                          key: 'showOnScrollUpAfterPx',
-                          label: 'Show on scroll up after',
-                          type: 'number',
-                          min: 0,
-                          max: 600,
-                          suffix: 'px',
-                        },
-                      ] as SettingsField<MenuSettings>[])
-                    : []),
-                ] as SettingsField<MenuSettings>[])
+                { key: 'hideOnScroll', label: 'Hide on scroll', type: 'checkbox' },
+                ...(settings.hideOnScroll
+                  ? ([
+                    {
+                      key: 'showOnScrollUpAfterPx',
+                      label: 'Show on scroll up after',
+                      type: 'number',
+                      min: 0,
+                      max: 600,
+                      suffix: 'px',
+                    },
+                  ] as SettingsField<MenuSettings>[])
+                  : []),
+              ] as SettingsField<MenuSettings>[])
               : []),
           ];
         }

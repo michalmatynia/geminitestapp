@@ -87,26 +87,26 @@ export function CaseResolverRuntimeProvider({
       }
       const nextWorkspaceSlice = isWorkspaceChanged
         ? {
-            value: workspace,
-            revision: workspaceRevision,
-            isHydrated: workspace.files.length > 0 || workspace.assets.length > 0,
-          }
+          value: workspace,
+          revision: workspaceRevision,
+          isHydrated: workspace.files.length > 0 || workspace.assets.length > 0,
+        }
         : currentState.workspace;
       const nextSelectionSlice = isSelectionChanged
         ? {
-            selectedFileId,
-            selectedAssetId,
-            selectedFolderPath,
-            activeCaseId,
-          }
+          selectedFileId,
+          selectedAssetId,
+          selectedFolderPath,
+          activeCaseId,
+        }
         : currentState.selection;
       const nextRequestedContextSlice = isRequestedContextChanged
         ? {
-            ...currentState.requestedContext,
-            requestedFileId,
-            status: nextRequestedStatus,
-            issue: requestedContextIssue,
-          }
+          ...currentState.requestedContext,
+          requestedFileId,
+          status: nextRequestedStatus,
+          issue: requestedContextIssue,
+        }
         : currentState.requestedContext;
       return {
         ...currentState,

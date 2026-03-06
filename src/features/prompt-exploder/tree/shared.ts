@@ -40,7 +40,7 @@ export function usePromptExploderHandleOnlyDrag(): {
   releaseDragHandle: () => void;
   clearDragHandleArming: () => void;
   canStartHandleOnlyDrag: NonNullable<FolderTreeViewportV2Props['canStartDrag']>;
-} {
+  } {
   const dragHandleNodeIdRef = React.useRef<MasterTreeId | null>(null);
 
   const clearDragHandleArming = React.useCallback((): void => {

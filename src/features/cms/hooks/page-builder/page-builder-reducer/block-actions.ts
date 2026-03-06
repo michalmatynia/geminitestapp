@@ -50,9 +50,9 @@ export function reduceBlockActions(
       const updatedSections = state.sections.map((s: SectionInstance) =>
         s.id === action.sectionId
           ? {
-              ...s,
-              blocks: s.blocks.filter((b: BlockInstance) => b.id !== action.blockId),
-            }
+            ...s,
+            blocks: s.blocks.filter((b: BlockInstance) => b.id !== action.blockId),
+          }
           : s
       );
       return {
@@ -66,13 +66,13 @@ export function reduceBlockActions(
       const updatedSections = state.sections.map((s: SectionInstance) =>
         s.id === action.sectionId
           ? {
-              ...s,
-              blocks: s.blocks.map((b: BlockInstance) =>
-                b.id === action.blockId
-                  ? applyTextAtomSettings(b, { ...b.settings, ...action.settings })
-                  : b
-              ),
-            }
+            ...s,
+            blocks: s.blocks.map((b: BlockInstance) =>
+              b.id === action.blockId
+                ? applyTextAtomSettings(b, { ...b.settings, ...action.settings })
+                : b
+            ),
+          }
           : s
       );
       return { ...state, sections: updatedSections };

@@ -73,28 +73,28 @@ export async function executeTool(args: {
     toolResult =
       shouldInitializeBrowser || shouldRunExtraction
         ? await runAgentTool(
-            {
-              name: 'playwright',
-              input: {
-                prompt: toolPrompt,
-                browser: agentBrowser || 'chromium',
-                runId,
-                ...(typeof runHeadless === 'boolean' && {
-                  runHeadless: runHeadless,
-                }),
-                stepId: step.id,
-                stepLabel: step.title,
-              },
+          {
+            name: 'playwright',
+            input: {
+              prompt: toolPrompt,
+              browser: agentBrowser || 'chromium',
+              runId,
+              ...(typeof runHeadless === 'boolean' && {
+                runHeadless: runHeadless,
+              }),
+              stepId: step.id,
+              stepLabel: step.title,
             },
-            sharedBrowser ?? undefined,
-            sharedContext ?? undefined
-          )
+          },
+          sharedBrowser ?? undefined,
+          sharedContext ?? undefined
+        )
         : await runAgentBrowserControl({
-            runId,
-            action: 'snapshot',
-            stepId: step.id,
-            stepLabel: step.title,
-          });
+          runId,
+          action: 'snapshot',
+          stepId: step.id,
+          stepLabel: step.title,
+        });
   } catch (error) {
     toolError = error;
   } finally {

@@ -124,11 +124,11 @@ const buildOperationInsights = (
     entries.length < 2
       ? null
       : [...entries].sort((left, right) => {
-          if (left.averageAccuracy !== right.averageAccuracy) {
-            return left.averageAccuracy - right.averageAccuracy;
-          }
-          return right.attempts - left.attempts;
-        })[0]!;
+        if (left.averageAccuracy !== right.averageAccuracy) {
+          return left.averageAccuracy - right.averageAccuracy;
+        }
+        return right.attempts - left.attempts;
+      })[0]!;
 
   return {
     strongestOperation,

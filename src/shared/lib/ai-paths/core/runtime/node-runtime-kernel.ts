@@ -47,6 +47,7 @@ export const NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES = [
   'validator',
   'viewer',
 ] as const;
+/** @deprecated Use NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES. */
 export const NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES = NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES;
 
 export type NodeRuntimeKernelDescriptor = {
@@ -74,6 +75,7 @@ export type CreateNodeRuntimeKernelArgs = {
     | undefined;
   resolveOverrideHandler?: ((nodeType: string) => NodeHandler | null) | undefined;
   runtimeKernelNodeTypes?: readonly string[] | undefined;
+  /** @deprecated Use runtimeKernelNodeTypes. */
   v3PilotNodeTypes?: readonly string[] | undefined;
   mode?: NodeRuntimeKernelMode | undefined;
   runtimeKernelStrictNativeRegistry?: boolean | undefined;
@@ -95,6 +97,7 @@ export const isNodeRuntimeKernelCanonicalType = ({
   runtimeKernelNodeTypes: Set<string>;
 }): boolean => runtimeKernelNodeTypes.has(nodeType);
 
+/** @deprecated Use isNodeRuntimeKernelCanonicalType. */
 export const isNodeRuntimeKernelV3PilotType = ({
   nodeType,
   v3PilotNodeTypes,

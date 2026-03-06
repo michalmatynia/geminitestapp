@@ -66,8 +66,8 @@ function CssAiSection(): React.JSX.Element {
     if (!cssDiff) return [];
     return cssAiDiffOnly
       ? cssDiff.lines.filter(
-          (line: { type: 'add' | 'remove' | 'same'; text: string }) => line.type !== 'same'
-        )
+        (line: { type: 'add' | 'remove' | 'same'; text: string }) => line.type !== 'same'
+      )
       : cssDiff.lines;
   }, [cssDiff, cssAiDiffOnly]);
 

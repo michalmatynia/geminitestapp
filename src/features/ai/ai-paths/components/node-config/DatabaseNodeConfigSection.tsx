@@ -172,12 +172,12 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
         state.resolvedProvider === 'mongodb'
           ? formatAndFixMongoQuery(targetValue)
           : (() => {
-              try {
-                return JSON.stringify(JSON.parse(targetValue), null, 2);
-              } catch {
-                return targetValue;
-              }
-            })();
+            try {
+              return JSON.stringify(JSON.parse(targetValue), null, 2);
+            } catch {
+              return targetValue;
+            }
+          })();
       if (state.isUpdateAction) {
         state.updateSelectedNodeConfig({
           database: {

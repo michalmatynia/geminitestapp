@@ -214,7 +214,7 @@ export async function deleteTeachingAgent(agentId: string): Promise<boolean> {
 
 export async function listEmbeddingCollections(): Promise<
   AgentTeachingEmbeddingCollectionRecord[]
-> {
+  > {
   if (!isMongoAvailable()) return [];
   await ensureIndexesOnce();
   const db = await getMongoDb();

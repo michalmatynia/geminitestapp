@@ -316,11 +316,11 @@ function DraggableClock({
 
   const onMouseDown =
     (hand: Hand) =>
-    (event: ReactMouseEvent<SVGElement> | ReactTouchEvent<SVGElement>): void => {
-      event.preventDefault();
-      dragging.current = hand;
-      setActiveHand(hand);
-    };
+      (event: ReactMouseEvent<SVGElement> | ReactTouchEvent<SVGElement>): void => {
+        event.preventDefault();
+        dragging.current = hand;
+        setActiveHand(hand);
+      };
 
   const onMove = useCallback(
     (event: MouseEvent | TouchEvent): void => {

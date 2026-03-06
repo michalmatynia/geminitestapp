@@ -225,9 +225,9 @@ export function useCanvasStateHandlers(args: {
       const viewportRect = args.viewportRef.current?.getBoundingClientRect() ?? null;
       const viewport = viewportRect
         ? {
-            width: viewportRect.width,
-            height: viewportRect.height,
-          }
+          width: viewportRect.width,
+          height: viewportRect.height,
+        }
         : null;
       const scale = Number.isFinite(args.viewScale) && args.viewScale > 0 ? args.viewScale : 1;
       const clamped = clampTranslate(nextX, nextY, scale, viewport);

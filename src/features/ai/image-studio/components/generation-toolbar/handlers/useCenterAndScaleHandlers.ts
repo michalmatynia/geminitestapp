@@ -97,9 +97,9 @@ export function useCenterAndScaleHandlers(
             ? (await layoutCanvasImageObject(sourceForClientCenter, centerLayoutPayload)).dataUrl
             : centerMode === 'client_white_bg_bbox'
               ? await centerCanvasImageObjectWhiteBg(
-                  sourceForClientCenter,
-                  centerLayoutWhiteThresholdValue
-                )
+                sourceForClientCenter,
+                centerLayoutWhiteThresholdValue
+              )
               : await centerCanvasImageObject(sourceForClientCenter);
 
         const uploadBlob = await dataUrlToUploadBlob(centeredDataUrl);

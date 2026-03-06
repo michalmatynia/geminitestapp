@@ -20,22 +20,22 @@ export const runOpenAiOcrRequest = async (input: {
   const content: string | ChatCompletionContentPart[] =
     typeof input.base64Image === 'string' && input.base64Image.length > 0
       ? [
-          {
-            type: 'text' as const,
-            text: input.prompt,
+        {
+          type: 'text' as const,
+          text: input.prompt,
+        },
+        {
+          type: 'image_url' as const,
+          image_url: {
+            url: `data:${input.mimeType || 'image/jpeg'};base64,${input.base64Image}`,
           },
-          {
-            type: 'image_url' as const,
-            image_url: {
-              url: `data:${input.mimeType || 'image/jpeg'};base64,${input.base64Image}`,
-            },
-          },
-        ]
+        },
+      ]
       : buildOcrPromptContent({
-          prompt: input.prompt,
-          filepath: input.filepath,
-          extractedDocumentText: input.extractedDocumentText,
-        });
+        prompt: input.prompt,
+        filepath: input.filepath,
+        extractedDocumentText: input.extractedDocumentText,
+      });
   const messages = [
     {
       role: 'user' as const,

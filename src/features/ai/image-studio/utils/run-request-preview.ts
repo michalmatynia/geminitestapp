@@ -172,13 +172,13 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
   const mask: RunStudioPayload['mask'] =
     hasSourceAsset && eligibleShapes.length > 0
       ? {
-          type: 'polygons',
-          polygons: eligibleShapes.map((shape: VectorShape) =>
-            shape.points.map((point: { x: number; y: number }) => ({ x: point.x, y: point.y }))
-          ),
-          invert: maskInvert || undefined,
-          feather: maskFeather > 0 ? maskFeather : undefined,
-        }
+        type: 'polygons',
+        polygons: eligibleShapes.map((shape: VectorShape) =>
+          shape.points.map((point: { x: number; y: number }) => ({ x: point.x, y: point.y }))
+        ),
+        invert: maskInvert || undefined,
+        feather: maskFeather > 0 ? maskFeather : undefined,
+      }
       : null;
 
   const referenceSlots = (hasSourceAsset ? compositeAssetIds : [])
@@ -261,11 +261,11 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
     projectId: projectId.trim(),
     ...(hasSourceAsset
       ? {
-          asset: {
-            filepath: sourceFilepath,
-            ...(workingSlot?.id ? { id: workingSlot.id } : {}),
-          },
-        }
+        asset: {
+          filepath: sourceFilepath,
+          ...(workingSlot?.id ? { id: workingSlot.id } : {}),
+        },
+      }
       : {}),
     ...(hasSourceAsset && referenceAssets.length > 0 ? { referenceAssets } : {}),
     prompt: resolvedPrompt,

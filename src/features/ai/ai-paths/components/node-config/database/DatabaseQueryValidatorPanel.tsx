@@ -105,8 +105,8 @@ export function DatabaseQueryValidatorPanel(): React.JSX.Element | null {
           const aiNode =
             aiPromptEdges.length > 0
               ? nodes.find(
-                  (n: AiNode): boolean => n.id === aiPromptEdges[0]?.to && n.type === 'model'
-                )
+                (n: AiNode): boolean => n.id === aiPromptEdges[0]?.to && n.type === 'model'
+              )
               : null;
 
           if (!aiNode) return null;

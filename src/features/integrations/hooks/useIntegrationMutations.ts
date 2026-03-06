@@ -21,7 +21,7 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 export function useCreateIntegration(): MutationResult<
   Integration,
   { name: string; slug: string }
-> {
+  > {
   const mutationKey = QUERY_KEYS.integrations.all;
   return createMutationV2<Integration, { name: string; slug: string }>({
     mutationFn: (variables) => api.post<Integration>('/api/v2/integrations', variables),

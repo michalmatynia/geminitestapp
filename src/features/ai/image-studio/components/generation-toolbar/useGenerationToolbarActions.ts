@@ -119,15 +119,15 @@ export function useGenerationToolbarActions(
       const payloadMasks = variants.map(({ variant, inverted }) =>
         maskAttachMode === 'client_canvas_polygon'
           ? {
-              variant,
-              inverted,
-              dataUrl: renderMaskDataUrlFromPolygons(polygons, width, height, variant, inverted),
-            }
+            variant,
+            inverted,
+            dataUrl: renderMaskDataUrlFromPolygons(polygons, width, height, variant, inverted),
+          }
           : {
-              variant,
-              inverted,
-              polygons,
-            }
+            variant,
+            inverted,
+            polygons,
+          }
       );
 
       const response = await api.post<{

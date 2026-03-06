@@ -69,8 +69,8 @@ function ProductListingsModalContent(): React.JSX.Element {
   const filteredListings: ProductListingWithDetails[] = useMemo(() => {
     return filterIntegrationSlug
       ? listings.filter((listing: ProductListingWithDetails): boolean =>
-          matchesIntegrationSlug(listing.integration.slug, filterIntegrationSlug)
-        )
+        matchesIntegrationSlug(listing.integration.slug, filterIntegrationSlug)
+      )
       : listings;
   }, [listings, filterIntegrationSlug]);
 

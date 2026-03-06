@@ -60,7 +60,7 @@ const resolveEdgeMeta = (
 const decodeBasicHtmlEntities = (value: string): string =>
   value
     .replace(/&nbsp;/gi, ' ')
-    .replace(/&apos;|&#39;/gi, "'")
+    .replace(/&apos;|&#39;/gi, '\'')
     .replace(/&quot;/gi, '"')
     .replace(/&gt;/gi, '>')
     .replace(/&lt;/gi, '<')

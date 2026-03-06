@@ -104,7 +104,7 @@ Semantic/v2 generation in this pipeline also prunes stale per-node JSON artifact
 Run dual-run parity:
 
 ```bash
-npm run test:ai-paths:v3-pilot-parity
+npm run test:ai-paths:runtime-kernel-parity
 ```
 
 Run parity-evidence coverage regression:

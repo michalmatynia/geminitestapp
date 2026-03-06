@@ -27,7 +27,7 @@ type NodeMigrationIndexRow = {
   title: string;
   nodeFamily: string;
   runtimeStrategy: 'legacy_adapter' | 'code_object_v3';
-  migrationWave: 'pilot' | 'backlog';
+  migrationWave: 'runtime_kernel' | 'backlog';
   codeObjectId: string | null;
   ports: {
     inputs: string[];
@@ -387,7 +387,7 @@ for (const row of rows) {
     errors.push(`${nodeType}: runtimeStrategy mismatch (expected ${expectedStrategy}, got ${row.runtimeStrategy}).`);
   }
 
-  const expectedWave = isRuntimeKernelNodeType ? 'pilot' : 'backlog';
+  const expectedWave = isRuntimeKernelNodeType ? 'runtime_kernel' : 'backlog';
   if (row.migrationWave !== expectedWave) {
     errors.push(`${nodeType}: migrationWave mismatch (expected ${expectedWave}, got ${row.migrationWave}).`);
   }

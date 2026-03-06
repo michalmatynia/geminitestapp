@@ -154,7 +154,7 @@ describe('engine-core edge sanitization', () => {
       nodes,
       edges,
       reportAiPathsError: (): void => {},
-      runtimeKernelPilotNodeTypes: ['constant'],
+      runtimeKernelNodeTypes: ['constant'],
       resolveCodeObjectHandler,
     });
 
@@ -195,7 +195,7 @@ describe('engine-core edge sanitization', () => {
       nodes,
       edges,
       reportAiPathsError: (): void => {},
-      runtimeKernelPilotNodeTypes: ['constant'],
+      runtimeKernelNodeTypes: ['constant'],
     });
 
     expect(registeredConstantHandler).toHaveBeenCalledTimes(1);
@@ -237,7 +237,7 @@ describe('engine-core edge sanitization', () => {
       nodes,
       edges,
       reportAiPathsError: (): void => {},
-      runtimeKernelPilotNodeTypes: ['constant'],
+      runtimeKernelNodeTypes: ['constant'],
       runtimeKernelCodeObjectResolverIds: ['test.registry.selected'],
     });
 

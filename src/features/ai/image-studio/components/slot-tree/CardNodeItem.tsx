@@ -69,12 +69,12 @@ export function CardNodeItem(props: CardNodeItemProps): React.JSX.Element | null
         },
         ...(card.folderPath && allowMoveCardToRoot
           ? [
-              {
-                id: 'move-card-root',
-                label: 'Move to root',
-                onSelect: (): void => onMoveSlot(card, ''),
-              },
-            ]
+            {
+              id: 'move-card-root',
+              label: 'Move to root',
+              onSelect: (): void => onMoveSlot(card, ''),
+            },
+          ]
           : []),
         {
           id: 'delete-card',

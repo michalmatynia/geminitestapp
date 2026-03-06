@@ -594,7 +594,7 @@ describe('client native code-object registry contract subset', () => {
     });
   });
 
-  it('covers all client-supported pilot node types with native mappings', () => {
+  it('covers all client-supported runtime-kernel node types with native mappings', () => {
     const byNodeType = readNativeContractCodeObjectIdByNodeType();
     const clientNativeIdSet = new Set<string>(CLIENT_NATIVE_CODE_OBJECT_HANDLER_IDS);
     const missingNodeTypes = CLIENT_LEGACY_HANDLER_NODE_TYPES.filter(
@@ -624,7 +624,7 @@ describe('client native code-object registry contract subset', () => {
     const result = await evaluateGraphClient({
       nodes: [buildPromptNode()],
       edges: [],
-      runtimeKernelPilotNodeTypes: ['prompt'],
+      runtimeKernelNodeTypes: ['prompt'],
       reportAiPathsError: (): void => {},
     });
 
@@ -647,7 +647,7 @@ describe('client native code-object registry contract subset', () => {
           kind: 'value',
         },
       ],
-      runtimeKernelPilotNodeTypes: ['prompt', 'model'],
+      runtimeKernelNodeTypes: ['prompt', 'model'],
       reportAiPathsError: (): void => {},
     });
 
@@ -669,7 +669,7 @@ describe('client native code-object registry contract subset', () => {
     const result = await evaluateGraphClient({
       nodes: [buildModelNode()],
       edges: [],
-      runtimeKernelPilotNodeTypes: ['model'],
+      runtimeKernelNodeTypes: ['model'],
       reportAiPathsError: (): void => {},
     });
 
@@ -696,7 +696,7 @@ describe('client native code-object registry contract subset', () => {
           kind: 'value',
         },
       ],
-      runtimeKernelPilotNodeTypes: ['prompt', 'model'],
+      runtimeKernelNodeTypes: ['prompt', 'model'],
       skipAiJobs: true,
       reportAiPathsError: (): void => {},
     });
@@ -723,7 +723,7 @@ describe('client native code-object registry contract subset', () => {
           kind: 'value',
         },
       ],
-      runtimeKernelPilotNodeTypes: ['prompt', 'model'],
+      runtimeKernelNodeTypes: ['prompt', 'model'],
       reportAiPathsError: (): void => {},
     });
 
@@ -757,7 +757,7 @@ describe('client native code-object registry contract subset', () => {
           kind: 'value',
         },
       ],
-      runtimeKernelPilotNodeTypes: ['prompt', 'model'],
+      runtimeKernelNodeTypes: ['prompt', 'model'],
       reportAiPathsError: (): void => {},
     });
 
@@ -788,7 +788,7 @@ describe('client native code-object registry contract subset', () => {
           kind: 'value',
         },
       ],
-      runtimeKernelPilotNodeTypes: ['prompt', 'model'],
+      runtimeKernelNodeTypes: ['prompt', 'model'],
       reportAiPathsError: (): void => {},
     });
 
@@ -817,7 +817,7 @@ describe('client native code-object registry contract subset', () => {
           kind: 'value',
         },
       ],
-      runtimeKernelPilotNodeTypes: ['prompt', 'agent'],
+      runtimeKernelNodeTypes: ['prompt', 'agent'],
       reportAiPathsError: (): void => {},
     });
 
@@ -841,7 +841,7 @@ describe('client native code-object registry contract subset', () => {
     const result = await evaluateGraphClient({
       nodes: [buildAgentNode()],
       edges: [],
-      runtimeKernelPilotNodeTypes: ['agent'],
+      runtimeKernelNodeTypes: ['agent'],
       reportAiPathsError: (): void => {},
     });
 
@@ -870,7 +870,7 @@ describe('client native code-object registry contract subset', () => {
           kind: 'value',
         },
       ],
-      runtimeKernelPilotNodeTypes: ['prompt', 'agent'],
+      runtimeKernelNodeTypes: ['prompt', 'agent'],
       skipAiJobs: true,
       reportAiPathsError: (): void => {},
     });
@@ -902,7 +902,7 @@ describe('client native code-object registry contract subset', () => {
           kind: 'value',
         },
       ],
-      runtimeKernelPilotNodeTypes: ['prompt', 'agent'],
+      runtimeKernelNodeTypes: ['prompt', 'agent'],
       reportAiPathsError: (): void => {},
     });
 
@@ -942,7 +942,7 @@ describe('client native code-object registry contract subset', () => {
           kind: 'value',
         },
       ],
-      runtimeKernelPilotNodeTypes: ['prompt', 'agent'],
+      runtimeKernelNodeTypes: ['prompt', 'agent'],
       reportAiPathsError: (): void => {},
     });
 
@@ -972,7 +972,7 @@ describe('client native code-object registry contract subset', () => {
           kind: 'value',
         },
       ],
-      runtimeKernelPilotNodeTypes: ['prompt', 'learner_agent'],
+      runtimeKernelNodeTypes: ['prompt', 'learner_agent'],
       reportAiPathsError: (): void => {},
     });
 
@@ -1013,7 +1013,7 @@ describe('client native code-object registry contract subset', () => {
           kind: 'value',
         },
       ],
-      runtimeKernelPilotNodeTypes: ['prompt', 'learner_agent'],
+      runtimeKernelNodeTypes: ['prompt', 'learner_agent'],
       reportAiPathsError: (): void => {},
     });
 
@@ -1042,7 +1042,7 @@ describe('client native code-object registry contract subset', () => {
           kind: 'value',
         },
       ],
-      runtimeKernelPilotNodeTypes: ['prompt', 'learner_agent'],
+      runtimeKernelNodeTypes: ['prompt', 'learner_agent'],
       skipAiJobs: true,
       reportAiPathsError: (): void => {},
     });
@@ -1074,7 +1074,7 @@ describe('client native code-object registry contract subset', () => {
           kind: 'value',
         },
       ],
-      runtimeKernelPilotNodeTypes: ['prompt', 'learner_agent'],
+      runtimeKernelNodeTypes: ['prompt', 'learner_agent'],
       reportAiPathsError: (): void => {},
     });
 
@@ -1091,7 +1091,7 @@ describe('client native code-object registry contract subset', () => {
     const result = await evaluateGraphClient({
       nodes: [buildTriggerNode()],
       edges: [],
-      runtimeKernelPilotNodeTypes: ['trigger'],
+      runtimeKernelNodeTypes: ['trigger'],
       reportAiPathsError: (): void => {},
     });
 
@@ -1103,7 +1103,7 @@ describe('client native code-object registry contract subset', () => {
     const result = await evaluateGraphClient({
       nodes: [buildSimulationNode()],
       edges: [],
-      runtimeKernelPilotNodeTypes: ['simulation'],
+      runtimeKernelNodeTypes: ['simulation'],
       reportAiPathsError: (): void => {},
     });
 
@@ -1128,7 +1128,7 @@ describe('client native code-object registry contract subset', () => {
           kind: 'signal',
         },
       ],
-      runtimeKernelPilotNodeTypes: ['trigger', 'fetcher'],
+      runtimeKernelNodeTypes: ['trigger', 'fetcher'],
       reportAiPathsError: (): void => {},
     });
 
@@ -1147,7 +1147,7 @@ describe('client native code-object registry contract subset', () => {
     const result = await evaluateGraphClient({
       nodes: [buildDbSchemaNode()],
       edges: [],
-      runtimeKernelPilotNodeTypes: ['db_schema'],
+      runtimeKernelNodeTypes: ['db_schema'],
       reportAiPathsError: (): void => {},
     });
 
@@ -1188,7 +1188,7 @@ describe('client native code-object registry contract subset', () => {
           kind: 'value',
         },
       ],
-      runtimeKernelPilotNodeTypes: ['constant', 'ai_description'],
+      runtimeKernelNodeTypes: ['constant', 'ai_description'],
       reportAiPathsError: (): void => {},
     });
 
@@ -1204,7 +1204,7 @@ describe('client native code-object registry contract subset', () => {
     const result = await evaluateGraphClient({
       nodes: [buildDescriptionUpdaterNode()],
       edges: [],
-      runtimeKernelPilotNodeTypes: ['description_updater'],
+      runtimeKernelNodeTypes: ['description_updater'],
       reportAiPathsError: (): void => {},
     });
 
@@ -1228,7 +1228,7 @@ describe('client native code-object registry contract subset', () => {
           kind: 'value',
         },
       ],
-      runtimeKernelPilotNodeTypes: ['prompt', 'playwright'],
+      runtimeKernelNodeTypes: ['prompt', 'playwright'],
       reportAiPathsError: (): void => {},
     });
 
@@ -1249,7 +1249,7 @@ describe('client native code-object registry contract subset', () => {
       const result = await evaluateGraphClient({
         nodes: [buildApiAdvancedNode()],
         edges: [],
-        runtimeKernelPilotNodeTypes: ['api_advanced'],
+        runtimeKernelNodeTypes: ['api_advanced'],
         reportAiPathsError: (): void => {},
       });
 
@@ -1271,7 +1271,7 @@ describe('client native code-object registry contract subset', () => {
       const result = await evaluateGraphClient({
         nodes: [buildDatabaseNode()],
         edges: [],
-        runtimeKernelPilotNodeTypes: ['database'],
+        runtimeKernelNodeTypes: ['database'],
         reportAiPathsError: (): void => {},
       });
       const bundle = result.outputs?.['node-database']?.['bundle'] as
@@ -1294,7 +1294,7 @@ describe('client native code-object registry contract subset', () => {
     const result = await evaluateGraphClient({
       nodes: [buildAudioOscillatorNode()],
       edges: [],
-      runtimeKernelPilotNodeTypes: ['audio_oscillator'],
+      runtimeKernelNodeTypes: ['audio_oscillator'],
       reportAiPathsError: (): void => {},
     });
 
@@ -1319,7 +1319,7 @@ describe('client native code-object registry contract subset', () => {
           kind: 'value',
         },
       ],
-      runtimeKernelPilotNodeTypes: ['audio_oscillator', 'audio_speaker'],
+      runtimeKernelNodeTypes: ['audio_oscillator', 'audio_speaker'],
       reportAiPathsError: (): void => {},
     });
 
@@ -1335,7 +1335,7 @@ describe('client native code-object registry contract subset', () => {
     const result = await evaluateGraphClient({
       nodes: [buildHttpNode()],
       edges: [],
-      runtimeKernelPilotNodeTypes: ['http'],
+      runtimeKernelNodeTypes: ['http'],
       reportAiPathsError: (): void => {},
     });
 
@@ -1351,7 +1351,7 @@ describe('client native code-object registry contract subset', () => {
     const result = await evaluateGraphClient({
       nodes: [buildPollNode()],
       edges: [],
-      runtimeKernelPilotNodeTypes: ['poll'],
+      runtimeKernelNodeTypes: ['poll'],
       reportAiPathsError: (): void => {},
     });
 
@@ -1363,7 +1363,7 @@ describe('client native code-object registry contract subset', () => {
       evaluateGraphClient({
         nodes: [buildUnsupportedClientNode()],
         edges: [],
-        runtimeKernelPilotNodeTypes: ['unsupported_client_node'],
+        runtimeKernelNodeTypes: ['unsupported_client_node'],
         reportAiPathsError: (): void => {},
       })
     ).rejects.toThrow(

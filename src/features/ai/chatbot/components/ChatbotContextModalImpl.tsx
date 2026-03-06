@@ -128,9 +128,9 @@ export function ChatbotContextModal(props: ChatbotContextModalProps): React.JSX.
                     setModalDraft((prev) =>
                       prev
                         ? {
-                            ...prev,
-                            tags: (prev.tags || []).filter((existing) => existing !== tag),
-                          }
+                          ...prev,
+                          tags: (prev.tags || []).filter((existing) => existing !== tag),
+                        }
                         : prev
                     );
                   }}
@@ -150,9 +150,9 @@ export function ChatbotContextModal(props: ChatbotContextModalProps): React.JSX.
                     setModalDraft((prev) =>
                       prev
                         ? {
-                            ...prev,
-                            tags: Array.from(new Set([...(prev.tags || []), nextTag])),
-                          }
+                          ...prev,
+                          tags: Array.from(new Set([...(prev.tags || []), nextTag])),
+                        }
                         : prev
                     );
                     setTagDraft('');
@@ -171,9 +171,9 @@ export function ChatbotContextModal(props: ChatbotContextModalProps): React.JSX.
                   setModalDraft((prev) =>
                     prev
                       ? {
-                          ...prev,
-                          tags: Array.from(new Set([...(prev.tags || []), nextTag])),
-                        }
+                        ...prev,
+                        tags: Array.from(new Set([...(prev.tags || []), nextTag])),
+                      }
                       : prev
                   );
                   setTagDraft('');

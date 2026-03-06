@@ -5,12 +5,12 @@ Generated at: 2026-03-06T00:00:00.000Z
 ## Status
 
 - Runtime strategy: `code_object_v3`
-- Migration wave: `pilot`
+- Migration wave: `runtime_kernel`
 - Code object ID: `ai-paths.node-code-object.audio_oscillator.v3`
 - Readiness stage: `rollout_approved`
 - Readiness score: 100/100
 - Readiness blockers: `none`
-- Parity evidence suite IDs: `v3-pilot-parity-core`
+- Parity evidence suite IDs: `runtime-kernel-parity-core`
 - Rollout approved: `yes` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 7
 

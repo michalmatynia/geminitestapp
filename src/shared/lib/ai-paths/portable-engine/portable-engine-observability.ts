@@ -2,10 +2,12 @@ import type {
   PortablePathEnvelopeSignatureVerificationMode,
   PortablePathFingerprintVerificationMode,
   PortablePathInputSource,
-  PortablePathSigningPolicyProfile,
-  PortablePathSigningPolicySurface,
   PortablePathValidationMode,
 } from './index';
+import type {
+  PortablePathSigningPolicyProfile,
+  PortablePathSigningPolicySurface,
+} from './types';
 
 export type PortablePathMigratorFailureReason = 'missing_migrator' | 'migrator_error';
 

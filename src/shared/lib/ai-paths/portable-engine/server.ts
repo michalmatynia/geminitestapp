@@ -110,9 +110,9 @@ export const runPortablePathServer = async (
 
   const runtimeValidationMiddleware: EvaluateGraphOptions['validationMiddleware'] =
     resolveAiPathsRuntimeValidationMiddleware({
-      validationMiddleware,
+      validationMiddleware: validationMiddleware as any,
       runtimeValidationEnabled,
-      runtimeValidationConfig: runtimeValidationConfig ?? resolved.value.pathConfig.aiPathsValidation ?? null,
+      runtimeValidationConfig: (runtimeValidationConfig ?? resolved.value.pathConfig.aiPathsValidation ?? null) as any,
       nodes: resolved.value.pathConfig.nodes,
       edges: resolved.value.pathConfig.edges,
     });

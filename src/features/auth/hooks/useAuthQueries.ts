@@ -78,7 +78,7 @@ export function useUpdateAuthUser(): UpdateMutation<
     userId: string;
     input: { name?: string | null; email?: string | null; emailVerified?: boolean | null };
   }
-> {
+  > {
   return createUpdateMutationV2({
     mutationFn: async ({
       userId,
@@ -114,7 +114,7 @@ export function useUpdateAuthUserSecurity(): UpdateMutation<
     userId: string;
     input: { disabled?: boolean; banned?: boolean; allowedIps?: string[]; disableMfa?: boolean };
   }
-> {
+  > {
   return createUpdateMutationV2({
     mutationFn: async ({
       userId,
@@ -151,7 +151,7 @@ export function useUpdateAuthUserSecurity(): UpdateMutation<
 export function useDeleteAuthUser(): UpdateMutation<
   { id: string; deleted: boolean },
   { userId: string }
-> {
+  > {
   return createDeleteMutationV2({
     mutationFn: async ({
       userId,
@@ -179,7 +179,7 @@ export function useDeleteAuthUser(): UpdateMutation<
 export function useMockSignIn(): MutationResult<
   { ok: boolean; payload: { ok?: boolean; message?: string } },
   { email: string; password: string }
-> {
+  > {
   return createCreateMutationV2({
     mutationFn: mockSignIn,
     mutationKey: authKeys.users.all,
@@ -202,7 +202,7 @@ export function useRegisterUser(): CreateMutation<
     name?: string | undefined;
     emailVerified?: boolean | undefined;
   }
-> {
+  > {
   return createCreateMutationV2({
     mutationFn: registerUser,
     mutationKey: authKeys.users.all,

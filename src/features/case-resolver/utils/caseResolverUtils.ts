@@ -527,11 +527,11 @@ export const resolveActiveVersion = (
     contentHtml:
       activeDocumentVersion === 'exploded'
         ? ensureSafeDocumentHtml(
-            file.explodedDocumentContent ?? file.documentContentHtml ?? baseContent
-          )
+          file.explodedDocumentContent ?? file.documentContentHtml ?? baseContent
+        )
         : ensureSafeDocumentHtml(
-            file.originalDocumentContent ?? file.documentContentHtml ?? baseContent
-          ),
+          file.originalDocumentContent ?? file.documentContentHtml ?? baseContent
+        ),
   };
 };
 

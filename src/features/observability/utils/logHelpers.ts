@@ -76,17 +76,17 @@ export const readContextDocument = (value: unknown): ContextDocumentDisplay | nu
     status: readRecordString(record?.['status']),
     tags: Array.isArray(record?.['tags'])
       ? record['tags']
-          .map((tag) => readRecordString(tag))
-          .filter((tag): tag is string => Boolean(tag))
-          .slice(0, 6)
+        .map((tag) => readRecordString(tag))
+        .filter((tag): tag is string => Boolean(tag))
+        .slice(0, 6)
       : [],
     facts: factsRecord
       ? Object.entries(factsRecord)
-          .map(([key, rawValue]) => {
-            const val = toDisplayValue(rawValue);
-            return val ? { label: key, value: val } : null;
-          })
-          .filter((entry): entry is { label: string; value: string } => Boolean(entry))
+        .map(([key, rawValue]) => {
+          const val = toDisplayValue(rawValue);
+          return val ? { label: key, value: val } : null;
+        })
+        .filter((entry): entry is { label: string; value: string } => Boolean(entry))
       : [],
     sections: sections
       .map((section): ContextDocumentSectionDisplay | null => {

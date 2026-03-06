@@ -43,7 +43,7 @@ Run node execution, runtime validation middleware, and event tracing with parity
 Wire page runtime loops, server execution, and queue execution through kernel-compatible adapter surfaces; preserve UX and run history semantics.
 
 5. Progressive Rollout
-Run internal -> pilot pages -> partial traffic -> full rollout with explicit kill switches and SLO monitoring.
+Run internal -> runtime-kernel pages -> partial traffic -> full rollout with explicit kill switches and SLO monitoring.
 
 6. Legacy Prune
 Remove legacy workflow-coupled execution paths only after sustained parity and rollback confidence.

@@ -287,11 +287,11 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
         cell: ({ row }) => {
           const linkedPaths = Array.isArray(row.original.usedPaths)
             ? row.original.usedPaths
-                .map((entry: { id: string; name: string }) => ({
-                  id: typeof entry.id === 'string' ? entry.id.trim() : '',
-                  name: typeof entry.name === 'string' ? entry.name.trim() : '',
-                }))
-                .filter((entry: { id: string; name: string }): boolean => entry.name.length > 0)
+              .map((entry: { id: string; name: string }) => ({
+                id: typeof entry.id === 'string' ? entry.id.trim() : '',
+                name: typeof entry.name === 'string' ? entry.name.trim() : '',
+              }))
+              .filter((entry: { id: string; name: string }): boolean => entry.name.length > 0)
             : [];
           if (linkedPaths.length === 0) {
             return <span className='text-xs text-gray-500'>Not linked</span>;

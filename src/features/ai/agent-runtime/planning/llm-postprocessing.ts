@@ -367,11 +367,11 @@ export async function optimizePlanWithLLM({
       : (parsed.optimizedSteps ?? []);
     const optimizedSteps = optimizedSpecs.length
       ? buildPlanStepsFromSpecs(
-          normalizePlanStepSpecs(optimizedSpecs),
-          meta,
-          true,
-          maxStepAttempts
-        ).slice(0, maxSteps)
+        normalizePlanStepSpecs(optimizedSpecs),
+        meta,
+        true,
+        maxStepAttempts
+      ).slice(0, maxSteps)
       : [];
     return {
       reason: parsed.reason ?? null,
@@ -405,7 +405,7 @@ export async function enrichPlanHierarchyWithLLM({
     const content = await runPlanningPostprocessTask({
       model,
       systemPrompt:
-        "You enrich goal hierarchies for execution. Return only JSON with keys: goals. goals is array of {title, successCriteria, priority, dependsOn, subgoals:[{title, successCriteria, priority, dependsOn, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}]}. Keep the same number of goals/subgoals but refine titles and steps. tool is 'playwright' or 'none'.",
+        'You enrich goal hierarchies for execution. Return only JSON with keys: goals. goals is array of {title, successCriteria, priority, dependsOn, subgoals:[{title, successCriteria, priority, dependsOn, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}]}. Keep the same number of goals/subgoals but refine titles and steps. tool is \'playwright\' or \'none\'.',
       userContent: JSON.stringify({
         prompt,
         memory,

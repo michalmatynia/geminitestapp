@@ -287,10 +287,10 @@ export function useCatalogSync(
     const scopedLanguages =
       allowedIds.length > 0
         ? languages.filter((lang) => {
-            const idKey = String(lang.id).trim().toUpperCase();
-            const codeKey = String(lang.code).trim().toUpperCase();
-            return normalizedAllowed.has(idKey) || normalizedAllowed.has(codeKey);
-          })
+          const idKey = String(lang.id).trim().toUpperCase();
+          const codeKey = String(lang.code).trim().toUpperCase();
+          return normalizedAllowed.has(idKey) || normalizedAllowed.has(codeKey);
+        })
         : languages;
 
     const seen = new Set<string>();
@@ -321,11 +321,11 @@ export function useCatalogSync(
     const defaultLanguageId = catalog?.defaultLanguageId ?? null;
     const defaultLang = defaultLanguageId
       ? languages.find((lang) => {
-          const value = String(defaultLanguageId).trim().toUpperCase();
-          const idKey = String(lang.id).trim().toUpperCase();
-          const codeKey = String(lang.code).trim().toUpperCase();
-          return value === idKey || value === codeKey;
-        })
+        const value = String(defaultLanguageId).trim().toUpperCase();
+        const idKey = String(lang.id).trim().toUpperCase();
+        const codeKey = String(lang.code).trim().toUpperCase();
+        return value === idKey || value === codeKey;
+      })
       : null;
     const defaultOption = defaultLang
       ? supportedLanguageMap[defaultLang.code?.trim().toUpperCase() || '']

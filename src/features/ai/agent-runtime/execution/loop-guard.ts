@@ -158,7 +158,7 @@ export async function buildLoopGuardReview({
     const content = await runLoopGuardTask({
       model,
       systemPrompt:
-        "You are a loop-guard. Output only JSON with keys: action, reason, questions, evidence, goals, critique, alternatives, taskType, summary, constraints, successSignals. action is 'continue', 'replan', or 'wait_human'. Provide 2-4 questions that test whether the agent is looping. If action is 'replan', include goals (planner schema) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}.",
+        'You are a loop-guard. Output only JSON with keys: action, reason, questions, evidence, goals, critique, alternatives, taskType, summary, constraints, successSignals. action is \'continue\', \'replan\', or \'wait_human\'. Provide 2-4 questions that test whether the agent is looping. If action is \'replan\', include goals (planner schema) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}.',
       userContent: JSON.stringify({
         prompt,
         memory,
@@ -219,11 +219,11 @@ export async function buildLoopGuardReview({
     let steps =
       action === 'replan'
         ? buildPlanStepsFromSpecs(
-            normalizePlanStepSpecs(stepSpecs),
-            meta,
-            true,
-            maxStepAttempts
-          ).slice(0, maxSteps)
+          normalizePlanStepSpecs(stepSpecs),
+          meta,
+          true,
+          maxStepAttempts
+        ).slice(0, maxSteps)
         : [];
     if (action === 'replan' && steps.length === 0) {
       const fallbackBranch = buildBranchStepsFromAlternatives(

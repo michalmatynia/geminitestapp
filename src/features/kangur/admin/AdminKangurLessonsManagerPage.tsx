@@ -267,26 +267,26 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
 
     const nextLesson: KangurLesson = editingLesson
       ? {
-          ...editingLesson,
-          componentId: formData.componentId,
-          title: normalizedTitle,
-          description: normalizedDescription,
-          emoji: normalizedEmoji,
-          color: formData.color,
-          activeBg: formData.activeBg,
-          enabled: formData.enabled,
-        }
+        ...editingLesson,
+        componentId: formData.componentId,
+        title: normalizedTitle,
+        description: normalizedDescription,
+        emoji: normalizedEmoji,
+        color: formData.color,
+        activeBg: formData.activeBg,
+        enabled: formData.enabled,
+      }
       : {
-          id: createKangurLessonId(normalizedTitle),
-          componentId: formData.componentId,
-          title: normalizedTitle,
-          description: normalizedDescription,
-          emoji: normalizedEmoji,
-          color: formData.color,
-          activeBg: formData.activeBg,
-          enabled: formData.enabled,
-          sortOrder: nextSortOrder,
-        };
+        id: createKangurLessonId(normalizedTitle),
+        componentId: formData.componentId,
+        title: normalizedTitle,
+        description: normalizedDescription,
+        emoji: normalizedEmoji,
+        color: formData.color,
+        activeBg: formData.activeBg,
+        enabled: formData.enabled,
+        sortOrder: nextSortOrder,
+      };
 
     const nextLessons = editingLesson
       ? lessons.map((lesson) => (lesson.id === editingLesson.id ? nextLesson : lesson))

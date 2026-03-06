@@ -175,16 +175,16 @@ const toRunGraph = (value: unknown): AiPathRunRecord['graph'] => {
   const rawNodes = record['nodes'];
   const nodes = Array.isArray(rawNodes)
     ? rawNodes.flatMap((entry: unknown): AiNode[] => {
-        const parsed = aiNodeSchema.safeParse(entry);
-        return parsed.success ? [parsed.data] : [];
-      })
+      const parsed = aiNodeSchema.safeParse(entry);
+      return parsed.success ? [parsed.data] : [];
+    })
     : [];
   const rawEdges = record['edges'];
   const edges: Edge[] = Array.isArray(rawEdges)
     ? rawEdges.flatMap((entry: unknown): Edge[] => {
-        const parsed = edgeSchema.safeParse(entry);
-        return parsed.success ? [parsed.data] : [];
-      })
+      const parsed = edgeSchema.safeParse(entry);
+      return parsed.success ? [parsed.data] : [];
+    })
     : [];
   return { nodes, edges };
 };

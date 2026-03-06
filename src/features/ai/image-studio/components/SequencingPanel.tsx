@@ -612,10 +612,10 @@ export function SequencingPanel(): React.JSX.Element {
         mask:
           polygons.length > 0
             ? {
-                polygons,
-                invert: maskInvert,
-                feather: maskFeather,
-              }
+              polygons,
+              invert: maskInvert,
+              feather: maskFeather,
+            }
             : null,
         studioSettings: studioSettings as unknown as Record<string, unknown>,
         steps: resolvedSteps,

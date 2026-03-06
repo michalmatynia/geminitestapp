@@ -354,16 +354,16 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
       : normalizePaddingPercent(layoutPadding),
     ...(layoutSplitAxes
       ? {
-          paddingXPercent,
-          paddingYPercent,
-        }
+        paddingXPercent,
+        paddingYPercent,
+      }
       : {}),
     fillMissingCanvasWhite: resolvedFillMissingCanvasWhite,
     ...(resolvedFillMissingCanvasWhite && projectCanvasSize
       ? {
-          targetCanvasWidth: projectCanvasSize.width,
-          targetCanvasHeight: projectCanvasSize.height,
-        }
+        targetCanvasWidth: projectCanvasSize.width,
+        targetCanvasHeight: projectCanvasSize.height,
+      }
       : {}),
     whiteThreshold,
     chromaThreshold,

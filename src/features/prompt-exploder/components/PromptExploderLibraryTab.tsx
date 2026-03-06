@@ -281,11 +281,11 @@ export function PromptExploderLibraryTab(): React.JSX.Element {
                       <TableCell>
                         {segment.subsections.length > 0
                           ? segment.subsections
-                              .map((subsection) => {
-                                const codePrefix = subsection.code ? `${subsection.code} ` : '';
-                                return `${codePrefix}${subsection.title}`;
-                              })
-                              .join(' | ')
+                            .map((subsection) => {
+                              const codePrefix = subsection.code ? `${subsection.code} ` : '';
+                              return `${codePrefix}${subsection.title}`;
+                            })
+                            .join(' | ')
                           : '—'}
                       </TableCell>
                     </TableRow>

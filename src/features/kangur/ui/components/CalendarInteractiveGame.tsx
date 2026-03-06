@@ -410,12 +410,12 @@ export default function CalendarInteractiveGame({
                     ${isClicked ? 'bg-teal-400 text-white scale-110' : ''}
                     ${isCorrectWeekend && !isClicked ? 'bg-green-200' : ''}
                     ${
-                      isNumberDay && isWeekend && !isClicked && !isTarget
-                        ? 'text-red-400'
-                        : isNumberDay && !isClicked && !isTarget
-                          ? 'text-gray-700'
-                          : ''
-                    }
+                isNumberDay && isWeekend && !isClicked && !isTarget
+                  ? 'text-red-400'
+                  : isNumberDay && !isClicked && !isTarget
+                    ? 'text-gray-700'
+                    : ''
+                }
                   `}
                 >
                   {isNumberDay ? day : ''}
@@ -477,12 +477,12 @@ export default function CalendarInteractiveGame({
                 }}
                 className={`py-4 rounded-2xl border-2 flex flex-col items-center gap-1 transition-all text-center
                   ${
-                    dragOver === season
-                      ? 'border-green-400 bg-green-50 scale-105'
-                      : feedback && season === task.correctSeason
-                        ? 'border-green-400 bg-green-50'
-                        : 'border-dashed border-gray-300 bg-white'
-                  }
+              dragOver === season
+                ? 'border-green-400 bg-green-50 scale-105'
+                : feedback && season === task.correctSeason
+                  ? 'border-green-400 bg-green-50'
+                  : 'border-dashed border-gray-300 bg-white'
+              }
                 `}
               >
                 <span className='text-2xl'>{season.split(' ')[0]}</span>

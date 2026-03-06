@@ -196,17 +196,17 @@ export function Asset3DListPage(): React.JSX.Element {
             filters={[
               ...(categories.length > 0
                 ? [
-                    {
-                      key: 'category',
-                      label: 'Category',
-                      type: 'select' as const,
-                      options: [
-                        { value: '__all__', label: 'All categories' },
-                        ...categories.map((cat: string) => ({ value: cat, label: cat })),
-                      ],
-                      width: '180px',
-                    },
-                  ]
+                  {
+                    key: 'category',
+                    label: 'Category',
+                    type: 'select' as const,
+                    options: [
+                      { value: '__all__', label: 'All categories' },
+                      ...categories.map((cat: string) => ({ value: cat, label: cat })),
+                    ],
+                    width: '180px',
+                  },
+                ]
                 : []),
             ]}
             headerAction={

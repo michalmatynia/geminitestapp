@@ -163,13 +163,13 @@ export function useAdminCaseResolverRelationActions({
 
         const nextFiles = graphChanged
           ? current.files.map((file) => {
-              if (file.id !== activeFileLocal.id) return file;
-              return {
-                ...file,
-                graph: nextComparableGraph,
-                updatedAt: now,
-              };
-            })
+            if (file.id !== activeFileLocal.id) return file;
+            return {
+              ...file,
+              graph: nextComparableGraph,
+              updatedAt: now,
+            };
+          })
           : current.files;
 
         return {
@@ -178,9 +178,9 @@ export function useAdminCaseResolverRelationActions({
           assets: assetsChanged ? nextAssets : current.assets,
           folders: assetsChanged
             ? normalizeFolderPaths([
-                ...current.folders,
-                ...nextAssets.map((asset: CaseResolverAssetFile): string => asset.folder),
-              ])
+              ...current.folders,
+              ...nextAssets.map((asset: CaseResolverAssetFile): string => asset.folder),
+            ])
             : current.folders,
         };
       });

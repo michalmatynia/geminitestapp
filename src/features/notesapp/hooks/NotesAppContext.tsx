@@ -93,7 +93,7 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
     onConfirm: () => void | Promise<void>;
     confirmText?: string;
     isDangerous?: boolean;
-  } | null>(null);
+      } | null>(null);
   const [prompt, setPrompt] = useState<{
     title: string;
     message?: string;
@@ -102,7 +102,7 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
     placeholder?: string;
     onConfirm: (value: string) => void | Promise<void>;
     required?: boolean;
-  } | null>(null);
+      } | null>(null);
 
   const confirmAction = useCallback(
     (config: {

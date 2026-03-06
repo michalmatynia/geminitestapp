@@ -123,9 +123,9 @@ export function useCaseResolverStateViewState({
           current.activeFileId === fileId
             ? current
             : {
-                ...current,
-                activeFileId: fileId,
-              }
+              ...current,
+              activeFileId: fileId,
+            }
       );
       setSelectedFolderPath(null);
       setSelectedAssetId(null);
@@ -152,9 +152,9 @@ export function useCaseResolverStateViewState({
               current.activeFileId === preservedCaseId
                 ? current
                 : {
-                    ...current,
-                    activeFileId: preservedCaseId,
-                  }
+                  ...current,
+                  activeFileId: preservedCaseId,
+                }
           );
         }
         return;
@@ -176,9 +176,9 @@ export function useCaseResolverStateViewState({
             current.activeFileId === nextActiveCaseId
               ? current
               : {
-                  ...current,
-                  activeFileId: nextActiveCaseId,
-                }
+                ...current,
+                activeFileId: nextActiveCaseId,
+              }
         );
       }
     },

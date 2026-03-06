@@ -317,7 +317,7 @@ export const getTargetInfo = (
   const target = event?.target as Element | null;
   if (!target) return null;
   const element =
-    target.closest("[data-component],[data-testid],[data-node],button,a,[role='button']") ?? target;
+    target.closest('[data-component],[data-testid],[data-node],button,a,[role=\'button\']') ?? target;
   const rect = element.getBoundingClientRect();
   const dataset = element instanceof HTMLElement ? element.dataset : undefined;
   return {
@@ -363,62 +363,62 @@ export const buildTriggerContext = (args: {
   const nativeEvent = args.event?.nativeEvent;
   const pointer = nativeEvent
     ? {
-        clientX: nativeEvent.clientX,
-        clientY: nativeEvent.clientY,
-        pageX: nativeEvent.pageX,
-        pageY: nativeEvent.pageY,
-        screenX: nativeEvent.screenX,
-        screenY: nativeEvent.screenY,
-        offsetX: 'offsetX' in nativeEvent ? nativeEvent.offsetX : undefined,
-        offsetY: 'offsetY' in nativeEvent ? nativeEvent.offsetY : undefined,
-        button: nativeEvent.button,
-        buttons: nativeEvent.buttons,
-        altKey: nativeEvent.altKey,
-        ctrlKey: nativeEvent.ctrlKey,
-        shiftKey: nativeEvent.shiftKey,
-        metaKey: nativeEvent.metaKey,
-      }
+      clientX: nativeEvent.clientX,
+      clientY: nativeEvent.clientY,
+      pageX: nativeEvent.pageX,
+      pageY: nativeEvent.pageY,
+      screenX: nativeEvent.screenX,
+      screenY: nativeEvent.screenY,
+      offsetX: 'offsetX' in nativeEvent ? nativeEvent.offsetX : undefined,
+      offsetY: 'offsetY' in nativeEvent ? nativeEvent.offsetY : undefined,
+      button: nativeEvent.button,
+      buttons: nativeEvent.buttons,
+      altKey: nativeEvent.altKey,
+      ctrlKey: nativeEvent.ctrlKey,
+      shiftKey: nativeEvent.shiftKey,
+      metaKey: nativeEvent.metaKey,
+    }
     : undefined;
 
   const targetInfo = getTargetInfo(args.event);
   const location =
     typeof window !== 'undefined'
       ? {
-          href: window.location.href,
-          origin: window.location.origin,
-          pathname: window.location.pathname,
-          search: window.location.search,
-          hash: window.location.hash,
-          referrer: document.referrer || undefined,
-        }
+        href: window.location.href,
+        origin: window.location.origin,
+        pathname: window.location.pathname,
+        search: window.location.search,
+        hash: window.location.hash,
+        referrer: document.referrer || undefined,
+      }
       : {};
 
   const ui =
     typeof window !== 'undefined'
       ? {
-          viewport: {
-            width: window.innerWidth,
-            height: window.innerHeight,
-            devicePixelRatio: window.devicePixelRatio,
-          },
-          screen: {
-            width: window.screen?.width,
-            height: window.screen?.height,
-            availWidth: window.screen?.availWidth,
-            availHeight: window.screen?.availHeight,
-          },
-          userAgent: navigator.userAgent,
-          platform: navigator.platform,
-          language: navigator.language,
-          languages: navigator.languages,
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          documentTitle: document.title,
-          visibilityState: document.visibilityState,
-          scroll: {
-            x: window.scrollX,
-            y: window.scrollY,
-          },
-        }
+        viewport: {
+          width: window.innerWidth,
+          height: window.innerHeight,
+          devicePixelRatio: window.devicePixelRatio,
+        },
+        screen: {
+          width: window.screen?.width,
+          height: window.screen?.height,
+          availWidth: window.screen?.availWidth,
+          availHeight: window.screen?.availHeight,
+        },
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        language: navigator.language,
+        languages: navigator.languages,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        documentTitle: document.title,
+        visibilityState: document.visibilityState,
+        scroll: {
+          x: window.scrollX,
+          y: window.scrollY,
+        },
+      }
       : {};
 
   return {

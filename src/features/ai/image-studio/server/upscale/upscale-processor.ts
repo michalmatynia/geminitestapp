@@ -142,9 +142,9 @@ export async function processUpscalePayload(input: {
     throw sourceLoadError instanceof Error
       ? sourceLoadError
       : upscaleBadRequest(
-          IMAGE_STUDIO_UPSCALE_ERROR_CODES.SOURCE_IMAGE_MISSING,
-          'Server upscale requires a resolvable source image.'
-        );
+        IMAGE_STUDIO_UPSCALE_ERROR_CODES.SOURCE_IMAGE_MISSING,
+        'Server upscale requires a resolvable source image.'
+      );
   }
 
   if (uploadedClientImage) {
@@ -190,11 +190,11 @@ export async function processUpscalePayload(input: {
       scale:
         outputWidth && outputHeight && sourceWidth > 0 && sourceHeight > 0
           ? deriveUpscaleScaleFromOutputDimensions({
-              sourceWidth,
-              sourceHeight,
-              outputWidth,
-              outputHeight,
-            })
+            sourceWidth,
+            sourceHeight,
+            outputWidth,
+            outputHeight,
+          })
           : resolvedRequest.strategy === 'scale'
             ? resolvedRequest.scale
             : null,
@@ -260,11 +260,11 @@ export async function processUpscalePayload(input: {
     scale:
       outputWidth && outputHeight && sourceWidth > 0 && sourceHeight > 0
         ? deriveUpscaleScaleFromOutputDimensions({
-            sourceWidth,
-            sourceHeight,
-            outputWidth,
-            outputHeight,
-          })
+          sourceWidth,
+          sourceHeight,
+          outputWidth,
+          outputHeight,
+        })
         : resolvedRequest.strategy === 'scale'
           ? resolvedRequest.scale
           : null,

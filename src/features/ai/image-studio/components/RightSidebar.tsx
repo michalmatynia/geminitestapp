@@ -133,7 +133,7 @@ export function RightSidebar(): React.JSX.Element {
       paramsState
         ? (
             flattenParams(paramsState) as Array<{ path: string; value: unknown; kind: string }>
-          ).filter((leaf) => Boolean(leaf.path))
+        ).filter((leaf) => Boolean(leaf.path))
         : [],
     [paramsState]
   );
@@ -210,9 +210,9 @@ export function RightSidebar(): React.JSX.Element {
       return CANVAS_SIZE_PRESET_OPTIONS.map((option) =>
         option.value === currentCanvasSizeValue
           ? {
-              ...option,
-              label: `${option.label} (Current)`,
-            }
+            ...option,
+            label: `${option.label} (Current)`,
+          }
           : option
       );
     }

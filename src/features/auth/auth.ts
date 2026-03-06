@@ -68,8 +68,8 @@ const credentialsProvider = Credentials({
         checkLoginAllowed({ email, ip }),
         challengeId
           ? consumeLoginChallenge({ id: challengeId, email, ip }).then((c) =>
-              c ? findAuthUserById(c.userId) : null
-            )
+            c ? findAuthUserById(c.userId) : null
+          )
           : findAuthUserByEmail(email),
       ]);
 

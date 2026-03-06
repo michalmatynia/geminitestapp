@@ -749,9 +749,9 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                 metadata:
                   errorMessage || nodeUpdate.outputs
                     ? {
-                        ...(errorMessage ? { error: errorMessage } : {}),
-                        ...(nodeUpdate.outputs ? { outputs: nodeUpdate.outputs } : {}),
-                      }
+                      ...(errorMessage ? { error: errorMessage } : {}),
+                      ...(nodeUpdate.outputs ? { outputs: nodeUpdate.outputs } : {}),
+                    }
                     : undefined,
               });
               args.setRuntimeState((prev) => {

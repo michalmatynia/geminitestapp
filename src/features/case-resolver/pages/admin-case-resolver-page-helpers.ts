@@ -1,8 +1,8 @@
 export const buildPathLabelMap = <
   T extends { id: string; parentId?: string | null | undefined; label?: string; name?: string },
 >(
-  items: T[]
-): Map<string, string> => {
+    items: T[]
+  ): Map<string, string> => {
   const byId = new Map<string, T>(items.map((item: T): [string, T] => [item.id, item]));
   const cache = new Map<string, string>();
 

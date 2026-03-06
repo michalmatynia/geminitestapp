@@ -34,7 +34,7 @@ import {
 export function useCreateChatbotSession(): CreateMutation<
   { sessionId: string; session?: ChatSession },
   { title?: string; settings?: ChatSession['settings'] }
-> {
+  > {
   const mutationKey = chatbotQueryKeys.mutation('create-session');
 
   return createCreateMutationV2({
@@ -58,7 +58,7 @@ export function useCreateChatbotSession(): CreateMutation<
 export function useUpdateSessionTitle(): UpdateMutation<
   ChatbotSessionListItem,
   { sessionId: string; title: string }
-> {
+  > {
   const mutationKey = chatbotQueryKeys.mutation('update-session-title');
 
   return createUpdateMutationV2({
@@ -141,7 +141,7 @@ type SaveChatbotSettingsVariables = {
 export function useSendChatMessage(): UpdateMutation<
   { message?: string },
   { messages: ChatMessage[]; sessionId?: string | null }
-> {
+  > {
   const mutationKey = chatbotQueryKeys.mutation('send-message');
   return createUpdateMutationV2({
     mutationFn: sendChatbotMessage,
@@ -163,7 +163,7 @@ export function useSendChatMessage(): UpdateMutation<
 export function useSaveChatbotSettings(): UpdateMutation<
   { settings?: { settings?: ChatbotSettingsPayload } },
   SaveChatbotSettingsVariables
-> {
+  > {
   const mutationKey = chatbotQueryKeys.mutation('save-settings');
 
   return createUpdateMutationV2({

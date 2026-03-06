@@ -16,10 +16,18 @@ import {
   type PortablePathEnvelopeVerificationAuditSinkSnapshot,
   type PortablePathEnvelopeVerificationAuditSink,
   type PortablePathEnvelopeVerificationObservabilitySnapshot,
-  type PortablePathSigningPolicyProfile,
-  type PortablePathSigningPolicySurface,
   type PortablePathSigningPolicyUsageSnapshot,
 } from './index';
+import type {
+  PortablePathSigningPolicyProfile,
+  PortablePathSigningPolicySurface,
+  PortablePathEnvelopeVerificationAuditSinkProfile,
+  PortablePathEnvelopeVerificationAuditSinkHealthPolicy,
+  PortablePathEnvelopeVerificationAuditSinkStartupHealthStatus,
+  PortablePathEnvelopeVerificationAuditSinkHealthDiagnosticStatus,
+  PortablePathEnvelopeVerificationAuditSinkHealthDiagnostic,
+  PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary,
+} from './types';
 import {
   enqueuePortablePathAuditSinkAutoRemediationDeadLetterCore,
   loadPortablePathAuditSinkAutoRemediationDeadLettersCore,
@@ -67,47 +75,16 @@ export const PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_PROFILES = [
   'staging',
   'prod',
 ] as const;
-export type PortablePathEnvelopeVerificationAuditSinkProfile =
-  (typeof PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_PROFILES)[number];
 export const PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_POLICIES = [
   'off',
   'warn',
   'error',
 ] as const;
-export type PortablePathEnvelopeVerificationAuditSinkHealthPolicy =
-  (typeof PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_POLICIES)[number];
 export type PortablePathEnvelopeVerificationAuditSinkHealthCheck = () => void | Promise<void>;
 export type PortablePathEnvelopeVerificationAuditSinkWithHealthCheck =
   PortablePathEnvelopeVerificationAuditSink & {
     healthCheck?: PortablePathEnvelopeVerificationAuditSinkHealthCheck;
   };
-export type PortablePathEnvelopeVerificationAuditSinkHealthDiagnosticStatus =
-  | 'healthy'
-  | 'failed'
-  | 'skipped';
-export type PortablePathEnvelopeVerificationAuditSinkHealthDiagnostic = {
-  sinkId: string;
-  status: PortablePathEnvelopeVerificationAuditSinkHealthDiagnosticStatus;
-  checkedAt: string;
-  durationMs: number;
-  message: string;
-  error: string | null;
-};
-export type PortablePathEnvelopeVerificationAuditSinkStartupHealthStatus =
-  | 'healthy'
-  | 'degraded'
-  | 'failed'
-  | 'skipped';
-export type PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary = {
-  profile: PortablePathEnvelopeVerificationAuditSinkProfile;
-  policy: PortablePathEnvelopeVerificationAuditSinkHealthPolicy;
-  timeoutMs: number;
-  status: PortablePathEnvelopeVerificationAuditSinkStartupHealthStatus;
-  checkedAt: string;
-  failedSinkIds: string[];
-  diagnostics: PortablePathEnvelopeVerificationAuditSinkHealthDiagnostic[];
-};
-
 const DEFAULT_PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_TIMEOUT_MS = 3000;
 export const PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_BOOTSTRAP_ENABLED_ENV =
   'PORTABLE_PATH_AUDIT_SINK_BOOTSTRAP_ENABLED';

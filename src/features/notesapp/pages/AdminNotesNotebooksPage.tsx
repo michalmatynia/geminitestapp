@@ -3,12 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 
-import {
-  useCreateNotebook,
-  useUpdateNotebook,
-  useDeleteNotebook,
-} from '@/features/notesapp/api/useNoteMutations';
-import { useNotebooks } from '@/features/notesapp/api/useNoteQueries';
+import { useNotebookResource } from '@/features/notesapp/api/useNotebookResource';
 import {
   useNoteSettingsActions,
   useNoteSettingsState,
@@ -43,7 +38,13 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
   const [search, setSearch] = useState('');
   const [notebookToDelete, setNotebookToDelete] = useState<string | null>(null);
 
-  const notebooksQuery = useNotebooks();
+  const {
+    listQuery: notebooksQuery,
+    createMutation: createNotebook,
+    updateMutation: updateNotebook,
+    deleteMutation: deleteNotebook,
+  } = useNotebookResource();
+
   const notebooks = useMemo(
     (): NotebookRecord[] => notebooksQuery.data ?? [],
     [notebooksQuery.data]
@@ -54,10 +55,6 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
     return notebooks.filter((nb) => nb.name.toLowerCase().includes(q));
   }, [notebooks, search]);
   const loading = notebooksQuery.isPending;
-
-  const createNotebook = useCreateNotebook();
-  const updateNotebook = useUpdateNotebook();
-  const deleteNotebook = useDeleteNotebook();
 
   useEffect((): void => {
     if (!selectedNotebookId && notebooks.length > 0) {

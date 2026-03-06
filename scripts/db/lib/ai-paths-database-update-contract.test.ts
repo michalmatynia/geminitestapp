@@ -111,6 +111,80 @@ describe('rewritePathConfigDatabaseUpdateContract', () => {
     ]);
   });
 
+  it('derives canonical mappings from pure set templates when stored mappings are placeholders', () => {
+    const config = buildConfig(
+      [
+        buildNode({
+          id: 'upstream-value',
+          type: 'regex',
+          outputs: ['value'],
+        }),
+        buildNode({
+          id: 'upstream-result',
+          type: 'regex',
+          outputs: ['value'],
+        }),
+        buildNode({
+          id: 'db-1b',
+          type: 'database',
+          inputs: ['value', 'result', 'entityId'],
+          outputs: ['result'],
+          config: {
+            database: {
+              operation: 'update',
+              updatePayloadMode: 'custom',
+              updateTemplate:
+                '{\n' +
+                '  "$set": {\n' +
+                '    "description_pl": "{{value.description_pl}}",\n' +
+                '    "parameters": {{result.parameters}}\n' +
+                '  }\n' +
+                '}',
+              mappings: [
+                { targetPath: '__translation_description_payload__', sourcePort: 'value' },
+                { targetPath: '__translation_parameters_payload__', sourcePort: 'result' },
+              ],
+            },
+          },
+        }),
+      ],
+      [
+        buildEdge({
+          id: 'edge-value-1b',
+          from: 'upstream-value',
+          to: 'db-1b',
+          fromPort: 'value',
+          toPort: 'value',
+        }),
+        buildEdge({
+          id: 'edge-result-1b',
+          from: 'upstream-result',
+          to: 'db-1b',
+          fromPort: 'value',
+          toPort: 'result',
+        }),
+      ]
+    );
+
+    const rewritten = rewritePathConfigDatabaseUpdateContract(config);
+    const dbNode = rewritten.config.nodes.find((node) => node.id === 'db-1b');
+
+    expect(rewritten.changed).toBe(true);
+    expect(dbNode?.config?.database?.updatePayloadMode).toBe('mapping');
+    expect(dbNode?.config?.database?.mappings).toEqual([
+      { targetPath: 'description_pl', sourcePort: 'value', sourcePath: 'description_pl' },
+      { targetPath: 'parameters', sourcePort: 'result', sourcePath: 'parameters' },
+    ]);
+    expect(rewritten.updates).toEqual([
+      expect.objectContaining({
+        nodeId: 'db-1b',
+        fromMode: 'custom',
+        toMode: 'mapping',
+        reason: 'custom_mode_switched_mapping_equivalent_template',
+      }),
+    ]);
+  });
+
   it('defaults missing mode to mapping when mappings exist and update template is empty', () => {
     const config = buildConfig(
       [

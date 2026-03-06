@@ -30,7 +30,8 @@ import {
 } from '@/features/integrations/constants/slugs';
 import { normalizeSteps } from '@/features/integrations/utils/connections';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { PlaywrightPersona } from '@/shared/contracts/playwright';
+import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
+import type { ListQuery } from '@/shared/contracts/ui';
 
 export function useIntegrationsActionsImpl(args: {
   integrations: Integration[];
@@ -48,27 +49,40 @@ export function useIntegrationsActionsImpl(args: {
   setShowTestLogModal: (show: boolean) => void;
   setShowTestErrorModal: (show: boolean) => void;
   setTestError: (error: string | null) => void;
-  setTestErrorMeta: (meta: any) => void;
+  setTestErrorMeta: (
+    meta: {
+      errorId?: string;
+      integrationId?: string | null;
+      connectionId?: string | null;
+    } | null
+  ) => void;
   setShowTestSuccessModal: (show: boolean) => void;
   setTestSuccessMessage: (msg: string | null) => void;
   playwrightPersonas: PlaywrightPersona[];
   setPlaywrightPersonaId: (id: string | null) => void;
-  setPlaywrightSettings: (s: any) => void;
+  setPlaywrightSettings: (s: PlaywrightSettings) => void;
   playwrightPersonaId: string | null;
-  playwrightSettings: any;
+  playwrightSettings: PlaywrightSettings;
   setShowSessionModal: (show: boolean) => void;
   baseApiMethod: string;
   baseApiParams: string;
-  setBaseApiResponse: (res: any) => void;
+  setBaseApiResponse: (res: { data: unknown } | null) => void;
   setBaseApiError: (err: string | null) => void;
   setBaseApiLoading: (loading: boolean) => void;
   allegroApiMethod: string;
   allegroApiBody: string;
   allegroApiPath: string;
-  setAllegroApiResponse: (res: any) => void;
+  setAllegroApiResponse: (
+    res: {
+      status: number;
+      statusText: string;
+      data?: unknown;
+      refreshed?: boolean;
+    } | null
+  ) => void;
   setAllegroApiError: (err: string | null) => void;
   setAllegroApiLoading: (loading: boolean) => void;
-  integrationsQuery: any;
+  integrationsQuery: ListQuery<Integration>;
 }) {
   const { toast } = useToast();
 
@@ -94,7 +108,7 @@ export function useIntegrationsActionsImpl(args: {
       let currentIntegrations = args.integrations;
       if (!currentIntegrations.length && args.integrationsQuery.isFetching) {
         const refreshed = await args.integrationsQuery.refetch();
-        currentIntegrations = refreshed.data ?? args.integrationsQuery.data ?? [];
+        currentIntegrations = (refreshed.data as Integration[]) ?? args.integrationsQuery.data ?? [];
       }
       const existing = currentIntegrations.find((i: Integration) => i.slug === def.slug);
       if (existing) return existing;
@@ -310,9 +324,9 @@ export function useIntegrationsActionsImpl(args: {
 
           args.setTestLog(steps);
           args.setTestErrorMeta({
-            errorId: data['errorId'],
-            integrationId: data['integrationId'],
-            connectionId: data['connectionId'],
+            errorId: (data['errorId'] as string) ?? undefined,
+            integrationId: (data['integrationId'] as string) ?? null,
+            connectionId: (data['connectionId'] as string) ?? null,
           });
         } else {
           args.setTestLog([

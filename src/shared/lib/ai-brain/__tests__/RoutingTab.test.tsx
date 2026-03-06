@@ -60,7 +60,7 @@ vi.mock('@/shared/ui', () => ({
     disabled?: boolean;
   }) => (
     <input
-      variant='checkbox'
+      type='checkbox'
       checked={checked}
       disabled={disabled}
       onChange={(event) => onCheckedChange?.(event.target.checked)}

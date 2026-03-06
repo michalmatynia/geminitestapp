@@ -180,6 +180,22 @@ describe('Canvas model selection badge', () => {
     expect(container.querySelector('.ai-paths-node-halo')).toBeFalsy();
   });
 
+  it('renders Pending badge without halo for unreached model nodes', () => {
+    const node = buildModelNode('gpt-4o-mini');
+    const { container } = render(
+      <svg>
+        <CanvasBoardUIProvider
+          value={buildContextValue(node, { runtimeNodeStatuses: { [node.id]: 'pending' } })}
+        >
+          <CanvasSvgNodeLayer />
+        </CanvasBoardUIProvider>
+      </svg>
+    );
+
+    expect(screen.getByText('Pending')).toBeTruthy();
+    expect(container.querySelector('.ai-paths-node-halo')).toBeFalsy();
+  });
+
   it('renders Blocked badge without halo for model nodes in blocked status', () => {
     const node = buildModelNode('gpt-4o-mini');
     const { container } = render(

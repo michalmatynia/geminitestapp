@@ -29,7 +29,7 @@ const DAYS = ['Pon', 'Wt', 'Sr', 'Czw', 'Pt', 'Sob', 'Nd'] as const;
 
 function MiniCalendar({ month = 2, year = 2025, highlightDay }: { month?: number; year?: number; highlightDay?: number }): React.JSX.Element {
   const firstDay = new Date(year, month - 1, 1).getDay();
-  const monthData = MONTHS[month - 1] ?? MONTHS[0]!;
+  const monthData = MONTHS[month - 1] ?? MONTHS[0];
   const startOffset = (firstDay + 6) % 7;
   const cells: Array<number | null> = [];
   for (let i = 0; i < startOffset; i++) cells.push(null);
@@ -102,10 +102,10 @@ const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
         <div className='flex flex-col items-center gap-3 text-center'>
           <div className='grid grid-cols-2 gap-3 w-full max-w-sm'>
             {[
-              { season: '🌸 Wiosna', months: [MONTHS[2]!, MONTHS[3]!, MONTHS[4]!], color: 'bg-green-50 border-green-200' },
-              { season: '☀️ Lato', months: [MONTHS[5]!, MONTHS[6]!, MONTHS[7]!], color: 'bg-yellow-50 border-yellow-200' },
-              { season: '🍂 Jesien', months: [MONTHS[8]!, MONTHS[9]!, MONTHS[10]!], color: 'bg-orange-50 border-orange-200' },
-              { season: '❄️ Zima', months: [MONTHS[11]!, MONTHS[0]!, MONTHS[1]!], color: 'bg-blue-50 border-blue-200' },
+              { season: '🌸 Wiosna', months: [MONTHS[2], MONTHS[3], MONTHS[4]], color: 'bg-green-50 border-green-200' },
+              { season: '☀️ Lato', months: [MONTHS[5], MONTHS[6], MONTHS[7]], color: 'bg-yellow-50 border-yellow-200' },
+              { season: '🍂 Jesien', months: [MONTHS[8], MONTHS[9], MONTHS[10]], color: 'bg-orange-50 border-orange-200' },
+              { season: '❄️ Zima', months: [MONTHS[11], MONTHS[0], MONTHS[1]], color: 'bg-blue-50 border-blue-200' },
             ].map((g) => (
               <div key={g.season} className={`rounded-2xl border p-3 ${g.color}`}>
                 <p className='font-bold text-sm text-gray-600 mb-1'>{g.season}</p>
@@ -221,7 +221,10 @@ export default function CalendarLesson({ onBack }: CalendarLessonProps): React.J
   if (activeSection === 'game') {
     return (
       <div className='flex flex-col items-center w-full max-w-lg gap-4'>
-        <button onClick={() => setActiveSection(null)} className='self-start flex items-center gap-2 text-green-600 hover:text-green-800 font-semibold text-sm transition'>
+        <button
+          onClick={() => setActiveSection(null)}
+          className='self-start flex items-center gap-2 text-green-600 hover:text-green-800 font-semibold text-sm transition'
+        >
           <ArrowLeft className='w-4 h-4' /> Wróc do menu
         </button>
         <div className='bg-white rounded-3xl shadow-xl p-6 w-full flex flex-col items-center gap-5'>
@@ -232,7 +235,7 @@ export default function CalendarLesson({ onBack }: CalendarLessonProps): React.J
     );
   }
 
-  if (activeSection && activeSection !== 'game') {
+  if (activeSection && (activeSection as SectionId) !== 'game') {
     return (
       <SectionView
         sectionId={activeSection}

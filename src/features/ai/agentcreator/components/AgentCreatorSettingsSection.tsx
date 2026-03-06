@@ -23,6 +23,7 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
     <FormSection title='Agent Settings' variant='subtle' className='p-4'>
       <div className='mt-2'>
         <ToggleRow
+          id='agent-mode-enabled'
           label='Enable Agent Mode'
           description='Allow the chatbot to use automated browser agents.'
           checked={agentModeEnabled}
@@ -63,18 +64,21 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
 
           <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
             <ToggleRow
+              id='agent-run-headless'
               label='Run Headless'
               description="Don't show browser window"
               checked={agentRunHeadless ?? false}
               onCheckedChange={setAgentRunHeadless}
             />
             <ToggleRow
+              id='agent-ignore-robots'
               label='Ignore robots.txt'
               description='Bypass scraping restrictions'
               checked={agentIgnoreRobotsTxt ?? false}
               onCheckedChange={setAgentIgnoreRobotsTxt}
             />
             <ToggleRow
+              id='agent-require-approval'
               label='Require Approval'
               description='Ask before critical actions'
               checked={agentRequireHumanApproval ?? false}

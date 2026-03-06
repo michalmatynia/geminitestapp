@@ -5,7 +5,7 @@ export type MongoCategoryMappingDoc = {
   _id: string | ObjectId;
   connectionId: string;
   externalCategoryId: string;
-  internalCategoryId: string;
+  internalCategoryId: string | null;
   catalogId: string;
   isActive: boolean;
   createdAt: Date;

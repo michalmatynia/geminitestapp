@@ -1,9 +1,10 @@
 import 'dotenv/config';
 
 import {
-  listAiPathsSettings,
-  upsertAiPathsSettingsBulk,
-} from '@/features/ai/ai-paths/server/settings-store';
+  listMongoAiPathsSettings,
+  upsertMongoAiPathsSettings,
+} from '@/features/ai/ai-paths/server/settings-store.repository';
+import { parsePositiveInt } from '@/features/ai/ai-paths/server/settings-store.helpers';
 import type { PathConfig } from '@/shared/contracts/ai-paths';
 
 import {
@@ -34,6 +35,10 @@ type PathNodeIssue = DatabaseUpdateContractNodeIssue & {
 };
 
 const AI_PATHS_CONFIG_PREFIX = 'ai_paths_config_';
+const AI_PATHS_MONGO_OP_TIMEOUT_MS = parsePositiveInt(
+  process.env['AI_PATHS_MONGO_OP_TIMEOUT_MS'],
+  15_000
+);
 
 const parseArgs = (argv: string[]): CliOptions => {
   const options: CliOptions = {
@@ -77,7 +82,7 @@ const parsePathConfig = (raw: string): PathConfig | null => {
 
 async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
-  const settings = await listAiPathsSettings();
+  const settings = await listMongoAiPathsSettings(AI_PATHS_MONGO_OP_TIMEOUT_MS);
   const updates: Array<{ key: string; value: string }> = [];
   const changedPathIds: string[] = [];
   const changedNodeUpdates: PathNodeUpdate[] = [];
@@ -141,7 +146,7 @@ async function main(): Promise<void> {
   }
 
   if (!options.dryRun && updates.length > 0) {
-    await upsertAiPathsSettingsBulk(updates);
+    await upsertMongoAiPathsSettings(updates, AI_PATHS_MONGO_OP_TIMEOUT_MS);
   }
 
   console.log(

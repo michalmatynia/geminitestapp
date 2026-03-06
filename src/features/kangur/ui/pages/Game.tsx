@@ -93,6 +93,7 @@ const KANGUR_OPERATIONS: KangurOperation[] = [
   'mixed',
 ];
 const KANGUR_DIFFICULTIES: KangurDifficulty[] = ['easy', 'medium', 'hard'];
+const GAME_BRAND_NAME = 'Sprycio';
 
 const isKangurOperation = (value: string | null): value is KangurOperation =>
   Boolean(value && KANGUR_OPERATIONS.includes(value as KangurOperation));
@@ -304,7 +305,9 @@ export default function Game() {
         visible={xpToast.visible}
       />
       {/* Top nav bar */}
-      <div className='w-full bg-white/70 backdrop-blur border-b border-indigo-100 px-6 py-3 flex items-center justify-between'>
+      <div
+        className='sticky top-0 z-20 w-full bg-white/70 backdrop-blur border-b border-indigo-100 px-6 py-3 flex items-center justify-between'
+      >
         <div>
           {screen !== 'home' && (
             <button
@@ -342,12 +345,12 @@ export default function Game() {
         <motion.div
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className='mb-8 text-center'
+          className='mb-8 pt-3 text-center'
         >
           <h1 className='text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 drop-shadow'>
-            🧮 MathBlast!
+            <span aria-hidden='true'>🧮 </span>
+            {GAME_BRAND_NAME}
           </h1>
-          <p className='text-gray-500 mt-1 text-lg'>Fajny sposób na naukę matematyki!</p>
           {!userLoading && (
             <div className='mt-3 flex justify-center'>
               {user ? (

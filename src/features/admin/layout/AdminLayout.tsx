@@ -127,6 +127,12 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
     : isMenuCollapsed
       ? 'ml-16 sm:ml-20'
       : 'ml-56 xl:ml-64';
+  const isEmbeddedKangurRoute =
+    pathname === '/admin/kangur' ||
+    (pathname.startsWith('/admin/kangur/') && !pathname.startsWith('/admin/kangur/lessons-manager'));
+  const mainClassName = `min-h-0 flex-1 min-w-0 max-w-full overflow-x-hidden overflow-y-auto ${
+    isEmbeddedKangurRoute ? 'p-0' : 'p-4'
+  }`;
 
   return (
     <div className='dark relative h-screen w-full max-w-full overflow-hidden bg-background text-white'>
@@ -160,7 +166,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
       <div
         className={`relative flex h-full min-w-0 flex-col overflow-x-hidden transition-[margin-left] duration-300 ${contentClassName}`}
       >
-        <header className='absolute top-0 right-0 z-10 flex h-14 items-center px-6 pointer-events-none'>
+        <header className='absolute top-0 right-0 z-[90] flex h-14 items-center px-6 pointer-events-none'>
           <div className='pointer-events-auto'>
             <div className='flex items-center gap-2'>
               <div id='ai-paths-header-actions' className='flex items-center gap-2' />
@@ -168,7 +174,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
             </div>
           </div>
         </header>
-        <main className='min-h-0 flex-1 min-w-0 max-w-full overflow-x-hidden overflow-y-auto p-4'>
+        <main className={mainClassName}>
           <QueryErrorBoundary>
             <div className='min-w-0 max-w-full'>{children}</div>
           </QueryErrorBoundary>

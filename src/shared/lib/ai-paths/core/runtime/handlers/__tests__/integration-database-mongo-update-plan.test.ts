@@ -225,7 +225,12 @@ describe('buildMongoUpdatePlan', () => {
       templateInputs: {
         entityId: 'product-1',
       },
-      parseJsonTemplate: () => ({}),
+      parseJsonTemplate: (template: string) =>
+        template.includes('"id"')
+          ? {
+              id: 'product-1',
+            }
+          : {},
       ensureExistingParameterTemplateContext: vi.fn(async () => {}),
       aiPrompt: '',
     });
@@ -241,6 +246,182 @@ describe('buildMongoUpdatePlan', () => {
     );
     expect(reportAiPathsError).toHaveBeenCalled();
     expect(toast).toHaveBeenCalled();
+  });
+
+  it('skips mapping mode when no mapping updates resolve from inputs', async () => {
+    const reportAiPathsError = vi.fn();
+    const toast = vi.fn();
+    const result = await buildMongoUpdatePlan({
+      actionCategory: 'update',
+      action: 'updateOne',
+      node: {
+        id: 'node-db-update-translate-en-pl',
+        type: 'database',
+        title: 'Database Update: Desc + Params',
+      } as AiNode,
+      prevOutputs: {},
+      reportAiPathsError,
+      toast,
+      resolvedInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+      },
+      nodeInputPorts: ['entityId', 'value', 'result'],
+      dbConfig: {
+        operation: 'update',
+        mode: 'replace',
+        updatePayloadMode: 'mapping',
+        mappings: [
+          {
+            targetPath: 'description_pl',
+            sourcePort: 'value',
+            sourcePath: 'description_pl',
+          },
+          {
+            targetPath: 'parameters',
+            sourcePort: 'result',
+            sourcePath: 'parameters',
+          },
+        ],
+      } as unknown as DatabaseConfig,
+      queryConfig: {
+        provider: 'auto',
+        collection: 'products',
+        mode: 'custom',
+        preset: 'by_id',
+        field: 'id',
+        idType: 'string',
+        queryTemplate: '{"id":"{{entityId}}"}',
+        limit: 1,
+        sort: '',
+        projection: '',
+        single: true,
+      } as DbQueryConfig,
+      collection: 'products',
+      filter: { id: 'product-1' },
+      idType: 'string',
+      updateTemplate: '',
+      templateInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+      },
+      parseJsonTemplate: (template: string) =>
+        template.includes('"id"')
+          ? {
+              id: 'product-1',
+            }
+          : {},
+      ensureExistingParameterTemplateContext: vi.fn(async () => {}),
+      aiPrompt: '',
+    });
+
+    expect('output' in result).toBe(true);
+    if (!('output' in result)) {
+      throw new Error('Expected skip output.');
+    }
+    expect(result.output['bundle']).toEqual(
+      expect.objectContaining({
+        skipped: true,
+        reason: 'no_mapping_updates',
+        unresolvedSourcePorts: ['value', 'result'],
+      })
+    );
+    expect(reportAiPathsError).not.toHaveBeenCalled();
+    expect(toast).not.toHaveBeenCalled();
+  });
+
+  it('builds partial mapping updates when only one translation branch resolves', async () => {
+    const reportAiPathsError = vi.fn();
+    const toast = vi.fn();
+    const result = await buildMongoUpdatePlan({
+      actionCategory: 'update',
+      action: 'updateOne',
+      node: {
+        id: 'node-db-update-translate-en-pl',
+        type: 'database',
+        title: 'Database Update: Desc + Params',
+      } as AiNode,
+      prevOutputs: {},
+      reportAiPathsError,
+      toast,
+      resolvedInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+        value: {
+          description_pl: 'Opis produktu',
+        },
+      },
+      nodeInputPorts: ['entityId', 'value', 'result'],
+      dbConfig: {
+        operation: 'update',
+        mode: 'replace',
+        updatePayloadMode: 'mapping',
+        mappings: [
+          {
+            targetPath: 'description_pl',
+            sourcePort: 'value',
+            sourcePath: 'description_pl',
+          },
+          {
+            targetPath: 'parameters',
+            sourcePort: 'result',
+            sourcePath: 'parameters',
+          },
+        ],
+      } as unknown as DatabaseConfig,
+      queryConfig: {
+        provider: 'auto',
+        collection: 'products',
+        mode: 'custom',
+        preset: 'by_id',
+        field: 'id',
+        idType: 'string',
+        queryTemplate: '{"id":"{{entityId}}"}',
+        limit: 1,
+        sort: '',
+        projection: '',
+        single: true,
+      } as DbQueryConfig,
+      collection: 'products',
+      filter: { id: 'product-1' },
+      idType: 'string',
+      updateTemplate: '',
+      templateInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+        value: {
+          description_pl: 'Opis produktu',
+        },
+      },
+      parseJsonTemplate: (template: string) =>
+        template.includes('"id"')
+          ? {
+              id: 'product-1',
+            }
+          : {},
+      ensureExistingParameterTemplateContext: vi.fn(async () => {}),
+      aiPrompt: '',
+    });
+
+    expect('plan' in result).toBe(true);
+    if (!('plan' in result)) {
+      throw new Error('Expected Mongo update plan.');
+    }
+    expect(result.plan.updates).toEqual({
+      description_pl: 'Opis produktu',
+    });
+    expect(result.plan.updateDoc).toEqual({
+      $set: {
+        description_pl: 'Opis produktu',
+      },
+    });
+    expect(result.plan.debugPayload).toEqual(
+      expect.objectContaining({
+        mode: 'mongo',
+      })
+    );
+    expect(reportAiPathsError).not.toHaveBeenCalled();
+    expect(toast).not.toHaveBeenCalled();
   });
 
   it('does not fallback to mappings when custom template guardrail fails', async () => {

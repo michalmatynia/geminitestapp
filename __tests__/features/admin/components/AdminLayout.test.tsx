@@ -9,9 +9,13 @@ import { server } from '@/mocks/server';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 import { ToastProvider } from '@/shared/ui/toast';
 
+const { usePathnameMock } = vi.hoisted(() => ({
+  usePathnameMock: vi.fn(() => '/admin'),
+}));
+
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
-  usePathname: vi.fn(() => '/admin'),
+  usePathname: usePathnameMock,
   useRouter: vi.fn(() => ({
     push: vi.fn(),
   })),
@@ -53,6 +57,7 @@ const renderLayout = (children: ReactNode) => {
 
 describe('AdminLayout', () => {
   beforeEach(() => {
+    usePathnameMock.mockReturnValue('/admin');
     server.use(
       http.get('/api/user/preferences', () => HttpResponse.json({})),
       http.patch('/api/user/preferences', () => HttpResponse.json({})),
@@ -66,6 +71,24 @@ describe('AdminLayout', () => {
 
     expect(screen.getByTestId('child')).toBeInTheDocument();
     expect(screen.getByText('Test Content')).toBeInTheDocument();
+    expect(screen.getByRole('main').className).toContain('p-4');
+  });
+
+  it('removes outer main padding for embedded kangur routes', () => {
+    usePathnameMock.mockReturnValue('/admin/kangur/lessons');
+
+    renderLayout(<div>Content</div>);
+
+    expect(screen.getByRole('main').className).toContain('p-0');
+    expect(screen.getByRole('main').className).not.toContain('p-4');
+  });
+
+  it('keeps default main padding for kangur lessons manager', () => {
+    usePathnameMock.mockReturnValue('/admin/kangur/lessons-manager');
+
+    renderLayout(<div>Content</div>);
+
+    expect(screen.getByRole('main').className).toContain('p-4');
   });
 
   it('can collapse and expand the sidebar', () => {
@@ -96,5 +119,7 @@ describe('AdminLayout', () => {
     const mainArea = screen.getByRole('main').parentElement;
     const header = mainArea?.querySelector('header');
     expect(header).toBeInTheDocument();
+    expect(header?.className).toContain('z-[90]');
+    expect(document.getElementById('admin-user-nav-trigger')?.className).toContain('z-[95]');
   });
 });

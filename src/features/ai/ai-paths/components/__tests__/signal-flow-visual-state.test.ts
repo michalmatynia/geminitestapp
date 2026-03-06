@@ -16,12 +16,12 @@ describe('signal flow visual state', () => {
     expect(normalizeRuntimeStatus(null)).toBeNull();
   });
 
-  it('keeps edge runtime flow active only for true processing statuses', () => {
+  it('keeps edge runtime flow active only for reached processing statuses', () => {
     expect(resolveEdgeRuntimeActive('running')).toBe(true);
     expect(resolveEdgeRuntimeActive('processing')).toBe(true);
     expect(resolveEdgeRuntimeActive('polling')).toBe(true);
-    expect(resolveEdgeRuntimeActive('pending')).toBe(true);
 
+    expect(resolveEdgeRuntimeActive('pending')).toBe(false);
     expect(resolveEdgeRuntimeActive('waiting_callback')).toBe(false);
     expect(resolveEdgeRuntimeActive('advance_pending')).toBe(false);
     expect(resolveEdgeRuntimeActive('queued')).toBe(false);
@@ -33,6 +33,7 @@ describe('signal flow visual state', () => {
     [
       'waiting_callback',
       'advance_pending',
+      'pending',
       'queued',
       'completed',
       'failed',
@@ -63,6 +64,12 @@ describe('signal flow visual state', () => {
       resolveNodeBlockerProcessing({
         nodeType: 'fetcher',
         status: 'waiting_callback',
+      })
+    ).toBe(false);
+    expect(
+      resolveNodeBlockerProcessing({
+        nodeType: 'model',
+        status: 'pending',
       })
     ).toBe(false);
   });
@@ -104,5 +111,6 @@ describe('signal flow visual state', () => {
     expect(formatRuntimeStatusLabel('timeout')).toBe('Timeout');
     expect(BLOCKER_PROCESSING_STATUSES.has('waiting_callback')).toBe(true);
     expect(BLOCKER_PROCESSING_STATUSES.has('advance_pending')).toBe(true);
+    expect(BLOCKER_PROCESSING_STATUSES.has('pending')).toBe(false);
   });
 });

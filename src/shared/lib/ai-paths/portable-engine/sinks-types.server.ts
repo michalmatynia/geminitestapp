@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { PortablePathEnvelopeVerificationAuditSink } from './portable-engine-envelope-observability';
+import type { PortablePathEnvelopeVerificationAuditSink } from './portable-engine-envelope-audit-sinks';
 
 export const PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_KIND =
   'ai-paths.portable-envelope-verification-audit.v1' as const;

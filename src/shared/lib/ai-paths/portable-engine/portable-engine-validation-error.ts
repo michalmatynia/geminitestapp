@@ -1,4 +1,4 @@
-import type { PortablePathValidationReport } from './portable-engine-types';
+import type { PortablePathValidationReport } from './portable-engine-runtime-types';
 
 const formatValidationErrorMessage = (validation: PortablePathValidationReport): string => {
   if (validation.identityIssues.length > 0) {

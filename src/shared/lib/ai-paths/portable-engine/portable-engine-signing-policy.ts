@@ -6,7 +6,7 @@ import type {
   PortablePathSigningPolicyProfile,
   PortablePathSigningPolicySurface,
   ResolvePortablePathInputOptions,
-} from './portable-engine-types';
+} from './portable-engine-resolution-types';
 
 const PORTABLE_PATH_SIGNING_POLICY_BY_PROFILE: Record<
   PortablePathSigningPolicyProfile,

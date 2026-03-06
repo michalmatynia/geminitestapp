@@ -93,8 +93,8 @@
         "database": {
           "operation": "update",
           "entityType": "product",
-          "updatePayloadMode": "custom",
-          "updateTemplate": "{\n  \"$set\": {\n    \"description_pl\": \"{{value.description_pl}}\",\n    \"parameters\": {{result.parameters}}\n  }\n}",
+          "updatePayloadMode": "mapping",
+          "updateTemplate": "",
           "query": {
             "provider": "auto",
             "collection": "products",

@@ -16,7 +16,7 @@ function mapToRecord(record: {
   id: string;
   connectionId: string;
   externalCategoryId: string;
-  internalCategoryId: string;
+  internalCategoryId: string | null;
   catalogId: string;
   isActive: boolean;
   createdAt: Date;
@@ -189,7 +189,7 @@ export const prismaCategoryMappingImpl = {
           updatedAt: record.internalCategory.updatedAt.toISOString(),
         }
         : ({
-          id: record.internalCategoryId,
+          id: record.internalCategoryId || '',
           name: `[Missing internal category: ${record.internalCategoryId}]`,
           description: null,
           color: null,
@@ -240,12 +240,12 @@ export const prismaCategoryMappingImpl = {
             create: {
               connectionId,
               externalCategoryId: m.externalCategoryId,
-              internalCategoryId: m.internalCategoryId!,
+              internalCategoryId: m.internalCategoryId,
               catalogId,
               isActive: true,
             },
             update: {
-              internalCategoryId: m.internalCategoryId!,
+              internalCategoryId: m.internalCategoryId,
               isActive: true,
               updatedAt: new Date(),
             },

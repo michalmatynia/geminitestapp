@@ -31,8 +31,8 @@ type KangurLessonPracticeReward = {
   progressUpdates: Partial<KangurProgressState>;
 };
 
-export const KANGUR_PROGRESS_STORAGE_KEY = 'mathblast_progress';
-export const KANGUR_PROGRESS_OWNER_STORAGE_KEY = 'mathblast_progress_owner';
+export const KANGUR_PROGRESS_STORAGE_KEY = 'sprycio_progress';
+export const KANGUR_PROGRESS_OWNER_STORAGE_KEY = 'sprycio_progress_owner';
 export const KANGUR_PROGRESS_EVENT_NAME = 'kangur-progress-changed';
 
 const DEFAULT_PROGRESS: KangurProgressState = createDefaultKangurProgressState();

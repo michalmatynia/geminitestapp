@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
@@ -14,9 +13,18 @@ import {
   buildPlanStepsFromSpecs,
   buildBranchStepsFromAlternatives,
   normalizeStringList,
+  type PlanHierarchy,
 } from '../utils';
 import { normalizePlanStepSpecs } from '../llm-step-specs';
 import { runPlannerTask } from './core';
+
+export type AdaptivePlanReviewResult = {
+  shouldReplan: boolean;
+  reason?: string;
+  steps: PlanStep[];
+  hierarchy?: PlanHierarchy | null;
+  meta?: PlannerMeta | null;
+};
 
 export async function buildAdaptivePlanReview({
   prompt,
@@ -34,7 +42,7 @@ export async function buildAdaptivePlanReview({
   prompt: string;
   memory: string[];
   model: string;
-  browserContext?: any;
+  browserContext?: unknown;
   currentPlan: PlanStep[];
   completedIndex: number;
   runId?: string;
@@ -42,13 +50,7 @@ export async function buildAdaptivePlanReview({
   maxStepAttempts: number;
   trigger?: string;
   signals?: Record<string, unknown>;
-}): Promise<{
-  shouldReplan: boolean;
-  reason?: string;
-  steps: PlanStep[];
-  hierarchy?: any;
-  meta?: PlannerMeta | null;
-}> {
+}): Promise<AdaptivePlanReviewResult> {
   try {
     const systemPrompt =
       'You are an agent replanner. Output only JSON with keys: shouldReplan, reason, goals, critique, alternatives, taskType, summary, constraints, successSignals. shouldReplan is boolean. taskType is \'web_task\' or \'extract_info\'. If shouldReplan is true, include goals (same schema as planner with priority/dependsOn) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. summary is a short plan summary. constraints and successSignals are arrays. The user input includes trigger and signals fields; use them to focus the replan.';
@@ -96,13 +98,13 @@ export async function buildAdaptivePlanReview({
       }
     }
     if (shouldReplan && steps.length === 0) {
-      const result: any = { shouldReplan: false, steps: [] };
+      const result: AdaptivePlanReviewResult = { shouldReplan: false, steps: [] };
       if (typeof parsed.reason === 'string') {
         result.reason = parsed.reason;
       }
       return result;
     }
-    const result: any = {
+    const result: AdaptivePlanReviewResult = {
       shouldReplan,
       steps,
       hierarchy,
@@ -120,6 +122,25 @@ export async function buildAdaptivePlanReview({
     return { shouldReplan: false, steps: [] };
   }
 }
+
+export type SelfCheckReviewResult = {
+  action: 'continue' | 'replan' | 'wait_human';
+  reason?: string;
+  notes?: string;
+  questions?: string[];
+  evidence?: string[];
+  confidence?: number;
+  missingInfo?: string[];
+  blockers?: string[];
+  hypotheses?: string[];
+  verificationSteps?: string[];
+  toolSwitch?: string;
+  abortSignals?: string[];
+  finishSignals?: string[];
+  steps: PlanStep[];
+  hierarchy?: PlanHierarchy | null;
+  meta?: PlannerMeta | null;
+};
 
 export async function buildSelfCheckReview({
   prompt,
@@ -143,7 +164,7 @@ export async function buildSelfCheckReview({
   prompt: string;
   memory: string[];
   model: string;
-  browserContext?: any;
+  browserContext?: unknown;
   step: PlanStep;
   stepIndex: number;
   lastError?: string | null;
@@ -157,24 +178,7 @@ export async function buildSelfCheckReview({
   runId?: string;
   maxSteps: number;
   maxStepAttempts: number;
-}): Promise<{
-  action: 'continue' | 'replan' | 'wait_human';
-  reason?: string;
-  notes?: string;
-  questions?: string[];
-  evidence?: string[];
-  confidence?: number;
-  missingInfo?: string[];
-  blockers?: string[];
-  hypotheses?: string[];
-  verificationSteps?: string[];
-  toolSwitch?: string;
-  abortSignals?: string[];
-  finishSignals?: string[];
-  steps: PlanStep[];
-  hierarchy?: any;
-  meta?: PlannerMeta | null;
-}> {
+}): Promise<SelfCheckReviewResult> {
   try {
     const systemPrompt =
       'You are an agent self-checker. Output only JSON with keys: action, reason, notes, questions, evidence, confidence, missingInfo, blockers, hypotheses, verificationSteps, toolSwitch, abortSignals, finishSignals, goals, critique, alternatives, taskType, summary, constraints, successSignals. action is \'continue\', \'replan\', or \'wait_human\'. Provide 5-8 self-questions that test assumptions, evidence quality, tool choice, and completion criteria. evidence is a list of observable facts from the context. confidence is 0-100. If action is \'replan\', include goals (planner schema with priority/dependsOn) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. toolSwitch is a short suggestion like \'use search\' or \'use playwright\'. abortSignals are conditions that should stop the run. finishSignals are conditions that indicate the goal is satisfied. summary is a short plan summary. constraints and successSignals are arrays.';
@@ -233,7 +237,7 @@ export async function buildSelfCheckReview({
         steps = fallbackBranch;
       }
     }
-    const result: any = {
+    const result: SelfCheckReviewResult = {
       action,
       questions: normalizeStringList(parsed.questions),
       evidence: normalizeStringList(parsed.evidence),

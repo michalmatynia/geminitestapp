@@ -216,10 +216,10 @@ export function FolderTreeViewportV2(props: FolderTreeViewportV2Props): React.JS
     return emptyLabel;
   }, [emptyLabel, searchState?.effectiveQuery, searchState?.isActive]);
 
-  const rootDropEnabled = rootDropUi?.enabled ?? true;
-  const rootDropLabel = rootDropUi?.label?.trim() || 'Drop to Root';
-  const rootDropIdleClassName = rootDropUi?.idleClassName ?? defaultRootDropIdleClassName;
-  const rootDropActiveClassName = rootDropUi?.activeClassName ?? defaultRootDropActiveClassName;
+  const rootDropEnabled = rootDropUi && 'enabled' in rootDropUi ? rootDropUi.enabled ?? true : true;
+  const rootDropLabel = (rootDropUi && 'label' in rootDropUi ? rootDropUi.label?.trim() : '') || 'Drop to Root';
+  const rootDropIdleClassName = (rootDropUi && 'idleClassName' in rootDropUi ? rootDropUi.idleClassName : '') ?? defaultRootDropIdleClassName;
+  const rootDropActiveClassName = (rootDropUi && 'activeClassName' in rootDropUi ? rootDropUi.activeClassName : '') ?? defaultRootDropActiveClassName;
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
 

@@ -1,4 +1,7 @@
-import { DEFAULT_PORTABLE_PAYLOAD_LIMITS, type PortablePayloadLimits } from './portable-engine-types';
+import {
+  DEFAULT_PORTABLE_PAYLOAD_LIMITS,
+  type PortablePayloadLimits,
+} from './portable-engine-resolution-types';
 
 const UNSAFE_OBJECT_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
 

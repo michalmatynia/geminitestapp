@@ -113,7 +113,7 @@ export default function GeometryShapesLesson({ onBack }: GeometryShapesLessonPro
   if (activeSection) {
     return (
       <LessonSlideSection
-        slides={SLIDES[activeSection as Exclude<SectionId, 'game'>]}
+        slides={SLIDES[activeSection]}
         onBack={() => setActiveSection(null)}
         dotActiveClass='bg-fuchsia-500'
         dotDoneClass='bg-fuchsia-300'

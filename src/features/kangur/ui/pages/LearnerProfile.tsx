@@ -192,7 +192,7 @@ export default function LearnerProfile() {
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex flex-col items-center'>
-      <div className='w-full bg-white/70 backdrop-blur border-b border-indigo-100 px-4 py-3 flex items-center justify-between gap-3'>
+      <div className='sticky top-0 z-20 w-full bg-white/70 backdrop-blur border-b border-indigo-100 px-4 py-3 flex items-center justify-between gap-3'>
         <Link
           href={createPageUrl('Game', basePath)}
           className='inline-flex items-center gap-2 text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'

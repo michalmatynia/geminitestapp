@@ -1,7 +1,7 @@
+// Edge flow should represent data that has reached a node, not nodes that are merely eligible.
 const EDGE_FLOWING_RUNTIME_STATUSES = new Set<string>([
   'running',
   'polling',
-  'pending',
   'processing',
 ]);
 
@@ -28,7 +28,6 @@ export const BLOCKER_PROCESSING_STATUSES = new Set<string>([
   'polling',
   'waiting_callback',
   'advance_pending',
-  'pending',
   'processing',
 ]);
 

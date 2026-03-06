@@ -54,21 +54,41 @@ npm run docs:ai-paths:node-docs:ci
   - `src/shared/lib/ai-paths/portable-engine/server.ts`
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-execution.ts`
 - Core module ownership:
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-contract.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-resolution-types.ts`
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-types.ts`
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-migration.ts`
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-builders.ts`
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-resolvers.ts`
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-signatures.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-envelope-signing.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-envelope-verification.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-envelope-verification-support.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-envelope-verification-sync.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-envelope-verification-async.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-fingerprints.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-path-canonicalization.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-package-migrators.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-integrity-support.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-migration-types.ts`
+  - `src/shared/lib/ai-paths/portable-engine/node-code-objects-v2-contracts.ts`
+  - `src/shared/lib/ai-paths/portable-engine/node-code-objects-v2-manifest.ts`
+  - `src/shared/lib/ai-paths/portable-engine/node-code-objects-v2.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-envelope-audit-sinks.ts`
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-envelope-observability.ts`
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-migrator-observability.ts`
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-signing-policy.ts`
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-signing-policy-observability.ts`
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-resolution-support.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-run-error-normalization.ts`
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-run-observability.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-runtime-types.ts`
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-validation.ts`
 - Server sink ownership:
   - `src/shared/lib/ai-paths/portable-engine/sinks-types.server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/sinks-environment.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-shared.server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/sinks-settings-store.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-creators.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-trend-state.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-trends.server.ts`

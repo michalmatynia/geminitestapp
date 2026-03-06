@@ -87,7 +87,9 @@ export default function ParentDashboard() {
   return (
     <div className='min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 flex flex-col items-center'>
       {/* Top bar */}
-      <div className='w-full bg-white/80 backdrop-blur border-b border-slate-200 px-4 py-3 flex items-center justify-between'>
+      <div
+        className='sticky top-0 z-20 w-full bg-white/80 backdrop-blur border-b border-slate-200 px-4 py-3 flex items-center justify-between'
+      >
         <div className='flex items-center gap-3'>
           <Link
             href={createPageUrl('Game', basePath)}

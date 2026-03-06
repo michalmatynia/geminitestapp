@@ -178,6 +178,18 @@ const parsePureSetTokenAssignments = (template: string): TemplateAssignment[] | 
   return assignments;
 };
 
+const deriveMappingsFromPureSetTemplate = (template: string): NormalizedMapping[] => {
+  const assignments = parsePureSetTokenAssignments(template);
+  if (!assignments) return [];
+  return assignments.map(
+    (assignment: TemplateAssignment): NormalizedMapping => ({
+      targetPath: assignment.targetPath,
+      sourcePort: assignment.sourcePort,
+      sourcePath: assignment.sourcePath,
+    })
+  );
+};
+
 const isEquivalentMappingTemplate = (
   updateTemplate: string,
   mappings: NormalizedMapping[]
@@ -318,7 +330,14 @@ const rewriteDatabaseNodeUpdateMode = (args: {
 
   const mode = normalizeMode(configRecord['updatePayloadMode']);
   const template = normalizeText(configRecord['updateTemplate']);
-  const mappings = normalizeMappings(configRecord['mappings']);
+  const storedMappings = normalizeMappings(configRecord['mappings']);
+  const derivedMappings = deriveMappingsFromPureSetTemplate(template);
+  const mappings =
+    storedMappings.length > 0 && isEquivalentMappingTemplate(template, storedMappings)
+      ? storedMappings
+      : derivedMappings.length > 0
+        ? derivedMappings
+        : storedMappings;
   const issues: DatabaseUpdateContractNodeIssue[] = [];
   const updates: DatabaseUpdateContractNodeUpdate[] = [];
   const mappingDiagnostics = evaluateMappings({
@@ -400,6 +419,7 @@ const rewriteDatabaseNodeUpdateMode = (args: {
         database: {
           ...databaseConfig,
           updatePayloadMode: nextMode,
+          mappings,
         },
       },
     },

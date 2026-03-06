@@ -6,7 +6,7 @@ import {
   listPortablePathEnvelopeVerificationAuditSinkIds,
   registerPortablePathEnvelopeVerificationAuditSink,
   unregisterPortablePathEnvelopeVerificationAuditSink,
-} from './portable-engine-envelope-observability';
+} from './portable-engine-envelope-audit-sinks';
 import {
   notifyPortablePathAuditSinkAutoRemediation,
   resolveDefaultPortablePathAuditSinkAutoRemediationStrategyByProfile,
@@ -44,6 +44,8 @@ import {
   resolvePortablePathEnvelopeVerificationAuditSinkHealthTimeoutMsFromEnvironment,
   resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment,
   resolvePortablePathEnvelopeVerificationAuditSinkProfileOverrideFromEnvironment,
+} from './sinks-environment.server';
+import {
   runWithTimeout,
   toErrorMessage,
   toStartupHealthSummaryLogInput,

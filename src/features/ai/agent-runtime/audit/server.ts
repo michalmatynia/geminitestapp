@@ -1,3 +1,5 @@
+import 'server-only';
+
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import prisma from '@/shared/lib/db/prisma';

@@ -8,7 +8,8 @@ import {
   useDeleteNoteTag,
   useUpdateNoteTag,
 } from '@/features/notesapp/api/useNoteMutations';
-import { useNotebooks, useNoteTags } from '@/features/notesapp/api/useNoteQueries';
+import { useNoteTags } from '@/features/notesapp/api/useNoteQueries';
+import { useNotebookResource } from '@/features/notesapp/api/useNotebookResource';
 import {
   useNoteSettingsActions,
   useNoteSettingsState,
@@ -45,7 +46,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
   const [editingColor, setEditingColor] = useState('#3b82f6');
   const [toDelete, setToDelete] = useState<TagRecord | null>(null);
 
-  const notebooksQuery = useNotebooks();
+  const { listQuery: notebooksQuery } = useNotebookResource();
   const tagsQuery = useNoteTags(selectedNotebookId ?? undefined);
   const createTag = useCreateNoteTag();
   const updateTag = useUpdateNoteTag();

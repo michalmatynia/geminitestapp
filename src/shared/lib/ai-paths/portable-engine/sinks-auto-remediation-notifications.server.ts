@@ -1,3 +1,5 @@
+import 'server-only';
+
 import { createHmac } from 'crypto';
 
 import { withTransientRecovery } from '@/shared/lib/observability/transient-recovery/with-recovery';

@@ -1,4 +1,4 @@
-import type { PortablePathInputSource } from './portable-engine-types';
+import type { PortablePathInputSource } from './portable-engine-contract';
 
 export type PortablePathMigratorFailureReason = 'missing_migrator' | 'migrator_error';
 

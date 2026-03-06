@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ChevronLeft, ChevronRight, LayoutDashboard, UserRound } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutDashboard, UserRound } from 'lucide-react';
 import type { ComponentType } from 'react';
 import dynamic from 'next/dynamic';
 
@@ -80,6 +80,10 @@ const GeometryPerimeterLesson = dynamic(
     loading: LessonLoadingFallback,
   }
 );
+const LogicalThinkingLesson = dynamic(
+  () => import('@/features/kangur/ui/components/LogicalThinkingLesson'),
+  { ssr: false, loading: LessonLoadingFallback }
+);
 const LogicalPatternsLesson = dynamic(
   () => import('@/features/kangur/ui/components/LogicalPatternsLesson'),
   { ssr: false, loading: LessonLoadingFallback }
@@ -108,6 +112,7 @@ const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<LessonPro
   geometry_shapes: GeometryShapesLesson,
   geometry_symmetry: GeometrySymmetryLesson,
   geometry_perimeter: GeometryPerimeterLesson,
+  logical_thinking: LogicalThinkingLesson,
   logical_patterns: LogicalPatternsLesson,
   logical_classification: LogicalClassificationLesson,
   logical_reasoning: LogicalReasoningLesson,
@@ -128,6 +133,8 @@ const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
   geometry_shapes: 'geometry_shapes',
   geometry_symmetry: 'geometry_symmetry',
   geometry_perimeter: 'geometry_perimeter',
+  logical_thinking: 'logical_thinking',
+  thinking: 'logical_thinking',
   logical_patterns: 'logical_patterns',
   patterns: 'logical_patterns',
   logical_classification: 'logical_classification',
@@ -136,7 +143,7 @@ const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
   reasoning: 'logical_reasoning',
   logical_analogies: 'logical_analogies',
   analogies: 'logical_analogies',
-  logic: 'logical_patterns',
+  logic: 'logical_thinking',
 };
 
 const resolveFocusedLessonId = (focusToken: string, lessons: KangurLesson[]): string | null => {
@@ -241,62 +248,41 @@ export default function Lessons() {
   const prev = activeIdx > 0 ? lessons[activeIdx - 1] : null;
   const next = activeIdx >= 0 && activeIdx < lessons.length - 1 ? lessons[activeIdx + 1] : null;
   const ActiveLessonComponent = activeLesson ? LESSON_COMPONENTS[activeLesson.componentId] : null;
+  const handleGoBack = (): void => {
+    if (typeof window === 'undefined') return;
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+
+    window.location.assign(createPageUrl('Game', basePath));
+  };
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex flex-col items-center'>
       {/* Top nav bar */}
-      <div className='w-full bg-white/70 backdrop-blur border-b border-indigo-100 px-4 py-2 flex flex-col gap-2'>
-        <div className='flex items-center justify-between'>
-          <Link
-            href={createPageUrl('Game', basePath)}
-            className='inline-flex items-center gap-2 text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
-          >
-            <ArrowLeft className='w-4 h-4' /> Strona główna
-          </Link>
-          <div className='flex items-center gap-3'>
-            <Link
-              href={createPageUrl('LearnerProfile', basePath)}
-              className='inline-flex items-center gap-1.5 text-sm text-indigo-500 hover:text-indigo-700 font-semibold transition'
-            >
-              <UserRound className='w-4 h-4' /> Profil
-            </Link>
-            <Link
-              href={createPageUrl('ParentDashboard', basePath)}
-              className='inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 font-semibold transition'
-            >
-              <LayoutDashboard className='w-4 h-4' /> Rodzic
-            </Link>
-          </div>
-        </div>
-        {/* Lesson tabs - scrollable row */}
-        <div
-          className='flex items-center gap-1 overflow-x-auto pb-1'
-          style={{ WebkitOverflowScrolling: 'touch' }}
+      <div
+        className='sticky top-0 z-20 w-full bg-white/70 backdrop-blur border-b border-indigo-100 px-4 py-2 flex items-center justify-between gap-3'
+      >
+        <Link
+          href={createPageUrl('Game', basePath)}
+          className='inline-flex items-center gap-2 text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
         >
-          <button
-            onClick={() => setActiveLessonId(null)}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-semibold transition-all ${
-              activeLessonId === null
-                ? 'bg-indigo-500 text-white shadow'
-                : 'text-gray-500 hover:bg-indigo-50'
-            }`}
+          Strona główna
+        </Link>
+        <div className='flex items-center gap-3'>
+          <Link
+            href={createPageUrl('LearnerProfile', basePath)}
+            className='inline-flex items-center gap-1.5 text-sm text-indigo-500 hover:text-indigo-700 font-semibold transition'
           >
-            Wszystkie
-          </button>
-          {lessons.map((lesson) => (
-            <button
-              key={lesson.id}
-              onClick={() => setActiveLessonId(lesson.id)}
-              className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold transition-all ${
-                activeLessonId === lesson.id
-                  ? `${lesson.activeBg} text-white shadow`
-                  : 'text-gray-500 hover:bg-indigo-50'
-              }`}
-            >
-              <span>{lesson.emoji}</span>
-              <span>{lesson.title}</span>
-            </button>
-          ))}
+            <UserRound className='w-4 h-4' /> Profil
+          </Link>
+          <Link
+            href={createPageUrl('ParentDashboard', basePath)}
+            className='inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 font-semibold transition'
+          >
+            <LayoutDashboard className='w-4 h-4' /> Rodzic
+          </Link>
         </div>
       </div>
 
@@ -315,6 +301,13 @@ export default function Lessons() {
                   📚 Lekcje
                 </h1>
                 <p className='text-gray-500 mt-1'>Ucz się krok po kroku!</p>
+                <button
+                  type='button'
+                  onClick={handleGoBack}
+                  className='mt-4 inline-flex items-center justify-center rounded-2xl border border-indigo-200 bg-white/90 px-4 py-2 text-sm font-semibold text-indigo-600 shadow-sm transition hover:bg-indigo-50'
+                >
+                  Wróć do poprzedniej strony
+                </button>
               </div>
 
               {lessons.length === 0 ? (

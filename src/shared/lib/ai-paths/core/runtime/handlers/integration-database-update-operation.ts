@@ -95,7 +95,22 @@ export async function handleDatabaseUpdateOperation({
       entityId,
       mappings: mappingResult.mappings,
       updates: mappingResult.updates,
+      unresolvedSourcePorts: Array.from(mappingResult.unresolvedSourcePorts),
     };
+
+    if (Object.keys(mappingResult.updates).length === 0) {
+      return {
+        ...prevOutputs,
+        result: null,
+        bundle: {
+          skipped: true,
+          reason: 'no_mapping_updates',
+          unresolvedSourcePorts: Array.from(mappingResult.unresolvedSourcePorts),
+        },
+        debugPayload,
+        aiPrompt,
+      };
+    }
 
     const executionResult = await executeDatabaseUpdate({
       nodeId: node.id,

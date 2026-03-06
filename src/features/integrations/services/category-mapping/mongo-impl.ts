@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
@@ -6,14 +5,16 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { randomUUID } from 'crypto';
-import { ObjectId, type Filter, type Collection } from 'mongodb';
+import { ObjectId, type Filter, type Collection, type UpdateFilter, type AnyBulkWriteOperation } from 'mongodb';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import {
   CategoryMapping,
   CategoryMappingWithDetails,
   CategoryMappingCreateInput,
   CategoryMappingUpdateInput,
+  ExternalCategory,
 } from '@/shared/contracts/integrations';
+import { type ProductCategory as InternalCategory } from '@/shared/contracts/products';
 import { notFoundError } from '@/shared/errors/app-error';
 import {
   MongoCategoryMappingDoc,
@@ -84,7 +85,7 @@ const buildMongoUniquenessFilter = (
     notConditions.push(buildMongoIdFilter(excludeId));
   }
   if (notConditions.length > 0) {
-    (filter as any)['$nor'] = notConditions;
+    filter['$nor'] = notConditions;
   }
 
   return filter;
@@ -148,7 +149,7 @@ export const mongoCategoryMappingImpl = {
       });
     }
 
-    const update: any = {
+    const update: UpdateFilter<MongoCategoryMappingDoc> = {
       $set: {
         updatedAt: new Date(),
         ...(input.internalCategoryId !== undefined && {
@@ -194,8 +195,12 @@ export const mongoCategoryMappingImpl = {
     const mappings = await collection.find(filter).sort({ createdAt: -1 }).toArray();
     if (mappings.length === 0) return [];
 
-    const externalCategoryIds = [...new Set(mappings.map((m) => m.externalCategoryId))];
-    const internalCategoryIds = [...new Set(mappings.map((m) => m.internalCategoryId))];
+    const externalCategoryIds = [
+      ...new Set(mappings.map((m) => m.externalCategoryId).filter((id): id is string => Boolean(id))),
+    ];
+    const internalCategoryIds = [
+      ...new Set(mappings.map((m) => m.internalCategoryId).filter((id): id is string => Boolean(id))),
+    ];
 
     const [externalCategories, internalCategories] = await Promise.all([
       db
@@ -212,7 +217,7 @@ export const mongoCategoryMappingImpl = {
             },
             { externalId: { $in: externalCategoryIds } },
           ],
-        } as any)
+        } as Filter<MongoExternalCategoryDoc>)
         .toArray(),
       db
         .collection<MongoProductCategoryDoc>(PRODUCT_CATEGORY_COLLECTION)
@@ -222,18 +227,21 @@ export const mongoCategoryMappingImpl = {
               .filter((id) => ObjectId.isValid(id))
               .map((id) => new ObjectId(id)),
           },
-        } as any)
+        } as Filter<MongoProductCategoryDoc>)
         .toArray(),
     ]);
 
-    const externalMap = new Map(
+    const externalMap = new Map<string, ExternalCategory>(
       externalCategories.map((c) => [
-        c.externalId || (c._id as any).toString(),
+        c.externalId || c._id.toString(),
         mapMongoExternalCategory(c),
-      ])
+      ] as [string, ExternalCategory])
     );
-    const internalMap = new Map(
-      internalCategories.map((c) => [(c._id as any).toString(), mapMongoInternalCategory(c)])
+    const internalMap = new Map<string, InternalCategory>(
+      internalCategories.map((c) => [
+        c._id.toString(),
+        mapMongoInternalCategory(c),
+      ] as [string, InternalCategory])
     );
 
     return mappings.map((mapping) => ({
@@ -253,11 +261,11 @@ export const mongoCategoryMappingImpl = {
           fetchedAt: mapping.updatedAt.toISOString(),
           createdAt: mapping.createdAt.toISOString(),
           updatedAt: mapping.updatedAt.toISOString(),
-        } as any),
+        } as ExternalCategory),
       internalCategory:
-        internalMap.get(mapping.internalCategoryId) ||
+        internalMap.get(mapping.internalCategoryId || '') ||
         ({
-          id: mapping.internalCategoryId,
+          id: mapping.internalCategoryId || '',
           name: `[Missing internal category: ${mapping.internalCategoryId}]`,
           description: null,
           color: null,
@@ -265,7 +273,7 @@ export const mongoCategoryMappingImpl = {
           catalogId: mapping.catalogId,
           createdAt: mapping.createdAt.toISOString(),
           updatedAt: mapping.updatedAt.toISOString(),
-        } as any),
+        } as InternalCategory),
     }));
   },
 
@@ -295,7 +303,7 @@ export const mongoCategoryMappingImpl = {
     const collection = db.collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION);
 
     const now = new Date();
-    const ops = mappings.map((m) => ({
+    const ops: AnyBulkWriteOperation<MongoCategoryMappingDoc>[] = mappings.map((m) => ({
       updateOne: {
         filter: { connectionId, externalCategoryId: m.externalCategoryId, catalogId },
         update: {
@@ -313,7 +321,7 @@ export const mongoCategoryMappingImpl = {
       },
     }));
 
-    const result = await collection.bulkWrite(ops as any);
+    const result = await collection.bulkWrite(ops);
     return (result.upsertedCount || 0) + (result.modifiedCount || 0);
   },
 

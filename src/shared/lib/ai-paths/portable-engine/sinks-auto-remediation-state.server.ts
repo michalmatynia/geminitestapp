@@ -13,9 +13,11 @@ import {
 } from './sinks-auto-remediation-notifications.server';
 import {
   parseBooleanFromEnvironment,
+} from './sinks-environment.server';
+import {
   readSettingsRawByProviderPriority,
   writeSettingsRawByProviderPriority,
-} from './sinks-shared.server';
+} from './sinks-settings-store.server';
 import {
   PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_COOLDOWN_SECONDS_ENV,
   PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES_ENV,

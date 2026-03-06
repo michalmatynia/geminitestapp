@@ -131,7 +131,7 @@ export default function AddingLesson({ onBack }: AddingLessonProps): React.JSX.E
   if (activeSection) {
     return (
       <LessonSlideSection
-        slides={SLIDES[activeSection as Exclude<SectionId, 'game'>]}
+        slides={SLIDES[activeSection]}
         onBack={() => setActiveSection(null)}
         dotActiveClass='bg-orange-400'
         dotDoneClass='bg-orange-200'

@@ -4,7 +4,7 @@ import {
 } from '@/shared/lib/ai-paths/core/semantic-grammar';
 import {
   verifyPortableNodeCodeObjectManifest
-} from './node-code-objects-v2';
+} from './node-code-objects-v2-manifest';
 
 import {
   decodePortablePayload,
@@ -13,26 +13,34 @@ import {
   validatePayloadObjectSafety,
 } from './portable-engine-resolution-support';
 import {
-  finalizeResolvedPath,
+  verifyPortablePackageFingerprint,
+  verifyPortablePackageFingerprintAsync,
+} from './portable-engine-fingerprints';
+import {
+  verifyPortablePathPackageEnvelopeSignatureAsync,
+} from './portable-engine-envelope-verification-async';
+import {
+  verifyPortablePathPackageEnvelopeSignature,
+} from './portable-engine-envelope-verification-sync';
+import { finalizeResolvedPath } from './portable-engine-path-canonicalization';
+import {
   migratePortablePathInput,
 } from './portable-engine-migration';
 import { resolvePortablePathVerificationModes } from './portable-engine-signing-policy';
 import {
-  verifyPortablePackageFingerprint,
-  verifyPortablePackageFingerprintAsync,
-  verifyPortablePathPackageEnvelopeSignature,
-  verifyPortablePathPackageEnvelopeSignatureAsync,
-} from './portable-engine-signatures';
-import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
   type AiPathPortablePackageEnvelope,
   type PortablePathInputSource,
-  type PortablePathMigrationWarning,
-  type ResolvePortablePathInputInternalOptions,
-  type ResolvePortablePathInputOptions,
-  type ResolvePortablePathInputResult,
   aiPathPortablePackageEnvelopeVersionedSchema,
-} from './portable-engine-types';
+} from './portable-engine-contract';
+import type {
+  PortablePathMigrationWarning,
+} from './portable-engine-migration-types';
+import type { ResolvePortablePathInputResult } from './portable-engine-runtime-types';
+import type {
+  ResolvePortablePathInputInternalOptions,
+  ResolvePortablePathInputOptions,
+} from './portable-engine-resolution-types';
 
 export const resolvePortablePathInput = (
   input: unknown,

@@ -125,4 +125,77 @@ describe('database node normalization', () => {
       single: false,
     });
   });
+
+  it('converts simple custom update templates with direct token mappings into mapping mode', () => {
+    const [normalized] = normalizeNodes([
+      buildDatabaseNode({
+        database: {
+          operation: 'update',
+          updatePayloadMode: 'custom',
+          updateTemplate:
+            '{\n' +
+            '  "$set": {\n' +
+            '    "description_pl": "{{value.description_pl}}",\n' +
+            '    "parameters": {{result.parameters}}\n' +
+            '  }\n' +
+            '}',
+          mappings: [
+            {
+              targetPath: '__translation_description_payload__',
+              sourcePort: 'value',
+            },
+            {
+              targetPath: '__translation_parameters_payload__',
+              sourcePort: 'result',
+            },
+          ],
+        },
+      }),
+    ]);
+
+    expect(normalized?.config?.database?.updatePayloadMode).toBe('mapping');
+    expect(normalized?.config?.database?.mappings).toEqual([
+      {
+        targetPath: 'description_pl',
+        sourcePort: 'value',
+        sourcePath: 'description_pl',
+      },
+      {
+        targetPath: 'parameters',
+        sourcePort: 'result',
+        sourcePath: 'parameters',
+      },
+    ]);
+  });
+
+  it('keeps custom update mode when the template is not a direct token-only $set payload', () => {
+    const [normalized] = normalizeNodes([
+      buildDatabaseNode({
+        database: {
+          operation: 'update',
+          updatePayloadMode: 'custom',
+          updateTemplate:
+            '{\n' +
+            '  "$set": {\n' +
+            '    "slug": "pl-{{value.slug}}"\n' +
+            '  }\n' +
+            '}',
+          mappings: [
+            {
+              targetPath: 'slug',
+              sourcePort: 'value',
+            },
+          ],
+        },
+      }),
+    ]);
+
+    expect(normalized?.config?.database?.updatePayloadMode).toBe('custom');
+    expect(normalized?.config?.database?.mappings).toEqual([
+      {
+        targetPath: 'slug',
+        sourcePort: 'value',
+      },
+    ]);
+  });
 });

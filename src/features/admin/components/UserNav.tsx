@@ -68,7 +68,7 @@ export function UserNav(): React.ReactNode {
         <Button
           id={triggerId}
           variant='ghost'
-          className='relative h-10 w-10 rounded-full opacity-60 transition-opacity hover:opacity-100'
+          className='relative z-[95] h-10 w-10 rounded-full opacity-60 transition-opacity hover:opacity-100'
         >
           <Avatar className='h-10 w-10'>
             <AvatarImage src={session.user?.image ?? ''} alt={session.user?.name ?? ''} />
@@ -76,7 +76,7 @@ export function UserNav(): React.ReactNode {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent id={contentId} className='w-56' align='end'>
+      <DropdownMenuContent id={contentId} className='z-[95] w-56' align='end'>
         <DropdownMenuLabel className='font-normal'>
           <div className='flex flex-col space-y-1'>
             <p className='text-sm font-medium leading-none'>{session.user?.name}</p>

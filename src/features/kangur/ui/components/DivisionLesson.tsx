@@ -115,7 +115,7 @@ export default function DivisionLesson({ onBack }: DivisionLessonProps): React.J
   if (activeSection) {
     return (
       <LessonSlideSection
-        slides={SLIDES[activeSection as Exclude<SectionId, 'game'>]}
+        slides={SLIDES[activeSection]}
         onBack={() => setActiveSection(null)}
         dotActiveClass='bg-blue-500'
         dotDoneClass='bg-blue-300'

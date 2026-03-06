@@ -65,7 +65,7 @@ const hasEquivalentStarterTriggerButton = (
   buttons.some((button) => {
     if (button.id === preset.id) return true;
     if ((button.pathId ?? null) !== preset.pathId) return false;
-    return button.locations.some((location) => preset.locations.includes(location));
+    return (button.locations ?? []).some((location) => preset.locations.includes(location));
   });
 
 export const countPendingStarterWorkflowDefaults = (records: AiPathsSettingRecord[]): number => {
@@ -90,8 +90,8 @@ export const countPendingStarterWorkflowDefaults = (records: AiPathsSettingRecor
     );
     const missingButtons = shouldSeedButtons
       ? (entry.triggerButtonPresets ?? []).some(
-          (preset) => !hasEquivalentStarterTriggerButton(triggerButtons, preset)
-        )
+        (preset) => !hasEquivalentStarterTriggerButton(triggerButtons, preset)
+      )
       : false;
     return count + Number(!hasConfig) + Number(!hasIndexMeta) + Number(missingButtons);
   }, 0);

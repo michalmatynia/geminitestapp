@@ -134,7 +134,7 @@ export default function SubtractingLesson({ onBack }: SubtractingLessonProps): R
   if (activeSection) {
     return (
       <LessonSlideSection
-        slides={SLIDES[activeSection as Exclude<SectionId, 'game'>]}
+        slides={SLIDES[activeSection]}
         onBack={() => setActiveSection(null)}
         dotActiveClass='bg-red-400'
         dotDoneClass='bg-red-200'

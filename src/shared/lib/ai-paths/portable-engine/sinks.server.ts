@@ -10,4 +10,4 @@ export {
   resolvePortablePathEnvelopeVerificationAuditSinkHealthTimeoutMsFromEnvironment,
   resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment,
   resolvePortablePathEnvelopeVerificationAuditSinkProfileOverrideFromEnvironment,
-} from './sinks-shared.server';
+} from './sinks-environment.server';

@@ -13,6 +13,7 @@ import LogicalAnalogiesLessonView from '@/features/kangur/ui/components/LogicalA
 import LogicalClassificationLessonView from '@/features/kangur/ui/components/LogicalClassificationLesson';
 import LogicalPatternLessonView from '@/features/kangur/ui/components/LogicalPatternsLesson';
 import LogicalReasoningLessonView from '@/features/kangur/ui/components/LogicalReasoningLesson';
+import LogicalThinkingLessonView from '@/features/kangur/ui/components/LogicalThinkingLesson';
 import MultiplicationLessonView from '@/features/kangur/ui/components/MultiplicationLesson';
 import SubtractingLessonView from '@/features/kangur/ui/components/SubtractingLesson';
 
@@ -34,6 +35,7 @@ export const GeometryBasicsLesson = GeometryBasicsLessonView as ComponentType<Le
 export const GeometryShapesLesson = GeometryShapesLessonView as ComponentType<LessonProps>;
 export const GeometrySymmetryLesson = GeometrySymmetryLessonView as ComponentType<LessonProps>;
 export const GeometryPerimeterLesson = GeometryPerimeterLessonView as ComponentType<LessonProps>;
+export const LogicalThinkingLesson = LogicalThinkingLessonView as ComponentType<LessonProps>;
 export const LogicalPatternsLesson = LogicalPatternLessonView as ComponentType<LessonProps>;
 export const LogicalClassificationLesson = LogicalClassificationLessonView as ComponentType<LessonProps>;
 export const LogicalReasoningLesson = LogicalReasoningLessonView as ComponentType<LessonProps>;

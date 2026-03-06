@@ -131,7 +131,7 @@ const readTriggerEventsForPathConfig = (value: string): Set<string> => {
     const events = nodes
       .map((node: unknown): string | null => {
         const nodeRecord = asRecord(node);
-        if (!nodeRecord || nodeRecord['type'] !== 'trigger') return null;
+        if (nodeRecord?.['type'] !== 'trigger') return null;
         const config = asRecord(nodeRecord['config']);
         const trigger = asRecord(config?.['trigger']);
         const event = typeof trigger?.['event'] === 'string' ? trigger['event'].trim() : '';
@@ -222,9 +222,9 @@ const repairTriggerButtonBindings = (records: AiPathsSettingRecord[]): {
   const nextRecords = records.map((entry) =>
     entry.key === AI_PATHS_TRIGGER_BUTTONS_KEY
       ? {
-          ...entry,
-          value: serializeAiTriggerButtonsRaw(repairedButtons),
-        }
+        ...entry,
+        value: serializeAiTriggerButtonsRaw(repairedButtons),
+      }
       : entry
   );
 

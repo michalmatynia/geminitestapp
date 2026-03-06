@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const KANGUR_PROGRESS_STORAGE_KEY = 'mathblast_progress';
+const KANGUR_PROGRESS_STORAGE_KEY = 'sprycio_progress';
 
 describe('loadProgress', () => {
   beforeEach(() => {

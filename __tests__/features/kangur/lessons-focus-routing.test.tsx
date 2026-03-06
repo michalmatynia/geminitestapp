@@ -67,7 +67,9 @@ describe('Lessons page focus query support', () => {
 
     render(<Lessons />);
 
-    expect(await screen.findByText('6 ÷ 2 = 3')).toBeInTheDocument();
+    // The component opens the lesson hub for the focused lesson.
+    // In the hub, "Dzielenie" is a heading (h1).
+    expect(await screen.findByRole('heading', { name: 'Dzielenie' })).toBeInTheDocument();
     expect(window.location.search).toBe('');
   });
 
@@ -77,7 +79,7 @@ describe('Lessons page focus query support', () => {
     render(<Lessons />);
 
     expect(await screen.findByRole('heading', { name: '📚 Lekcje' })).toBeInTheDocument();
-    expect(screen.queryByText('6 ÷ 2 = 3')).not.toBeInTheDocument();
+    expect(screen.queryByText('Co to dzielenie?')).not.toBeInTheDocument();
     expect(window.location.search).toBe('?focus=unknown');
   });
 });

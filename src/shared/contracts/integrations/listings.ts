@@ -158,7 +158,7 @@ export type ListingBadgesPayload = Record<string, MarketplaceBadgeEntry>;
 export const categoryMappingSchema = dtoBaseSchema.extend({
   connectionId: z.string(),
   externalCategoryId: z.string(),
-  internalCategoryId: z.string(),
+  internalCategoryId: z.string().nullable(),
   catalogId: z.string(),
   isActive: z.boolean(),
 });
@@ -167,7 +167,7 @@ export interface CategoryMapping {
   id: string;
   connectionId: string;
   externalCategoryId: string;
-  internalCategoryId: string;
+  internalCategoryId: string | null;
   catalogId: string;
   isActive: boolean;
   createdAt: string;
@@ -249,24 +249,24 @@ export interface ExternalCategorySyncInput {
 export const categoryMappingCreateInputSchema = z.object({
   connectionId: z.string(),
   externalCategoryId: z.string(),
-  internalCategoryId: z.string(),
+  internalCategoryId: z.string().nullable(),
   catalogId: z.string(),
 });
 
 export interface CategoryMappingCreateInput {
   connectionId: string;
   externalCategoryId: string;
-  internalCategoryId: string;
+  internalCategoryId: string | null;
   catalogId: string;
 }
 
 export const categoryMappingUpdateInputSchema = z.object({
-  internalCategoryId: z.string().optional(),
+  internalCategoryId: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
 });
 
 export interface CategoryMappingUpdateInput {
-  internalCategoryId?: string;
+  internalCategoryId?: string | null;
   isActive?: boolean;
 }
 

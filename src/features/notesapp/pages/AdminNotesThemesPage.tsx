@@ -8,7 +8,8 @@ import {
   useDeleteNoteTheme,
   useUpdateNoteTheme,
 } from '@/features/notesapp/api/useNoteMutations';
-import { useNotebooks, useNoteThemes } from '@/features/notesapp/api/useNoteQueries';
+import { useNoteThemes } from '@/features/notesapp/api/useNoteQueries';
+import { useNotebookResource } from '@/features/notesapp/api/useNotebookResource';
 import {
   useNoteSettingsActions,
   useNoteSettingsState,
@@ -53,7 +54,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingForm, setEditingForm] =
     useState<Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'>>(defaultTheme);
-  const notebooksQuery = useNotebooks();
+  const { listQuery: notebooksQuery } = useNotebookResource();
   const themesQuery = useNoteThemes(selectedNotebookId ?? undefined);
   const createTheme = useCreateNoteTheme();
   const updateTheme = useUpdateNoteTheme();

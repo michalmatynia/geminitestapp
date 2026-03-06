@@ -9,7 +9,7 @@ import {
   recordPortablePathRunExecutionAttempt,
   recordPortablePathRunExecutionFailure,
   recordPortablePathRunExecutionSuccess,
-} from './portable-engine-run-observability';
+} from './portable-engine-observability';
 
 import { normalizePortablePathSigningPolicySurface } from './portable-engine-signing-policy';
 import { resolvePortablePathInputAsync } from './portable-engine-resolvers';
@@ -17,12 +17,12 @@ import {
   PortablePathValidationError,
   validatePortablePathConfig,
 } from './portable-engine-validation';
+import type { PortablePathInputSource } from './portable-engine-contract';
 import {
-  type PortablePathInputSource,
   type PortablePathRunOptions,
   type PortablePathRunResult,
   type PortablePathValidationMode,
-} from './portable-engine-types';
+} from './portable-engine-runtime-types';
 
 export const runPortablePathClient = async (
   input: unknown,
@@ -118,9 +118,8 @@ export const runPortablePathClient = async (
     resolveAiPathsRuntimeValidationMiddleware({
       validationMiddleware: validationMiddleware as RuntimeValidationMiddleware | null,
       runtimeValidationEnabled: Boolean(runtimeValidationEnabled),
-      runtimeValidationConfig: (runtimeValidationConfig ??
-        resolved.value.pathConfig.aiPathsValidation ??
-        null),
+      runtimeValidationConfig:
+        runtimeValidationConfig ?? resolved.value.pathConfig.aiPathsValidation ?? null,
       nodes: resolved.value.pathConfig.nodes,
       edges: resolved.value.pathConfig.edges,
     }) ?? (runtimeValidationEnabled === false ? undefined : (() => null));

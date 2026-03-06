@@ -21,7 +21,7 @@ const GROUP_SIZES: Array<[number, number]> = [
 
 function pickProblem(excludePrev?: [number, number]): [number, number] {
   const candidates = GROUP_SIZES.filter(
-    ([a, b]) => !excludePrev || a !== excludePrev[0] || b !== excludePrev[1]
+    ([a, b]) => a !== excludePrev?.[0] || b !== excludePrev[1]
   );
   const pick = candidates[Math.floor(Math.random() * candidates.length)];
   return pick ?? [3, 4];
@@ -65,7 +65,12 @@ export default function MultiplicationArrayGame({
         const newScore = score + 1;
         if (roundIndex + 1 >= TOTAL_ROUNDS) {
           const progress = loadProgress();
-          const reward = createLessonPracticeReward(progress, 'multiplication', newScore, TOTAL_ROUNDS);
+          const reward = createLessonPracticeReward(
+            progress,
+            'multiplication',
+            newScore,
+            TOTAL_ROUNDS
+          );
           addXp(reward.xp, reward.progressUpdates);
           setXpEarned(reward.xp);
           setScore(newScore);
@@ -81,6 +86,7 @@ export default function MultiplicationArrayGame({
       }, 1400);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [allCollected, celebrating, done, score, roundIndex, a, b]);
 
   const handleTapGroup = (groupIndex: number): void => {
@@ -218,7 +224,7 @@ export default function MultiplicationArrayGame({
                   onClick={() => handleTapGroup(groupIndex)}
                   className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all duration-300 ${
                     isCollected
-                      ? `border-transparent bg-gradient-to-r from-purple-100 to-indigo-100 shadow-md`
+                      ? 'border-transparent bg-gradient-to-r from-purple-100 to-indigo-100 shadow-md'
                       : 'border-gray-200 bg-white hover:border-purple-300 cursor-pointer'
                   }`}
                 >

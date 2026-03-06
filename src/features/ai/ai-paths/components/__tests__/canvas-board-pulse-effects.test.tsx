@@ -201,6 +201,62 @@ describe('useCanvasPulseEffects', () => {
     expect(result.current.inputPulseNodes.has(targetNode.id)).toBe(false);
   });
 
+  it('does not activate edge pulses for pending node_status events', () => {
+    const sourceNode = buildNode({
+      id: 'node-source-pending',
+      outputs: ['result'],
+    });
+    const targetNode = buildNode({
+      id: 'node-target-pending',
+      inputs: ['trigger'],
+    });
+    const edge: Edge = {
+      id: 'edge-source-target-pending',
+      from: sourceNode.id,
+      to: targetNode.id,
+      fromPort: 'result',
+      toPort: 'trigger',
+    };
+    const maps = buildPortMaps([edge]);
+    const nodeById = new Map<string, AiNode>([
+      [sourceNode.id, sourceNode],
+      [targetNode.id, targetNode],
+    ]);
+    const runtimeState: RuntimeSnapshot = {
+      inputs: {},
+      outputs: {},
+    };
+    const runtimeEvents: AiPathRuntimeEvent[] = [
+      {
+        id: 'evt-pending-status',
+        source: 'server',
+        kind: 'node_status',
+        level: 'info',
+        message: 'Target pending',
+        nodeId: targetNode.id,
+        status: 'pending',
+        timestamp: '2026-03-04T10:01:30.000Z',
+      } as AiPathRuntimeEvent,
+    ];
+
+    const { result } = renderHook(() =>
+      useCanvasPulseEffects({
+        nodes: [sourceNode, targetNode],
+        edges: [edge],
+        runtimeEvents,
+        runtimeState,
+        getPortValue: () => undefined,
+        ...maps,
+        nodeById,
+        flowAnimationMs: 300,
+        nodePulseMs: 250,
+      })
+    );
+
+    expect(result.current.activeEdgeIds.has(edge.id)).toBe(false);
+    expect(result.current.inputPulseNodes.has(targetNode.id)).toBe(false);
+  });
+
   it('does not activate edge pulses for waiting_callback node_status events', () => {
     const sourceNode = buildNode({
       id: 'node-source-waiting',

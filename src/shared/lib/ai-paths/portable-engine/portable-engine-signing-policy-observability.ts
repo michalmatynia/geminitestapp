@@ -3,7 +3,7 @@ import type {
   PortablePathFingerprintVerificationMode,
   PortablePathSigningPolicyProfile,
   PortablePathSigningPolicySurface,
-} from './portable-engine-types';
+} from './portable-engine-resolution-types';
 
 export type PortablePathSigningPolicyUsageEvent = {
   at: string;

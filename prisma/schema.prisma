@@ -1105,13 +1105,13 @@ model CategoryMapping {
   id                 String           @id @default(cuid())
   connectionId       String
   externalCategoryId String
-  internalCategoryId String
+  internalCategoryId String?
   catalogId          String
   isActive           Boolean          @default(true)
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
   externalCategory   ExternalCategory @relation(fields: [externalCategoryId], references: [id], onDelete: Cascade)
-  internalCategory   ProductCategory  @relation(fields: [internalCategoryId], references: [id], onDelete: Cascade)
+  internalCategory   ProductCategory? @relation(fields: [internalCategoryId], references: [id], onDelete: Cascade)
 
   @@unique([connectionId, externalCategoryId, catalogId])
   @@index([connectionId])

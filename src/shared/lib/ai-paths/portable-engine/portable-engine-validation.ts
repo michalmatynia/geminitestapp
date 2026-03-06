@@ -16,7 +16,7 @@ import {
   type ValidatePortablePathConfigOptions,
   type ValidatePortablePathInputOptions,
   type ValidatePortablePathInputResult,
-} from './portable-engine-types';
+} from './portable-engine-runtime-types';
 export { PortablePathValidationError } from './portable-engine-validation-error';
 
 const coerceSampleStateMap = <T>(value: unknown): Record<string, T> | null => {

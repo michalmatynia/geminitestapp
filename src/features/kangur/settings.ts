@@ -31,6 +31,7 @@ const KANGUR_LESSON_COMPONENT_ORDER: readonly KangurLessonComponentId[] = [
   'geometry_shapes',
   'geometry_symmetry',
   'geometry_perimeter',
+  'logical_thinking',
   'logical_patterns',
   'logical_classification',
   'logical_reasoning',
@@ -55,6 +56,7 @@ const KANGUR_LEGACY_COMPONENT_ID_BY_ID: Record<string, KangurLessonComponentId> 
   geometry_shapes: 'geometry_shapes',
   geometry_symmetry: 'geometry_symmetry',
   geometry_perimeter: 'geometry_perimeter',
+  logical_thinking: 'logical_thinking',
   logical_patterns: 'logical_patterns',
   logical_classification: 'logical_classification',
   logical_reasoning: 'logical_reasoning',
@@ -151,6 +153,15 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
     emoji: '📏',
     color: 'from-amber-500 to-orange-500',
     activeBg: 'bg-amber-500',
+  },
+  logical_thinking: {
+    componentId: 'logical_thinking',
+    label: 'Logical Thinking Lesson',
+    title: 'Myślenie logiczne',
+    description: 'Wprowadzenie do wzorców, klasyfikacji i analogii',
+    emoji: '🧠',
+    color: 'from-violet-500 to-blue-500',
+    activeBg: 'bg-violet-500',
   },
   logical_patterns: {
     componentId: 'logical_patterns',
@@ -413,6 +424,7 @@ export const appendMissingGeometryKangurLessons = (
   appendMissingKangurLessonsByComponent(lessons, KANGUR_GEOMETRY_LESSON_COMPONENT_IDS);
 
 export const KANGUR_LOGICAL_THINKING_LESSON_COMPONENT_IDS = [
+  'logical_thinking',
   'logical_patterns',
   'logical_classification',
   'logical_reasoning',

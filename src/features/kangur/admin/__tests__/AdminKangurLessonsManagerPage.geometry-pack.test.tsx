@@ -146,6 +146,14 @@ const geometryComponentIds = [
   'geometry_perimeter',
 ] as const;
 
+const logicalComponentIds = [
+  'logical_thinking',
+  'logical_patterns',
+  'logical_classification',
+  'logical_reasoning',
+  'logical_analogies',
+] as const;
+
 describe('AdminKangurLessonsManagerPage geometry pack action', () => {
   beforeEach(() => {
     mutateAsyncMock.mockReset();
@@ -214,6 +222,52 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
     render(<AdminKangurLessonsManagerPage />);
 
     const addPackButton = screen.getByRole('button', { name: /add geometry pack/i });
+    expect(addPackButton).toBeDisabled();
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
+  });
+
+  it('adds missing logical thinking lessons in one action and persists updated settings', async () => {
+    settingsStoreMock.get.mockReturnValue(JSON.stringify(baseLessons));
+    mutateAsyncMock.mockResolvedValue(undefined);
+
+    render(<AdminKangurLessonsManagerPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /add logic pack/i }));
+
+    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(1));
+
+    const firstCallArg = mutateAsyncMock.mock.calls[0]?.[0] as { key: string; value: string };
+    expect(firstCallArg.key).toBe(KANGUR_LESSONS_SETTING_KEY);
+
+    const persistedLessons = JSON.parse(firstCallArg.value) as Array<{ componentId: string }>;
+    const persistedComponentIds = persistedLessons.map((lesson) => lesson.componentId);
+
+    expect(persistedLessons).toHaveLength(baseLessons.length + logicalComponentIds.length);
+    for (const logicalId of logicalComponentIds) {
+      expect(persistedComponentIds).toContain(logicalId);
+    }
+  });
+
+  it('disables logical-pack button when all logical thinking lessons already exist', () => {
+    const alreadyFull = [
+      ...baseLessons,
+      ...logicalComponentIds.map((componentId, index) => ({
+        id: `kangur-lesson-${componentId}`,
+        componentId,
+        title: `Logic ${componentId}`,
+        description: 'Logical lesson',
+        emoji: '🧠',
+        color: 'from-violet-500 to-blue-500',
+        activeBg: 'bg-violet-500',
+        sortOrder: 3000 + index * 1000,
+        enabled: true,
+      })),
+    ];
+    settingsStoreMock.get.mockReturnValue(JSON.stringify(alreadyFull));
+
+    render(<AdminKangurLessonsManagerPage />);
+
+    const addPackButton = screen.getByRole('button', { name: /add logic pack/i });
     expect(addPackButton).toBeDisabled();
     expect(mutateAsyncMock).not.toHaveBeenCalled();
   });

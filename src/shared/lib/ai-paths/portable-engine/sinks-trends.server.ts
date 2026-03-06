@@ -5,7 +5,7 @@ import { logSystemEvent, type SystemLogInput } from '@/shared/lib/observability/
 import {
   getPortablePathEnvelopeVerificationAuditSinkSnapshot,
   type PortablePathEnvelopeVerificationAuditSinkSnapshot,
-} from './portable-engine-envelope-observability';
+} from './portable-engine-envelope-audit-sinks';
 import {
   getPortablePathSigningPolicyUsageSnapshot,
   registerPortablePathSigningPolicyUsageHook,
@@ -14,11 +14,11 @@ import {
 import type {
   PortablePathSigningPolicyProfile,
   PortablePathSigningPolicySurface,
-} from './portable-engine-types';
+} from './portable-engine-resolution-types';
 import {
   parseBooleanFromEnvironment,
   resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment,
-} from './sinks-shared.server';
+} from './sinks-environment.server';
 import {
   appendPortablePathSigningPolicyTrendSnapshot,
   collectPortablePathSigningPolicyDriftAlerts,

@@ -10,7 +10,6 @@ import {
   relatedNoteSchema,
 } from '@/shared/contracts/notes';
 import type {
-  NotebookRecord,
   CategoryRecord,
   NoteWithRelations,
   TagRecord,
@@ -24,21 +23,7 @@ import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { noteKeys } from '@/shared/lib/query-key-exports';
 
-import { useNotebookResource } from './useNotebookResource';
-
 export * from './useNotebookResource';
-
-/**
- * @deprecated Use useNotebookResource().listQuery instead.
- */
-export function useNotebooks(
-  _notebookId?: string,
-  _options?: QueryOptions
-): ListQuery<NotebookRecord> {
-  const { listQuery } = useNotebookResource();
-  return listQuery;
-}
-
 const NOTES_STALE_MS = 10_000;
 
 type QueryOptions = {

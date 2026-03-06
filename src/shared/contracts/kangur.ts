@@ -15,6 +15,7 @@ export const kangurLessonComponentIdSchema = z.enum([
   'geometry_shapes',
   'geometry_symmetry',
   'geometry_perimeter',
+  'logical_thinking',
   'logical_patterns',
   'logical_classification',
   'logical_reasoning',

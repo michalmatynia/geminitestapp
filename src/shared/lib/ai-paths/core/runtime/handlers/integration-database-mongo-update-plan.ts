@@ -134,6 +134,25 @@ export async function buildMongoUpdatePlan({
       parameterTargetPath,
     });
     updates = mappingResult.updates;
+    if (Object.keys(updates).length === 0) {
+      return {
+        output: {
+          result: null,
+          bundle: {
+            skipped: true,
+            reason: 'no_mapping_updates',
+            unresolvedSourcePorts: Array.from(mappingResult.unresolvedSourcePorts),
+          },
+          debugPayload: {
+            mode: 'mapping',
+            collection,
+            filter: resolvedFilter,
+            unresolvedSourcePorts: Array.from(mappingResult.unresolvedSourcePorts),
+          },
+          aiPrompt,
+        },
+      };
+    }
     updateDoc = { $set: updates };
   } else {
     if (!updateTemplate.trim()) {

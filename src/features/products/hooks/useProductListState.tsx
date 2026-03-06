@@ -349,9 +349,8 @@ export function useProductListState(): ProductListContextType & {
 
   return {
     onCreateProduct: handleOpenCreate,
-    onCreateFromDraft: handleCreateFromDraft,
-    activeDrafts,
-    page,
+    onCreateFromDraft: (draftId: string) => void handleCreateFromDraft(draftId),
+    activeDrafts,    page,
     totalPages,
     setPage,
     pageSize,

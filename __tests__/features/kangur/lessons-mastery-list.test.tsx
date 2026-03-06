@@ -96,11 +96,33 @@ describe('Lessons page mastery list', () => {
     render(<Lessons />);
 
     expect(await screen.findByRole('heading', { name: '📚 Lekcje' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Wszystkie' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Strona główna' }).closest('div')?.className).toContain(
+      'sticky'
+    );
+    expect(screen.getByRole('link', { name: 'Strona główna' }).closest('div')?.className).toContain(
+      'top-0'
+    );
     expect(screen.getByText('Opanowane 92%')).toBeInTheDocument();
     expect(screen.getByText('Powtórz 45%')).toBeInTheDocument();
     expect(screen.getByText('Nowa')).toBeInTheDocument();
     expect(screen.getByText('Ukończono 2× · najlepszy wynik 100%')).toBeInTheDocument();
     expect(screen.getByText('Ukończono 1× · ostatni wynik 45%')).toBeInTheDocument();
     expect(screen.getByText('Brak zapisanej praktyki')).toBeInTheDocument();
+  });
+
+  it('sticks the header flush to the top inside the admin shell too', async () => {
+    useKangurRoutingMock.mockReturnValue({ basePath: '/admin/kangur' });
+
+    render(<Lessons />);
+
+    await screen.findByRole('heading', { name: '📚 Lekcje' });
+    expect(screen.getByRole('link', { name: 'Strona główna' }).closest('div')?.className).toContain(
+      'sticky'
+    );
+    expect(screen.getByRole('link', { name: 'Strona główna' }).closest('div')?.className).toContain(
+      'top-0'
+    );
   });
 });

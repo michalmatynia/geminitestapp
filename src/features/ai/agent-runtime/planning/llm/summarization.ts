@@ -1,8 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { runPlannerTask } from './core';
+
+export type PlannerSummarizationStep = {
+  id?: string;
+  title: string;
+  status: string;
+};
 
 export async function summarizePlannerMemoryWithLLM({
   model,
@@ -14,8 +19,8 @@ export async function summarizePlannerMemoryWithLLM({
   prompt: string;
   model: string;
   memory: string[];
-  steps: any[];
-  browserContext?: any;
+  steps: PlannerSummarizationStep[];
+  browserContext?: unknown;
   runId?: string;
 }): Promise<string | null> {
   try {
@@ -50,10 +55,10 @@ export async function buildCheckpointBriefWithLLM({
   prompt: string;
   model: string;
   memory: string[];
-  steps: any[];
+  steps: PlannerSummarizationStep[];
   activeStepId: string;
   lastError?: string | null;
-  browserContext?: any;
+  browserContext?: unknown;
   runId?: string;
 }): Promise<{ summary: string; nextActions: string[]; risks: string[] } | null> {
   try {

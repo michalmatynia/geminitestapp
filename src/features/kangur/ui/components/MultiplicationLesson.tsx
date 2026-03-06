@@ -124,7 +124,7 @@ export default function MultiplicationLesson({ onBack }: MultiplicationLessonPro
   if (activeSection) {
     return (
       <LessonSlideSection
-        slides={SLIDES[activeSection as Exclude<SectionId, 'game_array' | 'game_quiz'>]}
+        slides={SLIDES[activeSection]}
         onBack={() => setActiveSection(null)}
         dotActiveClass='bg-purple-500'
         dotDoneClass='bg-purple-300'

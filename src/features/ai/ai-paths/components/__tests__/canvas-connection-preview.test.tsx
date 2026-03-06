@@ -440,6 +440,62 @@ describe('canvas connection preview', () => {
     expect(container.querySelector('.ai-paths-wire-flow')).toBeTruthy();
   });
 
+  it('does not render wire flow when the target node is only pending', () => {
+    const sourceNode = buildNode({
+      id: 'node-pending-source',
+      outputs: ['result'],
+      inputs: [],
+      position: { x: 120, y: 80 },
+    });
+    const targetNode = buildNode({
+      id: 'node-pending-target',
+      inputs: ['input'],
+      outputs: [],
+      position: { x: 420, y: 220 },
+    });
+    const edge: Edge = {
+      id: 'edge-pending-status',
+      from: sourceNode.id,
+      to: targetNode.id,
+      fromPort: 'result',
+      toPort: 'input',
+    };
+    const value = buildContextValue();
+    value.nodes = [sourceNode, targetNode];
+    value.edges = [edge];
+    value.nodeById = new Map([
+      [sourceNode.id, sourceNode],
+      [targetNode.id, targetNode],
+    ]);
+    value.edgeMetaMap = new Map([[edge.id, edge]]);
+    value.edgePaths = [
+      {
+        id: edge.id,
+        path: 'M 380 162 C 420 162 470 244 540 244',
+        fromNodeId: sourceNode.id,
+        toNodeId: targetNode.id,
+        bounds: { minX: 380, minY: 162, maxX: 540, maxY: 244 },
+      },
+    ];
+    value.runtimeNodeStatuses = {
+      [targetNode.id]: 'pending',
+    };
+    value.wireFlowEnabled = true;
+    value.activeEdgeIds = new Set<string>();
+
+    const { container } = render(
+      <svg>
+        <g data-canvas-world='true' transform='translate(0 0) scale(1)'>
+          <CanvasBoardUIProvider value={value}>
+            <CanvasSvgEdgeLayer />
+          </CanvasBoardUIProvider>
+        </g>
+      </svg>
+    );
+
+    expect(container.querySelector('.ai-paths-wire-flow')).toBeFalsy();
+  });
+
   it('does not render wire flow when only queued runtime status is present', () => {
     const sourceNode = buildNode({
       id: 'node-queued-source',

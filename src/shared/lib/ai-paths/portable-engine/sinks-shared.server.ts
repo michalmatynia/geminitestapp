@@ -1,8 +1,5 @@
 import 'server-only';
 
-import prisma from '@/shared/lib/db/prisma';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { SystemLogInput } from '@/shared/lib/observability/system-logger';
 
 import type {
@@ -10,9 +7,6 @@ import type {
   PortablePathEnvelopeVerificationObservabilitySnapshot,
 } from './portable-engine-envelope-observability';
 import {
-  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_POLICY_ENV,
-  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_TIMEOUT_MS_ENV,
-  PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_PROFILE_ENV,
   PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_KIND,
   PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_BOOTSTRAP_SOURCE,
   PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
@@ -20,12 +14,8 @@ import {
   PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_CATEGORY,
   PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
   PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SOURCE,
-  type PortablePathEnvelopeVerificationAuditSinkHealthPolicy,
-  type PortablePathEnvelopeVerificationAuditSinkProfile,
   type PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary,
 } from './sinks-types.server';
-
-const DEFAULT_PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_TIMEOUT_MS = 3000;
 
 export type PortablePathEnvelopeVerificationSinkLevel = 'info' | 'warn' | 'error';
 
@@ -75,95 +65,6 @@ export const toErrorMessage = (error: unknown): string => {
   } catch {
     return 'unknown_error';
   }
-};
-
-export const parseBooleanFromEnvironment = (value: string | undefined): boolean | null => {
-  const normalized = String(value ?? '')
-    .trim()
-    .toLowerCase();
-  if (normalized.length === 0) return null;
-  if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
-    return true;
-  }
-  if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
-    return false;
-  }
-  return null;
-};
-
-export const resolveHealthTimeoutMs = (value: number | undefined): number => {
-  if (!Number.isFinite(value)) {
-    return DEFAULT_PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_TIMEOUT_MS;
-  }
-  const normalized = Math.floor(Number(value));
-  if (normalized < 250) {
-    return DEFAULT_PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_TIMEOUT_MS;
-  }
-  return normalized;
-};
-
-const normalizePortablePathEnvelopeVerificationAuditSinkProfile = (
-  value: string | undefined | null
-): PortablePathEnvelopeVerificationAuditSinkProfile | null => {
-  const normalized = String(value ?? '')
-    .trim()
-    .toLowerCase();
-  if (
-    normalized === 'production' ||
-    normalized === 'prod'
-  ) {
-    return 'prod';
-  }
-  if (
-    normalized === 'staging' ||
-    normalized === 'stage' ||
-    normalized === 'preprod'
-  ) {
-    return 'staging';
-  }
-  if (
-    normalized === 'development' ||
-    normalized === 'dev' ||
-    normalized === 'local' ||
-    normalized === 'test'
-  ) {
-    return 'dev';
-  }
-  return null;
-};
-
-export const resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment = (
-  nodeEnv: string | undefined = process.env['NODE_ENV']
-): PortablePathEnvelopeVerificationAuditSinkProfile => {
-  return normalizePortablePathEnvelopeVerificationAuditSinkProfile(nodeEnv) ?? 'dev';
-};
-
-export const resolvePortablePathEnvelopeVerificationAuditSinkProfileOverrideFromEnvironment = (
-  profile = process.env[PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_PROFILE_ENV]
-): PortablePathEnvelopeVerificationAuditSinkProfile | null =>
-  normalizePortablePathEnvelopeVerificationAuditSinkProfile(profile);
-
-export const resolvePortablePathEnvelopeVerificationAuditSinkHealthPolicyFromEnvironment = (
-  value = process.env[PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_POLICY_ENV]
-): PortablePathEnvelopeVerificationAuditSinkHealthPolicy | null => {
-  const normalized = String(value ?? '')
-    .trim()
-    .toLowerCase();
-  if (normalized === 'off') return 'off';
-  if (normalized === 'warn' || normalized === 'warning') return 'warn';
-  if (normalized === 'error' || normalized === 'strict') return 'error';
-  return null;
-};
-
-export const resolvePortablePathEnvelopeVerificationAuditSinkHealthTimeoutMsFromEnvironment = (
-  value = process.env[PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_TIMEOUT_MS_ENV]
-): number | null => {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  if (trimmed.length === 0) return null;
-  const numeric = Number(trimmed);
-  if (!Number.isFinite(numeric)) return null;
-  return resolveHealthTimeoutMs(numeric);
 };
 
 type PortablePathEnvelopeVerificationSnapshotReference = {
@@ -336,138 +237,4 @@ export const runWithTimeout = async (
   } finally {
     if (timeoutHandle) clearTimeout(timeoutHandle);
   }
-};
-
-type PortablePathSettingsStoreSettingRecord = {
-  _id?: string;
-  key?: string;
-  value?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
-
-const canUsePrismaSettings = (): boolean => Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
-
-type PrismaSettingClient = {
-  setting?: {
-    findUnique: (input: {
-      where: { key: string };
-      select: { value: true };
-    }) => Promise<{ value: string } | null>;
-    upsert: (input: {
-      where: { key: string };
-      create: { key: string; value: string };
-      update: { value: string };
-    }) => Promise<unknown>;
-  };
-};
-
-const readSettingsRawFromPrisma = async (key: string): Promise<string | null> => {
-  if (!canUsePrismaSettings()) return null;
-  try {
-    const prismaClient = prisma as unknown as PrismaSettingClient;
-    if (!prismaClient.setting || typeof prismaClient.setting.findUnique !== 'function') {
-      return null;
-    }
-    const setting = await prismaClient.setting.findUnique({
-      where: { key },
-      select: { value: true },
-    });
-    return setting?.value ?? null;
-  } catch {
-    return null;
-  }
-};
-
-const writeSettingsRawToPrisma = async (key: string, raw: string): Promise<boolean> => {
-  if (!canUsePrismaSettings()) return false;
-  try {
-    const prismaClient = prisma as unknown as PrismaSettingClient;
-    if (!prismaClient.setting || typeof prismaClient.setting.upsert !== 'function') {
-      return false;
-    }
-    await prismaClient.setting.upsert({
-      where: { key },
-      create: { key, value: raw },
-      update: { value: raw },
-    });
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-const readSettingsRawFromMongo = async (key: string): Promise<string | null> => {
-  if (!process.env['MONGODB_URI']) return null;
-  try {
-    const mongo = await getMongoDb();
-    const record = await mongo
-      .collection<PortablePathSettingsStoreSettingRecord>('settings')
-      .findOne(
-        {
-          $or: [{ _id: key }, { key }],
-        },
-        { projection: { value: 1 } }
-      );
-    return typeof record?.value === 'string' ? record.value : null;
-  } catch {
-    return null;
-  }
-};
-
-const writeSettingsRawToMongo = async (key: string, raw: string): Promise<boolean> => {
-  if (!process.env['MONGODB_URI']) return false;
-  try {
-    const mongo = await getMongoDb();
-    const now = new Date();
-    await mongo
-      .collection<PortablePathSettingsStoreSettingRecord>('settings')
-      .updateOne(
-        {
-          $or: [{ _id: key }, { key }],
-        },
-        {
-          $set: {
-            key,
-            value: raw,
-            updatedAt: now,
-          },
-          $setOnInsert: {
-            _id: key,
-            createdAt: now,
-          },
-        },
-        { upsert: true }
-      );
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-export const readSettingsRawByProviderPriority = async (key: string): Promise<string | null> => {
-  const provider = await Promise.resolve(getAppDbProvider()).catch(() => null);
-  if (provider === 'mongodb') {
-    const mongoRaw = await readSettingsRawFromMongo(key);
-    if (mongoRaw !== null) return mongoRaw;
-    return readSettingsRawFromPrisma(key);
-  }
-  const prismaRaw = await readSettingsRawFromPrisma(key);
-  if (prismaRaw !== null) return prismaRaw;
-  return readSettingsRawFromMongo(key);
-};
-
-export const writeSettingsRawByProviderPriority = async (
-  key: string,
-  raw: string
-): Promise<boolean> => {
-  const provider = await Promise.resolve(getAppDbProvider()).catch(() => null);
-  if (provider === 'mongodb') {
-    const mongoOk = await writeSettingsRawToMongo(key, raw);
-    if (mongoOk) return true;
-    return writeSettingsRawToPrisma(key, raw);
-  }
-  const prismaOk = await writeSettingsRawToPrisma(key, raw);
-  if (prismaOk) return true;
-  return writeSettingsRawToMongo(key, raw);
 };

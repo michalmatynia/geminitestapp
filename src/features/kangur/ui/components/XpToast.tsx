@@ -1,5 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 
+import { KangurLessonChip } from '@/features/kangur/ui/design/lesson-primitives';
+import { KangurPanel } from '@/features/kangur/ui/design/primitives';
 import { BADGES } from '@/features/kangur/ui/services/progress';
 import type { KangurXpToastState } from '@/features/kangur/ui/types';
 
@@ -20,17 +22,33 @@ export default function XpToast({ xpGained, newBadges, visible }: XpToastProps):
           className='fixed top-20 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none'
         >
           {xpGained > 0 && (
-            <div className='bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-extrabold px-6 py-2.5 rounded-full shadow-xl text-lg'>
-              +{xpGained} XP ✨
-            </div>
+            <KangurPanel
+              className='border-indigo-200/80 bg-white/96'
+              padding='md'
+              variant='elevated'
+            >
+              <div className='flex items-center gap-3'>
+                <KangurLessonChip accent='indigo' className='text-sm font-bold'>
+                  +{xpGained} XP
+                </KangurLessonChip>
+                <span className='text-sm font-bold text-slate-900'>Świetnie, zdobywasz kolejne punkty</span>
+              </div>
+            </KangurPanel>
           )}
           {badgeDetails.map((badge) => (
-            <div
+            <KangurPanel
               key={badge.id}
-              className='bg-amber-400 text-white font-bold px-5 py-2 rounded-full shadow-lg text-sm flex items-center gap-2'
+              className='border-amber-200/80 bg-white/96'
+              padding='md'
+              variant='elevated'
             >
-              {badge.emoji} Nowa odznaka: {badge.name}!
-            </div>
+              <div className='flex items-center gap-3'>
+                <KangurLessonChip accent='amber' className='text-sm font-bold'>
+                  {badge.emoji} Nowa odznaka
+                </KangurLessonChip>
+                <span className='text-sm font-bold text-slate-900'>{badge.name}</span>
+              </div>
+            </KangurPanel>
           ))}
         </motion.div>
       )}

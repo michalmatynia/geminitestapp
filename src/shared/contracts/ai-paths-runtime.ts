@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { dtoBaseSchema } from './base';
-import type { AiNode, Edge } from './ai-paths-core';
+import {
+  nodePortValueKindSchema,
+  type AiNode,
+  type Edge,
+} from './ai-paths-core';
 import type { Toast as ToastFn } from './ui';
 
 /**
@@ -225,6 +229,106 @@ export const runtimeHistoryLinkSchema = z.object({
 
 export type RuntimeHistoryLink = z.infer<typeof runtimeHistoryLinkSchema>;
 
+export const runtimeTraceCacheDecisionSchema = z.enum(['miss', 'hit', 'refresh', 'disabled']);
+export type RuntimeTraceCacheDecision = z.infer<typeof runtimeTraceCacheDecisionSchema>;
+
+export const runtimeTraceSpanStatusSchema = z.enum([
+  'running',
+  'completed',
+  'cached',
+  'failed',
+  'blocked',
+  'waiting_callback',
+  'skipped',
+]);
+export type RuntimeTraceSpanStatus = z.infer<typeof runtimeTraceSpanStatusSchema>;
+
+export const runtimeTraceBranchSchema = z.object({
+  route: z.string().nullable().optional(),
+  fromPort: z.string().nullable().optional(),
+  toPort: z.string().nullable().optional(),
+});
+export type RuntimeTraceBranch = z.infer<typeof runtimeTraceBranchSchema>;
+
+export const runtimeTraceCacheSchema = z.object({
+  key: z.string().nullable().optional(),
+  decision: runtimeTraceCacheDecisionSchema.optional(),
+  scope: z.enum(['run', 'activation', 'session']).nullable().optional(),
+});
+export type RuntimeTraceCache = z.infer<typeof runtimeTraceCacheSchema>;
+
+export const runtimeTraceEffectSchema = z.object({
+  policy: z.enum(['per_run', 'per_activation']).nullable().optional(),
+  decision: z.string().nullable().optional(),
+  recordId: z.string().nullable().optional(),
+  sourceSpanId: z.string().nullable().optional(),
+});
+export type RuntimeTraceEffect = z.infer<typeof runtimeTraceEffectSchema>;
+
+export const runtimeTraceErrorSchema = z.object({
+  code: z.string().nullable().optional(),
+  message: z.string().nullable().optional(),
+});
+export type RuntimeTraceError = z.infer<typeof runtimeTraceErrorSchema>;
+
+export const runtimeTraceLinkSchema = z.object({
+  correlationId: z.string(),
+  fromNodeId: z.string(),
+  fromPort: z.string().nullable().optional(),
+  toNodeId: z.string(),
+  toPort: z.string().nullable().optional(),
+  valueKind: nodePortValueKindSchema.nullable().optional(),
+  timestamp: z.string(),
+});
+export type RuntimeTraceLink = z.infer<typeof runtimeTraceLinkSchema>;
+
+export const runtimeTraceSpanSchema = z.object({
+  spanId: z.string(),
+  parentSpanId: z.string().nullable().optional(),
+  runId: z.string(),
+  traceId: z.string(),
+  nodeId: z.string(),
+  nodeType: z.string(),
+  nodeTitle: z.string().nullable().optional(),
+  iteration: z.number(),
+  attempt: z.number(),
+  startedAt: z.string(),
+  finishedAt: z.string().nullable().optional(),
+  status: runtimeTraceSpanStatusSchema,
+  inputHash: z.string().nullable().optional(),
+  activationHash: z.string().nullable().optional(),
+  correlationIds: z.array(z.string()).optional(),
+  cache: runtimeTraceCacheSchema.optional(),
+  branch: runtimeTraceBranchSchema.optional(),
+  effect: runtimeTraceEffectSchema.optional(),
+  error: runtimeTraceErrorSchema.optional(),
+});
+export type RuntimeTraceSpan = z.infer<typeof runtimeTraceSpanSchema>;
+
+export const runtimeTraceRecordSchema = z
+  .object({
+    version: z.literal('ai-paths.trace.v1'),
+    traceId: z.string(),
+    runId: z.string(),
+    source: z.enum(['local', 'server']),
+    startedAt: z.string(),
+    finishedAt: z.string().nullable().optional(),
+    spans: z.array(runtimeTraceSpanSchema),
+    links: z.array(runtimeTraceLinkSchema).optional(),
+    profile: z.record(z.string(), z.unknown()).nullable().optional(),
+    kernelParity: z.record(z.string(), z.unknown()).optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.traceId !== value.runId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Trace Record V1 requires traceId to equal runId.',
+        path: ['traceId'],
+      });
+    }
+  });
+export type RuntimeTraceRecord = z.infer<typeof runtimeTraceRecordSchema>;
+
 export type NodeRuntimeResolutionStrategy = 'compatibility' | 'code_object_v3';
 
 export const nodeRuntimeResolutionStrategySchema = z.enum([
@@ -236,11 +340,14 @@ export const runtimeHistoryEntrySchema = z.object({
   timestamp: z.string(),
   pathId: z.string().nullable(),
   pathName: z.string().nullable(),
+  traceId: z.string().optional(),
+  spanId: z.string().optional(),
   nodeId: z.string(),
   nodeType: z.string(),
   nodeTitle: z.string().nullable(),
   status: z.string(),
   iteration: z.number(),
+  attempt: z.number().optional(),
   inputs: z.record(z.string(), z.unknown()),
   outputs: z.record(z.string(), z.unknown()),
   inputHash: z.string().nullable(),
@@ -252,6 +359,9 @@ export const runtimeHistoryEntrySchema = z.object({
   sideEffectDecision: z.string().optional(),
   activationHash: z.string().nullable().optional(),
   idempotencyKey: z.string().nullable().optional(),
+  correlationIds: z.array(z.string()).optional(),
+  cacheDecision: runtimeTraceCacheDecisionSchema.optional(),
+  branch: runtimeTraceBranchSchema.optional(),
   error: z.string().optional(),
   inputsFrom: z.array(runtimeHistoryLinkSchema).optional().default([]),
   outputsTo: z.array(runtimeHistoryLinkSchema).optional().default([]),

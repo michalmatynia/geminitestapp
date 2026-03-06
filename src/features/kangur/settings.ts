@@ -7,6 +7,11 @@ import {
   type KangurLessonComponentId,
   type KangurLessonContentMode,
 } from '@/shared/contracts/kangur';
+import {
+  KANGUR_TTS_DEFAULT_VOICE,
+  KANGUR_TTS_VOICE_OPTIONS,
+  type KangurLessonTtsVoice,
+} from '@/features/kangur/tts/contracts';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export { KANGUR_LESSONS_SETTING_KEY, KANGUR_LESSON_DOCUMENTS_SETTING_KEY };
@@ -18,6 +23,7 @@ export type KangurNarratorEngine = 'server' | 'client';
 
 export type KangurNarratorSettings = {
   engine: KangurNarratorEngine;
+  voice: KangurLessonTtsVoice;
 };
 
 export const KANGUR_NARRATOR_ENGINE_OPTIONS: ReadonlyArray<{
@@ -275,6 +281,15 @@ const resolveKangurNarratorEngine = (value: unknown): KangurNarratorEngine => {
   return value.trim().toLowerCase() === 'client' ? 'client' : 'server';
 };
 
+const resolveKangurNarratorVoice = (value: unknown): KangurLessonTtsVoice => {
+  if (typeof value !== 'string' || !value.trim()) {
+    return KANGUR_TTS_DEFAULT_VOICE;
+  }
+  const normalized = value.trim().toLowerCase() as KangurLessonTtsVoice;
+  const supportedValues = KANGUR_TTS_VOICE_OPTIONS.map((option) => option.value);
+  return supportedValues.includes(normalized) ? normalized : KANGUR_TTS_DEFAULT_VOICE;
+};
+
 const ensureUniqueLessonId = (requestedId: string, usedIds: Set<string>): string => {
   let nextId = requestedId;
   let suffix = 1;
@@ -342,6 +357,7 @@ export const createDefaultKangurLessons = (): KangurLesson[] =>
 
 export const createDefaultKangurNarratorSettings = (): KangurNarratorSettings => ({
   engine: 'server',
+  voice: KANGUR_TTS_DEFAULT_VOICE,
 });
 
 export const normalizeKangurNarratorSettings = (value: unknown): KangurNarratorSettings => {
@@ -351,6 +367,7 @@ export const normalizeKangurNarratorSettings = (value: unknown): KangurNarratorS
 
   return {
     engine: resolveKangurNarratorEngine(value['engine']),
+    voice: resolveKangurNarratorVoice(value['voice']),
   };
 };
 

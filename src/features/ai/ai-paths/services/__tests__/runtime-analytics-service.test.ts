@@ -231,6 +231,59 @@ describe('runtime analytics service', () => {
     expect(summary.traces.avgDurationMs).toBe(1800);
   });
 
+  it('reads V1 trace spans from runtimeTrace.spans when present', async () => {
+    mockCapabilities(true, true);
+    const { redis } = createRedisMock();
+    const listRunsMock = vi.fn().mockResolvedValue({
+      runs: [
+        {
+          id: 'run-1',
+          meta: {
+            runtimeTrace: {
+              version: 'ai-paths.trace.v1',
+              traceId: 'run-1',
+              runId: 'run-1',
+              source: 'server',
+              startedAt: '2026-03-01T00:00:00.000Z',
+              spans: [
+                {
+                  spanId: 'node-1:1:1',
+                  traceId: 'run-1',
+                  runId: 'run-1',
+                  nodeId: 'node-1',
+                  nodeType: 'model',
+                  iteration: 1,
+                  attempt: 1,
+                  startedAt: '2026-03-01T00:00:00.000Z',
+                  finishedAt: '2026-03-01T00:00:02.000Z',
+                  status: 'completed',
+                },
+              ],
+            },
+          },
+        },
+      ],
+      total: 1,
+    });
+
+    getRedisConnectionMock.mockReturnValue(redis);
+    getPathRunRepositoryMock.mockResolvedValue({
+      listRuns: listRunsMock,
+    });
+
+    const { getRuntimeAnalyticsSummary } = await loadModule();
+    const summary = await getRuntimeAnalyticsSummary({
+      from: new Date('2026-03-01T00:00:00.000Z'),
+      to: new Date('2026-03-02T00:00:00.000Z'),
+      range: '24h',
+    });
+
+    expect(summary.traces.source).toBe('db_sample');
+    expect(summary.traces.sampledRuns).toBe(1);
+    expect(summary.traces.sampledSpans).toBe(1);
+    expect(summary.traces.avgDurationMs).toBe(2000);
+  });
+
   it('aggregates runtime kernel parity telemetry from run trace meta', async () => {
     mockCapabilities(true, true);
     const { redis } = createRedisMock();

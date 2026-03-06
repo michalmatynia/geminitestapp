@@ -89,17 +89,22 @@ export type EvaluateGraphOptions = {
   maxIterations?: number | undefined;
   onNodeStart?: (event: {
     runId: string;
+    traceId: string;
+    spanId: string;
     runStartedAt: string;
     node: AiNode;
     nodeInputs: RuntimePortValues;
     prevOutputs: RuntimePortValues | null;
     iteration: number;
+    attempt: number;
     runtimeStrategy?: NodeRuntimeResolutionStrategy;
     runtimeResolutionSource?: NodeRuntimeResolutionSource;
     runtimeCodeObjectId?: string | null;
   }) => Promise<void> | void;
   onNodeFinish?: (event: {
     runId: string;
+    traceId: string;
+    spanId: string;
     runStartedAt: string;
     node: AiNode;
     nodeInputs: RuntimePortValues;
@@ -107,6 +112,7 @@ export type EvaluateGraphOptions = {
     nextOutputs: RuntimePortValues;
     changed: boolean;
     iteration: number;
+    attempt: number;
     cached?: boolean;
     error?: string;
     sideEffectDecision?: string;
@@ -118,19 +124,26 @@ export type EvaluateGraphOptions = {
   }) => Promise<void> | void;
   onNodeError?: (event: {
     runId: string;
+    traceId: string;
+    spanId: string;
     runStartedAt: string;
     node: AiNode;
     nodeInputs: RuntimePortValues;
     prevOutputs: RuntimePortValues | null;
     error: unknown;
     iteration: number;
+    attempt: number;
     runtimeStrategy?: NodeRuntimeResolutionStrategy;
     runtimeResolutionSource?: NodeRuntimeResolutionSource;
     runtimeCodeObjectId?: string | null;
   }) => Promise<void> | void;
   onNodeBlocked?: (event: {
     runId: string;
+    traceId: string;
+    spanId: string;
     node: AiNode;
+    iteration: number;
+    attempt: number;
     reason: 'missing_inputs' | 'flow_control' | 'validation' | 'error';
     status?: 'blocked' | 'waiting_callback';
     waitingOnPorts?: string[];

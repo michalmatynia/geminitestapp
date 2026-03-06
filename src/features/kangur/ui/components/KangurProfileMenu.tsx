@@ -3,9 +3,14 @@
 import * as React from 'react';
 import Link from 'next/link';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
-import { LogIn, LogOut, UserRound } from 'lucide-react';
+import { LogIn, LogOut, User } from 'lucide-react';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import {
+  KANGUR_TOP_NAV_ITEM_ACTIVE_CLASSNAME,
+  KANGUR_TOP_NAV_ITEM_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
+import { cn } from '@/shared/utils';
 
 /**
  * Local UI primitives for Kangur to avoid importing from @/shared/ui (style isolation guardrail).
@@ -22,7 +27,7 @@ const DropdownMenuContent = React.forwardRef<
     <DropdownMenuPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
-      className='z-50 min-w-[8rem] overflow-hidden rounded-md border border-border/50 bg-popover/90 p-1 text-popover-foreground shadow-md backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2'
+      className='soft-card z-50 min-w-[11rem] overflow-hidden rounded-[22px] bg-white/96 p-2 text-slate-700 backdrop-blur-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2'
       {...props}
     />
   </DropdownMenuPrimitive.Portal>
@@ -35,7 +40,7 @@ const DropdownMenuItem = React.forwardRef<
 >(({ className: _className, ...props }, ref) => (
   <DropdownMenuPrimitive.Item
     ref={ref}
-    className='relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-foreground/10 focus:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50'
+    className='relative flex cursor-default select-none items-center rounded-2xl px-3 py-2 text-sm font-medium outline-none transition-colors focus:bg-slate-100 focus:text-slate-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50'
     {...props}
   />
 ));
@@ -47,6 +52,7 @@ type KangurProfileMenuProps = {
   onLogout: () => void;
   onLogin?: () => void;
   triggerClassName?: string;
+  isActive?: boolean;
 };
 
 export function KangurProfileMenu({
@@ -54,13 +60,21 @@ export function KangurProfileMenu({
   isAuthenticated,
   onLogout,
   onLogin,
-  triggerClassName = 'inline-flex items-center gap-1.5 text-sm text-indigo-500 hover:text-indigo-700 font-semibold transition',
+  triggerClassName,
+  isActive = false,
 }: KangurProfileMenuProps): React.JSX.Element {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button type='button' className={triggerClassName}>
-          <UserRound className='w-4 h-4' /> Profil
+        <button
+          type='button'
+          className={cn(
+            KANGUR_TOP_NAV_ITEM_CLASSNAME,
+            isActive ? KANGUR_TOP_NAV_ITEM_ACTIVE_CLASSNAME : null,
+            triggerClassName
+          )}
+        >
+          <User className='h-[22px] w-[22px]' strokeWidth={2.1} /> Profil
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align='end' className='w-44'>

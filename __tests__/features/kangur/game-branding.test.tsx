@@ -112,4 +112,23 @@ describe('Game branding', () => {
     expect(screen.queryByText('Fajny sposób na naukę matematyki!')).not.toBeInTheDocument();
     expect(screen.queryByText('MathBlast!')).not.toBeInTheDocument();
   });
+
+  it('applies the intrinsic highlighted style only to the primary play action', () => {
+    render(<Game />);
+
+    const lessonsHomeAction = screen
+      .getAllByText('Lekcje')
+      .map((node) => node.closest('a, button'))
+      .find((node) => node?.classList.contains('home-action-soft'));
+
+    expect(lessonsHomeAction).toHaveClass('home-action-soft');
+    expect(screen.getByText('Grajmy!').closest('a, button')).toHaveClass('home-action-active');
+    expect(screen.getByText('Trening mieszany').closest('a, button')).toHaveClass(
+      'home-action-soft'
+    );
+    expect(screen.getByText('Trening figur').closest('a, button')).toHaveClass('home-action-soft');
+    expect(screen.getByText('Kangur Matematyczny').closest('a, button')).toHaveClass(
+      'home-action-soft'
+    );
+  });
 });

@@ -1,6 +1,11 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogIn, BookOpen, LayoutDashboard } from 'lucide-react';
+import {
+  BookOpen,
+  Home,
+  LayoutGrid,
+  LogIn,
+} from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
@@ -23,6 +28,7 @@ import {
   KangurPageShell,
   KangurPageTopBar,
   KangurPanel,
+  KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
@@ -53,6 +59,7 @@ import type {
   KangurTrainingSelection,
   KangurXpToastState,
 } from '@/features/kangur/ui/types';
+import { cn } from '@/shared/utils';
 
 const TOTAL_QUESTIONS = 10;
 type KangurSetupProps = {
@@ -118,6 +125,164 @@ const isKangurOperation = (value: string | null): value is KangurOperation =>
 
 const isKangurDifficulty = (value: string | null): value is KangurDifficulty =>
   Boolean(value && KANGUR_DIFFICULTIES.includes(value as KangurDifficulty));
+
+type HomeActionTone = 'neutral' | 'violet' | 'sky' | 'mist' | 'sand';
+
+type HomeAction = {
+  id: string;
+  label: string;
+  symbol: string;
+  trailingSymbol?: string;
+  tone: HomeActionTone;
+  href?: string;
+  onClick?: () => void;
+  disabled?: boolean;
+};
+
+const HOME_ACTION_TONE_STYLES: Record<
+  HomeActionTone,
+  {
+    card: string;
+    label: string;
+    icon: string;
+    active?: boolean;
+  }
+> = {
+  neutral: {
+    card: 'home-action-soft',
+    label: 'text-[#2d3f84]',
+    icon: 'drop-shadow-[0_2px_4px_rgba(255,255,255,0.65)]',
+  },
+  violet: {
+    card: 'home-action-active',
+    label: 'text-white',
+    icon: 'drop-shadow-[0_3px_8px_rgba(74,54,190,0.25)]',
+    active: true,
+  },
+  sky: {
+    card: 'home-action-soft',
+    label: 'text-[#2d3f84]',
+    icon: 'drop-shadow-[0_2px_4px_rgba(255,255,255,0.65)]',
+  },
+  mist: {
+    card: 'home-action-soft',
+    label: 'text-[#2d3f84]',
+    icon: 'drop-shadow-[0_2px_4px_rgba(255,255,255,0.65)]',
+  },
+  sand: {
+    card: 'home-action-soft',
+    label: 'text-[#c55f1f]',
+    icon: 'drop-shadow-[0_2px_4px_rgba(255,255,255,0.65)]',
+  },
+};
+
+function KangurHomeActionCard({
+  action,
+  index,
+}: {
+  action: HomeAction;
+  index: number;
+}): React.JSX.Element {
+  const tone = HOME_ACTION_TONE_STYLES[action.tone];
+  const isActive = tone.active === true;
+  const wrapperClassName = cn('relative', action.disabled ? 'opacity-55' : null);
+  const sharedClassName = cn(
+    'group relative w-full text-center',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70 focus-visible:ring-offset-2 ring-offset-white',
+    'disabled:cursor-not-allowed',
+    tone.card
+  );
+
+  const content = (
+    <>
+      {isActive ? (
+        <>
+          <span className='pointer-events-none absolute inset-[1px] rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.26)_0%,rgba(255,255,255,0.08)_36%,rgba(255,255,255,0)_58%)]' />
+          <span className='pointer-events-none absolute left-[10%] top-[18%] h-[34px] w-[140px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.22)_0%,rgba(255,255,255,0)_70%)] blur-xl sm:h-[52px] sm:w-[220px]' />
+          <span className='pointer-events-none absolute right-[8%] top-[14%] h-[36px] w-[110px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.14)_0%,rgba(255,255,255,0)_72%)] blur-xl sm:h-[60px] sm:w-[180px]' />
+        </>
+      ) : (
+        <>
+          <span className='pointer-events-none absolute inset-[1px] rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.45)_0%,rgba(255,255,255,0.08)_38%,rgba(255,255,255,0)_60%)]' />
+          <span className='pointer-events-none absolute inset-x-[18px] bottom-[8px] h-[16px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(185,176,228,0.26)_0%,rgba(185,176,228,0)_72%)] blur-md sm:bottom-[10px] sm:h-[18px]' />
+        </>
+      )}
+
+      <span
+        className={cn(
+          'relative z-10 flex min-w-0 items-center justify-center',
+          isActive
+            ? 'gap-4 text-[20px] font-semibold tracking-[-0.05em] text-white sm:gap-6 sm:text-[24px]'
+            : 'gap-4 text-[18px] font-semibold tracking-[-0.04em] sm:gap-5 sm:text-[22px]',
+          tone.label
+        )}
+      >
+        <span
+          className={cn(
+            'leading-none transition-transform duration-200 group-hover:scale-[1.02]',
+            isActive ? 'text-[20px] sm:text-[24px]' : 'text-[20px] sm:text-[24px]',
+            tone.icon
+          )}
+          aria-hidden='true'
+        >
+          {action.symbol}
+        </span>
+        <span>{action.label}</span>
+        {action.trailingSymbol ? (
+          <span
+            className={cn(
+              'leading-none transition-transform duration-200 group-hover:scale-[1.02]',
+              isActive ? 'text-[20px] sm:text-[24px]' : 'text-[20px] sm:text-[24px]',
+              tone.icon
+            )}
+            aria-hidden='true'
+          >
+            {action.trailingSymbol}
+          </span>
+        ) : null}
+      </span>
+
+      {isActive ? (
+        <>
+          <span className='pointer-events-none absolute left-[31%] top-[34%] text-[10px] text-white/60 sm:text-[14px]'>
+            ✦
+          </span>
+          <span className='pointer-events-none absolute right-[29%] top-[26%] text-[10px] text-white/60 sm:text-[14px]'>
+            ✦
+          </span>
+          <span className='pointer-events-none absolute right-[20%] top-[46%] text-[9px] text-white/50 sm:text-[12px]'>
+            ✦
+          </span>
+        </>
+      ) : null}
+    </>
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.06 * index }}
+      className={wrapperClassName}
+    >
+      {isActive ? <div className='home-action-active-underlay' /> : null}
+      {action.href ? (
+        <Link href={action.href} className={sharedClassName}>
+          {content}
+        </Link>
+      ) : (
+        <button
+          type='button'
+          onClick={action.onClick}
+          disabled={action.disabled}
+          className={sharedClassName}
+        >
+          {content}
+        </button>
+      )}
+    </motion.div>
+  );
+}
 
 export default function Game() {
   const { basePath } = useKangurRouting();
@@ -348,6 +513,52 @@ export default function Game() {
         : null,
     [delegatedAssignments, operation, screen]
   );
+  const canStartFromHome = Boolean(user || playerName.trim().length > 0);
+  const homeActions = useMemo<HomeAction[]>(
+    () => [
+      {
+        id: 'lessons',
+        label: 'Lekcje',
+        symbol: '📚',
+        tone: 'neutral',
+        href: createPageUrl('Lessons', basePath),
+      },
+      {
+        id: 'play',
+        label: 'Grajmy!',
+        symbol: '🪐',
+        trailingSymbol: '🚀',
+        tone: 'violet',
+        onClick: handleStartGame,
+        disabled: !canStartFromHome,
+      },
+      {
+        id: 'training',
+        label: 'Trening mieszany',
+        symbol: '🤸',
+        tone: 'sky',
+        onClick: () => setScreen('training'),
+        disabled: !canStartFromHome,
+      },
+      {
+        id: 'geometry',
+        label: 'Trening figur',
+        symbol: '🔷',
+        tone: 'mist',
+        onClick: () => setScreen('geometry_quiz'),
+        disabled: !canStartFromHome,
+      },
+      {
+        id: 'kangur',
+        label: 'Kangur Matematyczny',
+        symbol: '🦘',
+        tone: 'sand',
+        onClick: () => setScreen('kangur_setup'),
+        disabled: !canStartFromHome,
+      },
+    ],
+    [basePath, canStartFromHome, handleStartGame]
+  );
 
   return (
     <KangurPageShell tone='play'>
@@ -357,58 +568,44 @@ export default function Game() {
         visible={xpToast.visible}
       />
       <KangurPageTopBar
+        contentClassName='justify-center'
         left={
-          <>
-            {screen !== 'home' && (
-              <KangurButton onClick={handleHome} size='sm' variant='ghost'>
-                Strona glowna
-              </KangurButton>
-            )}
-            <KangurButton asChild size='sm' variant='ghost'>
+          <KangurTopNavGroup>
+            <KangurButton
+              onClick={handleHome}
+              size='md'
+              variant={screen === 'home' ? 'navigationActive' : 'navigation'}
+            >
+              <Home className='h-[22px] w-[22px]' strokeWidth={2.1} />
+              <span>Strona glowna</span>
+            </KangurButton>
+            <KangurButton asChild size='md' variant='navigation'>
               <Link href={createPageUrl('Lessons', basePath)}>
-                <BookOpen className='w-4 h-4' /> Lekcje
+                <BookOpen className='h-[22px] w-[22px]' strokeWidth={2.1} />
+                <span>Lekcje</span>
               </Link>
             </KangurButton>
-          </>
-        }
-        right={
-          <>
             <KangurProfileMenu
               basePath={basePath}
               isAuthenticated={Boolean(user)}
               onLogout={handleLogout}
               onLogin={handleLogin}
+              isActive={false}
             />
             {user?.canManageLearners && (
-              <KangurButton asChild size='sm' variant='ghost'>
+              <KangurButton asChild size='md' variant='navigation'>
                 <Link href={createPageUrl('ParentDashboard', basePath)}>
-                  <LayoutDashboard className='w-4 h-4' /> Rodzic
+                  <LayoutGrid className='h-[22px] w-[22px]' strokeWidth={2.1} />
+                  <span>Rodzic</span>
                 </Link>
               </KangurButton>
             )}
-          </>
+          </KangurTopNavGroup>
         }
       />
 
-      <KangurPageContainer className='flex flex-col items-center'>
-        <motion.div
-          initial={{ y: -30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className='mb-8 pt-3 text-center'
-        >
-          <h1 className='text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 drop-shadow'>
-            <span aria-hidden='true'>🧮 </span>
-            {GAME_BRAND_NAME}
-          </h1>
-          {!userLoading && !user ? (
-            <div className='mt-3 flex justify-center'>
-              <KangurButton onClick={handleLogin} size='md' variant='secondary'>
-                <LogIn className='w-4 h-4' /> Zaloguj się, aby wejść na tablicę wyników
-              </KangurButton>
-            </div>
-          ) : null}
-        </motion.div>
-
+      <KangurPageContainer className='flex flex-col items-center gap-10 pt-6 sm:pt-8'>
+        <h1 className='sr-only'>{GAME_BRAND_NAME}</h1>
         <AnimatePresence mode='wait'>
           {screen === 'home' && (
             <motion.div
@@ -416,116 +613,68 @@ export default function Game() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className='flex flex-col items-center gap-6 w-full'
+              className='flex w-full flex-col items-center gap-10'
             >
-              <KangurPanel className='flex w-full max-w-sm flex-col items-center gap-4' padding='xl' variant='elevated'>
-                <div className='text-4xl'>👋</div>
+              <section className='w-full max-w-[520px] space-y-5'>
                 {user ? (
-                  <>
-                    <h2 className='text-2xl font-bold text-slate-700'>
-                      Cześć, {user.full_name}! 🎉
-                    </h2>
-                    <KangurAssignmentSpotlight basePath={basePath} />
-                    <KangurButton asChild className='w-full' size='lg' variant='secondary'>
-                      <Link href={createPageUrl('Lessons', basePath)}>📚 Lekcje</Link>
-                    </KangurButton>
-                    <KangurButton className='w-full' onClick={handleStartGame} size='xl' variant='primary'>
-                      Grajmy! 🚀
-                    </KangurButton>
-                    <KangurButton
-                      className='w-full'
-                      onClick={() => setScreen('training')}
-                      size='lg'
-                      variant='surface'
-                    >
-                      🏋️ Trening mieszany
-                    </KangurButton>
-                    <KangurButton
-                      className='w-full'
-                      onClick={() => setScreen('geometry_quiz')}
-                      size='lg'
-                      variant='secondary'
-                    >
-                      🔷 Trening figur
-                    </KangurButton>
-                    <KangurButton
-                      className='w-full'
-                      onClick={() => setScreen('kangur_setup')}
-                      size='lg'
-                      variant='warning'
-                    >
-                      🦘 Kangur Matematyczny
-                    </KangurButton>
-                  </>
+                  <KangurAssignmentSpotlight basePath={basePath} />
                 ) : (
-                  <>
-                    <h2 className='text-2xl font-bold text-slate-700'>Jak masz na imię?</h2>
-                    <input
-                      type='text'
-                      placeholder='Wpisz swoje imię...'
-                      value={playerName}
-                      onChange={(e) => setPlayerName(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && playerName.trim() && handleStartGame()}
-                      className='w-full border-2 border-indigo-200 rounded-2xl px-4 py-3 text-lg text-gray-700 focus:outline-none focus:border-indigo-400'
-                      maxLength={20}
-                    />
-                    <p className='text-center text-xs text-slate-400'>
-                      Zaloguj się, aby Twój wynik pojawił się na tablicy!
-                    </p>
-                    <KangurButton asChild className='w-full' size='lg' variant='secondary'>
-                      <Link href={createPageUrl('Lessons', basePath)}>📚 Lekcje</Link>
-                    </KangurButton>
-                    <KangurButton
-                      className='w-full'
-                      disabled={!playerName.trim()}
-                      onClick={handleStartGame}
-                      size='xl'
-                      variant='primary'
-                    >
-                      Grajmy! 🚀
-                    </KangurButton>
-                    <KangurButton
-                      className='w-full'
-                      disabled={!playerName.trim()}
-                      onClick={() => playerName.trim() && setScreen('training')}
-                      size='lg'
-                      variant='surface'
-                    >
-                      🏋️ Trening mieszany
-                    </KangurButton>
-                    <KangurButton
-                      className='w-full'
-                      disabled={!playerName.trim()}
-                      onClick={() => playerName.trim() && setScreen('geometry_quiz')}
-                      size='lg'
-                      variant='secondary'
-                    >
-                      🔷 Trening figur
-                    </KangurButton>
-                    <KangurButton
-                      className='w-full'
-                      disabled={!playerName.trim()}
-                      onClick={() => playerName.trim() && setScreen('kangur_setup')}
-                      size='lg'
-                      variant='warning'
-                    >
-                      🦘 Kangur Matematyczny
-                    </KangurButton>
-                    <KangurButton onClick={handleLogin} size='sm' variant='ghost'>
-                      <LogIn className='w-4 h-4' /> Zaloguj się
-                    </KangurButton>
-                  </>
+                  <KangurPanel className='w-full border-white/78 bg-white/58' padding='lg' variant='elevated'>
+                    <div className='px-1'>
+                      <label className='block text-[14px] font-bold uppercase tracking-[0.12em] text-[#97a0c3]'>
+                        Imie gracza
+                      </label>
+                      <input
+                        type='text'
+                        placeholder='Wpisz swoje imie...'
+                        value={playerName}
+                        onChange={(e) => setPlayerName(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && playerName.trim() && handleStartGame()}
+                        className='mt-4 h-[58px] w-full rounded-[22px] border border-[#eceff7] bg-white px-4 text-[18px] text-slate-700 outline-none transition focus:border-[#cdd7ff] focus:ring-2 focus:ring-[#e6ebff]'
+                        maxLength={20}
+                      />
+                      <div className='mt-4 flex flex-wrap items-center justify-between gap-3 text-[15px] text-[#8c97bb]'>
+                        <span>Zaloguj się, aby Twój wynik pojawił się na tablicy.</span>
+                        <KangurButton onClick={handleLogin} size='sm' variant='secondary'>
+                          <LogIn className='w-4 h-4' /> Zaloguj się
+                        </KangurButton>
+                      </div>
+                    </div>
+                  </KangurPanel>
                 )}
-              </KangurPanel>
-              <div className='w-full max-w-2xl'>
-                <KangurPriorityAssignments
-                  basePath={basePath}
-                  enabled={Boolean(user)}
-                  title='Priorytetowe zadania'
-                  emptyLabel='Brak aktywnych zadan od rodzica.'
-                />
+
+                <KangurPanel
+                  className='w-full border-white/78 bg-white/58 shadow-[0_24px_60px_rgba(168,175,216,0.18)]'
+                  padding='lg'
+                  variant='elevated'
+                >
+                  <div className='space-y-3'>
+                    {homeActions.map((action, index) => (
+                      <KangurHomeActionCard key={action.id} action={action} index={index} />
+                    ))}
+                  </div>
+                </KangurPanel>
+              </section>
+
+              {user ? (
+                <div className='mx-auto w-full max-w-[900px]'>
+                  <KangurPriorityAssignments
+                    basePath={basePath}
+                    enabled={Boolean(user)}
+                    title='Priorytetowe zadania'
+                    emptyLabel='Brak aktywnych zadan od rodzica.'
+                  />
+                </div>
+              ) : null}
+
+              <div className='grid w-full max-w-5xl gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'>
+                <div className='order-2 xl:order-1'>
+                  <Leaderboard />
+                </div>
+                <div className='order-1 xl:order-2 flex justify-center xl:justify-stretch'>
+                  <PlayerProgressCard progress={progress} />
+                </div>
               </div>
-              <Leaderboard />
             </motion.div>
           )}
 
@@ -720,17 +869,6 @@ export default function Game() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {screen === 'home' && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className='w-full flex justify-center mt-2'
-          >
-            <PlayerProgressCard progress={progress} />
-          </motion.div>
-        )}
       </KangurPageContainer>
     </KangurPageShell>
   );

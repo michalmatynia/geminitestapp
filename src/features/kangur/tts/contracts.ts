@@ -19,10 +19,16 @@ export const KANGUR_TTS_VOICE_OPTIONS: ReadonlyArray<{
   value: KangurLessonTtsVoice;
   label: string;
 }> = [
-  { value: 'coral', label: 'Coral' },
-  { value: 'sage', label: 'Sage' },
-  { value: 'verse', label: 'Verse' },
+  { value: 'alloy', label: 'Alloy' },
   { value: 'ash', label: 'Ash' },
+  { value: 'ballad', label: 'Ballad' },
+  { value: 'cedar', label: 'Cedar' },
+  { value: 'coral', label: 'Coral' },
+  { value: 'echo', label: 'Echo' },
+  { value: 'marin', label: 'Marin' },
+  { value: 'sage', label: 'Sage' },
+  { value: 'shimmer', label: 'Shimmer' },
+  { value: 'verse', label: 'Verse' },
 ] as const;
 
 export const kangurLessonNarrationSegmentSchema = z.object({

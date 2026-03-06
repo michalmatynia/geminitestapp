@@ -18,13 +18,27 @@ export type NodeHandlerContext = {
   resolvedRunId: string;
   resolvedRunStartedAt: string;
   iteration: number;
+  attempt: number;
+  spanId: string;
   nodeInputs: RuntimePortValues;
   prevOutputs: RuntimePortValues | null;
   runtimeTelemetry: RuntimeNodeResolutionTelemetry | null;
 };
 
 export const resolveNodeHandlerOrThrow = async (ctx: NodeHandlerContext): Promise<NodeHandler> => {
-  const { node, options, state, resolvedRunId, resolvedRunStartedAt, iteration, nodeInputs, prevOutputs, runtimeTelemetry } = ctx;
+  const {
+    node,
+    options,
+    state,
+    resolvedRunId,
+    resolvedRunStartedAt,
+    iteration,
+    attempt,
+    spanId,
+    nodeInputs,
+    prevOutputs,
+    runtimeTelemetry,
+  } = ctx;
   const handler = options.resolveHandler ? options.resolveHandler(node.type) : null;
   if (!handler) {
     state.errorNodes.add(node.id);
@@ -44,12 +58,15 @@ export const resolveNodeHandlerOrThrow = async (ctx: NodeHandlerContext): Promis
     if (options.onNodeError) {
       await options.onNodeError({
         runId: resolvedRunId,
+        traceId: resolvedRunId,
+        spanId,
         runStartedAt: resolvedRunStartedAt,
         node,
         nodeInputs,
         prevOutputs,
         error: handlerMissingError,
         iteration,
+        attempt,
         ...buildRuntimeTelemetryFields(runtimeTelemetry),
       });
     }

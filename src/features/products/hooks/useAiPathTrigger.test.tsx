@@ -32,9 +32,12 @@ vi.mock('@/shared/lib/query-invalidation', () => ({
   optimisticallyInsertAiPathRunInQueueCache: optimisticallyInsertAiPathRunInQueueCacheMock,
 }));
 
-vi.mock('@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent', () => ({
+vi.mock('@/shared/lib/ai-paths/hooks/trigger-event-utils', () => ({
   createAiPathTriggerRequestId: createAiPathTriggerRequestIdMock,
   isRecoverableTriggerEnqueueError: isRecoverableTriggerEnqueueErrorMock,
+}));
+
+vi.mock('@/shared/lib/ai-paths/hooks/trigger-event-recovery', () => ({
   recoverEnqueuedRunByRequestId: recoverEnqueuedRunByRequestIdMock,
 }));
 

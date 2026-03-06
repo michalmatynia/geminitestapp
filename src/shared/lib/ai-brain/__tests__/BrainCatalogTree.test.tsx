@@ -80,6 +80,15 @@ describe('BrainCatalogTree', () => {
 
   it('renders a flat list and binds to the brain catalog master instance', () => {
     useMasterFolderTreeShellMock.mockImplementation((options: { nodes: unknown[] }) => ({
+      capabilities: {
+        multiSelect: { enabled: false },
+        search: { enabled: true },
+      },
+      search: {
+        state: { isActive: false, matchNodeIds: new Set() },
+        resultCountLabel: '',
+        placeholder: 'Search...',
+      },
       appearance: {
         rootDropUi: {
           label: 'Move here',

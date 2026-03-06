@@ -33,6 +33,7 @@ describe('engine-core runtime validation middleware', () => {
                 message: 'node pre-execute blocked',
               }
             : null,
+        recordHistory: true,
         onNodeBlocked,
         onNodeError,
         reportAiPathsError: (): void => {},
@@ -47,6 +48,14 @@ describe('engine-core runtime validation middleware', () => {
         blockedReason: 'validation',
         message: 'node pre-execute blocked',
       });
+      expect(result.history?.[node.id]?.[0]).toEqual(
+        expect.objectContaining({
+          traceId: expect.stringContaining('run_'),
+          spanId: 'node-1:1:1',
+          attempt: 1,
+          error: 'node pre-execute blocked',
+        })
+      );
     }
     if (thrown) {
       expect(thrown).toBeInstanceOf(Error);
@@ -135,6 +144,7 @@ describe('engine-core runtime validation middleware', () => {
                 message: 'node post-execute blocked',
               }
             : null,
+        recordHistory: true,
         onNodeFinish,
         onNodeBlocked,
         reportAiPathsError: (): void => {},
@@ -149,6 +159,14 @@ describe('engine-core runtime validation middleware', () => {
         blockedReason: 'validation',
         message: 'node post-execute blocked',
       });
+      expect(result.history?.[node.id]?.[0]).toEqual(
+        expect.objectContaining({
+          traceId: expect.stringContaining('run_'),
+          spanId: 'node-1:1:1',
+          attempt: 1,
+          error: 'node post-execute blocked',
+        })
+      );
     }
     if (thrown) {
       expect(thrown).toBeInstanceOf(Error);

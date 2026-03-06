@@ -28,7 +28,12 @@ import type {
   RuntimePortValues,
   RuntimeState,
 } from '@/shared/contracts/ai-paths';
-import type { RuntimeProfileSummary } from '@/shared/contracts/ai-paths-runtime';
+import type {
+  RuntimeProfileSummary,
+  RuntimeTraceRecord,
+  RuntimeTraceSpanStatus,
+} from '@/shared/contracts/ai-paths-runtime';
+import { hashRuntimeValue } from '@/shared/lib/ai-paths/core/utils/runtime';
 
 import {
   matchesRuntimeKernelExecutionTelemetryFromMeta,
@@ -180,6 +185,8 @@ export const executePathRun = async (
 
   const profiling = createPathRunProfiling();
   let runtimeProfileSummary: RuntimeProfileSummary | null = null;
+  const runtimeTraceSpans = new Map<string, RuntimeTraceRecord['spans'][number]>();
+  const runtimeTraceSpanOrder: string[] = [];
 
   const nodes = normalizeNodes(run.graph?.nodes ?? []);
 
@@ -267,17 +274,78 @@ export const executePathRun = async (
     runMetaRecord,
     runtimeKernelExecutionTelemetry
   );
+  const baseRuntimeTraceRecord =
+    runMetaWithRuntimeFingerprint['runtimeTrace'] &&
+    typeof runMetaWithRuntimeFingerprint['runtimeTrace'] === 'object' &&
+    !Array.isArray(runMetaWithRuntimeFingerprint['runtimeTrace'])
+      ? (runMetaWithRuntimeFingerprint['runtimeTrace'] as Record<string, unknown>)
+      : {};
   const runMetaWithRuntimeContext: Record<string, unknown> = {
     ...runMetaWithRuntimeFingerprint,
     runtimeKernel: runtimeKernelExecutionTelemetry,
   };
 
+  const upsertRuntimeTraceSpan = (
+    spanId: string,
+    patch: Partial<RuntimeTraceRecord['spans'][number]> &
+      Pick<RuntimeTraceRecord['spans'][number], 'nodeId' | 'nodeType' | 'iteration' | 'attempt'>
+  ): void => {
+    const existing = runtimeTraceSpans.get(spanId);
+    const next: RuntimeTraceRecord['spans'][number] = {
+      spanId,
+      parentSpanId: existing?.parentSpanId ?? null,
+      runId: run.id,
+      traceId,
+      nodeId: patch.nodeId,
+      nodeType: patch.nodeType,
+      nodeTitle:
+        patch.nodeTitle !== undefined ? patch.nodeTitle : (existing?.nodeTitle ?? null),
+      iteration: patch.iteration,
+      attempt: patch.attempt,
+      startedAt: patch.startedAt ?? existing?.startedAt ?? new Date().toISOString(),
+      finishedAt:
+        patch.finishedAt !== undefined ? patch.finishedAt : (existing?.finishedAt ?? null),
+      status: patch.status ?? existing?.status ?? 'running',
+      inputHash:
+        patch.inputHash !== undefined ? patch.inputHash : (existing?.inputHash ?? undefined),
+      activationHash:
+        patch.activationHash !== undefined
+          ? patch.activationHash
+          : (existing?.activationHash ?? undefined),
+      correlationIds:
+        patch.correlationIds !== undefined
+          ? patch.correlationIds
+          : (existing?.correlationIds ?? []),
+      cache: patch.cache !== undefined ? patch.cache : existing?.cache,
+      branch: patch.branch !== undefined ? patch.branch : existing?.branch,
+      effect: patch.effect !== undefined ? patch.effect : existing?.effect,
+      error: patch.error !== undefined ? patch.error : existing?.error,
+    };
+    runtimeTraceSpans.set(spanId, next);
+    if (!runtimeTraceSpanOrder.includes(spanId)) {
+      runtimeTraceSpanOrder.push(spanId);
+    }
+  };
+
+  const syncRuntimeTraceMeta = (): void => {
+    runMetaWithRuntimeContext['runtimeTrace'] = {
+      ...baseRuntimeTraceRecord,
+      version: 'ai-paths.trace.v1',
+      traceId,
+      runId: run.id,
+      source: 'server',
+      startedAt: runStartedAt,
+      spans: runtimeTraceSpanOrder
+        .map((spanId: string) => runtimeTraceSpans.get(spanId))
+        .filter((span): span is RuntimeTraceRecord['spans'][number] => Boolean(span)),
+    } satisfies Partial<RuntimeTraceRecord>;
+  };
+
+  syncRuntimeTraceMeta();
+
   const nodeRecords = await repo.listRunNodes(run.id);
   const nodeStatusMap = new Map<string, string>(
     nodeRecords.map((record: AiPathRunNodeRecord) => [record.nodeId, record.status])
-  );
-  const nodeAttemptMap = new Map<string, number>(
-    nodeRecords.map((record: AiPathRunNodeRecord) => [record.nodeId, record.attempt ?? 0])
   );
   const skipNodes = buildSkipSet(run, edges, nodeStatusMap);
   const reportAiPathsError = async (
@@ -519,6 +587,8 @@ export const executePathRun = async (
         nodeInputs,
         prevOutputs,
         iteration,
+        attempt,
+        spanId: nodeSpanId,
         runtimeStrategy,
         runtimeResolutionSource,
         runtimeCodeObjectId,
@@ -526,9 +596,6 @@ export const executePathRun = async (
       }) => {
         try {
           resolvedRunStartedAt = cbRunStartedAt;
-          const nextAttempt = (nodeAttemptMap.get(node.id) ?? 0) + 1;
-          nodeAttemptMap.set(node.id, nextAttempt);
-          const nodeSpanId = `${node.id}:${nextAttempt}:${iteration}`;
           const nodeStartedAt = new Date().toISOString();
           profiling.beginRuntimeNodeSpan({
             spanId: nodeSpanId,
@@ -536,12 +603,26 @@ export const executePathRun = async (
             nodeType: node.type,
             nodeTitle: node.title ?? null,
             iteration,
-            attempt: nextAttempt,
+            attempt,
             startedAt: nodeStartedAt,
           });
 
           const safeInputs = cloneJsonSafe(nodeInputs) as RuntimePortValues;
           const safePrevOutputs = cloneJsonSafe(prevOutputs ?? {}) as RuntimePortValues;
+          upsertRuntimeTraceSpan(nodeSpanId, {
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            iteration,
+            attempt,
+            startedAt: nodeStartedAt,
+            status: 'running',
+            inputHash: hashRuntimeValue(safeInputs ?? nodeInputs),
+            cache: {
+              decision: 'miss',
+            },
+          });
+          syncRuntimeTraceMeta();
           accInputs[node.id] = safeInputs;
           accOutputs[node.id] = mergeNodeOutputsForStatus({
             previous: accOutputs[node.id],
@@ -554,7 +635,10 @@ export const executePathRun = async (
             nodeType: node.type,
             nodeTitle: node.title ?? null,
             status: 'running',
-            attempt: nextAttempt,
+            traceId,
+            spanId: nodeSpanId,
+            iteration,
+            attempt,
             inputs: safeInputs,
             outputs: safePrevOutputs,
             startedAt: nodeStartedAt,
@@ -572,7 +656,7 @@ export const executePathRun = async (
                 nodeType: node.type,
                 nodeTitle: node.title ?? null,
                 status: 'running',
-                attempt: nextAttempt,
+                attempt,
                 inputs: safeInputs,
                 outputs: safePrevOutputs,
                 startedAt: nodeStartedAt,
@@ -593,7 +677,7 @@ export const executePathRun = async (
                       nodeId: node.id,
                       nodeType: node.type,
                       iteration,
-                      attempt: nextAttempt,
+                      attempt,
                       ...toRunEventRuntimeKernelMetadata({
                         runtimeStrategy,
                         runtimeResolutionSource,
@@ -614,6 +698,8 @@ export const executePathRun = async (
         nodeInputs,
         nextOutputs,
         iteration,
+        attempt,
+        spanId: nodeSpanId,
         cached,
         runtimeStrategy,
         runtimeResolutionSource,
@@ -622,11 +708,10 @@ export const executePathRun = async (
       }) => {
         try {
           resolvedRunStartedAt = cbRunStartedAt;
-          const attempt = nodeAttemptMap.get(node.id) ?? 1;
-          const nodeSpanId = `${node.id}:${attempt}:${iteration}`;
           const finishedAt = new Date().toISOString();
           const rawStatus = toRuntimeNodeStatus(nextOutputs['status']);
           const status = (cached ? 'cached' : rawStatus) ?? 'completed';
+          const traceStatus: RuntimeTraceSpanStatus = cached ? 'cached' : 'completed';
 
           profiling.finalizeRuntimeNodeSpan({
             spanId: nodeSpanId,
@@ -636,6 +721,20 @@ export const executePathRun = async (
 
           const safeInputs = cloneJsonSafe(nodeInputs) as RuntimePortValues;
           const safeOutputs = cloneJsonSafe(nextOutputs) as RuntimePortValues;
+          upsertRuntimeTraceSpan(nodeSpanId, {
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            iteration,
+            attempt,
+            finishedAt,
+            status: traceStatus,
+            inputHash: hashRuntimeValue(safeInputs ?? nodeInputs),
+            cache: {
+              decision: cached ? 'hit' : 'miss',
+            },
+          });
+          syncRuntimeTraceMeta();
           accInputs[node.id] = safeInputs;
           accOutputs[node.id] = mergeNodeOutputsForStatus({
             previous: accOutputs[node.id],
@@ -652,6 +751,9 @@ export const executePathRun = async (
             nodeTitle: node.title ?? null,
             status,
             attempt,
+            traceId,
+            spanId: nodeSpanId,
+            iteration,
             inputs: safeInputs,
             outputs: safeOutputs,
             finishedAt,
@@ -705,6 +807,9 @@ export const executePathRun = async (
       },
       onNodeBlocked: async ({
         node,
+        iteration,
+        attempt,
+        spanId: nodeSpanId,
         reason,
         message,
         status,
@@ -716,8 +821,9 @@ export const executePathRun = async (
       }) => {
         try {
           const finishedAt = new Date().toISOString();
-          const attempt = nodeAttemptMap.get(node.id) ?? 0;
           const runtimeStatus = status === 'waiting_callback' ? 'waiting_callback' : 'blocked';
+          const traceStatus: RuntimeTraceSpanStatus =
+            runtimeStatus === 'waiting_callback' ? 'waiting_callback' : 'blocked';
           const safeOutputs: RuntimePortValues = {
             status: runtimeStatus,
             skipReason: reason,
@@ -726,6 +832,22 @@ export const executePathRun = async (
             ...(waitingOnPorts ? { waitingOnPorts } : {}),
             ...(waitingOnDetails ? { waitingOnDetails } : {}),
           };
+          upsertRuntimeTraceSpan(nodeSpanId, {
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            iteration,
+            attempt,
+            finishedAt,
+            status: traceStatus,
+            error:
+              typeof message === 'string' && message.trim().length > 0
+                ? {
+                    message,
+                  }
+                : undefined,
+          });
+          syncRuntimeTraceMeta();
           accOutputs[node.id] = mergeNodeOutputsForStatus({
             previous: accOutputs[node.id],
             next: safeOutputs,
@@ -738,6 +860,9 @@ export const executePathRun = async (
             nodeTitle: node.title ?? null,
             status: runtimeStatus,
             attempt,
+            traceId,
+            spanId: nodeSpanId,
+            iteration,
             outputs: safeOutputs,
             finishedAt,
             updatedAt: finishedAt,
@@ -763,9 +888,12 @@ export const executePathRun = async (
                     ? `Node ${node.title ?? node.id} waiting: ${message}`
                     : `Node ${node.title ?? node.id} blocked: ${message}`,
                 metadata: {
+                  traceId,
+                  spanId: nodeSpanId,
                   runId: run.id,
                   nodeId: node.id,
                   nodeType: node.type,
+                  iteration,
                   attempt,
                   reason,
                   status: runtimeStatus,
@@ -789,6 +917,8 @@ export const executePathRun = async (
         nodeInputs,
         error,
         iteration,
+        attempt,
+        spanId: nodeSpanId,
         runtimeStrategy,
         runtimeResolutionSource,
         runtimeCodeObjectId,
@@ -796,8 +926,6 @@ export const executePathRun = async (
       }) => {
         try {
           resolvedRunStartedAt = cbRunStartedAt;
-          const attempt = nodeAttemptMap.get(node.id) ?? 1;
-          const nodeSpanId = `${node.id}:${attempt}:${iteration}`;
           const finishedAt = new Date().toISOString();
           const message = error instanceof Error ? error.message : String(error);
 
@@ -841,6 +969,21 @@ export const executePathRun = async (
               errorOutputKeys,
             },
           });
+          upsertRuntimeTraceSpan(nodeSpanId, {
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            iteration,
+            attempt,
+            finishedAt,
+            status: 'failed',
+            inputHash: hashRuntimeValue(safeInputs ?? nodeInputs),
+            error: {
+              code: errorCode,
+              message,
+            },
+          });
+          syncRuntimeTraceMeta();
           accInputs[node.id] = safeInputs;
           accOutputs[node.id] = mergeNodeOutputsForStatus({
             previous: accOutputs[node.id],
@@ -853,6 +996,9 @@ export const executePathRun = async (
             nodeType: node.type,
             nodeTitle: node.title ?? null,
             status: 'failed',
+            traceId,
+            spanId: nodeSpanId,
+            iteration,
             attempt,
             inputs: safeInputs,
             outputs: errorOutputs ?? undefined,

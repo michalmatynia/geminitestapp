@@ -430,6 +430,8 @@ describe('path-run-executor runtime-kernel settings integration', () => {
           | undefined;
         await onNodeFinish?.({
           runId: run.id,
+          traceId: run.id,
+          spanId: `${node?.id ?? 'node-1'}:1:1`,
           runStartedAt: '2026-03-05T10:01:00.000Z',
           node: node ?? null,
           nodeInputs: {},
@@ -440,6 +442,7 @@ describe('path-run-executor runtime-kernel settings integration', () => {
           },
           changed: true,
           iteration: 1,
+          attempt: 1,
           runtimeStrategy: 'code_object_v3',
           runtimeResolutionSource: 'override',
           runtimeCodeObjectId: 'ai-paths.node-code-object.constant.v3',
@@ -478,6 +481,8 @@ describe('path-run-executor runtime-kernel settings integration', () => {
       runId: run.id,
       level: 'info',
       metadata: expect.objectContaining({
+        traceId: run.id,
+        spanId: `${node?.id ?? 'node-1'}:1:1`,
         runtimeKernelNodeTypes: ['constant', 'template'],
         runtimeKernelNodeTypesSource: 'settings',
         runtimeKernelCodeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
@@ -501,6 +506,23 @@ describe('path-run-executor runtime-kernel settings integration', () => {
           runtimeKernelCodeObjectResolverIdsSource: 'settings',
         },
         runtimeTrace: expect.objectContaining({
+          version: 'ai-paths.trace.v1',
+          traceId: run.id,
+          runId: run.id,
+          source: 'server',
+          finishedAt: expect.any(String),
+          spans: [
+            expect.objectContaining({
+              spanId: `${node?.id ?? 'node-1'}:1:1`,
+              runId: run.id,
+              traceId: run.id,
+              nodeId: node?.id ?? 'node-1',
+              nodeType: node?.type ?? 'trigger',
+              iteration: 1,
+              attempt: 1,
+              status: 'completed',
+            }),
+          ],
           kernelParity: {
             sampledHistoryEntries: 2,
             strategyCounts: {

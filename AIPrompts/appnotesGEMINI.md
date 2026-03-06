@@ -3,7 +3,7 @@ run npx eslint and address the issues one by one
 run npm build and address the issues one by one
 run vitest and address the issues ony by one
 npm audit fix
-npm run test:e2e
+npm run test:e2e 
 
 PRISMA
 npx prisma generate

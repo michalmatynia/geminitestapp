@@ -5,7 +5,7 @@ import { parseJsonSafe, renderJsonTemplate } from '@/shared/lib/ai-paths/core/ut
 import type { AiNode, DbQueryConfig, DatabaseConfig } from '@/shared/contracts/ai-paths';
 
 describe('buildMongoUpdatePlan', () => {
-  it('keeps description-only updates when legacy translation parameter coverage is incomplete', async () => {
+  it('keeps description updates and applies safe partial legacy parameter translations', async () => {
     const reportAiPathsError = vi.fn();
     const toast = vi.fn();
     const result = await buildMongoUpdatePlan({
@@ -99,15 +99,42 @@ describe('buildMongoUpdatePlan', () => {
 
     expect(result.plan.updates).toEqual({
       description_pl: 'Opis produktu',
+      parameters: [
+        {
+          parameterId: 'color',
+          value: 'Blue',
+          valuesByLanguage: {
+            pl: 'Niebieski',
+          },
+        },
+        {
+          parameterId: 'material',
+          value: 'Steel',
+        },
+      ],
     });
     expect(result.plan.updateDoc).toEqual({
       $set: {
         description_pl: 'Opis produktu',
+        parameters: [
+          {
+            parameterId: 'color',
+            value: 'Blue',
+            valuesByLanguage: {
+              pl: 'Niebieski',
+            },
+          },
+          {
+            parameterId: 'material',
+            value: 'Steel',
+          },
+        ],
       },
     });
     expect(result.plan.debugPayload).toEqual(
       expect.objectContaining({
         translationParameterMerge: expect.objectContaining({
+          mergedCount: 1,
           coverage: expect.objectContaining({
             requiredCount: 2,
             matchedCount: 1,
@@ -120,7 +147,7 @@ describe('buildMongoUpdatePlan', () => {
     expect(toast).not.toHaveBeenCalled();
   });
 
-  it('blocks incomplete legacy translation parameter payloads when description is also unavailable', async () => {
+  it('keeps safe partial legacy parameter translations when description is unavailable', async () => {
     const reportAiPathsError = vi.fn();
     const toast = vi.fn();
     const result = await buildMongoUpdatePlan({
@@ -201,32 +228,57 @@ describe('buildMongoUpdatePlan', () => {
       aiPrompt: '',
     });
 
-    expect('output' in result).toBe(true);
-    if (!('output' in result)) {
-      throw new Error('Expected guardrail output.');
+    expect('plan' in result).toBe(true);
+    if (!('plan' in result)) {
+      throw new Error('Expected Mongo update plan.');
     }
 
-    expect(result.output['bundle']).toEqual(
+    expect(result.plan.updates).toEqual({
+      parameters: [
+        {
+          parameterId: 'color',
+          value: 'Blue',
+          valuesByLanguage: {
+            pl: 'Niebieski',
+          },
+        },
+        {
+          parameterId: 'material',
+          value: 'Steel',
+        },
+      ],
+    });
+    expect(result.plan.updateDoc).toEqual({
+      $set: {
+        parameters: [
+          {
+            parameterId: 'color',
+            value: 'Blue',
+            valuesByLanguage: {
+              pl: 'Niebieski',
+            },
+          },
+          {
+            parameterId: 'material',
+            value: 'Steel',
+          },
+        ],
+      },
+    });
+    expect(result.plan.debugPayload).toEqual(
       expect.objectContaining({
-        guardrail: 'translation-no-updates',
-        guardrailMeta: expect.objectContaining({
-          translationParameterMerge: expect.objectContaining({
-            coverage: expect.objectContaining({
-              requiredCount: 2,
-              matchedCount: 1,
-              complete: false,
-            }),
+        translationParameterMerge: expect.objectContaining({
+          mergedCount: 1,
+          coverage: expect.objectContaining({
+            requiredCount: 2,
+            matchedCount: 1,
+            complete: false,
           }),
         }),
       })
     );
-    expect(reportAiPathsError).toHaveBeenCalled();
-    expect(toast).toHaveBeenCalledWith(
-      expect.stringContaining('No safe description or parameter translation updates were resolved'),
-      {
-        variant: 'error',
-      }
-    );
+    expect(reportAiPathsError).not.toHaveBeenCalled();
+    expect(toast).not.toHaveBeenCalled();
   });
 
   it('blocks legacy translation mappings when no safe translation updates resolve', async () => {

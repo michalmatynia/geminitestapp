@@ -1,0 +1,438 @@
+{
+  "schemaVersion": "ai-paths.improvements-roadmap.v1",
+  "generatedAt": "2026-03-06T00:00:00.000Z",
+  "summary": {
+    "goal": "Advance AI Paths into a contract-driven, replayable, trace-first workflow runtime.",
+    "audience": "internal_power_user",
+    "currentTrack": "v1",
+    "overallStatus": "in_progress"
+  },
+  "roadmap": [
+    {
+      "id": "v1",
+      "title": "Reliability and Debuggability Baseline",
+      "status": "in_progress",
+      "window": {
+        "from": "2026-03-09",
+        "to": "2026-04-17"
+      },
+      "priorities": [
+        "port_contracts_v3",
+        "deterministic_replay_ledger",
+        "trace_record_v1",
+        "execution_policy_v1"
+      ],
+      "gates": [
+        "port_mismatch_errors_are_canonical",
+        "replay_can_reuse_recorded_effects",
+        "trace_contract_powers_run_inspection"
+      ],
+      "artifacts": [
+        "docs/ai-paths/ai-paths-improvements-plan-2026-03-06.md",
+        "src/shared/contracts/ai-paths-core/nodes.ts",
+        "src/shared/contracts/ai-paths-runtime.ts",
+        "src/features/ai/ai-paths/services/path-run-service.ts",
+        "src/features/ai/ai-paths/services/path-run-executor/index.ts",
+        "src/features/ai/ai-paths/components/run-timeline.tsx"
+      ]
+    },
+    {
+      "id": "v2",
+      "title": "Throughput and Reuse",
+      "status": "planned",
+      "window": {
+        "from": "2026-04-20",
+        "to": "2026-05-22"
+      },
+      "priorities": [
+        "cache_contract_v1",
+        "async_envelope_concurrency",
+        "composite_nodes_templates",
+        "trace_debugging_ux"
+      ],
+      "gates": [
+        "parallel_execution_is_semantically_stable",
+        "cache_hits_are_trace_explainable",
+        "composite_nodes_roundtrip_as_semantic_assets"
+      ],
+      "artifacts": [
+        "docs/ai-paths/ai-paths-improvements-plan-2026-03-06.md",
+        "src/shared/lib/ai-paths/core/starter-workflows/registry.ts",
+        "src/features/ai/ai-paths/workers/aiPathRunQueue.ts",
+        "src/features/ai/ai-paths/components/run-history-panel.tsx"
+      ]
+    },
+    {
+      "id": "v3",
+      "title": "Governance and CI Platform",
+      "status": "planned",
+      "window": {
+        "from": "2026-05-25",
+        "to": "2026-06-26"
+      },
+      "priorities": [
+        "governance_linting_ci",
+        "headless_fixture_runner",
+        "golden_run_snapshots",
+        "secret_ref_enforcement"
+      ],
+      "gates": [
+        "fixture_runs_execute_in_ci",
+        "raw_secrets_blocked_from_path_config",
+        "trace_retention_policy_is_auditable"
+      ],
+      "artifacts": [
+        "docs/ai-paths/ai-paths-improvements-plan-2026-03-06.md",
+        "src/shared/lib/security/outbound-url-policy.ts",
+        "scripts/ai-paths/check-canonical.mjs",
+        "package.json"
+      ]
+    }
+  ],
+  "workstreams": [
+    {
+      "id": "port_contracts_v3",
+      "version": "v1",
+      "priority": "p0",
+      "status": "planned",
+      "dependencies": [],
+      "outcomes": [
+        "Ports gain canonical value kind and schema metadata.",
+        "Compile and runtime validation report actionable mismatch errors.",
+        "Adapter nodes make coercion explicit instead of implicit."
+      ],
+      "touchpoints": [
+        "src/shared/contracts/ai-paths-core/nodes.ts",
+        "src/shared/lib/ai-paths/core/validation-engine/",
+        "src/shared/lib/ai-paths/core/runtime/engine-core.ts",
+        "src/features/ai/ai-paths/components/node-config/dialog/RuntimeNodeConfigSection.tsx"
+      ]
+    },
+    {
+      "id": "deterministic_replay_ledger",
+      "version": "v1",
+      "priority": "p0",
+      "status": "planned",
+      "dependencies": [
+        "port_contracts_v3"
+      ],
+      "outcomes": [
+        "Replay can reuse recorded side effects instead of re-hitting external systems.",
+        "Resume from crash or failure does not double-fire completed side-effect nodes.",
+        "Effect records persist request fingerprint, result fingerprint, and replay eligibility."
+      ],
+      "touchpoints": [
+        "src/features/ai/ai-paths/services/path-run-service.ts",
+        "src/features/ai/ai-paths/services/path-run-executor/index.ts",
+        "src/shared/contracts/ai-paths.ts",
+        "src/shared/lib/ai-paths/core/runtime/handlers/"
+      ]
+    },
+    {
+      "id": "trace_record_v1",
+      "version": "v1",
+      "priority": "p0",
+      "status": "planned",
+      "dependencies": [],
+      "outcomes": [
+        "runtimeTrace becomes the canonical execution trace contract.",
+        "Node spans, attempts, branch decisions, and cache decisions share stable identifiers.",
+        "Run inspection and analytics derive from the same trace payload."
+      ],
+      "touchpoints": [
+        "src/shared/contracts/ai-paths-runtime.ts",
+        "src/features/ai/ai-paths/services/run-stream-publisher.ts",
+        "src/shared/lib/ai-paths/services/runtime-analytics/trace.ts",
+        "src/features/ai/ai-paths/components/run-timeline.tsx"
+      ]
+    },
+    {
+      "id": "execution_policy_v1",
+      "version": "v1",
+      "priority": "p1",
+      "status": "planned",
+      "dependencies": [
+        "trace_record_v1"
+      ],
+      "outcomes": [
+        "Retries, timeouts, and routed error semantics align across local and server execution.",
+        "Failure policy becomes explicit in trace and UI surfaces."
+      ],
+      "touchpoints": [
+        "src/shared/contracts/ai-paths-core/nodes.ts",
+        "src/shared/lib/ai-paths/core/runtime/engine-core.ts",
+        "src/features/ai/ai-paths/services/path-run-executor/index.ts"
+      ]
+    },
+    {
+      "id": "cache_contract_v1",
+      "version": "v2",
+      "priority": "p1",
+      "status": "planned",
+      "dependencies": [
+        "trace_record_v1",
+        "deterministic_replay_ledger"
+      ],
+      "outcomes": [
+        "Cache keys include config, normalized inputs, and code version.",
+        "Cache decisions are explainable and durable in server mode."
+      ],
+      "touchpoints": [
+        "src/shared/contracts/ai-paths-core/nodes.ts",
+        "src/shared/lib/ai-paths/core/runtime/engine-core.ts",
+        "src/features/ai/ai-paths/services/path-run-executor/index.ts"
+      ]
+    },
+    {
+      "id": "async_envelope_concurrency",
+      "version": "v2",
+      "priority": "p1",
+      "status": "planned",
+      "dependencies": [
+        "trace_record_v1"
+      ],
+      "outcomes": [
+        "Async node families use a shared job-envelope contract.",
+        "Server execution can constrain concurrency by node type, path, and tag.",
+        "Independent branches can run concurrently without semantic drift."
+      ],
+      "touchpoints": [
+        "src/shared/contracts/ai-paths-runtime.ts",
+        "src/shared/lib/ai-paths/core/runtime/handlers/generation.ts",
+        "src/shared/lib/ai-paths/core/runtime/handlers/integration-poll-handler.ts",
+        "src/features/ai/ai-paths/workers/aiPathRunQueue.ts"
+      ]
+    },
+    {
+      "id": "trace_debugging_ux",
+      "version": "v2",
+      "priority": "p2",
+      "status": "planned",
+      "dependencies": [
+        "trace_record_v1"
+      ],
+      "outcomes": [
+        "Run timeline gains waterfall and node inspector workflows.",
+        "Run compare highlights output, branch, and duration deltas."
+      ],
+      "touchpoints": [
+        "src/features/ai/ai-paths/components/run-timeline.tsx",
+        "src/features/ai/ai-paths/components/run-history-panel.tsx",
+        "src/features/ai/ai-paths/components/ai-paths-settings/panels/AiPathsRuntimeAnalysis.tsx"
+      ]
+    },
+    {
+      "id": "composite_nodes_templates",
+      "version": "v2",
+      "priority": "p2",
+      "status": "planned",
+      "dependencies": [
+        "port_contracts_v3"
+      ],
+      "outcomes": [
+        "Reusable subgraphs become insertable as composite nodes.",
+        "Template versioning and lineage remain asset-based, not workflow-specific code."
+      ],
+      "touchpoints": [
+        "src/shared/lib/ai-paths/core/starter-workflows/registry.ts",
+        "src/shared/contracts/ai-paths-semantic-grammar.ts",
+        "src/features/ai/ai-paths/components/"
+      ]
+    },
+    {
+      "id": "governance_linting_ci",
+      "version": "v3",
+      "priority": "p2",
+      "status": "planned",
+      "dependencies": [
+        "port_contracts_v3",
+        "trace_record_v1"
+      ],
+      "outcomes": [
+        "Path linting catches contract and governance issues before runtime.",
+        "Headless fixtures and golden-run snapshots execute in CI.",
+        "Secret refs and payload retention modes become policy-enforced."
+      ],
+      "touchpoints": [
+        "src/shared/lib/security/outbound-url-policy.ts",
+        "scripts/ai-paths/check-canonical.mjs",
+        "scripts/ai-paths/",
+        "package.json"
+      ]
+    },
+    {
+      "id": "headless_fixture_runner",
+      "version": "v3",
+      "priority": "p2",
+      "status": "planned",
+      "dependencies": [
+        "governance_linting_ci",
+        "trace_record_v1"
+      ],
+      "outcomes": [
+        "Fixture-backed AI Paths runs execute without the canvas UI.",
+        "CI can run deterministic path scenarios through the shared runtime."
+      ],
+      "touchpoints": [
+        "src/features/ai/ai-paths/services/path-run-executor/index.ts",
+        "src/shared/lib/ai-paths/core/runtime/engine-core.ts",
+        "scripts/ai-paths/",
+        "package.json"
+      ]
+    },
+    {
+      "id": "golden_run_snapshots",
+      "version": "v3",
+      "priority": "p2",
+      "status": "planned",
+      "dependencies": [
+        "headless_fixture_runner"
+      ],
+      "outcomes": [
+        "Golden-run snapshots capture expected outputs and trace characteristics for stable fixtures.",
+        "Regression drift becomes visible in CI before rollout."
+      ],
+      "touchpoints": [
+        "src/shared/contracts/ai-paths-runtime.ts",
+        "src/shared/lib/ai-paths/services/runtime-analytics/trace.ts",
+        "scripts/ai-paths/",
+        "package.json"
+      ]
+    },
+    {
+      "id": "secret_ref_enforcement",
+      "version": "v3",
+      "priority": "p2",
+      "status": "planned",
+      "dependencies": [
+        "governance_linting_ci"
+      ],
+      "outcomes": [
+        "Path configs store secret refs or ids instead of raw API keys.",
+        "Governance checks block unsafe secret persistence before save or rollout."
+      ],
+      "touchpoints": [
+        "src/shared/lib/security/outbound-url-policy.ts",
+        "scripts/ai-paths/check-canonical.mjs",
+        "package.json"
+      ]
+    }
+  ],
+  "firstSprint": {
+    "id": "v1_sprint_1",
+    "window": {
+      "from": "2026-03-09",
+      "to": "2026-03-20"
+    },
+    "goals": [
+      "Freeze minimal Port Contracts V3 additions.",
+      "Freeze Trace Record V1 contract additions.",
+      "Prepare deterministic replay ledger identifiers to reuse trace ids and span ids."
+    ],
+    "items": [
+      {
+        "id": "execution_brief",
+        "status": "completed",
+        "dependencies": [],
+        "artifacts": [
+          "docs/ai-paths/ai-paths-v1-sprint-1-execution-brief-2026-03-06.md"
+        ]
+      },
+      {
+        "id": "implementation_checklist",
+        "status": "completed",
+        "dependencies": [
+          "execution_brief"
+        ],
+        "artifacts": [
+          "docs/ai-paths/ai-paths-v1-sprint-1-implementation-checklist-2026-03-06.md"
+        ]
+      },
+      {
+        "id": "verification_plan",
+        "status": "completed",
+        "dependencies": [
+          "execution_brief"
+        ],
+        "artifacts": [
+          "docs/ai-paths/ai-paths-v1-sprint-1-test-plan-2026-03-06.md"
+        ]
+      },
+      {
+        "id": "contract_design_port_kinds",
+        "status": "in_progress",
+        "dependencies": [
+          "execution_brief",
+          "implementation_checklist"
+        ],
+        "artifacts": [
+          "docs/ai-paths/port-contracts-v3-design-2026-03-06.md",
+          "src/shared/contracts/ai-paths-core/nodes.ts",
+          "src/shared/contracts/ai-paths-runtime.ts"
+        ]
+      },
+      {
+        "id": "runtime_validation_gap_audit",
+        "status": "planned",
+        "dependencies": [
+          "contract_design_port_kinds",
+          "verification_plan"
+        ],
+        "artifacts": [
+          "docs/ai-paths/port-contract-validation-ownership-2026-03-06.md",
+          "src/shared/lib/ai-paths/core/validation-engine/",
+          "src/shared/lib/ai-paths/core/runtime/engine-core.ts"
+        ]
+      },
+      {
+        "id": "trace_contract_schema",
+        "status": "in_progress",
+        "dependencies": [
+          "execution_brief",
+          "implementation_checklist"
+        ],
+        "artifacts": [
+          "docs/ai-paths/trace-record-v1-design-2026-03-06.md",
+          "src/shared/contracts/ai-paths-runtime.ts",
+          "src/shared/lib/ai-paths/services/runtime-analytics/trace.ts"
+        ]
+      },
+      {
+        "id": "trace_stream_and_ui_slice",
+        "status": "planned",
+        "dependencies": [
+          "trace_contract_schema"
+        ],
+        "artifacts": [
+          "src/features/ai/ai-paths/services/run-stream-publisher.ts",
+          "src/features/ai/ai-paths/components/run-timeline.tsx"
+        ]
+      },
+      {
+        "id": "replay_ledger_identifier_alignment",
+        "status": "planned",
+        "dependencies": [
+          "trace_contract_schema"
+        ],
+        "artifacts": [
+          "docs/ai-paths/replay-ledger-identifier-strategy-2026-03-06.md",
+          "src/features/ai/ai-paths/services/path-run-service.ts",
+          "src/features/ai/ai-paths/services/path-run-executor/index.ts"
+        ]
+      }
+    ]
+  },
+  "ci": {
+    "requiredScripts": [
+      "ai-paths:check:canonical",
+      "ai-paths:check:portable-schema-diff",
+      "docs:ai-paths:node-docs:check",
+      "docs:ai-paths:kernel-transition:check"
+    ],
+    "plannedAdditions": [
+      "ai-paths:check:improvements-roadmap",
+      "test:ai-paths:fixtures",
+      "test:ai-paths:golden-runs"
+    ]
+  }
+}

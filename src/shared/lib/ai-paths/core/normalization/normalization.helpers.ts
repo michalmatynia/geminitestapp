@@ -40,7 +40,21 @@ export const mergeNodePortContracts = (
       existingContract?.cardinality !== undefined
         ? existingContract.cardinality
         : defaultContract?.cardinality;
-    if (required === undefined && cardinality === undefined) {
+    const kind =
+      existingContract?.kind !== undefined ? existingContract.kind : defaultContract?.kind;
+    const schema =
+      existingContract?.schema !== undefined ? existingContract.schema : defaultContract?.schema;
+    const schemaRef =
+      existingContract?.schemaRef !== undefined
+        ? existingContract.schemaRef
+        : defaultContract?.schemaRef;
+    if (
+      required === undefined &&
+      cardinality === undefined &&
+      kind === undefined &&
+      schema === undefined &&
+      schemaRef === undefined
+    ) {
       if (existingContract) {
         merged[port] = existingContract;
       }
@@ -49,6 +63,9 @@ export const mergeNodePortContracts = (
     merged[port] = {
       ...(required !== undefined ? { required } : {}),
       ...(cardinality !== undefined ? { cardinality } : {}),
+      ...(kind !== undefined ? { kind } : {}),
+      ...(schema !== undefined ? { schema } : {}),
+      ...(schemaRef !== undefined ? { schemaRef } : {}),
     };
   });
   return Object.keys(merged).length > 0 ? merged : undefined;
@@ -70,6 +87,9 @@ export const isSameContractRecord = (
             {
               ...(contract.required !== undefined ? { required: contract.required } : {}),
               ...(contract.cardinality !== undefined ? { cardinality: contract.cardinality } : {}),
+              ...(contract.kind !== undefined ? { kind: contract.kind } : {}),
+              ...(contract.schema !== undefined ? { schema: contract.schema } : {}),
+              ...(contract.schemaRef !== undefined ? { schemaRef: contract.schemaRef } : {}),
             },
           ];
         })

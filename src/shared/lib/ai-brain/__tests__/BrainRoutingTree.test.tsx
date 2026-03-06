@@ -60,6 +60,15 @@ vi.mock('@/features/foldertree/v2', async (importOriginal) => {
 describe('BrainRoutingTree', () => {
   it('binds to brain routing master instance and renders grouped route nodes', () => {
     useMasterFolderTreeShellMock.mockImplementation((options: { nodes: unknown[] }) => ({
+      capabilities: {
+        multiSelect: { enabled: false },
+        search: { enabled: true },
+      },
+      search: {
+        state: { isActive: false, matchNodeIds: new Set() },
+        resultCountLabel: '',
+        placeholder: 'Search...',
+      },
       appearance: {
         rootDropUi: {
           label: 'Move here',

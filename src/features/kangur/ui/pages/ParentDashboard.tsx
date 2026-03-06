@@ -5,6 +5,8 @@ import {
   BarChart2,
   BookOpen,
   ClipboardList,
+  Home,
+  LayoutGrid,
   LogIn,
   LogOut,
 } from 'lucide-react';
@@ -21,6 +23,7 @@ import {
   KangurPageShell,
   KangurPageTopBar,
   KangurPanel,
+  KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
 import { cn } from '@/shared/utils';
 import Link from 'next/link';
@@ -182,22 +185,38 @@ export default function ParentDashboard() {
     <KangurPageShell tone='dashboard'>
       <KangurPageTopBar
         left={
-          <>
-            <KangurButton asChild size='sm' variant='ghost'>
-              <Link href={createPageUrl('Game', basePath)}>Strona glowna</Link>
+          <KangurTopNavGroup>
+            <KangurButton asChild size='md' variant='navigation'>
+              <Link href={createPageUrl('Game', basePath)}>
+                <Home className='h-[22px] w-[22px]' strokeWidth={2.1} />
+                <span>Strona glowna</span>
+              </Link>
             </KangurButton>
             <KangurProfileMenu
               basePath={basePath}
               isAuthenticated={isAuthenticated}
               onLogout={() => logout(false)}
               onLogin={navigateToLogin}
+              isActive={false}
             />
-          </>
+            <KangurButton asChild size='md' variant='navigation'>
+              <Link href={createPageUrl('Lessons', basePath)}>
+                <BookOpen className='h-[22px] w-[22px]' strokeWidth={2.1} />
+                <span>Lekcje</span>
+              </Link>
+            </KangurButton>
+            <KangurButton asChild size='md' variant='navigationActive'>
+              <Link href={createPageUrl('ParentDashboard', basePath)}>
+                <LayoutGrid className='h-[22px] w-[22px]' strokeWidth={2.1} />
+                <span>Rodzic</span>
+              </Link>
+            </KangurButton>
+          </KangurTopNavGroup>
         }
         right={
           <>
             <span className='hidden sm:inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-500'>
-              {viewerRoleLabel}
+              Rola: {viewerRoleLabel}
             </span>
             <KangurButton onClick={() => logout(false)} size='sm' variant='ghost'>
               <LogOut className='w-4 h-4' /> Wyloguj

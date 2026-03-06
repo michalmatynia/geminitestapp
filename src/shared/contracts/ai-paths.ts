@@ -219,10 +219,13 @@ type AiPathRunUpdateRecord = z.infer<typeof aiPathRunUpdateSchema>;
  */
 export const aiPathRunNodeSchema = dtoBaseSchema.extend({
   runId: z.string(),
+  traceId: z.string().optional(),
+  spanId: z.string().optional(),
   nodeId: z.string(),
   nodeType: z.string(),
   nodeTitle: z.string().nullable().optional(),
   status: aiPathNodeStatusSchema,
+  iteration: z.number().optional(),
   attempt: z.number(),
   inputs: z.record(z.string(), z.unknown()).optional(),
   outputs: z.record(z.string(), z.unknown()).optional(),

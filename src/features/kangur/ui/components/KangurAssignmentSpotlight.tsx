@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
+import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
 import {
   buildKangurAssignmentHref,
   getKangurAssignmentActionLabel,
@@ -33,52 +34,69 @@ export function KangurAssignmentSpotlight({
     return null;
   }
 
+  const priorityLabel =
+    assignment.priority === 'high'
+      ? 'Priorytet wysoki'
+      : assignment.priority === 'medium'
+        ? 'Priorytet średni'
+        : 'Priorytet niski';
+
   return (
-    <section className='w-full rounded-3xl border border-amber-200 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 px-4 py-4 shadow-sm'>
-      <div className='text-[11px] font-bold uppercase tracking-[0.18em] text-amber-600'>
-        Na teraz
+    <KangurPanel
+      className='w-full border-white/78 bg-white/58'
+      padding='md'
+      variant='elevated'
+    >
+      <div className='px-3 pt-2 sm:px-4'>
+        <div className='text-[1.9rem] font-extrabold tracking-tight text-[#3d4f85] sm:text-[2rem]'>
+          Zadanie od rodzica
+        </div>
       </div>
-      <div className='mt-1 text-lg font-extrabold text-slate-800'>Zadanie od rodzica</div>
 
-      <div className='mt-3 rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-sm'>
-        <div className='flex items-start justify-between gap-3'>
-          <div>
-            <div className='text-xs font-bold uppercase tracking-wide text-amber-500'>
-              {assignment.priority === 'high'
-                ? 'Priorytet wysoki'
-                : assignment.priority === 'medium'
-                  ? 'Priorytet sredni'
-                  : 'Priorytet niski'}
+      <KangurPanel
+        className='relative mt-4 border-white/88 bg-white/94'
+        padding='lg'
+        variant='subtle'
+      >
+        <div className='absolute right-5 top-5 rounded-full bg-[#f6ead8] px-5 py-2 text-lg font-extrabold text-[#2d4176] shadow-[0_18px_40px_-30px_rgba(208,147,70,0.32)]'>
+          {assignment.progress.percent}%
+        </div>
+
+        <div className='pr-24'>
+          <div className='text-[11px] font-bold uppercase tracking-[0.18em] text-[#f0ac49]'>
+            {priorityLabel}
+          </div>
+          <div className='mt-4 flex items-start gap-3'>
+            <span className='mt-1 text-xl' aria-hidden='true'>
+              {assignment.target.type === 'lesson' ? '📚' : '🎯'}
+            </span>
+            <div className='min-w-0'>
+              <div className='text-[1.55rem] font-extrabold tracking-tight text-[#243b73]'>
+                {assignment.title}
+              </div>
+              <div className='mt-4 text-[1.04rem] leading-8 text-[#647196]'>
+                {assignment.description}
+              </div>
             </div>
-            <div className='mt-1 text-base font-extrabold text-slate-800'>{assignment.title}</div>
-            <div className='mt-1 text-sm text-slate-600'>{assignment.description}</div>
-          </div>
-          <div className='rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700'>
-            {assignment.progress.percent}%
           </div>
         </div>
 
-        <div className='mt-3'>
-          <div className='flex items-center justify-between gap-2 text-[11px] text-slate-500'>
-            <span>{assignment.progress.summary}</span>
-            <span>Postep</span>
-          </div>
-          <div className='mt-1 h-2 overflow-hidden rounded-full bg-amber-100'>
-            <div
-              className='h-full rounded-full bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400'
-              style={{ width: `${assignment.progress.percent}%` }}
-            />
-          </div>
+        <div className='mt-5 border-t border-[#ebebf0] pt-4 text-sm text-[#7d86a7]'>
+          {assignment.progress.summary}
         </div>
 
-        <Link
-          href={buildKangurAssignmentHref(basePath, assignment)}
-          className='mt-3 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 px-4 py-2.5 text-sm font-extrabold text-white shadow transition hover:brightness-105'
+        <KangurButton
+          asChild
+          className='mt-5 rounded-[22px] py-3.5 text-lg font-extrabold shadow-[0_24px_58px_-30px_rgba(255,133,72,0.56)]'
+          fullWidth
+          variant='warm'
         >
-          {getKangurAssignmentActionLabel(assignment)}
-        </Link>
-      </div>
-    </section>
+          <Link href={buildKangurAssignmentHref(basePath, assignment)}>
+            {getKangurAssignmentActionLabel(assignment)}
+          </Link>
+        </KangurButton>
+      </KangurPanel>
+    </KangurPanel>
   );
 }
 

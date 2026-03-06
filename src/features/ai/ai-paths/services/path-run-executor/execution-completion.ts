@@ -115,6 +115,7 @@ export const handleExecutionCompletion = async (
       durationMs,
       runtimeTrace: {
         ...runtimeTraceRecord,
+        finishedAt,
         profile: profileSnapshot,
         kernelParity: runtimeKernelParity,
       },

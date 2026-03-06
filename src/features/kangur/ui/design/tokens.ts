@@ -1,26 +1,32 @@
 export type KangurPageTone = 'play' | 'learn' | 'profile' | 'dashboard';
 
 export const KANGUR_PAGE_TONE_CLASSNAMES: Record<KangurPageTone, string> = {
-  play: 'min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-fuchsia-50',
-  learn: 'min-h-screen bg-gradient-to-br from-white via-sky-50 to-indigo-50',
-  profile: 'min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-amber-50/70',
-  dashboard: 'min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-indigo-50',
+  play: 'min-h-screen kangur-premium-bg',
+  learn: 'min-h-screen kangur-premium-bg',
+  profile: 'min-h-screen kangur-premium-bg',
+  dashboard: 'min-h-screen kangur-premium-bg',
 };
 
 export const KANGUR_TOP_BAR_CLASSNAME =
-  'sticky top-0 z-20 w-full border-b border-white/70 bg-white/82 backdrop-blur-xl shadow-[0_16px_48px_-42px_rgba(15,23,42,0.42)]';
+  'sticky top-0 z-20 w-full px-4 pb-2 pt-4 sm:px-6 sm:pb-3 sm:pt-6';
 export const KANGUR_TOP_BAR_INNER_CLASSNAME =
-  'mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3';
-export const KANGUR_PAGE_CONTAINER_CLASSNAME = 'w-full max-w-6xl px-4 py-8';
+  'mx-auto flex w-full max-w-[1180px] items-start gap-4';
+export const KANGUR_PAGE_CONTAINER_CLASSNAME = 'w-full max-w-[1440px] px-4 pb-20 pt-10 sm:px-8 xl:px-10';
 
 export const KANGUR_PANEL_CLASSNAMES = {
-  elevated:
-    'rounded-[30px] border border-white/75 bg-white/88 backdrop-blur shadow-[0_24px_70px_-38px_rgba(15,23,42,0.34)]',
-  soft:
-    'rounded-[28px] border border-white/70 bg-white/84 backdrop-blur shadow-[0_18px_54px_-40px_rgba(15,23,42,0.28)]',
-  subtle:
-    'rounded-[24px] border border-slate-200/80 bg-white/92 shadow-[0_14px_40px_-36px_rgba(15,23,42,0.3)]',
+  elevated: 'glass-panel rounded-[36px]',
+  soft: 'glass-panel rounded-[34px]',
+  subtle: 'soft-card rounded-[26px]',
 } as const;
+
+export const KANGUR_TOP_NAV_GROUP_CLASSNAME =
+  'flex flex-1 flex-wrap items-center justify-between gap-3 rounded-[32px] border border-white/70 bg-white/70 p-3 shadow-[0_12px_40px_rgba(101,119,180,0.14)] backdrop-blur-xl';
+
+export const KANGUR_TOP_NAV_ITEM_CLASSNAME =
+  'group relative inline-flex !h-[64px] min-w-[140px] flex-1 items-center justify-center gap-3 !rounded-[24px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.85)_0%,rgba(248,249,255,0.72)_100%)] px-5 text-[17px] font-semibold tracking-[-0.02em] text-[#8f99bf] transition-all duration-200 hover:text-[#5b6797] hover:shadow-[0_10px_24px_rgba(90,106,167,0.12)] sm:min-w-[210px] sm:px-7';
+
+export const KANGUR_TOP_NAV_ITEM_ACTIVE_CLASSNAME =
+  'border-[#2a4181] bg-[linear-gradient(180deg,#3f5db0_0%,#243d81_100%)] text-white shadow-[0_14px_28px_rgba(42,62,130,0.30),inset_0_1px_0_rgba(255,255,255,0.20)] hover:text-white';
 
 export type KangurAccent =
   | 'indigo'
@@ -117,4 +123,4 @@ export const KANGUR_ACCENT_STYLES: Record<KangurAccent, KangurAccentStyles> = {
 };
 
 export const KANGUR_OPTION_CARD_CLASSNAME =
-  'group w-full rounded-[28px] border border-white/75 bg-white/92 p-4 text-left shadow-[0_20px_55px_-42px_rgba(15,23,42,0.34)] transition-all duration-200';
+  'soft-card group w-full rounded-[26px] p-4 text-left transition duration-200 hover:-translate-y-[1px]';

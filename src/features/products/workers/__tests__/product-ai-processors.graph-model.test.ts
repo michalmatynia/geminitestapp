@@ -129,4 +129,151 @@ describe('processGraphModel AI Paths model selection', () => {
     );
     expect(runBrainChatCompletion).not.toHaveBeenCalled();
   });
+
+  it('retries once when the completion is empty and keeps the second result', async () => {
+    vi.mocked(resolveAiPathsNodeExecutionConfig).mockResolvedValue({
+      assignment: {
+        enabled: true,
+        provider: 'model',
+        modelId: 'ollama:brain-default',
+        agentId: '',
+        temperature: 0.6,
+        maxTokens: 500,
+        systemPrompt: 'Brain system',
+      },
+      capability: 'ai_paths.model',
+      feature: 'ai_paths',
+      provider: 'model',
+      agentId: '',
+      modelId: 'ollama:brain-default',
+      temperature: 0.6,
+      maxTokens: 500,
+      systemPrompt: 'Brain system',
+      brainApplied: {
+        capability: 'ai_paths.model',
+        feature: 'ai_paths',
+        modelFamily: 'chat',
+        runtimeKind: 'chat',
+        provider: 'model',
+        modelId: 'ollama:brain-default',
+        temperature: 0.6,
+        maxTokens: 500,
+        systemPromptApplied: true,
+        modelSelectionSource: 'brain_default',
+        enforced: true,
+      },
+    });
+    vi.mocked(runBrainChatCompletion)
+      .mockResolvedValueOnce({
+        text: '   ',
+        vendor: 'ollama',
+        modelId: 'ollama:brain-default',
+      })
+      .mockResolvedValueOnce({
+        text: 'Recovered copy',
+        vendor: 'ollama',
+        modelId: 'ollama:brain-default',
+      });
+
+    const result = await processGraphModel(buildJob());
+
+    expect(runBrainChatCompletion).toHaveBeenCalledTimes(2);
+    expect(runBrainChatCompletion).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        modelId: 'ollama:brain-default',
+        temperature: 0.6,
+        maxTokens: 500,
+      })
+    );
+    expect(runBrainChatCompletion).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        modelId: 'ollama:brain-default',
+        temperature: 0.2,
+        maxTokens: 900,
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        result: 'Recovered copy',
+        temperature: 0.2,
+        maxTokens: 900,
+        completionRetryCount: 1,
+        completionRetryReason: 'empty_result',
+      })
+    );
+  });
+
+  it('retries once for JSON-looking truncated completions', async () => {
+    vi.mocked(resolveAiPathsNodeExecutionConfig).mockResolvedValue({
+      assignment: {
+        enabled: true,
+        provider: 'model',
+        modelId: 'ollama:brain-default',
+        agentId: '',
+        temperature: 0.3,
+        maxTokens: 700,
+        systemPrompt: 'Brain system',
+      },
+      capability: 'ai_paths.model',
+      feature: 'ai_paths',
+      provider: 'model',
+      agentId: '',
+      modelId: 'ollama:brain-default',
+      temperature: 0.3,
+      maxTokens: 700,
+      systemPrompt: 'Brain system',
+      brainApplied: {
+        capability: 'ai_paths.model',
+        feature: 'ai_paths',
+        modelFamily: 'chat',
+        runtimeKind: 'chat',
+        provider: 'model',
+        modelId: 'ollama:brain-default',
+        temperature: 0.3,
+        maxTokens: 700,
+        systemPromptApplied: true,
+        modelSelectionSource: 'brain_default',
+        enforced: true,
+      },
+    });
+    vi.mocked(runBrainChatCompletion)
+      .mockResolvedValueOnce({
+        text: '{"parameters":[{"parameterId":"color","value":"Niebieski"}',
+        vendor: 'ollama',
+        modelId: 'ollama:brain-default',
+      })
+      .mockResolvedValueOnce({
+        text: '{"parameters":[{"parameterId":"color","value":"Niebieski"}]}',
+        vendor: 'ollama',
+        modelId: 'ollama:brain-default',
+      });
+
+    const result = await processGraphModel(
+      buildJob({
+        prompt:
+          'Return valid JSON only with translated parameters. Output must be a JSON object.',
+      })
+    );
+
+    expect(runBrainChatCompletion).toHaveBeenCalledTimes(2);
+    expect(runBrainChatCompletion).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        modelId: 'ollama:brain-default',
+        temperature: 0.3,
+        maxTokens: 1100,
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        result: '{"parameters":[{"parameterId":"color","value":"Niebieski"}]}',
+        temperature: 0.3,
+        maxTokens: 1100,
+        completionRetryCount: 1,
+        completionRetryReason: 'invalid_json',
+      })
+    );
+  });
 });

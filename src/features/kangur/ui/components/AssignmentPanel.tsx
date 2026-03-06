@@ -3,6 +3,11 @@ import { CheckCircle2, Circle } from 'lucide-react';
 import Link from 'next/link';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import {
+  KangurLessonCallout,
+  KangurLessonChip,
+} from '@/features/kangur/ui/design/lesson-primitives';
+import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
 import { buildKangurAssignments } from '@/features/kangur/ui/services/assignments';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
@@ -10,12 +15,6 @@ type AssignmentPanelProps = {
   basePath: string;
   progress: KangurProgressState;
 };
-
-const PRIORITY_STYLES = {
-  high: 'bg-rose-100 text-rose-700',
-  medium: 'bg-amber-100 text-amber-700',
-  low: 'bg-emerald-100 text-emerald-700',
-} as const;
 
 const buildAssignmentHref = (
   basePath: string,
@@ -50,27 +49,35 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
   };
 
   return (
-    <section className='bg-white rounded-2xl shadow p-4 flex flex-col gap-3'>
-      <header className='flex items-center justify-between'>
-        <h3 className='text-sm font-bold text-gray-600 uppercase tracking-wide'>Zadania</h3>
-        <span className='text-xs text-gray-400'>{completionLabel}</span>
+    <KangurPanel className='border-slate-200/70 bg-white/88' padding='lg' variant='soft'>
+      <header className='flex items-center justify-between gap-3'>
+        <div className='text-sm font-bold uppercase tracking-[0.18em] text-slate-500'>Zadania</div>
+        <KangurLessonChip accent='slate' className='text-[11px] uppercase tracking-[0.14em]'>
+          {completionLabel}
+        </KangurLessonChip>
       </header>
       {assignments.length === 0 ? (
-        <div className='rounded-xl border border-dashed border-gray-200 bg-gray-50 px-3 py-6 text-center text-sm text-gray-400'>
-          Brak proponowanych zadan. Zbierz najpierw troche postepu ucznia.
-        </div>
+        <KangurLessonCallout
+          accent='slate'
+          className='mt-4 border-dashed text-center text-sm text-slate-500'
+          padding='lg'
+        >
+          Brak proponowanych zadań. Zbierz najpierw trochę postępu ucznia.
+        </KangurLessonCallout>
       ) : (
-        <div className='flex flex-col gap-2'>
+        <div className='mt-4 flex flex-col gap-3'>
           {assignments.map((assignment) => {
             const completed = completedIds.includes(assignment.id);
             return (
-              <div
+              <KangurPanel
                 key={assignment.id}
-                className={`w-full text-left border rounded-xl px-3 py-2 transition ${
+                className={`w-full border transition ${
                   completed
-                    ? 'border-green-300 bg-green-50'
-                    : 'border-gray-200 bg-white hover:border-indigo-300 hover:bg-indigo-50'
+                    ? 'border-emerald-200/80 bg-emerald-50/72'
+                    : 'border-slate-200/80 bg-white/95 hover:border-indigo-200 hover:bg-indigo-50/35'
                 }`}
+                padding='md'
+                variant='subtle'
               >
                 <div className='flex items-start gap-2'>
                   <button
@@ -84,40 +91,53 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                     }
                   >
                     {completed ? (
-                      <CheckCircle2 className='w-4 h-4 text-green-600' />
+                      <CheckCircle2 className='h-4 w-4 text-emerald-600' />
                     ) : (
-                      <Circle className='w-4 h-4 text-gray-400' />
+                      <Circle className='h-4 w-4 text-slate-400' />
                     )}
                   </button>
                   <div className='min-w-0'>
                     <div className='flex flex-wrap items-center gap-2'>
-                      <p className='text-sm font-semibold text-gray-800'>{assignment.title}</p>
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${PRIORITY_STYLES[assignment.priority]}`}
+                      <p className='text-sm font-semibold text-slate-900'>{assignment.title}</p>
+                      <KangurLessonChip
+                        accent={
+                          assignment.priority === 'high'
+                            ? 'rose'
+                            : assignment.priority === 'medium'
+                              ? 'amber'
+                              : 'emerald'
+                        }
+                        className='text-[11px] uppercase tracking-[0.14em]'
                       >
                         {assignment.priority === 'high'
                           ? 'Priorytet wysoki'
                           : assignment.priority === 'medium'
-                            ? 'Priorytet sredni'
+                            ? 'Priorytet średni'
                             : 'Priorytet niski'}
-                      </span>
+                      </KangurLessonChip>
                     </div>
-                    <p className='text-xs text-gray-500'>{assignment.description}</p>
-                    <p className='text-xs text-indigo-500 mt-0.5'>Cel: {assignment.target}</p>
-                    <Link
-                      href={buildAssignmentHref(basePath, assignment.action)}
-                      className='mt-2 inline-flex items-center rounded-lg border border-indigo-200 px-2.5 py-1 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 transition'
+                    <p className='mt-1 text-sm leading-6 text-slate-600'>{assignment.description}</p>
+                    <p className='mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-indigo-600'>
+                      Cel: {assignment.target}
+                    </p>
+                    <KangurButton
+                      asChild
+                      className='mt-3'
+                      size='sm'
+                      variant={completed ? 'success' : 'surface'}
                     >
-                      {assignment.action.label}
-                    </Link>
+                      <Link href={buildAssignmentHref(basePath, assignment.action)}>
+                        {assignment.action.label}
+                      </Link>
+                    </KangurButton>
                   </div>
                 </div>
-              </div>
+              </KangurPanel>
             );
           })}
         </div>
       )}
-    </section>
+    </KangurPanel>
   );
 }
 

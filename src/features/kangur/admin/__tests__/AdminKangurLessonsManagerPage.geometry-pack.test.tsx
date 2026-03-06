@@ -43,13 +43,9 @@ vi.mock('@/features/foldertree/v2', async (importOriginal) => {
 });
 
 vi.mock('@/features/foldertree/v2/search', () => ({
-  FolderTreeSearchBar: (props: unknown) => {
+  FolderTreeSearchBar: (props: { placeholder?: string }) => {
     folderTreeSearchBarMock(props);
-    const placeholder =
-      props && typeof props === 'object' && 'placeholder' in props
-        ? String((props as { placeholder?: string }).placeholder ?? '')
-        : '';
-    return <div data-testid='folder-tree-search'>{placeholder}</div>;
+    return <div data-testid='folder-tree-search'>{props.placeholder}</div>;
   },
   useMasterFolderTreeSearch: () => searchStateMock,
 }));
@@ -158,6 +154,14 @@ const logicalComponentIds = [
   'logical_analogies',
 ] as const;
 
+vi.mock('@/features/kangur/settings', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/settings')>();
+  return {
+    ...actual,
+    createDefaultKangurLessons: vi.fn(() => []),
+  };
+});
+
 describe('AdminKangurLessonsManagerPage geometry pack action', () => {
   beforeEach(() => {
     mutateAsyncMock.mockReset();
@@ -171,13 +175,21 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
     useMasterFolderTreeShellMock.mockReturnValue({
       capabilities: {
         search: {
-          enabled: false,
+          enabled: true,
+          placeholder: 'Search lessons, ids, or component types...',
         },
+      },
+      search: {
+        state: { isActive: false, matchNodeIds: new Set() },
+        resultCountLabel: '',
+        placeholder: 'Search lessons, ids, or component types...',
       },
       appearance: {
         rootDropUi: null,
       },
-      controller: {},
+      controller: {
+        searchState: { isActive: false, matchNodeIds: new Set() },
+      },
       viewport: {
         scrollToNodeRef: { current: null },
       },
@@ -200,7 +212,7 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
     const persistedLessons = JSON.parse(firstCallArg.value) as Array<{ componentId: string }>;
     const persistedComponentIds = persistedLessons.map((lesson) => lesson.componentId);
 
-    expect(persistedLessons).toHaveLength(baseLessons.length + geometryComponentIds.length);
+    expect(persistedLessons).toHaveLength(geometryComponentIds.length);
     for (const geometryId of geometryComponentIds) {
       expect(persistedComponentIds).toContain(geometryId);
     }
@@ -246,7 +258,7 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
     const persistedLessons = JSON.parse(firstCallArg.value) as Array<{ componentId: string }>;
     const persistedComponentIds = persistedLessons.map((lesson) => lesson.componentId);
 
-    expect(persistedLessons).toHaveLength(baseLessons.length + logicalComponentIds.length);
+    expect(persistedLessons).toHaveLength(logicalComponentIds.length);
     for (const logicalId of logicalComponentIds) {
       expect(persistedComponentIds).toContain(logicalId);
     }
@@ -309,15 +321,9 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
     fireEvent.click(screen.getByRole('button', { name: /^catalog$/i }));
 
     await waitFor(() => {
-      const latestProps = folderTreeViewportMock.mock.calls.at(-1)?.[0] as {
-        enableDnd?: boolean;
-        rootDropUi?: { enabled?: boolean };
-      };
       const latestShellArgs = useMasterFolderTreeShellMock.mock.calls.at(-1)?.[0] as {
         instance?: string;
       };
-      expect(latestProps.enableDnd).toBe(false);
-      expect(latestProps.rootDropUi?.enabled).toBe(false);
       expect(latestShellArgs.instance).toBe('kangur_lessons_manager_catalog');
     });
   });

@@ -7,6 +7,7 @@ import {
   parseKangurNarratorSettings,
   normalizeKangurLessons,
 } from '@/features/kangur/settings';
+import { KANGUR_TTS_DEFAULT_VOICE } from '@/features/kangur/tts/contracts';
 
 describe('kangur lesson settings', () => {
   it('includes geometry lessons in default library', () => {
@@ -71,14 +72,30 @@ describe('kangur lesson settings', () => {
     expect(parsed[0]?.contentMode).toBe('document');
   });
 
-  it('defaults narrator settings to server mode', () => {
-    expect(parseKangurNarratorSettings(undefined)).toEqual({ engine: 'server' });
-    expect(parseKangurNarratorSettings(JSON.stringify({}))).toEqual({ engine: 'server' });
+  it('defaults narrator settings to server mode with voice', () => {
+    expect(parseKangurNarratorSettings(undefined)).toEqual({
+      engine: 'server',
+      voice: KANGUR_TTS_DEFAULT_VOICE,
+    });
+    expect(parseKangurNarratorSettings(JSON.stringify({}))).toEqual({
+      engine: 'server',
+      voice: KANGUR_TTS_DEFAULT_VOICE,
+    });
   });
 
   it('parses persisted client narrator mode', () => {
     expect(parseKangurNarratorSettings(JSON.stringify({ engine: 'client' }))).toEqual({
       engine: 'client',
+      voice: KANGUR_TTS_DEFAULT_VOICE,
+    });
+  });
+
+  it('parses persisted narrator voice override', () => {
+    expect(
+      parseKangurNarratorSettings(JSON.stringify({ engine: 'server', voice: 'sage' }))
+    ).toEqual({
+      engine: 'server',
+      voice: 'sage',
     });
   });
 

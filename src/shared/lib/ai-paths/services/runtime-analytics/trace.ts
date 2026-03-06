@@ -20,6 +20,8 @@ export const extractRuntimeTraceNodeSpans = (run: AiPathRunRecord): unknown[] =>
   if (!meta) return [];
   const runtimeTrace = asRecord(meta['runtimeTrace']);
   if (!runtimeTrace) return [];
+  const spans = runtimeTrace['spans'];
+  if (Array.isArray(spans)) return spans;
   const profile = asRecord(runtimeTrace['profile']);
   if (!profile) return [];
   const nodeSpans = profile['nodeSpans'];

@@ -158,6 +158,7 @@ export type ApiRouteHandlerWithParams<P extends Record<string, string | string[]
 
 export interface ApiHandlerOptions {
   requireAuth?: boolean;
+  resolveSessionUser?: boolean;
   allowedMethods?: string[];
   source: string;
   service?: string;

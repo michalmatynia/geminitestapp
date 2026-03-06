@@ -1,6 +1,6 @@
 # Trigger: Image Studio Analysis Migration Sheet (`trigger`)
 
-Generated at: 2026-03-06T00:00:00.000Z
+Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
@@ -21,7 +21,7 @@ Generated at: 2026-03-06T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/trigger.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/trigger.scaffold.json`
 - v3 object id: `node_obj_trigger_portable_v3`
-- v3 object hash: `8f34d661891e408d666b04faaf186448fd29bf6870065a2a6906db4a19d8b4c5`
+- v3 object hash: `b819305ec153c1cc968ab1ae5062c3d93a4713043f78591f8f3abc2fbf7e2e20`
 
 ## Ports
 

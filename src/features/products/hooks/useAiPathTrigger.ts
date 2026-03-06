@@ -15,6 +15,11 @@ import {
   notifyAiPathRunEnqueued,
   optimisticallyInsertAiPathRunInQueueCache,
 } from '@/shared/lib/query-invalidation';
+import {
+  createAiPathTriggerRequestId,
+  isRecoverableTriggerEnqueueError,
+  recoverEnqueuedRunByRequestId,
+} from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
 import { useToast } from '@/shared/ui';
 
 import { fetchPathSettings, findTriggerPath } from './useAiPathSettings';
@@ -258,20 +263,27 @@ export function useAiPathTrigger(): {
           }
         );
       }
+      const pathId = selectedConfig.id ?? 'path';
+      const requestId = createAiPathTriggerRequestId({
+        pathId,
+        triggerEventId: triggerEvent,
+        entityType: 'product',
+        entityId: product.id,
+      });
       const enqueueStartedAt = performance.now();
       const enqueueResult = await enqueueAiPathRun(
         {
-          pathId: selectedConfig.id ?? 'path',
+          pathId,
           pathName: selectedConfig.name ?? undefined,
-          nodes,
-          edges,
           triggerEvent,
           triggerNodeId: triggerNode.id,
           triggerContext,
           entityId: product.id,
           entityType: 'product',
+          requestId,
           meta: {
             source: 'product_panel',
+            requestId,
             triggerLabel: 'Path Generate Description',
             strictFlowMode: selectedConfig.strictFlowMode !== false,
           },
@@ -282,38 +294,85 @@ export function useAiPathTrigger(): {
       const triggerToEnqueueMs = performance.now() - phaseStartedAt;
       console.info('[ai-paths.products] trigger enqueue timing', {
         productId: product.id,
-        pathId: selectedConfig.id,
+        pathId,
         triggerEvent,
+        requestId,
         settingsLoadMode,
         settingsLoadMs: Math.round(settingsLoadMs),
         selectionMs: Math.round(selectionMs),
         enqueueRequestMs: Math.round(enqueueRequestMs),
         triggerToEnqueueMs: Math.round(triggerToEnqueueMs),
       });
+      let runId: string | null = null;
+      let runRecord: ReturnType<typeof resolveAiPathRunFromEnqueueResponseData>['runRecord'] = null;
+      let enqueueRecovered = false;
+
       if (!enqueueResult.ok) {
         const errorMsg = enqueueResult.error || 'Failed to enqueue AI Path run.';
-        const timeoutCode =
-          typeof errorMsg === 'string' && errorMsg.includes('queue_preflight_timeout')
-            ? 'queue_preflight_timeout'
-            : isTimeoutMessage(errorMsg)
-              ? 'enqueue_request_timeout'
-              : null;
-        toast(
-          timeoutCode ? `AI Path run request timed out (${timeoutCode}). Please retry.` : errorMsg,
-          { variant: 'error' }
-        );
-        logClientError(new Error(errorMsg), {
-          context: {
-            source: 'useAiPathTrigger',
-            action: 'enqueueFailed',
+        if (isRecoverableTriggerEnqueueError(errorMsg)) {
+          const recoveredRun = await recoverEnqueuedRunByRequestId({
+            pathId,
+            requestId,
+          });
+          if (recoveredRun) {
+            runId = recoveredRun.runId;
+            runRecord = recoveredRun.runRecord;
+            enqueueRecovered = true;
+          }
+        }
+        if (runId) {
+          console.info('[ai-paths.products] recovered enqueue response', {
             productId: product.id,
-            pathId: selectedConfig.id,
-            timeoutCode,
-          },
-        });
-        return;
+            pathId,
+            requestId,
+            runId,
+          });
+        } else {
+          const timeoutCode =
+            typeof errorMsg === 'string' && errorMsg.includes('queue_preflight_timeout')
+              ? 'queue_preflight_timeout'
+              : isTimeoutMessage(errorMsg)
+                ? 'enqueue_request_timeout'
+                : null;
+          toast(
+            timeoutCode ? `AI Path run request timed out (${timeoutCode}). Please retry.` : errorMsg,
+            { variant: 'error' }
+          );
+          logClientError(new Error(errorMsg), {
+            context: {
+              source: 'useAiPathTrigger',
+              action: 'enqueueFailed',
+              productId: product.id,
+              pathId,
+              requestId,
+              timeoutCode,
+            },
+          });
+          return;
+        }
       }
-      const { runId, runRecord } = resolveAiPathRunFromEnqueueResponseData(enqueueResult.data);
+      if (!runId) {
+        const resolved = resolveAiPathRunFromEnqueueResponseData(enqueueResult.data);
+        runId = resolved.runId;
+        runRecord = resolved.runRecord;
+      }
+      if (!runId) {
+        const recoveredRun = await recoverEnqueuedRunByRequestId({
+          pathId,
+          requestId,
+        });
+        if (recoveredRun) {
+          runId = recoveredRun.runId;
+          runRecord = recoveredRun.runRecord;
+          enqueueRecovered = true;
+          console.info('[ai-paths.products] recovered enqueue run id', {
+            productId: product.id,
+            pathId,
+            requestId,
+            runId,
+          });
+        }
+      }
       if (!runId) {
         const message = 'Failed to enqueue AI Path run: invalid run identifier from API.';
         toast(message, { variant: 'error' });
@@ -322,14 +381,15 @@ export function useAiPathTrigger(): {
             source: 'useAiPathTrigger',
             action: 'enqueueInvalidRunId',
             productId: product.id,
-            pathId: selectedConfig.id,
+            pathId,
+            requestId,
           },
         });
         return;
       }
       const queuedRunForCache = runRecord ?? {
         id: runId,
-        pathId: selectedConfig.id,
+        pathId,
         pathName: selectedConfig.name ?? null,
         status: 'queued',
         createdAt: new Date().toISOString(),
@@ -343,6 +403,18 @@ export function useAiPathTrigger(): {
         entityId: product.id,
         entityType: 'product',
       });
+      if (enqueueRecovered) {
+        logClientError(new Error(`Recovered AI Path enqueue response (${runId})`), {
+          context: {
+            source: 'useAiPathTrigger',
+            action: 'enqueueRecovered',
+            productId: product.id,
+            pathId,
+            requestId,
+            runId,
+          },
+        });
+      }
       toast('AI Path run queued.', { variant: 'success' });
     } catch (error) {
       logClientError(error, {

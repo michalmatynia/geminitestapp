@@ -13,6 +13,9 @@ import { normalizeAiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-ru
 
 const enqueueAiPathRunMock = vi.hoisted(() => vi.fn());
 const streamAiPathRunMock = vi.hoisted(() => vi.fn());
+const createAiPathTriggerRequestIdMock = vi.hoisted(() => vi.fn());
+const isRecoverableTriggerEnqueueErrorMock = vi.hoisted(() => vi.fn());
+const recoverEnqueuedRunByRequestIdMock = vi.hoisted(() => vi.fn());
 
 const invalidateAiPathQueueMock = vi.hoisted(() => vi.fn());
 const invalidateAiPathRunsMock = vi.hoisted(() => vi.fn());
@@ -42,6 +45,12 @@ vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
   useGraphActions: () => ({
     setPathConfigs: setPathConfigsMock,
   }),
+}));
+
+vi.mock('@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent', () => ({
+  createAiPathTriggerRequestId: createAiPathTriggerRequestIdMock,
+  isRecoverableTriggerEnqueueError: isRecoverableTriggerEnqueueErrorMock,
+  recoverEnqueuedRunByRequestId: recoverEnqueuedRunByRequestIdMock,
 }));
 
 import { useAiPathsServerExecution } from '../useAiPathsServerExecution';
@@ -197,12 +206,12 @@ describe('useAiPathsServerExecution history streaming', () => {
       expect.objectContaining({
         meta: expect.objectContaining({
           runtimeKernelConfig: {
-            mode: 'auto',
             nodeTypes: ['template'],
             codeObjectResolverIds: ['resolver.path'],
           },
         }),
-      })
+      }),
+      { timeoutMs: 90_000 }
     );
 
     const nodePayload = [
@@ -238,5 +247,242 @@ describe('useAiPathsServerExecution history streaming', () => {
     expect(nodeHistory[0]?.status).toBe('completed');
     expect(nodeHistory[0]?.outputs?.['value']).toBe(42);
     expect(invalidateAiPathRunsMock).toHaveBeenCalled();
+  });
+
+  it('drops legacy runtime-kernel path aliases from enqueue metadata', async () => {
+    let runtimeState: RuntimeState = {
+      status: 'idle',
+      nodeStatuses: {},
+      nodeOutputs: {},
+      variables: {},
+      events: [],
+      currentRun: null,
+      inputs: {},
+      outputs: {},
+      history: {},
+    };
+    const runtimeStateRef = { current: runtimeState };
+    const currentRunIdRef = { current: null as string | null };
+    const currentRunStartedAtRef = { current: null as string | null };
+    const setRuntimeState = vi.fn(
+      (next: RuntimeState | ((prev: RuntimeState) => RuntimeState)): void => {
+        runtimeState = typeof next === 'function' ? next(runtimeState) : next;
+        runtimeStateRef.current = runtimeState;
+      }
+    );
+
+    enqueueAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        run: {
+          id: 'run_server_2',
+          status: 'queued',
+          createdAt: '2026-03-05T07:10:00.000Z',
+          updatedAt: '2026-03-05T07:10:00.000Z',
+          pathId: 'path-main',
+        },
+      },
+    });
+    streamAiPathRunMock.mockReturnValue({
+      addEventListener: vi.fn(),
+      close: vi.fn(),
+      readyState: 1,
+      onerror: null,
+    } as unknown as EventSource);
+
+    const triggerNode = buildTriggerNode();
+
+    const { result } = renderHook(
+      () =>
+        useAiPathsServerExecution({
+          activePathId: 'path-main',
+          pathName: 'Main Path',
+          pathDescription: '',
+          runtimeKernelConfig: {
+            mode: 'auto',
+            pilotNodeTypes: ['template'],
+            resolverIds: ['resolver.path'],
+            strictCodeObjectRegistry: true,
+          },
+          activeTrigger: 'manual',
+          executionMode: 'server',
+          runMode: 'manual',
+          strictFlowMode: true,
+          blockedRunPolicy: 'fail_run',
+          aiPathsValidation: { enabled: false },
+          historyRetentionPasses: 5,
+          normalizedNodes: [triggerNode],
+          sanitizedEdges: [],
+          parserSamples: {},
+          updaterSamples: {},
+          runtimeStateRef,
+          resetRuntimeNodeStatuses: vi.fn(),
+          setRuntimeState,
+          setRuntimeEvents: vi.fn(),
+          appendRuntimeEvent: vi.fn(),
+          setNodeStatus: vi.fn(),
+          normalizeNodeStatus,
+          formatStatusLabel: (status: AiPathRuntimeNodeStatus) => status,
+          settleTransientNodeStatuses: vi.fn(),
+          setRunStatus: vi.fn(),
+          setLastRunAt: vi.fn(),
+          toast: vi.fn(),
+          currentRunIdRef,
+          currentRunStartedAtRef,
+          setCurrentRunId: vi.fn(),
+          openRunDetail: vi.fn(),
+        }),
+      {
+        wrapper: createWrapper(),
+      }
+    );
+
+    await act(async () => {
+      await result.current.runServerStream(triggerNode, 'manual', {});
+    });
+
+    expect(enqueueAiPathRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        meta: expect.not.objectContaining({
+          runtimeKernelConfig: expect.anything(),
+        }),
+      }),
+      { timeoutMs: 90_000 }
+    );
+  });
+
+  it('recovers queued server runs after a transport failure', async () => {
+    let runtimeState: RuntimeState = {
+      status: 'idle',
+      nodeStatuses: {},
+      nodeOutputs: {},
+      variables: {},
+      events: [],
+      currentRun: null,
+      inputs: {},
+      outputs: {},
+      history: {},
+    };
+    const runtimeStateRef = { current: runtimeState };
+    const currentRunIdRef = { current: null as string | null };
+    const currentRunStartedAtRef = { current: null as string | null };
+    const setRuntimeState = vi.fn(
+      (next: RuntimeState | ((prev: RuntimeState) => RuntimeState)): void => {
+        runtimeState = typeof next === 'function' ? next(runtimeState) : next;
+        runtimeStateRef.current = runtimeState;
+      }
+    );
+    const appendRuntimeEvent = vi.fn();
+    const setNodeStatus = vi.fn();
+    const settleTransientNodeStatuses = vi.fn();
+    const setRunStatus = vi.fn();
+    const toast = vi.fn();
+
+    createAiPathTriggerRequestIdMock.mockReturnValue('trigger:path-main:req-1');
+    enqueueAiPathRunMock.mockResolvedValue({
+      ok: false,
+      error: 'Failed to fetch',
+    });
+    isRecoverableTriggerEnqueueErrorMock.mockReturnValue(true);
+    recoverEnqueuedRunByRequestIdMock.mockResolvedValue({
+      runId: 'run_server_recovered',
+      runRecord: {
+        id: 'run_server_recovered',
+        status: 'queued',
+        pathId: 'path-main',
+        createdAt: '2026-03-05T07:10:00.000Z',
+        updatedAt: '2026-03-05T07:10:00.000Z',
+      },
+    });
+    streamAiPathRunMock.mockReturnValue({
+      addEventListener: vi.fn(),
+      close: vi.fn(),
+      readyState: 1,
+      onerror: null,
+    } as unknown as EventSource);
+
+    const triggerNode = buildTriggerNode();
+
+    const { result } = renderHook(
+      () =>
+        useAiPathsServerExecution({
+          activePathId: 'path-main',
+          pathName: 'Main Path',
+          pathDescription: '',
+          runtimeKernelConfig: {
+            mode: 'auto',
+            nodeTypes: ['template'],
+            codeObjectResolverIds: ['resolver.path'],
+          },
+          activeTrigger: 'manual',
+          executionMode: 'server',
+          runMode: 'manual',
+          strictFlowMode: true,
+          blockedRunPolicy: 'fail_run',
+          aiPathsValidation: { enabled: false },
+          historyRetentionPasses: 5,
+          normalizedNodes: [triggerNode],
+          sanitizedEdges: [],
+          parserSamples: {},
+          updaterSamples: {},
+          runtimeStateRef,
+          resetRuntimeNodeStatuses: vi.fn(),
+          setRuntimeState,
+          setRuntimeEvents: vi.fn(),
+          appendRuntimeEvent,
+          setNodeStatus,
+          normalizeNodeStatus,
+          formatStatusLabel: (status: AiPathRuntimeNodeStatus) => status,
+          settleTransientNodeStatuses,
+          setRunStatus,
+          setLastRunAt: vi.fn(),
+          toast,
+          currentRunIdRef,
+          currentRunStartedAtRef,
+          setCurrentRunId: vi.fn(),
+          openRunDetail: vi.fn(),
+        }),
+      {
+        wrapper: createWrapper(),
+      }
+    );
+
+    await act(async () => {
+      await result.current.runServerStream(triggerNode, 'manual', {});
+    });
+
+    expect(createAiPathTriggerRequestIdMock).toHaveBeenCalledWith({
+      pathId: 'path-main',
+      triggerEventId: 'manual',
+      entityType: 'custom',
+      entityId: null,
+    });
+    expect(enqueueAiPathRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requestId: 'trigger:path-main:req-1',
+        meta: expect.objectContaining({
+          requestId: 'trigger:path-main:req-1',
+        }),
+      }),
+      { timeoutMs: 90_000 }
+    );
+    expect(recoverEnqueuedRunByRequestIdMock).toHaveBeenCalledWith({
+      pathId: 'path-main',
+      requestId: 'trigger:path-main:req-1',
+    });
+    expect(appendRuntimeEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'run_warning',
+        message: 'Recovered queued server run after losing the enqueue response.',
+      })
+    );
+    expect(notifyAiPathRunEnqueuedMock).toHaveBeenCalledWith('run_server_recovered', {
+      entityId: null,
+      entityType: null,
+    });
+    expect(toast).not.toHaveBeenCalledWith(expect.stringContaining('Failed to enqueue'), {
+      variant: 'error',
+    });
+    expect(settleTransientNodeStatuses).not.toHaveBeenCalledWith('failed', {}, { settleQueued: true });
   });
 });

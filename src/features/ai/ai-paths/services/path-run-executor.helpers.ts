@@ -163,7 +163,7 @@ export const toRuntimeNodeResolutionTelemetry = (input: {
 export type RuntimeKernelParitySummary = {
   sampledHistoryEntries: number;
   strategyCounts: {
-    legacy_adapter: number;
+    compatibility: number;
     code_object_v3: number;
     unknown: number;
   };
@@ -182,7 +182,7 @@ export const summarizeRuntimeKernelParityFromHistory = (
   const summary: RuntimeKernelParitySummary = {
     sampledHistoryEntries: 0,
     strategyCounts: {
-      legacy_adapter: 0,
+      compatibility: 0,
       code_object_v3: 0,
       unknown: 0,
     },
@@ -207,8 +207,10 @@ export const summarizeRuntimeKernelParityFromHistory = (
       const record = entry as Record<string, unknown>;
 
       const strategy = normalizeRuntimeStrategy(record['runtimeStrategy']);
-      if (strategy) {
-        summary.strategyCounts[strategy] += 1;
+      if (strategy === 'code_object_v3') {
+        summary.strategyCounts.code_object_v3 += 1;
+      } else if (strategy === 'legacy_adapter') {
+        summary.strategyCounts.compatibility += 1;
       } else {
         summary.strategyCounts.unknown += 1;
       }

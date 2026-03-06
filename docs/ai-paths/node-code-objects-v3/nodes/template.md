@@ -1,6 +1,6 @@
 # Template Migration Sheet (`template`)
 
-Generated at: 2026-03-06T00:00:00.000Z
+Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
@@ -21,7 +21,7 @@ Generated at: 2026-03-06T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/template.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/template.scaffold.json`
 - v3 object id: `node_obj_template_portable_v3`
-- v3 object hash: `965d96a2ba08e5b736eb4dc2d604ec9b0f294161f947706874428c97789d3813`
+- v3 object hash: `661cd86e53a179505bc2d9d7561e6b7bc1462db9440f4500b95209b2e211762b`
 
 ## Ports
 

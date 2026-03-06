@@ -1,6 +1,6 @@
 # Iterator Migration Sheet (`iterator`)
 
-Generated at: 2026-03-06T00:00:00.000Z
+Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
@@ -21,7 +21,7 @@ Generated at: 2026-03-06T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/iterator.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/iterator.scaffold.json`
 - v3 object id: `node_obj_iterator_portable_v3`
-- v3 object hash: `c026fe308d736a25fbc56e1dd036827eef1b37701cfef0416b3136a1d2d9dd93`
+- v3 object hash: `dae944bf214f313dc1c11d5892dee04fcdcd353a7b2ed71f83d6f3b6ad3feff0`
 
 ## Ports
 

@@ -1,20 +1,15 @@
 import 'server-only';
 
 import {
-  AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
-  AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
   cloneJsonSafe,
   normalizeNodes,
   sanitizeEdges,
 } from '@/shared/lib/ai-paths';
 import { resolveAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine';
-import { listAiPathsRuntimeCodeObjectResolverIds } from '@/shared/lib/ai-paths/core/runtime/code-object-resolver-registry';
 import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
 import { GraphExecutionCancelled } from '@/shared/lib/ai-paths/core/runtime/engine-core';
-import { listAiPathsSettings } from '@/features/ai/ai-paths/server/settings-store';
 import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import { repairRuntimeStatePorts } from '@/features/ai/ai-paths/services/runtime-state-port-repair';
 import {
   getAiPathsRuntimeFingerprint,
   withRuntimeFingerprintMeta,
@@ -31,32 +26,20 @@ import type {
   AiPathRunRepository,
   AiPathRunStatus,
   RuntimePortValues,
-  RuntimeState,
 } from '@/shared/contracts/ai-paths';
 import type { RuntimeProfileSummary } from '@/shared/contracts/ai-paths-runtime';
 
 import {
-  EMPTY_RUNTIME_STATE,
   INTERMEDIATE_SAVE_INTERVAL_MS,
   LOG_NODE_START_EVENTS,
   UPDATE_ELIGIBLE_RUN_STATUSES,
   extractNodeErrorOutputs,
   isMissingRunUpdateError,
   parseRuntimeState,
-  resolveRuntimeKernelConfigForRun,
   resolveCancellationPollIntervalMs,
-  summarizeRuntimeKernelParityFromHistory,
-  toRuntimeKernelExecutionTelemetry,
   toRuntimeNodeResolutionTelemetry,
 } from '../path-run-executor.helpers';
 import { fetchEntityByType } from '../path-run-executor.entities';
-import {
-  buildBlockedRunFailureMessage,
-  buildFailedRunFailureMessage,
-  collectBlockedNodeDiagnostics,
-  collectFailedNodeDiagnostics,
-  shouldFailBlockedRun,
-} from '../path-run-executor.diagnostics';
 import { createCancellationMonitor } from '../path-run-executor.monitoring';
 import {
   buildRuntimeProfileSnapshot,
@@ -65,15 +48,17 @@ import {
   mergeNodeOutputsForStatus,
   mergeRuntimePortMaps,
   resolveTriggerNodeId,
-  sanitizeRuntimeState,
   toRuntimeNodeStatus,
   toRuntimeProfileHighlight,
 } from '../path-run-executor.logic';
-import { normalizeAiPathRunRuntimeKernelMetadata } from '../path-run-runtime-kernel-metadata';
+import { normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead } from '../path-run-runtime-kernel-metadata';
 import { extractDatabaseRuntimeMetadata } from '../../components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers';
 
 import { createPathRunProfiling } from './profiling';
 import { runExecutorPreflight } from './preflight';
+import { resolveRuntimeKernelConfigForPathRun } from './runtime-kernel-config';
+import { PathRunRuntimeStateManager } from './runtime-state-manager';
+import { handleExecutionCompletion } from './execution-completion';
 
 const normalizeRuntimeKernelTelemetryArray = (value: unknown): string[] | null => {
   if (!Array.isArray(value)) return null;
@@ -179,53 +164,19 @@ export const executePathRun = async (
   const triggerNodeId =
     resolveTriggerNodeId(nodes, edges, run.triggerEvent, run.triggerNodeId) ?? null;
   const runtimeState = parseRuntimeState(run.runtimeState);
-  const runMetaRecord = normalizeAiPathRunRuntimeKernelMetadata(run.meta).meta;
-  const runMetaRuntimeKernelConfigRecord =
-    runMetaRecord &&
-    typeof runMetaRecord['runtimeKernelConfig'] === 'object' &&
-    runMetaRecord['runtimeKernelConfig'] !== null &&
-    !Array.isArray(runMetaRecord['runtimeKernelConfig'])
-      ? (runMetaRecord['runtimeKernelConfig'] as Record<string, unknown>)
-      : null;
-  const runMetaRuntimeKernelConfigNodeTypes = runMetaRuntimeKernelConfigRecord?.['nodeTypes'];
-  const runMetaRuntimeKernelResolverIds =
-    runMetaRuntimeKernelConfigRecord?.['codeObjectResolverIds'];
-  const runtimeKernelSettings = await listAiPathsSettings([
-    AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
-    AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
-  ]).catch((error: unknown) => {
-    void ErrorSystem.logWarning('Failed to load AI Paths runtime-kernel settings', {
-      service: 'ai-paths-executor',
-      runId: run.id,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return [];
+  const runMetaRecord = normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead(run.meta).meta;
+
+  const {
+    nodeTypes: runtimeKernelNodeTypes,
+    resolverIds: runtimeKernelCodeObjectResolverIds,
+    missingResolverIds: runtimeKernelMissingCodeObjectResolverIds,
+    registeredResolverIds: registeredRuntimeKernelCodeObjectResolverIds,
+    executionTelemetry: runtimeKernelExecutionTelemetry,
+  } = await resolveRuntimeKernelConfigForPathRun({
+    runId: run.id,
+    runMetaRecord,
   });
-  const runtimeKernelSettingsMap = new Map(
-    runtimeKernelSettings.map((record) => [record.key, record.value])
-  );
-  const runtimeKernelConfig = resolveRuntimeKernelConfigForRun({
-    envNodeTypes: process.env['AI_PATHS_RUNTIME_KERNEL_NODE_TYPES'],
-    pathNodeTypes: runMetaRuntimeKernelConfigNodeTypes,
-    settingNodeTypes: runtimeKernelSettingsMap.get(AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY),
-    envResolverIds: process.env['AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS'],
-    pathResolverIds: runMetaRuntimeKernelResolverIds,
-    settingResolverIds: runtimeKernelSettingsMap.get(
-      AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY
-    ),
-  });
-  const runtimeKernelNodeTypes = runtimeKernelConfig.nodeTypes;
-  const runtimeKernelCodeObjectResolverIds = runtimeKernelConfig.resolverIds;
-  const registeredRuntimeKernelCodeObjectResolverIds = listAiPathsRuntimeCodeObjectResolverIds();
-  const registeredRuntimeKernelCodeObjectResolverIdSet = new Set(
-    registeredRuntimeKernelCodeObjectResolverIds
-  );
-  const runtimeKernelMissingCodeObjectResolverIds = (
-    runtimeKernelCodeObjectResolverIds ?? []
-  ).filter(
-    (resolverId: string): boolean => !registeredRuntimeKernelCodeObjectResolverIdSet.has(resolverId)
-  );
-  const runtimeKernelExecutionTelemetry = toRuntimeKernelExecutionTelemetry(runtimeKernelConfig);
+
   const toRunEventRuntimeKernelMetadata = (input?: {
     runtimeStrategy?: unknown;
     runtimeResolutionSource?: unknown;
@@ -247,59 +198,22 @@ export const executePathRun = async (
     {},
     runtimeState.outputs ?? {}
   );
-  let latestRuntimeStateSnapshot: RuntimeState | null = null;
 
   let resolvedRunStartedAt = runStartedAt;
 
-  const loadRunNodesForRuntimeRepair = async (): Promise<AiPathRunNodeRecord[]> => {
-    try {
-      return await repo.listRunNodes(run.id);
-    } catch {
-      return [];
-    }
-  };
-
-  const buildCurrentRuntimeStateSnapshot = async (): Promise<RuntimeState> => {
-    const currentRun = {
-      ...run,
-      status: 'running' as const,
-      startedAt: resolvedRunStartedAt,
-    };
-    const statusFromLatest = latestRuntimeStateSnapshot?.status ?? runtimeState.status;
-    const nodeStatusesFromLatest =
-      latestRuntimeStateSnapshot?.nodeStatuses ?? runtimeState.nodeStatuses;
-    const nodeOutputsFromLatest =
-      latestRuntimeStateSnapshot?.nodeOutputs ?? runtimeState.nodeOutputs;
-    const historyFromLatest = latestRuntimeStateSnapshot?.history ?? runtimeState.history;
-    const hashesFromLatest = latestRuntimeStateSnapshot?.hashes ?? runtimeState.hashes;
-    const hashTimestampsFromLatest =
-      latestRuntimeStateSnapshot?.hashTimestamps ?? runtimeState.hashTimestamps;
-    const nodeDurationsFromLatest =
-      latestRuntimeStateSnapshot?.nodeDurations ?? runtimeState.nodeDurations;
-    const candidate: RuntimeState = {
-      ...EMPTY_RUNTIME_STATE,
-      status: statusFromLatest ?? 'running',
-      currentRun,
-      inputs: accInputs,
-      outputs: accOutputs,
-      nodeOutputs: nodeOutputsFromLatest ?? accOutputs,
-      ...(nodeStatusesFromLatest ? { nodeStatuses: nodeStatusesFromLatest } : {}),
-      ...(historyFromLatest ? { history: historyFromLatest } : {}),
-      ...(hashesFromLatest ? { hashes: hashesFromLatest } : {}),
-      ...(hashTimestampsFromLatest ? { hashTimestamps: hashTimestampsFromLatest } : {}),
-      ...(nodeDurationsFromLatest ? { nodeDurations: nodeDurationsFromLatest } : {}),
-    };
-    const repaired = repairRuntimeStatePorts({
-      runtimeState: candidate,
-      runNodes: await loadRunNodesForRuntimeRepair(),
-    });
-    return sanitizeRuntimeState(repaired.runtimeState);
-  };
+  const stateManager = new PathRunRuntimeStateManager(
+    run,
+    runtimeState,
+    accInputs,
+    accOutputs,
+    repo,
+    resolvedRunStartedAt
+  );
 
   const saveIntermediateState = async (): Promise<void> => {
     try {
       await updateRunSnapshot({
-        runtimeState: await buildCurrentRuntimeStateSnapshot(),
+        runtimeState: await stateManager.buildCurrentRuntimeStateSnapshot(),
       });
     } catch (error) {
       void ErrorSystem.logWarning('Failed to save intermediate state', {
@@ -514,7 +428,7 @@ export const executePathRun = async (
       | 'failed'
       | 'canceled'
       | null = null;
-    latestRuntimeStateSnapshot = await evaluateGraphWithIteratorAutoContinue({
+    stateManager.setLatestSnapshot(await evaluateGraphWithIteratorAutoContinue({
       nodes,
       edges,
       activePathId: run.pathId ?? null,
@@ -550,7 +464,6 @@ export const executePathRun = async (
       },
       runtimeKernelNodeTypes,
       runtimeKernelCodeObjectResolverIds,
-      runtimeKernelStrictNativeRegistry: true,
       validationMiddleware: runtimeValidationMiddleware,
       onRuntimeValidation: async ({
         node,
@@ -990,43 +903,10 @@ export const executePathRun = async (
       onHalt: (halt: { reason: 'blocked' | 'max_iterations' | 'completed' | 'failed' }) => {
         runtimeHaltReason = halt.reason;
       },
-    });
+    }));
 
     if (pendingIntermediateSave) {
       await saveIntermediateState();
-    }
-
-    const finishedAt = new Date().toISOString();
-    let finalStatus: AiPathRunStatus = 'completed';
-    let finalError = null;
-
-    if (runtimeHaltReason === 'canceled') {
-      finalStatus = 'canceled';
-    } else if (runtimeHaltReason === 'blocked') {
-      const blockedNodeDiagnostics = collectBlockedNodeDiagnostics(nodes, accOutputs);
-      if (
-        shouldFailBlockedRun({
-          runBlocked: blockedNodeDiagnostics.length > 0,
-          blockedRunPolicy:
-            (run.meta?.['blockedRunPolicy'] as 'fail_run' | 'complete_with_warning') ??
-            'complete_with_warning',
-          nodeValidationEnabled,
-        })
-      ) {
-        finalStatus = 'failed';
-        finalError = buildBlockedRunFailureMessage(blockedNodeDiagnostics);
-      }
-    }
-    if (finalStatus === 'completed') {
-      const requiredProcessingNodeIdSet = new Set<string>(requiredProcessingNodeIds);
-      const failedRequiredNodes = collectFailedNodeDiagnostics(nodes, accOutputs).filter(
-        (node) =>
-          requiredProcessingNodeIdSet.size === 0 || requiredProcessingNodeIdSet.has(node.nodeId)
-      );
-      if (failedRequiredNodes.length > 0) {
-        finalStatus = 'failed';
-        finalError = buildFailedRunFailureMessage(failedRequiredNodes);
-      }
     }
 
     const profileSnapshot = buildRuntimeProfileSnapshot({
@@ -1037,31 +917,22 @@ export const executePathRun = async (
       nodeSpans: profiling.getRuntimeNodeSpansSnapshot(),
     });
 
-    const finalRuntimeState = await buildCurrentRuntimeStateSnapshot();
-    const runtimeTraceRecord =
-      runMetaWithRuntimeContext['runtimeTrace'] &&
-      typeof runMetaWithRuntimeContext['runtimeTrace'] === 'object' &&
-      !Array.isArray(runMetaWithRuntimeContext['runtimeTrace'])
-        ? (runMetaWithRuntimeContext['runtimeTrace'] as Record<string, unknown>)
-        : {};
-    const runtimeKernelParity = summarizeRuntimeKernelParityFromHistory(finalRuntimeState.history);
-
-    await updateRunSnapshot({
-      status: finalStatus,
-      runtimeState: finalRuntimeState,
-      errorMessage: finalError,
-      meta: {
-        ...runMetaWithRuntimeContext,
-        finishedAt,
-        durationMs: computeDurationMs(runStartedAt, finishedAt),
-        runtimeTrace: {
-          ...runtimeTraceRecord,
-          profile: profileSnapshot,
-          kernelParity: runtimeKernelParity,
-        },
-      },
+    const finalStatus = await handleExecutionCompletion({
+      run,
+      nodes,
+      accOutputs,
+      runtimeHaltReason,
+      nodeValidationEnabled,
+      requiredProcessingNodeIds,
+      runMetaWithRuntimeContext,
+      runStartedAt,
+      traceId,
+      profileSnapshot,
+      stateManager,
+      updateRunSnapshot,
     });
 
+    const finishedAt = new Date().toISOString();
     void recordRuntimeRunFinished({
       runId: run.id,
       status: finalStatus as 'completed' | 'failed' | 'canceled' | 'dead_lettered',
@@ -1074,7 +945,7 @@ export const executePathRun = async (
       error instanceof GraphExecutionCancelled || runAbortController.signal.aborted;
     const status: AiPathRunStatus = isCancelled ? 'canceled' : 'failed';
 
-    const finalRuntimeState = await buildCurrentRuntimeStateSnapshot();
+    const finalRuntimeState = await stateManager.buildCurrentRuntimeStateSnapshot();
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     await updateRunSnapshot({

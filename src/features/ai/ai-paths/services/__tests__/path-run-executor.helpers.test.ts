@@ -312,7 +312,7 @@ describe('runtime kernel telemetry helpers', () => {
     expect(summary).toEqual({
       sampledHistoryEntries: 4,
       strategyCounts: {
-        legacy_adapter: 2,
+        compatibility: 2,
         code_object_v3: 1,
         unknown: 1,
       },

@@ -2,7 +2,6 @@ import { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import {
   RuntimeState,
   RuntimeHistoryEntry,
-  RuntimePortValues,
   NodeHandlerContext,
 } from '@/shared/contracts/ai-paths-runtime';
 import { ToastOptions } from '@/shared/contracts/ui';
@@ -19,14 +18,14 @@ import {
 import {
   buildNodeInputHash,
   buildNodeHash,
+  resolveCacheScopeFingerprint,
 } from './engine-modules/engine-hashing';
 import {
   evaluateInputReadiness,
   resolveMissingInputStatus,
-  pickString,
   resolveEdgeToNodeId,
 } from './engine-modules/engine-utils';
-import { EngineStateManager, resolveNodeCacheScope } from './engine-modules/engine-state-manager';
+import { EngineStateManager } from './engine-modules/engine-state-manager';
 import { MAX_ITERATIONS } from './engine-modules/engine-constants';
 import { collectNodeInputs } from './engine-modules/engine-input-collector';
 import { deriveNodeInputs } from './engine-modules/engine-node-input-deriver';
@@ -136,24 +135,6 @@ export async function evaluateGraphInternal(
       });
     }
   };
-
-  const resolveCacheScopeFingerprint = (node: AiNode): Record<string, unknown> | undefined => {
-    const cacheScope = resolveNodeCacheScope(node);
-    if (cacheScope === 'run') {
-      return { runId: resolvedRunId };
-    }
-    if (cacheScope === 'session' || cacheScope === 'activation') {
-      const entityId =
-        pickString(triggerContext?.['entityId']) ?? pickString(triggerContext?.['productId']);
-      if (entityId) {
-        return { entityId };
-      }
-    }
-    return undefined;
-  };
-
-  const internalBuildNodeHash = (node: AiNode, nodeInputs: RuntimePortValues): string =>
-    buildNodeHash(node, nodeInputs, resolveCacheScopeFingerprint(node));
 
   const provenanceContext = {
     scopedNodeIds,
@@ -411,7 +392,11 @@ export async function evaluateGraphInternal(
           const runtimeTelemetry = telemetryResolver.resolve(node.type);
 
           // --- Cache Check Start ---
-          const nodeHash = internalBuildNodeHash(node, nodeInputs);
+          const nodeHash = buildNodeHash(
+            node,
+            nodeInputs,
+            resolveCacheScopeFingerprint({ node, runId: resolvedRunId, triggerContext })
+          );
 
           if (nodeHash) {
             state.nodeHashes.set(node.id, nodeHash);
@@ -810,7 +795,15 @@ export async function evaluateGraphInternal(
                       checkTriggerProvenance: internalCheckTriggerProvenance
                     });
                     const previousHash = state.nodeHashes.get(toNodeId) ?? null;
-                    const nextHash = internalBuildNodeHash(targetNode, targetInputs);
+                    const nextHash = buildNodeHash(
+                      targetNode,
+                      targetInputs,
+                      resolveCacheScopeFingerprint({
+                        node: targetNode,
+                        runId: resolvedRunId,
+                        triggerContext,
+                      })
+                    );
                     if (previousHash && nextHash && previousHash !== nextHash) {
                       state.finishedNodes.delete(toNodeId);
                       state.blockedNodes.delete(toNodeId);

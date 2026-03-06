@@ -38,6 +38,11 @@ import {
 } from './utils';
 import { parseRuntimeState } from '../../AiPathsSettingsUtils';
 import {
+  createAiPathTriggerRequestId,
+  isRecoverableTriggerEnqueueError,
+  recoverEnqueuedRunByRequestId,
+} from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
+import {
   collectInvalidRunEnqueuePayloadIssues,
   collectInvalidRunEnqueueSerializationIssues,
   collectInvalidRunNodePayloadIssues,
@@ -54,6 +59,7 @@ const TERMINAL_RUN_STATUSES = new Set<TerminalRunStatus>([
   'canceled',
   'dead_lettered',
 ]);
+const SERVER_EXECUTION_ENQUEUE_TIMEOUT_MS = 90_000;
 
 const asString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
@@ -242,6 +248,13 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
       );
       const entityId = resolveEntityIdFromContext(triggerContext);
       const entityType = resolveEntityTypeFromContext(triggerContext, entityId);
+      const requestIdEntityType = entityType === 'product' || entityType === 'note' ? entityType : 'custom';
+      const requestId = createAiPathTriggerRequestId({
+        pathId: args.activePathId,
+        triggerEventId: triggerEvent,
+        entityType: requestIdEntityType,
+        entityId,
+      });
       const nodePayloadIssues = collectInvalidRunNodePayloadIssues(args.normalizedNodes);
       if (nodePayloadIssues.length > 0) {
         const firstIssue = nodePayloadIssues[0];
@@ -283,8 +296,18 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
         });
         return;
       }
+      const normalizedRuntimeKernelConfig = isObjectRecord(args.runtimeKernelConfig)
+        ? normalizeRuntimeKernelConfigRecord(args.runtimeKernelConfig)
+        : null;
+      const hasNormalizedRuntimeKernelConfig =
+        normalizedRuntimeKernelConfig !== null &&
+        Object.keys(normalizedRuntimeKernelConfig).length > 0;
+      const runtimeKernelMeta = hasNormalizedRuntimeKernelConfig
+        ? { runtimeKernelConfig: normalizedRuntimeKernelConfig }
+        : {};
       const enqueueMeta = {
         source: 'ai_paths_ui',
+        requestId,
         triggerLabel: args.activeTrigger ?? null,
         strictFlowMode: args.strictFlowMode !== false,
         blockedRunPolicy: args.blockedRunPolicy ?? 'fail_run',
@@ -296,13 +319,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             ? { updaterSamples: args.updaterSamples }
             : {}),
         },
-        ...(isObjectRecord(args.runtimeKernelConfig)
-          ? {
-            runtimeKernelConfig:
-              normalizeRuntimeKernelConfigRecord(args.runtimeKernelConfig) ??
-              args.runtimeKernelConfig,
-          }
-          : {}),
+        ...runtimeKernelMeta,
         ...(args.aiPathsValidation ? { aiPathsValidation: args.aiPathsValidation } : {}),
       };
       const enqueuePayload = {
@@ -315,6 +332,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
         triggerContext,
         entityId,
         entityType,
+        requestId,
         meta: enqueueMeta,
       };
       const enqueuePayloadIssues = collectInvalidRunEnqueuePayloadIssues(enqueuePayload);
@@ -402,9 +420,28 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
       }
 
       try {
-        const enqueueResult = await enqueueAiPathRun(enqueuePayload);
+        const enqueueResult = await enqueueAiPathRun(enqueuePayload, {
+          timeoutMs: SERVER_EXECUTION_ENQUEUE_TIMEOUT_MS,
+        });
+        let runId: string | null = null;
+        let runRecord: AiPathRunRecord | null = null;
+        let enqueueRecovered = false;
 
         if (!enqueueResult.ok) {
+          if (isRecoverableTriggerEnqueueError(enqueueResult.error)) {
+            const recoveredRun = await recoverEnqueuedRunByRequestId({
+              pathId: args.activePathId,
+              requestId,
+            });
+            if (recoveredRun) {
+              runId = recoveredRun.runId;
+              runRecord = recoveredRun.runRecord;
+              enqueueRecovered = true;
+            }
+          }
+        }
+
+        if (!enqueueResult.ok && !runId) {
           const errorMetadata = readApiErrorMetadata(enqueueResult as unknown);
           const enqueueError =
             typeof enqueueResult.error === 'string' && enqueueResult.error.trim().length > 0
@@ -458,7 +495,23 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           return;
         }
 
-        const { runId, runRecord } = resolveAiPathRunFromEnqueueResponseData(enqueueResult.data);
+        if (enqueueResult.ok && !runId) {
+          const resolved = resolveAiPathRunFromEnqueueResponseData(enqueueResult.data);
+          runId = resolved.runId;
+          runRecord = resolved.runRecord;
+        }
+
+        if (!runId) {
+          const recoveredRun = await recoverEnqueuedRunByRequestId({
+            pathId: args.activePathId,
+            requestId,
+          });
+          if (recoveredRun) {
+            runId = recoveredRun.runId;
+            runRecord = recoveredRun.runRecord;
+            enqueueRecovered = true;
+          }
+        }
 
         if (!runId) {
           const message = 'Server run was enqueued without a run id.';
@@ -473,6 +526,25 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           args.toast(message, { variant: 'error' });
           stopServerRunStream();
           return;
+        }
+
+        if (enqueueRecovered) {
+          args.appendRuntimeEvent({
+            source: 'server',
+            kind: 'run_warning',
+            level: 'warn',
+            message: 'Recovered queued server run after losing the enqueue response.',
+          });
+          logClientError(new Error(`Recovered AI Paths server enqueue response (${runId})`), {
+            context: {
+              source: 'useAiPathsServerExecution',
+              action: 'enqueueRecovered',
+              pathId: args.activePathId,
+              triggerNodeId: triggerNode.id,
+              requestId,
+              runId,
+            },
+          });
         }
 
         const queuedRunForCache = runRecord ?? {

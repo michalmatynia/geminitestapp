@@ -43,7 +43,7 @@ export const emptyTraceAnalytics = (): AiPathRuntimeTraceAnalytics => ({
     runsWithKernelParity: 0,
     sampledHistoryEntries: 0,
     strategyCounts: {
-      legacy_adapter: 0,
+      compatibility: 0,
       code_object_v3: 0,
       unknown: 0,
     },
@@ -77,12 +77,14 @@ const extractRuntimeTraceKernelParity = (
     ? kernelParity['codeObjectIds']
     : [];
 
+  const compatibilityCount = normalizeNonNegativeInteger(strategyCounts?.['compatibility']);
+
   return {
     sampledRuns: 0,
     runsWithKernelParity: 0,
     sampledHistoryEntries: normalizeNonNegativeInteger(kernelParity['sampledHistoryEntries']),
     strategyCounts: {
-      legacy_adapter: normalizeNonNegativeInteger(strategyCounts?.['legacy_adapter']),
+      compatibility: compatibilityCount,
       code_object_v3: normalizeNonNegativeInteger(strategyCounts?.['code_object_v3']),
       unknown: normalizeNonNegativeInteger(strategyCounts?.['unknown']),
     },
@@ -127,7 +129,7 @@ export const summarizeRuntimeTraceAnalytics = (input: {
     runsWithKernelParity: 0,
     sampledHistoryEntries: 0,
     strategyCounts: {
-      legacy_adapter: 0,
+      compatibility: 0,
       code_object_v3: 0,
       unknown: 0,
     },
@@ -146,7 +148,7 @@ export const summarizeRuntimeTraceAnalytics = (input: {
     if (parity) {
       kernelParity.runsWithKernelParity += 1;
       kernelParity.sampledHistoryEntries += parity.sampledHistoryEntries;
-      kernelParity.strategyCounts.legacy_adapter += parity.strategyCounts.legacy_adapter;
+      kernelParity.strategyCounts.compatibility += parity.strategyCounts.compatibility;
       kernelParity.strategyCounts.code_object_v3 += parity.strategyCounts.code_object_v3;
       kernelParity.strategyCounts.unknown += parity.strategyCounts.unknown;
       kernelParity.resolutionSourceCounts.override += parity.resolutionSourceCounts.override;

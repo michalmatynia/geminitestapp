@@ -107,6 +107,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const visibility = visibilityParam === 'global' ? 'global' : 'scoped';
   const pathId = url.searchParams.get('pathId')?.trim() || undefined;
   const nodeId = url.searchParams.get('nodeId')?.trim() || undefined;
+  const requestId = url.searchParams.get('requestId')?.trim() || undefined;
   const query = url.searchParams.get('query')?.trim() || undefined;
   const source = url.searchParams.get('source')?.trim() || undefined;
   const sourceModeParam = url.searchParams.get('sourceMode')?.trim() || '';
@@ -140,6 +141,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     userScope: visibility === 'global' ? 'global' : access.userId,
     pathId: pathId ?? null,
     nodeId: nodeId ?? null,
+    requestId: requestId ?? null,
     query: query ?? null,
     source: source ?? null,
     sourceMode,
@@ -165,6 +167,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     ...(visibility === 'scoped' ? { userId: access.userId } : {}),
     ...(pathId ? { pathId } : {}),
     ...(nodeId ? { nodeId } : {}),
+    ...(requestId ? { requestId } : {}),
     ...(query ? { query } : {}),
     ...(source ? { source, sourceMode } : {}),
     ...(status ? { status } : {}),

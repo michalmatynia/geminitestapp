@@ -1,8 +1,6 @@
  
- 
 
-import { Collection, Document, AnyBulkWriteOperation, UpdateFilter } from 'mongodb';
-import { ProductDocument } from '../mongo-product-repository-mappers';
+import { Collection, Document, AnyBulkWriteOperation, UpdateFilter, Filter } from 'mongodb';
 import {
   buildProductIdFilter,
   normalizeLookupId,
@@ -15,6 +13,7 @@ import { mongoImageFileRepository } from '@/shared/lib/files/services/image-file
 import { mongoCatalogRepository } from '@/shared/lib/products/services/catalog-repository/mongo-catalog-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { ImageFile } from '@/shared/contracts/files';
+import { ProductDocument } from '../mongo-product-repository-mappers';
 
 export const mongoProductAssociationsImpl = {
   async getProductImages(productId: string, getCollection: () => Promise<Collection<ProductDocument>>) {
@@ -35,7 +34,8 @@ export const mongoProductAssociationsImpl = {
     const fallbackAssignedAt =
       doc['updatedAt'] instanceof Date ? doc['updatedAt'].toISOString() : new Date().toISOString();
 
-    const parsedEntries: ProductImageRecord[] = [];
+    type PartialEntry = Omit<ProductImageRecord, 'imageFile'> & { imageFile?: ImageFile };
+    const parsedEntries: PartialEntry[] = [];
     const images = doc['images'] as Array<{
       productId?: string;
       imageFileId: string;
@@ -55,27 +55,27 @@ export const mongoProductAssociationsImpl = {
         productId: rawImage.productId || fallbackProductId,
         imageFileId: rawImage.imageFileId,
         assignedAt,
-        imageFile: rawImage.imageFile as ImageFile,
+        imageFile: rawImage.imageFile,
       });
     });
 
     const missingImageFileIds = parsedEntries
-      .filter((e: ProductImageRecord) => !e.imageFile)
-      .map((e: ProductImageRecord) => e.imageFileId);
+      .filter((e) => !e.imageFile)
+      .map((e) => e.imageFileId);
 
     if (missingImageFileIds.length > 0) {
       const imageFiles = await mongoImageFileRepository.findImageFilesByIds(missingImageFileIds);
       const imageFileMap = new Map<string, ImageFile>(
         (imageFiles as ImageFile[]).map((f) => [f.id, f])
       );
-      parsedEntries.forEach((entry: ProductImageRecord) => {
+      parsedEntries.forEach((entry) => {
         if (!entry.imageFile) {
-          entry.imageFile = imageFileMap.get(entry.imageFileId) as ImageFile;
+          entry.imageFile = imageFileMap.get(entry.imageFileId);
         }
       });
     }
 
-    return parsedEntries.filter((e: ProductImageRecord) => !!e.imageFile);
+    return parsedEntries.filter((e): e is ProductImageRecord => !!e.imageFile);
   },
 
   async addProductImages(
@@ -148,7 +148,7 @@ export const mongoProductAssociationsImpl = {
 
   async countProductsByImageFileId(imageFileId: string, getCollection: () => Promise<Collection<ProductDocument>>) {
     const collection = await getCollection();
-    return collection.countDocuments({ 'images.imageFileId': imageFileId });
+    return collection.countDocuments({ 'images.imageFileId': imageFileId } as Filter<ProductDocument>);
   },
 
   async replaceProductCatalogs(
@@ -157,10 +157,10 @@ export const mongoProductAssociationsImpl = {
     getCollection: () => Promise<Collection<ProductDocument>>
   ) {
     const collection = await getCollection();
-    const catalogs = (await mongoCatalogRepository.getCatalogsByIds(catalogIds));
+    const catalogs = await mongoCatalogRepository.getCatalogsByIds(catalogIds);
     const now = new Date().toISOString();
 
-    const newCatalogs = catalogs.map((c) => ({
+    const newCatalogs = (catalogs as Array<{ id: string }>).map((c) => ({
       productId,
       catalogId: c.id,
       assignedAt: now,
@@ -189,7 +189,7 @@ export const mongoProductAssociationsImpl = {
       $unset: {
         categories: '',
       },
-    });
+    } as UpdateFilter<ProductDocument>);
   },
 
   async replaceProductTags(productId: string, tagIds: string[], getCollection: () => Promise<Collection<ProductDocument>>) {
@@ -212,7 +212,7 @@ export const mongoProductAssociationsImpl = {
         tags: newTags,
         updatedAt: new Date(),
       },
-    });
+    } as unknown as UpdateFilter<ProductDocument>);
   },
 
   async replaceProductProducers(
@@ -239,7 +239,7 @@ export const mongoProductAssociationsImpl = {
         producers: newProducers,
         updatedAt: new Date(),
       },
-    });
+    } as unknown as UpdateFilter<ProductDocument>);
   },
 
   async replaceProductNotes(
@@ -253,7 +253,7 @@ export const mongoProductAssociationsImpl = {
         noteIds,
         updatedAt: new Date(),
       },
-    });
+    } as unknown as UpdateFilter<ProductDocument>);
   },
 
   async bulkReplaceProductCatalogs(
@@ -262,7 +262,7 @@ export const mongoProductAssociationsImpl = {
     getCollection: () => Promise<Collection<ProductDocument>>
   ) {
     const collection = await getCollection();
-    const catalogs = (await mongoCatalogRepository.getCatalogsByIds(catalogIds));
+    const catalogs = await mongoCatalogRepository.getCatalogsByIds(catalogIds);
     const now = new Date().toISOString();
 
     const bulkOps = productIds.map((pid) => ({
@@ -270,7 +270,7 @@ export const mongoProductAssociationsImpl = {
         filter: buildProductIdFilter(pid),
         update: {
           $set: {
-            catalogs: catalogs.map((c) => ({
+            catalogs: (catalogs as Array<{ id: string }>).map((c) => ({
               productId: pid,
               catalogId: c.id,
               assignedAt: now,
@@ -293,7 +293,7 @@ export const mongoProductAssociationsImpl = {
     getCollection: () => Promise<Collection<ProductDocument>>
   ) {
     const collection = await getCollection();
-    const catalogs = (await mongoCatalogRepository.getCatalogsByIds(catalogIds));
+    const catalogs = await mongoCatalogRepository.getCatalogsByIds(catalogIds);
     const now = new Date().toISOString();
 
     const bulkOps = productIds.map((pid) => ({
@@ -302,7 +302,7 @@ export const mongoProductAssociationsImpl = {
         update: {
           $addToSet: {
             catalogs: {
-              $each: catalogs.map((c) => ({
+              $each: (catalogs as Array<{ id: string }>).map((c) => ({
                 productId: pid,
                 catalogId: c.id,
                 assignedAt: now,
@@ -326,20 +326,20 @@ export const mongoProductAssociationsImpl = {
     getCollection: () => Promise<Collection<ProductDocument>>
   ) {
     const collection = await getCollection();
-    const bulkOps = productIds.map((pid) => ({
+    const bulkOps: AnyBulkWriteOperation<ProductDocument>[] = productIds.map((pid) => ({
       updateOne: {
         filter: buildProductIdFilter(pid),
         update: {
           $pull: {
             catalogs: { catalogId: { $in: catalogIds } },
-          } as unknown as UpdateFilter<ProductDocument>['$pull'],
+          } as unknown as UpdateFilter<ProductDocument>,
           $set: { updatedAt: new Date() },
         },
       },
     }));
 
     if (bulkOps.length > 0) {
-      await collection.bulkWrite(bulkOps as unknown as AnyBulkWriteOperation<ProductDocument>[]);
+      await collection.bulkWrite(bulkOps);
     }
   },
 };

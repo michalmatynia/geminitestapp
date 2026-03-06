@@ -409,7 +409,6 @@ export async function evaluateGraphClient(
       }
       return resolveUnsupportedClientCodeObjectHandler(args);
     },
-    mode: resolvedOptions.runtimeKernelMode,
     runtimeKernelNodeTypes: resolvedOptions.runtimeKernelNodeTypes,
     runtimeKernelStrictNativeRegistry: true,
   });

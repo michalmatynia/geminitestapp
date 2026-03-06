@@ -3,7 +3,25 @@ import { describe, expect, it } from 'vitest';
 import type { AiNode } from '@/shared/contracts/ai-paths';
 import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
-import { sanitizeTriggerPathConfig } from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
+import {
+  buildTriggerContext,
+  sanitizeTriggerPathConfig,
+} from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
+
+const buildTriggerNode = (): AiNode =>
+  ({
+    id: 'node-trigger-test',
+    type: 'trigger',
+    title: 'Trigger',
+    description: '',
+    position: { x: 0, y: 0 },
+    data: {},
+    inputs: [],
+    outputs: ['trigger'],
+    config: { trigger: { event: 'manual' } },
+    createdAt: '2026-03-02T05:57:46.562Z',
+    updatedAt: null,
+  }) as AiNode;
 
 describe('sanitizeTriggerPathConfig', () => {
   it('rejects unsupported database snapshot and provider payloads', () => {
@@ -206,5 +224,66 @@ describe('sanitizeTriggerPathConfig', () => {
     expect(() => sanitizeTriggerPathConfig(config)).toThrowError(
       /unsupported trigger (output ports|data edges)/i
     );
+  });
+});
+
+describe('buildTriggerContext', () => {
+  it('omits persisted product snapshots from trigger payloads', () => {
+    const context = buildTriggerContext({
+      triggerNode: buildTriggerNode(),
+      triggerEventId: 'trigger-product-row',
+      triggerLabel: 'Run Product Path',
+      entityType: 'product',
+      entityId: 'product-123',
+      entityJson: {
+        id: 'product-123',
+        name_en: 'Milk Bar Stool',
+        imageBase64s: ['data:image/png;base64,AAAA'],
+      },
+    });
+
+    expect(context).toMatchObject({
+      entityId: 'product-123',
+      entityType: 'product',
+      productId: 'product-123',
+    });
+    expect(context['entityJson']).toBeUndefined();
+    expect(context['entity']).toBeUndefined();
+    expect(context['product']).toBeUndefined();
+  });
+
+  it('sanitizes embedded draft snapshots before enqueue', () => {
+    const context = buildTriggerContext({
+      triggerNode: buildTriggerNode(),
+      triggerEventId: 'trigger-product-draft',
+      triggerLabel: 'Run Draft Path',
+      entityType: 'product',
+      entityJson: {
+        name_en: 'Draft Product',
+        imageBase64s: ['raw-base64-payload'],
+        imageLinks: ['https://cdn.example.test/image.jpg', 'data:image/png;base64,BBBB'],
+        nested: {
+          base64: 'nested-b64',
+          keep: 'value',
+          file: {
+            buffer: 'buffer-payload',
+            filename: 'photo.jpg',
+          },
+        },
+      },
+    });
+
+    expect(context['entityJson']).toEqual({
+      name_en: 'Draft Product',
+      imageLinks: ['https://cdn.example.test/image.jpg', '[omitted_large_field]'],
+      nested: {
+        keep: 'value',
+        file: {
+          filename: 'photo.jpg',
+        },
+      },
+    });
+    expect(context['entity']).toEqual(context['entityJson']);
+    expect(context['product']).toEqual(context['entityJson']);
   });
 });

@@ -218,14 +218,26 @@ export const planHierarchySchema = z.object({
       id: z.string(),
       title: z.string(),
       description: z.string().optional(),
-      subgoals: z.array(z.string()),
-    })
-  ),
-  subgoals: z.array(
-    z.object({
-      id: z.string(),
-      title: z.string(),
-      steps: z.array(z.string()),
+      successCriteria: z.string().nullable().optional(),
+      priority: z.number().nullable().optional(),
+      dependsOn: z.union([z.array(z.number()), z.array(z.string())]).nullable().optional(),
+      subgoals: z.array(
+        z.object({
+          id: z.string(),
+          title: z.string(),
+          successCriteria: z.string().nullable().optional(),
+          priority: z.number().nullable().optional(),
+          dependsOn: z.union([z.array(z.number()), z.array(z.string())]).nullable().optional(),
+          steps: z.array(
+            z.object({
+              title: z.string(),
+              tool: z.enum(['playwright', 'none']).optional(),
+              expectedObservation: z.string().nullable().optional(),
+              successCriteria: z.string().nullable().optional(),
+            })
+          ),
+        })
+      ),
     })
   ),
 });
@@ -401,3 +413,34 @@ export const agentExecutionContextSchema = z.object({
 });
 
 export type AgentExecutionContext = z.infer<typeof agentExecutionContextSchema>;
+
+export const adaptivePlanReviewResultSchema = z.object({
+  shouldReplan: z.boolean(),
+  reason: z.string().optional(),
+  steps: z.array(planStepSchema),
+  hierarchy: planHierarchySchema.nullable().optional(),
+  meta: plannerMetaSchema.nullable().optional(),
+});
+
+export type AdaptivePlanReviewResult = z.infer<typeof adaptivePlanReviewResultSchema>;
+
+export const selfCheckReviewResultSchema = z.object({
+  action: z.enum(['continue', 'replan', 'wait_human']),
+  reason: z.string().optional(),
+  notes: z.string().optional(),
+  questions: z.array(z.string()).optional(),
+  evidence: z.array(z.string()).optional(),
+  confidence: z.number().optional(),
+  missingInfo: z.array(z.string()).optional(),
+  blockers: z.array(z.string()).optional(),
+  hypotheses: z.array(z.string()).optional(),
+  verificationSteps: z.array(z.string()).optional(),
+  toolSwitch: z.string().optional(),
+  abortSignals: z.array(z.string()).optional(),
+  finishSignals: z.array(z.string()).optional(),
+  steps: z.array(planStepSchema),
+  hierarchy: planHierarchySchema.nullable().optional(),
+  meta: plannerMetaSchema.nullable().optional(),
+});
+
+export type SelfCheckReviewResult = z.infer<typeof selfCheckReviewResultSchema>;

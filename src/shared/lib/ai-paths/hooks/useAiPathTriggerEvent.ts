@@ -31,7 +31,7 @@ import {
   updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { AiNode, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import type { AiNode, AiPathRunRecord, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
 import type { ParserSampleState, UpdaterSampleState } from '@/shared/contracts/ai-paths-core/nodes';
 import { validationError } from '@/shared/errors/app-error';
 import {
@@ -52,11 +52,109 @@ import {
 import { useToast } from '@/shared/ui';
 
 const TRIGGER_SETTINGS_PRELOAD_TIMEOUT_MS = 8_000;
+const TRIGGER_ENQUEUE_TIMEOUT_MS = 90_000;
+const TRIGGER_ENQUEUE_RECOVERY_TIMEOUT_MS = 10_000;
+const TRIGGER_ENQUEUE_RECOVERY_DELAYS_MS = [0, 350, 1_200] as const;
 
 const isTimeoutMessage = (message: string | null | undefined): boolean => {
   if (!message || typeof message !== 'string') return false;
   const normalized = message.toLowerCase();
   return normalized.includes('timed out') || normalized.includes('timeout');
+};
+
+export const isRecoverableTriggerEnqueueError = (
+  message: string | null | undefined
+): boolean => {
+  if (!message || typeof message !== 'string') return false;
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes('failed to fetch') ||
+    normalized.includes('networkerror') ||
+    normalized.includes('load failed') ||
+    normalized.includes('network request failed') ||
+    isTimeoutMessage(message)
+  );
+};
+
+export const createAiPathTriggerRequestId = (args: {
+  pathId: string;
+  triggerEventId: string;
+  entityType: TriggerEventEntityType;
+  entityId?: string | null | undefined;
+}): string => {
+  const randomPart =
+    typeof globalThis.crypto?.randomUUID === 'function'
+      ? globalThis.crypto.randomUUID().replace(/-/g, '')
+      : `${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+  const entityPart =
+    typeof args.entityId === 'string' && args.entityId.trim().length > 0
+      ? args.entityId.trim()
+      : 'entity';
+  return `trigger:${args.pathId}:${args.triggerEventId}:${args.entityType}:${entityPart}:${randomPart}`;
+};
+
+const toNonEmptyString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const extractAiPathRunIdFromListedRun = (value: unknown): string | null => {
+  const record = toRecord(value);
+  if (!record) return null;
+  return (
+    toNonEmptyString(record['id']) ??
+    toNonEmptyString(record['runId']) ??
+    toNonEmptyString(record['_id']) ??
+    null
+  );
+};
+
+const toAiPathRunRecord = (value: unknown, runId: string): AiPathRunRecord | null => {
+  const record = toRecord(value);
+  if (!record) return null;
+  return {
+    ...record,
+    id: runId,
+    status: toNonEmptyString(record['status']) ?? 'queued',
+  } as AiPathRunRecord;
+};
+
+const waitForMs = async (durationMs: number): Promise<void> => {
+  if (!Number.isFinite(durationMs) || durationMs <= 0) return;
+  await new Promise((resolve) => {
+    setTimeout(resolve, durationMs);
+  });
+};
+
+export const recoverEnqueuedRunByRequestId = async (args: {
+  pathId: string;
+  requestId: string;
+  lookupRuns?: typeof listAiPathRuns;
+  retryDelaysMs?: readonly number[];
+}): Promise<{ runId: string; runRecord: AiPathRunRecord | null } | null> => {
+  const lookupRuns = args.lookupRuns ?? listAiPathRuns;
+  const retryDelaysMs = args.retryDelaysMs ?? TRIGGER_ENQUEUE_RECOVERY_DELAYS_MS;
+  for (const delayMs of retryDelaysMs) {
+    await waitForMs(delayMs);
+    const lookupResult = await lookupRuns({
+      pathId: args.pathId,
+      requestId: args.requestId,
+      limit: 1,
+      includeTotal: false,
+      fresh: true,
+      timeoutMs: TRIGGER_ENQUEUE_RECOVERY_TIMEOUT_MS,
+    });
+    if (!lookupResult.ok) continue;
+    const candidate = lookupResult.data.runs[0];
+    const runId = extractAiPathRunIdFromListedRun(candidate);
+    if (!runId) continue;
+    return {
+      runId,
+      runRecord: toAiPathRunRecord(candidate, runId),
+    };
+  }
+  return null;
 };
 
 const resolvePreferredPathId = (value: string | null | undefined): string | null => {
@@ -151,6 +249,72 @@ const toRecord = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null;
+
+const TRIGGER_ENTITY_SNAPSHOT_MAX_DEPTH = 6;
+const TRIGGER_ENTITY_OMITTED_VALUE = '[omitted_large_field]';
+const TRIGGER_ENTITY_HEAVY_KEY_PATTERNS: RegExp[] = [
+  /^imagebase64s?$/i,
+  /^base64s?$/i,
+  /(?:^|[_-])base64(?:$|[_-])/i,
+  /(?:^|[_-])binary(?:$|[_-])/i,
+  /(?:^|[_-])buffer(?:$|[_-])/i,
+  /(?:^|[_-])blob(?:$|[_-])/i,
+  /(?:^|[_-])arraybuffer(?:$|[_-])/i,
+];
+
+const shouldOmitTriggerEntityKey = (key: string): boolean =>
+  TRIGGER_ENTITY_HEAVY_KEY_PATTERNS.some((pattern) => pattern.test(key));
+
+const isBase64DataUrl = (value: string): boolean => /^data:[^;]+;base64,/i.test(value.trim());
+
+const sanitizeTriggerEntityValue = (
+  value: unknown,
+  depth: number,
+  key?: string
+): unknown => {
+  if (value === null || value === undefined) return value;
+  if (typeof value === 'string') {
+    if ((key && shouldOmitTriggerEntityKey(key)) || isBase64DataUrl(value)) {
+      return TRIGGER_ENTITY_OMITTED_VALUE;
+    }
+    return value;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') return value;
+  if (Array.isArray(value)) {
+    return value
+      .map((item: unknown) => sanitizeTriggerEntityValue(item, depth + 1, key))
+      .filter((item: unknown) => item !== undefined);
+  }
+  if (typeof value !== 'object') return undefined;
+  if (depth >= TRIGGER_ENTITY_SNAPSHOT_MAX_DEPTH) {
+    return {};
+  }
+
+  const next: Record<string, unknown> = {};
+  Object.entries(value as Record<string, unknown>).forEach(([entryKey, entryValue]) => {
+    if (shouldOmitTriggerEntityKey(entryKey)) return;
+    const sanitized = sanitizeTriggerEntityValue(entryValue, depth + 1, entryKey);
+    if (sanitized !== undefined) {
+      next[entryKey] = sanitized;
+    }
+  });
+  return next;
+};
+
+export const sanitizeTriggerEntitySnapshot = (
+  entityJson?: Record<string, unknown> | null
+): Record<string, unknown> | null => {
+  if (!entityJson) return null;
+  return toRecord(sanitizeTriggerEntityValue(entityJson, 0));
+};
+
+const shouldEmbedTriggerEntitySnapshot = (args: {
+  entityType: TriggerEventEntityType;
+  entityId?: string | null | undefined;
+}): boolean => {
+  if (args.entityType === 'custom') return true;
+  return typeof args.entityId !== 'string' || args.entityId.trim().length === 0;
+};
 
 const resolveRuntimeStateHint = (value: unknown): Record<string, unknown> | null => {
   if (typeof value === 'string') {
@@ -431,7 +595,7 @@ const resolveTriggerSelection = async (
   };
 };
 
-const buildTriggerContext = (args: {
+export const buildTriggerContext = (args: {
   triggerNode: AiNode;
   triggerEventId: string;
   triggerLabel?: string | null | undefined;
@@ -447,6 +611,9 @@ const buildTriggerContext = (args: {
   extras?: Record<string, unknown> | null | undefined;
 }): Record<string, unknown> => {
   const timestamp = new Date().toISOString();
+  const sanitizedEntitySnapshot = sanitizeTriggerEntitySnapshot(args.entityJson);
+  const shouldEmbedEntitySnapshot =
+    sanitizedEntitySnapshot !== null && shouldEmbedTriggerEntitySnapshot(args);
   const nativeEvent = args.event?.nativeEvent;
   const pointer = nativeEvent
     ? {
@@ -535,10 +702,10 @@ const buildTriggerContext = (args: {
     ...(args.entityType === 'product' && args.entityId ? { productId: args.entityId } : {}),
   };
 
-  if (args.entityJson) {
-    base['entityJson'] = args.entityJson;
-    base['entity'] = args.entityJson;
-    if (args.entityType === 'product') base['product'] = args.entityJson;
+  if (shouldEmbedEntitySnapshot && sanitizedEntitySnapshot) {
+    base['entityJson'] = sanitizedEntitySnapshot;
+    base['entity'] = sanitizedEntitySnapshot;
+    if (args.entityType === 'product') base['product'] = sanitizedEntitySnapshot;
   }
 
   return base;
@@ -815,18 +982,24 @@ export function useAiPathTriggerEvent(): {
         const contextDurationMs = performance.now() - contextStartedAt;
 
         const apiStartedAt = performance.now();
+        const requestId = createAiPathTriggerRequestId({
+          pathId: selectedConfig.id,
+          triggerEventId,
+          entityType: args.entityType,
+          entityId: args.entityId,
+        });
         const runResult = await enqueueAiPathRun({
           pathId: selectedConfig.id,
           pathName: selectedConfig.name,
-          nodes: selectedConfig.nodes,
-          edges: selectedConfig.edges,
           triggerEvent: triggerEventId,
           triggerNodeId: triggerNode.id,
           triggerContext,
           entityId: args.entityId,
           entityType: args.entityType,
+          requestId,
           meta: {
             source: 'trigger_button',
+            requestId,
             historyRetentionPasses,
             strictFlowMode: selectedConfig.strictFlowMode !== false,
             aiPathsValidation: normalizeAiPathsValidationConfig(
@@ -844,6 +1017,7 @@ export function useAiPathTriggerEvent(): {
             clientMetadata: {
               source: 'useAiPathTriggerEvent',
               triggerEventId,
+              requestId,
               triggerLabel: args.triggerLabel ?? null,
               entityType: args.entityType,
               entityId: args.entityId ?? null,
@@ -859,10 +1033,28 @@ export function useAiPathTriggerEvent(): {
               },
             },
           },
-        });
+        }, { timeoutMs: TRIGGER_ENQUEUE_TIMEOUT_MS });
         const apiDurationMs = performance.now() - apiStartedAt;
 
+        let runId: string | null = null;
+        let runRecord: AiPathRunRecord | null = null;
+        let enqueueRecovered = false;
+
         if (!runResult.ok) {
+          if (isRecoverableTriggerEnqueueError(runResult.error)) {
+            const recoveredRun = await recoverEnqueuedRunByRequestId({
+              pathId: selectedConfig.id,
+              requestId,
+            });
+            if (recoveredRun) {
+              runId = recoveredRun.runId;
+              runRecord = recoveredRun.runRecord;
+              enqueueRecovered = true;
+            }
+          }
+        }
+
+        if (!runResult.ok && !runId) {
           toast(`Failed to start AI Path: ${runResult.error || 'API Error'}`, { variant: 'error' });
           args.onProgress?.({
             status: 'error',
@@ -876,7 +1068,24 @@ export function useAiPathTriggerEvent(): {
           return;
         }
 
-        const { runId, runRecord } = resolveAiPathRunFromEnqueueResponseData(runResult.data);
+        if (runResult.ok && !runId) {
+          const resolved = resolveAiPathRunFromEnqueueResponseData(runResult.data);
+          runId = resolved.runId;
+          runRecord = resolved.runRecord;
+        }
+
+        if (!runId) {
+          const recoveredRun = await recoverEnqueuedRunByRequestId({
+            pathId: selectedConfig.id,
+            requestId,
+          });
+          if (recoveredRun) {
+            runId = recoveredRun.runId;
+            runRecord = recoveredRun.runRecord;
+            enqueueRecovered = true;
+          }
+        }
+
         if (!runId) {
           toast('Failed to start AI Path: invalid run identifier from API.', { variant: 'error' });
           args.onProgress?.({
@@ -899,6 +1108,8 @@ export function useAiPathTriggerEvent(): {
             action: 'fireSuccess',
             pathId: selectedConfig.id,
             runId,
+            requestId,
+            enqueueRecovered,
             triggerEventId,
             totalPrepMs,
             performance: {

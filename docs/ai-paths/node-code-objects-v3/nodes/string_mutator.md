@@ -1,6 +1,6 @@
 # String Mutator Migration Sheet (`string_mutator`)
 
-Generated at: 2026-03-06T00:00:00.000Z
+Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
@@ -21,7 +21,7 @@ Generated at: 2026-03-06T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/string_mutator.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/string_mutator.scaffold.json`
 - v3 object id: `node_obj_string_mutator_portable_v3`
-- v3 object hash: `97c5f3de77a2cb4ca8dd77f130ef468213375dfba9718ffb8953a5822716557f`
+- v3 object hash: `1475200e961721518686a28aeaa8bf654e67df9c2d31972157325fe2360a5dad`
 
 ## Ports
 

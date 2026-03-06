@@ -252,6 +252,95 @@ describe('AiPathsCanvasView switch guard', () => {
     });
   });
 
+  it('ignores stale path runtime-kernel alias fields when loading path drafts', async () => {
+    mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([]);
+    pageContextMock = {
+      activeTab: 'canvas',
+      isFocusMode: false,
+      renderActions: (actions: unknown) => actions,
+      confirmNodeSwitch: async () => true,
+      savePathConfig: vi.fn(async () => true),
+      saving: false,
+      setPathSettingsModalOpen: vi.fn(),
+      activePathId: 'path-main',
+      nodeValidationEnabled: true,
+      updateAiPathsValidation: vi.fn(),
+      validationPreflightReport: {
+        score: 100,
+        failedRules: 0,
+        blocked: false,
+        shouldWarn: false,
+        findings: [],
+        recommendations: [],
+        schemaVersion: 1,
+        skippedRuleIds: [],
+        moduleImpact: {},
+      },
+      handleOpenNodeValidator: vi.fn(),
+      docsTooltipsEnabled: true,
+      setDocsTooltipsEnabled: vi.fn(),
+      handleTogglePathLock: vi.fn(),
+      isPathLocked: false,
+      handleRunNodeValidationCheck: vi.fn(),
+      toast: vi.fn(),
+      autoSaveLabel: '',
+      autoSaveVariant: 'neutral',
+      lastRunAt: null,
+      isPathNameEditing: false,
+      renameDraft: '',
+      setRenameDraft: vi.fn(),
+      commitPathNameEdit: vi.fn(),
+      cancelPathNameEdit: vi.fn(),
+      startPathNameEdit: vi.fn(),
+      pathName: 'Path Main',
+      pathSwitchOptions: [{ label: 'Path Main', value: 'path-main' }],
+      handleSwitchPath: vi.fn(),
+      isPathSwitching: false,
+      lastError: null,
+      persistLastError: vi.fn(async () => undefined),
+      incrementLoadNonce: vi.fn(),
+      handleClearConnectorData: vi.fn(async () => undefined),
+      handleClearHistory: vi.fn(async () => undefined),
+      handleDeleteSelectedNode: vi.fn(),
+      isPathActive: true,
+      handleTogglePathActive: vi.fn(),
+      hasHistory: false,
+      selectionScopeMode: 'portion',
+      setSelectionScopeMode: vi.fn(),
+      dataContractReport: { byNodeId: {} },
+      setDataContractInspectorNodeId: vi.fn(),
+      paths: [
+        {
+          id: 'path-main',
+          name: 'Path Main',
+          createdAt: '2026-03-05',
+          updatedAt: '2026-03-05',
+        },
+      ],
+      pathConfigs: {
+        'path-main': {
+          id: 'path-main',
+          extensions: {
+            runtimeKernel: {
+              pilotNodeTypes: ['template'],
+              resolverIds: ['resolver.path'],
+              strictCodeObjectRegistry: true,
+            },
+          },
+        },
+      },
+      persistPathSettings: vi.fn(async () => undefined),
+    };
+
+    render(<AiPathsCanvasView />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Runtime Kernel Path')).toBeInTheDocument();
+    });
+    expect(screen.getByPlaceholderText('path kernel nodes: template, parser')).toHaveValue('');
+    expect(screen.getByPlaceholderText('path resolvers: resolver.path')).toHaveValue('');
+  });
+
   it('disables delete while path switching and shows switching status', async () => {
     pageContextMock = {
       activeTab: 'canvas',

@@ -3,7 +3,7 @@
  
 
 import { randomUUID } from 'crypto';
-import { Collection, Document, UpdateFilter } from 'mongodb';
+import { Collection, UpdateFilter, WithId } from 'mongodb';
 import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
 import { ProductCreateInput, ProductUpdateInput, ProductRecord, ProductWithImages } from '@/shared/contracts/products';
 import {
@@ -14,7 +14,7 @@ import {
 export const mongoProductWriteImpl = {
   async createProduct(
     data: ProductCreateInput,
-    getCollection: () => Promise<Collection<Document>>
+    getCollection: () => Promise<Collection<ProductDocument>>
   ): Promise<ProductRecord> {
     const collection = await getCollection();
     const id = data.id || randomUUID();
@@ -59,20 +59,20 @@ export const mongoProductWriteImpl = {
       noteIds: data.noteIds || [],
     };
 
-    await collection.insertOne(doc as unknown as Document);
-    return toProductResponse(doc as unknown as Document);
+    await collection.insertOne(doc);
+    return toProductResponse(doc as unknown as WithId<ProductDocument>);
   },
 
   async updateProduct(
     id: string,
     data: ProductUpdateInput,
-    getCollection: () => Promise<Collection<Document>>
+    getCollection: () => Promise<Collection<ProductDocument>>
   ): Promise<ProductRecord | null> {
     const collection = await getCollection();
     const filter = buildProductIdFilter(id);
     const now = new Date();
 
-    const updates: UpdateFilter<Document> = {
+    const updates: UpdateFilter<ProductDocument> = {
       $set: {
         updatedAt: now,
       },
@@ -131,12 +131,12 @@ export const mongoProductWriteImpl = {
     });
 
     if (!result) return null;
-    return toProductResponse(result);
+    return toProductResponse(result as unknown as WithId<ProductDocument>);
   },
 
   async deleteProduct(
     id: string,
-    getCollection: () => Promise<Collection<Document>>
+    getCollection: () => Promise<Collection<ProductDocument>>
   ): Promise<ProductRecord | null> {
     const collection = await getCollection();
     const filter = buildProductIdFilter(id);
@@ -144,7 +144,7 @@ export const mongoProductWriteImpl = {
     if (!doc) return null;
 
     await collection.deleteOne(filter);
-    return toProductResponse(doc);
+    return toProductResponse(doc as unknown as WithId<ProductDocument>);
   },
 
   async bulkCreateProducts(

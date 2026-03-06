@@ -6,12 +6,17 @@ import {
   evaluateAiPathsValidationPreflight,
   normalizeNodes,
   normalizeAiPathsValidationConfig,
+  PATH_CONFIG_PREFIX,
   palette,
   sanitizeEdges,
   stableStringify,
   validateCanonicalPathNodeIdentities,
 } from '@/shared/lib/ai-paths';
-import { enforceAiPathsRunRateLimit, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
+import {
+  enforceAiPathsRunRateLimit,
+  getAiPathsSetting,
+  requireAiPathsRunAccess,
+} from '@/features/ai/ai-paths/server';
 import { enqueuePathRun } from '@/features/ai/ai-paths/services/path-run-service';
 import { assertAiPathRunQueueReadyForEnqueue } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
@@ -19,11 +24,13 @@ import {
   aiNodeSchema,
   aiPathRunEnqueueResponseSchema,
   edgeSchema,
+  pathConfigSchema,
   type PathConfig,
 } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError, serviceUnavailableError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { sanitizeTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
 
 const enqueueSchema = z.object({
   pathId: z.string().trim().min(1),
@@ -89,7 +96,34 @@ const resolveEnqueueRunId = (run: unknown): string | null => {
   return null;
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+const hasOwn = (record: Record<string, unknown>, key: string): boolean =>
+  Object.prototype.hasOwnProperty.call(record, key);
+
+const loadStoredPathConfig = async (pathId: string): Promise<PathConfig> => {
+  const configKey = `${PATH_CONFIG_PREFIX}${pathId}`;
+  const raw = await getAiPathsSetting(configKey);
+  if (!raw) {
+    throw badRequestError(`Stored AI Path config not found for "${pathId}".`);
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw) as unknown;
+  } catch {
+    throw badRequestError(`Stored AI Path config for "${pathId}" is invalid JSON.`);
+  }
+
+  const validation = pathConfigSchema.safeParse(parsed);
+  if (!validation.success) {
+    throw badRequestError(`Stored AI Path config for "${pathId}" is invalid.`);
+  }
+  if (validation.data.id !== pathId) {
+    throw badRequestError(`Stored AI Path config id mismatch for "${pathId}".`);
+  }
+  return sanitizeTriggerPathConfig(validation.data);
+};
+
+export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number> = {};
   const withTiming = async <T>(label: string, fn: () => Promise<T>): Promise<T> => {
     const startedAt = performance.now();
@@ -99,14 +133,35 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   };
 
   const access = await withTiming('accessMs', async () => await requireAiPathsRunAccess());
+  ctx.userId = access.userId;
   await withTiming('rateLimitMs', async () => await enforceAiPathsRunRateLimit(access));
-  const parsed = await parseJsonBody(req, enqueueSchema, {
-    logPrefix: 'ai-paths.runs.enqueue',
+  const parsed = await withTiming('parseBodyMs', async () => {
+    return await parseJsonBody(req, enqueueSchema, {
+      logPrefix: 'ai-paths.runs.enqueue',
+    });
   });
   if (!parsed.ok) return parsed.response;
 
   const data = parsed.data;
   const { nodes, edges, ...rest } = data;
+  const triggerContextRecord =
+    rest.triggerContext && typeof rest.triggerContext === 'object' && !Array.isArray(rest.triggerContext)
+      ? (rest.triggerContext)
+      : null;
+  const requestContentLength = Number.parseInt(req.headers.get('content-length') ?? '', 10);
+  let resolvedPathName = rest.pathName?.trim() || rest.pathId;
+  let resolvedNodesInput: unknown[] | undefined = nodes;
+  let resolvedEdgesInput: unknown[] | undefined = edges;
+  let graphSource: 'payload' | 'settings' = 'payload';
+  if (!Array.isArray(nodes) || !Array.isArray(edges)) {
+    const storedConfig = await withTiming('loadStoredPathMs', async () => {
+      return await loadStoredPathConfig(rest.pathId);
+    });
+    resolvedPathName = storedConfig.name?.trim() || resolvedPathName;
+    resolvedNodesInput = storedConfig.nodes;
+    resolvedEdgesInput = storedConfig.edges;
+    graphSource = 'settings';
+  }
   let normalizedMeta = rest.meta ?? null;
   if (normalizedMeta && typeof normalizedMeta === 'object') {
     const sourceValue = normalizedMeta['source'];
@@ -114,19 +169,19 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       throw badRequestError('Invalid enqueue metadata: meta.source must be a string.');
     }
   }
-  if (!Array.isArray(nodes) || !Array.isArray(edges)) {
+  if (!Array.isArray(resolvedNodesInput) || !Array.isArray(resolvedEdgesInput)) {
     throw badRequestError('Nodes and edges are required to enqueue a run.');
   }
 
-  const normalizedNodes = normalizeNodes(nodes);
+  const normalizedNodes = normalizeNodes(resolvedNodesInput as any[]);
   const validationConfig: PathConfig = {
     id: rest.pathId,
     version: 1,
-    name: rest.pathName?.trim() || rest.pathId,
+    name: resolvedPathName,
     description: '',
     trigger: rest.triggerEvent?.trim() || 'manual',
     nodes: normalizedNodes,
-    edges,
+    edges: resolvedEdgesInput as any[],
     updatedAt: new Date().toISOString(),
   };
   const identityIssues = validateCanonicalPathNodeIdentities(validationConfig, {
@@ -135,8 +190,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   if (identityIssues.length > 0) {
     throw badRequestError('AI Paths run graph contains unsupported node identities.');
   }
-  const normalizedEdges = sanitizeEdges(normalizedNodes, edges);
-  if (stableStringify(normalizedEdges) !== stableStringify(edges)) {
+  const normalizedEdges = sanitizeEdges(normalizedNodes, resolvedEdgesInput as any[]);
+  if (stableStringify(normalizedEdges) !== stableStringify(resolvedEdgesInput)) {
     throw badRequestError('AI Paths run graph contains invalid or non-canonical edges.');
   }
   const metaRecord = normalizedMeta && typeof normalizedMeta === 'object' ? normalizedMeta : {};
@@ -212,7 +267,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     return await enqueuePathRun({
       userId: access.userId,
       pathId: rest.pathId,
-      pathName: rest.pathName ?? null,
+      pathName: resolvedPathName,
       nodes: normalizedNodes,
       edges: normalizedEdges,
       ...(rest.triggerEvent ? { triggerEvent: rest.triggerEvent } : {}),
@@ -244,9 +299,19 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       edgeCount: normalizedEdges.length,
       accessMs: Math.round(timings['accessMs'] ?? 0),
       rateLimitMs: Math.round(timings['rateLimitMs'] ?? 0),
+      parseBodyMs: Math.round(timings['parseBodyMs'] ?? 0),
+      loadStoredPathMs: Math.round(timings['loadStoredPathMs'] ?? 0),
       compileMs: Math.round(timings['compileMs'] ?? 0),
       queueReadyMs: Math.round(timings['queueReadyMs'] ?? 0),
       enqueueServiceMs: Math.round(timings['enqueueServiceMs'] ?? 0),
+      graphSource,
+      ...(Number.isFinite(requestContentLength) ? { requestContentLength } : {}),
+      triggerContextHasEntityJson:
+        triggerContextRecord !== null && hasOwn(triggerContextRecord, 'entityJson'),
+      triggerContextHasEntity:
+        triggerContextRecord !== null && hasOwn(triggerContextRecord, 'entity'),
+      triggerContextHasProduct:
+        triggerContextRecord !== null && hasOwn(triggerContextRecord, 'product'),
     },
   });
 

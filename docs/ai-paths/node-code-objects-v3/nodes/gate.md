@@ -1,6 +1,6 @@
 # Gate Migration Sheet (`gate`)
 
-Generated at: 2026-03-06T00:00:00.000Z
+Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
@@ -21,7 +21,7 @@ Generated at: 2026-03-06T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/gate.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/gate.scaffold.json`
 - v3 object id: `node_obj_gate_portable_v3`
-- v3 object hash: `c8e8b778226f939066f49f070d24145d1039196d0b5a4b9f1e18ba67cede931d`
+- v3 object hash: `b97f1b9584a7dda0fc135a6bf3fcfed1149d7851833cffdc2c49f099d3f7d73f`
 
 ## Ports
 

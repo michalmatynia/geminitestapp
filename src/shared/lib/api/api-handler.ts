@@ -285,7 +285,7 @@ export function apiHandler(
     const correlationId = readHeaderTrimmed(request, 'x-correlation-id') ?? requestId;
     const service = options.service?.trim() || resolveServiceFromSource(options.source);
     const startTime = performance.now();
-    const user = await getSessionUser();
+    const user = options.resolveSessionUser === false ? null : await getSessionUser();
 
     const context: ApiHandlerContext = {
       requestId,
@@ -428,7 +428,7 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
     const correlationId = readHeaderTrimmed(request, 'x-correlation-id') ?? requestId;
     const service = options.service?.trim() || resolveServiceFromSource(options.source);
     const startTime = performance.now();
-    const user = await getSessionUser();
+    const user = options.resolveSessionUser === false ? null : await getSessionUser();
 
     const handlerContext: ApiHandlerContext = {
       requestId,

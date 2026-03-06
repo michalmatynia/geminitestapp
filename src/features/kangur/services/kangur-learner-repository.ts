@@ -214,6 +214,34 @@ export const updateKangurLearner = async (
   return toPublicLearnerProfile(nextProfile);
 };
 
+export const setKangurLearnerLegacyUserKey = async (
+  learnerId: string,
+  legacyUserKey: string | null
+): Promise<KangurLearnerProfile> => {
+  const profiles = await readStoredLearners();
+  const index = profiles.findIndex((profile) => profile.id === learnerId);
+  if (index < 0) {
+    throw notFoundError('Learner not found.');
+  }
+
+  const current = profiles[index]!;
+  const normalizedLegacyUserKey = normalizeLegacyUserKey(legacyUserKey);
+  if (current.legacyUserKey === normalizedLegacyUserKey) {
+    return toPublicLearnerProfile(current);
+  }
+
+  const nextProfile: StoredKangurLearnerProfile = {
+    ...current,
+    legacyUserKey: normalizedLegacyUserKey,
+    updatedAt: new Date().toISOString(),
+  };
+
+  const nextProfiles = [...profiles];
+  nextProfiles[index] = nextProfile;
+  await writeStoredLearners(nextProfiles);
+  return toPublicLearnerProfile(nextProfile);
+};
+
 export const verifyKangurLearnerPassword = async (
   loginName: string,
   password: string

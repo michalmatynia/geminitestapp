@@ -17,7 +17,8 @@ export type AiPathRunRuntimeKernelMetadataChangedField =
   | 'runtimeKernel.nodeTypesSource'
   | 'runtimeKernel.codeObjectResolverIds'
   | 'runtimeKernel.strictNativeRegistry'
-  | 'runtimeKernel.strictNativeRegistrySource';
+  | 'runtimeKernel.strictNativeRegistrySource'
+  | 'runtimeTrace.kernelParity.strategyCounts';
 
 export type NormalizeAiPathRunRuntimeKernelMetadataResult = {
   changed: boolean;
@@ -54,8 +55,14 @@ const appendChangedField = (
   }
 };
 
+const normalizeNonNegativeInteger = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0 ? Math.round(value) : null;
+
 const normalizeRuntimeKernelConfigRecord = (
-  value: Record<string, unknown>
+  value: Record<string, unknown>,
+  options: {
+    translateLegacyAliases: boolean;
+  }
 ): {
   changed: boolean;
   value: Record<string, unknown>;
@@ -69,7 +76,9 @@ const normalizeRuntimeKernelConfigRecord = (
     appendChangedField(changedFields, 'runtimeKernelConfig.mode');
   }
 
-  const nodeTypes = parseRuntimeKernelNodeTypes(value['nodeTypes'] ?? value['pilotNodeTypes']);
+  const nodeTypes = parseRuntimeKernelNodeTypes(
+    options.translateLegacyAliases ? value['nodeTypes'] ?? value['pilotNodeTypes'] : value['nodeTypes']
+  );
   if (nodeTypes) {
     if (!matchesStringArray(value['nodeTypes'], nodeTypes)) {
       nextValue['nodeTypes'] = nodeTypes;
@@ -85,7 +94,9 @@ const normalizeRuntimeKernelConfigRecord = (
   }
 
   const resolverIds = parseRuntimeKernelCodeObjectResolverIds(
-    value['codeObjectResolverIds'] ?? value['resolverIds']
+    options.translateLegacyAliases
+      ? value['codeObjectResolverIds'] ?? value['resolverIds']
+      : value['codeObjectResolverIds']
   );
   if (resolverIds) {
     if (!matchesStringArray(value['codeObjectResolverIds'], resolverIds)) {
@@ -118,7 +129,10 @@ const normalizeRuntimeKernelConfigRecord = (
 };
 
 const normalizeRuntimeKernelTelemetryRecord = (
-  value: Record<string, unknown>
+  value: Record<string, unknown>,
+  options: {
+    translateLegacyAliases: boolean;
+  }
 ): {
   changed: boolean;
   value: Record<string, unknown>;
@@ -137,7 +151,9 @@ const normalizeRuntimeKernelTelemetryRecord = (
   }
 
   const nodeTypes = parseRuntimeKernelNodeTypes(
-    value['runtimeKernelNodeTypes'] ?? value['runtimeKernelPilotNodeTypes']
+    options.translateLegacyAliases
+      ? value['runtimeKernelNodeTypes'] ?? value['runtimeKernelPilotNodeTypes']
+      : value['runtimeKernelNodeTypes']
   );
   if (nodeTypes) {
     if (!matchesStringArray(value['runtimeKernelNodeTypes'], nodeTypes)) {
@@ -154,7 +170,9 @@ const normalizeRuntimeKernelTelemetryRecord = (
   }
 
   const nodeTypesSource = normalizeRuntimeKernelNodeTypesSource(
-    value['runtimeKernelNodeTypesSource'] ?? value['runtimeKernelPilotNodeTypesSource']
+    options.translateLegacyAliases
+      ? value['runtimeKernelNodeTypesSource'] ?? value['runtimeKernelPilotNodeTypesSource']
+      : value['runtimeKernelNodeTypesSource']
   );
   if (nodeTypesSource !== undefined) {
     if (value['runtimeKernelNodeTypesSource'] !== nodeTypesSource) {
@@ -199,8 +217,83 @@ const normalizeRuntimeKernelTelemetryRecord = (
   };
 };
 
+const normalizeRuntimeTraceRecord = (
+  value: Record<string, unknown>
+): {
+  changed: boolean;
+  value: Record<string, unknown>;
+  changedFields: AiPathRunRuntimeKernelMetadataChangedField[];
+} => {
+  const nextValue: Record<string, unknown> = { ...value };
+  const changedFields: AiPathRunRuntimeKernelMetadataChangedField[] = [];
+  const kernelParity = isObjectRecord(value['kernelParity']) ? value['kernelParity'] : null;
+  if (!kernelParity) {
+    return {
+      changed: false,
+      value,
+      changedFields,
+    };
+  }
+
+  const strategyCounts = isObjectRecord(kernelParity['strategyCounts'])
+    ? kernelParity['strategyCounts']
+    : null;
+  if (!strategyCounts || !('legacy_adapter' in strategyCounts)) {
+    return {
+      changed: false,
+      value,
+      changedFields,
+    };
+  }
+
+  const compatibilityCount =
+    normalizeNonNegativeInteger(strategyCounts['compatibility']) ??
+    normalizeNonNegativeInteger(strategyCounts['legacy_adapter']);
+  const nextStrategyCounts: Record<string, unknown> = { ...strategyCounts };
+  delete nextStrategyCounts['legacy_adapter'];
+  if (compatibilityCount !== null) {
+    nextStrategyCounts['compatibility'] = compatibilityCount;
+  } else if ('compatibility' in nextStrategyCounts) {
+    delete nextStrategyCounts['compatibility'];
+  }
+
+  nextValue['kernelParity'] = {
+    ...kernelParity,
+    strategyCounts: nextStrategyCounts,
+  };
+  appendChangedField(changedFields, 'runtimeTrace.kernelParity.strategyCounts');
+
+  return {
+    changed: true,
+    value: nextValue,
+    changedFields,
+  };
+};
+
 export const normalizeAiPathRunRuntimeKernelMetadata = (
   meta: unknown
+): NormalizeAiPathRunRuntimeKernelMetadataResult => {
+  return normalizeAiPathRunRuntimeKernelMetadataInternal(meta, {
+    translateLegacyAliases: true,
+    dropEmptyObjects: false,
+  });
+};
+
+export const normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead = (
+  meta: unknown
+): NormalizeAiPathRunRuntimeKernelMetadataResult => {
+  return normalizeAiPathRunRuntimeKernelMetadataInternal(meta, {
+    translateLegacyAliases: false,
+    dropEmptyObjects: true,
+  });
+};
+
+const normalizeAiPathRunRuntimeKernelMetadataInternal = (
+  meta: unknown,
+  options: {
+    translateLegacyAliases: boolean;
+    dropEmptyObjects: boolean;
+  }
 ): NormalizeAiPathRunRuntimeKernelMetadataResult => {
   if (!isObjectRecord(meta)) {
     return {
@@ -217,18 +310,39 @@ export const normalizeAiPathRunRuntimeKernelMetadata = (
     ? meta['runtimeKernelConfig']
     : null;
   if (runtimeKernelConfig) {
-    const normalized = normalizeRuntimeKernelConfigRecord(runtimeKernelConfig);
+    const normalized = normalizeRuntimeKernelConfigRecord(runtimeKernelConfig, {
+      translateLegacyAliases: options.translateLegacyAliases,
+    });
     if (normalized.changed) {
-      nextMeta['runtimeKernelConfig'] = normalized.value;
+      if (options.dropEmptyObjects && Object.keys(normalized.value).length === 0) {
+        delete nextMeta['runtimeKernelConfig'];
+      } else {
+        nextMeta['runtimeKernelConfig'] = normalized.value;
+      }
       normalized.changedFields.forEach((field) => appendChangedField(changedFields, field));
     }
   }
 
   const runtimeKernel = isObjectRecord(meta['runtimeKernel']) ? meta['runtimeKernel'] : null;
   if (runtimeKernel) {
-    const normalized = normalizeRuntimeKernelTelemetryRecord(runtimeKernel);
+    const normalized = normalizeRuntimeKernelTelemetryRecord(runtimeKernel, {
+      translateLegacyAliases: options.translateLegacyAliases,
+    });
     if (normalized.changed) {
-      nextMeta['runtimeKernel'] = normalized.value;
+      if (options.dropEmptyObjects && Object.keys(normalized.value).length === 0) {
+        delete nextMeta['runtimeKernel'];
+      } else {
+        nextMeta['runtimeKernel'] = normalized.value;
+      }
+      normalized.changedFields.forEach((field) => appendChangedField(changedFields, field));
+    }
+  }
+
+  const runtimeTrace = isObjectRecord(meta['runtimeTrace']) ? meta['runtimeTrace'] : null;
+  if (runtimeTrace) {
+    const normalized = normalizeRuntimeTraceRecord(runtimeTrace);
+    if (normalized.changed) {
+      nextMeta['runtimeTrace'] = normalized.value;
       normalized.changedFields.forEach((field) => appendChangedField(changedFields, field));
     }
   }

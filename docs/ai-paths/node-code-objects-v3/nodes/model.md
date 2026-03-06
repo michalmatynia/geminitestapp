@@ -1,6 +1,6 @@
 # Model Migration Sheet (`model`)
 
-Generated at: 2026-03-06T00:00:00.000Z
+Generated at: 2026-03-05T00:00:00.000Z
 
 ## Status
 
@@ -21,7 +21,7 @@ Generated at: 2026-03-06T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/model.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/model.scaffold.json`
 - v3 object id: `node_obj_model_portable_v3`
-- v3 object hash: `a8e7ef678ccf03b077db4afa2f91d1fbd6913a9c3674d8fc485ee768db7bc552`
+- v3 object hash: `4dad6cd6dc5826ea8b9af205b8c52264da0e6d56da5471632967a10e1f9a0158`
 
 ## Ports
 

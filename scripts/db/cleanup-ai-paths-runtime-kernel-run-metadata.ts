@@ -81,6 +81,7 @@ const buildChangedFieldCounts = (): Record<AiPathRunRuntimeKernelMetadataChanged
   'runtimeKernel.codeObjectResolverIds': 0,
   'runtimeKernel.strictNativeRegistry': 0,
   'runtimeKernel.strictNativeRegistrySource': 0,
+  'runtimeTrace.kernelParity.strategyCounts': 0,
 });
 
 const maybeCollectSample = (sampleRunIds: string[], sampleLimit: number, runId: string): void => {
@@ -90,7 +91,12 @@ const maybeCollectSample = (sampleRunIds: string[], sampleLimit: number, runId: 
 
 const hasRuntimeKernelMetadata = (meta: unknown): boolean => {
   if (!isObjectRecord(meta)) return false;
-  return isObjectRecord(meta['runtimeKernelConfig']) || isObjectRecord(meta['runtimeKernel']);
+  const runtimeTrace = isObjectRecord(meta['runtimeTrace']) ? meta['runtimeTrace'] : null;
+  return (
+    isObjectRecord(meta['runtimeKernelConfig']) ||
+    isObjectRecord(meta['runtimeKernel']) ||
+    (runtimeTrace !== null && isObjectRecord(runtimeTrace['kernelParity']))
+  );
 };
 
 const asErrorMessage = (error: unknown): string =>

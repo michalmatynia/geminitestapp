@@ -82,12 +82,12 @@ type NodeMigrationIndexRow = {
 };
 
 type NodeMigrationIndexPayload = {
-  schemaVersion: 'ai-paths.node-migration-doc-index.v2';
+  schemaVersion: 'ai-paths.node-migration-doc-index.v3';
   generatedAt: string;
   totalNodes: number;
   runtimeKernelNodeTypes: string[];
   strategyTotals: {
-    legacy_adapter: number;
+    compatibility: number;
     code_object_v3: number;
   };
   v3ContractsHash: string | null;
@@ -125,7 +125,7 @@ type NodeMigrationIndexPayload = {
   familyTotals: Array<{
     nodeFamily: string;
     total: number;
-    legacy_adapter: number;
+    compatibility: number;
     code_object_v3: number;
   }>;
   nodes: NodeMigrationIndexRow[];
@@ -335,7 +335,7 @@ const rows: NodeMigrationIndexRow[] = [...AI_PATHS_NODE_DOCS]
     };
   });
 
-const strategyTotals = rows.reduce(
+const runtimeStrategyTotals = rows.reduce(
   (accumulator, row) => {
     accumulator[row.runtimeStrategy] += 1;
     return accumulator;
@@ -345,6 +345,10 @@ const strategyTotals = rows.reduce(
     code_object_v3: 0,
   }
 );
+const strategyTotals = {
+  compatibility: runtimeStrategyTotals.legacy_adapter,
+  code_object_v3: runtimeStrategyTotals.code_object_v3,
+};
 
 const familyTotalMap = new Map<
   string,
@@ -369,7 +373,7 @@ const familyTotals = Array.from(familyTotalMap.entries())
   .map(([nodeFamily, totals]) => ({
     nodeFamily,
     total: totals.total,
-    legacy_adapter: totals.legacy_adapter,
+    compatibility: totals.legacy_adapter,
     code_object_v3: totals.code_object_v3,
   }))
   .sort((left, right) => left.nodeFamily.localeCompare(right.nodeFamily));
@@ -412,7 +416,7 @@ const rolloutEligibilityPayload: NodeMigrationRolloutEligibilityPayload = {
 };
 
 const payload: NodeMigrationIndexPayload = {
-  schemaVersion: 'ai-paths.node-migration-doc-index.v2',
+  schemaVersion: 'ai-paths.node-migration-doc-index.v3',
   generatedAt,
   totalNodes: rows.length,
   runtimeKernelNodeTypes,
@@ -532,11 +536,11 @@ fs.writeFileSync(outputIndexPath, stableJson(payload), 'utf8');
 fs.writeFileSync(outputRolloutEligibilityPath, stableJson(rolloutEligibilityPayload), 'utf8');
 
 const familyTableLines = [
-  '| Node Family | Total | `legacy_adapter` | `code_object_v3` |',
+  '| Node Family | Total | `compatibility` | `code_object_v3` |',
   '| --- | ---: | ---: | ---: |',
   ...familyTotals.map(
     (entry) =>
-      `| ${entry.nodeFamily} | ${entry.total} | ${entry.legacy_adapter} | ${entry.code_object_v3} |`
+      `| ${entry.nodeFamily} | ${entry.total} | ${entry.compatibility} | ${entry.code_object_v3} |`
   ),
 ];
 
@@ -572,7 +576,7 @@ const blockerTableLines =
 const guideLines = [
   '# Node Migration Guide (Semantic Portable Engine)',
   '',
-  'This guide tracks node-by-node migration from legacy runtime handlers to semantic portable code objects (`v3`).',
+  'This guide tracks node-by-node migration from compatibility runtime handlers to semantic portable code objects (`v3`).',
   '',
   `Generated at: ${payload.generatedAt}`,
   '',
@@ -600,7 +604,7 @@ const guideLines = [
   '## Strategy Totals',
   '',
   `- Total node types: ${payload.totalNodes}`,
-  `- \`legacy_adapter\`: ${payload.strategyTotals.legacy_adapter}`,
+  `- \`compatibility\`: ${payload.strategyTotals.compatibility}`,
   `- \`code_object_v3\`: ${payload.strategyTotals.code_object_v3}`,
   `- v3 contracts hash: ${payload.v3ContractsHash ? `\`${payload.v3ContractsHash}\`` : '`missing`'}`,
   '',

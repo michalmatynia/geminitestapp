@@ -189,13 +189,11 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     if (args?.['runtimeKernelCodeObjectResolverIds'] !== undefined) {
       expect(args?.['runtimeKernelCodeObjectResolverIds']).toEqual(['resolver.primary']);
     }
-    expect(args?.['runtimeKernelStrictNativeRegistry']).toBe(true);
   });
 
   it('keeps env node-type override precedence', async () => {
     process.env['AI_PATHS_RUNTIME_KERNEL_NODE_TYPES'] = 'template';
     process.env['AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS'] = 'resolver.env';
-    process.env['AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY'] = 'false';
     listAiPathsSettingsMock.mockResolvedValue([
       { key: AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY, value: 'constant, math' },
       { key: AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY, value: 'resolver.settings' },
@@ -211,7 +209,6 @@ describe('path-run-executor runtime-kernel settings integration', () => {
       | undefined;
     expect(args?.['runtimeKernelNodeTypes']).toEqual(['template']);
     expect(args?.['runtimeKernelCodeObjectResolverIds']).toEqual(['resolver.env']);
-    expect(args?.['runtimeKernelStrictNativeRegistry']).toBe(true);
   });
 
   it('ignores deprecated env pilot-node-type aliases in live execution', async () => {
@@ -268,7 +265,6 @@ describe('path-run-executor runtime-kernel settings integration', () => {
       | undefined;
     expect(args?.['runtimeKernelNodeTypes']).toEqual(['template']);
     expect(args?.['runtimeKernelCodeObjectResolverIds']).toEqual(['resolver.path']);
-    expect(args?.['runtimeKernelStrictNativeRegistry']).toBe(true);
 
     const finalUpdatePayload = updateRunIfStatusMock.mock.calls
       .map((call) => call[2] as Record<string, unknown>)
@@ -286,7 +282,7 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     ).not.toHaveProperty('runtimeKernelPilotNodeTypesSource');
   });
 
-  it('normalizes historical run-meta runtime-kernel aliases before execution', async () => {
+  it('ignores historical run-meta runtime-kernel aliases during live execution', async () => {
     const run = buildRunRecord();
     run.meta = {
       runtimeKernelConfig: {
@@ -311,9 +307,8 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     const args = evaluateGraphWithIteratorAutoContinueMock.mock.calls[0]?.[0] as
       | Record<string, unknown>
       | undefined;
-    expect(args?.['runtimeKernelNodeTypes']).toEqual(['template']);
-    expect(args?.['runtimeKernelCodeObjectResolverIds']).toEqual(['resolver.path']);
-    expect(args?.['runtimeKernelStrictNativeRegistry']).toBe(true);
+    expect(args?.['runtimeKernelNodeTypes']).toBeUndefined();
+    expect(args?.['runtimeKernelCodeObjectResolverIds']).toBeUndefined();
 
     const finalUpdatePayload = updateRunIfStatusMock.mock.calls
       .map((call) => call[2] as Record<string, unknown>)
@@ -321,13 +316,16 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     expect(finalUpdatePayload?.['meta']).toEqual(
       expect.objectContaining({
         runtimeKernel: expect.objectContaining({
-          runtimeKernelNodeTypes: ['template'],
-          runtimeKernelNodeTypesSource: 'path',
-          runtimeKernelCodeObjectResolverIds: ['resolver.path'],
-          runtimeKernelCodeObjectResolverIdsSource: 'path',
+          runtimeKernelNodeTypes: [],
+          runtimeKernelNodeTypesSource: 'default',
+          runtimeKernelCodeObjectResolverIds: [],
+          runtimeKernelCodeObjectResolverIdsSource: 'default',
         }),
       })
     );
+    expect(
+      finalUpdatePayload?.['meta'] as Record<string, unknown> | undefined
+    ).not.toHaveProperty('runtimeKernelConfig');
     expect(
       (finalUpdatePayload?.['meta'] as Record<string, unknown> | undefined)?.['runtimeKernel']
     ).not.toHaveProperty('runtimeKernelPilotNodeTypes');
@@ -490,7 +488,7 @@ describe('path-run-executor runtime-kernel settings integration', () => {
           kernelParity: {
             sampledHistoryEntries: 2,
             strategyCounts: {
-              legacy_adapter: 1,
+              compatibility: 1,
               code_object_v3: 1,
               unknown: 0,
             },

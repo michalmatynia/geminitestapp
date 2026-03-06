@@ -1,10 +1,14 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
  
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
+import {
+  PlanStep,
+  PlannerMeta,
+  AdaptivePlanReviewResult,
+  SelfCheckReviewResult,
+  adaptivePlanReviewResultSchema,
+  selfCheckReviewResultSchema,
+} from '@/shared/contracts/agent-runtime';
 import {
   parsePlanJson,
   normalizePlannerMeta,
@@ -13,18 +17,9 @@ import {
   buildPlanStepsFromSpecs,
   buildBranchStepsFromAlternatives,
   normalizeStringList,
-  type PlanHierarchy,
 } from '../utils';
 import { normalizePlanStepSpecs } from '../llm-step-specs';
 import { runPlannerTask } from './core';
-
-export type AdaptivePlanReviewResult = {
-  shouldReplan: boolean;
-  reason?: string;
-  steps: PlanStep[];
-  hierarchy?: PlanHierarchy | null;
-  meta?: PlannerMeta | null;
-};
 
 export async function buildAdaptivePlanReview({
   prompt,
@@ -74,17 +69,17 @@ export async function buildAdaptivePlanReview({
         maxSteps,
       }),
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const parsed = parsePlanJson(content) as any;
-    if (!parsed) {
+    const rawParsed = parsePlanJson(content);
+    if (!rawParsed) {
       throw new Error('Planner review returned invalid JSON.');
     }
+    const parsed = adaptivePlanReviewResultSchema.partial().parse(rawParsed);
     const shouldReplan = Boolean(parsed.shouldReplan);
-    const meta = normalizePlannerMeta(parsed);
-    const hierarchy = normalizePlanHierarchy(parsed);
+    const meta = normalizePlannerMeta(rawParsed);
+    const hierarchy = normalizePlanHierarchy(rawParsed);
     const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
-    const stepSpecs = hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
-    const normalizedStepSpecs = normalizePlanStepSpecs(stepSpecs);
+    const stepSpecs = hierarchySteps.length > 0 ? hierarchySteps : ((rawParsed as Record<string, unknown>).steps ?? []);
+    const normalizedStepSpecs = normalizePlanStepSpecs(stepSpecs as unknown[]);
     let steps = shouldReplan
       ? buildPlanStepsFromSpecs(normalizedStepSpecs, meta, true, maxStepAttempts).slice(0, maxSteps)
       : [];
@@ -123,25 +118,6 @@ export async function buildAdaptivePlanReview({
     return { shouldReplan: false, steps: [] };
   }
 }
-
-export type SelfCheckReviewResult = {
-  action: 'continue' | 'replan' | 'wait_human';
-  reason?: string;
-  notes?: string;
-  questions?: string[];
-  evidence?: string[];
-  confidence?: number;
-  missingInfo?: string[];
-  blockers?: string[];
-  hypotheses?: string[];
-  verificationSteps?: string[];
-  toolSwitch?: string;
-  abortSignals?: string[];
-  finishSignals?: string[];
-  steps: PlanStep[];
-  hierarchy?: PlanHierarchy | null;
-  meta?: PlannerMeta | null;
-};
 
 export async function buildSelfCheckReview({
   prompt,
@@ -210,18 +186,18 @@ export async function buildSelfCheckReview({
         maxSteps,
       }),
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const parsed = parsePlanJson(content) as any;
-    if (!parsed) {
+    const rawParsed = parsePlanJson(content);
+    if (!rawParsed) {
       throw new Error('Self-check returned invalid JSON.');
     }
+    const parsed = selfCheckReviewResultSchema.partial().parse(rawParsed);
     const action =
       parsed.action === 'replan' || parsed.action === 'wait_human' ? parsed.action : 'continue';
-    const meta = normalizePlannerMeta(parsed);
-    const hierarchy = normalizePlanHierarchy(parsed);
+    const meta = normalizePlannerMeta(rawParsed);
+    const hierarchy = normalizePlanHierarchy(rawParsed);
     const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
-    const stepSpecs = hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
-    const normalizedStepSpecs = normalizePlanStepSpecs(stepSpecs);
+    const stepSpecs = hierarchySteps.length > 0 ? hierarchySteps : ((rawParsed as Record<string, unknown>).steps ?? []);
+    const normalizedStepSpecs = normalizePlanStepSpecs(stepSpecs as unknown[]);
     let steps =
       action === 'replan'
         ? buildPlanStepsFromSpecs(normalizedStepSpecs, meta, true, maxStepAttempts).slice(

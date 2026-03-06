@@ -63,7 +63,7 @@ const buildSummary = (
         runsWithKernelParity: 2,
         sampledHistoryEntries: 5,
         strategyCounts: {
-          legacy_adapter: 2,
+          compatibility: 2,
           code_object_v3: 3,
           unknown: 0,
         },
@@ -123,7 +123,7 @@ describe('buildRuntimeKernelParityPrompt', () => {
     expect(prompt).toContain('Kernel parity migration risk: HIGH');
     expect(prompt).toContain('Runs with kernel parity telemetry: 2 (66.7%)');
     expect(prompt).toContain(
-      'Strategy split: code_object_v3=3 (60.0%), legacy_adapter=2 (40.0%), unknown=0 (0.0%)'
+      'Strategy split: code_object_v3=3 (60.0%), compatibility=2 (40.0%), unknown=0 (0.0%)'
     );
     expect(prompt).toContain(
       'Resolution source counts: override=3, registry=2, missing=0, unknown=0'
@@ -143,7 +143,7 @@ describe('buildRuntimeKernelParityPrompt', () => {
             runsWithKernelParity: 0,
             sampledHistoryEntries: 0,
             strategyCounts: {
-              legacy_adapter: 0,
+              compatibility: 0,
               code_object_v3: 0,
               unknown: 0,
             },
@@ -161,7 +161,7 @@ describe('buildRuntimeKernelParityPrompt', () => {
 
     expect(prompt).toContain('Runs with kernel parity telemetry: 0 (0.0%)');
     expect(prompt).toContain(
-      'Strategy split: code_object_v3=0 (0.0%), legacy_adapter=0 (0.0%), unknown=0 (0.0%)'
+      'Strategy split: code_object_v3=0 (0.0%), compatibility=0 (0.0%), unknown=0 (0.0%)'
     );
     expect(prompt).toContain('Top runtime code objects: none observed in sampled traces');
   });
@@ -176,7 +176,7 @@ describe('buildRuntimeKernelParityPrompt', () => {
             runsWithKernelParity: 20,
             sampledHistoryEntries: 100,
             strategyCounts: {
-              legacy_adapter: 8,
+              compatibility: 8,
               code_object_v3: 92,
               unknown: 0,
             },
@@ -205,7 +205,7 @@ describe('buildRuntimeKernelParityPrompt', () => {
           runsWithKernelParity: 8,
           sampledHistoryEntries: 20,
           strategyCounts: {
-            legacy_adapter: 4,
+            compatibility: 4,
             code_object_v3: 15,
             unknown: 1,
           },

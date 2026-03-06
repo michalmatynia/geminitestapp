@@ -1,9 +1,0 @@
-src/app/api/drafts/[id]/handler.ts(8,15): error TS2724: '"@/features/products/server"' has no exported member named 'UpdateProductDraftDto'. Did you mean 'UpdateProductDraftInput'?
-src/app/api/drafts/handler.ts(8,15): error TS2724: '"@/features/products/server"' has no exported member named 'CreateProductDraftDto'. Did you mean 'CreateProductDraftInput'?
-src/features/prompt-exploder/context/SettingsContext.tsx(37,1): error TS6133: 'useDocument' is declared but its value is never read.
-src/features/prompt-exploder/context/SettingsContext.tsx(67,28): error TS2304: Cannot find name 'useDocumentPrompt'.
-src/features/prompt-exploder/context/SettingsContext.tsx(89,24): error TS2339: Property 'setSaveError' does not exist on type '{ learningDraft: LearningDraft; setLearningDraftState: Dispatch<SetStateAction<LearningDraft>>; parserTuningDrafts: PromptExploderParserTuningRuleDraft[]; ... 34 more ...; templateMergeThreshold: number; }'.
-src/shared/contracts/products/drafts.ts(23,52): error TS6196: 'ProductListPreferences' is declared but never used.
-src/shared/lib/ai-paths/api/client.ts(64,3): error TS6196: 'DatabaseBrowseDto' is declared but never used.
-src/shared/lib/ai-paths/core/runtime/handlers/agent.ts(107,43): error TS2345: Argument of type '{ scope: "heavy"; }' is not assignable to parameter of type '"all" | "light" | "heavy"'.
-src/shared/lib/ai-paths/core/runtime/handlers/integration-api-advanced-handler.ts(114,9): error TS6133: 'aggregateMode' is declared but its value is never read.

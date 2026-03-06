@@ -3,8 +3,6 @@
 import React, { createContext, useContext } from 'react';
 import type { MasterFolderTreeShell } from './useMasterFolderTreeShell';
 
-export type { MasterFolderTreeShell };
-
 export const MasterFolderTreeShellContext = createContext<MasterFolderTreeShell | null>(null);
 
 export function MasterFolderTreeShellProvider({

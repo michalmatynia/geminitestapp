@@ -685,6 +685,72 @@ describe('client native code-object registry contract subset', () => {
     expect(result.outputs?.['node-model-wait']?.['jobId']).toBe('job-model-1');
   });
 
+  it('marks model wait-for-result path as failed when poll reports failure', async () => {
+    mockAiJobsEnqueue.mockClear();
+    mockAiJobsPoll.mockClear();
+    mockAiJobsPoll.mockResolvedValueOnce({
+      ok: true as const,
+      data: {
+        status: 'failed',
+        error: 'model-job-failed',
+      },
+    });
+
+    const result = await evaluateGraphClient({
+      nodes: [buildPromptNode(), buildModelWaitNode()],
+      edges: [
+        {
+          id: 'edge-prompt-model-wait-failed',
+          from: 'node-prompt',
+          to: 'node-model-wait',
+          fromPort: 'prompt',
+          toPort: 'prompt',
+          kind: 'value',
+        },
+      ],
+      runtimeKernelPilotNodeTypes: ['prompt', 'model'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockAiJobsEnqueue).toHaveBeenCalledTimes(1);
+    expect(mockAiJobsPoll).toHaveBeenCalledTimes(1);
+    expect(result.outputs?.['node-model-wait']?.['status']).toBe('failed');
+    expect(result.outputs?.['node-model-wait']?.['error']).toBe('model-job-failed');
+    expect(result.outputs?.['node-model-wait']?.['jobId']).toBe('job-model-1');
+  });
+
+  it('fails model nodes when enqueue response misses a valid job id', async () => {
+    mockAiJobsEnqueue.mockClear();
+    mockAiJobsPoll.mockClear();
+    mockAiJobsEnqueue.mockResolvedValueOnce({
+      ok: true as const,
+      data: { jobId: ' ' },
+    });
+
+    const result = await evaluateGraphClient({
+      nodes: [buildPromptNode(), buildModelNode()],
+      edges: [
+        {
+          id: 'edge-prompt-model-missing-job-id',
+          from: 'node-prompt',
+          to: 'node-model',
+          fromPort: 'prompt',
+          toPort: 'prompt',
+          kind: 'value',
+        },
+      ],
+      runtimeKernelPilotNodeTypes: ['prompt', 'model'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockAiJobsEnqueue).toHaveBeenCalledTimes(1);
+    expect(mockAiJobsPoll).not.toHaveBeenCalled();
+    expect(result.outputs?.['node-model']?.['status']).toBe('failed');
+    expect(String(result.outputs?.['node-model']?.['error'] ?? '')).toContain(
+      'did not include a valid job id'
+    );
+  });
+
   it('executes agent nodes through client native contract resolver mapping', async () => {
     mockSettingsList.mockClear();
     mockAgentEnqueue.mockClear();
@@ -745,6 +811,49 @@ describe('client native code-object registry contract subset', () => {
     expect(result.outputs?.['node-agent-wait']?.['status']).toBe('completed');
     expect(result.outputs?.['node-agent-wait']?.['result']).toBe('done');
     expect(result.outputs?.['node-agent-wait']?.['jobId']).toBe('agent-run-1');
+  });
+
+  it('marks agent wait-for-result path as failed when poll reports failure', async () => {
+    mockSettingsList.mockClear();
+    mockAgentEnqueue.mockClear();
+    mockAgentPoll.mockClear();
+    mockAgentPoll.mockResolvedValueOnce({
+      ok: true as const,
+      data: {
+        run: {
+          id: 'agent-run-1',
+          status: 'failed',
+          errorMessage: 'agent-run-failed',
+          logLines: [],
+        },
+      },
+    });
+
+    const result = await evaluateGraphClient({
+      nodes: [buildPromptNode(), buildAgentWaitNode()],
+      edges: [
+        {
+          id: 'edge-prompt-agent-wait-failed',
+          from: 'node-prompt',
+          to: 'node-agent-wait',
+          fromPort: 'prompt',
+          toPort: 'prompt',
+          kind: 'value',
+        },
+      ],
+      runtimeKernelPilotNodeTypes: ['prompt', 'agent'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockSettingsList).toHaveBeenCalledTimes(1);
+    expect(mockAgentEnqueue).toHaveBeenCalledTimes(1);
+    expect(mockAgentPoll).toHaveBeenCalledTimes(1);
+    expect(result.outputs?.['node-agent-wait']?.['status']).toBe('failed');
+    expect(result.outputs?.['node-agent-wait']?.['jobId']).toBe('agent-run-1');
+    expect(result.outputs?.['node-agent-wait']?.['bundle']).toMatchObject({
+      runId: 'agent-run-1',
+      status: 'failed',
+    });
   });
 
   it('executes learner agent nodes through client native contract resolver mapping', async () => {

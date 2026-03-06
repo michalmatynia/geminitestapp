@@ -16,8 +16,8 @@ import {
 import {
   summarizeRuntimeKernelParityFromHistory,
 } from '../path-run-executor.helpers';
-import { computeDurationMs } from '../path-run-executor.logic';
 import { PathRunRuntimeStateManager } from './runtime-state-manager';
+import { RuntimeProfileSnapshot } from '../path-run-executor.types';
 
 export type ExecutionCompletionArgs = {
   run: AiPathRunRecord;
@@ -29,14 +29,20 @@ export type ExecutionCompletionArgs = {
   runMetaWithRuntimeContext: Record<string, unknown>;
   runStartedAt: string;
   traceId: string;
-  profileSnapshot: Record<string, unknown>;
+  profileSnapshot: RuntimeProfileSnapshot;
   stateManager: PathRunRuntimeStateManager;
-  updateRunSnapshot: (data: Record<string, unknown>) => Promise<boolean>;
+  updateRunSnapshot: (input: {
+    status: AiPathRunStatus;
+    runtimeState: any;
+    errorMessage: string | null;
+    meta: Record<string, unknown>;
+  }) => Promise<void>;
 };
 
-export const handleExecutionCompletion = async (args: ExecutionCompletionArgs): Promise<AiPathRunStatus> => {
+export const handleExecutionCompletion = async (
+  args: ExecutionCompletionArgs
+): Promise<AiPathRunStatus> => {
   const {
-    run,
     nodes,
     accOutputs,
     runtimeHaltReason,
@@ -44,50 +50,35 @@ export const handleExecutionCompletion = async (args: ExecutionCompletionArgs): 
     requiredProcessingNodeIds,
     runMetaWithRuntimeContext,
     runStartedAt,
+    traceId,
     profileSnapshot,
     stateManager,
     updateRunSnapshot,
   } = args;
 
-  const finishedAt = new Date().toISOString();
   let finalStatus: AiPathRunStatus = 'completed';
   let finalError: string | null = null;
 
   if (runtimeHaltReason === 'failed') {
     finalStatus = 'failed';
+    finalError = buildFailedRunFailureMessage(collectFailedNodeDiagnostics(accOutputs, nodes));
   } else if (runtimeHaltReason === 'max_iterations') {
     finalStatus = 'failed';
-    finalError = 'Maximum iteration limit reached. The graph might have a circular dependency or infinite loop.';
-  } else if (run.status === 'canceled') {
-    finalStatus = 'canceled';
+    finalError = 'Maximum iteration limit reached.';
+  } else if (
+    runtimeHaltReason === 'blocked' &&
+    shouldFailBlockedRun(accOutputs, nodes, {
+      nodeValidationEnabled,
+      requiredProcessingNodeIds,
+    })
+  ) {
+    finalStatus = 'failed';
+    finalError = buildBlockedRunFailureMessage(collectBlockedNodeDiagnostics(accOutputs, nodes));
   } else if (runtimeHaltReason === 'blocked') {
-    const blockedNodeDiagnostics = collectBlockedNodeDiagnostics(nodes, accOutputs);
-    if (
-      shouldFailBlockedRun({
-        runBlocked: blockedNodeDiagnostics.length > 0,
-        blockedRunPolicy:
-          (run.meta?.['blockedRunPolicy'] as 'fail_run' | 'complete_with_warning') ??
-          'complete_with_warning',
-        nodeValidationEnabled,
-      })
-    ) {
-      finalStatus = 'failed';
-      finalError = buildBlockedRunFailureMessage(blockedNodeDiagnostics);
-    }
+    finalStatus = 'blocked';
   }
 
-  if (finalStatus === 'completed') {
-    const requiredProcessingNodeIdSet = new Set<string>(requiredProcessingNodeIds);
-    const failedRequiredNodes = collectFailedNodeDiagnostics(nodes, accOutputs).filter(
-      (node) =>
-        requiredProcessingNodeIdSet.size === 0 || requiredProcessingNodeIdSet.has(node.nodeId)
-    );
-    if (failedRequiredNodes.length > 0) {
-      finalStatus = 'failed';
-      finalError = buildFailedRunFailureMessage(failedRequiredNodes);
-    }
-  }
-
+  const finishedAt = new Date().toISOString();
   const finalRuntimeState = await stateManager.buildCurrentRuntimeStateSnapshot();
   const runtimeTraceRecord =
     runMetaWithRuntimeContext['runtimeTrace'] &&
@@ -95,16 +86,21 @@ export const handleExecutionCompletion = async (args: ExecutionCompletionArgs): 
     !Array.isArray(runMetaWithRuntimeContext['runtimeTrace'])
       ? (runMetaWithRuntimeContext['runtimeTrace'] as Record<string, unknown>)
       : {};
-  const runtimeKernelParity = summarizeRuntimeKernelParityFromHistory(finalRuntimeState.history);
+  const runtimeKernelParity = summarizeRuntimeKernelParityFromHistory(finalRuntimeState.history as unknown);
+
+  const startMs = Date.parse(runStartedAt);
+  const finishMs = Date.parse(finishedAt);
+  const durationMs =
+    Number.isFinite(startMs) && Number.isFinite(finishMs) ? Math.max(0, finishMs - startMs) : null;
 
   await updateRunSnapshot({
     status: finalStatus,
-    runtimeState: finalRuntimeState,
+    runtimeState: finalRuntimeState as unknown,
     errorMessage: finalError,
     meta: {
       ...runMetaWithRuntimeContext,
       finishedAt,
-      durationMs: computeDurationMs(runStartedAt, finishedAt),
+      durationMs,
       runtimeTrace: {
         ...runtimeTraceRecord,
         profile: profileSnapshot,

@@ -57,7 +57,7 @@ Continue staged migration to semantic portable runtime by promoting `poll` into 
 
 - v3 pilot set remains `26` node types, with `poll` now included and parity-backed.
 - Migration snapshot now reports:
-  - `strategyTotals`: `legacy_adapter=10`, `code_object_v3=26`
+  - `strategyTotals`: `compatibility=10`, `code_object_v3=26`
   - `averageScore`: `75`
   - top blockers: `rollout_not_approved`, `missing_v3_scaffold`, `not_in_v3_pilot`
 

@@ -7,18 +7,21 @@ import {
 import type { AiPathsSettingRecord } from '@/features/ai/ai-paths/server/settings-store.constants';
 import {
   AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
-  AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
   AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
-  AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
-  AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
 } from '@/shared/lib/ai-paths/core/constants';
 import { AI_PATHS_CONFIG_KEY_PREFIX } from '@/features/ai/ai-paths/server/settings-store.constants';
+
+const DEPRECATED_AI_PATHS_RUNTIME_KERNEL_MODE_KEY = 'ai_paths_runtime_kernel_mode';
+const DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY =
+  'ai_paths_runtime_kernel_pilot_node_types';
+const DEPRECATED_AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY =
+  'ai_paths_runtime_kernel_strict_native_registry';
 
 describe('AI Paths maintenance runtime-kernel settings normalization', () => {
   it('surfaces normalization action when deprecated runtime mode is stored', () => {
     const records: AiPathsSettingRecord[] = [
       {
-        key: AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
+        key: DEPRECATED_AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
         value: 'legacy_only',
       },
     ];
@@ -38,7 +41,7 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
   it('prunes deprecated runtime mode setting', () => {
     const records: AiPathsSettingRecord[] = [
       {
-        key: AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
+        key: DEPRECATED_AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
         value: 'legacy_only',
       },
     ];
@@ -50,14 +53,14 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
 
     expect(result.success).toBe(true);
     expect(result.affectedCount).toBe(1);
-    expect(result.deletedKeys).toEqual([AI_PATHS_RUNTIME_KERNEL_MODE_KEY]);
+    expect(result.deletedKeys).toEqual([DEPRECATED_AI_PATHS_RUNTIME_KERNEL_MODE_KEY]);
     expect(result.nextRecords).toEqual([]);
   });
 
   it('normalizes runtime-kernel node type and resolver id list values', () => {
     const records: AiPathsSettingRecord[] = [
       {
-        key: AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
+        key: DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
         value: ' Constant , math, Template Node, math ',
       },
       {
@@ -84,7 +87,7 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
 
     expect(result.success).toBe(true);
     expect(result.affectedCount).toBe(2);
-    expect(result.deletedKeys).toEqual([AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY]);
+    expect(result.deletedKeys).toEqual([DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY]);
     expect(result.nextRecords).toEqual([
       {
         key: AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
@@ -100,7 +103,7 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
   it('prunes deprecated runtime-kernel strict native registry setting', () => {
     const records: AiPathsSettingRecord[] = [
       {
-        key: AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
+        key: DEPRECATED_AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
         value: ' YES ',
       },
     ];
@@ -123,7 +126,9 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
 
     expect(result.success).toBe(true);
     expect(result.affectedCount).toBe(1);
-    expect(result.deletedKeys).toEqual([AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY]);
+    expect(result.deletedKeys).toEqual([
+      DEPRECATED_AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
+    ]);
     expect(result.nextRecords).toEqual([]);
   });
 
@@ -205,4 +210,5 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
       codeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
     });
   });
+
 });

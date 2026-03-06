@@ -3,6 +3,7 @@ import 'server-only';
 import { randomUUID } from 'crypto';
 
 import bcrypt from 'bcryptjs';
+import type { Filter } from 'mongodb';
 
 import {
   type KangurLearnerCreateInput,
@@ -13,11 +14,27 @@ import {
 } from '@/shared/contracts/kangur';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
 import { readStoredSettingValue, upsertStoredSettingValue } from '@/shared/lib/ai-brain/server';
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 const KANGUR_LEARNERS_SETTINGS_KEY = 'kangur_learners.v1';
+const KANGUR_LEARNERS_COLLECTION = 'kangur_learners';
 
 type StoredKangurLearnerProfile = KangurLearnerProfile & {
+  passwordHash: string;
+};
+
+type MongoKangurLearnerDocument = {
+  _id: string;
+  id?: string;
+  ownerUserId: string;
+  displayName: string;
+  loginName: string;
+  status: KangurLearnerStatus;
+  legacyUserKey: string | null;
+  createdAt: string;
+  updatedAt: string;
   passwordHash: string;
 };
 
@@ -42,71 +59,75 @@ const toPublicLearnerProfile = (
   updatedAt: stored.updatedAt,
 });
 
-const parseStoredLearners = (raw: string | null): StoredKangurLearnerProfile[] => {
+const sortPublicLearners = (profiles: KangurLearnerProfile[]): KangurLearnerProfile[] =>
+  [...profiles].sort((left, right) => left.displayName.localeCompare(right.displayName, 'pl'));
+
+const normalizeStoredLearner = (value: unknown): StoredKangurLearnerProfile | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const publicProfiles = kangurLearnerProfilesSchema.safeParse([
+    {
+      id:
+        typeof record['_id'] === 'string'
+          ? record['_id']
+          : typeof record['id'] === 'string'
+            ? record['id']
+            : '',
+      ownerUserId: typeof record['ownerUserId'] === 'string' ? record['ownerUserId'] : '',
+      displayName: typeof record['displayName'] === 'string' ? record['displayName'] : '',
+      loginName:
+        typeof record['loginName'] === 'string' ? normalizeLoginName(record['loginName']) : '',
+      status: record['status'] === 'disabled' ? 'disabled' : 'active',
+      legacyUserKey: normalizeLegacyUserKey(
+        typeof record['legacyUserKey'] === 'string' ? record['legacyUserKey'] : null
+      ),
+      createdAt: typeof record['createdAt'] === 'string' ? record['createdAt'] : '',
+      updatedAt: typeof record['updatedAt'] === 'string' ? record['updatedAt'] : '',
+    },
+  ]);
+
+  if (!publicProfiles.success) {
+    return null;
+  }
+
+  const passwordHash = typeof record['passwordHash'] === 'string' ? record['passwordHash'] : '';
+  if (passwordHash.trim().length === 0) {
+    return null;
+  }
+
+  return {
+    ...publicProfiles.data[0]!,
+    passwordHash,
+  } satisfies StoredKangurLearnerProfile;
+};
+
+const parseLegacyStoredLearners = (raw: string | null): StoredKangurLearnerProfile[] => {
   const parsed = parseJsonSetting<unknown[]>(raw, []);
   if (!Array.isArray(parsed)) {
     return [];
   }
 
-  const publicProfiles = kangurLearnerProfilesSchema.safeParse(
-    parsed.map((entry) => {
-      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
-        return null;
-      }
-      const record = entry as Record<string, unknown>;
-      return {
-        id: typeof record['id'] === 'string' ? record['id'] : '',
-        ownerUserId: typeof record['ownerUserId'] === 'string' ? record['ownerUserId'] : '',
-        displayName: typeof record['displayName'] === 'string' ? record['displayName'] : '',
-        loginName:
-          typeof record['loginName'] === 'string'
-            ? normalizeLoginName(record['loginName'])
-            : '',
-        status: record['status'] === 'disabled' ? 'disabled' : 'active',
-        legacyUserKey: normalizeLegacyUserKey(
-          typeof record['legacyUserKey'] === 'string' ? record['legacyUserKey'] : null
-        ),
-        createdAt: typeof record['createdAt'] === 'string' ? record['createdAt'] : '',
-        updatedAt: typeof record['updatedAt'] === 'string' ? record['updatedAt'] : '',
-      };
-    })
-  );
-
-  if (!publicProfiles.success) {
-    return [];
-  }
-
-  return publicProfiles.data
-    .map((profile, index) => {
-      const source = parsed[index];
-      if (!source || typeof source !== 'object' || Array.isArray(source)) {
-        return null;
-      }
-      const record = source as Record<string, unknown>;
-      const passwordHash = typeof record['passwordHash'] === 'string' ? record['passwordHash'] : '';
-      if (passwordHash.trim().length === 0) {
-        return null;
-      }
-      return {
-        ...profile,
-        loginName: normalizeLoginName(profile.loginName),
-        passwordHash,
-      } satisfies StoredKangurLearnerProfile;
-    })
+  return parsed
+    .map((entry) => normalizeStoredLearner(entry))
     .filter((profile): profile is StoredKangurLearnerProfile => profile !== null);
 };
 
-const readStoredLearners = async (): Promise<StoredKangurLearnerProfile[]> =>
-  parseStoredLearners(await readStoredSettingValue(KANGUR_LEARNERS_SETTINGS_KEY));
+const readLegacyStoredLearners = async (): Promise<StoredKangurLearnerProfile[]> =>
+  parseLegacyStoredLearners(await readStoredSettingValue(KANGUR_LEARNERS_SETTINGS_KEY));
 
-const writeStoredLearners = async (profiles: StoredKangurLearnerProfile[]): Promise<void> => {
+const writeLegacyStoredLearners = async (
+  profiles: StoredKangurLearnerProfile[]
+): Promise<void> => {
   const ok = await upsertStoredSettingValue(KANGUR_LEARNERS_SETTINGS_KEY, serializeSetting(profiles));
   if (!ok) {
     throw new Error('Failed to persist Kangur learners.');
   }
 };
 
-const ensureUniqueLoginName = (
+const ensureUniqueLegacyLoginName = (
   profiles: StoredKangurLearnerProfile[],
   loginName: string,
   currentLearnerId?: string
@@ -122,35 +143,237 @@ const ensureUniqueLoginName = (
   }
 };
 
+const shouldUseMongoLearnerCollection = async (): Promise<boolean> => {
+  if (!process.env['MONGODB_URI']) {
+    return false;
+  }
+
+  return (await getAppDbProvider()) === 'mongodb';
+};
+
+const getMongoLearnerCollection = async () =>
+  (await getMongoDb()).collection<MongoKangurLearnerDocument>(KANGUR_LEARNERS_COLLECTION);
+
+const toMongoLearnerUpdate = (
+  profile: StoredKangurLearnerProfile
+): Omit<MongoKangurLearnerDocument, '_id'> => ({
+  ownerUserId: profile.ownerUserId,
+  displayName: profile.displayName,
+  loginName: profile.loginName,
+  status: profile.status,
+  legacyUserKey: profile.legacyUserKey ?? null,
+  createdAt: profile.createdAt,
+  updatedAt: profile.updatedAt,
+  passwordHash: profile.passwordHash,
+});
+
+const mergeStoredLearners = (
+  primary: StoredKangurLearnerProfile[],
+  fallback: StoredKangurLearnerProfile[]
+): StoredKangurLearnerProfile[] => {
+  const merged = new Map<string, StoredKangurLearnerProfile>();
+  fallback.forEach((profile) => {
+    merged.set(profile.id, profile);
+  });
+  primary.forEach((profile) => {
+    merged.set(profile.id, profile);
+  });
+  return [...merged.values()];
+};
+
+const upsertMongoStoredLearners = async (profiles: StoredKangurLearnerProfile[]): Promise<void> => {
+  if (profiles.length === 0) {
+    return;
+  }
+
+  const collection = await getMongoLearnerCollection();
+  await collection.bulkWrite(
+    profiles.map((profile) => ({
+      updateOne: {
+        filter: { _id: profile.id },
+        update: {
+          $set: toMongoLearnerUpdate(profile),
+          $setOnInsert: {
+            _id: profile.id,
+          },
+        },
+        upsert: true,
+      },
+    }))
+  );
+};
+
+const readMongoStoredLearnersByOwner = async (
+  ownerUserId: string
+): Promise<StoredKangurLearnerProfile[]> => {
+  const collection = await getMongoLearnerCollection();
+  const rows = await collection.find({ ownerUserId }).toArray();
+  return rows
+    .map((row) => normalizeStoredLearner(row))
+    .filter((profile): profile is StoredKangurLearnerProfile => profile !== null);
+};
+
+const readMongoStoredLearnerById = async (
+  learnerId: string
+): Promise<StoredKangurLearnerProfile | null> => {
+  const collection = await getMongoLearnerCollection();
+  const row = await collection.findOne({
+    $or: [{ _id: learnerId }, { id: learnerId }],
+  } as Filter<MongoKangurLearnerDocument>);
+  return normalizeStoredLearner(row);
+};
+
+const readMongoStoredLearnerByLoginName = async (
+  loginName: string
+): Promise<StoredKangurLearnerProfile | null> => {
+  const collection = await getMongoLearnerCollection();
+  const row = await collection.findOne({
+    loginName: normalizeLoginName(loginName),
+  });
+  return normalizeStoredLearner(row);
+};
+
+const writeMongoStoredLearner = async (profile: StoredKangurLearnerProfile): Promise<void> => {
+  const collection = await getMongoLearnerCollection();
+  await collection.updateOne(
+    {
+      _id: profile.id,
+    },
+    {
+      $set: toMongoLearnerUpdate(profile),
+      $setOnInsert: {
+        _id: profile.id,
+      },
+    },
+    {
+      upsert: true,
+    }
+  );
+};
+
+const ensureUniqueMongoLoginName = async (
+  loginName: string,
+  currentLearnerId?: string
+): Promise<void> => {
+  const normalized = normalizeLoginName(loginName);
+  const collection = await getMongoLearnerCollection();
+  const duplicate = await collection.findOne({
+    loginName: normalized,
+    ...(currentLearnerId ? { _id: { $ne: currentLearnerId } } : {}),
+  } as Filter<MongoKangurLearnerDocument>);
+
+  if (duplicate) {
+    throw conflictError('This learner login name is already in use.', {
+      loginName: normalized,
+    });
+  }
+
+  const legacyProfiles = await readLegacyStoredLearners();
+  const legacyDuplicate = legacyProfiles.find(
+    (profile) => profile.loginName === normalized && profile.id !== currentLearnerId
+  );
+  if (legacyDuplicate) {
+    throw conflictError('This learner login name is already in use.', {
+      loginName: normalized,
+    });
+  }
+};
+
+const readAllKnownLearners = async (): Promise<StoredKangurLearnerProfile[]> => {
+  if (!(await shouldUseMongoLearnerCollection())) {
+    return readLegacyStoredLearners();
+  }
+
+  const [mongoProfiles, legacyProfiles] = await Promise.all([
+    getMongoLearnerCollection()
+      .then((collection) => collection.find({}).toArray())
+      .then((rows) =>
+        rows
+          .map((row) => normalizeStoredLearner(row))
+          .filter((profile): profile is StoredKangurLearnerProfile => profile !== null)
+      ),
+    readLegacyStoredLearners(),
+  ]);
+
+  return mergeStoredLearners(mongoProfiles, legacyProfiles);
+};
+
 export const listKangurLearnersByOwner = async (
   ownerUserId: string
 ): Promise<KangurLearnerProfile[]> => {
-  const profiles = await readStoredLearners();
-  return profiles
-    .filter((profile) => profile.ownerUserId === ownerUserId)
-    .map(toPublicLearnerProfile)
-    .sort((left, right) => left.displayName.localeCompare(right.displayName, 'pl'));
+  if (!(await shouldUseMongoLearnerCollection())) {
+    return sortPublicLearners(
+      (await readLegacyStoredLearners())
+        .filter((profile) => profile.ownerUserId === ownerUserId)
+        .map(toPublicLearnerProfile)
+    );
+  }
+
+  const [mongoProfiles, legacyProfiles] = await Promise.all([
+    readMongoStoredLearnersByOwner(ownerUserId),
+    readLegacyStoredLearners(),
+  ]);
+  const legacyOwnedProfiles = legacyProfiles.filter((profile) => profile.ownerUserId === ownerUserId);
+  const missingLegacyProfiles = legacyOwnedProfiles.filter(
+    (legacyProfile) => !mongoProfiles.some((mongoProfile) => mongoProfile.id === legacyProfile.id)
+  );
+
+  if (missingLegacyProfiles.length > 0) {
+    await upsertMongoStoredLearners(missingLegacyProfiles);
+  }
+
+  return sortPublicLearners(
+    mergeStoredLearners(mongoProfiles, legacyOwnedProfiles).map(toPublicLearnerProfile)
+  );
 };
 
-export const getKangurLearnerById = async (learnerId: string): Promise<KangurLearnerProfile | null> => {
-  const profiles = await readStoredLearners();
-  const match = profiles.find((profile) => profile.id === learnerId);
+export const getKangurLearnerById = async (
+  learnerId: string
+): Promise<KangurLearnerProfile | null> => {
+  const match = await getKangurStoredLearnerById(learnerId);
   return match ? toPublicLearnerProfile(match) : null;
 };
 
 export const getKangurStoredLearnerById = async (
   learnerId: string
 ): Promise<StoredKangurLearnerProfile | null> => {
-  const profiles = await readStoredLearners();
-  return profiles.find((profile) => profile.id === learnerId) ?? null;
+  if (!(await shouldUseMongoLearnerCollection())) {
+    return (await readLegacyStoredLearners()).find((profile) => profile.id === learnerId) ?? null;
+  }
+
+  const mongoProfile = await readMongoStoredLearnerById(learnerId);
+  if (mongoProfile) {
+    return mongoProfile;
+  }
+
+  const legacyProfiles = await readLegacyStoredLearners();
+  const legacyProfile = legacyProfiles.find((profile) => profile.id === learnerId) ?? null;
+  if (legacyProfile) {
+    await writeMongoStoredLearner(legacyProfile);
+  }
+  return legacyProfile;
 };
 
 export const getKangurStoredLearnerByLoginName = async (
   loginName: string
 ): Promise<StoredKangurLearnerProfile | null> => {
-  const profiles = await readStoredLearners();
   const normalized = normalizeLoginName(loginName);
-  return profiles.find((profile) => profile.loginName === normalized) ?? null;
+
+  if (!(await shouldUseMongoLearnerCollection())) {
+    return (await readLegacyStoredLearners()).find((profile) => profile.loginName === normalized) ?? null;
+  }
+
+  const mongoProfile = await readMongoStoredLearnerByLoginName(normalized);
+  if (mongoProfile) {
+    return mongoProfile;
+  }
+
+  const legacyProfiles = await readLegacyStoredLearners();
+  const legacyProfile = legacyProfiles.find((profile) => profile.loginName === normalized) ?? null;
+  if (legacyProfile) {
+    await writeMongoStoredLearner(legacyProfile);
+  }
+  return legacyProfile;
 };
 
 export const createKangurLearner = async (input: {
@@ -159,9 +382,15 @@ export const createKangurLearner = async (input: {
   legacyUserKey?: string | null;
   status?: KangurLearnerStatus;
 }): Promise<KangurLearnerProfile> => {
-  const profiles = await readStoredLearners();
   const loginName = normalizeLoginName(input.learner.loginName);
-  ensureUniqueLoginName(profiles, loginName);
+  const useMongoLearnerCollection = await shouldUseMongoLearnerCollection();
+
+  if (useMongoLearnerCollection) {
+    await ensureUniqueMongoLoginName(loginName);
+  } else {
+    const profiles = await readLegacyStoredLearners();
+    ensureUniqueLegacyLoginName(profiles, loginName);
+  }
 
   const now = new Date().toISOString();
   const nextProfile: StoredKangurLearnerProfile = {
@@ -176,7 +405,13 @@ export const createKangurLearner = async (input: {
     passwordHash: await bcrypt.hash(input.learner.password, 12),
   };
 
-  await writeStoredLearners([...profiles, nextProfile]);
+  if (useMongoLearnerCollection) {
+    await writeMongoStoredLearner(nextProfile);
+  } else {
+    const profiles = await readLegacyStoredLearners();
+    await writeLegacyStoredLearners([...profiles, nextProfile]);
+  }
+
   return toPublicLearnerProfile(nextProfile);
 };
 
@@ -184,16 +419,21 @@ export const updateKangurLearner = async (
   learnerId: string,
   input: KangurLearnerUpdateInput
 ): Promise<KangurLearnerProfile> => {
-  const profiles = await readStoredLearners();
-  const index = profiles.findIndex((profile) => profile.id === learnerId);
-  if (index < 0) {
+  const current = await getKangurStoredLearnerById(learnerId);
+  if (!current) {
     throw notFoundError('Learner not found.');
   }
 
-  const current = profiles[index]!;
+  const useMongoLearnerCollection = await shouldUseMongoLearnerCollection();
   const nextLoginName =
     typeof input.loginName === 'string' ? normalizeLoginName(input.loginName) : current.loginName;
-  ensureUniqueLoginName(profiles, nextLoginName, learnerId);
+
+  if (useMongoLearnerCollection) {
+    await ensureUniqueMongoLoginName(nextLoginName, learnerId);
+  } else {
+    const profiles = await readLegacyStoredLearners();
+    ensureUniqueLegacyLoginName(profiles, nextLoginName, learnerId);
+  }
 
   const nextProfile: StoredKangurLearnerProfile = {
     ...current,
@@ -208,9 +448,19 @@ export const updateKangurLearner = async (
         : current.passwordHash,
   };
 
-  const nextProfiles = [...profiles];
-  nextProfiles[index] = nextProfile;
-  await writeStoredLearners(nextProfiles);
+  if (useMongoLearnerCollection) {
+    await writeMongoStoredLearner(nextProfile);
+  } else {
+    const profiles = await readLegacyStoredLearners();
+    const index = profiles.findIndex((profile) => profile.id === learnerId);
+    if (index < 0) {
+      throw notFoundError('Learner not found.');
+    }
+    const nextProfiles = [...profiles];
+    nextProfiles[index] = nextProfile;
+    await writeLegacyStoredLearners(nextProfiles);
+  }
+
   return toPublicLearnerProfile(nextProfile);
 };
 
@@ -218,13 +468,11 @@ export const setKangurLearnerLegacyUserKey = async (
   learnerId: string,
   legacyUserKey: string | null
 ): Promise<KangurLearnerProfile> => {
-  const profiles = await readStoredLearners();
-  const index = profiles.findIndex((profile) => profile.id === learnerId);
-  if (index < 0) {
+  const current = await getKangurStoredLearnerById(learnerId);
+  if (!current) {
     throw notFoundError('Learner not found.');
   }
 
-  const current = profiles[index]!;
   const normalizedLegacyUserKey = normalizeLegacyUserKey(legacyUserKey);
   if (current.legacyUserKey === normalizedLegacyUserKey) {
     return toPublicLearnerProfile(current);
@@ -236,9 +484,19 @@ export const setKangurLearnerLegacyUserKey = async (
     updatedAt: new Date().toISOString(),
   };
 
-  const nextProfiles = [...profiles];
-  nextProfiles[index] = nextProfile;
-  await writeStoredLearners(nextProfiles);
+  if (await shouldUseMongoLearnerCollection()) {
+    await writeMongoStoredLearner(nextProfile);
+  } else {
+    const profiles = await readLegacyStoredLearners();
+    const index = profiles.findIndex((profile) => profile.id === learnerId);
+    if (index < 0) {
+      throw notFoundError('Learner not found.');
+    }
+    const nextProfiles = [...profiles];
+    nextProfiles[index] = nextProfile;
+    await writeLegacyStoredLearners(nextProfiles);
+  }
+
   return toPublicLearnerProfile(nextProfile);
 };
 
@@ -270,8 +528,9 @@ export const ensureDefaultKangurLearnerForOwner = async (input: {
     return existing[0]!;
   }
 
-  const baseLoginName = normalizeLoginName(input.preferredLoginName) || `kangur-${randomUUID().slice(0, 8)}`;
-  const profiles = await readStoredLearners();
+  const baseLoginName =
+    normalizeLoginName(input.preferredLoginName) || `kangur-${randomUUID().slice(0, 8)}`;
+  const profiles = await readAllKnownLearners();
   let candidate = baseLoginName;
   let suffix = 1;
   while (profiles.some((profile) => profile.loginName === candidate)) {

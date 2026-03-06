@@ -101,6 +101,14 @@ if (readiness.migrationSchemaVersion !== 'ai-paths.portable-engine.v2') {
 if (Number.isNaN(Date.parse(readiness.generatedAt))) {
   errors.push('generatedAt must be a valid ISO timestamp.');
 }
+const summaryCurrentPhase = toSafeString(readiness.summary?.currentPhase);
+const summaryOverallStatus = readiness.summary?.overallStatus;
+if (!summaryCurrentPhase) {
+  errors.push('summary.currentPhase must be a non-empty phase id.');
+}
+if (!summaryOverallStatus || !allowedPhaseStatuses.has(summaryOverallStatus)) {
+  errors.push(`summary.overallStatus has invalid status: ${String(summaryOverallStatus)}.`);
+}
 
 const phaseRows = Array.isArray(readiness.phases) ? readiness.phases : [];
 if (phaseRows.length === 0) {
@@ -162,6 +170,10 @@ for (const phase of phaseRows) {
   }
 }
 
+if (summaryCurrentPhase && !phaseIds.has(summaryCurrentPhase)) {
+  errors.push(`summary.currentPhase references unknown phase: ${summaryCurrentPhase}`);
+}
+
 const parityRows = Array.isArray(readiness.featureParityMatrix) ? readiness.featureParityMatrix : [];
 if (parityRows.length === 0) {
   errors.push('featureParityMatrix must contain at least one feature.');
@@ -205,6 +217,25 @@ for (const feature of parityRows) {
     const absolute = path.join(workspaceRoot, evidencePath);
     if (!fs.existsSync(absolute)) {
       errors.push(`feature ${id} references missing evidence: ${evidencePath}`);
+    }
+  }
+}
+
+if (summaryOverallStatus === 'completed') {
+  for (const phase of phaseRows) {
+    const id = toSafeString(phase?.id);
+    if (phase?.status !== 'completed') {
+      errors.push(
+        `summary.overallStatus cannot be completed while phase ${id} is ${String(phase?.status)}.`
+      );
+    }
+  }
+  for (const feature of parityRows) {
+    const id = toSafeString(feature?.id);
+    if (feature?.status !== 'rolled_out') {
+      errors.push(
+        `summary.overallStatus cannot be completed while feature ${id} is ${String(feature?.status)}.`
+      );
     }
   }
 }

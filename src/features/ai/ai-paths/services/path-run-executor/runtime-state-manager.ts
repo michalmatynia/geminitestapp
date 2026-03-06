@@ -8,7 +8,6 @@ import type {
   RuntimeState,
 } from '@/shared/contracts/ai-paths';
 import {
-  EMPTY_RUNTIME_STATE,
   sanitizeRuntimeState,
 } from '../path-run-executor.logic';
 import { repairRuntimeStatePorts } from '@/features/ai/ai-paths/services/runtime-state-port-repair';
@@ -57,17 +56,18 @@ export class PathRunRuntimeStateManager {
       this.latestSnapshot?.nodeDurations ?? this.initialRuntimeState.nodeDurations;
       
     const candidate: RuntimeState = {
-      ...EMPTY_RUNTIME_STATE,
       status: statusFromLatest ?? 'running',
       currentRun,
       inputs: this.accInputs,
       outputs: this.accOutputs,
       nodeOutputs: nodeOutputsFromLatest ?? this.accOutputs,
-      ...(nodeStatusesFromLatest ? { nodeStatuses: nodeStatusesFromLatest } : {}),
-      ...(historyFromLatest ? { history: historyFromLatest } : {}),
-      ...(hashesFromLatest ? { hashes: hashesFromLatest } : {}),
-      ...(hashTimestampsFromLatest ? { hashTimestamps: hashTimestampsFromLatest } : {}),
-      ...(nodeDurationsFromLatest ? { nodeDurations: nodeDurationsFromLatest } : {}),
+      nodeStatuses: nodeStatusesFromLatest ?? {},
+      history: historyFromLatest ?? {},
+      hashes: hashesFromLatest ?? {},
+      hashTimestamps: hashTimestampsFromLatest ?? {},
+      nodeDurations: nodeDurationsFromLatest ?? {},
+      variables: this.latestSnapshot?.variables ?? this.initialRuntimeState.variables ?? {},
+      events: this.latestSnapshot?.events ?? this.initialRuntimeState.events ?? [],
     };
     
     const repaired = repairRuntimeStatePorts({

@@ -3,6 +3,7 @@ import { z } from 'zod';
 const nonEmptyTrimmedString = z.string().trim().min(1);
 
 export const KANGUR_LESSONS_SETTING_KEY = 'kangur_lessons_v1';
+export const KANGUR_LESSON_DOCUMENTS_SETTING_KEY = 'kangur_lesson_documents_v1';
 
 export const kangurLessonComponentIdSchema = z.enum([
   'clock',
@@ -23,9 +24,13 @@ export const kangurLessonComponentIdSchema = z.enum([
 ]);
 export type KangurLessonComponentId = z.infer<typeof kangurLessonComponentIdSchema>;
 
+export const kangurLessonContentModeSchema = z.enum(['component', 'document']);
+export type KangurLessonContentMode = z.infer<typeof kangurLessonContentModeSchema>;
+
 export const kangurLessonSchema = z.object({
   id: nonEmptyTrimmedString.max(120),
   componentId: kangurLessonComponentIdSchema,
+  contentMode: kangurLessonContentModeSchema.default('component'),
   title: nonEmptyTrimmedString.max(120),
   description: nonEmptyTrimmedString.max(240),
   emoji: nonEmptyTrimmedString.max(12),
@@ -38,6 +43,85 @@ export type KangurLesson = z.infer<typeof kangurLessonSchema>;
 
 export const kangurLessonsSchema = z.array(kangurLessonSchema);
 export type KangurLessons = z.infer<typeof kangurLessonsSchema>;
+
+const kangurLessonBlockIdSchema = nonEmptyTrimmedString.max(120);
+const kangurLessonBlockAlignSchema = z.enum(['left', 'center', 'right']);
+const kangurLessonSvgFitSchema = z.enum(['contain', 'cover', 'none']);
+const kangurLessonGridColumnsSchema = z.number().int().min(1).max(4);
+const kangurLessonGridGapSchema = z.number().int().min(0).max(48);
+const kangurLessonGridSpanSchema = z.number().int().min(1).max(4);
+const kangurLessonGridRowHeightSchema = z.number().int().min(120).max(480);
+const kangurLessonGridRowIndexSchema = z.number().int().min(1).max(12);
+
+export const kangurLessonTextBlockSchema = z.object({
+  id: kangurLessonBlockIdSchema,
+  type: z.literal('text'),
+  html: z.string().max(100_000).default(''),
+  ttsText: z.string().trim().max(10_000).optional(),
+  align: kangurLessonBlockAlignSchema.default('left'),
+});
+export type KangurLessonTextBlock = z.infer<typeof kangurLessonTextBlockSchema>;
+
+export const kangurLessonSvgBlockSchema = z.object({
+  id: kangurLessonBlockIdSchema,
+  type: z.literal('svg'),
+  title: z.string().trim().max(120).default(''),
+  ttsDescription: z.string().trim().max(2_000).optional(),
+  markup: z.string().max(200_000).default(''),
+  viewBox: z.string().trim().max(80).default('0 0 100 100'),
+  align: kangurLessonBlockAlignSchema.default('center'),
+  fit: kangurLessonSvgFitSchema.default('contain'),
+  maxWidth: z.number().int().min(120).max(1_200).default(420),
+});
+export type KangurLessonSvgBlock = z.infer<typeof kangurLessonSvgBlockSchema>;
+
+export const kangurLessonInlineBlockSchema = z.discriminatedUnion('type', [
+  kangurLessonTextBlockSchema,
+  kangurLessonSvgBlockSchema,
+]);
+export type KangurLessonInlineBlock = z.infer<typeof kangurLessonInlineBlockSchema>;
+
+export const kangurLessonGridItemSchema = z.object({
+  id: kangurLessonBlockIdSchema,
+  colSpan: kangurLessonGridSpanSchema.default(1),
+  rowSpan: kangurLessonGridSpanSchema.default(1),
+  columnStart: kangurLessonGridColumnsSchema.nullable().default(null),
+  rowStart: kangurLessonGridRowIndexSchema.nullable().default(null),
+  block: kangurLessonInlineBlockSchema,
+});
+export type KangurLessonGridItem = z.infer<typeof kangurLessonGridItemSchema>;
+
+export const kangurLessonGridBlockSchema = z.object({
+  id: kangurLessonBlockIdSchema,
+  type: z.literal('grid'),
+  columns: kangurLessonGridColumnsSchema.default(2),
+  gap: kangurLessonGridGapSchema.default(16),
+  rowHeight: kangurLessonGridRowHeightSchema.default(220),
+  denseFill: z.boolean().default(false),
+  stackOnMobile: z.boolean().default(true),
+  items: z.array(kangurLessonGridItemSchema).max(24).default([]),
+});
+export type KangurLessonGridBlock = z.infer<typeof kangurLessonGridBlockSchema>;
+
+export const kangurLessonRootBlockSchema = z.discriminatedUnion('type', [
+  kangurLessonTextBlockSchema,
+  kangurLessonSvgBlockSchema,
+  kangurLessonGridBlockSchema,
+]);
+export type KangurLessonRootBlock = z.infer<typeof kangurLessonRootBlockSchema>;
+
+export const kangurLessonDocumentSchema = z.object({
+  version: z.literal(1).default(1),
+  blocks: z.array(kangurLessonRootBlockSchema).max(64).default([]),
+  updatedAt: z.string().datetime({ offset: true }).optional(),
+});
+export type KangurLessonDocument = z.infer<typeof kangurLessonDocumentSchema>;
+
+export const kangurLessonDocumentStoreSchema = z.record(
+  z.string().trim().min(1).max(120),
+  kangurLessonDocumentSchema
+);
+export type KangurLessonDocumentStore = z.infer<typeof kangurLessonDocumentStoreSchema>;
 
 const kangurProgressCounterSchema = z.number().int().min(0).max(1_000_000);
 const kangurProgressListSchema = z.array(nonEmptyTrimmedString.max(64)).max(256);

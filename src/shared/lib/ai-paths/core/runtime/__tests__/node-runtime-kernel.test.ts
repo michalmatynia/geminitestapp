@@ -108,7 +108,7 @@ describe('node-runtime-kernel', () => {
     });
   });
 
-  it('keeps non-runtime-kernel node types on legacy_adapter strategy', () => {
+  it('keeps non-runtime-kernel node types on compatibility strategy', () => {
     const legacyCustomHandler = buildHandler('legacy_custom');
     const runtimeKernel = createNodeRuntimeKernel({
       resolveLegacyHandler: (nodeType: string) =>
@@ -116,7 +116,7 @@ describe('node-runtime-kernel', () => {
     });
 
     const descriptor = runtimeKernel.resolveDescriptor('legacy_custom');
-    expect(descriptor.strategy).toBe('legacy_adapter');
+    expect(descriptor.strategy).toBe('compatibility');
     expect(descriptor.source).toBe('registry');
     expect(descriptor.codeObjectId).toBeNull();
     expect(descriptor.handler).toBe(legacyCustomHandler);
@@ -146,7 +146,7 @@ describe('node-runtime-kernel', () => {
 
     const descriptor = runtimeKernel.resolveDescriptor('unknown_type');
     expect(descriptor.source).toBe('missing');
-    expect(descriptor.strategy).toBe('legacy_adapter');
+    expect(descriptor.strategy).toBe('compatibility');
     expect(descriptor.handler).toBeNull();
     expect(runtimeKernel.resolveHandler('unknown_type')).toBeNull();
   });

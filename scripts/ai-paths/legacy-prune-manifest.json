@@ -1440,7 +1440,7 @@
       "description": "Portable engine path-config migration warning channel must remain canonical and avoid legacy wording.",
       "targets": [
         {
-          "file": "src/shared/lib/ai-paths/portable-engine/index.ts",
+          "file": "src/shared/lib/ai-paths/portable-engine/portable-engine-migration.ts",
           "forbiddenSnippets": [
             "'legacy_path_config_upgraded'",
             "Legacy path config payload upgraded to portable package v1.",
@@ -1617,6 +1617,7 @@
             "compact_oversized_configs",
             "repair_path_index",
             "ensure_starter_workflow_defaults",
+            "repair_trigger_button_bindings",
             "normalize_runtime_kernel_settings"
           ]
         }
@@ -1694,7 +1695,7 @@
       "description": "Portable-engine path_config edge normalization must not reintroduce source/target/sourceHandle/targetHandle alias upgrade fallback.",
       "targets": [
         {
-          "file": "src/shared/lib/ai-paths/portable-engine/index.ts",
+          "file": "src/shared/lib/ai-paths/portable-engine/portable-engine-path-canonicalization.ts",
           "forbiddenSnippets": [
             "asTrimmedString(edge.from) ?? asTrimmedString(edge.source)",
             "asTrimmedString(edge.to) ?? asTrimmedString(edge.target)",

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   mergeNodeOutputsForStatus,
   shouldCaptureRuntimeProfileHighlight,
+  toRuntimeProfileHighlight,
   toRuntimeNodeStatus,
 } from '@/features/ai/ai-paths/services/path-run-executor.logic';
 
@@ -124,5 +125,30 @@ describe('shouldCaptureRuntimeProfileHighlight', () => {
         reason: 'validation',
       })
     ).toBe(true);
+  });
+});
+
+describe('toRuntimeProfileHighlight', () => {
+  it('keeps compatibility runtime strategy labels on public highlights', () => {
+    expect(
+      toRuntimeProfileHighlight({
+        type: 'node',
+        runId: 'run-1',
+        runStartedAt: '2026-03-05T10:00:00.000Z',
+        nodeId: 'node-1',
+        nodeType: 'template',
+        iteration: 1,
+        status: 'executed',
+        durationMs: 4,
+        runtimeStrategy: 'compatibility',
+        runtimeResolutionSource: 'registry',
+        runtimeCodeObjectId: null,
+      })
+    ).toMatchObject({
+      type: 'node',
+      runtimeStrategy: 'compatibility',
+      runtimeResolutionSource: 'registry',
+      runtimeCodeObjectId: undefined,
+    });
   });
 });

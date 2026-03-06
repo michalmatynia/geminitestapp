@@ -54,7 +54,7 @@ type NodeMigrationIndexRow = {
   nodeType: string;
   title: string;
   nodeFamily: string;
-  runtimeStrategy: 'legacy_adapter' | 'code_object_v3';
+  runtimeStrategy: 'compatibility' | 'code_object_v3';
   migrationWave: 'runtime_kernel' | 'backlog';
   codeObjectId: string | null;
   ports: {
@@ -82,7 +82,7 @@ type NodeMigrationIndexRow = {
 };
 
 type NodeMigrationIndexPayload = {
-  schemaVersion: 'ai-paths.node-migration-doc-index.v4';
+  schemaVersion: 'ai-paths.node-migration-doc-index.v5';
   generatedAt: string;
   totalNodes: number;
   runtimeKernelNodeTypes: string[];
@@ -271,9 +271,9 @@ const rows: NodeMigrationIndexRow[] = [...AI_PATHS_NODE_DOCS]
     const nodeType = doc.type;
     const v2Info = v2InfoByNodeType.get(nodeType);
     const isRuntimeKernelNodeType = runtimeKernelNodeTypeSet.has(nodeType);
-    const runtimeStrategy: 'legacy_adapter' | 'code_object_v3' = isRuntimeKernelNodeType
+    const runtimeStrategy: 'compatibility' | 'code_object_v3' = isRuntimeKernelNodeType
       ? 'code_object_v3'
-      : 'legacy_adapter';
+      : 'compatibility';
     const scaffoldFileFromIndex = scaffoldFileByNodeType.get(nodeType) ?? null;
     const fallbackScaffoldFile = `docs/ai-paths/node-code-objects-v3/${nodeType}.scaffold.json`;
     const scaffoldFile = scaffoldFileFromIndex
@@ -341,12 +341,12 @@ const runtimeStrategyTotals = rows.reduce(
     return accumulator;
   },
   {
-    legacy_adapter: 0,
+    compatibility: 0,
     code_object_v3: 0,
   }
 );
 const strategyTotals = {
-  compatibility: runtimeStrategyTotals.legacy_adapter,
+  compatibility: runtimeStrategyTotals.compatibility,
   code_object_v3: runtimeStrategyTotals.code_object_v3,
 };
 
@@ -354,14 +354,14 @@ const familyTotalMap = new Map<
   string,
   {
     total: number;
-    legacy_adapter: number;
+    compatibility: number;
     code_object_v3: number;
   }
 >();
 for (const row of rows) {
   const entry = familyTotalMap.get(row.nodeFamily) ?? {
     total: 0,
-    legacy_adapter: 0,
+    compatibility: 0,
     code_object_v3: 0,
   };
   entry.total += 1;
@@ -373,7 +373,7 @@ const familyTotals = Array.from(familyTotalMap.entries())
   .map(([nodeFamily, totals]) => ({
     nodeFamily,
     total: totals.total,
-    compatibility: totals.legacy_adapter,
+    compatibility: totals.compatibility,
     code_object_v3: totals.code_object_v3,
   }))
   .sort((left, right) => left.nodeFamily.localeCompare(right.nodeFamily));
@@ -416,7 +416,7 @@ const rolloutEligibilityPayload: NodeMigrationRolloutEligibilityPayload = {
 };
 
 const payload: NodeMigrationIndexPayload = {
-  schemaVersion: 'ai-paths.node-migration-doc-index.v4',
+  schemaVersion: 'ai-paths.node-migration-doc-index.v5',
   generatedAt,
   totalNodes: rows.length,
   runtimeKernelNodeTypes,

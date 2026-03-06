@@ -119,11 +119,20 @@ export const toRuntimeKernelExecutionTelemetry = (input: {
   runtimeKernelCodeObjectResolverIdsSource: input.resolverSource,
 });
 
-const normalizeRuntimeStrategy = (value: unknown): 'legacy_adapter' | 'code_object_v3' | null => {
-  if (value === 'legacy_adapter' || value === 'code_object_v3') {
+const normalizeRuntimeStrategy = (
+  value: unknown
+): 'compatibility' | 'code_object_v3' | null => {
+  if (value === 'compatibility' || value === 'code_object_v3') {
     return value;
   }
   return null;
+};
+
+const toPublicRuntimeStrategy = (
+  value: unknown
+): 'compatibility' | 'code_object_v3' | null => {
+  const runtimeStrategy = normalizeRuntimeStrategy(value);
+  return runtimeStrategy;
 };
 
 const normalizeRuntimeResolutionSource = (
@@ -140,11 +149,11 @@ export const toRuntimeNodeResolutionTelemetry = (input: {
   runtimeResolutionSource?: unknown;
   runtimeCodeObjectId?: unknown;
 }): {
-  runtimeStrategy?: 'legacy_adapter' | 'code_object_v3';
+  runtimeStrategy?: 'compatibility' | 'code_object_v3';
   runtimeResolutionSource?: 'override' | 'registry' | 'missing';
   runtimeCodeObjectId?: string | null;
 } => {
-  const runtimeStrategy = normalizeRuntimeStrategy(input.runtimeStrategy);
+  const runtimeStrategy = toPublicRuntimeStrategy(input.runtimeStrategy);
   const runtimeResolutionSource = normalizeRuntimeResolutionSource(input.runtimeResolutionSource);
   const runtimeCodeObjectId =
     input.runtimeCodeObjectId === null
@@ -209,7 +218,7 @@ export const summarizeRuntimeKernelParityFromHistory = (
       const strategy = normalizeRuntimeStrategy(record['runtimeStrategy']);
       if (strategy === 'code_object_v3') {
         summary.strategyCounts.code_object_v3 += 1;
-      } else if (strategy === 'legacy_adapter') {
+      } else if (strategy === 'compatibility') {
         summary.strategyCounts.compatibility += 1;
       } else {
         summary.strategyCounts.unknown += 1;

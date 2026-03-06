@@ -8,7 +8,7 @@ import {
 
 describe('engine-core runtime-kernel dual-run parity', () => {
   it('keeps outputs and node statuses identical for numeric runtime-kernel path', async () => {
-    const legacy = await runKernelPath('legacy_adapter', 7);
+    const legacy = await runKernelPath('compatibility', 7);
     const v3 = await runKernelPath('code_object_v3', 7);
 
     expect(legacy.result.status).toBe('completed');
@@ -35,7 +35,7 @@ describe('engine-core runtime-kernel dual-run parity', () => {
     expect(legacyNodeEvents).toHaveLength(3);
     expect(v3NodeEvents).toHaveLength(3);
     legacyNodeEvents.forEach((event) => {
-      expect(event['runtimeStrategy']).toBe('legacy_adapter');
+      expect(event['runtimeStrategy']).toBe('compatibility');
       expect(event['runtimeCodeObjectId']).toBeNull();
     });
     v3NodeEvents.forEach((event) => {
@@ -45,7 +45,7 @@ describe('engine-core runtime-kernel dual-run parity', () => {
   });
 
   it('keeps outputs and node statuses identical for non-numeric fallback path', async () => {
-    const legacy = await runKernelPath('legacy_adapter', 'abc');
+    const legacy = await runKernelPath('compatibility', 'abc');
     const v3 = await runKernelPath('code_object_v3', 'abc');
 
     expect(legacy.result.status).toBe('completed');
@@ -61,7 +61,7 @@ describe('engine-core runtime-kernel dual-run parity', () => {
   });
 
   it('keeps outputs, statuses, and strategy telemetry identical for transform runtime-kernel path', async () => {
-    const legacy = await runTransformKernelPath('legacy_adapter', 'Wave A Kernel');
+    const legacy = await runTransformKernelPath('compatibility', 'Wave A Kernel');
     const v3 = await runTransformKernelPath('code_object_v3', 'Wave A Kernel');
 
     expect(legacy.result.status).toBe('completed');
@@ -94,7 +94,7 @@ describe('engine-core runtime-kernel dual-run parity', () => {
     expect(legacyNodeEvents).toHaveLength(3);
     expect(v3NodeEvents).toHaveLength(3);
     legacyNodeEvents.forEach((event) => {
-      expect(event['runtimeStrategy']).toBe('legacy_adapter');
+      expect(event['runtimeStrategy']).toBe('compatibility');
       expect(event['runtimeCodeObjectId']).toBeNull();
     });
     v3NodeEvents.forEach((event) => {

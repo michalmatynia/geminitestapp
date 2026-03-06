@@ -12,6 +12,7 @@ import {
 const createLesson = (overrides: Partial<KangurLesson>): KangurLesson => ({
   id: 'lesson-default',
   componentId: 'clock',
+  contentMode: 'component',
   title: 'Default lesson',
   description: 'Default description',
   emoji: '📚',
@@ -61,12 +62,14 @@ describe('kangur-lessons-master-tree', () => {
       kangurLesson: {
         lessonId: 'lesson-b',
         componentId: 'calendar',
+        contentMode: 'component',
         enabled: false,
         description: 'Name weekdays.',
       },
       search: {
         lessonId: 'lesson-b',
         componentId: 'calendar',
+        contentMode: 'component',
         title: 'Calendar starter',
         description: 'Name weekdays.',
         visibility: 'hidden',

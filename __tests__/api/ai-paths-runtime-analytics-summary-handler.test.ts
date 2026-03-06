@@ -69,7 +69,7 @@ describe('AI Paths runtime analytics summary handler', () => {
         runsWithKernelParity: 0,
         sampledHistoryEntries: 0,
         strategyCounts: {
-          legacy_adapter: 0,
+          compatibility: 0,
           code_object_v3: 0,
           unknown: 0,
         },

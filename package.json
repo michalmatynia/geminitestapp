@@ -52,7 +52,6 @@
     "cleanup:ai-paths-legacy-index-key": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/cleanup-ai-paths-legacy-index-key.ts",
     "cleanup:ai-paths-runtime-kernel-settings": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/cleanup-ai-paths-runtime-kernel-settings.ts",
     "cleanup:ai-paths-runtime-kernel-run-metadata": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/cleanup-ai-paths-runtime-kernel-run-metadata.ts",
-    "cleanup:ai-paths-runtime-kernel-mode": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/cleanup-ai-paths-runtime-kernel-mode.ts",
     "cleanup:category-mapping-duplicates": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/cleanup/reconcile-category-mapping-duplicates.ts",
     "cleanup:image-studio-orphan-variants": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/cleanup/reconcile-image-studio-orphan-variant-slots.ts",
     "check:api-error-sources": "tsx scripts/debug/check-api-error-sources.ts",

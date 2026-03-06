@@ -29,12 +29,18 @@ const normalizeAppProvider = (value?: string | null): AppDbProvider | null => {
 
 const normalizeProductProvider = (value?: string | null): ProviderValue | null => {
   if (!value) return null;
-  return value.toLowerCase().trim() === 'mongodb' ? 'mongodb' : 'prisma';
+  const normalized = value.toLowerCase().trim();
+  if (normalized === 'mongodb') return 'mongodb';
+  if (normalized === 'prisma') return 'prisma';
+  return null;
 };
 
 const normalizeAuthProvider = (value?: string | null): ProviderValue | null => {
   if (!value) return null;
-  return value.toLowerCase().trim() === 'prisma' ? 'prisma' : 'mongodb';
+  const normalized = value.toLowerCase().trim();
+  if (normalized === 'prisma') return 'prisma';
+  if (normalized === 'mongodb') return 'mongodb';
+  return null;
 };
 
 const isPrismaMissingTableError = (error: unknown): error is Prisma.PrismaClientKnownRequestError =>
@@ -96,6 +102,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   const hasDatabaseUrl = Boolean(process.env['DATABASE_URL']);
   const hasMongoUri = Boolean(process.env['MONGODB_URI']);
   const appDbProviderEnv = process.env['APP_DB_PROVIDER']?.trim() || null;
+  const authDbProviderEnv = process.env['AUTH_DB_PROVIDER']?.trim() || null;
 
   const appPrismaSetting = normalizeAppProvider(
     await readPrismaSetting(APP_DB_PROVIDER_SETTING_KEY)
@@ -118,13 +125,16 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   const authPrismaSetting = normalizeAuthProvider(
     await readPrismaSetting(AUTH_SETTINGS_KEYS.provider)
   );
+  const envAuthProvider = normalizeAuthProvider(authDbProviderEnv);
   const authConfigured =
-    authMongoSetting ?? authPrismaSetting ?? (hasMongoUri ? 'mongodb' : 'prisma');
-  const authConfiguredSource: ProviderSource = authMongoSetting
-    ? 'mongo-setting'
-    : authPrismaSetting
-      ? 'prisma-setting'
-      : 'default';
+    envAuthProvider ?? authMongoSetting ?? authPrismaSetting ?? (hasMongoUri ? 'mongodb' : 'prisma');
+  const authConfiguredSource: ProviderSource = envAuthProvider
+    ? 'env'
+    : authMongoSetting
+      ? 'mongo-setting'
+      : authPrismaSetting
+        ? 'prisma-setting'
+        : 'default';
   const authResolved = await getAuthDataProvider();
   const authEffective = requireAuthProvider(authResolved);
   const authIntentionalOverride = isIntentionalServiceOverride(

@@ -438,7 +438,7 @@ describe('path-run-executor runtime-kernel settings integration', () => {
                 runtimeCodeObjectId: 'ai-paths.node-code-object.constant.v3',
               },
               {
-                runtimeStrategy: 'legacy_adapter',
+                runtimeStrategy: 'compatibility',
                 runtimeResolutionSource: 'registry',
                 runtimeCodeObjectId: null,
               },

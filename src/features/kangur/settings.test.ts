@@ -16,6 +16,7 @@ describe('kangur lesson settings', () => {
     expect(componentIds).toContain('geometry_shapes');
     expect(componentIds).toContain('geometry_symmetry');
     expect(componentIds).toContain('geometry_perimeter');
+    expect(lessons.every((lesson) => lesson.contentMode === 'component')).toBe(true);
   });
 
   it('includes logical thinking lessons in default library', () => {
@@ -46,7 +47,27 @@ describe('kangur lesson settings', () => {
 
     expect(parsed).toHaveLength(1);
     expect(parsed[0]?.componentId).toBe('geometry_shapes');
+    expect(parsed[0]?.contentMode).toBe('component');
     expect(parsed[0]?.title).toBe('Figury');
+  });
+
+  it('preserves explicit document render mode when provided', () => {
+    const parsed = normalizeKangurLessons([
+      {
+        id: 'doc-lesson',
+        componentId: 'geometry_shapes',
+        contentMode: 'document',
+        title: 'SVG lesson',
+        description: 'Custom lesson body',
+        emoji: '🧩',
+        color: 'from-sky-500 to-indigo-500',
+        activeBg: 'bg-sky-500',
+        sortOrder: 1000,
+        enabled: true,
+      },
+    ]);
+
+    expect(parsed[0]?.contentMode).toBe('document');
   });
 
   it('appends missing geometry lessons to an existing legacy-like list', () => {

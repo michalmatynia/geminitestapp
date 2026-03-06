@@ -11,10 +11,7 @@ import {
 } from './settings-store.constants';
 import {
   AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
-  AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
   AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
-  AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
-  AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
 } from '@/shared/lib/ai-paths/core/constants';
 import { compactPathConfigValue } from './settings-store.compaction';
 import { parsePathMetas, parseTriggerButtons } from './settings-store.parsing';
@@ -26,6 +23,11 @@ import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-button
 import { serializeAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
 
 const RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID = 'normalize_runtime_kernel_settings';
+const DEPRECATED_AI_PATHS_RUNTIME_KERNEL_MODE_KEY = 'ai_paths_runtime_kernel_mode';
+const DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY =
+  'ai_paths_runtime_kernel_pilot_node_types';
+const DEPRECATED_AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY =
+  'ai_paths_runtime_kernel_strict_native_registry';
 
 const normalizeRuntimeKernelNodeTypeToken = (value: string): string =>
   value.trim().toLowerCase().replace(/\s+/g, '_');
@@ -231,7 +233,7 @@ const toCanonicalRuntimeKernelListSettingValue = ({
 const toCanonicalRuntimeKernelSettingEntryValue = (
   entry: AiPathsSettingRecord
 ): string | undefined | null => {
-  if (entry.key === AI_PATHS_RUNTIME_KERNEL_MODE_KEY) {
+  if (entry.key === DEPRECATED_AI_PATHS_RUNTIME_KERNEL_MODE_KEY) {
     return undefined;
   }
   if (entry.key === AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY) {
@@ -246,7 +248,7 @@ const toCanonicalRuntimeKernelSettingEntryValue = (
       normalizeToken: normalizeRuntimeKernelResolverIdToken,
     });
   }
-  if (entry.key === AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY) {
+  if (entry.key === DEPRECATED_AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY) {
     return undefined;
   }
   return null;
@@ -365,7 +367,8 @@ const normalizeRuntimeKernelSettingsRecords = (records: AiPathsSettingRecord[]):
   const canonicalNodeTypesEntry =
     records.find((entry) => entry.key === AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY) ?? null;
   const legacyNodeTypesEntry =
-    records.find((entry) => entry.key === AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY) ?? null;
+    records.find((entry) => entry.key === DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY) ??
+    null;
   const rawNodeTypesValue =
     canonicalNodeTypesEntry?.value ?? legacyNodeTypesEntry?.value ?? undefined;
   const canonicalNodeTypesValue =
@@ -385,7 +388,7 @@ const normalizeRuntimeKernelSettingsRecords = (records: AiPathsSettingRecord[]):
   for (const entry of records) {
     if (
       entry.key === AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY ||
-      entry.key === AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY
+      entry.key === DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY
     ) {
       if (!nodeTypesHandled && shouldManageNodeTypesEntry) {
         nextRecords.push({
@@ -394,7 +397,7 @@ const normalizeRuntimeKernelSettingsRecords = (records: AiPathsSettingRecord[]):
         });
         nodeTypesHandled = true;
       }
-      if (entry.key === AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY) {
+      if (entry.key === DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY) {
         deletedKeys.add(entry.key);
       }
       continue;

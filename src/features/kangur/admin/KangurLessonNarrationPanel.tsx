@@ -1,0 +1,300 @@
+'use client';
+
+import { RefreshCw, Sparkles, Volume2 } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+
+import {
+  KANGUR_TTS_DEFAULT_VOICE,
+  KANGUR_TTS_VOICE_OPTIONS,
+  type KangurLessonTtsResponse,
+  type KangurLessonTtsVoice,
+} from '@/features/kangur/tts/contracts';
+import {
+  buildKangurLessonDocumentNarrationScript,
+  hasKangurLessonNarrationContent,
+} from '@/features/kangur/tts/script';
+import type { KangurLesson, KangurLessonDocument } from '@/shared/contracts/kangur';
+import { api } from '@/shared/lib/api-client';
+import { cn } from '@/shared/utils';
+
+type KangurLessonNarrationPanelProps = {
+  lesson: Pick<KangurLesson, 'id' | 'title' | 'description'>;
+  document: KangurLessonDocument;
+  className?: string | undefined;
+};
+
+type RequestStatus = 'idle' | 'loading' | 'ready' | 'error';
+
+const ADMIN_TTS_VOICE_STORAGE_KEY = 'kangur.lesson.admin.narration.voice.v1';
+
+const loadStoredVoice = (): KangurLessonTtsVoice => {
+  if (typeof window === 'undefined') {
+    return KANGUR_TTS_DEFAULT_VOICE;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(ADMIN_TTS_VOICE_STORAGE_KEY);
+    return KANGUR_TTS_VOICE_OPTIONS.some((option) => option.value === raw)
+      ? (raw as KangurLessonTtsVoice)
+      : KANGUR_TTS_DEFAULT_VOICE;
+  } catch {
+    return KANGUR_TTS_DEFAULT_VOICE;
+  }
+};
+
+const formatDateTime = (value: string | null): string | null => {
+  if (!value) return null;
+
+  try {
+    return new Intl.DateTimeFormat('pl-PL', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
+};
+
+const getLatestAudioCreatedAt = (response: KangurLessonTtsResponse | null): string | null => {
+  if (!response || response.mode !== 'audio' || response.segments.length === 0) {
+    return null;
+  }
+
+  return response.segments.reduce<string | null>(
+    (latest, segment) => (!latest || segment.createdAt > latest ? segment.createdAt : latest),
+    null
+  );
+};
+
+export function KangurLessonNarrationPanel(
+  props: KangurLessonNarrationPanelProps
+): React.JSX.Element {
+  const { lesson, document, className } = props;
+  const [voice, setVoice] = useState<KangurLessonTtsVoice>(loadStoredVoice);
+  const [status, setStatus] = useState<RequestStatus>('idle');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [response, setResponse] = useState<KangurLessonTtsResponse | null>(null);
+
+  const script = useMemo(
+    () =>
+      buildKangurLessonDocumentNarrationScript({
+        lessonId: lesson.id,
+        title: lesson.title,
+        description: lesson.description,
+        document,
+      }),
+    [document, lesson.description, lesson.id, lesson.title]
+  );
+
+  const hasScriptContent = hasKangurLessonNarrationContent(script);
+  const scriptKey = useMemo(
+    () =>
+      JSON.stringify({
+        voice,
+        lessonId: script.lessonId,
+        segments: script.segments.map((segment) => segment.text),
+      }),
+    [script, voice]
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(ADMIN_TTS_VOICE_STORAGE_KEY, voice);
+  }, [voice]);
+
+  useEffect(() => {
+    setStatus('idle');
+    setErrorMessage(null);
+    setResponse(null);
+  }, [scriptKey]);
+
+  const handlePreparePreview = async (forceRegenerate: boolean): Promise<void> => {
+    if (!hasScriptContent) return;
+
+    setStatus('loading');
+    setErrorMessage(null);
+
+    try {
+      const nextResponse = await api.post<KangurLessonTtsResponse>('/api/kangur/tts', {
+        script,
+        voice,
+        forceRegenerate,
+      });
+      setResponse(nextResponse);
+      setStatus('ready');
+    } catch (error) {
+      setStatus('error');
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Failed to prepare lesson narration preview.'
+      );
+    }
+  };
+
+  const latestAudioCreatedAt = formatDateTime(getLatestAudioCreatedAt(response));
+  const totalCharacters = script.segments.reduce((sum, segment) => sum + segment.text.length, 0);
+  const statusLabel =
+    status === 'loading'
+      ? 'Preparing audio preview...'
+      : status === 'error'
+        ? 'Narration preview failed.'
+        : response?.mode === 'audio'
+          ? 'Neural preview ready.'
+          : response?.mode === 'fallback'
+            ? 'Neural preview unavailable. Browser fallback would be used.'
+            : 'Review the narration script and generate audio when ready.';
+
+  return (
+    <section
+      className={cn(
+        'rounded-3xl border border-amber-200/70 bg-gradient-to-br from-amber-50 via-white to-sky-50 p-5 shadow-sm',
+        className
+      )}
+    >
+      <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+        <div className='min-w-0'>
+          <div className='inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-amber-700'>
+            <Volume2 className='size-3.5' />
+            Narration Preview
+          </div>
+          <h3 className='mt-3 text-lg font-semibold text-slate-900'>Lesson voice script</h3>
+          <p className='mt-1 text-sm text-slate-600'>{statusLabel}</p>
+          <div className='mt-3 flex flex-wrap gap-2 text-xs text-slate-500'>
+            <span className='rounded-full bg-white/80 px-2.5 py-1'>
+              {script.segments.length} segment{script.segments.length === 1 ? '' : 's'}
+            </span>
+            <span className='rounded-full bg-white/80 px-2.5 py-1'>
+              {totalCharacters} characters
+            </span>
+            <span className='rounded-full bg-white/80 px-2.5 py-1'>Locale: {script.locale}</span>
+            {latestAudioCreatedAt ? (
+              <span className='rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700'>
+                Last built: {latestAudioCreatedAt}
+              </span>
+            ) : null}
+          </div>
+        </div>
+
+        <div className='flex w-full flex-col gap-3 rounded-2xl border border-white/80 bg-white/80 p-4 lg:max-w-sm'>
+          <label className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'>
+            Voice
+          </label>
+          <select
+            aria-label='Narration voice'
+            value={voice}
+            onChange={(event): void => setVoice(event.target.value as KangurLessonTtsVoice)}
+            className='h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none ring-0'
+          >
+            {KANGUR_TTS_VOICE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+
+          <div className='flex flex-wrap gap-2'>
+            <button
+              type='button'
+              onClick={(): void => {
+                void handlePreparePreview(false);
+              }}
+              disabled={!hasScriptContent || status === 'loading'}
+              className='inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60'
+            >
+              <Sparkles className='size-4' />
+              {response?.mode === 'audio' ? 'Refresh preview' : 'Generate audio preview'}
+            </button>
+            <button
+              type='button'
+              onClick={(): void => {
+                void handlePreparePreview(true);
+              }}
+              disabled={!hasScriptContent || status === 'loading'}
+              className='inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60'
+            >
+              <RefreshCw className={cn('size-4', status === 'loading' && 'animate-spin')} />
+              Regenerate audio
+            </button>
+          </div>
+
+          {!hasScriptContent ? (
+            <div className='rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800'>
+              Add lesson text or narration overrides to generate a preview.
+            </div>
+          ) : null}
+          {errorMessage ? (
+            <div className='rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700'>
+              {errorMessage}
+            </div>
+          ) : null}
+          {response?.mode === 'fallback' ? (
+            <div className='rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800'>
+              {response.message}
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      <div className='mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'>
+        <div className='rounded-2xl border border-white/80 bg-white/85 p-4'>
+          <div className='text-sm font-semibold text-slate-900'>Narration script</div>
+          <div className='mt-1 text-xs text-slate-500'>
+            This is the exact spoken text generated from the current lesson draft.
+          </div>
+          <div className='mt-4 space-y-3'>
+            {script.segments.length > 0 ? (
+              script.segments.map((segment, index) => (
+                <article
+                  key={segment.id}
+                  className='rounded-2xl border border-slate-200 bg-slate-50/70 p-3'
+                >
+                  <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500'>
+                    Segment {index + 1}
+                  </div>
+                  <div className='mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700'>
+                    {segment.text}
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div className='rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-500'>
+                No readable lesson text detected yet.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className='rounded-2xl border border-white/80 bg-white/85 p-4'>
+          <div className='text-sm font-semibold text-slate-900'>Audio preview</div>
+          <div className='mt-1 text-xs text-slate-500'>
+            Generated audio uses the current draft and selected voice.
+          </div>
+          <div className='mt-4 space-y-3'>
+            {response?.mode === 'audio' ? (
+              response.segments.map((segment, index) => (
+                <article
+                  key={segment.id}
+                  className='rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3'
+                >
+                  <div className='flex flex-wrap items-center justify-between gap-2'>
+                    <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700'>
+                      Audio segment {index + 1}
+                    </div>
+                    <div className='text-[11px] text-emerald-700/80'>
+                      Built: {formatDateTime(segment.createdAt) ?? segment.createdAt}
+                    </div>
+                  </div>
+                  <div className='mt-2 text-sm leading-6 text-slate-700'>{segment.text}</div>
+                  <audio controls preload='none' src={segment.audioUrl} className='mt-3 w-full' />
+                </article>
+              ))
+            ) : (
+              <div className='rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-500'>
+                Generate audio preview to inspect the realistic narration output.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

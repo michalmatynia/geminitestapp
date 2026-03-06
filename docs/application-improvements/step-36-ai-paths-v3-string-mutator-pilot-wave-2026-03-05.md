@@ -19,7 +19,7 @@ Advance gradual migration toward semantic, portable, code-object-driven AI-Paths
 3. Dual-run parity coverage extended:
    - `src/shared/lib/ai-paths/core/runtime/__tests__/engine-core.v3-pilot-parity.test.ts`
    - Transform pilot path now includes `string_mutator`.
-   - Assertions confirm output/status parity (`legacy_adapter` vs `code_object_v3`) and runtime telemetry tagging.
+   - Assertions confirm output/status parity (`compatibility` vs `code_object_v3`) and runtime telemetry tagging.
 
 4. v3/migration docs refreshed:
    - `docs/ai-paths/node-code-objects-v3/index.scaffold.json`
@@ -48,6 +48,6 @@ Advance gradual migration toward semantic, portable, code-object-driven AI-Paths
 
 - v3 pilot set increased from 7 to 8 node types.
 - Migration index now reports:
-  - `strategyTotals`: `legacy_adapter=28`, `code_object_v3=8`
+  - `strategyTotals`: `compatibility=28`, `code_object_v3=8`
   - `averageScore`: `45`
 - Portability and migration artifacts remain deterministic and CI-checkable.

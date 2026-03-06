@@ -51,7 +51,7 @@ Complete pilot migration coverage by bringing remaining node types (`audio_oscil
 ## Outcome
 
 - Migration snapshot now reports:
-  - `strategyTotals`: `legacy_adapter=0`, `code_object_v3=36`
+  - `strategyTotals`: `compatibility=0`, `code_object_v3=36`
   - `averageScore`: `90`
   - top blockers: `rollout_not_approved` only
 - Remaining legacy node types: `none`.

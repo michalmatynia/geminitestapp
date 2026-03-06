@@ -54,7 +54,7 @@ Continue staged migration to semantic portable runtime by promoting `agent` and 
 ## Outcome
 
 - Migration snapshot now reports:
-  - `strategyTotals`: `legacy_adapter=4`, `code_object_v3=32`
+  - `strategyTotals`: `compatibility=4`, `code_object_v3=32`
   - `averageScore`: `84`
   - top blockers: `rollout_not_approved`, `missing_v3_scaffold`, `not_in_v3_pilot`
 - Remaining legacy node types: `audio_oscillator`, `audio_speaker`, `learner_agent`, `playwright`.

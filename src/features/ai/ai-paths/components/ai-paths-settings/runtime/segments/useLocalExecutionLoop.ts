@@ -68,9 +68,11 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
           runtimeCodeObjectId?: unknown;
         }): Record<string, unknown> => {
           const runtimeStrategy =
-            input.runtimeStrategy === 'legacy_adapter' || input.runtimeStrategy === 'code_object_v3'
-              ? input.runtimeStrategy
-              : null;
+            input.runtimeStrategy === 'compatibility'
+              ? 'compatibility'
+              : input.runtimeStrategy === 'code_object_v3'
+                ? 'code_object_v3'
+                : null;
           const runtimeResolutionSource =
             input.runtimeResolutionSource === 'override' ||
             input.runtimeResolutionSource === 'registry' ||
@@ -153,7 +155,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               node: AiNode;
               nodeInputs: RuntimePortValues;
               iteration: number;
-              runtimeStrategy?: 'legacy_adapter' | 'code_object_v3';
+              runtimeStrategy?: 'compatibility' | 'code_object_v3';
               runtimeResolutionSource?: 'override' | 'registry' | 'missing';
               runtimeCodeObjectId?: string | null;
             }) => {
@@ -223,7 +225,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               nextOutputs: RuntimePortValues;
               cached?: boolean;
               iteration: number;
-              runtimeStrategy?: 'legacy_adapter' | 'code_object_v3';
+              runtimeStrategy?: 'compatibility' | 'code_object_v3';
               runtimeResolutionSource?: 'override' | 'registry' | 'missing';
               runtimeCodeObjectId?: string | null;
             }) => {
@@ -307,7 +309,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               prevOutputs: RuntimePortValues | null;
               error: unknown;
               iteration: number;
-              runtimeStrategy?: 'legacy_adapter' | 'code_object_v3';
+              runtimeStrategy?: 'compatibility' | 'code_object_v3';
               runtimeResolutionSource?: 'override' | 'registry' | 'missing';
               runtimeCodeObjectId?: string | null;
             }) => {
@@ -381,7 +383,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               waitingOnDetails?: Array<Record<string, unknown>>;
               message?: string;
               runId: string;
-              runtimeStrategy?: 'legacy_adapter' | 'code_object_v3';
+              runtimeStrategy?: 'compatibility' | 'code_object_v3';
               runtimeResolutionSource?: 'override' | 'registry' | 'missing';
               runtimeCodeObjectId?: string | null;
             }) => {

@@ -26,7 +26,7 @@ type NodeMigrationIndexRow = {
   nodeType: string;
   title: string;
   nodeFamily: string;
-  runtimeStrategy: 'legacy_adapter' | 'code_object_v3';
+  runtimeStrategy: 'compatibility' | 'code_object_v3';
   migrationWave: 'runtime_kernel' | 'backlog';
   codeObjectId: string | null;
   ports: {
@@ -58,7 +58,6 @@ type NodeMigrationIndexPayload = {
   generatedAt: string;
   totalNodes: number;
   runtimeKernelNodeTypes?: string[];
-  pilotNodeTypes?: string[];
   strategyTotals: {
     compatibility: number;
     code_object_v3: number;
@@ -136,11 +135,7 @@ const toSafeString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
 
 const readDeclaredRuntimeKernelNodeTypes = (payload: NodeMigrationIndexPayload): string[] =>
-  (
-    Array.isArray(payload.runtimeKernelNodeTypes)
-      ? payload.runtimeKernelNodeTypes
-      : payload.pilotNodeTypes ?? []
-  )
+  (Array.isArray(payload.runtimeKernelNodeTypes) ? payload.runtimeKernelNodeTypes : [])
     .map(toSafeString)
     .filter(Boolean);
 
@@ -294,8 +289,8 @@ if (rolloutEligibilitySummary.schemaVersion !== NODE_MIGRATION_ROLLOUT_ELIGIBILI
   );
 }
 
-if (indexPayload.schemaVersion !== 'ai-paths.node-migration-doc-index.v4') {
-  errors.push('migration-index.json schemaVersion must be "ai-paths.node-migration-doc-index.v4".');
+if (indexPayload.schemaVersion !== 'ai-paths.node-migration-doc-index.v5') {
+  errors.push('migration-index.json schemaVersion must be "ai-paths.node-migration-doc-index.v5".');
 }
 
 if (!Array.isArray(indexPayload.nodes)) {
@@ -317,7 +312,7 @@ if (indexPayload.v3ContractsHash !== null && indexPayload.v3ContractsHash !== un
 const rows = Array.isArray(indexPayload.nodes) ? indexPayload.nodes : [];
 const seenNodeTypes = new Set<string>();
 const countedStrategies = {
-  legacy_adapter: 0,
+  compatibility: 0,
   code_object_v3: 0,
 };
 const declaredReadinessList: NodeMigrationReadiness[] = [];
@@ -374,15 +369,15 @@ for (const row of rows) {
     );
   }
 
-  if (row.runtimeStrategy !== 'legacy_adapter' && row.runtimeStrategy !== 'code_object_v3') {
-    errors.push(`${nodeType}: runtimeStrategy must be legacy_adapter or code_object_v3.`);
+  if (row.runtimeStrategy !== 'compatibility' && row.runtimeStrategy !== 'code_object_v3') {
+    errors.push(`${nodeType}: runtimeStrategy must be compatibility or code_object_v3.`);
     continue;
   }
 
   countedStrategies[row.runtimeStrategy] += 1;
 
   const isRuntimeKernelNodeType = runtimeKernelNodeTypeSet.has(nodeType);
-  const expectedStrategy = isRuntimeKernelNodeType ? 'code_object_v3' : 'legacy_adapter';
+  const expectedStrategy = isRuntimeKernelNodeType ? 'code_object_v3' : 'compatibility';
   if (row.runtimeStrategy !== expectedStrategy) {
     errors.push(`${nodeType}: runtimeStrategy mismatch (expected ${expectedStrategy}, got ${row.runtimeStrategy}).`);
   }
@@ -669,7 +664,7 @@ if (indexPayload.totalNodes !== rows.length) {
 }
 
 if (
-  indexPayload.strategyTotals?.compatibility !== countedStrategies.legacy_adapter ||
+  indexPayload.strategyTotals?.compatibility !== countedStrategies.compatibility ||
   indexPayload.strategyTotals?.code_object_v3 !== countedStrategies.code_object_v3
 ) {
   errors.push(

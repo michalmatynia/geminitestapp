@@ -254,6 +254,24 @@ const buildModelNode = (): AiNode => ({
   position: { x: 10, y: 0 },
 });
 
+const buildModelWaitNode = (): AiNode => ({
+  id: 'node-model-wait',
+  type: 'model',
+  title: 'Model Wait',
+  description: '',
+  inputs: ['prompt', 'images'],
+  outputs: ['result', 'jobId'],
+  config: {
+    model: {
+      waitForResult: true,
+      temperature: 0.7,
+      maxTokens: 256,
+      vision: false,
+    },
+  },
+  position: { x: 12, y: 0 },
+});
+
 const buildAgentNode = (): AiNode => ({
   id: 'node-agent',
   type: 'agent',
@@ -269,6 +287,23 @@ const buildAgentNode = (): AiNode => ({
     },
   },
   position: { x: 20, y: 0 },
+});
+
+const buildAgentWaitNode = (): AiNode => ({
+  id: 'node-agent-wait',
+  type: 'agent',
+  title: 'Agent Wait',
+  description: '',
+  inputs: ['prompt'],
+  outputs: ['result', 'jobId', 'status', 'bundle'],
+  config: {
+    agent: {
+      personaId: '',
+      promptTemplate: '',
+      waitForResult: true,
+    },
+  },
+  position: { x: 22, y: 0 },
 });
 
 const buildLearnerAgentNode = (): AiNode => ({
@@ -623,6 +658,33 @@ describe('client native code-object registry contract subset', () => {
     expect(result.outputs?.['node-model']?.['jobId']).toBe('job-model-1');
   });
 
+  it('executes model wait-for-result path through client native contract resolver mapping', async () => {
+    mockAiJobsEnqueue.mockClear();
+    mockAiJobsPoll.mockClear();
+
+    const result = await evaluateGraphClient({
+      nodes: [buildPromptNode(), buildModelWaitNode()],
+      edges: [
+        {
+          id: 'edge-prompt-model-wait',
+          from: 'node-prompt',
+          to: 'node-model-wait',
+          fromPort: 'prompt',
+          toPort: 'prompt',
+          kind: 'value',
+        },
+      ],
+      runtimeKernelPilotNodeTypes: ['prompt', 'model'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockAiJobsEnqueue).toHaveBeenCalledTimes(1);
+    expect(mockAiJobsPoll).toHaveBeenCalledTimes(1);
+    expect(result.outputs?.['node-model-wait']?.['status']).toBe('completed');
+    expect(result.outputs?.['node-model-wait']?.['result']).toBe('model-result');
+    expect(result.outputs?.['node-model-wait']?.['jobId']).toBe('job-model-1');
+  });
+
   it('executes agent nodes through client native contract resolver mapping', async () => {
     mockSettingsList.mockClear();
     mockAgentEnqueue.mockClear();
@@ -654,6 +716,35 @@ describe('client native code-object registry contract subset', () => {
     expect(mockAgentPoll).not.toHaveBeenCalled();
     expect(result.outputs?.['node-agent']?.['status']).toBe('queued');
     expect(result.outputs?.['node-agent']?.['jobId']).toBe('agent-run-1');
+  });
+
+  it('executes agent wait-for-result path through client native contract resolver mapping', async () => {
+    mockSettingsList.mockClear();
+    mockAgentEnqueue.mockClear();
+    mockAgentPoll.mockClear();
+
+    const result = await evaluateGraphClient({
+      nodes: [buildPromptNode(), buildAgentWaitNode()],
+      edges: [
+        {
+          id: 'edge-prompt-agent-wait',
+          from: 'node-prompt',
+          to: 'node-agent-wait',
+          fromPort: 'prompt',
+          toPort: 'prompt',
+          kind: 'value',
+        },
+      ],
+      runtimeKernelPilotNodeTypes: ['prompt', 'agent'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockSettingsList).toHaveBeenCalledTimes(1);
+    expect(mockAgentEnqueue).toHaveBeenCalledTimes(1);
+    expect(mockAgentPoll).toHaveBeenCalledTimes(1);
+    expect(result.outputs?.['node-agent-wait']?.['status']).toBe('completed');
+    expect(result.outputs?.['node-agent-wait']?.['result']).toBe('done');
+    expect(result.outputs?.['node-agent-wait']?.['jobId']).toBe('agent-run-1');
   });
 
   it('executes learner agent nodes through client native contract resolver mapping', async () => {

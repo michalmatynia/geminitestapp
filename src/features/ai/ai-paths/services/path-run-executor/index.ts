@@ -905,7 +905,7 @@ export const executePathRun = async (
       onHalt: (halt: { reason: 'blocked' | 'max_iterations' | 'completed' | 'failed' }) => {
         runtimeHaltReason = halt.reason;
       },
-    }));
+    }) as any as RuntimeState | null);
 
     if (pendingIntermediateSave) {
       await saveIntermediateState();

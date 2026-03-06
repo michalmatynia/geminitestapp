@@ -45,7 +45,7 @@ export type NodeMigrationReadiness = {
 };
 
 export type NodeMigrationReadinessInput = {
-  runtimeStrategy: 'legacy_adapter' | 'code_object_v3';
+  runtimeStrategy: 'compatibility' | 'code_object_v3';
   hasSemanticContractHash: boolean;
   hasV2ObjectContract: boolean;
   hasV3Scaffold: boolean;

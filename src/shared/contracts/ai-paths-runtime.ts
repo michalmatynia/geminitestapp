@@ -225,6 +225,13 @@ export const runtimeHistoryLinkSchema = z.object({
 
 export type RuntimeHistoryLink = z.infer<typeof runtimeHistoryLinkSchema>;
 
+export type NodeRuntimeResolutionStrategy = 'compatibility' | 'code_object_v3';
+
+export const nodeRuntimeResolutionStrategySchema = z.enum([
+  'compatibility',
+  'code_object_v3',
+]);
+
 export const runtimeHistoryEntrySchema = z.object({
   timestamp: z.string(),
   pathId: z.string().nullable(),
@@ -250,15 +257,12 @@ export const runtimeHistoryEntrySchema = z.object({
   outputsTo: z.array(runtimeHistoryLinkSchema).optional().default([]),
   delayMs: z.number().nullable().optional(),
   durationMs: z.number().nullable().optional(),
-  runtimeStrategy: z.enum(['legacy_adapter', 'code_object_v3']).optional(),
+  runtimeStrategy: nodeRuntimeResolutionStrategySchema.optional(),
   runtimeResolutionSource: z.enum(['override', 'registry', 'missing']).optional(),
   runtimeCodeObjectId: z.string().nullable().optional(),
 });
 
 export type RuntimeHistoryEntry = z.infer<typeof runtimeHistoryEntrySchema>;
-
-export const nodeRuntimeResolutionStrategySchema = z.enum(['legacy_adapter', 'code_object_v3']);
-export type NodeRuntimeResolutionStrategy = z.infer<typeof nodeRuntimeResolutionStrategySchema>;
 
 export const nodeRuntimeResolutionSourceSchema = z.enum(['override', 'registry', 'missing']);
 export type NodeRuntimeResolutionSource = z.infer<typeof nodeRuntimeResolutionSourceSchema>;

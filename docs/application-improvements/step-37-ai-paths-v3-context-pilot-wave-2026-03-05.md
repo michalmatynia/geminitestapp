@@ -50,7 +50,7 @@ Continue gradual migration from legacy handler wiring to semantic portable node 
 - v3 pilot set increased from 8 to 9 node types.
 - Migration snapshot now reports:
   - `pilotNodeTypes`: `constant,context,mapper,math,mutator,parser,regex,string_mutator,template`
-  - `strategyTotals`: `legacy_adapter=27`, `code_object_v3=9`
+  - `strategyTotals`: `compatibility=27`, `code_object_v3=9`
   - `averageScore`: `46`
 
 This preserves staged rollout safety while increasing portable-engine semantic coverage.

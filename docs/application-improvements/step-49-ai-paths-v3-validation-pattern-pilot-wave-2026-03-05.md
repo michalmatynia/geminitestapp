@@ -54,7 +54,7 @@ Continue staged migration to semantic portable runtime by promoting `validation_
 
 - v3 pilot set increased from `16` to `17` node types.
 - Migration snapshot now reports:
-  - `strategyTotals`: `legacy_adapter=19`, `code_object_v3=17`
+  - `strategyTotals`: `compatibility=19`, `code_object_v3=17`
   - `averageScore`: `61`
   - top blockers: `missing_v3_scaffold`, `not_in_v3_pilot`, `rollout_not_approved`
 

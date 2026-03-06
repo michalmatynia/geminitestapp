@@ -53,7 +53,7 @@ Continue staged migration to semantic portable runtime by promoting `fetcher` in
 
 - v3 pilot set increased from `18` to `19` node types.
 - Migration snapshot now reports:
-  - `strategyTotals`: `legacy_adapter=17`, `code_object_v3=19`
+  - `strategyTotals`: `compatibility=17`, `code_object_v3=19`
   - `averageScore`: `64`
   - top blockers: `rollout_not_approved`, `missing_v3_scaffold`, `not_in_v3_pilot`
 

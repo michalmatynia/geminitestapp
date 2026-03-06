@@ -55,9 +55,6 @@ const appendChangedField = (
   }
 };
 
-const normalizeNonNegativeInteger = (value: unknown): number | null =>
-  typeof value === 'number' && Number.isFinite(value) && value >= 0 ? Math.round(value) : null;
-
 const normalizeRuntimeKernelConfigRecord = (
   value: Record<string, unknown>,
   options: {
@@ -217,60 +214,7 @@ const normalizeRuntimeKernelTelemetryRecord = (
   };
 };
 
-const normalizeRuntimeTraceRecord = (
-  value: Record<string, unknown>
-): {
-  changed: boolean;
-  value: Record<string, unknown>;
-  changedFields: AiPathRunRuntimeKernelMetadataChangedField[];
-} => {
-  const nextValue: Record<string, unknown> = { ...value };
-  const changedFields: AiPathRunRuntimeKernelMetadataChangedField[] = [];
-  const kernelParity = isObjectRecord(value['kernelParity']) ? value['kernelParity'] : null;
-  if (!kernelParity) {
-    return {
-      changed: false,
-      value,
-      changedFields,
-    };
-  }
-
-  const strategyCounts = isObjectRecord(kernelParity['strategyCounts'])
-    ? kernelParity['strategyCounts']
-    : null;
-  if (!strategyCounts || !('legacy_adapter' in strategyCounts)) {
-    return {
-      changed: false,
-      value,
-      changedFields,
-    };
-  }
-
-  const compatibilityCount =
-    normalizeNonNegativeInteger(strategyCounts['compatibility']) ??
-    normalizeNonNegativeInteger(strategyCounts['legacy_adapter']);
-  const nextStrategyCounts: Record<string, unknown> = { ...strategyCounts };
-  delete nextStrategyCounts['legacy_adapter'];
-  if (compatibilityCount !== null) {
-    nextStrategyCounts['compatibility'] = compatibilityCount;
-  } else if ('compatibility' in nextStrategyCounts) {
-    delete nextStrategyCounts['compatibility'];
-  }
-
-  nextValue['kernelParity'] = {
-    ...kernelParity,
-    strategyCounts: nextStrategyCounts,
-  };
-  appendChangedField(changedFields, 'runtimeTrace.kernelParity.strategyCounts');
-
-  return {
-    changed: true,
-    value: nextValue,
-    changedFields,
-  };
-};
-
-export const normalizeAiPathRunRuntimeKernelMetadata = (
+export const normalizeAiPathRunRuntimeKernelMetadataForCleanup = (
   meta: unknown
 ): NormalizeAiPathRunRuntimeKernelMetadataResult => {
   return normalizeAiPathRunRuntimeKernelMetadataInternal(meta, {
@@ -337,16 +281,6 @@ const normalizeAiPathRunRuntimeKernelMetadataInternal = (
       normalized.changedFields.forEach((field) => appendChangedField(changedFields, field));
     }
   }
-
-  const runtimeTrace = isObjectRecord(meta['runtimeTrace']) ? meta['runtimeTrace'] : null;
-  if (runtimeTrace) {
-    const normalized = normalizeRuntimeTraceRecord(runtimeTrace);
-    if (normalized.changed) {
-      nextMeta['runtimeTrace'] = normalized.value;
-      normalized.changedFields.forEach((field) => appendChangedField(changedFields, field));
-    }
-  }
-
   return {
     changed: changedFields.length > 0,
     meta: changedFields.length > 0 ? nextMeta : meta,

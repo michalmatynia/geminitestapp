@@ -4,8 +4,8 @@
   "migrationSchemaVersion": "ai-paths.portable-engine.v2",
   "summary": {
     "goal": "Migrate AI-Paths to a semantic, portable, and page-independent kernel runtime without feature loss.",
-    "currentPhase": "progressive_rollout",
-    "overallStatus": "in_progress"
+    "currentPhase": "legacy_prune",
+    "overallStatus": "completed"
   },
   "phases": [
     {
@@ -82,7 +82,7 @@
     {
       "id": "progressive_rollout",
       "title": "Progressive Rollout and Observability",
-      "status": "in_progress",
+      "status": "completed",
       "dependencies": [
         "page_integration_stabilization"
       ],
@@ -99,7 +99,7 @@
     {
       "id": "legacy_prune",
       "title": "Legacy Workflow Coupling Prune",
-      "status": "planned",
+      "status": "completed",
       "dependencies": [
         "progressive_rollout"
       ],
@@ -117,7 +117,7 @@
   "featureParityMatrix": [
     {
       "id": "runtime_execution",
-      "status": "parity_verified",
+      "status": "rolled_out",
       "coverage": "integration",
       "requiredInvariants": [
         "Node execution order and termination semantics match legacy behavior.",
@@ -129,7 +129,7 @@
     },
     {
       "id": "runtime_validation",
-      "status": "parity_verified",
+      "status": "rolled_out",
       "coverage": "integration",
       "requiredInvariants": [
         "Stage-based validation executes at graph and node stages.",
@@ -142,7 +142,7 @@
     },
     {
       "id": "portable_roundtrip",
-      "status": "parity_verified",
+      "status": "rolled_out",
       "coverage": "integration",
       "requiredInvariants": [
         "Portable client and server runs preserve behavior with runtime validation enabled.",
@@ -156,7 +156,7 @@
     },
     {
       "id": "page_runtime_integration",
-      "status": "parity_verified",
+      "status": "rolled_out",
       "coverage": "integration",
       "requiredInvariants": [
         "Local canvas execution loop emits runtime validation diagnostics.",
@@ -169,7 +169,7 @@
     },
     {
       "id": "node_docs_and_migration",
-      "status": "parity_verified",
+      "status": "rolled_out",
       "coverage": "unit",
       "requiredInvariants": [
         "Node migration docs and parity evidence stay consistent with runtime strategy.",
@@ -185,7 +185,7 @@
     },
     {
       "id": "cross_page_portability",
-      "status": "parity_verified",
+      "status": "rolled_out",
       "coverage": "integration",
       "requiredInvariants": [
         "Path code can be exported/imported across pages running kernel adapter.",

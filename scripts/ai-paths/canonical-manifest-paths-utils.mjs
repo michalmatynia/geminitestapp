@@ -14,7 +14,7 @@ const readTextFile = (root, relativePath) => {
 const readJsonFile = (root, relativePath) => JSON.parse(readTextFile(root, relativePath));
 
 const extractConstValue = (source, name) => {
-  const regex = new RegExp(`export const ${name} = '([^']+)';`);
+  const regex = new RegExp(`export const ${name} =\\s*'([^']+)';`);
   const match = source.match(regex);
   return match?.[1] ?? null;
 };

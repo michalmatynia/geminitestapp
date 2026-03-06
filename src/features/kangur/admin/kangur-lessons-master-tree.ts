@@ -48,12 +48,14 @@ export const buildKangurLessonMasterNodes = (lessons: KangurLesson[]): MasterTre
         kangurLesson: {
           lessonId: lesson.id,
           componentId: lesson.componentId,
+          contentMode: lesson.contentMode,
           enabled: lesson.enabled,
           description: lesson.description,
         },
         search: {
           lessonId: lesson.id,
           componentId: lesson.componentId,
+          contentMode: lesson.contentMode,
           title: lesson.title,
           description: lesson.description,
           visibility: lesson.enabled ? 'enabled' : 'hidden',
@@ -72,6 +74,7 @@ const LESSON_VISIBILITY_GROUPS: Array<{
 const buildLessonSearchMetadata = (lesson: KangurLesson): Record<string, string> => ({
   lessonId: lesson.id,
   componentId: lesson.componentId,
+  contentMode: lesson.contentMode,
   title: lesson.title,
   description: lesson.description,
   visibility: lesson.enabled ? 'enabled' : 'hidden',
@@ -168,6 +171,7 @@ export const buildKangurLessonCatalogMasterNodes = (lessons: KangurLesson[]): Ma
             kangurLesson: {
               lessonId: lesson.id,
               componentId: lesson.componentId,
+              contentMode: lesson.contentMode,
               enabled: lesson.enabled,
               description: lesson.description,
             },

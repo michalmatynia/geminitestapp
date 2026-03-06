@@ -74,7 +74,7 @@ Improve robustness of the portable engine migration by:
 ## Outcome
 
 - Runtime strategy coverage remains:
-  - `legacy_adapter=0`, `code_object_v3=36`
+  - `compatibility=0`, `code_object_v3=36`
 - Readiness now correctly reflects manual rollout gating:
   - `rollout_candidate=36`, `rollout_approved=0`
   - blocker: `rollout_not_approved` (until approvals are added to `rollout-approvals.json`)

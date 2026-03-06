@@ -1,11 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, LayoutDashboard } from 'lucide-react';
 import type { ComponentType } from 'react';
 import dynamic from 'next/dynamic';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import {
+  hasKangurLessonDocumentContent,
+  KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
+  parseKangurLessonDocumentStore,
+} from '@/features/kangur/lesson-documents';
 import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
+import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
+import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
@@ -232,9 +239,14 @@ export default function Lessons() {
   });
 
   const rawLessons = settingsStore.get(KANGUR_LESSONS_SETTING_KEY);
+  const rawLessonDocuments = settingsStore.get(KANGUR_LESSON_DOCUMENTS_SETTING_KEY);
   const lessons = useMemo(
     (): KangurLesson[] => parseKangurLessons(rawLessons).filter((lesson) => lesson.enabled),
     [rawLessons]
+  );
+  const lessonDocuments = useMemo(
+    () => parseKangurLessonDocumentStore(rawLessonDocuments),
+    [rawLessonDocuments]
   );
   const lessonAssignmentsByComponent = useMemo(() => {
     const nextMap = new Map<
@@ -358,6 +370,10 @@ export default function Lessons() {
   const next =
     activeIdx >= 0 && activeIdx < orderedLessons.length - 1 ? orderedLessons[activeIdx + 1] : null;
   const ActiveLessonComponent = activeLesson ? LESSON_COMPONENTS[activeLesson.componentId] : null;
+  const activeLessonDocument = activeLesson ? lessonDocuments[activeLesson.id] ?? null : null;
+  const hasActiveLessonDocumentContent = hasKangurLessonDocumentContent(activeLessonDocument);
+  const shouldRenderLessonDocument =
+    activeLesson?.contentMode === 'document' && hasActiveLessonDocumentContent;
   const activeLessonAssignment = activeLesson
     ? lessonAssignmentsByComponent.get(activeLesson.componentId) ?? null
     : null;
@@ -365,6 +381,7 @@ export default function Lessons() {
     activeLesson && !activeLessonAssignment
       ? completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null
       : null;
+  const activeLessonContentRef = useRef<HTMLDivElement | null>(null);
   const handleGoBack = (): void => {
     if (typeof window === 'undefined') return;
     if (window.history.length > 1) {
@@ -461,6 +478,12 @@ export default function Lessons() {
                           <div>
                             <div className='font-extrabold text-xl'>{lesson.title}</div>
                             <div className='text-white/80 text-sm mt-0.5'>{lesson.description}</div>
+                            {lesson.contentMode === 'document' &&
+                            hasKangurLessonDocumentContent(lessonDocuments[lesson.id]) ? (
+                                <div className='mt-2 inline-flex rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-sky-700'>
+                                Wlasna zawartosc
+                                </div>
+                              ) : null}
                             {lessonAssignment ? (
                               <div className='mt-2 inline-flex rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white'>
                                 Priorytet rodzica
@@ -535,9 +558,59 @@ export default function Lessons() {
                   </div>
                 </div>
               ) : null}
-              {ActiveLessonComponent ? (
-                <ActiveLessonComponent onBack={() => setActiveLessonId(null)} />
-              ) : null}
+              <KangurLessonNarrator
+                lesson={activeLesson}
+                lessonDocument={activeLessonDocument}
+                lessonContentRef={activeLessonContentRef}
+              />
+              <div ref={activeLessonContentRef} className='w-full flex flex-col items-center gap-4'>
+                {shouldRenderLessonDocument && activeLessonDocument ? (
+                  <div className='w-full max-w-5xl space-y-4'>
+                    <div className='rounded-[30px] border border-indigo-200/80 bg-white/92 p-5 shadow-lg'>
+                      <div className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between'>
+                        <div>
+                          <div className='inline-flex rounded-full bg-sky-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-sky-700'>
+                            Lesson document
+                          </div>
+                          <h1 className='mt-3 text-3xl font-extrabold text-slate-900'>
+                            {activeLesson.title}
+                          </h1>
+                          <p className='mt-2 max-w-3xl text-sm text-slate-600'>
+                            {activeLesson.description}
+                          </p>
+                        </div>
+                        <button
+                          type='button'
+                          onClick={(): void => setActiveLessonId(null)}
+                          className='inline-flex items-center justify-center rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100'
+                        >
+                          Wroc do listy lekcji
+                        </button>
+                      </div>
+                    </div>
+                    <KangurLessonDocumentRenderer document={activeLessonDocument} />
+                  </div>
+                ) : activeLesson?.contentMode === 'document' && !hasActiveLessonDocumentContent ? (
+                  <div className='w-full max-w-3xl rounded-[30px] border border-amber-200 bg-white/92 p-6 text-center shadow-lg'>
+                    <div className='inline-flex rounded-full bg-amber-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-amber-700'>
+                      Lesson document
+                    </div>
+                    <h1 className='mt-4 text-3xl font-extrabold text-slate-900'>{activeLesson.title}</h1>
+                    <p className='mt-3 text-sm text-slate-600'>
+                      This lesson is set to use custom document content, but no document blocks have been saved yet.
+                    </p>
+                    <button
+                      type='button'
+                      onClick={(): void => setActiveLessonId(null)}
+                      className='mt-5 inline-flex items-center justify-center rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100'
+                    >
+                      Wroc do listy lekcji
+                    </button>
+                  </div>
+                ) : ActiveLessonComponent ? (
+                  <ActiveLessonComponent onBack={() => setActiveLessonId(null)} />
+                ) : null}
+              </div>
 
               {/* Prev / Next lesson navigation */}
               {(prev || next) && (

@@ -53,7 +53,7 @@ Continue staged migration to semantic portable runtime by promoting `gate` into 
 
 - v3 pilot set increased from `11` to `12` node types.
 - Migration snapshot now reports:
-  - `strategyTotals`: `legacy_adapter=24`, `code_object_v3=12`
+  - `strategyTotals`: `compatibility=24`, `code_object_v3=12`
   - `averageScore`: `53`
   - top blockers: `missing_v3_scaffold`, `not_in_v3_pilot`, `rollout_not_approved`
 

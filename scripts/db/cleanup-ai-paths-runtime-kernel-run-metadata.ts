@@ -4,10 +4,14 @@ import { pathToFileURL } from 'node:url';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import {
-  normalizeAiPathRunRuntimeKernelMetadata,
+  normalizeAiPathRunRuntimeKernelMetadataForCleanup,
   type AiPathRunRuntimeKernelMetadataChangedField,
 } from '@/features/ai/ai-paths/services/path-run-runtime-kernel-metadata';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+import {
+  normalizeHistoricalRuntimeKernelParityStrategyCountsMeta,
+  normalizeHistoricalRuntimeStateCompatibilityHistoryField,
+} from './ai-paths-runtime-compatibility-normalization';
 
 type CliOptions = {
   write: boolean;
@@ -21,9 +25,12 @@ type CleanupSummary = {
   scannedBatches: number;
   scannedRuns: number;
   runsWithRuntimeKernelMetadata: number;
+  runsWithLegacyRuntimeTraceStrategyCounts: number;
+  runsWithLegacyRuntimeStateHistory: number;
   affectedRuns: number;
   updateAttempts: number;
   updatesApplied: number;
+  runtimeStateUpdatesApplied: number;
   changedFieldCounts: Record<AiPathRunRuntimeKernelMetadataChangedField, number>;
   sampleRunIds: string[];
   failures: Array<{ runId: string; message: string }>;
@@ -110,9 +117,12 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
     scannedBatches: 0,
     scannedRuns: 0,
     runsWithRuntimeKernelMetadata: 0,
+    runsWithLegacyRuntimeTraceStrategyCounts: 0,
+    runsWithLegacyRuntimeStateHistory: 0,
     affectedRuns: 0,
     updateAttempts: 0,
     updatesApplied: 0,
+    runtimeStateUpdatesApplied: 0,
     changedFieldCounts: buildChangedFieldCounts(),
     sampleRunIds: [],
     failures: [],
@@ -137,16 +147,41 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
       }
 
       summary.scannedRuns += 1;
-      if (!hasRuntimeKernelMetadata(run.meta)) continue;
-      summary.runsWithRuntimeKernelMetadata += 1;
-
-      const normalized = normalizeAiPathRunRuntimeKernelMetadata(run.meta);
-      if (!normalized.changed || !normalized.meta) continue;
+      const normalized = normalizeAiPathRunRuntimeKernelMetadataForCleanup(run.meta);
+      const normalizedCompatibilityMeta = normalizeHistoricalRuntimeKernelParityStrategyCountsMeta(
+        normalized.meta ?? run.meta
+      );
+      const normalizedRuntimeState = normalizeHistoricalRuntimeStateCompatibilityHistoryField(
+        run.runtimeState
+      );
+      const metadataChanged =
+        (normalized.changed && normalized.meta) || normalizedCompatibilityMeta.changed;
+      const nextMeta = normalizedCompatibilityMeta.changed
+        ? normalizedCompatibilityMeta.value
+        : normalized.changed
+          ? normalized.meta
+          : null;
+      if (hasRuntimeKernelMetadata(run.meta)) {
+        summary.runsWithRuntimeKernelMetadata += 1;
+      }
+      if (normalizedCompatibilityMeta.changed) {
+        summary.runsWithLegacyRuntimeTraceStrategyCounts += 1;
+      }
+      if (normalizedRuntimeState.changed) {
+        summary.runsWithLegacyRuntimeStateHistory += 1;
+      }
+      if (!metadataChanged && !normalizedRuntimeState.changed) continue;
 
       summary.affectedRuns += 1;
-      normalized.changedFields.forEach((field) => {
-        summary.changedFieldCounts[field] += 1;
-      });
+      if (metadataChanged) {
+        const metadataChangedFields = normalized.changedFields.slice();
+        if (normalizedCompatibilityMeta.changed) {
+          metadataChangedFields.push('runtimeTrace.kernelParity.strategyCounts');
+        }
+        metadataChangedFields.forEach((field) => {
+          summary.changedFieldCounts[field] += 1;
+        });
+      }
       maybeCollectSample(summary.sampleRunIds, options.sampleLimit, run.id);
 
       if (!options.write) continue;
@@ -154,9 +189,13 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
       summary.updateAttempts += 1;
       try {
         await repo.updateRun(run.id, {
-          meta: normalized.meta,
+          ...(metadataChanged ? { meta: nextMeta } : {}),
+          ...(normalizedRuntimeState.changed ? { runtimeState: normalizedRuntimeState.value } : {}),
         });
         summary.updatesApplied += 1;
+        if (normalizedRuntimeState.changed) {
+          summary.runtimeStateUpdatesApplied += 1;
+        }
       } catch (error) {
         summary.failures.push({
           runId: run.id,

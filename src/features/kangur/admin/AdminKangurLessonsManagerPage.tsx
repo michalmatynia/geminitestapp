@@ -3,6 +3,7 @@
 import {
   ChevronDown,
   ChevronRight,
+  FileText,
   Folder,
   FolderOpen,
   Folders,
@@ -22,7 +23,11 @@ import {
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree/v2';
 import { FolderTreeSearchBar, useMasterFolderTreeSearch } from '@/features/foldertree/v2/search';
-import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
+import type {
+  KangurLesson,
+  KangurLessonComponentId,
+  KangurLessonContentMode,
+} from '@/shared/contracts/kangur';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
@@ -53,6 +58,7 @@ import {
   resolveKangurLessonOrderFromNodes,
 } from './kangur-lessons-master-tree';
 import {
+  KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
   appendMissingGeometryKangurLessons,
   appendMissingLogicalThinkingKangurLessons,
   KANGUR_LESSONS_SETTING_KEY,
@@ -63,6 +69,16 @@ import {
   createKangurLessonId,
   parseKangurLessons,
 } from '../settings';
+import {
+  createStarterKangurLessonDocument,
+  createDefaultKangurLessonDocument,
+  hasKangurLessonDocumentContent,
+  parseKangurLessonDocumentStore,
+  removeKangurLessonDocument,
+  updateKangurLessonDocumentTimestamp,
+} from '../lesson-documents';
+import { KangurLessonDocumentEditor } from './KangurLessonDocumentEditor';
+import { KangurLessonNarrationPanel } from './KangurLessonNarrationPanel';
 
 type LessonTreeMode = 'ordered' | 'catalog';
 const ORDERED_TREE_INSTANCE = 'kangur_lessons_manager';
@@ -71,6 +87,7 @@ const TREE_MODE_STORAGE_KEY = 'kangur_lessons_manager_tree_mode_v1';
 
 type LessonFormData = {
   componentId: KangurLessonComponentId;
+  contentMode: KangurLessonContentMode;
   title: string;
   description: string;
   emoji: string;
@@ -81,6 +98,7 @@ type LessonFormData = {
 
 const toLessonFormData = (lesson: KangurLesson): LessonFormData => ({
   componentId: lesson.componentId,
+  contentMode: lesson.contentMode,
   title: lesson.title,
   description: lesson.description,
   emoji: lesson.emoji,
@@ -90,6 +108,23 @@ const toLessonFormData = (lesson: KangurLesson): LessonFormData => ({
 });
 
 const createInitialLessonFormData = (): LessonFormData => createKangurLessonDraft('clock');
+
+const LESSON_CONTENT_MODE_OPTIONS: Array<{
+  value: KangurLessonContentMode;
+  label: string;
+}> = [
+  { value: 'component', label: 'Legacy component' },
+  { value: 'document', label: 'Custom document' },
+];
+
+const upsertLesson = (lessons: KangurLesson[], nextLesson: KangurLesson): KangurLesson[] => {
+  const existingIndex = lessons.findIndex((lesson) => lesson.id === nextLesson.id);
+  if (existingIndex === -1) {
+    return [...lessons, nextLesson];
+  }
+
+  return lessons.map((lesson) => (lesson.id === nextLesson.id ? nextLesson : lesson));
+};
 
 const readLessonGroupCount = (metadata: unknown): number | null => {
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return null;
@@ -116,16 +151,24 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
   const { toast } = useToast();
 
   const rawLessons = settingsStore.get(KANGUR_LESSONS_SETTING_KEY);
+  const rawLessonDocuments = settingsStore.get(KANGUR_LESSON_DOCUMENTS_SETTING_KEY);
   const lessons = useMemo((): KangurLesson[] => parseKangurLessons(rawLessons), [rawLessons]);
+  const lessonDocuments = useMemo(
+    () => parseKangurLessonDocumentStore(rawLessonDocuments),
+    [rawLessonDocuments]
+  );
   const lessonById = useMemo(
     () => new Map(lessons.map((lesson): [string, KangurLesson] => [lesson.id, lesson])),
     [lessons]
   );
 
   const [showModal, setShowModal] = useState(false);
+  const [showContentModal, setShowContentModal] = useState(false);
   const [editingLesson, setEditingLesson] = useState<KangurLesson | null>(null);
+  const [editingContentLesson, setEditingContentLesson] = useState<KangurLesson | null>(null);
   const [lessonToDelete, setLessonToDelete] = useState<KangurLesson | null>(null);
   const [formData, setFormData] = useState<LessonFormData>(() => createInitialLessonFormData());
+  const [contentDraft, setContentDraft] = useState(createDefaultKangurLessonDocument);
   const [treeMode, setTreeMode] = useState<LessonTreeMode>(() => readPersistedTreeMode());
   const [orderedTreeSearchQuery, setOrderedTreeSearchQuery] = useState('');
   const [catalogTreeSearchQuery, setCatalogTreeSearchQuery] = useState('');
@@ -171,6 +214,33 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
           },
         });
         throw error instanceof Error ? error : new Error('Failed to persist lessons.');
+      }
+    },
+    [toast, updateSetting]
+  );
+
+  const persistLessonDocuments = useCallback(
+    async (
+      nextDocuments: ReturnType<typeof parseKangurLessonDocumentStore>,
+      options?: { successMessage?: string }
+    ): Promise<void> => {
+      try {
+        await updateSetting.mutateAsync({
+          key: KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
+          value: serializeSetting(nextDocuments),
+        });
+        if (options?.successMessage) {
+          toast(options.successMessage, { variant: 'success' });
+        }
+      } catch (error: unknown) {
+        logClientError(error, {
+          context: {
+            source: 'AdminKangurLessonsManagerPage',
+            action: 'persistLessonDocuments',
+            lessonDocumentCount: Object.keys(nextDocuments).length,
+          },
+        });
+        throw error instanceof Error ? error : new Error('Failed to persist lesson documents.');
       }
     },
     [toast, updateSetting]
@@ -235,6 +305,15 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
     setShowModal(true);
   }, []);
 
+  const openContentModal = useCallback(
+    (lesson: KangurLesson): void => {
+      setEditingContentLesson(lesson);
+      setContentDraft(lessonDocuments[lesson.id] ?? createStarterKangurLessonDocument(lesson.componentId));
+      setShowContentModal(true);
+    },
+    [lessonDocuments]
+  );
+
   const applyTemplateForComponent = useCallback((componentId: KangurLessonComponentId): void => {
     const template = createKangurLessonDraft(componentId);
     setFormData((current) => ({
@@ -270,6 +349,7 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
       ? {
         ...editingLesson,
         componentId: formData.componentId,
+        contentMode: formData.contentMode,
         title: normalizedTitle,
         description: normalizedDescription,
         emoji: normalizedEmoji,
@@ -280,6 +360,7 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
       : {
         id: createKangurLessonId(normalizedTitle),
         componentId: formData.componentId,
+        contentMode: formData.contentMode,
         title: normalizedTitle,
         description: normalizedDescription,
         emoji: normalizedEmoji,
@@ -292,6 +373,9 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
     const nextLessons = editingLesson
       ? lessons.map((lesson) => (lesson.id === editingLesson.id ? nextLesson : lesson))
       : [...lessons, nextLesson];
+    const nextLessonDocument = lessonDocuments[nextLesson.id] ?? null;
+    const shouldOpenContentEditor =
+      nextLesson.contentMode === 'document' && !hasKangurLessonDocumentContent(nextLessonDocument);
 
     try {
       await persistLessons(nextLessons, {
@@ -299,20 +383,29 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
       });
       setShowModal(false);
       setEditingLesson(null);
+      if (shouldOpenContentEditor) {
+        setEditingContentLesson(nextLesson);
+        setContentDraft(nextLessonDocument ?? createStarterKangurLessonDocument(nextLesson.componentId));
+        setShowContentModal(true);
+      }
     } catch (error: unknown) {
       toast(error instanceof Error ? error.message : 'Failed to save lesson.', {
         variant: 'error',
       });
     }
-  }, [editingLesson, formData, lessons, persistLessons, toast]);
+  }, [editingLesson, formData, lessonDocuments, lessons, persistLessons, toast]);
 
   const handleDeleteLesson = useCallback(async (): Promise<void> => {
     if (!lessonToDelete) return;
 
     const nextLessons = lessons.filter((lesson) => lesson.id !== lessonToDelete.id);
+    const nextLessonDocuments = removeKangurLessonDocument(lessonDocuments, lessonToDelete.id);
 
     try {
       await persistLessons(nextLessons, { successMessage: 'Lesson removed.' });
+      if (nextLessonDocuments !== lessonDocuments) {
+        await persistLessonDocuments(nextLessonDocuments);
+      }
     } catch (error: unknown) {
       toast(error instanceof Error ? error.message : 'Failed to remove lesson.', {
         variant: 'error',
@@ -320,7 +413,79 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
     } finally {
       setLessonToDelete(null);
     }
-  }, [lessonToDelete, lessons, persistLessons, toast]);
+  }, [lessonDocuments, lessonToDelete, lessons, persistLessonDocuments, persistLessons, toast]);
+
+  const handleSaveLessonContent = useCallback(async (): Promise<void> => {
+    if (!editingContentLesson) return;
+
+    const nextLessonDocuments = {
+      ...lessonDocuments,
+      [editingContentLesson.id]: updateKangurLessonDocumentTimestamp(contentDraft),
+    };
+    const nextLessonRecord: KangurLesson = {
+      ...editingContentLesson,
+      contentMode: 'document',
+    };
+    const nextLessons = upsertLesson(lessons, nextLessonRecord);
+    const shouldPersistLessonMode = !lessons.some(
+      (lesson) => lesson.id === editingContentLesson.id && lesson.contentMode === 'document'
+    );
+
+    try {
+      await persistLessonDocuments(nextLessonDocuments);
+      if (shouldPersistLessonMode || !lessons.some((lesson) => lesson.id === editingContentLesson.id)) {
+        await persistLessons(nextLessons, {
+          successMessage: 'Lesson content updated.',
+        });
+      } else {
+        toast('Lesson content updated.', { variant: 'success' });
+      }
+      setShowContentModal(false);
+      setEditingContentLesson(null);
+    } catch (error: unknown) {
+      toast(error instanceof Error ? error.message : 'Failed to save lesson content.', {
+        variant: 'error',
+      });
+    }
+  }, [
+    contentDraft,
+    editingContentLesson,
+    lessonDocuments,
+    lessons,
+    persistLessonDocuments,
+    persistLessons,
+    toast,
+  ]);
+
+  const handleClearLessonContent = useCallback(async (): Promise<void> => {
+    if (!editingContentLesson) return;
+
+    const nextLessonDocuments = removeKangurLessonDocument(lessonDocuments, editingContentLesson.id);
+    const nextLessonRecord: KangurLesson = {
+      ...editingContentLesson,
+      contentMode: 'component',
+    };
+    const nextLessons = upsertLesson(lessons, nextLessonRecord);
+    const shouldPersistLessonMode = !lessons.some(
+      (lesson) => lesson.id === editingContentLesson.id && lesson.contentMode === 'component'
+    );
+
+    try {
+      if (shouldPersistLessonMode || !lessons.some((lesson) => lesson.id === editingContentLesson.id)) {
+        await persistLessons(nextLessons);
+      }
+      await persistLessonDocuments(nextLessonDocuments, {
+        successMessage: 'Custom lesson content removed.',
+      });
+      setContentDraft(createDefaultKangurLessonDocument());
+      setShowContentModal(false);
+      setEditingContentLesson(null);
+    } catch (error: unknown) {
+      toast(error instanceof Error ? error.message : 'Failed to clear lesson content.', {
+        variant: 'error',
+      });
+    }
+  }, [editingContentLesson, lessonDocuments, lessons, persistLessonDocuments, persistLessons, toast]);
 
   const geometryPackResult = useMemo(() => appendMissingGeometryKangurLessons(lessons), [lessons]);
   const logicalThinkingPackResult = useMemo(
@@ -466,6 +631,25 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
             <Badge variant='outline' className='h-5 px-1.5 text-[10px] uppercase tracking-wide'>
               {lesson.componentId}
             </Badge>
+            <Badge
+              variant='outline'
+              className={cn(
+                'h-5 px-1.5 text-[10px] uppercase tracking-wide',
+                lesson.contentMode === 'document'
+                  ? 'border-sky-400/40 text-sky-300'
+                  : 'border-gray-500/40 text-gray-300'
+              )}
+            >
+              {lesson.contentMode}
+            </Badge>
+            {hasKangurLessonDocumentContent(lessonDocuments[lesson.id]) ? (
+              <Badge
+                variant='outline'
+                className='h-5 px-1.5 text-[10px] border-sky-400/40 text-sky-300'
+              >
+                Custom content
+              </Badge>
+            ) : null}
             {!lesson.enabled ? (
               <Badge
                 variant='outline'
@@ -476,6 +660,20 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
             ) : null}
 
             <div className='inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100'>
+              <button
+                type='button'
+                className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200'
+                onMouseDown={(event): void => event.stopPropagation()}
+                onClick={(event): void => {
+                  event.stopPropagation();
+                  openContentModal(lesson);
+                }}
+                title='Edit lesson content'
+                aria-label='Edit lesson content'
+                disabled={updateSetting.isPending}
+              >
+                <FileText className='size-3.5' />
+              </button>
               <button
                 type='button'
                 className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-gray-700/60 hover:text-white'
@@ -509,7 +707,7 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
         </TreeRow>
       );
     },
-    [lessonById, openEditModal, updateSetting.isPending]
+    [lessonById, lessonDocuments, openContentModal, openEditModal, updateSetting.isPending]
   );
 
   const isSaveDisabled = !formData.title.trim() || !formData.description.trim();
@@ -703,6 +901,19 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
             />
           </FormField>
 
+          <FormField label='Rendering Mode'>
+            <SelectSimple
+              size='sm'
+              value={formData.contentMode}
+              onValueChange={(value: string): void => {
+                if (value !== 'component' && value !== 'document') return;
+                setFormData((current) => ({ ...current, contentMode: value }));
+              }}
+              options={LESSON_CONTENT_MODE_OPTIONS}
+              triggerClassName='h-9'
+            />
+          </FormField>
+
           <FormField label='Title'>
             <Input
               value={formData.title}
@@ -749,7 +960,51 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
               }}
             />
           </div>
+
+          <div className='rounded-md border border-sky-400/20 bg-sky-500/10 p-3 text-xs text-sky-100/90'>
+            {formData.contentMode === 'document'
+              ? 'This lesson will render through the custom document editor. Use the document icon on the lesson row to author text, SVG blocks, and grid layouts.'
+              : 'This lesson will render through the legacy Kangur component selected above. You can still open the document editor and prepare custom content before switching modes.'}
+          </div>
         </div>
+      </FormModal>
+
+      <FormModal
+        isOpen={showContentModal}
+        onClose={(): void => {
+          setShowContentModal(false);
+          setEditingContentLesson(null);
+        }}
+        title={editingContentLesson ? `Edit Content: ${editingContentLesson.title}` : 'Edit Lesson Content'}
+        subtitle='Author lesson pages with text, SVG blocks, and responsive grid layouts.'
+        onSave={(): void => {
+          void handleSaveLessonContent();
+        }}
+        isSaving={updateSetting.isPending}
+        saveText='Save Content'
+        size='xl'
+        actions={
+          editingContentLesson && hasKangurLessonDocumentContent(contentDraft) ? (
+            <Button
+              type='button'
+              variant='outline'
+              className='text-rose-300 hover:bg-rose-500/10 hover:text-rose-200'
+              onClick={(): void => {
+                void handleClearLessonContent();
+              }}
+              disabled={updateSetting.isPending}
+            >
+              Clear custom content
+            </Button>
+          ) : undefined
+        }
+      >
+        {editingContentLesson ? (
+          <div className='space-y-6'>
+            <KangurLessonNarrationPanel lesson={editingContentLesson} document={contentDraft} />
+            <KangurLessonDocumentEditor value={contentDraft} onChange={setContentDraft} />
+          </div>
+        ) : null}
       </FormModal>
     </div>
   );

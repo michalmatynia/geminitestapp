@@ -436,14 +436,13 @@ export function flattenPlanHierarchy(hierarchy: PlanHierarchy): Array<{
   for (const goal of hierarchy.goals) {
     for (const subgoal of goal.subgoals) {
       for (const step of subgoal.steps) {
-        const priority =
-          typeof step.priority === 'number'
-            ? step.priority
-            : typeof subgoal.priority === 'number'
-              ? subgoal.priority
-              : typeof goal.priority === 'number'
-                ? goal.priority
-                : null;
+        const priority = (typeof step.priority === 'number'
+          ? step.priority
+          : typeof subgoal.priority === 'number'
+            ? subgoal.priority
+            : typeof goal.priority === 'number'
+              ? goal.priority
+              : null);
         steps.push({
           ...step,
           priority,

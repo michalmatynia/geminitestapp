@@ -6,7 +6,8 @@ import type {
 } from '@/shared/contracts/ai-paths-runtime';
 import { resolveNodeCodeObjectV3ContractByCodeObjectId } from './node-code-object-v3-legacy-bridge';
 
-export const NODE_RUNTIME_KERNEL_STRATEGIES = ['legacy_adapter', 'code_object_v3'] as const;
+export const NODE_RUNTIME_KERNEL_STRATEGIES = ['compatibility', 'code_object_v3'] as const;
+export type NodeRuntimeKernelStrategy = (typeof NODE_RUNTIME_KERNEL_STRATEGIES)[number];
 
 export const NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES = [
   'agent',
@@ -49,7 +50,7 @@ export const NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES = [
 
 export type NodeRuntimeKernelDescriptor = {
   nodeType: string;
-  strategy: NodeRuntimeResolutionStrategy;
+  strategy: NodeRuntimeKernelStrategy;
   source: NodeRuntimeResolutionSource;
   codeObjectId: string | null;
   handler: NodeHandler | null;
@@ -79,6 +80,11 @@ const normalizeNodeType = (nodeType: string): string =>
 
 const buildV3CodeObjectId = (nodeType: string): string => `ai-paths.node-code-object.${nodeType}.v3`;
 
+const toPublicRuntimeStrategy = (
+  strategy: NodeRuntimeKernelStrategy
+): NodeRuntimeResolutionStrategy =>
+  strategy;
+
 export const isNodeRuntimeKernelCanonicalType = ({
   nodeType,
   runtimeKernelNodeTypes,
@@ -93,10 +99,10 @@ const resolveStrategy = ({
 }: {
   nodeType: string;
   runtimeKernelNodeTypes: Set<string>;
-}): NodeRuntimeResolutionStrategy =>
+}): NodeRuntimeKernelStrategy =>
   isNodeRuntimeKernelCanonicalType({ nodeType, runtimeKernelNodeTypes })
     ? 'code_object_v3'
-    : 'legacy_adapter';
+    : 'compatibility';
 
 const buildDescriptor = ({
   nodeType,
@@ -122,7 +128,7 @@ const buildDescriptor = ({
 export const toNodeRuntimeResolutionTelemetry = (
   descriptor: NodeRuntimeKernelDescriptor
 ): NodeRuntimeResolutionTelemetry => ({
-  runtimeStrategy: descriptor.strategy,
+  runtimeStrategy: toPublicRuntimeStrategy(descriptor.strategy),
   runtimeResolutionSource: descriptor.source,
   runtimeCodeObjectId: descriptor.codeObjectId,
 });

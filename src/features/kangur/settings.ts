@@ -1,12 +1,15 @@
 import {
   KANGUR_LESSONS_SETTING_KEY,
+  KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
+  kangurLessonContentModeSchema,
   kangurLessonComponentIdSchema,
   type KangurLesson,
   type KangurLessonComponentId,
+  type KangurLessonContentMode,
 } from '@/shared/contracts/kangur';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
-export { KANGUR_LESSONS_SETTING_KEY };
+export { KANGUR_LESSONS_SETTING_KEY, KANGUR_LESSON_DOCUMENTS_SETTING_KEY };
 
 export const KANGUR_LESSON_SORT_ORDER_GAP = 1000;
 
@@ -211,7 +214,7 @@ export const KANGUR_LESSON_COMPONENT_OPTIONS: Array<{
 
 export type KangurLessonDraft = Pick<
   KangurLesson,
-  'componentId' | 'title' | 'description' | 'emoji' | 'color' | 'activeBg' | 'enabled'
+  'componentId' | 'contentMode' | 'title' | 'description' | 'emoji' | 'color' | 'activeBg' | 'enabled'
 >;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -235,6 +238,12 @@ const resolveKangurLessonComponentId = (value: unknown): KangurLessonComponentId
   const parsed = kangurLessonComponentIdSchema.safeParse(normalized);
   if (parsed.success) return parsed.data;
   return KANGUR_LEGACY_COMPONENT_ID_BY_ID[normalized] ?? null;
+};
+
+const resolveKangurLessonContentMode = (value: unknown): KangurLessonContentMode => {
+  if (typeof value !== 'string') return 'component';
+  const parsed = kangurLessonContentModeSchema.safeParse(value.trim().toLowerCase());
+  return parsed.success ? parsed.data : 'component';
 };
 
 const ensureUniqueLessonId = (requestedId: string, usedIds: Set<string>): string => {
@@ -275,6 +284,7 @@ export const createKangurLessonDraft = (
   const template = getKangurLessonTemplate(componentId);
   return {
     componentId,
+    contentMode: 'component',
     title: template.title,
     description: template.description,
     emoji: template.emoji,
@@ -290,6 +300,7 @@ export const createDefaultKangurLessons = (): KangurLesson[] =>
     return {
       id: `kangur-lesson-${componentId}`,
       componentId,
+      contentMode: 'component',
       title: template.title,
       description: template.description,
       emoji: template.emoji,
@@ -322,6 +333,7 @@ export const normalizeKangurLessons = (value: unknown): KangurLesson[] => {
       return {
         id: lessonId,
         componentId,
+        contentMode: resolveKangurLessonContentMode(entry['contentMode']),
         title: normalizeText(entry['title'], template.title, 120),
         description: normalizeText(entry['description'], template.description, 240),
         emoji: normalizeText(entry['emoji'], template.emoji, 12),
@@ -393,6 +405,7 @@ export const appendMissingKangurLessonsByComponent = (
     additions.push({
       id: lessonId,
       componentId,
+      contentMode: 'component',
       title: template.title,
       description: template.description,
       emoji: template.emoji,

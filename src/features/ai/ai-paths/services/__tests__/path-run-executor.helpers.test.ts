@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RuntimeState } from '@/shared/contracts/ai-paths';
+import { HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS } from '../../../../../../scripts/db/ai-paths-runtime-compatibility-normalization';
 
 import {
   EMPTY_RUNTIME_STATE,
@@ -117,6 +118,42 @@ describe('parseRuntimeState', () => {
 
     expect(parsed.currentRun?.id).toBe('run-1');
     expect(parsed.currentRun?.status).toBe('running');
+  });
+
+  it('rejects historical legacy runtime strategies inside runtime history', () => {
+    expect(() =>
+      parseRuntimeState(
+        JSON.stringify({
+          status: 'running',
+          nodeStatuses: {},
+          nodeOutputs: {},
+          variables: {},
+          events: [],
+          inputs: {},
+          outputs: {},
+          history: {
+            'node-1': [
+              {
+                timestamp: '2026-03-03T10:00:00.000Z',
+                pathId: 'path-1',
+                pathName: 'Path 1',
+                nodeId: 'node-1',
+                nodeType: 'template',
+                nodeTitle: 'Node 1',
+                status: 'completed',
+                iteration: 1,
+                inputs: {},
+                outputs: {},
+                inputHash: null,
+                runtimeStrategy: HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS,
+                runtimeResolutionSource: 'registry',
+                runtimeCodeObjectId: null,
+              },
+            ],
+          },
+        })
+      )
+    ).toThrowError(/Invalid AI Paths runtime state payload\./i);
   });
 
   it('rejects legacy "cancelled" runtime event status spelling', () => {
@@ -263,6 +300,18 @@ describe('runtime kernel telemetry helpers', () => {
   it('normalizes runtime node resolution telemetry payloads', () => {
     expect(
       toRuntimeNodeResolutionTelemetry({
+        runtimeStrategy: 'compatibility',
+        runtimeResolutionSource: 'registry',
+        runtimeCodeObjectId: null,
+      })
+    ).toEqual({
+      runtimeStrategy: 'compatibility',
+      runtimeResolutionSource: 'registry',
+      runtimeCodeObjectId: null,
+    });
+
+    expect(
+      toRuntimeNodeResolutionTelemetry({
         runtimeStrategy: 'code_object_v3',
         runtimeResolutionSource: 'override',
         runtimeCodeObjectId: ' ai-paths.node-code-object.template.v3 ',
@@ -291,14 +340,14 @@ describe('runtime kernel telemetry helpers', () => {
           runtimeCodeObjectId: 'ai-paths.node-code-object.template.v3',
         },
         {
-          runtimeStrategy: 'legacy_adapter',
+          runtimeStrategy: 'compatibility',
           runtimeResolutionSource: 'registry',
           runtimeCodeObjectId: null,
         },
       ],
       'node-math': [
         {
-          runtimeStrategy: 'legacy_adapter',
+          runtimeStrategy: 'compatibility',
           runtimeResolutionSource: 'missing',
           runtimeCodeObjectId: '',
         },

@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import { HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS } from '../../../../../../scripts/db/ai-paths-runtime-compatibility-normalization';
 
 import {
-  normalizeAiPathRunRuntimeKernelMetadata,
+  normalizeAiPathRunRuntimeKernelMetadataForCleanup,
   normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead,
 } from '@/features/ai/ai-paths/services/path-run-runtime-kernel-metadata';
 
-describe('normalizeAiPathRunRuntimeKernelMetadata', () => {
+describe('normalizeAiPathRunRuntimeKernelMetadataForCleanup', () => {
   it('normalizes legacy runtime-kernel config aliases into canonical fields', () => {
-    const result = normalizeAiPathRunRuntimeKernelMetadata({
+    const result = normalizeAiPathRunRuntimeKernelMetadataForCleanup({
       runtimeKernelConfig: {
         mode: ' legacy_only ',
         pilotNodeTypes: ' Template Node, parser ',
@@ -32,7 +33,7 @@ describe('normalizeAiPathRunRuntimeKernelMetadata', () => {
   });
 
   it('prunes deprecated runtime-kernel telemetry aliases and typed values', () => {
-    const result = normalizeAiPathRunRuntimeKernelMetadata({
+    const result = normalizeAiPathRunRuntimeKernelMetadataForCleanup({
       runtimeKernel: {
         runtimeKernelMode: 'legacy_only',
         runtimeKernelModeSource: 'default',
@@ -63,13 +64,13 @@ describe('normalizeAiPathRunRuntimeKernelMetadata', () => {
     });
   });
 
-  it('normalizes legacy runtime-trace kernel parity strategy counts into compatibility', () => {
-    const result = normalizeAiPathRunRuntimeKernelMetadata({
+  it('leaves legacy runtime-trace kernel parity strategy counts for cleanup scripts', () => {
+    const result = normalizeAiPathRunRuntimeKernelMetadataForCleanup({
       runtimeTrace: {
         kernelParity: {
           sampledHistoryEntries: 3,
           strategyCounts: {
-            legacy_adapter: 2,
+            [HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS]: 2,
             code_object_v3: 1,
             unknown: 0,
           },
@@ -77,14 +78,14 @@ describe('normalizeAiPathRunRuntimeKernelMetadata', () => {
       },
     });
 
-    expect(result.changed).toBe(true);
-    expect(result.changedFields).toEqual(['runtimeTrace.kernelParity.strategyCounts']);
+    expect(result.changed).toBe(false);
+    expect(result.changedFields).toEqual([]);
     expect(result.meta).toEqual({
       runtimeTrace: {
         kernelParity: {
           sampledHistoryEntries: 3,
           strategyCounts: {
-            compatibility: 2,
+            [HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS]: 2,
             code_object_v3: 1,
             unknown: 0,
           },
@@ -106,7 +107,7 @@ describe('normalizeAiPathRunRuntimeKernelMetadata', () => {
       },
     };
 
-    const result = normalizeAiPathRunRuntimeKernelMetadata(meta);
+    const result = normalizeAiPathRunRuntimeKernelMetadataForCleanup(meta);
 
     expect(result.changed).toBe(false);
     expect(result.changedFields).toEqual([]);
@@ -184,12 +185,12 @@ describe('normalizeAiPathRunRuntimeKernelMetadata', () => {
     });
   });
 
-  it('normalizes runtime-trace kernel parity strategy counts during live runtime reads', () => {
+  it('does not translate legacy runtime-trace kernel parity strategy counts during live runtime reads', () => {
     const result = normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead({
       runtimeTrace: {
         kernelParity: {
           strategyCounts: {
-            legacy_adapter: 4,
+            [HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS]: 4,
             code_object_v3: 2,
             unknown: 1,
           },
@@ -197,13 +198,13 @@ describe('normalizeAiPathRunRuntimeKernelMetadata', () => {
       },
     });
 
-    expect(result.changed).toBe(true);
-    expect(result.changedFields).toEqual(['runtimeTrace.kernelParity.strategyCounts']);
+    expect(result.changed).toBe(false);
+    expect(result.changedFields).toEqual([]);
     expect(result.meta).toEqual({
       runtimeTrace: {
         kernelParity: {
           strategyCounts: {
-            compatibility: 4,
+            [HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS]: 4,
             code_object_v3: 2,
             unknown: 1,
           },

@@ -2,7 +2,7 @@ import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import type { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
 import { evaluateGraphClient } from '@/shared/lib/ai-paths/core/runtime/engine-client';
 
-export type RuntimeMode = 'legacy_adapter' | 'code_object_v3';
+export type RuntimeMode = 'compatibility' | 'code_object_v3';
 
 const buildKernelNodes = (value: unknown): AiNode[] => [
   {

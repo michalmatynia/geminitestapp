@@ -177,6 +177,12 @@ export const toRuntimeProfileHighlight = (
       durationMs: event.durationMs,
     };
   }
+  const runtimeStrategy =
+    event.runtimeStrategy === 'compatibility'
+      ? 'compatibility'
+      : event.runtimeStrategy === 'code_object_v3'
+        ? 'code_object_v3'
+        : undefined;
   return {
     type: 'node',
     nodeId: event.nodeId,
@@ -186,7 +192,7 @@ export const toRuntimeProfileHighlight = (
     iteration: event.iteration,
     durationMs: event.durationMs,
     hashMs: event.hashMs,
-    runtimeStrategy: event.runtimeStrategy,
+    runtimeStrategy,
     runtimeResolutionSource: event.runtimeResolutionSource,
     runtimeCodeObjectId: event.runtimeCodeObjectId ?? undefined,
   };

@@ -36,6 +36,7 @@ const envSchema = z.object({
   AUTH_DEBUG: z.coerce.boolean().default(false),
   AUTH_TOKEN_REFRESH_TTL_MS: z.coerce.number().int().positive().default(60000),
   AUTH_ENCRYPTION_KEY: z.string().optional(),
+  AUTH_DB_PROVIDER: z.enum(['prisma', 'mongodb']).optional(),
 
   // AI
   OPENAI_API_KEY: z.string().optional(),

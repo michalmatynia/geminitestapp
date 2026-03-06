@@ -54,7 +54,7 @@ Continue staged migration to semantic portable runtime by promoting `prompt` int
 
 - v3 pilot set increased from `24` to `25` node types.
 - Migration snapshot now reports:
-  - `strategyTotals`: `legacy_adapter=11`, `code_object_v3=25`
+  - `strategyTotals`: `compatibility=11`, `code_object_v3=25`
   - `averageScore`: `73`
   - top blockers: `rollout_not_approved`, `missing_v3_scaffold`, `not_in_v3_pilot`
 

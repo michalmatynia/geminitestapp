@@ -8,6 +8,7 @@ import {
 } from '@/features/ai/ai-paths/server/settings-store';
 import { runMaintenanceAction } from '@/features/ai/ai-paths/server/settings-store.maintenance';
 import type { AiPathsSettingRecord } from '@/features/ai/ai-paths/server/settings-store.constants';
+import { normalizeHistoricalRuntimeStateCompatibilityHistoryField } from './ai-paths-runtime-compatibility-normalization';
 
 const ACTION_ID = 'normalize_runtime_kernel_settings' as const;
 
@@ -54,6 +55,31 @@ const collectChangedKeys = (
   ).sort((left, right) => left.localeCompare(right));
 };
 
+const normalizePathConfigRuntimeStateHistory = (
+  records: AiPathsSettingRecord[]
+): AiPathsSettingRecord[] =>
+  records.map((record) => {
+    if (!record.key.startsWith('ai_paths_config_')) return record;
+    try {
+      const parsed = JSON.parse(record.value) as unknown;
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return record;
+      const config = parsed as Record<string, unknown>;
+      const normalizedRuntimeState = normalizeHistoricalRuntimeStateCompatibilityHistoryField(
+        config['runtimeState']
+      );
+      if (!normalizedRuntimeState.changed) return record;
+      return {
+        ...record,
+        value: JSON.stringify({
+          ...config,
+          runtimeState: normalizedRuntimeState.value,
+        }),
+      };
+    } catch {
+      return record;
+    }
+  });
+
 export async function main(argv: string[] = process.argv.slice(2)): Promise<void> {
   const options = parseCliOptions(argv);
   const records = await listAiPathsSettings();
@@ -61,18 +87,21 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
     actionId: ACTION_ID,
     records,
   });
+  const nextRecords = normalizePathConfigRuntimeStateHistory(result.nextRecords);
+  const changedKeys = collectChangedKeys(records, nextRecords, result.deletedKeys);
+  const affectedRecords = changedKeys.length;
 
-  if (!options.dryRun && result.affectedCount > 0) {
-    await upsertAiPathsSettingsBulk(result.nextRecords);
+  if (!options.dryRun && affectedRecords > 0) {
+    await upsertAiPathsSettingsBulk(nextRecords);
   }
 
   const summary: CleanupSummary = {
     mode: options.dryRun ? 'dry-run' : 'write',
     actionId: ACTION_ID,
-    affectedRecords: result.affectedCount,
+    affectedRecords,
     deletedKeys: result.deletedKeys,
-    updated: !options.dryRun && result.affectedCount > 0,
-    changedKeys: collectChangedKeys(records, result.nextRecords, result.deletedKeys),
+    updated: !options.dryRun && affectedRecords > 0,
+    changedKeys,
   };
 
   console.log(JSON.stringify(summary, null, 2));

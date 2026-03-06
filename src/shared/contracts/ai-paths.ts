@@ -854,7 +854,7 @@ export type RuntimeProfileHighlight = {
   iteration?: number | undefined;
   durationMs?: number | undefined;
   hashMs?: number | undefined;
-  runtimeStrategy?: 'legacy_adapter' | 'code_object_v3' | undefined;
+  runtimeStrategy?: 'compatibility' | 'code_object_v3' | undefined;
   runtimeResolutionSource?: 'override' | 'registry' | 'missing' | undefined;
   runtimeCodeObjectId?: string | null | undefined;
 };

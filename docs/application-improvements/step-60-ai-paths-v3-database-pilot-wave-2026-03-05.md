@@ -55,7 +55,7 @@ Continue staged migration to semantic portable runtime by promoting `database` i
 ## Outcome
 
 - Migration snapshot now reports:
-  - `strategyTotals`: `legacy_adapter=6`, `code_object_v3=30`
+  - `strategyTotals`: `compatibility=6`, `code_object_v3=30`
   - `averageScore`: `81`
   - top blockers: `rollout_not_approved`, `missing_v3_scaffold`, `not_in_v3_pilot`
 - Remaining legacy node types: `agent`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `learner_agent`, `playwright`.

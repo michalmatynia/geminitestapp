@@ -53,7 +53,7 @@ Continue staged migration to semantic portable runtime by promoting `db_schema` 
 
 - v3 pilot set increased from `23` to `24` node types.
 - Migration snapshot now reports:
-  - `strategyTotals`: `legacy_adapter=12`, `code_object_v3=24`
+  - `strategyTotals`: `compatibility=12`, `code_object_v3=24`
   - `averageScore`: `72`
   - top blockers: `rollout_not_approved`, `missing_v3_scaffold`, `not_in_v3_pilot`
 

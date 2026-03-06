@@ -54,7 +54,7 @@ const readPrismaAuthProvider = async (): Promise<AuthDbProvider | null> => {
 const warnAuthProviderDrift = (
   appProvider: 'prisma' | 'mongodb',
   authProvider: AuthDbProvider,
-  source: 'mongo-setting' | 'prisma-setting' | 'route-map' | 'default'
+  source: 'env' | 'mongo-setting' | 'prisma-setting' | 'route-map' | 'default'
 ): void => {
   if (appProvider === authProvider) return;
   // Explicit auth provider settings are intentional overrides in mixed-provider deployments.
@@ -80,6 +80,11 @@ const ensureAvailableAuthProvider = (provider: AuthDbProvider): AuthDbProvider =
 export const getAuthDataProvider = async (): Promise<AuthDbProvider> => {
   const policy = await getDatabaseEnginePolicy();
   const appProvider = await getAppDbProvider();
+  const envProvider = normalizeProvider(process.env['AUTH_DB_PROVIDER']);
+  if (envProvider) {
+    warnAuthProviderDrift(appProvider, envProvider, 'env');
+    return ensureAvailableAuthProvider(envProvider);
+  }
   const mongoSetting = await readMongoAuthProvider();
   if (mongoSetting) {
     warnAuthProviderDrift(appProvider, mongoSetting, 'mongo-setting');

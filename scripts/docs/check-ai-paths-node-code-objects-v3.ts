@@ -22,7 +22,6 @@ type NodeCodeObjectV3Index = {
   specVersion: string;
   totalObjects: number;
   runtimeKernelNodeTypes?: string[];
-  pilotNodeTypes?: string[];
   objects: Array<{
     id: string;
     nodeType: string;
@@ -101,11 +100,7 @@ const toSafeString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
 
 const readDeclaredRuntimeKernelNodeTypes = (payload: NodeCodeObjectV3Index): string[] =>
-  (
-    Array.isArray(payload.runtimeKernelNodeTypes)
-      ? payload.runtimeKernelNodeTypes
-      : payload.pilotNodeTypes ?? []
-  )
+  (Array.isArray(payload.runtimeKernelNodeTypes) ? payload.runtimeKernelNodeTypes : [])
     .map(toSafeString)
     .filter(Boolean);
 const ALLOWED_EXECUTION_ADAPTERS = new Set<string>([

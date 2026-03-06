@@ -1,17 +1,17 @@
 # Toast Notification Migration Sheet (`notification`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-06T00:00:00.000Z
 
 ## Status
 
 - Runtime strategy: `code_object_v3`
 - Migration wave: `pilot`
 - Code object ID: `ai-paths.node-code-object.notification.v3`
-- Readiness stage: `rollout_candidate`
-- Readiness score: 90/100
-- Readiness blockers: `rollout_not_approved`
+- Readiness stage: `rollout_approved`
+- Readiness score: 100/100
+- Readiness blockers: `none`
 - Parity evidence suite IDs: `v3-pilot-parity-core`
-- Rollout approved: `no` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
+- Rollout approved: `yes` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 3
 
 ## Node Contract Files
@@ -21,7 +21,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/notification.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/notification.scaffold.json`
 - v3 object id: `node_obj_notification_portable_v3`
-- v3 object hash: `ba8a2a6ef746ce80c6a7f1c12dd913262b29fb2381c7d28d5379992f0d348302`
+- v3 object hash: `2b1a98f49ec8f6de9d87eea5a5dfefb4a96d86345141a7f3294130329bfdeb3c`
 
 ## Ports
 

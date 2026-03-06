@@ -1,4 +1,5 @@
 import type {
+  KangurProgressState as SharedKangurProgressState,
   KangurScore as SharedKangurScore,
   KangurScoreCreateInput as SharedKangurScoreCreateInput,
 } from '@/shared/contracts/kangur';
@@ -12,6 +13,7 @@ export type KangurUser = {
   role: KangurRole;
 };
 
+export type KangurProgressRecord = SharedKangurProgressState;
 export type KangurScoreRecord = SharedKangurScore;
 export type KangurScoreCreateInput = SharedKangurScoreCreateInput;
 
@@ -31,7 +33,13 @@ export interface KangurScorePort {
   ) => Promise<KangurScoreRecord[]>;
 }
 
+export interface KangurProgressPort {
+  get: () => Promise<KangurProgressRecord>;
+  update: (input: KangurProgressRecord) => Promise<KangurProgressRecord>;
+}
+
 export interface KangurPlatform {
   auth: KangurAuthPort;
   score: KangurScorePort;
+  progress: KangurProgressPort;
 }

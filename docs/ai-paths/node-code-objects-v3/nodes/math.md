@@ -1,17 +1,17 @@
 # Math Migration Sheet (`math`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-06T00:00:00.000Z
 
 ## Status
 
 - Runtime strategy: `code_object_v3`
 - Migration wave: `pilot`
 - Code object ID: `ai-paths.node-code-object.math.v3`
-- Readiness stage: `rollout_candidate`
-- Readiness score: 90/100
-- Readiness blockers: `rollout_not_approved`
+- Readiness stage: `rollout_approved`
+- Readiness score: 100/100
+- Readiness blockers: `none`
 - Parity evidence suite IDs: `v3-pilot-parity-core`
-- Rollout approved: `no` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
+- Rollout approved: `yes` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 5
 
 ## Node Contract Files
@@ -21,7 +21,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/math.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/math.scaffold.json`
 - v3 object id: `node_obj_math_portable_v3`
-- v3 object hash: `c70779a2aab2367a9808d19b34ce4ed47d62d5d81603d531fbed1fa332ea898f`
+- v3 object hash: `b1e8aa79ed007ea99c46eb46db83a9e0198d7113f837b2fc40e2fd8d9e1e2514`
 
 ## Ports
 

@@ -48,6 +48,13 @@ module.exports = tseslint.config(
       'src/features/kangur/legacy/**/*',
       'externalkangur/',
       'externalkangur/',
+      // Draft split modules kept outside active lint scope until integrated.
+      'src/shared/lib/ai-paths/portable-engine/sinks-creators.server.ts',
+      'src/shared/lib/ai-paths/portable-engine/sinks-remediation.server.ts',
+      'src/shared/lib/ai-paths/portable-engine/sinks-trends.server.ts',
+      'src/shared/lib/ai-paths/portable-engine/sinks-types.server.ts',
+      'src/shared/lib/ai-paths/portable-engine/sinks-shared.server.ts',
+      'src/shared/lib/ai-paths/portable-engine/sinks-bootstrap.server.ts',
     ],
   },
   {

@@ -23,6 +23,7 @@ import {
 
 const LEGACY_RUNTIME_KERNEL_MODE = 'legacy_only';
 const CANONICAL_RUNTIME_KERNEL_MODE = 'auto';
+const RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID = 'normalize_runtime_kernel_settings';
 
 const normalizeRuntimeKernelModeValue = (value: string | undefined): string =>
   typeof value === 'string' ? value.trim().toLowerCase() : '';
@@ -402,10 +403,10 @@ export const buildAiPathsMaintenanceReport = (
   const runtimeKernelModeNormalizationCount = countPendingRuntimeKernelModeNormalizations(records);
   if (runtimeKernelModeNormalizationCount > 0) {
     actions.push({
-      id: 'normalize_runtime_kernel_mode',
+      id: RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID,
       title: 'Normalize Runtime Kernel Settings',
       description:
-        'Replace deprecated runtime-kernel mode values with canonical auto mode and normalize runtime-kernel list settings for forward-compatible execution.',
+        'Normalize deprecated runtime-kernel mode aliases, pilot-node lists, resolver ids, and strict-native registry flags for forward-compatible execution.',
       blocking: false,
       status: 'pending',
       affectedRecords: runtimeKernelModeNormalizationCount,
@@ -477,7 +478,7 @@ export const runMaintenanceAction = (args: {
       break;
     }
 
-    case 'normalize_runtime_kernel_mode': {
+    case RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID: {
       args.records.forEach((entry: AiPathsSettingRecord) => {
         const nextValue = toCanonicalRuntimeKernelSettingEntryValue(entry);
         if (nextValue !== null && nextValue !== entry.value) {
@@ -524,7 +525,7 @@ export const runFullMaintenance = (records: AiPathsSettingRecord[]): AiPathsMain
       'compact_oversized_configs',
       'repair_path_index',
       'ensure_starter_workflow_defaults',
-      'normalize_runtime_kernel_mode',
+      RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID,
     ] as AiPathsMaintenanceActionId[]
   ).forEach((actionId: AiPathsMaintenanceActionId) => {
     const report = runMaintenanceAction({ actionId, records: currentRecords });

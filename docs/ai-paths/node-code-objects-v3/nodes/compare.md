@@ -1,17 +1,17 @@
 # Compare Migration Sheet (`compare`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-06T00:00:00.000Z
 
 ## Status
 
 - Runtime strategy: `code_object_v3`
 - Migration wave: `pilot`
 - Code object ID: `ai-paths.node-code-object.compare.v3`
-- Readiness stage: `rollout_candidate`
-- Readiness score: 90/100
-- Readiness blockers: `rollout_not_approved`
+- Readiness stage: `rollout_approved`
+- Readiness score: 100/100
+- Readiness blockers: `none`
 - Parity evidence suite IDs: `v3-pilot-parity-core`
-- Rollout approved: `no` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
+- Rollout approved: `yes` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 7
 
 ## Node Contract Files
@@ -21,7 +21,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/compare.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/compare.scaffold.json`
 - v3 object id: `node_obj_compare_portable_v3`
-- v3 object hash: `27cd022de9a91da8088d4845d0bcc7da25818e41ca6ab312523b59477a9e6265`
+- v3 object hash: `5ab8c593494171b48a3c7f01829a11b03f52fae56df93e41cb0129efae2cee4c`
 
 ## Ports
 

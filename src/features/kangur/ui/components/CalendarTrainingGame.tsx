@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
-import { addXp, loadProgress } from '@/features/kangur/ui/services/progress';
+import { addXp, buildLessonMasteryUpdate, loadProgress } from '@/features/kangur/ui/services/progress';
 
 type CalendarTrainingGameProps = {
   onFinish: () => void;
@@ -144,6 +144,7 @@ export default function CalendarTrainingGame({
     const prog = loadProgress();
     addXp(xp, {
       calendarPerfect: isPerfect ? prog.calendarPerfect + 1 : prog.calendarPerfect,
+      lessonMastery: buildLessonMasteryUpdate(prog, 'calendar', (finalScore / TOTAL) * 100),
     });
     setXpEarned(xp);
     setDone(true);

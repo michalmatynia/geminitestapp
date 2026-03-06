@@ -9,16 +9,16 @@ Schema target:
 - `kind: "path_node_code_object"`
 - `runtimeKernel.strategy: "code_object_v3"`
 
-Current runtime scope uses the pilot list (`agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`), which currently covers all 36 registered node types.
+Current runtime scope uses the canonical runtime-kernel set (`agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`), which currently covers all 36 registered node types.
 
 Runtime rollout controls:
 
-- `runtimeKernelPilotNodeTypes` allows scoped pilot overrides for parity/canary runs. An empty list disables contract-backed resolution and routes every node through `legacy_adapter`.
+- `runtimeKernelPilotNodeTypes` allows scoped runtime-kernel overrides for parity/canary runs. Omitted or empty persisted values fall back to the canonical approved node set.
 - `runtimeKernelStrictNativeRegistry` keeps native resolution fail-closed by default and only allows legacy fallback when explicitly disabled.
-- Server runtime resolves pilot `code_object_v3` handlers through `contracts.json`.
+- Server runtime resolves approved `code_object_v3` handlers through `contracts.json`.
 - Supported execution adapters:
   - `legacy_handler_bridge`
-  - `native_handler_registry` (current pilot: `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`)
+  - `native_handler_registry` (current approved set: `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`)
 - Native adapter path blocks missing mappings by default and only falls back to the legacy bridge when strict mode is explicitly disabled.
 - Client local runtime native subset now includes:
   - `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`
@@ -33,7 +33,7 @@ Runtime rollout controls:
   - `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES`
   - `AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY`
 - `runtimeKernelMode`, `ai_paths_runtime_kernel_mode`, and `AI_PATHS_RUNTIME_KERNEL_MODE` are deprecated compatibility inputs. They normalize to `auto` and are no longer active rollout controls.
-- `npm run cleanup:ai-paths-runtime-kernel-mode` rewrites stale persisted `legacy_only` values to the canonical `auto`.
+- `npm run cleanup:ai-paths-runtime-kernel-settings` normalizes stale runtime-kernel mode aliases, pilot-node lists, resolver ids, and strict-native registry flags. The old `cleanup:ai-paths-runtime-kernel-mode` command remains as a deprecated alias.
 
 Generated migration documentation:
 
@@ -45,10 +45,11 @@ Scaffold contracts:
 
 - `index.scaffold.json`
 - `{agent,ai_description,api_advanced,audio_oscillator,audio_speaker,bundle,compare,constant,context,database,db_schema,delay,description_updater,fetcher,gate,http,iterator,learner_agent,mapper,math,model,mutator,notification,parser,playwright,poll,prompt,regex,router,simulation,string_mutator,template,trigger,validation_pattern,validator,viewer}.scaffold.json`
-- `index.json` (pilot v3 object index with hashes)
-- `contracts.json` (pilot v3 contract hash catalog)
+- `index.json` (active v3 object index with hashes)
+- `contracts.json` (active v3 contract hash catalog)
 - `parity-evidence.json` (runtime parity evidence by node type, including product-trigger E2E coverage)
 - `rollout-approvals.json` (manual rollout approval source)
+- `rollout-eligibility.json` (generated technical rollout-candidate source)
 
 Regenerate migration docs:
 
@@ -56,9 +57,9 @@ Regenerate migration docs:
 npm run docs:ai-paths:node-migration:generate
 ```
 
-This command regenerates pilot v3 contracts first (`docs:ai-paths:node-code-v3:generate`) and then refreshes migration docs.
+This command regenerates the active v3 contracts first (`docs:ai-paths:node-code-v3:generate`) and then refreshes migration docs.
 
-Generate v3 pilot contract artifacts:
+Generate active v3 contract artifacts:
 
 ```bash
 npm run docs:ai-paths:node-code-v3:generate
@@ -70,11 +71,11 @@ Validate migration docs:
 npm run docs:ai-paths:node-migration:check
 ```
 
-This command validates pilot v3 contracts first (`docs:ai-paths:node-code-v3:check`) and then runs migration-doc checks.
+This command validates the active v3 contracts first (`docs:ai-paths:node-code-v3:check`) and then runs migration-doc checks.
 It also validates checklist parity readiness against `parity-evidence.json`.
 Pilot nodes without parity-evidence coverage fail the check.
 
-Validate v3 pilot contract artifacts:
+Validate active v3 contract artifacts:
 
 ```bash
 npm run docs:ai-paths:node-code-v3:check
@@ -96,15 +97,15 @@ npm run docs:ai-paths:node-docs:ci
 `ci` runs `verify` plus tooltip coverage checks (`npm run docs:ai-paths:tooltip:check`).
 On CI (clean checkout), this enforces regenerated artifacts are committed.
 Semantic/v2 generation in this pipeline also prunes stale per-node JSON artifacts, and corresponding checks fail fast on unexpected per-node files.
-`v3` generation also prunes stale `*.scaffold.json` files outside the pilot set, and `docs:ai-paths:node-code-v3:check` fails fast on unexpected scaffold files.
+`v3` generation also prunes stale `*.scaffold.json` files outside the active runtime-kernel set, and `docs:ai-paths:node-code-v3:check` fails fast on unexpected scaffold files.
 
-Run pilot dual-run parity:
+Run dual-run parity:
 
 ```bash
 npm run test:ai-paths:v3-pilot-parity
 ```
 
-Run pilot parity-evidence coverage regression:
+Run parity-evidence coverage regression:
 
 ```bash
 npm run test:ai-paths:node-migration-parity-evidence
@@ -118,9 +119,10 @@ npm run test:ai-paths:trigger-queue:integration
 
 Rollout approvals:
 
-1. Update `rollout-approvals.json` by adding node types to `approvedNodeTypes`.
-2. Run `npm run docs:ai-paths:node-migration:generate`.
-3. Run `npm run ai-paths:check:canonical`.
+1. Review `rollout-eligibility.json` for technically eligible rollout candidates.
+2. Update `rollout-approvals.json` by adding approved node types to `approvedNodeTypes`.
+3. Run `npm run docs:ai-paths:node-migration:generate`.
+4. Run `npm run ai-paths:check:canonical`.
 
 CI integration:
 

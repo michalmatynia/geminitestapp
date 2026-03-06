@@ -5,9 +5,10 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useKangurRoutingMock, settingsStoreGetMock } = vi.hoisted(() => ({
+const { useKangurRoutingMock, settingsStoreGetMock, useKangurProgressStateMock } = vi.hoisted(() => ({
   useKangurRoutingMock: vi.fn(),
   settingsStoreGetMock: vi.fn(),
+  useKangurProgressStateMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -20,29 +21,9 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   }),
 }));
 
-vi.mock('@/features/kangur/ui/components/lessons', () => {
-  const lesson =
-    (label: string) =>
-    ({ onBack }: { onBack: () => void }) => (
-      <div data-testid={`lesson-${label}`}>
-        {label}
-        <button onClick={onBack}>back</button>
-      </div>
-    );
-
-  return {
-    AddingLesson: lesson('adding'),
-    CalendarLesson: lesson('calendar'),
-    ClockLesson: lesson('clock'),
-    DivisionLesson: lesson('division'),
-    GeometryBasicsLesson: lesson('geometry_basics'),
-    GeometryPerimeterLesson: lesson('geometry_perimeter'),
-    GeometryShapesLesson: lesson('geometry_shapes'),
-    GeometrySymmetryLesson: lesson('geometry_symmetry'),
-    MultiplicationLesson: lesson('multiplication'),
-    SubtractingLesson: lesson('subtracting'),
-  };
-});
+vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
+  useKangurProgressState: useKangurProgressStateMock,
+}));
 
 import Lessons from '@/features/kangur/ui/pages/Lessons';
 
@@ -76,6 +57,9 @@ describe('Lessons page focus query support', () => {
     vi.clearAllMocks();
     useKangurRoutingMock.mockReturnValue({ basePath: '/kangur' });
     settingsStoreGetMock.mockReturnValue(lessonsSettingsValue);
+    useKangurProgressStateMock.mockReturnValue({
+      lessonMastery: {},
+    });
   });
 
   it('auto-opens the focused lesson when focus query maps to operation', async () => {
@@ -83,7 +67,7 @@ describe('Lessons page focus query support', () => {
 
     render(<Lessons />);
 
-    expect(await screen.findByTestId('lesson-division')).toBeInTheDocument();
+    expect(await screen.findByText('6 ÷ 2 = 3')).toBeInTheDocument();
     expect(window.location.search).toBe('');
   });
 
@@ -93,7 +77,7 @@ describe('Lessons page focus query support', () => {
     render(<Lessons />);
 
     expect(await screen.findByRole('heading', { name: '📚 Lekcje' })).toBeInTheDocument();
-    expect(screen.queryByTestId('lesson-division')).not.toBeInTheDocument();
+    expect(screen.queryByText('6 ÷ 2 = 3')).not.toBeInTheDocument();
     expect(window.location.search).toBe('?focus=unknown');
   });
 });

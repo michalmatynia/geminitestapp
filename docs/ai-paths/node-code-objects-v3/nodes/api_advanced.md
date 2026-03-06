@@ -1,17 +1,17 @@
 # API Operation (Advanced) Migration Sheet (`api_advanced`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-06T00:00:00.000Z
 
 ## Status
 
 - Runtime strategy: `code_object_v3`
 - Migration wave: `pilot`
 - Code object ID: `ai-paths.node-code-object.api_advanced.v3`
-- Readiness stage: `rollout_candidate`
-- Readiness score: 90/100
-- Readiness blockers: `rollout_not_approved`
+- Readiness stage: `rollout_approved`
+- Readiness score: 100/100
+- Readiness blockers: `none`
 - Parity evidence suite IDs: `v3-pilot-parity-core`
-- Rollout approved: `no` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
+- Rollout approved: `yes` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 17
 
 ## Node Contract Files
@@ -21,7 +21,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/api_advanced.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/api_advanced.scaffold.json`
 - v3 object id: `node_obj_api_advanced_portable_v3`
-- v3 object hash: `77838bc67f8604217d9f1c75cab0b355213b8d25f9a624cd27932c321f4f5041`
+- v3 object hash: `1a0e05bb12bf3073c3aa5f19c9c5eb05e9440fdcf5d4ac4ab5700611bd73ae16`
 
 ## Ports
 

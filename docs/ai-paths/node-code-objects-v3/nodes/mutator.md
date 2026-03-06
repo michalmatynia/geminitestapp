@@ -1,17 +1,17 @@
 # Mutator Migration Sheet (`mutator`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-06T00:00:00.000Z
 
 ## Status
 
 - Runtime strategy: `code_object_v3`
 - Migration wave: `pilot`
 - Code object ID: `ai-paths.node-code-object.mutator.v3`
-- Readiness stage: `rollout_candidate`
-- Readiness score: 90/100
-- Readiness blockers: `rollout_not_approved`
+- Readiness stage: `rollout_approved`
+- Readiness score: 100/100
+- Readiness blockers: `none`
 - Parity evidence suite IDs: `v3-pilot-parity-core`
-- Rollout approved: `no` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
+- Rollout approved: `yes` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 5
 
 ## Node Contract Files
@@ -21,7 +21,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/mutator.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/mutator.scaffold.json`
 - v3 object id: `node_obj_mutator_portable_v3`
-- v3 object hash: `905d2aef2e7ac39d6af1759e2cce1a94fd6ecfa39b551303f010aee9d85a6d5b`
+- v3 object hash: `d494689f686d7c140e861deaab2bf4ef5d19baf237c3b98f52939ba74323065b`
 
 ## Ports
 

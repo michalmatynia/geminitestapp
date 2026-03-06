@@ -6,6 +6,7 @@ import ClockLesson from '../ClockLesson';
 const addXpMock = vi.fn();
 const loadProgressMock = vi.fn(() => ({
   lessonsCompleted: 0,
+  lessonMastery: {},
 }));
 
 vi.mock('@/features/kangur/ui/components/ClockTrainingGame', () => ({

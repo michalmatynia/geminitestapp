@@ -1,10 +1,10 @@
 {
   "schemaVersion": "ai-paths.kernel-transition-readiness.v1",
-  "generatedAt": "2026-03-05T12:00:00.000Z",
+  "generatedAt": "2026-03-06T00:00:00.000Z",
   "migrationSchemaVersion": "ai-paths.portable-engine.v2",
   "summary": {
     "goal": "Migrate AI-Paths to a semantic, portable, and page-independent kernel runtime without feature loss.",
-    "currentPhase": "kernel_runtime_parity",
+    "currentPhase": "progressive_rollout",
     "overallStatus": "in_progress"
   },
   "phases": [
@@ -25,7 +25,7 @@
     {
       "id": "schema_and_parser",
       "title": "Canonical Schema and Parser Patterns",
-      "status": "in_progress",
+      "status": "completed",
       "dependencies": [
         "baseline_contract"
       ],
@@ -44,7 +44,7 @@
     {
       "id": "kernel_runtime_parity",
       "title": "Kernel Runtime Parity",
-      "status": "in_progress",
+      "status": "completed",
       "dependencies": [
         "schema_and_parser"
       ],
@@ -64,7 +64,7 @@
     {
       "id": "page_integration_stabilization",
       "title": "Page Integration Stabilization",
-      "status": "in_progress",
+      "status": "completed",
       "dependencies": [
         "kernel_runtime_parity"
       ],
@@ -82,7 +82,7 @@
     {
       "id": "progressive_rollout",
       "title": "Progressive Rollout and Observability",
-      "status": "planned",
+      "status": "in_progress",
       "dependencies": [
         "page_integration_stabilization"
       ],
@@ -116,7 +116,7 @@
   "featureParityMatrix": [
     {
       "id": "runtime_execution",
-      "status": "in_progress",
+      "status": "parity_verified",
       "coverage": "integration",
       "requiredInvariants": [
         "Node execution order and termination semantics match legacy behavior.",
@@ -128,7 +128,7 @@
     },
     {
       "id": "runtime_validation",
-      "status": "in_progress",
+      "status": "parity_verified",
       "coverage": "integration",
       "requiredInvariants": [
         "Stage-based validation executes at graph and node stages.",
@@ -141,7 +141,7 @@
     },
     {
       "id": "portable_roundtrip",
-      "status": "in_progress",
+      "status": "parity_verified",
       "coverage": "integration",
       "requiredInvariants": [
         "Portable client and server runs preserve behavior with runtime validation enabled.",
@@ -155,7 +155,7 @@
     },
     {
       "id": "page_runtime_integration",
-      "status": "in_progress",
+      "status": "parity_verified",
       "coverage": "integration",
       "requiredInvariants": [
         "Local canvas execution loop emits runtime validation diagnostics.",
@@ -168,7 +168,7 @@
     },
     {
       "id": "node_docs_and_migration",
-      "status": "in_progress",
+      "status": "parity_verified",
       "coverage": "unit",
       "requiredInvariants": [
         "Node migration docs and parity evidence stay consistent with runtime strategy.",
@@ -177,18 +177,21 @@
       "evidence": [
         "scripts/docs/check-ai-paths-node-migration-docs.ts",
         "docs/ai-paths/node-code-objects-v3/migration-index.json",
-        "docs/ai-paths/node-code-objects-v3/parity-evidence.json"
+        "docs/ai-paths/node-code-objects-v3/parity-evidence.json",
+        "docs/ai-paths/node-code-objects-v3/rollout-eligibility.json",
+        "docs/ai-paths/node-code-objects-v3/rollout-approvals.json"
       ]
     },
     {
       "id": "cross_page_portability",
-      "status": "planned",
-      "coverage": "manual",
+      "status": "parity_verified",
+      "coverage": "integration",
       "requiredInvariants": [
         "Path code can be exported/imported across pages running kernel adapter.",
         "Path behavior and validation policy remain preserved after transfer."
       ],
       "evidence": [
+        "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine-cross-page-portability.test.ts",
         "docs/ai-paths/portable-engine-receiver-runbook.md"
       ]
     }

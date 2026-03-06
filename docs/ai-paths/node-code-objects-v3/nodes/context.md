@@ -1,17 +1,17 @@
 # Context Filter Migration Sheet (`context`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-06T00:00:00.000Z
 
 ## Status
 
 - Runtime strategy: `code_object_v3`
 - Migration wave: `pilot`
 - Code object ID: `ai-paths.node-code-object.context.v3`
-- Readiness stage: `rollout_candidate`
-- Readiness score: 90/100
-- Readiness blockers: `rollout_not_approved`
+- Readiness stage: `rollout_approved`
+- Readiness score: 100/100
+- Readiness blockers: `none`
 - Parity evidence suite IDs: `v3-pilot-parity-core`
-- Rollout approved: `no` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
+- Rollout approved: `yes` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 11
 
 ## Node Contract Files
@@ -21,7 +21,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/context.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/context.scaffold.json`
 - v3 object id: `node_obj_context_portable_v3`
-- v3 object hash: `051a0edf561bf0f1456a9358738790b6e931aaa38b85884528dc623f5a6ecf65`
+- v3 object hash: `8c3eb88c9a9c8fcb5bff65151ad1d8faf12f6a6e63b522434f50c2cc4c17c28e`
 
 ## Ports
 

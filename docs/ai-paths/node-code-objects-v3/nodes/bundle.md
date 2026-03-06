@@ -1,17 +1,17 @@
 # Bundle Migration Sheet (`bundle`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-06T00:00:00.000Z
 
 ## Status
 
 - Runtime strategy: `code_object_v3`
 - Migration wave: `pilot`
 - Code object ID: `ai-paths.node-code-object.bundle.v3`
-- Readiness stage: `rollout_candidate`
-- Readiness score: 90/100
-- Readiness blockers: `rollout_not_approved`
+- Readiness stage: `rollout_approved`
+- Readiness score: 100/100
+- Readiness blockers: `none`
 - Parity evidence suite IDs: `v3-pilot-parity-core`
-- Rollout approved: `no` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
+- Rollout approved: `yes` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 4
 
 ## Node Contract Files
@@ -21,7 +21,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/bundle.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/bundle.scaffold.json`
 - v3 object id: `node_obj_bundle_portable_v3`
-- v3 object hash: `128dc8b581e6fa336c213a421a0863032cb065d373fd9e2c5d99557f6b8fca75`
+- v3 object hash: `fae337317016a517e299781ba7512a277712ad86359ff972bbc77fbad4776c4c`
 
 ## Ports
 

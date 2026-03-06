@@ -2,25 +2,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ChevronLeft, ChevronRight, LayoutDashboard, UserRound } from 'lucide-react';
 import type { ComponentType } from 'react';
+import dynamic from 'next/dynamic';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
-import {
-  AddingLesson,
-  CalendarLesson,
-  ClockLesson,
-  DivisionLesson,
-  GeometryBasicsLesson,
-  GeometryPerimeterLesson,
-  GeometryShapesLesson,
-  GeometrySymmetryLesson,
-  MultiplicationLesson,
-  SubtractingLesson,
-} from '@/features/kangur/ui/components/lessons';
 import {
   KANGUR_LESSONS_SETTING_KEY,
   parseKangurLessons,
 } from '@/features/kangur/settings';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import Link from 'next/link';
@@ -28,6 +18,68 @@ import Link from 'next/link';
 type LessonProps = {
   onBack: () => void;
 };
+
+const LessonLoadingFallback = (): React.JSX.Element => (
+  <div className='w-full max-w-2xl rounded-3xl border border-indigo-200/70 bg-white/90 p-6 text-center shadow-lg text-sm text-indigo-500'>
+    Ladowanie lekcji...
+  </div>
+);
+
+const ClockLesson = dynamic(() => import('@/features/kangur/ui/components/ClockLesson'), {
+  ssr: false,
+  loading: LessonLoadingFallback,
+});
+const CalendarLesson = dynamic(() => import('@/features/kangur/ui/components/CalendarLesson'), {
+  ssr: false,
+  loading: LessonLoadingFallback,
+});
+const AddingLesson = dynamic(() => import('@/features/kangur/ui/components/AddingLesson'), {
+  ssr: false,
+  loading: LessonLoadingFallback,
+});
+const SubtractingLesson = dynamic(() => import('@/features/kangur/ui/components/SubtractingLesson'), {
+  ssr: false,
+  loading: LessonLoadingFallback,
+});
+const MultiplicationLesson = dynamic(
+  () => import('@/features/kangur/ui/components/MultiplicationLesson'),
+  {
+    ssr: false,
+    loading: LessonLoadingFallback,
+  }
+);
+const DivisionLesson = dynamic(() => import('@/features/kangur/ui/components/DivisionLesson'), {
+  ssr: false,
+  loading: LessonLoadingFallback,
+});
+const GeometryBasicsLesson = dynamic(
+  () => import('@/features/kangur/ui/components/GeometryBasicsLesson'),
+  {
+    ssr: false,
+    loading: LessonLoadingFallback,
+  }
+);
+const GeometryShapesLesson = dynamic(
+  () => import('@/features/kangur/ui/components/GeometryShapesLesson'),
+  {
+    ssr: false,
+    loading: LessonLoadingFallback,
+  }
+);
+const GeometrySymmetryLesson = dynamic(
+  () => import('@/features/kangur/ui/components/GeometrySymmetryLesson'),
+  {
+    ssr: false,
+    loading: LessonLoadingFallback,
+  }
+);
+const GeometryPerimeterLesson = dynamic(
+  () => import('@/features/kangur/ui/components/GeometryPerimeterLesson'),
+  {
+    ssr: false,
+    loading: LessonLoadingFallback,
+  }
+);
 
 const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<LessonProps>> = {
   clock: ClockLesson,
@@ -75,9 +127,50 @@ const resolveFocusedLessonId = (
   return byTitle?.id ?? null;
 };
 
+const getLessonMasteryPresentation = (
+  lesson: KangurLesson,
+  progress: ReturnType<typeof useKangurProgressState>
+): {
+  statusLabel: string;
+  summaryLabel: string;
+  badgeClassName: string;
+} => {
+  const mastery = progress.lessonMastery[lesson.componentId];
+  if (!mastery) {
+    return {
+      statusLabel: 'Nowa',
+      summaryLabel: 'Brak zapisanej praktyki',
+      badgeClassName: 'bg-white/20 text-white/90',
+    };
+  }
+
+  if (mastery.masteryPercent >= 85) {
+    return {
+      statusLabel: `Opanowane ${mastery.masteryPercent}%`,
+      summaryLabel: `Ukończono ${mastery.completions}× · najlepszy wynik ${mastery.bestScorePercent}%`,
+      badgeClassName: 'bg-emerald-400/90 text-emerald-950',
+    };
+  }
+
+  if (mastery.masteryPercent >= 60) {
+    return {
+      statusLabel: `W trakcie ${mastery.masteryPercent}%`,
+      summaryLabel: `Ukończono ${mastery.completions}× · ostatni wynik ${mastery.lastScorePercent}%`,
+      badgeClassName: 'bg-amber-300/90 text-amber-950',
+    };
+  }
+
+  return {
+    statusLabel: `Powtórz ${mastery.masteryPercent}%`,
+    summaryLabel: `Ukończono ${mastery.completions}× · ostatni wynik ${mastery.lastScorePercent}%`,
+    badgeClassName: 'bg-rose-300/90 text-rose-950',
+  };
+};
+
 export default function Lessons() {
   const { basePath } = useKangurRouting();
   const settingsStore = useSettingsStore();
+  const progress = useKangurProgressState();
 
   const rawLessons = settingsStore.get(KANGUR_LESSONS_SETTING_KEY);
   const lessons = useMemo(
@@ -206,24 +299,40 @@ export default function Lessons() {
                   </div>
                 </div>
               ) : (
-                lessons.map((lesson, index) => (
-                  <motion.button
-                    key={lesson.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => setActiveLessonId(lesson.id)}
-                    className={`w-full bg-gradient-to-r ${lesson.color} text-white rounded-3xl p-5 flex items-center gap-4 shadow-lg text-left`}
-                  >
-                    <span className='text-5xl'>{lesson.emoji}</span>
-                    <div>
-                      <div className='font-extrabold text-xl'>{lesson.title}</div>
-                      <div className='text-white/80 text-sm mt-0.5'>{lesson.description}</div>
-                    </div>
-                  </motion.button>
-                ))
+                lessons.map((lesson, index) => {
+                  const masteryPresentation = getLessonMasteryPresentation(lesson, progress);
+
+                  return (
+                    <motion.button
+                      key={lesson.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setActiveLessonId(lesson.id)}
+                      className={`w-full bg-gradient-to-r ${lesson.color} text-white rounded-3xl p-5 flex items-center gap-4 shadow-lg text-left`}
+                    >
+                      <span className='text-5xl'>{lesson.emoji}</span>
+                      <div className='flex-1'>
+                        <div className='flex items-start justify-between gap-3'>
+                          <div>
+                            <div className='font-extrabold text-xl'>{lesson.title}</div>
+                            <div className='text-white/80 text-sm mt-0.5'>{lesson.description}</div>
+                          </div>
+                          <span
+                            className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] ${masteryPresentation.badgeClassName}`}
+                          >
+                            {masteryPresentation.statusLabel}
+                          </span>
+                        </div>
+                        <div className='mt-3 text-xs font-medium text-white/80'>
+                          {masteryPresentation.summaryLabel}
+                        </div>
+                      </div>
+                    </motion.button>
+                  );
+                })
               )}
             </motion.div>
           ) : (

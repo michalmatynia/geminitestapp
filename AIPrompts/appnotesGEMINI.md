@@ -109,13 +109,16 @@ LOGGING
 -Instrument Prisma query timings, Redis timings, and external API timings into traces + structured logs. Produce a ‘top 10 slow operations’ report from local runs.
 -Implement a ‘diagnostic mode’ for production troubleshooting: enable additional logging/tracing via feature flag and auto-disable after TTL.
 
+MIGRATION
+-migrate everything to its newest for and prune backwards compatibility
+-make everything canonical 
+
 TESTING
 Prepare a suite tests in vitests for feature \*\*\*
 write tests for critical components and API routes
 write end-to-end tests (Playwright) for key flows
 include npm test in your build pipeline.
 Write and integrate automated tests. Unit and integration tests catch regressions early.
-Set up Jest and React Testing Library ? - Don't I have that alrady ? Is vitest better than React Testing Licrary ?
 
 CODE PERFORMANCE
 Scan for optimization opportunities Optimization and speed up processes

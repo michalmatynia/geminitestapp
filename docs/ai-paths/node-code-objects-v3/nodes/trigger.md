@@ -1,17 +1,17 @@
 # Trigger: Image Studio Analysis Migration Sheet (`trigger`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-06T00:00:00.000Z
 
 ## Status
 
 - Runtime strategy: `code_object_v3`
 - Migration wave: `pilot`
 - Code object ID: `ai-paths.node-code-object.trigger.v3`
-- Readiness stage: `rollout_candidate`
-- Readiness score: 90/100
-- Readiness blockers: `rollout_not_approved`
+- Readiness stage: `rollout_approved`
+- Readiness score: 100/100
+- Readiness blockers: `none`
 - Parity evidence suite IDs: `v3-pilot-parity-core`, `v3-pilot-product-trigger-queue-e2e`
-- Rollout approved: `no` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
+- Rollout approved: `yes` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 5
 
 ## Node Contract Files
@@ -21,7 +21,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/trigger.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/trigger.scaffold.json`
 - v3 object id: `node_obj_trigger_portable_v3`
-- v3 object hash: `b819305ec153c1cc968ab1ae5062c3d93a4713043f78591f8f3abc2fbf7e2e20`
+- v3 object hash: `8f34d661891e408d666b04faaf186448fd29bf6870065a2a6906db4a19d8b4c5`
 
 ## Ports
 

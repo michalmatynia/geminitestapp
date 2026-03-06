@@ -1,6 +1,7 @@
 const version = process.versions.node || '';
 const [majorRaw] = version.split('.');
 const major = Number(majorRaw);
+const allowUnsupportedNodeDev = process.env['ALLOW_UNSUPPORTED_NODE_DEV'] === '1';
 
 if (!Number.isFinite(major)) {
   console.error(`[runtime] Unable to parse Node version: "${version}"`);
@@ -15,11 +16,16 @@ if (major < 20) {
 }
 
 if (major >= 24) {
-  console.error(
+  const message =
     `[runtime] Node ${process.version} is not supported for this app in dev mode (Next/SWC instability). ` +
-      `Switch to Node 22 LTS (for example: "nvm use 22").`
-  );
-  process.exit(1);
+    `Switch to Node 22 LTS (for example: "nvm use 22").`;
+
+  if (!allowUnsupportedNodeDev) {
+    console.error(message);
+    process.exit(1);
+  }
+
+  console.warn(`${message} Continuing because ALLOW_UNSUPPORTED_NODE_DEV=1.`);
 }
 
 if (major === 23) {

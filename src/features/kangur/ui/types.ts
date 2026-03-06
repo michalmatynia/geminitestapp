@@ -1,3 +1,8 @@
+import type {
+  KangurLessonMasteryEntry as SharedKangurLessonMasteryEntry,
+  KangurProgressState as SharedKangurProgressState,
+} from '@/shared/contracts/kangur';
+
 export type KangurGameScreen =
   | 'home'
   | 'training'
@@ -50,17 +55,8 @@ export type KangurDifficultyConfigEntry = {
 
 export type KangurDifficultyConfig = Record<KangurDifficulty, KangurDifficultyConfigEntry>;
 
-export type KangurProgressState = {
-  totalXp: number;
-  gamesPlayed: number;
-  perfectGames: number;
-  lessonsCompleted: number;
-  clockPerfect: number;
-  calendarPerfect: number;
-  geometryPerfect: number;
-  badges: string[];
-  operationsPlayed: string[];
-};
+export type KangurLessonMasteryEntry = SharedKangurLessonMasteryEntry;
+export type KangurProgressState = SharedKangurProgressState;
 
 export type KangurXpRewards = {
   correct_answer: number;

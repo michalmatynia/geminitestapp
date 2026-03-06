@@ -48,13 +48,14 @@ const formatDuration = (ms) => {
   return `${(sec / 60).toFixed(1)}m`;
 };
 
-const runCommand = ({ command, commandArgs, label }) =>
+const runCommand = ({ command, commandArgs, label, env = {} }) =>
   new Promise((resolve) => {
     const startedAt = Date.now();
     const child = spawn(command, commandArgs, {
       cwd: root,
       env: {
         ...process.env,
+        ...env,
         FORCE_COLOR: '0',
       },
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -161,6 +162,10 @@ const run = async () => {
       command: 'npx',
       commandArgs: ['playwright', 'test', ...KANGUR_E2E_TESTS, '--workers=1'],
       label: 'kangur-e2e',
+      env: {
+        ALLOW_UNSUPPORTED_NODE_DEV: '1',
+        SKIP_PORTABLE_PATH_BOOTSTRAP: '1',
+      },
     });
   }
 

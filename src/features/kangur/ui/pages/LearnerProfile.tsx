@@ -9,9 +9,10 @@ import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import { buildKangurLearnerProfileSnapshot } from '@/features/kangur/ui/services/profile';
 import type { KangurDifficulty, KangurOperation } from '@/features/kangur/ui/types';
-import { BADGES, loadProgress } from '@/features/kangur/ui/services/progress';
+import { BADGES } from '@/features/kangur/ui/services/progress';
 
 const DAILY_GOAL_GAMES = 3;
 const SCORE_FETCH_LIMIT = 120;
@@ -101,14 +102,10 @@ const buildRecommendationHref = (
 export default function LearnerProfile() {
   const { basePath } = useKangurRouting();
   const { user, navigateToLogin } = useKangurAuth();
-  const [progress, setProgress] = useState(() => loadProgress());
+  const progress = useKangurProgressState();
   const [scores, setScores] = useState<KangurScoreRecord[]>([]);
   const [isLoadingScores, setIsLoadingScores] = useState(true);
   const [scoresError, setScoresError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setProgress(loadProgress());
-  }, []);
 
   useEffect(() => {
     let isActive = true;

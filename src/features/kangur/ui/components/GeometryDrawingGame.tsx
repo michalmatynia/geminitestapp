@@ -7,7 +7,12 @@ import {
   type GeometryDrawPoint,
   type GeometryShapeId,
 } from '@/features/kangur/ui/services/geometry-drawing';
-import { XP_REWARDS, addXp, loadProgress } from '@/features/kangur/ui/services/progress';
+import {
+  XP_REWARDS,
+  addXp,
+  buildLessonMasteryUpdate,
+  loadProgress,
+} from '@/features/kangur/ui/services/progress';
 
 type GeometryDrawingGameProps = {
   onFinish: () => void;
@@ -285,6 +290,11 @@ export default function GeometryDrawingGame({ onFinish }: GeometryDrawingGamePro
       addXp(xp, {
         lessonsCompleted: progress.lessonsCompleted + 1,
         geometryPerfect: isPerfect ? progress.geometryPerfect + 1 : progress.geometryPerfect,
+        lessonMastery: buildLessonMasteryUpdate(
+          progress,
+          'geometry_shapes',
+          (finalScore / totalRounds) * 100
+        ),
       });
       setXpEarned(xp);
       setDone(true);

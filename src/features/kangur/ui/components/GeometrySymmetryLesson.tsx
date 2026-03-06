@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { XP_REWARDS, addXp, loadProgress } from '@/features/kangur/ui/services/progress';
+import {
+  XP_REWARDS,
+  addXp,
+  buildLessonMasteryUpdate,
+  loadProgress,
+} from '@/features/kangur/ui/services/progress';
 
 type GeometrySymmetryLessonProps = {
   onBack: () => void;
@@ -100,6 +105,7 @@ export default function GeometrySymmetryLesson({ onBack }: GeometrySymmetryLesso
       const progress = loadProgress();
       addXp(XP_REWARDS.lesson_completed, {
         lessonsCompleted: progress.lessonsCompleted + 1,
+        lessonMastery: buildLessonMasteryUpdate(progress, 'geometry_symmetry', 100),
       });
       setRewarded(true);
     }

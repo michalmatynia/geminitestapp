@@ -7,6 +7,7 @@ const { pathToFileURL } = require('url');
 const dev = process.env.NODE_ENV !== 'production';
 const nodeVersion = process.versions.node || '';
 const nodeMajor = Number((nodeVersion.split('.')[0] || '').trim());
+const allowUnsupportedNodeDev = process.env['ALLOW_UNSUPPORTED_NODE_DEV'] === '1';
 
 if (!Number.isFinite(nodeMajor)) {
   console.error(`[runtime] Unable to parse Node version: "${nodeVersion}"`);
@@ -21,11 +22,16 @@ if (nodeMajor < 20) {
 }
 
 if (dev && nodeMajor >= 24) {
-  console.error(
+  const message =
     `[runtime] Node ${process.version} is not supported for dev mode (Next/SWC/Turbopack instability). ` +
-      'Use Node 22 LTS: `nvm use 22`.'
-  );
-  process.exit(1);
+    'Use Node 22 LTS: `nvm use 22`.';
+
+  if (!allowUnsupportedNodeDev) {
+    console.error(message);
+    process.exit(1);
+  }
+
+  console.warn(`${message} Continuing because ALLOW_UNSUPPORTED_NODE_DEV=1.`);
 }
 
 // Dynamic import for ESM modules from src/features

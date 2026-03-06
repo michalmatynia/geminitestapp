@@ -7,6 +7,10 @@ import { resolveDocsGeneratedAt } from './docs-generated-at';
 import { loadNodeMigrationParityEvidenceSummary } from './node-migration-parity-evidence';
 import { loadNodeMigrationRolloutApprovalsSummary } from './node-migration-rollout-approvals';
 import {
+  NODE_MIGRATION_ROLLOUT_ELIGIBILITY_FILE,
+  NODE_MIGRATION_ROLLOUT_ELIGIBILITY_SCHEMA_VERSION,
+} from './node-migration-rollout-eligibility';
+import {
   type NodeMigrationReadiness,
   type NodeMigrationReadinessBlockerCode,
   type NodeMigrationReadinessStage,
@@ -110,6 +114,14 @@ type NodeMigrationIndexPayload = {
     approvedNodeTypes: string[];
     approvedCount: number;
   };
+  rolloutEligibility: {
+    sourceFile: string;
+    schemaVersion: string;
+    generatedAt: string;
+    criteria: string[];
+    eligibleNodeTypes: string[];
+    eligibleCount: number;
+  };
   familyTotals: Array<{
     nodeFamily: string;
     total: number;
@@ -117,6 +129,21 @@ type NodeMigrationIndexPayload = {
     code_object_v3: number;
   }>;
   nodes: NodeMigrationIndexRow[];
+};
+
+type NodeMigrationRolloutEligibilityPayload = {
+  schemaVersion: string;
+  generatedAt: string;
+  criteria: string[];
+  eligibleNodeTypes: string[];
+  nodes: Array<{
+    nodeType: string;
+    stage: NodeMigrationReadinessStage;
+    score: number;
+    eligible: boolean;
+    blockers: NodeMigrationReadinessBlockerCode[];
+    parityEvidenceSuiteIds: string[];
+  }>;
 };
 
 const workspaceRoot = process.cwd();
@@ -128,6 +155,7 @@ const v3IndexPath = path.join(outputDir, 'index.json');
 const v3ContractsPath = path.join(outputDir, 'contracts.json');
 const outputIndexPath = path.join(outputDir, 'migration-index.json');
 const outputGuidePath = path.join(outputDir, 'MIGRATION_GUIDE.md');
+const outputRolloutEligibilityPath = path.join(outputDir, 'rollout-eligibility.json');
 const perNodeDocsDir = path.join(outputDir, 'nodes');
 
 const stableJson = (value: unknown): string => `${JSON.stringify(value, null, 2)}\n`;
@@ -349,6 +377,38 @@ const generatedAt = resolveDocsGeneratedAt();
 const readinessSummary = summarizeNodeMigrationReadiness(
   rows.map((row) => row.migrationReadiness)
 );
+const rolloutEligibilityCriteria = [
+  'runtime_strategy=code_object_v3',
+  'has_semantic_contract_hash',
+  'has_v2_object_contract',
+  'has_v3_scaffold',
+  'has_v3_object_artifacts',
+  'dual_run_parity_validated',
+] as const;
+const rolloutEligibleRows = rows.filter(
+  (row) =>
+    row.runtimeStrategy === 'code_object_v3' &&
+    row.migrationChecklistTemplate.semanticContractReviewed &&
+    row.migrationChecklistTemplate.v3CodeObjectAuthored &&
+    row.migrationChecklistTemplate.dualRunParityValidated &&
+    row.docs.semanticNodeHash &&
+    row.docs.v3ObjectId &&
+    row.docs.v3ObjectHash
+);
+const rolloutEligibilityPayload: NodeMigrationRolloutEligibilityPayload = {
+  schemaVersion: NODE_MIGRATION_ROLLOUT_ELIGIBILITY_SCHEMA_VERSION,
+  generatedAt,
+  criteria: [...rolloutEligibilityCriteria],
+  eligibleNodeTypes: rolloutEligibleRows.map((row) => row.nodeType).sort((left, right) => left.localeCompare(right)),
+  nodes: rows.map((row) => ({
+    nodeType: row.nodeType,
+    stage: row.migrationReadiness.stage,
+    score: row.migrationReadiness.score,
+    eligible: rolloutEligibleRows.some((eligibleRow) => eligibleRow.nodeType === row.nodeType),
+    blockers: row.migrationReadiness.blockers,
+    parityEvidenceSuiteIds: row.parityEvidenceSuiteIds,
+  })),
+};
 
 const payload: NodeMigrationIndexPayload = {
   schemaVersion: 'ai-paths.node-migration-doc-index.v2',
@@ -376,6 +436,14 @@ const payload: NodeMigrationIndexPayload = {
     generatedAt: rolloutApprovalsSummary.generatedAt,
     approvedNodeTypes: rolloutApprovalsSummary.approvedNodeTypes,
     approvedCount: rolloutApprovalsSummary.approvedNodeTypes.length,
+  },
+  rolloutEligibility: {
+    sourceFile: NODE_MIGRATION_ROLLOUT_ELIGIBILITY_FILE,
+    schemaVersion: rolloutEligibilityPayload.schemaVersion,
+    generatedAt: rolloutEligibilityPayload.generatedAt,
+    criteria: [...rolloutEligibilityPayload.criteria],
+    eligibleNodeTypes: [...rolloutEligibilityPayload.eligibleNodeTypes],
+    eligibleCount: rolloutEligibilityPayload.eligibleNodeTypes.length,
   },
   familyTotals,
   nodes: rows,
@@ -460,6 +528,7 @@ for (const row of rows) {
 }
 
 fs.writeFileSync(outputIndexPath, stableJson(payload), 'utf8');
+fs.writeFileSync(outputRolloutEligibilityPath, stableJson(rolloutEligibilityPayload), 'utf8');
 
 const familyTableLines = [
   '| Node Family | Total | `legacy_adapter` | `code_object_v3` |',
@@ -509,13 +578,14 @@ const guideLines = [
   '## Inputs',
   '',
   '- `src/shared/lib/ai-paths/core/docs/node-docs.ts` (node catalog)',
-  '- `src/shared/lib/ai-paths/core/runtime/node-runtime-kernel.ts` (pilot runtime strategy)',
+  '- `src/shared/lib/ai-paths/core/runtime/node-runtime-kernel.ts` (canonical runtime-kernel node set)',
   '- `docs/ai-paths/semantic-grammar/nodes/index.json` (semantic hashes)',
   '- `docs/ai-paths/node-code-objects-v2/index.json` (node-family metadata)',
   '- `docs/ai-paths/node-code-objects-v3/index.scaffold.json` (available v3 scaffolds)',
-  '- `docs/ai-paths/node-code-objects-v3/index.json` + `contracts.json` (pilot v3 object hashes)',
+  '- `docs/ai-paths/node-code-objects-v3/index.json` + `contracts.json` (active v3 object hashes)',
   '- `docs/ai-paths/node-code-objects-v3/parity-evidence.json` (runtime parity evidence: core dual-run + product-trigger E2E)',
   '- `docs/ai-paths/node-code-objects-v3/rollout-approvals.json` (manual rollout approvals)',
+  '- `docs/ai-paths/node-code-objects-v3/rollout-eligibility.json` (generated technical rollout candidates)',
   '',
   '## Migration Workflow',
   '',
@@ -523,7 +593,7 @@ const guideLines = [
   '2. Author/refresh `node-code-objects-v3/<nodeType>.scaffold.json` with runtime kernel metadata.',
   '3. Keep runtime strategy on `code_object_v3` and set `executionAdapter` to `native_handler_registry`.',
   '4. Validate runtime parity and native registry coverage checks for server/client execution paths.',
-  '5. Keep node type in kernel pilot list (`NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES`) and monitor rollout signals.',
+  '5. Keep node type in the canonical runtime-kernel set (`NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES`) and monitor rollout signals.',
   '6. Preserve docs/check guardrails in CI and use rollout approvals for governance sign-off when required.',
   '',
   '## Strategy Totals',
@@ -562,6 +632,18 @@ const guideLines = [
       : '`none`'
   }`,
   '',
+  '## Rollout Eligibility',
+  '',
+  `- Source file: \`${payload.rolloutEligibility.sourceFile}\``,
+  `- Schema version: \`${payload.rolloutEligibility.schemaVersion}\``,
+  `- Generated at: \`${payload.rolloutEligibility.generatedAt}\``,
+  `- Eligibility criteria: ${payload.rolloutEligibility.criteria.map((criterion) => `\`${criterion}\``).join(', ')}`,
+  `- Eligible node types: ${
+    payload.rolloutEligibility.eligibleNodeTypes.length > 0
+      ? payload.rolloutEligibility.eligibleNodeTypes.map((nodeType) => `\`${nodeType}\``).join(', ')
+      : '`none`'
+  }`,
+  '',
   'Top blockers:',
   '',
   ...blockerTableLines,
@@ -584,13 +666,14 @@ const guideLines = [
   '- `docs/ai-paths/node-code-objects-v3/index.json`',
   '- `docs/ai-paths/node-code-objects-v3/contracts.json`',
   '- `docs/ai-paths/node-code-objects-v3/migration-index.json`',
+  '- `docs/ai-paths/node-code-objects-v3/rollout-eligibility.json`',
   '- `docs/ai-paths/node-code-objects-v3/MIGRATION_GUIDE.md`',
   '- `docs/ai-paths/node-code-objects-v3/nodes/<nodeType>.md`',
   '',
   '## Artifact Hygiene',
   '',
   '- Semantic/v2 generators prune stale per-node JSON files not represented in `AI_PATHS_NODE_DOCS`.',
-  '- v3 generator prunes stale `*.scaffold.json` files outside the active pilot set.',
+  '- v3 generator prunes stale `*.scaffold.json` files outside the active runtime-kernel set.',
   '- Semantic/v2/v3 checks fail fast when unexpected node/scaffold files are present.',
   '',
   'Regenerate with:',

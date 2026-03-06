@@ -1,17 +1,17 @@
 # Simulation: Entity Modal Migration Sheet (`simulation`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-06T00:00:00.000Z
 
 ## Status
 
 - Runtime strategy: `code_object_v3`
 - Migration wave: `pilot`
 - Code object ID: `ai-paths.node-code-object.simulation.v3`
-- Readiness stage: `rollout_candidate`
-- Readiness score: 90/100
-- Readiness blockers: `rollout_not_approved`
+- Readiness stage: `rollout_approved`
+- Readiness score: 100/100
+- Readiness blockers: `none`
 - Parity evidence suite IDs: `v3-pilot-parity-core`
-- Rollout approved: `no` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
+- Rollout approved: `yes` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 7
 
 ## Node Contract Files
@@ -21,7 +21,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/simulation.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/simulation.scaffold.json`
 - v3 object id: `node_obj_simulation_portable_v3`
-- v3 object hash: `2e7504c02f6d65866b23cf869eb33e55a52fd9f9319c08bcc07c2b7b6a5ce435`
+- v3 object hash: `02c2380880296bf3b7ed3800afd810579ca0d881c84c55d348363a00f1f20f5a`
 
 ## Ports
 

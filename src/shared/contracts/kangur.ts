@@ -34,6 +34,118 @@ export type KangurLesson = z.infer<typeof kangurLessonSchema>;
 export const kangurLessonsSchema = z.array(kangurLessonSchema);
 export type KangurLessons = z.infer<typeof kangurLessonsSchema>;
 
+const kangurProgressCounterSchema = z.number().int().min(0).max(1_000_000);
+const kangurProgressListSchema = z.array(nonEmptyTrimmedString.max(64)).max(256);
+const kangurLessonMasteryPercentSchema = z.number().int().min(0).max(100);
+
+export const kangurLessonMasteryEntrySchema = z.object({
+  attempts: kangurProgressCounterSchema,
+  completions: kangurProgressCounterSchema,
+  masteryPercent: kangurLessonMasteryPercentSchema,
+  bestScorePercent: kangurLessonMasteryPercentSchema,
+  lastScorePercent: kangurLessonMasteryPercentSchema,
+  lastCompletedAt: z.string().datetime({ offset: true }).nullable(),
+});
+export type KangurLessonMasteryEntry = z.infer<typeof kangurLessonMasteryEntrySchema>;
+
+export const kangurLessonMasterySchema = z.record(
+  z.string().trim().min(1).max(80),
+  kangurLessonMasteryEntrySchema
+);
+export type KangurLessonMastery = z.infer<typeof kangurLessonMasterySchema>;
+
+const normalizeKangurLessonMasteryEntry = (value: unknown): KangurLessonMasteryEntry | null => {
+  const parsed = kangurLessonMasteryEntrySchema.safeParse(value);
+  if (!parsed.success) {
+    return null;
+  }
+
+  return {
+    ...parsed.data,
+    lastCompletedAt: parsed.data.lastCompletedAt ?? null,
+  };
+};
+
+export const normalizeKangurLessonMastery = (value: unknown): KangurLessonMastery => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  const normalized: KangurLessonMastery = {};
+  for (const [rawKey, rawEntry] of Object.entries(value as Record<string, unknown>)) {
+    const key = rawKey.trim();
+    if (!key || key.length > 80) {
+      continue;
+    }
+
+    const entry = normalizeKangurLessonMasteryEntry(rawEntry);
+    if (entry) {
+      normalized[key] = entry;
+    }
+  }
+
+  return normalized;
+};
+
+export const kangurProgressStateSchema = z.object({
+  totalXp: kangurProgressCounterSchema,
+  gamesPlayed: kangurProgressCounterSchema,
+  perfectGames: kangurProgressCounterSchema,
+  lessonsCompleted: kangurProgressCounterSchema,
+  clockPerfect: kangurProgressCounterSchema,
+  calendarPerfect: kangurProgressCounterSchema,
+  geometryPerfect: kangurProgressCounterSchema,
+  badges: kangurProgressListSchema,
+  operationsPlayed: kangurProgressListSchema,
+  lessonMastery: kangurLessonMasterySchema,
+});
+export type KangurProgressState = z.infer<typeof kangurProgressStateSchema>;
+
+const kangurProgressStatePartialSchema = kangurProgressStateSchema.partial();
+
+const mergeUniqueProgressValues = (values: string[]): string[] => Array.from(new Set(values));
+
+export const createDefaultKangurProgressState = (): KangurProgressState => ({
+  totalXp: 0,
+  gamesPlayed: 0,
+  perfectGames: 0,
+  lessonsCompleted: 0,
+  clockPerfect: 0,
+  calendarPerfect: 0,
+  geometryPerfect: 0,
+  badges: [],
+  operationsPlayed: [],
+  lessonMastery: {},
+});
+
+export const normalizeKangurProgressState = (value: unknown): KangurProgressState => {
+  const parsed = kangurProgressStateSchema.safeParse(value);
+  if (parsed.success) {
+    return {
+      ...parsed.data,
+      badges: mergeUniqueProgressValues(parsed.data.badges),
+      operationsPlayed: mergeUniqueProgressValues(parsed.data.operationsPlayed),
+      lessonMastery: normalizeKangurLessonMastery(parsed.data.lessonMastery),
+    };
+  }
+
+  const partial = kangurProgressStatePartialSchema.safeParse(value);
+  if (!partial.success) {
+    return createDefaultKangurProgressState();
+  }
+
+  const defaults = createDefaultKangurProgressState();
+  return {
+    ...defaults,
+    ...partial.data,
+    badges: mergeUniqueProgressValues(partial.data.badges ?? defaults.badges),
+    operationsPlayed: mergeUniqueProgressValues(
+      partial.data.operationsPlayed ?? defaults.operationsPlayed
+    ),
+    lessonMastery: normalizeKangurLessonMastery(partial.data.lessonMastery),
+  };
+};
+
 export const kangurScoreSortFieldSchema = z.enum([
   'created_date',
   'score',

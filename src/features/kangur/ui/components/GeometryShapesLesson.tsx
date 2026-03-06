@@ -3,7 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
-import { XP_REWARDS, addXp, loadProgress } from '@/features/kangur/ui/services/progress';
+import {
+  XP_REWARDS,
+  addXp,
+  buildLessonMasteryUpdate,
+  loadProgress,
+} from '@/features/kangur/ui/services/progress';
 
 type GeometryShapesLessonProps = {
   onBack: () => void;
@@ -87,6 +92,7 @@ export default function GeometryShapesLesson({ onBack }: GeometryShapesLessonPro
       const progress = loadProgress();
       addXp(XP_REWARDS.lesson_completed, {
         lessonsCompleted: progress.lessonsCompleted + 1,
+        lessonMastery: buildLessonMasteryUpdate(progress, 'geometry_shapes', 60),
       });
       setRewarded(true);
     }

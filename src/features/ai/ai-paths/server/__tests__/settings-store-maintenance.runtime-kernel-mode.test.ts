@@ -13,7 +13,7 @@ import {
 } from '@/shared/lib/ai-paths/core/constants';
 import { AI_PATHS_CONFIG_KEY_PREFIX } from '@/features/ai/ai-paths/server/settings-store.constants';
 
-describe('AI Paths maintenance runtime-kernel mode normalization', () => {
+describe('AI Paths maintenance runtime-kernel settings normalization', () => {
   it('surfaces normalization action when deprecated runtime mode is stored', () => {
     const records: AiPathsSettingRecord[] = [
       {
@@ -26,7 +26,7 @@ describe('AI Paths maintenance runtime-kernel mode normalization', () => {
     expect(report.actions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'normalize_runtime_kernel_mode',
+          id: 'normalize_runtime_kernel_settings',
           status: 'pending',
           affectedRecords: 1,
         }),
@@ -43,7 +43,7 @@ describe('AI Paths maintenance runtime-kernel mode normalization', () => {
     ];
 
     const result = runMaintenanceAction({
-      actionId: 'normalize_runtime_kernel_mode',
+      actionId: 'normalize_runtime_kernel_settings',
       records,
     });
 
@@ -73,7 +73,7 @@ describe('AI Paths maintenance runtime-kernel mode normalization', () => {
     expect(report.actions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'normalize_runtime_kernel_mode',
+          id: 'normalize_runtime_kernel_settings',
           status: 'pending',
           affectedRecords: 2,
         }),
@@ -81,7 +81,7 @@ describe('AI Paths maintenance runtime-kernel mode normalization', () => {
     );
 
     const result = runMaintenanceAction({
-      actionId: 'normalize_runtime_kernel_mode',
+      actionId: 'normalize_runtime_kernel_settings',
       records,
     });
 
@@ -111,7 +111,7 @@ describe('AI Paths maintenance runtime-kernel mode normalization', () => {
     expect(report.actions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'normalize_runtime_kernel_mode',
+          id: 'normalize_runtime_kernel_settings',
           status: 'pending',
           affectedRecords: 1,
         }),
@@ -119,7 +119,7 @@ describe('AI Paths maintenance runtime-kernel mode normalization', () => {
     );
 
     const result = runMaintenanceAction({
-      actionId: 'normalize_runtime_kernel_mode',
+      actionId: 'normalize_runtime_kernel_settings',
       records,
     });
 
@@ -162,7 +162,7 @@ describe('AI Paths maintenance runtime-kernel mode normalization', () => {
     expect(report.actions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'normalize_runtime_kernel_mode',
+          id: 'normalize_runtime_kernel_settings',
           status: 'pending',
           affectedRecords: 1,
         }),
@@ -196,7 +196,7 @@ describe('AI Paths maintenance runtime-kernel mode normalization', () => {
     ];
 
     const result = runMaintenanceAction({
-      actionId: 'normalize_runtime_kernel_mode',
+      actionId: 'normalize_runtime_kernel_settings',
       records,
     });
 

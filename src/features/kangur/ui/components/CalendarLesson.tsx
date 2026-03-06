@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Volume2, VolumeX } from 'lucide-react';
 import CalendarInteractiveGame from './CalendarInteractiveGame';
-import { addXp, XP_REWARDS, loadProgress } from '@/features/kangur/ui/services/progress';
+import { addXp, buildLessonMasteryUpdate, XP_REWARDS, loadProgress } from '@/features/kangur/ui/services/progress';
 
 type CalendarLessonProps = {
   onBack: () => void;
@@ -284,6 +284,7 @@ export default function CalendarLesson({ onBack }: CalendarLessonProps): React.J
     const prog = loadProgress();
     addXp(XP_REWARDS.lesson_completed, {
       lessonsCompleted: prog.lessonsCompleted + 1,
+      lessonMastery: buildLessonMasteryUpdate(prog, 'calendar', 60),
     });
     setInTraining(true);
   };

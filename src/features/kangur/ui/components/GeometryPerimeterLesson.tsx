@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { XP_REWARDS, addXp, loadProgress } from '@/features/kangur/ui/services/progress';
+import {
+  XP_REWARDS,
+  addXp,
+  buildLessonMasteryUpdate,
+  loadProgress,
+} from '@/features/kangur/ui/services/progress';
 
 type GeometryPerimeterLessonProps = {
   onBack: () => void;
@@ -87,6 +92,7 @@ export default function GeometryPerimeterLesson({ onBack }: GeometryPerimeterLes
       const progress = loadProgress();
       addXp(XP_REWARDS.lesson_completed, {
         lessonsCompleted: progress.lessonsCompleted + 1,
+        lessonMastery: buildLessonMasteryUpdate(progress, 'geometry_perimeter', 100),
       });
       setRewarded(true);
     }

@@ -1,0 +1,413 @@
+{
+  "schemaVersion": "ai-paths.node-migration-rollout-eligibility.v1",
+  "generatedAt": "2026-03-06T00:00:00.000Z",
+  "criteria": [
+    "runtime_strategy=code_object_v3",
+    "has_semantic_contract_hash",
+    "has_v2_object_contract",
+    "has_v3_scaffold",
+    "has_v3_object_artifacts",
+    "dual_run_parity_validated"
+  ],
+  "eligibleNodeTypes": [
+    "agent",
+    "ai_description",
+    "api_advanced",
+    "audio_oscillator",
+    "audio_speaker",
+    "bundle",
+    "compare",
+    "constant",
+    "context",
+    "database",
+    "db_schema",
+    "delay",
+    "description_updater",
+    "fetcher",
+    "gate",
+    "http",
+    "iterator",
+    "learner_agent",
+    "mapper",
+    "math",
+    "model",
+    "mutator",
+    "notification",
+    "parser",
+    "playwright",
+    "poll",
+    "prompt",
+    "regex",
+    "router",
+    "simulation",
+    "string_mutator",
+    "template",
+    "trigger",
+    "validation_pattern",
+    "validator",
+    "viewer"
+  ],
+  "nodes": [
+    {
+      "nodeType": "agent",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "ai_description",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "api_advanced",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "audio_oscillator",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "audio_speaker",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "bundle",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "compare",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "constant",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "context",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "database",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "db_schema",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "delay",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "description_updater",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "fetcher",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "gate",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "http",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "iterator",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "learner_agent",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "mapper",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "math",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "model",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "mutator",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "notification",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "parser",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "playwright",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "poll",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "prompt",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "regex",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "router",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "simulation",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "string_mutator",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "template",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "trigger",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core",
+        "v3-pilot-product-trigger-queue-e2e"
+      ]
+    },
+    {
+      "nodeType": "validation_pattern",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "validator",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    },
+    {
+      "nodeType": "viewer",
+      "stage": "rollout_approved",
+      "score": 100,
+      "eligible": true,
+      "blockers": [],
+      "parityEvidenceSuiteIds": [
+        "v3-pilot-parity-core"
+      ]
+    }
+  ]
+}

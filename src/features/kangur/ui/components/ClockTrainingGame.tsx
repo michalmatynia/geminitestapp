@@ -4,7 +4,12 @@ import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } fro
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, RefreshCw, XCircle } from 'lucide-react';
 
-import { addXp, XP_REWARDS, loadProgress } from '@/features/kangur/ui/services/progress';
+import {
+  addXp,
+  buildLessonMasteryUpdate,
+  XP_REWARDS,
+  loadProgress,
+} from '@/features/kangur/ui/services/progress';
 
 type ClockTrainingGameProps = {
   onFinish: () => void;
@@ -590,6 +595,7 @@ export default function ClockTrainingGame({
     const progress = loadProgress();
     addXp(xp, {
       clockPerfect: isPerfect ? progress.clockPerfect + 1 : progress.clockPerfect,
+      lessonMastery: buildLessonMasteryUpdate(progress, 'clock', (finalScore / tasks.length) * 100),
     });
 
     setXpEarned(xp);

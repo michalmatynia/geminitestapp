@@ -1,17 +1,17 @@
 # Template Migration Sheet (`template`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-06T00:00:00.000Z
 
 ## Status
 
 - Runtime strategy: `code_object_v3`
 - Migration wave: `pilot`
 - Code object ID: `ai-paths.node-code-object.template.v3`
-- Readiness stage: `rollout_candidate`
-- Readiness score: 90/100
-- Readiness blockers: `rollout_not_approved`
+- Readiness stage: `rollout_approved`
+- Readiness score: 100/100
+- Readiness blockers: `none`
 - Parity evidence suite IDs: `v3-pilot-parity-core`
-- Rollout approved: `no` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
+- Rollout approved: `yes` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 4
 
 ## Node Contract Files
@@ -21,7 +21,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/template.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/template.scaffold.json`
 - v3 object id: `node_obj_template_portable_v3`
-- v3 object hash: `661cd86e53a179505bc2d9d7561e6b7bc1462db9440f4500b95209b2e211762b`
+- v3 object hash: `965d96a2ba08e5b736eb4dc2d604ec9b0f294161f947706874428c97789d3813`
 
 ## Ports
 

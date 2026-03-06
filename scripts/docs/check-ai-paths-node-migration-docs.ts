@@ -9,6 +9,10 @@ import {
   loadNodeMigrationRolloutApprovalsSummary,
 } from './node-migration-rollout-approvals';
 import {
+  NODE_MIGRATION_ROLLOUT_ELIGIBILITY_SCHEMA_VERSION,
+  loadNodeMigrationRolloutEligibilitySummary,
+} from './node-migration-rollout-eligibility';
+import {
   type NodeMigrationReadiness,
   type NodeMigrationReadinessBlockerCode,
   type NodeMigrationReadinessStage,
@@ -82,6 +86,14 @@ type NodeMigrationIndexPayload = {
     approvedNodeTypes?: string[];
     approvedCount?: number;
   };
+  rolloutEligibility?: {
+    sourceFile?: string;
+    schemaVersion?: string;
+    generatedAt?: string;
+    criteria?: string[];
+    eligibleNodeTypes?: string[];
+    eligibleCount?: number;
+  };
   familyTotals: Array<{
     nodeFamily: string;
     total: number;
@@ -135,7 +147,9 @@ const pilotNodeTypeSet = new Set<string>(
 );
 const parityEvidenceSummary = loadNodeMigrationParityEvidenceSummary({ workspaceRoot });
 const rolloutApprovalsSummary = loadNodeMigrationRolloutApprovalsSummary({ workspaceRoot });
+const rolloutEligibilitySummary = loadNodeMigrationRolloutEligibilitySummary({ workspaceRoot });
 const rolloutApprovedNodeTypeSet = new Set<string>(rolloutApprovalsSummary.approvedNodeTypes);
+const rolloutEligibleNodeTypeSet = new Set<string>(rolloutEligibilitySummary.eligibleNodeTypes);
 
 if (!fs.existsSync(indexPath)) {
   console.error(`Missing migration index: ${path.relative(workspaceRoot, indexPath)}`);
@@ -170,6 +184,12 @@ if (!fs.existsSync(parityEvidenceSummary.sourcePath)) {
 if (!fs.existsSync(rolloutApprovalsSummary.sourcePath)) {
   console.error(
     `Missing rollout approvals file: ${path.relative(workspaceRoot, rolloutApprovalsSummary.sourcePath)}`
+  );
+  process.exit(1);
+}
+if (!fs.existsSync(rolloutEligibilitySummary.sourcePath)) {
+  console.error(
+    `Missing rollout eligibility file: ${path.relative(workspaceRoot, rolloutEligibilitySummary.sourcePath)}`
   );
   process.exit(1);
 }
@@ -256,6 +276,11 @@ if (parityEvidenceSummary.schemaVersion !== 'ai-paths.node-migration-parity-evid
 if (rolloutApprovalsSummary.schemaVersion !== NODE_MIGRATION_ROLLOUT_APPROVALS_SCHEMA_VERSION) {
   errors.push(
     `rollout-approvals schemaVersion must be "${NODE_MIGRATION_ROLLOUT_APPROVALS_SCHEMA_VERSION}" (got ${rolloutApprovalsSummary.schemaVersion ?? 'null'}).`
+  );
+}
+if (rolloutEligibilitySummary.schemaVersion !== NODE_MIGRATION_ROLLOUT_ELIGIBILITY_SCHEMA_VERSION) {
+  errors.push(
+    `rollout-eligibility schemaVersion must be "${NODE_MIGRATION_ROLLOUT_ELIGIBILITY_SCHEMA_VERSION}" (got ${rolloutEligibilitySummary.schemaVersion ?? 'null'}).`
   );
 }
 
@@ -810,6 +835,62 @@ if (!indexPayload.rolloutApprovals || typeof indexPayload.rolloutApprovals !== '
   }
 }
 
+if (!indexPayload.rolloutEligibility || typeof indexPayload.rolloutEligibility !== 'object') {
+  errors.push('migration-index.json rolloutEligibility summary is missing.');
+} else {
+  const declaredSourceFile = toSafeString(indexPayload.rolloutEligibility.sourceFile);
+  if (declaredSourceFile !== rolloutEligibilitySummary.sourceFile) {
+    errors.push(
+      `migration-index.json rolloutEligibility.sourceFile mismatch (declared=${declaredSourceFile || 'empty'}, expected=${rolloutEligibilitySummary.sourceFile}).`
+    );
+  }
+
+  const declaredSchemaVersion = toSafeString(indexPayload.rolloutEligibility.schemaVersion);
+  if (declaredSchemaVersion !== rolloutEligibilitySummary.schemaVersion) {
+    errors.push(
+      `migration-index.json rolloutEligibility.schemaVersion mismatch (declared=${declaredSchemaVersion || 'empty'}, expected=${rolloutEligibilitySummary.schemaVersion ?? 'null'}).`
+    );
+  }
+
+  const declaredGeneratedAt = toSafeString(indexPayload.rolloutEligibility.generatedAt);
+  if (declaredGeneratedAt !== rolloutEligibilitySummary.generatedAt) {
+    errors.push(
+      `migration-index.json rolloutEligibility.generatedAt mismatch (declared=${declaredGeneratedAt || 'empty'}, expected=${rolloutEligibilitySummary.generatedAt ?? 'null'}).`
+    );
+  }
+
+  const declaredCriteria = Array.isArray(indexPayload.rolloutEligibility.criteria)
+    ? indexPayload.rolloutEligibility.criteria.map((entry) => toSafeString(entry)).filter(Boolean).sort()
+    : [];
+  if (JSON.stringify(declaredCriteria) !== JSON.stringify(rolloutEligibilitySummary.criteria)) {
+    errors.push(
+      `migration-index.json rolloutEligibility.criteria mismatch (declared=${JSON.stringify(declaredCriteria)}, expected=${JSON.stringify(rolloutEligibilitySummary.criteria)}).`
+    );
+  }
+
+  const declaredEligibleNodeTypes = Array.isArray(indexPayload.rolloutEligibility.eligibleNodeTypes)
+    ? indexPayload.rolloutEligibility.eligibleNodeTypes
+      .map((entry) => toSafeString(entry))
+      .filter(Boolean)
+      .sort()
+    : [];
+  if (
+    JSON.stringify(declaredEligibleNodeTypes) !==
+    JSON.stringify(rolloutEligibilitySummary.eligibleNodeTypes)
+  ) {
+    errors.push(
+      `migration-index.json rolloutEligibility.eligibleNodeTypes mismatch (declared=${JSON.stringify(declaredEligibleNodeTypes)}, expected=${JSON.stringify(rolloutEligibilitySummary.eligibleNodeTypes)}).`
+    );
+  }
+
+  const declaredEligibleCount = Number(indexPayload.rolloutEligibility.eligibleCount);
+  if (declaredEligibleCount !== rolloutEligibilitySummary.eligibleNodeTypes.length) {
+    errors.push(
+      `migration-index.json rolloutEligibility.eligibleCount mismatch (declared=${String(indexPayload.rolloutEligibility.eligibleCount)}, expected=${rolloutEligibilitySummary.eligibleNodeTypes.length}).`
+    );
+  }
+}
+
 const declaredPilotTypes = new Set<string>((indexPayload.pilotNodeTypes ?? []).map(toSafeString).filter(Boolean));
 for (const pilotNodeType of pilotNodeTypeSet) {
   if (!declaredPilotTypes.has(pilotNodeType)) {
@@ -829,6 +910,31 @@ for (const approvedNodeType of rolloutApprovalsSummary.approvedNodeTypes) {
   if (!pilotNodeTypeSet.has(approvedNodeType)) {
     errors.push(`rollout-approvals nodeType=${approvedNodeType} is not in v3 pilot kernel set.`);
   }
+  if (!rolloutEligibleNodeTypeSet.has(approvedNodeType)) {
+    errors.push(`rollout-approvals nodeType=${approvedNodeType} is not technically eligible.`);
+  }
+}
+const declaredRowsByNodeType = new Map<string, NodeMigrationIndexRow>(rows.map((row) => [row.nodeType, row]));
+for (const eligibleNodeType of rolloutEligibilitySummary.eligibleNodeTypes) {
+  const row = declaredRowsByNodeType.get(eligibleNodeType);
+  if (!row) {
+    errors.push(`rollout-eligibility has unknown nodeType=${eligibleNodeType}.`);
+    continue;
+  }
+  if (!pilotNodeTypeSet.has(eligibleNodeType)) {
+    errors.push(`rollout-eligibility nodeType=${eligibleNodeType} is not in v3 pilot kernel set.`);
+  }
+  if (
+    row.migrationReadiness.stage !== 'rollout_candidate' &&
+    row.migrationReadiness.stage !== 'rollout_approved'
+  ) {
+    errors.push(
+      `rollout-eligibility nodeType=${eligibleNodeType} must be rollout_candidate or rollout_approved (got ${row.migrationReadiness.stage}).`
+    );
+  }
+  if (row.parityEvidenceSuiteIds.length === 0) {
+    errors.push(`rollout-eligibility nodeType=${eligibleNodeType} is missing parity evidence.`);
+  }
 }
 
 const guideRaw = fs.readFileSync(guidePath, 'utf8');
@@ -846,6 +952,9 @@ if (!guideRaw.includes('## Parity Evidence')) {
 }
 if (!guideRaw.includes('## Rollout Approvals')) {
   errors.push('MIGRATION_GUIDE.md is missing the "Rollout Approvals" section.');
+}
+if (!guideRaw.includes('## Rollout Eligibility')) {
+  errors.push('MIGRATION_GUIDE.md is missing the "Rollout Eligibility" section.');
 }
 if (!guideRaw.includes('## Per-Node Sheets')) {
   errors.push('MIGRATION_GUIDE.md is missing the "Per-Node Sheets" section.');

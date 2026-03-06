@@ -1,0 +1,60 @@
+{
+  "generatedAt": "2026-03-06T04:06:23.539Z",
+  "strictMode": false,
+  "includeE2E": true,
+  "unit": {
+    "id": "kangur-unit",
+    "command": "npx vitest run __tests__/features/kangur/learner-profile.page.test.tsx __tests__/features/kangur/lessons-focus-routing.test.tsx __tests__/features/kangur/kangur-feature-app.shell.test.tsx __tests__/features/kangur/kangur-admin-menu-toggle.test.tsx src/features/kangur/ui/services/profile.test.ts src/features/kangur/settings.test.ts",
+    "status": "pass",
+    "exitCode": 0,
+    "durationMs": 6644,
+    "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/kangur/lessons-focus-routing.test.tsx (2 tests) 537ms\n     ✓ auto-opens the focused lesson when focus query maps to operation  470ms\n ✓ |unit| __tests__/features/kangur/learner-profile.page.test.tsx (3 tests) 307ms\n ✓ |unit| __tests__/features/kangur/kangur-admin-menu-toggle.test.tsx (2 tests) 111ms\n ✓ |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx (6 tests) 24ms\n ✓ |unit| src/features/kangur/ui/services/profile.test.ts (2 tests) 7ms\n ✓ |unit| src/features/kangur/settings.test.ts (4 tests) 6ms\n\n Test Files  6 passed (6)\n      Tests  19 passed (19)\n   Start at  05:06:14\n   Duration  5.54s (transform 821ms, setup 665ms, import 1.66s, tests 992ms, environment 1.70s)"
+  },
+  "e2e": {
+    "id": "kangur-e2e",
+    "command": "npx playwright test e2e/features/kangur/kangur-profile.spec.ts e2e/features/kangur/kangur-game-quickstart.spec.ts --workers=1",
+    "status": "fail",
+    "exitCode": 1,
+    "durationMs": 3333,
+    "output": "[WebServer] [runtime] Node v24.3.0 is not supported for this app in dev mode (Next/SWC instability). Switch to Node 22 LTS (for example: \"nvm use 22\"). Continuing because ALLOW_UNSUPPORTED_NODE_DEV=1.\n[WebServer] [runtime] Node v24.3.0 is not supported for dev mode (Next/SWC/Turbopack instability). Use Node 22 LTS: `nvm use 22`. Continuing because ALLOW_UNSUPPORTED_NODE_DEV=1.\n[WebServer] ⨯ Unable to acquire lock at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next-dev/dev/lock, is another instance of next dev running?\nError: Process from config.webServer was not able to start. Exit code: 1"
+  },
+  "bundleRisk": {
+    "files": [
+      {
+        "path": "src/features/kangur/ui/pages/Game.tsx",
+        "lines": 670,
+        "bytes": 26336
+      },
+      {
+        "path": "src/features/kangur/ui/services/kangur-questions-data.js",
+        "lines": 329,
+        "bytes": 21289
+      },
+      {
+        "path": "src/features/kangur/ui/pages/LearnerProfile.tsx",
+        "lines": 444,
+        "bytes": 19057
+      },
+      {
+        "path": "src/features/kangur/ui/pages/Lessons.tsx",
+        "lines": 392,
+        "bytes": 15121
+      },
+      {
+        "path": "src/features/kangur/ui/components/KangurGame.tsx",
+        "lines": 310,
+        "bytes": 10394
+      },
+      {
+        "path": "src/features/kangur/ui/components/KangurIllustrations.jsx",
+        "lines": 14,
+        "bytes": 853
+      }
+    ],
+    "totalBytes": 93050,
+    "totalLines": 2159
+  },
+  "summary": {
+    "failedRuns": 1
+  }
+}

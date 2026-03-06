@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, BarChart2, BookOpen, ClipboardList, Eye, EyeOff, UserRound } from 'lucide-react';
+import { ArrowLeft, BarChart2, BookOpen, ClipboardList, LogIn, LogOut, UserRound } from 'lucide-react';
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
+import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import Link from 'next/link';
 import { AssignmentPanel, ProgressOverview, ScoreHistory } from '@/features/kangur/ui/components/dashboard';
-import { loadProgress } from '@/features/kangur/ui/services/progress';
 
 type ParentDashboardTabId = 'progress' | 'scores' | 'assign';
 
@@ -21,29 +22,16 @@ const TABS: ParentDashboardTab[] = [
   { id: 'assign', label: 'Zadania', icon: BookOpen },
 ];
 
-const PIN = '1234';
-
 export default function ParentDashboard() {
   const { basePath } = useKangurRouting();
-  const [unlocked, setUnlocked] = useState(false);
-  const [pin, setPin] = useState('');
-  const [pinError, setPinError] = useState(false);
-  const [showPin, setShowPin] = useState(false);
+  const { isAuthenticated, user, navigateToLogin, logout } = useKangurAuth();
   const [activeTab, setActiveTab] = useState<ParentDashboardTabId>('progress');
 
-  const progress = loadProgress();
+  const progress = useKangurProgressState();
+  const viewerName = user?.full_name?.trim() || user?.email?.trim() || 'Konto';
+  const viewerRoleLabel = user?.role === 'admin' ? 'Nauczyciel' : 'Rodzic';
 
-  const handleUnlock = () => {
-    if (pin === PIN) {
-      setUnlocked(true);
-      setPinError(false);
-    } else {
-      setPinError(true);
-      setPin('');
-    }
-  };
-
-  if (!unlocked) {
+  if (!isAuthenticated) {
     return (
       <div className='min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 flex flex-col items-center justify-center px-4'>
         <motion.div
@@ -51,49 +39,24 @@ export default function ParentDashboard() {
           animate={{ opacity: 1, y: 0 }}
           className='bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm flex flex-col items-center gap-5'
         >
-          <div className='text-6xl'>🔐</div>
+          <div className='text-6xl'>🪪</div>
           <h1 className='text-2xl font-extrabold text-gray-800 text-center'>
             Panel Rodzica / Nauczyciela
           </h1>
-          <p className='text-gray-400 text-sm text-center'>Wprowadź PIN, aby uzyskać dostęp.</p>
-          <p className='text-xs text-gray-300 text-center'>(domyślny PIN: 1234)</p>
-
-          <div className='relative w-full'>
-            <input
-              type={showPin ? 'text' : 'password'}
-              value={pin}
-              onChange={(e) => {
-                setPin(e.target.value);
-                setPinError(false);
-              }}
-              onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
-              placeholder='Wpisz PIN...'
-              maxLength={10}
-              className={`w-full border-2 rounded-2xl px-4 py-3 text-lg text-center font-bold tracking-widest focus:outline-none transition ${
-                pinError ? 'border-red-400 bg-red-50' : 'border-indigo-200 focus:border-indigo-400'
-              }`}
-            />
-            <button
-              onClick={() => setShowPin((v) => !v)}
-              className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600'
-            >
-              {showPin ? <EyeOff className='w-5 h-5' /> : <Eye className='w-5 h-5' />}
-            </button>
-          </div>
-
-          {pinError && (
-            <p className='text-red-500 text-sm font-semibold'>
-              Nieprawidłowy PIN. Spróbuj ponownie.
-            </p>
-          )}
+          <p className='text-gray-500 text-sm text-center'>
+            Ten widok pokazuje prywatne postępy ucznia, więc dostęp wymaga zalogowanego konta.
+          </p>
 
           <motion.button
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.97 }}
-            onClick={handleUnlock}
+            onClick={navigateToLogin}
             className='w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-extrabold py-3 rounded-2xl shadow-lg text-lg'
           >
-            Wejdź 🚀
+            <span className='inline-flex items-center justify-center gap-2'>
+              <LogIn className='w-5 h-5' />
+              Zaloguj się
+            </span>
           </motion.button>
 
           <Link
@@ -125,19 +88,27 @@ export default function ParentDashboard() {
             <UserRound className='w-4 h-4' /> Profil
           </Link>
         </div>
-        <button
-          onClick={() => setUnlocked(false)}
-          className='text-sm text-gray-400 hover:text-gray-600 transition font-semibold'
-        >
-          🔒 Zablokuj
-        </button>
+        <div className='flex items-center gap-3'>
+          <span className='hidden sm:inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-500'>
+            {viewerRoleLabel}
+          </span>
+          <button
+            onClick={() => logout(false)}
+            className='inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 transition font-semibold'
+          >
+            <LogOut className='w-4 h-4' /> Wyloguj
+          </button>
+        </div>
       </div>
 
       <div className='w-full max-w-2xl px-4 py-8 flex flex-col gap-6'>
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className='text-3xl font-extrabold text-gray-800'>📊 Panel Rodzica</h1>
-          <p className='text-gray-500 mt-1'>Monitoruj postępy ucznia i przydzielaj zadania.</p>
+          <p className='text-gray-500 mt-1'>
+            Konto: <span className='font-semibold text-gray-700'>{viewerName}</span>. Monitoruj
+            postępy ucznia i przydzielaj zadania.
+          </p>
         </motion.div>
 
         {/* Tabs */}

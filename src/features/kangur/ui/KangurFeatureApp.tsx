@@ -7,6 +7,7 @@ import UserNotRegisteredError from '@/features/kangur/ui/components/UserNotRegis
 import { KANGUR_MAIN_PAGE, kangurPages } from '@/features/kangur/config/pages';
 import { resolveKangurPageKey } from '@/features/kangur/config/routing';
 import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { KangurProgressSyncProvider } from '@/features/kangur/ui/context/KangurProgressSyncProvider';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 
 const AuthenticatedApp = (): JSX.Element | null => {
@@ -47,7 +48,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
 export function KangurFeatureApp(): JSX.Element {
   return (
     <KangurAuthProvider>
-      <AuthenticatedApp />
+      <KangurProgressSyncProvider>
+        <AuthenticatedApp />
+      </KangurProgressSyncProvider>
     </KangurAuthProvider>
   );
 }

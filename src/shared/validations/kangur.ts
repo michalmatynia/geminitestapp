@@ -1,9 +1,11 @@
 import { z } from 'zod';
 
 import {
+  kangurProgressStateSchema,
   kangurScoreCreateInputSchema,
   kangurScoreListQuerySchema,
   kangurScoreSortFieldSchema,
+  type KangurProgressState,
   type KangurScoreCreateInput,
   type KangurScoreListQuery,
   type KangurScoreSortField,
@@ -38,6 +40,16 @@ export const parseKangurScoreCreatePayload = (payload: unknown): KangurScoreCrea
   const parsed = kangurScoreCreateInputSchema.safeParse(payload);
   if (!parsed.success) {
     throw validationError('Invalid Kangur score payload.', {
+      issues: extractValidationIssues(parsed.error),
+    });
+  }
+  return parsed.data;
+};
+
+export const parseKangurProgressUpdatePayload = (payload: unknown): KangurProgressState => {
+  const parsed = kangurProgressStateSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw validationError('Invalid Kangur progress payload.', {
       issues: extractValidationIssues(parsed.error),
     });
   }

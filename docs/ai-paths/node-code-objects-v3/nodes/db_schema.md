@@ -1,17 +1,17 @@
 # Database Schema Migration Sheet (`db_schema`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-06T00:00:00.000Z
 
 ## Status
 
 - Runtime strategy: `code_object_v3`
 - Migration wave: `pilot`
 - Code object ID: `ai-paths.node-code-object.db_schema.v3`
-- Readiness stage: `rollout_candidate`
-- Readiness score: 90/100
-- Readiness blockers: `rollout_not_approved`
+- Readiness stage: `rollout_approved`
+- Readiness score: 100/100
+- Readiness blockers: `none`
 - Parity evidence suite IDs: `v3-pilot-parity-core`
-- Rollout approved: `no` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
+- Rollout approved: `yes` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 9
 
 ## Node Contract Files
@@ -21,7 +21,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/db_schema.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/db_schema.scaffold.json`
 - v3 object id: `node_obj_db_schema_portable_v3`
-- v3 object hash: `86528cde5227693e6df921247af672d0d22c164d2dcc974e27c4f75db7ab4727`
+- v3 object hash: `2b89d2102d0970e05608ae0cccf49e2539c146debd4c017a9b848bb112fcb4a9`
 
 ## Ports
 

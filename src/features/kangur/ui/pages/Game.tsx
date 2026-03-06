@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogIn, LogOut, BookOpen, ArrowLeft, LayoutDashboard, UserRound } from 'lucide-react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 
 import {
   Leaderboard,
@@ -10,15 +11,14 @@ import {
   ResultScreen,
   TrainingSetup,
 } from '@/features/kangur/ui/components/game';
-import { KangurGame, KangurGameProvider, KangurSetup } from '@/features/kangur/ui/components/kangur';
-import { CalendarTrainingGame } from '@/features/kangur/ui/components/lessons';
-import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
 import { PlayerProgressCard, XpToast } from '@/features/kangur/ui/components/progress';
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurPlatform, KangurUser } from '@/features/kangur/services/ports';
+import { KangurGameProvider } from '@/features/kangur/ui/context/KangurGameContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import {
   DIFFICULTY_CONFIG,
   generateQuestions,
@@ -30,13 +30,55 @@ import type {
   KangurGameScreen,
   KangurMode,
   KangurOperation,
-  KangurProgressState,
   KangurQuestion,
   KangurTrainingSelection,
   KangurXpToastState,
 } from '@/features/kangur/ui/types';
 
 const TOTAL_QUESTIONS = 10;
+type KangurSetupProps = {
+  onStart: (mode: KangurMode) => void;
+  onBack: () => void;
+};
+type CalendarTrainingGameProps = {
+  onFinish: () => void;
+};
+type GeometryDrawingGameProps = {
+  onFinish: () => void;
+};
+
+const DeferredModuleFallback = (): React.JSX.Element => (
+  <div className='w-full max-w-md rounded-3xl border border-indigo-200/70 bg-white/90 p-6 text-center shadow-lg text-sm text-indigo-500'>
+    Ladowanie...
+  </div>
+);
+
+const KangurSetup = dynamic<KangurSetupProps>(
+  () => import('@/features/kangur/ui/components/KangurSetup'),
+  {
+    ssr: false,
+    loading: DeferredModuleFallback,
+  }
+);
+const KangurGame = dynamic(() => import('@/features/kangur/ui/components/KangurGame'), {
+  ssr: false,
+  loading: DeferredModuleFallback,
+});
+const CalendarTrainingGame = dynamic<CalendarTrainingGameProps>(
+  () => import('@/features/kangur/ui/components/CalendarTrainingGame'),
+  {
+    ssr: false,
+    loading: DeferredModuleFallback,
+  }
+);
+const GeometryDrawingGame = dynamic<GeometryDrawingGameProps>(
+  () => import('@/features/kangur/ui/components/GeometryDrawingGame'),
+  {
+    ssr: false,
+    loading: DeferredModuleFallback,
+  }
+);
+
 const kangurPlatform: KangurPlatform = getKangurPlatform();
 const KANGUR_OPERATIONS: KangurOperation[] = [
   'addition',
@@ -77,7 +119,7 @@ export default function Game() {
   const [score, setScore] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [timeTaken, setTimeTaken] = useState(0);
-  const [progress, setProgress] = useState<KangurProgressState>(() => loadProgress());
+  const progress = useKangurProgressState();
   const [xpToast, setXpToast] = useState<KangurXpToastState>({
     visible: false,
     xpGained: 0,
@@ -226,12 +268,11 @@ export default function Game() {
           ? XP_REWARDS.great_game
           : XP_REWARDS.good_game;
       const ops = [...new Set([...(prog.operationsPlayed || []), selectedOperation])];
-      const { updated, newBadges } = addXp(xp, {
+      const { newBadges } = addXp(xp, {
         gamesPlayed: prog.gamesPlayed + 1,
         perfectGames: isPerfect ? prog.perfectGames + 1 : prog.perfectGames,
         operationsPlayed: ops,
       });
-      setProgress(updated);
       showXpToast(xp, newBadges);
 
       setTimeout(() => setScreen('result'), 1000);

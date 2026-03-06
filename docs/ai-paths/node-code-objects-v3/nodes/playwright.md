@@ -1,17 +1,17 @@
 # Playwright Migration Sheet (`playwright`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-06T00:00:00.000Z
 
 ## Status
 
 - Runtime strategy: `code_object_v3`
 - Migration wave: `pilot`
 - Code object ID: `ai-paths.node-code-object.playwright.v3`
-- Readiness stage: `rollout_candidate`
-- Readiness score: 90/100
-- Readiness blockers: `rollout_not_approved`
+- Readiness stage: `rollout_approved`
+- Readiness score: 100/100
+- Readiness blockers: `none`
 - Parity evidence suite IDs: `v3-pilot-parity-core`
-- Rollout approved: `no` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
+- Rollout approved: `yes` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 16
 
 ## Node Contract Files
@@ -21,7 +21,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/playwright.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/playwright.scaffold.json`
 - v3 object id: `node_obj_playwright_portable_v3`
-- v3 object hash: `3c448f15426f46d9fc942dc37863fc357de4603bd2ffdae718ef54154952e71e`
+- v3 object hash: `c0ece42ab8841f5f24e7d6963b1e494cf4d56020d7f4864058923b6ed94dcff1`
 
 ## Ports
 

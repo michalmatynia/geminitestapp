@@ -8,6 +8,7 @@ import {
   NODE_MIGRATION_ROLLOUT_APPROVALS_SCHEMA_VERSION,
   loadNodeMigrationRolloutApprovalsSummary,
 } from '../../../scripts/docs/node-migration-rollout-approvals';
+import { loadNodeMigrationRolloutEligibilitySummary } from '../../../scripts/docs/node-migration-rollout-eligibility';
 
 const normalizeNodeType = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
@@ -38,6 +39,23 @@ describe('node migration rollout approvals', () => {
       expect(
         expectedPilotNodeTypes.has(nodeType),
         `Rollout approval node "${nodeType}" is not in NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES`
+      ).toBe(true);
+    });
+  });
+
+  it('keeps rollout approvals within the technically eligible node set', () => {
+    const approvals = loadNodeMigrationRolloutApprovalsSummary({
+      workspaceRoot: process.cwd(),
+    });
+    const eligibility = loadNodeMigrationRolloutEligibilitySummary({
+      workspaceRoot: process.cwd(),
+    });
+    const eligibleNodeTypes = new Set<string>(eligibility.eligibleNodeTypes);
+
+    approvals.approvedNodeTypes.forEach((nodeType: string): void => {
+      expect(
+        eligibleNodeTypes.has(nodeType),
+        `Rollout approval node "${nodeType}" is not technically eligible`
       ).toBe(true);
     });
   });

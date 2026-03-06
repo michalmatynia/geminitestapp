@@ -1,4 +1,5 @@
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
+import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
 import { BADGES, getCurrentLevel, getNextLevel } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
@@ -283,11 +284,26 @@ const buildRecommendations = (input: {
   dailyGoalGames: number;
   todayGames: number;
   operationPerformance: KangurOperationPerformance[];
+  progress: KangurProgressState;
 }): KangurLearnerRecommendation[] => {
   const recommendations: KangurLearnerRecommendation[] = [];
   const remainingDailyGames = Math.max(0, input.dailyGoalGames - input.todayGames);
   const weakestOperation = input.operationPerformance.at(-1) ?? null;
   const strongestOperation = input.operationPerformance[0] ?? null;
+  const weakestLessonEntry = Object.entries(input.progress.lessonMastery)
+    .map(([componentId, mastery]) => ({
+      componentId,
+      mastery,
+      lesson: KANGUR_LESSON_LIBRARY[componentId as keyof typeof KANGUR_LESSON_LIBRARY] ?? null,
+    }))
+    .filter(
+      (entry): entry is {
+        componentId: string;
+        mastery: KangurProgressState['lessonMastery'][string];
+        lesson: (typeof KANGUR_LESSON_LIBRARY)[keyof typeof KANGUR_LESSON_LIBRARY];
+      } => entry.lesson !== null
+    )
+    .sort((left, right) => left.mastery.masteryPercent - right.mastery.masteryPercent)[0];
 
   if (weakestOperation && weakestOperation.averageAccuracy < 75) {
     recommendations.push({
@@ -316,6 +332,22 @@ const buildRecommendations = (input: {
         page: 'Game',
         query: {
           quickStart: 'training',
+        },
+      },
+    });
+  }
+
+  if (weakestLessonEntry && weakestLessonEntry.mastery.masteryPercent < 80) {
+    recommendations.push({
+      id: 'strengthen_lesson_mastery',
+      title: `Powtorz lekcje: ${weakestLessonEntry.lesson.title}`,
+      description: `Aktualne opanowanie to ${weakestLessonEntry.mastery.masteryPercent}%. Jedna powtorka tej lekcji podniesie stabilnosc.`,
+      priority: weakestLessonEntry.mastery.masteryPercent < 60 ? 'high' : 'medium',
+      action: {
+        label: 'Otworz lekcje',
+        page: 'Lessons',
+        query: {
+          focus: weakestLessonEntry.componentId,
         },
       },
     });
@@ -413,6 +445,7 @@ export const buildKangurLearnerProfileSnapshot = (
     dailyGoalGames,
     todayGames,
     operationPerformance,
+    progress: input.progress,
   });
 
   return {

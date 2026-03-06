@@ -1,17 +1,17 @@
 # Router Migration Sheet (`router`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-06T00:00:00.000Z
 
 ## Status
 
 - Runtime strategy: `code_object_v3`
 - Migration wave: `pilot`
 - Code object ID: `ai-paths.node-code-object.router.v3`
-- Readiness stage: `rollout_candidate`
-- Readiness score: 90/100
-- Readiness blockers: `rollout_not_approved`
+- Readiness stage: `rollout_approved`
+- Readiness score: 100/100
+- Readiness blockers: `none`
 - Parity evidence suite IDs: `v3-pilot-parity-core`
-- Rollout approved: `no` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
+- Rollout approved: `yes` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 6
 
 ## Node Contract Files
@@ -21,7 +21,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/router.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/router.scaffold.json`
 - v3 object id: `node_obj_router_portable_v3`
-- v3 object hash: `a1637c9c049eceeebbc27427d4b8f4e9c024bf06d83b34fd336ffb43735387ec`
+- v3 object hash: `401253c810d46404644387543567fd83df53ea18ee76a3acaf8747bc92573846`
 
 ## Ports
 

@@ -1,17 +1,17 @@
 # Regex Grouper Migration Sheet (`regex`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-06T00:00:00.000Z
 
 ## Status
 
 - Runtime strategy: `code_object_v3`
 - Migration wave: `pilot`
 - Code object ID: `ai-paths.node-code-object.regex.v3`
-- Readiness stage: `rollout_candidate`
-- Readiness score: 90/100
-- Readiness blockers: `rollout_not_approved`
+- Readiness stage: `rollout_approved`
+- Readiness score: 100/100
+- Readiness blockers: `none`
 - Parity evidence suite IDs: `v3-pilot-parity-core`
-- Rollout approved: `no` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
+- Rollout approved: `yes` (source: `docs/ai-paths/node-code-objects-v3/rollout-approvals.json`)
 - Config field count: 15
 
 ## Node Contract Files
@@ -21,7 +21,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/regex.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/regex.scaffold.json`
 - v3 object id: `node_obj_regex_portable_v3`
-- v3 object hash: `d1752a00d7dd0d3bd36a924ac414d5cbc518b2a17b8e29eb75d27880ad8c7f92`
+- v3 object hash: `6712738b81c5799d53dca854c1212d3aca2b3009e3c8d2428d9ba47adb2e4cd8`
 
 ## Ports
 

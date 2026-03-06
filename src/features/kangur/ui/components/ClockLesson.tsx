@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 import ClockTrainingGame from './ClockTrainingGame';
-import { addXp, XP_REWARDS, loadProgress } from '@/features/kangur/ui/services/progress';
+import { addXp, buildLessonMasteryUpdate, XP_REWARDS, loadProgress } from '@/features/kangur/ui/services/progress';
 
 type ClockLessonProps = {
   onBack: () => void;
@@ -461,6 +461,7 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
     const progress = loadProgress();
     addXp(XP_REWARDS.lesson_completed, {
       lessonsCompleted: progress.lessonsCompleted + 1,
+      lessonMastery: buildLessonMasteryUpdate(progress, 'clock', 60),
     });
     setInTraining(true);
   }, []);

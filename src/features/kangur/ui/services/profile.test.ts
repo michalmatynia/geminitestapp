@@ -27,6 +27,7 @@ const progress: KangurProgressState = {
   geometryPerfect: 1,
   badges: ['first_game', 'perfect_10', 'lesson_hero', 'ten_games'],
   operationsPlayed: ['addition', 'multiplication', 'division'],
+  lessonMastery: {},
 };
 
 describe('buildKangurLearnerProfileSnapshot', () => {

@@ -7,7 +7,9 @@ type PlayerProgressCardProps = {
   progress: KangurProgressState;
 };
 
-export default function PlayerProgressCard({ progress }: PlayerProgressCardProps): React.JSX.Element {
+export default function PlayerProgressCard({
+  progress,
+}: PlayerProgressCardProps): React.JSX.Element {
   const { totalXp, badges, gamesPlayed, lessonsCompleted } = progress;
   const currentLevel = getCurrentLevel(totalXp);
   const nextLevel = getNextLevel(totalXp);

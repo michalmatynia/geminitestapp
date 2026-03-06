@@ -15,7 +15,7 @@ const legacyEndpointToken = '/api/integrations/imports/base';
 const legacyCsvImportEndpointToken = '/api/import';
 const legacyCatalogsEndpointToken = '/api/catalogs';
 const legacyContractsImportToken = '@/shared/contracts/data-import-export';
-const legacyApiImportToken = "@/app/api/integrations/imports/base/";
+const legacyApiImportToken = '@/app/api/integrations/imports/base/';
 const legacyExportWarehouseEndpointToken = '/api/v2/integrations/imports/base/export-warehouse';
 const canonicalImportsRootEndpointToken = '/api/v2/integrations/imports/base';
 const legacyRootImportActionPattern = /action\s*:\s*['"]import['"]/;
@@ -167,7 +167,10 @@ describe('v2 integrations imports/base route migration', () => {
   });
 
   it('avoids legacy password token fallback in imports runtime code', () => {
-    const candidateFiles = [...collectSourceFiles(v2Root), ...collectSourceFiles(importsServiceRoot)];
+    const candidateFiles = [
+      ...collectSourceFiles(v2Root),
+      ...collectSourceFiles(importsServiceRoot),
+    ];
     const offenders = candidateFiles
       .filter((absolute) => legacyPasswordTokenFallbackPattern.test(readFileSync(absolute, 'utf8')))
       .map((absolute) => path.relative(projectRoot, absolute));

@@ -28,14 +28,12 @@ type PanelPaginationRuntimeValue = {
   className?: string;
 };
 
-const {
-  Context: PanelPaginationRuntimeContext,
-  useStrictContext: usePanelPaginationRuntime,
-} = createStrictContext<PanelPaginationRuntimeValue>({
-  hookName: 'usePanelPaginationRuntime',
-  providerName: 'PanelPaginationRuntimeProvider',
-  displayName: 'PanelPaginationRuntimeContext',
-});
+const { Context: PanelPaginationRuntimeContext, useStrictContext: usePanelPaginationRuntime } =
+  createStrictContext<PanelPaginationRuntimeValue>({
+    hookName: 'usePanelPaginationRuntime',
+    providerName: 'PanelPaginationRuntimeProvider',
+    displayName: 'PanelPaginationRuntimeContext',
+  });
 
 function PanelPaginationRuntime(): React.JSX.Element {
   const {

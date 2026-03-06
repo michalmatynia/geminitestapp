@@ -15,9 +15,7 @@ import {
   getRuntimeAnalyticsAvailability as getRuntimeAnalyticsAvailabilityShared,
   type RuntimeAnalyticsAvailability,
 } from '@/shared/lib/ai-paths/services/runtime-analytics/availability';
-import {
-  summarizeRuntimeTraceAnalytics,
-} from '@/shared/lib/ai-paths/services/runtime-analytics/trace';
+import { summarizeRuntimeTraceAnalytics } from '@/shared/lib/ai-paths/services/runtime-analytics/trace';
 import {
   getRuntimeAnalyticsSummaryBase,
   resolveRuntimeAnalyticsRangeWindow,
@@ -42,7 +40,10 @@ export { resolveRuntimeAnalyticsRangeWindow };
 export const getRuntimeAnalyticsAvailability = getRuntimeAnalyticsAvailabilityShared;
 
 const toPortableEngineRates = (
-  counts: Pick<AiPathRuntimePortableEngineAnalytics['totals'], 'attempts' | 'successes' | 'failures'>
+  counts: Pick<
+    AiPathRuntimePortableEngineAnalytics['totals'],
+    'attempts' | 'successes' | 'failures'
+  >
 ): Pick<AiPathRuntimePortableEngineAnalytics['totals'], 'successRate' | 'failureRate'> => {
   if (counts.attempts <= 0) {
     return {

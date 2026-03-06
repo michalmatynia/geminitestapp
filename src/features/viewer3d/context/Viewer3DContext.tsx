@@ -123,15 +123,13 @@ export const {
   errorFactory: internalError,
 });
 
-export const {
-  Context: Viewer3DActionsContext,
-  useStrictContext: useViewer3DActions,
-} = createStrictContext<Viewer3DActionsContextType>({
-  hookName: 'useViewer3DActions',
-  providerName: 'a Viewer3DProvider',
-  displayName: 'Viewer3DActionsContext',
-  errorFactory: internalError,
-});
+export const { Context: Viewer3DActionsContext, useStrictContext: useViewer3DActions } =
+  createStrictContext<Viewer3DActionsContextType>({
+    hookName: 'useViewer3DActions',
+    providerName: 'a Viewer3DProvider',
+    displayName: 'Viewer3DActionsContext',
+    errorFactory: internalError,
+  });
 
 export function Viewer3DProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const [autoRotate, setAutoRotate] = useState(true);

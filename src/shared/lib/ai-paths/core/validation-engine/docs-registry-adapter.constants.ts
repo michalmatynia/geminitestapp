@@ -8,7 +8,8 @@ import { type AiPathsDocsManifest } from './docs-registry-adapter.types';
 export const DOC_ASSERTION_BLOCK_REGEX = /```ai-paths-assertion\s*([\s\S]*?)```/gim;
 export const DOCS_MANIFEST_PATH = 'docs/ai-paths/node-validator-central-manifest.json';
 export const NODE_DOCS_CATALOG_SOURCE_PATH = 'src/shared/lib/ai-paths/core/docs/node-docs.ts';
-export const DOCS_SNIPPETS_SOURCE_PATH = 'src/shared/lib/ai-paths/core/definitions/docs-snippets.ts';
+export const DOCS_SNIPPETS_SOURCE_PATH =
+  'src/shared/lib/ai-paths/core/definitions/docs-snippets.ts';
 
 export const CRITICAL_CONFIG_FIELD_PATTERN =
   /(entityId|collection|modelId|template|event|pattern|queryTemplate|intervalMs|maxAttempts|mappings|url)$/i;

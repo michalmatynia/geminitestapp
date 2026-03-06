@@ -18,7 +18,10 @@ import {
   renderFieldGroups,
 } from './field-group-helpers';
 import { getBlockDefinition } from '../section-registry';
-import { usePageBuilderSelection, usePageBuilderDispatch } from '../../../hooks/usePageBuilderContext';
+import {
+  usePageBuilderSelection,
+  usePageBuilderDispatch,
+} from '../../../hooks/usePageBuilderContext';
 import { useComponentSettingsActions } from '../context/ComponentSettingsContext';
 
 export function BlockSettingsTab(): React.JSX.Element | null {

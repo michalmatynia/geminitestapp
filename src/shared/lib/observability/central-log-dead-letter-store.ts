@@ -8,8 +8,7 @@ const SETTINGS_COLLECTION = 'settings';
 const CENTRAL_LOG_DEAD_LETTER_STORE_VERSION = 1;
 const DEFAULT_MAX_ENTRIES = 200;
 
-export const CENTRAL_LOG_DEAD_LETTER_SETTINGS_KEY =
-  'observability_central_log_dead_letters_v1';
+export const CENTRAL_LOG_DEAD_LETTER_SETTINGS_KEY = 'observability_central_log_dead_letters_v1';
 
 type SettingDocument = {
   _id?: string;
@@ -73,13 +72,19 @@ const normalizeStoredEntry = (value: unknown): CentralLogDeadLetterStoredEntry |
   };
 };
 
-const normalizeEntries = (entries: unknown[], maxEntries: number): CentralLogDeadLetterStoredEntry[] =>
+const normalizeEntries = (
+  entries: unknown[],
+  maxEntries: number
+): CentralLogDeadLetterStoredEntry[] =>
   entries
     .map((entry) => normalizeStoredEntry(entry))
     .filter((entry): entry is CentralLogDeadLetterStoredEntry => entry !== null)
     .slice(-maxEntries);
 
-const parseStoredEntries = (raw: string | null, maxEntries: number): CentralLogDeadLetterStoredEntry[] => {
+const parseStoredEntries = (
+  raw: string | null,
+  maxEntries: number
+): CentralLogDeadLetterStoredEntry[] => {
   if (!raw || raw.trim().length === 0) return [];
 
   try {
@@ -98,7 +103,10 @@ const parseStoredEntries = (raw: string | null, maxEntries: number): CentralLogD
   }
 };
 
-const stringifyEntries = (entries: CentralLogDeadLetterStoredEntry[], maxEntries: number): string | null => {
+const stringifyEntries = (
+  entries: CentralLogDeadLetterStoredEntry[],
+  maxEntries: number
+): string | null => {
   try {
     const payload: CentralLogDeadLetterEnvelope = {
       version: CENTRAL_LOG_DEAD_LETTER_STORE_VERSION,

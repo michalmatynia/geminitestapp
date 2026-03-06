@@ -94,9 +94,7 @@ export function useComponentSettingsState(): ComponentSettingsStateContextValue 
 export function useComponentSettingsActions(): ComponentSettingsActionsContextValue {
   const context = useContext(ComponentSettingsActionsContext);
   if (!context) {
-    throw new Error(
-      'useComponentSettingsActions must be used within a ComponentSettingsProvider'
-    );
+    throw new Error('useComponentSettingsActions must be used within a ComponentSettingsProvider');
   }
   return context;
 }

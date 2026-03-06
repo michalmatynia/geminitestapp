@@ -61,11 +61,7 @@ const matchesIntegrationSlug = (
 function ProductListingsModalContent(): React.JSX.Element {
   const { product, listings, isLoading, error } = useProductListingsData();
   const { exportLogs } = useProductListingsLogs();
-  const {
-    onClose,
-    onStartListing,
-    filterIntegrationSlug,
-  } = useProductListingsModals();
+  const { onClose, onStartListing, filterIntegrationSlug } = useProductListingsModals();
 
   const productName: string =
     product.name_en || product.name_pl || product.name_de || 'Unnamed Product';
@@ -73,8 +69,8 @@ function ProductListingsModalContent(): React.JSX.Element {
   const filteredListings: ProductListingWithDetails[] = useMemo(() => {
     return filterIntegrationSlug
       ? listings.filter((listing: ProductListingWithDetails): boolean =>
-        matchesIntegrationSlug(listing.integration.slug, filterIntegrationSlug)
-      )
+          matchesIntegrationSlug(listing.integration.slug, filterIntegrationSlug)
+        )
       : listings;
   }, [listings, filterIntegrationSlug]);
 

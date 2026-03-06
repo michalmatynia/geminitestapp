@@ -430,8 +430,8 @@ const compileAdvancedMongoRule = (
     compiledRules.length === 1
       ? compiledRules[0]!
       : ({
-        [rule.combinator === 'and' ? '$and' : '$or']: compiledRules,
-      } as Filter<ProductDocument>);
+          [rule.combinator === 'and' ? '$and' : '$or']: compiledRules,
+        } as Filter<ProductDocument>);
 
   if (!rule.not) return combined;
   return { $nor: [combined] } as Filter<ProductDocument>;
@@ -568,7 +568,9 @@ export const buildMongoWhere = async (
   }
 
   if (filters.categoryId) {
-    filter = appendAndCondition(filter, { categoryId: filters.categoryId } as Filter<ProductDocument>);
+    filter = appendAndCondition(filter, {
+      categoryId: filters.categoryId,
+    } as Filter<ProductDocument>);
   }
 
   if (filters.baseExported !== undefined || filters.advancedFilter) {

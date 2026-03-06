@@ -178,26 +178,26 @@ export function useApplyCaptureProposal(args: {
           targetFileId,
           addresser: args.promptExploderProposalDraft!.addresser
             ? ({
-              ...args.promptExploderProposalDraft!.addresser,
-              candidate: { ...args.promptExploderProposalDraft!.addresser.candidate },
-              existingReference: args.promptExploderProposalDraft!.addresser.existingReference
-                ? { ...(args.promptExploderPartyProposal?.addresser?.existingReference ?? null) }
-                : null,
-            } as CaseResolverCaptureProposal)
+                ...args.promptExploderProposalDraft!.addresser,
+                candidate: { ...args.promptExploderProposalDraft!.addresser.candidate },
+                existingReference: args.promptExploderProposalDraft!.addresser.existingReference
+                  ? { ...(args.promptExploderPartyProposal?.addresser?.existingReference ?? null) }
+                  : null,
+              } as CaseResolverCaptureProposal)
             : null,
           addressee: args.promptExploderProposalDraft!.addressee
             ? ({
-              ...args.promptExploderProposalDraft!.addressee,
-              candidate: { ...args.promptExploderProposalDraft!.addressee.candidate },
-              existingReference: args.promptExploderProposalDraft!.addressee.existingReference
-                ? { ...(args.promptExploderPartyProposal?.addressee?.existingReference ?? null) }
-                : null,
-            } as CaseResolverCaptureProposal)
+                ...args.promptExploderProposalDraft!.addressee,
+                candidate: { ...args.promptExploderProposalDraft!.addressee.candidate },
+                existingReference: args.promptExploderProposalDraft!.addressee.existingReference
+                  ? { ...(args.promptExploderPartyProposal?.addressee?.existingReference ?? null) }
+                  : null,
+              } as CaseResolverCaptureProposal)
             : null,
           documentDate: args.promptExploderProposalDraft!.documentDate
             ? {
-              ...args.promptExploderProposalDraft!.documentDate,
-            }
+                ...args.promptExploderProposalDraft!.documentDate,
+              }
             : null,
         };
         const rolePatches: {
@@ -347,10 +347,10 @@ export function useApplyCaptureProposal(args: {
         const acceptedDocumentDateValue =
           acceptedDateValue && dateProposal
             ? {
-              ...dateProposal,
-              isoDate: acceptedDateValue,
-              city: acceptedCityValue ?? dateProposal.city ?? dateProposal.cityHint ?? null,
-            }
+                ...dateProposal,
+                isoDate: acceptedDateValue,
+                city: acceptedCityValue ?? dateProposal.city ?? dateProposal.cityHint ?? null,
+              }
             : null;
 
         const cleanupProposalState: CaseResolverCaptureProposalState = {
@@ -406,33 +406,33 @@ export function useApplyCaptureProposal(args: {
         const hasSourceExplodedContent = (sourceExplodedContent ?? '').trim().length > 0;
         const cleanupResult = hasSourceExplodedContent
           ? stripAcceptedCaptureContentFromTextWithReport(
-            sourceExplodedContent ?? '',
-            cleanupProposalState
-          )
+              sourceExplodedContent ?? '',
+              cleanupProposalState
+            )
           : {
-            text: sourceExplodedContent ?? '',
-            report: {
-              changed: false,
-              sourceWasHtml: false,
-              removedAddressLineCount: 0,
-              removedAddresserLineCount: 0,
-              removedAddresseeLineCount: 0,
-              removedDateLineCount: 0,
-            },
-          };
+              text: sourceExplodedContent ?? '',
+              report: {
+                changed: false,
+                sourceWasHtml: false,
+                removedAddressLineCount: 0,
+                removedAddresserLineCount: 0,
+                removedAddresseeLineCount: 0,
+                removedDateLineCount: 0,
+              },
+            };
         cleanupDurationMs = resolveCaptureApplyDurationMs(cleanupStartedAtMs);
         const cleanedExplodedContent = cleanupResult.text;
         const hasExplodedCleanup = cleanupResult.report.changed;
 
         const cleanedExplodedCanonical = hasExplodedCleanup
           ? deriveDocumentContentSync({
-            mode: 'wysiwyg',
-            value: cleanedExplodedContent ?? '',
-            previousMarkdown:
+              mode: 'wysiwyg',
+              value: cleanedExplodedContent ?? '',
+              previousMarkdown:
                 draftForTargetFile?.documentContentMarkdown ?? targetFile.documentContentMarkdown,
-            previousHtml:
+              previousHtml:
                 draftForTargetFile?.documentContentHtml ?? targetFile.documentContentHtml,
-          })
+            })
           : null;
         const cleanedExplodedStored = cleanedExplodedCanonical
           ? toStorageDocumentValue(cleanedExplodedCanonical)
@@ -523,15 +523,15 @@ export function useApplyCaptureProposal(args: {
                   const nextContentVersion = file.documentContentVersion + 1;
                   const currentSnapshot = hasExplodedCleanup
                     ? createCaseResolverHistorySnapshotEntry({
-                      savedAt: now,
-                      documentContentVersion: file.documentContentVersion,
-                      activeDocumentVersion: file.activeDocumentVersion,
-                      editorType: file.editorType,
-                      documentContent: file.documentContent,
-                      documentContentMarkdown: file.documentContentMarkdown,
-                      documentContentHtml: file.documentContentHtml,
-                      documentContentPlainText: file.documentContentPlainText,
-                    })
+                        savedAt: now,
+                        documentContentVersion: file.documentContentVersion,
+                        activeDocumentVersion: file.activeDocumentVersion,
+                        editorType: file.editorType,
+                        documentContent: file.documentContent,
+                        documentContentMarkdown: file.documentContentMarkdown,
+                        documentContentHtml: file.documentContentHtml,
+                        documentContentPlainText: file.documentContentPlainText,
+                      })
                     : null;
                   const nextDocumentHistory = currentSnapshot
                     ? [currentSnapshot, ...file.documentHistory].slice(0, 120)
@@ -551,21 +551,21 @@ export function useApplyCaptureProposal(args: {
                     cleanedExplodedCanonical &&
                     cleanedExplodedStored
                       ? {
-                        explodedDocumentContent: cleanedExplodedStored,
-                        ...(file.activeDocumentVersion === 'exploded'
-                          ? {
-                            editorType: cleanedExplodedCanonical.mode,
-                            documentContentFormatVersion: 1,
-                            documentContent: cleanedExplodedStored,
-                            documentContentMarkdown: cleanedExplodedCanonical.markdown,
-                            documentContentHtml: cleanedExplodedCanonical.html,
-                            documentContentPlainText: cleanedExplodedCanonical.plainText,
-                            documentConversionWarnings: cleanedExplodedCanonical.warnings,
-                            lastContentConversionAt: now,
-                          }
-                          : {}),
-                        documentHistory: nextDocumentHistory,
-                      }
+                          explodedDocumentContent: cleanedExplodedStored,
+                          ...(file.activeDocumentVersion === 'exploded'
+                            ? {
+                                editorType: cleanedExplodedCanonical.mode,
+                                documentContentFormatVersion: 1,
+                                documentContent: cleanedExplodedStored,
+                                documentContentMarkdown: cleanedExplodedCanonical.markdown,
+                                documentContentHtml: cleanedExplodedCanonical.html,
+                                documentContentPlainText: cleanedExplodedCanonical.plainText,
+                                documentConversionWarnings: cleanedExplodedCanonical.warnings,
+                                lastContentConversionAt: now,
+                              }
+                            : {}),
+                          documentHistory: nextDocumentHistory,
+                        }
                       : {}),
                     documentContentVersion: nextContentVersion,
                     updatedAt: now,

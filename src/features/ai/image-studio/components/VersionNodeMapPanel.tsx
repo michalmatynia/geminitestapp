@@ -306,9 +306,9 @@ export function VersionNodeMapPanel(): React.JSX.Element {
 
   const compareNodes = compareNodeIds
     ? ([
-      nodes.find((n) => n.id === compareNodeIds[0]) ?? null,
-      nodes.find((n) => n.id === compareNodeIds[1]) ?? null,
-    ] as const)
+        nodes.find((n) => n.id === compareNodeIds[0]) ?? null,
+        nodes.find((n) => n.id === compareNodeIds[1]) ?? null,
+      ] as const)
     : null;
 
   const handleMinimapPan = useCallback((x: number, y: number) => {

@@ -34,7 +34,10 @@ const SLIDES: LessonSlide[] = [
     content: (
       <div className='grid grid-cols-2 gap-2'>
         {SHAPE_CARDS.slice(0, 4).map((shape) => (
-          <div key={shape.name} className='rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-3 text-center'>
+          <div
+            key={shape.name}
+            className='rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-3 text-center'
+          >
             <div className='text-3xl'>{shape.emoji}</div>
             <div className='mt-1 text-sm font-bold text-fuchsia-700'>{shape.name}</div>
             <div className='text-xs text-fuchsia-600'>{shape.details}</div>
@@ -48,7 +51,10 @@ const SLIDES: LessonSlide[] = [
     content: (
       <div className='space-y-2'>
         {SHAPE_CARDS.map((shape) => (
-          <div key={shape.name} className='rounded-2xl border border-fuchsia-200 bg-white px-3 py-2'>
+          <div
+            key={shape.name}
+            className='rounded-2xl border border-fuchsia-200 bg-white px-3 py-2'
+          >
             <div className='flex items-center gap-2'>
               <span className='text-2xl'>{shape.emoji}</span>
               <div>
@@ -70,16 +76,19 @@ const SLIDES: LessonSlide[] = [
           Za chwilę uruchomisz grę, w której narysujesz figury i od razu dostaniesz ocenę.
         </p>
         <div className='w-full rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-3 text-left text-sm text-fuchsia-700'>
-          ✅ Rysuj jedną zamkniętą linią<br />
-          ✅ Staraj się robić wyraźne rogi<br />
-          ✅ Rysuj większe kształty
+          ✅ Rysuj jedną zamkniętą linią
+          <br />
+          ✅ Staraj się robić wyraźne rogi
+          <br />✅ Rysuj większe kształty
         </div>
       </div>
     ),
   },
 ];
 
-export default function GeometryShapesLesson({ onBack }: GeometryShapesLessonProps): React.JSX.Element {
+export default function GeometryShapesLesson({
+  onBack,
+}: GeometryShapesLessonProps): React.JSX.Element {
   const [slide, setSlide] = useState(0);
   const [gameMode, setGameMode] = useState(false);
   const [rewarded, setRewarded] = useState(false);
@@ -109,7 +118,9 @@ export default function GeometryShapesLesson({ onBack }: GeometryShapesLessonPro
           Wróć do lekcji
         </button>
         <div className='w-full rounded-3xl bg-white p-5 shadow-xl'>
-          <h2 className='mb-4 text-center text-xl font-extrabold text-fuchsia-700'>🔷 Trening figur</h2>
+          <h2 className='mb-4 text-center text-xl font-extrabold text-fuchsia-700'>
+            🔷 Trening figur
+          </h2>
           <GeometryDrawingGame onFinish={onBack} />
         </div>
       </div>
@@ -125,7 +136,11 @@ export default function GeometryShapesLesson({ onBack }: GeometryShapesLessonPro
           <div
             key={index}
             className={`h-2.5 w-2.5 rounded-full transition-all ${
-              index === slide ? 'bg-fuchsia-500 scale-125' : index < slide ? 'bg-fuchsia-300' : 'bg-gray-200'
+              index === slide
+                ? 'bg-fuchsia-500 scale-125'
+                : index < slide
+                  ? 'bg-fuchsia-300'
+                  : 'bg-gray-200'
             }`}
           />
         ))}

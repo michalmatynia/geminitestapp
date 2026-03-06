@@ -25,7 +25,9 @@ export function SearchBar({ searchEnabled }: SearchBarProps): React.JSX.Element 
             placeholder='Search catalogs & files…'
           />
         ) : (
-          <div className='text-xs text-muted-foreground/80'>Tree search disabled for this profile.</div>
+          <div className='text-xs text-muted-foreground/80'>
+            Tree search disabled for this profile.
+          </div>
         )}
       </div>
 

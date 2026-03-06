@@ -234,8 +234,8 @@ export const linkFilemakerPhoneNumberToParty = (
     input.partyKind === 'person'
       ? database.persons.some((person: FilemakerPerson): boolean => person.id === partyId)
       : database.organizations.some(
-        (organization: FilemakerOrganization): boolean => organization.id === partyId
-      );
+          (organization: FilemakerOrganization): boolean => organization.id === partyId
+        );
   if (!hasParty) return { database, created: false };
 
   const alreadyLinked = database.phoneNumberLinks.some(
@@ -303,11 +303,11 @@ export const unlinkFilemakerPhoneNumberFromParty = (
   const nextPersons =
     nextPhoneNumberLinks.length === 0
       ? database.persons.map(
-        (person: FilemakerPerson): FilemakerPerson => ({
-          ...person,
-          phoneNumbers: [],
-        })
-      )
+          (person: FilemakerPerson): FilemakerPerson => ({
+            ...person,
+            phoneNumbers: [],
+          })
+        )
       : database.persons;
 
   return normalizeFilemakerDatabase({
@@ -338,8 +338,8 @@ export const linkFilemakerEmailToParty = (
     input.partyKind === 'person'
       ? database.persons.some((person: FilemakerPerson): boolean => person.id === partyId)
       : database.organizations.some(
-        (organization: FilemakerOrganization): boolean => organization.id === partyId
-      );
+          (organization: FilemakerOrganization): boolean => organization.id === partyId
+        );
   if (!hasParty) return { database, created: false };
 
   const alreadyLinked = database.emailLinks.some(

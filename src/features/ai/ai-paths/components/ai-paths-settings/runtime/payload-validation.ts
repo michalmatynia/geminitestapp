@@ -60,11 +60,7 @@ const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
 const truncateText = (value: string): string =>
   value.length > MAX_CONTEXT_STRING_LENGTH ? value.slice(0, MAX_CONTEXT_STRING_LENGTH) : value;
 
-const sanitizeContextValue = (
-  value: unknown,
-  depth: number,
-  seen: WeakSet<object>
-): unknown => {
+const sanitizeContextValue = (value: unknown, depth: number, seen: WeakSet<object>): unknown => {
   if (depth > MAX_CONTEXT_DEPTH) return undefined;
   if (value === null) return null;
   if (value === undefined) return undefined;
@@ -151,7 +147,11 @@ export const compactTriggerContextForEnqueue = (
   ]);
 
   if (isObjectRecord(sanitized['source'])) {
-    const sourceCompact = pickCompactContextValue(sanitized['source'], ['pathId', 'pathName', 'tab']);
+    const sourceCompact = pickCompactContextValue(sanitized['source'], [
+      'pathId',
+      'pathName',
+      'tab',
+    ]);
     if (Object.keys(sourceCompact).length > 0) compact['source'] = sourceCompact;
   }
 

@@ -11,6 +11,7 @@ import {
 import {
   AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
   AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
+  AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
   AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
   AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
 } from '@/shared/lib/ai-paths/core/constants';
@@ -28,7 +29,7 @@ const RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID = 'normalize_runtime_kerne
 const normalizeRuntimeKernelModeValue = (value: string | undefined): string =>
   typeof value === 'string' ? value.trim().toLowerCase() : '';
 
-const normalizeRuntimeKernelPilotNodeTypeToken = (value: string): string =>
+const normalizeRuntimeKernelNodeTypeToken = (value: string): string =>
   value.trim().toLowerCase().replace(/\s+/g, '_');
 
 const normalizeRuntimeKernelResolverIdToken = (value: string): string => value.trim();
@@ -44,9 +45,7 @@ const normalizeRuntimeKernelStrictNativeRegistryValue = (
   return undefined;
 };
 
-const normalizeRuntimeKernelStrictNativeRegistryUnknown = (
-  value: unknown
-): boolean | undefined => {
+const normalizeRuntimeKernelStrictNativeRegistryUnknown = (value: unknown): boolean | undefined => {
   if (typeof value === 'boolean') return value;
   if (typeof value !== 'string') return undefined;
   return normalizeRuntimeKernelStrictNativeRegistryValue(value);
@@ -125,10 +124,7 @@ const toCanonicalRuntimeKernelModeSettingValue = (
 ): string | undefined => {
   if (typeof value !== 'string') return value;
   const normalized = normalizeRuntimeKernelModeValue(value);
-  if (
-    normalized === LEGACY_RUNTIME_KERNEL_MODE ||
-    normalized === CANONICAL_RUNTIME_KERNEL_MODE
-  ) {
+  if (normalized === LEGACY_RUNTIME_KERNEL_MODE || normalized === CANONICAL_RUNTIME_KERNEL_MODE) {
     return CANONICAL_RUNTIME_KERNEL_MODE;
   }
   return value;
@@ -152,10 +148,10 @@ const toCanonicalRuntimeKernelSettingEntryValue = (
   if (entry.key === AI_PATHS_RUNTIME_KERNEL_MODE_KEY) {
     return toCanonicalRuntimeKernelModeSettingValue(entry.value);
   }
-  if (entry.key === AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY) {
+  if (entry.key === AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY) {
     return toCanonicalRuntimeKernelListSettingValue({
       value: entry.value,
-      normalizeToken: normalizeRuntimeKernelPilotNodeTypeToken,
+      normalizeToken: normalizeRuntimeKernelNodeTypeToken,
     });
   }
   if (entry.key === AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY) {
@@ -200,23 +196,29 @@ const toCanonicalRuntimeKernelPathConfigEntryValue = (
     changed = true;
   }
 
-  const pilotNodeTypes = parseRuntimeKernelListValueFromUnknown({
-    value: runtimeKernel['pilotNodeTypes'],
-    normalizeToken: normalizeRuntimeKernelPilotNodeTypeToken,
+  const nodeTypes = parseRuntimeKernelListValueFromUnknown({
+    value: runtimeKernel['nodeTypes'] ?? runtimeKernel['pilotNodeTypes'],
+    normalizeToken: normalizeRuntimeKernelNodeTypeToken,
   });
-  if (pilotNodeTypes) {
-    const previous = Array.isArray(runtimeKernel['pilotNodeTypes'])
-      ? (runtimeKernel['pilotNodeTypes'] as unknown[])
+  if (nodeTypes) {
+    const previous = Array.isArray(runtimeKernel['nodeTypes'])
+      ? (runtimeKernel['nodeTypes'] as unknown[])
       : null;
-    const previousJoined = previous?.every((entry: unknown): entry is string => typeof entry === 'string')
+    const previousJoined = previous?.every(
+      (entry: unknown): entry is string => typeof entry === 'string'
+    )
       ? previous.join('|')
       : '';
-    const nextJoined = pilotNodeTypes.join('|');
-    if (previousJoined !== nextJoined || !Array.isArray(runtimeKernel['pilotNodeTypes'])) {
-      nextRuntimeKernel['pilotNodeTypes'] = pilotNodeTypes;
+    const nextJoined = nodeTypes.join('|');
+    if (previousJoined !== nextJoined || !Array.isArray(runtimeKernel['nodeTypes'])) {
+      nextRuntimeKernel['nodeTypes'] = nodeTypes;
       changed = true;
     }
-  } else if ('pilotNodeTypes' in nextRuntimeKernel) {
+  } else if ('nodeTypes' in nextRuntimeKernel) {
+    delete nextRuntimeKernel['nodeTypes'];
+    changed = true;
+  }
+  if ('pilotNodeTypes' in nextRuntimeKernel) {
     delete nextRuntimeKernel['pilotNodeTypes'];
     changed = true;
   }
@@ -229,7 +231,9 @@ const toCanonicalRuntimeKernelPathConfigEntryValue = (
     const previous = Array.isArray(runtimeKernel['codeObjectResolverIds'])
       ? (runtimeKernel['codeObjectResolverIds'] as unknown[])
       : null;
-    const previousJoined = previous?.every((entry: unknown): entry is string => typeof entry === 'string')
+    const previousJoined = previous?.every(
+      (entry: unknown): entry is string => typeof entry === 'string'
+    )
       ? previous.join('|')
       : '';
     const nextJoined = resolverIds.join('|');
@@ -276,20 +280,84 @@ const toCanonicalRuntimeKernelPathConfigEntryValue = (
   return JSON.stringify(nextConfig);
 };
 
-export const countPendingRuntimeKernelModeNormalizations = (
-  records: AiPathsSettingRecord[]
-): number =>
-  records.reduce((count: number, entry: AiPathsSettingRecord): number => {
+const normalizeRuntimeKernelSettingsRecords = (records: AiPathsSettingRecord[]): {
+  nextRecords: AiPathsSettingRecord[];
+  affectedCount: number;
+  deletedKeys: string[];
+} => {
+  const nextRecords: AiPathsSettingRecord[] = [];
+  const deletedKeys = new Set<string>();
+  const canonicalNodeTypesEntry =
+    records.find((entry) => entry.key === AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY) ?? null;
+  const legacyNodeTypesEntry =
+    records.find((entry) => entry.key === AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY) ?? null;
+  const rawNodeTypesValue =
+    canonicalNodeTypesEntry?.value ?? legacyNodeTypesEntry?.value ?? undefined;
+  const canonicalNodeTypesValue =
+    toCanonicalRuntimeKernelListSettingValue({
+      value: rawNodeTypesValue,
+      normalizeToken: normalizeRuntimeKernelNodeTypeToken,
+    }) ?? '';
+  const shouldManageNodeTypesEntry = canonicalNodeTypesEntry !== null || legacyNodeTypesEntry !== null;
+  const shouldUpdateCanonicalNodeTypesEntry =
+    shouldManageNodeTypesEntry &&
+    (!canonicalNodeTypesEntry || canonicalNodeTypesEntry.value !== canonicalNodeTypesValue);
+  const shouldDeleteLegacyNodeTypesEntry = legacyNodeTypesEntry !== null;
+  let affectedCount =
+    shouldUpdateCanonicalNodeTypesEntry || shouldDeleteLegacyNodeTypesEntry ? 1 : 0;
+  let nodeTypesHandled = false;
+
+  for (const entry of records) {
+    if (
+      entry.key === AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY ||
+      entry.key === AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY
+    ) {
+      if (!nodeTypesHandled && shouldManageNodeTypesEntry) {
+        nextRecords.push({
+          key: AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
+          value: canonicalNodeTypesValue,
+        });
+        nodeTypesHandled = true;
+      }
+      if (entry.key === AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY) {
+        deletedKeys.add(entry.key);
+      }
+      continue;
+    }
+
     const nextValue = toCanonicalRuntimeKernelSettingEntryValue(entry);
     if (nextValue !== null && nextValue !== entry.value) {
-      return count + 1;
+      nextRecords.push({
+        ...entry,
+        value: nextValue ?? '',
+      });
+      affectedCount += 1;
+      continue;
     }
+
     const nextPathConfigValue = toCanonicalRuntimeKernelPathConfigEntryValue(entry);
     if (nextPathConfigValue !== null && nextPathConfigValue !== entry.value) {
-      return count + 1;
+      nextRecords.push({
+        ...entry,
+        value: nextPathConfigValue,
+      });
+      affectedCount += 1;
+      continue;
     }
-    return count;
-  }, 0);
+
+    nextRecords.push(entry);
+  }
+
+  return {
+    nextRecords,
+    affectedCount,
+    deletedKeys: [...deletedKeys].sort((left, right) => left.localeCompare(right)),
+  };
+};
+
+export const countPendingRuntimeKernelModeNormalizations = (
+  records: AiPathsSettingRecord[]
+): number => normalizeRuntimeKernelSettingsRecords(records).affectedCount;
 
 export const countPendingPathConfigCompactions = (records: AiPathsSettingRecord[]): number => {
   if (records.length === 0) return 0;
@@ -406,7 +474,7 @@ export const buildAiPathsMaintenanceReport = (
       id: RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID,
       title: 'Normalize Runtime Kernel Settings',
       description:
-        'Normalize deprecated runtime-kernel mode aliases, pilot-node lists, resolver ids, and strict-native registry flags for forward-compatible execution.',
+        'Normalize deprecated runtime-kernel mode aliases, node-type overrides, resolver ids, and strict-native registry flags for forward-compatible execution.',
       blocking: false,
       status: 'pending',
       affectedRecords: runtimeKernelModeNormalizationCount,
@@ -424,6 +492,7 @@ export const buildAiPathsMaintenanceReport = (
 export type MaintenanceActionApplyResult = {
   actionId: AiPathsMaintenanceActionId;
   affectedCount: number;
+  deletedKeys: string[];
   durationMs: number;
   nextRecords: AiPathsSettingRecord[];
   success: boolean;
@@ -479,28 +548,15 @@ export const runMaintenanceAction = (args: {
     }
 
     case RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID: {
-      args.records.forEach((entry: AiPathsSettingRecord) => {
-        const nextValue = toCanonicalRuntimeKernelSettingEntryValue(entry);
-        if (nextValue !== null && nextValue !== entry.value) {
-          nextRecords.push({
-            ...entry,
-            value: nextValue ?? '',
-          });
-          affectedCount += 1;
-          return;
-        }
-        const nextPathConfigValue = toCanonicalRuntimeKernelPathConfigEntryValue(entry);
-        if (nextPathConfigValue !== null && nextPathConfigValue !== entry.value) {
-          nextRecords.push({
-            ...entry,
-            value: nextPathConfigValue,
-          });
-          affectedCount += 1;
-          return;
-        }
-        nextRecords.push(entry);
-      });
-      break;
+      const normalized = normalizeRuntimeKernelSettingsRecords(args.records);
+      return {
+        actionId: args.actionId,
+        affectedCount: normalized.affectedCount,
+        deletedKeys: normalized.deletedKeys,
+        durationMs: Date.now() - startedAt,
+        nextRecords: normalized.nextRecords,
+        success: true,
+      };
     }
 
     default:
@@ -510,6 +566,7 @@ export const runMaintenanceAction = (args: {
   return {
     actionId: args.actionId,
     affectedCount,
+    deletedKeys: [],
     durationMs: Date.now() - startedAt,
     nextRecords,
     success: true,

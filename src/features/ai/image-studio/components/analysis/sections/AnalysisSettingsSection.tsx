@@ -60,7 +60,9 @@ interface AnalysisSettingsSectionProps {
   config: AnalysisSettingsSectionConfig;
 }
 
-export function AnalysisSettingsSection({ config }: AnalysisSettingsSectionProps): React.JSX.Element {
+export function AnalysisSettingsSection({
+  config,
+}: AnalysisSettingsSectionProps): React.JSX.Element {
   const {
     mode,
     setMode,

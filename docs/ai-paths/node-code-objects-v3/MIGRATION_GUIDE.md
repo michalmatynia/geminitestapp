@@ -7,11 +7,11 @@ Generated at: 2026-03-06T00:00:00.000Z
 ## Inputs
 
 - `src/shared/lib/ai-paths/core/docs/node-docs.ts` (node catalog)
-- `src/shared/lib/ai-paths/core/runtime/node-runtime-kernel.ts` (pilot runtime strategy)
+- `src/shared/lib/ai-paths/core/runtime/node-runtime-kernel.ts` (canonical runtime-kernel node set)
 - `docs/ai-paths/semantic-grammar/nodes/index.json` (semantic hashes)
 - `docs/ai-paths/node-code-objects-v2/index.json` (node-family metadata)
 - `docs/ai-paths/node-code-objects-v3/index.scaffold.json` (available v3 scaffolds)
-- `docs/ai-paths/node-code-objects-v3/index.json` + `contracts.json` (pilot v3 object hashes)
+- `docs/ai-paths/node-code-objects-v3/index.json` + `contracts.json` (active v3 object hashes)
 - `docs/ai-paths/node-code-objects-v3/parity-evidence.json` (runtime parity evidence: core dual-run + product-trigger E2E)
 - `docs/ai-paths/node-code-objects-v3/rollout-approvals.json` (manual rollout approvals)
 - `docs/ai-paths/node-code-objects-v3/rollout-eligibility.json` (generated technical rollout candidates)
@@ -22,7 +22,7 @@ Generated at: 2026-03-06T00:00:00.000Z
 2. Author/refresh `node-code-objects-v3/<nodeType>.scaffold.json` with runtime kernel metadata.
 3. Keep runtime strategy on `code_object_v3` and set `executionAdapter` to `native_handler_registry`.
 4. Validate runtime parity and native registry coverage checks for server/client execution paths.
-5. Keep node type in kernel pilot list (`NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES`) and monitor rollout signals.
+5. Keep node type in the canonical runtime-kernel set (`NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES`) and monitor rollout signals.
 6. Preserve docs/check guardrails in CI and use rollout approvals for governance sign-off when required.
 
 ## Strategy Totals
@@ -141,7 +141,7 @@ No migration blockers detected.
 ## Artifact Hygiene
 
 - Semantic/v2 generators prune stale per-node JSON files not represented in `AI_PATHS_NODE_DOCS`.
-- v3 generator prunes stale `*.scaffold.json` files outside the active pilot set.
+- v3 generator prunes stale `*.scaffold.json` files outside the active runtime-kernel set.
 - Semantic/v2/v3 checks fail fast when unexpected node/scaffold files are present.
 
 Regenerate with:

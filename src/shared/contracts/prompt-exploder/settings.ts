@@ -8,10 +8,7 @@ import {
 } from '../validator';
 import type { PromptExploderRuntimeValidationScope as PromptExploderRuntimeValidationScopeCore } from '../prompt-exploder-core';
 import { type PromptValidationRule, type PromptEngineSettings } from '../prompt-engine';
-import {
-  promptExploderSegmentTypeSchema,
-  type PromptExploderSegmentType,
-} from './base';
+import { promptExploderSegmentTypeSchema, type PromptExploderSegmentType } from './base';
 
 export const PROMPT_EXPLODER_SETTINGS_KEY = 'prompt_exploder_settings';
 export const VALIDATOR_PATTERN_LISTS_KEY = 'validator_pattern_lists';
@@ -130,15 +127,17 @@ export const promptExploderSettingsSchema = z.object({
     .default({
       operationMode: 'hybrid',
     }),
-  promptValidation: z.object({
-    enabled: z.boolean().default(true),
-    rules: z.array(z.any()).default([]),
-    learnedRules: z.array(z.any()).default([]),
-  }).default({
-    enabled: true,
-    rules: [],
-    learnedRules: [],
-  }),
+  promptValidation: z
+    .object({
+      enabled: z.boolean().default(true),
+      rules: z.array(z.any()).default([]),
+      learnedRules: z.array(z.any()).default([]),
+    })
+    .default({
+      enabled: true,
+      rules: [],
+      learnedRules: [],
+    }),
   patternSnapshots: z.array(promptExploderPatternSnapshotSchema).default([]),
 });
 

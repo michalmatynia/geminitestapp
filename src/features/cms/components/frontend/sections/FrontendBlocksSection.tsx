@@ -52,8 +52,8 @@ export function FrontendBlocksSection({
           {blocks.length === 0
             ? emptyState
             : blocks.map((block: BlockInstance) => (
-              <FrontendBlockRenderer key={block.id} block={block} />
-            ))}
+                <FrontendBlockRenderer key={block.id} block={block} />
+              ))}
         </div>
       </div>
     </section>

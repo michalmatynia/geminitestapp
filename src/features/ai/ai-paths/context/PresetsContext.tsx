@@ -16,10 +16,7 @@ import type {
   DbNodePreset,
   DatabaseConfig,
 } from '@/shared/lib/ai-paths';
-import {
-  createPresetId,
-  databaseConfigSchema,
-} from '@/shared/lib/ai-paths';
+import { createPresetId, databaseConfigSchema } from '@/shared/lib/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 // ---------------------------------------------------------------------------

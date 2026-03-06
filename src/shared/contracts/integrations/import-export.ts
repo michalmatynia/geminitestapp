@@ -2,10 +2,7 @@ import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from '../base';
 
-import {
-  type BaseImportStartResponse,
-  type BaseImportRunDetailResponse,
-} from './base-com';
+import { type BaseImportStartResponse, type BaseImportRunDetailResponse } from './base-com';
 import type { ImportTemplateParameterImport as IntegrationTemplateParameterImport } from './templates';
 
 /**

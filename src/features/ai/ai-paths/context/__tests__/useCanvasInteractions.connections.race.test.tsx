@@ -100,7 +100,8 @@ describe('useCanvasInteractionsConnections race handling', () => {
       );
     });
 
-    const setEdgesCalls = (props.setEdges as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+    const setEdgesCalls = (props.setEdges as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls;
     expect(setEdgesCalls.length).toBe(1);
     const [nextEdges] = setEdgesCalls[0] as [Edge[] | ((prev: Edge[]) => Edge[]), unknown];
     const resolvedEdges = typeof nextEdges === 'function' ? nextEdges([]) : nextEdges;
@@ -185,7 +186,8 @@ describe('useCanvasInteractionsConnections race handling', () => {
       result.current.handleCompleteConnection(createPointerEvent(target), targetNode, 'trigger');
     });
 
-    const setEdgesCalls = (props.setEdges as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+    const setEdgesCalls = (props.setEdges as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls;
     expect(setEdgesCalls.length).toBe(1);
     const [nextEdges] = setEdgesCalls[0] as [Edge[] | ((prev: Edge[]) => Edge[]), unknown];
     const resolvedEdges = typeof nextEdges === 'function' ? nextEdges([]) : nextEdges;

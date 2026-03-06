@@ -46,8 +46,7 @@ const CircleIconButton = (props: {
   className?: string;
   children: React.ReactNode;
 }): React.JSX.Element => {
-  const { onClick, onMouseEnter, onFocus, disabled, ariaLabel, title, className, children } =
-    props;
+  const { onClick, onMouseEnter, onFocus, disabled, ariaLabel, title, className, children } = props;
 
   return (
     <Button

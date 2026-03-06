@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildKangurLearnerProfileSnapshot } from '@/features/kangur/ui/services/profile';
+import {
+  buildKangurLearnerProfileSnapshot,
+  buildLessonMasteryInsights,
+} from '@/features/kangur/ui/services/profile';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
@@ -31,14 +34,81 @@ const progress: KangurProgressState = {
 };
 
 describe('buildKangurLearnerProfileSnapshot', () => {
+  it('summarizes strongest and weakest tracked lessons from mastery data', () => {
+    const insights = buildLessonMasteryInsights({
+      ...progress,
+      lessonMastery: {
+        division: {
+          attempts: 2,
+          completions: 2,
+          masteryPercent: 45,
+          bestScorePercent: 60,
+          lastScorePercent: 40,
+          lastCompletedAt: '2026-03-06T10:00:00.000Z',
+        },
+        adding: {
+          attempts: 3,
+          completions: 3,
+          masteryPercent: 67,
+          bestScorePercent: 80,
+          lastScorePercent: 70,
+          lastCompletedAt: '2026-03-06T11:00:00.000Z',
+        },
+        clock: {
+          attempts: 4,
+          completions: 4,
+          masteryPercent: 92,
+          bestScorePercent: 100,
+          lastScorePercent: 90,
+          lastCompletedAt: '2026-03-06T12:00:00.000Z',
+        },
+      },
+    });
+
+    expect(insights.trackedLessons).toBe(3);
+    expect(insights.masteredLessons).toBe(1);
+    expect(insights.lessonsNeedingPractice).toBe(2);
+    expect(insights.weakest[0]).toMatchObject({
+      componentId: 'division',
+      masteryPercent: 45,
+    });
+    expect(insights.strongest[0]).toMatchObject({
+      componentId: 'clock',
+      masteryPercent: 92,
+    });
+  });
+
   it('builds aggregate learner metrics from score history and progress', () => {
     const snapshot = buildKangurLearnerProfileSnapshot({
       progress,
       scores: [
-        createScore({ id: 's1', operation: 'addition', correct_answers: 8, created_date: '2026-03-06T12:00:00.000Z' }),
-        createScore({ id: 's2', operation: 'multiplication', correct_answers: 10, score: 10, created_date: '2026-03-05T12:00:00.000Z' }),
-        createScore({ id: 's3', operation: 'addition', correct_answers: 7, score: 7, created_date: '2026-03-04T12:00:00.000Z' }),
-        createScore({ id: 's4', operation: 'division', correct_answers: 6, score: 6, created_date: '2026-03-02T12:00:00.000Z' }),
+        createScore({
+          id: 's1',
+          operation: 'addition',
+          correct_answers: 8,
+          created_date: '2026-03-06T12:00:00.000Z',
+        }),
+        createScore({
+          id: 's2',
+          operation: 'multiplication',
+          correct_answers: 10,
+          score: 10,
+          created_date: '2026-03-05T12:00:00.000Z',
+        }),
+        createScore({
+          id: 's3',
+          operation: 'addition',
+          correct_answers: 7,
+          score: 7,
+          created_date: '2026-03-04T12:00:00.000Z',
+        }),
+        createScore({
+          id: 's4',
+          operation: 'division',
+          correct_answers: 6,
+          score: 6,
+          created_date: '2026-03-02T12:00:00.000Z',
+        }),
       ],
       dailyGoalGames: 2,
       now: new Date('2026-03-06T15:00:00.000Z'),
@@ -56,7 +126,9 @@ describe('buildKangurLearnerProfileSnapshot', () => {
     expect(snapshot.dailyGoalPercent).toBe(50);
     expect(snapshot.unlockedBadges).toBe(4);
     expect(snapshot.operationPerformance.map((entry) => entry.operation)).toContain('addition');
-    expect(snapshot.operationPerformance.find((entry) => entry.operation === 'addition')).toMatchObject({
+    expect(
+      snapshot.operationPerformance.find((entry) => entry.operation === 'addition')
+    ).toMatchObject({
       attempts: 2,
       averageAccuracy: 75,
       bestScore: 80,
@@ -96,6 +168,8 @@ describe('buildKangurLearnerProfileSnapshot', () => {
     expect(snapshot.recommendations.map((entry) => entry.id)).toContain('daily_goal');
     expect(snapshot.recommendations.map((entry) => entry.id)).toContain('streak_bootstrap');
     expect(snapshot.recommendations.every((entry) => Boolean(entry.action?.label))).toBe(true);
-    expect(snapshot.recommendations.every((entry) => typeof entry.action.page === 'string')).toBe(true);
+    expect(snapshot.recommendations.every((entry) => typeof entry.action.page === 'string')).toBe(
+      true
+    );
   });
 });

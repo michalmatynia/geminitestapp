@@ -15,11 +15,7 @@ import type { ColumnDef, Row } from '@tanstack/react-table';
 import { formatTimestamp } from '../utils/formatTimestamp';
 
 export function LogDiagnostics(): React.JSX.Element {
-  const {
-    diagnostics,
-    diagnosticsUpdatedAt,
-    mongoDiagnosticsQuery,
-  } = useSystemLogsState();
+  const { diagnostics, diagnosticsUpdatedAt, mongoDiagnosticsQuery } = useSystemLogsState();
   const { confirmAction, handleRebuildMongoIndexes } = useSystemLogsActions();
 
   const columns = useMemo<ColumnDef<MongoCollectionIndexStatus>[]>(

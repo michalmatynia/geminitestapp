@@ -5,9 +5,7 @@ import {
 } from '@/shared/contracts/ai-paths';
 import { runtimeStateSchema } from '@/shared/contracts/ai-paths-runtime';
 import type { NodeRuntimeKernelMode } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
-import {
-  cloneJsonSafe,
-} from '@/shared/lib/ai-paths';
+import { cloneJsonSafe } from '@/shared/lib/ai-paths';
 import { isAppError, validationError } from '@/shared/errors/app-error';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
@@ -49,7 +47,7 @@ const normalizeRuntimeKernelModeValue = (value: unknown): NodeRuntimeKernelMode 
   return normalized === 'auto' || normalized === 'legacy_only' ? 'auto' : null;
 };
 
-const normalizeRuntimeKernelPilotNodeTypeToken = (value: string): string =>
+const normalizeRuntimeKernelNodeTypeToken = (value: string): string =>
   value.trim().toLowerCase().replace(/\s+/g, '_');
 
 const parseRuntimeKernelListValue = ({
@@ -104,11 +102,12 @@ const parseRuntimeKernelListValue = ({
   return normalized.length > 0 ? normalized : undefined;
 };
 
-export const parseRuntimeKernelPilotNodeTypes = (value: unknown): string[] | undefined =>
+export const parseRuntimeKernelNodeTypes = (value: unknown): string[] | undefined =>
   parseRuntimeKernelListValue({
     value,
-    normalizeToken: normalizeRuntimeKernelPilotNodeTypeToken,
+    normalizeToken: normalizeRuntimeKernelNodeTypeToken,
   });
+export const parseRuntimeKernelPilotNodeTypes = parseRuntimeKernelNodeTypes;
 
 const normalizeRuntimeKernelResolverIdToken = (value: string): string => value.trim();
 
@@ -143,6 +142,9 @@ export const resolveRuntimeKernelConfigForRun = (input: {
   envMode: unknown;
   pathMode: unknown;
   settingMode: unknown;
+  envNodeTypes?: unknown;
+  pathNodeTypes?: unknown;
+  settingNodeTypes?: unknown;
   envPilotNodeTypes: unknown;
   pathPilotNodeTypes: unknown;
   settingPilotNodeTypes: unknown;
@@ -155,8 +157,8 @@ export const resolveRuntimeKernelConfigForRun = (input: {
 }): {
   mode: NodeRuntimeKernelMode;
   modeSource: 'env' | 'path' | 'settings' | 'default';
-  pilotNodeTypes: string[] | undefined;
-  pilotSource: 'env' | 'path' | 'settings' | 'default';
+  nodeTypes: string[] | undefined;
+  nodeTypesSource: 'env' | 'path' | 'settings' | 'default';
   resolverIds: string[] | undefined;
   resolverSource: 'env' | 'path' | 'settings' | 'default';
   strictNativeRegistry: boolean;
@@ -174,15 +176,21 @@ export const resolveRuntimeKernelConfigForRun = (input: {
         ? 'settings'
         : 'default';
 
-  const envPilotNodeTypes = parseRuntimeKernelPilotNodeTypes(input.envPilotNodeTypes);
-  const pathPilotNodeTypes = parseRuntimeKernelPilotNodeTypes(input.pathPilotNodeTypes);
-  const settingsPilotNodeTypes = parseRuntimeKernelPilotNodeTypes(input.settingPilotNodeTypes);
-  const pilotNodeTypes = envPilotNodeTypes ?? pathPilotNodeTypes ?? settingsPilotNodeTypes;
-  const pilotSource: 'env' | 'path' | 'settings' | 'default' = envPilotNodeTypes
+  const envNodeTypes =
+    parseRuntimeKernelNodeTypes(input.envNodeTypes) ??
+    parseRuntimeKernelNodeTypes(input.envPilotNodeTypes);
+  const pathNodeTypes =
+    parseRuntimeKernelNodeTypes(input.pathNodeTypes) ??
+    parseRuntimeKernelNodeTypes(input.pathPilotNodeTypes);
+  const settingsNodeTypes =
+    parseRuntimeKernelNodeTypes(input.settingNodeTypes) ??
+    parseRuntimeKernelNodeTypes(input.settingPilotNodeTypes);
+  const nodeTypes = envNodeTypes ?? pathNodeTypes ?? settingsNodeTypes;
+  const nodeTypesSource: 'env' | 'path' | 'settings' | 'default' = envNodeTypes
     ? 'env'
-    : pathPilotNodeTypes
+    : pathNodeTypes
       ? 'path'
-      : settingsPilotNodeTypes
+      : settingsNodeTypes
         ? 'settings'
         : 'default';
   const envResolverIds = parseRuntimeKernelCodeObjectResolverIds(input.envResolverIds);
@@ -219,8 +227,8 @@ export const resolveRuntimeKernelConfigForRun = (input: {
   return {
     mode,
     modeSource,
-    pilotNodeTypes,
-    pilotSource,
+    nodeTypes,
+    nodeTypesSource,
     resolverIds,
     resolverSource,
     strictNativeRegistry,
@@ -231,6 +239,9 @@ export const resolveRuntimeKernelConfigForRun = (input: {
 export type RuntimeKernelExecutionTelemetry = {
   runtimeKernelMode: NodeRuntimeKernelMode;
   runtimeKernelModeSource: 'env' | 'path' | 'settings' | 'default';
+  runtimeKernelNodeTypes: string[];
+  runtimeKernelNodeTypesSource: 'env' | 'path' | 'settings' | 'default';
+  // Deprecated compatibility aliases.
   runtimeKernelPilotNodeTypes: string[];
   runtimeKernelPilotNodeTypesSource: 'env' | 'path' | 'settings' | 'default';
   runtimeKernelCodeObjectResolverIds: string[];
@@ -242,8 +253,8 @@ export type RuntimeKernelExecutionTelemetry = {
 export const toRuntimeKernelExecutionTelemetry = (input: {
   mode: NodeRuntimeKernelMode;
   modeSource: 'env' | 'path' | 'settings' | 'default';
-  pilotNodeTypes: string[] | undefined;
-  pilotSource: 'env' | 'path' | 'settings' | 'default';
+  nodeTypes: string[] | undefined;
+  nodeTypesSource: 'env' | 'path' | 'settings' | 'default';
   resolverIds: string[] | undefined;
   resolverSource: 'env' | 'path' | 'settings' | 'default';
   strictNativeRegistry: boolean;
@@ -251,8 +262,10 @@ export const toRuntimeKernelExecutionTelemetry = (input: {
 }): RuntimeKernelExecutionTelemetry => ({
   runtimeKernelMode: input.mode,
   runtimeKernelModeSource: input.modeSource,
-  runtimeKernelPilotNodeTypes: input.pilotNodeTypes ?? [],
-  runtimeKernelPilotNodeTypesSource: input.pilotSource,
+  runtimeKernelNodeTypes: input.nodeTypes ?? [],
+  runtimeKernelNodeTypesSource: input.nodeTypesSource,
+  runtimeKernelPilotNodeTypes: input.nodeTypes ?? [],
+  runtimeKernelPilotNodeTypesSource: input.nodeTypesSource,
   runtimeKernelCodeObjectResolverIds: input.resolverIds ?? [],
   runtimeKernelCodeObjectResolverIdsSource: input.resolverSource,
   runtimeKernelStrictNativeRegistry: input.strictNativeRegistry,

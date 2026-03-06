@@ -240,9 +240,7 @@ const toDomain = (pattern: PrismaPattern): ProductValidationPattern => {
       typeof patternAny['passOutputToNext'] === 'boolean' ? patternAny['passOutputToNext'] : true,
     launchEnabled:
       typeof patternAny['launchEnabled'] === 'boolean' ? patternAny['launchEnabled'] : false,
-    launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
-      launchAppliesToScopesRaw
-    ),
+    launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(launchAppliesToScopesRaw),
     launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(
       patternAny['launchScopeBehavior']
     ),

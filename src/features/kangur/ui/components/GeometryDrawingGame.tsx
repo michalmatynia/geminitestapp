@@ -28,12 +28,10 @@ type ShapeRound = {
 
 type GeometryDifficultyId = 'starter' | 'pro';
 
-type FeedbackState =
-  | {
-      kind: 'success' | 'error' | 'info';
-      text: string;
-    }
-  | null;
+type FeedbackState = {
+  kind: 'success' | 'error' | 'info';
+  text: string;
+} | null;
 
 const SHAPE_ROUND_LIBRARY: Record<GeometryShapeId, ShapeRound> = {
   circle: {
@@ -152,7 +150,9 @@ const CANVAS_HEIGHT = 220;
 const flattenPoints = (strokes: GeometryDrawPoint[][]): GeometryDrawPoint[] =>
   strokes.flatMap((stroke) => stroke);
 
-export default function GeometryDrawingGame({ onFinish }: GeometryDrawingGameProps): React.JSX.Element {
+export default function GeometryDrawingGame({
+  onFinish,
+}: GeometryDrawingGameProps): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawingRef = useRef(false);
 
@@ -234,15 +234,18 @@ export default function GeometryDrawingGame({ onFinish }: GeometryDrawingGamePro
     });
   }, [redrawCanvas]);
 
-  const resolvePoint = useCallback((event: React.PointerEvent<HTMLCanvasElement>): GeometryDrawPoint => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
-    };
-  }, []);
+  const resolvePoint = useCallback(
+    (event: React.PointerEvent<HTMLCanvasElement>): GeometryDrawPoint => {
+      const canvas = canvasRef.current;
+      if (!canvas) return { x: 0, y: 0 };
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      };
+    },
+    []
+  );
 
   const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>): void => {
     if (done || feedback) return;
@@ -438,9 +441,7 @@ export default function GeometryDrawingGame({ onFinish }: GeometryDrawingGamePro
             className='w-full bg-white rounded-3xl shadow-xl p-5 flex flex-col items-center gap-3'
           >
             <div className='text-5xl'>{currentRound?.emoji}</div>
-            <h3 className='text-xl font-extrabold text-gray-800'>
-              Narysuj: {currentRound?.label}
-            </h3>
+            <h3 className='text-xl font-extrabold text-gray-800'>Narysuj: {currentRound?.label}</h3>
             <p className='text-sm text-gray-500 text-center'>{currentRound?.hint}</p>
 
             <div className='relative w-full'>

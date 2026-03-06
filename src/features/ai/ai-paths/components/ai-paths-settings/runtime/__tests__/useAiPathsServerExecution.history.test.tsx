@@ -22,9 +22,8 @@ const optimisticallyInsertAiPathRunInQueueCacheMock = vi.hoisted(() => vi.fn());
 const setPathConfigsMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/shared/lib/ai-paths', async () => {
-  const actual = await vi.importActual<typeof import('@/shared/lib/ai-paths')>(
-    '@/shared/lib/ai-paths'
-  );
+  const actual =
+    await vi.importActual<typeof import('@/shared/lib/ai-paths')>('@/shared/lib/ai-paths');
   return {
     ...actual,
     enqueueAiPathRun: enqueueAiPathRunMock,
@@ -112,11 +111,7 @@ describe('useAiPathsServerExecution history streaming', () => {
     const currentRunStartedAtRef = { current: null as string | null };
 
     const setRuntimeState = vi.fn(
-      (
-        next:
-          | RuntimeState
-          | ((prev: RuntimeState) => RuntimeState)
-      ): void => {
+      (next: RuntimeState | ((prev: RuntimeState) => RuntimeState)): void => {
         runtimeState = typeof next === 'function' ? next(runtimeState) : next;
         runtimeStateRef.current = runtimeState;
       }
@@ -159,7 +154,7 @@ describe('useAiPathsServerExecution history streaming', () => {
           pathDescription: '',
           runtimeKernelConfig: {
             mode: 'auto',
-            pilotNodeTypes: ['template'],
+            nodeTypes: ['template'],
             codeObjectResolverIds: ['resolver.path'],
           },
           activeTrigger: 'manual',
@@ -203,7 +198,7 @@ describe('useAiPathsServerExecution history streaming', () => {
         meta: expect.objectContaining({
           runtimeKernelConfig: {
             mode: 'auto',
-            pilotNodeTypes: ['template'],
+            nodeTypes: ['template'],
             codeObjectResolverIds: ['resolver.path'],
           },
         }),

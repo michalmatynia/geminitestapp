@@ -4,10 +4,7 @@ import React from 'react';
 import { Star } from 'lucide-react';
 
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
-import {
-  useNotesAppActions,
-  useNotesAppState,
-} from '@/features/notesapp/hooks/NotesAppContext';
+import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import { Button } from '@/shared/ui';
 
 export function NoteDetailActions(): React.JSX.Element | null {

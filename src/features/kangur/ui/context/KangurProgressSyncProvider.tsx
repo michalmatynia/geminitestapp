@@ -6,6 +6,7 @@ import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurProgressRecord, KangurUser } from '@/features/kangur/services/ports';
+import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import {
   areProgressStatesEqual,
@@ -18,12 +19,6 @@ import {
 } from '@/features/kangur/ui/services/progress';
 
 const kangurPlatform = getKangurPlatform();
-
-const isStatusError = (value: unknown): value is { status: number } =>
-  typeof value === 'object' &&
-  value !== null &&
-  'status' in value &&
-  typeof (value as { status?: unknown }).status === 'number';
 
 const resolveUserProgressKey = (user: KangurUser | null): string | null => {
   const email = user?.email?.trim().toLowerCase();
@@ -103,7 +98,7 @@ export function KangurProgressSyncProvider({
           return;
         }
 
-        if (isStatusError(error) && (error.status === 401 || error.status === 403)) {
+        if (isKangurAuthStatusError(error)) {
           syncStateRef.current = 'idle';
           return;
         }
@@ -154,7 +149,7 @@ export function KangurProgressSyncProvider({
           }
         })
         .catch((error: unknown) => {
-          if (isStatusError(error) && (error.status === 401 || error.status === 403)) {
+          if (isKangurAuthStatusError(error)) {
             syncStateRef.current = 'idle';
             return;
           }

@@ -160,11 +160,19 @@ type CaseResolverPageActionKey =
   | 'onSaveActiveCase'
   | 'onDiscardActiveCaseChanges';
 
-export type CaseResolverPageActionsValue = Pick<CaseResolverPageContextValue, CaseResolverPageActionKey>;
-export type CaseResolverPageStateValue = Omit<CaseResolverPageContextValue, CaseResolverPageActionKey>;
+export type CaseResolverPageActionsValue = Pick<
+  CaseResolverPageContextValue,
+  CaseResolverPageActionKey
+>;
+export type CaseResolverPageStateValue = Omit<
+  CaseResolverPageContextValue,
+  CaseResolverPageActionKey
+>;
 
 const CaseResolverPageStateContext = React.createContext<CaseResolverPageStateValue | null>(null);
-const CaseResolverPageActionsContext = React.createContext<CaseResolverPageActionsValue | null>(null);
+const CaseResolverPageActionsContext = React.createContext<CaseResolverPageActionsValue | null>(
+  null
+);
 
 type CaseResolverPageProviderProps = {
   value: CaseResolverPageContextValue;

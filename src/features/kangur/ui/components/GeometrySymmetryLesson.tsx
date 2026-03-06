@@ -24,7 +24,8 @@ const SLIDES: LessonSlide[] = [
     content: (
       <div className='flex flex-col gap-4 text-center'>
         <p className='text-gray-700'>
-          Figura jest <strong>symetryczna</strong>, gdy po złożeniu na pół obie strony pasują do siebie.
+          Figura jest <strong>symetryczna</strong>, gdy po złożeniu na pół obie strony pasują do
+          siebie.
         </p>
         <div className='rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-5xl'>
           🦋
@@ -88,7 +89,9 @@ const SLIDES: LessonSlide[] = [
   },
 ];
 
-export default function GeometrySymmetryLesson({ onBack }: GeometrySymmetryLessonProps): React.JSX.Element {
+export default function GeometrySymmetryLesson({
+  onBack,
+}: GeometrySymmetryLessonProps): React.JSX.Element {
   const [slide, setSlide] = useState(0);
   const [rewarded, setRewarded] = useState(false);
 

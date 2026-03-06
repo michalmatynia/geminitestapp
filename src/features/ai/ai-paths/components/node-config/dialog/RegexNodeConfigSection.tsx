@@ -31,7 +31,12 @@ import {
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { RegexPendingAiProposal } from './RegexPendingAiProposal';
 import { RegexTemplatesTabContent } from './RegexTemplatesTabContent';
-import { useAiPathGraph, useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../../AiPathConfigContext';
+import {
+  useAiPathGraph,
+  useAiPathOrchestrator,
+  useAiPathRuntime,
+  useAiPathSelection,
+} from '../../AiPathConfigContext';
 
 import { RegexConfigBasicTab } from './regex/RegexConfigBasicTab';
 import { RegexAiProposalSection } from './regex/RegexAiProposalSection';
@@ -389,14 +394,14 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
         ? callbackValue
         : callbackValue !== undefined && callbackValue !== null
           ? ((): string => {
-            try {
-              return JSON.stringify(callbackValue, null, 2);
-            } catch {
-              return typeof callbackValue === 'object'
-                ? '[Object]'
-                : String(callbackValue as string | number | boolean);
-            }
-          })()
+              try {
+                return JSON.stringify(callbackValue, null, 2);
+              } catch {
+                return typeof callbackValue === 'object'
+                  ? '[Object]'
+                  : String(callbackValue as string | number | boolean);
+              }
+            })()
           : '';
     if (resolvedCallbackValue.trim().length === 0) return;
     if (resolvedCallbackValue === lastInjectedResponseRef.current) return;
@@ -465,10 +470,10 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
     const nextManual = regexConfig.manual?.pattern
       ? regexConfig.manual
       : {
-        pattern: regexConfig.pattern ?? '',
-        flags: regexConfig.flags ?? '',
-        groupBy: regexConfig.groupBy ?? 'match',
-      };
+          pattern: regexConfig.pattern ?? '',
+          flags: regexConfig.flags ?? '',
+          groupBy: regexConfig.groupBy ?? 'match',
+        };
     addAiProposal(candidate);
     updateRegex({
       pattern: candidate.pattern,
@@ -573,10 +578,10 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
             const nextManual = regexConfig.manual?.pattern
               ? regexConfig.manual
               : {
-                pattern: regexConfig.pattern ?? '',
-                flags: regexConfig.flags ?? '',
-                groupBy: regexConfig.groupBy ?? 'match',
-              };
+                  pattern: regexConfig.pattern ?? '',
+                  flags: regexConfig.flags ?? '',
+                  groupBy: regexConfig.groupBy ?? 'match',
+                };
             updateRegex({
               pattern: proposal.pattern,
               ...((proposal.flags ?? normalizedFlags)

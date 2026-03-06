@@ -5,10 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
 import { normalizeNodes, sanitizeEdges, stableStringify, aiJobsApi } from '@/shared/lib/ai-paths';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
-import {
-  useRuntimeActions,
-  useRuntimeState,
-} from '@/features/ai/ai-paths/context/RuntimeContext';
+import { useRuntimeActions, useRuntimeState } from '@/features/ai/ai-paths/context/RuntimeContext';
 
 import { useAiPathsLocalExecution } from './runtime/useAiPathsLocalExecution';
 import { useAiPathsRuntimeState } from './runtime/useAiPathsRuntimeState';
@@ -46,7 +43,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   const currentRunStartedAtMsRef = useRef<number | null>(null);
   const fetchEntityByTypeRef = useRef<
     (entityType: string, entityId: string) => Promise<Record<string, unknown> | null>
-      >(async () => null);
+  >(async () => null);
 
   // 1. Centralized State
   const state = useAiPathsRuntimeState();

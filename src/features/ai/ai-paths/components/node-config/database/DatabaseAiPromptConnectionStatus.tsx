@@ -45,8 +45,8 @@ export function DatabaseAiPromptConnectionStatus(
   const aiNode =
     aiPromptEdges.length > 0
       ? nodes.find(
-        (node: AiNode): boolean => node.id === aiPromptEdges[0]?.to && node.type === 'model'
-      )
+          (node: AiNode): boolean => node.id === aiPromptEdges[0]?.to && node.type === 'model'
+        )
       : null;
   const selectedModelId = aiNode?.config?.model?.modelId?.trim() || '';
   const modelLabel = selectedModelId

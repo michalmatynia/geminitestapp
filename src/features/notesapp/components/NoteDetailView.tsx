@@ -2,10 +2,7 @@
 
 import React from 'react';
 
-import {
-  useNotesAppActions,
-  useNotesAppState,
-} from '@/features/notesapp/hooks/NotesAppContext';
+import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import { NoteForm } from './NoteForm';
 import { NoteDetailBreadcrumbs } from './detail/NoteDetailBreadcrumbs';
 import { NoteDetailActions } from './detail/NoteDetailActions';

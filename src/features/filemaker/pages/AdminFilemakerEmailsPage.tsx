@@ -79,7 +79,9 @@ export function AdminFilemakerEmailsPage(): React.JSX.Element {
             <div className='space-y-0.5'>
               <div className='text-[11px] text-gray-500'>Total: {linkCount.total}</div>
               <div className='text-[11px] text-gray-500'>Persons: {linkCount.persons}</div>
-              <div className='text-[11px] text-gray-500'>Organizations: {linkCount.organizations}</div>
+              <div className='text-[11px] text-gray-500'>
+                Organizations: {linkCount.organizations}
+              </div>
             </div>
           );
         },

@@ -707,7 +707,9 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
           padding='lg'
           className='flex flex-col items-center justify-center border-dashed border-border/60 bg-card/20 py-20 text-center'
         >
-          <p className='text-sm font-medium text-muted-foreground'>Could not load cases workspace.</p>
+          <p className='text-sm font-medium text-muted-foreground'>
+            Could not load cases workspace.
+          </p>
           <p className='mt-2 max-w-xl text-xs text-muted-foreground/80'>
             {casesLoadMessage || 'Retry loading workspace data.'}
           </p>

@@ -19,8 +19,8 @@ export const extractProductNames = async (page: Page): Promise<string[]> => {
     const productSelectors = [
       '[data-product]',
       '[data-product-name]',
-      '[data-testid*=\'product\' i]',
-      '[itemtype*=\'Product\']',
+      "[data-testid*='product' i]",
+      "[itemtype*='Product']",
       '.product',
       '.product-item',
       '.product-card',
@@ -30,15 +30,15 @@ export const extractProductNames = async (page: Page): Promise<string[]> => {
       '.collection-item',
       '.grid-item',
       'article',
-      '[class*=\'product\' i]',
-      '[class*=\'card\' i]',
-      '[class*=\'grid\' i]',
-      '[class*=\'item\' i]',
+      "[class*='product' i]",
+      "[class*='card' i]",
+      "[class*='grid' i]",
+      "[class*='item' i]",
     ];
     const nameSelectors = [
       '[data-product-name]',
-      '[data-testid*=\'title\' i]',
-      '[itemprop=\'name\']',
+      "[data-testid*='title' i]",
+      "[itemprop='name']",
       '.product-title',
       '.product-name',
       '.product-card__title',
@@ -131,7 +131,7 @@ export const extractProductNames = async (page: Page): Promise<string[]> => {
     }
 
     document
-      .querySelectorAll('a[href*=\'/product\' i], a[href*=\'product\' i]')
+      .querySelectorAll("a[href*='/product' i], a[href*='product' i]")
       .forEach((link: Element) => {
         if (!(link instanceof HTMLElement)) return;
         const text = link.innerText;
@@ -143,7 +143,7 @@ export const extractProductNames = async (page: Page): Promise<string[]> => {
       pushName(heading.innerText);
     });
 
-    document.querySelectorAll('script[type=\'application/ld+json\']').forEach((script: Element) => {
+    document.querySelectorAll("script[type='application/ld+json']").forEach((script: Element) => {
       const parsed = parseJson(script.textContent);
       if (parsed) {
         collectFromSchema(parsed);
@@ -197,7 +197,7 @@ export const extractEmailsFromDom = async (page: Page): Promise<string[]> => {
   if (!page) return [];
   return page.evaluate(() => {
     const emails = new Set<string>();
-    document.querySelectorAll('a[href^=\'mailto:\']').forEach((link: Element) => {
+    document.querySelectorAll("a[href^='mailto:']").forEach((link: Element) => {
       if (!(link instanceof HTMLAnchorElement)) return;
       const href = link.getAttribute('href') || '';
       const email = href
@@ -233,8 +233,8 @@ export const waitForProductContent = async (page: Page): Promise<void> => {
   const productSelectors = [
     '[data-product]',
     '[data-product-name]',
-    '[data-testid*=\'product\' i]',
-    '[itemtype*=\'Product\']',
+    "[data-testid*='product' i]",
+    "[itemtype*='Product']",
     '.product',
     '.product-item',
     '.product-card',
@@ -244,10 +244,10 @@ export const waitForProductContent = async (page: Page): Promise<void> => {
     '.collection-item',
     '.grid-item',
     'article',
-    '[class*=\'product\' i]',
-    '[class*=\'card\' i]',
-    '[class*=\'grid\' i]',
-    '[class*=\'item\' i]',
+    "[class*='product' i]",
+    "[class*='card' i]",
+    "[class*='grid' i]",
+    "[class*='item' i]",
   ];
   try {
     await page.waitForLoadState('networkidle', { timeout: 15000 });

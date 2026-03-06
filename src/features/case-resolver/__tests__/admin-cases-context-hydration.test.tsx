@@ -62,9 +62,9 @@ vi.mock('@/shared/ui', () => ({
 }));
 
 vi.mock('@/features/case-resolver/workspace-persistence', async () => {
-  const actual = await vi.importActual<typeof import('@/features/case-resolver/workspace-persistence')>(
-    '@/features/case-resolver/workspace-persistence'
-  );
+  const actual = await vi.importActual<
+    typeof import('@/features/case-resolver/workspace-persistence')
+  >('@/features/case-resolver/workspace-persistence');
   return {
     ...actual,
     fetchCaseResolverWorkspaceRecordDetailed: (...args: unknown[]) =>
@@ -85,9 +85,7 @@ const buildWorkspaceWithCase = () => ({
   ],
 });
 
-const buildResolvedResult = (
-  source: 'resolved_v2'
-): CaseResolverWorkspaceRecordFetchResult => ({
+const buildResolvedResult = (source: 'resolved_v2'): CaseResolverWorkspaceRecordFetchResult => ({
   status: 'resolved',
   workspace: buildWorkspaceWithCase(),
   attemptKey: 'light_fresh',

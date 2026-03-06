@@ -20,9 +20,7 @@ const buildTriggerNode = (): AiNode => ({
   position: { x: 120, y: 240 },
 });
 
-const buildUi = (
-  overrides?: Partial<CanvasBoardUIContextValue>
-): CanvasBoardUIContextValue =>
+const buildUi = (overrides?: Partial<CanvasBoardUIContextValue>): CanvasBoardUIContextValue =>
   ({
     view: { x: 0, y: 0, scale: 1 },
     dragState: null,
@@ -100,9 +98,7 @@ describe('CanvasSvgNode trigger interactions', () => {
       </CanvasBoardUIProvider>
     );
 
-    const triggerActionRect = container.querySelector(
-      '[data-node-action="fire-trigger"]'
-    );
+    const triggerActionRect = container.querySelector('[data-node-action="fire-trigger"]');
     expect(triggerActionRect).toBeTruthy();
     if (!triggerActionRect) return;
 
@@ -133,9 +129,7 @@ describe('CanvasSvgNode trigger interactions', () => {
       </CanvasBoardUIProvider>
     );
 
-    const triggerActionRect = container.querySelector(
-      '[data-node-action="fire-trigger"]'
-    );
+    const triggerActionRect = container.querySelector('[data-node-action="fire-trigger"]');
     expect(triggerActionRect).toBeTruthy();
     if (!triggerActionRect) return;
 
@@ -187,9 +181,7 @@ describe('CanvasSvgNode trigger interactions', () => {
       </CanvasBoardUIProvider>
     );
 
-    const triggerActionRect = container.querySelector(
-      '[data-node-action="fire-trigger"]'
-    );
+    const triggerActionRect = container.querySelector('[data-node-action="fire-trigger"]');
     expect(triggerActionRect).toBeTruthy();
     if (!triggerActionRect) return;
 

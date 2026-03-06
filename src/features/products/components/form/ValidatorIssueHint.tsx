@@ -141,7 +141,9 @@ type IssueHintRowProps = {
   numericField?: keyof ProductFormData;
 };
 
-export const IssueHintRow = memo(function IssueHintRow(props: IssueHintRowProps): React.JSX.Element {
+export const IssueHintRow = memo(function IssueHintRow(
+  props: IssueHintRowProps
+): React.JSX.Element {
   const { fieldName, issue, fieldValue, numericField } = props;
 
   const { getValues, setValue } = useFormContext<ProductFormData>();

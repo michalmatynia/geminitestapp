@@ -29,11 +29,7 @@ import { BLOCK_DEFINITIONS } from './registry/block-definitions';
 import { COLUMN_ALLOWED_BLOCK_TYPES, ROW_ALLOWED_BLOCK_TYPES } from './registry/block-definitions';
 import { SECTION_DEFINITIONS } from './registry/section-definitions';
 
-import type {
-  SectionDefinition,
-  BlockDefinition,
-  PageZone,
-} from '../../types/page-builder';
+import type { SectionDefinition, BlockDefinition, PageZone } from '../../types/page-builder';
 
 // ---------------------------------------------------------------------------
 // Helpers

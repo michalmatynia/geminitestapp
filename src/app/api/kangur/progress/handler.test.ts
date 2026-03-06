@@ -33,7 +33,9 @@ const createRequestContext = (): ApiHandlerContext =>
     getElapsedMs: () => 1,
   }) as ApiHandlerContext;
 
-const createProgress = (overrides: Partial<ReturnType<typeof createDefaultKangurProgressState>> = {}) => ({
+const createProgress = (
+  overrides: Partial<ReturnType<typeof createDefaultKangurProgressState>> = {}
+) => ({
   ...createDefaultKangurProgressState(),
   ...overrides,
 });

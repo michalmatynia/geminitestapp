@@ -35,9 +35,9 @@ export function reduceComplexActions(
       const siblings = section.parentSectionId
         ? (hierarchy.childrenByParent.get(section.parentSectionId) ?? [])
         : (hierarchy.childrenByParent.get(null) ?? []).filter((id: string) => {
-          const node = hierarchy.nodeById.get(id);
-          return node?.zone === section.zone;
-        });
+            const node = hierarchy.nodeById.get(id);
+            return node?.zone === section.zone;
+          });
       const sourceIndex = siblings.indexOf(section.id);
       const targetIndex = sourceIndex >= 0 ? sourceIndex + 1 : siblings.length;
 

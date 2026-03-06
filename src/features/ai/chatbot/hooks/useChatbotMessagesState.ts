@@ -14,9 +14,7 @@ import { useSendChatMessage } from './useChatbotMutations';
 
 export type { UseChatbotMessagesStateReturn };
 
-export function useChatbotMessagesState(
-  sessionId: string | null
-): UseChatbotMessagesStateReturn {
+export function useChatbotMessagesState(sessionId: string | null): UseChatbotMessagesStateReturn {
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState<string>('');

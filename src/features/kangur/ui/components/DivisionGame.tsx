@@ -2,6 +2,13 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 
+import {
+  addXp,
+  createLessonPracticeReward,
+  loadProgress,
+} from '@/features/kangur/ui/services/progress';
+import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
+
 type DivisionQuotientQuestion = {
   type: 'quotient';
   a: number;
@@ -68,7 +75,14 @@ function generateQuestion(round: number): DivisionQuestion {
     }
   }
   const choices = [...wrongs, correct].sort(() => Math.random() - 0.5);
-  return { type: 'quotient', a: dividend, b: divisor, correct, choices, label: `${dividend} ÷ ${divisor} = ?` };
+  return {
+    type: 'quotient',
+    a: dividend,
+    b: divisor,
+    correct,
+    choices,
+    label: `${dividend} ÷ ${divisor} = ?`,
+  };
 }
 
 function ShareVisual({
@@ -115,6 +129,7 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
+  const [xpEarned, setXpEarned] = useState(0);
   const [question, setQuestion] = useState<DivisionQuestion>(() => generateQuestion(0));
   const [selected, setSelected] = useState<number | null>(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -134,8 +149,12 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
     const isCorrect = selected === question.correct;
     const newScore = isCorrect ? score + 1 : score;
 
-    setTimeout(() => {
+    scheduleKangurRoundFeedback(() => {
       if (roundIndex + 1 >= TOTAL) {
+        const progress = loadProgress();
+        const reward = createLessonPracticeReward(progress, 'division', newScore, TOTAL);
+        addXp(reward.xp, reward.progressUpdates);
+        setXpEarned(reward.xp);
         setScore(newScore);
         setDone(true);
       } else {
@@ -145,7 +164,7 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
         setSelected(null);
         setConfirmed(false);
       }
-    }, 1200);
+    });
   };
 
   if (done) {
@@ -160,6 +179,11 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
         <h2 className='text-2xl font-extrabold text-gray-800'>
           Wynik: {score}/{TOTAL}
         </h2>
+        {xpEarned > 0 && (
+          <div className='bg-indigo-100 text-indigo-700 font-bold px-4 py-2 rounded-full text-sm'>
+            +{xpEarned} XP ✨
+          </div>
+        )}
         <div className='w-full bg-gray-100 rounded-full h-3'>
           <motion.div
             initial={{ width: 0 }}
@@ -181,6 +205,7 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
               setRoundIndex(0);
               setScore(0);
               setDone(false);
+              setXpEarned(0);
               setQuestion(generateQuestion(0));
               setSelected(null);
               setConfirmed(false);
@@ -243,7 +268,8 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
 
           <div className='grid grid-cols-2 gap-2 w-full'>
             {question.choices.map((choice, index) => {
-              let className = 'border-2 border-gray-200 text-gray-700 hover:border-blue-400 bg-white';
+              let className =
+                'border-2 border-gray-200 text-gray-700 hover:border-blue-400 bg-white';
               if (confirmed) {
                 if (choice === question.correct) {
                   className = 'border-2 border-green-400 bg-green-100 text-green-800';

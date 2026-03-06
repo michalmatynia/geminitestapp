@@ -145,27 +145,24 @@ export function PersistenceProvider({
     operationHandlersRef.current = handlers;
   }, []);
 
-  const savePathConfig = useCallback(
-    async (options?: SavePathConfigOptions): Promise<boolean> => {
-      const handler = operationHandlersRef.current.savePathConfig;
-      if (!handler) {
-        setAutoSaveStatusInternal('error');
-        setSavingInternal(false);
-        const error = new Error(MISSING_SAVE_HANDLER_MESSAGE);
-        logClientError(error, {
-          context: {
-            source: 'ai-paths.persistence-context',
-            action: 'savePathConfig',
-            category: 'AI',
-            level: 'error',
-          },
-        });
-        return false;
-      }
-      return await handler(options);
-    },
-    []
-  );
+  const savePathConfig = useCallback(async (options?: SavePathConfigOptions): Promise<boolean> => {
+    const handler = operationHandlersRef.current.savePathConfig;
+    if (!handler) {
+      setAutoSaveStatusInternal('error');
+      setSavingInternal(false);
+      const error = new Error(MISSING_SAVE_HANDLER_MESSAGE);
+      logClientError(error, {
+        context: {
+          source: 'ai-paths.persistence-context',
+          action: 'savePathConfig',
+          category: 'AI',
+          level: 'error',
+        },
+      });
+      return false;
+    }
+    return await handler(options);
+  }, []);
 
   // Actions are stable
   const actions = useMemo<PersistenceActions>(

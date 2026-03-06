@@ -699,7 +699,6 @@ describe('case-resolver workspace', () => {
     expect(file?.documentHistory[1]?.documentContentMarkdown).toContain('# First version');
   });
 
-
   it('normalizes related file links and enforces bidirectional relations', () => {
     const raw = JSON.stringify({
       version: 2,
@@ -861,5 +860,4 @@ describe('case-resolver workspace', () => {
     expect(customScan?.scanOcrModel).toBe('llama3.2-vision');
     expect(customScan?.scanOcrPrompt).toBe('Use this custom OCR prompt.');
   });
-
 });

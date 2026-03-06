@@ -127,7 +127,9 @@ export async function POST_handler(
   }
 
   const normalizedUsername = data.username?.trim() ?? '';
-  const isBaseIntegration = BASE_INTEGRATION_SLUGS.has((integration.slug ?? '').trim().toLowerCase());
+  const isBaseIntegration = BASE_INTEGRATION_SLUGS.has(
+    (integration.slug ?? '').trim().toLowerCase()
+  );
   if (integration.slug !== 'baselinker' && !normalizedUsername) {
     throw badRequestError('Username is required for this integration.', {
       integrationId,

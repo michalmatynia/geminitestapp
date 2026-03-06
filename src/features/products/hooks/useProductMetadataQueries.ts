@@ -136,7 +136,8 @@ export function useProducers(): ListQuery<Producer> {
   const queryKey = productMetadataKeys.producers();
   return createListQueryV2({
     queryKey,
-    queryFn: async (): Promise<Producer[]> => await api.get<Producer[]>('/api/v2/products/producers'),
+    queryFn: async (): Promise<Producer[]> =>
+      await api.get<Producer[]>('/api/v2/products/producers'),
     meta: {
       source: 'products.hooks.useProducers',
       operation: 'list',
@@ -151,7 +152,7 @@ export function useProducers(): ListQuery<Producer> {
 export function useSaveProducerMutation(): SaveMutation<
   Producer,
   { id: string | undefined; data: { name: string; website: string | null } }
-  > {
+> {
   const mutationKey = productMetadataKeys.producers();
   return createMutationV2({
     mutationFn: ({ id, data }) =>

@@ -86,15 +86,19 @@ export function CanvasSvgNodePorts({
       if (press?.key !== key || event.button !== 0) return false;
       const deltaX = event.clientX - press.startClientX;
       const deltaY = event.clientY - press.startClientY;
-      const moved = press.moved || deltaX * deltaX + deltaY * deltaY > CONNECTOR_TAP_MOVE_THRESHOLD_SQ;
+      const moved =
+        press.moved || deltaX * deltaX + deltaY * deltaY > CONNECTOR_TAP_MOVE_THRESHOLD_SQ;
       return !moved;
     },
     []
   );
 
-  const clearConnectorPress = React.useCallback((event: React.PointerEvent<SVGCircleElement>): void => {
-    connectorPressByPointerIdRef.current.delete(event.pointerId);
-  }, []);
+  const clearConnectorPress = React.useCallback(
+    (event: React.PointerEvent<SVGCircleElement>): void => {
+      connectorPressByPointerIdRef.current.delete(event.pointerId);
+    },
+    []
+  );
 
   const togglePinnedConnector = React.useCallback(
     (key: string, isPinned: boolean): void => {

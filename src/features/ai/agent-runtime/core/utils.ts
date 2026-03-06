@@ -27,9 +27,9 @@ export function buildSelfImprovementPlaybook(
   const collect = (values: unknown): string[] =>
     Array.isArray(values)
       ? values
-        .filter((item: unknown): item is string => typeof item === 'string')
-        .map((item: string) => item.trim())
-        .filter(Boolean)
+          .filter((item: unknown): item is string => typeof item === 'string')
+          .map((item: string) => item.trim())
+          .filter(Boolean)
       : [];
   const mistakes = new Set<string>();
   const improvements = new Set<string>();

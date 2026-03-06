@@ -1,8 +1,6 @@
 import { z } from 'zod';
 import { namedDtoSchema } from '../base';
-import {
-  type PromptExploderSegmentType,
-} from './base';
+import { type PromptExploderSegmentType } from './base';
 
 import { type PromptValidationRule } from '../prompt-engine';
 import { type PromptExploderLearnedTemplate } from './settings';
@@ -122,4 +120,3 @@ export type PromptExploderBenchmarkCase = {
 export type ParseCustomBenchmarkCasesResult =
   | { ok: true; cases: PromptExploderBenchmarkCase[] }
   | { ok: false; error: string };
-

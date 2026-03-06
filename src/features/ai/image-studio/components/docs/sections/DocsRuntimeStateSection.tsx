@@ -49,7 +49,9 @@ function metricValue(value: string | number | boolean | null | undefined): strin
   return String(value);
 }
 
-export function DocsRuntimeStateSection({ state }: DocsRuntimeStateSectionProps): React.JSX.Element {
+export function DocsRuntimeStateSection({
+  state,
+}: DocsRuntimeStateSectionProps): React.JSX.Element {
   const {
     projectId,
     projectsQueryCount,

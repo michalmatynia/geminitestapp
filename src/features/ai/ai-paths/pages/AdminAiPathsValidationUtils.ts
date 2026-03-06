@@ -181,9 +181,7 @@ export const parsePathIndex = (raw: string | undefined): PathMeta[] => {
     .filter((entry: PathMeta | null): entry is PathMeta => Boolean(entry));
 };
 
-export const parseAiPathsSettings = (
-  records: AiPathsSettingRecordDto[]
-): ParsedAiPathsSettings => {
+export const parseAiPathsSettings = (records: AiPathsSettingRecordDto[]): ParsedAiPathsSettings => {
   const settingsMap = new Map<string, string>(
     records.map((record: AiPathsSettingRecordDto): [string, string] => [record.key, record.value])
   );
@@ -218,9 +216,7 @@ export const parseAiPathsSettings = (
       };
     });
 
-  const pathMetas = [...metasFromIndex].sort((left, right) =>
-    left.name.localeCompare(right.name)
-  );
+  const pathMetas = [...metasFromIndex].sort((left, right) => left.name.localeCompare(right.name));
   const pathConfigs = Object.fromEntries(
     Array.from(parsedConfigById.entries()).map(([id, config]: [string, PathConfig]) => [id, config])
   );

@@ -68,10 +68,7 @@ export function useCatalogs(): ListQuery<CatalogRecord> {
 }
 
 export function useTemplates(scope: 'import' | 'export'): ListQuery<Template> {
-  const endpoint =
-    scope === 'import'
-      ? '/api/v2/templates/import'
-      : '/api/v2/templates/export';
+  const endpoint = scope === 'import' ? '/api/v2/templates/import' : '/api/v2/templates/export';
   const queryKey = importExportKeys.templates(scope);
 
   return createListQueryV2({
@@ -127,7 +124,7 @@ export function useImportPreference<T>(
 export function useSavePreferenceMutation(): MutationResult<
   unknown,
   { endpoint: string; data: unknown }
-  > {
+> {
   const mutationKey = importExportKeys.preferences();
 
   return createUpdateMutationV2({
@@ -156,10 +153,7 @@ export function useTemplateMutation(
   scope: 'import' | 'export',
   id?: string
 ): MutationResult<unknown, { data?: unknown; isDelete?: boolean }> {
-  const endpoint =
-    scope === 'import'
-      ? '/api/v2/templates/import'
-      : '/api/v2/templates/export';
+  const endpoint = scope === 'import' ? '/api/v2/templates/import' : '/api/v2/templates/export';
   const mutationKey = importExportKeys.templates(scope);
 
   return createMutationV2({
@@ -309,7 +303,7 @@ export function useImportParameterCache(
 export function useRefreshImportParameterCacheMutation(): MutationResult<
   { keys?: string[]; values?: Record<string, string> },
   { inventoryId: string; connectionId: string }
-  > {
+> {
   const mutationKey = importExportKeys.lists();
 
   return createMutationV2({
@@ -440,7 +434,7 @@ export function useImportMutation(): MutationResult<
     mode?: BaseImportMode;
     requestId?: string;
   }
-  > {
+> {
   const mutationKey = importExportKeys.lists();
   return createCreateMutationV2({
     mutationFn: (params) => {
@@ -575,7 +569,7 @@ export function useSaveExportSettingsMutation(): MutationResult<
     imageRetryPresets?: ImageRetryPreset[];
     exportWarehouseId?: string | null;
   }
-  > {
+> {
   const mutationKey = importExportKeys.preferences();
 
   return createUpdateMutationV2({
@@ -611,11 +605,11 @@ export function useSaveExportSettingsMutation(): MutationResult<
         }),
         ...(normalizedInventoryId
           ? [
-            api.post('/api/v2/integrations/exports/base/export-warehouse', {
-              warehouseId: normalizedWarehouseId,
-              inventoryId: normalizedInventoryId,
-            }),
-          ]
+              api.post('/api/v2/integrations/exports/base/export-warehouse', {
+                warehouseId: normalizedWarehouseId,
+                inventoryId: normalizedInventoryId,
+              }),
+            ]
           : []),
       ]);
     },
@@ -640,7 +634,7 @@ export function useSaveExportSettingsMutation(): MutationResult<
 export function useSaveDefaultConnectionMutation(): MutationResult<
   { connectionId: string | null },
   { connectionId?: string | null }
-  > {
+> {
   const mutationKey = importExportKeys.preferences();
 
   return createUpdateMutationV2({

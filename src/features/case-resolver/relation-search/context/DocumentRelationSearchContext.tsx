@@ -115,9 +115,8 @@ export type DocumentRelationSearchStateValue = Omit<
 const DocumentRelationSearchStateContext = createContext<DocumentRelationSearchStateValue | null>(
   null
 );
-const DocumentRelationSearchActionsContext = createContext<DocumentRelationSearchActionsValue | null>(
-  null
-);
+const DocumentRelationSearchActionsContext =
+  createContext<DocumentRelationSearchActionsValue | null>(null);
 
 export function useDocumentRelationSearchStateContext(): DocumentRelationSearchStateValue {
   const context = useContext(DocumentRelationSearchStateContext);

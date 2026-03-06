@@ -11,4 +11,3 @@ export const PUT = apiHandlerWithParams(PUT_templates_item_handler, {
 export const DELETE = apiHandlerWithParams(DELETE_templates_item_handler, {
   source: 'templates.item.DELETE',
 });
-

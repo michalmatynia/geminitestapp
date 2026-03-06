@@ -30,11 +30,7 @@ const applySimulationEntityId = (node: AiNode, entityId: string): AiNode => ({
 });
 
 export function SimulationDialog(): React.JSX.Element | null {
-  const {
-    nodes,
-    isPathLocked,
-    handleRunSimulation,
-  } = useAiPathsSettingsOrchestrator();
+  const { nodes, isPathLocked, handleRunSimulation } = useAiPathsSettingsOrchestrator();
   const { simulationOpenNodeId } = useSelectionState();
   const { setSimulationOpenNodeId } = useSelectionActions();
   const { setNodes } = useGraphActions();

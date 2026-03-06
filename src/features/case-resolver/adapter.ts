@@ -47,9 +47,9 @@ export const createCaseResolverMasterTreeAdapter = (
           targetParent?.entity === 'folder'
             ? targetParent.id
             : (resolveCaseResolverFolderTargetForNode(
-              context.nextNodes,
-              operation.targetParentId
-            ) ?? '');
+                context.nextNodes,
+                operation.targetParentId
+              ) ?? '');
 
         if (node.entity === 'file') {
           await operations.moveFile(node.id, targetFolder);

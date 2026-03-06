@@ -241,7 +241,7 @@ export function useOfflineMutation<
 export function useOfflineSync(): {
   processQueue: () => Promise<void>;
   clearQueue: () => void;
-  } {
+} {
   const queryClient = useQueryClient();
 
   const processQueue = useCallback(async () => {

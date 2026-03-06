@@ -127,9 +127,7 @@ describe('handleFetcher', () => {
       }
     );
 
-    await expect(handleFetcher(context)).rejects.toThrow(
-      'could not hydrate product:p-404'
-    );
+    await expect(handleFetcher(context)).rejects.toThrow('could not hydrate product:p-404');
     expect(fetchEntityCached).toHaveBeenCalledWith('product', 'p-404');
   });
 

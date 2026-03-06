@@ -49,7 +49,9 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
   const runtimeKernelCodeObjectIds = runtimeKernelParity?.codeObjectIds ?? [];
 
   const runtimeKernelRunsCoverageRate =
-    runtimeKernelSampledRuns > 0 ? (runtimeKernelRunsWithParity / runtimeKernelSampledRuns) * 100 : 0;
+    runtimeKernelSampledRuns > 0
+      ? (runtimeKernelRunsWithParity / runtimeKernelSampledRuns) * 100
+      : 0;
   const runtimeKernelV3Rate =
     runtimeKernelSampledHistoryEntries > 0
       ? (runtimeKernelV3Entries / runtimeKernelSampledHistoryEntries) * 100

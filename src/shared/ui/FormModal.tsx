@@ -54,14 +54,12 @@ type FormModalHeaderRuntimeValue = {
   isCloseLocked: boolean;
 };
 
-const {
-  Context: FormModalHeaderRuntimeContext,
-  useStrictContext: useFormModalHeaderRuntime,
-} = createStrictContext<FormModalHeaderRuntimeValue>({
-  hookName: 'useFormModalHeaderRuntime',
-  providerName: 'FormModalHeaderRuntimeProvider',
-  displayName: 'FormModalHeaderRuntimeContext',
-});
+const { Context: FormModalHeaderRuntimeContext, useStrictContext: useFormModalHeaderRuntime } =
+  createStrictContext<FormModalHeaderRuntimeValue>({
+    hookName: 'useFormModalHeaderRuntime',
+    providerName: 'FormModalHeaderRuntimeProvider',
+    displayName: 'FormModalHeaderRuntimeContext',
+  });
 
 type FormModalHeaderRuntimeProviderProps = {
   value: FormModalHeaderRuntimeValue;

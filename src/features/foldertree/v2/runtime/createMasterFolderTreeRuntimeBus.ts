@@ -91,7 +91,8 @@ export const createMasterFolderTreeRuntimeBus = (
     },
     getFocusedInstance: (): string | null => focusedInstanceId,
     getInstanceIds: (): string[] => Array.from(instances.keys()),
-    getCachedSearchIndex: (instanceId: string): string[] | null => searchCache.get(instanceId) ?? null,
+    getCachedSearchIndex: (instanceId: string): string[] | null =>
+      searchCache.get(instanceId) ?? null,
     setCachedSearchIndex: (instanceId: string, nodeIds: string[]): void => {
       searchCache.set(instanceId, [...nodeIds]);
     },

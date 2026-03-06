@@ -42,9 +42,8 @@ export type ComponentTreePanelActionsContextValue = Pick<
 const ComponentTreePanelStateContext = createContext<ComponentTreePanelStateContextValue | null>(
   null
 );
-const ComponentTreePanelActionsContext = createContext<ComponentTreePanelActionsContextValue | null>(
-  null
-);
+const ComponentTreePanelActionsContext =
+  createContext<ComponentTreePanelActionsContextValue | null>(null);
 
 type ComponentTreePanelProviderProps = {
   value: ComponentTreePanelContextValue;
@@ -102,9 +101,7 @@ export function ComponentTreePanelProvider({
 export function useComponentTreePanelState(): ComponentTreePanelStateContextValue {
   const context = useContext(ComponentTreePanelStateContext);
   if (!context) {
-    throw new Error(
-      'useComponentTreePanelState must be used within ComponentTreePanelProvider'
-    );
+    throw new Error('useComponentTreePanelState must be used within ComponentTreePanelProvider');
   }
   return context;
 }
@@ -112,9 +109,7 @@ export function useComponentTreePanelState(): ComponentTreePanelStateContextValu
 export function useComponentTreePanelActions(): ComponentTreePanelActionsContextValue {
   const context = useContext(ComponentTreePanelActionsContext);
   if (!context) {
-    throw new Error(
-      'useComponentTreePanelActions must be used within ComponentTreePanelProvider'
-    );
+    throw new Error('useComponentTreePanelActions must be used within ComponentTreePanelProvider');
   }
   return context;
 }

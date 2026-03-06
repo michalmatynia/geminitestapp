@@ -382,9 +382,9 @@ export default function ProductFormParameters(): React.JSX.Element {
                                       const nextValues = checked
                                         ? [...checklistValues, optionLabel]
                                         : checklistValues.filter(
-                                          (value: string) =>
-                                            value.trim().toLowerCase() !== optionKey
-                                        );
+                                            (value: string) =>
+                                              value.trim().toLowerCase() !== optionKey
+                                          );
                                       handleLanguageValueChange(
                                         activeParameterLanguage.code,
                                         formatChecklistValues(

@@ -96,9 +96,7 @@ export const prismaKangurScoreRepository: KangurScoreRepository = {
       take: PRISMA_SCORE_SCAN_LIMIT,
     })) as PrismaScoreSettingRow[];
 
-    const parsed = rows
-      .map(parseScoreRow)
-      .filter((row): row is KangurScore => row !== null);
+    const parsed = rows.map(parseScoreRow).filter((row): row is KangurScore => row !== null);
     const filtered = applyFilters(parsed, input);
     const sorted = sortScores(filtered, input?.sort);
     const limit = input?.limit ?? 100;

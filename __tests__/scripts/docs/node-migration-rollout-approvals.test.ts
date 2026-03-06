@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
+import { NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
 import {
   NODE_MIGRATION_ROLLOUT_APPROVALS_FILE,
   NODE_MIGRATION_ROLLOUT_APPROVALS_SCHEMA_VERSION,
@@ -13,8 +13,8 @@ import { loadNodeMigrationRolloutEligibilitySummary } from '../../../scripts/doc
 const normalizeNodeType = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
 
-const expectedPilotNodeTypes = new Set<string>(
-  NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES.map((entry: unknown): string =>
+const expectedRuntimeKernelNodeTypes = new Set<string>(
+  NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES.map((entry: unknown): string =>
     normalizeNodeType(entry)
   ).filter((entry: string): boolean => entry.length > 0)
 );
@@ -30,15 +30,15 @@ describe('node migration rollout approvals', () => {
     expect(summary.schemaVersion).toBe(NODE_MIGRATION_ROLLOUT_APPROVALS_SCHEMA_VERSION);
   });
 
-  it('allows approvals only for v3 pilot node types', () => {
+  it('allows approvals only for canonical runtime-kernel node types', () => {
     const summary = loadNodeMigrationRolloutApprovalsSummary({
       workspaceRoot: process.cwd(),
     });
 
     summary.approvedNodeTypes.forEach((nodeType: string): void => {
       expect(
-        expectedPilotNodeTypes.has(nodeType),
-        `Rollout approval node "${nodeType}" is not in NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES`
+        expectedRuntimeKernelNodeTypes.has(nodeType),
+        `Rollout approval node "${nodeType}" is not in NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES`
       ).toBe(true);
     });
   });

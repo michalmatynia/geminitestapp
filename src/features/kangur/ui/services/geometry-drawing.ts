@@ -280,7 +280,11 @@ const evaluateAspectScore = (aspectRatio: number, rule: GeometryShapeRule): numb
   return 0.8;
 };
 
-const evaluatePolygonScore = (rule: GeometryShapeRule, corners: number, aspectRatio: number): number => {
+const evaluatePolygonScore = (
+  rule: GeometryShapeRule,
+  corners: number,
+  aspectRatio: number
+): number => {
   const cornerScore = clamp01(1 - Math.abs(corners - rule.idealCorners) / 2.3);
   const ratioScore = evaluateAspectScore(aspectRatio, rule);
   return cornerScore * 0.72 + ratioScore * 0.28;
@@ -355,7 +359,8 @@ export const evaluateGeometryDrawing = (
   const closureRatio = distance(first, last) / box.diagonal;
   const closureScore = clamp01(1 - closureRatio / 0.28);
   const corners = countCorners(sampled);
-  const aspectRatio = Math.max(box.width, box.height) / Math.max(1, Math.min(box.width, box.height));
+  const aspectRatio =
+    Math.max(box.width, box.height) / Math.max(1, Math.min(box.width, box.height));
 
   const shapeScore =
     target === 'circle'

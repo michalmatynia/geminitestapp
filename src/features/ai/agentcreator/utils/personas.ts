@@ -43,9 +43,7 @@ const UNSUPPORTED_AGENT_PERSONA_SETTINGS_KEYS = [
 
 const UNSUPPORTED_AGENT_PERSONA_TOP_LEVEL_KEYS = ['modelId', 'temperature', 'maxTokens'] as const;
 
-const toCanonicalAgentPersonaSettings = (
-  value: unknown
-): AgentPersonaSettings => {
+const toCanonicalAgentPersonaSettings = (value: unknown): AgentPersonaSettings => {
   if (value === undefined || value === null) {
     return buildAgentPersonaSettings();
   }
@@ -83,9 +81,7 @@ const toCanonicalAgentPersonaSettings = (
   return buildAgentPersonaSettings(parsedSettings.data);
 };
 
-export const normalizeAgentPersonas = (
-  value: unknown
-): AgentPersona[] => {
+export const normalizeAgentPersonas = (value: unknown): AgentPersona[] => {
   if (!Array.isArray(value)) {
     throw validationError('Invalid agent personas payload.', {
       source: 'agent_personas',
@@ -128,17 +124,12 @@ export const normalizeAgentPersonas = (
     }
 
     const id =
-      typeof raw['id'] === 'string' && raw['id'].trim()
-        ? raw['id']
-        : createAgentPersonaId();
+      typeof raw['id'] === 'string' && raw['id'].trim() ? raw['id'] : createAgentPersonaId();
     const createdAt =
-      typeof raw['createdAt'] === 'string'
-        ? raw['createdAt']
-        : new Date().toISOString();
+      typeof raw['createdAt'] === 'string' ? raw['createdAt'] : new Date().toISOString();
     const updatedAt = typeof raw['updatedAt'] === 'string' ? raw['updatedAt'] : createdAt;
     const settings = toCanonicalAgentPersonaSettings(raw['settings']);
-    const description =
-      typeof raw['description'] === 'string' ? raw['description'] : null;
+    const description = typeof raw['description'] === 'string' ? raw['description'] : null;
 
     return {
       id,

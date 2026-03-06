@@ -114,11 +114,13 @@ export const createCmsPageComponentSchema = cmsPageComponentSchema.omit({
 export type CreateCmsPageComponentDto = z.infer<typeof createCmsPageComponentSchema>;
 export type UpdateCmsPageComponentDto = Partial<CreateCmsPageComponentDto>;
 
-export const cmsPageComponentInputSchema = z.object({
-  type: z.string(),
-  order: z.number(),
-  content: cmsPageBuilderComponentContentSchema,
-}).strict();
+export const cmsPageComponentInputSchema = z
+  .object({
+    type: z.string(),
+    order: z.number(),
+    content: cmsPageBuilderComponentContentSchema,
+  })
+  .strict();
 
 export type CmsPageComponentInputDto = z.infer<typeof cmsPageComponentInputSchema>;
 export type PageComponentInput = CmsPageComponentInputDto;
@@ -860,10 +862,7 @@ export type CmsRepository = {
   addSlugToPage(pageId: string, slugId: string): Promise<void>;
   removeSlugFromPage(pageId: string, slugId: string): Promise<void>;
   replacePageSlugs(pageId: string, slugIds: string[]): Promise<void>;
-  replacePageComponents(
-    pageId: string,
-    components: PageComponentInput[]
-  ): Promise<void>;
+  replacePageComponents(pageId: string, components: PageComponentInput[]): Promise<void>;
 
   // Slugs
   getSlugs(): Promise<Slug[]>;

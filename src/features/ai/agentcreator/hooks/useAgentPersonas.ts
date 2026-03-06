@@ -36,7 +36,7 @@ export function useSaveAgentPersonasMutation(): UseMutationResult<
   void,
   Error,
   { personas: AgentPersona[] }
-  > {
+> {
   return createUpdateMutationV2<void, { personas: AgentPersona[] }>({
     mutationKey: agentPersonaKeys.mutation('save'),
     mutationFn: async ({ personas }: { personas: AgentPersona[] }): Promise<void> => {

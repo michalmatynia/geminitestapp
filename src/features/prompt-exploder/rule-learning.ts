@@ -12,14 +12,14 @@ export const mergeRegexLearnedRule = (args: {
   const nextRule: PromptValidationRule =
     existingRule?.kind === 'regex'
       ? {
-        ...args.incomingRule,
-        pattern: mergeRegexPatternsForRule(existingRule.pattern, args.incomingRule.pattern),
-        similar: existingRule.similar ?? args.incomingRule.similar,
-        sequence:
+          ...args.incomingRule,
+          pattern: mergeRegexPatternsForRule(existingRule.pattern, args.incomingRule.pattern),
+          similar: existingRule.similar ?? args.incomingRule.similar,
+          sequence:
             (typeof existingRule.sequence === 'number'
               ? existingRule.sequence
               : args.incomingRule.sequence) ?? null,
-      }
+        }
       : args.incomingRule;
 
   return {

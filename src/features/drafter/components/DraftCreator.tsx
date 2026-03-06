@@ -84,8 +84,7 @@ export function DraftCreator({
   const stateContext = useOptionalDrafterState();
   const actionsContext = useOptionalDrafterActions();
 
-  const draftId =
-    propDraftId !== undefined ? propDraftId : (stateContext?.editingDraftId ?? null);
+  const draftId = propDraftId !== undefined ? propDraftId : (stateContext?.editingDraftId ?? null);
   const handleSaveSuccess =
     propOnSaveSuccess ?? actionsContext?.handleSaveSuccess ?? ((): void => {});
   const formRef = stateContext?.formRef;

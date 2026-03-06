@@ -104,17 +104,17 @@ export function GenerationToolbarCropSection(): React.JSX.Element {
         )}
         {cropBusy
           ? maybeWrapTooltip(
-            cropTooltipContent.cancelCrop,
-            <Button
-              size='xs'
-              type='button'
-              variant='outline'
-              onClick={onCancelCrop}
-              title={cropTooltipsEnabled ? cropTooltipContent.cancelCrop : undefined}
-            >
+              cropTooltipContent.cancelCrop,
+              <Button
+                size='xs'
+                type='button'
+                variant='outline'
+                onClick={onCancelCrop}
+                title={cropTooltipsEnabled ? cropTooltipContent.cancelCrop : undefined}
+              >
                 Cancel Crop
-            </Button>
-          )
+              </Button>
+            )
           : null}
       </div>
     </div>

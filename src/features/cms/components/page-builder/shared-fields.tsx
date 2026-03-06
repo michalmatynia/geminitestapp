@@ -9,14 +9,7 @@ import { useAsset3DById } from '@/features/viewer3d/hooks/useAsset3dQueries';
 import type { ManagedImageSlot } from '@/shared/contracts/image-slots';
 import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
-import {
-  Input,
-  SelectSimple,
-  Checkbox,
-  Button,
-  useToast,
-  FormField,
-} from '@/shared/ui';
+import { Input, SelectSimple, Checkbox, Button, useToast, FormField } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { Asset3DPickerModal } from './Asset3DPickerModal';
@@ -115,9 +108,7 @@ export function ImagePickerField(props: FieldProps<string>): React.JSX.Element {
       slotLabels: [''],
       uploadError,
       isSlotImageLocked: (): boolean => Boolean(disabled || uploadMutation.isPending),
-      slotImageLockedReason: disabled
-        ? 'Image field is disabled.'
-        : 'Image upload is in progress.',
+      slotImageLockedReason: disabled ? 'Image field is disabled.' : 'Image upload is in progress.',
     }),
     [
       disabled,
@@ -295,10 +286,10 @@ export function ColorField(props: FieldProps<string>): React.JSX.Element {
 
 export function NumberField(
   props: FieldProps<number> & {
-  suffix?: string;
-  min?: number;
-  max?: number;
-  step?: number;
+    suffix?: string;
+    min?: number;
+    max?: number;
+    step?: number;
   }
 ): React.JSX.Element {
   const { label, value, onChange, className, disabled, suffix, min, max, step } = props;
@@ -326,10 +317,10 @@ export function NumberField(
 
 export function RangeField(
   props: FieldProps<number> & {
-  min: number;
-  max: number;
-  step?: number;
-  suffix?: string;
+    min: number;
+    max: number;
+    step?: number;
+    suffix?: string;
   }
 ): React.JSX.Element {
   const { label, value, onChange, className, disabled, min, max, step, suffix } = props;
@@ -364,8 +355,8 @@ export function RangeField(
 
 export function SelectField(
   props: FieldProps<string> & {
-  options: { label: string; value: string }[];
-  placeholder?: string;
+    options: { label: string; value: string }[];
+    placeholder?: string;
   }
 ): React.JSX.Element {
   const { label, value, onChange, options, className, disabled, placeholder } = props;
@@ -412,9 +403,7 @@ export function CheckboxField(props: {
   );
 }
 
-export function TextField(
-  props: FieldProps<string> & { placeholder?: string }
-): React.JSX.Element {
+export function TextField(props: FieldProps<string> & { placeholder?: string }): React.JSX.Element {
   const { label, value, onChange, className, disabled, placeholder } = props;
 
   return (

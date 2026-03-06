@@ -18,7 +18,10 @@ import {
   type SeverityFilter,
   usePromptEngineFilters,
 } from '../context/prompt-engine/PromptEngineFiltersContext';
-import { PROMPT_VALIDATION_SCOPE_LABELS, PROMPT_VALIDATION_SCOPE_VALUES } from '@/shared/lib/prompt-engine/settings';
+import {
+  PROMPT_VALIDATION_SCOPE_LABELS,
+  PROMPT_VALIDATION_SCOPE_VALUES,
+} from '@/shared/lib/prompt-engine/settings';
 
 /**
  * REFACTORED: PromptEngineFilters using FilterPanel template
@@ -28,20 +31,20 @@ import { PROMPT_VALIDATION_SCOPE_LABELS, PROMPT_VALIDATION_SCOPE_VALUES } from '
  * Savings: 56% reduction
  */
 export function PromptEngineFilters(): React.JSX.Element {
+  const { patternTab, patternTabLocked, exploderSubTab, exploderSubTabLocked, scopeLocked } =
+    usePromptEngineConfig();
   const {
-    patternTab,
-    patternTabLocked,
-    exploderSubTab,
-    exploderSubTabLocked,
-    scopeLocked,
-  } = usePromptEngineConfig();
-  const { query, setQuery, severity, setSeverity, scope, setScope, includeDisabled, setIncludeDisabled } =
-    usePromptEngineFilters();
+    query,
+    setQuery,
+    severity,
+    setSeverity,
+    scope,
+    setScope,
+    includeDisabled,
+    setIncludeDisabled,
+  } = usePromptEngineFilters();
   const { filteredDrafts } = usePromptEngineData();
-  const {
-    setPatternTab,
-    setExploderSubTab,
-  } = usePromptEngineActions();
+  const { setPatternTab, setExploderSubTab } = usePromptEngineActions();
   const activeTabLabel =
     patternTab === 'core'
       ? 'Core'
@@ -80,7 +83,7 @@ export function PromptEngineFilters(): React.JSX.Element {
               })),
             ],
           } satisfies FilterField,
-      ]),
+        ]),
     {
       key: 'includeDisabled',
       label: 'Include Disabled',

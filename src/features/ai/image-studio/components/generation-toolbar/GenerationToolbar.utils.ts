@@ -66,16 +66,16 @@ export const normalizeMaskShapeForExport = (shape: unknown): MaskShapeForExport 
 
   const points = Array.isArray(candidate['points'])
     ? candidate['points']
-      .map((point) => {
-        if (!point || typeof point !== 'object') return null;
-        const pointRecord = point as Record<string, unknown>;
-        const x = pointRecord['x'];
-        const y = pointRecord['y'];
-        if (typeof x !== 'number' || !Number.isFinite(x)) return null;
-        if (typeof y !== 'number' || !Number.isFinite(y)) return null;
-        return { x, y };
-      })
-      .filter((point): point is { x: number; y: number } => Boolean(point))
+        .map((point) => {
+          if (!point || typeof point !== 'object') return null;
+          const pointRecord = point as Record<string, unknown>;
+          const x = pointRecord['x'];
+          const y = pointRecord['y'];
+          if (typeof x !== 'number' || !Number.isFinite(x)) return null;
+          if (typeof y !== 'number' || !Number.isFinite(y)) return null;
+          return { x, y };
+        })
+        .filter((point): point is { x: number; y: number } => Boolean(point))
     : [];
   if (points.length === 0) return null;
 

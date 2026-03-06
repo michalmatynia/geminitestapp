@@ -7,7 +7,10 @@ import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useOptionalPromptEngineValidationPageContext } from './PromptEngineValidationPageContext';
-import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
+import {
+  PROMPT_ENGINE_SETTINGS_KEY,
+  parsePromptEngineSettings,
+} from '@/shared/lib/prompt-engine/settings';
 
 import {
   ConfigContext,
@@ -21,10 +24,7 @@ import {
   type PromptEngineFilters,
   type ScopeFilter,
 } from './prompt-engine/PromptEngineFiltersContext';
-import {
-  DataContext,
-  type PromptEngineData,
-} from './prompt-engine/PromptEngineDataContext';
+import { DataContext, type PromptEngineData } from './prompt-engine/PromptEngineDataContext';
 import {
   ActionsContext,
   type PromptEngineActions,

@@ -262,8 +262,7 @@ describe('image-studio autoscale handler', () => {
     createImageFileMock.mockResolvedValue({
       id: 'image-file-output-1',
       filename: 'autoscale-server_auto_scaler.png',
-      filepath:
-        '/uploads/studio/autoscale/project-1/source-slot/autoscale-server_auto_scaler.png',
+      filepath: '/uploads/studio/autoscale/project-1/source-slot/autoscale-server_auto_scaler.png',
       mimetype: 'image/png',
       size: outputBuffer.length,
       width: 40,

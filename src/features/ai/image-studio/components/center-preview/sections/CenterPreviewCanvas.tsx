@@ -69,36 +69,36 @@ export function CenterPreviewCanvas(): React.JSX.Element {
           canCompareSelectedVariants &&
           compareVariantImageA &&
           compareVariantImageB ? (
-            <SplitVariantPreview />
-          ) : splitVariantView &&
+          <SplitVariantPreview />
+        ) : splitVariantView &&
           canCompareWithSource &&
           sourceSlotImageSrc &&
           workingSlotImageSrc ? (
-              <SplitVariantPreview />
-            ) : (
-              <div className={previewCanvasClassName}>
-                <VectorDrawingCanvas
-                  shapes={liveMaskShapes}
-                  src={activeCanvasImageSrc}
-                  baseCanvasWidthPx={baseCanvasWidthPx}
-                  baseCanvasHeightPx={baseCanvasHeightPx}
-                  maskPreviewEnabled={maskPreviewEnabled}
-                  maskPreviewInvert={maskInvert}
-                  maskPreviewFeather={maskFeather}
-                  showCenterGuides={centerGuidesEnabled}
-                  selectionEnabled={canvasSelectionEnabled}
-                  imageMoveEnabled={imageMoveEnabled}
-                  imageOffset={canvasImageOffset}
-                  onImageOffsetChange={(offset) => {
-                    setCanvasImageOffset(offset);
-                  }}
-                  backgroundLayerEnabled={canvasBackgroundLayerEnabled}
-                  backgroundColor={canvasBackgroundColor}
-                  onViewCropRectChange={onPreviewCanvasCropRectChange}
-                  onImageContentFrameChange={onPreviewCanvasImageFrameChange}
-                />
-              </div>
-            )}
+          <SplitVariantPreview />
+        ) : (
+          <div className={previewCanvasClassName}>
+            <VectorDrawingCanvas
+              shapes={liveMaskShapes}
+              src={activeCanvasImageSrc}
+              baseCanvasWidthPx={baseCanvasWidthPx}
+              baseCanvasHeightPx={baseCanvasHeightPx}
+              maskPreviewEnabled={maskPreviewEnabled}
+              maskPreviewInvert={maskInvert}
+              maskPreviewFeather={maskFeather}
+              showCenterGuides={centerGuidesEnabled}
+              selectionEnabled={canvasSelectionEnabled}
+              imageMoveEnabled={imageMoveEnabled}
+              imageOffset={canvasImageOffset}
+              onImageOffsetChange={(offset) => {
+                setCanvasImageOffset(offset);
+              }}
+              backgroundLayerEnabled={canvasBackgroundLayerEnabled}
+              backgroundColor={canvasBackgroundColor}
+              onViewCropRectChange={onPreviewCanvasCropRectChange}
+              onImageContentFrameChange={onPreviewCanvasImageFrameChange}
+            />
+          </div>
+        )}
 
         <div className='absolute bottom-4 left-4 z-30'>
           <SplitViewControls />

@@ -360,12 +360,12 @@ export function ProductMetadataMultiSelectField({
     ? onChangeProp
     : single
       ? (() => {
-        const singleHandler = resolveSingleChangeHandler();
-        if (!singleHandler) return null;
-        return (nextIds: string[]): void => {
-          singleHandler(nextIds[0] || null);
-        };
-      })()
+          const singleHandler = resolveSingleChangeHandler();
+          if (!singleHandler) return null;
+          return (nextIds: string[]): void => {
+            singleHandler(nextIds[0] || null);
+          };
+        })()
       : ((metadataActionsContext?.[contextOnChangeKey] as (nextIds: string[]) => void) ??
         resolveFormContextMultiHandler());
 

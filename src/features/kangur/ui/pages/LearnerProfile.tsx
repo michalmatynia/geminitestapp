@@ -1,29 +1,36 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, BarChart2, BookOpen, Flame, LayoutDashboard, LogIn, Target } from 'lucide-react';
+import {
+  ArrowLeft,
+  BarChart2,
+  BookOpen,
+  Flame,
+  LayoutDashboard,
+  LogIn,
+  Target,
+} from 'lucide-react';
 import Link from 'next/link';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
+import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
+import LessonMasteryInsights from '@/features/kangur/ui/components/LessonMasteryInsights';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import { buildKangurLearnerProfileSnapshot } from '@/features/kangur/ui/services/profile';
+import {
+  LEARNER_PROFILE_SCORE_FETCH_LIMIT,
+  loadLearnerProfileScores,
+} from '@/features/kangur/ui/services/learner-profile-scores';
 import type { KangurDifficulty, KangurOperation } from '@/features/kangur/ui/types';
 import { BADGES } from '@/features/kangur/ui/services/progress';
 
 const DAILY_GOAL_GAMES = 3;
-const SCORE_FETCH_LIMIT = 120;
 
 const kangurPlatform = getKangurPlatform();
-
-const isStatusError = (value: unknown): value is { status: number } =>
-  typeof value === 'object' &&
-  value !== null &&
-  'status' in value &&
-  typeof (value as { status?: unknown }).status === 'number';
 
 const formatDateTime = (value: string): string => {
   const parsed = new Date(value);
@@ -74,7 +81,11 @@ const resolvePracticeDifficulty = (averageAccuracy: number): KangurDifficulty =>
   return 'easy';
 };
 
-const buildOperationPracticeHref = (basePath: string, operation: string, averageAccuracy: number): string => {
+const buildOperationPracticeHref = (
+  basePath: string,
+  operation: string,
+  averageAccuracy: number
+): string => {
   const baseHref = createPageUrl('Game', basePath);
   const params = new URLSearchParams({ quickStart: 'training' });
 
@@ -126,28 +137,21 @@ export default function LearnerProfile() {
       setScoresError(null);
 
       try {
-        const rowsByEmail =
-          userEmail.length > 0
-            ? await kangurPlatform.score.filter({ created_by: userEmail }, '-created_date', SCORE_FETCH_LIMIT)
-            : [];
-        const rowsByName =
-          userName.length > 0
-            ? await kangurPlatform.score.filter({ player_name: userName }, '-created_date', SCORE_FETCH_LIMIT)
-            : [];
-
+        const loadedScores = await loadLearnerProfileScores(kangurPlatform.score, {
+          userName,
+          userEmail,
+          limit: LEARNER_PROFILE_SCORE_FETCH_LIMIT,
+        });
         if (!isActive) {
           return;
         }
-
-        const uniqueRows = new Map<string, KangurScoreRecord>();
-        [...rowsByEmail, ...rowsByName].forEach((row) => uniqueRows.set(row.id, row));
-        setScores(Array.from(uniqueRows.values()));
+        setScores(loadedScores);
       } catch (error: unknown) {
         if (!isActive) {
           return;
         }
 
-        if (isStatusError(error) && (error.status === 401 || error.status === 403)) {
+        if (isKangurAuthStatusError(error)) {
           setScores([]);
         } else {
           logKangurClientError(error, {
@@ -182,7 +186,9 @@ export default function LearnerProfile() {
   );
 
   const maxWeeklyGames = Math.max(1, ...snapshot.weeklyActivity.map((point) => point.games));
-  const xpToNextLevel = snapshot.nextLevel ? Math.max(0, snapshot.nextLevel.minXp - snapshot.totalXp) : 0;
+  const xpToNextLevel = snapshot.nextLevel
+    ? Math.max(0, snapshot.nextLevel.minXp - snapshot.totalXp)
+    : 0;
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex flex-col items-center'>
@@ -234,7 +240,9 @@ export default function LearnerProfile() {
         >
           <div className='flex flex-col md:flex-row md:items-end md:justify-between gap-4'>
             <div>
-              <div className={`text-2xl font-extrabold ${snapshot.level.color}`}>{snapshot.level.title}</div>
+              <div className={`text-2xl font-extrabold ${snapshot.level.color}`}>
+                {snapshot.level.title}
+              </div>
               <p className='text-sm text-gray-500'>
                 Poziom {snapshot.level.level} · {snapshot.totalXp} XP lacznie
               </p>
@@ -255,7 +263,9 @@ export default function LearnerProfile() {
                 className='h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500'
               />
             </div>
-            <div className='mt-1 text-xs text-gray-500 text-right'>{snapshot.levelProgressPercent}%</div>
+            <div className='mt-1 text-xs text-gray-500 text-right'>
+              {snapshot.levelProgressPercent}%
+            </div>
           </div>
         </motion.section>
 
@@ -264,7 +274,9 @@ export default function LearnerProfile() {
             <div className='inline-flex items-center gap-2 text-indigo-600 text-sm font-semibold'>
               <BarChart2 className='w-4 h-4' /> Srednia skutecznosc
             </div>
-            <p className='text-3xl font-extrabold text-indigo-700 mt-2'>{snapshot.averageAccuracy}%</p>
+            <p className='text-3xl font-extrabold text-indigo-700 mt-2'>
+              {snapshot.averageAccuracy}%
+            </p>
             <p className='text-xs text-gray-500 mt-1'>Najlepsza sesja: {snapshot.bestAccuracy}%</p>
           </div>
 
@@ -272,8 +284,12 @@ export default function LearnerProfile() {
             <div className='inline-flex items-center gap-2 text-orange-500 text-sm font-semibold'>
               <Flame className='w-4 h-4' /> Seria dni
             </div>
-            <p className='text-3xl font-extrabold text-orange-600 mt-2'>{snapshot.currentStreakDays}</p>
-            <p className='text-xs text-gray-500 mt-1'>Najdluzsza: {snapshot.longestStreakDays} dni</p>
+            <p className='text-3xl font-extrabold text-orange-600 mt-2'>
+              {snapshot.currentStreakDays}
+            </p>
+            <p className='text-xs text-gray-500 mt-1'>
+              Najdluzsza: {snapshot.longestStreakDays} dni
+            </p>
           </div>
 
           <div className='bg-white/85 backdrop-blur rounded-2xl shadow p-4'>
@@ -298,7 +314,9 @@ export default function LearnerProfile() {
         </section>
 
         <section className='bg-white/85 backdrop-blur rounded-2xl shadow p-5'>
-          <div className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>Plan na dzis</div>
+          <div className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
+            Plan na dzis
+          </div>
           <div className='grid grid-cols-1 lg:grid-cols-3 gap-3'>
             {snapshot.recommendations.map((recommendation) => (
               <div
@@ -325,17 +343,29 @@ export default function LearnerProfile() {
           </div>
         </section>
 
+        <LessonMasteryInsights progress={progress} />
+
         <section className='grid grid-cols-1 xl:grid-cols-5 gap-4'>
           <div className='xl:col-span-3 bg-white/85 backdrop-blur rounded-2xl shadow p-5'>
-            <div className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>Aktywnosc 7 dni</div>
+            <div className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
+              Aktywnosc 7 dni
+            </div>
             <div className='h-32 flex items-end gap-2'>
               {snapshot.weeklyActivity.map((point) => {
-                const heightPercent = point.games === 0 ? 6 : Math.max(14, Math.round((point.games / maxWeeklyGames) * 100));
+                const heightPercent =
+                  point.games === 0
+                    ? 6
+                    : Math.max(14, Math.round((point.games / maxWeeklyGames) * 100));
                 return (
-                  <div key={point.dateKey} className='flex-1 min-w-[0] flex flex-col items-center gap-1'>
+                  <div
+                    key={point.dateKey}
+                    className='flex-1 min-w-[0] flex flex-col items-center gap-1'
+                  >
                     <div
                       className={`w-full rounded-lg bg-gradient-to-t ${
-                        point.games > 0 ? 'from-indigo-500 to-purple-400' : 'from-slate-200 to-slate-100'
+                        point.games > 0
+                          ? 'from-indigo-500 to-purple-400'
+                          : 'from-slate-200 to-slate-100'
                       }`}
                       style={{ height: `${heightPercent}%` }}
                       title={`${point.games} gier, srednia ${point.averageAccuracy}%`}
@@ -348,10 +378,14 @@ export default function LearnerProfile() {
           </div>
 
           <div className='xl:col-span-2 bg-white/85 backdrop-blur rounded-2xl shadow p-5'>
-            <div className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>Wyniki wg operacji</div>
+            <div className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
+              Wyniki wg operacji
+            </div>
             <div className='flex flex-col gap-3'>
               {snapshot.operationPerformance.length === 0 && (
-                <div className='text-sm text-gray-400 py-6 text-center'>Brak danych o operacjach.</div>
+                <div className='text-sm text-gray-400 py-6 text-center'>
+                  Brak danych o operacjach.
+                </div>
               )}
               {snapshot.operationPerformance.map((item) => (
                 <div key={item.operation}>
@@ -362,7 +396,11 @@ export default function LearnerProfile() {
                     <div className='flex items-center gap-2'>
                       <span>{item.averageAccuracy}%</span>
                       <Link
-                        href={buildOperationPracticeHref(basePath, item.operation, item.averageAccuracy)}
+                        href={buildOperationPracticeHref(
+                          basePath,
+                          item.operation,
+                          item.averageAccuracy
+                        )}
                         className='inline-flex items-center rounded-md border border-indigo-200 px-2 py-0.5 text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 transition'
                       >
                         Trenuj
@@ -370,7 +408,10 @@ export default function LearnerProfile() {
                     </div>
                   </div>
                   <div className='w-full h-2 bg-slate-100 rounded-full overflow-hidden'>
-                    <div className='h-full bg-gradient-to-r from-indigo-400 to-purple-500' style={{ width: `${item.averageAccuracy}%` }} />
+                    <div
+                      className='h-full bg-gradient-to-r from-indigo-400 to-purple-500'
+                      style={{ width: `${item.averageAccuracy}%` }}
+                    />
                   </div>
                   <div className='mt-1 text-[11px] text-gray-500'>
                     Proby: {item.attempts} · Najlepsza skutecznosc: {item.bestScore}%
@@ -401,14 +442,20 @@ export default function LearnerProfile() {
                   >
                     <div className='text-xl'>{session.operationEmoji}</div>
                     <div className='flex-1'>
-                      <div className='text-sm font-semibold text-gray-700'>{session.operationLabel}</div>
-                      <div className='text-xs text-gray-500'>{formatDateTime(session.createdAt)}</div>
+                      <div className='text-sm font-semibold text-gray-700'>
+                        {session.operationLabel}
+                      </div>
+                      <div className='text-xs text-gray-500'>
+                        {formatDateTime(session.createdAt)}
+                      </div>
                     </div>
                     <div className='text-right'>
                       <div className='text-sm font-extrabold text-indigo-600'>
                         {session.score}/{session.totalQuestions}
                       </div>
-                      <div className='text-xs text-gray-500'>{formatDuration(session.timeTakenSeconds)}</div>
+                      <div className='text-xs text-gray-500'>
+                        {formatDuration(session.timeTakenSeconds)}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -417,7 +464,9 @@ export default function LearnerProfile() {
           </div>
 
           <div className='xl:col-span-2 bg-white/85 backdrop-blur rounded-2xl shadow p-5'>
-            <div className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>Odznaki</div>
+            <div className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
+              Odznaki
+            </div>
             <div className='flex flex-wrap gap-2'>
               {BADGES.map((badge) => {
                 const unlocked = snapshot.unlockedBadgeIds.includes(badge.id);

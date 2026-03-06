@@ -3,10 +3,7 @@
 import React, { useMemo } from 'react';
 import { FolderPlus, FilePlus, ChevronRight, Star, Folder } from 'lucide-react';
 
-import {
-  useNotesAppActions,
-  useNotesAppState,
-} from '@/features/notesapp/hooks/NotesAppContext';
+import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { NoteWithRelations } from '@/shared/contracts/notes';
 import { Button, TreeHeader } from '@/shared/ui';
@@ -130,7 +127,9 @@ function NotesAppTreeHeaderQuickFilters(): React.JSX.Element {
       <Button
         onClick={onToggleFavorites}
         className={`mt-1 w-full justify-start gap-2 px-2 py-1.5 text-left text-sm ${
-          isFavoritesFilterActive ? 'bg-yellow-500/20 text-yellow-200' : 'text-gray-300 hover:bg-muted/50'
+          isFavoritesFilterActive
+            ? 'bg-yellow-500/20 text-yellow-200'
+            : 'text-gray-300 hover:bg-muted/50'
         }`}
       >
         <Star className='size-4' />

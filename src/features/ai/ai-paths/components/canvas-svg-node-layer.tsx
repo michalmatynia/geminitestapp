@@ -43,29 +43,29 @@ export function CanvasSvgNodeLayer({
     const visibleNodes = !worldViewport
       ? nodes
       : nodes.filter((node: AiNode) => {
-        const left = node.position.x;
-        const top = node.position.y;
-        const right = node.position.x + NODE_WIDTH;
-        const bottom = node.position.y + NODE_MIN_HEIGHT;
-        if (
-          !Number.isFinite(left) ||
-          !Number.isFinite(top) ||
-          !Number.isFinite(right) ||
-          !Number.isFinite(bottom)
-        ) {
-          return true;
-        }
-        if (
-          right >= worldViewport.minX &&
+          const left = node.position.x;
+          const top = node.position.y;
+          const right = node.position.x + NODE_WIDTH;
+          const bottom = node.position.y + NODE_MIN_HEIGHT;
+          if (
+            !Number.isFinite(left) ||
+            !Number.isFinite(top) ||
+            !Number.isFinite(right) ||
+            !Number.isFinite(bottom)
+          ) {
+            return true;
+          }
+          if (
+            right >= worldViewport.minX &&
             left <= worldViewport.maxX &&
             bottom >= worldViewport.minY &&
             top <= worldViewport.maxY
-        ) {
-          return true;
-        }
-        if (selectedNodeIdSet.has(node.id)) return true;
-        return false;
-      });
+          ) {
+            return true;
+          }
+          if (selectedNodeIdSet.has(node.id)) return true;
+          return false;
+        });
 
     const seenNodeIds = new Set<string>();
     return visibleNodes.filter((node: AiNode): boolean => {

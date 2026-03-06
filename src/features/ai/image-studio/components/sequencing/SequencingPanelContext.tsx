@@ -51,9 +51,7 @@ export function SequencingPanelProvider({
   value: SequencingPanelContextValue;
 }) {
   return (
-    <SequencingPanelContext.Provider value={value}>
-      {children}
-    </SequencingPanelContext.Provider>
+    <SequencingPanelContext.Provider value={value}>{children}</SequencingPanelContext.Provider>
   );
 }
 

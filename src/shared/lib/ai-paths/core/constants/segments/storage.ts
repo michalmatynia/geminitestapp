@@ -14,6 +14,8 @@ export const AI_PATHS_VALIDATION_ENTITY_COLLECTION_MAP_KEY =
 export const AI_PATHS_HISTORY_RETENTION_KEY = 'ai_paths_history_retention_passes';
 export const AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY = 'ai_paths_history_retention_options_max';
 export const AI_PATHS_RUNTIME_KERNEL_MODE_KEY = 'ai_paths_runtime_kernel_mode';
+export const AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY = 'ai_paths_runtime_kernel_node_types';
+// Deprecated compatibility alias for persisted runtime-kernel node type overrides.
 export const AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY =
   'ai_paths_runtime_kernel_pilot_node_types';
 export const AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY =
@@ -33,9 +35,9 @@ export const AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT =
   Number.isFinite(rawHistoryRetentionOptionsMax) &&
   rawHistoryRetentionOptionsMax >= AI_PATHS_HISTORY_RETENTION_MIN
     ? Math.min(
-      AI_PATHS_HISTORY_RETENTION_MAX,
-      Math.max(AI_PATHS_HISTORY_RETENTION_MIN, Math.trunc(rawHistoryRetentionOptionsMax))
-    )
+        AI_PATHS_HISTORY_RETENTION_MAX,
+        Math.max(AI_PATHS_HISTORY_RETENTION_MIN, Math.trunc(rawHistoryRetentionOptionsMax))
+      )
     : AI_PATHS_HISTORY_RETENTION_MAX;
 
 export const STORAGE_VERSION = 1;

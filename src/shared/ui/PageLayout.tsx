@@ -115,7 +115,11 @@ function PageLayoutContent(): JSX.Element {
   if (!wrapInPanel) {
     return <>{children}</>;
   }
-  return <div className={cn('rounded-lg border border-border bg-card p-6', panelClassName)}>{children}</div>;
+  return (
+    <div className={cn('rounded-lg border border-border bg-card p-6', panelClassName)}>
+      {children}
+    </div>
+  );
 }
 
 function PageLayoutSaveFooter(): JSX.Element | null {

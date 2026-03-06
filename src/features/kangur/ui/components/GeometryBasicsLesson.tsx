@@ -24,7 +24,8 @@ const SLIDES: LessonSlide[] = [
     content: (
       <div className='flex flex-col gap-4 text-center'>
         <p className='text-gray-700'>
-          <strong>Punkt</strong> to jedno miejsce na kartce. <strong>Odcinek</strong> łączy dwa punkty.
+          <strong>Punkt</strong> to jedno miejsce na kartce. <strong>Odcinek</strong> łączy dwa
+          punkty.
         </p>
         <div className='rounded-2xl border border-cyan-200 bg-cyan-50 p-4'>
           <div className='mx-auto flex max-w-xs items-center justify-between'>
@@ -62,7 +63,9 @@ const SLIDES: LessonSlide[] = [
           <div className='relative mx-auto h-28 w-28'>
             <div className='absolute left-1/2 top-1/2 h-1 w-20 -translate-y-1/2 rounded bg-cyan-600' />
             <div className='absolute left-1/2 top-1/2 h-20 w-1 -translate-x-1/2 rounded bg-cyan-600' />
-            <div className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-cyan-700'>∟</div>
+            <div className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-cyan-700'>
+              ∟
+            </div>
           </div>
           <p className='mt-2 text-sm text-cyan-700'>To kąt prosty (90°).</p>
         </div>
@@ -90,7 +93,9 @@ const SLIDES: LessonSlide[] = [
   },
 ];
 
-export default function GeometryBasicsLesson({ onBack }: GeometryBasicsLessonProps): React.JSX.Element {
+export default function GeometryBasicsLesson({
+  onBack,
+}: GeometryBasicsLessonProps): React.JSX.Element {
   const [slide, setSlide] = useState(0);
   const [rewarded, setRewarded] = useState(false);
 
@@ -123,7 +128,11 @@ export default function GeometryBasicsLesson({ onBack }: GeometryBasicsLessonPro
           <div
             key={index}
             className={`h-2.5 w-2.5 rounded-full transition-all ${
-              index === slide ? 'bg-cyan-500 scale-125' : index < slide ? 'bg-cyan-300' : 'bg-gray-200'
+              index === slide
+                ? 'bg-cyan-500 scale-125'
+                : index < slide
+                  ? 'bg-cyan-300'
+                  : 'bg-gray-200'
             }`}
           />
         ))}

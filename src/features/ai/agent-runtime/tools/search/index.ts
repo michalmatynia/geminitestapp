@@ -27,8 +27,8 @@ export const fetchDuckDuckGoResults = async (
     const title = rawTitle.replace(/<[^>]+>/g, '').trim();
     const url = rawUrl.includes('duckduckgo.com/l/')
       ? decodeURIComponent(
-        new URL(rawUrl, 'https://duckduckgo.com').searchParams.get('uddg') ?? rawUrl
-      )
+          new URL(rawUrl, 'https://duckduckgo.com').searchParams.get('uddg') ?? rawUrl
+        )
       : rawUrl;
     if (title && url) {
       results.push({ title, url });

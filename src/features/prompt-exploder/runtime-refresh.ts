@@ -116,7 +116,7 @@ export const resolveSegmentIdAfterReexplode = (args: {
         (segment: PromptExploderSegment) => segment.id === previousId
       )
         ? previousId
-        : args.document.segments[0]?.id ?? (null as string | null);
+        : (args.document.segments[0]?.id ?? (null as string | null));
     }
   }
   return args.document.segments[0]?.id ?? null;

@@ -22,9 +22,7 @@ export * from './settings.files';
 export * from './settings.workspace';
 export * from './settings.snapshots';
 
-export {
-  sanitizeCaseResolverGraphNodeFileRelations,
-} from '@/features/case-resolver/nodefile-relations';
+export { sanitizeCaseResolverGraphNodeFileRelations } from '@/features/case-resolver/nodefile-relations';
 export {
   buildCaseResolverFolderRecords,
   parseCaseResolverFolderRecords,
@@ -208,14 +206,12 @@ export const safeParseCaseResolverWorkspace = (
     );
   } catch (firstError: unknown) {
     const emptyWorkspace = createDefaultCaseResolverWorkspace();
-    return attachCaseResolverWorkspaceSafeParseDiagnostics(
-      emptyWorkspace,
-      {
-        parseFallbackApplied: true,
-        parseFallbackReason: firstError instanceof Error ? firstError.message : 'workspace_parse_failed',
-        parseFallbackClass: resolveWorkspaceParseFallbackClass(firstError),
-      }
-    );
+    return attachCaseResolverWorkspaceSafeParseDiagnostics(emptyWorkspace, {
+      parseFallbackApplied: true,
+      parseFallbackReason:
+        firstError instanceof Error ? firstError.message : 'workspace_parse_failed',
+      parseFallbackClass: resolveWorkspaceParseFallbackClass(firstError),
+    });
   }
 };
 

@@ -40,10 +40,7 @@ export function useDatabaseMappingState(args: {
     args.updateSelectedNodeConfig({
       database: {
         ...args.databaseConfig,
-        mappings: [
-          ...args.mappings,
-          { targetPath: '', sourcePort: defaultPort, sourcePath: '' },
-        ],
+        mappings: [...args.mappings, { targetPath: '', sourcePort: defaultPort, sourcePath: '' }],
       },
     });
   }, [args]);

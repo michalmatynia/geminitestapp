@@ -162,7 +162,9 @@ export function ListingSettingsProvider({
   return (
     <SelectionContext.Provider value={selectionValue}>
       <BaseComSettingsContext.Provider value={baseComSettings}>
-        <TraderaSettingsContext.Provider value={traderaValue}>{children}</TraderaSettingsContext.Provider>
+        <TraderaSettingsContext.Provider value={traderaValue}>
+          {children}
+        </TraderaSettingsContext.Provider>
       </BaseComSettingsContext.Provider>
     </SelectionContext.Provider>
   );

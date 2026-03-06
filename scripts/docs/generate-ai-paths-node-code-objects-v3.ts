@@ -3,7 +3,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 
 import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
-import { NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
+import { NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
 import { pruneUnexpectedFilesBySuffix } from './artifact-hygiene';
 import { resolveDocsGeneratedAt } from './docs-generated-at';
 
@@ -37,7 +37,7 @@ type NodeCodeObjectV3Index = {
   generatedAt: string;
   specVersion: 'ai-paths.portable-engine.v1';
   totalObjects: number;
-  pilotNodeTypes: string[];
+  runtimeKernelNodeTypes: string[];
   objects: Array<{
     id: string;
     nodeType: string;
@@ -106,16 +106,18 @@ const asRecord = (value: unknown): Record<string, unknown> =>
 const toSafeString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
 
-const pilotNodeTypes = Array.from(
+const runtimeKernelNodeTypes = Array.from(
   new Set(
-    NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES.map((entry: string): string =>
+    NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES.map((entry: string): string =>
       typeof entry === 'string' ? entry.trim() : ''
     ).filter(Boolean)
   )
 ).sort((left, right) => left.localeCompare(right));
 
-if (pilotNodeTypes.length === 0) {
-  console.error('No v3 pilot node types resolved from NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES.');
+if (runtimeKernelNodeTypes.length === 0) {
+  console.error(
+    'No runtime-kernel node types resolved from NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES.'
+  );
   process.exit(1);
 }
 
@@ -130,7 +132,7 @@ fs.mkdirSync(outputDir, { recursive: true });
 pruneUnexpectedFilesBySuffix({
   directoryPath: outputDir,
   suffix: '.scaffold.json',
-  expectedBaseNames: new Set<string>(pilotNodeTypes),
+  expectedBaseNames: new Set<string>(runtimeKernelNodeTypes),
   excludedFileNames: ['index.scaffold.json'],
 });
 
@@ -138,8 +140,8 @@ const indexScaffold: NodeCodeObjectV3IndexScaffold = {
   schemaVersion: 'ai-paths.node-code-object-index.v3-scaffold',
   generatedAt,
   strategy: 'code_object_v3',
-  totalObjects: pilotNodeTypes.length,
-  objects: pilotNodeTypes.map((nodeType: string) => ({
+  totalObjects: runtimeKernelNodeTypes.length,
+  objects: runtimeKernelNodeTypes.map((nodeType: string) => ({
     nodeType,
     objectFile: `docs/ai-paths/node-code-objects-v3/${nodeType}.scaffold.json`,
   })),
@@ -238,7 +240,7 @@ const indexPayload: NodeCodeObjectV3Index = {
   generatedAt,
   specVersion: NODE_CODE_OBJECT_V3_SPEC_VERSION,
   totalObjects: normalizedIndexRows.length,
-  pilotNodeTypes: [...pilotNodeTypes],
+  runtimeKernelNodeTypes: [...runtimeKernelNodeTypes],
   objects: normalizedIndexRows,
 };
 
@@ -261,5 +263,5 @@ fs.writeFileSync(indexPath, stableJson(indexPayload), 'utf8');
 fs.writeFileSync(contractsPath, stableJson(contractsPayload), 'utf8');
 
 console.log(
-  `Generated AI-Paths node code object v3 artifacts for ${normalizedIndexRows.length} pilot node type(s).`
+  `Generated AI-Paths node code object v3 artifacts for ${normalizedIndexRows.length} runtime-kernel node type(s).`
 );

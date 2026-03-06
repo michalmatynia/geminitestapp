@@ -113,16 +113,11 @@ export function useAiPathsCanvasInteractions(
 
   const { viewportRef, canvasRef } = useCanvasRefs();
   const { view, panState, dragState, connecting, connectingPos, lastDrop } = useCanvasState();
-  const {
-    setConnecting: setConnectingCtx,
-    setConnectingPos: setConnectingPosCtx,
-  } = useCanvasActions();
+  const { setConnecting: setConnectingCtx, setConnectingPos: setConnectingPosCtx } =
+    useCanvasActions();
   const lockedToastAtRef = useRef<number>(0);
 
-  const {
-    selectedEdgeId,
-    selectedNodeIds: selectedNodeIdsCtx,
-  } = useSelectionState();
+  const { selectedEdgeId, selectedNodeIds: selectedNodeIdsCtx } = useSelectionState();
   const { selectEdge, selectNode } = useSelectionActions();
   const { nodes: graphNodes, edges: graphEdges } = useGraphState();
   const { setNodes: setGraphNodes, setEdges: setGraphEdges } = useGraphActions();
@@ -203,7 +198,7 @@ export function useAiPathsCanvasInteractions(
     event: React.PointerEvent<HTMLDivElement>
   ) => void;
   const connectingFromNode = connecting
-    ? graphNodes.find((node: AiNode): boolean => node.id === connecting.fromNodeId) ?? null
+    ? (graphNodes.find((node: AiNode): boolean => node.id === connecting.fromNodeId) ?? null)
     : null;
   const getCanvasCenterPosition = useCallback((): { x: number; y: number } => {
     const viewport = viewportRef.current?.getBoundingClientRect();
@@ -327,11 +322,7 @@ export function useAiPathsCanvasInteractions(
 
     window.addEventListener('keydown', handleWindowKeyDown);
     return (): void => window.removeEventListener('keydown', handleWindowKeyDown);
-  }, [
-    handleDeleteSelectedNode,
-    selectedEdgeId,
-    selectedNodeIdsCtx,
-  ]);
+  }, [handleDeleteSelectedNode, selectedEdgeId, selectedNodeIdsCtx]);
 
   useEffect((): void => {
     setGraphEdges((prev: Edge[]): Edge[] => sanitizeEdges(graphNodes, prev), {

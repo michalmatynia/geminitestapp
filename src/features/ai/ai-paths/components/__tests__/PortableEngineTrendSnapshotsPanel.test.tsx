@@ -103,7 +103,9 @@ describe('PortableEngineTrendSnapshotsPanel', () => {
 
     expect(await screen.findByText('Run execution telemetry')).toBeInTheDocument();
     expect(screen.getByText(/run failures 3/i)).toBeInTheDocument();
-    expect(screen.getByText(/source=in_memory attempts=8 success=63% failure=38% stage\(1\/1\/1\)/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/source=in_memory attempts=8 success=63% failure=38% stage\(1\/1\/1\)/i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Invalid AI-Path payload \(2\)/i)).toBeInTheDocument();
     expect(screen.getByText(/runtime failure \(1\)/i)).toBeInTheDocument();
     expect(screen.getByText(/client\/canvas\/runtime/i)).toBeInTheDocument();
@@ -120,7 +122,9 @@ describe('PortableEngineTrendSnapshotsPanel', () => {
     render(<PortableEngineTrendSnapshotsPanel />);
 
     expect(await screen.findByText('Run execution telemetry')).toBeInTheDocument();
-    expect(screen.getByText(/source=unavailable attempts=0 success=0% failure=0% stage\(0\/0\/0\)/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/source=unavailable attempts=0 success=0% failure=0% stage\(0\/0\/0\)/i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/No recent runtime failures captured\./i)).toBeInTheDocument();
   });
 });

@@ -114,7 +114,7 @@ export class RateLimiter {
   getStats(): {
     totalKeys: number;
     memoryUsage: number;
-    } {
+  } {
     return {
       totalKeys: this.store.size,
       memoryUsage: JSON.stringify([...this.store.entries()]).length,

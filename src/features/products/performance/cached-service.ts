@@ -147,19 +147,19 @@ export class CachedProductService {
     products: ProductWithImages[];
     total: number;
   }> = withQueryCache(
-      async (filters: ProductFilterInput = {}) => {
-        return productService.getProductsWithCount(normalizeFilters(filters));
-      },
-      {
-        keyGenerator: (filters: ProductFilterInput = {}) =>
-          `products:paged:${JSON.stringify(filters)}`,
-        ttl: 180000, // 3 minutes
-        tags: (filters: ProductFilterInput = {}) => [
-          'products:paged',
-          ...ProductCacheHelpers.getTags.productList(filters),
-        ],
-      }
-    );
+    async (filters: ProductFilterInput = {}) => {
+      return productService.getProductsWithCount(normalizeFilters(filters));
+    },
+    {
+      keyGenerator: (filters: ProductFilterInput = {}) =>
+        `products:paged:${JSON.stringify(filters)}`,
+      ttl: 180000, // 3 minutes
+      tags: (filters: ProductFilterInput = {}) => [
+        'products:paged',
+        ...ProductCacheHelpers.getTags.productList(filters),
+      ],
+    }
+  );
 
   // Get product count with caching
   static getProductCount: (filters?: ProductFilterInput) => Promise<number> = withQueryCache(
@@ -182,28 +182,28 @@ export class CachedProductService {
     categoryId: string,
     limit?: number
   ) => Promise<ProductWithImages[]> = withQueryCache(
-      async (categoryId: string, limit?: number) => {
-        const categoryFilters: ProductFilters = {
-          categoryId,
-        };
+    async (categoryId: string, limit?: number) => {
+      const categoryFilters: ProductFilters = {
+        categoryId,
+      };
 
-        if (typeof limit === 'number' && Number.isFinite(limit) && limit > 0) {
-          categoryFilters.pageSize = limit;
-        }
-
-        const products = await productService.getProducts(categoryFilters);
-        return products;
-      },
-      {
-        keyGenerator: (categoryId: string, limit?: number) =>
-          `products:category:${categoryId}:${limit || 'all'}`,
-        ttl: 240000, // 4 minutes
-        tags: (categoryId: string) => [
-          ...ProductCacheHelpers.getTags.category(categoryId),
-          'products:list',
-        ],
+      if (typeof limit === 'number' && Number.isFinite(limit) && limit > 0) {
+        categoryFilters.pageSize = limit;
       }
-    );
+
+      const products = await productService.getProducts(categoryFilters);
+      return products;
+    },
+    {
+      keyGenerator: (categoryId: string, limit?: number) =>
+        `products:category:${categoryId}:${limit || 'all'}`,
+      ttl: 240000, // 4 minutes
+      tags: (categoryId: string) => [
+        ...ProductCacheHelpers.getTags.category(categoryId),
+        'products:list',
+      ],
+    }
+  );
 
   // Get product with images (expensive query)
   static getProductWithImages: (id: string) => Promise<ProductWithImages | null> = withQueryCache(
@@ -220,22 +220,22 @@ export class CachedProductService {
     query: string,
     filters?: ProductFilterInput
   ) => Promise<ProductWithImages[]> = withQueryCache(
-      async (query: string, filters: ProductFilterInput = {}) => {
-        return productService.getProducts({
-          ...normalizeFilters(filters),
-          search: query,
-        });
-      },
-      {
-        keyGenerator: (query: string, filters: ProductFilterInput = {}) =>
-          `products:search:${query}:${JSON.stringify(filters)}`,
-        ttl: 120000, // 2 minutes (shorter for search results)
-        tags: (_query: string, _filters: ProductFilterInput = {}) => [
-          'products:search',
-          'products:list',
-        ],
-      }
-    );
+    async (query: string, filters: ProductFilterInput = {}) => {
+      return productService.getProducts({
+        ...normalizeFilters(filters),
+        search: query,
+      });
+    },
+    {
+      keyGenerator: (query: string, filters: ProductFilterInput = {}) =>
+        `products:search:${query}:${JSON.stringify(filters)}`,
+      ttl: 120000, // 2 minutes (shorter for search results)
+      tags: (_query: string, _filters: ProductFilterInput = {}) => [
+        'products:search',
+        'products:list',
+      ],
+    }
+  );
 
   // List categories with caching
   static listCategories: (filters: { catalogId: string }) => Promise<unknown[]> = withQueryCache(
@@ -261,9 +261,9 @@ export class CachedProductService {
     withQueryCache(
       async (filters: { catalogId: string }) => {
         const primaryProvider = await getProductDataProvider();
-        const repository = await import(
-          '@/shared/lib/products/services/parameter-repository'
-        ).then((m) => m.getParameterRepository(primaryProvider));
+        const repository = await import('@/shared/lib/products/services/parameter-repository').then(
+          (m) => m.getParameterRepository(primaryProvider)
+        );
         return repository.listParameters(filters);
       },
       {

@@ -100,7 +100,9 @@ describe('kangur-lessons-master-tree', () => {
       (node) => node.id === 'kangur-lesson-component-group:hidden:geometry_basics'
     );
     const clockLesson = nodes.find((node) => node.id === toKangurLessonNodeId('clock-visible'));
-    const geometryLesson = nodes.find((node) => node.id === toKangurLessonNodeId('geometry-hidden'));
+    const geometryLesson = nodes.find(
+      (node) => node.id === toKangurLessonNodeId('geometry-hidden')
+    );
 
     expect(enabledGroup?.type).toBe('folder');
     expect(hiddenGroup?.type).toBe('folder');
@@ -117,7 +119,9 @@ describe('kangur-lessons-master-tree', () => {
       createLesson({ id: 'two', title: 'Two', sortOrder: 2_000 }),
       createLesson({ id: 'three', title: 'Three', sortOrder: 3_000 }),
     ];
-    const lessonById = new Map(lessons.map((lesson): [string, KangurLesson] => [lesson.id, lesson]));
+    const lessonById = new Map(
+      lessons.map((lesson): [string, KangurLesson] => [lesson.id, lesson])
+    );
     const nodes = buildKangurLessonMasterNodes(lessons);
     const nodesByPath = new Map(nodes.map((node) => [node.path, node] as const));
     const reorderedNodes = ['three', 'one', 'two'].map((id, index) => {
@@ -141,7 +145,9 @@ describe('kangur-lessons-master-tree', () => {
       createLesson({ id: 'two', sortOrder: 2_000 }),
       createLesson({ id: 'one', sortOrder: 1_000 }),
     ];
-    const lessonById = new Map(lessons.map((lesson): [string, KangurLesson] => [lesson.id, lesson]));
+    const lessonById = new Map(
+      lessons.map((lesson): [string, KangurLesson] => [lesson.id, lesson])
+    );
 
     const reordered = resolveKangurLessonOrderFromNodes([], lessonById);
     expect(reordered.map((lesson) => lesson.id)).toEqual(['one', 'two']);

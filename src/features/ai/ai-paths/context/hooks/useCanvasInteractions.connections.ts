@@ -59,10 +59,7 @@ export function useCanvasInteractionsConnections({
   isPathLocked: boolean;
   notifyLocked: () => void;
   confirmNodeSwitch?: (nodeId: string) => boolean | Promise<boolean>;
-  setEdges: (
-    edges: Edge[] | ((prev: Edge[]) => Edge[]),
-    mutationMeta?: GraphMutationMeta
-  ) => void;
+  setEdges: (edges: Edge[] | ((prev: Edge[]) => Edge[]), mutationMeta?: GraphMutationMeta) => void;
   setRuntimeState: (state: RuntimeState | ((prev: RuntimeState) => RuntimeState)) => void;
   pruneRuntimeInputsInternal: (
     state: RuntimeState,
@@ -316,9 +313,9 @@ export function useCanvasInteractionsConnections({
       const viewport = viewportRef.current?.getBoundingClientRect();
       const nextPos = viewport
         ? {
-          x: (event.clientX - viewport.left - view.x) / view.scale,
-          y: (event.clientY - viewport.top - view.y) / view.scale,
-        }
+            x: (event.clientX - viewport.left - view.x) / view.scale,
+            y: (event.clientY - viewport.top - view.y) / view.scale,
+          }
         : start;
 
       const remaining = currentEdges.filter((e) => e.id !== edgeToMove.id);

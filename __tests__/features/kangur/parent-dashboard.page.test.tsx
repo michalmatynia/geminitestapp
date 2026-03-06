@@ -37,8 +37,18 @@ vi.mock('@/features/kangur/ui/components/dashboard', () => ({
   ProgressOverview: ({ progress }: { progress: { totalXp: number } }) => (
     <div data-testid='kangur-progress-overview'>XP: {progress.totalXp}</div>
   ),
-  ScoreHistory: ({ playerName }: { playerName: string | null }) => (
-    <div data-testid='kangur-score-history'>Score history: {playerName ?? 'all'}</div>
+  ScoreHistory: ({
+    playerName,
+    createdBy,
+    basePath,
+  }: {
+    playerName?: string | null;
+    createdBy?: string | null;
+    basePath?: string | null;
+  }) => (
+    <div data-testid='kangur-score-history'>
+      Score history: {playerName ?? 'all'} / {createdBy ?? 'none'} / {basePath ?? 'no-base'}
+    </div>
   ),
 }));
 
@@ -108,7 +118,9 @@ describe('ParentDashboard page', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /Wyniki gier/i }));
     await waitFor(() =>
-      expect(screen.getByTestId('kangur-score-history')).toHaveTextContent('Score history: all')
+      expect(screen.getByTestId('kangur-score-history')).toHaveTextContent(
+        'Score history: Anna Kowalska / anna@example.com / /kangur'
+      )
     );
 
     await userEvent.click(screen.getByRole('button', { name: /Zadania/i }));

@@ -1,6 +1,14 @@
 'use client';
 
-import { createContext, useContext, useState, useMemo, useCallback, useRef, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+  type ReactNode,
+} from 'react';
 
 import type {
   AiNode,
@@ -94,10 +102,7 @@ export interface GraphActions {
   removeNode: (nodeId: string) => void;
 
   // Edge actions
-  setEdges: (
-    edges: Edge[] | ((prev: Edge[]) => Edge[]),
-    mutationMeta?: GraphMutationMeta
-  ) => void;
+  setEdges: (edges: Edge[] | ((prev: Edge[]) => Edge[]), mutationMeta?: GraphMutationMeta) => void;
   addEdge: (edge: Edge) => void;
   removeEdge: (edgeId: string) => void;
   clearEdges: () => void;
@@ -216,10 +221,12 @@ export function GraphProvider({
     useState<PathFlowIntensity>(DEFAULT_FLOW_INTENSITY);
   const [runMode, setRunModeInternal] = useState<PathRunMode>(DEFAULT_RUN_MODE);
   const [strictFlowMode, setStrictFlowModeInternal] = useState<boolean>(DEFAULT_STRICT_FLOW_MODE);
-  const [blockedRunPolicy, setBlockedRunPolicyInternal] =
-    useState<PathBlockedRunPolicy>(DEFAULT_BLOCKED_RUN_POLICY);
-  const [aiPathsValidation, setAiPathsValidationInternal] =
-    useState<AiPathsValidationConfig>(DEFAULT_AI_PATHS_VALIDATION);
+  const [blockedRunPolicy, setBlockedRunPolicyInternal] = useState<PathBlockedRunPolicy>(
+    DEFAULT_BLOCKED_RUN_POLICY
+  );
+  const [aiPathsValidation, setAiPathsValidationInternal] = useState<AiPathsValidationConfig>(
+    DEFAULT_AI_PATHS_VALIDATION
+  );
   const [historyRetentionPasses, setHistoryRetentionPassesInternal] = useState<number>(
     DEFAULT_HISTORY_RETENTION_PASSES
   );
@@ -269,9 +276,7 @@ export function GraphProvider({
 
   const setNodes = useCallback(
     (
-      nextNodes:
-        | AiNode[]
-        | ((prev: AiNode[]) => AiNode[]),
+      nextNodes: AiNode[] | ((prev: AiNode[]) => AiNode[]),
       mutationMeta?: GraphMutationMeta
     ): void => {
       const reason = mutationMeta?.reason ?? 'unknown';
@@ -319,12 +324,7 @@ export function GraphProvider({
   );
 
   const setEdges = useCallback(
-    (
-      nextEdges:
-        | Edge[]
-        | ((prev: Edge[]) => Edge[]),
-      mutationMeta?: GraphMutationMeta
-    ): void => {
+    (nextEdges: Edge[] | ((prev: Edge[]) => Edge[]), mutationMeta?: GraphMutationMeta): void => {
       const reason = mutationMeta?.reason ?? 'unknown';
       pendingMutationMetaRef.current = mutationMeta ?? { reason };
       let changedEdges = false;
@@ -349,47 +349,66 @@ export function GraphProvider({
   );
 
   // Memoized node operations
-  const addNode = useCallback((node: AiNode) => {
-    setNodes((prev) => [...prev, node], { reason: 'drop', source: 'graph.addNode' });
-  }, [setNodes]);
+  const addNode = useCallback(
+    (node: AiNode) => {
+      setNodes((prev) => [...prev, node], { reason: 'drop', source: 'graph.addNode' });
+    },
+    [setNodes]
+  );
 
-  const updateNode = useCallback((nodeId: string, update: Partial<AiNode>) => {
-    setNodes(
-      (prev) => prev.map((node) => (node.id === nodeId ? { ...node, ...update } : node)),
-      { reason: 'update', source: 'graph.updateNode' }
-    );
-  }, [setNodes]);
+  const updateNode = useCallback(
+    (nodeId: string, update: Partial<AiNode>) => {
+      setNodes((prev) => prev.map((node) => (node.id === nodeId ? { ...node, ...update } : node)), {
+        reason: 'update',
+        source: 'graph.updateNode',
+      });
+    },
+    [setNodes]
+  );
 
-  const updateNodeConfig = useCallback((nodeId: string, config: NodeConfig) => {
-    setNodes(
-      (prev) => prev.map((node) => (node.id === nodeId ? { ...node, config } : node)),
-      { reason: 'update', source: 'graph.updateNodeConfig' }
-    );
-  }, [setNodes]);
+  const updateNodeConfig = useCallback(
+    (nodeId: string, config: NodeConfig) => {
+      setNodes((prev) => prev.map((node) => (node.id === nodeId ? { ...node, config } : node)), {
+        reason: 'update',
+        source: 'graph.updateNodeConfig',
+      });
+    },
+    [setNodes]
+  );
 
-  const removeNode = useCallback((nodeId: string) => {
-    setNodes(
-      (prev) => prev.filter((node) => node.id !== nodeId),
-      { reason: 'delete', source: 'graph.removeNode', allowNodeCountDecrease: true }
-    );
-    // Also remove connected edges
-    setEdges(
-      (prev) => prev.filter((edge) => edge.from !== nodeId && edge.to !== nodeId),
-      { reason: 'delete', source: 'graph.removeNode' }
-    );
-  }, [setEdges, setNodes]);
+  const removeNode = useCallback(
+    (nodeId: string) => {
+      setNodes((prev) => prev.filter((node) => node.id !== nodeId), {
+        reason: 'delete',
+        source: 'graph.removeNode',
+        allowNodeCountDecrease: true,
+      });
+      // Also remove connected edges
+      setEdges((prev) => prev.filter((edge) => edge.from !== nodeId && edge.to !== nodeId), {
+        reason: 'delete',
+        source: 'graph.removeNode',
+      });
+    },
+    [setEdges, setNodes]
+  );
 
   // Memoized edge operations
-  const addEdge = useCallback((edge: Edge) => {
-    setEdges((prev) => [...prev, edge], { reason: 'update', source: 'graph.addEdge' });
-  }, [setEdges]);
+  const addEdge = useCallback(
+    (edge: Edge) => {
+      setEdges((prev) => [...prev, edge], { reason: 'update', source: 'graph.addEdge' });
+    },
+    [setEdges]
+  );
 
-  const removeEdge = useCallback((edgeId: string) => {
-    setEdges(
-      (prev) => prev.filter((edge) => edge.id !== edgeId),
-      { reason: 'delete', source: 'graph.removeEdge' }
-    );
-  }, [setEdges]);
+  const removeEdge = useCallback(
+    (edgeId: string) => {
+      setEdges((prev) => prev.filter((edge) => edge.id !== edgeId), {
+        reason: 'delete',
+        source: 'graph.removeEdge',
+      });
+    },
+    [setEdges]
+  );
 
   const clearEdges = useCallback(() => {
     setEdges([], { reason: 'delete', source: 'graph.clearEdges' });
@@ -430,7 +449,8 @@ export function GraphProvider({
       if (data.runMode !== undefined) setRunModeInternal(data.runMode);
       if (data.strictFlowMode !== undefined) setStrictFlowModeInternal(data.strictFlowMode);
       if (data.blockedRunPolicy !== undefined) setBlockedRunPolicyInternal(data.blockedRunPolicy);
-      if (data.aiPathsValidation !== undefined) setAiPathsValidationInternal(data.aiPathsValidation);
+      if (data.aiPathsValidation !== undefined)
+        setAiPathsValidationInternal(data.aiPathsValidation);
       if (data.historyRetentionPasses !== undefined) {
         setHistoryRetentionPassesInternal(data.historyRetentionPasses);
       }

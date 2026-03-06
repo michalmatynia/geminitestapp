@@ -129,7 +129,7 @@ const removeListingBadgeStatus = (
 export function useGenericExportToBaseMutation(): UpdateMutation<
   ExportResponse,
   GenericExportToBaseVariables
-  > {
+> {
   const mutationKey = listingBadgesQueryKey;
   const queryClient = useQueryClient();
 
@@ -186,7 +186,7 @@ export function useGenericExportToBaseMutation(): UpdateMutation<
 export function useGenericCreateListingMutation(): CreateMutation<
   Record<string, unknown>,
   { productId: string; integrationId: string; connectionId: string }
-  > {
+> {
   return createCreateMutationV2({
     mutationFn: ({
       productId,

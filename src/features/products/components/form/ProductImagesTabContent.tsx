@@ -32,8 +32,7 @@ export function ProductImagesTabContent(): React.JSX.Element {
   const sectionDescription =
     imagesTabStateContext?.sectionDescription ??
     'Upload directly from any slot (single or multi-select), or pick existing files from the platform library.';
-  const chooseButtonLabel =
-    imagesTabStateContext?.chooseButtonLabel ?? 'Choose from File Manager';
+  const chooseButtonLabel = imagesTabStateContext?.chooseButtonLabel ?? 'Choose from File Manager';
   const chooseButtonAriaLabel =
     imagesTabStateContext?.chooseButtonAriaLabel ??
     'Choose multiple existing images for the product';

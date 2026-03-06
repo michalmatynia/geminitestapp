@@ -68,19 +68,19 @@ export const ProductListHeader = memo(function ProductListHeader({
     typeof document === 'undefined'
       ? null
       : createPortal(
-        <Button
-          size='xs'
-          type='button'
-          variant='outline'
-          onClick={() => setIsMenuHidden(!isMenuHidden)}
-          title={isMenuHidden ? 'Show side panels' : 'Show canvas only'}
-          aria-label={isMenuHidden ? 'Show side panels' : 'Show canvas only'}
-          className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2'
-        >
-          {isMenuHidden ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
-        </Button>,
-        document.body
-      );
+          <Button
+            size='xs'
+            type='button'
+            variant='outline'
+            onClick={() => setIsMenuHidden(!isMenuHidden)}
+            title={isMenuHidden ? 'Show side panels' : 'Show canvas only'}
+            aria-label={isMenuHidden ? 'Show side panels' : 'Show canvas only'}
+            className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2'
+          >
+            {isMenuHidden ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
+          </Button>,
+          document.body
+        );
 
   const renderHeaderBreadcrumb = (): React.JSX.Element => (
     <Breadcrumbs

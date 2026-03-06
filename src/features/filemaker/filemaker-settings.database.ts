@@ -239,7 +239,9 @@ export const assertCanonicalFilemakerDatabasePayload = (
   }
 
   if (rawOrganizations.some(hasInlineEmailFields)) {
-    throw validationError('Filemaker organization payload includes unsupported inline email fields.');
+    throw validationError(
+      'Filemaker organization payload includes unsupported inline email fields.'
+    );
   }
 };
 

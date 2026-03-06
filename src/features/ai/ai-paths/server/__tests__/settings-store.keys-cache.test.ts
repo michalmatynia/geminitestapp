@@ -26,8 +26,7 @@ vi.mock('@/features/ai/ai-paths/server/starter-workflows-settings', () => ({
   }),
 }));
 
-const loadSettingsStore = async () =>
-  import('@/features/ai/ai-paths/server/settings-store');
+const loadSettingsStore = async () => import('@/features/ai/ai-paths/server/settings-store');
 
 describe('settings-store keyset cache', () => {
   beforeEach(() => {
@@ -36,9 +35,7 @@ describe('settings-store keyset cache', () => {
   });
 
   it('reuses cached keyset reads within TTL', async () => {
-    fetchMongoAiPathsSettingsMock.mockResolvedValue([
-      { key: 'ai_paths_index', value: '[]' },
-    ]);
+    fetchMongoAiPathsSettingsMock.mockResolvedValue([{ key: 'ai_paths_index', value: '[]' }]);
 
     const { getAiPathsSettings } = await loadSettingsStore();
 

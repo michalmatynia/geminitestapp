@@ -46,7 +46,9 @@ export const promptExploderSegmentationRecordSchema = z.object({
   segments: z.array(promptExploderSegmentSchema),
 });
 
-export type PromptExploderSegmentationRecord = z.infer<typeof promptExploderSegmentationRecordSchema>;
+export type PromptExploderSegmentationRecord = z.infer<
+  typeof promptExploderSegmentationRecordSchema
+>;
 
 export type PromptExploderSegmentationLibraryState = {
   records: PromptExploderSegmentationRecord[];

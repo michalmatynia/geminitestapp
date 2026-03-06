@@ -858,6 +858,4 @@ describe('case-resolver workspace persistence', () => {
       expect(hydratedDocument?.documentHistory.length).toBe(1);
     }
   });
-
-
 });

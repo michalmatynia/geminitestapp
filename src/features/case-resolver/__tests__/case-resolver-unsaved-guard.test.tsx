@@ -30,7 +30,11 @@ vi.mock('@/features/case-resolver/components/CaseResolverFolderTree', async () =
     await import('@/features/case-resolver/context/CaseResolverPageContext');
   const CaseResolverFolderTree = () => {
     const { onEditFile } = useCaseResolverPageActions();
-    return <button type='button' onClick={() => onEditFile('file-b')}>Switch File</button>;
+    return (
+      <button type='button' onClick={() => onEditFile('file-b')}>
+        Switch File
+      </button>
+    );
   };
   return { CaseResolverFolderTree };
 });

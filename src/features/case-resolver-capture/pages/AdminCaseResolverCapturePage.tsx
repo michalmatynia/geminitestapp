@@ -189,9 +189,9 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
                 setDraft((current: CaseResolverCaptureSettings | null) =>
                   current
                     ? {
-                      ...current,
-                      enabled: fromBooleanOptionValue(value),
-                    }
+                        ...current,
+                        enabled: fromBooleanOptionValue(value),
+                      }
                     : current
                 );
               }}
@@ -205,9 +205,9 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
                 setDraft((current: CaseResolverCaptureSettings | null) =>
                   current
                     ? {
-                      ...current,
-                      autoOpenProposalModal: fromBooleanOptionValue(value),
-                    }
+                        ...current,
+                        autoOpenProposalModal: fromBooleanOptionValue(value),
+                      }
                     : current
                 );
               }}

@@ -16,6 +16,7 @@ import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/rou
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurPlatform, KangurUser } from '@/features/kangur/services/ports';
+import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { KangurGameProvider } from '@/features/kangur/ui/context/KangurGameContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
@@ -93,12 +94,6 @@ const KANGUR_OPERATIONS: KangurOperation[] = [
 ];
 const KANGUR_DIFFICULTIES: KangurDifficulty[] = ['easy', 'medium', 'hard'];
 
-const isStatusError = (value: unknown): value is { status: number } =>
-  typeof value === 'object' &&
-  value !== null &&
-  'status' in value &&
-  typeof (value as { status?: unknown }).status === 'number';
-
 const isKangurOperation = (value: string | null): value is KangurOperation =>
   Boolean(value && KANGUR_OPERATIONS.includes(value as KangurOperation));
 
@@ -139,7 +134,7 @@ export default function Game() {
         if (u?.full_name) setPlayerName(u.full_name);
       })
       .catch((error: unknown) => {
-        if (isStatusError(error) && (error.status === 401 || error.status === 403)) {
+        if (isKangurAuthStatusError(error)) {
           return;
         }
         logKangurClientError(error, {
@@ -165,7 +160,11 @@ export default function Game() {
 
   const handleStartGame = (): void => setScreen('operation');
 
-  const handleStartTraining = ({ categories, count, difficulty: diff }: KangurTrainingSelection): void => {
+  const handleStartTraining = ({
+    categories,
+    count,
+    difficulty: diff,
+  }: KangurTrainingSelection): void => {
     const qs = generateTrainingQuestions(categories, diff, count);
     setOperation('mixed');
     setDifficulty(diff);

@@ -157,27 +157,27 @@ export function useIntegrationsActionsImpl(args: {
       ...(formData.password.trim() ? { password: formData.password.trim() } : {}),
       ...(isTraderaIntegration
         ? {
-          traderaDefaultTemplateId: formData.traderaDefaultTemplateId.trim() || null,
-          traderaDefaultDurationHours: Math.max(
-            1,
-            Math.min(720, Math.floor(formData.traderaDefaultDurationHours))
-          ),
-          traderaAutoRelistEnabled: formData.traderaAutoRelistEnabled,
-          traderaAutoRelistLeadMinutes: Math.max(
-            0,
-            Math.min(10080, Math.floor(formData.traderaAutoRelistLeadMinutes))
-          ),
-        }
+            traderaDefaultTemplateId: formData.traderaDefaultTemplateId.trim() || null,
+            traderaDefaultDurationHours: Math.max(
+              1,
+              Math.min(720, Math.floor(formData.traderaDefaultDurationHours))
+            ),
+            traderaAutoRelistEnabled: formData.traderaAutoRelistEnabled,
+            traderaAutoRelistLeadMinutes: Math.max(
+              0,
+              Math.min(10080, Math.floor(formData.traderaAutoRelistLeadMinutes))
+            ),
+          }
         : {}),
       ...(isTraderaApiIntegration
         ? {
-          traderaApiAppId: Number.parseInt(formData.traderaApiAppId, 10),
-          traderaApiAppKey: formData.traderaApiAppKey.trim(),
-          traderaApiPublicKey: formData.traderaApiPublicKey.trim() || null,
-          traderaApiUserId: Number.parseInt(formData.traderaApiUserId, 10),
-          traderaApiToken: formData.traderaApiToken.trim(),
-          traderaApiSandbox: formData.traderaApiSandbox,
-        }
+            traderaApiAppId: Number.parseInt(formData.traderaApiAppId, 10),
+            traderaApiAppKey: formData.traderaApiAppKey.trim(),
+            traderaApiPublicKey: formData.traderaApiPublicKey.trim() || null,
+            traderaApiUserId: Number.parseInt(formData.traderaApiUserId, 10),
+            traderaApiToken: formData.traderaApiToken.trim(),
+            traderaApiSandbox: formData.traderaApiSandbox,
+          }
         : {}),
     };
     try {
@@ -297,16 +297,16 @@ export function useIntegrationsActionsImpl(args: {
 
           const steps = normalizedSteps.length
             ? normalizedSteps.map((s: TestLogEntry) =>
-              s.status === 'failed' && !s.detail ? { ...s, detail: errorMessage } : s
-            )
+                s.status === 'failed' && !s.detail ? { ...s, detail: errorMessage } : s
+              )
             : [
-              {
-                step: `${title} failed`,
-                status: 'failed' as const,
-                timestamp: new Date().toISOString(),
-                detail: errorMessage,
-              },
-            ];
+                {
+                  step: `${title} failed`,
+                  status: 'failed' as const,
+                  timestamp: new Date().toISOString(),
+                  detail: errorMessage,
+                },
+              ];
 
           args.setTestLog(steps);
           args.setTestErrorMeta({

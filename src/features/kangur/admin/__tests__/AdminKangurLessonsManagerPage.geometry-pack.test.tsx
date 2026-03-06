@@ -77,7 +77,13 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
-  FolderTreePanel: ({ children, header }: { children: React.ReactNode; header?: React.ReactNode }) => (
+  FolderTreePanel: ({
+    children,
+    header,
+  }: {
+    children: React.ReactNode;
+    header?: React.ReactNode;
+  }) => (
     <div>
       {header}
       {children}

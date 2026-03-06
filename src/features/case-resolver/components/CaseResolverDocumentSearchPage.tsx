@@ -65,8 +65,8 @@ const toDateLabel = (value: string | null | undefined): string => {
 const buildPathLabelMap = <
   T extends { id: string; name: string; parentId?: string | null | undefined },
 >(
-    items: T[]
-  ): Map<string, string> => {
+  items: T[]
+): Map<string, string> => {
   const byId = new Map<string, T>(items.map((item: T): [string, T] => [item.id, item]));
   const cache = new Map<string, string>();
 
@@ -99,13 +99,14 @@ const buildPathLabelMap = <
 };
 
 export function CaseResolverDocumentSearchPage(): React.JSX.Element {
-  const { workspace, caseResolverTags: tags, caseResolverIdentifiers: identifiers, caseResolverCategories: categories } =
-    useCaseResolverPageState();
   const {
-    onCreateDocumentFromSearch,
-    onOpenFileFromSearch,
-    onEditFileFromSearch,
-  } = useCaseResolverPageActions();
+    workspace,
+    caseResolverTags: tags,
+    caseResolverIdentifiers: identifiers,
+    caseResolverCategories: categories,
+  } = useCaseResolverPageState();
+  const { onCreateDocumentFromSearch, onOpenFileFromSearch, onEditFileFromSearch } =
+    useCaseResolverPageActions();
   const files: CaseResolverFile[] = useMemo(
     (): CaseResolverFile[] =>
       workspace.files.filter((file: CaseResolverFile): boolean => file.fileType !== 'case'),

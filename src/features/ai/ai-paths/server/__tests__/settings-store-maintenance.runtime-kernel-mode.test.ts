@@ -8,6 +8,7 @@ import type { AiPathsSettingRecord } from '@/features/ai/ai-paths/server/setting
 import {
   AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
   AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
+  AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
   AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
   AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
 } from '@/shared/lib/ai-paths/core/constants';
@@ -57,7 +58,7 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
     ]);
   });
 
-  it('normalizes runtime-kernel pilot node and resolver id list values', () => {
+  it('normalizes runtime-kernel node type and resolver id list values', () => {
     const records: AiPathsSettingRecord[] = [
       {
         key: AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
@@ -87,9 +88,10 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
 
     expect(result.success).toBe(true);
     expect(result.affectedCount).toBe(2);
+    expect(result.deletedKeys).toEqual([AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY]);
     expect(result.nextRecords).toEqual([
       {
-        key: AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
+        key: AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
         value: 'constant, math, template_node',
       },
       {
@@ -125,6 +127,7 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
 
     expect(result.success).toBe(true);
     expect(result.affectedCount).toBe(1);
+    expect(result.deletedKeys).toEqual([]);
     expect(result.nextRecords).toEqual([
       {
         key: AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
@@ -202,12 +205,13 @@ describe('AI Paths maintenance runtime-kernel settings normalization', () => {
 
     expect(result.success).toBe(true);
     expect(result.affectedCount).toBe(1);
+    expect(result.deletedKeys).toEqual([]);
     const parsed = JSON.parse(result.nextRecords[0]?.value ?? '{}') as Record<string, unknown>;
     const extensions = parsed['extensions'] as Record<string, unknown>;
     const runtimeKernel = extensions?.['runtimeKernel'] as Record<string, unknown>;
     expect(runtimeKernel).toEqual({
       mode: 'auto',
-      pilotNodeTypes: ['template_node', 'parser'],
+      nodeTypes: ['template_node', 'parser'],
       codeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
       strictNativeRegistry: true,
     });

@@ -10,7 +10,10 @@ import {
   normalizeRuleKind,
   normalizeRuleScopes,
 } from '../rule-item-utils';
-import type { PromptValidationRule, PromptValidationScope } from '@/shared/lib/prompt-engine/settings';
+import type {
+  PromptValidationRule,
+  PromptValidationScope,
+} from '@/shared/lib/prompt-engine/settings';
 
 export function RuleItemBasicSettings(): React.JSX.Element | null {
   const { draft, rule, patchRule } = useRuleItemContext();

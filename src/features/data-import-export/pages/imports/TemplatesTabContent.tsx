@@ -512,11 +512,11 @@ export function TemplatesTabContent(): React.JSX.Element {
                             { value: '__none__', label: 'Source Field' },
                             ...(m.sourceKey && !importSourceFieldOptions.includes(m.sourceKey)
                               ? [
-                                {
-                                  value: m.sourceKey,
-                                  label: `${m.sourceKey} (custom)`,
-                                },
-                              ]
+                                  {
+                                    value: m.sourceKey,
+                                    label: `${m.sourceKey} (custom)`,
+                                  },
+                                ]
                               : []),
                             ...importSourceFieldOptions.map((field: string) => ({
                               value: field,
@@ -546,11 +546,11 @@ export function TemplatesTabContent(): React.JSX.Element {
                             (option) => option.value === m.targetField
                           )
                             ? [
-                              {
-                                value: m.targetField,
-                                label: `${m.targetField} (custom)`,
-                              },
-                            ]
+                                {
+                                  value: m.targetField,
+                                  label: `${m.targetField} (custom)`,
+                                },
+                              ]
                             : []),
                           ...templateTargetFieldOptions,
                         ]}
@@ -569,60 +569,60 @@ export function TemplatesTabContent(): React.JSX.Element {
                   </div>
                   {templateScope === 'export'
                     ? (() => {
-                      const sourceValue = m.sourceKey.trim();
-                      const sourceUsesParameterPrefix = sourceValue
-                        .toLowerCase()
-                        .startsWith(PRODUCT_PARAMETER_TARGET_PREFIX);
-                      const targetValue = m.targetField.trim();
-                      const hasParameterPrefix = targetValue
-                        .toLowerCase()
-                        .startsWith(PRODUCT_PARAMETER_TARGET_PREFIX);
-                      if (!hasParameterPrefix && !sourceUsesParameterPrefix) {
-                        return null;
-                      }
+                        const sourceValue = m.sourceKey.trim();
+                        const sourceUsesParameterPrefix = sourceValue
+                          .toLowerCase()
+                          .startsWith(PRODUCT_PARAMETER_TARGET_PREFIX);
+                        const targetValue = m.targetField.trim();
+                        const hasParameterPrefix = targetValue
+                          .toLowerCase()
+                          .startsWith(PRODUCT_PARAMETER_TARGET_PREFIX);
+                        if (!hasParameterPrefix && !sourceUsesParameterPrefix) {
+                          return null;
+                        }
 
-                      if (sourceUsesParameterPrefix) {
-                        const parsedSourceParameter = parseParameterTarget(sourceValue);
-                        if (parsedSourceParameter) {
-                          return (
-                            <p className='text-[11px] text-red-300'>
+                        if (sourceUsesParameterPrefix) {
+                          const parsedSourceParameter = parseParameterTarget(sourceValue);
+                          if (parsedSourceParameter) {
+                            return (
+                              <p className='text-[11px] text-red-300'>
                                 Legacy source format <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code>{' '}
-                                is not supported for export. Use canonical Base source fields
-                                (for example <code>text_fields.features.Material</code> or{' '}
-                              <code>text_fields.features|de.Material</code>).
+                                is not supported for export. Use canonical Base source fields (for
+                                example <code>text_fields.features.Material</code> or{' '}
+                                <code>text_fields.features|de.Material</code>).
+                              </p>
+                            );
+                          }
+                        }
+
+                        if (!hasParameterPrefix) return null;
+
+                        const parsedParameterTarget = parseParameterTarget(targetValue);
+                        if (!parsedParameterTarget) {
+                          return (
+                            <p className='text-[11px] text-amber-300'>
+                              Invalid parameter target format. Use{' '}
+                              <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code> or{' '}
+                              <code>{PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN}</code>.
                             </p>
                           );
                         }
-                      }
 
-                      if (!hasParameterPrefix) return null;
+                        const normalizedTargetValue = toParameterTargetValue(
+                          parsedParameterTarget.parameterId
+                        );
+                        if (validParameterTargetValues.has(normalizedTargetValue)) {
+                          return null;
+                        }
 
-                      const parsedParameterTarget = parseParameterTarget(targetValue);
-                      if (!parsedParameterTarget) {
                         return (
                           <p className='text-[11px] text-amber-300'>
-                              Invalid parameter target format. Use{' '}
-                            <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code> or{' '}
-                            <code>{PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN}</code>.
+                            {catalogId
+                              ? 'Parameter target is not in current catalog parameter list. Verify the parameter ID.'
+                              : 'Select a catalog in Imports tab to validate parameter targets.'}
                           </p>
                         );
-                      }
-
-                      const normalizedTargetValue = toParameterTargetValue(
-                        parsedParameterTarget.parameterId
-                      );
-                      if (validParameterTargetValues.has(normalizedTargetValue)) {
-                        return null;
-                      }
-
-                      return (
-                        <p className='text-[11px] text-amber-300'>
-                          {catalogId
-                            ? 'Parameter target is not in current catalog parameter list. Verify the parameter ID.'
-                            : 'Select a catalog in Imports tab to validate parameter targets.'}
-                        </p>
-                      );
-                    })()
+                      })()
                     : null}
                 </div>
               ))}

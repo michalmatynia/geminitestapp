@@ -2,7 +2,11 @@
 import { RunHistoryEntries } from '@/features/ai/ai-paths/components/RunHistoryEntries';
 import { Button } from '@/shared/ui';
 
-import { useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../../AiPathConfigContext';
+import {
+  useAiPathOrchestrator,
+  useAiPathRuntime,
+  useAiPathSelection,
+} from '../../AiPathConfigContext';
 import { useRunHistoryActions } from '../../../context';
 
 export function NodeHistoryTab(): React.JSX.Element | null {

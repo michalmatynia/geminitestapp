@@ -392,10 +392,9 @@ export function usePathPersistence(
           'Failed to save AI Paths settings:'
         );
         if (!silent) {
-          args.toast(
-            shouldExposeRawMessage ? rawMessage : 'Failed to save AI Paths settings.',
-            { variant: 'error' }
-          );
+          args.toast(shouldExposeRawMessage ? rawMessage : 'Failed to save AI Paths settings.', {
+            variant: 'error',
+          });
         }
         return false;
       } finally {

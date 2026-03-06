@@ -26,9 +26,9 @@ export async function ProductPublicPage({
   const priceLabel =
     typeof product.price === 'number'
       ? new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-      }).format(product.price)
+          style: 'currency',
+          currency: 'USD',
+        }).format(product.price)
       : '—';
 
   const description =

@@ -107,10 +107,10 @@ export function useGenerationToolbarResolution(state: GenerationToolbarState) {
     }
     const overflowCropRect = imageContentFrame
       ? resolveCanvasOverflowCropRect({
-        canvasWidth,
-        canvasHeight,
-        imageFrame: imageContentFrame,
-      })
+          canvasWidth,
+          canvasHeight,
+          imageFrame: imageContentFrame,
+        })
       : null;
     if (overflowCropRect) {
       return {

@@ -23,10 +23,7 @@ import { PreviewSectionMediaButton } from './PreviewSectionMediaButton';
 export function PreviewHeroSection(): React.JSX.Element {
   const { layout } = useCmsPageContext();
   const mediaStyles = useMediaStyles();
-  const {
-    section,
-    PreviewBlockItem,
-  } = usePreviewSectionContext();
+  const { section, PreviewBlockItem } = usePreviewSectionContext();
   const { inspectorSettings } = usePreviewEditorState();
   const { onOpenMedia } = usePreviewEditorActions();
 
@@ -90,10 +87,7 @@ export function PreviewHeroSection(): React.JSX.Element {
 export function PreviewImageWithTextSection(): React.JSX.Element {
   const { layout } = useCmsPageContext();
   const mediaStyles = useMediaStyles();
-  const {
-    section,
-    PreviewBlockItem,
-  } = usePreviewSectionContext();
+  const { section, PreviewBlockItem } = usePreviewSectionContext();
   const { inspectorSettings } = usePreviewEditorState();
   const { onOpenMedia } = usePreviewEditorActions();
 
@@ -168,10 +162,7 @@ export function PreviewImageWithTextSection(): React.JSX.Element {
 
 export function PreviewRichTextSection(): React.JSX.Element {
   const { layout } = useCmsPageContext();
-  const {
-    section,
-    PreviewBlockItem,
-  } = usePreviewSectionContext();
+  const { section, PreviewBlockItem } = usePreviewSectionContext();
   const { inspectorSettings } = usePreviewEditorState();
   const { onOpenMedia } = usePreviewEditorActions();
 

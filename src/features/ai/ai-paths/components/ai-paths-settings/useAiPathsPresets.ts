@@ -150,9 +150,7 @@ export function useAiPathsPresets({
     [presetsActions, presetsState.presetsJson]
   );
 
-  const setExpandedPaletteGroups = useCallback<
-    React.Dispatch<React.SetStateAction<Set<string>>>
-  >(
+  const setExpandedPaletteGroups = useCallback<React.Dispatch<React.SetStateAction<Set<string>>>>(
     (next): void => {
       presetsActions.setExpandedPaletteGroups(next);
     },
@@ -167,45 +165,61 @@ export function useAiPathsPresets({
     [presetsActions, presetsState.paletteCollapsed]
   );
 
-  const setEditingPresetId = useCallback((id: string | null): void => {
-    presetsActions.setEditingPresetId(id);
-  }, [presetsActions]);
+  const setEditingPresetId = useCallback(
+    (id: string | null): void => {
+      presetsActions.setEditingPresetId(id);
+    },
+    [presetsActions]
+  );
 
   const handleResetPresetDraft = useCallback((): void => {
     presetsActions.resetPresetDraft();
   }, [presetsActions]);
 
-  const saveClusterPresets = useCallback(async (nextPresets: ClusterPreset[]): Promise<void> => {
-    try {
-      await updateAiPathsSetting(CLUSTER_PRESETS_KEY, JSON.stringify(nextPresets));
-    } catch (error: unknown) {
-      reportAiPathsError(error, { action: 'saveClusterPresets' }, 'Failed to save presets:');
-      toast('Failed to save cluster presets.', { variant: 'error' });
-    }
-  }, [reportAiPathsError, toast]);
+  const saveClusterPresets = useCallback(
+    async (nextPresets: ClusterPreset[]): Promise<void> => {
+      try {
+        await updateAiPathsSetting(CLUSTER_PRESETS_KEY, JSON.stringify(nextPresets));
+      } catch (error: unknown) {
+        reportAiPathsError(error, { action: 'saveClusterPresets' }, 'Failed to save presets:');
+        toast('Failed to save cluster presets.', { variant: 'error' });
+      }
+    },
+    [reportAiPathsError, toast]
+  );
 
-  const saveDbQueryPresets = useCallback(async (nextPresets: DbQueryPreset[]): Promise<void> => {
-    try {
-      await updateAiPathsSetting(DB_QUERY_PRESETS_KEY, JSON.stringify(nextPresets));
-    } catch (error: unknown) {
-      reportAiPathsError(error, { action: 'saveDbQueryPresets' }, 'Failed to save query presets:');
-      toast('Failed to save query presets.', { variant: 'error' });
-      throw error;
-    }
-  }, [reportAiPathsError, toast]);
+  const saveDbQueryPresets = useCallback(
+    async (nextPresets: DbQueryPreset[]): Promise<void> => {
+      try {
+        await updateAiPathsSetting(DB_QUERY_PRESETS_KEY, JSON.stringify(nextPresets));
+      } catch (error: unknown) {
+        reportAiPathsError(
+          error,
+          { action: 'saveDbQueryPresets' },
+          'Failed to save query presets:'
+        );
+        toast('Failed to save query presets.', { variant: 'error' });
+        throw error;
+      }
+    },
+    [reportAiPathsError, toast]
+  );
 
-  const saveDbNodePresets = useCallback(async (nextPresets: DbNodePreset[]): Promise<void> => {
-    try {
-      await updateAiPathsSetting(DB_NODE_PRESETS_KEY, JSON.stringify(nextPresets));
-    } catch (error: unknown) {
-      reportAiPathsError(
-        error,
-        { action: 'saveDbNodePresets' },
-        'Failed to save database presets:'
-      );
-      toast('Failed to save database presets.', { variant: 'error' });
-    }
-  }, [reportAiPathsError, toast]);
+  const saveDbNodePresets = useCallback(
+    async (nextPresets: DbNodePreset[]): Promise<void> => {
+      try {
+        await updateAiPathsSetting(DB_NODE_PRESETS_KEY, JSON.stringify(nextPresets));
+      } catch (error: unknown) {
+        reportAiPathsError(
+          error,
+          { action: 'saveDbNodePresets' },
+          'Failed to save database presets:'
+        );
+        toast('Failed to save database presets.', { variant: 'error' });
+      }
+    },
+    [reportAiPathsError, toast]
+  );
 
   useEffect(() => {
     presetsActions.setPresetPersistenceHandlers({

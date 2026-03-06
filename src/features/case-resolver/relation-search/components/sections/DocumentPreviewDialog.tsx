@@ -19,11 +19,7 @@ import {
 import { FileTypeIcon, formatShortDate } from './document-relation-search-utils';
 
 export function DocumentPreviewDialog(): React.JSX.Element {
-  const {
-    previewFile: file,
-    previewRow,
-    isLocked,
-  } = useDocumentRelationSearchStateContext();
+  const { previewFile: file, previewRow, isLocked } = useDocumentRelationSearchStateContext();
   const { onLinkFile, setPreviewFileId } = useDocumentRelationSearchActionsContext();
 
   const onClose = () => setPreviewFileId(null);

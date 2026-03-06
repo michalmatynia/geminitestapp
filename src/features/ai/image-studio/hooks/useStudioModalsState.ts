@@ -24,9 +24,7 @@ import type {
   LinkedGeneratedVariantViewModel as LinkedGeneratedVariant,
 } from '../components/studio-modals/slot-inline-edit-tab-types';
 import { mapLinkedGeneratedVariants } from '../components/studio-modals/slot-inline-edit-utils';
-import type {
-  PromptExtractHistoryEntry,
-} from '../components/studio-modals/prompt-extract-utils';
+import type { PromptExtractHistoryEntry } from '../components/studio-modals/prompt-extract-utils';
 import type { PromptValidationIssue } from '@/shared/contracts/prompt-engine';
 import type { ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
 

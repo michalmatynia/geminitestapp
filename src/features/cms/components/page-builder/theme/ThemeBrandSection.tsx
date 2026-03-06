@@ -22,13 +22,11 @@ export function ThemeBrandSection(): React.JSX.Element {
   const applyThemePatch = <K extends keyof ThemeSettings>(
     values: Partial<Pick<ThemeSettings, K>>
   ): void => {
-    (Object.entries(values) as Array<[K, ThemeSettings[K] | undefined]>).forEach(
-      ([key, value]) => {
-        if (value !== undefined) {
-          update(key, value);
-        }
+    (Object.entries(values) as Array<[K, ThemeSettings[K] | undefined]>).forEach(([key, value]) => {
+      if (value !== undefined) {
+        update(key, value);
       }
-    );
+    });
   };
 
   const updateStringSetting =
@@ -39,9 +37,9 @@ export function ThemeBrandSection(): React.JSX.Element {
     >(
       key: K
     ) =>
-      (value: string): void => {
-        update(key, value);
-      };
+    (value: string): void => {
+      update(key, value);
+    };
 
   const handleBrandImageWidthChange = (values: Partial<BrandImageSettings>): void => {
     applyThemePatch(values);

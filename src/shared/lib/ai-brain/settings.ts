@@ -16,10 +16,7 @@ import {
   AI_BRAIN_SETTINGS_KEY as SETTINGS_KEY,
   AI_BRAIN_PROVIDER_CATALOG_KEY as CATALOG_KEY,
 } from '@/shared/contracts/ai-brain';
-import {
-  catalogToEntries,
-  sanitizeCatalogEntries,
-} from '@/shared/lib/ai-brain/catalog-entries';
+import { catalogToEntries, sanitizeCatalogEntries } from '@/shared/lib/ai-brain/catalog-entries';
 import { validationError } from '@/shared/errors/app-error';
 
 export type {

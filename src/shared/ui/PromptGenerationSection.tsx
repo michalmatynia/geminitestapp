@@ -50,10 +50,14 @@ const {
 });
 
 function PromptGenerationSectionHeader(): JSX.Element {
-  const { badgeVariant, badgeTextColor, pathNumber, pathTitle } = usePromptGenerationSectionRuntime();
+  const { badgeVariant, badgeTextColor, pathNumber, pathTitle } =
+    usePromptGenerationSectionRuntime();
   return (
     <div className='flex items-center gap-2'>
-      <Badge variant={badgeVariant} className={`h-6 w-6 justify-center p-0 font-bold ${badgeTextColor}`}>
+      <Badge
+        variant={badgeVariant}
+        className={`h-6 w-6 justify-center p-0 font-bold ${badgeTextColor}`}
+      >
         {pathNumber}
       </Badge>
       <h3 className='text-md font-medium text-white'>{pathTitle}</h3>
@@ -100,18 +104,29 @@ function PromptGenerationInitialResultPanel(): JSX.Element {
 }
 
 function PromptGenerationModelPanel(): JSX.Element {
-  const { modelLabel, modelOptions, modelValue, onModelChange } = usePromptGenerationSectionRuntime();
+  const { modelLabel, modelOptions, modelValue, onModelChange } =
+    usePromptGenerationSectionRuntime();
   return (
     <div className='max-w-md'>
       <Label>{modelLabel}</Label>
-      <SelectSimple size='sm' value={modelValue} onValueChange={onModelChange} options={modelOptions} />
+      <SelectSimple
+        size='sm'
+        value={modelValue}
+        onValueChange={onModelChange}
+        options={modelOptions}
+      />
     </div>
   );
 }
 
 function PromptGenerationOutputToggle(): JSX.Element {
-  const { badgeTextColor, modelValue, onOutputEnabledChange, outputEnabled, outputEnabledCheckboxId } =
-    usePromptGenerationSectionRuntime();
+  const {
+    badgeTextColor,
+    modelValue,
+    onOutputEnabledChange,
+    outputEnabled,
+    outputEnabledCheckboxId,
+  } = usePromptGenerationSectionRuntime();
   return (
     <div className='flex items-center gap-2'>
       <Checkbox
@@ -127,8 +142,13 @@ function PromptGenerationOutputToggle(): JSX.Element {
 }
 
 function PromptGenerationOutputPromptPanel(): JSX.Element {
-  const { outputPlaceholder, outputPromptLabel, outputPromptValue, onOutputPromptChange, pathNumber } =
-    usePromptGenerationSectionRuntime();
+  const {
+    outputPlaceholder,
+    outputPromptLabel,
+    outputPromptValue,
+    onOutputPromptChange,
+    pathNumber,
+  } = usePromptGenerationSectionRuntime();
   return (
     <div className='space-y-2'>
       <Label>{outputPromptLabel}</Label>

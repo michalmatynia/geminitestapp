@@ -30,4 +30,5 @@ export const GeometryBasicsLesson = GeometryBasicsLessonView as ComponentType<Le
 export const GeometryShapesLesson = GeometryShapesLessonView as ComponentType<LessonProps>;
 export const GeometrySymmetryLesson = GeometrySymmetryLessonView as ComponentType<LessonProps>;
 export const GeometryPerimeterLesson = GeometryPerimeterLessonView as ComponentType<LessonProps>;
-export const CalendarTrainingGame = CalendarTrainingGameView as ComponentType<CalendarTrainingGameProps>;
+export const CalendarTrainingGame =
+  CalendarTrainingGameView as ComponentType<CalendarTrainingGameProps>;

@@ -331,9 +331,7 @@ const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern =>
   maxExecutions: normalizeMaxExecutions(doc.maxExecutions),
   passOutputToNext: doc.passOutputToNext ?? true,
   launchEnabled: doc.launchEnabled ?? false,
-  launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
-    doc.launchAppliesToScopes
-  ),
+  launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(doc.launchAppliesToScopes),
   launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(doc.launchScopeBehavior),
   launchSourceMode: normalizeLaunchSourceMode(doc.launchSourceMode),
   launchSourceField:

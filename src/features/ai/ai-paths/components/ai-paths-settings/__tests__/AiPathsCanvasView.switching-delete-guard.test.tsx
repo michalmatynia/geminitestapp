@@ -303,7 +303,9 @@ describe('AiPathsCanvasView switch guard', () => {
       setSelectionScopeMode: vi.fn(),
       dataContractReport: { byNodeId: {} },
       setDataContractInspectorNodeId: vi.fn(),
-      paths: [{ id: 'path-main', name: 'Path Main', createdAt: '2026-03-05', updatedAt: '2026-03-05' }],
+      paths: [
+        { id: 'path-main', name: 'Path Main', createdAt: '2026-03-05', updatedAt: '2026-03-05' },
+      ],
       pathConfigs: { 'path-main': { id: 'path-main', extensions: {} } },
       persistPathSettings: vi.fn(async () => undefined),
     };
@@ -374,7 +376,9 @@ describe('AiPathsCanvasView switch guard', () => {
       setSelectionScopeMode: vi.fn(),
       dataContractReport: { byNodeId: {} },
       setDataContractInspectorNodeId: vi.fn(),
-      paths: [{ id: 'path-main', name: 'Path Main', createdAt: '2026-03-05', updatedAt: '2026-03-05' }],
+      paths: [
+        { id: 'path-main', name: 'Path Main', createdAt: '2026-03-05', updatedAt: '2026-03-05' },
+      ],
       pathConfigs: {
         'path-main': {
           id: 'path-main',
@@ -397,7 +401,7 @@ describe('AiPathsCanvasView switch guard', () => {
 
     render(<AiPathsCanvasView />);
 
-    fireEvent.change(screen.getByPlaceholderText('path pilot nodes: template, parser'), {
+    fireEvent.change(screen.getByPlaceholderText('path kernel nodes: template, parser'), {
       target: { value: 'template, parser' },
     });
     fireEvent.change(screen.getByPlaceholderText('path resolvers: resolver.path'), {
@@ -412,7 +416,7 @@ describe('AiPathsCanvasView switch guard', () => {
     const extensions = config?.['extensions'] as Record<string, unknown> | undefined;
     const runtimeKernel = extensions?.['runtimeKernel'] as Record<string, unknown> | undefined;
     expect(runtimeKernel).toEqual({
-      pilotNodeTypes: ['template', 'parser'],
+      nodeTypes: ['template', 'parser'],
       codeObjectResolverIds: ['resolver.path'],
       strictNativeRegistry: true,
     });

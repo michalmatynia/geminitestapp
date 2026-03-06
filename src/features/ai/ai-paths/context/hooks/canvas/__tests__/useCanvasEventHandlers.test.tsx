@@ -123,4 +123,3 @@ describe('useCanvasEventHandlers', () => {
     expect(updateLastPointerCanvasPosFromClient).toHaveBeenCalledWith(400, 300);
   });
 });
-

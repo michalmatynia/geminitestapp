@@ -6,10 +6,7 @@ import { Button, Checkbox, Input, Tooltip, FormSection, FormField } from '@/shar
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
-import {
-  useAnimationConfigActions,
-  useAnimationConfigState,
-} from '../AnimationConfigContext';
+import { useAnimationConfigActions, useAnimationConfigState } from '../AnimationConfigContext';
 import type { VectorOverlayResult } from '../../../../hooks/usePageBuilderContext';
 import { type VectorShape } from '@/shared/contracts/vector';
 

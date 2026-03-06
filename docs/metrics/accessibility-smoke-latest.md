@@ -1,11 +1,11 @@
 # Accessibility Smoke Report
 
-Generated at: 2026-03-06T03:13:47.603Z
+Generated at: 2026-03-06T04:51:28.593Z
 
 ## Summary
 
-- Suites: 5
-- Passed: 5
+- Suites: 6
+- Passed: 6
 - Failed: 0
 - React act warnings: 1
 - Warning budget: 10
@@ -16,11 +16,12 @@ Generated at: 2026-03-06T03:13:47.603Z
 
 | Suite | Status | Duration | Exit | Tests |
 | --- | --- | ---: | ---: | --- |
-| Auth Sign-In Accessibility | PASS | 2.8s | 0 | `__tests__/features/auth/pages/signin-page.test.tsx` |
-| Products Edit Form Accessibility | PASS | 3.8s | 0 | `__tests__/features/products/pages/product-edit-page.test.tsx` |
-| Image Studio UI Accessibility | PASS | 2.8s | 0 | `src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx` |
-| AI Paths Canvas Accessibility | PASS | 3.2s | 0 | `src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx` |
-| Case Resolver Header Accessibility | PASS | 2.4s | 0 | `src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx` |
+| Auth Sign-In Accessibility | PASS | 3.5s | 0 | `__tests__/features/auth/pages/signin-page.test.tsx` |
+| Products Edit Form Accessibility | PASS | 5.9s | 0 | `__tests__/features/products/pages/product-edit-page.test.tsx` |
+| Image Studio UI Accessibility | PASS | 4.5s | 0 | `src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx` |
+| AI Paths Canvas Accessibility | PASS | 5.0s | 0 | `src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx` |
+| Case Resolver Header Accessibility | PASS | 3.7s | 0 | `src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx` |
+| Kangur Profile Accessibility | PASS | 2.9s | 0 | `__tests__/features/kangur/kangur-accessibility-smoke.test.tsx` |
 
 ## Warning Details
 
@@ -31,6 +32,7 @@ Generated at: 2026-03-06T03:13:47.603Z
 | Image Studio UI Accessibility | 0 |
 | AI Paths Canvas Accessibility | 0 |
 | Case Resolver Header Accessibility | 0 |
+| Kangur Profile Accessibility | 0 |
 
 ## Notes
 

@@ -82,14 +82,12 @@ type TableDetailCardRuntimeValue = {
   onManageTable?: (tableName: string) => void;
 };
 
-const {
-  Context: TableDetailCardRuntimeContext,
-  useStrictContext: useTableDetailCardRuntime,
-} = createStrictContext<TableDetailCardRuntimeValue>({
-  hookName: 'useTableDetailCardRuntime',
-  providerName: 'TableDetailCardRuntimeProvider',
-  displayName: 'TableDetailCardRuntimeContext',
-});
+const { Context: TableDetailCardRuntimeContext, useStrictContext: useTableDetailCardRuntime } =
+  createStrictContext<TableDetailCardRuntimeValue>({
+    hookName: 'useTableDetailCardRuntime',
+    providerName: 'TableDetailCardRuntimeProvider',
+    displayName: 'TableDetailCardRuntimeContext',
+  });
 
 function TableDetailCardTitle(): React.JSX.Element {
   const { detail } = useTableDetailCardRuntime();

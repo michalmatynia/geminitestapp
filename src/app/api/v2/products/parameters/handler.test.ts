@@ -89,14 +89,17 @@ describe('products/parameters handler', () => {
       optionLabels: [],
     });
 
-    const response = await POST_handler(new NextRequest('http://localhost/api/v2/products/parameters'), {
-      body: {
-        name_en: 'Material',
-        catalogId: 'catalog-1',
-        selectorType: 'text',
-        optionLabels: [],
-      },
-    } as ApiHandlerContext);
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/v2/products/parameters'),
+      {
+        body: {
+          name_en: 'Material',
+          catalogId: 'catalog-1',
+          selectorType: 'text',
+          optionLabels: [],
+        },
+      } as ApiHandlerContext
+    );
 
     expect(response.status).toBe(201);
     expect(createParameterMock).toHaveBeenCalled();

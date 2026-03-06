@@ -250,7 +250,9 @@ export function AiPathConfigProvider({
       <AiPathGraphContext.Provider value={value}>
         <AiPathRuntimeContext.Provider value={value}>
           <AiPathPresetsContext.Provider value={value}>
-            <AiPathOrchestratorContext.Provider value={value}>{children}</AiPathOrchestratorContext.Provider>
+            <AiPathOrchestratorContext.Provider value={value}>
+              {children}
+            </AiPathOrchestratorContext.Provider>
           </AiPathPresetsContext.Provider>
         </AiPathRuntimeContext.Provider>
       </AiPathGraphContext.Provider>

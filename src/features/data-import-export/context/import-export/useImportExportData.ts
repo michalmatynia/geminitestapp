@@ -144,10 +144,7 @@ export function useImportExportData({
       searchName: importNameSearch,
       searchSku: importSkuSearch,
     },
-    importListEnabled &&
-      isBaseConnected &&
-      !!inventoryId &&
-      !!normalizedSelectedBaseConnectionId
+    importListEnabled && isBaseConnected && !!inventoryId && !!normalizedSelectedBaseConnectionId
   );
   const importListData = importListQuery.data as
     | {

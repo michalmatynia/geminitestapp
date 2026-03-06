@@ -44,9 +44,7 @@ import {
 } from './admin-cases/types';
 
 import { useAdminCaseResolverCasesState } from './admin-cases/useAdminCaseResolverCasesState';
-import {
-  useAdminCaseResolverCasesActions,
-} from './admin-cases/useAdminCaseResolverCasesActions';
+import { useAdminCaseResolverCasesActions } from './admin-cases/useAdminCaseResolverCasesActions';
 import {
   getCaseResolverWorkspaceRevision,
   normalizeCaseListViewDefaults,
@@ -132,9 +130,8 @@ const AdminCaseResolverCasesStateContext = createContext<AdminCaseResolverCasesS
   null
 );
 
-const AdminCaseResolverCasesActionsContext = createContext<AdminCaseResolverCasesActionsValue | null>(
-  null
-);
+const AdminCaseResolverCasesActionsContext =
+  createContext<AdminCaseResolverCasesActionsValue | null>(null);
 
 const normalizeToastVariant = (value: string | undefined): ToastVariant | undefined => {
   if (value === 'success') return 'success';
@@ -374,27 +371,16 @@ export function AdminCaseResolverCasesProvider({
           return currentWorkspace;
         }
         lastPersistedWorkspaceValueRef.current = JSON.stringify(incomingWorkspace);
-        lastPersistedWorkspaceRevisionRef.current = getCaseResolverWorkspaceRevision(
-          incomingWorkspace
-        );
+        lastPersistedWorkspaceRevisionRef.current =
+          getCaseResolverWorkspaceRevision(incomingWorkspace);
         return incomingWorkspace;
       });
     },
-    [
-      lastPersistedWorkspaceRevisionRef,
-      lastPersistedWorkspaceValueRef,
-      setWorkspace,
-    ]
+    [lastPersistedWorkspaceRevisionRef, lastPersistedWorkspaceValueRef, setWorkspace]
   );
 
   const runWorkspaceBootstrap = useCallback(
-    async ({
-      source,
-      force,
-    }: {
-      source: string;
-      force: boolean;
-    }): Promise<void> => {
+    async ({ source, force }: { source: string; force: boolean }): Promise<void> => {
       try {
         const shouldBootstrapFromRecord =
           force ||
@@ -402,7 +388,9 @@ export function AdminCaseResolverCasesProvider({
           workspaceSafeParseDiagnostics.parseFallbackApplied;
 
         if (!shouldBootstrapFromRecord) {
-          setCasesLoadState((currentState) => (currentState === 'loading' ? 'ready' : currentState));
+          setCasesLoadState((currentState) =>
+            currentState === 'loading' ? 'ready' : currentState
+          );
           if (!workspaceSafeParseDiagnostics.parseFallbackApplied) {
             setCasesLoadMessage(null);
           }
@@ -482,7 +470,9 @@ export function AdminCaseResolverCasesProvider({
       } catch (error: unknown) {
         if (!isMountedRef.current) return;
         setCasesLoadState('unavailable');
-        setCasesLoadMessage(error instanceof Error ? error.message : 'Could not load cases workspace.');
+        setCasesLoadMessage(
+          error instanceof Error ? error.message : 'Could not load cases workspace.'
+        );
       }
     },
     [
@@ -540,7 +530,8 @@ export function AdminCaseResolverCasesProvider({
     () =>
       caseResolverIdentifiers.map((identifierRecord: CaseResolverIdentifier) => {
         const id = identifierRecord.id;
-        const name = typeof identifierRecord['name'] === 'string' ? identifierRecord['name'].trim() : '';
+        const name =
+          typeof identifierRecord['name'] === 'string' ? identifierRecord['name'].trim() : '';
         const label =
           typeof identifierRecord['label'] === 'string' ? identifierRecord['label'].trim() : '';
         const type =

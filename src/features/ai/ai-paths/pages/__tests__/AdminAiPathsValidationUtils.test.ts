@@ -136,10 +136,9 @@ describe('AdminAiPathsValidationUtils', () => {
   });
 
   it('parses canonical docs sources one-per-line', () => {
-    expect(parseDocsSourcesText('ai-paths:node-docs:trigger\nai-paths:node-docs:database')).toEqual([
-      'ai-paths:node-docs:trigger',
-      'ai-paths:node-docs:database',
-    ]);
+    expect(parseDocsSourcesText('ai-paths:node-docs:trigger\nai-paths:node-docs:database')).toEqual(
+      ['ai-paths:node-docs:trigger', 'ai-paths:node-docs:database']
+    );
   });
 
   it('ignores legacy comma-delimited docs sources lines', () => {

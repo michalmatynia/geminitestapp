@@ -108,7 +108,7 @@ export function useRunLogInsightMutation(): MutationResult<AiInsightRecord | nul
 export function useRunRuntimeAnalyticsInsightMutation(): MutationResult<
   AiInsightRecord | null,
   void
-  > {
+> {
   const mutationKey = QUERY_KEYS.ai.insights.runtimeAnalytics();
   return createCreateMutationV2<AiInsightRecord | null, void>({
     mutationFn: async () => {

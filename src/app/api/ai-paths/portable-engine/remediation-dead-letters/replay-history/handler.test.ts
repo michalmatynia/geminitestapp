@@ -217,8 +217,9 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
   });
 
   it('applies sensitive redaction mode for lower-trust replay-history exports', async () => {
-    resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionModeFromEnvironmentMock
-      .mockReturnValueOnce('sensitive');
+    resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionModeFromEnvironmentMock.mockReturnValueOnce(
+      'sensitive'
+    );
     listSystemLogsMock.mockResolvedValueOnce({
       logs: [
         {
@@ -514,7 +515,11 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
             retainedCount: 0,
             persisted: true,
             filters: { channel: 'webhook', endpoint: 'https://example.test/a', limit: 1 },
-            replayPolicy: { replayWindowSeconds: 300, minimumQueuedAt: null, endpointAllowlistCount: 1 },
+            replayPolicy: {
+              replayWindowSeconds: 300,
+              minimumQueuedAt: null,
+              endpointAllowlistCount: 1,
+            },
           },
         },
         {
@@ -532,7 +537,11 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
             retainedCount: 1,
             persisted: true,
             filters: { channel: 'webhook', endpoint: 'https://example.test/b', limit: 1 },
-            replayPolicy: { replayWindowSeconds: 300, minimumQueuedAt: null, endpointAllowlistCount: 1 },
+            replayPolicy: {
+              replayWindowSeconds: 300,
+              minimumQueuedAt: null,
+              endpointAllowlistCount: 1,
+            },
           },
         },
         {
@@ -550,7 +559,11 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
             retainedCount: 1,
             persisted: true,
             filters: { channel: 'webhook', endpoint: 'https://example.test/c', limit: 1 },
-            replayPolicy: { replayWindowSeconds: 300, minimumQueuedAt: null, endpointAllowlistCount: 1 },
+            replayPolicy: {
+              replayWindowSeconds: 300,
+              minimumQueuedAt: null,
+              endpointAllowlistCount: 1,
+            },
           },
         },
       ],
@@ -623,9 +636,7 @@ describe('ai-paths portable-engine remediation dead-letter replay history handle
         ),
         {} as Parameters<typeof GET_handler>[1]
       )
-    ).rejects.toThrow(
-      'Remediation replay history "format" must be one of: json, ndjson, csv.'
-    );
+    ).rejects.toThrow('Remediation replay history "format" must be one of: json, ndjson, csv.');
 
     await expect(
       GET_handler(

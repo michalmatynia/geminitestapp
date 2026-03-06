@@ -2,7 +2,10 @@ import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { folderTreeInstanceValues, type FolderTreeInstance } from '@/shared/utils/folder-tree-profiles-v2';
+import {
+  folderTreeInstanceValues,
+  type FolderTreeInstance,
+} from '@/shared/utils/folder-tree-profiles-v2';
 
 const ROOT_SRC_DIR = path.resolve(process.cwd(), 'src');
 

@@ -295,5 +295,4 @@ describe('case-resolver workspace persistence required file and fallback behavio
       `/api/settings?scope=heavy&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
     );
   });
-
 });

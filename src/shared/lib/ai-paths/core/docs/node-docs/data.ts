@@ -61,7 +61,7 @@ export const databaseDocs: NodeConfigDocField[] = [
   },
   {
     path: 'database.writeSourcePath',
-    description: 'Optional JSON path within writeSource to write (example: \'result.items[0]\').',
+    description: "Optional JSON path within writeSource to write (example: 'result.items[0]').",
   },
   {
     path: 'database.writeOutcomePolicy.onZeroAffected',

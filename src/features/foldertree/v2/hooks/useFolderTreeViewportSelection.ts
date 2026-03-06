@@ -37,29 +37,29 @@ export function useFolderTreeViewportSelection(args: {
 
       const nextSelectedIds = isRangeGesture
         ? resolveNextSelectedNodeIds({
-          mode: 'range',
-          nodeId,
-          anchorId:
+            mode: 'range',
+            nodeId,
+            anchorId:
               selectionAnchorRef.current ??
               controller.selectedNodeId ??
               currentSelectedIds[0] ??
               nodeId,
-          currentSelectedIds,
-          visibleRows: rows,
-        })
-        : isToggleGesture
-          ? resolveNextSelectedNodeIds({
-            mode: 'toggle',
-            nodeId,
             currentSelectedIds,
             visibleRows: rows,
           })
+        : isToggleGesture
+          ? resolveNextSelectedNodeIds({
+              mode: 'toggle',
+              nodeId,
+              currentSelectedIds,
+              visibleRows: rows,
+            })
           : resolveNextSelectedNodeIds({
-            mode: 'single',
-            nodeId,
-            currentSelectedIds,
-            visibleRows: rows,
-          });
+              mode: 'single',
+              nodeId,
+              currentSelectedIds,
+              visibleRows: rows,
+            });
 
       setSelectedNodeIds(nextSelectedIds);
       selectionAnchorRef.current = nodeId;

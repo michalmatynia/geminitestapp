@@ -4,7 +4,12 @@ import type { DbQueryConfig, Edge, PollConfig } from '@/shared/lib/ai-paths';
 import { DB_COLLECTION_OPTIONS, renderTemplate, toNumber } from '@/shared/lib/ai-paths';
 import { Button, Input, Textarea, SelectSimple, FormField } from '@/shared/ui';
 
-import { useAiPathGraph, useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../../AiPathConfigContext';
+import {
+  useAiPathGraph,
+  useAiPathOrchestrator,
+  useAiPathRuntime,
+  useAiPathSelection,
+} from '../../AiPathConfigContext';
 
 export function PollNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();

@@ -6,9 +6,7 @@ import type {
   PathFlowIntensity,
   PathRunMode,
 } from '@/shared/lib/ai-paths';
-import {
-  normalizeAiPathsValidationConfig,
-} from '@/shared/lib/ai-paths';
+import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths';
 import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
 
 export function useExecutionSettingsState() {

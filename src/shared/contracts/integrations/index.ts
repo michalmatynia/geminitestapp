@@ -15,9 +15,7 @@ export {
   type UpdateIntegrationTemplate,
 } from './templates';
 export * from './base-com';
-export {
-  importExportTemplateSchema,
-} from './import-export';
+export { importExportTemplateSchema } from './import-export';
 export type {
   CatalogOption,
   DebugWarehouses,

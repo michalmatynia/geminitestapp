@@ -47,8 +47,14 @@ type VectorDrawingActionKey =
   | 'onCloseShape'
   | 'onDetach';
 
-export type VectorDrawingStateContextValue = Omit<VectorDrawingContextValue, VectorDrawingActionKey>;
-export type VectorDrawingActionsContextValue = Pick<VectorDrawingContextValue, VectorDrawingActionKey>;
+export type VectorDrawingStateContextValue = Omit<
+  VectorDrawingContextValue,
+  VectorDrawingActionKey
+>;
+export type VectorDrawingActionsContextValue = Pick<
+  VectorDrawingContextValue,
+  VectorDrawingActionKey
+>;
 
 export const {
   Context: VectorDrawingStateContext,
@@ -179,7 +185,9 @@ export function VectorDrawingProvider({
 
   return (
     <VectorDrawingActionsContext.Provider value={actionsValue}>
-      <VectorDrawingStateContext.Provider value={stateValue}>{children}</VectorDrawingStateContext.Provider>
+      <VectorDrawingStateContext.Provider value={stateValue}>
+        {children}
+      </VectorDrawingStateContext.Provider>
     </VectorDrawingActionsContext.Provider>
   );
 }

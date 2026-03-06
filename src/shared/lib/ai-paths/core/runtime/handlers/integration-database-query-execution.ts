@@ -114,7 +114,8 @@ export async function executeDatabaseQuery({
         ? queryConfig.provider
         : 'auto';
   const resolvedProvider =
-    queryResultData['resolvedProvider'] === 'mongodb' || queryResultData['resolvedProvider'] === 'prisma'
+    queryResultData['resolvedProvider'] === 'mongodb' ||
+    queryResultData['resolvedProvider'] === 'prisma'
       ? queryResultData['resolvedProvider']
       : requestedProvider === 'auto'
         ? null

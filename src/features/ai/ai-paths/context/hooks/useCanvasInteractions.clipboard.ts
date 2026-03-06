@@ -70,10 +70,7 @@ export function useCanvasInteractionsClipboard({
     nodes: AiNode[] | ((prev: AiNode[]) => AiNode[]),
     mutationMeta?: GraphMutationMeta
   ) => void;
-  setEdges: (
-    edges: Edge[] | ((prev: Edge[]) => Edge[]),
-    mutationMeta?: GraphMutationMeta
-  ) => void;
+  setEdges: (edges: Edge[] | ((prev: Edge[]) => Edge[]), mutationMeta?: GraphMutationMeta) => void;
   setNodeSelection: (nodeIds: string[]) => void;
   selectEdge: (edgeId: string | null) => void;
   setRuntimeState: (state: RuntimeState | ((prev: RuntimeState) => RuntimeState)) => void;

@@ -34,14 +34,12 @@ type TreeSectionPickerRuntimeValue = {
   zone: PageZone | null;
 };
 
-const {
-  Context: TreeSectionPickerRuntimeContext,
-  useStrictContext: useTreeSectionPickerRuntime,
-} = createStrictContext<TreeSectionPickerRuntimeValue>({
-  hookName: 'useTreeSectionPickerRuntime',
-  providerName: 'TreeSectionPickerRuntimeProvider',
-  displayName: 'TreeSectionPickerRuntimeContext',
-});
+const { Context: TreeSectionPickerRuntimeContext, useStrictContext: useTreeSectionPickerRuntime } =
+  createStrictContext<TreeSectionPickerRuntimeValue>({
+    hookName: 'useTreeSectionPickerRuntime',
+    providerName: 'TreeSectionPickerRuntimeProvider',
+    displayName: 'TreeSectionPickerRuntimeContext',
+  });
 
 function TreeBlockPicker(): React.ReactNode {
   const runtime = useTreeSectionPickerRuntime();

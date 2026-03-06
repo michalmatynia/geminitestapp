@@ -1,8 +1,15 @@
-import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 
+import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
+import { loadScopedKangurScores } from '@/features/kangur/ui/services/learner-profile-scores';
+import {
+  SCORE_INSIGHT_WINDOW_DAYS,
+  buildKangurScoreInsights,
+} from '@/features/kangur/ui/services/score-insights';
 
 type OperationLabel = {
   label: string;
@@ -16,7 +23,9 @@ type OperationBreakdown = {
 };
 
 type ScoreHistoryProps = {
-  playerName: string | null;
+  playerName?: string | null;
+  createdBy?: string | null;
+  basePath?: string | null;
 };
 
 const OP_LABELS: Record<string, OperationLabel> = {
@@ -33,7 +42,61 @@ const OP_LABELS: Record<string, OperationLabel> = {
 
 const kangurPlatform = getKangurPlatform();
 
-export default function ScoreHistory({ playerName }: ScoreHistoryProps): React.JSX.Element {
+const SCORE_FETCH_LIMIT = 30;
+const formatRelativeLastPlayed = (value: string | null): string => {
+  if (!value) {
+    return 'Brak aktywnosci';
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return 'Brak aktywnosci';
+  }
+
+  const today = new Date();
+  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const playedMidnight = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+  const diffDays = Math.round((todayMidnight.getTime() - playedMidnight.getTime()) / (24 * 60 * 60 * 1000));
+  if (diffDays <= 0) {
+    return 'Dzisiaj';
+  }
+  if (diffDays === 1) {
+    return 'Wczoraj';
+  }
+  return `${diffDays} dni temu`;
+};
+
+const formatTrendValue = (deltaAccuracy: number | null): string => {
+  if (deltaAccuracy === null) {
+    return 'Nowy zakres';
+  }
+  if (deltaAccuracy > 0) {
+    return `+${deltaAccuracy} pp`;
+  }
+  return `${deltaAccuracy} pp`;
+};
+
+const formatTrendContext = (trend: ReturnType<typeof buildKangurScoreInsights>['trend']): string => {
+  if (trend.previousAverageAccuracy === null) {
+    return 'Potrzeba starszych wynikow do porownania.';
+  }
+  if (trend.direction === 'up') {
+    return `Wzrost z ${trend.previousAverageAccuracy}% na ${trend.recentAverageAccuracy}%.`;
+  }
+  if (trend.direction === 'down') {
+    return `Spadek z ${trend.previousAverageAccuracy}% na ${trend.recentAverageAccuracy}%.`;
+  }
+  return `Stabilnie: ${trend.recentAverageAccuracy}% tydzien do tygodnia.`;
+};
+
+const buildLessonFocusHref = (basePath: string, operation: string): string =>
+  `${createPageUrl('Lessons', basePath)}?${new URLSearchParams({ focus: operation }).toString()}`;
+
+export default function ScoreHistory({
+  playerName = null,
+  createdBy = null,
+  basePath = null,
+}: ScoreHistoryProps): React.JSX.Element {
   const [scores, setScores] = useState<KangurScoreRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,16 +104,23 @@ export default function ScoreHistory({ playerName }: ScoreHistoryProps): React.J
     let isActive = true;
 
     const loadScores = async (): Promise<void> => {
+      const normalizedPlayerName = playerName?.trim() || '';
+      const normalizedCreatedBy = createdBy?.trim() || '';
+      if (isActive) {
+        setLoading(true);
+      }
+
       try {
-        const data = await kangurPlatform.score.filter(
-          playerName ? { player_name: playerName } : {},
-          '-created_date',
-          30
-        );
+        const loadedScores = await loadScopedKangurScores(kangurPlatform.score, {
+          playerName: normalizedPlayerName,
+          createdBy: normalizedCreatedBy,
+          limit: SCORE_FETCH_LIMIT,
+          fallbackToAll: true,
+        });
         if (!isActive) {
           return;
         }
-        setScores(data);
+        setScores(loadedScores);
       } catch (error: unknown) {
         if (!isActive) {
           return;
@@ -58,7 +128,8 @@ export default function ScoreHistory({ playerName }: ScoreHistoryProps): React.J
         logKangurClientError(error, {
           source: 'KangurScoreHistory',
           action: 'loadScores',
-          playerNameProvided: Boolean(playerName),
+          playerNameProvided: normalizedPlayerName.length > 0,
+          createdByProvided: normalizedCreatedBy.length > 0,
         });
         setScores([]);
       } finally {
@@ -73,7 +144,13 @@ export default function ScoreHistory({ playerName }: ScoreHistoryProps): React.J
     return () => {
       isActive = false;
     };
-  }, [playerName]);
+  }, [createdBy, playerName]);
+
+  const insights = useMemo(() => buildKangurScoreInsights(scores), [scores]);
+  const weakestLessonHref =
+    basePath && insights.weakestOperation
+      ? buildLessonFocusHref(basePath, insights.weakestOperation.operation)
+      : null;
 
   if (loading) {
     return <div className='text-center text-gray-400 py-8'>Ladowanie wynikow...</div>;
@@ -116,6 +193,80 @@ export default function ScoreHistory({ playerName }: ScoreHistoryProps): React.J
             {scores.filter((score) => score.correct_answers === score.total_questions).length}
           </p>
           <p className='text-xs text-gray-500 mt-0.5'>Idealne wyniki</p>
+        </div>
+      </div>
+
+      <div className='bg-white rounded-2xl shadow p-4'>
+        <p className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
+          Obraz ostatnich {SCORE_INSIGHT_WINDOW_DAYS} dni
+        </p>
+        <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3'>
+          <div className='rounded-2xl border border-sky-100 bg-sky-50 p-4'>
+            <p className='text-xs font-bold uppercase tracking-wide text-sky-700'>Sesje tygodnia</p>
+            <p className='mt-2 text-3xl font-extrabold text-sky-700'>{insights.recentGames}</p>
+            <p className='mt-1 text-xs text-sky-800/80'>
+              Srednia {insights.recentAverageAccuracy}% · idealne {insights.recentPerfectGames}
+            </p>
+            <p className='mt-2 text-[11px] text-sky-800/70'>
+              Ostatnia aktywnosc: {formatRelativeLastPlayed(insights.lastPlayedAt)}
+            </p>
+          </div>
+
+          <div className='rounded-2xl border border-violet-100 bg-violet-50 p-4'>
+            <p className='text-xs font-bold uppercase tracking-wide text-violet-700'>
+              Trend tygodnia
+            </p>
+            <p className='mt-2 text-3xl font-extrabold text-violet-700'>
+              {formatTrendValue(insights.trend.deltaAccuracy)}
+            </p>
+            <p className='mt-1 text-xs text-violet-800/80'>{formatTrendContext(insights.trend)}</p>
+          </div>
+
+          <div className='rounded-2xl border border-emerald-100 bg-emerald-50 p-4'>
+            <p className='text-xs font-bold uppercase tracking-wide text-emerald-700'>
+              Mocna strona
+            </p>
+            {insights.strongestOperation ? (
+              <>
+                <p className='mt-2 text-lg font-extrabold text-emerald-700'>
+                  {insights.strongestOperation.emoji} {insights.strongestOperation.label}
+                </p>
+                <p className='mt-1 text-xs text-emerald-800/80'>
+                  Srednio {insights.strongestOperation.averageAccuracy}% · proby{' '}
+                  {insights.strongestOperation.attempts}
+                </p>
+              </>
+            ) : (
+              <p className='mt-2 text-sm text-emerald-800/80'>Za malo danych na wskazanie przewagi.</p>
+            )}
+          </div>
+
+          <div className='rounded-2xl border border-rose-100 bg-rose-50 p-4'>
+            <p className='text-xs font-bold uppercase tracking-wide text-rose-700'>Do wsparcia</p>
+            {insights.weakestOperation ? (
+              <>
+                <p className='mt-2 text-lg font-extrabold text-rose-700'>
+                  {insights.weakestOperation.emoji} {insights.weakestOperation.label}
+                </p>
+                <p className='mt-1 text-xs text-rose-800/80'>
+                  Srednio {insights.weakestOperation.averageAccuracy}% · proby{' '}
+                  {insights.weakestOperation.attempts}
+                </p>
+                {weakestLessonHref && (
+                  <Link
+                    href={weakestLessonHref}
+                    className='mt-3 inline-flex items-center rounded-lg border border-rose-200 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-white/70 transition'
+                  >
+                    Powtorz lekcje
+                  </Link>
+                )}
+              </>
+            ) : (
+              <p className='mt-2 text-sm text-rose-800/80'>
+                Potrzeba wiecej niz jednego typu zadania, aby wskazac obszar do wsparcia.
+              </p>
+            )}
+          </div>
         </div>
       </div>
 

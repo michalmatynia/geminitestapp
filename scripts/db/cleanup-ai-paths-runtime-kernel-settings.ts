@@ -19,6 +19,7 @@ export type CleanupSummary = {
   mode: 'dry-run' | 'write';
   actionId: typeof ACTION_ID;
   affectedRecords: number;
+  deletedKeys: string[];
   updated: boolean;
   changedKeys: string[];
 };
@@ -37,15 +38,20 @@ const parseCliOptions = (argv: string[]): CliOptions => {
 
 const collectChangedKeys = (
   previousRecords: AiPathsSettingRecord[],
-  nextRecords: AiPathsSettingRecord[]
+  nextRecords: AiPathsSettingRecord[],
+  deletedKeys: string[]
 ): string[] => {
   const previousByKey = new Map<string, string>(
     previousRecords.map((record) => [record.key, record.value])
   );
-  return nextRecords
-    .filter((record) => previousByKey.get(record.key) !== record.value)
-    .map((record) => record.key)
-    .sort((left, right) => left.localeCompare(right));
+  return Array.from(
+    new Set(
+      nextRecords
+        .filter((record) => previousByKey.get(record.key) !== record.value)
+        .map((record) => record.key)
+        .concat(deletedKeys)
+    )
+  ).sort((left, right) => left.localeCompare(right));
 };
 
 export async function main(argv: string[] = process.argv.slice(2)): Promise<void> {
@@ -64,8 +70,9 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
     mode: options.dryRun ? 'dry-run' : 'write',
     actionId: ACTION_ID,
     affectedRecords: result.affectedCount,
+    deletedKeys: result.deletedKeys,
     updated: !options.dryRun && result.affectedCount > 0,
-    changedKeys: collectChangedKeys(records, result.nextRecords),
+    changedKeys: collectChangedKeys(records, result.nextRecords, result.deletedKeys),
   };
 
   console.log(JSON.stringify(summary, null, 2));

@@ -46,10 +46,7 @@ const setGraphNodesMock = vi.fn(
   }
 );
 const setGraphEdgesMock = vi.fn(
-  (
-    updater: Edge[] | ((prev: Edge[]) => Edge[]),
-    _meta?: { reason?: string; source?: string }
-  ) => {
+  (updater: Edge[] | ((prev: Edge[]) => Edge[]), _meta?: { reason?: string; source?: string }) => {
     graphStateMock.edges = typeof updater === 'function' ? updater(graphStateMock.edges) : updater;
   }
 );
@@ -74,7 +71,9 @@ const endDragMock = vi.fn(() => {
   canvasStateMock.dragState = null;
 });
 const setConnectingMock = vi.fn(
-  (connecting: { fromNodeId: string; fromPort: string; start: { x: number; y: number } } | null) => {
+  (
+    connecting: { fromNodeId: string; fromPort: string; start: { x: number; y: number } } | null
+  ) => {
     canvasStateMock.connecting = connecting;
   }
 );
@@ -278,9 +277,7 @@ describe('useAiPathsCanvasInteractions delete shortcuts', () => {
     });
 
     expect(setGraphNodesMock).toHaveBeenCalledWith(
-      [
-        expect.objectContaining({ id: 'node-b' }),
-      ],
+      [expect.objectContaining({ id: 'node-b' })],
       expect.objectContaining({
         reason: 'delete',
         source: 'settings.canvas.delete.node',

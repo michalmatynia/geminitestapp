@@ -225,15 +225,21 @@ export function useCanvasStateHandlers(args: {
       const viewportRect = args.viewportRef.current?.getBoundingClientRect() ?? null;
       const viewport = viewportRect
         ? {
-          width: viewportRect.width,
-          height: viewportRect.height,
-        }
+            width: viewportRect.width,
+            height: viewportRect.height,
+          }
         : null;
       const scale = Number.isFinite(args.viewScale) && args.viewScale > 0 ? args.viewScale : 1;
       const clamped = clampTranslate(nextX, nextY, scale, viewport);
       updateView({ x: clamped.x, y: clamped.y });
     },
-    [args.panState, args.viewScale, args.viewportRef, updateView, updateLastPointerCanvasPosFromClient]
+    [
+      args.panState,
+      args.viewScale,
+      args.viewportRef,
+      updateView,
+      updateLastPointerCanvasPosFromClient,
+    ]
   );
 
   const forcePanEnd = useCallback((): void => {

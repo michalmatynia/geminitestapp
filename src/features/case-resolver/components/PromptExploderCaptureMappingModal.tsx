@@ -159,12 +159,12 @@ export function PromptExploderCaptureMappingModal(
                   diagnostics.mutationDurationMs !== undefined) ||
                 (diagnostics.totalDurationMs !== null &&
                   diagnostics.totalDurationMs !== undefined) ? (
-                    <div className='mt-0.5 text-gray-500'>
+                  <div className='mt-0.5 text-gray-500'>
                     cleanup: {diagnostics.cleanupDurationMs ?? '-'}ms · mutation:{' '}
-                      {diagnostics.mutationDurationMs ?? '-'}ms · total:{' '}
-                      {diagnostics.totalDurationMs ?? '-'}ms
-                    </div>
-                  ) : null}
+                    {diagnostics.mutationDurationMs ?? '-'}ms · total:{' '}
+                    {diagnostics.totalDurationMs ?? '-'}ms
+                  </div>
+                ) : null}
               </div>
             ) : null}
 

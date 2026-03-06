@@ -34,7 +34,7 @@ export function createStrictContext<T>({
     const context = useContext(Context);
     if (context === MISSING_CONTEXT) {
       const message = `${hookName} must be used within ${providerName}`;
-      throw (errorFactory ? errorFactory(message) : new Error(message));
+      throw errorFactory ? errorFactory(message) : new Error(message);
     }
     return context;
   };

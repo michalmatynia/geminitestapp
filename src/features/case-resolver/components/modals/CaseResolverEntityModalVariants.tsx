@@ -30,7 +30,10 @@ type TagFormData = {
   parentId: string | null;
 };
 
-interface BaseCaseResolverEntityModalProps<TItem, TForm extends object> extends EntityModalProps<TItem> {
+interface BaseCaseResolverEntityModalProps<
+  TItem,
+  TForm extends object,
+> extends EntityModalProps<TItem> {
   formData: TForm;
   setFormData: React.Dispatch<React.SetStateAction<TForm>>;
   isSaving: boolean;
@@ -98,7 +101,9 @@ interface CaseResolverCategoryModalProps extends EntityModalProps<CaseResolverCa
   onSave: () => void;
 }
 
-export function CaseResolverCategoryModal(props: CaseResolverCategoryModalProps): React.JSX.Element {
+export function CaseResolverCategoryModal(
+  props: CaseResolverCategoryModalProps
+): React.JSX.Element {
   const { parentOptions, isOpen, onClose, item, formData, setFormData, isSaving, onSave } = props;
 
   const fields: SettingsField<CategoryFormData>[] = useMemo(
@@ -191,7 +196,10 @@ export function CaseResolverIdentifierModal(
         key: 'parentId',
         label: 'Parent Case Identifier',
         type: 'select',
-        options: [{ value: '__none__', label: 'No parent (root identifier)' }, ...parentIdentifierOptions],
+        options: [
+          { value: '__none__', label: 'No parent (root identifier)' },
+          ...parentIdentifierOptions,
+        ],
         placeholder: 'Select parent case identifier',
       },
     ],

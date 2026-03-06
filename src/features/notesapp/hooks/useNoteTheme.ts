@@ -49,9 +49,9 @@ export function useNoteTheme({
 
   const selectedFolderThemeId: string = selectedFolderId
     ? ((): string => {
-      const folder = findFolderById(folderTree, selectedFolderId);
-      return folder?.themeId ? String(folder.themeId) : '';
-    })()
+        const folder = findFolderById(folderTree, selectedFolderId);
+        return folder?.themeId ? String(folder.themeId) : '';
+      })()
     : notebook?.defaultThemeId
       ? String(notebook.defaultThemeId)
       : '';

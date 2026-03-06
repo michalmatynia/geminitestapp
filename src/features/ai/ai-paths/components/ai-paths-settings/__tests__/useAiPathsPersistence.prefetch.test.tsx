@@ -61,7 +61,7 @@ const presetMock = {
 vi.mock('@/shared/lib/ai-paths/settings-store-client', async () => {
   const actual = await vi.importActual<
     typeof import('@/shared/lib/ai-paths/settings-store-client')
-      >('@/shared/lib/ai-paths/settings-store-client');
+  >('@/shared/lib/ai-paths/settings-store-client');
   return {
     ...actual,
     fetchAiPathsSettingsByKeysCached: vi.fn(),
@@ -302,12 +302,15 @@ describe('useAiPathsPersistence idle prefetch', () => {
 
     renderHook(() => useAiPathsPersistence(args));
 
-    await waitFor(() => {
-      expect(mockedFetchAiPathsSettingsByKeysCached).toHaveBeenCalledWith(
-        [`${PATH_CONFIG_PREFIX}${secondaryPathId}`],
-        expect.objectContaining({ timeoutMs: 6000 })
-      );
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(mockedFetchAiPathsSettingsByKeysCached).toHaveBeenCalledWith(
+          [`${PATH_CONFIG_PREFIX}${secondaryPathId}`],
+          expect.objectContaining({ timeoutMs: 6000 })
+        );
+      },
+      { timeout: 3000 }
+    );
 
     await waitFor(() => {
       expect(setPathConfigsGraphMock).toHaveBeenCalledTimes(1);
@@ -393,12 +396,15 @@ describe('useAiPathsPersistence idle prefetch', () => {
 
     renderHook(() => useAiPathsPersistence(args));
 
-    await waitFor(() => {
-      expect(mockedFetchAiPathsSettingsByKeysCached).toHaveBeenCalledWith(
-        [`${PATH_CONFIG_PREFIX}${secondaryPathId}`],
-        expect.objectContaining({ timeoutMs: 6000 })
-      );
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(mockedFetchAiPathsSettingsByKeysCached).toHaveBeenCalledWith(
+          [`${PATH_CONFIG_PREFIX}${secondaryPathId}`],
+          expect.objectContaining({ timeoutMs: 6000 })
+        );
+      },
+      { timeout: 3000 }
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 75));
     expect(setPathConfigsGraphMock).toHaveBeenCalledTimes(0);

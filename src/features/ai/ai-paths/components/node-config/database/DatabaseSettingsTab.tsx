@@ -150,7 +150,9 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                         size='sm'
                         variant='subtle'
                         value={mapping.sourcePort ?? availablePorts[0] ?? 'value'}
-                        onValueChange={(value: string): void => updateMapping(index, { sourcePort: value })}
+                        onValueChange={(value: string): void =>
+                          updateMapping(index, { sourcePort: value })
+                        }
                         options={availablePorts.map((port: string) => ({
                           value: port,
                           label: formatPortLabel(port),
@@ -340,9 +342,9 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                   guard.enabled
                     ? { enabled: false }
                     : {
-                      enabled: true,
-                      targetPath: CANONICAL_PARAMETER_INFERENCE_TARGET_PATH,
-                    }
+                        enabled: true,
+                        targetPath: CANONICAL_PARAMETER_INFERENCE_TARGET_PATH,
+                      }
                 )
               }
             >

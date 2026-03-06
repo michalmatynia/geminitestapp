@@ -251,7 +251,9 @@ const toReplayHistoryRecord = (
   const logId = toOptionalString(log['id']);
   const context = asRecord(log['context']);
   if (!context) return null;
-  if (context['alertType'] !== PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_ALERT_TYPE) {
+  if (
+    context['alertType'] !== PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_DEAD_LETTER_REPLAY_ALERT_TYPE
+  ) {
     return null;
   }
   const filters = asRecord(context['filters']);
@@ -374,24 +376,25 @@ const withReplayHistoryRedactionHeaders = (
 const resolveReplayHistoryExportRedactionMode =
   (): PortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode =>
     resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionModeFromEnvironment() ??
-    'off';
+    'none';
 
 const applyReplayHistoryRecordRedaction = (
   entry: ReplayHistoryRecord,
   redactionMode: PortablePathAuditSinkAutoRemediationDeadLetterReplayExportRedactionMode
 ): ReplayHistoryRecord => {
-  if (redactionMode === 'off') return entry;
+  if (redactionMode === 'none') return entry;
   return {
     ...entry,
     filters: {
       ...entry.filters,
       endpoint: null,
     },
-    attempts: entry.attempts?.map((attempt) => ({
-      ...attempt,
-      endpoint: null,
-      error: attempt.error === null ? null : REPLAY_HISTORY_REDACTED_VALUE,
-    })) ?? null,
+    attempts:
+      entry.attempts?.map((attempt) => ({
+        ...attempt,
+        endpoint: null,
+        error: attempt.error === null ? null : REPLAY_HISTORY_REDACTED_VALUE,
+      })) ?? null,
   };
 };
 
@@ -555,10 +558,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     });
     scannedLogCount += result.logs.length;
     for (const log of result.logs as unknown[]) {
-      const replayLog = toReplayHistoryRecord(
-        (asRecord(log) ?? {}),
-        includeAttempts
-      );
+      const replayLog = toReplayHistoryRecord(asRecord(log) ?? {}, includeAttempts);
       if (!replayLog) continue;
       if (!isReplayHistoryRecordBeforeCursor(replayLog, cursor)) continue;
       matchedReplayCount += 1;
@@ -574,7 +574,9 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   matchedEntries.sort(compareReplayHistoryRecordsDesc);
   const selectedEntries = matchedEntries.slice(0, limit);
   const redactionMode = resolveReplayHistoryExportRedactionMode();
-  const rawEntries: ReplayHistoryRecord[] = selectedEntries.map(({ logId: _logId, ...entry }) => entry);
+  const rawEntries: ReplayHistoryRecord[] = selectedEntries.map(
+    ({ logId: _logId, ...entry }) => entry
+  );
   const entries: ReplayHistoryRecord[] = rawEntries.map((entry) =>
     applyReplayHistoryRecordRedaction(entry, redactionMode)
   );
@@ -603,7 +605,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     },
     redaction: {
       mode: redactionMode,
-      applied: redactionMode !== 'off',
+      applied: redactionMode !== 'none',
     },
     summary: {
       scannedLogCount,
@@ -619,8 +621,10 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     entries,
   };
 
-  const exportSecret = resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportSecretFromEnvironment();
-  const exportKeyId = resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportKeyIdFromEnvironment();
+  const exportSecret =
+    resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportSecretFromEnvironment();
+  const exportKeyId =
+    resolvePortablePathAuditSinkAutoRemediationDeadLetterReplayExportKeyIdFromEnvironment();
   const signature =
     signed && exportSecret
       ? signReplayHistoryPayload(payload, {

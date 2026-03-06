@@ -18,9 +18,7 @@ export function TreeSectionProvider({
   children,
 }: TreeSectionProviderProps): React.JSX.Element {
   const value = useMemo<TreeSectionContextValue>(() => ({ sectionId }), [sectionId]);
-  return (
-    <TreeSectionContext.Provider value={value}>{children}</TreeSectionContext.Provider>
-  );
+  return <TreeSectionContext.Provider value={value}>{children}</TreeSectionContext.Provider>;
 }
 
 export function useTreeSectionId(explicitSectionId?: string): string {

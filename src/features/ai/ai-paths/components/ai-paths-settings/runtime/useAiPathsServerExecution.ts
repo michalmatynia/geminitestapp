@@ -60,6 +60,25 @@ const asString = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
+const normalizeRuntimeKernelConfig = (
+  value: Record<string, unknown>
+): Record<string, unknown> => {
+  const nodeTypes = value['nodeTypes'] ?? value['pilotNodeTypes'];
+  const codeObjectResolverIds = value['codeObjectResolverIds'] ?? value['resolverIds'];
+  const strictNativeRegistry =
+    value['strictNativeRegistry'] ?? value['strictCodeObjectRegistry'];
+  const normalized: Record<string, unknown> = {
+    ...value,
+    ...(nodeTypes !== undefined ? { nodeTypes } : {}),
+    ...(codeObjectResolverIds !== undefined ? { codeObjectResolverIds } : {}),
+    ...(strictNativeRegistry !== undefined ? { strictNativeRegistry } : {}),
+  };
+  delete normalized['pilotNodeTypes'];
+  delete normalized['resolverIds'];
+  delete normalized['strictCodeObjectRegistry'];
+  return normalized;
+};
+
 const asNumber = (value: unknown): number | null => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return null;
   return value;
@@ -236,9 +255,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
       const historyLimit = Math.max(
         1,
         Math.trunc(
-          typeof args.historyRetentionPasses === 'number'
-            ? args.historyRetentionPasses
-            : 20
+          typeof args.historyRetentionPasses === 'number' ? args.historyRetentionPasses : 20
         )
       );
       const entityId = resolveEntityIdFromContext(triggerContext);
@@ -299,9 +316,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
         },
         ...(isObjectRecord(args.runtimeKernelConfig)
           ? {
-            runtimeKernelConfig: {
-              ...args.runtimeKernelConfig,
-            },
+            runtimeKernelConfig: normalizeRuntimeKernelConfig(args.runtimeKernelConfig),
           }
           : {}),
         ...(args.aiPathsValidation ? { aiPathsValidation: args.aiPathsValidation } : {}),
@@ -697,12 +712,12 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                   ? nodeUpdate.outputs
                   : null;
               const nodeStatus = args.normalizeNodeStatus(nodeUpdate.status);
-              const outputStatus = nodeOutputs ? args.normalizeNodeStatus(nodeOutputs['status']) : null;
+              const outputStatus = nodeOutputs
+                ? args.normalizeNodeStatus(nodeOutputs['status'])
+                : null;
               const status = resolveRuntimeNodeDisplayStatus({
                 status:
-                  outputStatus === 'waiting_callback'
-                    ? outputStatus
-                    : nodeStatus ?? outputStatus,
+                  outputStatus === 'waiting_callback' ? outputStatus : (nodeStatus ?? outputStatus),
                 outputs: nodeOutputs,
               });
               if (!status) return;
@@ -734,9 +749,9 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                 metadata:
                   errorMessage || nodeUpdate.outputs
                     ? {
-                      ...(errorMessage ? { error: errorMessage } : {}),
-                      ...(nodeUpdate.outputs ? { outputs: nodeUpdate.outputs } : {}),
-                    }
+                        ...(errorMessage ? { error: errorMessage } : {}),
+                        ...(nodeUpdate.outputs ? { outputs: nodeUpdate.outputs } : {}),
+                      }
                     : undefined,
               });
               args.setRuntimeState((prev) => {
@@ -823,13 +838,12 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                   (metadata ? asString(metadata['nodeId']) : null) ??
                   undefined;
                 const runtimeNode = nodeId ? runtimeNodeById.get(nodeId) : null;
-                const status =
-                  resolveRuntimeNodeDisplayStatus({
-                    status:
-                      args.normalizeNodeStatus(rawEvent.status) ??
-                      (metadata ? args.normalizeNodeStatus(metadata['status']) : null),
-                    metadata,
-                  });
+                const status = resolveRuntimeNodeDisplayStatus({
+                  status:
+                    args.normalizeNodeStatus(rawEvent.status) ??
+                    (metadata ? args.normalizeNodeStatus(metadata['status']) : null),
+                  metadata,
+                });
                 const iteration =
                   asNumber(rawEvent.iteration) ??
                   (metadata ? asNumber(metadata['iteration']) : null);

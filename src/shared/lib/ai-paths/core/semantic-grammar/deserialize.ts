@@ -65,13 +65,13 @@ const toAiEdge = (semanticEdge: SemanticEdge): Edge => ({
   to: semanticEdge.toNodeId,
   ...(typeof semanticEdge.fromPort === 'string' || semanticEdge.fromPort === null
     ? {
-      fromPort: semanticEdge.fromPort,
-    }
+        fromPort: semanticEdge.fromPort,
+      }
     : {}),
   ...(typeof semanticEdge.toPort === 'string' || semanticEdge.toPort === null
     ? {
-      toPort: semanticEdge.toPort,
-    }
+        toPort: semanticEdge.toPort,
+      }
     : {}),
   ...(typeof semanticEdge.label === 'string' || semanticEdge.label === null
     ? { label: semanticEdge.label }

@@ -84,7 +84,9 @@ export function AdminFilemakerOrganizationsPage(): React.JSX.Element {
               <DropdownMenuItem
                 onSelect={(event: Event): void => {
                   event.preventDefault();
-                  router.push(`/admin/filemaker/organizations/${encodeURIComponent(row.original.id)}`);
+                  router.push(
+                    `/admin/filemaker/organizations/${encodeURIComponent(row.original.id)}`
+                  );
                 }}
               >
                 Edit Details

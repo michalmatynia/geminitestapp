@@ -171,13 +171,13 @@ const buildCaseResolverCaptureProposal = (args: {
 
   const existingAddressId = args.mapping.autoMatchAddress
     ? findExistingFilemakerAddressId(args.database, {
-      street: args.candidate.street ?? '',
-      streetNumber: composeCandidateStreetNumber(args.candidate),
-      city: args.candidate.city ?? '',
-      postalCode: args.candidate.postalCode ?? '',
-      country: args.candidate.country ?? '',
-      countryId: '',
-    })
+        street: args.candidate.street ?? '',
+        streetNumber: composeCandidateStreetNumber(args.candidate),
+        city: args.candidate.city ?? '',
+        postalCode: args.candidate.postalCode ?? '',
+        country: args.candidate.country ?? '',
+        countryId: '',
+      })
     : null;
 
   const hasAddressCandidate = Boolean(
@@ -222,10 +222,10 @@ const buildCaseResolverCaptureProposal = (args: {
     candidate: args.candidate,
     existingReference: existingReference
       ? {
-        kind: existingReference.kind,
-        id: String(existingReference.id),
-        name: existingReference.displayName,
-      }
+          kind: existingReference.kind,
+          id: String(existingReference.id),
+          name: existingReference.displayName,
+        }
       : null,
     existingAddressId,
     matchKind,
@@ -361,13 +361,13 @@ export const buildCaseResolverCaptureProposalState = (
   const documentDateProposal: CaseResolverCaptureDocumentDateProposal | null =
     detectedDate && detectedDateSource
       ? {
-        isoDate: detectedDate,
-        source: detectedDateSource,
-        sourceLine: sourceDateLine,
-        cityHint,
-        city: resolvedDocumentCity,
-        action: 'useDetectedDate',
-      }
+          isoDate: detectedDate,
+          source: detectedDateSource,
+          sourceLine: sourceDateLine,
+          cityHint,
+          city: resolvedDocumentCity,
+          action: 'useDetectedDate',
+        }
       : null;
 
   if (!proposals.addresser && !proposals.addressee && !documentDateProposal) return null;

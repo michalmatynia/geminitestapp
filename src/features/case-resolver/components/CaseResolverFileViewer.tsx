@@ -42,10 +42,7 @@ const resolveAssetSubtitle = (asset: CaseResolverAssetFile): string => {
 
 export function CaseResolverFileViewer(): React.JSX.Element {
   const { selectedAsset, selectedFolderPath, activeFile } = useCaseResolverPageState();
-  const {
-    onUpdateSelectedAsset,
-    onAttachAssetFile,
-  } = useCaseResolverPageActions();
+  const { onUpdateSelectedAsset, onAttachAssetFile } = useCaseResolverPageActions();
   const { toast } = useToast();
   const [isDragActive, setIsDragActive] = React.useState(false);
   const [isAttachingImage, setIsAttachingImage] = React.useState(false);

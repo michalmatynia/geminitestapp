@@ -40,7 +40,9 @@ export function FilemakerPersonsSection(): React.JSX.Element {
           <div className='text-[11px] text-gray-500'>
             Phones: {person.phoneNumbers.length > 0 ? person.phoneNumbers.join(', ') : 'n/a'}
           </div>
-          <div className='text-[10px] text-gray-600'>Updated: {formatTimestamp(person.updatedAt)}</div>
+          <div className='text-[10px] text-gray-600'>
+            Updated: {formatTimestamp(person.updatedAt)}
+          </div>
         </>
       )}
       onAdd={openCreatePerson}

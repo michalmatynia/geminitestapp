@@ -38,14 +38,12 @@ type SettingsFormModalRuntimeValue = {
   padding: 'default' | 'none';
 };
 
-const {
-  Context: SettingsFormModalRuntimeContext,
-  useStrictContext: useSettingsFormModalRuntime,
-} = createStrictContext<SettingsFormModalRuntimeValue>({
-  hookName: 'useSettingsFormModalRuntime',
-  providerName: 'SettingsFormModalRuntimeProvider',
-  displayName: 'SettingsFormModalRuntimeContext',
-});
+const { Context: SettingsFormModalRuntimeContext, useStrictContext: useSettingsFormModalRuntime } =
+  createStrictContext<SettingsFormModalRuntimeValue>({
+    hookName: 'useSettingsFormModalRuntime',
+    providerName: 'SettingsFormModalRuntimeProvider',
+    displayName: 'SettingsFormModalRuntimeContext',
+  });
 
 function SettingsFormModalRuntime(): React.JSX.Element {
   const {

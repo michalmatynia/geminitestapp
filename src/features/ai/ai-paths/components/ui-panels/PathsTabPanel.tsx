@@ -106,7 +106,11 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
       await navigator.clipboard.writeText(payload);
       orchestrator.toast('Path JSON copied.', { variant: 'success' });
     } catch (error) {
-      orchestrator.reportAiPathsError(error, { action: 'copyPathJson', pathId }, 'Failed to copy path JSON:');
+      orchestrator.reportAiPathsError(
+        error,
+        { action: 'copyPathJson', pathId },
+        'Failed to copy path JSON:'
+      );
       orchestrator.toast('Failed to copy path JSON.', { variant: 'error' });
     }
   };
@@ -151,7 +155,9 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
         typeof importedPathConfig.id === 'string' && importedPathConfig.id.trim().length > 0
           ? importedPathConfig.id.trim()
           : createPathId();
-      const pathIdExists = graphPaths.some((path: PathMeta): boolean => path.id === requestedPathId);
+      const pathIdExists = graphPaths.some(
+        (path: PathMeta): boolean => path.id === requestedPathId
+      );
       const nextPathId = pathIdExists ? createPathId() : requestedPathId;
       const baseConfig = createDefaultPathConfig(nextPathId);
       const importedName =
@@ -174,20 +180,29 @@ export function PathsTabPanel({ onPathOpen }: PathsTabPanelProps): React.JSX.Ele
             ? nextConfig.updatedAt
             : now,
       };
-      const nextPaths = [...graphPaths.filter((path: PathMeta): boolean => path.id !== nextPathId), nextMeta];
+      const nextPaths = [
+        ...graphPaths.filter((path: PathMeta): boolean => path.id !== nextPathId),
+        nextMeta,
+      ];
 
       await orchestrator.persistPathSettings(nextPaths, nextPathId, nextConfig);
       setPaths(nextPaths);
-      setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
-        ...prev,
-        [nextPathId]: nextConfig,
-      }));
+      setPathConfigs(
+        (prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
+          ...prev,
+          [nextPathId]: nextConfig,
+        })
+      );
       setImportModalOpen(false);
       setImportPayload('');
       orchestrator.toast('Path imported.', { variant: 'success' });
       handleOpenPath(nextPathId);
     } catch (error) {
-      orchestrator.reportAiPathsError(error, { action: 'importPathJson' }, 'Failed to import path JSON:');
+      orchestrator.reportAiPathsError(
+        error,
+        { action: 'importPathJson' },
+        'Failed to import path JSON:'
+      );
       orchestrator.toast('Failed to import path JSON.', { variant: 'error' });
     } finally {
       setImporting(false);

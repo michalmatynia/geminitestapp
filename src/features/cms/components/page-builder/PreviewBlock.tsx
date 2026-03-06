@@ -124,8 +124,12 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
 
   const { colorSchemes, layout } = useCmsPageContext();
   const mediaStyles = useMediaStyles();
-  const { selectedNodeId, isInspecting = false, inspectorSettings, hoveredNodeId } =
-    usePreviewEditorState();
+  const {
+    selectedNodeId,
+    isInspecting = false,
+    inspectorSettings,
+    hoveredNodeId,
+  } = usePreviewEditorState();
   const { onSelect, onRemoveSection, onToggleSectionVisibility } = usePreviewEditorActions();
 
   const isSectionSelected = selectedNodeId === section.id;
@@ -418,15 +422,16 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
 
   // Render section types via the storefront renderer when a dedicated editor preview is not implemented.
   if (FRONTEND_PREVIEW_SECTION_TYPES.has(section.type)) {
-    const frontendSectionRendererRuntimeValue = React.useMemo<PreviewFrontendSectionRendererRuntimeValue>(
-      () => ({
-        type: section.type,
-        sectionId: section.id,
-        settings: section.settings,
-        blocks: section.blocks,
-      }),
-      [section.type, section.id, section.settings, section.blocks]
-    );
+    const frontendSectionRendererRuntimeValue =
+      React.useMemo<PreviewFrontendSectionRendererRuntimeValue>(
+        () => ({
+          type: section.type,
+          sectionId: section.id,
+          settings: section.settings,
+          blocks: section.blocks,
+        }),
+        [section.type, section.id, section.settings, section.blocks]
+      );
 
     return wrapInspector(
       <div
@@ -477,8 +482,12 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
 function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
   const { block } = props;
 
-  const { selectedNodeId, isInspecting = false, inspectorSettings, hoveredNodeId } =
-    usePreviewEditorState();
+  const {
+    selectedNodeId,
+    isInspecting = false,
+    inspectorSettings,
+    hoveredNodeId,
+  } = usePreviewEditorState();
   const { onSelect, onOpenMedia } = usePreviewEditorActions();
 
   const blockContext = useBlockContext();
@@ -489,10 +498,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
   const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
   const animConfig = block.settings['gsapAnimation'] as Partial<GsapAnimationConfig> | undefined;
   const cssAnimConfig = block.settings['cssAnimation'] as CssAnimationConfig | undefined;
-  const parentBlockContextValue = React.useMemo(
-    () => ({ parentBlockId: block.id }),
-    [block.id]
-  );
+  const parentBlockContextValue = React.useMemo(() => ({ parentBlockId: block.id }), [block.id]);
   const stretchBlockContextValue = React.useMemo(() => ({ stretch }), [stretch]);
 
   const allowInlineCustomCss = !['Block', 'Row', 'Column'].includes(block.type);

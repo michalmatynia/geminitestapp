@@ -185,9 +185,7 @@ export function BlockNodeItem(props: BlockNodeItemProps): React.ReactNode {
           }
           endBlockDrag();
         }}
-        className={`group flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-sm transition ${
-          'cursor-pointer'
-        } ${
+        className={`group flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-sm transition ${'cursor-pointer'} ${
           isDragOver
             ? 'bg-emerald-600/30 text-emerald-200 ring-1 ring-emerald-500/50'
             : isSelected

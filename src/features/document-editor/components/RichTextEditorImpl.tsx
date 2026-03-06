@@ -525,11 +525,7 @@ export default function RichTextEditorImpl({
             </>
           ) : null}
 
-          <ToolbarButton
-            title='Link'
-            onClick={addLink}
-            isActive={editor.isActive('link')}
-          >
+          <ToolbarButton title='Link' onClick={addLink} isActive={editor.isActive('link')}>
             <LinkIcon className='size-4' />
           </ToolbarButton>
           {allowImage ? (

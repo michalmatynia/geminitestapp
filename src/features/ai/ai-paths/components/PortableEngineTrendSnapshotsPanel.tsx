@@ -119,10 +119,7 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
     void loadSnapshots();
   }, [loadSnapshots]);
 
-  const latestSnapshots = useMemo(
-    () => (data?.snapshots ?? []).slice(-6).reverse(),
-    [data]
-  );
+  const latestSnapshots = useMemo(() => (data?.snapshots ?? []).slice(-6).reverse(), [data]);
   const runExecution = data?.runExecution ?? {
     source: 'unavailable' as const,
     totals: {
@@ -227,14 +224,13 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
           </div>
 
           <div className='rounded-md border border-border/60 bg-black/20 p-2 text-xs text-gray-300'>
-            Latest snapshot: {formatTimestamp(data.summary.latestSnapshotAt)} | consecutive failures:{' '}
-            {data.autoRemediation.state.consecutiveFailureCount} | remediations:{' '}
+            Latest snapshot: {formatTimestamp(data.summary.latestSnapshotAt)} | consecutive
+            failures: {data.autoRemediation.state.consecutiveFailureCount} | remediations:{' '}
             {data.autoRemediation.state.remediationCount} | threshold:{' '}
-            {data.autoRemediation.threshold} | strategy: {data.autoRemediation.strategy} |
-            cooldown: {data.autoRemediation.cooldownSeconds}s | rate limit:{' '}
-            {data.autoRemediation.rateLimitMaxActions}/
-            {data.autoRemediation.rateLimitWindowSeconds}s
-            {' | '}notify:{' '}
+            {data.autoRemediation.threshold} | strategy: {data.autoRemediation.strategy} | cooldown:{' '}
+            {data.autoRemediation.cooldownSeconds}s | rate limit:{' '}
+            {data.autoRemediation.rateLimitMaxActions}/{data.autoRemediation.rateLimitWindowSeconds}
+            s{' | '}notify:{' '}
             {data.autoRemediation.notifications.enabled
               ? `on (webhook=${data.autoRemediation.notifications.webhookConfigured ? 'yes' : 'no'}, email=${data.autoRemediation.notifications.emailWebhookConfigured ? 'yes' : 'no'})`
               : 'off'}
@@ -249,14 +245,20 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
               <div className='mt-1 flex flex-wrap gap-1.5'>
                 {data.autoRemediation.notifications.deadLetter.replayPolicySkipReasons.map(
                   (entry) => (
-                    <Badge key={entry.reason} variant='outline' className='border-white/10 text-gray-300'>
+                    <Badge
+                      key={entry.reason}
+                      variant='outline'
+                      className='border-white/10 text-gray-300'
+                    >
                       {entry.reason} ({entry.count})
                     </Badge>
                   )
                 )}
               </div>
             ) : (
-              <div className='mt-1 text-gray-400'>No replay-policy skip reasons in dead letters.</div>
+              <div className='mt-1 text-gray-400'>
+                No replay-policy skip reasons in dead letters.
+              </div>
             )}
           </div>
 
@@ -266,14 +268,17 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
               source={runExecution.source} attempts={runExecution.totals.attempts} success=
               {formatPercent(runExecution.totals.successRate)} failure=
               {formatPercent(runExecution.totals.failureRate)} stage(
-              {runExecution.failureStageCounts.resolve}/
-              {runExecution.failureStageCounts.validation}/
-              {runExecution.failureStageCounts.runtime})
+              {runExecution.failureStageCounts.resolve}/{runExecution.failureStageCounts.validation}
+              /{runExecution.failureStageCounts.runtime})
             </div>
             {runExecution.topFailureErrors.length > 0 ? (
               <div className='mt-1 flex flex-wrap gap-1.5'>
                 {runExecution.topFailureErrors.slice(0, 4).map((entry) => (
-                  <Badge key={entry.reason} variant='outline' className='border-white/10 text-gray-300'>
+                  <Badge
+                    key={entry.reason}
+                    variant='outline'
+                    className='border-white/10 text-gray-300'
+                  >
                     {entry.reason} ({entry.count})
                   </Badge>
                 ))}

@@ -61,17 +61,17 @@ export function DropTargetIndicator({
   const isHorizontal = orientation === 'horizontal';
   const lineStyles: React.CSSProperties = isHorizontal
     ? {
-      left: 0,
-      right: 0,
-      height: '2px',
-      ...(position === 'before' ? { top: 0 } : { bottom: 0 }),
-    }
+        left: 0,
+        right: 0,
+        height: '2px',
+        ...(position === 'before' ? { top: 0 } : { bottom: 0 }),
+      }
     : {
-      top: 0,
-      bottom: 0,
-      width: '2px',
-      ...(position === 'before' ? { left: 0 } : { right: 0 }),
-    };
+        top: 0,
+        bottom: 0,
+        width: '2px',
+        ...(position === 'before' ? { left: 0 } : { right: 0 }),
+      };
 
   return (
     <div

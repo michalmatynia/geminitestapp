@@ -196,9 +196,7 @@ export function MetricsTab(): React.JSX.Element {
               <MetadataItem
                 label='Kernel parity risk'
                 value={
-                  latestRuntimeInsight
-                    ? getRuntimeKernelRisk(latestRuntimeInsight.metadata)
-                    : '—'
+                  latestRuntimeInsight ? getRuntimeKernelRisk(latestRuntimeInsight.metadata) : '—'
                 }
               />
               <div className='text-[11px] text-gray-400 line-clamp-2 mt-1'>
@@ -265,10 +263,7 @@ export function MetricsTab(): React.JSX.Element {
                     label='Kernel Coverage'
                     value={`${runsWithKernelParity}/${sampledRuns} (${formatPercent(kernelCoverage)})`}
                   />
-                  <MetadataItem
-                    label='Kernel v3 Share'
-                    value={formatPercent(v3Share)}
-                  />
+                  <MetadataItem label='Kernel v3 Share' value={formatPercent(v3Share)} />
                 </>
               );
             })()}

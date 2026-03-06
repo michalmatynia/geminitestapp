@@ -18,4 +18,5 @@ export type KangurGameProviderProps = {
 
 export const KangurSetup = KangurSetupView as ComponentType<KangurSetupProps>;
 export const KangurGame = KangurGameView as ComponentType;
-export const KangurGameProvider = KangurGameProviderLegacy as ComponentType<KangurGameProviderProps>;
+export const KangurGameProvider =
+  KangurGameProviderLegacy as ComponentType<KangurGameProviderProps>;

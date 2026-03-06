@@ -46,8 +46,12 @@ export function PreviewGridSection() {
     PreviewBlockItem,
   } = usePreviewSectionContext();
 
-  const { selectedNodeId, isInspecting = false, inspectorSettings, hoveredNodeId } =
-    usePreviewEditorState();
+  const {
+    selectedNodeId,
+    isInspecting = false,
+    inspectorSettings,
+    hoveredNodeId,
+  } = usePreviewEditorState();
   const { onSelect, onRemoveRow } = usePreviewEditorActions();
 
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
@@ -307,23 +311,23 @@ export function PreviewGridSection() {
                                     title: 'Meta',
                                     entries: inspectorSettings.showIdentifiers
                                       ? [
-                                        { label: 'Type', value: 'Column' },
-                                        { label: 'ID', value: column.id },
-                                      ]
+                                          { label: 'Type', value: 'Column' },
+                                          { label: 'ID', value: column.id },
+                                        ]
                                       : [{ label: 'Type', value: 'Column' }],
                                   },
                                   ...(inspectorSettings.showStructureInfo
                                     ? [
-                                      {
-                                        title: 'Structure',
-                                        entries: [
-                                          { label: 'Section', value: section.type },
-                                          { label: 'Zone', value: section.zone },
-                                          { label: 'Row', value: String(rowIndex + 1) },
-                                          { label: 'Column', value: String(colIndex + 1) },
-                                        ],
-                                      },
-                                    ]
+                                        {
+                                          title: 'Structure',
+                                          entries: [
+                                            { label: 'Section', value: section.type },
+                                            { label: 'Zone', value: section.zone },
+                                            { label: 'Row', value: String(rowIndex + 1) },
+                                            { label: 'Column', value: String(colIndex + 1) },
+                                          ],
+                                        },
+                                      ]
                                     : []),
                                   // Simplified connection and style info for refactor phase
                                 ]}

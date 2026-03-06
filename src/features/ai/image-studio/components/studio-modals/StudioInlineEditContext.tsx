@@ -591,14 +591,14 @@ export function StudioInlineEditProvider({
     const managedInlineSlot =
       selectedSlot?.imageFileId && previewPath
         ? {
-          type: 'existing' as const,
-          data: {
-            id: selectedSlot.imageFileId,
-            filepath: previewPath,
-          },
-          previewUrl: previewPath,
-          slotId: selectedSlot.id,
-        }
+            type: 'existing' as const,
+            data: {
+              id: selectedSlot.imageFileId,
+              filepath: previewPath,
+            },
+            previewUrl: previewPath,
+            slotId: selectedSlot.id,
+          }
         : null;
 
     return {

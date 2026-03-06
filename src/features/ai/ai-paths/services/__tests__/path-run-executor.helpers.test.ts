@@ -4,6 +4,7 @@ import type { RuntimeState } from '@/shared/contracts/ai-paths';
 import {
   EMPTY_RUNTIME_STATE,
   parseRuntimeKernelCodeObjectResolverIds,
+  parseRuntimeKernelNodeTypes,
   parseRuntimeState,
   parseRuntimeKernelPilotNodeTypes,
   resolveRuntimeKernelConfigForRun,
@@ -144,9 +145,9 @@ describe('parseRuntimeState', () => {
   });
 });
 
-describe('parseRuntimeKernelPilotNodeTypes', () => {
+describe('parseRuntimeKernelNodeTypes', () => {
   it('parses comma-delimited values', () => {
-    expect(parseRuntimeKernelPilotNodeTypes(' constant, math ,template ')).toEqual([
+    expect(parseRuntimeKernelNodeTypes(' constant, math ,template ')).toEqual([
       'constant',
       'math',
       'template',
@@ -154,16 +155,20 @@ describe('parseRuntimeKernelPilotNodeTypes', () => {
   });
 
   it('parses JSON arrays and normalizes values', () => {
-    expect(parseRuntimeKernelPilotNodeTypes('["Template Node","math"," "]')).toEqual([
+    expect(parseRuntimeKernelNodeTypes('["Template Node","math"," "]')).toEqual([
       'template_node',
       'math',
     ]);
   });
 
   it('returns undefined for empty or invalid inputs', () => {
-    expect(parseRuntimeKernelPilotNodeTypes('')).toBeUndefined();
-    expect(parseRuntimeKernelPilotNodeTypes('[]')).toBeUndefined();
-    expect(parseRuntimeKernelPilotNodeTypes(null)).toBeUndefined();
+    expect(parseRuntimeKernelNodeTypes('')).toBeUndefined();
+    expect(parseRuntimeKernelNodeTypes('[]')).toBeUndefined();
+    expect(parseRuntimeKernelNodeTypes(null)).toBeUndefined();
+  });
+
+  it('keeps parseRuntimeKernelPilotNodeTypes as a deprecated alias', () => {
+    expect(parseRuntimeKernelPilotNodeTypes(' constant, math ')).toEqual(['constant', 'math']);
   });
 });
 
@@ -194,9 +199,12 @@ describe('resolveRuntimeKernelConfigForRun', () => {
         envMode: 'auto',
         pathMode: undefined,
         settingMode: 'invalid',
-        envPilotNodeTypes: 'constant',
+        envNodeTypes: 'constant',
+        pathNodeTypes: undefined,
+        settingNodeTypes: 'math',
+        envPilotNodeTypes: undefined,
         pathPilotNodeTypes: undefined,
-        settingPilotNodeTypes: 'math',
+        settingPilotNodeTypes: undefined,
         envResolverIds: 'resolver.primary',
         pathResolverIds: undefined,
         settingResolverIds: 'resolver.secondary',
@@ -207,8 +215,8 @@ describe('resolveRuntimeKernelConfigForRun', () => {
     ).toMatchObject({
       mode: 'auto',
       modeSource: 'env',
-      pilotNodeTypes: ['constant'],
-      pilotSource: 'env',
+      nodeTypes: ['constant'],
+      nodeTypesSource: 'env',
       resolverIds: ['resolver.primary'],
       resolverSource: 'env',
       strictNativeRegistry: true,
@@ -222,6 +230,9 @@ describe('resolveRuntimeKernelConfigForRun', () => {
         envMode: undefined,
         pathMode: undefined,
         settingMode: 'auto',
+        envNodeTypes: undefined,
+        pathNodeTypes: undefined,
+        settingNodeTypes: undefined,
         envPilotNodeTypes: undefined,
         pathPilotNodeTypes: undefined,
         settingPilotNodeTypes: undefined,
@@ -248,6 +259,9 @@ describe('resolveRuntimeKernelConfigForRun', () => {
         envMode: undefined,
         pathMode: undefined,
         settingMode: 'legacy_only',
+        envNodeTypes: undefined,
+        pathNodeTypes: undefined,
+        settingNodeTypes: undefined,
         envPilotNodeTypes: undefined,
         pathPilotNodeTypes: undefined,
         settingPilotNodeTypes: undefined,
@@ -270,9 +284,12 @@ describe('resolveRuntimeKernelConfigForRun', () => {
         envMode: 'invalid',
         pathMode: 'invalid',
         settingMode: 'invalid',
+        envNodeTypes: '',
+        pathNodeTypes: '',
+        settingNodeTypes: 'constant, math',
         envPilotNodeTypes: '',
         pathPilotNodeTypes: '',
-        settingPilotNodeTypes: 'constant, math',
+        settingPilotNodeTypes: '',
         envResolverIds: '',
         pathResolverIds: '',
         settingResolverIds: 'resolver.primary, resolver.secondary',
@@ -283,8 +300,8 @@ describe('resolveRuntimeKernelConfigForRun', () => {
     ).toMatchObject({
       mode: 'auto',
       modeSource: 'default',
-      pilotNodeTypes: ['constant', 'math'],
-      pilotSource: 'settings',
+      nodeTypes: ['constant', 'math'],
+      nodeTypesSource: 'settings',
       resolverIds: ['resolver.primary', 'resolver.secondary'],
       resolverSource: 'settings',
       strictNativeRegistry: true,
@@ -298,9 +315,12 @@ describe('resolveRuntimeKernelConfigForRun', () => {
         envMode: undefined,
         pathMode: 'auto',
         settingMode: 'auto',
+        envNodeTypes: undefined,
+        pathNodeTypes: 'template',
+        settingNodeTypes: 'constant, math',
         envPilotNodeTypes: undefined,
-        pathPilotNodeTypes: 'template',
-        settingPilotNodeTypes: 'constant, math',
+        pathPilotNodeTypes: undefined,
+        settingPilotNodeTypes: undefined,
         envResolverIds: undefined,
         pathResolverIds: 'resolver.path',
         settingResolverIds: 'resolver.settings',
@@ -311,12 +331,37 @@ describe('resolveRuntimeKernelConfigForRun', () => {
     ).toMatchObject({
       mode: 'auto',
       modeSource: 'path',
-      pilotNodeTypes: ['template'],
-      pilotSource: 'path',
+      nodeTypes: ['template'],
+      nodeTypesSource: 'path',
       resolverIds: ['resolver.path'],
       resolverSource: 'path',
       strictNativeRegistry: false,
       strictNativeRegistrySource: 'path',
+    });
+  });
+
+  it('accepts deprecated pilot node type inputs as a compatibility alias', () => {
+    expect(
+      resolveRuntimeKernelConfigForRun({
+        envMode: undefined,
+        pathMode: undefined,
+        settingMode: 'auto',
+        envNodeTypes: undefined,
+        pathNodeTypes: undefined,
+        settingNodeTypes: undefined,
+        envPilotNodeTypes: undefined,
+        pathPilotNodeTypes: 'template',
+        settingPilotNodeTypes: 'constant, math',
+        envResolverIds: undefined,
+        pathResolverIds: undefined,
+        settingResolverIds: undefined,
+        envStrictNativeRegistry: undefined,
+        pathStrictNativeRegistry: undefined,
+        settingStrictNativeRegistry: undefined,
+      })
+    ).toMatchObject({
+      nodeTypes: ['template'],
+      nodeTypesSource: 'path',
     });
   });
 });
@@ -327,8 +372,8 @@ describe('runtime kernel telemetry helpers', () => {
       toRuntimeKernelExecutionTelemetry({
         mode: 'auto',
         modeSource: 'settings',
-        pilotNodeTypes: ['constant', 'template'],
-        pilotSource: 'env',
+        nodeTypes: ['constant', 'template'],
+        nodeTypesSource: 'env',
         resolverIds: ['resolver.primary'],
         resolverSource: 'settings',
         strictNativeRegistry: true,
@@ -337,6 +382,8 @@ describe('runtime kernel telemetry helpers', () => {
     ).toEqual({
       runtimeKernelMode: 'auto',
       runtimeKernelModeSource: 'settings',
+      runtimeKernelNodeTypes: ['constant', 'template'],
+      runtimeKernelNodeTypesSource: 'env',
       runtimeKernelPilotNodeTypes: ['constant', 'template'],
       runtimeKernelPilotNodeTypesSource: 'env',
       runtimeKernelCodeObjectResolverIds: ['resolver.primary'],

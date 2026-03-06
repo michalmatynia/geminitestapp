@@ -187,7 +187,7 @@ export function useUpdateProductField(): UpdateMutation<
     field: keyof ProductWithImages;
     value: ProductWithImages[keyof ProductWithImages];
   }
-  > {
+> {
   const queryClient = useQueryClient();
 
   return createUpdateMutationV2<

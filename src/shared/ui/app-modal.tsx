@@ -127,7 +127,10 @@ function AppModalDialogContentShell({
   const runtime = useAppModalDialogContentRuntime();
   return (
     <DialogContent
-      className={cn('max-w-none w-auto p-0 border-none bg-transparent shadow-none', runtime.modalContentClassName ?? '')}
+      className={cn(
+        'max-w-none w-auto p-0 border-none bg-transparent shadow-none',
+        runtime.modalContentClassName ?? ''
+      )}
       onInteractOutside={runtime.handleInteractOutside}
       onEscapeKeyDown={runtime.handleEscapeKeyDown}
     >
@@ -275,7 +278,9 @@ export function AppModal({
 
             {/* Footer */}
             {footer ? (
-              <div className='p-6 pt-4 border-t border-white/5 flex justify-end gap-2'>{footer}</div>
+              <div className='p-6 pt-4 border-t border-white/5 flex justify-end gap-2'>
+                {footer}
+              </div>
             ) : null}
           </div>
         </AppModalDialogContentShell>

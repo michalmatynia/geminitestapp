@@ -190,7 +190,9 @@ export type KangurScoreCreateInput = z.infer<typeof kangurScoreCreateInputSchema
 export const kangurScoreRepositoryCreateInputSchema = kangurScoreCreateInputSchema.extend({
   created_by: z.string().trim().nullable().optional(),
 });
-export type KangurScoreRepositoryCreateInput = z.infer<typeof kangurScoreRepositoryCreateInputSchema>;
+export type KangurScoreRepositoryCreateInput = z.infer<
+  typeof kangurScoreRepositoryCreateInputSchema
+>;
 
 export const kangurScoreFiltersSchema = z.object({
   player_name: z.string().trim().min(1).optional(),

@@ -475,10 +475,10 @@ export function useAdminCaseResolverPageState() {
           const nextFiles = current.files.map((file) =>
             file.id === fileId
               ? {
-                ...file,
-                isLocked: nextLocked,
-                updatedAt: now,
-              }
+                  ...file,
+                  isLocked: nextLocked,
+                  updatedAt: now,
+                }
               : file
           );
           return {

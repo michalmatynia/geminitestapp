@@ -9,10 +9,7 @@ import {
 } from './NodeFileWorkspaceContext';
 
 export function CaseResolverLinkedPreviewModal(): React.JSX.Element {
-  const {
-    isLinkedPreviewOpen: open,
-    compiled,
-  } = useNodeFileWorkspaceStateContext();
+  const { isLinkedPreviewOpen: open, compiled } = useNodeFileWorkspaceStateContext();
   const { setIsLinkedPreviewOpen: onOpenChange } = useNodeFileWorkspaceActionsContext();
 
   return (

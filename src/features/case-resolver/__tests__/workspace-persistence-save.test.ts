@@ -163,7 +163,9 @@ describe('case-resolver workspace persistence', () => {
       .mockResolvedValueOnce(
         toJsonResponse(200, { key: CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY, value: 'ok' })
       )
-      .mockResolvedValueOnce(toJsonResponse(200, { key: CASE_RESOLVER_WORKSPACE_HISTORY_KEY, value: 'ok' }))
+      .mockResolvedValueOnce(
+        toJsonResponse(200, { key: CASE_RESOLVER_WORKSPACE_HISTORY_KEY, value: 'ok' })
+      )
       .mockImplementationOnce(async (_url: string, init?: RequestInit): Promise<Response> => {
         const body = JSON.parse(String(init?.body ?? '{}')) as { key?: string; value?: string };
         return toJsonResponse(200, {
@@ -305,5 +307,4 @@ describe('case-resolver workspace persistence', () => {
     }
     expect(fetchMock).toHaveBeenCalledTimes(0);
   });
-
 });

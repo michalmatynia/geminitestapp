@@ -214,9 +214,8 @@ type DeadLetterStoreModule = {
 const loadDeadLetterStore = async (): Promise<DeadLetterStoreModule | null> => {
   if (typeof window !== 'undefined') return null;
   try {
-    const mod = (await import('@/shared/lib/observability/central-log-dead-letter-store')) as
-      | DeadLetterStoreModule
-      | null;
+    const mod =
+      (await import('@/shared/lib/observability/central-log-dead-letter-store')) as DeadLetterStoreModule | null;
     return mod;
   } catch (error) {
     console.error('[system-logger] Failed to load dead-letter persistence module', error);
@@ -227,7 +226,11 @@ const loadDeadLetterStore = async (): Promise<DeadLetterStoreModule | null> => {
 const isCentralLogDeadLetterEntry = (value: unknown): value is CentralLogDeadLetterEntry => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const record = value as Record<string, unknown>;
-  if (!record['payload'] || typeof record['payload'] !== 'object' || Array.isArray(record['payload'])) {
+  if (
+    !record['payload'] ||
+    typeof record['payload'] !== 'object' ||
+    Array.isArray(record['payload'])
+  ) {
     return false;
   }
   if (typeof record['queuedAt'] !== 'string' || record['queuedAt'].trim().length === 0) {
@@ -296,11 +299,7 @@ const ensureDeadLetterStoreHydrated = async (): Promise<void> => {
         .filter((entry) => isCentralLogDeadLetterEntry(entry))
         .slice(-CENTRAL_LOG_DEAD_LETTER_MAX);
       if (normalized.length > 0) {
-        centralLogDeadLetterQueue.splice(
-          0,
-          centralLogDeadLetterQueue.length,
-          ...normalized
-        );
+        centralLogDeadLetterQueue.splice(0, centralLogDeadLetterQueue.length, ...normalized);
         centralLoggingRuntimeState.deadLetterHydrated += normalized.length;
         centralLoggingRuntimeState.lastDeadLetterHydratedAt = new Date().toISOString();
       }
@@ -317,7 +316,9 @@ const ensureDeadLetterStoreHydrated = async (): Promise<void> => {
 
 const isRetryableCentralForwardError = (error: unknown): boolean => {
   if (error instanceof CentralSinkHttpError) {
-    return error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500;
+    return (
+      error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500
+    );
   }
   return isTransientError(error);
 };

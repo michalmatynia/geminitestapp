@@ -17,12 +17,14 @@ export function ExportQuickActionsSection(): React.JSX.Element {
     debugWarehouses,
     setDebugWarehouses,
   } = useImportExportState();
+  const { isFetchingInventories: loadingInventories, isFetchingWarehouses: loadingWarehouses } =
+    useImportExportData();
   const {
-    isFetchingInventories: loadingInventories,
-    isFetchingWarehouses: loadingWarehouses,
-  } = useImportExportData();
-  const { handleLoadInventories, handleLoadWarehouses, handleSaveExportSettings, savingExportSettings } =
-    useImportExportActions();
+    handleLoadInventories,
+    handleLoadWarehouses,
+    handleSaveExportSettings,
+    savingExportSettings,
+  } = useImportExportActions();
 
   const loadingDebugWarehouses = false;
 

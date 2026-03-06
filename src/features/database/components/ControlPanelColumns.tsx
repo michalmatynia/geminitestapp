@@ -18,7 +18,9 @@ const ProviderBadgeRuntimeContext = React.createContext<ProviderBadgeRuntimeValu
 function useProviderBadgeRuntime(): ProviderBadgeRuntimeValue {
   const runtime = React.useContext(ProviderBadgeRuntimeContext);
   if (!runtime) {
-    throw new Error('useProviderBadgeRuntime must be used within ProviderBadgeRuntimeContext.Provider');
+    throw new Error(
+      'useProviderBadgeRuntime must be used within ProviderBadgeRuntimeContext.Provider'
+    );
   }
   return runtime;
 }
@@ -78,10 +80,7 @@ export function getControlPanelColumns(options: {
       id: 'prisma',
       header: 'Prisma',
       cell: ({ row }: { row: { original: UnifiedCollectionRow } }): React.JSX.Element => (
-        <ProviderBadge
-          exists={row.original.existsInPrisma}
-          count={row.original.prismaRowCount}
-        />
+        <ProviderBadge exists={row.original.existsInPrisma} count={row.original.prismaRowCount} />
       ),
     },
     {

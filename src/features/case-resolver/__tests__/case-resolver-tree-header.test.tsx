@@ -198,7 +198,9 @@ describe('CaseResolverTreeHeader', () => {
   });
 
   it('hides tree search input when search capability is disabled', () => {
-    render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} searchEnabled={false} />);
+    render(
+      <CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} searchEnabled={false} />
+    );
 
     expect(screen.queryByPlaceholderText('Search files & folders…')).not.toBeInTheDocument();
   });

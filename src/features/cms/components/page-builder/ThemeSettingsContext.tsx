@@ -103,10 +103,7 @@ export function ThemeSettingsProvider({
     [initialTheme]
   );
 
-  const value = useMemo(
-    (): ThemeSettingsStateContextValue => ({ theme }),
-    [theme]
-  );
+  const value = useMemo((): ThemeSettingsStateContextValue => ({ theme }), [theme]);
   const actions = useMemo(
     (): ThemeSettingsActionsContextValue => ({
       setTheme: setThemeProxy,

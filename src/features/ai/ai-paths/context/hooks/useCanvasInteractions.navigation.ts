@@ -484,7 +484,10 @@ export function useCanvasInteractionsNavigation({
           cancelAnimationFrame(wheelZoomRafRef.current);
           wheelZoomRafRef.current = null;
         }
-        const immediateView = getZoomTargetView(targetScale, wheelZoomTargetRef.current.anchorClientPos);
+        const immediateView = getZoomTargetView(
+          targetScale,
+          wheelZoomTargetRef.current.anchorClientPos
+        );
         setViewClamped(immediateView);
         wheelZoomTargetRef.current = null;
         updateLastPointerCanvasPosFromClient(clientX, clientY);

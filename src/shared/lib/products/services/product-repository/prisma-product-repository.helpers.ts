@@ -52,14 +52,14 @@ export const normalizeProductParameterValues = (input: unknown): ProductParamete
       typeof valuesByLanguageRaw === 'object' &&
       !Array.isArray(valuesByLanguageRaw)
         ? Object.entries(valuesByLanguageRaw as Record<string, unknown>).reduce(
-          (acc: Record<string, string>, [languageCode, languageValue]) => {
-            const normalizedCode = languageCode.trim().toLowerCase();
-            if (!normalizedCode || typeof languageValue !== 'string') return acc;
-            acc[normalizedCode] = languageValue;
-            return acc;
-          },
-          {}
-        )
+            (acc: Record<string, string>, [languageCode, languageValue]) => {
+              const normalizedCode = languageCode.trim().toLowerCase();
+              if (!normalizedCode || typeof languageValue !== 'string') return acc;
+              acc[normalizedCode] = languageValue;
+              return acc;
+            },
+            {}
+          )
         : {};
     const resolvedValue = value || resolvePrimaryLocalizedValue(valuesByLanguage) || '';
     byParameterId.set(parameterId, {

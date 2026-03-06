@@ -59,13 +59,10 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
     (key: string): boolean => !allowedKeys.has(key)
   );
   if (unexpectedKeys.length > 0) {
-    throw validationError(
-      'Case Resolver node-file snapshot payload includes unsupported fields.',
-      {
-        source: 'case_resolver.node_file_snapshot',
-        unexpectedKeys,
-      }
-    );
+    throw validationError('Case Resolver node-file snapshot payload includes unsupported fields.', {
+      source: 'case_resolver.node_file_snapshot',
+      unexpectedKeys,
+    });
   }
 
   const { source: _source, ...snapshotRecord } = record;

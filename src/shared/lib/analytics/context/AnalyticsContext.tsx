@@ -31,32 +31,26 @@ interface AnalyticsInsightsContextValue {
   runInsightMutation: UseMutationResult<{ insight: AiInsightRecord }, Error, void>;
 }
 
-export const {
-  Context: AnalyticsFiltersContext,
-  useStrictContext: useAnalyticsFilters,
-} = createStrictContext<AnalyticsFiltersContextValue>({
-  hookName: 'useAnalyticsFilters',
-  providerName: 'an AnalyticsProvider',
-  displayName: 'AnalyticsFiltersContext',
-});
+export const { Context: AnalyticsFiltersContext, useStrictContext: useAnalyticsFilters } =
+  createStrictContext<AnalyticsFiltersContextValue>({
+    hookName: 'useAnalyticsFilters',
+    providerName: 'an AnalyticsProvider',
+    displayName: 'AnalyticsFiltersContext',
+  });
 
-export const {
-  Context: AnalyticsSummaryContext,
-  useStrictContext: useAnalyticsSummaryData,
-} = createStrictContext<AnalyticsSummaryContextValue>({
-  hookName: 'useAnalyticsSummaryData',
-  providerName: 'an AnalyticsProvider',
-  displayName: 'AnalyticsSummaryContext',
-});
+export const { Context: AnalyticsSummaryContext, useStrictContext: useAnalyticsSummaryData } =
+  createStrictContext<AnalyticsSummaryContextValue>({
+    hookName: 'useAnalyticsSummaryData',
+    providerName: 'an AnalyticsProvider',
+    displayName: 'AnalyticsSummaryContext',
+  });
 
-export const {
-  Context: AnalyticsInsightsContext,
-  useStrictContext: useAnalyticsInsightsData,
-} = createStrictContext<AnalyticsInsightsContextValue>({
-  hookName: 'useAnalyticsInsightsData',
-  providerName: 'an AnalyticsProvider',
-  displayName: 'AnalyticsInsightsContext',
-});
+export const { Context: AnalyticsInsightsContext, useStrictContext: useAnalyticsInsightsData } =
+  createStrictContext<AnalyticsInsightsContextValue>({
+    hookName: 'useAnalyticsInsightsData',
+    providerName: 'an AnalyticsProvider',
+    displayName: 'AnalyticsInsightsContext',
+  });
 
 export function AnalyticsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [range, setRange] = useState<AnalyticsRange>('24h');
@@ -109,7 +103,9 @@ export function AnalyticsProvider({ children }: { children: ReactNode }): React.
   return (
     <AnalyticsFiltersContext.Provider value={filtersValue}>
       <AnalyticsSummaryContext.Provider value={summaryValue}>
-        <AnalyticsInsightsContext.Provider value={insightsValue}>{children}</AnalyticsInsightsContext.Provider>
+        <AnalyticsInsightsContext.Provider value={insightsValue}>
+          {children}
+        </AnalyticsInsightsContext.Provider>
       </AnalyticsSummaryContext.Provider>
     </AnalyticsFiltersContext.Provider>
   );

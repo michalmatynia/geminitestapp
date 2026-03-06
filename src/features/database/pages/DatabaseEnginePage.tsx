@@ -37,8 +37,15 @@ import { type DatabaseCollectionRow } from '../hooks/useDatabaseEngineState';
 import type { ColumnDef } from '@tanstack/react-table';
 
 function DatabaseEngineSettingsTab(): React.JSX.Element {
-  const { policy, collectionRouteMap, rows, isLoading, engineStatus, operationsJobs, redisOverview } =
-    useDatabaseEngineStateContext();
+  const {
+    policy,
+    collectionRouteMap,
+    rows,
+    isLoading,
+    engineStatus,
+    operationsJobs,
+    redisOverview,
+  } = useDatabaseEngineStateContext();
   const { updatePolicy, updateCollectionRoute } = useDatabaseEngineActionsContext();
 
   const collectionColumns = useMemo<ColumnDef<DatabaseCollectionRow>[]>(

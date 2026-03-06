@@ -39,16 +39,16 @@ const createTelemetrizedQueryFnInternal = <
   TQueryKey extends QueryKey,
   TPageParam = never,
 >(
-    config: {
+  config: {
     meta: TanstackFactoryMeta;
     queryFn: (context: QueryFunctionContext<TQueryKey, TPageParam>) => Promise<TQueryFnData>;
     telemetryContext?: Record<string, unknown> | undefined;
     transformError?: (error: unknown) => TError;
     entity?: 'query' | 'query-batch';
   },
-    normalizedQueryKey: TQueryKey,
-    attemptRef: { current: number }
-  ): (context: QueryFunctionContext<TQueryKey, TPageParam>) => Promise<TQueryFnData> => {
+  normalizedQueryKey: TQueryKey,
+  attemptRef: { current: number }
+): ((context: QueryFunctionContext<TQueryKey, TPageParam>) => Promise<TQueryFnData>) => {
   const { meta, queryFn, telemetryContext, transformError, entity = 'query' } = config;
   const telemetryMeta = withQueryKeyMeta(meta, normalizedQueryKey);
 

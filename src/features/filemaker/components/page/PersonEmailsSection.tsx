@@ -9,11 +9,10 @@ import {
 } from '../../context/AdminFilemakerPersonEditPageContext';
 
 export function PersonEmailsSection(): React.JSX.Element {
-  const { emails, emailExtractionText, updateSetting } = useAdminFilemakerPersonEditPageStateContext();
-  const {
-    setEmailExtractionText,
-    handleExtractEmails,
-  } = useAdminFilemakerPersonEditPageActionsContext();
+  const { emails, emailExtractionText, updateSetting } =
+    useAdminFilemakerPersonEditPageStateContext();
+  const { setEmailExtractionText, handleExtractEmails } =
+    useAdminFilemakerPersonEditPageActionsContext();
 
   return (
     <FilemakerLinkedEmailsSection

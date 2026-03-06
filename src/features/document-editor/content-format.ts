@@ -30,8 +30,8 @@ const ENTITY_MAP: Record<string, string> = {
   '&lt;': '<',
   '&gt;': '>',
   '&quot;': '"',
-  '&apos;': '\'',
-  '&#39;': '\'',
+  '&apos;': "'",
+  '&#39;': "'",
 };
 
 const decodeHtmlEntity = (value: string): string => {

@@ -66,9 +66,7 @@ const toRecord = (value: unknown): Record<string, unknown> | null =>
     ? (value as Record<string, unknown>)
     : null;
 
-const toSampleStateMap = <T = unknown>(
-  value: unknown
-): Record<string, T> | undefined => {
+const toSampleStateMap = <T = unknown>(value: unknown): Record<string, T> | undefined => {
   const record = toRecord(value);
   if (!record) return undefined;
   return record as Record<string, T>;
@@ -333,9 +331,9 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       nodePolicy:
         policyReport.disabledNodeTypes.length > 0
           ? {
-            disabledNodeTypes: policyReport.disabledNodeTypes,
-            blockedCount: policyReport.violations.length,
-          }
+              disabledNodeTypes: policyReport.disabledNodeTypes,
+              blockedCount: policyReport.violations.length,
+            }
           : undefined,
       graphCompile: {
         errors: runPreflight.compileReport.errors,
@@ -348,10 +346,10 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         validation: runPreflight.validationReport,
         dependency: runPreflight.dependencyReport
           ? {
-            errors: runPreflight.dependencyReport.errors,
-            warnings: runPreflight.dependencyReport.warnings,
-            strictReady: runPreflight.dependencyReport.strictReady,
-          }
+              errors: runPreflight.dependencyReport.errors,
+              warnings: runPreflight.dependencyReport.warnings,
+              strictReady: runPreflight.dependencyReport.strictReady,
+            }
           : null,
         dataContract: {
           errors: runPreflight.dataContractReport.errors,

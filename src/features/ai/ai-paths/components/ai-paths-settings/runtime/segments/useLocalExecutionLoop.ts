@@ -5,9 +5,7 @@ import {
   GraphExecutionError,
   GraphExecutionCancelled,
 } from '@/shared/lib/ai-paths';
-import {
-  resolveAiPathsRuntimeValidationMiddleware,
-} from '@/shared/lib/ai-paths/core/validation-engine/runtime-middleware';
+import { resolveAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine/runtime-middleware';
 
 import {
   createRunId,
@@ -73,7 +71,7 @@ const parseRuntimeKernelListValue = ({
   return normalized.length > 0 ? normalized : undefined;
 };
 
-const parseRuntimeKernelPilotNodeTypes = (value: unknown): string[] | undefined =>
+const parseRuntimeKernelNodeTypes = (value: unknown): string[] | undefined =>
   parseRuntimeKernelListValue({
     value,
     normalizeToken: (token: string): string => token.trim().toLowerCase().replace(/\s+/g, '_'),
@@ -98,15 +96,17 @@ const parseRuntimeKernelStrictNativeRegistry = (value: unknown): boolean | undef
 
 export function useLocalExecutionLoop(args: LocalExecutionArgs) {
   const runtimeKernelConfig = toRecord(args.runtimeKernelConfig);
-  const runtimeKernelPilotNodeTypes = parseRuntimeKernelPilotNodeTypes(
-    runtimeKernelConfig?.['pilotNodeTypes']
+  const runtimeKernelNodeTypes = parseRuntimeKernelNodeTypes(
+    runtimeKernelConfig?.['nodeTypes'] ?? runtimeKernelConfig?.['pilotNodeTypes']
   );
   const runtimeKernelCodeObjectResolverIds = parseRuntimeKernelResolverIds(
     runtimeKernelConfig?.['codeObjectResolverIds'] ?? runtimeKernelConfig?.['resolverIds']
   );
-  const runtimeKernelStrictNativeRegistry = parseRuntimeKernelStrictNativeRegistry(
-    runtimeKernelConfig?.['strictNativeRegistry'] ?? runtimeKernelConfig?.['strictCodeObjectRegistry']
-  ) ?? true;
+  const runtimeKernelStrictNativeRegistry =
+    parseRuntimeKernelStrictNativeRegistry(
+      runtimeKernelConfig?.['strictNativeRegistry'] ??
+        runtimeKernelConfig?.['strictCodeObjectRegistry']
+    ) ?? true;
   const runLocalLoop = useCallback(
     async (
       mode: 'run' | 'step'
@@ -334,9 +334,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
                   displayStatus === 'cached'
                     ? `Node ${node.title ?? node.id} reused cached outputs.`
                     : `Node ${node.title ?? node.id} ${args.formatStatusLabel(displayStatus)}.`,
-                ...(Object.keys(statusMetadata).length > 0
-                  ? { metadata: statusMetadata }
-                  : {}),
+                ...(Object.keys(statusMetadata).length > 0 ? { metadata: statusMetadata } : {}),
               });
               args.setRuntimeState((prev: RuntimeState): RuntimeState => {
                 const nextOutput = mergeRuntimeNodeOutputsForStatus({
@@ -547,9 +545,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               args.appendRuntimeEvent({
                 source: 'local',
                 kind:
-                  decision === 'block'
-                    ? 'runtime_validation_blocked'
-                    : 'runtime_validation_warn',
+                  decision === 'block' ? 'runtime_validation_blocked' : 'runtime_validation_warn',
                 level: decision === 'block' ? 'error' : 'warn',
                 timestamp: new Date().toISOString(),
                 message,
@@ -579,7 +575,9 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
             }) => {
               haltRef.reason = payload.reason;
             },
-            ...(runtimeKernelPilotNodeTypes ? { runtimeKernelPilotNodeTypes } : {}),
+            ...(runtimeKernelNodeTypes
+              ? { runtimeKernelNodeTypes }
+              : {}),
             ...(runtimeKernelCodeObjectResolverIds ? { runtimeKernelCodeObjectResolverIds } : {}),
             ...(runtimeKernelStrictNativeRegistry !== undefined
               ? { runtimeKernelStrictNativeRegistry }
@@ -677,7 +675,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
     [
       args,
       runtimeKernelCodeObjectResolverIds,
-      runtimeKernelPilotNodeTypes,
+      runtimeKernelNodeTypes,
       runtimeKernelStrictNativeRegistry,
     ]
   );

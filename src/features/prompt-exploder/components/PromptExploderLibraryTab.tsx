@@ -215,9 +215,7 @@ export function PromptExploderLibraryTab(): React.JSX.Element {
               <div className='text-xs text-gray-300'>
                 Scope: {selectedSegmentationRecord.validationScope}
               </div>
-              <div className='text-xs text-gray-300'>
-                Stack: {selectedStackLabel}
-              </div>
+              <div className='text-xs text-gray-300'>Stack: {selectedStackLabel}</div>
               <div className='text-xs text-gray-300'>
                 Target: {selectedSegmentationRecord.returnTarget}
               </div>
@@ -283,11 +281,11 @@ export function PromptExploderLibraryTab(): React.JSX.Element {
                       <TableCell>
                         {segment.subsections.length > 0
                           ? segment.subsections
-                            .map((subsection) => {
-                              const codePrefix = subsection.code ? `${subsection.code} ` : '';
-                              return `${codePrefix}${subsection.title}`;
-                            })
-                            .join(' | ')
+                              .map((subsection) => {
+                                const codePrefix = subsection.code ? `${subsection.code} ` : '';
+                                return `${codePrefix}${subsection.title}`;
+                              })
+                              .join(' | ')
                           : '—'}
                       </TableCell>
                     </TableRow>

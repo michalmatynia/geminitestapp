@@ -16,7 +16,9 @@ export function CenterPreviewHeaderSectionProvider({
   value: CenterPreviewHeaderContextValue;
 }): React.JSX.Element {
   return (
-    <CenterPreviewHeaderContext.Provider value={value}>{children}</CenterPreviewHeaderContext.Provider>
+    <CenterPreviewHeaderContext.Provider value={value}>
+      {children}
+    </CenterPreviewHeaderContext.Provider>
   );
 }
 

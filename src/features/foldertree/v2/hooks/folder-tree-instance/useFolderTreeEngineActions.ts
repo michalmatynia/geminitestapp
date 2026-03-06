@@ -198,9 +198,9 @@ export function useFolderTreeEngineActions(
       const optimisticNodes = current.nodes.map((node) =>
         node.id === nodeId
           ? {
-            ...node,
-            name: rawName,
-          }
+              ...node,
+              name: rawName,
+            }
           : node
       );
 

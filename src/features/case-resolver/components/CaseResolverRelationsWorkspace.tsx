@@ -121,13 +121,13 @@ const toRuntimeNodes = (nodes: CaseResolverRelationGraph['nodes']): AiNode[] =>
           : 0;
       const inputs = Array.isArray(node['inputs'])
         ? node['inputs'].filter(
-          (port: unknown): port is string => typeof port === 'string' && port.trim().length > 0
-        )
+            (port: unknown): port is string => typeof port === 'string' && port.trim().length > 0
+          )
         : [];
       const outputs = Array.isArray(node['outputs'])
         ? node['outputs'].filter(
-          (port: unknown): port is string => typeof port === 'string' && port.trim().length > 0
-        )
+            (port: unknown): port is string => typeof port === 'string' && port.trim().length > 0
+          )
         : [];
       const config =
         node['config'] && typeof node['config'] === 'object' && !Array.isArray(node['config'])

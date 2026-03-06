@@ -29,17 +29,11 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const {
-    selectedIntegrationId,
-    selectedConnectionId,
-    isBaseComIntegration,
-  } = useListingSelection();
+  const { selectedIntegrationId, selectedConnectionId, isBaseComIntegration } =
+    useListingSelection();
 
-  const {
-    selectedInventoryId,
-    selectedTemplateId,
-    allowDuplicateSku,
-  } = useListingBaseComSettings();
+  const { selectedInventoryId, selectedTemplateId, allowDuplicateSku } =
+    useListingBaseComSettings();
 
   const exportToBaseMutation = useExportToBaseMutation(selectedProductId || '');
   const createListingMutation = useCreateListingMutation(selectedProductId || '');

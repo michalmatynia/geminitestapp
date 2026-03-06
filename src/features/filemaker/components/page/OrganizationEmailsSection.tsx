@@ -11,10 +11,8 @@ import {
 export function OrganizationEmailsSection(): React.JSX.Element {
   const { emails, emailExtractionText, updateSetting } =
     useAdminFilemakerOrganizationEditPageStateContext();
-  const {
-    setEmailExtractionText,
-    handleExtractEmails,
-  } = useAdminFilemakerOrganizationEditPageActionsContext();
+  const { setEmailExtractionText, handleExtractEmails } =
+    useAdminFilemakerOrganizationEditPageActionsContext();
 
   return (
     <FilemakerLinkedEmailsSection

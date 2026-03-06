@@ -347,18 +347,18 @@ export const updateProductSyncProfile = async (
       : {}),
     ...(patch.scheduleIntervalMinutes !== undefined
       ? {
-        scheduleIntervalMinutes: toBoundedInt(
-          patch.scheduleIntervalMinutes,
-          existing.scheduleIntervalMinutes,
-          1,
-          24 * 60
-        ),
-      }
+          scheduleIntervalMinutes: toBoundedInt(
+            patch.scheduleIntervalMinutes,
+            existing.scheduleIntervalMinutes,
+            1,
+            24 * 60
+          ),
+        }
       : {}),
     ...(patch.batchSize !== undefined
       ? {
-        batchSize: toBoundedInt(patch.batchSize, existing.batchSize, 1, 500),
-      }
+          batchSize: toBoundedInt(patch.batchSize, existing.batchSize, 1, 500),
+        }
       : {}),
     ...(patch.fieldRules !== undefined
       ? { fieldRules: normalizeFieldRules(patch.fieldRules) }

@@ -10,10 +10,7 @@ import type {
 } from '@/shared/contracts/case-resolver';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import type { MasterFolderTreeAdapterV3 } from '@/shared/contracts/master-folder-tree';
-import {
-  useCaseResolverPageActions,
-  useCaseResolverPageState,
-} from './CaseResolverPageContext';
+import { useCaseResolverPageActions, useCaseResolverPageState } from './CaseResolverPageContext';
 import { resolveCaseResolverTreeWorkspace } from '../components/case-resolver-tree-workspace';
 import {
   getCachedCaseResolverRuntimeIndexes,

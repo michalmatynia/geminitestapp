@@ -114,7 +114,7 @@ export function SectionDropTarget({
           });
           const dragSectionId = sectionDrag.id;
           if (!dragSectionId) return;
-          const dragZone = (sectionDrag.zone) ?? null;
+          const dragZone = sectionDrag.zone ?? null;
           const dragIndex = sectionDrag.index;
           const isSamePosition =
             draggedSectionParentId === toParentSectionId &&
@@ -147,7 +147,7 @@ export function SectionDropTarget({
           });
           const dragSectionId = sectionDrag.id;
           if (!dragSectionId) return;
-          const dragZone = (sectionDrag.zone) ?? null;
+          const dragZone = sectionDrag.zone ?? null;
           const dragIndex = sectionDrag.index;
           const isSamePosition =
             draggedSectionParentId === toParentSectionId &&

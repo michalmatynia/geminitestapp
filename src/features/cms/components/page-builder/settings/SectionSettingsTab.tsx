@@ -21,7 +21,10 @@ import {
   type SectionTemplateRecord,
 } from '../section-template-store';
 import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates } from '../grid-templates';
-import { usePageBuilderSelection, usePageBuilderDispatch } from '../../../hooks/usePageBuilderContext';
+import {
+  usePageBuilderSelection,
+  usePageBuilderDispatch,
+} from '../../../hooks/usePageBuilderContext';
 import { useComponentSettingsActions } from '../context/ComponentSettingsContext';
 
 export function SectionSettingsTab(): React.JSX.Element | null {

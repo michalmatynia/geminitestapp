@@ -255,9 +255,12 @@ export function useProductMetadata({
 
     let cancelled = false;
     void api
-      .get<ProductCategory>(`/api/v2/products/categories/${encodeURIComponent(selectedCategoryId)}`, {
-        logError: false,
-      })
+      .get<ProductCategory>(
+        `/api/v2/products/categories/${encodeURIComponent(selectedCategoryId)}`,
+        {
+          logError: false,
+        }
+      )
       .then((category: ProductCategory) => {
         if (cancelled) return;
         const categoryCatalogId =
@@ -339,10 +342,10 @@ export function useProductMetadata({
 
     const filteredLanguages = languageIdSet.size
       ? languages.filter((language: Language) => {
-        const idKey = String(language.id).trim().toUpperCase();
-        const codeKey = String(language.code).trim().toUpperCase();
-        return normalizedLanguageSet.has(idKey) || normalizedLanguageSet.has(codeKey);
-      })
+          const idKey = String(language.id).trim().toUpperCase();
+          const codeKey = String(language.code).trim().toUpperCase();
+          return normalizedLanguageSet.has(idKey) || normalizedLanguageSet.has(codeKey);
+        })
       : languages;
 
     const priceGroupIdSet = new Set(

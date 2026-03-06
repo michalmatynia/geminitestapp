@@ -466,15 +466,15 @@ export function useAdminCaseResolverDocumentActions({
       setEditingDocumentDraft((current) =>
         current
           ? {
-            ...current,
-            activeDocumentVersion: entry.activeDocumentVersion,
-            editorType: entry.editorType,
-            documentContent: entry.documentContent,
-            documentContentMarkdown: entry.documentContentMarkdown,
-            documentContentHtml: entry.documentContentHtml,
-            documentContentPlainText: entry.documentContentPlainText,
-            documentHistory: nextHistory,
-          }
+              ...current,
+              activeDocumentVersion: entry.activeDocumentVersion,
+              editorType: entry.editorType,
+              documentContent: entry.documentContent,
+              documentContentMarkdown: entry.documentContentMarkdown,
+              documentContentHtml: entry.documentContentHtml,
+              documentContentPlainText: entry.documentContentPlainText,
+              documentHistory: nextHistory,
+            }
           : null
       );
 

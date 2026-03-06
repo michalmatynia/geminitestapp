@@ -39,7 +39,8 @@ const readNativeContractCodeObjectIds = (): string[] => {
   return Object.values(contracts)
     .filter(
       (entry: NodeCodeObjectContractEntry): boolean =>
-        entry.executionAdapter === 'native_handler_registry' && typeof entry.codeObjectId === 'string'
+        entry.executionAdapter === 'native_handler_registry' &&
+        typeof entry.codeObjectId === 'string'
     )
     .map((entry: NodeCodeObjectContractEntry): string => entry.codeObjectId as string)
     .sort();

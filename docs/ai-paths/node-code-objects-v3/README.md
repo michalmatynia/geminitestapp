@@ -13,7 +13,7 @@ Current runtime scope uses the canonical runtime-kernel set (`agent`, `ai_descri
 
 Runtime rollout controls:
 
-- `runtimeKernelPilotNodeTypes` allows scoped runtime-kernel overrides for parity/canary runs. Omitted or empty persisted values fall back to the canonical approved node set.
+- `runtimeKernelNodeTypes` is the canonical scoped runtime-kernel override for parity/canary runs. `runtimeKernelPilotNodeTypes` remains as a deprecated compatibility alias. Omitted or empty persisted values fall back to the canonical approved node set.
 - `runtimeKernelStrictNativeRegistry` keeps native resolution fail-closed by default and only allows legacy fallback when explicitly disabled.
 - Server runtime resolves approved `code_object_v3` handlers through `contracts.json`.
 - Supported execution adapters:
@@ -25,15 +25,17 @@ Runtime rollout controls:
 - Remaining server-only native node families are:
   - `none`
 - Product/server runs can also read persisted global settings:
-  - `ai_paths_runtime_kernel_pilot_node_types`: JSON array or comma-delimited node types
+  - `ai_paths_runtime_kernel_node_types`: JSON array or comma-delimited node types
+  - `ai_paths_runtime_kernel_pilot_node_types`: deprecated compatibility alias
   - `ai_paths_runtime_kernel_strict_native_registry`: `true | false`
 - Canvas admins can edit these persisted settings from the `Runtime Kernel` control group on the AI-Paths Canvas action bar.
 - `strict_native_registry` supports Canvas control (global + per-path override) and env/run-meta/settings API configuration.
 - Env vars override persisted settings:
-  - `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES`
+  - `AI_PATHS_RUNTIME_KERNEL_NODE_TYPES`
+  - `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES` (deprecated compatibility alias)
   - `AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY`
 - `runtimeKernelMode`, `ai_paths_runtime_kernel_mode`, and `AI_PATHS_RUNTIME_KERNEL_MODE` are deprecated compatibility inputs. They normalize to `auto` and are no longer active rollout controls.
-- `npm run cleanup:ai-paths-runtime-kernel-settings` normalizes stale runtime-kernel mode aliases, pilot-node lists, resolver ids, and strict-native registry flags. The old `cleanup:ai-paths-runtime-kernel-mode` command remains as a deprecated alias.
+- `npm run cleanup:ai-paths-runtime-kernel-settings` normalizes stale runtime-kernel mode aliases, node-type overrides, resolver ids, and strict-native registry flags. The old `cleanup:ai-paths-runtime-kernel-mode` command remains as a deprecated alias.
 
 Generated migration documentation:
 
@@ -73,7 +75,7 @@ npm run docs:ai-paths:node-migration:check
 
 This command validates the active v3 contracts first (`docs:ai-paths:node-code-v3:check`) and then runs migration-doc checks.
 It also validates checklist parity readiness against `parity-evidence.json`.
-Pilot nodes without parity-evidence coverage fail the check.
+Runtime-kernel nodes without parity-evidence coverage fail the check.
 
 Validate active v3 contract artifacts:
 

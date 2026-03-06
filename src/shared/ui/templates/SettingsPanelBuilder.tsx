@@ -82,14 +82,7 @@ export interface SettingsFieldsRendererProps<T extends object> {
  * Renders a list of settings fields based on configuration.
  */
 export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRendererProps<T>) {
-  const {
-    fields,
-    values,
-    errors,
-    onChange,
-    disabled = false,
-    className,
-  } = props;
+  const { fields, values, errors, onChange, disabled = false, className } = props;
   const resolvedErrors: Partial<Record<keyof T, string>> =
     errors ?? ({} as Partial<Record<keyof T, string>>);
 
@@ -167,9 +160,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                 {field.helperText && (
                   <p className='text-xs text-muted-foreground ml-6'>{field.helperText}</p>
                 )}
-                {fieldError && (
-                  <p className='text-xs text-red-500 ml-6'>{fieldError}</p>
-                )}
+                {fieldError && <p className='text-xs text-red-500 ml-6'>{fieldError}</p>}
               </div>
             ) : field.type === 'switch' ? (
               <div className='flex items-center justify-between p-3 rounded-md border border-white/5 bg-card/30 transition-colors hover:bg-card/50'>
@@ -191,9 +182,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                   onCheckedChange={(checked) => handleFieldChange(field.key, !!checked)}
                   disabled={field.disabled || disabled}
                 />
-                {fieldError && (
-                  <p className='text-xs text-red-500 mt-1'>{fieldError}</p>
-                )}
+                {fieldError && <p className='text-xs text-red-500 mt-1'>{fieldError}</p>}
               </div>
             ) : field.type === 'color' ? (
               <FormField

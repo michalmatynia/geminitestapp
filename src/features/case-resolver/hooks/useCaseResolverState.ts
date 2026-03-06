@@ -571,9 +571,9 @@ export function useCaseResolverState(): CaseResolverStateValue {
         current.activeFileId === null
           ? current
           : {
-            ...current,
-            activeFileId: null,
-          }
+              ...current,
+              activeFileId: null,
+            }
     );
   }, [
     resetRequestedContextState,

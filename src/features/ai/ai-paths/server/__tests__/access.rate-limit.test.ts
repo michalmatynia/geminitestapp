@@ -2,17 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiPathRunRecord, AiPathRunStatus } from '@/shared/contracts/ai-paths';
 
-const {
-  listRunsMock,
-  getQueueStatsMock,
-  markStaleRunningRunsMock,
-  getPathRunRepositoryMock,
-} = vi.hoisted(() => ({
-  listRunsMock: vi.fn(),
-  getQueueStatsMock: vi.fn(),
-  markStaleRunningRunsMock: vi.fn(),
-  getPathRunRepositoryMock: vi.fn(),
-}));
+const { listRunsMock, getQueueStatsMock, markStaleRunningRunsMock, getPathRunRepositoryMock } =
+  vi.hoisted(() => ({
+    listRunsMock: vi.fn(),
+    getQueueStatsMock: vi.fn(),
+    markStaleRunningRunsMock: vi.fn(),
+    getPathRunRepositoryMock: vi.fn(),
+  }));
 
 vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: getPathRunRepositoryMock,

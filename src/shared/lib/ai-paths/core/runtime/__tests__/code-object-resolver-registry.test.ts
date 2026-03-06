@@ -71,8 +71,6 @@ describe('code-object-resolver-registry', () => {
   });
 
   it('throws for empty resolver ids', () => {
-    expect(() => registerAiPathsRuntimeCodeObjectResolver('   ', () => null)).toThrow(
-      /non-empty/i
-    );
+    expect(() => registerAiPathsRuntimeCodeObjectResolver('   ', () => null)).toThrow(/non-empty/i);
   });
 });

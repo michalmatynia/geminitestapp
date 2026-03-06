@@ -70,7 +70,11 @@ function SelectSimpleControl(): React.JSX.Element {
   const runtime = useSelectSimpleRuntime();
 
   return (
-    <Select value={runtime.safeValue} onValueChange={runtime.onValueChange} disabled={runtime.disabled}>
+    <Select
+      value={runtime.safeValue}
+      onValueChange={runtime.onValueChange}
+      disabled={runtime.disabled}
+    >
       <SelectTrigger
         className={cn(
           'w-full [&>span]:max-w-[calc(100%-1.5rem)] [&>span]:truncate [&>span]:text-left',

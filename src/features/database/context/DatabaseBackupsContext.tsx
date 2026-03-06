@@ -116,9 +116,7 @@ export function DatabaseBackupsProvider({
 export function useDatabaseBackupsStateContext(): DatabaseBackupsStateContextValue {
   const context = useContext(DatabaseBackupsStateContext);
   if (!context) {
-    throw new Error(
-      'useDatabaseBackupsStateContext must be used within a DatabaseBackupsProvider'
-    );
+    throw new Error('useDatabaseBackupsStateContext must be used within a DatabaseBackupsProvider');
   }
   return context;
 }

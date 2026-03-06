@@ -24,14 +24,12 @@ type TagRuntimeValue = {
   onClick?: () => void;
 };
 
-const {
-  Context: TagRuntimeContext,
-  useStrictContext: useTagRuntime,
-} = createStrictContext<TagRuntimeValue>({
-  hookName: 'useTagRuntime',
-  providerName: 'TagRuntimeProvider',
-  displayName: 'TagRuntimeContext',
-});
+const { Context: TagRuntimeContext, useStrictContext: useTagRuntime } =
+  createStrictContext<TagRuntimeValue>({
+    hookName: 'useTagRuntime',
+    providerName: 'TagRuntimeProvider',
+    displayName: 'TagRuntimeContext',
+  });
 
 function TagBadge(): React.JSX.Element {
   const runtime = useTagRuntime();

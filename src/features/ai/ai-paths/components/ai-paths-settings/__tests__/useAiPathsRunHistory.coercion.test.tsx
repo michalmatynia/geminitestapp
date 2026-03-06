@@ -9,9 +9,8 @@ const cancelAiPathRunMock = vi.hoisted(() => vi.fn());
 const resumeAiPathRunMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/shared/lib/ai-paths', async () => {
-  const actual = await vi.importActual<typeof import('@/shared/lib/ai-paths')>(
-    '@/shared/lib/ai-paths'
-  );
+  const actual =
+    await vi.importActual<typeof import('@/shared/lib/ai-paths')>('@/shared/lib/ai-paths');
   return {
     ...actual,
     listAiPathRuns: listAiPathRunsMock,
@@ -21,7 +20,10 @@ vi.mock('@/shared/lib/ai-paths', async () => {
   };
 });
 
-import { RunHistoryProvider, useRunHistoryState } from '@/features/ai/ai-paths/context/RunHistoryContext';
+import {
+  RunHistoryProvider,
+  useRunHistoryState,
+} from '@/features/ai/ai-paths/context/RunHistoryContext';
 
 import { useAiPathsRunHistory } from '../useAiPathsRunHistory';
 

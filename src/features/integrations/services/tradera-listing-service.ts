@@ -20,9 +20,7 @@ export * from './tradera-listing/browser';
 export * from './tradera-listing/api';
 export * from './tradera-listing/categories';
 
-import {
-  isTraderaApiIntegrationSlug,
-} from '@/features/integrations/constants/slugs';
+import { isTraderaApiIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
   findProductListingByIdAcrossProviders,
   getIntegrationRepository,

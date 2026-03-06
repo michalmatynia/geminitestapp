@@ -11,7 +11,9 @@ const loadProgressMock = vi.fn(() => ({
 
 vi.mock('@/features/kangur/ui/components/ClockTrainingGame', () => ({
   __esModule: true,
-  default: (): React.JSX.Element => <div data-testid='mock-clock-training-game'>Mock Clock Training</div>,
+  default: (): React.JSX.Element => (
+    <div data-testid='mock-clock-training-game'>Mock Clock Training</div>
+  ),
 }));
 
 vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
@@ -142,13 +144,17 @@ describe('ClockLesson sectioned structure', () => {
       expect(screen.getByText('Co pokazuje długa wskazówka?')).toBeInTheDocument();
     });
     expect(screen.getByTestId('clock-lesson-section-status-hours')).toHaveTextContent('Ukończono');
-    expect(screen.getByTestId('clock-lesson-section-status-minutes')).toHaveTextContent('W trakcie');
+    expect(screen.getByTestId('clock-lesson-section-status-minutes')).toHaveTextContent(
+      'W trakcie'
+    );
   });
 
   it('unlocks the combined section only after completing the minutes section', async () => {
     render(<ClockLesson onBack={vi.fn()} />);
 
-    expect(screen.getByTestId('clock-lesson-section-status-combined')).toHaveTextContent('Zablokowana');
+    expect(screen.getByTestId('clock-lesson-section-status-combined')).toHaveTextContent(
+      'Zablokowana'
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
     fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
@@ -158,7 +164,9 @@ describe('ClockLesson sectioned structure', () => {
       expect(screen.getByText('Co pokazuje długa wskazówka?')).toBeInTheDocument();
     });
 
-    expect(screen.getByTestId('clock-lesson-section-status-combined')).toHaveTextContent('Zablokowana');
+    expect(screen.getByTestId('clock-lesson-section-status-combined')).toHaveTextContent(
+      'Zablokowana'
+    );
     expect(screen.queryByTestId('clock-lesson-section-locked-hint-minutes')).toBeNull();
     expect(screen.getByTestId('clock-lesson-section-locked-hint-combined')).toBeInTheDocument();
 
@@ -170,7 +178,11 @@ describe('ClockLesson sectioned structure', () => {
       expect(screen.getByText('Jak łączyć obie wskazówki?')).toBeInTheDocument();
     });
 
-    expect(screen.getByTestId('clock-lesson-section-status-minutes')).toHaveTextContent('Ukończono');
-    expect(screen.getByTestId('clock-lesson-section-status-combined')).toHaveTextContent('W trakcie');
+    expect(screen.getByTestId('clock-lesson-section-status-minutes')).toHaveTextContent(
+      'Ukończono'
+    );
+    expect(screen.getByTestId('clock-lesson-section-status-combined')).toHaveTextContent(
+      'W trakcie'
+    );
   });
 });

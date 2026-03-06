@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurUser } from '@/features/kangur/services/ports';
+import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 
 type KangurAuthError = {
@@ -25,12 +26,6 @@ type KangurAuthContextValue = {
 
 const KangurAuthContext = createContext<KangurAuthContextValue | null>(null);
 const kangurPlatform = getKangurPlatform();
-
-const isStatusError = (value: unknown): value is { status: number } =>
-  typeof value === 'object' &&
-  value !== null &&
-  'status' in value &&
-  typeof (value as { status?: unknown }).status === 'number';
 
 const resolveErrorMessage = (value: unknown): string => {
   if (value instanceof Error && value.message.trim().length > 0) {
@@ -59,7 +54,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       setUser(null);
       setIsAuthenticated(false);
 
-      if (isStatusError(error) && (error.status === 401 || error.status === 403)) {
+      if (isKangurAuthStatusError(error)) {
         // Anonymous mode is allowed; authentication is optional.
         setAuthError(null);
       } else {

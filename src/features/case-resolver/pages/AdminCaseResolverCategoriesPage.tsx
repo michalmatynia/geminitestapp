@@ -187,13 +187,13 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
         (category: CaseResolverCategory): CaseResolverCategory =>
           category.id === editableCategory.id
             ? {
-              ...category,
-              name: normalizedName,
-              description: formData.description,
-              color: formData.color.trim() || '#10b981',
-              parentId: formData.parentId,
-              updatedAt: now,
-            }
+                ...category,
+                name: normalizedName,
+                description: formData.description,
+                color: formData.color.trim() || '#10b981',
+                parentId: formData.parentId,
+                updatedAt: now,
+              }
             : category
       );
       await persistCategories(nextCategories, 'Category updated.');
@@ -282,10 +282,10 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
         (category: CaseResolverCategory): CaseResolverCategory =>
           sortOrderById.has(category.id)
             ? {
-              ...category,
-              sortOrder: sortOrderById.get(category.id)!,
-              updatedAt: new Date().toISOString(),
-            }
+                ...category,
+                sortOrder: sortOrderById.get(category.id)!,
+                updatedAt: new Date().toISOString(),
+              }
             : category
       );
       await persistCategories(nextCategories, 'Category order updated.');

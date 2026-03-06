@@ -85,7 +85,11 @@ export function ValidationRulesEditor(): React.JSX.Element {
                         </Badge>
                       ))}
                       {rule.appliesToStages?.map((stage: string) => (
-                        <Badge key={`${rule.id}:${stage}`} variant='outline' className='text-[10px]'>
+                        <Badge
+                          key={`${rule.id}:${stage}`}
+                          variant='outline'
+                          className='text-[10px]'
+                        >
                           {stage}
                         </Badge>
                       ))}

@@ -69,7 +69,9 @@ function DatabaseActionsRestoreItem(): React.JSX.Element {
   return (
     <DropdownMenuItem
       disabled={!backupMaintenanceAllowed}
-      title={!backupMaintenanceAllowed ? 'Disabled by Database Engine operation controls' : undefined}
+      title={
+        !backupMaintenanceAllowed ? 'Disabled by Database Engine operation controls' : undefined
+      }
       onClick={() => handleRestoreRequest(backup)}
     >
       Restore
@@ -83,7 +85,9 @@ function DatabaseActionsDeleteItem(): React.JSX.Element {
     <DropdownMenuItem
       className='text-destructive focus:text-destructive'
       disabled={!backupMaintenanceAllowed}
-      title={!backupMaintenanceAllowed ? 'Disabled by Database Engine operation controls' : undefined}
+      title={
+        !backupMaintenanceAllowed ? 'Disabled by Database Engine operation controls' : undefined
+      }
       onClick={() => handleDeleteRequest(backup.name)}
     >
       Delete

@@ -267,15 +267,15 @@ export const buildPersistedRuntimeState = (state: RuntimeState, graphNodes: AiNo
   const currentRun =
     state.currentRun && typeof state.currentRun.id === 'string'
       ? {
-        id: state.currentRun.id,
-        status: state.currentRun.status,
-        startedAt: state.currentRun.startedAt ?? null,
-        finishedAt: state.currentRun.finishedAt ?? null,
-        pathId: state.currentRun.pathId ?? null,
-        pathName: state.currentRun.pathName ?? null,
-        createdAt: state.currentRun.createdAt,
-        updatedAt: state.currentRun.updatedAt ?? null,
-      }
+          id: state.currentRun.id,
+          status: state.currentRun.status,
+          startedAt: state.currentRun.startedAt ?? null,
+          finishedAt: state.currentRun.finishedAt ?? null,
+          pathId: state.currentRun.pathId ?? null,
+          pathName: state.currentRun.pathName ?? null,
+          createdAt: state.currentRun.createdAt,
+          updatedAt: state.currentRun.updatedAt ?? null,
+        }
       : null;
   const payload: Record<string, unknown> = {
     inputs,
@@ -396,20 +396,23 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
             (databaseRecord['writeOutcomePolicy'] as Record<string, unknown>)['onZeroAffected'] ===
               'ignore')
             ? ((databaseRecord['writeOutcomePolicy'] as Record<string, unknown>)[
-              'onZeroAffected'
-            ] as 'warn' | 'ignore')
+                'onZeroAffected'
+              ] as 'warn' | 'ignore')
             : 'fail',
       },
     } as DatabaseConfig;
     if (queryConfig) {
       const provider = queryConfig['provider'];
       if (provider === 'all') {
-        throw validationError('AI Path config contains unsupported database query provider "all".', {
-          source: 'ai_paths.path_config',
-          reason: 'unsupported_database_query_provider',
-          nodeId: node.id,
-          provider,
-        });
+        throw validationError(
+          'AI Path config contains unsupported database query provider "all".',
+          {
+            source: 'ai_paths.path_config',
+            reason: 'unsupported_database_query_provider',
+            nodeId: node.id,
+            provider,
+          }
+        );
       }
       if (
         provider !== undefined &&
@@ -473,12 +476,15 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
           ? parameterInferenceGuard['targetPath'].trim()
           : '';
       if (targetPath.length > 0 && targetPath !== 'parameters') {
-        throw validationError('AI Path config contains unsupported parameter inference target path.', {
-          source: 'ai_paths.path_config',
-          reason: 'unsupported_parameter_inference_target_path',
-          nodeId: node.id,
-          targetPath,
-        });
+        throw validationError(
+          'AI Path config contains unsupported parameter inference target path.',
+          {
+            source: 'ai_paths.path_config',
+            reason: 'unsupported_parameter_inference_target_path',
+            nodeId: node.id,
+            targetPath,
+          }
+        );
       }
     }
     return {
@@ -508,14 +514,17 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
   const rawEdges = Array.isArray(contractBackfilled.edges) ? contractBackfilled.edges : [];
   assertNoUnsupportedTriggerDataGraph(normalizedNodes, rawEdges);
   const fallbackNodeTimestamp =
-    typeof contractBackfilled.updatedAt === 'string' && contractBackfilled.updatedAt.trim().length > 0
+    typeof contractBackfilled.updatedAt === 'string' &&
+    contractBackfilled.updatedAt.trim().length > 0
       ? contractBackfilled.updatedAt
       : new Date().toISOString();
-  const graphNodes = normalizeNodes(normalizedNodes).map((node: AiNode): AiNode => ({
-    ...node,
-    createdAt: resolveNodeCreatedAt(node.createdAt, fallbackNodeTimestamp),
-    updatedAt: resolveNodeUpdatedAt(node.updatedAt),
-  }));
+  const graphNodes = normalizeNodes(normalizedNodes).map(
+    (node: AiNode): AiNode => ({
+      ...node,
+      createdAt: resolveNodeCreatedAt(node.createdAt, fallbackNodeTimestamp),
+      updatedAt: resolveNodeUpdatedAt(node.updatedAt),
+    })
+  );
   const normalizedEdges = sanitizeEdges(graphNodes, rawEdges);
   if (stableStringify(normalizedEdges) !== stableStringify(rawEdges)) {
     throw validationError('AI Path config contains invalid or non-canonical edges.', {

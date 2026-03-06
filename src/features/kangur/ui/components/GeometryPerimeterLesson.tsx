@@ -53,7 +53,9 @@ const SLIDES: LessonSlide[] = [
           <p className='text-gray-700'>Boki: 6 cm, 4 cm, 6 cm, 4 cm</p>
           <p className='mt-2 text-xl font-bold text-amber-700'>Obwód = 6 + 4 + 6 + 4 = 20 cm</p>
         </div>
-        <p className='text-center text-sm text-gray-500'>Dla prostokąta: 2 × (długość + szerokość)</p>
+        <p className='text-center text-sm text-gray-500'>
+          Dla prostokąta: 2 × (długość + szerokość)
+        </p>
       </div>
     ),
   },
@@ -75,7 +77,9 @@ const SLIDES: LessonSlide[] = [
   },
 ];
 
-export default function GeometryPerimeterLesson({ onBack }: GeometryPerimeterLessonProps): React.JSX.Element {
+export default function GeometryPerimeterLesson({
+  onBack,
+}: GeometryPerimeterLessonProps): React.JSX.Element {
   const [slide, setSlide] = useState(0);
   const [rewarded, setRewarded] = useState(false);
 
@@ -108,7 +112,11 @@ export default function GeometryPerimeterLesson({ onBack }: GeometryPerimeterLes
           <div
             key={index}
             className={`h-2.5 w-2.5 rounded-full transition-all ${
-              index === slide ? 'bg-amber-500 scale-125' : index < slide ? 'bg-amber-300' : 'bg-gray-200'
+              index === slide
+                ? 'bg-amber-500 scale-125'
+                : index < slide
+                  ? 'bg-amber-300'
+                  : 'bg-gray-200'
             }`}
           />
         ))}

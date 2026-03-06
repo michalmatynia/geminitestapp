@@ -161,9 +161,7 @@ describe('useFolderTreeInstanceV2 external sync replace', () => {
       return { controller };
     });
 
-    let action:
-      | Awaited<ReturnType<(typeof result.current.controller)['replaceNodes']>>
-      | undefined;
+    let action: Awaited<ReturnType<(typeof result.current.controller)['replaceNodes']>> | undefined;
     await act(async () => {
       action = await result.current.controller.replaceNodes(nextNodes, 'refresh');
     });

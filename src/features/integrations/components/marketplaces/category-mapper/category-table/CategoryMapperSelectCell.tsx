@@ -5,9 +5,7 @@ import type { GenericMapperExternalCellProps as CategoryMapperSelectCellProps } 
 
 export type { CategoryMapperSelectCellProps };
 
-export function CategoryMapperSelectCell(
-  props: CategoryMapperSelectCellProps
-): React.JSX.Element {
+export function CategoryMapperSelectCell(props: CategoryMapperSelectCellProps): React.JSX.Element {
   const { value, onChange, options, disabled } = props;
 
   return (

@@ -1,9 +1,6 @@
 export * from './base';
 export * from './document';
-export {
-  PROMPT_EXPLODER_SETTINGS_KEY,
-  VALIDATOR_PATTERN_LISTS_KEY,
-} from './settings';
+export { PROMPT_EXPLODER_SETTINGS_KEY, VALIDATOR_PATTERN_LISTS_KEY } from './settings';
 export * from './settings';
 export * from './bridge';
 export {

@@ -354,16 +354,16 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
       : normalizePaddingPercent(layoutPadding),
     ...(layoutSplitAxes
       ? {
-        paddingXPercent,
-        paddingYPercent,
-      }
+          paddingXPercent,
+          paddingYPercent,
+        }
       : {}),
     fillMissingCanvasWhite: resolvedFillMissingCanvasWhite,
     ...(resolvedFillMissingCanvasWhite && projectCanvasSize
       ? {
-        targetCanvasWidth: projectCanvasSize.width,
-        targetCanvasHeight: projectCanvasSize.height,
-      }
+          targetCanvasWidth: projectCanvasSize.width,
+          targetCanvasHeight: projectCanvasSize.height,
+        }
       : {}),
     whiteThreshold,
     chromaThreshold,
@@ -635,10 +635,9 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
       const nextPresets = deleteObjectLayoutCustomPreset(activeProjectId, selectedCustomPresetId);
       setLayoutCustomPresets(nextPresets);
       setLayoutPresetDraftName('');
-      toast(
-        deletedName ? `Deleted preset "${deletedName}".` : 'Deleted selected custom preset.',
-        { variant: 'success' }
-      );
+      toast(deletedName ? `Deleted preset "${deletedName}".` : 'Deleted selected custom preset.', {
+        variant: 'success',
+      });
     },
     layoutCanSavePreset,
     layoutCanDeletePreset,

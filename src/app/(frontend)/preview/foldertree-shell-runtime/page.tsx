@@ -42,11 +42,7 @@ const createRouteNodes = (routeId: RuntimeRouteId): MasterTreeNode[] => [
   },
 ];
 
-function RouteTreeHarness({
-  routeId,
-}: {
-  routeId: RuntimeRouteId;
-}): React.JSX.Element {
+function RouteTreeHarness({ routeId }: { routeId: RuntimeRouteId }): React.JSX.Element {
   const runtime = useFolderTreeShellRuntime();
   const instanceId = `preview_shell_${routeId}`;
   const nodes = useMemo(() => createRouteNodes(routeId), [routeId]);

@@ -91,13 +91,13 @@ export function parseImageStudioProjectSession(
 
   const compositeAssetIds = Array.isArray(objectValue['compositeAssetIds'])
     ? Array.from(
-      new Set(
-        objectValue['compositeAssetIds']
-          .filter((value: unknown): value is string => typeof value === 'string')
-          .map((value: string) => value.trim())
-          .filter(Boolean)
+        new Set(
+          objectValue['compositeAssetIds']
+            .filter((value: unknown): value is string => typeof value === 'string')
+            .map((value: string) => value.trim())
+            .filter(Boolean)
+        )
       )
-    )
     : [];
 
   const previewMode = objectValue['previewMode'] === '3d' ? '3d' : 'image';

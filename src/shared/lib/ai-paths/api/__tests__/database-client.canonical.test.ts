@@ -9,7 +9,11 @@ vi.mock('@/shared/lib/ai-paths/api/client/base', () => ({
   apiPost: apiPostMock,
 }));
 
-import { databaseAction, databaseQuery, databaseUpdate } from '@/shared/lib/ai-paths/api/client/database';
+import {
+  databaseAction,
+  databaseQuery,
+  databaseUpdate,
+} from '@/shared/lib/ai-paths/api/client/database';
 
 describe('database client canonical db-action routing', () => {
   beforeEach(() => {

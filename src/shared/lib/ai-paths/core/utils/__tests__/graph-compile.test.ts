@@ -879,5 +879,4 @@ describe('compileGraph', () => {
       )
     ).toBe(true);
   });
-
 });

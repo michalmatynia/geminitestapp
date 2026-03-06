@@ -48,17 +48,17 @@ export async function prepareRunContext(run: AgentRunContextInput): Promise<Agen
   const longTermItems = memoryKey ? await listAgentLongTermMemory({ memoryKey, limit: 4 }) : [];
   const longTermProblemItems = memoryKey
     ? await listAgentLongTermMemory({
-      memoryKey,
-      limit: 4,
-      tags: ['problem-solution'],
-    })
+        memoryKey,
+        limit: 4,
+        tags: ['problem-solution'],
+      })
     : [];
   const longTermImprovementItems = memoryKey
     ? await listAgentLongTermMemory({
-      memoryKey,
-      limit: 3,
-      tags: ['self-improvement'],
-    })
+        memoryKey,
+        limit: 3,
+        tags: ['self-improvement'],
+      })
     : [];
   const selfImprovementPlaybook = buildSelfImprovementPlaybook(
     longTermImprovementItems.map(

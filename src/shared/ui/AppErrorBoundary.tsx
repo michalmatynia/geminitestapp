@@ -97,10 +97,10 @@ export function AppErrorBoundary({
 }: AppErrorBoundaryProps) {
   const resetProps = onReset
     ? {
-      onReset: (): void => {
-        onReset();
-      },
-    }
+        onReset: (): void => {
+          onReset();
+        },
+      }
     : {};
 
   return (

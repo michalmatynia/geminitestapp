@@ -177,7 +177,9 @@ export const aiPathRunEnqueuedEventSchema = z.object({
 
 export type AiPathRunEnqueuedEvent = z.infer<typeof aiPathRunEnqueuedEventSchema>;
 
-export const parseAiPathRunEnqueuedEventPayload = (value: unknown): AiPathRunEnqueuedEvent | null => {
+export const parseAiPathRunEnqueuedEventPayload = (
+  value: unknown
+): AiPathRunEnqueuedEvent | null => {
   const parsed = aiPathRunEnqueuedEventSchema.safeParse(value);
   return parsed.success ? parsed.data : null;
 };
@@ -385,7 +387,9 @@ export const aiPathRuntimePortableEngineFailureSchema = z.object({
   at: z.string(),
   runner: z.enum(['client', 'server']),
   surface: z.enum(['canvas', 'product', 'api']),
-  source: z.enum(['portable_package', 'portable_envelope', 'semantic_canvas', 'path_config']).nullable(),
+  source: z
+    .enum(['portable_package', 'portable_envelope', 'semantic_canvas', 'path_config'])
+    .nullable(),
   stage: z.enum(['resolve', 'validation', 'runtime']),
   error: z.string(),
   durationMs: z.number(),
@@ -527,10 +531,7 @@ export type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping' | 'com
 
 export interface RuntimeControlHandlers {
   fireTrigger?: (node: AiNode, event?: React.MouseEvent<Element>) => void | Promise<void>;
-  fireTriggerPersistent?: (
-    node: AiNode,
-    event?: React.MouseEvent<Element>
-  ) => void | Promise<void>;
+  fireTriggerPersistent?: (node: AiNode, event?: React.MouseEvent<Element>) => void | Promise<void>;
   pauseActiveRun?: () => void;
   resumeActiveRun?: () => void;
   stepActiveRun?: (triggerNode?: AiNode) => void;

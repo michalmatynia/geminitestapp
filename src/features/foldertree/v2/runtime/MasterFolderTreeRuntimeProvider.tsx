@@ -5,7 +5,11 @@ import React, { createContext, useContext, useEffect, useMemo } from 'react';
 import { createMasterFolderTreeRuntimeBus } from './createMasterFolderTreeRuntimeBus';
 import type { FolderTreeRuntimeBus } from './types';
 
-export type { FolderTreeRuntimeBus, FolderTreeRuntimeInstanceInfo, FolderTreeRuntimeMetric } from './types';
+export type {
+  FolderTreeRuntimeBus,
+  FolderTreeRuntimeInstanceInfo,
+  FolderTreeRuntimeMetric,
+} from './types';
 
 const FolderTreeRuntimeContext = createContext<FolderTreeRuntimeBus | null>(null);
 

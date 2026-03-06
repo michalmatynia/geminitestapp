@@ -234,23 +234,23 @@ export async function executeDatabaseUpdate({
       } else {
         const dbUpdateResult: ApiResponse<DbActionResult> = isCustomPayloadMode
           ? await dbApi.action<DbActionResult>({
-            provider: queryPayload.provider,
-            action: 'updateMany',
-            collection: queryPayload.collection,
-            ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
-            filter: query,
-            update: customUpdateDoc,
-            ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
-          })
+              provider: queryPayload.provider,
+              action: 'updateMany',
+              collection: queryPayload.collection,
+              ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
+              filter: query,
+              update: customUpdateDoc,
+              ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
+            })
           : await dbApi.update<DbActionResult>({
-            provider: queryPayload.provider,
-            collection: queryPayload.collection,
-            ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
-            filter: query,
-            update: updates,
-            single: false,
-            ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
-          });
+              provider: queryPayload.provider,
+              collection: queryPayload.collection,
+              ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
+              filter: query,
+              update: updates,
+              single: false,
+              ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
+            });
         executed.updater.add(nodeId);
         if (!dbUpdateResult.ok) {
           reportAiPathsError(
@@ -437,23 +437,23 @@ export async function executeDatabaseUpdate({
       } else {
         const dbUpdateResult: ApiResponse<DbActionResult> = isCustomPayloadMode
           ? await dbApi.action<DbActionResult>({
-            provider: queryPayload.provider,
-            action: 'updateOne',
-            collection,
-            ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
-            filter: resolvedFilter,
-            update: customUpdateDoc,
-            ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
-          })
+              provider: queryPayload.provider,
+              action: 'updateOne',
+              collection,
+              ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
+              filter: resolvedFilter,
+              update: customUpdateDoc,
+              ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
+            })
           : await dbApi.update<DbActionResult>({
-            provider: queryPayload.provider,
-            collection,
-            ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
-            filter: resolvedFilter,
-            update: updates,
-            single: true,
-            ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
-          });
+              provider: queryPayload.provider,
+              collection,
+              ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
+              filter: resolvedFilter,
+              update: updates,
+              single: true,
+              ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
+            });
         executed.updater.add(nodeId);
         if (!dbUpdateResult.ok) {
           reportAiPathsError(

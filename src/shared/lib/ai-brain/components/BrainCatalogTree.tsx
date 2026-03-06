@@ -85,7 +85,10 @@ export function BrainCatalogTree({
     () =>
       createMasterFolderTreeTransactionAdapter({
         onApply: async (tx) => {
-          const reordered = resolveBrainCatalogOrderFromNodes(tx.nextNodes, entryByNodeIdRef.current);
+          const reordered = resolveBrainCatalogOrderFromNodes(
+            tx.nextNodes,
+            entryByNodeIdRef.current
+          );
           onChangeRef.current(reordered);
         },
       }),

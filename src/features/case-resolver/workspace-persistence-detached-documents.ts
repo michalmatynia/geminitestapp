@@ -38,18 +38,22 @@ const normalizeWhitespace = (value: string): string => value.replace(/\s+/g, ' '
 
 const stripHtmlTags = (value: string): string => value.replace(/<[^>]*>/g, ' ');
 
-const resolveLightweightDocumentText = (
-  file: CaseResolverWorkspace['files'][number]
-): string => {
+const resolveLightweightDocumentText = (file: CaseResolverWorkspace['files'][number]): string => {
   const plainText =
     typeof file.documentContentPlainText === 'string' ? file.documentContentPlainText : '';
   if (plainText.trim().length > 0) {
-    return truncate(normalizeWhitespace(plainText), CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_TEXT_MAX_CHARS);
+    return truncate(
+      normalizeWhitespace(plainText),
+      CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_TEXT_MAX_CHARS
+    );
   }
   const markdown =
     typeof file.documentContentMarkdown === 'string' ? file.documentContentMarkdown : '';
   if (markdown.trim().length > 0) {
-    return truncate(normalizeWhitespace(markdown), CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_TEXT_MAX_CHARS);
+    return truncate(
+      normalizeWhitespace(markdown),
+      CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_TEXT_MAX_CHARS
+    );
   }
   const html = typeof file.documentContentHtml === 'string' ? file.documentContentHtml : '';
   if (html.trim().length > 0) {
@@ -60,7 +64,10 @@ const resolveLightweightDocumentText = (
   }
   const content = typeof file.documentContent === 'string' ? file.documentContent : '';
   if (content.trim().length > 0) {
-    return truncate(normalizeWhitespace(content), CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_TEXT_MAX_CHARS);
+    return truncate(
+      normalizeWhitespace(content),
+      CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_TEXT_MAX_CHARS
+    );
   }
   return '';
 };
@@ -299,10 +306,9 @@ export const applyCaseResolverWorkspaceDetachedDocumentsPayload = ({
   }
   if (detachedDocumentsPayload.files.length === 0 || workspace.files.length === 0) return workspace;
   const payloadByFileId = new Map<string, CaseResolverWorkspaceDetachedDocumentsFileEntry>(
-    detachedDocumentsPayload.files.map((entry): [string, CaseResolverWorkspaceDetachedDocumentsFileEntry] => [
-      entry.id,
-      entry,
-    ])
+    detachedDocumentsPayload.files.map(
+      (entry): [string, CaseResolverWorkspaceDetachedDocumentsFileEntry] => [entry.id, entry]
+    )
   );
   let updated = false;
   const files = workspace.files.map((file): CaseResolverWorkspace['files'][number] => {

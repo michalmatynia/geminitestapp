@@ -52,7 +52,10 @@ export async function updateProductAiJob(
   jobId: string,
   data: Partial<ProductAiJob>
 ): Promise<{ success: boolean; job: ProductAiJob }> {
-  return api.put<{ success: boolean; job: ProductAiJob }>(`/api/v2/products/ai-jobs/${jobId}`, data);
+  return api.put<{ success: boolean; job: ProductAiJob }>(
+    `/api/v2/products/ai-jobs/${jobId}`,
+    data
+  );
 }
 
 /**

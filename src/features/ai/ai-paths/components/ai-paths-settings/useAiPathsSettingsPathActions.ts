@@ -1,10 +1,6 @@
 import React, { useCallback } from 'react';
 
-import type {
-  AiNode,
-  PathConfig,
-  PathMeta,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import {
   PATH_CONFIG_PREFIX,
   PATH_DEBUG_PREFIX,
@@ -177,7 +173,7 @@ export function useAiPathsSettingsPathActions({
       const resolvedName =
         typeof imported.name === 'string' && imported.name.trim().length > 0
           ? imported.name
-          : (fallbackName || base.name);
+          : fallbackName || base.name;
       return {
         ...base,
         ...imported,
@@ -306,13 +302,7 @@ export function useAiPathsSettingsPathActions({
         [activePathId]: resetConfig,
       })
     );
-  }, [
-    activePathId,
-    applyPathConfigState,
-    isPathLocked,
-    setPathConfigs,
-    toast,
-  ]);
+  }, [activePathId, applyPathConfigState, isPathLocked, setPathConfigs, toast]);
 
   const handleCreatePath = useCallback((): void => {
     const id = createPathId();

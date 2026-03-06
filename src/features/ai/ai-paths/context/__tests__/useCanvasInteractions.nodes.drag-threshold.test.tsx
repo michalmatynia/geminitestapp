@@ -46,7 +46,10 @@ const createPointerEvent = (
     ...patch,
   }) as React.PointerEvent<Element>;
 
-const dispatchWindowPointerEvent = (type: 'pointerup' | 'pointercancel', pointerId: number): void => {
+const dispatchWindowPointerEvent = (
+  type: 'pointerup' | 'pointercancel',
+  pointerId: number
+): void => {
   const event = new Event(type) as PointerEvent;
   Object.defineProperty(event, 'pointerId', {
     value: pointerId,
@@ -216,7 +219,10 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
     expect(mutation?.mutationMeta).toMatchObject({
       reason: 'drag',
     });
-    expect(mutation?.nodes.find((node) => node.id === 'node-1')?.position).toEqual({ x: 50, y: 50 });
+    expect(mutation?.nodes.find((node) => node.id === 'node-1')?.position).toEqual({
+      x: 50,
+      y: 50,
+    });
     expect(props.endDrag).toHaveBeenCalledTimes(1);
     expect(result.current.consumeSuppressedNodeClick('node-1')).toBe(true);
     expect(result.current.consumeSuppressedNodeClick('node-1')).toBe(false);

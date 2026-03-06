@@ -12,13 +12,16 @@ import {
   createDeleteMutationV2,
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
-import { invalidateIntegrationConnections, invalidateIntegrations } from '@/shared/lib/query-invalidation';
+import {
+  invalidateIntegrationConnections,
+  invalidateIntegrations,
+} from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export function useCreateIntegration(): MutationResult<
   Integration,
   { name: string; slug: string }
-  > {
+> {
   const mutationKey = QUERY_KEYS.integrations.all;
   return createMutationV2<Integration, { name: string; slug: string }>({
     mutationFn: (variables) => api.post<Integration>('/api/v2/integrations', variables),
@@ -241,7 +244,8 @@ export function useUpdatePreferredTemplate() {
 export function useSyncAllBaseImagesMutation() {
   const mutationKey = QUERY_KEYS.integrations.all;
   return createMutationV2<{ message?: string }, void>({
-    mutationFn: () => api.post<{ message?: string }>('/api/v2/integrations/images/sync-base/all', {}),
+    mutationFn: () =>
+      api.post<{ message?: string }>('/api/v2/integrations/images/sync-base/all', {}),
     mutationKey,
     meta: {
       source: 'integrations.hooks.useSyncAllBaseImagesMutation',

@@ -29,7 +29,9 @@ describe('node-code-object-v3 legacy bridge', () => {
   });
 
   it('returns null for unknown code object ids', () => {
-    expect(resolveNodeCodeObjectV3ContractByCodeObjectId('ai-paths.node-code-object.unknown.v3')).toBeNull();
+    expect(
+      resolveNodeCodeObjectV3ContractByCodeObjectId('ai-paths.node-code-object.unknown.v3')
+    ).toBeNull();
   });
 
   it('bridges v3 code object resolution to legacy handlers using contract mapping', () => {

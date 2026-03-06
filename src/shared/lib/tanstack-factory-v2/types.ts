@@ -184,11 +184,7 @@ export type SingleQueryConfigV2<
   transformError?: (error: unknown) => Error;
 };
 
-type MultiQueryConfigBaseV2<
-  TQueries extends readonly unknown[],
-  TResults,
-  TCombine = TResults,
-> = {
+type MultiQueryConfigBaseV2<TQueries extends readonly unknown[], TResults, TCombine = TResults> = {
   queries: TQueries;
   combine?: (results: TResults) => TCombine;
 };

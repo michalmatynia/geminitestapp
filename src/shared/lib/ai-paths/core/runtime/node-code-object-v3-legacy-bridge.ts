@@ -16,7 +16,8 @@ export const NODE_CODE_OBJECT_V3_EXECUTION_ADAPTERS = [
   'legacy_handler_bridge',
   'native_handler_registry',
 ] as const;
-export type NodeCodeObjectV3ExecutionAdapter = (typeof NODE_CODE_OBJECT_V3_EXECUTION_ADAPTERS)[number];
+export type NodeCodeObjectV3ExecutionAdapter =
+  (typeof NODE_CODE_OBJECT_V3_EXECUTION_ADAPTERS)[number];
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -122,8 +123,13 @@ export const createNodeCodeObjectV3ContractResolver = ({
   resolveLegacyHandler,
   resolveNativeCodeObjectHandler,
   strictNativeRegistry,
-}: CreateNodeCodeObjectV3ContractResolverArgs): ((args: ResolveCodeObjectHandlerArgs) => NodeHandler | null) => {
-  return ({ nodeType: nodeTypeInput, codeObjectId: codeObjectIdInput }: ResolveCodeObjectHandlerArgs) => {
+}: CreateNodeCodeObjectV3ContractResolverArgs): ((
+  args: ResolveCodeObjectHandlerArgs
+) => NodeHandler | null) => {
+  return ({
+    nodeType: nodeTypeInput,
+    codeObjectId: codeObjectIdInput,
+  }: ResolveCodeObjectHandlerArgs) => {
     const nodeType = normalizeNodeType(nodeTypeInput);
     const codeObjectId = normalizeCodeObjectId(codeObjectIdInput);
     if (!nodeType || !codeObjectId) return null;

@@ -37,8 +37,7 @@ export function DatabasePresetsTabContextProvider({
   value: DatabasePresetsTabContextValue;
   children: React.ReactNode;
 }): React.JSX.Element {
-  const { builtInPresets, onApplyBuiltInPreset, onRenameQueryPreset, onDeleteQueryPreset } =
-    value;
+  const { builtInPresets, onApplyBuiltInPreset, onRenameQueryPreset, onDeleteQueryPreset } = value;
 
   const stateValue = useMemo<DatabasePresetsTabStateContextValue>(
     () => ({

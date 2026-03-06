@@ -105,14 +105,10 @@ export function ProductMetadataFieldProvider({
   );
 }
 
-export function useOptionalProductMetadataFieldStateContext():
-  | ProductMetadataFieldStateContextValue
-  | null {
+export function useOptionalProductMetadataFieldStateContext(): ProductMetadataFieldStateContextValue | null {
   return React.useContext(ProductMetadataFieldStateContext);
 }
 
-export function useOptionalProductMetadataFieldActionsContext():
-  | ProductMetadataFieldActionsContextValue
-  | null {
+export function useOptionalProductMetadataFieldActionsContext(): ProductMetadataFieldActionsContextValue | null {
   return React.useContext(ProductMetadataFieldActionsContext);
 }

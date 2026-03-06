@@ -210,7 +210,9 @@ export function useDefaultExportInventory(): SingleQuery<{ inventoryId?: string 
 export function useDefaultExportConnection(): SingleQuery<{ connectionId?: string | null }> {
   const queryKey = integrationKeys.selection.defaultConnection();
   const queryFn = async (): Promise<{ connectionId?: string | null }> =>
-    api.get<{ connectionId?: string | null }>('/api/v2/integrations/exports/base/default-connection');
+    api.get<{ connectionId?: string | null }>(
+      '/api/v2/integrations/exports/base/default-connection'
+    );
 
   return createSingleQueryV2({
     id: 'default-export-connection',
@@ -308,7 +310,9 @@ export const getDefaultExportInventoryQueryOptions = (): QueryDescriptorV2<{
   return {
     queryKey,
     queryFn: () =>
-      api.get<{ inventoryId?: string | null }>('/api/v2/integrations/exports/base/default-inventory'),
+      api.get<{ inventoryId?: string | null }>(
+        '/api/v2/integrations/exports/base/default-inventory'
+      ),
     staleTime: 5 * 60 * 1000,
     meta: {
       source: 'integrations.queries.getDefaultExportInventoryOptions',

@@ -154,7 +154,7 @@ export const KANGUR_ORIGINAL_4PT_2024 = [
     choices: ['3', '4', '5', '6', '7'],
     answer: '5',
     explanation:
-      'Po odwróceniu kartki wzdłuż pionowej krawędzi, prawa strona staje się lewą i odwrotnie. Białe liczby to 6,7 (góra) i 8,5 (dół) po prawej stronie. Po przecięciu na 4 części, każda część ma liczbę z przodu i tyłu. Karta z \'5\' ma ? z tyłu, karta z \'6\' ma ? z tyłu. Z układu odwróconej kartki: suma znaków zapytania = 5.',
+      "Po odwróceniu kartki wzdłuż pionowej krawędzi, prawa strona staje się lewą i odwrotnie. Białe liczby to 6,7 (góra) i 8,5 (dół) po prawej stronie. Po przecięciu na 4 części, każda część ma liczbę z przodu i tyłu. Karta z '5' ma ? z tyłu, karta z '6' ma ? z tyłu. Z układu odwróconej kartki: suma znaków zapytania = 5.",
   },
 ];
 
@@ -230,7 +230,7 @@ export const KANGUR_ORIGINAL_5PT_2024 = [
     choices: ['8', '11', '13', '14', '23'],
     answer: '14',
     explanation:
-      'Duży sześcian składa się z 2×2×2 = 8 małych sześcianów. Każdy mały sześcian zawiera albo 4 białe klocki, albo 1 biały + 1 szary. Aby minimalizować białe klocki, maksymalizujemy użycie zestawu \'1 biały + 1 szary\'. Ile małych sześcianów może używać szarych? Z obrazka wynika, że część sześcianów musi być z 4 białych. Minimalna liczba białych: gdy maksymalnie wiele sześcianów używa 1 białego = jeśli wszystkie 8 używa 1 białego: 8 białych. Ale z obrazka część musi mieć 4 białe. Jeśli 6 małych sześcianów ma 1 biały (= 6 białych) i 2 mają 4 białe (= 8 białych): razem 14. Odpowiedź: 14.',
+      "Duży sześcian składa się z 2×2×2 = 8 małych sześcianów. Każdy mały sześcian zawiera albo 4 białe klocki, albo 1 biały + 1 szary. Aby minimalizować białe klocki, maksymalizujemy użycie zestawu '1 biały + 1 szary'. Ile małych sześcianów może używać szarych? Z obrazka wynika, że część sześcianów musi być z 4 białych. Minimalna liczba białych: gdy maksymalnie wiele sześcianów używa 1 białego = jeśli wszystkie 8 używa 1 białego: 8 białych. Ale z obrazka część musi mieć 4 białe. Jeśli 6 małych sześcianów ma 1 biały (= 6 białych) i 2 mają 4 białe (= 8 białych): razem 14. Odpowiedź: 14.",
   },
 ];
 

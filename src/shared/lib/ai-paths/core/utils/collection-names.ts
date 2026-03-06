@@ -1,7 +1,4 @@
-import type {
-  AiNode,
-  PathConfig,
-} from '@/shared/contracts/ai-paths';
+import type { AiNode, PathConfig } from '@/shared/contracts/ai-paths';
 
 const CANONICAL_COLLECTION_NAMES = new Set<string>([
   'products',

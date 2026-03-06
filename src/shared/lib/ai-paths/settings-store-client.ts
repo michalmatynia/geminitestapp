@@ -573,8 +573,8 @@ export const applyAiPathsMaintenanceActions = async (
   const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
   const appliedActionIds = Array.isArray(payload['appliedActionIds'])
     ? payload['appliedActionIds'].filter((value: unknown): value is AiPathsMaintenanceActionId =>
-      isAiPathsMaintenanceActionId(value)
-    )
+        isAiPathsMaintenanceActionId(value)
+      )
     : [];
   const report = normalizeAiPathsMaintenanceReport(payload['report']);
   invalidateAiPathsSettingsCache();

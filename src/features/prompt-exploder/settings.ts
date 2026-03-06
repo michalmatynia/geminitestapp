@@ -52,9 +52,7 @@ export const PROMPT_EXPLODER_STORAGE_KEYS = [
   VALIDATOR_PATTERN_LISTS_KEY,
 ] as const;
 
-export type PromptExploderSettingsValidationErrorCode =
-  | 'invalid_settings_json'
-  | 'invalid_shape';
+export type PromptExploderSettingsValidationErrorCode = 'invalid_settings_json' | 'invalid_shape';
 
 export type PromptExploderSettingsValidationError = {
   code: PromptExploderSettingsValidationErrorCode;

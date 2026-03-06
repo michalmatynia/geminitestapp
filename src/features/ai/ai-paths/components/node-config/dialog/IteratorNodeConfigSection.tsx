@@ -6,7 +6,11 @@ import type { IteratorConfig } from '@/shared/lib/ai-paths';
 import { formatRuntimeValue } from '@/shared/lib/ai-paths';
 import { Input, Textarea, ToggleRow, FormField, Card, Badge, StatusBadge } from '@/shared/ui';
 
-import { useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../../AiPathConfigContext';
+import {
+  useAiPathOrchestrator,
+  useAiPathRuntime,
+  useAiPathSelection,
+} from '../../AiPathConfigContext';
 
 export function IteratorNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();

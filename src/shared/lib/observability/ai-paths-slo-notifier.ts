@@ -267,9 +267,9 @@ const buildPayload = (input: NotifyAiPathsSloInput, signature: string): Record<s
   const headline =
     status.breaches.length > 0
       ? status.breaches
-        .slice(0, 3)
-        .map((breach) => breach.message)
-        .join(' ')
+          .slice(0, 3)
+          .map((breach) => breach.message)
+          .join(' ')
       : 'No detailed breach messages were provided.';
   return {
     event: 'ai_paths_slo_breach',

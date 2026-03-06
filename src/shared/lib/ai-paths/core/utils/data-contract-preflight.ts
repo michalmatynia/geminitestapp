@@ -445,8 +445,7 @@ const validateDatabaseMappingContract = (args: {
         severity: 'error',
         code: 'database_mapping_invalid',
         message: `Mapping #${index + 1} is invalid.`,
-        recommendation:
-          'Each mapping must define sourcePort and targetPath as non-empty strings.',
+        recommendation: 'Each mapping must define sourcePort and targetPath as non-empty strings.',
         metadata: {
           index,
         },
@@ -464,8 +463,7 @@ const validateDatabaseMappingContract = (args: {
         severity: 'error',
         code: 'database_mapping_invalid',
         message: `Mapping #${index + 1} is missing sourcePort or targetPath.`,
-        recommendation:
-          'Each mapping must define sourcePort and targetPath as non-empty strings.',
+        recommendation: 'Each mapping must define sourcePort and targetPath as non-empty strings.',
         metadata: {
           index,
           sourcePort: sourcePort ?? null,
@@ -516,10 +514,10 @@ export const evaluateDataContractPreflight = (
     scopeMode === 'reachable_from_roots'
       ? buildReachableScope(args.nodes, sanitizedEdges, args.scopeRootNodeIds)
       : {
-        nodes: args.nodes,
-        edges: sanitizedEdges,
-        reachableNodeIds: new Set(args.nodes.map((node: AiNode): string => node.id)),
-      };
+          nodes: args.nodes,
+          edges: sanitizedEdges,
+          reachableNodeIds: new Set(args.nodes.map((node: AiNode): string => node.id)),
+        };
 
   const nodes = scoped.nodes;
   const edges = scoped.edges;

@@ -123,8 +123,7 @@ export const isProviderActionCategorySupported = (
 
 export const getProviderActionCategoryOptions = (
   provider: DbActionProvider
-): LabeledOptionDto<DatabaseActionCategory>[] =>
-  CATEGORY_OPTIONS_BY_PROVIDER[provider];
+): LabeledOptionDto<DatabaseActionCategory>[] => CATEGORY_OPTIONS_BY_PROVIDER[provider];
 
 export const getProviderActionOptions = (
   provider: DbActionProvider,

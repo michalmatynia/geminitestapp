@@ -19,13 +19,17 @@ export function FilemakerPartyEditPageLayout(
   const { itemName, notFoundMessage, onSave, onCancel, isSaving, children } = props;
 
   if (!itemName) {
-    return <div className='container mx-auto py-8 text-center text-gray-500'>{notFoundMessage}</div>;
+    return (
+      <div className='container mx-auto py-8 text-center text-gray-500'>{notFoundMessage}</div>
+    );
   }
 
   return (
     <div className='container mx-auto space-y-6 py-8'>
       <div className='flex flex-wrap items-center justify-between gap-4'>
-        <Breadcrumbs items={[{ label: 'Filemaker', href: '/admin/filemaker' }, { label: itemName }]} />
+        <Breadcrumbs
+          items={[{ label: 'Filemaker', href: '/admin/filemaker' }, { label: itemName }]}
+        />
       </div>
 
       <div className='grid gap-6 lg:grid-cols-3'>

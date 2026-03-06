@@ -73,15 +73,15 @@ describe('engine-core runtime validation middleware', () => {
       validationMiddleware: ({ stage }) =>
         stage === 'node_post_execute'
           ? {
-            decision: 'warn',
-            message: 'node post-execute warning',
-            issues: [
-              {
-                stage,
-                message: 'warn issue',
-              },
-            ],
-          }
+              decision: 'warn',
+              message: 'node post-execute warning',
+              issues: [
+                {
+                  stage,
+                  message: 'warn issue',
+                },
+              ],
+            }
           : null,
       onRuntimeValidation,
       reportAiPathsError: (): void => {},
@@ -106,9 +106,9 @@ describe('engine-core runtime validation middleware', () => {
         validationMiddleware: ({ stage }) =>
           stage === 'graph_parse'
             ? {
-              decision: 'block',
-              message: 'graph parse blocked',
-            }
+                decision: 'block',
+                message: 'graph parse blocked',
+              }
             : null,
         onNodeStart,
         reportAiPathsError: (): void => {},

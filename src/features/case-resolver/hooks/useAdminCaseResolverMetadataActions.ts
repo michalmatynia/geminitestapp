@@ -161,14 +161,14 @@ export function useAdminCaseResolverMetadataActions({
             nextParentCaseId === currentCase.id ? null : nextParentCaseId;
           const nextReferenceCaseIds = hasReferencePatch
             ? Array.from(
-              new Set(
-                (patch.referenceCaseIds ?? [])
-                  .map((value: string): string => value.trim())
-                  .filter(
-                    (value: string): boolean => value.length > 0 && value !== currentCase.id
-                  )
+                new Set(
+                  (patch.referenceCaseIds ?? [])
+                    .map((value: string): string => value.trim())
+                    .filter(
+                      (value: string): boolean => value.length > 0 && value !== currentCase.id
+                    )
+                )
               )
-            )
             : currentCase.referenceCaseIds;
 
           const nextTagId = hasTagPatch ? patch.tagId?.trim() || null : currentCase.tagId;

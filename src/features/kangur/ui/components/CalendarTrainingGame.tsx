@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
-import { addXp, buildLessonMasteryUpdate, loadProgress } from '@/features/kangur/ui/services/progress';
+import {
+  addXp,
+  buildLessonMasteryUpdate,
+  loadProgress,
+} from '@/features/kangur/ui/services/progress';
 
 type CalendarTrainingGameProps = {
   onFinish: () => void;

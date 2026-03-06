@@ -84,6 +84,25 @@ export type KangurLearnerRecommendation = {
   action: KangurLearnerRecommendationAction;
 };
 
+export type KangurLessonMasteryInsight = {
+  componentId: string;
+  title: string;
+  emoji: string;
+  masteryPercent: number;
+  attempts: number;
+  bestScorePercent: number;
+  lastScorePercent: number;
+  lastCompletedAt: string | null;
+};
+
+export type KangurLessonMasteryInsights = {
+  weakest: KangurLessonMasteryInsight[];
+  strongest: KangurLessonMasteryInsight[];
+  trackedLessons: number;
+  masteredLessons: number;
+  lessonsNeedingPractice: number;
+};
+
 export type KangurLearnerProfileSnapshot = {
   totalXp: number;
   gamesPlayed: number;
@@ -125,7 +144,10 @@ const normalizeScoresDesc = (scores: KangurScoreRecord[]): KangurScoreRecord[] =
     return rightTs - leftTs;
   });
 
-const computeStreaks = (scores: KangurScoreRecord[], now: Date): {
+const computeStreaks = (
+  scores: KangurScoreRecord[],
+  now: Date
+): {
   currentStreakDays: number;
   longestStreakDays: number;
   lastPlayedAt: string | null;
@@ -141,7 +163,9 @@ const computeStreaks = (scores: KangurScoreRecord[], now: Date): {
         .filter((date): date is Date => Boolean(date))
         .map((date) => toLocalDateKey(date))
     )
-  ).sort((left, right) => toDateAtLocalMidnight(right).getTime() - toDateAtLocalMidnight(left).getTime());
+  ).sort(
+    (left, right) => toDateAtLocalMidnight(right).getTime() - toDateAtLocalMidnight(left).getTime()
+  );
 
   if (uniqueDateKeys.length === 0) {
     return { currentStreakDays: 0, longestStreakDays: 0, lastPlayedAt: null };
@@ -228,7 +252,10 @@ const computeOperationPerformance = (scores: KangurScoreRecord[]): KangurOperati
     .sort((left, right) => right.averageAccuracy - left.averageAccuracy);
 };
 
-const computeWeeklyActivity = (scores: KangurScoreRecord[], now: Date): KangurWeeklyActivityPoint[] => {
+const computeWeeklyActivity = (
+  scores: KangurScoreRecord[],
+  now: Date
+): KangurWeeklyActivityPoint[] => {
   const daysToDisplay = 7;
   const buckets = new Map<string, { games: number; accuracySum: number }>();
 
@@ -263,7 +290,10 @@ const computeWeeklyActivity = (scores: KangurScoreRecord[], now: Date): KangurWe
 
 const computeRecentSessions = (scores: KangurScoreRecord[]): KangurRecentSession[] =>
   scores.slice(0, 8).map((score): KangurRecentSession => {
-    const operationInfo = OPERATION_LABELS[score.operation] ?? { label: score.operation, emoji: '❓' };
+    const operationInfo = OPERATION_LABELS[score.operation] ?? {
+      label: score.operation,
+      emoji: '❓',
+    };
     const totalQuestions = Math.max(1, score.total_questions || 1);
     return {
       id: score.id,
@@ -278,6 +308,66 @@ const computeRecentSessions = (scores: KangurScoreRecord[]): KangurRecentSession
     };
   });
 
+const resolveLessonMasteryEntries = (progress: KangurProgressState): KangurLessonMasteryInsight[] =>
+  Object.entries(progress.lessonMastery)
+    .map(([componentId, mastery]) => {
+      const lesson = KANGUR_LESSON_LIBRARY[componentId as keyof typeof KANGUR_LESSON_LIBRARY];
+      if (!lesson) {
+        return null;
+      }
+
+      return {
+        componentId,
+        title: lesson.title,
+        emoji: lesson.emoji,
+        masteryPercent: mastery.masteryPercent,
+        attempts: mastery.attempts,
+        bestScorePercent: mastery.bestScorePercent,
+        lastScorePercent: mastery.lastScorePercent,
+        lastCompletedAt: mastery.lastCompletedAt,
+      };
+    })
+    .filter((entry): entry is KangurLessonMasteryInsight => entry !== null);
+
+export const buildLessonMasteryInsights = (
+  progress: KangurProgressState,
+  limit = 3
+): KangurLessonMasteryInsights => {
+  const entries = resolveLessonMasteryEntries(progress);
+  const safeLimit = Math.max(1, Math.floor(limit));
+  const weakest = [...entries]
+    .filter((entry) => entry.masteryPercent < 80)
+    .sort((left, right) => {
+      if (left.masteryPercent !== right.masteryPercent) {
+        return left.masteryPercent - right.masteryPercent;
+      }
+      if (left.lastScorePercent !== right.lastScorePercent) {
+        return left.lastScorePercent - right.lastScorePercent;
+      }
+      return right.attempts - left.attempts;
+    })
+    .slice(0, safeLimit);
+  const strongest = [...entries]
+    .sort((left, right) => {
+      if (left.masteryPercent !== right.masteryPercent) {
+        return right.masteryPercent - left.masteryPercent;
+      }
+      if (left.bestScorePercent !== right.bestScorePercent) {
+        return right.bestScorePercent - left.bestScorePercent;
+      }
+      return right.attempts - left.attempts;
+    })
+    .slice(0, safeLimit);
+
+  return {
+    weakest,
+    strongest,
+    trackedLessons: entries.length,
+    masteredLessons: entries.filter((entry) => entry.masteryPercent >= 80).length,
+    lessonsNeedingPractice: entries.filter((entry) => entry.masteryPercent < 80).length,
+  };
+};
+
 const buildRecommendations = (input: {
   averageAccuracy: number;
   currentStreakDays: number;
@@ -290,20 +380,7 @@ const buildRecommendations = (input: {
   const remainingDailyGames = Math.max(0, input.dailyGoalGames - input.todayGames);
   const weakestOperation = input.operationPerformance.at(-1) ?? null;
   const strongestOperation = input.operationPerformance[0] ?? null;
-  const weakestLessonEntry = Object.entries(input.progress.lessonMastery)
-    .map(([componentId, mastery]) => ({
-      componentId,
-      mastery,
-      lesson: KANGUR_LESSON_LIBRARY[componentId as keyof typeof KANGUR_LESSON_LIBRARY] ?? null,
-    }))
-    .filter(
-      (entry): entry is {
-        componentId: string;
-        mastery: KangurProgressState['lessonMastery'][string];
-        lesson: (typeof KANGUR_LESSON_LIBRARY)[keyof typeof KANGUR_LESSON_LIBRARY];
-      } => entry.lesson !== null
-    )
-    .sort((left, right) => left.mastery.masteryPercent - right.mastery.masteryPercent)[0];
+  const weakestLessonEntry = buildLessonMasteryInsights(input.progress, 1).weakest[0] ?? null;
 
   if (weakestOperation && weakestOperation.averageAccuracy < 75) {
     recommendations.push({
@@ -337,12 +414,12 @@ const buildRecommendations = (input: {
     });
   }
 
-  if (weakestLessonEntry && weakestLessonEntry.mastery.masteryPercent < 80) {
+  if (weakestLessonEntry && weakestLessonEntry.masteryPercent < 80) {
     recommendations.push({
       id: 'strengthen_lesson_mastery',
-      title: `Powtorz lekcje: ${weakestLessonEntry.lesson.title}`,
-      description: `Aktualne opanowanie to ${weakestLessonEntry.mastery.masteryPercent}%. Jedna powtorka tej lekcji podniesie stabilnosc.`,
-      priority: weakestLessonEntry.mastery.masteryPercent < 60 ? 'high' : 'medium',
+      title: `Powtorz lekcje: ${weakestLessonEntry.title}`,
+      description: `Aktualne opanowanie to ${weakestLessonEntry.masteryPercent}%. Jedna powtorka tej lekcji podniesie stabilnosc.`,
+      priority: weakestLessonEntry.masteryPercent < 60 ? 'high' : 'medium',
       action: {
         label: 'Otworz lekcje',
         page: 'Lessons',
@@ -423,15 +500,14 @@ export const buildKangurLearnerProfileSnapshot = (
   const operationPerformance = computeOperationPerformance(normalizedScores);
   const weeklyActivity = computeWeeklyActivity(normalizedScores, now);
   const recentSessions = computeRecentSessions(normalizedScores);
-  const accuracyValues = normalizedScores.map((score) =>
-    (score.correct_answers / Math.max(1, score.total_questions || 1)) * 100
+  const accuracyValues = normalizedScores.map(
+    (score) => (score.correct_answers / Math.max(1, score.total_questions || 1)) * 100
   );
   const averageAccuracy =
     accuracyValues.length === 0
       ? 0
       : toPercent(accuracyValues.reduce((sum, value) => sum + value, 0) / accuracyValues.length);
-  const bestAccuracy =
-    accuracyValues.length === 0 ? 0 : toPercent(Math.max(...accuracyValues));
+  const bestAccuracy = accuracyValues.length === 0 ? 0 : toPercent(Math.max(...accuracyValues));
   const todayDateKey = toLocalDateKey(now);
   const todayGames = weeklyActivity.find((entry) => entry.dateKey === todayDateKey)?.games ?? 0;
   const dailyGoalGames = Math.max(1, Math.round(input.dailyGoalGames));

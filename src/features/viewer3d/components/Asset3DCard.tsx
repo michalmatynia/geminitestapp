@@ -24,14 +24,12 @@ type Asset3DCardRuntimeValue = {
   onDeleteAsset: () => void;
 };
 
-const {
-  Context: Asset3DCardRuntimeContext,
-  useStrictContext: useAsset3DCardRuntime,
-} = createStrictContext<Asset3DCardRuntimeValue>({
-  hookName: 'useAsset3DCardRuntime',
-  providerName: 'Asset3DCardRuntimeProvider',
-  displayName: 'Asset3DCardRuntimeContext',
-});
+const { Context: Asset3DCardRuntimeContext, useStrictContext: useAsset3DCardRuntime } =
+  createStrictContext<Asset3DCardRuntimeValue>({
+    hookName: 'useAsset3DCardRuntime',
+    providerName: 'Asset3DCardRuntimeProvider',
+    displayName: 'Asset3DCardRuntimeContext',
+  });
 
 function Asset3DResourceCard(): JSX.Element {
   const runtime = useAsset3DCardRuntime();

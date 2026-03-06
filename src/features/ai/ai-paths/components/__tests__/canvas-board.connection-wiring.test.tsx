@@ -31,7 +31,8 @@ function EdgeSummaryProbe(): React.JSX.Element {
   const { edges } = useGraphState();
   const summary = edges
     .map(
-      (edge: Edge): string => `${edge.from ?? ''}:${edge.fromPort ?? ''}->${edge.to ?? ''}:${edge.toPort ?? ''}`
+      (edge: Edge): string =>
+        `${edge.from ?? ''}:${edge.fromPort ?? ''}->${edge.to ?? ''}:${edge.toPort ?? ''}`
     )
     .sort();
   return <output data-testid='edge-summary'>{summary.join('|')}</output>;
@@ -457,10 +458,7 @@ describe('CanvasBoard connector wiring', () => {
 
     const { container, getByTestId } = render(
       <ToastProvider>
-        <AiPathsProvider
-          initialNodes={[sourceA, sourceB, target]}
-          initialEdges={initialEdges}
-        >
+        <AiPathsProvider initialNodes={[sourceA, sourceB, target]} initialEdges={initialEdges}>
           <CanvasBoard confirmNodeSwitch={() => true} />
           <EdgeCountProbe />
           <EdgeSummaryProbe />
@@ -534,10 +532,7 @@ describe('CanvasBoard connector wiring', () => {
 
     const { container, getByTestId } = render(
       <ToastProvider>
-        <AiPathsProvider
-          initialNodes={[sourceA, sourceB, target]}
-          initialEdges={initialEdges}
-        >
+        <AiPathsProvider initialNodes={[sourceA, sourceB, target]} initialEdges={initialEdges}>
           <CanvasBoard confirmNodeSwitch={() => true} />
           <EdgeCountProbe />
           <EdgeSummaryProbe />

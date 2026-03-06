@@ -59,12 +59,12 @@ export const compactRuntimeStateField = (runtimeStateRaw: unknown): string | nul
   const parsedRuntimeState =
     typeof runtimeStateRaw === 'string'
       ? (() => {
-        try {
-          return JSON.parse(runtimeStateRaw) as Record<string, unknown>;
-        } catch {
-          return null;
-        }
-      })()
+          try {
+            return JSON.parse(runtimeStateRaw) as Record<string, unknown>;
+          } catch {
+            return null;
+          }
+        })()
       : runtimeStateRaw && typeof runtimeStateRaw === 'object'
         ? (runtimeStateRaw as Record<string, unknown>)
         : null;

@@ -149,9 +149,12 @@ export const syncBaseImagesForListing = async (
       baseApiToken: connection.baseApiToken,
     });
     if (!tokenResolution.token) {
-      throw badRequestError(tokenResolution.error ?? 'Base.com API token not found in connection.', {
-        connectionId: listing.connectionId,
-      });
+      throw badRequestError(
+        tokenResolution.error ?? 'Base.com API token not found in connection.',
+        {
+          connectionId: listing.connectionId,
+        }
+      );
     }
     const token = tokenResolution.token;
 

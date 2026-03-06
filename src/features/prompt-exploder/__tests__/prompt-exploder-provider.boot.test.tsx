@@ -148,4 +148,3 @@ describe('PromptExploderProvider boot', () => {
     expect(screen.getByTestId('provider-ready')).toHaveTextContent('image-studio:1:1');
   });
 });
-

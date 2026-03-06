@@ -41,18 +41,26 @@ type SelectModalRuntimeValue = {
   modalSize: 'sm' | 'md' | 'lg' | 'xl';
 };
 
-const {
-  Context: SelectModalRuntimeContext,
-  useStrictContext: useSelectModalRuntime,
-} = createStrictContext<SelectModalRuntimeValue>({
-  hookName: 'useSelectModalRuntime',
-  providerName: 'SelectModalRuntimeProvider',
-  displayName: 'SelectModalRuntimeContext',
-});
+const { Context: SelectModalRuntimeContext, useStrictContext: useSelectModalRuntime } =
+  createStrictContext<SelectModalRuntimeValue>({
+    hookName: 'useSelectModalRuntime',
+    providerName: 'SelectModalRuntimeProvider',
+    displayName: 'SelectModalRuntimeContext',
+  });
 
 function SelectModalRuntime(): React.JSX.Element {
-  const { open, onClose, title, subtitle, options, onSelect, loading, searchable, multiple, modalSize } =
-    useSelectModalRuntime();
+  const {
+    open,
+    onClose,
+    title,
+    subtitle,
+    options,
+    onSelect,
+    loading,
+    searchable,
+    multiple,
+    modalSize,
+  } = useSelectModalRuntime();
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set());
 

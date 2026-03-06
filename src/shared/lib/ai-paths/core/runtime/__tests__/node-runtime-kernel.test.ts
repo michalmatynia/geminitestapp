@@ -13,7 +13,7 @@ const buildHandler = (label: string): NodeHandler =>
   }));
 
 describe('node-runtime-kernel', () => {
-  it('resolves pilot node types through code_object_v3 strategy while keeping legacy handlers', () => {
+  it('resolves canonical runtime-kernel node types through code_object_v3 strategy while keeping legacy handlers', () => {
     const constantHandler = buildHandler('constant');
     const templateHandler = buildHandler('template');
     const mathHandler = buildHandler('math');
@@ -39,13 +39,14 @@ describe('node-runtime-kernel', () => {
     expect(runtimeKernel.resolveHandler('template')).toBe(templateHandler);
   });
 
-  it('prefers direct code-object handlers for pilot node types when provided', () => {
+  it('prefers direct code-object handlers for canonical runtime-kernel node types when provided', () => {
     const legacyConstantHandler = buildHandler('legacy-constant');
     const v3ConstantHandler = buildHandler('v3-constant');
-    const resolveCodeObjectHandler = vi.fn(({ nodeType, codeObjectId }: { nodeType: string; codeObjectId: string }) =>
-      nodeType === 'constant' && codeObjectId === 'ai-paths.node-code-object.constant.v3'
-        ? v3ConstantHandler
-        : null
+    const resolveCodeObjectHandler = vi.fn(
+      ({ nodeType, codeObjectId }: { nodeType: string; codeObjectId: string }) =>
+        nodeType === 'constant' && codeObjectId === 'ai-paths.node-code-object.constant.v3'
+          ? v3ConstantHandler
+          : null
     );
 
     const runtimeKernel = createNodeRuntimeKernel({
@@ -70,10 +71,9 @@ describe('node-runtime-kernel', () => {
     const resolveCodeObjectHandler = vi.fn(() => null);
 
     const runtimeKernel = createNodeRuntimeKernel({
-      resolveLegacyHandler: (nodeType: string) =>
-        nodeType === 'math' ? legacyMathHandler : null,
+      resolveLegacyHandler: (nodeType: string) => (nodeType === 'math' ? legacyMathHandler : null),
       resolveCodeObjectHandler,
-      v3PilotNodeTypes: ['math'],
+      runtimeKernelNodeTypes: ['math'],
     });
 
     const descriptor = runtimeKernel.resolveDescriptor('math');
@@ -92,10 +92,9 @@ describe('node-runtime-kernel', () => {
     const resolveCodeObjectHandler = vi.fn(() => null);
 
     const runtimeKernel = createNodeRuntimeKernel({
-      resolveLegacyHandler: (nodeType: string) =>
-        nodeType === 'math' ? legacyMathHandler : null,
+      resolveLegacyHandler: (nodeType: string) => (nodeType === 'math' ? legacyMathHandler : null),
       resolveCodeObjectHandler,
-      v3PilotNodeTypes: ['math'],
+      runtimeKernelNodeTypes: ['math'],
       runtimeKernelStrictNativeRegistry: true,
     });
 
@@ -110,7 +109,7 @@ describe('node-runtime-kernel', () => {
     });
   });
 
-  it('keeps non-pilot node types on legacy_adapter strategy', () => {
+  it('keeps non-runtime-kernel node types on legacy_adapter strategy', () => {
     const legacyCustomHandler = buildHandler('legacy_custom');
     const runtimeKernel = createNodeRuntimeKernel({
       resolveLegacyHandler: (nodeType: string) =>
@@ -129,8 +128,7 @@ describe('node-runtime-kernel', () => {
     const overrideMathHandler = buildHandler('override');
 
     const runtimeKernel = createNodeRuntimeKernel({
-      resolveLegacyHandler: (nodeType: string) =>
-        nodeType === 'math' ? legacyMathHandler : null,
+      resolveLegacyHandler: (nodeType: string) => (nodeType === 'math' ? legacyMathHandler : null),
       resolveOverrideHandler: (nodeType: string) =>
         nodeType === 'math' ? overrideMathHandler : null,
     });
@@ -154,10 +152,25 @@ describe('node-runtime-kernel', () => {
     expect(runtimeKernel.resolveHandler('unknown_type')).toBeNull();
   });
 
-  it('supports custom pilot lists for staged migration rollouts', () => {
+  it('supports custom runtime-kernel node type lists for staged migration rollouts', () => {
     const databaseHandler = buildHandler('database');
     const runtimeKernel = createNodeRuntimeKernel({
-      resolveLegacyHandler: (nodeType: string) => (nodeType === 'database' ? databaseHandler : null),
+      resolveLegacyHandler: (nodeType: string) =>
+        nodeType === 'database' ? databaseHandler : null,
+      runtimeKernelNodeTypes: ['database'],
+    });
+
+    const descriptor = runtimeKernel.resolveDescriptor('database');
+    expect(descriptor.strategy).toBe('code_object_v3');
+    expect(descriptor.codeObjectId).toBe('ai-paths.node-code-object.database.v3');
+    expect(descriptor.handler).toBe(databaseHandler);
+  });
+
+  it('accepts deprecated v3PilotNodeTypes as a compatibility alias', () => {
+    const databaseHandler = buildHandler('database');
+    const runtimeKernel = createNodeRuntimeKernel({
+      resolveLegacyHandler: (nodeType: string) =>
+        nodeType === 'database' ? databaseHandler : null,
       v3PilotNodeTypes: ['database'],
     });
 

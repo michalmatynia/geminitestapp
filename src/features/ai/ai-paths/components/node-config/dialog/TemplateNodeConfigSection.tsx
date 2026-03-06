@@ -7,7 +7,12 @@ import { createParserMappings, formatRuntimeValue } from '@/shared/lib/ai-paths'
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Button, Label, Textarea } from '@/shared/ui';
 
-import { useAiPathGraph, useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../../AiPathConfigContext';
+import {
+  useAiPathGraph,
+  useAiPathOrchestrator,
+  useAiPathRuntime,
+  useAiPathSelection,
+} from '../../AiPathConfigContext';
 import {
   PlaceholderMatrixDialog,
   type PlaceholderGroup,

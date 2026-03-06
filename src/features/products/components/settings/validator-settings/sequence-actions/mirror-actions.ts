@@ -4,11 +4,7 @@ import type { ProductValidationPattern } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { invalidateValidatorConfig } from '@/shared/lib/query-invalidation';
 import type { QueryClient } from '@tanstack/react-query';
-import {
-  buildUniqueLabel,
-  createSequenceGroupId,
-  getPatternSequence,
-} from '../helpers';
+import { buildUniqueLabel, createSequenceGroupId, getPatternSequence } from '../helpers';
 import type { CreatePatternMutation } from './types';
 
 export const handleCreateNameLengthMirrorPattern = async (args: {
@@ -67,7 +63,11 @@ export const handleCreateNameCategoryMirrorPattern = async (args: {
         action?: string;
         target?: string;
       }>;
-    }>('/api/v2/products/validator-patterns/templates/name-segment-category', {}, { logError: false });
+    }>(
+      '/api/v2/products/validator-patterns/templates/name-segment-category',
+      {},
+      { logError: false }
+    );
     void invalidateValidatorConfig(queryClient);
     const createdCount = (templateResult.outcomes ?? []).filter(
       (item) => item.action === 'created'

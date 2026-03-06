@@ -419,9 +419,9 @@ export const resolvePromptValidationRuntime = (
     );
     const runtimeLearnedTemplates = args.learningEnabled
       ? filterTemplatesForRuntime(effectiveLearnedTemplates, {
-        minApprovalsForMatching: args.minApprovalsForMatching,
-        maxTemplates: args.maxTemplates,
-      })
+          minApprovalsForMatching: args.minApprovalsForMatching,
+          maxTemplates: args.maxTemplates,
+        })
       : [];
     trackRuntimeVersionAndInvalidate({
       scope: stackResolution.scope ?? 'global',
@@ -432,7 +432,7 @@ export const resolvePromptValidationRuntime = (
     });
     const identity: PromptValidationRuntimeIdentity = {
       scope: stackResolution.scope ?? 'global',
-      validatorScope: (stackResolution.validatorScope) ?? 'products',
+      validatorScope: stackResolution.validatorScope ?? 'products',
       stack: resolveStackId(stackResolution.stack),
       profile: args.runtimeRuleProfile,
       settingsVersion,

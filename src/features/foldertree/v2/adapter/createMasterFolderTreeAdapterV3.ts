@@ -12,7 +12,8 @@ import type {
   MasterFolderTreeAdapterV3,
 } from '../types/index';
 
-type DecodedMasterTreeNodeV3<TEntity extends string = string> = SharedDecodedMasterTreeNode<TEntity>;
+type DecodedMasterTreeNodeV3<TEntity extends string = string> =
+  SharedDecodedMasterTreeNode<TEntity>;
 
 export type { DecodedMasterTreeNodeV3 };
 

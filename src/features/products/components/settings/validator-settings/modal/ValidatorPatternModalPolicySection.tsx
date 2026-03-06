@@ -29,9 +29,8 @@ export function ValidatorPatternModalPolicySection(): React.JSX.Element {
           onChange={(values: string[]) =>
             setFormData((prev: PatternFormData) => ({
               ...prev,
-              replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
-                values
-              ),
+              replacementAppliesToScopes:
+                normalizeProductValidationPatternReplacementScopes(values),
             }))
           }
           placeholder='Follow pattern scopes'

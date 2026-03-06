@@ -30,8 +30,7 @@ function generateWrongChoices(
 
   while (wrongChoices.size < count && attempts < 100) {
     attempts += 1;
-    const offset =
-      randInt(1, Math.ceil(maxOffset / step)) * step * (Math.random() > 0.5 ? 1 : -1);
+    const offset = randInt(1, Math.ceil(maxOffset / step)) * step * (Math.random() > 0.5 ? 1 : -1);
     const wrongAnswer = round2(answer + offset);
     if (wrongAnswer !== answer && wrongAnswer >= 0) {
       wrongChoices.add(wrongAnswer);

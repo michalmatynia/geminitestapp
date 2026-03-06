@@ -32,14 +32,12 @@ type ConfirmDialogRuntimeValue = {
   loading: boolean;
 };
 
-const {
-  Context: ConfirmDialogRuntimeContext,
-  useStrictContext: useConfirmDialogRuntime,
-} = createStrictContext<ConfirmDialogRuntimeValue>({
-  hookName: 'useConfirmDialogRuntime',
-  providerName: 'ConfirmDialogRuntimeProvider',
-  displayName: 'ConfirmDialogRuntimeContext',
-});
+const { Context: ConfirmDialogRuntimeContext, useStrictContext: useConfirmDialogRuntime } =
+  createStrictContext<ConfirmDialogRuntimeValue>({
+    hookName: 'useConfirmDialogRuntime',
+    providerName: 'ConfirmDialogRuntimeProvider',
+    displayName: 'ConfirmDialogRuntimeContext',
+  });
 
 function ConfirmDialogModal(): React.JSX.Element {
   const runtime = useConfirmDialogRuntime();

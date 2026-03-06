@@ -7,7 +7,9 @@ import {
   buildRuntimeKernelParityPrompt,
 } from '@/features/ai/insights/generator/runtime-analytics-prompt';
 
-const buildSummary = (overrides?: Partial<AiPathRuntimeAnalyticsSummary>): AiPathRuntimeAnalyticsSummary =>
+const buildSummary = (
+  overrides?: Partial<AiPathRuntimeAnalyticsSummary>
+): AiPathRuntimeAnalyticsSummary =>
   ({
     from: '2026-03-01T00:00:00.000Z',
     to: '2026-03-02T00:00:00.000Z',
@@ -111,7 +113,7 @@ const buildSummary = (overrides?: Partial<AiPathRuntimeAnalyticsSummary>): AiPat
     },
     generatedAt: '2026-03-02T00:00:00.000Z',
     ...overrides,
-  } satisfies AiPathRuntimeAnalyticsSummary);
+  }) satisfies AiPathRuntimeAnalyticsSummary;
 
 describe('buildRuntimeKernelParityPrompt', () => {
   it('formats kernel parity coverage, strategy split, and resolution counts', () => {
@@ -123,7 +125,9 @@ describe('buildRuntimeKernelParityPrompt', () => {
     expect(prompt).toContain(
       'Strategy split: code_object_v3=3 (60.0%), legacy_adapter=2 (40.0%), unknown=0 (0.0%)'
     );
-    expect(prompt).toContain('Resolution source counts: override=3, registry=2, missing=0, unknown=0');
+    expect(prompt).toContain(
+      'Resolution source counts: override=3, registry=2, missing=0, unknown=0'
+    );
     expect(prompt).toContain(
       'Top runtime code objects: ai-paths.node-code-object.constant.v3, ai-paths.node-code-object.template.v3'
     );

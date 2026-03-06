@@ -70,10 +70,13 @@ export function useCanvasEventHandlers(args: {
     return wheelGestureSourceRef.current === 'safari';
   }, []);
 
-  const isWheelEventFromScrollRegion = useCallback((target: EventTarget | null | undefined): boolean => {
-    if (!(target instanceof Element)) return false;
-    return Boolean(target.closest(CANVAS_SCROLL_REGION_SELECTOR));
-  }, []);
+  const isWheelEventFromScrollRegion = useCallback(
+    (target: EventTarget | null | undefined): boolean => {
+      if (!(target instanceof Element)) return false;
+      return Boolean(target.closest(CANVAS_SCROLL_REGION_SELECTOR));
+    },
+    []
+  );
 
   const applyWheelZoomFromEvent = useCallback(
     (event: WheelLikeEvent, options?: { immediate?: boolean }): void => {

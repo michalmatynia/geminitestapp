@@ -10,11 +10,7 @@ import {
   useSelectionState,
   useSelectionActions,
 } from '../context';
-import {
-  evaluateRunPreflight,
-  type AiNode,
-  type PathFlowIntensity,
-} from '@/shared/lib/ai-paths';
+import { evaluateRunPreflight, type AiNode, type PathFlowIntensity } from '@/shared/lib/ai-paths';
 import {
   MINIMAP_VISIBILITY_STORAGE_KEY,
   type SvgConnectorTooltipState,

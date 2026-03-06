@@ -96,8 +96,6 @@ export function useOptionalProductImagesTabStateContext(): ProductImagesTabState
   return useContext(ProductImagesTabStateContext);
 }
 
-export function useOptionalProductImagesTabActionsContext():
-  | ProductImagesTabActionsContextValue
-  | null {
+export function useOptionalProductImagesTabActionsContext(): ProductImagesTabActionsContextValue | null {
   return useContext(ProductImagesTabActionsContext);
 }

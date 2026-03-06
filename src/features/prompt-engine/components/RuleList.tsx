@@ -102,11 +102,8 @@ export function RuleList(): React.JSX.Element {
   const { filteredDrafts } = usePromptEngineData();
   const { query, severity, scope, includeDisabled } = usePromptEngineFilters();
   const { patternTab, exploderSubTab } = usePromptEngineConfig();
-  const {
-    handleSequenceDrop,
-    handleSaveSequenceGroup,
-    handleUngroupSequenceGroup,
-  } = usePromptEngineActions();
+  const { handleSequenceDrop, handleSaveSequenceGroup, handleUngroupSequenceGroup } =
+    usePromptEngineActions();
   const [draggedUid, setDraggedUid] = useState<string | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [groupDrafts, setGroupDrafts] = useState<Record<string, SequenceGroupDraft>>({});

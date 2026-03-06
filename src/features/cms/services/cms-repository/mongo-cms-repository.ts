@@ -99,7 +99,9 @@ function mapPageComponentInput(component: PageComponentInput): PageComponentInpu
 function mapPageDocumentToPage(doc: PageDocument, slugs: SlugDocument[]): Page {
   const components = doc.components
     .map((component: PageComponentInput): PageComponentInput => mapPageComponentInput(component))
-    .sort((left: PageComponentInput, right: PageComponentInput): number => left.order - right.order);
+    .sort(
+      (left: PageComponentInput, right: PageComponentInput): number => left.order - right.order
+    );
 
   return {
     id: doc.id,
@@ -282,9 +284,9 @@ export const mongoCmsRepository: CmsRepository = {
     const slugDocs =
       slugIds.length > 0
         ? await db
-          .collection<SlugDocument>(slugsCollection)
-          .find({ id: { $in: slugIds } })
-          .toArray()
+            .collection<SlugDocument>(slugsCollection)
+            .find({ id: { $in: slugIds } })
+            .toArray()
         : [];
 
     return mapPageDocumentToPage(result, slugDocs);

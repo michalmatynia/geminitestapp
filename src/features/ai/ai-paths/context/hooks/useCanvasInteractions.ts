@@ -295,7 +295,10 @@ export function useCanvasInteractions(args?: {
         const x = (clientPoint.clientX - viewport.left - view.x) / view.scale;
         const y = (clientPoint.clientY - viewport.top - view.y) / view.scale;
         setConnectingPos({ x, y });
-        stateHandlers.updateLastPointerCanvasPosFromClient(clientPoint.clientX, clientPoint.clientY);
+        stateHandlers.updateLastPointerCanvasPosFromClient(
+          clientPoint.clientX,
+          clientPoint.clientY
+        );
         return;
       }
       stateHandlers.handlePanMove(event);

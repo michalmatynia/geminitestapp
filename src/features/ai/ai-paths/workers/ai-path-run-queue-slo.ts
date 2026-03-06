@@ -104,10 +104,10 @@ export const computeAiPathRunQueueSlo = (
     input.queueLagMs === null
       ? 'ok'
       : classifyGreaterIsWorse(
-        lagValue,
-        thresholds.queueLagWarningMs,
-        thresholds.queueLagCriticalMs
-      );
+          lagValue,
+          thresholds.queueLagWarningMs,
+          thresholds.queueLagCriticalMs
+        );
   const queueLagMessage =
     input.queueLagMs === null
       ? 'No queued runs.'
@@ -123,10 +123,10 @@ export const computeAiPathRunQueueSlo = (
   const hasTerminalSample = input.terminalRuns24h >= thresholds.minTerminalSamples;
   const successRateLevel = hasTerminalSample
     ? classifyLowerIsWorse(
-      input.successRate24h,
-      thresholds.successRateWarningPct,
-      thresholds.successRateCriticalPct
-    )
+        input.successRate24h,
+        thresholds.successRateWarningPct,
+        thresholds.successRateCriticalPct
+      )
     : 'ok';
   const successRateMessage = hasTerminalSample
     ? `Success ${input.successRate24h.toFixed(2)}% over ${input.terminalRuns24h} terminal runs.`
@@ -141,10 +141,10 @@ export const computeAiPathRunQueueSlo = (
 
   const deadLetterLevel = hasTerminalSample
     ? classifyGreaterIsWorse(
-      input.deadLetterRate24h,
-      thresholds.deadLetterRateWarningPct,
-      thresholds.deadLetterRateCriticalPct
-    )
+        input.deadLetterRate24h,
+        thresholds.deadLetterRateWarningPct,
+        thresholds.deadLetterRateCriticalPct
+      )
     : 'ok';
   const deadLetterMessage = hasTerminalSample
     ? `Dead-letter rate ${input.deadLetterRate24h.toFixed(2)}% over ${input.terminalRuns24h} terminal runs.`
@@ -160,10 +160,10 @@ export const computeAiPathRunQueueSlo = (
   const hasBrainSample = input.brainTotalReports24h >= thresholds.minBrainSamples;
   const brainErrorLevel = hasBrainSample
     ? classifyGreaterIsWorse(
-      input.brainErrorRate24h,
-      thresholds.brainErrorRateWarningPct,
-      thresholds.brainErrorRateCriticalPct
-    )
+        input.brainErrorRate24h,
+        thresholds.brainErrorRateWarningPct,
+        thresholds.brainErrorRateCriticalPct
+      )
     : 'ok';
   const brainErrorMessage = hasBrainSample
     ? `Brain error ${input.brainErrorRate24h.toFixed(2)}% over ${input.brainTotalReports24h} total reports.`

@@ -10,13 +10,8 @@ import {
 import { useAiPathOrchestrator } from '../../AiPathConfigContext';
 
 export function DatabaseAiQueryReviewSection(): React.JSX.Element | null {
-  const {
-    pendingAiQuery,
-    codeSnippets,
-    selectedSnippetIndex,
-    databaseConfig,
-    queryConfig,
-  } = useDatabaseConstructorStateContext();
+  const { pendingAiQuery, codeSnippets, selectedSnippetIndex, databaseConfig, queryConfig } =
+    useDatabaseConstructorStateContext();
   const { setPendingAiQuery, setSelectedSnippetIndex, setAiQueries, setSelectedAiQueryId } =
     useDatabaseConstructorActionsContext();
 

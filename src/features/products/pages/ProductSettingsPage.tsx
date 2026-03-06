@@ -64,7 +64,7 @@ export function ProductSettingsPage(): React.JSX.Element {
     onConfirm: () => void | Promise<void>;
     confirmText?: string;
     isDangerous?: boolean;
-      } | null>(null);
+  } | null>(null);
 
   const { toast } = useToast();
 

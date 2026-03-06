@@ -10,10 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 
-import type {
-  AiPathRunRecord,
-  AiPathRunEventRecord,
-} from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord, AiPathRunEventRecord } from '@/shared/lib/ai-paths';
 import {
   refreshRunDetailErrorSummary,
   type RunDetail as RunDetailData,

@@ -49,14 +49,9 @@ export const assessRuntimeKernelParityRisk = (
     missingResolutionRate >= 20;
 
   const mediumRisk =
-    !highRisk &&
-    (coverageRate < 90 || v3Rate < 85 || unknownRate > 0 || missingResolutionRate > 0);
+    !highRisk && (coverageRate < 90 || v3Rate < 85 || unknownRate > 0 || missingResolutionRate > 0);
 
-  const riskLevel: RuntimeKernelParityRiskLevel = highRisk
-    ? 'high'
-    : mediumRisk
-      ? 'medium'
-      : 'low';
+  const riskLevel: RuntimeKernelParityRiskLevel = highRisk ? 'high' : mediumRisk ? 'medium' : 'low';
 
   const signals: string[] = [];
   if (sampledRuns <= 0) {

@@ -50,26 +50,26 @@ export function useCaptureProposalState(args: {
       targetFileId: args.promptExploderPartyProposal.targetFileId,
       addresser: args.promptExploderPartyProposal.addresser
         ? {
-          ...args.promptExploderPartyProposal.addresser,
-          candidate: { ...args.promptExploderPartyProposal.addresser.candidate },
-          existingReference: args.promptExploderPartyProposal.addresser.existingReference
-            ? { ...args.promptExploderPartyProposal.addresser.existingReference }
-            : null,
-        }
+            ...args.promptExploderPartyProposal.addresser,
+            candidate: { ...args.promptExploderPartyProposal.addresser.candidate },
+            existingReference: args.promptExploderPartyProposal.addresser.existingReference
+              ? { ...args.promptExploderPartyProposal.addresser.existingReference }
+              : null,
+          }
         : null,
       addressee: args.promptExploderPartyProposal.addressee
         ? {
-          ...args.promptExploderPartyProposal.addressee,
-          candidate: { ...args.promptExploderPartyProposal.addressee.candidate },
-          existingReference: args.promptExploderPartyProposal.addressee.existingReference
-            ? { ...args.promptExploderPartyProposal.addressee.existingReference }
-            : null,
-        }
+            ...args.promptExploderPartyProposal.addressee,
+            candidate: { ...args.promptExploderPartyProposal.addressee.candidate },
+            existingReference: args.promptExploderPartyProposal.addressee.existingReference
+              ? { ...args.promptExploderPartyProposal.addressee.existingReference }
+              : null,
+          }
         : null,
       documentDate: args.promptExploderPartyProposal.documentDate
         ? {
-          ...args.promptExploderPartyProposal.documentDate,
-        }
+            ...args.promptExploderPartyProposal.documentDate,
+          }
         : null,
     });
   }, [args.isPromptExploderPartyProposalOpen, args.promptExploderPartyProposal]);

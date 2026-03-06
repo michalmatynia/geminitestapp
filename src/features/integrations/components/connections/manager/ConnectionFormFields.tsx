@@ -39,7 +39,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
     ? 'Integration name (e.g. Allegro Main)'
     : isBaselinker
       ? 'Integration name (e.g. Main Baselinker)'
-      : 'Integration name (e.g. John\'s Tradera)';
+      : "Integration name (e.g. John's Tradera)";
 
   const usernameLabel = isAllegro
     ? 'Allegro client ID'
@@ -233,10 +233,10 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
                 {!isCreateMode &&
                   !form.traderaApiAppKey.trim() &&
                   selectedConnection?.hasTraderaApiAppKey && (
-                  <p className='mt-1 text-xs text-emerald-300'>
+                    <p className='mt-1 text-xs text-emerald-300'>
                       Stored app key retained. Leave blank to keep it.
-                  </p>
-                )}
+                    </p>
+                  )}
               </FormField>
               <FormField label='Tradera API Public Key (optional)'>
                 <Input
@@ -284,10 +284,10 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
                 {!isCreateMode &&
                   !form.traderaApiToken.trim() &&
                   selectedConnection?.hasTraderaApiToken && (
-                  <p className='mt-1 text-xs text-emerald-300'>
+                    <p className='mt-1 text-xs text-emerald-300'>
                       Stored token retained. Leave blank to keep it.
-                  </p>
-                )}
+                    </p>
+                  )}
               </FormField>
               <div className='flex items-center gap-3 py-1'>
                 <Checkbox

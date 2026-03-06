@@ -32,8 +32,8 @@ const forbiddenRuntimeCompatTokens = [
   'const pickFromText = (labels: string[]): string | undefined => {',
   '// fall through to regex parsing',
   'const fenced = trimmed.match(/```(?:json)?\\s*([\\s\\S]*?)```/i);',
-  'const first = trimmed.indexOf(\'{\');',
-  'const last = trimmed.lastIndexOf(\'}\');',
+  "const first = trimmed.indexOf('{');",
+  "const last = trimmed.lastIndexOf('}');",
   'extractJsonBlock(trimmed)',
 ];
 
@@ -46,7 +46,9 @@ const collectSourceFiles = (dir: string): string[] => {
     const stats = statSync(absolute);
     if (stats.isDirectory()) {
       if (entry === '__tests__') continue;
-      if (absolute.includes(`${path.sep}src${path.sep}features${path.sep}cms${path.sep}migrations`)) {
+      if (
+        absolute.includes(`${path.sep}src${path.sep}features${path.sep}cms${path.sep}migrations`)
+      ) {
         continue;
       }
       files.push(...collectSourceFiles(absolute));
@@ -67,7 +69,9 @@ describe('cms page-builder runtime legacy-compat prune guard', () => {
     const offenders = sourceFiles
       .filter((absolutePath: string): boolean => {
         const content = readFileSync(absolutePath, 'utf8');
-        return forbiddenRuntimeCompatTokens.some((token: string): boolean => content.includes(token));
+        return forbiddenRuntimeCompatTokens.some((token: string): boolean =>
+          content.includes(token)
+        );
       })
       .map((absolutePath: string): string => path.relative(projectRoot, absolutePath));
 

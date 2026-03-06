@@ -140,10 +140,7 @@ export function applyMinuteValueToCycleMinutes(
     deltaTicks += minuteTicks;
   }
 
-  return normalize(
-    normalizedCycleMinutes + deltaTicks * normalizedStep,
-    CLOCK_MINUTES_IN_CYCLE
-  );
+  return normalize(normalizedCycleMinutes + deltaTicks * normalizedStep, CLOCK_MINUTES_IN_CYCLE);
 }
 
 export function applyMinuteAngleToCycleMinutes(
@@ -151,7 +148,11 @@ export function applyMinuteAngleToCycleMinutes(
   minuteAngle: number,
   minuteStep = MINUTE_STEP
 ): number {
-  return applyMinuteValueToCycleMinutes(cycleMinutes, angleToMinute(minuteAngle, minuteStep), minuteStep);
+  return applyMinuteValueToCycleMinutes(
+    cycleMinutes,
+    angleToMinute(minuteAngle, minuteStep),
+    minuteStep
+  );
 }
 
 export function applyHourAngleToCycleMinutes(cycleMinutes: number, hourAngle: number): number {
@@ -313,13 +314,13 @@ function DraggableClock({
     return angle;
   }, []);
 
-  const onMouseDown = (hand: Hand) => (
-    event: ReactMouseEvent<SVGElement> | ReactTouchEvent<SVGElement>
-  ): void => {
-    event.preventDefault();
-    dragging.current = hand;
-    setActiveHand(hand);
-  };
+  const onMouseDown =
+    (hand: Hand) =>
+    (event: ReactMouseEvent<SVGElement> | ReactTouchEvent<SVGElement>): void => {
+      event.preventDefault();
+      dragging.current = hand;
+      setActiveHand(hand);
+    };
 
   const onMove = useCallback(
     (event: MouseEvent | TouchEvent): void => {
@@ -566,9 +567,7 @@ function DraggableClock({
   );
 }
 
-export default function ClockTrainingGame({
-  onFinish,
-}: ClockTrainingGameProps): React.JSX.Element {
+export default function ClockTrainingGame({ onFinish }: ClockTrainingGameProps): React.JSX.Element {
   const [gameMode, setGameMode] = useState<ClockGameMode>('practice');
   const [tasks, setTasks] = useState<ClockTask[]>(() => createClockTaskSet());
   const [current, setCurrent] = useState(0);
@@ -587,20 +586,31 @@ export default function ClockTrainingGame({
     return <div className='text-sm text-gray-500'>Brak zadania.</div>;
   }
 
-  const handleDone = useCallback((finalScore: number): void => {
-    const isPerfect = finalScore === tasks.length;
-    const isGood = finalScore >= 3;
-    const xp = isPerfect ? XP_REWARDS.clock_training_perfect : isGood ? XP_REWARDS.clock_training_good : 10;
+  const handleDone = useCallback(
+    (finalScore: number): void => {
+      const isPerfect = finalScore === tasks.length;
+      const isGood = finalScore >= 3;
+      const xp = isPerfect
+        ? XP_REWARDS.clock_training_perfect
+        : isGood
+          ? XP_REWARDS.clock_training_good
+          : 10;
 
-    const progress = loadProgress();
-    addXp(xp, {
-      clockPerfect: isPerfect ? progress.clockPerfect + 1 : progress.clockPerfect,
-      lessonMastery: buildLessonMasteryUpdate(progress, 'clock', (finalScore / tasks.length) * 100),
-    });
+      const progress = loadProgress();
+      addXp(xp, {
+        clockPerfect: isPerfect ? progress.clockPerfect + 1 : progress.clockPerfect,
+        lessonMastery: buildLessonMasteryUpdate(
+          progress,
+          'clock',
+          (finalScore / tasks.length) * 100
+        ),
+      });
 
-    setXpEarned(xp);
-    setDone(true);
-  }, [tasks.length]);
+      setXpEarned(xp);
+      setDone(true);
+    },
+    [tasks.length]
+  );
 
   const resetSession = useCallback(
     (mode: ClockGameMode = gameMode): void => {

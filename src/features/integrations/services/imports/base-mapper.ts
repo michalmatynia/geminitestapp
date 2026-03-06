@@ -756,13 +756,13 @@ export function mapBaseProduct(
     pickNestedInt(record, [
       ...(preferredCurrencies.includes('PLN')
         ? [
-          ['prices', 'pln'],
-          ['prices', 'PLN'],
-          ['prices', 'pln', 'price'],
-          ['prices', 'PLN', 'price'],
-          ['prices', 'pln', 'price_brutto'],
-          ['prices', 'PLN', 'price_brutto'],
-        ]
+            ['prices', 'pln'],
+            ['prices', 'PLN'],
+            ['prices', 'pln', 'price'],
+            ['prices', 'PLN', 'price'],
+            ['prices', 'pln', 'price_brutto'],
+            ['prices', 'PLN', 'price_brutto'],
+          ]
         : []),
       ['prices', '0', 'price'],
       ['prices', '0', 'price_brutto'],

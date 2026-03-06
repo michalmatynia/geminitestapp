@@ -116,12 +116,15 @@ function VectorCanvasInner(props: VectorCanvasProps): React.JSX.Element {
     baseCanvasWidthPx = props.baseCanvasWidthPx ?? context?.baseCanvasWidthPx ?? null,
     baseCanvasHeightPx = props.baseCanvasHeightPx ?? context?.baseCanvasHeightPx ?? null,
     onViewCropRectChange = props.onViewCropRectChange ?? context?.onViewCropRectChange,
-    onImageContentFrameChange = props.onImageContentFrameChange ?? context?.onImageContentFrameChange,
+    onImageContentFrameChange = props.onImageContentFrameChange ??
+      context?.onImageContentFrameChange,
     showCanvasGrid = props.showCanvasGrid ?? context?.showCanvasGrid ?? false,
     imageMoveEnabled = props.imageMoveEnabled ?? context?.imageMoveEnabled ?? false,
     imageOffset = props.imageOffset ?? context?.imageOffset,
     onImageOffsetChange = props.onImageOffsetChange ?? context?.onImageOffsetChange,
-    backgroundLayerEnabled = props.backgroundLayerEnabled ?? context?.backgroundLayerEnabled ?? false,
+    backgroundLayerEnabled = props.backgroundLayerEnabled ??
+      context?.backgroundLayerEnabled ??
+      false,
     backgroundColor = props.backgroundColor ?? context?.backgroundColor ?? 'transparent',
     className = props.className ?? context?.className,
   } = props;
@@ -330,10 +333,10 @@ function VectorCanvasInner(props: VectorCanvasProps): React.JSX.Element {
           style={
             showViewTransformHud
               ? {
-                transform: `translate(${viewTransform.panX}px, ${viewTransform.panY}px) scale(${viewTransform.scale}) rotate(${viewTransform.rotateDeg}deg)`,
-                transformOrigin: '0 0',
-                transition: isPanning ? 'none' : 'transform 120ms cubic-bezier(0.22, 1, 0.36, 1)',
-              }
+                  transform: `translate(${viewTransform.panX}px, ${viewTransform.panY}px) scale(${viewTransform.scale}) rotate(${viewTransform.rotateDeg}deg)`,
+                  transformOrigin: '0 0',
+                  transition: isPanning ? 'none' : 'transform 120ms cubic-bezier(0.22, 1, 0.36, 1)',
+                }
               : undefined
           }
         >

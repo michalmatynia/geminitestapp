@@ -151,13 +151,13 @@ const readByPath = (source: unknown, path: string, policy: JsonIntegrityPolicy):
     const parseDiagnostic =
       normalizedCursorResult.state === 'repaired' || normalizedCursorResult.state === 'unparseable'
         ? {
-          rawType: normalizedCursorResult.diagnostic.rawType,
-          parseState: normalizedCursorResult.diagnostic.parseState,
-          repairApplied: normalizedCursorResult.diagnostic.repairApplied,
-          parseError: normalizedCursorResult.diagnostic.parseError,
-          truncationDetected: normalizedCursorResult.diagnostic.truncationDetected,
-          repairSteps: normalizedCursorResult.diagnostic.repairSteps,
-        }
+            rawType: normalizedCursorResult.diagnostic.rawType,
+            parseState: normalizedCursorResult.diagnostic.parseState,
+            repairApplied: normalizedCursorResult.diagnostic.repairApplied,
+            parseError: normalizedCursorResult.diagnostic.parseError,
+            truncationDetected: normalizedCursorResult.diagnostic.truncationDetected,
+            repairSteps: normalizedCursorResult.diagnostic.repairSteps,
+          }
         : undefined;
     if (normalizedCursorResult.state === 'unparseable') {
       return {
@@ -231,16 +231,16 @@ const resolveTokenValue = (
       value: resolved.value,
       ...(resolved.parseDiagnostic
         ? {
-          parseDiagnostic: {
-            token: trimmedToken,
-            rawType: resolved.parseDiagnostic.rawType,
-            parseState: resolved.parseDiagnostic.parseState,
-            repairApplied: resolved.parseDiagnostic.repairApplied,
-            parseError: resolved.parseDiagnostic.parseError,
-            truncationDetected: resolved.parseDiagnostic.truncationDetected,
-            repairSteps: resolved.parseDiagnostic.repairSteps,
-          },
-        }
+            parseDiagnostic: {
+              token: trimmedToken,
+              rawType: resolved.parseDiagnostic.rawType,
+              parseState: resolved.parseDiagnostic.parseState,
+              repairApplied: resolved.parseDiagnostic.repairApplied,
+              parseError: resolved.parseDiagnostic.parseError,
+              truncationDetected: resolved.parseDiagnostic.truncationDetected,
+              repairSteps: resolved.parseDiagnostic.repairSteps,
+            },
+          }
         : {}),
     };
   }
@@ -254,17 +254,17 @@ const resolveTokenValue = (
     value: resolved.value,
     ...(resolved.parseDiagnostic
       ? {
-        parseDiagnostic: {
-          port: normalizeTokenRoot(trimmedToken) || undefined,
-          token: trimmedToken,
-          rawType: resolved.parseDiagnostic.rawType,
-          parseState: resolved.parseDiagnostic.parseState,
-          repairApplied: resolved.parseDiagnostic.repairApplied,
-          parseError: resolved.parseDiagnostic.parseError,
-          truncationDetected: resolved.parseDiagnostic.truncationDetected,
-          repairSteps: resolved.parseDiagnostic.repairSteps,
-        },
-      }
+          parseDiagnostic: {
+            port: normalizeTokenRoot(trimmedToken) || undefined,
+            token: trimmedToken,
+            rawType: resolved.parseDiagnostic.rawType,
+            parseState: resolved.parseDiagnostic.parseState,
+            repairApplied: resolved.parseDiagnostic.repairApplied,
+            parseError: resolved.parseDiagnostic.parseError,
+            truncationDetected: resolved.parseDiagnostic.truncationDetected,
+            repairSteps: resolved.parseDiagnostic.repairSteps,
+          },
+        }
       : {}),
   };
 };

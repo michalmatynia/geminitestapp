@@ -64,7 +64,11 @@ export type RuntimeValidationResult = {
 
 export type RuntimeValidationMiddleware = (
   context: RuntimeValidationContext
-) => RuntimeValidationResult | null | undefined | Promise<RuntimeValidationResult | null | undefined>;
+) =>
+  | RuntimeValidationResult
+  | null
+  | undefined
+  | Promise<RuntimeValidationResult | null | undefined>;
 
 export type EvaluateGraphOptions = {
   runId?: string | undefined;
@@ -180,12 +184,12 @@ export type EvaluateGraphOptions = {
   reportAiPathsError: (error: unknown, context: Record<string, unknown>, summary?: string) => void;
   // Handler Resolution
   resolveHandler?: (type: string) => NodeHandler | null;
-  resolveCodeObjectHandler?: ((args: {
-    nodeType: string;
-    codeObjectId: string;
-  }) => NodeHandler | null) | undefined;
+  resolveCodeObjectHandler?:
+    | ((args: { nodeType: string; codeObjectId: string }) => NodeHandler | null)
+    | undefined;
   resolveHandlerTelemetry?: (type: string) => RuntimeNodeResolutionTelemetry | null;
   runtimeKernelMode?: 'auto' | undefined;
+  runtimeKernelNodeTypes?: string[] | undefined;
   runtimeKernelPilotNodeTypes?: string[] | undefined;
   runtimeKernelCodeObjectResolverIds?: string[] | undefined;
   runtimeKernelStrictNativeRegistry?: boolean | undefined;

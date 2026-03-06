@@ -89,17 +89,16 @@ type EditPageRouteListRuntimeValue = {
   onToggleSlug: (slugId: string) => void;
 };
 
-const {
-  Context: EditPageRouteListRuntimeContext,
-  useStrictContext: useEditPageRouteListRuntime,
-} = createStrictContext<EditPageRouteListRuntimeValue>({
-  hookName: 'useEditPageRouteListRuntime',
-  providerName: 'EditPageRouteListRuntimeProvider',
-  displayName: 'EditPageRouteListRuntimeContext',
-});
+const { Context: EditPageRouteListRuntimeContext, useStrictContext: useEditPageRouteListRuntime } =
+  createStrictContext<EditPageRouteListRuntimeValue>({
+    hookName: 'useEditPageRouteListRuntime',
+    providerName: 'EditPageRouteListRuntimeProvider',
+    displayName: 'EditPageRouteListRuntimeContext',
+  });
 
 function EditPageRouteList(): React.JSX.Element {
-  const { visibleSlugs, selectedSlugIds, domainSlugIds, onToggleSlug } = useEditPageRouteListRuntime();
+  const { visibleSlugs, selectedSlugIds, domainSlugIds, onToggleSlug } =
+    useEditPageRouteListRuntime();
   return (
     <SearchableList
       items={visibleSlugs}

@@ -179,7 +179,7 @@ export function PagePreviewPanel(): React.ReactNode {
     (event: React.PointerEvent<HTMLDivElement>): void => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
-      if (target.closest('[data-cms-canvas=\'true\']')) return;
+      if (target.closest("[data-cms-canvas='true']")) return;
       dispatch({ type: 'SELECT_NODE', nodeId: null });
     },
     [dispatch]
@@ -453,13 +453,13 @@ export function PagePreviewPanel(): React.ReactNode {
   const shouldScaleCanvas = isDesktopPreview && canvasWidth !== null && canvasScale < 0.999;
   const scaledCanvasStyle: React.CSSProperties = shouldScaleCanvas
     ? {
-      width: `${canvasWidth}px`,
-      position: 'absolute',
-      left: '50%',
-      top: 0,
-      transform: `translateX(-50%) scale(${canvasScale})`,
-      transformOrigin: 'top center',
-    }
+        width: `${canvasWidth}px`,
+        position: 'absolute',
+        left: '50%',
+        top: 0,
+        transform: `translateX(-50%) scale(${canvasScale})`,
+        transformOrigin: 'top center',
+      }
     : {};
   const scaledCanvasWrapperStyle: React.CSSProperties =
     shouldScaleCanvas && canvasScaledHeight
@@ -469,7 +469,7 @@ export function PagePreviewPanel(): React.ReactNode {
   useEffect((): (() => void) | void => {
     if (!isDesktopPreview) return undefined;
     const viewport = canvasRef.current?.closest(
-      '[data-cms-canvas-viewport=\'true\']'
+      "[data-cms-canvas-viewport='true']"
     ) as HTMLDivElement | null;
     if (!viewport || typeof window === 'undefined') return undefined;
 

@@ -23,10 +23,7 @@ const normalizeSourcePath = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const buildSourcePathCandidates = (args: {
-  sourcePath: string;
-  sourcePort: string;
-}): string[] => {
+const buildSourcePathCandidates = (args: { sourcePath: string; sourcePort: string }): string[] => {
   const { sourcePath, sourcePort } = args;
   const candidates = new Set<string>([sourcePath]);
   if (sourcePath.startsWith(`${sourcePort}.`)) {

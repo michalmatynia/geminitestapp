@@ -8,12 +8,7 @@ import {
 import { ToastOptions } from '@/shared/contracts/ui';
 
 import { cloneValue, sanitizeEdges } from '../utils';
-import {
-  nowMs,
-  resolveNodeTimeoutMs,
-  withTimeout,
-  withRetries,
-} from './execution-helpers';
+import { nowMs, resolveNodeTimeoutMs, withTimeout, withRetries } from './execution-helpers';
 
 // Modular imports
 import {
@@ -138,13 +133,17 @@ export async function evaluateGraphInternal(
   const resolvedOnHalt = options.onHalt;
   const runtimeTelemetryByNodeType = new Map<string, RuntimeNodeResolutionTelemetry | null>();
 
-  const resolveRuntimeTelemetry = (nodeTypeInput: string): RuntimeNodeResolutionTelemetry | null => {
+  const resolveRuntimeTelemetry = (
+    nodeTypeInput: string
+  ): RuntimeNodeResolutionTelemetry | null => {
     const nodeType = typeof nodeTypeInput === 'string' ? nodeTypeInput.trim() : '';
     if (!nodeType) return null;
     if (runtimeTelemetryByNodeType.has(nodeType)) {
       return runtimeTelemetryByNodeType.get(nodeType) ?? null;
     }
-    const telemetry = options.resolveHandlerTelemetry ? options.resolveHandlerTelemetry(nodeType) : null;
+    const telemetry = options.resolveHandlerTelemetry
+      ? options.resolveHandlerTelemetry(nodeType)
+      : null;
     runtimeTelemetryByNodeType.set(nodeType, telemetry ?? null);
     return telemetry ?? null;
   };
@@ -158,10 +157,10 @@ export async function evaluateGraphInternal(
   } =>
     telemetry
       ? {
-        runtimeStrategy: telemetry.runtimeStrategy,
-        runtimeResolutionSource: telemetry.runtimeResolutionSource,
-        runtimeCodeObjectId: telemetry.runtimeCodeObjectId ?? null,
-      }
+          runtimeStrategy: telemetry.runtimeStrategy,
+          runtimeResolutionSource: telemetry.runtimeResolutionSource,
+          runtimeCodeObjectId: telemetry.runtimeCodeObjectId ?? null,
+        }
       : {};
 
   const normalizeRuntimeValidationIssues = (
@@ -171,16 +170,20 @@ export async function evaluateGraphInternal(
   ): RuntimeValidationIssue[] => {
     if (!Array.isArray(issues)) return [];
     return issues
-      .filter((issue: RuntimeValidationIssue | null | undefined): issue is RuntimeValidationIssue => {
-        if (!issue) return false;
-        return typeof issue.message === 'string' && issue.message.trim().length > 0;
-      })
-      .map((issue: RuntimeValidationIssue): RuntimeValidationIssue => ({
-        ...issue,
-        stage,
-        nodeId: issue.nodeId ?? node?.id ?? null,
-        nodeTitle: issue.nodeTitle ?? node?.title ?? null,
-      }));
+      .filter(
+        (issue: RuntimeValidationIssue | null | undefined): issue is RuntimeValidationIssue => {
+          if (!issue) return false;
+          return typeof issue.message === 'string' && issue.message.trim().length > 0;
+        }
+      )
+      .map(
+        (issue: RuntimeValidationIssue): RuntimeValidationIssue => ({
+          ...issue,
+          stage,
+          nodeId: issue.nodeId ?? node?.id ?? null,
+          nodeTitle: issue.nodeTitle ?? node?.title ?? null,
+        })
+      );
   };
 
   const runRuntimeValidation = async (args: {
@@ -190,14 +193,11 @@ export async function evaluateGraphInternal(
     nodeInputs?: RuntimePortValues;
     nodeOutputs?: RuntimePortValues;
     runtimeTelemetry?: RuntimeNodeResolutionTelemetry | null;
-  }): Promise<
-    | {
-        decision: 'warn' | 'block';
-        message: string;
-        issues: RuntimeValidationIssue[];
-      }
-    | null
-  > => {
+  }): Promise<{
+    decision: 'warn' | 'block';
+    message: string;
+    issues: RuntimeValidationIssue[];
+  } | null> => {
     if (!options.validationMiddleware) return null;
 
     const stage = args.stage;
@@ -532,8 +532,8 @@ export async function evaluateGraphInternal(
         const blockedStatus =
           readiness.waitingOnDetails.length > 0
             ? resolveMissingInputStatus({
-              waitingOnDetails: readiness.waitingOnDetails,
-            })
+                waitingOnDetails: readiness.waitingOnDetails,
+              })
             : 'blocked';
         let message =
           readiness.waitingOnPorts.length > 0

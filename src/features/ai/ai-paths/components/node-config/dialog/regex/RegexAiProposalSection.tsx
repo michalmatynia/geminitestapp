@@ -14,7 +14,9 @@ export type RegexAiProposalSectionProps = {
   normalizedFlags: string;
 };
 
-export function RegexAiProposalSection(props: RegexAiProposalSectionProps): React.JSX.Element | null {
+export function RegexAiProposalSection(
+  props: RegexAiProposalSectionProps
+): React.JSX.Element | null {
   const {
     regexConfig: _regexConfig,
     hasAiProposal,

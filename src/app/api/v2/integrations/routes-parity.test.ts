@@ -138,7 +138,7 @@ describe('v2 integrations selected route migration', () => {
   it('keeps selected v2 route.ts files independent from direct legacy api imports', () => {
     const offenders = migratedRoutePaths.filter((relativeRoute) => {
       const source = readFileSync(path.join(v2Root, relativeRoute), 'utf8');
-      return source.includes("@/app/api/integrations/");
+      return source.includes('@/app/api/integrations/');
     });
 
     expect(offenders).toEqual([]);
@@ -148,7 +148,7 @@ describe('v2 integrations selected route migration', () => {
     const v2Handlers = collectHandlerFiles(v2Root);
     const offenders = v2Handlers.filter((relativePath) => {
       const source = readFileSync(path.join(v2Root, relativePath), 'utf8');
-      return source.includes("@/app/api/integrations/");
+      return source.includes('@/app/api/integrations/');
     });
 
     expect(offenders).toEqual([]);

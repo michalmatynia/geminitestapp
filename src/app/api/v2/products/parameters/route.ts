@@ -3,7 +3,11 @@ export const runtime = 'nodejs';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { catalogIdQuerySchema } from '@/shared/validations/product-metadata-api-schemas';
 
-import { GET_handler, POST_handler, productParameterCreateSchema } from '@/app/api/v2/products/parameters/handler';
+import {
+  GET_handler,
+  POST_handler,
+  productParameterCreateSchema,
+} from '@/app/api/v2/products/parameters/handler';
 
 export const GET = apiHandler(GET_handler, {
   source: 'products.parameters.GET',

@@ -331,10 +331,10 @@ export function ImportExportProvider({
       `active-template:${importTemplateScopeKey || 'none'}`,
       importTemplateScopeReady
         ? buildScopedTemplatePreferenceEndpoint(
-          '/api/v2/integrations/imports/base/active-template',
-          normalizedSelectedBaseConnectionId,
-          normalizedImportInventoryId
-        )
+            '/api/v2/integrations/imports/base/active-template',
+            normalizedSelectedBaseConnectionId,
+            normalizedImportInventoryId
+          )
         : '/api/v2/integrations/imports/base/active-template',
       { enabled: importTemplateScopeReady }
     );
@@ -343,10 +343,10 @@ export function ImportExportProvider({
       `export-active-template:${exportTemplateScopeKey || 'none'}`,
       exportTemplateScopeReady
         ? buildScopedTemplatePreferenceEndpoint(
-          '/api/v2/integrations/exports/base/active-template',
-          normalizedSelectedBaseConnectionId,
-          normalizedExportInventoryId
-        )
+            '/api/v2/integrations/exports/base/active-template',
+            normalizedSelectedBaseConnectionId,
+            normalizedExportInventoryId
+          )
         : '/api/v2/integrations/exports/base/active-template',
       { enabled: exportTemplateScopeReady }
     );
@@ -743,9 +743,11 @@ export function ImportExportProvider({
   const savingDefaultConnection = saveDefaultConnectionMutation.isPending;
   const savingExportSettings = saveExportSettingsMutation.isPending;
   const savingImportTemplate =
-    templates.saveImportTemplateMutation.isPending || templates.createImportTemplateMutation.isPending;
+    templates.saveImportTemplateMutation.isPending ||
+    templates.createImportTemplateMutation.isPending;
   const savingExportTemplate =
-    templates.saveExportTemplateMutation.isPending || templates.createExportTemplateMutation.isPending;
+    templates.saveExportTemplateMutation.isPending ||
+    templates.createExportTemplateMutation.isPending;
 
   const stateValue: ImportExportStateContextType = {
     inventoryId,

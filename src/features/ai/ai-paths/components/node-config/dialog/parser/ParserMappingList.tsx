@@ -12,8 +12,13 @@ export interface ParserMappingListProps {
 }
 
 export function ParserMappingList(props: ParserMappingListProps): React.JSX.Element {
-  const { entries, updateMappingKey, updateMappingPath, uniqueSuggestedPathOptions, removeMapping } =
-    props;
+  const {
+    entries,
+    updateMappingKey,
+    updateMappingPath,
+    uniqueSuggestedPathOptions,
+    removeMapping,
+  } = props;
 
   return (
     <div className='space-y-3'>

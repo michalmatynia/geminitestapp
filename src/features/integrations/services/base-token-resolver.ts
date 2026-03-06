@@ -64,6 +64,7 @@ export const resolveBaseConnectionToken = (connection: BaseTokenCarrier): Resolv
   return {
     token: null,
     source: null,
-    error: fromBaseToken.error ?? 'No Base API token configured. Password token fallback is disabled.',
+    error:
+      fromBaseToken.error ?? 'No Base API token configured. Password token fallback is disabled.',
   };
 };

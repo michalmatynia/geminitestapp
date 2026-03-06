@@ -35,21 +35,17 @@ const collectSourceFiles = (dir: string): string[] => {
 };
 
 describe('folder-tree runtime legacy-compat prune guard', () => {
-  it(
-    'keeps aggregate profile legacy compatibility keys/helpers out of runtime source files',
-    () => {
-      const sourceFiles = collectSourceFiles(srcRoot);
-      const offenders = sourceFiles
-        .filter((absolutePath: string): boolean => {
-          const content = readFileSync(absolutePath, 'utf8');
-          return forbiddenRuntimeCompatTokens.some((token: string): boolean =>
-            content.includes(token)
-          );
-        })
-        .map((absolutePath: string): string => path.relative(projectRoot, absolutePath));
+  it('keeps aggregate profile legacy compatibility keys/helpers out of runtime source files', () => {
+    const sourceFiles = collectSourceFiles(srcRoot);
+    const offenders = sourceFiles
+      .filter((absolutePath: string): boolean => {
+        const content = readFileSync(absolutePath, 'utf8');
+        return forbiddenRuntimeCompatTokens.some((token: string): boolean =>
+          content.includes(token)
+        );
+      })
+      .map((absolutePath: string): string => path.relative(projectRoot, absolutePath));
 
-      expect(offenders).toEqual([]);
-    },
-    20000
-  );
+    expect(offenders).toEqual([]);
+  }, 20000);
 });

@@ -585,10 +585,7 @@ const evaluateAiPathsValidation = ({
       return a.id.localeCompare(b.id);
     });
   (normalizedConfig.rules ?? []).forEach((rule: AiPathsValidationRule): void => {
-    if (
-      !shouldEvaluateRuleAtRuntime(rule) ||
-      !doesAiPathsValidationRuleApplyToStage(rule, stage)
-    ) {
+    if (!shouldEvaluateRuleAtRuntime(rule) || !doesAiPathsValidationRuleApplyToStage(rule, stage)) {
       skippedRuleIds.add(rule.id);
     }
   });

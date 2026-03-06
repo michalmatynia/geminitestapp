@@ -8,10 +8,7 @@ import { FormModal, Label, StandardDataTablePanel, EmptyState } from '@/shared/u
 
 import { PromptExtractionHistoryPanel } from '../studio-modals/PromptExtractionHistoryPanel';
 import { useStudioInlineEdit } from '../studio-modals/StudioInlineEditContext';
-import {
-  StudioActionButtonRow,
-  type StudioActionButtonConfig,
-} from './StudioActionButtonRow';
+import { StudioActionButtonRow, type StudioActionButtonConfig } from './StudioActionButtonRow';
 import { StudioPromptTextSection } from './StudioPromptTextSection';
 import type { ColumnDef } from '@tanstack/react-table';
 

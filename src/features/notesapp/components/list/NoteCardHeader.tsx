@@ -14,14 +14,12 @@ export type NoteCardHeaderRuntimeValue = {
   relatedNoteStyle: React.CSSProperties;
 };
 
-const {
-  Context: NoteCardHeaderRuntimeContext,
-  useStrictContext: useNoteCardHeaderRuntime,
-} = createStrictContext<NoteCardHeaderRuntimeValue>({
-  hookName: 'useNoteCardHeaderRuntime',
-  providerName: 'NoteCardHeaderRuntimeProvider',
-  displayName: 'NoteCardHeaderRuntimeContext',
-});
+const { Context: NoteCardHeaderRuntimeContext, useStrictContext: useNoteCardHeaderRuntime } =
+  createStrictContext<NoteCardHeaderRuntimeValue>({
+    hookName: 'useNoteCardHeaderRuntime',
+    providerName: 'NoteCardHeaderRuntimeProvider',
+    displayName: 'NoteCardHeaderRuntimeContext',
+  });
 
 export { NoteCardHeaderRuntimeContext, useNoteCardHeaderRuntime };
 

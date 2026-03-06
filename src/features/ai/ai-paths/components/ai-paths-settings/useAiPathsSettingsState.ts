@@ -1,11 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo } from 'react';
 
-import type {
-  Edge,
-  PathMeta,
-  PathConfig,
-} from '@/shared/lib/ai-paths';
+import type { Edge, PathMeta, PathConfig } from '@/shared/lib/ai-paths';
 import { triggers } from '@/shared/lib/ai-paths';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
@@ -70,14 +66,8 @@ export function useAiPathsSettingsState({
     setParserSamples: setParserSamplesAction,
     setUpdaterSamples: setUpdaterSamplesAction,
   } = useRuntimeActions();
-  const {
-    runtimeState,
-    parserSamples,
-    updaterSamples,
-    pathDebugSnapshots,
-    lastRunAt,
-    lastError,
-  } = useRuntimeState();
+  const { runtimeState, parserSamples, updaterSamples, pathDebugSnapshots, lastRunAt, lastError } =
+    useRuntimeState();
 
   const normalizeTriggerLabel = (value?: string | null): string =>
     value === 'Product Modal - Context Grabber'
@@ -109,11 +99,7 @@ export function useAiPathsSettingsState({
     historyRetentionOptionsMax,
   } = useExecutionSettingsState();
 
-  const {
-    validation,
-    reportAiPathsError,
-    persistLastError,
-  } = useAiPathsErrorState({
+  const { validation, reportAiPathsError, persistLastError } = useAiPathsErrorState({
     toast,
   });
 

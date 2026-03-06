@@ -196,10 +196,10 @@ export const applyBaseParameterImport = async (
     input.prefetchedLinks ??
     (useLinkMap
       ? await getCatalogParameterLinks({
-        catalogId: input.catalogId,
-        connectionId: input.connectionId ?? null,
-        inventoryId: input.inventoryId ?? null,
-      })
+          catalogId: input.catalogId,
+          connectionId: input.connectionId ?? null,
+          inventoryId: input.inventoryId ?? null,
+        })
       : {});
   const linkUpdates: Record<string, string> = {};
 

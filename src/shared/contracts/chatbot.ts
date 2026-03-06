@@ -71,10 +71,7 @@ const UNSUPPORTED_CHATBOT_AGENT_MODEL_KEYS = [
 export class ChatbotSettingsValidationError extends Error {
   code: 'invalid_shape';
 
-  constructor(args: {
-    code: 'invalid_shape';
-    message: string;
-  }) {
+  constructor(args: { code: 'invalid_shape'; message: string }) {
     super(args.message);
     this.name = 'ChatbotSettingsValidationError';
     this.code = args.code;

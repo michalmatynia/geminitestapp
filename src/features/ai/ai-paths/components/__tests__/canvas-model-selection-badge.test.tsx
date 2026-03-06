@@ -148,7 +148,9 @@ describe('Canvas model selection badge', () => {
     const { container } = render(
       <svg>
         <CanvasBoardUIProvider
-          value={buildContextValue(node, { runtimeNodeStatuses: { [node.id]: 'waiting_callback' } })}
+          value={buildContextValue(node, {
+            runtimeNodeStatuses: { [node.id]: 'waiting_callback' },
+          })}
         >
           <CanvasSvgNodeLayer />
         </CanvasBoardUIProvider>
@@ -165,7 +167,9 @@ describe('Canvas model selection badge', () => {
     const { container } = render(
       <svg>
         <CanvasBoardUIProvider
-          value={buildContextValue(node, { runtimeNodeStatuses: { [node.id]: 'waiting_callback' } })}
+          value={buildContextValue(node, {
+            runtimeNodeStatuses: { [node.id]: 'waiting_callback' },
+          })}
         >
           <CanvasSvgNodeLayer />
         </CanvasBoardUIProvider>

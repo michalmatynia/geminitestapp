@@ -3,7 +3,7 @@
   "generatedAt": "2026-03-06T00:00:00.000Z",
   "specVersion": "ai-paths.portable-engine.v1",
   "totalObjects": 36,
-  "pilotNodeTypes": [
+  "runtimeKernelNodeTypes": [
     "agent",
     "ai_description",
     "api_advanced",

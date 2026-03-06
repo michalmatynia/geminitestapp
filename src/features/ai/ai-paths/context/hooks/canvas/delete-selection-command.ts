@@ -15,16 +15,13 @@ export const computeNodeSelectionDeleteResult = (
 ): NodeSelectionDeleteResult => {
   const trimmedNodeIds = Array.from(
     new Set(
-      nodeIds
-        .map((nodeId) => nodeId.trim())
-        .filter((nodeId): nodeId is string => nodeId.length > 0)
+      nodeIds.map((nodeId) => nodeId.trim()).filter((nodeId): nodeId is string => nodeId.length > 0)
     )
   );
   const nodeIdSet = new Set(trimmedNodeIds);
   const remainingNodes = nodes.filter((node) => !nodeIdSet.has(node.id));
-  const removedEdges = edges.filter(
-    (edge) =>
-      Boolean((edge.from && nodeIdSet.has(edge.from)) || (edge.to && nodeIdSet.has(edge.to)))
+  const removedEdges = edges.filter((edge) =>
+    Boolean((edge.from && nodeIdSet.has(edge.from)) || (edge.to && nodeIdSet.has(edge.to)))
   );
   const remainingEdges = edges.filter(
     (edge) => !((edge.from && nodeIdSet.has(edge.from)) || (edge.to && nodeIdSet.has(edge.to)))
@@ -52,9 +49,7 @@ export const computeEdgeSelectionDeleteResult = (
 ): EdgeSelectionDeleteResult => {
   const trimmedEdgeIds = Array.from(
     new Set(
-      edgeIds
-        .map((edgeId) => edgeId.trim())
-        .filter((edgeId): edgeId is string => edgeId.length > 0)
+      edgeIds.map((edgeId) => edgeId.trim()).filter((edgeId): edgeId is string => edgeId.length > 0)
     )
   );
   const edgeIdSet = new Set(trimmedEdgeIds);

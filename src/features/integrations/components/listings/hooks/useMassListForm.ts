@@ -20,16 +20,10 @@ export function useMassListForm() {
   const { productIds, integrationId, connectionId, onSuccess } =
     useMassListProductModalViewContext();
 
-  const {
-    selectedConnectionId,
-    isBaseComIntegration,
-  } = useListingSelection();
+  const { selectedConnectionId, isBaseComIntegration } = useListingSelection();
 
-  const {
-    selectedInventoryId,
-    selectedTemplateId,
-    allowDuplicateSku,
-  } = useListingBaseComSettings();
+  const { selectedInventoryId, selectedTemplateId, allowDuplicateSku } =
+    useListingBaseComSettings();
 
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<{

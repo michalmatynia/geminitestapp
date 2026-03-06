@@ -9,7 +9,11 @@ import {
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Input, SelectSimple, Textarea, FormField } from '@/shared/ui';
 
-import { useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../../AiPathConfigContext';
+import {
+  useAiPathOrchestrator,
+  useAiPathRuntime,
+  useAiPathSelection,
+} from '../../AiPathConfigContext';
 
 type MapperSources = {
   context: unknown;

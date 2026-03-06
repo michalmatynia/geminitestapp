@@ -90,14 +90,12 @@ export const isPatternEnabledForValidationScope = (
 export const isPatternReplacementEnabledForValidationScope = (
   replacementScopes: unknown,
   scope: ProductValidationInstanceScope
-): boolean =>
-  normalizeProductValidationPatternReplacementScopes(replacementScopes).includes(scope);
+): boolean => normalizeProductValidationPatternReplacementScopes(replacementScopes).includes(scope);
 
 export const isPatternLaunchEnabledForValidationScope = (
   launchScopes: unknown,
   scope: ProductValidationInstanceScope
-): boolean =>
-  normalizeProductValidationPatternLaunchScopes(launchScopes).includes(scope);
+): boolean => normalizeProductValidationPatternLaunchScopes(launchScopes).includes(scope);
 
 export const normalizeProductValidationLaunchScopeBehavior = (
   value: unknown

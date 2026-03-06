@@ -18,9 +18,7 @@ import {
   Q15Illustration,
   Q16Illustration,
 } from '@/features/kangur/ui/components/KangurIllustrations';
-import {
-  useKangurGameContext,
-} from '@/features/kangur/ui/context/KangurGameContext';
+import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameContext';
 import { getKangurQuestions, isExamMode } from '@/features/kangur/ui/services/kangur-questions';
 import { XP_REWARDS, addXp, loadProgress } from '@/features/kangur/ui/services/progress';
 import type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
@@ -290,7 +288,12 @@ function PracticeModeGame(): React.JSX.Element {
         exit={{ opacity: 0, x: -30 }}
         className='w-full'
       >
-        <QuestionView q={activeQuestion} qIndex={current} total={questions.length} onAnswer={handleAnswer} />
+        <QuestionView
+          q={activeQuestion}
+          qIndex={current}
+          total={questions.length}
+          onAnswer={handleAnswer}
+        />
       </motion.div>
     </AnimatePresence>
   );

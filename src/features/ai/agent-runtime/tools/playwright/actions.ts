@@ -38,13 +38,13 @@ export const dismissConsent = async (
   const buttonText = /accept|agree|ok|got it|allow all|accept all|dismiss|close/i;
   const selectors = [
     'button',
-    '[role=\'button\']',
-    'input[type=\'button\']',
-    'input[type=\'submit\']',
-    '[data-testid*=\'consent\' i]',
-    '[data-testid*=\'cookie\' i]',
-    '[aria-label*=\'accept\' i]',
-    '[aria-label*=\'cookie\' i]',
+    "[role='button']",
+    "input[type='button']",
+    "input[type='submit']",
+    "[data-testid*='consent' i]",
+    "[data-testid*='cookie' i]",
+    "[aria-label*='accept' i]",
+    "[aria-label*='cookie' i]",
   ];
   try {
     const candidates = page.locator(selectors.join(', '));
@@ -164,7 +164,7 @@ export const inferLoginCandidates = async (
         .slice(0, 12);
 
       const buttons = Array.from(
-        document.querySelectorAll('button, input[type=\'submit\'], input[type=\'button\']')
+        document.querySelectorAll("button, input[type='submit'], input[type='button']")
       )
         .filter((el: Element) => (el as HTMLElement).offsetParent !== null)
         .map((el: Element) => ({

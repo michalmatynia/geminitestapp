@@ -273,28 +273,28 @@ export const listBrainModels = async (
   const ollamaWarning =
     liveOllamaModels === null
       ? {
-        code: 'OLLAMA_UNAVAILABLE',
-        message:
+          code: 'OLLAMA_UNAVAILABLE',
+          message:
             `Live Ollama discovery failed for ${OLLAMA_BASE_URL}. ` +
             'Showing Brain-configured model catalog only. ' +
             'If OLLAMA_BASE_URL includes /v1, set it to the host root (for example http://localhost:11434).',
-      }
+        }
       : undefined;
   const catalogRepairWarning =
     providerCatalogRepairStatus === 'reset'
       ? {
-        code: 'PROVIDER_CATALOG_RESET',
-        message:
+          code: 'PROVIDER_CATALOG_RESET',
+          message:
             'AI Brain provider catalog payload was invalid and has been reset to canonical defaults.',
-      }
+        }
       : undefined;
   const warning =
     catalogRepairWarning && ollamaWarning
       ? {
-        code: `${catalogRepairWarning.code}+${ollamaWarning.code}`,
-        message: `${catalogRepairWarning.message} ${ollamaWarning.message}`,
-      }
-      : catalogRepairWarning ?? ollamaWarning;
+          code: `${catalogRepairWarning.code}+${ollamaWarning.code}`,
+          message: `${catalogRepairWarning.message} ${ollamaWarning.message}`,
+        }
+      : (catalogRepairWarning ?? ollamaWarning);
 
   return {
     models: filteredModels,

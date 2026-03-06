@@ -601,8 +601,8 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
           const resolved =
             typeof next === 'function'
               ? (next as (prev: ProductValidationDenyBehavior) => ProductValidationDenyBehavior)(
-                current
-              )
+                  current
+                )
               : next;
           const normalized = normalizeProductValidationDenyBehavior(resolved);
           if (normalized === current && prev[validationInstanceScope] === normalized) {

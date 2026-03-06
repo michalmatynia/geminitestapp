@@ -27,8 +27,8 @@ export const handleTemplate: NodeHandler = ({
   const prompt = templateConfig.template
     ? renderTemplate(templateConfig.template, data, currentValue)
     : Object.entries(data)
-      .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
-      .join('\n');
+        .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
+        .join('\n');
   return { prompt: prompt || 'Prompt: (no template)' };
 };
 
@@ -501,7 +501,11 @@ export const handleModel: NodeHandler = async ({
     };
     let enqueueResult: Awaited<ReturnType<typeof aiJobsApi.enqueue>> | null = null;
     let enqueueErrorMessage: string | null = null;
-    for (let enqueueAttempt = 1; enqueueAttempt <= defaultModelEnqueueRetryAttempts; enqueueAttempt += 1) {
+    for (
+      let enqueueAttempt = 1;
+      enqueueAttempt <= defaultModelEnqueueRetryAttempts;
+      enqueueAttempt += 1
+    ) {
       enqueueResult = await aiJobsApi.enqueue({
         productId,
         type: 'graph_model',

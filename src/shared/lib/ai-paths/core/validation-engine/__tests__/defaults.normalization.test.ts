@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  AI_PATHS_VALIDATION_SCHEMA_VERSION,
-  normalizeAiPathsValidationConfig,
-} from '../defaults';
+import { AI_PATHS_VALIDATION_SCHEMA_VERSION, normalizeAiPathsValidationConfig } from '../defaults';
 
 describe('normalizeAiPathsValidationConfig', () => {
   it('keeps lastEvaluatedAt for legacy schema payloads', () => {

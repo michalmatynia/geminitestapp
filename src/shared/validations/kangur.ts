@@ -20,7 +20,9 @@ const normalizeSortField = (value: string): KangurScoreSortField => {
   return 'created_date';
 };
 
-export const normalizeKangurSort = (sort?: string): `-${KangurScoreSortField}` | KangurScoreSortField => {
+export const normalizeKangurSort = (
+  sort?: string
+): `-${KangurScoreSortField}` | KangurScoreSortField => {
   if (!sort || sort.trim().length === 0) {
     return '-created_date';
   }

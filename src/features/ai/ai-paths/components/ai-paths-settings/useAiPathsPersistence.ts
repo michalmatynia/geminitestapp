@@ -91,12 +91,8 @@ export function useAiPathsPersistence(
     setIsPathLocked,
     setIsPathActive,
   } = useGraphActions();
-  const {
-    setRuntimeState,
-    setParserSamples,
-    setUpdaterSamples,
-    setLastRunAt,
-  } = useRuntimeActions();
+  const { setRuntimeState, setParserSamples, setUpdaterSamples, setLastRunAt } =
+    useRuntimeActions();
   const { setLoading } = usePersistenceActions();
   const { selectNode, setConfigOpen } = useSelectionActions();
 
@@ -247,8 +243,14 @@ export function useAiPathsPersistence(
           const configItem = activeConfigSettings.find((item) => item.key === activeConfigKey);
           if (configItem?.value) {
             try {
-              const fallbackName = loadedPaths.find((path: PathMeta): boolean => path.id === resolvedActivePathId)?.name;
-              config = resolveLoadedPathConfig(configItem.value, resolvedActivePathId, fallbackName);
+              const fallbackName = loadedPaths.find(
+                (path: PathMeta): boolean => path.id === resolvedActivePathId
+              )?.name;
+              config = resolveLoadedPathConfig(
+                configItem.value,
+                resolvedActivePathId,
+                fallbackName
+              );
             } catch (error) {
               logClientError(error, {
                 context: {
@@ -465,7 +467,9 @@ export function useAiPathsPersistence(
             const item = settingByKey.get(`${PATH_CONFIG_PREFIX}${pathId}`);
             if (!item?.value) return;
             try {
-              const fallbackName = paths.find((path: PathMeta): boolean => path.id === pathId)?.name;
+              const fallbackName = paths.find(
+                (path: PathMeta): boolean => path.id === pathId
+              )?.name;
               const parsed = resolveLoadedPathConfig(item.value, pathId, fallbackName);
               const sanitized = sanitizePrefetchedPathConfig(parsed, pathId);
               if (!sanitized) return;

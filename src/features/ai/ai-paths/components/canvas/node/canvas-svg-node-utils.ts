@@ -1,9 +1,6 @@
 import type { DataContractNodeIssueSummary } from '@/shared/lib/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
-export {
-  BLOCKER_PROCESSING_STATUSES,
-  formatRuntimeStatusLabel,
-} from '../signal-flow-visual-state';
+export { BLOCKER_PROCESSING_STATUSES, formatRuntimeStatusLabel } from '../signal-flow-visual-state';
 
 export const INPUT_CONNECTOR_COLORS = {
   fill: 'rgba(56, 189, 248, 0.18)',

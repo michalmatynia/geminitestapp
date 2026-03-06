@@ -100,9 +100,7 @@ const metricCellToneClass = (
   }
   if (metric.key === 'runtime_audit_age_min') {
     const value =
-      typeof metric.value === 'number'
-        ? metric.value
-        : Number.parseInt(String(metric.value), 10);
+      typeof metric.value === 'number' ? metric.value : Number.parseInt(String(metric.value), 10);
     if (Number.isFinite(value) && value >= 240) {
       return 'border-red-500/40 bg-red-500/10';
     }
@@ -126,9 +124,7 @@ const metricValueToneClass = (
   }
   if (metric.key === 'runtime_audit_age_min') {
     const value =
-      typeof metric.value === 'number'
-        ? metric.value
-        : Number.parseInt(String(metric.value), 10);
+      typeof metric.value === 'number' ? metric.value : Number.parseInt(String(metric.value), 10);
     if (Number.isFinite(value) && value >= 240) return 'text-red-200 font-semibold';
     if (Number.isFinite(value) && value >= 120) return 'text-amber-200 font-semibold';
   }

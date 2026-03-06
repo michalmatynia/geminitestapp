@@ -19,11 +19,7 @@ export function ThemeAiSection(): React.JSX.Element {
     brainAiAgentId,
     newSchemeColors,
   } = useThemeColorsState();
-  const {
-    setSchemeAiPrompt,
-    handleGenerateScheme,
-    handleCancelSchemeAi,
-  } = useThemeColorsActions();
+  const { setSchemeAiPrompt, handleGenerateScheme, handleCancelSchemeAi } = useThemeColorsActions();
 
   return (
     <div className='rounded border border-border/40 bg-gray-900/40 p-3 space-y-3'>

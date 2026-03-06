@@ -90,9 +90,9 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
       defaultDocumentFormat === parsedBase.defaultDocumentFormat
         ? parsedBase
         : {
-          ...parsedBase,
-          defaultDocumentFormat,
-        };
+            ...parsedBase,
+            defaultDocumentFormat,
+          };
     if (!parsed.ocrModel && openaiModelFallback) {
       return {
         ...parsed,
@@ -282,9 +282,9 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {
-                      ...previous,
-                      ocrModel: value,
-                    }
+                        ...previous,
+                        ocrModel: value,
+                      }
                     : previous
                 );
               }}
@@ -309,9 +309,9 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {
-                      ...previous,
-                      ocrModel: value,
-                    }
+                        ...previous,
+                        ocrModel: value,
+                      }
                     : previous
                 );
               }}
@@ -332,9 +332,9 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {
-                      ...previous,
-                      ocrPrompt: value,
-                    }
+                        ...previous,
+                        ocrPrompt: value,
+                      }
                     : previous
                 );
               }}
@@ -363,9 +363,9 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {
-                      ...previous,
-                      defaultDocumentFormat: 'wysiwyg',
-                    }
+                        ...previous,
+                        defaultDocumentFormat: 'wysiwyg',
+                      }
                     : previous
                 );
               }}
@@ -384,9 +384,9 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {
-                      ...previous,
-                      confirmDeleteDocument: value !== 'off',
-                    }
+                        ...previous,
+                        confirmDeleteDocument: value !== 'off',
+                      }
                     : previous
                 );
               }}
@@ -405,9 +405,9 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {
-                      ...previous,
-                      defaultAddresserPartyKind: value,
-                    }
+                        ...previous,
+                        defaultAddresserPartyKind: value,
+                      }
                     : previous
                 );
               }}
@@ -426,9 +426,9 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {
-                      ...previous,
-                      defaultAddresseePartyKind: value,
-                    }
+                        ...previous,
+                        defaultAddresseePartyKind: value,
+                      }
                     : previous
                 );
               }}

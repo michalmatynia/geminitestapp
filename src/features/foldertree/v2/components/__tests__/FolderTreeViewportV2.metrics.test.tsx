@@ -80,9 +80,7 @@ describe('FolderTreeViewportV2 runtime metrics', () => {
     const runtime = createTestRuntime();
     const controller = createController();
 
-    render(
-      <FolderTreeViewportV2 controller={controller} enableDnd={false} runtime={runtime} />
-    );
+    render(<FolderTreeViewportV2 controller={controller} enableDnd={false} runtime={runtime} />);
 
     await waitFor(() => {
       expect(runtime.getMetricsSnapshot()['row_rerender'] ?? 0).toBeGreaterThanOrEqual(1);

@@ -62,7 +62,9 @@ function InlineImagePreviewControls(): React.JSX.Element {
       >
         -
       </Button>
-      <div className='min-w-10 text-center text-[10px] text-gray-200'>{Math.round(zoom * 100)}%</div>
+      <div className='min-w-10 text-center text-[10px] text-gray-200'>
+        {Math.round(zoom * 100)}%
+      </div>
       <Button
         size='xs'
         type='button'

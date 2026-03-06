@@ -282,7 +282,10 @@ export function buildImageStudioSequenceSnapshot(
 
 const imageStudioSettingsSchema = z
   .object({
-    version: z.union([z.literal(1), z.literal(2)]).optional().default(2),
+    version: z
+      .union([z.literal(1), z.literal(2)])
+      .optional()
+      .default(2),
     projectSequencing: z
       .object({
         enabled: z
@@ -564,9 +567,7 @@ const resolveUnsupportedImageStudioSnapshotKeys = (value: unknown): string[] => 
   return unsupportedKeys;
 };
 
-export function parseImageStudioSettings(
-  raw: string | null | undefined
-): ImageStudioSettings {
+export function parseImageStudioSettings(raw: string | null | undefined): ImageStudioSettings {
   if (!raw) return defaultImageStudioSettings;
   if (!raw.trim()) return defaultImageStudioSettings;
 
@@ -653,6 +654,8 @@ export function parseImageStudioSettings(
   };
 }
 
-export function parsePersistedImageStudioSettings(raw: string | null | undefined): ImageStudioSettings {
+export function parsePersistedImageStudioSettings(
+  raw: string | null | undefined
+): ImageStudioSettings {
   return parseImageStudioSettings(raw);
 }

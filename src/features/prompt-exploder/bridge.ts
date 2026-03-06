@@ -282,7 +282,9 @@ const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | n
     const source = normalizeBridgeSource(parsed.source);
     const target = normalizeBridgeTarget(parsed.target);
     if (!source || !target) return null;
-    const createdAt = toIsoTimestamp(typeof parsed.createdAt === 'string' ? parsed.createdAt : null);
+    const createdAt = toIsoTimestamp(
+      typeof parsed.createdAt === 'string' ? parsed.createdAt : null
+    );
     if (!createdAt) return null;
     const transferId = toTrimmedString(parsed.transferId) || createBridgeTransferId();
     const payloadVersion = (() => {

@@ -10,11 +10,8 @@ import {
 export function ProductFormValidationTab(): React.JSX.Element {
   const { validatorEnabled, formatterEnabled, validationDenyBehavior, validationInstanceScope } =
     useProductValidationState();
-  const {
-    setValidatorEnabled,
-    setFormatterEnabled,
-    setValidationDenyBehavior,
-  } = useProductValidationActions();
+  const { setValidatorEnabled, setFormatterEnabled, setValidationDenyBehavior } =
+    useProductValidationActions();
 
   return (
     <div className='rounded-md border border-border bg-gray-900/70 p-4'>

@@ -204,10 +204,7 @@ export function useAiPathsRuntimeState() {
         const normalizedStatus = normalizeNodeStatus(nextStatuses[nodeId] ?? outputStatus);
         if (!normalizedStatus) return;
         const isNonSettledStatus = NON_SETTLED_RUNTIME_NODE_STATUSES.has(normalizedStatus);
-        if (
-          isNonSettledStatus &&
-          !(settleQueued && normalizedStatus === 'queued')
-        ) {
+        if (isNonSettledStatus && !(settleQueued && normalizedStatus === 'queued')) {
           return;
         }
         if (nextStatuses[nodeId] === terminalStatus) return;

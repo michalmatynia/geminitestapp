@@ -2,7 +2,10 @@
 
 import React, { createContext, useCallback, useMemo, useState } from 'react';
 
-import { PROMPT_ENGINE_SETTINGS_KEY, type PromptValidationRule } from '@/shared/contracts/prompt-engine';
+import {
+  PROMPT_ENGINE_SETTINGS_KEY,
+  type PromptValidationRule,
+} from '@/shared/contracts/prompt-engine';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -129,7 +132,8 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
   // ── Derived ────────────────────────────────────────────────────────────────
 
   const parsedCustomBenchmarkCases = useMemo(
-    (): ParseCustomBenchmarkCasesResult => parseCustomBenchmarkCasesDraft(customBenchmarkCasesDraft),
+    (): ParseCustomBenchmarkCasesResult =>
+      parseCustomBenchmarkCasesDraft(customBenchmarkCasesDraft),
     [customBenchmarkCasesDraft]
   );
 
@@ -222,7 +226,8 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
         : ['assigned_text']
     ) as PromptExploderSegment['type'][];
     const minSegments = Math.max(1, documentState?.segments.length ?? 1);
-    const parsed: ParseCustomBenchmarkCasesResult = parseCustomBenchmarkCasesDraft(customBenchmarkCasesDraft);
+    const parsed: ParseCustomBenchmarkCasesResult =
+      parseCustomBenchmarkCasesDraft(customBenchmarkCasesDraft);
     if (!parsed.ok) {
       toast(`Custom benchmark JSON is invalid: ${parsed.error}`, { variant: 'error' });
       return;
@@ -261,7 +266,8 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
 
   const handleAppendBenchmarkTemplateToCustom = useCallback(
     (suite: 'default' | 'extended') => {
-      const parsed: ParseCustomBenchmarkCasesResult = parseCustomBenchmarkCasesDraft(customBenchmarkCasesDraft);
+      const parsed: ParseCustomBenchmarkCasesResult =
+        parseCustomBenchmarkCasesDraft(customBenchmarkCasesDraft);
       if (!parsed.ok) {
         toast(`Custom benchmark JSON is invalid: ${parsed.error}`, { variant: 'error' });
         return;

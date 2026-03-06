@@ -1,7 +1,4 @@
-export type CaseResolverWorkspaceDetachedPayload<
-  TSchema extends string,
-  TFileEntry,
-> = {
+export type CaseResolverWorkspaceDetachedPayload<TSchema extends string, TFileEntry> = {
   schema: TSchema;
   workspaceRevision: number;
   lastMutationId: string | null;

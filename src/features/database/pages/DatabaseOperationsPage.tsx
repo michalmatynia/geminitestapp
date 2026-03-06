@@ -20,11 +20,7 @@ import {
 
 import { CrudPanel } from '../components/CrudPanel';
 import { SqlQueryConsole } from '../components/SqlQueryConsole';
-import {
-  DatabaseProvider,
-  useDatabaseConfig,
-  useDatabaseData,
-} from '../context/DatabaseContext';
+import { DatabaseProvider, useDatabaseConfig, useDatabaseData } from '../context/DatabaseContext';
 
 function DatabaseOperationsContent(): React.JSX.Element {
   const { dbType, setDbType } = useDatabaseConfig();

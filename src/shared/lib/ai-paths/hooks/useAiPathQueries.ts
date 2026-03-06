@@ -1,8 +1,6 @@
 'use client';
 
-import type {
-  AiPathRuntimeAnalyticsSummary,
-} from '@/shared/contracts/ai-paths';
+import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { ListQuery, VoidMutation, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';

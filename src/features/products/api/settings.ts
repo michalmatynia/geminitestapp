@@ -219,7 +219,10 @@ export async function reorderValidationPatterns(payload: {
 export async function importValidationPatterns(
   payload: ProductValidatorImportRequest
 ): Promise<ProductValidatorImportResult> {
-  return api.post<ProductValidatorImportResult>('/api/v2/products/validator-patterns/import', payload);
+  return api.post<ProductValidatorImportResult>(
+    '/api/v2/products/validator-patterns/import',
+    payload
+  );
 }
 
 export async function getProductValidatorConfig(

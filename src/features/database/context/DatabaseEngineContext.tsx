@@ -86,9 +86,7 @@ export function useDatabaseEngineStateContext(): DatabaseEngineStateContextValue
 export function useDatabaseEngineActionsContext(): DatabaseEngineActionsContextValue {
   const context = useContext(DatabaseEngineActionsContext);
   if (!context) {
-    throw new Error(
-      'useDatabaseEngineActionsContext must be used within a DatabaseEngineProvider'
-    );
+    throw new Error('useDatabaseEngineActionsContext must be used within a DatabaseEngineProvider');
   }
   return context;
 }

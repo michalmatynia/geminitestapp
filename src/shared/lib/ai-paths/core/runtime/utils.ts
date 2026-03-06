@@ -252,8 +252,8 @@ export const buildPromptOutput = (
   const prompt = resolvedConfig.template
     ? renderTemplate(resolvedConfig.template, data, currentValue)
     : Object.entries(data)
-      .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
-      .join('\n');
+        .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
+        .join('\n');
   const imagesValue =
     normalizedImagesInput !== undefined
       ? normalizedImagesInput
@@ -351,7 +351,10 @@ export const pollGraphJob = async (
         const pollErrorMessage = pollResult.error || 'Unknown poll error.';
         if (isAiJobNotFoundErrorMessage(pollErrorMessage)) {
           consecutiveNotFoundAttempts += 1;
-          if (consecutiveNotFoundAttempts <= maxNotFoundGraceAttempts && attempt < maxAttempts - 1) {
+          if (
+            consecutiveNotFoundAttempts <= maxNotFoundGraceAttempts &&
+            attempt < maxAttempts - 1
+          ) {
             await sleep(Math.max(0, intervalMs), signal);
             continue;
           }

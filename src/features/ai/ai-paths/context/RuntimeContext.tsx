@@ -135,10 +135,7 @@ export interface RuntimeActions {
   ) => void;
   setRunControlHandlers: (handlers: RuntimeControlHandlers) => void;
   fireTrigger: (node: AiNode, event?: React.MouseEvent<Element>) => Promise<void>;
-  fireTriggerPersistent: (
-    node: AiNode,
-    event?: React.MouseEvent<Element>
-  ) => Promise<void>;
+  fireTriggerPersistent: (node: AiNode, event?: React.MouseEvent<Element>) => Promise<void>;
   pauseActiveRun: () => void;
   resumeActiveRun: () => void;
   stepActiveRun: (triggerNode?: AiNode) => void;
@@ -430,14 +427,17 @@ export function RuntimeProvider({
     handler();
   }, [reportMissingRunControlHandler]);
 
-  const stepActiveRun = useCallback((triggerNode?: AiNode) => {
-    const handler = runControlHandlersRef.current.stepActiveRun;
-    if (!handler) {
-      reportMissingRunControlHandler('stepActiveRun', { nodeId: triggerNode?.id ?? null });
-      return;
-    }
-    handler(triggerNode);
-  }, [reportMissingRunControlHandler]);
+  const stepActiveRun = useCallback(
+    (triggerNode?: AiNode) => {
+      const handler = runControlHandlersRef.current.stepActiveRun;
+      if (!handler) {
+        reportMissingRunControlHandler('stepActiveRun', { nodeId: triggerNode?.id ?? null });
+        return;
+      }
+      handler(triggerNode);
+    },
+    [reportMissingRunControlHandler]
+  );
 
   const cancelActiveRun = useCallback(() => {
     const handler = runControlHandlersRef.current.cancelActiveRun;
@@ -493,26 +493,32 @@ export function RuntimeProvider({
     [reportMissingRuntimeNodeConfigHandler]
   );
 
-  const runSimulation = useCallback(async (node: AiNode, triggerEvent?: string): Promise<void> => {
-    const handler = runtimeNodeConfigHandlersRef.current.runSimulation;
-    if (!handler) {
-      reportMissingRuntimeNodeConfigHandler('runSimulation', { nodeId: node.id });
-      return;
-    }
-    const result = handler(node, triggerEvent);
-    if (result && typeof (result as Promise<unknown>).then === 'function') {
-      await (result as Promise<unknown>);
-    }
-  }, [reportMissingRuntimeNodeConfigHandler]);
+  const runSimulation = useCallback(
+    async (node: AiNode, triggerEvent?: string): Promise<void> => {
+      const handler = runtimeNodeConfigHandlersRef.current.runSimulation;
+      if (!handler) {
+        reportMissingRuntimeNodeConfigHandler('runSimulation', { nodeId: node.id });
+        return;
+      }
+      const result = handler(node, triggerEvent);
+      if (result && typeof (result as Promise<unknown>).then === 'function') {
+        await (result as Promise<unknown>);
+      }
+    },
+    [reportMissingRuntimeNodeConfigHandler]
+  );
 
-  const sendToAi = useCallback(async (databaseNodeId: string, prompt: string): Promise<void> => {
-    const handler = runtimeNodeConfigHandlersRef.current.sendToAi;
-    if (!handler) {
-      reportMissingRuntimeNodeConfigHandler('sendToAi', { nodeId: databaseNodeId });
-      return;
-    }
-    await handler(databaseNodeId, prompt);
-  }, [reportMissingRuntimeNodeConfigHandler]);
+  const sendToAi = useCallback(
+    async (databaseNodeId: string, prompt: string): Promise<void> => {
+      const handler = runtimeNodeConfigHandlersRef.current.sendToAi;
+      if (!handler) {
+        reportMissingRuntimeNodeConfigHandler('sendToAi', { nodeId: databaseNodeId });
+        return;
+      }
+      await handler(databaseNodeId, prompt);
+    },
+    [reportMissingRuntimeNodeConfigHandler]
+  );
 
   // Actions are stable
   const actions = useMemo<RuntimeActions>(

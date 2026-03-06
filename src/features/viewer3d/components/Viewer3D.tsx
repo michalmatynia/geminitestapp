@@ -229,10 +229,7 @@ function Ground(props: { showGround: boolean }): React.JSX.Element | null {
 }
 
 // Scene lighting setup
-function SceneLighting(props: {
-  preset: LightingPreset;
-  intensity: number;
-}): React.JSX.Element {
+function SceneLighting(props: { preset: LightingPreset; intensity: number }): React.JSX.Element {
   const { preset, intensity } = props;
 
   const lightConfigs = {

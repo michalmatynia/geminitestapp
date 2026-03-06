@@ -13,10 +13,7 @@ import {
 describe('folder-tree-profiles-v2', () => {
   it('rejects invalid profile payloads in strict mode', () => {
     expect(() =>
-      parseFolderTreeProfileV2Strict(
-        { legacy: true },
-        defaultFolderTreeProfilesV2.notes
-      )
+      parseFolderTreeProfileV2Strict({ legacy: true }, defaultFolderTreeProfilesV2.notes)
     ).toThrow();
   });
 
@@ -353,7 +350,8 @@ describe('folder-tree-profiles-v2', () => {
   });
 
   it('inherits fallback search config when payload omits search section for case resolver', () => {
-    const { search: _ignored, ...candidateWithoutSearch } = defaultFolderTreeProfilesV2.case_resolver;
+    const { search: _ignored, ...candidateWithoutSearch } =
+      defaultFolderTreeProfilesV2.case_resolver;
     const profile = parseFolderTreeProfileV2Strict(
       candidateWithoutSearch,
       defaultFolderTreeProfilesV2.case_resolver
@@ -370,7 +368,8 @@ describe('folder-tree-profiles-v2', () => {
   });
 
   it('merges partial search overrides with fallback instance defaults', () => {
-    const { search: _ignored, ...candidateWithoutSearch } = defaultFolderTreeProfilesV2.case_resolver;
+    const { search: _ignored, ...candidateWithoutSearch } =
+      defaultFolderTreeProfilesV2.case_resolver;
     const profile = parseFolderTreeProfileV2Strict(
       {
         ...candidateWithoutSearch,

@@ -22,13 +22,7 @@ interface PreviewSectionBlocksProps {
 }
 
 export function PreviewSectionBlocks(props: PreviewSectionBlocksProps): React.JSX.Element {
-  const {
-    blocks,
-    PreviewBlockItem,
-    showEmptyState = true,
-    emptyState,
-    className,
-  } = props;
+  const { blocks, PreviewBlockItem, showEmptyState = true, emptyState, className } = props;
 
   return (
     <div className={cn('space-y-4', className)}>

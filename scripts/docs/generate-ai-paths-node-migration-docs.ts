@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
-import { NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
+import { NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
 import { resolveDocsGeneratedAt } from './docs-generated-at';
 import { loadNodeMigrationParityEvidenceSummary } from './node-migration-parity-evidence';
 import { loadNodeMigrationRolloutApprovalsSummary } from './node-migration-rollout-approvals';
@@ -85,7 +85,7 @@ type NodeMigrationIndexPayload = {
   schemaVersion: 'ai-paths.node-migration-doc-index.v2';
   generatedAt: string;
   totalNodes: number;
-  pilotNodeTypes: string[];
+  runtimeKernelNodeTypes: string[];
   strategyTotals: {
     legacy_adapter: number;
     code_object_v3: number;
@@ -253,14 +253,14 @@ const v3ContractsHashRaw =
   typeof v3Contracts.contractsHash === 'string' ? v3Contracts.contractsHash.trim().toLowerCase() : '';
 const v3ContractsHash = isSha256Hex(v3ContractsHashRaw) ? v3ContractsHashRaw : null;
 
-const pilotNodeTypes = Array.from(
+const runtimeKernelNodeTypes = Array.from(
   new Set(
-    NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES.map((entry: string): string =>
+    NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES.map((entry: string): string =>
       typeof entry === 'string' ? entry.trim() : ''
     ).filter(Boolean)
   )
 ).sort((left, right) => left.localeCompare(right));
-const pilotNodeTypeSet = new Set<string>(pilotNodeTypes);
+const runtimeKernelNodeTypeSet = new Set<string>(runtimeKernelNodeTypes);
 const parityEvidenceSummary = loadNodeMigrationParityEvidenceSummary({ workspaceRoot });
 const rolloutApprovalsSummary = loadNodeMigrationRolloutApprovalsSummary({ workspaceRoot });
 const rolloutApprovedNodeTypeSet = new Set<string>(rolloutApprovalsSummary.approvedNodeTypes);
@@ -270,8 +270,8 @@ const rows: NodeMigrationIndexRow[] = [...AI_PATHS_NODE_DOCS]
   .map((doc) => {
     const nodeType = doc.type;
     const v2Info = v2InfoByNodeType.get(nodeType);
-    const isPilot = pilotNodeTypeSet.has(nodeType);
-    const runtimeStrategy: 'legacy_adapter' | 'code_object_v3' = isPilot
+    const isRuntimeKernelNodeType = runtimeKernelNodeTypeSet.has(nodeType);
+    const runtimeStrategy: 'legacy_adapter' | 'code_object_v3' = isRuntimeKernelNodeType
       ? 'code_object_v3'
       : 'legacy_adapter';
     const scaffoldFileFromIndex = scaffoldFileByNodeType.get(nodeType) ?? null;
@@ -291,10 +291,11 @@ const rows: NodeMigrationIndexRow[] = [...AI_PATHS_NODE_DOCS]
     const v2ObjectFile = v2Info?.objectFile ?? `docs/ai-paths/node-code-objects-v2/${nodeType}.json`;
     const hasV2ObjectContract = fs.existsSync(path.join(workspaceRoot, v2ObjectFile));
     const parityEvidenceSuiteIds = parityEvidenceSummary.suiteIdsByNodeType[nodeType] ?? [];
-    const rolloutApproved = isPilot && rolloutApprovedNodeTypeSet.has(nodeType);
+    const rolloutApproved =
+      isRuntimeKernelNodeType && rolloutApprovedNodeTypeSet.has(nodeType);
     const migrationChecklistTemplate = {
       semanticContractReviewed: Boolean(semanticNodeFile),
-      v3CodeObjectAuthored: isPilot && Boolean(scaffoldFile),
+      v3CodeObjectAuthored: isRuntimeKernelNodeType && Boolean(scaffoldFile),
       dualRunParityValidated: parityEvidenceSuiteIds.length > 0,
       rolloutApproved,
     } as const;
@@ -312,8 +313,8 @@ const rows: NodeMigrationIndexRow[] = [...AI_PATHS_NODE_DOCS]
       title: doc.title,
       nodeFamily: v2Info?.nodeFamily ?? 'general',
       runtimeStrategy,
-      migrationWave: isPilot ? 'pilot' : 'backlog',
-      codeObjectId: isPilot ? buildCodeObjectId(nodeType) : null,
+      migrationWave: isRuntimeKernelNodeType ? 'pilot' : 'backlog',
+      codeObjectId: isRuntimeKernelNodeType ? buildCodeObjectId(nodeType) : null,
       ports: {
         inputs: doc.inputs,
         outputs: doc.outputs,
@@ -324,8 +325,8 @@ const rows: NodeMigrationIndexRow[] = [...AI_PATHS_NODE_DOCS]
         semanticNodeHash,
         v2ObjectFile,
         v3ScaffoldFile: scaffoldFile,
-        v3ObjectId: isPilot ? v3Entry?.objectId ?? null : null,
-        v3ObjectHash: isPilot ? v3Entry?.objectHash ?? null : null,
+        v3ObjectId: isRuntimeKernelNodeType ? v3Entry?.objectId ?? null : null,
+        v3ObjectHash: isRuntimeKernelNodeType ? v3Entry?.objectHash ?? null : null,
         migrationDocFile,
       },
       migrationChecklistTemplate,
@@ -414,7 +415,7 @@ const payload: NodeMigrationIndexPayload = {
   schemaVersion: 'ai-paths.node-migration-doc-index.v2',
   generatedAt,
   totalNodes: rows.length,
-  pilotNodeTypes,
+  runtimeKernelNodeTypes,
   strategyTotals,
   v3ContractsHash,
   readiness: {
@@ -593,7 +594,7 @@ const guideLines = [
   '2. Author/refresh `node-code-objects-v3/<nodeType>.scaffold.json` with runtime kernel metadata.',
   '3. Keep runtime strategy on `code_object_v3` and set `executionAdapter` to `native_handler_registry`.',
   '4. Validate runtime parity and native registry coverage checks for server/client execution paths.',
-  '5. Keep node type in the canonical runtime-kernel set (`NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES`) and monitor rollout signals.',
+  '5. Keep node type in the canonical runtime-kernel set (`NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES`) and monitor rollout signals.',
   '6. Preserve docs/check guardrails in CI and use rollout approvals for governance sign-off when required.',
   '',
   '## Strategy Totals',

@@ -29,8 +29,7 @@ const {
     vi.fn(),
   resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironmentMock: vi.fn(),
   resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironmentMock:
-    vi.fn(),
+  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironmentMock: vi.fn(),
   resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock: vi.fn(),
   resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironmentMock: vi.fn(),
   resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironmentMock: vi.fn(),
@@ -70,45 +69,41 @@ import { GET_handler, POST_handler } from './handler';
 describe('ai-paths portable-engine remediation dead-letter handler', () => {
   beforeEach(() => {
     requireAiPathsAccessMock.mockReset().mockResolvedValue(undefined);
-    loadPortablePathAuditSinkAutoRemediationDeadLettersMock
-      .mockReset()
-      .mockResolvedValue([
-        {
-          queuedAt: '2026-03-05T00:00:00.000Z',
-          channel: 'webhook',
-          endpoint: 'https://example.test/remediation',
-          payload: { event: 'portable_audit_sink_auto_remediation' },
-          error: 'notification_http_502',
-          statusCode: 502,
-          attemptCount: 1,
-          signature: null,
-        },
-        {
-          queuedAt: '2026-03-05T00:05:00.000Z',
-          channel: 'email',
-          endpoint: 'https://example.test/email',
-          payload: { event: 'portable_audit_sink_auto_remediation_email' },
-          error: 'notification_http_500',
-          statusCode: 500,
-          attemptCount: 1,
-          signature: null,
-        },
-      ]);
-    replayPortablePathAuditSinkAutoRemediationDeadLettersMock
-      .mockReset()
-      .mockResolvedValue({
-        dryRun: true,
-        selectedCount: 1,
-        attemptedCount: 0,
-        deliveredCount: 0,
-        failedCount: 0,
-        skippedCount: 1,
-        removedCount: 0,
-        retainedCount: 2,
-        persisted: true,
-        remainingCount: 2,
-        attempts: [],
-      });
+    loadPortablePathAuditSinkAutoRemediationDeadLettersMock.mockReset().mockResolvedValue([
+      {
+        queuedAt: '2026-03-05T00:00:00.000Z',
+        channel: 'webhook',
+        endpoint: 'https://example.test/remediation',
+        payload: { event: 'portable_audit_sink_auto_remediation' },
+        error: 'notification_http_502',
+        statusCode: 502,
+        attemptCount: 1,
+        signature: null,
+      },
+      {
+        queuedAt: '2026-03-05T00:05:00.000Z',
+        channel: 'email',
+        endpoint: 'https://example.test/email',
+        payload: { event: 'portable_audit_sink_auto_remediation_email' },
+        error: 'notification_http_500',
+        statusCode: 500,
+        attemptCount: 1,
+        signature: null,
+      },
+    ]);
+    replayPortablePathAuditSinkAutoRemediationDeadLettersMock.mockReset().mockResolvedValue({
+      dryRun: true,
+      selectedCount: 1,
+      attemptedCount: 0,
+      deliveredCount: 0,
+      failedCount: 0,
+      skippedCount: 1,
+      removedCount: 0,
+      retainedCount: 2,
+      persisted: true,
+      remainingCount: 2,
+      attempts: [],
+    });
     resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironmentMock
       .mockReset()
       .mockReturnValue(100);
@@ -170,10 +165,9 @@ describe('ai-paths portable-engine remediation dead-letter handler', () => {
 
   it('runs dead-letter replay with parsed request options', async () => {
     const response = await POST_handler(
-      new NextRequest(
-        'http://localhost/api/ai-paths/portable-engine/remediation-dead-letters',
-        { method: 'POST' }
-      ),
+      new NextRequest('http://localhost/api/ai-paths/portable-engine/remediation-dead-letters', {
+        method: 'POST',
+      }),
       {
         body: {
           action: 'replay',
@@ -208,9 +202,7 @@ describe('ai-paths portable-engine remediation dead-letter handler', () => {
       })
     );
     const payload = (await response.json()) as Record<string, unknown>;
-    expect(payload['kind']).toBe(
-      'portable_audit_sink_auto_remediation_dead_letter_replay'
-    );
+    expect(payload['kind']).toBe('portable_audit_sink_auto_remediation_dead_letter_replay');
     expect(payload['request']).toEqual(
       expect.objectContaining({
         action: 'replay',
@@ -231,16 +223,13 @@ describe('ai-paths portable-engine remediation dead-letter handler', () => {
         ),
         {} as Parameters<typeof GET_handler>[1]
       )
-    ).rejects.toThrow(
-      'Remediation dead-letter channel must be one of: webhook, email.'
-    );
+    ).rejects.toThrow('Remediation dead-letter channel must be one of: webhook, email.');
 
     await expect(
       POST_handler(
-        new NextRequest(
-          'http://localhost/api/ai-paths/portable-engine/remediation-dead-letters',
-          { method: 'POST' }
-        ),
+        new NextRequest('http://localhost/api/ai-paths/portable-engine/remediation-dead-letters', {
+          method: 'POST',
+        }),
         {
           body: {
             action: 'invalid',

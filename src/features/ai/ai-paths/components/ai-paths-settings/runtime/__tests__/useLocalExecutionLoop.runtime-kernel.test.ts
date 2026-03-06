@@ -1,11 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type {
-  AiNode,
-  AiPathRuntimeNodeStatus,
-  RuntimeState,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, AiPathRuntimeNodeStatus, RuntimeState } from '@/shared/lib/ai-paths';
 import { normalizeAiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
 
 import type { LocalExecutionArgs } from '../types';
@@ -13,9 +9,8 @@ import type { LocalExecutionArgs } from '../types';
 const evaluateGraphClientMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/shared/lib/ai-paths', async () => {
-  const actual = await vi.importActual<typeof import('@/shared/lib/ai-paths')>(
-    '@/shared/lib/ai-paths'
-  );
+  const actual =
+    await vi.importActual<typeof import('@/shared/lib/ai-paths')>('@/shared/lib/ai-paths');
   return {
     ...actual,
     evaluateGraphClient: evaluateGraphClientMock,
@@ -57,13 +52,8 @@ const buildLocalExecutionArgs = (): LocalExecutionArgs => {
   };
 
   const setRuntimeState = vi.fn(
-    (
-      next:
-        | RuntimeState
-        | ((previous: RuntimeState) => RuntimeState)
-    ): void => {
-      runtimeStateRef.current =
-        typeof next === 'function' ? next(runtimeStateRef.current) : next;
+    (next: RuntimeState | ((previous: RuntimeState) => RuntimeState)): void => {
+      runtimeStateRef.current = typeof next === 'function' ? next(runtimeStateRef.current) : next;
     }
   );
 
@@ -86,7 +76,7 @@ const buildLocalExecutionArgs = (): LocalExecutionArgs => {
     pathName: 'Path Main',
     pathDescription: '',
     runtimeKernelConfig: {
-      pilotNodeTypes: 'Template Node, parser',
+      nodeTypes: 'Template Node, parser',
       codeObjectResolverIds: ' resolver.primary , resolver.fallback ',
       strictCodeObjectRegistry: 'yes',
     },
@@ -148,7 +138,7 @@ describe('useLocalExecutionLoop runtime kernel forwarding', () => {
     expect(evaluateGraphClientMock).toHaveBeenCalledTimes(1);
     expect(evaluateGraphClientMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        runtimeKernelPilotNodeTypes: ['template_node', 'parser'],
+        runtimeKernelNodeTypes: ['template_node', 'parser'],
         runtimeKernelCodeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
         runtimeKernelStrictNativeRegistry: true,
       })

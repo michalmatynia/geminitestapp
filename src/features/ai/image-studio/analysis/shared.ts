@@ -46,19 +46,19 @@ export const normalizeImageStudioAnalysisLayoutConfig = (
     targetCanvasWidth:
       config?.targetCanvasWidth != null
         ? Math.max(
-          IMAGE_STUDIO_CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE_PX,
-          Math.min(IMAGE_STUDIO_CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE_PX, config.targetCanvasWidth)
-        )
+            IMAGE_STUDIO_CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE_PX,
+            Math.min(IMAGE_STUDIO_CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE_PX, config.targetCanvasWidth)
+          )
         : null,
     targetCanvasHeight:
       config?.targetCanvasHeight != null
         ? Math.max(
-          IMAGE_STUDIO_CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE_PX,
-          Math.min(
-            IMAGE_STUDIO_CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE_PX,
-            config.targetCanvasHeight
+            IMAGE_STUDIO_CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE_PX,
+            Math.min(
+              IMAGE_STUDIO_CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE_PX,
+              config.targetCanvasHeight
+            )
           )
-        )
         : null,
     whiteThreshold: Math.max(
       IMAGE_STUDIO_CENTER_LAYOUT_MIN_WHITE_THRESHOLD,

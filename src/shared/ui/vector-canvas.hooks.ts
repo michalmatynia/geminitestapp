@@ -36,12 +36,8 @@ export interface UseVectorCanvasInteractionsProps {
   enableTwoFingerRotate: boolean;
   baseCanvasWidthPx?: number | null;
   baseCanvasHeightPx?: number | null;
-  onViewCropRectChange?: (
-    cropRect: VectorCanvasViewCropRect | null
-  ) => void;
-  onImageContentFrameChange?: (
-    frame: VectorCanvasImageContentFrame | null
-  ) => void;
+  onViewCropRectChange?: (cropRect: VectorCanvasViewCropRect | null) => void;
+  onImageContentFrameChange?: (frame: VectorCanvasImageContentFrame | null) => void;
   imageMoveEnabled: boolean;
   onImageOffsetChange?: (offset: { x: number; y: number }) => void;
   minViewScale: number;
@@ -403,7 +399,11 @@ export function useVectorCanvasInteractions({
     event.stopPropagation?.();
 
     const normalizedDeltaY =
-      event.deltaMode === 1 ? event.deltaY * 16 : event.deltaMode === 2 ? event.deltaY * 240 : event.deltaY;
+      event.deltaMode === 1
+        ? event.deltaY * 16
+        : event.deltaMode === 2
+          ? event.deltaY * 240
+          : event.deltaY;
     const currentScale = viewTransformRef.current.scale;
     const zoomFactor = 1 - normalizedDeltaY * 0.001;
     const nextScale = Math.min(8, Math.max(0.25, currentScale * zoomFactor));

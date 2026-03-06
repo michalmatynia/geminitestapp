@@ -16,7 +16,12 @@ import {
 } from '@/shared/lib/ai-paths';
 import { Button, FormField, Input, SelectSimple, Textarea } from '@/shared/ui';
 
-import { useAiPathGraph, useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../AiPathConfigContext';
+import {
+  useAiPathGraph,
+  useAiPathOrchestrator,
+  useAiPathRuntime,
+  useAiPathSelection,
+} from '../AiPathConfigContext';
 
 export function ParserNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();

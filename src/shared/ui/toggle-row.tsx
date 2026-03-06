@@ -48,14 +48,12 @@ type ToggleRowControlRuntimeValue = {
   controlWrapper?: (control: ReactNode) => ReactNode;
 };
 
-const {
-  Context: ToggleRowControlRuntimeContext,
-  useStrictContext: useToggleRowControlRuntime,
-} = createStrictContext<ToggleRowControlRuntimeValue>({
-  hookName: 'useToggleRowControlRuntime',
-  providerName: 'ToggleRowControlRuntimeProvider',
-  displayName: 'ToggleRowControlRuntimeContext',
-});
+const { Context: ToggleRowControlRuntimeContext, useStrictContext: useToggleRowControlRuntime } =
+  createStrictContext<ToggleRowControlRuntimeValue>({
+    hookName: 'useToggleRowControlRuntime',
+    providerName: 'ToggleRowControlRuntimeProvider',
+    displayName: 'ToggleRowControlRuntimeContext',
+  });
 
 type ToggleRowControlRuntimeProviderProps = {
   value: ToggleRowControlRuntimeValue;

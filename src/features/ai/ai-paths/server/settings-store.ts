@@ -258,6 +258,7 @@ export const runAiPathsMaintenance = async (
   const requestedIds = resolveRequestedMaintenanceActionIds(report, actionIds);
 
   const appliedActionIds: AiPathsMaintenanceActionId[] = [];
+  const deletedKeys = new Set<string>();
   let currentRecords = [...allSettings];
 
   for (const id of requestedIds) {
@@ -268,11 +269,15 @@ export const runAiPathsMaintenance = async (
     if (actionReport.success) {
       appliedActionIds.push(id);
       currentRecords = actionReport.nextRecords;
+      actionReport.deletedKeys.forEach((key) => deletedKeys.add(key));
     }
   }
 
   if (appliedActionIds.length > 0) {
     await upsertAiPathsSettings(currentRecords);
+    if (deletedKeys.size > 0) {
+      await deleteAiPathsSettings([...deletedKeys]);
+    }
   }
 
   return {

@@ -44,18 +44,15 @@ export const formatRuntimeStatusLabel = (status: string): string =>
     : status === 'advance_pending'
       ? 'Processing'
       : status
-        .split('_')
-        .map((part: string): string =>
-          part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part
-        )
-        .join(' ');
+          .split('_')
+          .map((part: string): string =>
+            part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part
+          )
+          .join(' ');
 
 export const resolveEdgeRuntimeActive = (status: string | null): boolean => {
   if (!status) return false;
-  return (
-    EDGE_FLOWING_RUNTIME_STATUSES.has(status) &&
-    !EDGE_TERMINAL_RUNTIME_STATUSES.has(status)
-  );
+  return EDGE_FLOWING_RUNTIME_STATUSES.has(status) && !EDGE_TERMINAL_RUNTIME_STATUSES.has(status);
 };
 
 export const resolveNodeBlockerProcessing = (input: {

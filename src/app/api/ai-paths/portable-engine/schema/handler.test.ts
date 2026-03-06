@@ -66,11 +66,14 @@ describe('ai-paths portable-engine schema handler', () => {
     expect(etag).toBeTruthy();
 
     const response = await GET_handler(
-      new NextRequest('http://localhost/api/ai-paths/portable-engine/schema?kind=portable_package', {
-        headers: {
-          'if-none-match': etag ?? '',
-        },
-      }),
+      new NextRequest(
+        'http://localhost/api/ai-paths/portable-engine/schema?kind=portable_package',
+        {
+          headers: {
+            'if-none-match': etag ?? '',
+          },
+        }
+      ),
       {} as Parameters<typeof GET_handler>[1]
     );
 

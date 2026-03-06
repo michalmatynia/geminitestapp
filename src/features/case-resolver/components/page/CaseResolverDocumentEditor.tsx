@@ -380,13 +380,13 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                     updateEditingDocumentDraft({
                       documentDate: val
                         ? {
-                          source: 'metadata',
-                          sourceLine: null,
-                          cityHint: null,
-                          action: 'useDetectedDate',
-                          ...draft.documentDate,
-                          isoDate: val,
-                        }
+                            source: 'metadata',
+                            sourceLine: null,
+                            cityHint: null,
+                            action: 'useDetectedDate',
+                            ...draft.documentDate,
+                            isoDate: val,
+                          }
                         : null,
                     });
                   }}

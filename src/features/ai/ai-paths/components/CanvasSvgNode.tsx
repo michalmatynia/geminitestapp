@@ -152,8 +152,7 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
     typeof runtimeState.outputs?.[node.id]?.['status'] === 'string'
       ? runtimeState.outputs?.[node.id]?.['status']
       : null);
-  const runtimeNodeStatus =
-    normalizeRuntimeStatus(runtimeNodeStatusRaw);
+  const runtimeNodeStatus = normalizeRuntimeStatus(runtimeNodeStatusRaw);
   const runtimeStatusColors = statusPalette(runtimeNodeStatus);
   const nodeDiagnosticsSummary = nodeDiagnosticsById[node.id];
   const nodeDiagnosticsBadge = resolveNodeDiagnosticsBadgePalette(nodeDiagnosticsSummary);
@@ -437,7 +436,9 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
 
       {node.type === 'trigger' && (
         <g transform={`translate(${NODE_WIDTH - 92} 6)`}>
-          {isTriggerBlocked && triggerBlockedMessage ? <title>{triggerBlockedMessage}</title> : null}
+          {isTriggerBlocked && triggerBlockedMessage ? (
+            <title>{triggerBlockedMessage}</title>
+          ) : null}
           <rect
             data-node-action='fire-trigger'
             data-node-id={node.id}

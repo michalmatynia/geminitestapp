@@ -94,19 +94,19 @@ export const buildCaseResolverWorkspaceDetachedHistoryPayload = (
       : null,
   files: Array.isArray(workspace.files)
     ? workspace.files
-      .map((file): CaseResolverWorkspaceDetachedHistoryFileEntry | null => {
-        const documentHistory = Array.isArray(file.documentHistory) ? file.documentHistory : [];
-        if (documentHistory.length === 0) return null;
-        return {
-          id: file.id,
-          documentHistory,
-        };
-      })
-      .filter(
-        (
-          entry: CaseResolverWorkspaceDetachedHistoryFileEntry | null
-        ): entry is CaseResolverWorkspaceDetachedHistoryFileEntry => Boolean(entry)
-      )
+        .map((file): CaseResolverWorkspaceDetachedHistoryFileEntry | null => {
+          const documentHistory = Array.isArray(file.documentHistory) ? file.documentHistory : [];
+          if (documentHistory.length === 0) return null;
+          return {
+            id: file.id,
+            documentHistory,
+          };
+        })
+        .filter(
+          (
+            entry: CaseResolverWorkspaceDetachedHistoryFileEntry | null
+          ): entry is CaseResolverWorkspaceDetachedHistoryFileEntry => Boolean(entry)
+        )
     : [],
 });
 
@@ -132,7 +132,10 @@ export const parseCaseResolverWorkspaceDetachedHistoryPayload = (
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
   const record = parsed as Record<string, unknown>;
   const schemaRaw = record['schema'];
-  if (typeof schemaRaw !== 'string' || schemaRaw !== CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA) {
+  if (
+    typeof schemaRaw !== 'string' ||
+    schemaRaw !== CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA
+  ) {
     return null;
   }
   const workspaceRevisionRaw = record['workspaceRevision'];
@@ -180,11 +183,16 @@ export const applyCaseResolverWorkspaceDetachedHistoryPayload = ({
   if (detachedHistoryPayload.files.length === 0 || workspace.files.length === 0) {
     return workspace;
   }
-  const historyByFileId = new Map<string, CaseResolverWorkspace['files'][number]['documentHistory']>(
-    detachedHistoryPayload.files.map((entry): [string, CaseResolverWorkspace['files'][number]['documentHistory']] => [
-      entry.id,
-      entry.documentHistory,
-    ])
+  const historyByFileId = new Map<
+    string,
+    CaseResolverWorkspace['files'][number]['documentHistory']
+  >(
+    detachedHistoryPayload.files.map(
+      (entry): [string, CaseResolverWorkspace['files'][number]['documentHistory']] => [
+        entry.id,
+        entry.documentHistory,
+      ]
+    )
   );
   let updated = false;
   const files = workspace.files.map((file): CaseResolverWorkspace['files'][number] => {
@@ -198,8 +206,8 @@ export const applyCaseResolverWorkspaceDetachedHistoryPayload = ({
   });
   return updated
     ? {
-      ...workspace,
-      files,
-    }
+        ...workspace,
+        files,
+      }
     : workspace;
 };

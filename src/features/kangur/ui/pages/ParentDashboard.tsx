@@ -1,12 +1,24 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, BarChart2, BookOpen, ClipboardList, LogIn, LogOut, UserRound } from 'lucide-react';
+import {
+  ArrowLeft,
+  BarChart2,
+  BookOpen,
+  ClipboardList,
+  LogIn,
+  LogOut,
+  UserRound,
+} from 'lucide-react';
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import Link from 'next/link';
-import { AssignmentPanel, ProgressOverview, ScoreHistory } from '@/features/kangur/ui/components/dashboard';
+import {
+  AssignmentPanel,
+  ProgressOverview,
+  ScoreHistory,
+} from '@/features/kangur/ui/components/dashboard';
 
 type ParentDashboardTabId = 'progress' | 'scores' | 'assign';
 
@@ -29,6 +41,8 @@ export default function ParentDashboard() {
 
   const progress = useKangurProgressState();
   const viewerName = user?.full_name?.trim() || user?.email?.trim() || 'Konto';
+  const scoreViewerName = user?.full_name?.trim() || null;
+  const scoreViewerEmail = user?.email?.trim() || null;
   const viewerRoleLabel = user?.role === 'admin' ? 'Nauczyciel' : 'Rodzic';
 
   if (!isAuthenticated) {
@@ -141,8 +155,14 @@ export default function ParentDashboard() {
             exit={{ opacity: 0, y: -16 }}
           >
             {activeTab === 'progress' && <ProgressOverview progress={progress} />}
-            {activeTab === 'scores' && <ScoreHistory playerName={null} />}
-            {activeTab === 'assign' && <AssignmentPanel />}
+            {activeTab === 'scores' && (
+              <ScoreHistory
+                playerName={scoreViewerName}
+                createdBy={scoreViewerEmail}
+                basePath={basePath}
+              />
+            )}
+            {activeTab === 'assign' && <AssignmentPanel basePath={basePath} progress={progress} />}
           </motion.div>
         </AnimatePresence>
       </div>

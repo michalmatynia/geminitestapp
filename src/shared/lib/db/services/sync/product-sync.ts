@@ -314,12 +314,12 @@ export const syncProductsPrismaToMongo: SyncHandler = async ({
       categoryId,
       categories: categoryId
         ? [
-          {
-            productId: product.id,
-            categoryId,
-            assignedAt: new Date(),
-          },
-        ]
+            {
+              productId: product.id,
+              categoryId,
+              assignedAt: new Date(),
+            },
+          ]
         : [],
       tags: product.tags.map((entry) => ({
         productId: product.id,

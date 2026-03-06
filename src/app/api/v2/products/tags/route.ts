@@ -3,7 +3,11 @@ export const revalidate = 300;
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { GET_handler, POST_handler, productTagCreateSchema } from '@/app/api/v2/products/tags/handler';
+import {
+  GET_handler,
+  POST_handler,
+  productTagCreateSchema,
+} from '@/app/api/v2/products/tags/handler';
 
 export const GET = apiHandler(GET_handler, { source: 'products.tags.GET' });
 

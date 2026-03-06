@@ -49,17 +49,18 @@ export const resolveAiPathsRuntimeCodeObjectHandler = (
   const resolverIds =
     Array.isArray(options?.resolverIds) && options?.resolverIds.length > 0
       ? options.resolverIds
-        .map((entry: string): string => normalizeResolverId(entry))
-        .filter(Boolean)
+          .map((entry: string): string => normalizeResolverId(entry))
+          .filter(Boolean)
       : null;
 
   const resolverEntries =
     resolverIds && resolverIds.length > 0
       ? resolverIds
-        .map((id: string): NodeCodeObjectHandlerResolver | null =>
-          CODE_OBJECT_RESOLVER_REGISTRY.get(id) ?? null
-        )
-        .filter((resolver): resolver is NodeCodeObjectHandlerResolver => Boolean(resolver))
+          .map(
+            (id: string): NodeCodeObjectHandlerResolver | null =>
+              CODE_OBJECT_RESOLVER_REGISTRY.get(id) ?? null
+          )
+          .filter((resolver): resolver is NodeCodeObjectHandlerResolver => Boolean(resolver))
       : listResolvers();
 
   for (const resolver of resolverEntries) {

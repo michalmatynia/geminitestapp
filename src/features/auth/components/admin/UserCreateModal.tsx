@@ -44,12 +44,7 @@ const FIELDS: SettingsField<UserCreateFormState>[] = [
 export function UserCreateModal(): React.JSX.Element | null {
   const { toast } = useToast();
   const { mutations, refetch } = useUsersData();
-  const {
-    createOpen: isOpen,
-    setCreateOpen,
-    createForm,
-    setCreateForm,
-  } = useUsersDialogs();
+  const { createOpen: isOpen, setCreateOpen, createForm, setCreateForm } = useUsersDialogs();
 
   const isSaving = mutations.register.isPending;
   const onClose = () => setCreateOpen(false);

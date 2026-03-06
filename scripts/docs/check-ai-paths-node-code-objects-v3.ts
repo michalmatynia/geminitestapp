@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 
-import { NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
+import { NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
 import { listUnexpectedFilesBySuffix } from './artifact-hygiene';
 
 type NodeCodeObjectV3IndexScaffold = {
@@ -21,7 +21,8 @@ type NodeCodeObjectV3Index = {
   generatedAt: string;
   specVersion: string;
   totalObjects: number;
-  pilotNodeTypes: string[];
+  runtimeKernelNodeTypes?: string[];
+  pilotNodeTypes?: string[];
   objects: Array<{
     id: string;
     nodeType: string;
@@ -98,19 +99,28 @@ const isSha256Hex = (value: string): boolean => /^[a-f0-9]{64}$/i.test(value);
 
 const toSafeString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
+
+const readDeclaredRuntimeKernelNodeTypes = (payload: NodeCodeObjectV3Index): string[] =>
+  (
+    Array.isArray(payload.runtimeKernelNodeTypes)
+      ? payload.runtimeKernelNodeTypes
+      : payload.pilotNodeTypes ?? []
+  )
+    .map(toSafeString)
+    .filter(Boolean);
 const ALLOWED_EXECUTION_ADAPTERS = new Set<string>([
   'legacy_handler_bridge',
   'native_handler_registry',
 ]);
 
-const pilotNodeTypes = Array.from(
+const runtimeKernelNodeTypes = Array.from(
   new Set(
-    NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES.map((entry: string): string =>
+    NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES.map((entry: string): string =>
       typeof entry === 'string' ? entry.trim() : ''
     ).filter(Boolean)
   )
 ).sort((left, right) => left.localeCompare(right));
-const pilotNodeTypeSet = new Set<string>(pilotNodeTypes);
+const runtimeKernelNodeTypeSet = new Set<string>(runtimeKernelNodeTypes);
 
 const errors: string[] = [];
 const legacyAdapterNodeTypes: string[] = [];
@@ -118,7 +128,7 @@ const legacyAdapterNodeTypes: string[] = [];
 const unexpectedScaffoldFiles = listUnexpectedFilesBySuffix({
   directoryPath: outputDir,
   suffix: '.scaffold.json',
-  expectedBaseNames: pilotNodeTypeSet,
+  expectedBaseNames: runtimeKernelNodeTypeSet,
   excludedFileNames: ['index.scaffold.json'],
 });
 
@@ -228,7 +238,7 @@ for (const row of scaffoldRows) {
   }
   scaffoldNodeTypes.add(nodeType);
 
-  if (!pilotNodeTypeSet.has(nodeType)) {
+  if (!runtimeKernelNodeTypeSet.has(nodeType)) {
     errors.push(`index.scaffold.json has unexpected nodeType=${nodeType}.`);
   }
 
@@ -240,21 +250,21 @@ for (const row of scaffoldRows) {
   }
 }
 
-for (const pilotNodeType of pilotNodeTypes) {
-  if (!scaffoldNodeTypes.has(pilotNodeType)) {
-    errors.push(`index.scaffold.json missing pilot nodeType=${pilotNodeType}.`);
+for (const runtimeKernelNodeType of runtimeKernelNodeTypes) {
+  if (!scaffoldNodeTypes.has(runtimeKernelNodeType)) {
+    errors.push(`index.scaffold.json missing runtime-kernel nodeType=${runtimeKernelNodeType}.`);
   }
 }
 
-const declaredPilotTypes = new Set<string>((indexPayload.pilotNodeTypes ?? []).map(toSafeString).filter(Boolean));
-for (const pilotNodeType of pilotNodeTypes) {
-  if (!declaredPilotTypes.has(pilotNodeType)) {
-    errors.push(`index.json missing pilotNodeType=${pilotNodeType}.`);
+const declaredRuntimeKernelTypes = new Set<string>(readDeclaredRuntimeKernelNodeTypes(indexPayload));
+for (const runtimeKernelNodeType of runtimeKernelNodeTypes) {
+  if (!declaredRuntimeKernelTypes.has(runtimeKernelNodeType)) {
+    errors.push(`index.json missing runtimeKernelNodeType=${runtimeKernelNodeType}.`);
   }
 }
-for (const declared of declaredPilotTypes) {
-  if (!pilotNodeTypeSet.has(declared)) {
-    errors.push(`index.json has unexpected pilotNodeType=${declared}.`);
+for (const declared of declaredRuntimeKernelTypes) {
+  if (!runtimeKernelNodeTypeSet.has(declared)) {
+    errors.push(`index.json has unexpected runtimeKernelNodeType=${declared}.`);
   }
 }
 
@@ -271,7 +281,7 @@ for (const row of indexRows) {
   }
   seenIndexNodeTypes.add(nodeType);
 
-  if (!pilotNodeTypeSet.has(nodeType)) {
+  if (!runtimeKernelNodeTypeSet.has(nodeType)) {
     errors.push(`index.json has unexpected nodeType=${nodeType}.`);
   }
 
@@ -403,21 +413,21 @@ for (const row of indexRows) {
   }
 }
 
-for (const pilotNodeType of pilotNodeTypes) {
-  if (!seenIndexNodeTypes.has(pilotNodeType)) {
-    errors.push(`index.json missing pilot nodeType=${pilotNodeType}.`);
+for (const runtimeKernelNodeType of runtimeKernelNodeTypes) {
+  if (!seenIndexNodeTypes.has(runtimeKernelNodeType)) {
+    errors.push(`index.json missing pilot nodeType=${runtimeKernelNodeType}.`);
   }
 }
 
 const contractNodeTypes = new Set<string>(Object.keys(contractsPayload.contracts ?? {}));
 for (const contractNodeType of contractNodeTypes) {
-  if (!pilotNodeTypeSet.has(contractNodeType)) {
+  if (!runtimeKernelNodeTypeSet.has(contractNodeType)) {
     errors.push(`contracts.json has unexpected nodeType=${contractNodeType}.`);
   }
 }
-for (const pilotNodeType of pilotNodeTypes) {
-  if (!contractNodeTypes.has(pilotNodeType)) {
-    errors.push(`contracts.json missing pilot nodeType=${pilotNodeType}.`);
+for (const runtimeKernelNodeType of runtimeKernelNodeTypes) {
+  if (!contractNodeTypes.has(runtimeKernelNodeType)) {
+    errors.push(`contracts.json missing pilot nodeType=${runtimeKernelNodeType}.`);
   }
 }
 
@@ -428,7 +438,7 @@ if (unexpectedScaffoldFiles.length > 0) {
 }
 if (legacyAdapterNodeTypes.length > 0) {
   errors.push(
-    `All v3 pilot node contracts must use native_handler_registry. Legacy adapters found for: ${legacyAdapterNodeTypes
+    `All runtime-kernel node contracts must use native_handler_registry. Legacy adapters found for: ${legacyAdapterNodeTypes
       .sort((left, right) => left.localeCompare(right))
       .join(', ')}`
   );
@@ -442,4 +452,6 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log(`AI-Paths node code object v3 check passed for ${pilotNodeTypes.length} pilot node type(s).`);
+console.log(
+  `AI-Paths node code object v3 check passed for ${runtimeKernelNodeTypes.length} runtime-kernel node type(s).`
+);

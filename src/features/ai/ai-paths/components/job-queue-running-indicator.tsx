@@ -8,7 +8,9 @@ type RunningIndicatorRuntimeValue = {
   label: string;
 };
 
-const RunningIndicatorRuntimeContext = React.createContext<RunningIndicatorRuntimeValue | null>(null);
+const RunningIndicatorRuntimeContext = React.createContext<RunningIndicatorRuntimeValue | null>(
+  null
+);
 
 function useRunningIndicatorRuntime(): RunningIndicatorRuntimeValue {
   const runtime = React.useContext(RunningIndicatorRuntimeContext);

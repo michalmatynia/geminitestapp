@@ -29,7 +29,7 @@ export const decodeHtmlEntities = (value: string): string => {
     lt: '<',
     gt: '>',
     quot: '"',
-    apos: '\'',
+    apos: "'",
     nbsp: ' ',
   };
 

@@ -276,13 +276,9 @@ export const handleSaveCaseDraftImpl = async (args: {
       ? normalizeOptionalCaseId(caseDraft.categoryId)
       : normalizeOptionalCaseId(existingCase.categoryId);
   const resolvedIsLocked =
-    caseDraft.isLocked !== undefined
-      ? caseDraft.isLocked === true
-      : existingCase.isLocked === true;
+    caseDraft.isLocked !== undefined ? caseDraft.isLocked === true : existingCase.isLocked === true;
   const resolvedIsSent =
-    caseDraft.isSent !== undefined
-      ? caseDraft.isSent === true
-      : existingCase.isSent === true;
+    caseDraft.isSent !== undefined ? caseDraft.isSent === true : existingCase.isSent === true;
 
   setIsCreatingCase(true);
   try {
@@ -389,15 +385,15 @@ export const handleUpdateCaseImpl = async (args: {
       files: workspace.files.map((file) =>
         file.id === editingCaseId
           ? {
-            ...file,
-            name: editingCaseName.trim(),
-            parentCaseId: editingCaseParentId,
-            referenceCaseIds: editingCaseReferenceCaseIds,
-            tagId: editingCaseTagId,
-            caseIdentifierId: editingCaseCaseIdentifierId,
-            categoryId: editingCaseCategoryId,
-            updatedAt: new Date().toISOString(),
-          }
+              ...file,
+              name: editingCaseName.trim(),
+              parentCaseId: editingCaseParentId,
+              referenceCaseIds: editingCaseReferenceCaseIds,
+              tagId: editingCaseTagId,
+              caseIdentifierId: editingCaseCaseIdentifierId,
+              categoryId: editingCaseCategoryId,
+              updatedAt: new Date().toISOString(),
+            }
           : file
       ),
     };

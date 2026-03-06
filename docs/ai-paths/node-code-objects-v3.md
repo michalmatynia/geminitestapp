@@ -56,7 +56,7 @@ Current runtime-kernel set:
 - `validator`
 - `viewer`
 
-Pilot nodes now resolve via contract-backed native handler registry on server runtime.
+Approved runtime-kernel nodes now resolve via contract-backed native handler registry on server runtime.
 Server runtime resolves `code_object_v3` handlers through `docs/ai-paths/node-code-objects-v3/contracts.json`.
 Supported adapters:
 - `legacy_handler_bridge`
@@ -67,17 +67,19 @@ Remaining server-only native node families are tracked explicitly in runtime gua
 
 Rollout control:
 
-- runtime option `runtimeKernelPilotNodeTypes: string[]` allows scoped runtime-kernel overrides for test/canary execution. Omitted or empty persisted values fall back to the canonical approved node set.
+- runtime option `runtimeKernelNodeTypes: string[]` is the canonical way to scope runtime-kernel overrides for test/canary execution. `runtimeKernelPilotNodeTypes` remains as a deprecated compatibility alias. Omitted or empty persisted values fall back to the canonical approved node set.
 - runtime option `runtimeKernelStrictNativeRegistry: boolean` controls whether missing native mappings fail closed (`true`, default) or fall back to the legacy bridge (`false`).
 - product-run executor supports global persisted settings:
-  - `ai_paths_runtime_kernel_pilot_node_types`: JSON array or comma-delimited node types
+  - `ai_paths_runtime_kernel_node_types`: JSON array or comma-delimited node types
+  - `ai_paths_runtime_kernel_pilot_node_types`: deprecated compatibility alias
   - `ai_paths_runtime_kernel_strict_native_registry`: `true | false`
 - Admin UI control is available in AI-Paths Canvas action bar under `Runtime Kernel`.
 - `strict_native_registry` can be configured from Canvas runtime controls (global + per-path override), and from env/run-meta/settings API paths.
-- `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES=agent,api_advanced,audio_oscillator,audio_speaker,constant,context,bundle,compare,database,delay,db_schema,description_updater,ai_description,fetcher,gate,http,iterator,learner_agent,mapper,math,model,mutator,notification,parser,playwright,poll,prompt,regex,router,simulation,string_mutator,template,trigger,validation_pattern,validator,viewer`
+- `AI_PATHS_RUNTIME_KERNEL_NODE_TYPES=agent,api_advanced,audio_oscillator,audio_speaker,constant,context,bundle,compare,database,delay,db_schema,description_updater,ai_description,fetcher,gate,http,iterator,learner_agent,mapper,math,model,mutator,notification,parser,playwright,poll,prompt,regex,router,simulation,string_mutator,template,trigger,validation_pattern,validator,viewer`
+- `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES=...` remains as a deprecated compatibility alias.
 - `AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY=true`
 - `runtimeKernelMode`, `ai_paths_runtime_kernel_mode`, and `AI_PATHS_RUNTIME_KERNEL_MODE` remain deprecated compatibility inputs only. They are normalized to `auto` and should not be used for rollout control.
-- Use `npm run cleanup:ai-paths-runtime-kernel-settings` to normalize stale runtime-kernel mode aliases, pilot-node lists, resolver ids, and strict-native registry flags. `cleanup:ai-paths-runtime-kernel-mode` remains as a deprecated alias.
+- Use `npm run cleanup:ai-paths-runtime-kernel-settings` to normalize stale runtime-kernel mode aliases, node-type overrides, resolver ids, and strict-native registry flags. `cleanup:ai-paths-runtime-kernel-mode` remains as a deprecated alias.
 
 ## Directory
 
@@ -143,7 +145,7 @@ As part of this pipeline, semantic/v2 generation also prunes stale per-node JSON
 The check validates migration docs against live node registry metadata (`title`, `ports`, config-field count, runtime-kernel strategy, semantic hashes, and per-node sheets).
 It also validates runtime-kernel-set linkage to v3 object IDs/hashes from `docs/ai-paths/node-code-objects-v3/index.json`.
 It also validates checklist parity readiness against `docs/ai-paths/node-code-objects-v3/parity-evidence.json`.
-Pilot nodes are required to have parity-evidence suite coverage; missing coverage fails `docs:ai-paths:node-migration:check`.
+Runtime-kernel nodes are required to have parity-evidence suite coverage; missing coverage fails `docs:ai-paths:node-migration:check`.
 
 Dual-run parity suite for approved kernel nodes:
 
@@ -151,7 +153,7 @@ Dual-run parity suite for approved kernel nodes:
 npm run test:ai-paths:v3-pilot-parity
 ```
 
-Pilot parity-evidence coverage regression suite:
+Runtime-kernel parity-evidence coverage regression suite:
 
 ```bash
 npm run test:ai-paths:node-migration-parity-evidence

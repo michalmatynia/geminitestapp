@@ -41,7 +41,9 @@ describe('collectInvalidPathSavePayloadIssues', () => {
 
 describe('shouldExposePathSaveRawMessage', () => {
   it('exposes canonical path contract errors only', () => {
-    expect(shouldExposePathSaveRawMessage('AI Path config contains invalid or non-canonical edges.')).toBe(true);
+    expect(
+      shouldExposePathSaveRawMessage('AI Path config contains invalid or non-canonical edges.')
+    ).toBe(true);
     expect(shouldExposePathSaveRawMessage('Invalid AI Paths runtime state payload.')).toBe(true);
     expect(shouldExposePathSaveRawMessage('Invalid payload')).toBe(true);
   });
@@ -197,8 +199,11 @@ describe('resolvePersistedNodeConfigMismatch', () => {
     const expectedNode = config.nodes[0] as AiNode;
     const persistedConfig = {
       ...config,
-      nodes: config.nodes.map((node: AiNode): AiNode =>
-        node.id === expectedNode.id ? ({ ...node, config: { constant: { value: 'changed' } } } as AiNode) : node
+      nodes: config.nodes.map(
+        (node: AiNode): AiNode =>
+          node.id === expectedNode.id
+            ? ({ ...node, config: { constant: { value: 'changed' } } } as AiNode)
+            : node
       ),
     };
     const mismatch = resolvePersistedNodeConfigMismatch({

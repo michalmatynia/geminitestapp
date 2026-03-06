@@ -128,9 +128,9 @@ export function ChatbotContextModal(props: ChatbotContextModalProps): React.JSX.
                     setModalDraft((prev) =>
                       prev
                         ? {
-                          ...prev,
-                          tags: (prev.tags || []).filter((existing) => existing !== tag),
-                        }
+                            ...prev,
+                            tags: (prev.tags || []).filter((existing) => existing !== tag),
+                          }
                         : prev
                     );
                   }}
@@ -150,9 +150,9 @@ export function ChatbotContextModal(props: ChatbotContextModalProps): React.JSX.
                     setModalDraft((prev) =>
                       prev
                         ? {
-                          ...prev,
-                          tags: Array.from(new Set([...(prev.tags || []), nextTag])),
-                        }
+                            ...prev,
+                            tags: Array.from(new Set([...(prev.tags || []), nextTag])),
+                          }
                         : prev
                     );
                     setTagDraft('');
@@ -171,9 +171,9 @@ export function ChatbotContextModal(props: ChatbotContextModalProps): React.JSX.
                   setModalDraft((prev) =>
                     prev
                       ? {
-                        ...prev,
-                        tags: Array.from(new Set([...(prev.tags || []), nextTag])),
-                      }
+                          ...prev,
+                          tags: Array.from(new Set([...(prev.tags || []), nextTag])),
+                        }
                       : prev
                   );
                   setTagDraft('');
@@ -203,9 +203,12 @@ export function ChatbotContextModal(props: ChatbotContextModalProps): React.JSX.
     [draftTags, tagDraft, isSaving, setModalDraft, setTagDraft]
   );
 
-  const handleChange = useCallback((vals: Partial<ContextDraft>) => {
-    setModalDraft((prev) => (prev ? { ...prev, ...vals } : prev));
-  }, [setModalDraft]);
+  const handleChange = useCallback(
+    (vals: Partial<ContextDraft>) => {
+      setModalDraft((prev) => (prev ? { ...prev, ...vals } : prev));
+    },
+    [setModalDraft]
+  );
 
   const runtimeValue = useMemo<ChatbotContextModalRuntimeValue>(
     () => ({
@@ -218,7 +221,17 @@ export function ChatbotContextModal(props: ChatbotContextModalProps): React.JSX.
       onSave,
       isSaving,
     }),
-    [editingItem, effectiveDraft, fields, handleChange, isOpen, isSaving, modalDraft, onClose, onSave]
+    [
+      editingItem,
+      effectiveDraft,
+      fields,
+      handleChange,
+      isOpen,
+      isSaving,
+      modalDraft,
+      onClose,
+      onSave,
+    ]
   );
 
   return (

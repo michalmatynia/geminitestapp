@@ -4,7 +4,10 @@ import path from 'path';
 import { describe, expect, it } from 'vitest';
 
 const projectRoot = process.cwd();
-const centerUtilsPath = path.join(projectRoot, 'src/features/ai/image-studio/server/center-utils.ts');
+const centerUtilsPath = path.join(
+  projectRoot,
+  'src/features/ai/image-studio/server/center-utils.ts'
+);
 const autoScalerUtilsPath = path.join(
   projectRoot,
   'src/features/ai/image-studio/server/auto-scaler-utils.ts'

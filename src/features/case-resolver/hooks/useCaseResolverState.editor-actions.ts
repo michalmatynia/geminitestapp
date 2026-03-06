@@ -165,9 +165,9 @@ export function useCaseResolverStateEditorActions({
         current.activeFileId === fileId
           ? current
           : {
-            ...current,
-            activeFileId: fileId,
-          }
+              ...current,
+              activeFileId: fileId,
+            }
       );
     },
     [
@@ -251,21 +251,21 @@ export function useCaseResolverStateEditorActions({
     const nextDocumentContentVersion = currentFile.documentContentVersion + 1;
     const currentSnapshot = hasContentChanges
       ? createCaseResolverHistorySnapshotEntry({
-        savedAt: now,
-        documentContentVersion: currentFile.documentContentVersion,
-        activeDocumentVersion: currentFile.activeDocumentVersion,
-        editorType: currentFile.editorType,
-        documentContent: currentFile.documentContent,
-        documentContentMarkdown: currentFile.documentContentMarkdown,
-        documentContentHtml: currentFile.documentContentHtml,
-        documentContentPlainText: currentFile.documentContentPlainText,
-      })
+          savedAt: now,
+          documentContentVersion: currentFile.documentContentVersion,
+          activeDocumentVersion: currentFile.activeDocumentVersion,
+          editorType: currentFile.editorType,
+          documentContent: currentFile.documentContent,
+          documentContentMarkdown: currentFile.documentContentMarkdown,
+          documentContentHtml: currentFile.documentContentHtml,
+          documentContentPlainText: currentFile.documentContentPlainText,
+        })
       : null;
     const nextDocumentHistory = currentSnapshot
       ? [currentSnapshot, ...currentFile.documentHistory].slice(
-        0,
-        CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT
-      )
+          0,
+          CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT
+        )
       : currentFile.documentHistory;
     const nextParentCaseId =
       editingDocumentDraft.parentCaseId === undefined

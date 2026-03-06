@@ -2,6 +2,13 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 
+import {
+  addXp,
+  createLessonPracticeReward,
+  loadProgress,
+} from '@/features/kangur/ui/services/progress';
+import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
+
 type SubtractingQuestion = {
   a: number;
   b: number;
@@ -34,8 +41,7 @@ function generateQuestion(round: number): SubtractingQuestion {
   const correct = a - b;
   const wrongs = new Set<number>();
   while (wrongs.size < 3) {
-    const wrong =
-      correct + (Math.floor(Math.random() * 4) + 1) * (Math.random() < 0.5 ? 1 : -1);
+    const wrong = correct + (Math.floor(Math.random() * 4) + 1) * (Math.random() < 0.5 ? 1 : -1);
     if (wrong >= 0 && wrong !== correct) {
       wrongs.add(wrong);
     }
@@ -68,6 +74,7 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
+  const [xpEarned, setXpEarned] = useState(0);
   const [question, setQuestion] = useState<SubtractingQuestion>(() => generateQuestion(0));
   const [selected, setSelected] = useState<number | null>(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -87,8 +94,12 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
     const isCorrect = selected === question.correct;
     const newScore = isCorrect ? score + 1 : score;
 
-    setTimeout(() => {
+    scheduleKangurRoundFeedback(() => {
       if (roundIndex + 1 >= TOTAL) {
+        const progress = loadProgress();
+        const reward = createLessonPracticeReward(progress, 'subtracting', newScore, TOTAL);
+        addXp(reward.xp, reward.progressUpdates);
+        setXpEarned(reward.xp);
         setScore(newScore);
         setDone(true);
       } else {
@@ -98,7 +109,7 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
         setSelected(null);
         setConfirmed(false);
       }
-    }, 1200);
+    });
   };
 
   if (done) {
@@ -113,6 +124,11 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
         <h2 className='text-2xl font-extrabold text-gray-800'>
           Wynik: {score}/{TOTAL}
         </h2>
+        {xpEarned > 0 && (
+          <div className='bg-indigo-100 text-indigo-700 font-bold px-4 py-2 rounded-full text-sm'>
+            +{xpEarned} XP ✨
+          </div>
+        )}
         <div className='w-full bg-gray-100 rounded-full h-3'>
           <motion.div
             initial={{ width: 0 }}
@@ -134,6 +150,7 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
               setRoundIndex(0);
               setScore(0);
               setDone(false);
+              setXpEarned(0);
               setQuestion(generateQuestion(0));
               setSelected(null);
               setConfirmed(false);

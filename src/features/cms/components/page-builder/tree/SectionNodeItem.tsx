@@ -172,9 +172,11 @@ export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element 
 
       setIsInsideDropOver(false);
 
-      void moveSectionByMaster(dragSectionId, section.zone, childSectionCount, section.id).finally(() => {
-        endSectionDrag();
-      });
+      void moveSectionByMaster(dragSectionId, section.zone, childSectionCount, section.id).finally(
+        () => {
+          endSectionDrag();
+        }
+      );
     },
     [
       childSectionCount,

@@ -11,9 +11,7 @@ import { DraftCreator } from './DraftCreator';
 
 export function DraftCreatorModal(): React.JSX.Element | null {
   const { isCreatorOpen: isOpen, editingDraftId, formRef } = useDrafterState();
-  const {
-    closeCreator: onClose,
-  } = useDrafterActions();
+  const { closeCreator: onClose } = useDrafterActions();
 
   const { data: drafts = [] } = useDraftQueries();
   const editingDraft = drafts.find((d: ProductDraft) => d.id === editingDraftId) ?? null;

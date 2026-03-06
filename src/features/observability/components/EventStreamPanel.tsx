@@ -36,15 +36,8 @@ import { ContextDocumentCard } from './ContextDocumentCard';
 import { ContextRegistryNodesCard } from './ContextRegistryNodesCard';
 
 export function EventStreamPanel(): React.JSX.Element {
-  const {
-    logsQuery,
-    logs,
-    total,
-    totalPages,
-    page,
-    interpretLogMutation,
-    logInterpretations,
-  } = useSystemLogsState();
+  const { logsQuery, logs, total, totalPages, page, interpretLogMutation, logInterpretations } =
+    useSystemLogsState();
   const { setPage, handleFilterChange } = useSystemLogsActions();
   const aiInterpretationTooltip =
     getDocumentationTooltip(

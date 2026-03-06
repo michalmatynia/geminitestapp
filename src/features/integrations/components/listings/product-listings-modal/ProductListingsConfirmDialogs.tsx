@@ -23,11 +23,8 @@ export function ProductListingsConfirmDialogs(): React.JSX.Element {
     setIsSyncImagesConfirmOpen,
   } = useProductListingsModals();
 
-  const {
-    handleDeleteFromBase,
-    handlePurgeListing,
-    handleSyncBaseImages,
-  } = useProductListingsActions();
+  const { handleDeleteFromBase, handlePurgeListing, handleSyncBaseImages } =
+    useProductListingsActions();
 
   const baseListing =
     listings.find((listing) =>

@@ -79,9 +79,9 @@ const { Context: PanelFiltersRuntimeContext, useStrictContext: usePanelFiltersRu
     displayName: 'PanelFiltersRuntimeContext',
   });
 
-export const PanelFiltersSearchPlaceholderRuntimeContext = React.createContext<
-  string | undefined
->(undefined);
+export const PanelFiltersSearchPlaceholderRuntimeContext = React.createContext<string | undefined>(
+  undefined
+);
 
 /**
  * PanelFilters - Renders dynamic filter controls based on FilterField configuration
@@ -233,9 +233,7 @@ interface PanelFilterControlProps {
 /**
  * PanelFilterControl - Renders individual filter input based on field type
  */
-const PanelFilterControl: React.FC<PanelFilterControlProps> = (
-  props: PanelFilterControlProps
-) => {
+const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilterControlProps) => {
   const { field } = props;
 
   const runtime = usePanelFiltersRuntime();

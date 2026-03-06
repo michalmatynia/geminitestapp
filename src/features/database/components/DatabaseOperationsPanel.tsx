@@ -21,11 +21,7 @@ import { cn } from '@/shared/utils';
 
 import { CrudPanel } from './CrudPanel';
 import { SqlQueryConsole } from './SqlQueryConsole';
-import {
-  DatabaseProvider,
-  useDatabaseConfig,
-  useDatabaseData,
-} from '../context/DatabaseContext';
+import { DatabaseProvider, useDatabaseConfig, useDatabaseData } from '../context/DatabaseContext';
 
 const DATABASE_OPTIONS: Array<{
   value: DatabaseType;

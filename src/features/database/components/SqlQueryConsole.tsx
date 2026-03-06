@@ -192,29 +192,29 @@ export function SqlQueryConsole({
                   },
                   ...(result.fields.length > 0
                     ? result.fields.map((f: { name: string }) => ({
-                      accessorKey: f.name,
-                      header: f.name,
-                      cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
-                        <span
-                          className='font-mono text-[11px] text-gray-300 truncate block max-w-[250px]'
-                          title={formatCellValue(row.original[f.name])}
-                        >
-                          {formatCellValue(row.original[f.name])}
-                        </span>
-                      ),
-                    }))
+                        accessorKey: f.name,
+                        header: f.name,
+                        cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
+                          <span
+                            className='font-mono text-[11px] text-gray-300 truncate block max-w-[250px]'
+                            title={formatCellValue(row.original[f.name])}
+                          >
+                            {formatCellValue(row.original[f.name])}
+                          </span>
+                        ),
+                      }))
                     : Object.keys(result.rows[0] ?? {}).map((key) => ({
-                      accessorKey: key,
-                      header: key,
-                      cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
-                        <span
-                          className='font-mono text-[11px] text-gray-300 truncate block max-w-[250px]'
-                          title={formatCellValue(row.original[key])}
-                        >
-                          {formatCellValue(row.original[key])}
-                        </span>
-                      ),
-                    }))),
+                        accessorKey: key,
+                        header: key,
+                        cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
+                          <span
+                            className='font-mono text-[11px] text-gray-300 truncate block max-w-[250px]'
+                            title={formatCellValue(row.original[key])}
+                          >
+                            {formatCellValue(row.original[key])}
+                          </span>
+                        ),
+                      }))),
                 ] as ColumnDef<Record<string, unknown>>[]
               }
               data={result.rows}

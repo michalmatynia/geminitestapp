@@ -3,10 +3,7 @@
 import { ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import {
-  useNotesAppActions,
-  useNotesAppState,
-} from '@/features/notesapp/hooks/NotesAppContext';
+import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import type { TagRecord } from '@/shared/contracts/notes';
 import { Button } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';

@@ -36,7 +36,10 @@ const compareScalar = (left: unknown, right: unknown): number => {
   return String(left ?? '').localeCompare(String(right ?? ''), 'pl');
 };
 
-export const sortScores = (scores: KangurScore[], sort: KangurScoreSort | undefined): KangurScore[] => {
+export const sortScores = (
+  scores: KangurScore[],
+  sort: KangurScoreSort | undefined
+): KangurScore[] => {
   const normalized = normalizeSort(sort);
   return [...scores].sort((left, right) => {
     const value = compareScalar(left[normalized.field], right[normalized.field]);

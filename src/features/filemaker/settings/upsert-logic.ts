@@ -51,11 +51,11 @@ export const upsertFilemakerPhoneNumbersForParty = (
   const partyFound =
     input.partyKind === 'person'
       ? normalizedDatabase.persons.some(
-        (person: FilemakerPerson): boolean => person.id === normalizedPartyId
-      )
+          (person: FilemakerPerson): boolean => person.id === normalizedPartyId
+        )
       : normalizedDatabase.organizations.some(
-        (organization: FilemakerOrganization): boolean => organization.id === normalizedPartyId
-      );
+          (organization: FilemakerOrganization): boolean => organization.id === normalizedPartyId
+        );
   if (!partyFound) {
     return {
       database: normalizedDatabase,
@@ -190,11 +190,11 @@ export const upsertFilemakerEmailsForParty = (
   const partyFound =
     input.partyKind === 'person'
       ? normalizedDatabase.persons.some(
-        (person: FilemakerPerson): boolean => person.id === normalizedPartyId
-      )
+          (person: FilemakerPerson): boolean => person.id === normalizedPartyId
+        )
       : normalizedDatabase.organizations.some(
-        (organization: FilemakerOrganization): boolean => organization.id === normalizedPartyId
-      );
+          (organization: FilemakerOrganization): boolean => organization.id === normalizedPartyId
+        );
   if (!partyFound) {
     return {
       database: normalizedDatabase,

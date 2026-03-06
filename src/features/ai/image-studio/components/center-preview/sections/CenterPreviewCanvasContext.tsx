@@ -42,7 +42,9 @@ export function CenterPreviewCanvasSectionProvider({
   value: CenterPreviewCanvasContextValue;
 }): React.JSX.Element {
   return (
-    <CenterPreviewCanvasContext.Provider value={value}>{children}</CenterPreviewCanvasContext.Provider>
+    <CenterPreviewCanvasContext.Provider value={value}>
+      {children}
+    </CenterPreviewCanvasContext.Provider>
   );
 }
 

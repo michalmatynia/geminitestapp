@@ -11,7 +11,12 @@ import {
 } from 'lucide-react';
 
 import ClockTrainingGame from './ClockTrainingGame';
-import { addXp, buildLessonMasteryUpdate, XP_REWARDS, loadProgress } from '@/features/kangur/ui/services/progress';
+import {
+  addXp,
+  buildLessonMasteryUpdate,
+  XP_REWARDS,
+  loadProgress,
+} from '@/features/kangur/ui/services/progress';
 
 type ClockLessonProps = {
   onBack: () => void;
@@ -176,8 +181,20 @@ const LESSON_SECTIONS: LessonSection[] = [
         content: (
           <div className='flex flex-col items-center gap-4 text-center'>
             <div className='flex gap-6 justify-center flex-wrap'>
-              <AnalogClock hours={1} minutes={0} highlightHour showMinuteHand={false} label='1:00' />
-              <AnalogClock hours={6} minutes={0} highlightHour showMinuteHand={false} label='6:00' />
+              <AnalogClock
+                hours={1}
+                minutes={0}
+                highlightHour
+                showMinuteHand={false}
+                label='1:00'
+              />
+              <AnalogClock
+                hours={6}
+                minutes={0}
+                highlightHour
+                showMinuteHand={false}
+                label='6:00'
+              />
               <AnalogClock
                 hours={11}
                 minutes={0}
@@ -292,8 +309,7 @@ const LESSON_SECTIONS: LessonSection[] = [
               <p className='text-gray-700 font-semibold'>Krok:</p>
               <p className='text-gray-600 text-sm mt-1'>
                 Długa wskazówka stoi przy 7.
-                <br />
-                7 × 5 = 35 minut.
+                <br />7 × 5 = 35 minut.
               </p>
               <p className='text-green-700 font-extrabold mt-2'>Wynik: :35</p>
             </div>
@@ -349,8 +365,7 @@ const LESSON_SECTIONS: LessonSection[] = [
               🔴 czytać godziny,
               <br />
               🟢 czytać minuty,
-              <br />
-              ✅ łączyć obie wskazówki w pełny czas.
+              <br />✅ łączyć obie wskazówki w pełny czas.
             </p>
           </div>
         ),
@@ -417,17 +432,20 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
     });
   }, []);
 
-  const markSectionCompleted = useCallback((sectionIndex: number) => {
-    setCompletedSections((previous) => {
-      if (previous[sectionIndex]) {
-        return previous;
-      }
-      const next = [...previous];
-      next[sectionIndex] = true;
-      return next;
-    });
-    unlockNextSection(sectionIndex);
-  }, [unlockNextSection]);
+  const markSectionCompleted = useCallback(
+    (sectionIndex: number) => {
+      setCompletedSections((previous) => {
+        if (previous[sectionIndex]) {
+          return previous;
+        }
+        const next = [...previous];
+        next[sectionIndex] = true;
+        return next;
+      });
+      unlockNextSection(sectionIndex);
+    },
+    [unlockNextSection]
+  );
 
   const getSectionStatus = useCallback(
     (sectionIndex: number, isOpen: boolean): { label: string; className: string } => {
@@ -544,7 +562,15 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
     }
 
     onBack();
-  }, [activeSection, activeSlideIndex, onBack, openSection, openSectionAt, setSectionSlideIndex, stopSpeaking]);
+  }, [
+    activeSection,
+    activeSlideIndex,
+    onBack,
+    openSection,
+    openSectionAt,
+    setSectionSlideIndex,
+    stopSpeaking,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -603,7 +629,9 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
                   disabled={isLocked}
                 >
                   <div>
-                    <p className='text-xs font-bold uppercase tracking-wide text-indigo-400'>Nauka Zegara</p>
+                    <p className='text-xs font-bold uppercase tracking-wide text-indigo-400'>
+                      Nauka Zegara
+                    </p>
                     <h3 className='text-lg font-extrabold text-indigo-700'>{section.title}</h3>
                     <p className='text-sm text-gray-500 mt-1'>{section.subtitle}</p>
                     <p
@@ -665,7 +693,9 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
               disabled={isLocked}
             >
               <div>
-                <p className='text-xs font-bold uppercase tracking-wide text-indigo-400'>Nauka Zegara</p>
+                <p className='text-xs font-bold uppercase tracking-wide text-indigo-400'>
+                  Nauka Zegara
+                </p>
                 <h3 className='text-lg font-extrabold text-indigo-700'>{section.title}</h3>
                 <p className='text-sm text-gray-500 mt-1'>{section.subtitle}</p>
                 <p
@@ -682,7 +712,9 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
                     {LOCKED_SECTION_HINT}
                   </p>
                 )}
-                <p className='text-xs font-semibold text-indigo-500 mt-1'>Postęp sekcji: {sectionProgressText}</p>
+                <p className='text-xs font-semibold text-indigo-500 mt-1'>
+                  Postęp sekcji: {sectionProgressText}
+                </p>
               </div>
               {isLocked ? (
                 <Lock className='w-5 h-5 text-slate-500 flex-shrink-0' />

@@ -113,7 +113,7 @@ export function useUpdateProductMutation(): UseMutationResult<
   Error,
   { id: string; data: Partial<ProductWithImages> | FormData; originalSku?: string | null },
   unknown
-  > {
+> {
   const parseUpdateError = async (response: Response): Promise<string> => {
     const errorData = (await response.json().catch(() => ({}))) as {
       error?: string;
@@ -268,7 +268,7 @@ export function useBulkDeleteProductsMutation(): UseMutationResult<
   Error,
   string[],
   unknown
-  > {
+> {
   return useOfflineMutation(
     async (ids: string[]): Promise<{ success: boolean }> => {
       const responses = await Promise.all(ids.map((id: string) => deleteProduct(id)));

@@ -74,14 +74,14 @@ export function SettingsFieldRenderer(props: {
       theme.colorSchemes.length === 0
         ? COLOR_SCHEME_OPTIONS
         : theme.colorSchemes.map((scheme: ColorScheme) => ({
-          label: scheme.name || scheme.id,
-          value: scheme.id,
-        }));
+            label: scheme.name || scheme.id,
+            value: scheme.id,
+          }));
     const extraOptions = field.options
       ? field.options.filter(
-        (opt: SettingsFieldOption) =>
-          !baseOptions.some((base: SettingsFieldOption) => base.value === opt.value)
-      )
+          (opt: SettingsFieldOption) =>
+            !baseOptions.some((base: SettingsFieldOption) => base.value === opt.value)
+        )
       : [];
     return [...extraOptions, ...baseOptions];
   }, [field.options, theme.colorSchemes]);

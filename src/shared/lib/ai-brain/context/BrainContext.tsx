@@ -667,11 +667,11 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
           const assignment = settings.capabilities[key];
           acc[key] = assignment
             ? sanitizeBrainAssignmentForProviders(
-              assignment,
-              getBrainCapabilityDefinition(key).policy === 'agent-or-model'
-                ? ['model', 'agent']
-                : ['model']
-            )
+                assignment,
+                getBrainCapabilityDefinition(key).policy === 'agent-or-model'
+                  ? ['model', 'agent']
+                  : ['model']
+              )
             : undefined;
           return acc;
         },

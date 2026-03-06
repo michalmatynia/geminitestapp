@@ -209,38 +209,38 @@ export const ParamRow = React.memo(function ParamRow({
           uiKind === 'enum' &&
           typeof value === 'string' &&
           spec?.enumOptions ? (
-              requestedControl === 'buttons' ? (
-                <div className='flex flex-wrap gap-2'>
-                  {spec.enumOptions.map((opt: string) => (
-                    <Button
-                      size='xs'
-                      key={opt}
-                      type='button'
-                      variant={opt === value ? 'secondary' : 'outline'}
-                      onClick={() => onChange(opt)}
-                    >
-                      {opt}
-                    </Button>
-                  ))}
-                </div>
-              ) : requestedControl === 'text' ? (
-                <Input
-                  size='sm'
-                  value={value}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-                  className='h-8'
-                />
-              ) : (
-                <SelectSimple
-                  size='sm'
-                  value={value}
-                  onValueChange={(next: string) => onChange(next)}
-                  options={enumOptions}
-                  triggerClassName='h-8'
-                  ariaLabel='Enum parameter value'
-                />
-              )
-            ) : null}
+            requestedControl === 'buttons' ? (
+              <div className='flex flex-wrap gap-2'>
+                {spec.enumOptions.map((opt: string) => (
+                  <Button
+                    size='xs'
+                    key={opt}
+                    type='button'
+                    variant={opt === value ? 'secondary' : 'outline'}
+                    onClick={() => onChange(opt)}
+                  >
+                    {opt}
+                  </Button>
+                ))}
+              </div>
+            ) : requestedControl === 'text' ? (
+              <Input
+                size='sm'
+                value={value}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+                className='h-8'
+              />
+            ) : (
+              <SelectSimple
+                size='sm'
+                value={value}
+                onValueChange={(next: string) => onChange(next)}
+                options={enumOptions}
+                triggerClassName='h-8'
+                ariaLabel='Enum parameter value'
+              />
+            )
+          ) : null}
 
           {requestedControl !== 'json' && uiKind === 'number' && isNumber ? (
             <div className='space-y-2'>

@@ -31,10 +31,7 @@ const ADMIN_MENU_COLLAPSED_COOKIE_KEY = 'admin_menu_collapsed';
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }): React.ReactNode {
   const { isMenuCollapsed, isMenuHidden, isProgrammaticallyCollapsed } = useAdminLayoutState();
-  const {
-    setIsMenuCollapsed,
-    setIsProgrammaticallyCollapsed,
-  } = useAdminLayoutActions();
+  const { setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayoutActions();
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const didUserToggleRef = useRef(false);

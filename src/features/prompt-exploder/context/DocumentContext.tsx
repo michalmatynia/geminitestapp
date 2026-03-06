@@ -28,10 +28,7 @@ import type {
   PromptExploderParamEntriesState,
 } from '@/shared/contracts/prompt-exploder';
 import { buildPromptExploderParamEntries } from '../params-editor';
-import {
-  reassemblePromptSegments,
-  updatePromptExploderDocument,
-} from '../parser';
+import { reassemblePromptSegments, updatePromptExploderDocument } from '../parser';
 import { explodePromptWithValidationRuntime } from '../prompt-validation-orchestrator';
 import { leavePromptRuntimeScope, tryEnterPromptRuntimeScope } from '../runtime-load-shedder';
 import {
@@ -441,13 +438,13 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
           fileName: incomingCaseResolverContext?.fileName?.trim() || resolvedContextFileId,
           ...(resolvedContextSessionId
             ? {
-              sessionId: resolvedContextSessionId,
-            }
+                sessionId: resolvedContextSessionId,
+              }
             : {}),
           ...(typeof incomingCaseResolverContext?.documentVersionAtStart === 'number'
             ? {
-              documentVersionAtStart: incomingCaseResolverContext.documentVersionAtStart,
-            }
+                documentVersionAtStart: incomingCaseResolverContext.documentVersionAtStart,
+              }
             : {}),
         };
         savePromptExploderApplyPromptForCaseResolver(
@@ -562,8 +559,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   useEffect(() => {
     const payload = readPromptExploderDraftPayload();
     const rawPayloadContext = payload?.caseResolverContext ?? null;
-    const isConsumableDraftPayload =
-      payload !== null && payload.target === 'prompt-exploder';
+    const isConsumableDraftPayload = payload !== null && payload.target === 'prompt-exploder';
     const nextBridgeSource = isConsumableDraftPayload ? (payload?.source ?? null) : null;
     if (nextBridgeSource !== incomingBridgeSource) {
       setIncomingBridgeSource(nextBridgeSource);
@@ -578,13 +574,13 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     const promptFromPayload = isConsumableDraftPayload ? (payload?.prompt ?? null) : null;
     const payloadKey = payload
       ? [
-        payload.createdAt,
-        payload.source ?? '',
-        payload.target ?? '',
-        payload.caseResolverContext?.fileId ?? '',
-        payload.caseResolverContext?.sessionId ?? '',
-        String(payload.prompt.length),
-      ].join('|')
+          payload.createdAt,
+          payload.source ?? '',
+          payload.target ?? '',
+          payload.caseResolverContext?.fileId ?? '',
+          payload.caseResolverContext?.sessionId ?? '',
+          String(payload.prompt.length),
+        ].join('|')
       : null;
     if (promptFromPayload && payloadKey && lastHydratedDraftPayloadKeyRef.current !== payloadKey) {
       lastHydratedDraftPayloadKeyRef.current = payloadKey;
@@ -592,11 +588,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
       setPromptText(promptFromPayload);
       return;
     }
-  }, [
-    clearDocument,
-    incomingBridgeSource,
-    incomingCaseResolverContext,
-  ]);
+  }, [clearDocument, incomingBridgeSource, incomingCaseResolverContext]);
 
   // ── Context values ─────────────────────────────────────────────────────────
 

@@ -73,10 +73,12 @@ export const mongoKangurScoreRepository: KangurScoreRepository = {
       created_by: input.created_by ?? null,
     };
 
-    const insertResult = await db.collection<KangurScoreDocument>(KANGUR_SCORES_COLLECTION).insertOne({
-      ...payload,
-      _id: new ObjectId(),
-    });
+    const insertResult = await db
+      .collection<KangurScoreDocument>(KANGUR_SCORES_COLLECTION)
+      .insertOne({
+        ...payload,
+        _id: new ObjectId(),
+      });
 
     return toDto({
       _id: insertResult.insertedId,

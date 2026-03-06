@@ -56,10 +56,7 @@ describe('ai-paths trigger-buttons reorder handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await POST_handler(
-      request,
-      {} as Parameters<typeof POST_handler>[1]
-    );
+    const response = await POST_handler(request, {} as Parameters<typeof POST_handler>[1]);
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual([
@@ -95,12 +92,9 @@ describe('ai-paths trigger-buttons reorder handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    await expect(
-      POST_handler(
-        request,
-        {} as Parameters<typeof POST_handler>[1]
-      )
-    ).rejects.toThrow('Invalid AI trigger button record payload.');
+    await expect(POST_handler(request, {} as Parameters<typeof POST_handler>[1])).rejects.toThrow(
+      'Invalid AI trigger button record payload.'
+    );
 
     expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
   });

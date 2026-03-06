@@ -630,9 +630,7 @@ export function JobQueueProvider({
     };
 
     const handleWindowEvent = (event: Event): void => {
-      const payload = parseAiPathRunEnqueuedEventPayload(
-        (event as CustomEvent<unknown>).detail
-      );
+      const payload = parseAiPathRunEnqueuedEventPayload((event as CustomEvent<unknown>).detail);
       if (!payload) return;
       refreshQueueViews();
     };
@@ -781,12 +779,9 @@ export function JobQueueProvider({
     },
     [handleToggleRun]
   );
-  const setHistorySelectionForRun = useCallback(
-    (runId: string, nodeId: string): void => {
-      setHistorySelection((prev) => ({ ...prev, [runId]: nodeId }));
-    },
-    []
-  );
+  const setHistorySelectionForRun = useCallback((runId: string, nodeId: string): void => {
+    setHistorySelection((prev) => ({ ...prev, [runId]: nodeId }));
+  }, []);
   const isCancelingRun = useCallback(
     (id: string): boolean => cancelRunMutation.isPending && cancelRunMutation.variables === id,
     [cancelRunMutation.isPending, cancelRunMutation.variables]

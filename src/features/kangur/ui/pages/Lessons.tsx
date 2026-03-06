@@ -5,10 +5,7 @@ import type { ComponentType } from 'react';
 import dynamic from 'next/dynamic';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
-import {
-  KANGUR_LESSONS_SETTING_KEY,
-  parseKangurLessons,
-} from '@/features/kangur/settings';
+import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import type { KangurLesson, KangurLessonComponentId } from '@/shared/contracts/kangur';
@@ -37,10 +34,13 @@ const AddingLesson = dynamic(() => import('@/features/kangur/ui/components/Addin
   ssr: false,
   loading: LessonLoadingFallback,
 });
-const SubtractingLesson = dynamic(() => import('@/features/kangur/ui/components/SubtractingLesson'), {
-  ssr: false,
-  loading: LessonLoadingFallback,
-});
+const SubtractingLesson = dynamic(
+  () => import('@/features/kangur/ui/components/SubtractingLesson'),
+  {
+    ssr: false,
+    loading: LessonLoadingFallback,
+  }
+);
 const MultiplicationLesson = dynamic(
   () => import('@/features/kangur/ui/components/MultiplicationLesson'),
   {
@@ -110,10 +110,7 @@ const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
   geometry_perimeter: 'geometry_perimeter',
 };
 
-const resolveFocusedLessonId = (
-  focusToken: string,
-  lessons: KangurLesson[]
-): string | null => {
+const resolveFocusedLessonId = (focusToken: string, lessons: KangurLesson[]): string | null => {
   const mappedComponent = FOCUS_TO_COMPONENT[focusToken];
   if (mappedComponent) {
     const byComponent = lessons.find((lesson) => lesson.componentId === mappedComponent);

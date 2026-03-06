@@ -309,7 +309,9 @@ export const extractAiPathRunRecordFromEnqueueResponseData = (
   } as AiPathRunRecord;
 };
 
-export const resolveAiPathRunFromEnqueueResponseData = (data: unknown): {
+export const resolveAiPathRunFromEnqueueResponseData = (
+  data: unknown
+): {
   runId: string | null;
   runRecord: AiPathRunRecord | null;
 } => {
@@ -536,7 +538,9 @@ const normalizeAiJobStatus = (status: unknown): string => {
   return normalized;
 };
 
-const normalizeAiJobsPollPayload = (payload: AiJobsPollPayload): {
+const normalizeAiJobsPollPayload = (
+  payload: AiJobsPollPayload
+): {
   status: string;
   result?: unknown;
   error?: string;
@@ -559,7 +563,8 @@ const normalizeAiJobsPollPayload = (payload: AiJobsPollPayload): {
 
   const payloadRecord = payload as Record<string, unknown>;
   const status = normalizeAiJobStatus(payloadRecord['status']);
-  const errorValue = typeof payloadRecord['error'] === 'string' ? payloadRecord['error'] : undefined;
+  const errorValue =
+    typeof payloadRecord['error'] === 'string' ? payloadRecord['error'] : undefined;
   return {
     status,
     ...(payloadRecord['result'] !== undefined ? { result: payloadRecord['result'] } : {}),
@@ -574,7 +579,10 @@ export const aiJobsApi = {
     jobId: string,
     options?: { signal?: AbortSignal }
   ): Promise<ApiResponse<{ status: string; result?: unknown; error?: string }>> => {
-    const response = await apiFetch<AiJobsPollPayload>(`/api/v2/products/ai-jobs/${jobId}`, options);
+    const response = await apiFetch<AiJobsPollPayload>(
+      `/api/v2/products/ai-jobs/${jobId}`,
+      options
+    );
     if (!response.ok) return response;
     return {
       ok: true,

@@ -56,8 +56,12 @@ export const buildSequencingDiagnostics = (params: {
   const hasGlobalSettings = globalSettingsRaw !== null;
   const selectedScope = hasProjectSettings ? 'project' : 'default';
   const selectedSettingsKey = params.projectSettingsKey;
-  const projectSettings = projectSettingsRaw ? parsePersistedImageStudioSettings(projectSettingsRaw) : null;
-  const globalSettings = globalSettingsRaw ? parsePersistedImageStudioSettings(globalSettingsRaw) : null;
+  const projectSettings = projectSettingsRaw
+    ? parsePersistedImageStudioSettings(projectSettingsRaw)
+    : null;
+  const globalSettings = globalSettingsRaw
+    ? parsePersistedImageStudioSettings(globalSettingsRaw)
+    : null;
 
   return {
     projectId: trimString(params.projectId),

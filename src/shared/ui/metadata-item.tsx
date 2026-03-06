@@ -56,7 +56,11 @@ export function MetadataItem(props: MetadataItemProps): React.JSX.Element {
     const isSubtle = variant === 'subtle';
     return (
       <div
-        className={cn('flex items-center gap-2 text-[11px]', isSubtle ? 'opacity-80' : '', className)}
+        className={cn(
+          'flex items-center gap-2 text-[11px]',
+          isSubtle ? 'opacity-80' : '',
+          className
+        )}
       >
         {icon && <div className='shrink-0 text-gray-500'>{icon}</div>}
         <MetadataItemLabel
@@ -70,7 +74,11 @@ export function MetadataItem(props: MetadataItemProps): React.JSX.Element {
           withColon
         />
         <div
-          className={cn('text-gray-300 truncate', mono && 'font-mono text-gray-200', valueClassName)}
+          className={cn(
+            'text-gray-300 truncate',
+            mono && 'font-mono text-gray-200',
+            valueClassName
+          )}
         >
           {content}
         </div>
@@ -89,7 +97,13 @@ export function MetadataItem(props: MetadataItemProps): React.JSX.Element {
           className='block text-gray-500 text-[10px] uppercase font-bold tracking-wider leading-none'
         />
       </div>
-      <div className={cn('text-gray-200 text-sm truncate', mono && 'font-mono text-gray-300', valueClassName)}>
+      <div
+        className={cn(
+          'text-gray-200 text-sm truncate',
+          mono && 'font-mono text-gray-300',
+          valueClassName
+        )}
+      >
         {content}
       </div>
       {hint && (

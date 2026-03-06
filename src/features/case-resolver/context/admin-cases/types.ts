@@ -44,11 +44,7 @@ export type CaseResolverCaseListConfirmationState = {
   isDangerous?: boolean;
 } | null;
 
-export type CaseResolverCasesLoadState =
-  | 'loading'
-  | 'ready'
-  | 'no_record'
-  | 'unavailable';
+export type CaseResolverCasesLoadState = 'loading' | 'ready' | 'no_record' | 'unavailable';
 
 export type AdminCaseResolverCasesContextValue = {
   // State

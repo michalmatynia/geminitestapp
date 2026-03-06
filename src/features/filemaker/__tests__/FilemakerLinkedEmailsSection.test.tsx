@@ -33,9 +33,12 @@ describe('FilemakerLinkedEmailsSection', () => {
     expect(screen.getByText('test@example.com')).toBeInTheDocument();
     expect(screen.getByText('active')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText('Paste document content, headers, or any text here...'), {
-      target: { value: 'updated text' },
-    });
+    fireEvent.change(
+      screen.getByPlaceholderText('Paste document content, headers, or any text here...'),
+      {
+        target: { value: 'updated text' },
+      }
+    );
     expect(onEmailExtractionTextChange).toHaveBeenCalledWith('updated text');
 
     fireEvent.click(screen.getByRole('button', { name: 'Extract Emails' }));

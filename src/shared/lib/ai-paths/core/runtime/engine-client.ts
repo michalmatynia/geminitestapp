@@ -60,10 +60,7 @@ import { handleTrigger as handleIntegrationTrigger } from './handlers/integratio
 // Re-export types from core
 export * from './engine-core';
 
-const handlePrompt: NodeHandler = ({
-  node,
-  nodeInputs,
-}: NodeHandlerContext): RuntimePortValues => {
+const handlePrompt: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
   const { promptOutput, imagesValue } = buildPromptOutput(node.config?.prompt, nodeInputs);
   return imagesValue !== undefined
     ? { prompt: promptOutput, images: imagesValue }
@@ -80,8 +77,8 @@ const handleTemplate: NodeHandler = ({
   const prompt = templateConfig.template
     ? renderTemplate(templateConfig.template, data, currentValue)
     : Object.entries(data)
-      .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
-      .join('\n');
+        .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
+        .join('\n');
   return { prompt: prompt || 'Prompt: (no template)' };
 };
 
@@ -155,7 +152,9 @@ const handleModel: NodeHandler = async ({
     ...(typeof modelConfig['temperature'] === 'number'
       ? { temperature: modelConfig['temperature'] }
       : {}),
-    ...(typeof modelConfig['maxTokens'] === 'number' ? { maxTokens: modelConfig['maxTokens'] } : {}),
+    ...(typeof modelConfig['maxTokens'] === 'number'
+      ? { maxTokens: modelConfig['maxTokens'] }
+      : {}),
     ...(typeof modelConfig['vision'] === 'boolean' ? { vision: modelConfig['vision'] } : {}),
     source: 'ai_paths',
     graph: {
@@ -420,7 +419,9 @@ const resolveUnsupportedClientCodeObjectHandler = ({
   nodeType: string;
   codeObjectId: string;
 }): NodeHandler | null =>
-  resolveNodeCodeObjectV3ContractByCodeObjectId(codeObjectId) ? null : resolveLegacyHandler(nodeType);
+  resolveNodeCodeObjectV3ContractByCodeObjectId(codeObjectId)
+    ? null
+    : resolveLegacyHandler(nodeType);
 
 export async function evaluateGraphClient(
   argsOrNodes: EvaluateGraphArgs | AiNode[],
@@ -463,7 +464,8 @@ export async function evaluateGraphClient(
       return null;
     },
     mode: resolvedOptions.runtimeKernelMode,
-    v3PilotNodeTypes: resolvedOptions.runtimeKernelPilotNodeTypes,
+    runtimeKernelNodeTypes:
+      resolvedOptions.runtimeKernelNodeTypes ?? resolvedOptions.runtimeKernelPilotNodeTypes,
     runtimeKernelStrictNativeRegistry,
   });
 

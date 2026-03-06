@@ -50,11 +50,13 @@ export const cmsPageCreateSchema = z.object({
   themeId: z.string().nullable().optional(),
 });
 
-export const cmsPageComponentSchema = z.object({
-  type: nonEmptyStringSchema,
-  order: z.number(),
-  content: cmsPageBuilderComponentContentSchema,
-}).strict();
+export const cmsPageComponentSchema = z
+  .object({
+    type: nonEmptyStringSchema,
+    order: z.number(),
+    content: cmsPageBuilderComponentContentSchema,
+  })
+  .strict();
 
 export const cmsPageUpdateSchema = z.object({
   name: nonEmptyStringSchema,

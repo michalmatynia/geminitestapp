@@ -62,7 +62,7 @@ export function LanguageModal(): React.JSX.Element | null {
       key: 'name', // Using existing key for custom field as key is required
       label: 'Associated Countries',
       type: 'custom',
-      render: () => (
+      render: () =>
         renderSelectionChecklistGrid({
           className: 'mt-2',
           items: countries.map((country) => ({
@@ -72,8 +72,7 @@ export function LanguageModal(): React.JSX.Element | null {
           selectedIds: selectedCountryIds,
           onToggle: toggleCountry,
           emptyMessage: 'No countries available.',
-        })
-      ),
+        }),
     },
   ];
 

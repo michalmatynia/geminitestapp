@@ -63,7 +63,8 @@ const FALLBACK_VALIDATION_STACK_OPTIONS: PromptExploderValidationRuleStackOption
 const isPromptExploderValidatorScope = (
   scope: ValidatorScope
 ): scope is 'prompt-exploder' | 'case-resolver-prompt-exploder' =>
-  scope === PROMPT_EXPLODER_VALIDATOR_SCOPE || scope === CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE;
+  scope === PROMPT_EXPLODER_VALIDATOR_SCOPE ||
+  scope === CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE;
 
 const normalizeStackValue = (
   value: PromptExploderValidationRuleStack | null | undefined

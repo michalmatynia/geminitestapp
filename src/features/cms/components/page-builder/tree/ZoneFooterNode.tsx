@@ -74,10 +74,7 @@ export function ZoneFooterNode({
             Empty Zone
           </Button>
         ) : null}
-        <TreeSectionPicker
-          disabled={!currentPage}
-          zone={pickerZone}
-        />
+        <TreeSectionPicker disabled={!currentPage} zone={pickerZone} />
       </div>
     </>
   );

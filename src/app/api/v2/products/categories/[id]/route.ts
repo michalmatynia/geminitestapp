@@ -2,7 +2,12 @@ export const runtime = 'nodejs';
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { DELETE_handler, GET_handler, PUT_handler, productCategoryUpdateSchema } from '@/app/api/v2/products/categories/[id]/handler';
+import {
+  DELETE_handler,
+  GET_handler,
+  PUT_handler,
+  productCategoryUpdateSchema,
+} from '@/app/api/v2/products/categories/[id]/handler';
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
   source: 'products.categories.[id].GET',

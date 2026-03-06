@@ -47,8 +47,7 @@ const analysisBadRequest = (
   meta?: Record<string, unknown>
 ) => badRequestError(message, { analysisErrorCode, ...(meta ?? {}) });
 
-const isClientAnalysisMode = (mode: ImageStudioAnalysisMode): boolean =>
-  mode === 'client_analysis';
+const isClientAnalysisMode = (mode: ImageStudioAnalysisMode): boolean => mode === 'client_analysis';
 
 const parseJsonFormValue = <T>(value: FormDataEntryValue | null): T | undefined => {
   if (typeof value !== 'string') return undefined;

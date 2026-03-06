@@ -151,13 +151,13 @@ describe('case-resolver composer', () => {
 
     const compiled = compileCaseResolverPrompt(graph, 'focus');
 
-    expect(compiled.prompt).toBe('<<\'Quoted text\'>>');
+    expect(compiled.prompt).toBe("<<'Quoted text'>>");
     expect(compiled.segments).toHaveLength(1);
-    expect(compiled.segments[0]?.text).toBe('<<\'Quoted text\'>>');
+    expect(compiled.segments[0]?.text).toBe("<<'Quoted text'>>");
     expect(compiled.outputsByNode['focus']).toEqual({
-      wysiwygText: '<<\'Quoted text\'>>',
-      plaintextContent: '<<\'Quoted text\'>>',
-      plainText: '<<\'Quoted text\'>>',
+      wysiwygText: "<<'Quoted text'>>",
+      plaintextContent: "<<'Quoted text'>>",
+      plainText: "<<'Quoted text'>>",
       wysiwygContent: '',
     });
   });

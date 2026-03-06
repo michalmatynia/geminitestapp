@@ -290,8 +290,7 @@ const collectRuntimeInsightTelemetry = async (
     const latestRecord = records[0];
     if (!latestRecord) return fallback;
 
-    const ageMinutes =
-      Math.max(0, Math.round((nowMs - latestRecord.timestampMs) / 60_000));
+    const ageMinutes = Math.max(0, Math.round((nowMs - latestRecord.timestampMs) / 60_000));
 
     const currentRiskEvents = records.filter(
       (record) =>

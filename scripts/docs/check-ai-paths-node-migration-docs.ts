@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
-import { NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
+import { NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
 import { loadNodeMigrationParityEvidenceSummary } from './node-migration-parity-evidence';
 import {
   NODE_MIGRATION_ROLLOUT_APPROVALS_SCHEMA_VERSION,
@@ -57,7 +57,8 @@ type NodeMigrationIndexPayload = {
   schemaVersion: string;
   generatedAt: string;
   totalNodes: number;
-  pilotNodeTypes: string[];
+  runtimeKernelNodeTypes?: string[];
+  pilotNodeTypes?: string[];
   strategyTotals: {
     legacy_adapter: number;
     code_object_v3: number;
@@ -134,14 +135,23 @@ const v3ContractsPath = path.join(outputDir, 'contracts.json');
 const toSafeString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
 
+const readDeclaredRuntimeKernelNodeTypes = (payload: NodeMigrationIndexPayload): string[] =>
+  (
+    Array.isArray(payload.runtimeKernelNodeTypes)
+      ? payload.runtimeKernelNodeTypes
+      : payload.pilotNodeTypes ?? []
+  )
+    .map(toSafeString)
+    .filter(Boolean);
+
 const isSha256Hex = (value: string): boolean => /^[a-f0-9]{64}$/i.test(value);
 
 const expectedNodeTypes = new Set<string>(AI_PATHS_NODE_DOCS.map((doc) => doc.type));
 const expectedNodeDocsByType = new Map<string, (typeof AI_PATHS_NODE_DOCS)[number]>(
   AI_PATHS_NODE_DOCS.map((doc) => [doc.type, doc])
 );
-const pilotNodeTypeSet = new Set<string>(
-  NODE_RUNTIME_KERNEL_V3_PILOT_NODE_TYPES.map((entry: string): string =>
+const runtimeKernelNodeTypeSet = new Set<string>(
+  NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES.map((entry: string): string =>
     typeof entry === 'string' ? entry.trim() : ''
   ).filter(Boolean)
 );
@@ -371,27 +381,27 @@ for (const row of rows) {
 
   countedStrategies[row.runtimeStrategy] += 1;
 
-  const isPilot = pilotNodeTypeSet.has(nodeType);
-  const expectedStrategy = isPilot ? 'code_object_v3' : 'legacy_adapter';
+  const isRuntimeKernelNodeType = runtimeKernelNodeTypeSet.has(nodeType);
+  const expectedStrategy = isRuntimeKernelNodeType ? 'code_object_v3' : 'legacy_adapter';
   if (row.runtimeStrategy !== expectedStrategy) {
     errors.push(`${nodeType}: runtimeStrategy mismatch (expected ${expectedStrategy}, got ${row.runtimeStrategy}).`);
   }
 
-  const expectedWave = isPilot ? 'pilot' : 'backlog';
+  const expectedWave = isRuntimeKernelNodeType ? 'pilot' : 'backlog';
   if (row.migrationWave !== expectedWave) {
     errors.push(`${nodeType}: migrationWave mismatch (expected ${expectedWave}, got ${row.migrationWave}).`);
   }
 
-  if (isPilot) {
+  if (isRuntimeKernelNodeType) {
     const expectedId = buildCodeObjectId(nodeType);
     if (row.codeObjectId !== expectedId) {
       errors.push(`${nodeType}: codeObjectId mismatch (expected ${expectedId}, got ${row.codeObjectId ?? 'null'}).`);
     }
     if (!row.docs.v3ScaffoldFile) {
-      errors.push(`${nodeType}: pilot node must include docs.v3ScaffoldFile.`);
+      errors.push(`${nodeType}: runtime-kernel node must include docs.v3ScaffoldFile.`);
     }
   } else if (row.codeObjectId !== null) {
-    errors.push(`${nodeType}: non-pilot node must have codeObjectId set to null.`);
+    errors.push(`${nodeType}: non-runtime-kernel node must have codeObjectId set to null.`);
   }
 
   const semanticNodeFile = toSafeString(row.docs?.semanticNodeFile);
@@ -423,9 +433,9 @@ for (const row of rows) {
   }
 
   const v3IndexEntry = v3IndexEntryByType.get(nodeType) ?? null;
-  if (isPilot) {
+  if (isRuntimeKernelNodeType) {
     if (!v3IndexEntry) {
-      errors.push(`${nodeType}: missing v3 index entry for pilot node.`);
+      errors.push(`${nodeType}: missing v3 index entry for runtime-kernel node.`);
     } else {
       if (!row.docs.v3ScaffoldFile || row.docs.v3ScaffoldFile !== v3IndexEntry.objectFile) {
         errors.push(
@@ -450,10 +460,10 @@ for (const row of rows) {
     }
   } else {
     if (normalizedV3ObjectId !== null) {
-      errors.push(`${nodeType}: non-pilot node must have docs.v3ObjectId set to null.`);
+      errors.push(`${nodeType}: non-runtime-kernel node must have docs.v3ObjectId set to null.`);
     }
     if (normalizedV3ObjectHash !== null) {
-      errors.push(`${nodeType}: non-pilot node must have docs.v3ObjectHash set to null.`);
+      errors.push(`${nodeType}: non-runtime-kernel node must have docs.v3ObjectHash set to null.`);
     }
   }
 
@@ -500,9 +510,9 @@ for (const row of rows) {
       `${nodeType}: parityEvidenceSuiteIds mismatch (expected ${JSON.stringify(expectedParityEvidenceSuiteIds)}, got ${JSON.stringify(declaredParityEvidenceSuiteIds)}).`
     );
   }
-  if (isPilot && expectedParityEvidenceSuiteIds.length === 0) {
+  if (isRuntimeKernelNodeType && expectedParityEvidenceSuiteIds.length === 0) {
     errors.push(
-      `${nodeType}: pilot node is missing parity evidence coverage in ${parityEvidenceSummary.sourceFile}.`
+      `${nodeType}: runtime-kernel node is missing parity evidence coverage in ${parityEvidenceSummary.sourceFile}.`
     );
   }
 
@@ -571,9 +581,10 @@ for (const row of rows) {
 
   const expectedChecklist = {
     semanticContractReviewed: Boolean(semanticNodeFile),
-    v3CodeObjectAuthored: isPilot && Boolean(row.docs?.v3ScaffoldFile),
+    v3CodeObjectAuthored: isRuntimeKernelNodeType && Boolean(row.docs?.v3ScaffoldFile),
     dualRunParityValidated: expectedParityEvidenceSuiteIds.length > 0,
-    rolloutApproved: isPilot && rolloutApprovedNodeTypeSet.has(nodeType),
+    rolloutApproved:
+      isRuntimeKernelNodeType && rolloutApprovedNodeTypeSet.has(nodeType),
   };
   if (row.migrationChecklistTemplate?.semanticContractReviewed !== expectedChecklist.semanticContractReviewed) {
     errors.push(
@@ -891,15 +902,17 @@ if (!indexPayload.rolloutEligibility || typeof indexPayload.rolloutEligibility !
   }
 }
 
-const declaredPilotTypes = new Set<string>((indexPayload.pilotNodeTypes ?? []).map(toSafeString).filter(Boolean));
-for (const pilotNodeType of pilotNodeTypeSet) {
-  if (!declaredPilotTypes.has(pilotNodeType)) {
-    errors.push(`migration-index.json missing pilotNodeType=${pilotNodeType}.`);
+const declaredRuntimeKernelNodeTypes = new Set<string>(
+  readDeclaredRuntimeKernelNodeTypes(indexPayload)
+);
+for (const runtimeKernelNodeType of runtimeKernelNodeTypeSet) {
+  if (!declaredRuntimeKernelNodeTypes.has(runtimeKernelNodeType)) {
+    errors.push(`migration-index.json missing runtimeKernelNodeType=${runtimeKernelNodeType}.`);
   }
 }
-for (const declared of declaredPilotTypes) {
-  if (!pilotNodeTypeSet.has(declared)) {
-    errors.push(`migration-index.json has unexpected pilotNodeType=${declared}.`);
+for (const declared of declaredRuntimeKernelNodeTypes) {
+  if (!runtimeKernelNodeTypeSet.has(declared)) {
+    errors.push(`migration-index.json has unexpected runtimeKernelNodeType=${declared}.`);
   }
 }
 for (const approvedNodeType of rolloutApprovalsSummary.approvedNodeTypes) {
@@ -907,8 +920,8 @@ for (const approvedNodeType of rolloutApprovalsSummary.approvedNodeTypes) {
     errors.push(`rollout-approvals has unknown nodeType=${approvedNodeType}.`);
     continue;
   }
-  if (!pilotNodeTypeSet.has(approvedNodeType)) {
-    errors.push(`rollout-approvals nodeType=${approvedNodeType} is not in v3 pilot kernel set.`);
+  if (!runtimeKernelNodeTypeSet.has(approvedNodeType)) {
+    errors.push(`rollout-approvals nodeType=${approvedNodeType} is not in the canonical runtime-kernel set.`);
   }
   if (!rolloutEligibleNodeTypeSet.has(approvedNodeType)) {
     errors.push(`rollout-approvals nodeType=${approvedNodeType} is not technically eligible.`);
@@ -921,8 +934,8 @@ for (const eligibleNodeType of rolloutEligibilitySummary.eligibleNodeTypes) {
     errors.push(`rollout-eligibility has unknown nodeType=${eligibleNodeType}.`);
     continue;
   }
-  if (!pilotNodeTypeSet.has(eligibleNodeType)) {
-    errors.push(`rollout-eligibility nodeType=${eligibleNodeType} is not in v3 pilot kernel set.`);
+  if (!runtimeKernelNodeTypeSet.has(eligibleNodeType)) {
+    errors.push(`rollout-eligibility nodeType=${eligibleNodeType} is not in the canonical runtime-kernel set.`);
   }
   if (
     row.migrationReadiness.stage !== 'rollout_candidate' &&

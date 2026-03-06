@@ -32,14 +32,12 @@ type CaseListHeaderRuntimeValue = {
   onSearchChange?: (q: string) => void;
 };
 
-const {
-  Context: CaseListHeaderRuntimeContext,
-  useStrictContext: useCaseListHeaderRuntime,
-} = createStrictContext<CaseListHeaderRuntimeValue>({
-  hookName: 'useCaseListHeaderRuntime',
-  providerName: 'CaseListHeaderRuntimeProvider',
-  displayName: 'CaseListHeaderRuntimeContext',
-});
+const { Context: CaseListHeaderRuntimeContext, useStrictContext: useCaseListHeaderRuntime } =
+  createStrictContext<CaseListHeaderRuntimeValue>({
+    hookName: 'useCaseListHeaderRuntime',
+    providerName: 'CaseListHeaderRuntimeProvider',
+    displayName: 'CaseListHeaderRuntimeContext',
+  });
 
 function CaseListHeaderPaginationControl(): React.JSX.Element {
   const { page, totalPages, onPageChange, pageSize, onPageSizeChange } = useCaseListHeaderRuntime();

@@ -6,10 +6,7 @@ import React from 'react';
 import { FilePreviewModal } from '@/shared/ui';
 
 import { AssetPreviewModal } from './AssetPreviewModalImpl';
-import {
-  useFileManagerActions,
-  useFileManagerUIState,
-} from '../../contexts/FileManagerContext';
+import { useFileManagerActions, useFileManagerUIState } from '../../contexts/FileManagerContext';
 
 export function FileManagerModals(): React.JSX.Element {
   const { previewFile, setPreviewFile, previewAsset, setPreviewAsset } = useFileManagerUIState();

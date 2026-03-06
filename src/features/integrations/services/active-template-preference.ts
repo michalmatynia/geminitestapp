@@ -37,7 +37,8 @@ const normalizeByScopeEntries = (value: unknown): Record<string, string> => {
   );
 };
 
-export const normalizeActiveTemplateId = (value: unknown): string | null => normalizeOptionalId(value);
+export const normalizeActiveTemplateId = (value: unknown): string | null =>
+  normalizeOptionalId(value);
 
 export const buildActiveTemplateScopeKey = (scope?: ActiveTemplateScopeInput): string | null => {
   const connectionId = normalizeOptionalId(scope?.connectionId);
@@ -71,17 +72,13 @@ export const stringifyScopedActiveTemplateMap = (map: ScopedActiveTemplateMap): 
   const normalizedByScope = normalizeByScopeEntries(map.byScope);
   const sortedByScope = Object.keys(normalizedByScope)
     .sort((left: string, right: string) => left.localeCompare(right))
-    .reduce(
-      (acc: Record<string, string>, scopeKey: string) => {
-        acc[scopeKey] = normalizedByScope[scopeKey] as string;
-        return acc;
-      },
-      {}
-    );
+    .reduce((acc: Record<string, string>, scopeKey: string) => {
+      acc[scopeKey] = normalizedByScope[scopeKey] as string;
+      return acc;
+    }, {});
 
   return JSON.stringify({
     defaultTemplateId,
     byScope: sortedByScope,
   });
 };
-

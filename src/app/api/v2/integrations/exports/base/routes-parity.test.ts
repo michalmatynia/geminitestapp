@@ -27,7 +27,7 @@ const starterWorkflowsRoot = path.join(
   'src/shared/lib/ai-paths/core/starter-workflows/assets'
 );
 const legacyEndpointToken = '/api/integrations/exports/base';
-const legacyApiImportToken = "@/app/api/integrations/exports/base/";
+const legacyApiImportToken = '@/app/api/integrations/exports/base/';
 const legacyPasswordTokenFallbackPattern = /connection\.password|source:\s*['"]password['"]/;
 const expectedV2RoutePaths = ['[setting]/route.ts'] as const;
 

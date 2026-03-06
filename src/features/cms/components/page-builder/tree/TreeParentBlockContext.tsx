@@ -17,15 +17,10 @@ export function TreeParentBlockProvider({
   parentBlockId,
   children,
 }: TreeParentBlockProviderProps): React.JSX.Element {
-  const value = useMemo<TreeParentBlockContextValue>(
-    () => ({ parentBlockId }),
-    [parentBlockId]
-  );
+  const value = useMemo<TreeParentBlockContextValue>(() => ({ parentBlockId }), [parentBlockId]);
 
   return (
-    <TreeParentBlockContext.Provider value={value}>
-      {children}
-    </TreeParentBlockContext.Provider>
+    <TreeParentBlockContext.Provider value={value}>{children}</TreeParentBlockContext.Provider>
   );
 }
 

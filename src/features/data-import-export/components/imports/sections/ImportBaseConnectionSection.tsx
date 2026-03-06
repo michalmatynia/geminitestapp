@@ -16,11 +16,7 @@ import {
   ToggleRow,
   Card,
 } from '@/shared/ui';
-import type {
-  InventoryOption,
-  CatalogOption,
-  Template,
-} from '@/shared/contracts/integrations';
+import type { InventoryOption, CatalogOption, Template } from '@/shared/contracts/integrations';
 
 export function ImportBaseConnectionSection(): React.JSX.Element {
   const {

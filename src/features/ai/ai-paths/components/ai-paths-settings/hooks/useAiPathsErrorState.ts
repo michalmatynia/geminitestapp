@@ -14,9 +14,7 @@ type LastErrorInfo = {
 
 type UseAiPathsErrorStateArgs = { toast: Toast };
 
-export function useAiPathsErrorState({
-  toast,
-}: UseAiPathsErrorStateArgs) {
+export function useAiPathsErrorState({ toast }: UseAiPathsErrorStateArgs) {
   const { setAiPathsValidation } = useGraphActions();
   const { setLastError } = useRuntimeActions();
 

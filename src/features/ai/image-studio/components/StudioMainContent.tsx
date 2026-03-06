@@ -18,7 +18,9 @@ export function StudioMainContent(): React.JSX.Element {
   const hasProjects = (projectsQuery.data?.length ?? 0) > 0;
   const isProjectSelectionPending = !normalizedProjectId && hasProjects;
   const isStudioBootstrapping =
-    projectsQuery.isLoading || isProjectSelectionPending || (Boolean(normalizedProjectId) && slotsLoading);
+    projectsQuery.isLoading ||
+    isProjectSelectionPending ||
+    (Boolean(normalizedProjectId) && slotsLoading);
 
   if (isStudioBootstrapping) {
     return <ImageStudioPageSkeleton />;

@@ -51,9 +51,9 @@ const compileConditions = (
     const conditionId = explicitConditionId
       ? explicitConditionId
       : createAiPathsValidationConditionId(
-        `${ruleId}_${condition.operator}_${index + 1}`,
-        usedConditionIds
-      );
+          `${ruleId}_${condition.operator}_${index + 1}`,
+          usedConditionIds
+        );
     usedConditionIds.add(conditionId);
     return {
       ...condition,

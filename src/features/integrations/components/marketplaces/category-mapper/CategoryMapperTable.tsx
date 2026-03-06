@@ -29,8 +29,14 @@ export function CategoryMapperTable(): React.JSX.Element {
     categoryTree,
   } = useCategoryMapperData();
   const { pendingMappings, expandedIds, toggleExpand, stats } = useCategoryMapperUIState();
-  const { getMappingForExternal, handleMappingChange, handleFetchFromBase, handleSave, fetchMutation, saveMutation } =
-    useCategoryMapperActions();
+  const {
+    getMappingForExternal,
+    handleMappingChange,
+    handleFetchFromBase,
+    handleSave,
+    fetchMutation,
+    saveMutation,
+  } = useCategoryMapperActions();
 
   const isFetchPending = fetchMutation.isPending;
   const isSavePending = saveMutation.isPending;

@@ -1181,22 +1181,24 @@ const buildTransformPilotEdges = (): Edge[] => [
 ];
 
 const asRecord = (value: unknown): Record<string, unknown> =>
-  value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 
 const pilotHandlers: Record<string, NodeHandler> = {
   constant: ({ node }) => {
     const valueType = node.config?.constant?.valueType;
     const rawValue = node.config?.constant?.value;
-    const value = valueType === 'number' ? Number(rawValue ?? 0) : rawValue ?? '';
+    const value = valueType === 'number' ? Number(rawValue ?? 0) : (rawValue ?? '');
     const entityJson =
       typeof value === 'string'
         ? (() => {
-          try {
-            return asRecord(JSON.parse(value));
-          } catch {
-            return { value };
-          }
-        })()
+            try {
+              return asRecord(JSON.parse(value));
+            } catch {
+              return { value };
+            }
+          })()
         : asRecord(value);
 
     return { value, entityJson };
@@ -1231,7 +1233,8 @@ const pilotHandlers: Record<string, NodeHandler> = {
     };
   },
   mapper: ({ nodeInputs }) => {
-    const value = nodeInputs['value'] ?? nodeInputs['context'] ?? nodeInputs['result'] ?? nodeInputs['bundle'];
+    const value =
+      nodeInputs['value'] ?? nodeInputs['context'] ?? nodeInputs['result'] ?? nodeInputs['bundle'];
     return {
       value: String(value ?? ''),
       context: { value: String(value ?? '') },
@@ -1291,7 +1294,9 @@ const pilotHandlers: Record<string, NodeHandler> = {
   }),
   simulation: ({ node }) => {
     const simulationConfig = asRecord(node.config?.simulation);
-    const entityId = String(simulationConfig['entityId'] ?? simulationConfig['productId'] ?? 'sim-wave-a');
+    const entityId = String(
+      simulationConfig['entityId'] ?? simulationConfig['productId'] ?? 'sim-wave-a'
+    );
     const entityType = String(simulationConfig['entityType'] ?? 'product');
     return {
       context: {
@@ -1488,7 +1493,9 @@ const pilotHandlers: Record<string, NodeHandler> = {
     return next;
   },
   string_mutator: ({ node, nodeInputs }) => {
-    const rawInput = String(nodeInputs['value'] ?? nodeInputs['prompt'] ?? nodeInputs['result'] ?? '');
+    const rawInput = String(
+      nodeInputs['value'] ?? nodeInputs['prompt'] ?? nodeInputs['result'] ?? ''
+    );
     const config = asRecord(node.config?.stringMutator);
     const operations = Array.isArray(config['operations'])
       ? (config['operations'] as Array<Record<string, unknown>>)
@@ -1502,7 +1509,8 @@ const pilotHandlers: Record<string, NodeHandler> = {
         if (!search) return;
         const replace = String(operation['replace'] ?? '');
         const mode = String(operation['matchMode'] ?? 'all');
-        current = mode === 'all' ? current.split(search).join(replace) : current.replace(search, replace);
+        current =
+          mode === 'all' ? current.split(search).join(replace) : current.replace(search, replace);
       } else if (type === 'append') {
         const value = String(operation['value'] ?? '');
         const position = String(operation['position'] ?? 'suffix');
@@ -1592,7 +1600,8 @@ const pilotHandlers: Record<string, NodeHandler> = {
     const signal = nodeInputs['audioSignal'];
     return {
       status: 'completed',
-      audioSignal: signal && typeof signal === 'object' ? signal : { source: 'speaker', signal: 'none' },
+      audioSignal:
+        signal && typeof signal === 'object' ? signal : { source: 'speaker', signal: 'none' },
     };
   },
   ai_description: ({ nodeInputs }) => {
@@ -1746,7 +1755,9 @@ describe('engine-core v3 pilot dual-run parity', () => {
     expect(v3.result.status).toBe('completed');
     expect(legacy.result.outputs).toEqual(v3.result.outputs);
     expect(legacy.result.nodeStatuses).toEqual(v3.result.nodeStatuses);
-    expect(stripRuntimeTelemetry(legacy.result.history)).toEqual(stripRuntimeTelemetry(v3.result.history));
+    expect(stripRuntimeTelemetry(legacy.result.history)).toEqual(
+      stripRuntimeTelemetry(v3.result.history)
+    );
 
     const legacyNodeEvents = legacy.profileNodeEvents.filter(
       (event) =>
@@ -1781,7 +1792,9 @@ describe('engine-core v3 pilot dual-run parity', () => {
     expect(v3.result.status).toBe('completed');
     expect(legacy.result.outputs).toEqual(v3.result.outputs);
     expect(legacy.result.nodeStatuses).toEqual(v3.result.nodeStatuses);
-    expect(stripRuntimeTelemetry(legacy.result.history)).toEqual(stripRuntimeTelemetry(v3.result.history));
+    expect(stripRuntimeTelemetry(legacy.result.history)).toEqual(
+      stripRuntimeTelemetry(v3.result.history)
+    );
 
     expect(legacy.result.outputs['node-template']?.['prompt']).toBe('sum=abc');
     expect(v3.result.outputs['node-template']?.['prompt']).toBe('sum=abc');
@@ -1795,7 +1808,9 @@ describe('engine-core v3 pilot dual-run parity', () => {
     expect(v3.result.status).toBe('completed');
     expect(legacy.result.outputs).toEqual(v3.result.outputs);
     expect(legacy.result.nodeStatuses).toEqual(v3.result.nodeStatuses);
-    expect(stripRuntimeTelemetry(legacy.result.history)).toEqual(stripRuntimeTelemetry(v3.result.history));
+    expect(stripRuntimeTelemetry(legacy.result.history)).toEqual(
+      stripRuntimeTelemetry(v3.result.history)
+    );
 
     const legacyPrompt = legacy.result.outputs['node-template']?.['prompt'];
     const v3Prompt = v3.result.outputs['node-template']?.['prompt'];

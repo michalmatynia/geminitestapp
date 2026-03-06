@@ -22,8 +22,12 @@ export type RunHistoryFilter = 'all' | 'active' | 'failed' | 'dead';
 
 export function RunHistoryPanel(): React.JSX.Element {
   const runHistoryState = useRunHistoryState();
-  const { runList: resolvedRuns, runsRefreshing: resolvedIsRefreshing, expandedRunHistory, runHistorySelection } =
-    runHistoryState;
+  const {
+    runList: resolvedRuns,
+    runsRefreshing: resolvedIsRefreshing,
+    expandedRunHistory,
+    runHistorySelection,
+  } = runHistoryState;
   const {
     setRunFilter: setRunFilterContext,
     setExpandedRunHistory,

@@ -17,8 +17,7 @@ const ORPHAN_QUEUED_RECOVERY_ENABLED =
   process.env['AI_PATHS_ORPHAN_QUEUED_RECOVERY_ENABLED'] !== 'false';
 const ORPHAN_QUEUED_RECOVERY_MIN_AGE_MS = Math.max(
   0,
-  Number.parseInt(process.env['AI_PATHS_ORPHAN_QUEUED_RECOVERY_MIN_AGE_MS'] ?? '60000', 10) ||
-    60000
+  Number.parseInt(process.env['AI_PATHS_ORPHAN_QUEUED_RECOVERY_MIN_AGE_MS'] ?? '60000', 10) || 60000
 );
 const ORPHAN_QUEUED_RECOVERY_BATCH_SIZE = Math.max(
   1,
@@ -392,7 +391,8 @@ export const processStaleRunRecovery = async (): Promise<void> => {
         includeTotal: false,
       });
       const now = Date.now();
-      const { enqueuePathRunJob } = await import('@/features/ai/ai-paths/workers/ai-path-run-queue/queue');
+      const { enqueuePathRunJob } =
+        await import('@/features/ai/ai-paths/workers/ai-path-run-queue/queue');
       let revivedCount = 0;
 
       for (const run of queued.runs) {

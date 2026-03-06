@@ -53,11 +53,9 @@ describe('ai-paths trigger-buttons [id] handler', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await PATCH_handler(
-      request,
-      {} as Parameters<typeof PATCH_handler>[1],
-      { id: 'btn-1' }
-    );
+    const response = await PATCH_handler(request, {} as Parameters<typeof PATCH_handler>[1], {
+      id: 'btn-1',
+    });
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(
@@ -95,11 +93,7 @@ describe('ai-paths trigger-buttons [id] handler', () => {
     });
 
     await expect(
-      PATCH_handler(
-        request,
-        {} as Parameters<typeof PATCH_handler>[1],
-        { id: 'btn-1' }
-      )
+      PATCH_handler(request, {} as Parameters<typeof PATCH_handler>[1], { id: 'btn-1' })
     ).rejects.toThrow('Invalid AI trigger button record payload.');
 
     expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
@@ -117,11 +111,9 @@ describe('ai-paths trigger-buttons [id] handler', () => {
       method: 'DELETE',
     });
 
-    const response = await DELETE_handler(
-      request,
-      {} as Parameters<typeof DELETE_handler>[1],
-      { id: 'btn-1' }
-    );
+    const response = await DELETE_handler(request, {} as Parameters<typeof DELETE_handler>[1], {
+      id: 'btn-1',
+    });
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true });
@@ -152,11 +144,7 @@ describe('ai-paths trigger-buttons [id] handler', () => {
     });
 
     await expect(
-      DELETE_handler(
-        request,
-        {} as Parameters<typeof DELETE_handler>[1],
-        { id: 'btn-1' }
-      )
+      DELETE_handler(request, {} as Parameters<typeof DELETE_handler>[1], { id: 'btn-1' })
     ).rejects.toThrow('Invalid AI trigger button record payload.');
 
     expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();

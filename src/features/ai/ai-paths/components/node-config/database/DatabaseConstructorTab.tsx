@@ -506,7 +506,7 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
                       <span className='text-[10px] text-gray-400'>
                         {queryConfig.collection
                           ? (schemaCollections.find((c) => c.name === queryConfig.collection)
-                            ?.fields.length ?? 0)
+                              ?.fields.length ?? 0)
                           : 0}{' '}
                         fields
                       </span>

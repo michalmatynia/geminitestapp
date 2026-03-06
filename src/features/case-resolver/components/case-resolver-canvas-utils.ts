@@ -34,9 +34,9 @@ export const buildNode = (
   );
   const mergedConfig = definition.config
     ? {
-      ...(defaultConfig ?? {}),
-      ...definition.config,
-    }
+        ...(defaultConfig ?? {}),
+        ...definition.config,
+      }
     : defaultConfig;
 
   return {
@@ -231,7 +231,7 @@ const hasHtmlMarkup = (value: string): boolean => /<\/?[a-z][^>]*>/i.test(value)
 const decodeBasicHtmlEntities = (value: string): string =>
   value
     .replace(/&nbsp;/gi, ' ')
-    .replace(/&apos;|&#39;/gi, '\'')
+    .replace(/&apos;|&#39;/gi, "'")
     .replace(/&quot;/gi, '"')
     .replace(/&gt;/gi, '>')
     .replace(/&lt;/gi, '<')

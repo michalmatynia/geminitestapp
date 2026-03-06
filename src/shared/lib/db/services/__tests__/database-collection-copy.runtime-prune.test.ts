@@ -4,7 +4,10 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const projectRoot = process.cwd();
-const runtimeFile = path.join(projectRoot, 'src/shared/lib/db/services/database-collection-copy.ts');
+const runtimeFile = path.join(
+  projectRoot,
+  'src/shared/lib/db/services/database-collection-copy.ts'
+);
 
 const requiredTokens = ['AI_PATHS_DEPRECATED_STORE_PREFIX', 'AI_PATHS_DEPRECATED_STORE_KEY_PREFIX'];
 const forbiddenTokens = ['AI_PATHS_LEGACY_PREFIX', 'AI_PATHS_LEGACY_KEY_PREFIX'];

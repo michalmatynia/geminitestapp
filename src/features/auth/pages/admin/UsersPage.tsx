@@ -40,25 +40,12 @@ export default function AuthUsersPage(): React.JSX.Element {
 }
 
 function AuthUsersPageContent(): React.JSX.Element {
-  const {
-    filteredUsers,
-    isFetching,
-    isLoading,
-    canReadUsers,
-    roles,
-    provider,
-    refetch,
-  } = useUsersData();
+  const { filteredUsers, isFetching, isLoading, canReadUsers, roles, provider, refetch } =
+    useUsersData();
   const { search, setSearch } = useUsersSearch();
   const { localUserRoles, handleRoleChange, dirtyRoles, saveRoles } = useUsersRoles();
-  const {
-    setEditingUser,
-    userToDelete,
-    setUserToDelete,
-    deleteUser,
-    setCreateOpen,
-    setMockOpen,
-  } = useUsersDialogs();
+  const { setEditingUser, userToDelete, setUserToDelete, deleteUser, setCreateOpen, setMockOpen } =
+    useUsersDialogs();
 
   const columns = useMemo<ColumnDef<AuthUserSummary>[]>(
     () => [

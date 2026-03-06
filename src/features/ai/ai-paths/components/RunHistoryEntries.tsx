@@ -92,8 +92,8 @@ export function RunHistoryEntries(props: RunHistoryEntriesProps): React.JSX.Elem
                   entry.delayMs !== null &&
                   entry.delayMs !== undefined &&
                   entry.delayMs > 0 && (
-                  <span className='text-[10px] text-amber-300/80'>+{entry.delayMs}ms delay</span>
-                )}
+                    <span className='text-[10px] text-amber-300/80'>+{entry.delayMs}ms delay</span>
+                  )}
                 <Button
                   type='button'
                   size='xs'
@@ -151,10 +151,10 @@ export function RunHistoryEntries(props: RunHistoryEntriesProps): React.JSX.Elem
                   <span>Outputs</span>
                   {Array.isArray(entry.outputs?.['__logs']) &&
                   (entry.outputs['__logs'] as unknown[]).length > 0 ? (
-                      <span className='rounded-full border border-sky-500/50 bg-sky-500/15 px-2 py-px text-[10px] font-mono normal-case text-sky-100'>
+                    <span className='rounded-full border border-sky-500/50 bg-sky-500/15 px-2 py-px text-[10px] font-mono normal-case text-sky-100'>
                       Logs: {(entry.outputs['__logs'] as unknown[]).length}
-                      </span>
-                    ) : null}
+                    </span>
+                  ) : null}
                 </div>
                 <pre className='mt-2 max-h-64 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200'>
                   {formatPortData(entry.outputs)}

@@ -109,7 +109,12 @@ function StandardDataTablePanelGeneratedHeader(): React.JSX.Element | null {
   const { title, description, headerActions, refresh } = useStandardDataTablePanelHeaderRuntime();
   if (!title) return null;
   return (
-    <SectionHeader title={title} description={description} actions={headerActions} refresh={refresh} />
+    <SectionHeader
+      title={title}
+      description={description}
+      actions={headerActions}
+      refresh={refresh}
+    />
   );
 }
 
@@ -139,7 +144,9 @@ type StandardDataTablePanelRenderRuntimeValue = {
     stickyHeader?: boolean | undefined;
     rowSelection?: import('@tanstack/react-table').RowSelectionState | undefined;
     onRowSelectionChange?:
-      | import('@tanstack/react-table').OnChangeFn<import('@tanstack/react-table').RowSelectionState>
+      | import('@tanstack/react-table').OnChangeFn<
+          import('@tanstack/react-table').RowSelectionState
+        >
       | undefined;
     skeletonRows?: React.ReactNode | undefined;
     expanded?: ExpandedState | undefined;
@@ -163,7 +170,9 @@ function StandardDataTablePanelRenderRuntime(): React.JSX.Element {
   const { table } = runtime;
   return (
     <ListPanel
-      {...(runtime.resolvedPanelHeader !== undefined ? { header: runtime.resolvedPanelHeader } : {})}
+      {...(runtime.resolvedPanelHeader !== undefined
+        ? { header: runtime.resolvedPanelHeader }
+        : {})}
       {...(runtime.resolvedAlerts !== undefined ? { alerts: runtime.resolvedAlerts } : {})}
       {...(runtime.resolvedFilters !== undefined ? { filters: runtime.resolvedFilters } : {})}
       {...(runtime.actions !== undefined ? { actions: runtime.actions } : {})}
@@ -184,10 +193,14 @@ function StandardDataTablePanelRenderRuntime(): React.JSX.Element {
           isLoading={table.showTableLoading}
           {...(runtime.emptyState !== undefined ? { emptyState: runtime.emptyState } : {})}
           {...(table.initialSorting !== undefined ? { initialSorting: table.initialSorting } : {})}
-          {...(table.sortingStorageKey !== undefined ? { sortingStorageKey: table.sortingStorageKey } : {})}
+          {...(table.sortingStorageKey !== undefined
+            ? { sortingStorageKey: table.sortingStorageKey }
+            : {})}
           {...(table.getRowId !== undefined ? { getRowId: table.getRowId } : {})}
           {...(table.getSubRows !== undefined ? { getSubRows: table.getSubRows } : {})}
-          {...(table.getRowClassName !== undefined ? { getRowClassName: table.getRowClassName } : {})}
+          {...(table.getRowClassName !== undefined
+            ? { getRowClassName: table.getRowClassName }
+            : {})}
           {...(table.maxHeight !== undefined ? { maxHeight: table.maxHeight } : {})}
           {...(table.stickyHeader !== undefined ? { stickyHeader: table.stickyHeader } : {})}
           {...(table.rowSelection !== undefined ? { rowSelection: table.rowSelection } : {})}
@@ -196,8 +209,12 @@ function StandardDataTablePanelRenderRuntime(): React.JSX.Element {
             : {})}
           {...(table.skeletonRows !== undefined ? { skeletonRows: table.skeletonRows } : {})}
           {...(table.expanded !== undefined ? { expanded: table.expanded } : {})}
-          {...(table.onExpandedChange !== undefined ? { onExpandedChange: table.onExpandedChange } : {})}
-          {...(table.renderRowDetails !== undefined ? { renderRowDetails: table.renderRowDetails } : {})}
+          {...(table.onExpandedChange !== undefined
+            ? { onExpandedChange: table.onExpandedChange }
+            : {})}
+          {...(table.renderRowDetails !== undefined
+            ? { renderRowDetails: table.renderRowDetails }
+            : {})}
           enableVirtualization={table.enableVirtualization}
         />
       )}
@@ -263,8 +280,7 @@ export function StandardDataTablePanel<TData>({
     [panelDescription, panelHeaderActions, panelRefresh, panelTitle]
   );
   const resolvedPanelHeader =
-    resolvedHeader ??
-    (hasGeneratedHeader ? <StandardDataTablePanelGeneratedHeader /> : undefined);
+    resolvedHeader ?? (hasGeneratedHeader ? <StandardDataTablePanelGeneratedHeader /> : undefined);
   const showPanelLoading = isLoading && loadingVariant === 'panel';
   const showTableLoading = isLoading && loadingVariant === 'table';
   const renderRuntimeValue = React.useMemo<StandardDataTablePanelRenderRuntimeValue>(

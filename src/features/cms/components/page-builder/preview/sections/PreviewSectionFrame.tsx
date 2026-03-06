@@ -21,14 +21,8 @@ export function PreviewSectionFrame({
   children,
 }: PreviewSectionFrameProps): React.JSX.Element {
   const { colorSchemes } = useCmsPageContext();
-  const {
-    section,
-    selectedRing,
-    handleSelect,
-    wrapInspector,
-    renderSectionActions,
-    divider,
-  } = usePreviewSectionContext();
+  const { section, selectedRing, handleSelect, wrapInspector, renderSectionActions, divider } =
+    usePreviewSectionContext();
 
   const sectionStyles = getSectionStyles(section.settings, colorSchemes);
 

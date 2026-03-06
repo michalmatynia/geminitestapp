@@ -180,7 +180,8 @@ const readNativeContractCodeObjectIdSet = (): Set<string> => {
   const ids = Object.values(contracts)
     .filter(
       (entry: NodeCodeObjectContractEntry): boolean =>
-        entry.executionAdapter === 'native_handler_registry' && typeof entry.codeObjectId === 'string'
+        entry.executionAdapter === 'native_handler_registry' &&
+        typeof entry.codeObjectId === 'string'
     )
     .map((entry: NodeCodeObjectContractEntry): string => entry.codeObjectId as string);
   return new Set(ids);
@@ -201,7 +202,8 @@ const readNativeContractCodeObjectIdByNodeType = (): Map<string, string> => {
   const entries = Object.entries(contracts)
     .filter(
       ([, entry]: [string, NodeCodeObjectContractEntry]): boolean =>
-        entry.executionAdapter === 'native_handler_registry' && typeof entry.codeObjectId === 'string'
+        entry.executionAdapter === 'native_handler_registry' &&
+        typeof entry.codeObjectId === 'string'
     )
     .map(([nodeType, entry]: [string, NodeCodeObjectContractEntry]): [string, string] => [
       nodeType,
@@ -595,11 +597,13 @@ describe('client native code-object registry contract subset', () => {
   it('covers all client-supported pilot node types with native mappings', () => {
     const byNodeType = readNativeContractCodeObjectIdByNodeType();
     const clientNativeIdSet = new Set<string>(CLIENT_NATIVE_CODE_OBJECT_HANDLER_IDS);
-    const missingNodeTypes = CLIENT_LEGACY_HANDLER_NODE_TYPES.filter((nodeType: string): boolean => {
-      const contractCodeObjectId = byNodeType.get(nodeType);
-      if (!contractCodeObjectId) return false;
-      return !clientNativeIdSet.has(contractCodeObjectId);
-    });
+    const missingNodeTypes = CLIENT_LEGACY_HANDLER_NODE_TYPES.filter(
+      (nodeType: string): boolean => {
+        const contractCodeObjectId = byNodeType.get(nodeType);
+        if (!contractCodeObjectId) return false;
+        return !clientNativeIdSet.has(contractCodeObjectId);
+      }
+    );
 
     expect(missingNodeTypes).toEqual([]);
   });
@@ -1015,7 +1019,9 @@ describe('client native code-object registry contract subset', () => {
 
     expect(mockLearnerAgentsChat).not.toHaveBeenCalled();
     expect(result.outputs?.[learnerNodeMissingAgentId.id]?.['status']).toBe('blocked');
-    expect(result.outputs?.[learnerNodeMissingAgentId.id]?.['blockedReason']).toBe('missing_agent_id');
+    expect(result.outputs?.[learnerNodeMissingAgentId.id]?.['blockedReason']).toBe(
+      'missing_agent_id'
+    );
     expect(result.outputs?.[learnerNodeMissingAgentId.id]?.['bundle']).toMatchObject({
       status: 'blocked',
     });
@@ -1187,7 +1193,9 @@ describe('client native code-object registry contract subset', () => {
     });
 
     expect(mockAiGenerationGenerate).toHaveBeenCalledTimes(1);
-    expect(result.outputs?.['node-ai-description']?.['description_en']).toBe('generated-description');
+    expect(result.outputs?.['node-ai-description']?.['description_en']).toBe(
+      'generated-description'
+    );
   });
 
   it('executes description updater nodes through client native contract resolver mapping', async () => {

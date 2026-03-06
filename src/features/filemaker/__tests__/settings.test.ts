@@ -185,7 +185,9 @@ describe('filemaker settings', () => {
         { id: 'ph-1', phoneNumber: '+48 123 456 789' },
         { id: 'ph-duplicate', phoneNumber: '+48123456789' },
       ],
-      phoneNumberLinks: [{ id: 'phl-1', phoneNumberId: 'ph-1', partyKind: 'person', partyId: 'p-1' }],
+      phoneNumberLinks: [
+        { id: 'phl-1', phoneNumberId: 'ph-1', partyKind: 'person', partyId: 'p-1' },
+      ],
       emails: [],
       emailLinks: [],
       eventOrganizationLinks: [],
@@ -227,7 +229,13 @@ describe('filemaker settings', () => {
           },
         ],
         addressLinks: [
-          { id: 'al-person', ownerKind: 'person', ownerId: 'p-1', addressId: 'a-1', isDefault: true },
+          {
+            id: 'al-person',
+            ownerKind: 'person',
+            ownerId: 'p-1',
+            addressId: 'a-1',
+            isDefault: true,
+          },
           {
             id: 'al-organization',
             ownerKind: 'organization',
@@ -235,10 +243,18 @@ describe('filemaker settings', () => {
             addressId: 'a-1',
             isDefault: true,
           },
-          { id: 'al-event', ownerKind: 'event', ownerId: 'ev-1', addressId: 'a-1', isDefault: true },
+          {
+            id: 'al-event',
+            ownerKind: 'event',
+            ownerId: 'ev-1',
+            addressId: 'a-1',
+            isDefault: true,
+          },
         ],
         phoneNumbers: [{ id: 'ph-1', phoneNumber: '+48 123 456 789' }],
-        phoneNumberLinks: [{ id: 'phl-1', phoneNumberId: 'ph-1', partyKind: 'person', partyId: 'p-1' }],
+        phoneNumberLinks: [
+          { id: 'phl-1', phoneNumberId: 'ph-1', partyKind: 'person', partyId: 'p-1' },
+        ],
         emails: [],
         emailLinks: [],
         eventOrganizationLinks: [],
@@ -585,7 +601,9 @@ describe('filemaker settings', () => {
           addresses: [],
           addressLinks: [],
           phoneNumbers: [{ id: 'ph-1', phoneNumber: '+48111222333' }],
-          phoneNumberLinks: [{ id: 'phl-1', phoneNumberId: 'ph-1', partyKind: 'person', partyId: 'p-1' }],
+          phoneNumberLinks: [
+            { id: 'phl-1', phoneNumberId: 'ph-1', partyKind: 'person', partyId: 'p-1' },
+          ],
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
@@ -757,5 +775,4 @@ describe('filemaker settings', () => {
       )
     ).toThrowError(/Invalid Filemaker phoneNumbers payload/);
   });
-
 });

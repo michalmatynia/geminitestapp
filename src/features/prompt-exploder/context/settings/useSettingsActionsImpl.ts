@@ -4,7 +4,11 @@ import { useCallback, type Dispatch, type SetStateAction } from 'react';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
-import { PROMPT_ENGINE_SETTINGS_KEY, type PromptEngineSettings, type PromptValidationRule } from '@/shared/contracts/prompt-engine';
+import {
+  PROMPT_ENGINE_SETTINGS_KEY,
+  type PromptEngineSettings,
+  type PromptValidationRule,
+} from '@/shared/contracts/prompt-engine';
 import { PROMPT_EXPLODER_SETTINGS_KEY } from '../../settings';
 import {
   PromptExploderPatternSnapshot,

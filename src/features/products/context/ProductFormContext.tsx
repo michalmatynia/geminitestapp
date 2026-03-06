@@ -18,22 +18,13 @@ import {
   ProductFormCoreProvider,
   useProductFormCore,
 } from './ProductFormCoreContext';
-import {
-  ProductFormImageProvider,
-  useProductFormImages,
-} from './ProductFormImageContext';
-import {
-  ProductFormMetadataProvider,
-  useProductFormMetadata,
-} from './ProductFormMetadataContext';
+import { ProductFormImageProvider, useProductFormImages } from './ProductFormImageContext';
+import { ProductFormMetadataProvider, useProductFormMetadata } from './ProductFormMetadataContext';
 import {
   ProductFormParameterProvider,
   useProductFormParameters,
 } from './ProductFormParameterContext';
-import {
-  ProductFormStudioProvider,
-  useProductFormStudio,
-} from './ProductFormStudioContext';
+import { ProductFormStudioProvider, useProductFormStudio } from './ProductFormStudioContext';
 
 type ComparableParameterValue = {
   parameterId: string;
@@ -83,15 +74,15 @@ const normalizeComparableParameterValues = (
         typeof entry.valuesByLanguage === 'object' &&
         !Array.isArray(entry.valuesByLanguage)
           ? Object.entries(entry.valuesByLanguage).reduce(
-            (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
-              const normalizedLang = normalizeComparableString(lang).toLowerCase();
-              const normalizedValue = normalizeComparableString(value);
-              if (!normalizedLang || !normalizedValue) return acc;
-              acc[normalizedLang] = normalizedValue;
-              return acc;
-            },
+              (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
+                const normalizedLang = normalizeComparableString(lang).toLowerCase();
+                const normalizedValue = normalizeComparableString(value);
+                if (!normalizedLang || !normalizedValue) return acc;
+                acc[normalizedLang] = normalizedValue;
+                return acc;
+              },
               {} as Record<string, string>
-          )
+            )
           : {};
       const directValue = normalizeComparableString(entry.value);
       const fallbackLocalizedValue =
@@ -163,9 +154,8 @@ type ProductFormProviderRuntimeValue = {
 };
 
 export const ProductFormSubmitContext = createContext<ProductFormSubmitContextType | null>(null);
-export const ProductFormProviderRuntimeContext = createContext<ProductFormProviderRuntimeValue | null>(
-  null
-);
+export const ProductFormProviderRuntimeContext =
+  createContext<ProductFormProviderRuntimeValue | null>(null);
 const ProductFormProviderConfigContext = createContext<ProductFormProviderConfigContextType | null>(
   null
 );

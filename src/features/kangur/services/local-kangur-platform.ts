@@ -12,6 +12,7 @@ import type {
   KangurScoreRecord,
   KangurUser,
 } from '@/features/kangur/services/ports';
+import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 
 const KANGUR_PROGRESS_ENDPOINT = '/api/kangur/progress';
@@ -44,12 +45,6 @@ const unauthorizedError = (): Error & { status: number } => {
   error.status = 401;
   return error;
 };
-
-const isStatusError = (value: unknown): value is { status: number } =>
-  typeof value === 'object' &&
-  value !== null &&
-  'status' in value &&
-  typeof (value as { status?: unknown }).status === 'number';
 
 const clearScoreQueryCache = (): void => {
   scoreQueryCache.clear();
@@ -160,7 +155,9 @@ const requestScoresFromApi = async (url: string): Promise<KangurScoreRecord[]> =
         credentials: 'same-origin',
       });
       if (!response.ok) {
-        const requestError = new Error(`Kangur score list request failed with ${response.status}`) as Error & {
+        const requestError = new Error(
+          `Kangur score list request failed with ${response.status}`
+        ) as Error & {
           status: number;
         };
         requestError.status = response.status;
@@ -185,7 +182,7 @@ const requestScoresFromApi = async (url: string): Promise<KangurScoreRecord[]> =
         action: 'score.list',
         method: 'GET',
         endpoint: url,
-        ...(isStatusError(error) ? { statusCode: error.status } : {}),
+        ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
       });
       throw error;
     } finally {
@@ -210,7 +207,9 @@ const createScoreViaApi = async (input: KangurScoreCreateInput): Promise<KangurS
     });
 
     if (!response.ok) {
-      const requestError = new Error(`Kangur score create request failed with ${response.status}`) as Error & {
+      const requestError = new Error(
+        `Kangur score create request failed with ${response.status}`
+      ) as Error & {
         status: number;
       };
       requestError.status = response.status;
@@ -231,7 +230,7 @@ const createScoreViaApi = async (input: KangurScoreCreateInput): Promise<KangurS
       method: 'POST',
       endpoint: KANGUR_SCORES_ENDPOINT,
       operation: input.operation,
-      ...(isStatusError(error) ? { statusCode: error.status } : {}),
+      ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
     });
     throw error;
   }
@@ -261,12 +260,16 @@ const requestProgressFromApi = async (): Promise<KangurProgressRecord> => {
 
     return parsed.data;
   } catch (error: unknown) {
+    if (isKangurAuthStatusError(error)) {
+      throw error;
+    }
+
     logKangurClientError(error, {
       source: 'kangur.local-platform',
       action: 'progress.get',
       method: 'GET',
       endpoint: KANGUR_PROGRESS_ENDPOINT,
-      ...(isStatusError(error) ? { statusCode: error.status } : {}),
+      ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
     });
     throw error;
   }
@@ -304,7 +307,7 @@ const updateProgressViaApi = async (input: KangurProgressRecord): Promise<Kangur
       action: 'progress.update',
       method: 'PATCH',
       endpoint: KANGUR_PROGRESS_ENDPOINT,
-      ...(isStatusError(error) ? { statusCode: error.status } : {}),
+      ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
     });
     throw error;
   }

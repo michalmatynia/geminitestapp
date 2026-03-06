@@ -55,7 +55,10 @@ export const getProducerExternalIdFromLookup = (
   return getLookupValue(producerExternalIdByInternalId, internalProducerId);
 };
 
-export const getTagNameFromLookup = (tagId: string, tagNameById?: EntityNameLookup): string | null => {
+export const getTagNameFromLookup = (
+  tagId: string,
+  tagNameById?: EntityNameLookup
+): string | null => {
   return getLookupValue(tagNameById, tagId);
 };
 

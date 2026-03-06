@@ -240,11 +240,11 @@ export const handleFunctionNode: NodeHandler = ({
       errorRaw:
         error instanceof Error
           ? {
-            name: error.name,
-            message: error.message,
-            stack: error.stack,
-            logs: logs.length > 0 ? logs : undefined,
-          }
+              name: error.name,
+              message: error.message,
+              stack: error.stack,
+              logs: logs.length > 0 ? logs : undefined,
+            }
           : undefined,
     };
   }

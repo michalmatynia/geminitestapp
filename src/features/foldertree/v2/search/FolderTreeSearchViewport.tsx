@@ -50,7 +50,8 @@ const {
 });
 
 function FolderTreeSearchViewportSearchBar(): React.JSX.Element | null {
-  const { query, onQueryChange, searchEnabled, searchPlaceholder } = useFolderTreeSearchViewportRuntime();
+  const { query, onQueryChange, searchEnabled, searchPlaceholder } =
+    useFolderTreeSearchViewportRuntime();
   if (!searchEnabled) return null;
   return (
     <FolderTreeSearchBar value={query} onChange={onQueryChange} placeholder={searchPlaceholder} />
@@ -58,7 +59,8 @@ function FolderTreeSearchViewportSearchBar(): React.JSX.Element | null {
 }
 
 function FolderTreeSearchViewportTree(): React.JSX.Element {
-  const { controller, viewportProps, searchEnabled, searchState } = useFolderTreeSearchViewportRuntime();
+  const { controller, viewportProps, searchEnabled, searchState } =
+    useFolderTreeSearchViewportRuntime();
   return (
     <FolderTreeViewportV2
       controller={controller}

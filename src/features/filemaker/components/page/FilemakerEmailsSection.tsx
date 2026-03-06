@@ -14,11 +14,8 @@ import type { FilemakerEmail } from '../../types';
 
 export function FilemakerEmailsSection(): React.JSX.Element {
   const { database, updateSetting, emailLinkCountByEmailId } = useAdminFilemakerPageStateContext();
-  const {
-    openCreateEmail,
-    handleStartEditEmail,
-    handleDeleteEmail,
-  } = useAdminFilemakerPageActionsContext();
+  const { openCreateEmail, handleStartEditEmail, handleDeleteEmail } =
+    useAdminFilemakerPageActionsContext();
 
   return (
     <FilemakerEntityCardsSection
@@ -39,7 +36,9 @@ export function FilemakerEmailsSection(): React.JSX.Element {
           <div className='text-[11px] text-gray-500'>
             Linked parties: {emailLinkCountByEmailId.get(email.id) ?? 0}
           </div>
-          <div className='text-[10px] text-gray-600'>Updated: {formatTimestamp(email.updatedAt)}</div>
+          <div className='text-[10px] text-gray-600'>
+            Updated: {formatTimestamp(email.updatedAt)}
+          </div>
         </>
       )}
       onAdd={openCreateEmail}

@@ -345,6 +345,8 @@ describe('OperationsTab', () => {
     render(<OperationsTab />);
 
     expect(screen.queryByTestId('operations-runtime-risk-ai_paths')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('operations-runtime-risk-summary-ai_paths')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('operations-runtime-risk-summary-ai_paths')
+    ).not.toBeInTheDocument();
   });
 });

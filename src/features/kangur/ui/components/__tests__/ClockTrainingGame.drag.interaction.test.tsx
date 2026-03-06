@@ -171,7 +171,8 @@ describe('ClockTrainingGame drag interactions', () => {
     const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:00';
     const target = parseDisplayedTime(taskValueText);
     const nearMinutes = (target.minutes + 55) % 60;
-    const nearHours = target.minutes >= 5 ? target.hours : target.hours === 1 ? 12 : target.hours - 1;
+    const nearHours =
+      target.minutes >= 5 ? target.hours : target.hours === 1 ? 12 : target.hours - 1;
 
     dragHandToAngle(hourHand, hourToAngle(nearHours));
     dragHandToAngle(minuteHand, minuteToAngle(nearMinutes));
@@ -192,7 +193,8 @@ describe('ClockTrainingGame drag interactions', () => {
     const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:00';
     const target = parseDisplayedTime(taskValueText);
     const nearMinutes = (target.minutes + 55) % 60;
-    const nearHours = target.minutes >= 5 ? target.hours : target.hours === 1 ? 12 : target.hours - 1;
+    const nearHours =
+      target.minutes >= 5 ? target.hours : target.hours === 1 ? 12 : target.hours - 1;
 
     dragHandToAngle(hourHand, hourToAngle(nearHours));
     dragHandToAngle(minuteHand, minuteToAngle(nearMinutes));
@@ -229,7 +231,8 @@ describe('ClockTrainingGame drag interactions', () => {
     const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:00';
     const target = parseDisplayedTime(taskValueText);
     const nearMinutes = (target.minutes + 55) % 60;
-    const nearHours = target.minutes >= 5 ? target.hours : target.hours === 1 ? 12 : target.hours - 1;
+    const nearHours =
+      target.minutes >= 5 ? target.hours : target.hours === 1 ? 12 : target.hours - 1;
 
     dragHandToAngle(hourHand, hourToAngle(nearHours));
     dragHandToAngle(minuteHand, minuteToAngle(nearMinutes));

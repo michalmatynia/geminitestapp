@@ -3,10 +3,7 @@
 import { useMemo, type JSX, type ReactNode } from 'react';
 
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import {
-  PanelFilters,
-  PanelFiltersSearchPlaceholderRuntimeContext,
-} from './panels/PanelFilters';
+import { PanelFilters, PanelFiltersSearchPlaceholderRuntimeContext } from './panels/PanelFilters';
 import { FilterField } from '@/shared/contracts/ui';
 
 /**
@@ -86,7 +83,9 @@ const isActiveFilterValue = (value: unknown): boolean => {
   if (typeof value === 'boolean') return value;
   if (Array.isArray(value)) return value.some((entry) => isActiveFilterValue(entry));
   if (typeof value === 'object') {
-    return Object.values(value as Record<string, unknown>).some((entry) => isActiveFilterValue(entry));
+    return Object.values(value as Record<string, unknown>).some((entry) =>
+      isActiveFilterValue(entry)
+    );
   }
   return true;
 };
@@ -168,9 +167,12 @@ function FilterPanelPresets(): JSX.Element | null {
 
 function FilterPanelActiveCount(): JSX.Element | null {
   const { search, values } = useFilterPanelRuntime();
-  const hasActiveFilters = Object.values(values).some((value) => isActiveFilterValue(value)) || search;
+  const hasActiveFilters =
+    Object.values(values).some((value) => isActiveFilterValue(value)) || search;
   if (!hasActiveFilters) return null;
-  const activeFilterCount = Object.entries(values).filter(([, value]) => isActiveFilterValue(value)).length;
+  const activeFilterCount = Object.entries(values).filter(([, value]) =>
+    isActiveFilterValue(value)
+  ).length;
   return (
     <div className='mt-2 text-xs text-gray-500'>
       {activeFilterCount} filter{activeFilterCount !== 1 ? 's' : ''} active

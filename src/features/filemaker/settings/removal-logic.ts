@@ -35,11 +35,11 @@ export const removeFilemakerPhoneNumber = (
   const nextPersons =
     nextLinks.length === 0
       ? database.persons.map(
-        (person: FilemakerPerson): FilemakerPerson => ({
-          ...person,
-          phoneNumbers: [],
-        })
-      )
+          (person: FilemakerPerson): FilemakerPerson => ({
+            ...person,
+            phoneNumbers: [],
+          })
+        )
       : database.persons;
 
   return normalizeFilemakerDatabase({
@@ -67,11 +67,11 @@ export const removeFilemakerPartyPhoneNumberLinks = (
   const nextPersons =
     nextLinks.length === 0
       ? database.persons.map(
-        (person: FilemakerPerson): FilemakerPerson => ({
-          ...person,
-          phoneNumbers: [],
-        })
-      )
+          (person: FilemakerPerson): FilemakerPerson => ({
+            ...person,
+            phoneNumbers: [],
+          })
+        )
       : database.persons;
 
   return normalizeFilemakerDatabase({

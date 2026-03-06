@@ -59,7 +59,9 @@ const buildHarness = (options?: {
   };
 };
 
-const buildWheelEvent = (patch: Partial<React.WheelEvent> = {}): {
+const buildWheelEvent = (
+  patch: Partial<React.WheelEvent> = {}
+): {
   event: React.WheelEvent;
   preventDefault: ReturnType<typeof vi.fn>;
   stopPropagation: ReturnType<typeof vi.fn>;

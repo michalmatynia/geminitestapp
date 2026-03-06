@@ -143,9 +143,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
         });
         break;
       }
-      if (
-        /image studio settings payload includes unsupported keys/i.test(message)
-      ) {
+      if (/image studio settings payload includes unsupported keys/i.test(message)) {
         actions.push({
           label: 'Update Image Studio Settings',
           description:

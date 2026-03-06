@@ -546,9 +546,9 @@ export function reducePageBuilderMoveActions(
       const resolvedBlocks =
         located.block.type === TEXT_ATOM_BLOCK_TYPE
           ? buildTextAtomLetterBlocks(
-            normalizeTextAtomText(baseSettings['text']),
-            located.block.blocks
-          )
+              normalizeTextAtomText(baseSettings['text']),
+              located.block.blocks
+            )
           : located.block.blocks
             ? [...located.block.blocks]
             : [];
@@ -599,9 +599,9 @@ export function reducePageBuilderMoveActions(
       const textAtomBlocks =
         sourceSection.type === TEXT_ATOM_BLOCK_TYPE
           ? buildTextAtomLetterBlocks(
-            normalizeTextAtomText(baseSettings['text']),
-            sourceSection.blocks
-          )
+              normalizeTextAtomText(baseSettings['text']),
+              sourceSection.blocks
+            )
           : undefined;
       const convertedBlock: BlockInstance = {
         id: uid(),

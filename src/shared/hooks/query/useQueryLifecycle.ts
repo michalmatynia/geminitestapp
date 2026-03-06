@@ -22,7 +22,7 @@ export function useQueryLifecycle(): {
     totalMemoryUsage: number;
     avgAccessCount: number;
   };
-  } {
+} {
   const queryClient = useQueryClient();
   const queryMetadata = useRef<Map<string, QueryMetadata>>(new Map());
 

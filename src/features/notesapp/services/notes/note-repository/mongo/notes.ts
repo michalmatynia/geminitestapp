@@ -57,9 +57,9 @@ export const mongoNoteCrudImpl = {
     const noteFileCollection = db.collection<NoteFileDocument>(noteFileCollectionName);
     const noteFiles = noteIds.length
       ? await noteFileCollection
-        .find({ noteId: { $in: noteIds } } as Filter<NoteFileDocument>)
-        .sort({ slotIndex: 1 })
-        .toArray()
+          .find({ noteId: { $in: noteIds } } as Filter<NoteFileDocument>)
+          .sort({ slotIndex: 1 })
+          .toArray()
       : [];
     const filesByNoteId = new Map<string, NoteFileRecord[]>();
     noteFiles.forEach((fileDoc: WithId<NoteFileDocument>): void => {
@@ -70,10 +70,10 @@ export const mongoNoteCrudImpl = {
     });
     const incomingDocs = noteIds.length
       ? await collection
-        .find({
-          'relationsFrom.targetNoteId': { $in: noteIds },
-        } as Filter<NoteDocument>)
-        .toArray()
+          .find({
+            'relationsFrom.targetNoteId': { $in: noteIds },
+          } as Filter<NoteDocument>)
+          .toArray()
       : [];
     const incomingMap = buildIncomingRelationsMap(incomingDocs, noteIdSet);
 

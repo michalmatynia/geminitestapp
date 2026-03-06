@@ -266,11 +266,11 @@ export const buildWaitingOnDetails = (
         : {}),
       ...(Array.isArray(rawWaitingOnPorts)
         ? {
-          waitingOnPorts: rawWaitingOnPorts
-            .filter((p: unknown): p is string => typeof p === 'string')
-            .map((p: string): string => p.trim())
-            .filter((p: string): boolean => p.length > 0),
-        }
+            waitingOnPorts: rawWaitingOnPorts
+              .filter((p: unknown): p is string => typeof p === 'string')
+              .map((p: string): string => p.trim())
+              .filter((p: string): boolean => p.length > 0),
+          }
         : {}),
     });
   });
@@ -300,7 +300,9 @@ export const resolveMissingInputStatus = (input: {
         return false;
       }
       const blockedReason =
-        typeof upstream.blockedReason === 'string' ? upstream.blockedReason.trim().toLowerCase() : '';
+        typeof upstream.blockedReason === 'string'
+          ? upstream.blockedReason.trim().toLowerCase()
+          : '';
       const hasWaitingPorts =
         Array.isArray(upstream.waitingOnPorts) &&
         upstream.waitingOnPorts.some(

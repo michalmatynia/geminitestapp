@@ -82,24 +82,26 @@ const databaseRuntimeConfigSchema = z
   })
   .strict();
 
-const aiRuntimeConfigSchema = z.object({
-  version: z.literal(1).optional(),
-  model: z.string().trim().min(1).max(200).optional(),
-  systemPrompt: z.string().max(10_000).optional(),
-  promptTemplate: z.string().max(20_000).optional(),
-  temperature: z.number().min(0).max(2).optional(),
-  maxTokens: z.number().int().min(50).max(4_000).optional(),
-  timeoutMs: z.number().int().min(500).max(60_000).optional(),
-  responseFormat: z.enum(['json', 'text']).optional(),
-  resultPath: z.string().trim().optional(),
-  operator: runtimeOperatorSchema.optional(),
-  operand: z.unknown().optional(),
-  flags: z.string().trim().nullable().optional(),
-  messageTemplate: z.string().max(10_000).optional(),
-  replacementPaths: z.array(z.string().trim().min(1)).max(20).optional(),
-  replacementValue: z.union([z.string(), z.number(), z.boolean()]).optional(),
-  onError: z.enum(['ignore', 'issue']).optional(),
-}).strict();
+const aiRuntimeConfigSchema = z
+  .object({
+    version: z.literal(1).optional(),
+    model: z.string().trim().min(1).max(200).optional(),
+    systemPrompt: z.string().max(10_000).optional(),
+    promptTemplate: z.string().max(20_000).optional(),
+    temperature: z.number().min(0).max(2).optional(),
+    maxTokens: z.number().int().min(50).max(4_000).optional(),
+    timeoutMs: z.number().int().min(500).max(60_000).optional(),
+    responseFormat: z.enum(['json', 'text']).optional(),
+    resultPath: z.string().trim().optional(),
+    operator: runtimeOperatorSchema.optional(),
+    operand: z.unknown().optional(),
+    flags: z.string().trim().nullable().optional(),
+    messageTemplate: z.string().max(10_000).optional(),
+    replacementPaths: z.array(z.string().trim().min(1)).max(20).optional(),
+    replacementValue: z.union([z.string(), z.number(), z.boolean()]).optional(),
+    onError: z.enum(['ignore', 'issue']).optional(),
+  })
+  .strict();
 
 const parseRuntimeConfigJson = (rawValue: string): Record<string, unknown> => {
   let parsed: unknown;

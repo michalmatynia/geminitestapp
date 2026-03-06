@@ -7,7 +7,12 @@ import { createViewerOutputs, formatRuntimeValue } from '@/shared/lib/ai-paths';
 import { extractImageUrls, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Button, Textarea, FormField } from '@/shared/ui';
 
-import { useAiPathGraph, useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../../AiPathConfigContext';
+import {
+  useAiPathGraph,
+  useAiPathOrchestrator,
+  useAiPathRuntime,
+  useAiPathSelection,
+} from '../../AiPathConfigContext';
 
 export function ViewerNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();

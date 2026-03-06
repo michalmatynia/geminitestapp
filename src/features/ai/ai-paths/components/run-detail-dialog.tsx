@@ -318,7 +318,10 @@ export function RunDetailDialog(): React.JSX.Element {
               {errorSummary.nodeFailures.length > 0 ? (
                 <div className='mt-2 space-y-1 text-[10px] text-rose-100/90'>
                   {errorSummary.nodeFailures.map((node) => (
-                    <div key={node.nodeId} className='rounded border border-rose-500/30 bg-black/20 px-2 py-1'>
+                    <div
+                      key={node.nodeId}
+                      className='rounded border border-rose-500/30 bg-black/20 px-2 py-1'
+                    >
                       <span className='font-mono'>{node.nodeId}</span>
                       {node.nodeTitle ? ` (${node.nodeTitle})` : ''} - {node.code ?? 'unknown'} x
                       {node.count}

@@ -26,10 +26,7 @@ import {
 import { getProductRepository } from '@/features/products/server';
 import { buildImageBase64Slots } from '@/shared/lib/products/services/image-base64';
 import type { ProductAiJobRecord } from '@/shared/contracts/jobs';
-import {
-  badRequestError,
-  operationFailedError,
-} from '@/shared/errors/app-error';
+import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 
 import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
 
@@ -153,8 +150,8 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
   let brainApplied: Record<string, unknown> | undefined;
   const imageUrls = Array.isArray(payload.imageUrls)
     ? payload.imageUrls.filter(
-      (url: unknown): url is string => typeof url === 'string' && url.trim() !== ''
-    )
+        (url: unknown): url is string => typeof url === 'string' && url.trim() !== ''
+      )
     : [];
   const attachImages = Boolean(payload.vision) && imageUrls.length > 0;
   if (source === 'ai_paths') {

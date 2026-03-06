@@ -22,7 +22,11 @@ import {
   FormField,
 } from '@/shared/ui';
 
-import { useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../AiPathConfigContext';
+import {
+  useAiPathOrchestrator,
+  useAiPathRuntime,
+  useAiPathSelection,
+} from '../AiPathConfigContext';
 
 function pruneLargeFields(value: unknown, seen: Set<object> = new Set<object>()): unknown {
   if (!value || typeof value !== 'object') return value;

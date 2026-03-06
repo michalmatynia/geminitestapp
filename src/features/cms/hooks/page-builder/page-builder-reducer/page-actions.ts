@@ -1,6 +1,4 @@
-import {
-  syncNextIdFromSections,
-} from '../block-helpers';
+import { syncNextIdFromSections } from '../block-helpers';
 import type {
   PageBuilderState,
   PageBuilderAction,
@@ -17,19 +15,17 @@ export function reducePageActions(
 
     case 'SET_CURRENT_PAGE': {
       const page = action.page;
-      const sections: SectionInstance[] = page.components.map(
-        (comp): SectionInstance => {
-          const content = comp.content;
-          return {
-            id: content.sectionId,
-            type: comp.type,
-            zone: content.zone,
-            parentSectionId: content.parentSectionId,
-            settings: content.settings,
-            blocks: content.blocks,
-          };
-        }
-      );
+      const sections: SectionInstance[] = page.components.map((comp): SectionInstance => {
+        const content = comp.content;
+        return {
+          id: content.sectionId,
+          type: comp.type,
+          zone: content.zone,
+          parentSectionId: content.parentSectionId,
+          settings: content.settings,
+          blocks: content.blocks,
+        };
+      });
       syncNextIdFromSections(sections);
       return {
         ...state,

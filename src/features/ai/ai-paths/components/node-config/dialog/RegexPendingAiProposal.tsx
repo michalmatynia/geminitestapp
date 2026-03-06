@@ -13,8 +13,14 @@ type RegexPendingAiProposalProps = {
 };
 
 export function RegexPendingAiProposal(props: RegexPendingAiProposalProps): React.JSX.Element {
-  const { codeSnippets, onAccept, onReject, onSelectSnippetIndex, pendingAiRegex, selectedSnippetIndex } =
-    props;
+  const {
+    codeSnippets,
+    onAccept,
+    onReject,
+    onSelectSnippetIndex,
+    pendingAiRegex,
+    selectedSnippetIndex,
+  } = props;
 
   return (
     <div className='rounded-md border border-purple-500/40 bg-purple-500/10 p-3'>

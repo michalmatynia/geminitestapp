@@ -44,7 +44,9 @@ describe('error-classifier', () => {
   });
 
   it('treats unsupported-key errors as validation even when thrown as plain Error', () => {
-    const error = new Error('Agent persona settings payload includes unsupported keys: plannerModel.');
+    const error = new Error(
+      'Agent persona settings payload includes unsupported keys: plannerModel.'
+    );
     const actions = getSuggestedActions(classifyError(error), error);
 
     expect(classifyError(error)).toBe(ERROR_CATEGORY.VALIDATION);

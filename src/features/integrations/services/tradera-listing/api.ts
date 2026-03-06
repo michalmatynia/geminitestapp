@@ -21,9 +21,7 @@ export const resolveTraderaApiCredentials = (
   const appKey = connection.traderaApiAppKey
     ? decryptSecret(connection.traderaApiAppKey).trim()
     : '';
-  const token = connection.traderaApiToken
-    ? decryptSecret(connection.traderaApiToken).trim()
-    : '';
+  const token = connection.traderaApiToken ? decryptSecret(connection.traderaApiToken).trim() : '';
 
   if (!appId) {
     throw internalError('Tradera API App ID is missing. Update the connection credentials.');

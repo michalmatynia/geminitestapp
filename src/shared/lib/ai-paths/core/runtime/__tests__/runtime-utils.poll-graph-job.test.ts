@@ -65,7 +65,9 @@ describe('pollGraphJob', () => {
 
     await expect(
       pollGraphJob('job-connection-failure', { intervalMs: 0, maxAttempts: 2 })
-    ).rejects.toThrow('Connection error after 2 attempts while polling AI job "job-connection-failure"');
+    ).rejects.toThrow(
+      'Connection error after 2 attempts while polling AI job "job-connection-failure"'
+    );
     expect(vi.mocked(aiJobsApi.poll)).toHaveBeenCalledTimes(2);
   });
 });

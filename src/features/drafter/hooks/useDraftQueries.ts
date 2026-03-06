@@ -18,9 +18,7 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 const draftKeys = QUERY_KEYS.drafter;
 
-export {
-  draftKeys,
-};
+export { draftKeys };
 
 export function useDraftQueries(notebookId?: string): ListQuery<ProductDraft> {
   const queryKey = draftKeys.list(notebookId ?? 'all');
@@ -76,7 +74,7 @@ export function useCreateDraftMutation(): MutationResult<ProductDraft, CreatePro
 export function useUpdateDraftMutation(): MutationResult<
   ProductDraft,
   { id: string; data: UpdateProductDraftInput }
-  > {
+> {
   return createUpdateMutationV2<ProductDraft, { id: string; data: UpdateProductDraftInput }>({
     mutationFn: ({ id, data }) => api.put<ProductDraft>(`/api/drafts/${id}`, data),
     meta: {

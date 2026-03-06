@@ -2,11 +2,7 @@
 
 import Link from 'next/link';
 
-import {
-  JobsProvider,
-  useJobsActions,
-  useJobsState,
-} from '@/shared/lib/jobs/context/JobsContext';
+import { JobsProvider, useJobsActions, useJobsState } from '@/shared/lib/jobs/context/JobsContext';
 import { useProductListingJobsProps } from '@/shared/lib/jobs/hooks/useProductListingJobsProps';
 import {
   Button,

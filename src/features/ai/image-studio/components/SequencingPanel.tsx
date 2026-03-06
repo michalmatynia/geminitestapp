@@ -50,7 +50,10 @@ import { useSequenceMonitor } from './sequencing/useSequenceMonitor';
 import { SequenceRuntimeCard } from './sequencing/SequenceRuntimeCard';
 import { SequencePresetsCard } from './sequencing/SequencePresetsCard';
 import { SequenceRunCard } from './sequencing/SequenceRunCard';
-import { SequencingPanelProvider, type SequencingPanelContextValue } from './sequencing/SequencingPanelContext';
+import {
+  SequencingPanelProvider,
+  type SequencingPanelContextValue,
+} from './sequencing/SequencingPanelContext';
 
 const SLOT_RESOLUTION_RETRY_MS = 220;
 const SLOT_RESOLUTION_ATTEMPTS = 10;
@@ -609,10 +612,10 @@ export function SequencingPanel(): React.JSX.Element {
         mask:
           polygons.length > 0
             ? {
-              polygons,
-              invert: maskInvert,
-              feather: maskFeather,
-            }
+                polygons,
+                invert: maskInvert,
+                feather: maskFeather,
+              }
             : null,
         studioSettings: studioSettings as unknown as Record<string, unknown>,
         steps: resolvedSteps,

@@ -93,7 +93,9 @@ const extractRuntimeTraceKernelParity = (
       unknown: normalizeNonNegativeInteger(resolutionSourceCounts?.['unknown']),
     },
     codeObjectIds: rawCodeObjectIds
-      .filter((entry: unknown): entry is string => typeof entry === 'string' && entry.trim().length > 0)
+      .filter(
+        (entry: unknown): entry is string => typeof entry === 'string' && entry.trim().length > 0
+      )
       .map((entry: string) => entry.trim())
       .slice(0, 25),
   };
@@ -213,14 +215,14 @@ export const summarizeRuntimeTraceAnalytics = (input: {
   const avgDurationMs =
     durations.length > 0
       ? Math.round(
-        durations.reduce((sum: number, value: number) => sum + value, 0) / durations.length
-      )
+          durations.reduce((sum: number, value: number) => sum + value, 0) / durations.length
+        )
       : null;
   const p95DurationMs =
     durations.length > 0
       ? durations[
-        Math.min(durations.length - 1, Math.max(0, Math.ceil(durations.length * 0.95) - 1))
-      ]!
+          Math.min(durations.length - 1, Math.max(0, Math.ceil(durations.length * 0.95) - 1))
+        ]!
       : null;
   const topSlowNodes = Array.from(nodeAggregates.values())
     .filter((aggregate) => aggregate.durationCount > 0)

@@ -26,14 +26,12 @@ type StatusToggleRuntimeValue = {
   label: string;
 };
 
-const {
-  Context: StatusToggleRuntimeContext,
-  useStrictContext: useStatusToggleRuntime,
-} = createStrictContext<StatusToggleRuntimeValue>({
-  hookName: 'useStatusToggleRuntime',
-  providerName: 'StatusToggleRuntimeProvider',
-  displayName: 'StatusToggleRuntimeContext',
-});
+const { Context: StatusToggleRuntimeContext, useStrictContext: useStatusToggleRuntime } =
+  createStrictContext<StatusToggleRuntimeValue>({
+    hookName: 'useStatusToggleRuntime',
+    providerName: 'StatusToggleRuntimeProvider',
+    displayName: 'StatusToggleRuntimeContext',
+  });
 
 function StatusToggleBadge(): React.JSX.Element {
   const runtime = useStatusToggleRuntime();

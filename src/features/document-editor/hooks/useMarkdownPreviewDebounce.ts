@@ -22,14 +22,14 @@ export function useMarkdownPreviewDebounce({
 
   React.useEffect((): void | (() => void) => {
     if (!enabled) return;
-    
+
     setIsDebouncing(true);
     const timer = window.setTimeout((): void => {
       const nextHtml = renderPreviewHtml(value);
       setDebouncedHtml(sanitizePreviewHtml ? sanitizePreviewHtml(nextHtml) : nextHtml);
       setIsDebouncing(false);
     }, debounceMs);
-    
+
     return (): void => window.clearTimeout(timer);
   }, [debounceMs, renderPreviewHtml, sanitizePreviewHtml, enabled, value]);
 

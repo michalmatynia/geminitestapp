@@ -28,7 +28,7 @@ const buildNode = (patch: Partial<AiNode>): AiNode => {
               id: nextId,
             } as AiNode,
             palette
-        ),
+          ),
   } as AiNode;
 };
 
@@ -159,18 +159,18 @@ describe('sanitizePathConfig', () => {
       (node: AiNode): AiNode =>
         node.type === 'database'
           ? {
-            ...node,
-            config: {
-              ...(node.config ?? {}),
-              database: {
-                operation: 'query',
-                schemaSnapshot: {
-                  collections: [],
-                  sources: {},
+              ...node,
+              config: {
+                ...(node.config ?? {}),
+                database: {
+                  operation: 'query',
+                  schemaSnapshot: {
+                    collections: [],
+                    sources: {},
+                  },
                 },
               },
-            },
-          }
+            }
           : node
     );
 
@@ -185,17 +185,17 @@ describe('sanitizePathConfig', () => {
       (node: AiNode): AiNode =>
         node.type === 'database'
           ? {
-            ...node,
-            config: {
-              ...(node.config ?? {}),
-              database: {
-                operation: 'query',
-                query: {
-                  provider: 'all',
+              ...node,
+              config: {
+                ...(node.config ?? {}),
+                database: {
+                  operation: 'query',
+                  query: {
+                    provider: 'all',
+                  },
                 },
               },
-            },
-          }
+            }
           : node
     );
 
@@ -210,18 +210,18 @@ describe('sanitizePathConfig', () => {
       (node: AiNode): AiNode =>
         node.type === 'database'
           ? {
-            ...node,
-            config: {
-              ...(node.config ?? {}),
-              database: {
-                operation: 'update',
-                parameterInferenceGuard: {
-                  enabled: true,
-                  targetPath: 'simpleParameters',
+              ...node,
+              config: {
+                ...(node.config ?? {}),
+                database: {
+                  operation: 'update',
+                  parameterInferenceGuard: {
+                    enabled: true,
+                    targetPath: 'simpleParameters',
+                  },
                 },
               },
-            },
-          }
+            }
           : node
     );
 
@@ -236,9 +236,9 @@ describe('sanitizePathConfig', () => {
       (node: AiNode, index: number): AiNode =>
         index === 0
           ? {
-            ...node,
-            instanceId: undefined,
-          }
+              ...node,
+              instanceId: undefined,
+            }
           : node
     );
 

@@ -383,17 +383,17 @@ ${String(error)}`);
     const nextSchedule =
       activeTargetKey === 'mongodb'
         ? {
-          ...backupSchedule,
-          schedulerEnabled: schedulerEnabledDraft,
-          repeatTickEnabled: repeatTickEnabledDraft,
-          mongodb: activeTargetNext,
-        }
+            ...backupSchedule,
+            schedulerEnabled: schedulerEnabledDraft,
+            repeatTickEnabled: repeatTickEnabledDraft,
+            mongodb: activeTargetNext,
+          }
         : {
-          ...backupSchedule,
-          schedulerEnabled: schedulerEnabledDraft,
-          repeatTickEnabled: repeatTickEnabledDraft,
-          postgresql: activeTargetNext,
-        };
+            ...backupSchedule,
+            schedulerEnabled: schedulerEnabledDraft,
+            repeatTickEnabled: repeatTickEnabledDraft,
+            postgresql: activeTargetNext,
+          };
 
     try {
       await updateSetting.mutateAsync({

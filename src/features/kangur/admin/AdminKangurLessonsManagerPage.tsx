@@ -189,7 +189,10 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
     () =>
       createMasterFolderTreeTransactionAdapter({
         onApply: async (tx) => {
-          const reorderedLessons = resolveKangurLessonOrderFromNodes(tx.nextNodes, lessonByIdRef.current);
+          const reorderedLessons = resolveKangurLessonOrderFromNodes(
+            tx.nextNodes,
+            lessonByIdRef.current
+          );
           await persistLessonsRef.current(reorderedLessons);
           return tx.nextNodes;
         },
@@ -199,7 +202,9 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
 
   const masterNodes = useMemo(
     () =>
-      isCatalogMode ? buildKangurLessonCatalogMasterNodes(lessons) : buildKangurLessonMasterNodes(lessons),
+      isCatalogMode
+        ? buildKangurLessonCatalogMasterNodes(lessons)
+        : buildKangurLessonMasterNodes(lessons),
     [isCatalogMode, lessons]
   );
 
@@ -262,26 +267,26 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
 
     const nextLesson: KangurLesson = editingLesson
       ? {
-        ...editingLesson,
-        componentId: formData.componentId,
-        title: normalizedTitle,
-        description: normalizedDescription,
-        emoji: normalizedEmoji,
-        color: formData.color,
-        activeBg: formData.activeBg,
-        enabled: formData.enabled,
-      }
+          ...editingLesson,
+          componentId: formData.componentId,
+          title: normalizedTitle,
+          description: normalizedDescription,
+          emoji: normalizedEmoji,
+          color: formData.color,
+          activeBg: formData.activeBg,
+          enabled: formData.enabled,
+        }
       : {
-        id: createKangurLessonId(normalizedTitle),
-        componentId: formData.componentId,
-        title: normalizedTitle,
-        description: normalizedDescription,
-        emoji: normalizedEmoji,
-        color: formData.color,
-        activeBg: formData.activeBg,
-        enabled: formData.enabled,
-        sortOrder: nextSortOrder,
-      };
+          id: createKangurLessonId(normalizedTitle),
+          componentId: formData.componentId,
+          title: normalizedTitle,
+          description: normalizedDescription,
+          emoji: normalizedEmoji,
+          color: formData.color,
+          activeBg: formData.activeBg,
+          enabled: formData.enabled,
+          sortOrder: nextSortOrder,
+        };
 
     const nextLessons = editingLesson
       ? lessons.map((lesson) => (lesson.id === editingLesson.id ? nextLesson : lesson))
@@ -316,10 +321,7 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
     }
   }, [lessonToDelete, lessons, persistLessons, toast]);
 
-  const geometryPackResult = useMemo(
-    () => appendMissingGeometryKangurLessons(lessons),
-    [lessons]
-  );
+  const geometryPackResult = useMemo(() => appendMissingGeometryKangurLessons(lessons), [lessons]);
 
   const handleAddGeometryPack = useCallback(async (): Promise<void> => {
     if (geometryPackResult.addedCount === 0) {
@@ -341,7 +343,7 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
   const renderNode = useCallback(
     (input: FolderTreeViewportRenderNodeInput): React.ReactNode => {
       const lessonId = fromKangurLessonNodeId(input.node.id);
-      const lesson = lessonId ? lessonById.get(lessonId) ?? null : null;
+      const lesson = lessonId ? (lessonById.get(lessonId) ?? null) : null;
       if (!lesson) {
         const lessonCount = readLessonGroupCount(input.node.metadata);
         return (
@@ -593,7 +595,9 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
                   placeholder={searchPlaceholder}
                 />
                 {searchState.isActive ? (
-                  <div className='text-[11px] text-muted-foreground/80'>{searchResultCountLabel}</div>
+                  <div className='text-[11px] text-muted-foreground/80'>
+                    {searchResultCountLabel}
+                  </div>
                 ) : null}
               </>
             ) : null}
@@ -612,11 +616,7 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
               controller={controller}
               scrollToNodeRef={scrollToNodeRef}
               searchState={searchState}
-              rootDropUi={
-                isCatalogMode
-                  ? { ...rootDropUi, enabled: false }
-                  : rootDropUi
-              }
+              rootDropUi={isCatalogMode ? { ...rootDropUi, enabled: false } : rootDropUi}
               renderNode={renderNode}
               enableDnd={!isCatalogMode && !updateSetting.isPending}
               emptyLabel='No lessons yet. Add the first lesson to start.'
@@ -658,7 +658,9 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
               size='sm'
               value={formData.componentId}
               onValueChange={(value: string): void => {
-                const matched = KANGUR_LESSON_COMPONENT_OPTIONS.find((option) => option.value === value);
+                const matched = KANGUR_LESSON_COMPONENT_OPTIONS.find(
+                  (option) => option.value === value
+                );
                 if (!matched) return;
                 applyTemplateForComponent(matched.value);
               }}

@@ -88,15 +88,15 @@ export const canTransitionPromptExploderTransferStatus = (
 export const applyPromptExploderTransferLifecycleUpdate = <
   T extends PromptExploderTransferLifecycleRecord,
 >(
-    current: T | null,
-    input: {
+  current: T | null,
+  input: {
     nextStatus: PromptExploderTransferUiStatus;
     reason?: string | null;
     at?: string;
     force?: boolean;
     patch?: Partial<T>;
   }
-  ): T | null => {
+): T | null => {
   if (!current) return current;
   const nextStatus = input.nextStatus;
   const transitionAllowed =

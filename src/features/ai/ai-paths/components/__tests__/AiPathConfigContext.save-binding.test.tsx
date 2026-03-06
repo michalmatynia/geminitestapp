@@ -74,10 +74,7 @@ vi.mock('@/shared/ui', () => ({
   useToast: () => ({ toast: vi.fn() }),
 }));
 
-import {
-  AiPathConfigProviderWithContext,
-  useAiPathOrchestrator,
-} from '../AiPathConfigContext';
+import { AiPathConfigProviderWithContext, useAiPathOrchestrator } from '../AiPathConfigContext';
 
 function Probe(props: { onReady: (value: ReturnType<typeof useAiPathOrchestrator>) => void }) {
   const value = useAiPathOrchestrator();

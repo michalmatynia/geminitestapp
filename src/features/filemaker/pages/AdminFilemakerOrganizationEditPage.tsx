@@ -12,7 +12,8 @@ import { OrganizationEmailsSection } from '../components/page/OrganizationEmails
 import { FilemakerPartyEditPageLayout } from '../components/shared/FilemakerPartyEditPageLayout';
 
 function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
-  const { organization, updateSetting, router } = useAdminFilemakerOrganizationEditPageStateContext();
+  const { organization, updateSetting, router } =
+    useAdminFilemakerOrganizationEditPageStateContext();
   const { handleSave } = useAdminFilemakerOrganizationEditPageActionsContext();
 
   return (

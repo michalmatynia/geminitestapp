@@ -141,10 +141,7 @@ export function useCanvasInteractionsNodes({
     onConfirm: () => void;
     onCancel?: () => void;
   }) => void;
-  setEdges: (
-    edges: Edge[] | ((prev: Edge[]) => Edge[]),
-    mutationMeta?: GraphMutationMeta
-  ) => void;
+  setEdges: (edges: Edge[] | ((prev: Edge[]) => Edge[]), mutationMeta?: GraphMutationMeta) => void;
   setRuntimeState: (state: RuntimeState | ((prev: RuntimeState) => RuntimeState)) => void;
   pruneRuntimeInputsInternal: (
     state: RuntimeState,
@@ -190,13 +187,14 @@ export function useCanvasInteractionsNodes({
       const { nodeId: id, x, y } = pendingDragRef.current;
       setNodes(
         (prev: AiNode[]): AiNode[] =>
-          prev.map((item: AiNode): AiNode =>
-            item.id === id
-              ? {
-                ...item,
-                position: { x, y },
-              }
-              : item
+          prev.map(
+            (item: AiNode): AiNode =>
+              item.id === id
+                ? {
+                    ...item,
+                    position: { x, y },
+                  }
+                : item
           ),
         { reason: 'drag', source: 'canvas.drag.flush' }
       );
@@ -446,13 +444,14 @@ export function useCanvasInteractionsNodes({
             const { nodeId: id, x, y } = pendingDragRef.current;
             setNodes(
               (prev: AiNode[]): AiNode[] =>
-                prev.map((item: AiNode): AiNode =>
-                  item.id === id
-                    ? {
-                      ...item,
-                      position: { x, y },
-                    }
-                    : item
+                prev.map(
+                  (item: AiNode): AiNode =>
+                    item.id === id
+                      ? {
+                          ...item,
+                          position: { x, y },
+                        }
+                      : item
                 ),
               { reason: 'drag', source: 'canvas.drag.raf' }
             );

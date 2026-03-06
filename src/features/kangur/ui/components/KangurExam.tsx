@@ -79,7 +79,13 @@ const POINT_LABELS: Record<string, string> = {
   '2024_5pt_24': '5 pkt',
 };
 
-function ExamQuestion({ q, qIndex, total, selected, onSelect }: ExamQuestionProps): React.JSX.Element {
+function ExamQuestion({
+  q,
+  qIndex,
+  total,
+  selected,
+  onSelect,
+}: ExamQuestionProps): React.JSX.Element {
   const Illustration = ILLUSTRATIONS[q.id];
 
   return (
@@ -150,7 +156,9 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
   if (reviewing !== null) {
     const question = questions[reviewing];
     if (!question) {
-      return <div className='w-full text-center text-sm text-gray-500'>Brak pytania do podglądu.</div>;
+      return (
+        <div className='w-full text-center text-sm text-gray-500'>Brak pytania do podglądu.</div>
+      );
     }
     const userAnswer = answers[question.id];
     const Illustration = ILLUSTRATIONS[question.id];

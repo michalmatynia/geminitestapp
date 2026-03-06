@@ -93,9 +93,8 @@ export type ProductImageManagerUIActionsContextValue = Pick<
   | 'handleDrop'
 >;
 
-const ProductImageManagerUIStateContext = createContext<ProductImageManagerUIStateContextValue | null>(
-  null
-);
+const ProductImageManagerUIStateContext =
+  createContext<ProductImageManagerUIStateContextValue | null>(null);
 const ProductImageManagerUIActionsContext =
   createContext<ProductImageManagerUIActionsContextValue | null>(null);
 
@@ -229,14 +228,14 @@ export function ProductImageManagerUIProvider({
           fileIndex === 0
             ? slotIndex
             : (() => {
-              for (let i = nextSearchIndex; i < imageSlots.length; i++) {
-                if (imageSlots[i] === null) {
-                  nextSearchIndex = i + 1;
-                  return i;
+                for (let i = nextSearchIndex; i < imageSlots.length; i++) {
+                  if (imageSlots[i] === null) {
+                    nextSearchIndex = i + 1;
+                    return i;
+                  }
                 }
-              }
-              return -1;
-            })();
+                return -1;
+              })();
         if (targetIndex < 0) return;
         try {
           handleSlotImageChange(file, targetIndex);

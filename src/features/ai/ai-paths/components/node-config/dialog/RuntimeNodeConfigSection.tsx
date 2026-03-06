@@ -3,7 +3,11 @@
 import type { NodeCacheMode, NodeCacheScope, NodeSideEffectPolicy } from '@/shared/lib/ai-paths';
 import { Button, Input, MultiSelect, SelectSimple, ToggleRow, FormField } from '@/shared/ui';
 
-import { useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../../AiPathConfigContext';
+import {
+  useAiPathOrchestrator,
+  useAiPathRuntime,
+  useAiPathSelection,
+} from '../../AiPathConfigContext';
 
 const cacheModeOptions = [
   { value: 'auto', label: 'Auto (deterministic only)' },

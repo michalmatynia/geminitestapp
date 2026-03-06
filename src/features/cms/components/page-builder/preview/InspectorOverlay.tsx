@@ -139,8 +139,7 @@ export const InspectorHover = ({
   const previewEditorActions = useOptionalPreviewEditorActions();
 
   const enabled = propEnabled ?? previewEditorState?.isInspecting ?? false;
-  const showTooltip =
-    propShowTooltip ?? previewEditorState?.inspectorSettings?.showTooltip ?? true;
+  const showTooltip = propShowTooltip ?? previewEditorState?.inspectorSettings?.showTooltip ?? true;
   const onHover = propOnHover ?? previewEditorActions?.onHoverNode;
 
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -162,10 +161,10 @@ export const InspectorHover = ({
   const updateTooltipPosition = useCallback((): void => {
     const viewport =
       typeof document !== 'undefined'
-        ? document.querySelector('[data-cms-canvas-viewport=\'true\']')
+        ? document.querySelector("[data-cms-canvas-viewport='true']")
         : null;
     const canvas =
-      typeof document !== 'undefined' ? document.querySelector('[data-cms-canvas=\'true\']') : null;
+      typeof document !== 'undefined' ? document.querySelector("[data-cms-canvas='true']") : null;
     const el = viewport ?? canvas ?? wrapperRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -244,16 +243,16 @@ export const InspectorHover = ({
       tooltipPos &&
       typeof document !== 'undefined'
         ? createPortal(
-          <Card
-            variant='subtle-compact'
-            padding='sm'
-            className='fixed z-[99999] -translate-x-full -translate-y-full border-gray-700 bg-gray-900/95 text-xs text-gray-200 shadow-lg pointer-events-none'
-            style={{ left: tooltipPos.left, top: tooltipPos.top, width: INSPECTOR_TOOLTIP_WIDTH }}
-          >
-            {content}
-          </Card>,
-          document.body
-        )
+            <Card
+              variant='subtle-compact'
+              padding='sm'
+              className='fixed z-[99999] -translate-x-full -translate-y-full border-gray-700 bg-gray-900/95 text-xs text-gray-200 shadow-lg pointer-events-none'
+              style={{ left: tooltipPos.left, top: tooltipPos.top, width: INSPECTOR_TOOLTIP_WIDTH }}
+            >
+              {content}
+            </Card>,
+            document.body
+          )
         : null}
     </div>
   );

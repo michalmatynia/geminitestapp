@@ -166,7 +166,9 @@ export function ProductSettingsProvider({
 export function useProductSettingsCatalogsContext(): ProductSettingsCatalogsSection {
   const context = React.useContext(ProductSettingsCatalogsContext);
   if (!context) {
-    throw new Error('useProductSettingsCatalogsContext must be used inside ProductSettingsProvider');
+    throw new Error(
+      'useProductSettingsCatalogsContext must be used inside ProductSettingsProvider'
+    );
   }
   return context;
 }

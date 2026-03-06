@@ -71,10 +71,7 @@ export const IMAGE_STUDIO_ANALYSIS_ERROR_CODES = {
 export type ImageStudioAnalysisErrorCode =
   (typeof IMAGE_STUDIO_ANALYSIS_ERROR_CODES)[keyof typeof IMAGE_STUDIO_ANALYSIS_ERROR_CODES];
 
-const IMAGE_STUDIO_ANALYSIS_MODE_VALUES = [
-  'client_analysis',
-  'server_analysis',
-] as const;
+const IMAGE_STUDIO_ANALYSIS_MODE_VALUES = ['client_analysis', 'server_analysis'] as const;
 
 export const imageStudioAnalysisModeSchema = z.enum(IMAGE_STUDIO_ANALYSIS_MODE_VALUES);
 export type ImageStudioAnalysisMode = z.infer<typeof imageStudioAnalysisModeSchema>;
@@ -114,10 +111,7 @@ export const IMAGE_STUDIO_AUTOSCALER_ERROR_CODES = {
 export type ImageStudioAutoScalerErrorCode =
   (typeof IMAGE_STUDIO_AUTOSCALER_ERROR_CODES)[keyof typeof IMAGE_STUDIO_AUTOSCALER_ERROR_CODES];
 
-const IMAGE_STUDIO_AUTOSCALER_MODE_VALUES = [
-  'client_auto_scaler',
-  'server_auto_scaler',
-] as const;
+const IMAGE_STUDIO_AUTOSCALER_MODE_VALUES = ['client_auto_scaler', 'server_auto_scaler'] as const;
 
 export const imageStudioAutoScalerModeSchema = z.enum(IMAGE_STUDIO_AUTOSCALER_MODE_VALUES);
 export type ImageStudioAutoScalerMode = z.infer<typeof imageStudioAutoScalerModeSchema>;
@@ -261,10 +255,7 @@ export const imageStudioSlotSchema = dtoBaseSchema.extend({
 });
 
 export type ImageStudioSlot = z.infer<typeof imageStudioSlotSchema>;
-export type {
-  ImageStudioSlot as ImageStudioSlotRecord,
-  ImageStudioSlot as ImageStudioSlotDto,
-};
+export type { ImageStudioSlot as ImageStudioSlotRecord, ImageStudioSlot as ImageStudioSlotDto };
 
 export const createImageStudioSlotSchema = z.object({
   name: z.string().nullable().optional(),
@@ -757,7 +748,10 @@ export type { ImageStudioSequenceRunDispatchMode };
 
 export type ImageStudioSequenceRunHistoryEventSource =
   | 'api'
-  | 'queue' | 'worker' | 'stream' | 'client';
+  | 'queue'
+  | 'worker'
+  | 'stream'
+  | 'client';
 
 export type ImageStudioSequenceMaskContext = {
   polygons: Array<Array<{ x: number; y: number }>>;

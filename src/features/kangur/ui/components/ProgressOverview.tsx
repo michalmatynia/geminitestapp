@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 
+import LessonMasteryInsights from '@/features/kangur/ui/components/LessonMasteryInsights';
 import { BADGES, getCurrentLevel, getNextLevel } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
@@ -81,6 +82,8 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
           </div>
         ))}
       </div>
+
+      <LessonMasteryInsights progress={progress} />
 
       {operationsPlayed.length > 0 && (
         <div className='bg-white rounded-2xl shadow p-4'>

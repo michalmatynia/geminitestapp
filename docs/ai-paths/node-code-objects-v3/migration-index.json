@@ -2,7 +2,7 @@
   "schemaVersion": "ai-paths.node-migration-doc-index.v2",
   "generatedAt": "2026-03-06T00:00:00.000Z",
   "totalNodes": 36,
-  "pilotNodeTypes": [
+  "runtimeKernelNodeTypes": [
     "agent",
     "ai_description",
     "api_advanced",

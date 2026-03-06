@@ -75,9 +75,8 @@ const InternationalizationDataContext = createContext<InternationalizationDataCo
   null
 );
 const InternationalizationUiContext = createContext<InternationalizationUiContextType | null>(null);
-const InternationalizationActionsContext = createContext<InternationalizationActionsContextType | null>(
-  null
-);
+const InternationalizationActionsContext =
+  createContext<InternationalizationActionsContextType | null>(null);
 
 export function useInternationalizationData(): InternationalizationDataContextType {
   const context = useContext(InternationalizationDataContext);

@@ -19,12 +19,8 @@ export function StudioSettingsContent(): React.JSX.Element {
     capability: 'image_studio.general',
   });
   const { studioSettings, settingsLoaded } = useSettingsState();
-  const {
-    setStudioSettings,
-    saveStudioSettings,
-    resetStudioSettings,
-    handleRefreshSettings,
-  } = useSettingsActions();
+  const { setStudioSettings, saveStudioSettings, resetStudioSettings, handleRefreshSettings } =
+    useSettingsActions();
 
   const [advancedOverridesText, setAdvancedOverridesText] = useState<string>(
     JSON.stringify(studioSettings.targetAi.openai.advanced_overrides ?? {}, null, 2)

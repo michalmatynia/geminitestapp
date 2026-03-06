@@ -4,9 +4,7 @@ import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
 } from '@/shared/lib/ai-paths';
-import {
-  buildAiPathRunErrorSummary,
-} from '@/shared/lib/ai-paths/error-reporting';
+import { buildAiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reporting';
 import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 import type { StatusVariant } from '@/shared/ui';
 
@@ -240,15 +238,15 @@ export const normalizeRunDetail = (
   if (!value || typeof value !== 'object') {
     return fallbackRun
       ? {
-        run: fallbackRun,
-        nodes: [],
-        events: [],
-        errorSummary: buildAiPathRunErrorSummary({
           run: fallbackRun,
           nodes: [],
           events: [],
-        }),
-      }
+          errorSummary: buildAiPathRunErrorSummary({
+            run: fallbackRun,
+            nodes: [],
+            events: [],
+          }),
+        }
       : null;
   }
   const detail = value as {

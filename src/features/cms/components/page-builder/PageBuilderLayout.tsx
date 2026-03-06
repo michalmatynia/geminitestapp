@@ -75,8 +75,7 @@ function PageBuilderInner(): React.JSX.Element {
   }, [dispatch, state.rightPanelCollapsed]);
 
   const isBuilderBootstrapping =
-    !state.currentPage &&
-    (domainSelectionLoading || pagesQuery.isLoading || pageQuery.isLoading);
+    !state.currentPage && (domainSelectionLoading || pagesQuery.isLoading || pageQuery.isLoading);
 
   if (isBuilderBootstrapping) {
     return <PageBuilderPageSkeleton />;
@@ -126,10 +125,7 @@ export function PageBuilderLayout({
 }: {
   initialState?: PageBuilderState | undefined;
 }): React.JSX.Element {
-  const providerProps = React.useMemo(
-    () => (initialState ? { initialState } : {}),
-    [initialState]
-  );
+  const providerProps = React.useMemo(() => (initialState ? { initialState } : {}), [initialState]);
 
   return (
     <PageBuilderProvider {...providerProps}>

@@ -211,9 +211,9 @@ export async function processCenterPayload(input: {
     throw sourceLoadError instanceof Error
       ? sourceLoadError
       : centerBadRequest(
-        IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_MISSING,
-        'Server centering requires a resolvable source image.'
-      );
+          IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_MISSING,
+          'Server centering requires a resolvable source image.'
+        );
   }
 
   if (uploadedClientImage) {

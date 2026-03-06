@@ -47,7 +47,7 @@ const normalizeRecord = (value: unknown): AiPathLocalRunRecord | null => {
           Object.entries(rawNodeDurations as Record<string, unknown>).filter(
             ([, v]) => typeof v === 'number' && Number.isFinite(v)
           ) as [string, number][]
-      )
+        )
       : null;
 
   return {

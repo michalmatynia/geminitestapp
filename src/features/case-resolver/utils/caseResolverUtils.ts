@@ -153,10 +153,7 @@ const buildCanonicalDocumentForDraft = (
     if (typeof file.documentContent === 'string' && file.documentContent.trim()) {
       return ensureSafeDocumentHtml(file.documentContent);
     }
-    if (
-      typeof file.documentContentPlainText === 'string' &&
-      file.documentContentPlainText.trim()
-    ) {
+    if (typeof file.documentContentPlainText === 'string' && file.documentContentPlainText.trim()) {
       return ensureSafeDocumentHtml(file.documentContentPlainText);
     }
     return '';
@@ -530,11 +527,11 @@ export const resolveActiveVersion = (
     contentHtml:
       activeDocumentVersion === 'exploded'
         ? ensureSafeDocumentHtml(
-          file.explodedDocumentContent ?? file.documentContentHtml ?? baseContent
-        )
+            file.explodedDocumentContent ?? file.documentContentHtml ?? baseContent
+          )
         : ensureSafeDocumentHtml(
-          file.originalDocumentContent ?? file.documentContentHtml ?? baseContent
-        ),
+            file.originalDocumentContent ?? file.documentContentHtml ?? baseContent
+          ),
   };
 };
 

@@ -61,12 +61,10 @@ export type DatabaseQueryInputControlsActionsContextValue = Pick<
   DatabaseQueryInputControlsActionKey
 >;
 
-const DatabaseQueryInputControlsStateContext = React.createContext<DatabaseQueryInputControlsStateContextValue | null>(
-  null
-);
-const DatabaseQueryInputControlsActionsContext = React.createContext<DatabaseQueryInputControlsActionsContextValue | null>(
-  null
-);
+const DatabaseQueryInputControlsStateContext =
+  React.createContext<DatabaseQueryInputControlsStateContextValue | null>(null);
+const DatabaseQueryInputControlsActionsContext =
+  React.createContext<DatabaseQueryInputControlsActionsContextValue | null>(null);
 
 export function DatabaseQueryInputControlsContextProvider({
   value,

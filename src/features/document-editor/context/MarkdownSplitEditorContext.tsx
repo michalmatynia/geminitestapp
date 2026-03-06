@@ -28,7 +28,9 @@ export interface MarkdownSplitEditorContextValue {
   textareaClassName?: string;
 }
 
-export const MarkdownSplitEditorContext = createContext<MarkdownSplitEditorContextValue | null>(null);
+export const MarkdownSplitEditorContext = createContext<MarkdownSplitEditorContextValue | null>(
+  null
+);
 
 export function MarkdownSplitEditorProvider({
   children,

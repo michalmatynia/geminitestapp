@@ -64,10 +64,8 @@ vi.mock('@/shared/lib/ai-paths/portable-engine/portable-engine-observability', (
 vi.mock('@/shared/lib/ai-paths/portable-engine/server', () => ({
   loadPortablePathAuditSinkAutoRemediationDeadLetters:
     loadPortablePathAuditSinkAutoRemediationDeadLettersMock,
-  loadPortablePathSigningPolicyTrendSnapshots:
-    loadPortablePathSigningPolicyTrendSnapshotsMock,
-  loadPortablePathAuditSinkStartupHealthState:
-    loadPortablePathAuditSinkStartupHealthStateMock,
+  loadPortablePathSigningPolicyTrendSnapshots: loadPortablePathSigningPolicyTrendSnapshotsMock,
+  loadPortablePathAuditSinkStartupHealthState: loadPortablePathAuditSinkStartupHealthStateMock,
   resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment:
     resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironmentMock,
   resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment:
@@ -135,9 +133,7 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       },
       recentEvents: [],
     });
-    loadPortablePathAuditSinkAutoRemediationDeadLettersMock
-      .mockReset()
-      .mockResolvedValue([]);
+    loadPortablePathAuditSinkAutoRemediationDeadLettersMock.mockReset().mockResolvedValue([]);
     loadPortablePathSigningPolicyTrendSnapshotsMock.mockReset().mockResolvedValue([
       {
         at: '2026-03-05T00:00:00.000Z',
@@ -545,9 +541,7 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
   });
 
   it('falls back to default remediation threshold when resolver returns null', async () => {
-    resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironmentMock.mockReturnValue(
-      null
-    );
+    resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironmentMock.mockReturnValue(null);
     resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironmentMock.mockReturnValue(
       null
     );
@@ -560,9 +554,7 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
     resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironmentMock.mockReturnValue(
       null
     );
-    resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock.mockReturnValue(
-      null
-    );
+    resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock.mockReturnValue(null);
     resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironmentMock.mockReturnValue(
       null
     );
@@ -575,12 +567,8 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
     resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironmentMock.mockReturnValue(
       null
     );
-    resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironmentMock.mockReturnValue(
-      null
-    );
-    resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironmentMock.mockReturnValue(
-      null
-    );
+    resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironmentMock.mockReturnValue(null);
+    resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironmentMock.mockReturnValue(null);
     resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironmentMock.mockReturnValue(
       null
     );
@@ -908,9 +896,9 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
         nextCursor: null,
       })
     );
-    expect(
-      (cursorPayload['snapshots'] as Array<{ at: string }>).map((entry) => entry.at)
-    ).toEqual(['2026-03-05T00:10:00.000Z']);
+    expect((cursorPayload['snapshots'] as Array<{ at: string }>).map((entry) => entry.at)).toEqual([
+      '2026-03-05T00:10:00.000Z',
+    ]);
   });
 
   it('keeps cursor windows stable when newer snapshots append between page requests', async () => {
@@ -1181,9 +1169,9 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
     const secondPayload = (await secondResponse.json()) as Record<string, unknown>;
     expect(secondPayload['snapshotCount']).toBe(1);
     expect(secondPayload['matchedSnapshotCount']).toBe(3);
-    expect(
-      (secondPayload['snapshots'] as Array<{ at: string }>).map((entry) => entry.at)
-    ).toEqual(['2026-03-05T00:10:00.000Z']);
+    expect((secondPayload['snapshots'] as Array<{ at: string }>).map((entry) => entry.at)).toEqual([
+      '2026-03-05T00:10:00.000Z',
+    ]);
   });
 
   it('rejects invalid snapshot limits', async () => {

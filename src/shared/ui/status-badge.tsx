@@ -67,17 +67,7 @@ export const resolveStatusBadgeVariant = (status: string): StatusVariant => {
  * Leverages the shared Badge component for consistent design.
  */
 export function StatusBadge(props: StatusBadgeProps): React.JSX.Element {
-  const {
-    status,
-    label,
-    variant,
-    size = 'md',
-    icon,
-    hideLabel,
-    className,
-    title,
-    onClick,
-  } = props;
+  const { status, label, variant, size = 'md', icon, hideLabel, className, title, onClick } = props;
 
   const resolvedVariant: VariantProps<typeof badgeVariants>['variant'] =
     variant || resolveStatusBadgeVariant(status);

@@ -319,7 +319,11 @@ describe('buildMongoUpdatePlan', () => {
       templateInputs,
       parseJsonTemplate: (template: string): unknown =>
         parseJsonSafe(
-          renderJsonTemplate(template, templateInputs as Record<string, unknown>, templateInputs['value'])
+          renderJsonTemplate(
+            template,
+            templateInputs as Record<string, unknown>,
+            templateInputs['value']
+          )
         ),
       ensureExistingParameterTemplateContext: vi.fn(async () => {}),
       aiPrompt: '',

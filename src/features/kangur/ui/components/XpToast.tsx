@@ -5,11 +5,7 @@ import type { KangurXpToastState } from '@/features/kangur/ui/types';
 
 type XpToastProps = KangurXpToastState;
 
-export default function XpToast({
-  xpGained,
-  newBadges,
-  visible,
-}: XpToastProps): React.JSX.Element {
+export default function XpToast({ xpGained, newBadges, visible }: XpToastProps): React.JSX.Element {
   const badgeDetails = (newBadges ?? [])
     .map((badgeId) => BADGES.find((badge) => badge.id === badgeId))
     .filter((badge): badge is (typeof BADGES)[number] => Boolean(badge));

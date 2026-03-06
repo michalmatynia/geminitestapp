@@ -8,7 +8,8 @@ interface CanvasHudProps {
 
 export function CanvasHud(props: CanvasHudProps): React.JSX.Element | null {
   const { show } = props;
-  const { viewTransform, handleZoomIn, handleZoomOut, handleFitToScreen } = useVectorCanvasContext();
+  const { viewTransform, handleZoomIn, handleZoomOut, handleFitToScreen } =
+    useVectorCanvasContext();
 
   if (!show) return null;
 

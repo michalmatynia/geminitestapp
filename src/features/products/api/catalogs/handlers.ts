@@ -21,7 +21,10 @@ const catalogSchema = z.object({
   isDefault: z.boolean().optional(),
 });
 
-export async function getCatalogsHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getCatalogsHandler(
+  req: NextRequest,
+  ctx: ApiHandlerContext
+): Promise<Response> {
   const provider = await getProductDataProvider();
   let catalogs = await (await getCatalogRepository(provider)).listCatalogs();
 
@@ -97,7 +100,10 @@ export async function getCatalogsHandler(req: NextRequest, ctx: ApiHandlerContex
   return NextResponse.json(catalogs);
 }
 
-export async function postCatalogsHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postCatalogsHandler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext
+): Promise<Response> {
   const parsed = await parseJsonBody(req, catalogSchema, {
     logPrefix: 'catalogs.POST',
   });

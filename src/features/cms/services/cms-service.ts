@@ -87,10 +87,8 @@ export const cmsService: CmsRepository = {
   },
   replacePageSlugs: (pageId: string, slugIds: string[]): Promise<void> =>
     repoCall('replacePageSlugs', pageId, slugIds),
-  replacePageComponents: (
-    pageId: string,
-    components: PageComponentInput[]
-  ): Promise<void> => repoCall('replacePageComponents', pageId, components),
+  replacePageComponents: (pageId: string, components: PageComponentInput[]): Promise<void> =>
+    repoCall('replacePageComponents', pageId, components),
 
   // Slugs
   getSlugs: (): Promise<Slug[]> => repoCall('getSlugs'),

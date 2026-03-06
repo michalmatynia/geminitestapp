@@ -55,7 +55,9 @@ const resolveBaseListingLinkContext = async (): Promise<BaseListingLinkContext |
         (connection: (typeof connections)[number]) => connection.id === defaultConnectionId
       )
       : null) ??
-    connections.find((connection: (typeof connections)[number]) => Boolean(connection.baseApiToken)) ??
+    connections.find((connection: (typeof connections)[number]) =>
+      Boolean(connection.baseApiToken)
+    ) ??
     connections[0] ??
     null;
   if (!preferredConnection?.id) return null;

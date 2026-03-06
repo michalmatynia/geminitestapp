@@ -42,8 +42,8 @@ function normalizeAsset3DListFilters(filters: Asset3DListFilters): Asset3DListFi
   const normalizedSearch = typeof filters.search === 'string' ? filters.search.trim() : '';
   const normalizedTags = Array.isArray(filters.tags)
     ? Array.from(
-      new Set(filters.tags.map((tag) => tag.trim()).filter((tag) => tag.length > 0))
-    ).sort((left, right) => left.localeCompare(right))
+        new Set(filters.tags.map((tag) => tag.trim()).filter((tag) => tag.length > 0))
+      ).sort((left, right) => left.localeCompare(right))
     : [];
 
   return {
@@ -174,7 +174,7 @@ export function useReindexAssets3DMutation(): UpdateMutation<
     createdIds: string[];
   },
   void
-  > {
+> {
   return createUpdateMutationV2({
     mutationFn: () => reindexAssets3DFromDisk(),
     mutationKey: asset3dKeys.all,

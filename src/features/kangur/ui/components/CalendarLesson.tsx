@@ -2,7 +2,12 @@ import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Volume2, VolumeX } from 'lucide-react';
 import CalendarInteractiveGame from './CalendarInteractiveGame';
-import { addXp, buildLessonMasteryUpdate, XP_REWARDS, loadProgress } from '@/features/kangur/ui/services/progress';
+import {
+  addXp,
+  buildLessonMasteryUpdate,
+  XP_REWARDS,
+  loadProgress,
+} from '@/features/kangur/ui/services/progress';
 
 type CalendarLessonProps = {
   onBack: () => void;
@@ -43,7 +48,11 @@ const MONTHS: CalendarMonth[] = [
 
 const DAYS = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Nd'] as const;
 
-function MiniCalendar({ month = 2, year = 2025, highlightDay }: MiniCalendarProps): React.JSX.Element {
+function MiniCalendar({
+  month = 2,
+  year = 2025,
+  highlightDay,
+}: MiniCalendarProps): React.JSX.Element {
   // month is 1-indexed
   const firstDay = new Date(year, month - 1, 1).getDay(); // 0=Sun
   const monthData = MONTHS[month - 1] ?? MONTHS[0]!;
@@ -332,9 +341,7 @@ export default function CalendarLesson({ onBack }: CalendarLessonProps): React.J
         </div>
 
         <div className='flex items-center justify-center gap-3 w-full'>
-          <h2 className='text-xl font-extrabold text-green-700 text-center'>
-            {activeSlide.title}
-          </h2>
+          <h2 className='text-xl font-extrabold text-green-700 text-center'>{activeSlide.title}</h2>
           <button
             onClick={speaking ? stopSpeaking : speak}
             className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-all shadow ${

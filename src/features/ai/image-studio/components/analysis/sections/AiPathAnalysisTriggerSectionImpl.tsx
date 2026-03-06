@@ -20,7 +20,9 @@ export interface AiPathAnalysisTriggerSectionProps {
   analysis: UseAiPathsObjectAnalysisReturn;
 }
 
-const AiPathAnalysisTriggerContext = React.createContext<UseAiPathsObjectAnalysisReturn | null>(null);
+const AiPathAnalysisTriggerContext = React.createContext<UseAiPathsObjectAnalysisReturn | null>(
+  null
+);
 
 function useAiPathAnalysisTriggerContext(): UseAiPathsObjectAnalysisReturn {
   const value = React.useContext(AiPathAnalysisTriggerContext);

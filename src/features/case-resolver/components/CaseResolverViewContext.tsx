@@ -159,8 +159,14 @@ type FunctionKey<T> = {
 
 type CaseResolverViewActionKey = FunctionKey<CaseResolverViewContextValue>;
 
-export type CaseResolverViewActionsValue = Pick<CaseResolverViewContextValue, CaseResolverViewActionKey>;
-export type CaseResolverViewStateValue = Omit<CaseResolverViewContextValue, CaseResolverViewActionKey>;
+export type CaseResolverViewActionsValue = Pick<
+  CaseResolverViewContextValue,
+  CaseResolverViewActionKey
+>;
+export type CaseResolverViewStateValue = Omit<
+  CaseResolverViewContextValue,
+  CaseResolverViewActionKey
+>;
 
 const CaseResolverViewStateContext = createContext<CaseResolverViewStateValue | null>(null);
 const CaseResolverViewActionsContext = createContext<CaseResolverViewActionsValue | null>(null);
@@ -195,7 +201,9 @@ export function useCaseResolverViewStateContext(): CaseResolverViewStateValue {
 export function useCaseResolverViewActionsContext(): CaseResolverViewActionsValue {
   const context = useContext(CaseResolverViewActionsContext);
   if (!context) {
-    throw new Error('useCaseResolverViewActionsContext must be used within CaseResolverViewProvider');
+    throw new Error(
+      'useCaseResolverViewActionsContext must be used within CaseResolverViewProvider'
+    );
   }
   return context;
 }

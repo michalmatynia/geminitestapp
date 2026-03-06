@@ -3,10 +3,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-import {
-  useNotesAppActions,
-  useNotesAppState,
-} from '@/features/notesapp/hooks/NotesAppContext';
+import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import { Button } from '@/shared/ui';
 import { buildBreadcrumbPath } from '../../utils';
 

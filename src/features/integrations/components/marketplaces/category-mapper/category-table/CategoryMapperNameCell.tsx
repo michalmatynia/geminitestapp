@@ -20,9 +20,8 @@ type CategoryMapperExpandRuntimeValue = {
   onToggleExpand: () => void;
 };
 
-const CategoryMapperExpandRuntimeContext = React.createContext<CategoryMapperExpandRuntimeValue | null>(
-  null
-);
+const CategoryMapperExpandRuntimeContext =
+  React.createContext<CategoryMapperExpandRuntimeValue | null>(null);
 
 function useCategoryMapperExpandRuntime(): CategoryMapperExpandRuntimeValue {
   const runtime = React.useContext(CategoryMapperExpandRuntimeContext);

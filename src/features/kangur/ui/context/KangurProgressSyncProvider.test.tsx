@@ -12,14 +12,13 @@ import {
   saveProgress,
 } from '@/features/kangur/ui/services/progress';
 
-const { useKangurAuthMock, progressGetMock, progressUpdateMock, logKangurClientErrorMock } = vi.hoisted(
-  () => ({
+const { useKangurAuthMock, progressGetMock, progressUpdateMock, logKangurClientErrorMock } =
+  vi.hoisted(() => ({
     useKangurAuthMock: vi.fn(),
     progressGetMock: vi.fn(),
     progressUpdateMock: vi.fn(),
     logKangurClientErrorMock: vi.fn(),
-  })
-);
+  }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
@@ -40,7 +39,9 @@ vi.mock('@/features/kangur/observability/client', () => ({
 
 import { KangurProgressSyncProvider } from './KangurProgressSyncProvider';
 
-const createProgress = (overrides: Partial<ReturnType<typeof createDefaultKangurProgressState>> = {}) => ({
+const createProgress = (
+  overrides: Partial<ReturnType<typeof createDefaultKangurProgressState>> = {}
+) => ({
   ...createDefaultKangurProgressState(),
   ...overrides,
 });
@@ -68,7 +69,9 @@ describe('KangurProgressSyncProvider', () => {
 
     useKangurAuthMock.mockReturnValue(buildAuthState());
     progressGetMock.mockResolvedValue(createProgress());
-    progressUpdateMock.mockImplementation(async (progress: ReturnType<typeof createProgress>) => progress);
+    progressUpdateMock.mockImplementation(
+      async (progress: ReturnType<typeof createProgress>) => progress
+    );
   });
 
   it('hydrates authenticated progress by merging local progress and syncing the merged snapshot', async () => {
@@ -118,7 +121,9 @@ describe('KangurProgressSyncProvider', () => {
     );
 
     await waitFor(() => expect(progressGetMock).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('0'));
+    await waitFor(() =>
+      expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('0')
+    );
 
     progressUpdateMock.mockClear();
 

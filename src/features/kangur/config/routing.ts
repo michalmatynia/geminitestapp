@@ -57,7 +57,10 @@ export const normalizeKangurRequestedPath = (
   return joinKangurPath(normalizedBasePath, slugSegments.join('/'));
 };
 
-export const getKangurPageHref = (pageName: string, basePath: string = KANGUR_BASE_PATH): string => {
+export const getKangurPageHref = (
+  pageName: string,
+  basePath: string = KANGUR_BASE_PATH
+): string => {
   const mappedSlug = KANGUR_PAGE_TO_SLUG[pageName];
   const slug = mappedSlug ?? toKebabCase(pageName);
   return joinKangurPath(basePath, slug);

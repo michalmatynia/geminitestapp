@@ -190,14 +190,14 @@ function AuthPermissionsForm({
       prev.map((role: AuthRole) =>
         role.id === roleId
           ? {
-            ...role,
-            [field]:
+              ...role,
+              [field]:
                 field === 'level'
                   ? Number.isNaN(Number(value))
                     ? (role.level ?? 0)
                     : Number(value)
                   : value,
-          }
+            }
           : role
       )
     );

@@ -1,8 +1,4 @@
-import {
-  createColumnBlock,
-  createRowBlock,
-  getCanonicalGridStructure,
-} from '../block-helpers';
+import { createColumnBlock, createRowBlock, getCanonicalGridStructure } from '../block-helpers';
 import type {
   PageBuilderState,
   PageBuilderAction,

@@ -69,13 +69,13 @@ export function useLocalRuns({ sourceFilter, sourceMode }: UseLocalRunsOptions =
       .filter((value: number | null | undefined): value is number => Number.isFinite(value));
     const avgDuration = durations.length
       ? Math.round(
-        durations.reduce((acc: number, value: number) => acc + value, 0) / durations.length
-      )
+          durations.reduce((acc: number, value: number) => acc + value, 0) / durations.length
+        )
       : null;
     const p95Duration = durations.length
       ? ([...durations].sort((a: number, b: number) => a - b)[
-        Math.max(0, Math.ceil(durations.length * 0.95) - 1)
-      ] ?? null)
+          Math.max(0, Math.ceil(durations.length * 0.95) - 1)
+        ] ?? null)
       : null;
     const successRate = total > 0 ? Math.round((success / total) * 100) : 0;
     const lastRunAt = runs[0]?.startedAt ?? null;

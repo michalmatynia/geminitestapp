@@ -166,18 +166,14 @@ function ThemeSettingsPanelContent({
           const fields = getFieldsForSection(section, theme, themePresetOptions);
           if (fields.length > 0) {
             return (
-              <SettingsFieldsRenderer
-                fields={fields}
-                values={theme}
-                onChange={applyThemePatch}
-              />
+              <SettingsFieldsRenderer fields={fields} values={theme} onChange={applyThemePatch} />
             );
           }
           return <div className='text-xs text-gray-500'>Settings coming soon.</div>;
         }
       }
     },
-  [applyThemePatch, theme, themePresetOptions]
+    [applyThemePatch, theme, themePresetOptions]
   );
 
   return (

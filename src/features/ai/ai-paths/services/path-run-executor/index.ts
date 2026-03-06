@@ -3,6 +3,7 @@ import 'server-only';
 import {
   AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
   AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
+  AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
   AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
   AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
   cloneJsonSafe,
@@ -75,6 +76,21 @@ import { extractDatabaseRuntimeMetadata } from '../../components/ai-paths-settin
 
 import { createPathRunProfiling } from './profiling';
 import { runExecutorPreflight } from './preflight';
+
+const normalizeRuntimeKernelTelemetryArray = (value: unknown): string[] | null => {
+  if (!Array.isArray(value)) return null;
+  if (!value.every((entry: unknown): entry is string => typeof entry === 'string')) {
+    return null;
+  }
+  return value.map((entry: string) => entry.trim());
+};
+
+const normalizeRuntimeKernelTelemetrySource = (
+  value: unknown
+): 'env' | 'path' | 'settings' | 'default' | null =>
+  value === 'env' || value === 'path' || value === 'settings' || value === 'default'
+    ? value
+    : null;
 
 export const executePathRun = async (
   run: AiPathRunRecord,
@@ -166,9 +182,7 @@ export const executePathRun = async (
     resolveTriggerNodeId(nodes, edges, run.triggerEvent, run.triggerNodeId) ?? null;
   const runtimeState = parseRuntimeState(run.runtimeState);
   const runMetaRecord =
-    run.meta && typeof run.meta === 'object' && !Array.isArray(run.meta)
-      ? (run.meta)
-      : null;
+    run.meta && typeof run.meta === 'object' && !Array.isArray(run.meta) ? run.meta : null;
   const runMetaRuntimeKernelConfigRecord =
     runMetaRecord &&
     typeof runMetaRecord['runtimeKernelConfig'] === 'object' &&
@@ -177,7 +191,9 @@ export const executePathRun = async (
       ? (runMetaRecord['runtimeKernelConfig'] as Record<string, unknown>)
       : null;
   const runMetaRuntimeKernelMode = runMetaRuntimeKernelConfigRecord?.['mode'];
-  const runMetaRuntimeKernelPilotNodeTypes = runMetaRuntimeKernelConfigRecord?.['pilotNodeTypes'];
+  const runMetaRuntimeKernelConfigNodeTypes =
+    runMetaRuntimeKernelConfigRecord?.['nodeTypes'] ??
+    runMetaRuntimeKernelConfigRecord?.['pilotNodeTypes'];
   const runMetaRuntimeKernelResolverIds =
     runMetaRuntimeKernelConfigRecord?.['codeObjectResolverIds'] ??
     runMetaRuntimeKernelConfigRecord?.['resolverIds'];
@@ -187,6 +203,7 @@ export const executePathRun = async (
   const runtimeKernelSettings = await listAiPathsSettings([
     AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
     AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
+    AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
     AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
     AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
   ]).catch((error: unknown) => {
@@ -204,11 +221,16 @@ export const executePathRun = async (
     envMode: process.env['AI_PATHS_RUNTIME_KERNEL_MODE'],
     pathMode: runMetaRuntimeKernelMode,
     settingMode: runtimeKernelSettingsMap.get(AI_PATHS_RUNTIME_KERNEL_MODE_KEY),
-    envPilotNodeTypes: process.env['AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES'],
-    pathPilotNodeTypes: runMetaRuntimeKernelPilotNodeTypes,
-    settingPilotNodeTypes: runtimeKernelSettingsMap.get(
-      AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY
-    ),
+    envNodeTypes:
+      process.env['AI_PATHS_RUNTIME_KERNEL_NODE_TYPES'] ??
+      process.env['AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES'],
+    pathNodeTypes: runMetaRuntimeKernelConfigNodeTypes,
+    settingNodeTypes:
+      runtimeKernelSettingsMap.get(AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY) ??
+      runtimeKernelSettingsMap.get(AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY),
+    envPilotNodeTypes: undefined,
+    pathPilotNodeTypes: undefined,
+    settingPilotNodeTypes: undefined,
     envResolverIds: process.env['AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS'],
     pathResolverIds: runMetaRuntimeKernelResolverIds,
     settingResolverIds: runtimeKernelSettingsMap.get(
@@ -221,14 +243,16 @@ export const executePathRun = async (
     ),
   });
   const runtimeKernelMode = runtimeKernelConfig.mode;
-  const runtimeKernelPilotNodeTypes = runtimeKernelConfig.pilotNodeTypes;
+  const runtimeKernelNodeTypes = runtimeKernelConfig.nodeTypes;
   const runtimeKernelCodeObjectResolverIds = runtimeKernelConfig.resolverIds;
   const runtimeKernelStrictNativeRegistry = runtimeKernelConfig.strictNativeRegistry;
   const registeredRuntimeKernelCodeObjectResolverIds = listAiPathsRuntimeCodeObjectResolverIds();
   const registeredRuntimeKernelCodeObjectResolverIdSet = new Set(
     registeredRuntimeKernelCodeObjectResolverIds
   );
-  const runtimeKernelMissingCodeObjectResolverIds = (runtimeKernelCodeObjectResolverIds ?? []).filter(
+  const runtimeKernelMissingCodeObjectResolverIds = (
+    runtimeKernelCodeObjectResolverIds ?? []
+  ).filter(
     (resolverId: string): boolean => !registeredRuntimeKernelCodeObjectResolverIdSet.has(resolverId)
   );
   const runtimeKernelExecutionTelemetry = toRuntimeKernelExecutionTelemetry(runtimeKernelConfig);
@@ -337,26 +361,33 @@ export const executePathRun = async (
     !Array.isArray(runMetaRecord['runtimeKernel'])
       ? (runMetaRecord['runtimeKernel'] as Record<string, unknown>)
       : null;
+  const runMetaRuntimeKernelNodeTypesSource =
+    normalizeRuntimeKernelTelemetrySource(
+      runMetaRuntimeKernelRecord?.['runtimeKernelNodeTypesSource']
+    ) ??
+    normalizeRuntimeKernelTelemetrySource(
+      runMetaRuntimeKernelRecord?.['runtimeKernelPilotNodeTypesSource']
+    );
+  const runMetaRuntimeKernelTelemetryNodeTypes =
+    normalizeRuntimeKernelTelemetryArray(runMetaRuntimeKernelRecord?.['runtimeKernelNodeTypes']) ??
+    normalizeRuntimeKernelTelemetryArray(runMetaRuntimeKernelRecord?.['runtimeKernelPilotNodeTypes']);
+  const runMetaRuntimeKernelTelemetryResolverIds =
+    normalizeRuntimeKernelTelemetryArray(
+      runMetaRuntimeKernelRecord?.['runtimeKernelCodeObjectResolverIds']
+    );
   const runMetaRuntimeKernelTelemetryMatches =
     runMetaRuntimeKernelRecord?.['runtimeKernelMode'] ===
       runtimeKernelExecutionTelemetry.runtimeKernelMode &&
     runMetaRuntimeKernelRecord?.['runtimeKernelModeSource'] ===
       runtimeKernelExecutionTelemetry.runtimeKernelModeSource &&
-    runMetaRuntimeKernelRecord?.['runtimeKernelPilotNodeTypesSource'] ===
-      runtimeKernelExecutionTelemetry.runtimeKernelPilotNodeTypesSource &&
-    Array.isArray(runMetaRuntimeKernelRecord?.['runtimeKernelPilotNodeTypes']) &&
-    (runMetaRuntimeKernelRecord?.['runtimeKernelPilotNodeTypes'] as unknown[]).every(
-      (entry: unknown): entry is string => typeof entry === 'string'
-    ) &&
-    (runMetaRuntimeKernelRecord?.['runtimeKernelPilotNodeTypes'] as string[]).join('|') ===
-      runtimeKernelExecutionTelemetry.runtimeKernelPilotNodeTypes.join('|') &&
+    runMetaRuntimeKernelNodeTypesSource === runtimeKernelExecutionTelemetry.runtimeKernelNodeTypesSource &&
+    Array.isArray(runMetaRuntimeKernelTelemetryNodeTypes) &&
+    runMetaRuntimeKernelTelemetryNodeTypes.join('|') ===
+      runtimeKernelExecutionTelemetry.runtimeKernelNodeTypes.join('|') &&
     runMetaRuntimeKernelRecord?.['runtimeKernelCodeObjectResolverIdsSource'] ===
       runtimeKernelExecutionTelemetry.runtimeKernelCodeObjectResolverIdsSource &&
-    Array.isArray(runMetaRuntimeKernelRecord?.['runtimeKernelCodeObjectResolverIds']) &&
-    (runMetaRuntimeKernelRecord?.['runtimeKernelCodeObjectResolverIds'] as unknown[]).every(
-      (entry: unknown): entry is string => typeof entry === 'string'
-    ) &&
-    (runMetaRuntimeKernelRecord?.['runtimeKernelCodeObjectResolverIds'] as string[]).join('|') ===
+    Array.isArray(runMetaRuntimeKernelTelemetryResolverIds) &&
+    runMetaRuntimeKernelTelemetryResolverIds.join('|') ===
       runtimeKernelExecutionTelemetry.runtimeKernelCodeObjectResolverIds.join('|') &&
     runMetaRuntimeKernelRecord?.['runtimeKernelStrictNativeRegistry'] ===
       runtimeKernelExecutionTelemetry.runtimeKernelStrictNativeRegistry &&
@@ -487,7 +518,8 @@ export const executePathRun = async (
           traceId,
           ...runtimeKernelExecutionTelemetry,
           runtimeKernelCodeObjectResolverIdsMissing: runtimeKernelMissingCodeObjectResolverIds,
-          runtimeKernelRegisteredCodeObjectResolverIds: registeredRuntimeKernelCodeObjectResolverIds,
+          runtimeKernelRegisteredCodeObjectResolverIds:
+            registeredRuntimeKernelCodeObjectResolverIds,
         },
       });
     }
@@ -559,7 +591,7 @@ export const executePathRun = async (
         },
       },
       runtimeKernelMode,
-      runtimeKernelPilotNodeTypes,
+      runtimeKernelNodeTypes,
       runtimeKernelCodeObjectResolverIds,
       runtimeKernelStrictNativeRegistry,
       validationMiddleware: runtimeValidationMiddleware,
@@ -674,27 +706,27 @@ export const executePathRun = async (
             throttledSaveIntermediateState().catch(() => {}),
             ...(LOG_NODE_START_EVENTS
               ? [
-                repo
-                  .createRunEvent({
-                    runId: run.id,
-                    level: 'info',
-                    message: `Node ${node.title ?? node.id} started.`,
-                    metadata: {
-                      traceId,
-                      spanId: nodeSpanId,
-                      nodeId: node.id,
-                      nodeType: node.type,
-                      iteration,
-                      attempt: nextAttempt,
-                      ...toRunEventRuntimeKernelMetadata({
-                        runtimeStrategy,
-                        runtimeResolutionSource,
-                        runtimeCodeObjectId,
-                      }),
-                    },
-                  })
-                  .catch(() => {}),
-              ]
+                  repo
+                    .createRunEvent({
+                      runId: run.id,
+                      level: 'info',
+                      message: `Node ${node.title ?? node.id} started.`,
+                      metadata: {
+                        traceId,
+                        spanId: nodeSpanId,
+                        nodeId: node.id,
+                        nodeType: node.type,
+                        iteration,
+                        attempt: nextAttempt,
+                        ...toRunEventRuntimeKernelMetadata({
+                          runtimeStrategy,
+                          runtimeResolutionSource,
+                          runtimeCodeObjectId,
+                        }),
+                      },
+                    })
+                    .catch(() => {}),
+                ]
               : []),
           ]);
         } catch (error) {
@@ -903,14 +935,12 @@ export const executePathRun = async (
           const errorOutputs = extractNodeErrorOutputs(error);
           const errorCodeValue = errorOutputs?.['errorCode'];
           const errorCode =
-            typeof errorCodeValue === 'string'
-              ? errorCodeValue
-              : 'AI_PATHS_NODE_EXECUTION_FAILED';
+            typeof errorCodeValue === 'string' ? errorCodeValue : 'AI_PATHS_NODE_EXECUTION_FAILED';
           const hints =
             Array.isArray(errorOutputs?.['hints']) && errorOutputs['hints'].length > 0
               ? (errorOutputs['hints'] as unknown[]).filter(
-                (entry: unknown): entry is string => typeof entry === 'string'
-              )
+                  (entry: unknown): entry is string => typeof entry === 'string'
+                )
               : null;
           const errorOutputKeys = errorOutputs ? Object.keys(errorOutputs).slice(0, 30) : [];
           const errorReport = buildAiPathErrorReport({
@@ -1000,9 +1030,7 @@ export const executePathRun = async (
           void reportAiPathsError(error, { nodeId: node.id, action: 'onNodeError' });
         }
       },
-      onHalt: (halt: {
-        reason: 'blocked' | 'max_iterations' | 'completed' | 'failed';
-      }) => {
+      onHalt: (halt: { reason: 'blocked' | 'max_iterations' | 'completed' | 'failed' }) => {
         runtimeHaltReason = halt.reason;
       },
     });

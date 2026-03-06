@@ -29,7 +29,9 @@ function OptionalConsumer(): React.JSX.Element {
 
 describe('createStrictContext', () => {
   it('throws a clear error outside of provider', () => {
-    expect(() => render(<StrictConsumer />)).toThrow('useTestContext must be used within TestProvider');
+    expect(() => render(<StrictConsumer />)).toThrow(
+      'useTestContext must be used within TestProvider'
+    );
   });
 
   it('returns context value inside provider', () => {

@@ -80,25 +80,21 @@ interface JobsActionsContextType {
   ConfirmationModal: React.FC;
 }
 
-export const {
-  Context: JobsStateContext,
-  useStrictContext: useJobsState,
-} = createStrictContext<JobsStateContextType>({
-  hookName: 'useJobsState',
-  providerName: 'a JobsProvider',
-  displayName: 'JobsStateContext',
-  errorFactory: internalError,
-});
+export const { Context: JobsStateContext, useStrictContext: useJobsState } =
+  createStrictContext<JobsStateContextType>({
+    hookName: 'useJobsState',
+    providerName: 'a JobsProvider',
+    displayName: 'JobsStateContext',
+    errorFactory: internalError,
+  });
 
-export const {
-  Context: JobsActionsContext,
-  useStrictContext: useJobsActions,
-} = createStrictContext<JobsActionsContextType>({
-  hookName: 'useJobsActions',
-  providerName: 'a JobsProvider',
-  displayName: 'JobsActionsContext',
-  errorFactory: internalError,
-});
+export const { Context: JobsActionsContext, useStrictContext: useJobsActions } =
+  createStrictContext<JobsActionsContextType>({
+    hookName: 'useJobsActions',
+    providerName: 'a JobsProvider',
+    displayName: 'JobsActionsContext',
+    errorFactory: internalError,
+  });
 
 export function JobsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   // --- Product Listing Jobs ---

@@ -452,11 +452,11 @@ export const VersionNodeMapCanvas = React.forwardRef<
   const cullMargin = 200; // extra margin in world-space units
   const viewBounds = svgRect
     ? {
-      minX: -pan.x / zoom - cullMargin - CONTENT_OFFSET_X,
-      minY: -pan.y / zoom - cullMargin - CONTENT_OFFSET_Y,
-      maxX: (-pan.x + svgRect.width) / zoom + cullMargin - CONTENT_OFFSET_X,
-      maxY: (-pan.y + svgRect.height) / zoom + cullMargin - CONTENT_OFFSET_Y,
-    }
+        minX: -pan.x / zoom - cullMargin - CONTENT_OFFSET_X,
+        minY: -pan.y / zoom - cullMargin - CONTENT_OFFSET_Y,
+        maxX: (-pan.x + svgRect.width) / zoom + cullMargin - CONTENT_OFFSET_X,
+        maxY: (-pan.y + svgRect.height) / zoom + cullMargin - CONTENT_OFFSET_Y,
+      }
     : null;
 
   const isNodeVisible = (node: VersionNode): boolean => {
@@ -543,10 +543,10 @@ export const VersionNodeMapCanvas = React.forwardRef<
                     transition: 'stroke-width 0.15s ease, stroke-opacity 0.15s ease',
                     ...(isNewEdge
                       ? {
-                        strokeDasharray: 1000,
-                        strokeDashoffset: 1000,
-                        animation: 'vgraph-edge-draw 0.6s ease forwards 0.2s',
-                      }
+                          strokeDasharray: 1000,
+                          strokeDashoffset: 1000,
+                          animation: 'vgraph-edge-draw 0.6s ease forwards 0.2s',
+                        }
                       : {}),
                   }}
                 />

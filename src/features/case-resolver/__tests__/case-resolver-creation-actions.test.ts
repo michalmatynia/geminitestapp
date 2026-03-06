@@ -3,7 +3,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { useCaseResolverStateCreationActions } from '@/features/case-resolver/hooks/useCaseResolverState.creation-actions';
 import { resolveCaseResolverTreeWorkspace } from '@/features/case-resolver/components/case-resolver-tree-workspace';
-import { createCaseResolverFile, parseCaseResolverWorkspace } from '@/features/case-resolver/settings';
+import {
+  createCaseResolverFile,
+  parseCaseResolverWorkspace,
+} from '@/features/case-resolver/settings';
 import type {
   CaseResolverRequestedCaseStatus,
   CaseResolverWorkspace,
@@ -67,9 +70,8 @@ const buildHarness = ({
   canCreateInActiveCase: boolean;
 }) => {
   let currentWorkspace = workspace;
-  const requestedCaseStatusState = createMutableState<CaseResolverRequestedCaseStatus>(
-    requestedCaseStatus
-  );
+  const requestedCaseStatusState =
+    createMutableState<CaseResolverRequestedCaseStatus>(requestedCaseStatus);
   const selectedFileState = createMutableState<string | null>(null);
   const selectedAssetState = createMutableState<string | null>(null);
   const selectedFolderState = createMutableState<string | null>(null);
@@ -81,7 +83,9 @@ const buildHarness = ({
   ): void => {
     currentWorkspace = updater(currentWorkspace);
   };
-  const setWorkspace: React.Dispatch<React.SetStateAction<CaseResolverWorkspace>> = (value): void => {
+  const setWorkspace: React.Dispatch<React.SetStateAction<CaseResolverWorkspace>> = (
+    value
+  ): void => {
     currentWorkspace =
       typeof value === 'function'
         ? (value as (current: CaseResolverWorkspace) => CaseResolverWorkspace)(currentWorkspace)
@@ -237,8 +241,9 @@ describe('useCaseResolverStateCreationActions', () => {
       requestedFileId: caseFile.id,
       workspace: harness.getWorkspace(),
     });
-    const createdAssetId = harness.getWorkspace().assets.find((asset) => asset.kind === 'node_file')
-      ?.id;
+    const createdAssetId = harness
+      .getWorkspace()
+      .assets.find((asset) => asset.kind === 'node_file')?.id;
 
     expect(createdAssetId).toBeTruthy();
     expect(scopedWorkspace.assets.map((asset) => asset.id)).toContain(createdAssetId as string);

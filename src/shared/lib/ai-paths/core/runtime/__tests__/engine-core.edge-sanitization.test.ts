@@ -246,5 +246,4 @@ describe('engine-core edge sanitization', () => {
     expect(result.outputs?.['node-constant']?.['value']).toBe('kernel-selected');
     expect(result.outputs?.['node-delay']?.['value']).toBe('kernel-selected');
   });
-
 });

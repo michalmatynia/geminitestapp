@@ -65,7 +65,24 @@ const baseProgress: KangurProgressState = {
   geometryPerfect: 1,
   badges: ['first_game', 'perfect_10', 'lesson_hero', 'ten_games'],
   operationsPlayed: ['addition', 'multiplication', 'division'],
-  lessonMastery: {},
+  lessonMastery: {
+    division: {
+      attempts: 2,
+      completions: 2,
+      masteryPercent: 45,
+      bestScorePercent: 60,
+      lastScorePercent: 40,
+      lastCompletedAt: '2026-03-06T10:00:00.000Z',
+    },
+    clock: {
+      attempts: 4,
+      completions: 4,
+      masteryPercent: 92,
+      bestScorePercent: 100,
+      lastScorePercent: 90,
+      lastCompletedAt: '2026-03-06T12:00:00.000Z',
+    },
+  },
 };
 
 const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord => ({
@@ -133,18 +150,22 @@ describe('LearnerProfile page', () => {
     expect(screen.getByText('Poziom 4 · 620 XP lacznie')).toBeInTheDocument();
     expect(screen.getByText('Wyniki wg operacji')).toBeInTheDocument();
     expect(screen.getByText('Plan na dzis')).toBeInTheDocument();
+    expect(screen.getByText('Opanowanie lekcji')).toBeInTheDocument();
+    expect(screen.getAllByText('➗ Dzielenie').length).toBeGreaterThan(0);
+    expect(screen.getByText('🕐 Nauka zegara')).toBeInTheDocument();
     expect(screen.getByText('Priorytet sredni')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Otworz lekcje' })).toHaveAttribute(
-      'href',
-      '/kangur/lessons?focus=division'
-    );
+    expect(
+      screen
+        .getAllByRole('link', { name: 'Otworz lekcje' })
+        .map((link) => link.getAttribute('href'))
+    ).toContain('/kangur/lessons?focus=division');
     expect(screen.getByRole('link', { name: 'Zagraj dzis' })).toHaveAttribute(
       'href',
       '/kangur/game?quickStart=training'
     );
     expect(screen.getByText('➕ Dodawanie')).toBeInTheDocument();
     expect(screen.getByText('✖️ Mnozenie')).toBeInTheDocument();
-    expect(screen.getByText('➗ Dzielenie')).toBeInTheDocument();
+    expect(screen.getAllByText('➗ Dzielenie').length).toBeGreaterThan(0);
     const operationTrainingHrefs = screen
       .getAllByRole('link', { name: 'Trenuj' })
       .map((link) => link.getAttribute('href'));
@@ -181,5 +202,15 @@ describe('LearnerProfile page', () => {
 
     expect(await screen.findByText('Nie udalo sie pobrac historii wynikow.')).toBeInTheDocument();
     expect(logKangurClientErrorMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats score authorization errors as expected local-mode fallback', async () => {
+    scoreFilterMock.mockRejectedValue({ status: 403 });
+
+    render(<LearnerProfile />);
+
+    expect(await screen.findByText('Brak rozegranych sesji.')).toBeInTheDocument();
+    expect(screen.queryByText('Nie udalo sie pobrac historii wynikow.')).not.toBeInTheDocument();
+    expect(logKangurClientErrorMock).not.toHaveBeenCalled();
   });
 });

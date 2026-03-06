@@ -4,6 +4,12 @@ import type { DropResult } from '@hello-pangea/dnd';
 import { AnimatePresence, motion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 
+import {
+  addXp,
+  createLessonPracticeReward,
+  loadProgress,
+} from '@/features/kangur/ui/services/progress';
+
 type AddingBallGameProps = {
   onFinish: () => void;
 };
@@ -406,10 +412,12 @@ function GroupSum({
         </p>
 
         <div className='flex gap-4 flex-wrap justify-center'>
-          {([
-            { id: 'group1', label: 'Grupa 1' },
-            { id: 'group2', label: 'Grupa 2' },
-          ] as const).map((group) => (
+          {(
+            [
+              { id: 'group1', label: 'Grupa 1' },
+              { id: 'group2', label: 'Grupa 2' },
+            ] as const
+          ).map((group) => (
             <Droppable key={group.id} droppableId={group.id} direction='horizontal'>
               {(provided, snapshot) => (
                 <div>
@@ -624,11 +632,16 @@ export default function AddingBallGame({ onFinish }: AddingBallGameProps): React
   const [roundIdx, setRoundIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
+  const [xpEarned, setXpEarned] = useState(0);
   const [round, setRound] = useState<Round>(() => generateRound(MODES[0] ?? 'complete_equation'));
 
   const handleResult = (correct: boolean): void => {
     const nextScore = correct ? score + 1 : score;
     if (roundIdx + 1 >= TOTAL_ROUNDS) {
+      const progress = loadProgress();
+      const reward = createLessonPracticeReward(progress, 'adding', nextScore, TOTAL_ROUNDS);
+      addXp(reward.xp, reward.progressUpdates);
+      setXpEarned(reward.xp);
       setScore(nextScore);
       setDone(true);
       return;
@@ -652,6 +665,11 @@ export default function AddingBallGame({ onFinish }: AddingBallGameProps): React
         <h2 className='text-2xl font-extrabold text-gray-800'>
           Wynik: {score}/{TOTAL_ROUNDS}
         </h2>
+        {xpEarned > 0 && (
+          <div className='bg-indigo-100 text-indigo-700 font-bold px-4 py-2 rounded-full text-sm'>
+            +{xpEarned} XP ✨
+          </div>
+        )}
         <div className='w-full bg-gray-100 rounded-full h-3'>
           <motion.div
             initial={{ width: 0 }}
@@ -673,6 +691,7 @@ export default function AddingBallGame({ onFinish }: AddingBallGameProps): React
               setRoundIdx(0);
               setScore(0);
               setDone(false);
+              setXpEarned(0);
               setRound(generateRound(MODES[0] ?? 'complete_equation'));
             }}
             className='flex-1 flex items-center justify-center gap-2 py-2 rounded-2xl border-2 border-gray-200 text-gray-500 font-bold hover:bg-gray-50 transition'
@@ -712,7 +731,9 @@ export default function AddingBallGame({ onFinish }: AddingBallGameProps): React
       </div>
 
       <div className='w-full bg-white rounded-2xl shadow p-5'>
-        <p className='text-xs font-bold text-orange-500 uppercase tracking-wide mb-3'>{modeLabel}</p>
+        <p className='text-xs font-bold text-orange-500 uppercase tracking-wide mb-3'>
+          {modeLabel}
+        </p>
         <AnimatePresence mode='wait'>
           <motion.div
             key={roundIdx}

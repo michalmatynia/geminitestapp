@@ -31,7 +31,7 @@ describe('syncProductAiJobs', () => {
         },
       } as unknown as Parameters<typeof syncProductAiJobs>[0]['prisma'],
       normalizeId: (doc: Record<string, unknown>): string =>
-        (typeof doc['_id'] === 'string' ? doc['_id'] : ''),
+        typeof doc['_id'] === 'string' ? doc['_id'] : '',
       toDate: (): Date | null => null,
       toObjectIdMaybe: () => null,
       toJsonValue: (value: unknown): unknown => value,

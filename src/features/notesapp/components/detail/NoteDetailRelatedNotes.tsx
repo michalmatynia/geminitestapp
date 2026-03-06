@@ -4,10 +4,7 @@ import React, { useMemo } from 'react';
 import { X } from 'lucide-react';
 
 import { useNotesLookup } from '@/features/notesapp/api/useNoteQueries';
-import {
-  useNotesAppActions,
-  useNotesAppState,
-} from '@/features/notesapp/hooks/NotesAppContext';
+import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import { Button } from '@/shared/ui';
 import type { RelatedNote, NoteRelationRecord } from '@/shared/contracts/notes';
 

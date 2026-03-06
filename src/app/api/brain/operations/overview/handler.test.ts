@@ -412,7 +412,9 @@ describe('brain operations overview handler', () => {
       };
     };
 
-    expect(payload.domains.ai_paths.trend?.label).toContain('Risky runtime insights vs previous 15m');
+    expect(payload.domains.ai_paths.trend?.label).toContain(
+      'Risky runtime insights vs previous 15m'
+    );
     expect(payload.domains.ai_paths.trend?.current).toBe(1);
     expect(payload.domains.ai_paths.trend?.previous).toBe(1);
     expect(payload.domains.ai_paths.metrics).toEqual(

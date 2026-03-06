@@ -3,7 +3,11 @@ import { motion } from 'framer-motion';
 import { Dumbbell } from 'lucide-react';
 
 import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
-import type { KangurDifficulty, KangurOperation, KangurTrainingSelection } from '@/features/kangur/ui/types';
+import type {
+  KangurDifficulty,
+  KangurOperation,
+  KangurTrainingSelection,
+} from '@/features/kangur/ui/types';
 
 export type TrainingSetupProps = {
   onStart: (selection: KangurTrainingSelection) => void;

@@ -13,7 +13,10 @@ type AdminFilemakerPageFunctionKeys = {
     : never;
 }[keyof AdminFilemakerPageContextValue];
 
-type AdminFilemakerPageDataKeys = Exclude<keyof AdminFilemakerPageContextValue, AdminFilemakerPageFunctionKeys>;
+type AdminFilemakerPageDataKeys = Exclude<
+  keyof AdminFilemakerPageContextValue,
+  AdminFilemakerPageFunctionKeys
+>;
 
 export type AdminFilemakerPageStateContextValue = Pick<
   AdminFilemakerPageContextValue,

@@ -8,8 +8,8 @@ import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from '@/shared/lib/ai-paths/por
 import { getPortablePathRunExecutionSnapshot } from '@/shared/lib/ai-paths/portable-engine/portable-engine-observability';
 import {
   loadPortablePathAuditSinkAutoRemediationDeadLetters,
-  loadPortablePathAuditSinkStartupHealthState,
   loadPortablePathSigningPolicyTrendSnapshots,
+  loadPortablePathAuditSinkStartupHealthState,
   resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironment,
@@ -26,6 +26,9 @@ import {
   resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment,
+  type PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry,
+  type PortablePathSigningPolicyTrendPersistedSnapshot,
+  type PortablePathAuditSinkStartupHealthState,
 } from '@/shared/lib/ai-paths/portable-engine/server';
 
 const DEFAULT_TREND_SNAPSHOT_LIMIT = 50;
@@ -114,24 +117,14 @@ const parseTrendSnapshotCursor = (
       throw new Error('invalid_before_at');
     }
     const cursorTrigger =
-      payload.trigger === 'manual' || payload.trigger === 'threshold'
-        ? payload.trigger
-        : null;
+      payload.trigger === 'manual' || payload.trigger === 'threshold' ? payload.trigger : null;
     const cursorFrom =
-      typeof payload.from === 'string' && payload.from.trim().length > 0
-        ? payload.from
-        : null;
+      typeof payload.from === 'string' && payload.from.trim().length > 0 ? payload.from : null;
     const cursorTo =
-      typeof payload.to === 'string' && payload.to.trim().length > 0
-        ? payload.to
-        : null;
+      typeof payload.to === 'string' && payload.to.trim().length > 0 ? payload.to : null;
     const requestFrom = filters.from?.toISOString() ?? null;
     const requestTo = filters.to?.toISOString() ?? null;
-    if (
-      cursorTrigger !== filters.trigger ||
-      cursorFrom !== requestFrom ||
-      cursorTo !== requestTo
-    ) {
+    if (cursorTrigger !== filters.trigger || cursorFrom !== requestFrom || cursorTo !== requestTo) {
       throw new Error('cursor_filter_mismatch');
     }
     return {
@@ -161,7 +154,11 @@ const toTopDeadLetterErrorBreakdown = (
     .slice(0, limit)
     .map(([reason, count]) => ({ reason, count }));
 
-const createEmptyRunExecutionCounts = (): { attempts: number; successes: number; failures: number } => ({
+const createEmptyRunExecutionCounts = (): {
+  attempts: number;
+  successes: number;
+  failures: number;
+} => ({
   attempts: 0,
   successes: 0,
   failures: 0,
@@ -258,7 +255,7 @@ const buildRunExecutionSummary = (): {
         runner: event.runner,
         surface: event.surface,
         source: event.source,
-        stage: event.failureStage ?? 'runtime',
+        stage: (event.failureStage ?? 'runtime') as 'resolve' | 'validation' | 'runtime',
         error:
           typeof event.error === 'string' && event.error.trim().length > 0
             ? event.error
@@ -322,13 +319,22 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment() ??
     DEFAULT_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES;
 
-  const [snapshots, autoRemediationState, deadLetters] = await Promise.all([
+  const [snapshotsRaw, autoRemediationState, deadLettersRaw] = await Promise.all<
+    [
+      PortablePathSigningPolicyTrendPersistedSnapshot[],
+      PortablePathAuditSinkStartupHealthState,
+      PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry[],
+    ]
+  >([
     loadPortablePathSigningPolicyTrendSnapshots({ maxSnapshots: loadLimit }),
     loadPortablePathAuditSinkStartupHealthState(),
     loadPortablePathAuditSinkAutoRemediationDeadLetters({
       maxEntries: deadLetterMaxEntries,
     }),
   ]);
+  const snapshots = snapshotsRaw;
+  const deadLetters = deadLettersRaw;
+
   const fromTime = from?.getTime() ?? null;
   const toTime = to?.getTime() ?? null;
   const filteredSnapshots = snapshots.filter((snapshot) => {
@@ -353,37 +359,35 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const snapshotCount = pageSnapshots.length;
   const hasMore = cursorFilteredSnapshots.length > pageSnapshots.length;
   const driftAlertsTotal = pageSnapshots.reduce(
-    (sum, snapshot) => sum + snapshot.driftAlerts.length,
+    (sum, snapshot) =>
+      sum + (Array.isArray(snapshot.driftAlerts) ? snapshot.driftAlerts.length : 0),
     0
   );
   const sinkWritesFailedTotal = pageSnapshots.reduce(
-    (sum, snapshot) => sum + snapshot.sinkTotals.writesFailed,
+    (sum, snapshot) => sum + (snapshot.sinkTotals?.writesFailed ?? 0),
     0
   );
-  const latestSnapshotAt =
-    snapshotCount > 0 ? pageSnapshots[snapshotCount - 1]!.at : null;
+  const lastSnapshot = snapshotCount > 0 ? pageSnapshots[snapshotCount - 1] : null;
+  const latestSnapshotAt = lastSnapshot ? lastSnapshot.at : null;
+  const firstSnapshot = snapshotCount > 0 ? pageSnapshots[0] : null;
   const nextCursor =
-    hasMore && snapshotCount > 0
+    hasMore && firstSnapshot
       ? encodeTrendSnapshotCursor({
         version: TREND_SNAPSHOT_CURSOR_VERSION,
-        beforeAt: pageSnapshots[0]!.at,
+        beforeAt: firstSnapshot.at,
         trigger,
         from: from?.toISOString() ?? null,
         to: to?.toISOString() ?? null,
       })
       : null;
   const notificationDeadLetterCount = deadLetters.length;
-  const latestNotificationDeadLetterAt =
-    notificationDeadLetterCount > 0
-      ? deadLetters[notificationDeadLetterCount - 1]!.queuedAt
-      : null;
+  const lastDeadLetter = notificationDeadLetterCount > 0 ? deadLetters[notificationDeadLetterCount - 1] : null;
+  const latestNotificationDeadLetterAt = lastDeadLetter?.at ?? null;
   const deadLetterErrorCounts: Record<string, number> = {};
   const deadLetterReplayPolicySkipCounts: Record<string, number> = {};
   for (const entry of deadLetters) {
     const reason =
-      typeof entry.error === 'string' && entry.error.trim().length > 0
-        ? entry.error
-        : 'unknown';
+      typeof entry.reason === 'string' && entry.reason.trim().length > 0 ? entry.reason : 'unknown';
     deadLetterErrorCounts[reason] = (deadLetterErrorCounts[reason] ?? 0) + 1;
     if (DEAD_LETTER_REPLAY_POLICY_SKIP_REASONS.has(reason)) {
       deadLetterReplayPolicySkipCounts[reason] =
@@ -394,10 +398,41 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const deadLetterReplayPolicySkipReasons = toTopDeadLetterErrorBreakdown(
     deadLetterReplayPolicySkipCounts
   );
-  const deadLetterReplayPolicySkipsTotal = Object.values(
-    deadLetterReplayPolicySkipCounts
-  ).reduce((sum, value) => sum + value, 0);
+  const deadLetterReplayPolicySkipsTotal = Object.values(deadLetterReplayPolicySkipCounts).reduce(
+    (sum, value) => sum + value,
+    0
+  );
   const runExecution = buildRunExecutionSummary();
+
+  const notifications = {
+    enabled:
+      resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironment() ?? true,
+    webhookConfigured:
+      resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment() !== null,
+    webhookSigningConfigured:
+      resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment() !== null,
+    webhookSignatureKeyId:
+      resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment(),
+    emailWebhookConfigured:
+      resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironment() !== null,
+    emailWebhookSigningConfigured:
+      resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironment() !== null,
+    emailWebhookSignatureKeyId:
+      resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironment(),
+    emailRecipients:
+      resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironment() ?? [],
+    timeoutMs:
+      resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironment() ??
+      DEFAULT_AUTO_REMEDIATION_NOTIFICATION_TIMEOUT_MS,
+    deadLetter: {
+      maxEntries: deadLetterMaxEntries,
+      queuedCount: notificationDeadLetterCount,
+      latestQueuedAt: latestNotificationDeadLetterAt,
+      topErrors: deadLetterTopErrors,
+      replayPolicySkipsTotal: deadLetterReplayPolicySkipsTotal,
+      replayPolicySkipReasons: deadLetterReplayPolicySkipReasons,
+    },
+  };
 
   return NextResponse.json({
     specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
@@ -424,12 +459,9 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       notificationDeadLetterTopErrors: deadLetterTopErrors,
     },
     autoRemediation: {
-      enabled:
-        resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironment() ??
-        true,
+      enabled: resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironment() ?? true,
       strategy:
-        resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment() ??
-        'unregister_all',
+        resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment() ?? 'unregister_all',
       threshold:
         resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment() ??
         DEFAULT_AUTO_REMEDIATION_THRESHOLD,
@@ -442,36 +474,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       rateLimitMaxActions:
         resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironment() ??
         DEFAULT_AUTO_REMEDIATION_RATE_LIMIT_MAX_ACTIONS,
-      notifications: {
-        enabled:
-          resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironment() ??
-          true,
-        webhookConfigured:
-          resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment() !== null,
-        webhookSigningConfigured:
-          resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment() !== null,
-        webhookSignatureKeyId:
-          resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment(),
-        emailWebhookConfigured:
-          resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironment() !== null,
-        emailWebhookSigningConfigured:
-          resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironment() !== null,
-        emailWebhookSignatureKeyId:
-          resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironment(),
-        emailRecipients:
-          resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironment() ?? [],
-        timeoutMs:
-          resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironment() ??
-          DEFAULT_AUTO_REMEDIATION_NOTIFICATION_TIMEOUT_MS,
-        deadLetter: {
-          maxEntries: deadLetterMaxEntries,
-          queuedCount: notificationDeadLetterCount,
-          latestQueuedAt: latestNotificationDeadLetterAt,
-          topErrors: deadLetterTopErrors,
-          replayPolicySkipsTotal: deadLetterReplayPolicySkipsTotal,
-          replayPolicySkipReasons: deadLetterReplayPolicySkipReasons,
-        },
-      },
+      notifications,
       state: autoRemediationState,
     },
     runExecution,

@@ -4,7 +4,11 @@ import {
   type KangurLessonMasteryEntry,
 } from '@/shared/contracts/kangur';
 
-import type { KangurAddXpResult, KangurProgressState, KangurXpRewards } from '@/features/kangur/ui/types';
+import type {
+  KangurAddXpResult,
+  KangurProgressState,
+  KangurXpRewards,
+} from '@/features/kangur/ui/types';
 
 type KangurProgressLevel = {
   level: number;
@@ -162,6 +166,13 @@ const updateCachedProgressSnapshot = (progress: unknown): KangurProgressState =>
   return cachedProgressSnapshot;
 };
 
+const updateCachedProgressSnapshotFromStorageRaw = (raw: string): KangurProgressState => {
+  const snapshot = updateCachedProgressSnapshot(JSON.parse(raw));
+  // Preserve the exact storage payload so repeated reads don't re-normalize solely due key order.
+  cachedProgressRaw = raw;
+  return snapshot;
+};
+
 export function loadProgress(): KangurProgressState {
   if (typeof window === 'undefined') {
     return cachedProgressSnapshot;
@@ -176,7 +187,7 @@ export function loadProgress(): KangurProgressState {
       return cachedProgressSnapshot;
     }
     if (raw !== cachedProgressRaw) {
-      return updateCachedProgressSnapshot(JSON.parse(raw));
+      return updateCachedProgressSnapshotFromStorageRaw(raw);
     }
     return cachedProgressSnapshot;
   } catch {
@@ -190,7 +201,10 @@ export function saveProgress(progress: KangurProgressState): void {
     return;
   }
 
-  localStorage.setItem(KANGUR_PROGRESS_STORAGE_KEY, cachedProgressRaw ?? JSON.stringify(normalized));
+  localStorage.setItem(
+    KANGUR_PROGRESS_STORAGE_KEY,
+    cachedProgressRaw ?? JSON.stringify(normalized)
+  );
   emitProgressChange(normalized);
 }
 
@@ -221,9 +235,7 @@ export function saveProgressOwnerKey(ownerKey: string | null): void {
   localStorage.setItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY, normalized);
 }
 
-export function subscribeToProgress(
-  listener: (progress: KangurProgressState) => void
-): () => void {
+export function subscribeToProgress(listener: (progress: KangurProgressState) => void): () => void {
   progressListeners.add(listener);
   return () => {
     progressListeners.delete(listener);
@@ -234,7 +246,10 @@ export function areProgressStatesEqual(
   left: KangurProgressState,
   right: KangurProgressState
 ): boolean {
-  return JSON.stringify(normalizeKangurProgressState(left)) === JSON.stringify(normalizeKangurProgressState(right));
+  return (
+    JSON.stringify(normalizeKangurProgressState(left)) ===
+    JSON.stringify(normalizeKangurProgressState(right))
+  );
 }
 
 export function mergeProgressStates(

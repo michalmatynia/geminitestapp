@@ -50,14 +50,12 @@ type VectorToolbarRuntimeValue = {
   hasActions: boolean;
 };
 
-const {
-  Context: VectorToolbarRuntimeContext,
-  useStrictContext: useVectorToolbarRuntime,
-} = createStrictContext<VectorToolbarRuntimeValue>({
-  hookName: 'useVectorToolbarRuntime',
-  providerName: 'VectorToolbarRuntimeProvider',
-  displayName: 'VectorToolbarRuntimeContext',
-});
+const { Context: VectorToolbarRuntimeContext, useStrictContext: useVectorToolbarRuntime } =
+  createStrictContext<VectorToolbarRuntimeValue>({
+    hookName: 'useVectorToolbarRuntime',
+    providerName: 'VectorToolbarRuntimeProvider',
+    displayName: 'VectorToolbarRuntimeContext',
+  });
 
 function VectorToolbarToolButtons(): JSX.Element {
   const { onSelectTool, tool } = useVectorToolbarRuntime();
@@ -128,8 +126,16 @@ function VectorToolbarToolButtons(): JSX.Element {
 }
 
 function VectorToolbarActionButtons(): JSX.Element {
-  const { disableClear, disableClose, disableDetach, disableUndo, onClear, onClose, onDetach, onUndo } =
-    useVectorToolbarRuntime();
+  const {
+    disableClear,
+    disableClose,
+    disableDetach,
+    disableUndo,
+    onClear,
+    onClose,
+    onDetach,
+    onUndo,
+  } = useVectorToolbarRuntime();
   return (
     <>
       {onUndo ? (
@@ -324,38 +330,38 @@ export function VectorShapeOverlay(props: VectorShapeOverlayProps): React.JSX.El
               shape.type === 'rect' ||
               shape.type === 'ellipse'
                 ? (shape.type === 'rect' || shape.type === 'ellipse'
-                  ? shape.points.slice(0, 2)
-                  : shape.points
-                ).map((point: VectorPoint, index: number) => {
-                  const cx = point.x * viewboxSize;
-                  const cy = point.y * viewboxSize;
-                  const selected = isActive && index === (selectedPointIndex ?? -1);
-                  const isRectLike = shape.type === 'rect' || shape.type === 'ellipse';
-                  const haloRadius = isRectLike ? 7.5 : index === 0 ? 7.5 : 6.5;
-                  const markerRadius = isRectLike ? 5.5 : index === 0 ? 5.5 : 4.5;
-                  return (
-                    <g key={`${shape.id}-${index.toString(36)}`}>
-                      <circle cx={cx} cy={cy} r={haloRadius} fill='rgba(2,6,23,0.55)' />
-                      <circle
-                        cx={cx}
-                        cy={cy}
-                        r={markerRadius}
-                        fill={
-                          selected
-                            ? 'rgba(251,191,36,0.98)'
-                            : isRectLike
-                              ? 'rgba(251,146,60,0.98)'
-                              : index === 0
-                                ? 'rgba(16,185,129,0.98)'
-                                : 'rgba(56,189,248,0.98)'
-                        }
-                        stroke='rgba(255,255,255,0.9)'
-                        strokeWidth={1.5}
-                        vectorEffect='non-scaling-stroke'
-                      />
-                    </g>
-                  );
-                })
+                    ? shape.points.slice(0, 2)
+                    : shape.points
+                  ).map((point: VectorPoint, index: number) => {
+                    const cx = point.x * viewboxSize;
+                    const cy = point.y * viewboxSize;
+                    const selected = isActive && index === (selectedPointIndex ?? -1);
+                    const isRectLike = shape.type === 'rect' || shape.type === 'ellipse';
+                    const haloRadius = isRectLike ? 7.5 : index === 0 ? 7.5 : 6.5;
+                    const markerRadius = isRectLike ? 5.5 : index === 0 ? 5.5 : 4.5;
+                    return (
+                      <g key={`${shape.id}-${index.toString(36)}`}>
+                        <circle cx={cx} cy={cy} r={haloRadius} fill='rgba(2,6,23,0.55)' />
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={markerRadius}
+                          fill={
+                            selected
+                              ? 'rgba(251,191,36,0.98)'
+                              : isRectLike
+                                ? 'rgba(251,146,60,0.98)'
+                                : index === 0
+                                  ? 'rgba(16,185,129,0.98)'
+                                  : 'rgba(56,189,248,0.98)'
+                          }
+                          stroke='rgba(255,255,255,0.9)'
+                          strokeWidth={1.5}
+                          vectorEffect='non-scaling-stroke'
+                        />
+                      </g>
+                    );
+                  })
                 : null}
             </g>
           );

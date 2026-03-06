@@ -77,7 +77,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     };
   }, [parsedSegmentationLibraryState.records, parsedSegmentationLibraryState.version]);
 
-  const returnTarget = data.incomingBridgeSource === 'case-resolver' ? 'case-resolver' : 'image-studio';
+  const returnTarget =
+    data.incomingBridgeSource === 'case-resolver' ? 'case-resolver' : 'image-studio';
 
   const actions = useSettingsActionsImpl({
     settingsMap,

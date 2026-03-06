@@ -7,7 +7,8 @@ import {
 } from '@/shared/utils/folder-tree-profiles-v2/constants';
 import { folderTreeInstanceValues } from '@/shared/utils/folder-tree-profiles-v2/types';
 
-const asSorted = (values: readonly string[]): string[] => [...values].sort((a, b) => a.localeCompare(b));
+const asSorted = (values: readonly string[]): string[] =>
+  [...values].sort((a, b) => a.localeCompare(b));
 
 describe('folder-tree instance parity', () => {
   it('keeps profile defaults, settings metadata, and persist feedback aligned with registry', () => {

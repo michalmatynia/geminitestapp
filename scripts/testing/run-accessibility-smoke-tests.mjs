@@ -39,6 +39,11 @@ const suites = [
     name: 'Case Resolver Header Accessibility',
     tests: ['src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx'],
   },
+  {
+    id: 'kangur-profile-a11y',
+    name: 'Kangur Profile Accessibility',
+    tests: ['__tests__/features/kangur/kangur-accessibility-smoke.test.tsx'],
+  },
 ];
 
 const formatDuration = (ms) => {

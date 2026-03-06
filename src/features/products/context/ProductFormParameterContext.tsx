@@ -67,15 +67,15 @@ export function ProductFormParameterProvider({
         typeof entry.valuesByLanguage === 'object' &&
         !Array.isArray(entry.valuesByLanguage)
           ? Object.entries(entry.valuesByLanguage).reduce(
-            (acc: Record<string, string>, [lang, rawValue]: [string, unknown]) => {
-              const normalizedLang = lang.trim().toLowerCase();
-              if (!normalizedLang) return acc;
-              const normalizedValue = typeof rawValue === 'string' ? rawValue : '';
-              acc[normalizedLang] = normalizedValue;
-              return acc;
-            },
+              (acc: Record<string, string>, [lang, rawValue]: [string, unknown]) => {
+                const normalizedLang = lang.trim().toLowerCase();
+                if (!normalizedLang) return acc;
+                const normalizedValue = typeof rawValue === 'string' ? rawValue : '';
+                acc[normalizedLang] = normalizedValue;
+                return acc;
+              },
               {} as Record<string, string>
-          )
+            )
           : {};
       const directValue = typeof entry?.value === 'string' ? entry.value : '';
       const fallbackValue = resolvePrimaryParameterValue(valuesByLanguage, directValue);

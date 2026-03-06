@@ -73,7 +73,10 @@ export async function POST_handler(
     baseApiToken: connection.baseApiToken,
   });
   if (!tokenResolution.token) {
-    return fail('Token validation', tokenResolution.error ?? 'No Base API token configured for this connection');
+    return fail(
+      'Token validation',
+      tokenResolution.error ?? 'No Base API token configured for this connection'
+    );
   }
   const baseToken = tokenResolution.token;
   pushStep('Resolving token', 'ok', 'Base API token resolved');

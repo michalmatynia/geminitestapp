@@ -184,7 +184,7 @@ export async function getDatabaseEnginePolicy(): Promise<DatabaseEnginePolicy> {
 
 export async function getDatabaseEngineServiceRouteMap(): Promise<
   Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>>
-  > {
+> {
   const now = Date.now();
   if (serviceRouteMapCache && now - serviceRouteMapCache.ts < CACHE_TTL_MS) {
     return serviceRouteMapCache.value;
@@ -211,7 +211,7 @@ export async function getDatabaseEngineServiceRouteMap(): Promise<
 
 export async function getDatabaseEngineCollectionRouteMap(): Promise<
   Record<string, DatabaseEngineProvider>
-  > {
+> {
   const now = Date.now();
   if (collectionRouteMapCache && now - collectionRouteMapCache.ts < CACHE_TTL_MS) {
     return collectionRouteMapCache.value;

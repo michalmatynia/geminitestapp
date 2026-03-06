@@ -29,11 +29,7 @@ export function MarkdownEditor(): React.JSX.Element {
     contentTextColor,
     previewTypographyStyle,
   } = useNoteEditorContext();
-  const {
-    isPasting,
-    handlePaste,
-    setLightboxImage,
-  } = useNoteFilesContext();
+  const { isPasting, handlePaste, setLightboxImage } = useNoteFilesContext();
   const isCodeMode = editorMode === 'code';
 
   const { toast } = useToast();

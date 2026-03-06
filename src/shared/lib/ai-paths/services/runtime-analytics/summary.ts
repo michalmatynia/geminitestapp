@@ -1,7 +1,10 @@
 import 'server-only';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import type { AiPathRuntimeAnalyticsRange, AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
+import type {
+  AiPathRuntimeAnalyticsRange,
+  AiPathRuntimeAnalyticsSummary,
+} from '@/shared/contracts/ai-paths';
 import { getRedisConnection } from '@/shared/lib/queue';
 import {
   DURATION_SAMPLE_LIMIT,
@@ -127,14 +130,14 @@ export const getRuntimeAnalyticsSummaryBase = async (
       const avgDurationMs =
         durations.length > 0
           ? Math.round(
-            durations.reduce((sum: number, value: number) => sum + value, 0) / durations.length
-          )
+              durations.reduce((sum: number, value: number) => sum + value, 0) / durations.length
+            )
           : null;
       const p95DurationMs =
         durations.length > 0
           ? durations[
-            Math.min(durations.length - 1, Math.max(0, Math.ceil(durations.length * 0.95) - 1))
-          ]!
+              Math.min(durations.length - 1, Math.max(0, Math.ceil(durations.length * 0.95) - 1))
+            ]!
           : null;
 
       const runsCompleted = readCountAt(3);

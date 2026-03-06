@@ -8,7 +8,12 @@ import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelO
 import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Button, Textarea, Alert, FormField } from '@/shared/ui';
 
-import { useAiPathGraph, useAiPathOrchestrator, useAiPathRuntime, useAiPathSelection } from '../../AiPathConfigContext';
+import {
+  useAiPathGraph,
+  useAiPathOrchestrator,
+  useAiPathRuntime,
+  useAiPathSelection,
+} from '../../AiPathConfigContext';
 import {
   PlaceholderMatrixDialog,
   type PlaceholderGroup,
@@ -403,11 +408,11 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
         const resultSourceModelHasPoll =
           resultSourceNode?.type === 'model'
             ? edges.some((edge: Edge): boolean => {
-              if (edge.from !== resultSourceNode.id) return false;
-              if (edge.fromPort !== 'jobId') return false;
-              const target = nodes.find((node: AiNode): boolean => node.id === edge.to);
-              return target?.type === 'poll';
-            })
+                if (edge.from !== resultSourceNode.id) return false;
+                if (edge.fromPort !== 'jobId') return false;
+                const target = nodes.find((node: AiNode): boolean => node.id === edge.to);
+                return target?.type === 'poll';
+              })
             : false;
         const resultSourceModelWaits =
           resultSourceNode?.type === 'model'
@@ -434,31 +439,31 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
               resultSourceModelHasPoll &&
               !resultSourceModelWaits &&
               resultSourcePort === 'result' && (
-              <Alert variant='warning' className='mt-2 py-2 text-[11px]'>
+                <Alert variant='warning' className='mt-2 py-2 text-[11px]'>
                   This Prompt is connected to <span className='text-amber-200'>Model.result</span>,
                   but that Model has a <span className='text-amber-200'>Poll</span> connected and{' '}
-                <span className='text-amber-200'>Wait for result</span> is disabled, so the Model
+                  <span className='text-amber-200'>Wait for result</span> is disabled, so the Model
                   emits only <span className='text-amber-200'>jobId</span>. Connect{' '}
-                <span className='text-amber-200'>Poll.result</span> instead, or enable{' '}
-                <span className='text-amber-200'>Wait for result</span> on the Model node.
-              </Alert>
-            )}
+                  <span className='text-amber-200'>Poll.result</span> instead, or enable{' '}
+                  <span className='text-amber-200'>Wait for result</span> on the Model node.
+                </Alert>
+              )}
             {!hasResult &&
               resultSourceNode?.type === 'poll' &&
               resultSourcePollStatus === 'polling' && (
-              <Alert variant='info' className='mt-2 py-2 text-[11px]'>
+                <Alert variant='info' className='mt-2 py-2 text-[11px]'>
                   Poll is still running. The <span className='text-sky-200'>result</span> will
                   populate when polling completes.
-              </Alert>
-            )}
+                </Alert>
+              )}
             {!hasResult &&
               resultSourceNode?.type === 'poll' &&
               resultSourcePollStatus === 'failed' && (
-              <Alert variant='error' className='mt-2 py-2 text-[11px]'>
+                <Alert variant='error' className='mt-2 py-2 text-[11px]'>
                   Poll failed. Check the Poll node output for an error, or verify the job/database
                   query configuration.
-              </Alert>
-            )}
+                </Alert>
+              )}
           </div>
         );
       })()}

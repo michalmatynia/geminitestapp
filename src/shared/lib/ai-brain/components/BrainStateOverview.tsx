@@ -47,7 +47,9 @@ export function BrainStateOverview(): React.JSX.Element {
       const rightTime = new Date(right.createdAt || 0).getTime();
       return rightTime - leftTime;
     })[0];
-  const runtimeRisk = latestRuntimeInsight ? getRuntimeKernelRisk(latestRuntimeInsight.metadata) : '';
+  const runtimeRisk = latestRuntimeInsight
+    ? getRuntimeKernelRisk(latestRuntimeInsight.metadata)
+    : '';
 
   const brainConfigured = settingsQuery.data?.get(AI_BRAIN_SETTINGS_KEY);
   const hasCustomRouting =

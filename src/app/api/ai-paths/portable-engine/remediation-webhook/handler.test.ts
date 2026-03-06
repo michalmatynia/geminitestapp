@@ -17,15 +17,10 @@ vi.mock('@/shared/lib/ai-paths/portable-engine/server', () => ({
     resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironmentMock,
 }));
 
-import {
-  POST_handler,
-  resetPortablePathAutoRemediationWebhookReplayGuard,
-} from './handler';
+import { POST_handler, resetPortablePathAutoRemediationWebhookReplayGuard } from './handler';
 
 const buildSignatureHeader = (timestamp: string, body: string, secret: string): string => {
-  const digest = createHmac('sha256', secret)
-    .update(`${timestamp}.${body}`)
-    .digest('hex');
+  const digest = createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex');
   return `v1=${digest}`;
 };
 

@@ -104,8 +104,8 @@ const stripUsedIds = (
   const nodeChildren = node.children;
   const children = nodeChildren
     ? nodeChildren
-      .map((child: AdminMenuCustomNode) => stripUsedIds(child, usedIds))
-      .filter((child: AdminMenuCustomNode | null): child is AdminMenuCustomNode => Boolean(child))
+        .map((child: AdminMenuCustomNode) => stripUsedIds(child, usedIds))
+        .filter((child: AdminMenuCustomNode | null): child is AdminMenuCustomNode => Boolean(child))
     : undefined;
   return {
     ...node,

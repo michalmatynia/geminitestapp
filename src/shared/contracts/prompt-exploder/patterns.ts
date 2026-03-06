@@ -1,7 +1,5 @@
 import { z } from 'zod';
-import {
-  type PromptExploderSegmentType,
-} from './base';
+import { type PromptExploderSegmentType } from './base';
 
 /**
  * Prompt Exploder Pattern & Template DTOs

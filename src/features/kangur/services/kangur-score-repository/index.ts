@@ -13,7 +13,8 @@ const KANGUR_SCORE_REPOSITORY_SERVICE = 'kangur.score-repository';
 
 export const getKangurScoreRepository = async (): Promise<KangurScoreRepository> => {
   const provider = await getAppDbProvider();
-  const repository = provider === 'mongodb' ? mongoKangurScoreRepository : prismaKangurScoreRepository;
+  const repository =
+    provider === 'mongodb' ? mongoKangurScoreRepository : prismaKangurScoreRepository;
 
   return {
     createScore: async (input) => {

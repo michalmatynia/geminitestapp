@@ -315,9 +315,7 @@ const toRunFallbackReport = (run: AiPathRunRecord): AiPathErrorReport | null => 
     timestamp: run.finishedAt ?? run.updatedAt ?? run.createdAt,
     runId: run.id,
     traceId:
-      isRecord(run.meta) && typeof run.meta['traceId'] === 'string'
-        ? run.meta['traceId']
-        : run.id,
+      isRecord(run.meta) && typeof run.meta['traceId'] === 'string' ? run.meta['traceId'] : run.id,
     retryable: run.status === 'dead_lettered' || Boolean(run.nextRetryAt),
     retryAfterMs: null,
     metadata: null,
@@ -327,23 +325,24 @@ const toRunFallbackReport = (run: AiPathRunRecord): AiPathErrorReport | null => 
 const toNodeFallbackReports = (nodes: AiPathRunNodeRecord[], runId: string): AiPathErrorReport[] =>
   nodes
     .filter((node: AiPathRunNodeRecord): boolean => node.status === 'failed')
-    .map((node: AiPathRunNodeRecord): AiPathErrorReport =>
-      buildAiPathErrorReport({
-        error:
-          toNonEmptyString(node.errorMessage) ??
-          toNonEmptyString(node.error) ??
-          'Node failed without an explicit error message.',
-        code: 'AI_PATHS_NODE_FAILED',
-        category: 'runtime',
-        severity: 'error',
-        scope: 'node',
-        timestamp: node.finishedAt ?? node.updatedAt ?? node.createdAt,
-        runId,
-        nodeId: node.nodeId,
-        nodeType: node.nodeType,
-        nodeTitle: node.nodeTitle ?? null,
-        attempt: node.attempt,
-      })
+    .map(
+      (node: AiPathRunNodeRecord): AiPathErrorReport =>
+        buildAiPathErrorReport({
+          error:
+            toNonEmptyString(node.errorMessage) ??
+            toNonEmptyString(node.error) ??
+            'Node failed without an explicit error message.',
+          code: 'AI_PATHS_NODE_FAILED',
+          category: 'runtime',
+          severity: 'error',
+          scope: 'node',
+          timestamp: node.finishedAt ?? node.updatedAt ?? node.createdAt,
+          runId,
+          nodeId: node.nodeId,
+          nodeType: node.nodeType,
+          nodeTitle: node.nodeTitle ?? null,
+          attempt: node.attempt,
+        })
     );
 
 const compareReports = (left: AiPathErrorReport, right: AiPathErrorReport): number => {
@@ -384,7 +383,9 @@ export const buildAiPathRunErrorSummary = (input: {
   const runReport = toRunFallbackReport(input.run);
   const nodeFallbackReports = toNodeFallbackReports(input.nodes, input.run.id);
   const reports = dedupeReports(
-    [...eventReports, ...(runReport ? [runReport] : []), ...nodeFallbackReports].sort(compareReports)
+    [...eventReports, ...(runReport ? [runReport] : []), ...nodeFallbackReports].sort(
+      compareReports
+    )
   );
 
   if (reports.length === 0) return null;

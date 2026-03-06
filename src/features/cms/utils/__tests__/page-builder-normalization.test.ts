@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { isCmsSectionHidden, normalizePageZone } from '@/features/cms/utils/page-builder-normalization';
+import {
+  isCmsSectionHidden,
+  normalizePageZone,
+} from '@/features/cms/utils/page-builder-normalization';
 
 describe('page-builder-normalization', () => {
   it('normalizes invalid zones to template', () => {

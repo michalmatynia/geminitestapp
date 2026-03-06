@@ -1,6 +1,4 @@
-import {
-  getBlockDefinition,
-} from '../../components/page-builder/section-registry';
+import { getBlockDefinition } from '../../components/page-builder/section-registry';
 
 import type { SectionInstance, BlockInstance } from '../../types/page-builder';
 

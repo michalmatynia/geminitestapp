@@ -24,13 +24,16 @@ const AttachSlugModalRuntimeContext = React.createContext<AttachSlugModalRuntime
 function useAttachSlugModalRuntime(): AttachSlugModalRuntimeValue {
   const runtime = React.useContext(AttachSlugModalRuntimeContext);
   if (!runtime) {
-    throw new Error('useAttachSlugModalRuntime must be used within AttachSlugModalRuntimeContext.Provider');
+    throw new Error(
+      'useAttachSlugModalRuntime must be used within AttachSlugModalRuntimeContext.Provider'
+    );
   }
   return runtime;
 }
 
 function AttachSlugFormModal({ children }: { children: React.ReactNode }): React.JSX.Element {
-  const { isOpen, handleClose, handleAttach, selectedCount, isAttaching } = useAttachSlugModalRuntime();
+  const { isOpen, handleClose, handleAttach, selectedCount, isAttaching } =
+    useAttachSlugModalRuntime();
   return (
     <FormModal
       open={isOpen}

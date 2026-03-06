@@ -31,19 +31,16 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { DocsTooltipEnhancer } from '../components/DocsTooltipEnhancer';
 import { PromptExploderDocsTooltipSwitch } from '../components/PromptExploderDocsTooltipSwitch';
 import { usePromptExploderDocsTooltips } from '../hooks/usePromptExploderDocsTooltips';
-import {
-  defaultPromptExploderSettings,
-  parsePromptExploderSettingsResult,
-} from '../settings';
+import { defaultPromptExploderSettings, parsePromptExploderSettingsResult } from '../settings';
 import { PROMPT_EXPLODER_SETTINGS_KEY } from '@/shared/contracts/prompt-exploder';
 import {
   buildPromptExploderValidationRuleStackOptions,
   normalizePromptExploderValidationRuleStack,
 } from '../validation-stack';
 
-import type { 
+import type {
   PromptExploderOperationMode,
-  PromptExploderSettings
+  PromptExploderSettings,
 } from '@/shared/contracts/prompt-exploder';
 
 const clampNumber = (value: number, min: number, max: number): number =>
@@ -475,12 +472,12 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
                   setDraft((prev) =>
                     prev
                       ? {
-                        ...prev,
-                        ai: {
-                          ...prev.ai,
-                          operationMode: value as PromptExploderOperationMode,
-                        },
-                      }
+                          ...prev,
+                          ai: {
+                            ...prev.ai,
+                            operationMode: value as PromptExploderOperationMode,
+                          },
+                        }
                       : null
                   );
                 }}

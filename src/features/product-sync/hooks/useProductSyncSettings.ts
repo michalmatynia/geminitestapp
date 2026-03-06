@@ -1,9 +1,6 @@
 'use client';
 
-import type {
-  ProductSyncProfile,
-  ProductSyncRunRecord,
-} from '@/shared/contracts/product-sync';
+import type { ProductSyncProfile, ProductSyncRunRecord } from '@/shared/contracts/product-sync';
 import type {
   CreateMutation,
   DeleteMutation,
@@ -80,7 +77,7 @@ export function useProductSyncRuns(
 export function useCreateProductSyncProfileMutation(): CreateMutation<
   ProductSyncProfile,
   Partial<ProductSyncProfile>
-  > {
+> {
   const mutationKey = productSettingsKeys.syncProfiles();
   return createCreateMutationV2({
     mutationFn: (input: Partial<ProductSyncProfile>) =>
@@ -101,7 +98,7 @@ export function useCreateProductSyncProfileMutation(): CreateMutation<
 export function useUpdateProductSyncProfileMutation(): UpdateMutation<
   ProductSyncProfile,
   { id: string; data: Partial<ProductSyncProfile> }
-  > {
+> {
   const mutationKey = productSettingsKeys.syncProfiles();
   return createUpdateMutationV2({
     mutationFn: ({ id, data }: { id: string; data: Partial<ProductSyncProfile> }) =>
@@ -122,7 +119,8 @@ export function useUpdateProductSyncProfileMutation(): UpdateMutation<
 export function useDeleteProductSyncProfileMutation(): DeleteMutation {
   const mutationKey = productSettingsKeys.syncProfiles();
   return createDeleteMutationV2({
-    mutationFn: (id: string) => api.delete(`/api/v2/products/sync/profiles/${encodeURIComponent(id)}`),
+    mutationFn: (id: string) =>
+      api.delete(`/api/v2/products/sync/profiles/${encodeURIComponent(id)}`),
     mutationKey,
     meta: {
       source: 'products.hooks.useDeleteProductSyncProfileMutation',
@@ -139,7 +137,7 @@ export function useDeleteProductSyncProfileMutation(): DeleteMutation {
 export function useRunProductSyncProfileMutation(): MutationResult<
   ProductSyncRunRecord,
   { profileId: string }
-  > {
+> {
   const mutationKey = productSettingsKeys.syncRuns(null);
   return createMutationV2({
     mutationFn: ({ profileId }: { profileId: string }) =>
@@ -167,7 +165,7 @@ export function useRunProductSyncProfileMutation(): MutationResult<
 export function useRelinkBaseProductsMutation(): MutationResult<
   { status: string; jobId: string },
   { connectionId?: string; inventoryId?: string; catalogId?: string | null; limit?: number }
-  > {
+> {
   const mutationKey = productSettingsKeys.syncProfiles();
   return createMutationV2({
     mutationFn: (payload) =>

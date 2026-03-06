@@ -17,7 +17,10 @@ import {
   resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment,
   resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment,
-  type PortablePathAuditSinkAutoRemediationNotificationChannel,
+} from '@/shared/lib/ai-paths/portable-engine/server';
+import type {
+  PortablePathAuditSinkAutoRemediationNotificationChannel,
+  PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry,
 } from '@/shared/lib/ai-paths/portable-engine/server';
 
 const DEFAULT_DEAD_LETTER_LIMIT = 50;
@@ -81,15 +84,18 @@ type ReplayRequestBody = {
   timeoutMs?: number;
 };
 
-const parseReplayRequestBody = (value: unknown): Required<
-  Pick<ReplayRequestBody, 'action' | 'dryRun'>
-> &
+const parseReplayRequestBody = (
+  value: unknown
+): Required<Pick<ReplayRequestBody, 'action' | 'dryRun'>> &
   Pick<ReplayRequestBody, 'timeoutMs'> & {
     limit: number;
     channel: PortablePathAuditSinkAutoRemediationNotificationChannel | null;
     endpoint: string | null;
   } => {
-  if (value !== undefined && (typeof value !== 'object' || value === null || Array.isArray(value))) {
+  if (
+    value !== undefined &&
+    (typeof value !== 'object' || value === null || Array.isArray(value))
+  ) {
     throw badRequestError('Remediation dead-letter replay payload must be an object.');
   }
   const payload = (value ?? {}) as ReplayRequestBody;
@@ -130,19 +136,32 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const deadLetterMaxEntries =
     resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment() ??
     DEFAULT_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES;
-  const entries = await loadPortablePathAuditSinkAutoRemediationDeadLetters({
+  const entriesRaw = await loadPortablePathAuditSinkAutoRemediationDeadLetters({
     maxEntries: Math.max(deadLetterMaxEntries, limit),
   });
+  const entries = Array.isArray(entriesRaw)
+    ? (entriesRaw)
+    : [];
   const filtered = entries.filter((entry) => {
     if (channel && entry.channel !== channel) return false;
     if (endpoint && entry.endpoint !== endpoint) return false;
     return true;
   });
   const sliced = filtered.slice(-limit);
-  const latestQueuedAt = sliced.length > 0 ? sliced[sliced.length - 1]!.queuedAt : null;
+  const latestEntry = sliced.length > 0 ? sliced[sliced.length - 1] : null;
+  const latestQueuedAt = latestEntry ? latestEntry.at : null;
   const byChannel = {
     webhook: sliced.filter((entry) => entry.channel === 'webhook').length,
     email: sliced.filter((entry) => entry.channel === 'email').length,
+  };
+
+  const summary = {
+    totalStored: entries.length,
+    matchedCount: filtered.length,
+    returnedCount: sliced.length,
+    latestQueuedAt,
+    byChannel,
+    maxEntries: deadLetterMaxEntries,
   };
 
   return NextResponse.json({
@@ -153,14 +172,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       channel,
       endpoint,
     },
-    summary: {
-      totalStored: entries.length,
-      matchedCount: filtered.length,
-      returnedCount: sliced.length,
-      latestQueuedAt,
-      byChannel,
-      maxEntries: deadLetterMaxEntries,
-    },
+    summary,
     entries: sliced,
   });
 }

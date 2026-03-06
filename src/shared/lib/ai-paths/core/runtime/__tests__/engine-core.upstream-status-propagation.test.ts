@@ -40,20 +40,24 @@ describe('engine-core upstream status propagation', () => {
       outputs: ['result'],
     });
 
-    const runtime = await evaluateGraphInternal([upstream, downstream], [buildEdge('model-1', 'database-1')], {
-      resolveHandler: (nodeType) => {
-        if (nodeType === 'custom_model') {
-          return async () => ({
-            status: 'waiting_callback',
-          });
-        }
-        if (nodeType === 'custom_database') {
-          return vi.fn(async () => ({ result: 'should-not-run' }));
-        }
-        return null;
-      },
-      reportAiPathsError: (): void => {},
-    });
+    const runtime = await evaluateGraphInternal(
+      [upstream, downstream],
+      [buildEdge('model-1', 'database-1')],
+      {
+        resolveHandler: (nodeType) => {
+          if (nodeType === 'custom_model') {
+            return async () => ({
+              status: 'waiting_callback',
+            });
+          }
+          if (nodeType === 'custom_database') {
+            return vi.fn(async () => ({ result: 'should-not-run' }));
+          }
+          return null;
+        },
+        reportAiPathsError: (): void => {},
+      }
+    );
 
     expect(runtime.nodeStatuses['model-1']).toBe('waiting_callback');
     expect(runtime.nodeStatuses['database-1']).toBe('waiting_callback');
@@ -75,21 +79,25 @@ describe('engine-core upstream status propagation', () => {
       outputs: ['result'],
     });
 
-    const runtime = await evaluateGraphInternal([upstream, downstream], [buildEdge('model-1', 'database-1')], {
-      resolveHandler: (nodeType) => {
-        if (nodeType === 'custom_model') {
-          return async () => ({
-            status: 'failed',
-            error: 'upstream failed',
-          });
-        }
-        if (nodeType === 'custom_database') {
-          return vi.fn(async () => ({ result: 'should-not-run' }));
-        }
-        return null;
-      },
-      reportAiPathsError: (): void => {},
-    });
+    const runtime = await evaluateGraphInternal(
+      [upstream, downstream],
+      [buildEdge('model-1', 'database-1')],
+      {
+        resolveHandler: (nodeType) => {
+          if (nodeType === 'custom_model') {
+            return async () => ({
+              status: 'failed',
+              error: 'upstream failed',
+            });
+          }
+          if (nodeType === 'custom_database') {
+            return vi.fn(async () => ({ result: 'should-not-run' }));
+          }
+          return null;
+        },
+        reportAiPathsError: (): void => {},
+      }
+    );
 
     expect(runtime.nodeStatuses['model-1']).toBe('failed');
     expect(runtime.nodeStatuses['database-1']).toBe('blocked');
@@ -111,21 +119,25 @@ describe('engine-core upstream status propagation', () => {
       outputs: ['result'],
     });
 
-    const runtime = await evaluateGraphInternal([upstream, downstream], [buildEdge('model-1', 'database-1')], {
-      resolveHandler: (nodeType) => {
-        if (nodeType === 'custom_model') {
-          return async () => ({
-            status: 'queued',
-            jobId: 'job-queued-1',
-          });
-        }
-        if (nodeType === 'custom_database') {
-          return vi.fn(async () => ({ result: 'should-not-run' }));
-        }
-        return null;
-      },
-      reportAiPathsError: (): void => {},
-    });
+    const runtime = await evaluateGraphInternal(
+      [upstream, downstream],
+      [buildEdge('model-1', 'database-1')],
+      {
+        resolveHandler: (nodeType) => {
+          if (nodeType === 'custom_model') {
+            return async () => ({
+              status: 'queued',
+              jobId: 'job-queued-1',
+            });
+          }
+          if (nodeType === 'custom_database') {
+            return vi.fn(async () => ({ result: 'should-not-run' }));
+          }
+          return null;
+        },
+        reportAiPathsError: (): void => {},
+      }
+    );
 
     expect(runtime.nodeStatuses['model-1']).toBe('queued');
     expect(runtime.nodeStatuses['database-1']).toBe('waiting_callback');

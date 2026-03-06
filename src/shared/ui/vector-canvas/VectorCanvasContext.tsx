@@ -1,10 +1,7 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
-import {
-  type VectorShape,
-  type VectorToolMode,
-} from '@/shared/contracts/vector';
+import { type VectorShape, type VectorToolMode } from '@/shared/contracts/vector';
 import {
   type VectorCanvasImageContentFrame,
   type VectorCanvasViewCropRect,
@@ -70,11 +67,7 @@ export function VectorCanvasProvider({
   children: React.ReactNode;
   value: VectorCanvasContextValue;
 }) {
-  return (
-    <VectorCanvasContext.Provider value={value}>
-      {children}
-    </VectorCanvasContext.Provider>
-  );
+  return <VectorCanvasContext.Provider value={value}>{children}</VectorCanvasContext.Provider>;
 }
 
 export function useVectorCanvasContext() {

@@ -86,13 +86,10 @@ export const normalizeScopedCatalogParameterLinkMap = (
 const sortLinkEntries = (entries: Record<string, string>): Record<string, string> =>
   Object.keys(entries)
     .sort((left: string, right: string) => left.localeCompare(right))
-    .reduce(
-      (acc: Record<string, string>, key: string): Record<string, string> => {
-        acc[key] = entries[key] as string;
-        return acc;
-      },
-      {}
-    );
+    .reduce((acc: Record<string, string>, key: string): Record<string, string> => {
+      acc[key] = entries[key] as string;
+      return acc;
+    }, {});
 
 const sortCatalogLinkMap = (map: CatalogParameterLinkMap): CatalogParameterLinkMap =>
   Object.keys(map)
@@ -135,15 +132,10 @@ export const stringifyScopedCatalogParameterLinkMap = (
   const normalizedByScope = normalizeScopedCatalogParameterLinkMap(map.byScope);
   const sortedByScope = Object.keys(normalizedByScope)
     .sort((left: string, right: string) => left.localeCompare(right))
-    .reduce(
-      (acc: Record<string, CatalogParameterLinkMap>, scopeKey: string) => {
-        acc[scopeKey] = sortCatalogLinkMap(
-          normalizedByScope[scopeKey] as CatalogParameterLinkMap
-        );
-        return acc;
-      },
-      {}
-    );
+    .reduce((acc: Record<string, CatalogParameterLinkMap>, scopeKey: string) => {
+      acc[scopeKey] = sortCatalogLinkMap(normalizedByScope[scopeKey] as CatalogParameterLinkMap);
+      return acc;
+    }, {});
 
   return JSON.stringify({
     defaultByCatalog: sortCatalogLinkMap(normalizedDefaultByCatalog),

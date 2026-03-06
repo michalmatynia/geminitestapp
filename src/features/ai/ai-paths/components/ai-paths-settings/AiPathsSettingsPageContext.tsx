@@ -70,7 +70,9 @@ export function AiPathsSettingsPageProvider({
 export function useAiPathsSettingsPageContext(): AiPathsSettingsPageContextValue {
   const context = useContext(AiPathsSettingsPageContext);
   if (!context) {
-    throw new Error('useAiPathsSettingsPageContext must be used within AiPathsSettingsPageProvider');
+    throw new Error(
+      'useAiPathsSettingsPageContext must be used within AiPathsSettingsPageProvider'
+    );
   }
   return context;
 }

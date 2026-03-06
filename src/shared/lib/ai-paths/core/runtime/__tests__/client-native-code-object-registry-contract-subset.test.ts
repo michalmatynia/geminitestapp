@@ -5,6 +5,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 const {
   mockDbApiSchema,
+  mockAiJobsEnqueue,
+  mockAiJobsPoll,
   mockAiGenerationGenerate,
   mockAiGenerationUpdateProductDescription,
   mockAgentEnqueue,
@@ -34,6 +36,17 @@ const {
           relations: ['categories'],
         },
       ],
+    },
+  })),
+  mockAiJobsEnqueue: vi.fn(async () => ({
+    ok: true as const,
+    data: { jobId: 'job-model-1' },
+  })),
+  mockAiJobsPoll: vi.fn(async () => ({
+    ok: true as const,
+    data: {
+      status: 'completed',
+      result: 'model-result',
     },
   })),
   mockAiGenerationGenerate: vi.fn(async () => ({
@@ -108,6 +121,11 @@ vi.mock('@/shared/lib/ai-paths/api', async () => {
     dbApi: {
       ...actual.dbApi,
       schema: mockDbApiSchema,
+    },
+    aiJobsApi: {
+      ...actual.aiJobsApi,
+      enqueue: mockAiJobsEnqueue,
+      poll: mockAiJobsPoll,
     },
     aiGenerationApi: {
       ...actual.aiGenerationApi,
@@ -192,10 +210,10 @@ const readNativeContractCodeObjectIdByNodeType = (): Map<string, string> => {
   return new Map(entries);
 };
 
-const buildUnsupportedModelNode = (): AiNode => ({
-  id: 'node-model',
-  type: 'model',
-  title: 'Model',
+const buildUnsupportedClientNode = (): AiNode => ({
+  id: 'node-unsupported',
+  type: 'unsupported_client_node',
+  title: 'Unsupported',
   description: '',
   inputs: [],
   outputs: ['result'],
@@ -216,6 +234,24 @@ const buildPromptNode = (): AiNode => ({
     },
   },
   position: { x: 0, y: 0 },
+});
+
+const buildModelNode = (): AiNode => ({
+  id: 'node-model',
+  type: 'model',
+  title: 'Model',
+  description: '',
+  inputs: ['prompt', 'images'],
+  outputs: ['result', 'jobId'],
+  config: {
+    model: {
+      waitForResult: false,
+      temperature: 0.7,
+      maxTokens: 256,
+      vision: false,
+    },
+  },
+  position: { x: 10, y: 0 },
 });
 
 const buildAgentNode = (): AiNode => ({
@@ -542,7 +578,7 @@ describe('client native code-object registry contract subset', () => {
       .map(([nodeType]: [string, string]) => nodeType)
       .sort();
 
-    expect(unsupportedOnClientNodeTypes).toEqual(['model']);
+    expect(unsupportedOnClientNodeTypes).toEqual([]);
   });
 
   it('executes prompt nodes through client native contract resolver mapping', async () => {
@@ -554,6 +590,37 @@ describe('client native code-object registry contract subset', () => {
     });
 
     expect(result.outputs?.['node-prompt']?.['prompt']).toBe('hello-from-prompt');
+  });
+
+  it('executes model nodes through client native contract resolver mapping', async () => {
+    mockAiJobsEnqueue.mockClear();
+    mockAiJobsPoll.mockClear();
+
+    const result = await evaluateGraphClient({
+      nodes: [buildPromptNode(), buildModelNode()],
+      edges: [
+        {
+          id: 'edge-prompt-model',
+          from: 'node-prompt',
+          to: 'node-model',
+          fromPort: 'prompt',
+          toPort: 'prompt',
+          kind: 'value',
+        },
+      ],
+      runtimeKernelPilotNodeTypes: ['prompt', 'model'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockAiJobsEnqueue).toHaveBeenCalledTimes(1);
+    expect(mockAiJobsEnqueue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'graph_model',
+      })
+    );
+    expect(mockAiJobsPoll).not.toHaveBeenCalled();
+    expect(result.outputs?.['node-model']?.['status']).toBe('queued');
+    expect(result.outputs?.['node-model']?.['jobId']).toBe('job-model-1');
   });
 
   it('executes agent nodes through client native contract resolver mapping', async () => {
@@ -891,11 +958,13 @@ describe('client native code-object registry contract subset', () => {
   it('keeps unsupported server-only nodes blocked in client execution', async () => {
     await expect(
       evaluateGraphClient({
-        nodes: [buildUnsupportedModelNode()],
+        nodes: [buildUnsupportedClientNode()],
         edges: [],
-        runtimeKernelPilotNodeTypes: ['model'],
+        runtimeKernelPilotNodeTypes: ['unsupported_client_node'],
         reportAiPathsError: (): void => {},
       })
-    ).rejects.toThrow(`Node type 'model' is not supported in client-side execution. Use Server execution.`);
+    ).rejects.toThrow(
+      `Node type 'unsupported_client_node' is not supported in client-side execution. Use Server execution.`
+    );
   });
 });

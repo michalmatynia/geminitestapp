@@ -11,7 +11,7 @@ import { resolveAiPathsRuntimeCodeObjectHandler } from './code-object-resolver-r
 import { createNodeRuntimeKernel, toNodeRuntimeResolutionTelemetry } from './node-runtime-kernel';
 import { createNodeCodeObjectV3ContractResolver } from './node-code-object-v3-legacy-bridge';
 import { buildPromptOutput } from './utils';
-import { aiGenerationApi } from '@/shared/lib/ai-paths/api';
+import { aiGenerationApi, aiJobsApi } from '@/shared/lib/ai-paths/api';
 
 import { type EvaluateGraphArgs, type EvaluateGraphOptions } from './engine-modules/engine-types';
 import { coerceInput, formatRuntimeValue, renderTemplate } from '../utils';
@@ -82,6 +82,174 @@ const handleTemplate: NodeHandler = ({
   return { prompt: prompt || 'Prompt: (no template)' };
 };
 
+const buildModelTerminalOutputs = (options: {
+  status: 'blocked' | 'skipped';
+  reason: string;
+  details?: RuntimePortValues;
+}): RuntimePortValues => {
+  const base: RuntimePortValues = {
+    status: options.status,
+    skipReason: options.reason,
+    result: '',
+  };
+  if (options.status === 'blocked') {
+    base['blockedReason'] = options.reason;
+  }
+  return {
+    ...base,
+    ...(options.details ?? {}),
+  };
+};
+
+const handleModel: NodeHandler = async ({
+  node,
+  nodeInputs,
+  prevOutputs,
+  skipAiJobs,
+  executed,
+  reportAiPathsError,
+  toast,
+  runId,
+  activePathId,
+  simulationEntityId,
+}: NodeHandlerContext): Promise<RuntimePortValues> => {
+  if (skipAiJobs) {
+    return buildModelTerminalOutputs({
+      status: 'skipped',
+      reason: 'ai_jobs_disabled',
+    });
+  }
+  if (executed.ai.has(node.id)) return prevOutputs;
+
+  const rawPrompt =
+    coerceInput(nodeInputs['prompt']) ??
+    coerceInput(nodeInputs['value']) ??
+    coerceInput(nodeInputs['result']) ??
+    coerceInput(nodeInputs['bundle']) ??
+    coerceInput(nodeInputs['context']) ??
+    coerceInput(nodeInputs['entityJson']) ??
+    coerceInput(nodeInputs['title']) ??
+    coerceInput(nodeInputs['content_en']);
+
+  const prompt = typeof rawPrompt === 'string' ? rawPrompt.trim() : formatRuntimeValue(rawPrompt);
+  if (!prompt || prompt === '—') {
+    return buildModelTerminalOutputs({
+      status: 'blocked',
+      reason: 'missing_prompt',
+      details: {
+        requiredPorts: ['prompt'],
+        waitingOnPorts: ['prompt'],
+      },
+    });
+  }
+
+  const modelConfig = (node.config?.model ?? {}) as Record<string, unknown>;
+  const payload = {
+    prompt,
+    ...(typeof modelConfig['modelId'] === 'string' && modelConfig['modelId'].trim().length > 0
+      ? { modelId: modelConfig['modelId'].trim() }
+      : {}),
+    ...(typeof modelConfig['temperature'] === 'number'
+      ? { temperature: modelConfig['temperature'] }
+      : {}),
+    ...(typeof modelConfig['maxTokens'] === 'number' ? { maxTokens: modelConfig['maxTokens'] } : {}),
+    ...(typeof modelConfig['vision'] === 'boolean' ? { vision: modelConfig['vision'] } : {}),
+    source: 'ai_paths',
+    graph: {
+      pathId: activePathId ?? undefined,
+      nodeId: node.id,
+      nodeTitle: node.title,
+      runId,
+    },
+  };
+
+  const productIdInput =
+    typeof nodeInputs['productId'] === 'string'
+      ? nodeInputs['productId']
+      : typeof nodeInputs['entityId'] === 'string'
+        ? nodeInputs['entityId']
+        : typeof simulationEntityId === 'string'
+          ? simulationEntityId
+          : 'unknown';
+
+  try {
+    const enqueueResult = await aiJobsApi.enqueue({
+      productId: productIdInput,
+      type: 'graph_model',
+      payload,
+    });
+    if (!enqueueResult.ok) {
+      throw new Error(enqueueResult.error || 'Failed to enqueue AI job.');
+    }
+    const jobIdRaw = enqueueResult.data?.jobId;
+    if (typeof jobIdRaw !== 'string' || jobIdRaw.trim().length === 0) {
+      throw new Error('AI job enqueue response did not include a valid job id.');
+    }
+    const jobId = jobIdRaw.trim();
+    executed.ai.add(node.id);
+    toast('AI model job queued.', { variant: 'success' });
+
+    const waitForResult = modelConfig['waitForResult'] === true;
+    if (!waitForResult) {
+      return {
+        jobId,
+        status: 'queued',
+        debugPayload: payload,
+      };
+    }
+
+    const maxAttempts = 10;
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const pollResult = await aiJobsApi.poll(jobId);
+      if (!pollResult.ok) {
+        throw new Error(pollResult.error || 'Failed to poll AI job.');
+      }
+      const status =
+        typeof pollResult.data?.status === 'string' ? pollResult.data.status : 'processing';
+      if (status === 'completed') {
+        return {
+          result: pollResult.data.result ?? '',
+          jobId,
+          status,
+          debugPayload: payload,
+        };
+      }
+      if (status === 'failed' || status === 'cancelled') {
+        return {
+          result: '',
+          jobId,
+          status: 'failed',
+          error:
+            typeof pollResult.data?.error === 'string'
+              ? pollResult.data.error
+              : 'AI model job failed.',
+          debugPayload: payload,
+        };
+      }
+      if (attempt < maxAttempts - 1) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 500));
+      }
+    }
+
+    return {
+      result: '',
+      jobId,
+      status: 'failed',
+      error: 'AI model job timed out.',
+      debugPayload: payload,
+    };
+  } catch (error) {
+    reportAiPathsError(error, { action: 'graphModel', nodeId: node.id }, 'AI model job failed:');
+    executed.ai.add(node.id);
+    return {
+      result: '',
+      status: 'failed',
+      error: error instanceof Error ? error.message : 'AI model job failed.',
+      debugPayload: payload,
+    };
+  }
+};
+
 const handleAiDescription: NodeHandler = async ({
   node,
   nodeInputs,
@@ -131,6 +299,7 @@ const handleDescriptionUpdater: NodeHandler = async ({
 const CLIENT_HANDLERS: Record<string, NodeHandler> = {
   prompt: handlePrompt,
   template: handleTemplate,
+  model: handleModel,
   agent: handleAgent,
   learner_agent: handleLearnerAgent,
   ai_description: handleAiDescription,
@@ -207,6 +376,7 @@ const NATIVE_CODE_OBJECT_HANDLERS: Record<string, NodeHandler> = {
   'ai-paths.node-code-object.audio_speaker.v3': handleAudioSpeaker,
   'ai-paths.node-code-object.parser.v3': handleParser,
   'ai-paths.node-code-object.prompt.v3': handlePrompt,
+  'ai-paths.node-code-object.model.v3': handleModel,
   'ai-paths.node-code-object.agent.v3': handleAgent,
   'ai-paths.node-code-object.learner_agent.v3': handleLearnerAgent,
   'ai-paths.node-code-object.ai_description.v3': handleAiDescription,

@@ -42,6 +42,7 @@ import {
   handleIterator,
   handleContext,
 } from './handlers/transform';
+import { handleAgent, handleLearnerAgent } from './handlers/agent';
 import { handleNotification as handleIntegrationNotification } from './handlers/integration-notification-handler';
 import { handleFetcher as handleIntegrationFetcher } from './handlers/integration-fetcher-handler';
 import { handleDbSchema as handleIntegrationDbSchema } from './handlers/integration-schema-handler';
@@ -130,6 +131,8 @@ const handleDescriptionUpdater: NodeHandler = async ({
 const CLIENT_HANDLERS: Record<string, NodeHandler> = {
   prompt: handlePrompt,
   template: handleTemplate,
+  agent: handleAgent,
+  learner_agent: handleLearnerAgent,
   ai_description: handleAiDescription,
   description_updater: handleDescriptionUpdater,
   trigger: handleIntegrationTrigger,
@@ -204,6 +207,8 @@ const NATIVE_CODE_OBJECT_HANDLERS: Record<string, NodeHandler> = {
   'ai-paths.node-code-object.audio_speaker.v3': handleAudioSpeaker,
   'ai-paths.node-code-object.parser.v3': handleParser,
   'ai-paths.node-code-object.prompt.v3': handlePrompt,
+  'ai-paths.node-code-object.agent.v3': handleAgent,
+  'ai-paths.node-code-object.learner_agent.v3': handleLearnerAgent,
   'ai-paths.node-code-object.ai_description.v3': handleAiDescription,
   'ai-paths.node-code-object.description_updater.v3': handleDescriptionUpdater,
   'ai-paths.node-code-object.regex.v3': handleRegex,

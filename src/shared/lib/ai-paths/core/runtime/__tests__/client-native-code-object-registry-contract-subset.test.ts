@@ -7,6 +7,10 @@ const {
   mockDbApiSchema,
   mockAiGenerationGenerate,
   mockAiGenerationUpdateProductDescription,
+  mockAgentEnqueue,
+  mockAgentPoll,
+  mockSettingsList,
+  mockLearnerAgentsChat,
   mockPlaywrightEnqueue,
   mockPlaywrightPoll,
 } = vi.hoisted(() => ({
@@ -39,6 +43,29 @@ const {
   mockAiGenerationUpdateProductDescription: vi.fn(async () => ({
     ok: true as const,
     data: {},
+  })),
+  mockAgentEnqueue: vi.fn(async () => ({
+    ok: true as const,
+    data: { runId: 'agent-run-1' },
+  })),
+  mockAgentPoll: vi.fn(async () => ({
+    ok: true as const,
+    data: {
+      run: {
+        id: 'agent-run-1',
+        status: 'completed',
+        errorMessage: null,
+        logLines: ['done'],
+      },
+    },
+  })),
+  mockSettingsList: vi.fn(async () => ({
+    ok: true as const,
+    data: [],
+  })),
+  mockLearnerAgentsChat: vi.fn(async () => ({
+    ok: true as const,
+    data: { message: 'learner-response', sources: [{ id: 'source-1' }] },
   })),
   mockPlaywrightEnqueue: vi.fn(async () => ({
     ok: true as const,
@@ -86,6 +113,19 @@ vi.mock('@/shared/lib/ai-paths/api', async () => {
       ...actual.aiGenerationApi,
       generate: mockAiGenerationGenerate,
       updateProductDescription: mockAiGenerationUpdateProductDescription,
+    },
+    agentApi: {
+      ...actual.agentApi,
+      enqueue: mockAgentEnqueue,
+      poll: mockAgentPoll,
+    },
+    settingsApi: {
+      ...actual.settingsApi,
+      list: mockSettingsList,
+    },
+    learnerAgentsApi: {
+      ...actual.learnerAgentsApi,
+      chat: mockLearnerAgentsChat,
     },
     playwrightNodeApi: {
       ...actual.playwrightNodeApi,
@@ -176,6 +216,40 @@ const buildPromptNode = (): AiNode => ({
     },
   },
   position: { x: 0, y: 0 },
+});
+
+const buildAgentNode = (): AiNode => ({
+  id: 'node-agent',
+  type: 'agent',
+  title: 'Agent',
+  description: '',
+  inputs: ['prompt'],
+  outputs: ['result', 'jobId', 'status', 'bundle'],
+  config: {
+    agent: {
+      personaId: '',
+      promptTemplate: '',
+      waitForResult: false,
+    },
+  },
+  position: { x: 20, y: 0 },
+});
+
+const buildLearnerAgentNode = (): AiNode => ({
+  id: 'node-learner-agent',
+  type: 'learner_agent',
+  title: 'Learner Agent',
+  description: '',
+  inputs: ['prompt'],
+  outputs: ['result', 'sources', 'status', 'bundle'],
+  config: {
+    learnerAgent: {
+      agentId: 'agent-1',
+      promptTemplate: '',
+      includeSources: true,
+    },
+  },
+  position: { x: 40, y: 0 },
 });
 
 const buildTriggerNode = (): AiNode => ({
@@ -468,11 +542,7 @@ describe('client native code-object registry contract subset', () => {
       .map(([nodeType]: [string, string]) => nodeType)
       .sort();
 
-    expect(unsupportedOnClientNodeTypes).toEqual([
-      'agent',
-      'learner_agent',
-      'model',
-    ]);
+    expect(unsupportedOnClientNodeTypes).toEqual(['model']);
   });
 
   it('executes prompt nodes through client native contract resolver mapping', async () => {
@@ -484,6 +554,69 @@ describe('client native code-object registry contract subset', () => {
     });
 
     expect(result.outputs?.['node-prompt']?.['prompt']).toBe('hello-from-prompt');
+  });
+
+  it('executes agent nodes through client native contract resolver mapping', async () => {
+    mockSettingsList.mockClear();
+    mockAgentEnqueue.mockClear();
+    mockAgentPoll.mockClear();
+
+    const result = await evaluateGraphClient({
+      nodes: [buildPromptNode(), buildAgentNode()],
+      edges: [
+        {
+          id: 'edge-prompt-agent',
+          from: 'node-prompt',
+          to: 'node-agent',
+          fromPort: 'prompt',
+          toPort: 'prompt',
+          kind: 'value',
+        },
+      ],
+      runtimeKernelPilotNodeTypes: ['prompt', 'agent'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockSettingsList).toHaveBeenCalledTimes(1);
+    expect(mockAgentEnqueue).toHaveBeenCalledTimes(1);
+    expect(mockAgentEnqueue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: 'hello-from-prompt',
+      })
+    );
+    expect(mockAgentPoll).not.toHaveBeenCalled();
+    expect(result.outputs?.['node-agent']?.['status']).toBe('queued');
+    expect(result.outputs?.['node-agent']?.['jobId']).toBe('agent-run-1');
+  });
+
+  it('executes learner agent nodes through client native contract resolver mapping', async () => {
+    mockLearnerAgentsChat.mockClear();
+
+    const result = await evaluateGraphClient({
+      nodes: [buildPromptNode(), buildLearnerAgentNode()],
+      edges: [
+        {
+          id: 'edge-prompt-learner-agent',
+          from: 'node-prompt',
+          to: 'node-learner-agent',
+          fromPort: 'prompt',
+          toPort: 'prompt',
+          kind: 'value',
+        },
+      ],
+      runtimeKernelPilotNodeTypes: ['prompt', 'learner_agent'],
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(mockLearnerAgentsChat).toHaveBeenCalledTimes(1);
+    expect(mockLearnerAgentsChat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        agentId: 'agent-1',
+      })
+    );
+    expect(result.outputs?.['node-learner-agent']?.['status']).toBe('completed');
+    expect(result.outputs?.['node-learner-agent']?.['result']).toBe('learner-response');
+    expect(result.outputs?.['node-learner-agent']?.['sources']).toEqual([{ id: 'source-1' }]);
   });
 
   it('executes trigger nodes through client native contract resolver mapping', async () => {

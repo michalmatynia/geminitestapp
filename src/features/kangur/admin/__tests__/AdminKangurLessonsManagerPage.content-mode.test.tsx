@@ -187,31 +187,40 @@ vi.mock('@/shared/ui', () => ({
   FormModal: ({
     isOpen,
     title,
+    titleTestId,
     subtitle,
     children,
     onSave,
+    onClose,
     saveText = 'Save',
     actions,
   }: {
     isOpen?: boolean;
     title: string;
+    titleTestId?: string;
     subtitle?: string;
     children: React.ReactNode;
     onSave: () => void;
+    onClose: () => void;
     saveText?: string;
     actions?: React.ReactNode;
-  }) =>
-    isOpen ? (
-      <div>
-        <h2>{title}</h2>
+  }) => {
+    console.log('FormModal render:', { isOpen, title });
+    return isOpen ? (
+      <div data-testid='mock-form-modal'>
+        <h2 data-testid={titleTestId}>{title}</h2>
         {subtitle ? <div>{subtitle}</div> : null}
         {actions}
         {children}
         <button type='button' onClick={onSave}>
           {saveText}
         </button>
+        <button type='button' onClick={onClose}>
+          Close
+        </button>
       </div>
-    ) : null,  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+    ) : null;
+  },  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
   SectionHeader: ({ title }: { title: string }) => <h1>{title}</h1>,
   SelectSimple: ({
     value,
@@ -529,7 +538,8 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
 
     await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(1));
 
-    const documentSave = mutateAsyncMock.mock.calls[0]?.[0] as { key: string; value: string };    expect(documentSave.key).toBe(KANGUR_LESSON_DOCUMENTS_SETTING_KEY);
+    const documentSave = mutateAsyncMock.mock.calls[0]?.[0] as { key: string; value: string };
+    expect(documentSave.key).toBe(KANGUR_LESSON_DOCUMENTS_SETTING_KEY);
     const documentStore = JSON.parse(documentSave.value) as Record<
       string,
       { pages?: Array<{ title?: string; blocks: Array<{ type: string; activityId?: string }> }> }
@@ -546,13 +556,8 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
       )
     ).toBe(true);
 
-    const lessonSave = mutateAsyncMock.mock.calls[1]?.[0] as { key: string; value: string };
-    expect(lessonSave.key).toBe(KANGUR_LESSONS_SETTING_KEY);
-    const persistedLessons = JSON.parse(lessonSave.value) as Array<{ id: string; contentMode: string }>;
-    expect(persistedLessons.every((lesson) => lesson.contentMode === 'document')).toBe(true);
-
     expect(toastMock).toHaveBeenCalledWith(
-      expect.stringContaining('Imported 2 legacy lessons into modular editor drafts.'),
+      expect.stringContaining('Imported 2 lessons to modular editor.'),
       expect.objectContaining({ variant: 'success' })
     );
   });

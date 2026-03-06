@@ -14,7 +14,7 @@ import {
 import {
   collectNodeInputs,
 } from './engine-modules/engine-utils';
-import { EngineStateManager } from './engine-state-manager';
+import { EngineStateManager } from './engine-modules/engine-state-manager';
 import { MAX_ITERATIONS } from './engine-modules/engine-constants';
 import {
   runRuntimeValidation,
@@ -60,7 +60,7 @@ export async function evaluateGraphInternal(
   });
   const seedHashes: Record<string, string> = options.seedHashes ?? {};
 
-  const state = new EngineStateManager(nodes, scopedNodeIds.size, options);
+  const state = new EngineStateManager(nodes, scopedNodeIds.size, options, incomingEdgesByNode);
 
   Object.keys(state.outputs).forEach((nodeId) => {
     if (!scopedNodeIds.has(nodeId)) {

@@ -18,7 +18,11 @@ import {
 } from '@/shared/ui';
 
 import { buildHistoryNodeOptions } from './run-history-utils';
-import { buildRunTraceComparison, readRuntimeTraceSummary } from './run-trace-utils';
+import {
+  buildRunTraceComparison,
+  readRuntimeTraceSummary,
+  type RunTracePayloadDiff,
+} from './run-trace-utils';
 import { RunHistoryEntries } from './RunHistoryEntries';
 import { useRunHistoryActions, useRunHistoryState } from '../context';
 
@@ -140,6 +144,89 @@ export function RunHistoryPanel(): React.JSX.Element {
 
     return (
       <JsonViewer title={title} data={data} maxHeight='220px' className='bg-card/20' />
+    );
+  };
+  const renderPayloadDiffInspector = (
+    title: string,
+    diff: RunTracePayloadDiff | null,
+    tone: 'input' | 'output'
+  ): React.JSX.Element => {
+    const changedEntries = diff?.entries.filter((entry) => entry.change !== 'same') ?? [];
+    const accentClassName =
+      tone === 'input'
+        ? 'border-sky-500/30 bg-sky-500/5 text-sky-100'
+        : 'border-emerald-500/30 bg-emerald-500/5 text-emerald-100';
+    const labelClassName =
+      tone === 'input'
+        ? 'border-sky-500/30 bg-sky-500/10 text-sky-100'
+        : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100';
+
+    return (
+      <div className={`rounded-lg border p-3 ${accentClassName}`}>
+        <div className='mb-3 flex flex-wrap items-center gap-2 text-[10px]'>
+          <span className='font-semibold uppercase tracking-wide'>{title}</span>
+          <span className={labelClassName + ' rounded-full px-2 py-px'}>
+            changed {diff?.changed.length ?? 0}
+          </span>
+          <span className='rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-px text-emerald-100'>
+            added {diff?.added.length ?? 0}
+          </span>
+          <span className='rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-px text-amber-100'>
+            removed {diff?.removed.length ?? 0}
+          </span>
+          <span className='rounded-full border border-border/50 bg-black/20 px-2 py-px text-gray-300'>
+            same {diff?.same.length ?? 0}
+          </span>
+        </div>
+        {changedEntries.length > 0 ? (
+          <div className='space-y-2'>
+            {changedEntries.slice(0, 8).map((entry) => {
+              const changeBadgeClassName =
+                entry.change === 'added'
+                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100'
+                  : entry.change === 'removed'
+                    ? 'border-amber-500/30 bg-amber-500/10 text-amber-100'
+                    : 'border-sky-500/30 bg-sky-500/10 text-sky-100';
+              return (
+                <div
+                  key={`${title}-${entry.change}-${entry.key}`}
+                  className='grid gap-2 rounded-md border border-border/40 bg-black/20 p-2 lg:grid-cols-[110px_minmax(0,1fr)_minmax(0,1fr)]'
+                >
+                  <div className='space-y-1'>
+                    <span
+                      className={`inline-flex rounded-full border px-2 py-px text-[9px] font-semibold uppercase tracking-wide ${changeBadgeClassName}`}
+                    >
+                      {entry.change}
+                    </span>
+                    <div className='font-mono text-[10px] text-gray-200'>{entry.key}</div>
+                  </div>
+                  <div>
+                    <div className='mb-1 text-[9px] uppercase text-gray-500'>Run A</div>
+                    <pre className='overflow-auto whitespace-pre-wrap break-words rounded border border-border/40 bg-black/30 p-2 text-[10px] text-gray-200'>
+                      {entry.leftLabel ?? '—'}
+                    </pre>
+                  </div>
+                  <div>
+                    <div className='mb-1 text-[9px] uppercase text-gray-500'>Run B</div>
+                    <pre className='overflow-auto whitespace-pre-wrap break-words rounded border border-border/40 bg-black/30 p-2 text-[10px] text-gray-200'>
+                      {entry.rightLabel ?? '—'}
+                    </pre>
+                  </div>
+                </div>
+              );
+            })}
+            {changedEntries.length > 8 ? (
+              <div className='text-[10px] text-gray-400'>
+                Showing first 8 changed fields. Use the raw JSON panes below for the full payload.
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <div className='text-[11px] text-gray-400'>
+            No field-level differences in this payload.
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -644,27 +731,41 @@ export function RunHistoryPanel(): React.JSX.Element {
                             triggerClassName='px-0 py-2 hover:bg-transparent'
                             contentClassName='px-0'
                           >
-                            <div className='grid gap-3 lg:grid-cols-2'>
-                              {renderPayloadInspectorPane(
-                                'Run A Inputs',
-                                row.leftInputs,
-                                'No captured input payload for Run A.'
-                              )}
-                              {renderPayloadInspectorPane(
-                                'Run B Inputs',
-                                row.rightInputs,
-                                'No captured input payload for Run B.'
-                              )}
-                              {renderPayloadInspectorPane(
-                                'Run A Outputs',
-                                row.leftOutputs,
-                                'No captured output payload for Run A.'
-                              )}
-                              {renderPayloadInspectorPane(
-                                'Run B Outputs',
-                                row.rightOutputs,
-                                'No captured output payload for Run B.'
-                              )}
+                            <div className='space-y-3'>
+                              <div className='grid gap-3 lg:grid-cols-2'>
+                                {renderPayloadDiffInspector(
+                                  'Input field diff',
+                                  row.inputDiff,
+                                  'input'
+                                )}
+                                {renderPayloadDiffInspector(
+                                  'Output field diff',
+                                  row.outputDiff,
+                                  'output'
+                                )}
+                              </div>
+                              <div className='grid gap-3 lg:grid-cols-2'>
+                                {renderPayloadInspectorPane(
+                                  'Run A Inputs',
+                                  row.leftInputs,
+                                  'No captured input payload for Run A.'
+                                )}
+                                {renderPayloadInspectorPane(
+                                  'Run B Inputs',
+                                  row.rightInputs,
+                                  'No captured input payload for Run B.'
+                                )}
+                                {renderPayloadInspectorPane(
+                                  'Run A Outputs',
+                                  row.leftOutputs,
+                                  'No captured output payload for Run A.'
+                                )}
+                                {renderPayloadInspectorPane(
+                                  'Run B Outputs',
+                                  row.rightOutputs,
+                                  'No captured output payload for Run B.'
+                                )}
+                              </div>
                             </div>
                           </CollapsibleSection>
                         ) : null}

@@ -101,6 +101,12 @@ export type RunTracePayloadDiff = {
   removed: string[];
   changed: string[];
   same: string[];
+  entries: Array<{
+    key: string;
+    change: 'added' | 'removed' | 'changed' | 'same';
+    leftLabel: string | null;
+    rightLabel: string | null;
+  }>;
   lines: string[];
   hasChanges: boolean;
 };
@@ -132,10 +138,10 @@ export type RunTraceComparisonRow = {
   rightSpanCount: number;
   leftHistorySpanId: string | null;
   rightHistorySpanId: string | null;
-  leftInputs: Record<string, unknown> | null;
-  rightInputs: Record<string, unknown> | null;
-  leftOutputs: Record<string, unknown> | null;
-  rightOutputs: Record<string, unknown> | null;
+  leftInputs: unknown | null;
+  rightInputs: unknown | null;
+  leftOutputs: unknown | null;
+  rightOutputs: unknown | null;
   inputDiff: RunTracePayloadDiff | null;
   outputDiff: RunTracePayloadDiff | null;
 };
@@ -157,8 +163,8 @@ export type RunTraceComparison = {
 
 type HistoryPayloadSnapshot = {
   spanId: string | null;
-  inputs: Record<string, unknown>;
-  outputs: Record<string, unknown>;
+  inputs: unknown;
+  outputs: unknown;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -320,38 +326,77 @@ const readRuntimeHistoryEntries = (run: AiPathRunRecord): RuntimeHistoryEntry[] 
     .filter((entry: RuntimeHistoryEntry | null | undefined): entry is RuntimeHistoryEntry => Boolean(entry));
 };
 
-const toRecord = (value: unknown): Record<string, unknown> => (isRecord(value) ? value : {});
+const normalizePayloadForDiff = (
+  value: unknown,
+  compareByFields: boolean
+): Record<string, unknown> => {
+  if (value === null || value === undefined) return {};
+  if (compareByFields) {
+    return isRecord(value) ? value : {};
+  }
+  return { payload: value };
+};
 
 const buildPayloadDiff = (
-  leftValue: Record<string, unknown> | null,
-  rightValue: Record<string, unknown> | null,
+  leftValue: unknown | null,
+  rightValue: unknown | null,
   maxLines = 6
 ): RunTracePayloadDiff | null => {
-  if (!leftValue && !rightValue) return null;
-  const leftRecord = leftValue ?? {};
-  const rightRecord = rightValue ?? {};
+  if (leftValue === null || leftValue === undefined) {
+    if (rightValue === null || rightValue === undefined) return null;
+  }
+  const compareByFields =
+    (leftValue === null || leftValue === undefined || isRecord(leftValue)) &&
+    (rightValue === null || rightValue === undefined || isRecord(rightValue));
+  const leftRecord = normalizePayloadForDiff(leftValue, compareByFields);
+  const rightRecord = normalizePayloadForDiff(rightValue, compareByFields);
   const keys = Array.from(new Set([...Object.keys(leftRecord), ...Object.keys(rightRecord)])).sort();
   const added: string[] = [];
   const removed: string[] = [];
   const changed: string[] = [];
   const same: string[] = [];
+  const entries: RunTracePayloadDiff['entries'] = [];
 
   keys.forEach((key) => {
     const inLeft = key in leftRecord;
     const inRight = key in rightRecord;
     if (!inLeft && inRight) {
       added.push(key);
+      entries.push({
+        key,
+        change: 'added',
+        leftLabel: null,
+        rightLabel: formatRuntimeValue(rightRecord[key]),
+      });
       return;
     }
     if (inLeft && !inRight) {
       removed.push(key);
+      entries.push({
+        key,
+        change: 'removed',
+        leftLabel: formatRuntimeValue(leftRecord[key]),
+        rightLabel: null,
+      });
       return;
     }
     if (stableStringify(leftRecord[key]) !== stableStringify(rightRecord[key])) {
       changed.push(key);
+      entries.push({
+        key,
+        change: 'changed',
+        leftLabel: formatRuntimeValue(leftRecord[key]),
+        rightLabel: formatRuntimeValue(rightRecord[key]),
+      });
       return;
     }
     same.push(key);
+    entries.push({
+      key,
+      change: 'same',
+      leftLabel: formatRuntimeValue(leftRecord[key]),
+      rightLabel: formatRuntimeValue(rightRecord[key]),
+    });
   });
 
   const lines = [
@@ -370,6 +415,7 @@ const buildPayloadDiff = (
     removed,
     changed,
     same,
+    entries,
     lines,
     hasChanges: added.length > 0 || removed.length > 0 || changed.length > 0,
   };
@@ -689,8 +735,8 @@ const buildHistoryPayloadIndex = (run: AiPathRunRecord): Map<string, HistoryPayl
       key,
       {
         spanId: entry.spanId ?? null,
-        inputs: toRecord(entry.inputs),
-        outputs: toRecord(entry.outputs),
+        inputs: entry.inputs ?? null,
+        outputs: entry.outputs ?? null,
       },
     ])
   );

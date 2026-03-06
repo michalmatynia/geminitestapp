@@ -312,7 +312,150 @@ describe('run-trace-utils', () => {
       changed: ['value'],
       hasChanges: true,
     });
+    expect(comparison?.rows[0]?.inputDiff?.entries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'mode',
+          change: 'added',
+          leftLabel: null,
+          rightLabel: 'strict',
+        }),
+        expect.objectContaining({
+          key: 'query',
+          change: 'changed',
+          leftLabel: 'alpha',
+          rightLabel: 'beta',
+        }),
+      ])
+    );
     expect(comparison?.rows[0]?.inputDiff?.lines.join('\n')).toContain('~ query: alpha -> beta');
     expect(comparison?.rows[0]?.outputDiff?.lines.join('\n')).toContain('+ reason: timeout');
+  });
+
+  it('preserves primitive and array payloads when building comparison diffs', () => {
+    const comparison = buildRunTraceComparison(
+      {
+        id: 'run-a',
+        status: 'completed',
+        pathId: 'path-1',
+        pathName: 'Path 1',
+        createdAt: '2026-03-06T11:00:00.000Z',
+        startedAt: '2026-03-06T11:00:01.000Z',
+        finishedAt: '2026-03-06T11:00:03.000Z',
+        runtimeState: {
+          history: {
+            'node-b': [
+              {
+                timestamp: '2026-03-06T11:00:01.100Z',
+                pathId: 'path-1',
+                pathName: 'Path 1',
+                traceId: 'run-a',
+                spanId: 'node-b:1:1',
+                nodeId: 'node-b',
+                nodeType: 'parser',
+                nodeTitle: 'Parser',
+                status: 'completed',
+                iteration: 1,
+                attempt: 1,
+                inputs: false,
+                outputs: ['alpha', 'beta'],
+              },
+            ],
+          },
+        },
+        meta: {
+          runtimeTrace: {
+            version: 'ai-paths.trace.v1',
+            traceId: 'run-a',
+            runId: 'run-a',
+            source: 'server',
+            startedAt: '2026-03-06T11:00:01.000Z',
+            finishedAt: '2026-03-06T11:00:03.000Z',
+            spans: [
+              {
+                spanId: 'node-b:1:1',
+                runId: 'run-a',
+                traceId: 'run-a',
+                nodeId: 'node-b',
+                nodeType: 'parser',
+                iteration: 1,
+                attempt: 1,
+                startedAt: '2026-03-06T11:00:01.000Z',
+                finishedAt: '2026-03-06T11:00:01.100Z',
+                status: 'completed',
+              },
+            ],
+          },
+        },
+      } as never,
+      {
+        id: 'run-b',
+        status: 'completed',
+        pathId: 'path-1',
+        pathName: 'Path 1',
+        createdAt: '2026-03-06T11:05:00.000Z',
+        startedAt: '2026-03-06T11:05:01.000Z',
+        finishedAt: '2026-03-06T11:05:03.000Z',
+        runtimeState: {
+          history: {
+            'node-b': [
+              {
+                timestamp: '2026-03-06T11:05:01.100Z',
+                pathId: 'path-1',
+                pathName: 'Path 1',
+                traceId: 'run-b',
+                spanId: 'node-b:1:1',
+                nodeId: 'node-b',
+                nodeType: 'parser',
+                nodeTitle: 'Parser',
+                status: 'completed',
+                iteration: 1,
+                attempt: 1,
+                inputs: true,
+                outputs: ['alpha', 'gamma'],
+              },
+            ],
+          },
+        },
+        meta: {
+          runtimeTrace: {
+            version: 'ai-paths.trace.v1',
+            traceId: 'run-b',
+            runId: 'run-b',
+            source: 'server',
+            startedAt: '2026-03-06T11:05:01.000Z',
+            finishedAt: '2026-03-06T11:05:03.000Z',
+            spans: [
+              {
+                spanId: 'node-b:1:1',
+                runId: 'run-b',
+                traceId: 'run-b',
+                nodeId: 'node-b',
+                nodeType: 'parser',
+                iteration: 1,
+                attempt: 1,
+                startedAt: '2026-03-06T11:05:01.000Z',
+                finishedAt: '2026-03-06T11:05:01.300Z',
+                status: 'completed',
+              },
+            ],
+          },
+        },
+      } as never
+    );
+
+    expect(comparison?.rows[0]?.leftInputs).toBe(false);
+    expect(comparison?.rows[0]?.rightInputs).toBe(true);
+    expect(comparison?.rows[0]?.leftOutputs).toEqual(['alpha', 'beta']);
+    expect(comparison?.rows[0]?.rightOutputs).toEqual(['alpha', 'gamma']);
+    expect(comparison?.rows[0]?.inputDiff?.entries).toEqual([
+      {
+        key: 'payload',
+        change: 'changed',
+        leftLabel: 'false',
+        rightLabel: 'true',
+      },
+    ]);
+    expect(comparison?.rows[0]?.outputDiff?.lines.join('\n')).toContain('~ payload:');
   });
 });

@@ -91,7 +91,7 @@ function AuthUserPagesForm(): React.JSX.Element {
                 description={description}
                 checked={settings[key]}
                 onCheckedChange={() => handleToggle(key)}
-                type='switch'
+                variant='switch'
               />
             )
           )}

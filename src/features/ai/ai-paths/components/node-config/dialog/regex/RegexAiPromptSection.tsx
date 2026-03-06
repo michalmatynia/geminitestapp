@@ -52,7 +52,7 @@ export function RegexAiPromptSection(props: RegexAiPromptSectionProps): React.JS
         )}
       </div>
       <ToggleRow
-        type='switch'
+        variant='switch'
         label='Auto-run AI prompt'
         description="When off, Regex won't auto-trigger the model during path runs."
         checked={regexConfig.aiAutoRun ?? false}

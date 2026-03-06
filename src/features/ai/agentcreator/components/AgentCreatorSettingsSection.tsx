@@ -27,7 +27,7 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
           description='Allow the chatbot to use automated browser agents.'
           checked={agentModeEnabled}
           onCheckedChange={setAgentModeEnabled}
-          type='switch'
+          variant='switch'
         />
       </div>
 

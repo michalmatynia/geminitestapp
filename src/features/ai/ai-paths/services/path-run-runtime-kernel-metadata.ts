@@ -1,4 +1,8 @@
-import { parseRuntimeKernelCodeObjectResolverIds, parseRuntimeKernelNodeTypes } from './path-run-executor.helpers';
+import {
+  parseRuntimeKernelCodeObjectResolverIds,
+  parseRuntimeKernelNodeTypes,
+  parseRuntimeKernelStrictNativeRegistry,
+} from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-config';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 type RuntimeKernelNodeTypesSource = 'env' | 'path' | 'settings' | 'default';
@@ -24,17 +28,6 @@ const normalizeRuntimeKernelMode = (value: unknown): 'auto' | undefined => {
   if (typeof value !== 'string') return undefined;
   const normalized = value.trim().toLowerCase();
   return normalized === 'auto' || normalized === 'legacy_only' ? 'auto' : undefined;
-};
-
-const normalizeRuntimeKernelStrictNativeRegistry = (value: unknown): boolean | undefined => {
-  if (typeof value === 'boolean') return value;
-  if (typeof value !== 'string') return undefined;
-  const normalized = value.trim().toLowerCase();
-  if (normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on')
-    return true;
-  if (normalized === 'false' || normalized === '0' || normalized === 'no' || normalized === 'off')
-    return false;
-  return undefined;
 };
 
 const normalizeRuntimeKernelNodeTypesSource = (
@@ -116,7 +109,7 @@ const normalizeRuntimeKernelConfigRecord = (
     appendChangedField(changedFields, 'runtimeKernelConfig.codeObjectResolverIds');
   }
 
-  const strictNativeRegistry = normalizeRuntimeKernelStrictNativeRegistry(
+  const strictNativeRegistry = parseRuntimeKernelStrictNativeRegistry(
     value['strictNativeRegistry'] ?? value['strictCodeObjectRegistry']
   );
   if (strictNativeRegistry !== undefined) {
@@ -203,7 +196,7 @@ const normalizeRuntimeKernelTelemetryRecord = (
     appendChangedField(changedFields, 'runtimeKernel.codeObjectResolverIds');
   }
 
-  const strictNativeRegistry = normalizeRuntimeKernelStrictNativeRegistry(
+  const strictNativeRegistry = parseRuntimeKernelStrictNativeRegistry(
     value['runtimeKernelStrictNativeRegistry']
   );
   if (strictNativeRegistry !== undefined) {

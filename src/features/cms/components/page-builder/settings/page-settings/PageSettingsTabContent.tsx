@@ -156,7 +156,7 @@ export function PageSettingsTabContent({ allSlugs }: { allSlugs: Slug[] }): Reac
 
       <div className='space-y-2'>
         <ToggleRow
-          type='switch'
+          variant='switch'
           label='Global Menu'
           description='Show the global navigation menu on this page.'
           checked={showMenuValue}

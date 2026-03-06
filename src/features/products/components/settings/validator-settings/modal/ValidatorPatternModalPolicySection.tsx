@@ -79,7 +79,7 @@ export function ValidatorPatternModalPolicySection(): React.JSX.Element {
           onCheckedChange={(enabled) =>
             setFormData((prev: PatternFormData) => ({ ...prev, enabled }))
           }
-          type='status'
+          variant='switch'
           className='bg-gray-900/70 border-border'
           labelClassName='text-xs text-gray-300'
         />
@@ -96,7 +96,7 @@ export function ValidatorPatternModalPolicySection(): React.JSX.Element {
               };
             })
           }
-          type='status'
+          variant='switch'
           className='bg-gray-900/70 border-border'
           labelClassName='text-xs text-gray-300'
           controlWrapper={(control) => (
@@ -114,7 +114,7 @@ export function ValidatorPatternModalPolicySection(): React.JSX.Element {
             setFormData((prev: PatternFormData) => ({ ...prev, replacementAutoApply }))
           }
           disabled={!formData.replacementEnabled}
-          type='status'
+          variant='switch'
           className='bg-gray-900/70 border-border'
           labelClassName='text-xs text-gray-300'
           controlWrapper={(control) => (
@@ -132,7 +132,7 @@ export function ValidatorPatternModalPolicySection(): React.JSX.Element {
             setFormData((prev: PatternFormData) => ({ ...prev, skipNoopReplacementProposal }))
           }
           disabled={!formData.replacementEnabled}
-          type='status'
+          variant='switch'
           className='bg-gray-900/70 border-border'
           labelClassName='text-xs text-gray-300'
           controlWrapper={(control) => (

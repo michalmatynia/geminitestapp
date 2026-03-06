@@ -4,6 +4,11 @@ import {
   type RuntimePortValues,
 } from '@/shared/contracts/ai-paths';
 import { runtimeStateSchema } from '@/shared/contracts/ai-paths-runtime';
+import {
+  parseRuntimeKernelCodeObjectResolverIds,
+  parseRuntimeKernelNodeTypes,
+  parseRuntimeKernelStrictNativeRegistry,
+} from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-config';
 import type { NodeRuntimeKernelMode } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
 import { cloneJsonSafe } from '@/shared/lib/ai-paths';
 import { isAppError, validationError } from '@/shared/errors/app-error';
@@ -47,92 +52,12 @@ const normalizeRuntimeKernelModeValue = (value: unknown): NodeRuntimeKernelMode 
   return normalized === 'auto' || normalized === 'legacy_only' ? 'auto' : null;
 };
 
-const normalizeRuntimeKernelNodeTypeToken = (value: string): string =>
-  value.trim().toLowerCase().replace(/\s+/g, '_');
-
-const parseRuntimeKernelListValue = ({
-  value,
-  normalizeToken,
-}: {
-  value: unknown;
-  normalizeToken: (token: string) => string;
-}): string[] | undefined => {
-  if (Array.isArray(value)) {
-    const normalized = Array.from(
-      new Set(
-        value
-          .filter((entry): entry is string => typeof entry === 'string')
-          .map((entry: string): string => normalizeToken(entry))
-          .filter(Boolean)
-      )
-    );
-    return normalized.length > 0 ? normalized : undefined;
-  }
-  if (typeof value !== 'string') return undefined;
-  const trimmed = value.trim();
-  if (!trimmed) return undefined;
-
-  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-    try {
-      const parsed = JSON.parse(trimmed) as unknown;
-      if (Array.isArray(parsed)) {
-        const normalized = Array.from(
-          new Set(
-            parsed
-              .filter((entry): entry is string => typeof entry === 'string')
-              .map((entry: string): string => normalizeToken(entry))
-              .filter(Boolean)
-          )
-        );
-        return normalized.length > 0 ? normalized : undefined;
-      }
-    } catch {
-      // Fall through to tokenized parsing.
-    }
-  }
-
-  const normalized = Array.from(
-    new Set(
-      trimmed
-        .split(/[,\n]/g)
-        .map((entry: string): string => normalizeToken(entry))
-        .filter(Boolean)
-    )
-  );
-  return normalized.length > 0 ? normalized : undefined;
-};
-
-export const parseRuntimeKernelNodeTypes = (value: unknown): string[] | undefined =>
-  parseRuntimeKernelListValue({
-    value,
-    normalizeToken: normalizeRuntimeKernelNodeTypeToken,
-  });
-
-const normalizeRuntimeKernelResolverIdToken = (value: string): string => value.trim();
-
-export const parseRuntimeKernelCodeObjectResolverIds = (value: unknown): string[] | undefined =>
-  parseRuntimeKernelListValue({
-    value,
-    normalizeToken: normalizeRuntimeKernelResolverIdToken,
-  });
-
-const parseRuntimeKernelStrictNativeRegistry = (value: unknown): boolean | undefined => {
-  if (typeof value === 'boolean') return value;
-  if (typeof value !== 'string') return undefined;
-  const normalized = value.trim().toLowerCase();
-  if (normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on')
-    return true;
-  if (normalized === 'false' || normalized === '0' || normalized === 'no' || normalized === 'off')
-    return false;
-  return undefined;
-};
-
 export const normalizeRuntimeKernelCodeObjectResolverIds = (
   values: string[] | undefined
 ): string[] | undefined => {
   if (!Array.isArray(values)) return undefined;
   const normalized = Array.from(
-    new Set(values.map(normalizeRuntimeKernelResolverIdToken).filter(Boolean))
+    new Set(values.map((value: string): string => value.trim()).filter(Boolean))
   );
   return normalized.length > 0 ? normalized : undefined;
 };
@@ -225,6 +150,8 @@ export const resolveRuntimeKernelConfigForRun = (input: {
     strictNativeRegistrySource,
   };
 };
+
+export { parseRuntimeKernelCodeObjectResolverIds, parseRuntimeKernelNodeTypes };
 
 export type RuntimeKernelExecutionTelemetry = {
   runtimeKernelMode: NodeRuntimeKernelMode;

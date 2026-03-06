@@ -26,6 +26,7 @@ export type FolderTreeRootDropUi = {
   label: string;
   idleClassName: string;
   activeClassName: string;
+  enabled?: boolean;
 };
 
 export type FolderTreeAppearance = {

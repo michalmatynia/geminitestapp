@@ -86,6 +86,8 @@ export function ProductFormStudioProvider({
 }) {
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
+  const settingsStoreRef = useRef(settingsStore);
+  settingsStoreRef.current = settingsStore;
   const defaultStudioProjectIdSettingRaw =
     settingsStore.get(PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY) ?? '';
   const defaultStudioProjectId = defaultStudioProjectIdSettingRaw.trim() || null;

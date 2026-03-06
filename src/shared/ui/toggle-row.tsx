@@ -25,6 +25,7 @@ export interface ToggleRowProps {
   title?: string | undefined;
   children?: ReactNode | undefined;
   showBorder?: boolean | undefined;
+  controlWrapper?: (control: ReactNode) => ReactNode;
 }
 
 export interface ToggleRowContextValue {
@@ -44,6 +45,7 @@ export interface ToggleRowContextValue {
   title?: string;
   children?: ReactNode;
   showBorder?: boolean;
+  controlWrapper?: (control: ReactNode) => ReactNode;
 }
 
 const ToggleRowContext = createContext<ToggleRowContextValue | null>(null);
@@ -93,6 +95,7 @@ export function ToggleRow(props: ToggleRowProps): React.JSX.Element {
     title,
     children,
     showBorder = true,
+    controlWrapper,
   } = props;
 
   const contextValue = useMemo(
@@ -113,6 +116,7 @@ export function ToggleRow(props: ToggleRowProps): React.JSX.Element {
       title,
       children,
       showBorder,
+      controlWrapper,
     }),
     [
       label,
@@ -131,8 +135,11 @@ export function ToggleRow(props: ToggleRowProps): React.JSX.Element {
       title,
       children,
       showBorder,
+      controlWrapper,
     ]
   );
+
+  const control = <ToggleRowControl />;
 
   return (
     <ToggleRowContext.Provider value={contextValue}>
@@ -171,7 +178,7 @@ export function ToggleRow(props: ToggleRowProps): React.JSX.Element {
           </div>
         </div>
         <div className='flex shrink-0 items-center'>
-          <ToggleRowControl />
+          {controlWrapper ? controlWrapper(control) : control}
         </div>
       </Card>
     </ToggleRowContext.Provider>

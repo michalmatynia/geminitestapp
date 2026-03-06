@@ -1,5 +1,7 @@
 'use client';
 
+import { memo } from 'react';
+
 import { ArrowUpDown, Download } from 'lucide-react';
 
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
@@ -114,6 +116,260 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({ row }: ColumnActionsProps) 
   );
 };
 
+const ImageCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function ImageCell({ row }) {
+  const product: ProductWithImages = row.original;
+  const { thumbnailSource, imageExternalBaseUrl } = useProductListActionsContext();
+
+  const firstFileImage: string | undefined = product.images
+    ?.map((img) => getImageFilepath(img.imageFile))
+    .find((filepath): filepath is string => typeof filepath === 'string');
+
+  const firstLinkImage: string | undefined = product.imageLinks?.find(
+    (link: string) => link && link.trim().length > 0
+  );
+
+  const firstBase64Image: string | undefined = product.imageBase64s?.find(
+    (link: string) => link && link.trim().length > 0
+  );
+
+  const resolvedFileImage =
+    resolveProductImageUrl(firstFileImage, imageExternalBaseUrl) ?? undefined;
+  const resolvedLinkImage =
+    resolveProductImageUrl(firstLinkImage, imageExternalBaseUrl) ?? undefined;
+
+  let imageUrl: string | undefined;
+  if (thumbnailSource === 'link') {
+    imageUrl = resolvedLinkImage || resolvedFileImage || firstBase64Image;
+  } else if (thumbnailSource === 'base64') {
+    imageUrl = firstBase64Image || resolvedFileImage || resolvedLinkImage;
+  } else {
+    imageUrl = resolvedFileImage || resolvedLinkImage || firstBase64Image;
+  }
+
+  return (
+    <ProductImageCell imageUrl={imageUrl || null} productName={getProductDisplayName(product)} />
+  );
+});
+
+const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCell({ row }) {
+  const product: ProductWithImages = row.original;
+  const { productNameKey, onProductNameClick, queuedProductIds, categoryNameById } =
+    useProductListActionsContext();
+
+  const nameKey = productNameKey ?? 'name_en';
+  const nameValue =
+    getProductNameValue(product, nameKey) ??
+    getProductNameValue(product, 'name_en') ??
+    getProductNameValue(product, 'name_pl') ??
+    getProductNameValue(product, 'name_de');
+
+  const isImported: boolean = !!product.baseProductId;
+  const isQueued: boolean = queuedProductIds?.has(product.id) ?? false;
+  const normalizedSku = (product.sku ?? '').trim();
+  const normalizedCategoryId = resolveProductCategoryId(product);
+  const categoryLabel = normalizedCategoryId
+    ? (categoryNameById.get(normalizedCategoryId) ?? normalizedCategoryId)
+    : 'Unassigned';
+
+  return (
+    <div>
+      <span
+        className={[
+          'inline whitespace-normal break-words',
+          'select-text',
+          'cursor-pointer hover:underline',
+          'text-sm font-normal text-white/90',
+          'hover:text-white/80',
+        ].join(' ')}
+        onClick={(): void => {
+          const selection = typeof window !== 'undefined' ? window.getSelection() : null;
+          if (selection && selection.toString().trim().length > 0) return;
+          onProductNameClick(product);
+        }}
+      >
+        {nameValue || '—'}
+      </span>
+
+      <div className='flex items-center gap-1.5 text-sm text-gray-500'>
+        <span className={['select-text cursor-text'].join(' ')}>{normalizedSku || 'No SKU'}</span>
+        <span aria-hidden='true' className='text-gray-600'>
+          |
+        </span>
+        <Tooltip content={categoryLabel}>
+          <span className='max-w-[14rem] truncate'>{categoryLabel}</span>
+        </Tooltip>
+        {isImported && (
+          <Tooltip
+            content={
+              getDocumentationTooltip(
+                DOCUMENTATION_MODULE_IDS.products,
+                'product_imported_badge'
+              ) ?? 'Imported product'
+            }
+          >
+            <span>
+              <Download className='size-3 text-blue-400' aria-label='Imported product' />
+            </span>
+          </Tooltip>
+        )}
+        {isQueued && (
+          <Badge variant='processing' className='ml-1'>
+            Queued
+          </Badge>
+        )}
+      </div>
+    </div>
+  );
+});
+
+const PriceCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function PriceCell({ row }) {
+  const product: ProductWithImages = row.original;
+  const { currencyCode, priceGroups } = useProductListActionsContext();
+
+  const {
+    price: displayPrice,
+    currencyCode: actualCurrency,
+    baseCurrencyCode,
+  } = calculatePriceForCurrency(
+    product.price,
+    product.defaultPriceGroupId,
+    currencyCode,
+    priceGroups
+  );
+
+  const showCurrencyIndicator: boolean = !!(actualCurrency && actualCurrency !== currencyCode);
+  const hasConvertedPrice: boolean =
+    displayPrice !== null &&
+    product.price !== null &&
+    !!baseCurrencyCode &&
+    normalizeCurrencyCode(baseCurrencyCode) !== normalizeCurrencyCode(currencyCode) &&
+    displayPrice !== product.price;
+
+  if (hasConvertedPrice) {
+    return (
+      <div className='flex flex-col items-start'>
+        <span className='text-foreground'>{displayPrice?.toFixed(2)}</span>
+        <span className='text-xs text-muted-foreground'>
+          Base: {product.price?.toFixed(2)} {baseCurrencyCode}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className='flex items-center gap-1'>
+      <EditableCell
+        value={product.price}
+        productId={product.id}
+        field='price'
+        onUpdate={(): void => {
+          // Now handled optimistically by useUpdateProductField mutation
+        }}
+      />
+      {showCurrencyIndicator && displayPrice !== product.price && (
+        <Tooltip content={`Converted: ${displayPrice?.toFixed(2)} ${actualCurrency}`}>
+          <span className='text-xs text-muted-foreground'>→{displayPrice?.toFixed(2)}</span>
+        </Tooltip>
+      )}
+    </div>
+  );
+});
+
+const StockCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function StockCell({ row }) {
+  const product: ProductWithImages = row.original;
+
+  return (
+    <EditableCell
+      value={product.stock}
+      productId={product.id}
+      field='stock'
+      onUpdate={(): void => {
+        // Now handled optimistically by useUpdateProductField mutation
+      }}
+    />
+  );
+});
+
+const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function IntegrationsCell({
+  row,
+}) {
+  const product: ProductWithImages = row.original;
+  const {
+    onIntegrationsClick: handleClick,
+    integrationBadgeIds,
+    integrationBadgeStatuses,
+    traderaBadgeIds,
+    traderaBadgeStatuses,
+  } = useProductListActionsContext();
+
+  const queryClient = useQueryClient();
+
+  if (!handleClick) return null;
+  const showMarketplaceBadge: boolean =
+    (integrationBadgeIds?.has(product.id) ?? false) || Boolean(product.baseProductId?.trim());
+  const status: string =
+    integrationBadgeStatuses?.get(product.id) ??
+    (product.baseProductId?.trim() ? 'active' : 'not_started');
+  const showTraderaBadge: boolean = traderaBadgeIds?.has(product.id) ?? false;
+  const traderaStatus: string = traderaBadgeStatuses?.get(product.id) ?? 'not_started';
+  const prefetchListings = (): void => {
+    void prefetchQueryV2(queryClient, {
+      queryKey: productListingsQueryKey(product.id),
+      queryFn: () => fetchProductListings(product.id),
+      staleTime: 30 * 1000,
+      meta: {
+        source: 'products.columns.integrations.prefetchListings',
+        operation: 'list',
+        resource: 'integrations.listings',
+        domain: 'integrations',
+        queryKey: productListingsQueryKey(product.id),
+        tags: ['integrations', 'listings', 'prefetch'],
+      },
+    })();
+  };
+  return (
+    <div className='inline-flex items-center gap-1'>
+      <CircleIconButton
+        onClick={(): void => handleClick(product)}
+        onMouseEnter={prefetchListings}
+        onFocus={prefetchListings}
+        ariaLabel='View integrations'
+        className='border-gray-500/50 text-gray-300 hover:border-gray-400/60 hover:text-white transition-colors'
+      >
+        <span
+          aria-hidden='true'
+          className='inline-flex size-full items-center justify-center text-[20px] font-medium leading-none tracking-tight -translate-y-[1px]'
+        >
+          +
+        </span>
+      </CircleIconButton>
+      <BaseQuickExportButton
+        product={product}
+        status={status}
+        prefetchListings={prefetchListings}
+        showMarketplaceBadge={showMarketplaceBadge}
+        onOpenIntegrations={(): void => handleClick(product)}
+      />
+      <TriggerButtonBar
+        location='product_row'
+        entityType='product'
+        entityId={product.id}
+        getEntityJson={(): Record<string, unknown> =>
+          product as unknown as Record<string, unknown>
+        }
+        className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
+      />
+      {showTraderaBadge && (
+        <TraderaStatusButton
+          status={traderaStatus}
+          prefetchListings={prefetchListings}
+          onOpenListings={(): void => handleClick(product)}
+        />
+      )}
+    </div>
+  );
+});
+
 export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
   {
     id: 'select',
@@ -144,43 +400,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
   {
     accessorKey: 'images',
     header: 'Image',
-    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
-      const product: ProductWithImages = row.original;
-      const { thumbnailSource, imageExternalBaseUrl } = useProductListActionsContext();
-
-      const firstFileImage: string | undefined = product.images
-        ?.map((img) => getImageFilepath(img.imageFile))
-        .find((filepath): filepath is string => typeof filepath === 'string');
-
-      const firstLinkImage: string | undefined = product.imageLinks?.find(
-        (link: string) => link && link.trim().length > 0
-      );
-
-      const firstBase64Image: string | undefined = product.imageBase64s?.find(
-        (link: string) => link && link.trim().length > 0
-      );
-
-      const resolvedFileImage =
-        resolveProductImageUrl(firstFileImage, imageExternalBaseUrl) ?? undefined;
-      const resolvedLinkImage =
-        resolveProductImageUrl(firstLinkImage, imageExternalBaseUrl) ?? undefined;
-
-      let imageUrl: string | undefined;
-      if (thumbnailSource === 'link') {
-        imageUrl = resolvedLinkImage || resolvedFileImage || firstBase64Image;
-      } else if (thumbnailSource === 'base64') {
-        imageUrl = firstBase64Image || resolvedFileImage || resolvedLinkImage;
-      } else {
-        imageUrl = resolvedFileImage || resolvedLinkImage || firstBase64Image;
-      }
-
-      return (
-        <ProductImageCell
-          imageUrl={imageUrl || null}
-          productName={getProductDisplayName(product)}
-        />
-      );
-    },
+    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => <ImageCell row={row} />,
   },
 
   {
@@ -191,78 +411,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
         <ArrowUpDown className='ml-2 size-4' />
       </Button>
     ),
-    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
-      const product: ProductWithImages = row.original;
-      const { productNameKey, onProductNameClick, queuedProductIds, categoryNameById } =
-        useProductListActionsContext();
-
-      const nameKey = productNameKey ?? 'name_en';
-      const nameValue =
-        getProductNameValue(product, nameKey) ??
-        getProductNameValue(product, 'name_en') ??
-        getProductNameValue(product, 'name_pl') ??
-        getProductNameValue(product, 'name_de');
-
-      const isImported: boolean = !!product.baseProductId;
-      const isQueued: boolean = queuedProductIds?.has(product.id) ?? false;
-      const normalizedSku = (product.sku ?? '').trim();
-      const normalizedCategoryId = resolveProductCategoryId(product);
-      const categoryLabel = normalizedCategoryId
-        ? (categoryNameById.get(normalizedCategoryId) ?? normalizedCategoryId)
-        : 'Unassigned';
-
-      return (
-        <div>
-          <span
-            className={[
-              'inline whitespace-normal break-words',
-              'select-text',
-              'cursor-pointer hover:underline',
-              'text-sm font-normal text-white/90',
-              'hover:text-white/80',
-            ].join(' ')}
-            onClick={(): void => {
-              const selection = typeof window !== 'undefined' ? window.getSelection() : null;
-              if (selection && selection.toString().trim().length > 0) return;
-              onProductNameClick(product);
-            }}
-          >
-            {nameValue || '—'}
-          </span>
-
-          <div className='flex items-center gap-1.5 text-sm text-gray-500'>
-            <span className={['select-text cursor-text'].join(' ')}>
-              {normalizedSku || 'No SKU'}
-            </span>
-            <span aria-hidden='true' className='text-gray-600'>
-              |
-            </span>
-            <Tooltip content={categoryLabel}>
-              <span className='max-w-[14rem] truncate'>{categoryLabel}</span>
-            </Tooltip>
-            {isImported && (
-              <Tooltip
-                content={
-                  getDocumentationTooltip(
-                    DOCUMENTATION_MODULE_IDS.products,
-                    'product_imported_badge'
-                  ) ?? 'Imported product'
-                }
-              >
-                <span>
-                  <Download className='size-3 text-blue-400' aria-label='Imported product' />
-                </span>
-              </Tooltip>
-            )}
-            {isQueued && (
-              <Badge variant='processing' className='ml-1'>
-                Queued
-              </Badge>
-            )}
-          </div>
-        </div>
-      );
-    },
+    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => <NameCell row={row} />,
   },
 
   {
@@ -287,58 +436,9 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
         </Button>
       );
     },
-    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
-      const product: ProductWithImages = row.original;
-      const { currencyCode, priceGroups } = useProductListActionsContext();
-
-      const {
-        price: displayPrice,
-        currencyCode: actualCurrency,
-        baseCurrencyCode,
-      } = calculatePriceForCurrency(
-        product.price,
-        product.defaultPriceGroupId,
-        currencyCode,
-        priceGroups
-      );
-
-      const showCurrencyIndicator: boolean = !!(actualCurrency && actualCurrency !== currencyCode);
-      const hasConvertedPrice: boolean =
-        displayPrice !== null &&
-        product.price !== null &&
-        !!baseCurrencyCode &&
-        normalizeCurrencyCode(baseCurrencyCode) !== normalizeCurrencyCode(currencyCode) &&
-        displayPrice !== product.price;
-
-      if (hasConvertedPrice) {
-        return (
-          <div className='flex flex-col items-start'>
-            <span className='text-foreground'>{displayPrice?.toFixed(2)}</span>
-            <span className='text-xs text-muted-foreground'>
-              Base: {product.price?.toFixed(2)} {baseCurrencyCode}
-            </span>
-          </div>
-        );
-      }
-
-      return (
-        <div className='flex items-center gap-1'>
-          <EditableCell
-            value={product.price}
-            productId={product.id}
-            field='price'
-            onUpdate={(): void => {
-              // Now handled optimistically by useUpdateProductField mutation
-            }}
-          />
-          {showCurrencyIndicator && displayPrice !== product.price && (
-            <Tooltip content={`Converted: ${displayPrice?.toFixed(2)} ${actualCurrency}`}>
-              <span className='text-xs text-muted-foreground'>→{displayPrice?.toFixed(2)}</span>
-            </Tooltip>
-          )}
-        </div>
-      );
-    },
+    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => (
+      <PriceCell row={row} />
+    ),
   },
 
   {
@@ -349,20 +449,9 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
         <ArrowUpDown className='ml-2 size-4' />
       </Button>
     ),
-    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
-      const product: ProductWithImages = row.original;
-
-      return (
-        <EditableCell
-          value={product.stock}
-          productId={product.id}
-          field='stock'
-          onUpdate={(): void => {
-            // Now handled optimistically by useUpdateProductField mutation
-          }}
-        />
-      );
-    },
+    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => (
+      <StockCell row={row} />
+    ),
   },
 
   {
@@ -378,89 +467,15 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
   {
     id: 'integrations',
     header: '',
-    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element | null => {
-      const product: ProductWithImages = row.original;
-      const {
-        onIntegrationsClick: handleClick,
-        integrationBadgeIds,
-        integrationBadgeStatuses,
-        traderaBadgeIds,
-        traderaBadgeStatuses,
-      } = useProductListActionsContext();
-
-      const queryClient = useQueryClient();
-
-      if (!handleClick) return null;
-      const showMarketplaceBadge: boolean =
-        (integrationBadgeIds?.has(product.id) ?? false) || Boolean(product.baseProductId?.trim());
-      const status: string =
-        integrationBadgeStatuses?.get(product.id) ??
-        (product.baseProductId?.trim() ? 'active' : 'not_started');
-      const showTraderaBadge: boolean = traderaBadgeIds?.has(product.id) ?? false;
-      const traderaStatus: string = traderaBadgeStatuses?.get(product.id) ?? 'not_started';
-      const prefetchListings = (): void => {
-        void prefetchQueryV2(queryClient, {
-          queryKey: productListingsQueryKey(product.id),
-          queryFn: () => fetchProductListings(product.id),
-          staleTime: 30 * 1000,
-          meta: {
-            source: 'products.columns.integrations.prefetchListings',
-            operation: 'list',
-            resource: 'integrations.listings',
-            domain: 'integrations',
-            queryKey: productListingsQueryKey(product.id),
-            tags: ['integrations', 'listings', 'prefetch'],
-          },
-        })();
-      };
-      return (
-        <div className='inline-flex items-center gap-1'>
-          <CircleIconButton
-            onClick={(): void => handleClick(product)}
-            onMouseEnter={prefetchListings}
-            onFocus={prefetchListings}
-            ariaLabel='View integrations'
-            className='border-gray-500/50 text-gray-300 hover:border-gray-400/60 hover:text-white transition-colors'
-          >
-            <span
-              aria-hidden='true'
-              className='inline-flex size-full items-center justify-center text-[20px] font-medium leading-none tracking-tight -translate-y-[1px]'
-            >
-              +
-            </span>
-          </CircleIconButton>
-          <BaseQuickExportButton
-            product={product}
-            status={status}
-            prefetchListings={prefetchListings}
-            showMarketplaceBadge={showMarketplaceBadge}
-            onOpenIntegrations={(): void => handleClick(product)}
-          />
-          <TriggerButtonBar
-            location='product_row'
-            entityType='product'
-            entityId={product.id}
-            getEntityJson={(): Record<string, unknown> =>
-              product as unknown as Record<string, unknown>
-            }
-            className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
-          />
-          {showTraderaBadge && (
-            <TraderaStatusButton
-              status={traderaStatus}
-              prefetchListings={prefetchListings}
-              onOpenListings={(): void => handleClick(product)}
-            />
-          )}
-        </div>
-      );
-    },
+    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => (
+      <IntegrationsCell row={row} />
+    ),
   },
 
   {
     id: 'actions',
-    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element | null => {
-      return <ActionsCell row={row} />;
-    },
+    cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => (
+      <ActionsCell row={row} />
+    ),
   },
 ];

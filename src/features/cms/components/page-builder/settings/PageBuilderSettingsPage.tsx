@@ -96,7 +96,7 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
             onCheckedChange={setLocalSectionDropPlaceholder}
             label='Show section drop placeholder'
             description='When enabled, purple "Drop here" placeholders will appear when dragging sections between zones.'
-            type='checkbox'
+            variant='checkbox'
           />
 
           <ToggleRow
@@ -104,7 +104,7 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
             onCheckedChange={setLocalExtractPlaceholder}
             label='Show extract placeholder when dragging blocks'
             description='When enabled, a "Drop here to extract" placeholder will appear when dragging promotable blocks (ImageElement, TextElement, ButtonElement) to allow extracting them as standalone sections.'
-            type='checkbox'
+            variant='checkbox'
           />
         </div>
       </Card>

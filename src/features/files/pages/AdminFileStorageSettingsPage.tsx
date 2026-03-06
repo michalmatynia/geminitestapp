@@ -290,7 +290,7 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
                     keepLocalCopy: checked,
                   }))
                 }
-                type='switch'
+                variant='switch'
                 className='border-none bg-muted/20 px-3 py-2 hover:bg-muted/30'
               />
               <Hint className='mt-1'>

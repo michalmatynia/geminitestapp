@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
@@ -143,9 +143,8 @@ export function ProductImageManagerUIProvider({
   const slotImageLockedReason = controller.slotImageLockedReason || 'Image is locked.';
 
   const settingsStore = useSettingsStore();
-  const externalBaseUrl =
-    settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
-    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+  const settingsStoreRef = useRef(settingsStore);
+  settingsStoreRef.current = settingsStore;
 
   // UI State
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
@@ -446,7 +445,9 @@ export function ProductImageManagerUIProvider({
       isReordering,
       debugInfo,
       showDebug,
-      externalBaseUrl,
+      externalBaseUrl:
+        settingsStoreRef.current.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
+        DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
       minimalUi,
       showDragHandle,
       minimalSingleSlotAlign,
@@ -461,7 +462,6 @@ export function ProductImageManagerUIProvider({
       isReordering,
       debugInfo,
       showDebug,
-      externalBaseUrl,
       minimalUi,
       showDragHandle,
       minimalSingleSlotAlign,

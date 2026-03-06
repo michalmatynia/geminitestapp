@@ -237,11 +237,9 @@ export class SecureFileUpload {
   }
 
   private static getImageDimensions(buffer: ArrayBuffer): { width: number; height: number } {
-    // This is a simplified implementation
-    // In production, you'd use a proper image library like sharp
     const bytes = new Uint8Array(buffer);
 
-    // PNG dimensions
+    // PNG: magic bytes 89 50 4E 47, IHDR chunk at offset 8 contains width/height
     if (bytes[0] === 0x89 && bytes[1] === 0x50) {
       if (bytes.length < 24) throw badRequestError('Invalid PNG buffer');
       const width = (bytes[16]! << 24) | (bytes[17]! << 16) | (bytes[18]! << 8) | bytes[19]!;
@@ -249,10 +247,41 @@ export class SecureFileUpload {
       return { width, height };
     }
 
-    // JPEG dimensions (simplified)
+    // JPEG: scan for SOF (Start Of Frame) marker to read real dimensions
     if (bytes[0] === 0xff && bytes[1] === 0xd8) {
-      // This would require more complex parsing in production
-      return { width: 1920, height: 1080 }; // Placeholder
+      let i = 2;
+      while (i + 1 < bytes.length) {
+        if (bytes[i] !== 0xff) break;
+        const marker = bytes[i + 1]!;
+        // SOF markers C0–CF encode image dimensions, except:
+        //   C4 = DHT (Huffman table), C8 = JPEG extension, CC = DAC
+        if (
+          marker >= 0xc0 &&
+          marker <= 0xcf &&
+          marker !== 0xc4 &&
+          marker !== 0xc8 &&
+          marker !== 0xcc
+        ) {
+          // SOF layout: FF Cx <length 2B> <precision 1B> <height 2B> <width 2B>
+          if (i + 8 >= bytes.length) break;
+          const height = (bytes[i + 5]! << 8) | bytes[i + 6]!;
+          const width = (bytes[i + 7]! << 8) | bytes[i + 8]!;
+          if (width > 0 && height > 0) return { width, height };
+        }
+        // EOI — end of image
+        if (marker === 0xd9) break;
+        // Markers without a length field: RST0–RST7 (D0–D7), SOI (D8), EOI (D9), TEM (01)
+        if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd9)) {
+          i += 2;
+          continue;
+        }
+        // All other markers carry a 2-byte length field (the length includes itself)
+        if (i + 3 >= bytes.length) break;
+        const segLength = (bytes[i + 2]! << 8) | bytes[i + 3]!;
+        if (segLength < 2) break;
+        i += 2 + segLength;
+      }
+      throw badRequestError('Could not parse JPEG dimensions');
     }
 
     throw badRequestError('Unsupported image format for dimension reading');

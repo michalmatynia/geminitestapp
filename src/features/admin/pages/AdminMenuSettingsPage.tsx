@@ -374,7 +374,7 @@ function MenuBuilderSection(): React.JSX.Element {
       variant='subtle'
     >
       <ToggleRow
-        type='switch'
+        variant='switch'
         label='Use custom layout'
         description='Enable this to apply the custom menu structure defined below.'
         checked={customEnabled}

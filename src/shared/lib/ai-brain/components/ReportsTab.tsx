@@ -84,7 +84,7 @@ export function ReportsTab(): React.JSX.Element {
         <div className='mt-3 grid gap-4 md:grid-cols-3'>
           <div className='space-y-3'>
             <ToggleRow
-              type='switch'
+              variant='switch'
               label='Analytics insights schedule'
               description='How often analytics reports run.'
               checked={analyticsScheduleEnabled}
@@ -105,7 +105,7 @@ export function ReportsTab(): React.JSX.Element {
 
           <div className='space-y-3'>
             <ToggleRow
-              type='switch'
+              variant='switch'
               label='Runtime analytics schedule'
               description='How often runtime AI reports run.'
               checked={runtimeAnalyticsScheduleEnabled}
@@ -126,7 +126,7 @@ export function ReportsTab(): React.JSX.Element {
 
           <div className='space-y-3'>
             <ToggleRow
-              type='switch'
+              variant='switch'
               label='System log insights schedule'
               description='How often log reports run.'
               checked={logsScheduleEnabled}
@@ -144,7 +144,7 @@ export function ReportsTab(): React.JSX.Element {
               />
             </FormField>
             <ToggleRow
-              type='switch'
+              variant='switch'
               label='Auto-run on new errors'
               checked={logsAutoOnError}
               onCheckedChange={setLogsAutoOnError}

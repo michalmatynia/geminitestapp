@@ -120,7 +120,19 @@ export class QueryCache {
   }
 }
 
-// Database query wrapper with caching
+// Stable JSON serialization: sorts object keys recursively to produce order-independent output
+export function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return JSON.stringify(value);
+  }
+  const obj = value as Record<string, unknown>;
+  const pairs = Object.keys(obj)
+    .sort()
+    .map((key) => `${JSON.stringify(key)}:${stableStringify(obj[key])}`);
+  return `{${pairs.join(',')}}`;
+}
+
+// Database query wrapper with caching and in-flight request deduplication
 export function withQueryCache<TArgs extends unknown[], TResult>(
   queryFn: (...args: TArgs) => Promise<TResult>,
   options: {
@@ -130,21 +142,31 @@ export function withQueryCache<TArgs extends unknown[], TResult>(
     invalidateOn?: string[];
   }
 ): (...args: TArgs) => Promise<TResult> {
-  return async (...args: TArgs): Promise<TResult> => {
+  const pendingPromises = new Map<string, Promise<TResult>>();
+  return (...args: TArgs): Promise<TResult> => {
     const key = options.keyGenerator(...args);
     const tags = options.tags?.(...args) || [];
 
     // Try cache first
     const cached = queryCache.get<TResult>(key, [], { tags, ttl: options.ttl });
-    if (cached !== null) return cached;
+    if (cached !== null) return Promise.resolve(cached);
 
-    // Execute query
-    const result = await queryFn(...args);
+    // Deduplicate concurrent in-flight requests for the same key
+    const pending = pendingPromises.get(key);
+    if (pending) return pending;
 
-    // Cache result
-    queryCache.set(key, [], result, { tags, ttl: options.ttl });
+    // Execute query, cache result, and clean up pending entry
+    const promise = queryFn(...args)
+      .then((result) => {
+        queryCache.set(key, [], result, { tags, ttl: options.ttl });
+        return result;
+      })
+      .finally(() => {
+        pendingPromises.delete(key);
+      });
 
-    return result;
+    pendingPromises.set(key, promise);
+    return promise;
   };
 }
 

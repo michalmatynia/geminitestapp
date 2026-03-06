@@ -5,18 +5,19 @@ import { resolveAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths
 import type { EvaluateGraphOptions, RuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/runtime/engine-modules/engine-types';
 
 import {
-  PortablePathValidationError,
   resolvePortablePathInputAsync,
-  runPortablePathClient,
-  type PortablePathRunOptions,
-  type PortablePathRunResult,
-  validatePortablePathConfig,
-} from './index';
+} from './portable-engine-resolvers';
+import { runPortablePathClient } from './portable-engine-execution';
 import {
   recordPortablePathRunExecutionAttempt,
   recordPortablePathRunExecutionFailure,
   recordPortablePathRunExecutionSuccess,
 } from './portable-engine-observability';
+import {
+  PortablePathValidationError,
+  validatePortablePathConfig,
+} from './portable-engine-validation';
+import type { PortablePathRunOptions, PortablePathRunResult } from './portable-engine-types';
 
 export { runPortablePathClient };
 export * from './sinks.server';
@@ -111,7 +112,7 @@ export const runPortablePathServer = async (
   const runtimeValidationMiddleware: EvaluateGraphOptions['validationMiddleware'] =
     resolveAiPathsRuntimeValidationMiddleware({
       validationMiddleware: validationMiddleware as RuntimeValidationMiddleware | null,
-      runtimeValidationEnabled,
+      runtimeValidationEnabled: Boolean(runtimeValidationEnabled),
       runtimeValidationConfig: (runtimeValidationConfig ??
         resolved.value.pathConfig.aiPathsValidation ??
         null),

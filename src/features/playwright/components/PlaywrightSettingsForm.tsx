@@ -55,7 +55,7 @@ function HeadlessModeSection(): ReactElement {
           headless: checked,
         }))
       }
-      type='switch'
+      variant='switch'
     />
   );
 }
@@ -74,7 +74,7 @@ function EmulationSection(): ReactElement {
             emulateDevice: checked,
           }))
         }
-        type='switch'
+        variant='switch'
         className='border-none bg-transparent p-0 hover:bg-transparent'
       />
       {settings.emulateDevice && (
@@ -164,7 +164,7 @@ function HumanizeSection(): ReactElement {
             humanizeMouse: checked,
           }))
         }
-        type='switch'
+        variant='switch'
         className='border-none bg-transparent p-0 hover:bg-transparent'
       />
       {settings.humanizeMouse && (
@@ -244,7 +244,7 @@ function ProxySection(): ReactElement {
             proxyEnabled: checked,
           }))
         }
-        type='switch'
+        variant='switch'
         className='border-none bg-transparent p-0 hover:bg-transparent'
       />
       {settings.proxyEnabled && (

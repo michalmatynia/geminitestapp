@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import Image from 'next/image';
 import { Trash2 } from 'lucide-react';
 import { Button, FormSection, LoadingState, StatusBadge } from '@/shared/ui';
@@ -28,8 +28,10 @@ export function StudioVariantsGrid(): React.JSX.Element {
   } = context;
 
   const settingsStore = useSettingsStore();
+  const settingsStoreRef = useRef(settingsStore);
+  settingsStoreRef.current = settingsStore;
   const productImagesExternalBaseUrl =
-    settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
+    settingsStoreRef.current.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
     DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
 
   return (

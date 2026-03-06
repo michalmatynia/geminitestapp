@@ -149,10 +149,10 @@ export function FolderTreeViewportV2(props: FolderTreeViewportV2Props): React.JS
   const runtime = useFolderTreeShellRuntime(runtimeOverride);
   const resolvedMultiSelectConfig = useMemo<ResolvedFolderTreeMultiSelectConfig>(
     () => ({
-      enabled: multiSelectConfig?.enabled ?? false,
-      ctrlClick: multiSelectConfig?.ctrlClick ?? true,
-      shiftClick: multiSelectConfig?.shiftClick ?? true,
-      selectAll: multiSelectConfig?.selectAll ?? true,
+      enabled: (multiSelectConfig && 'enabled' in multiSelectConfig) ? (multiSelectConfig.enabled ?? false) : false,
+      ctrlClick: (multiSelectConfig && 'ctrlClick' in multiSelectConfig) ? (multiSelectConfig.ctrlClick ?? true) : true,
+      shiftClick: (multiSelectConfig && 'shiftClick' in multiSelectConfig) ? (multiSelectConfig.shiftClick ?? true) : true,
+      selectAll: (multiSelectConfig && 'selectAll' in multiSelectConfig) ? (multiSelectConfig.selectAll ?? true) : true,
     }),
     [multiSelectConfig]
   );

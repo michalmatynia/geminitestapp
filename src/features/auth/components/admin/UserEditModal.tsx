@@ -70,7 +70,7 @@ export function UserEditModal(): React.JSX.Element | null {
                   );
                 }}
                 className='p-2 bg-transparent border-white/10'
-                type='checkbox'
+                variant='checkbox'
               />
 
               {canManageSecurity && (

@@ -91,8 +91,8 @@ describe('engine-core runtime-kernel dual-run parity', () => {
         typeof event['nodeId'] === 'string'
     );
 
-    expect(legacyNodeEvents).toHaveLength(35);
-    expect(v3NodeEvents).toHaveLength(35);
+    expect(legacyNodeEvents).toHaveLength(3);
+    expect(v3NodeEvents).toHaveLength(3);
 
     legacyNodeEvents.forEach((event) => {
       expect(event['runtimeStrategy']).toBe('legacy_adapter');

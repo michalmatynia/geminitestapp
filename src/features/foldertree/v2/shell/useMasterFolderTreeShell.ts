@@ -59,6 +59,7 @@ export type MasterFolderTreeShell = {
       label: string;
       idleClassName: string;
       activeClassName: string;
+      enabled?: boolean;
     };
     resolveIcon: (input: ResolveFolderTreeIconInput) => LucideIcon;
   };

@@ -235,21 +235,21 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                   label='Enable Shadows'
                   checked={enableShadows}
                   onCheckedChange={setEnableShadows}
-                  type='checkbox'
+                  variant='checkbox'
                   className='bg-transparent border-none p-0 hover:bg-transparent'
                 />
                 <ToggleRow
                   label='Contact Shadows'
                   checked={enableContactShadows}
                   onCheckedChange={setEnableContactShadows}
-                  type='checkbox'
+                  variant='checkbox'
                   className='bg-transparent border-none p-0 hover:bg-transparent'
                 />
                 <ToggleRow
                   label='Show Ground'
                   checked={showGround}
                   onCheckedChange={setShowGround}
-                  type='checkbox'
+                  variant='checkbox'
                   className='bg-transparent border-none p-0 hover:bg-transparent'
                 />
               </div>
@@ -320,7 +320,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
               label='Vignette'
               checked={enableVignette}
               onCheckedChange={setEnableVignette}
-              type='checkbox'
+              variant='checkbox'
               className='p-3 rounded-md border border-border/40 bg-gray-900/40'
             />
 
@@ -442,7 +442,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                         setOrderedDitheringGrayscaleOnly(v);
                         setOrderedDitheringPreset('custom');
                       }}
-                      type='checkbox'
+                      variant='checkbox'
                       className='bg-transparent border-none p-0 hover:bg-transparent'
                     />
                     <ToggleRow
@@ -452,7 +452,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                         setOrderedDitheringInvertColor(v);
                         setOrderedDitheringPreset('custom');
                       }}
-                      type='checkbox'
+                      variant='checkbox'
                       className='bg-transparent border-none p-0 hover:bg-transparent'
                     />
                   </div>

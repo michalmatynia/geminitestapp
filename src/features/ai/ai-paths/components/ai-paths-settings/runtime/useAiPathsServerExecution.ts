@@ -17,6 +17,7 @@ import {
   aiPathRunNodeSchema,
   resolveAiPathRunFromEnqueueResponseData,
 } from '@/shared/lib/ai-paths';
+import { normalizeRuntimeKernelConfigRecord } from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-config';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import {
@@ -58,25 +59,6 @@ const asString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
-};
-
-const normalizeRuntimeKernelConfig = (
-  value: Record<string, unknown>
-): Record<string, unknown> => {
-  const nodeTypes = value['nodeTypes'] ?? value['pilotNodeTypes'];
-  const codeObjectResolverIds = value['codeObjectResolverIds'] ?? value['resolverIds'];
-  const strictNativeRegistry =
-    value['strictNativeRegistry'] ?? value['strictCodeObjectRegistry'];
-  const normalized: Record<string, unknown> = {
-    ...value,
-    ...(nodeTypes !== undefined ? { nodeTypes } : {}),
-    ...(codeObjectResolverIds !== undefined ? { codeObjectResolverIds } : {}),
-    ...(strictNativeRegistry !== undefined ? { strictNativeRegistry } : {}),
-  };
-  delete normalized['pilotNodeTypes'];
-  delete normalized['resolverIds'];
-  delete normalized['strictCodeObjectRegistry'];
-  return normalized;
 };
 
 const asNumber = (value: unknown): number | null => {
@@ -316,7 +298,9 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
         },
         ...(isObjectRecord(args.runtimeKernelConfig)
           ? {
-            runtimeKernelConfig: normalizeRuntimeKernelConfig(args.runtimeKernelConfig),
+            runtimeKernelConfig:
+              normalizeRuntimeKernelConfigRecord(args.runtimeKernelConfig) ??
+              args.runtimeKernelConfig,
           }
           : {}),
         ...(args.aiPathsValidation ? { aiPathsValidation: args.aiPathsValidation } : {}),

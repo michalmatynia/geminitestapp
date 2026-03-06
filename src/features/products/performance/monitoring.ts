@@ -115,7 +115,7 @@ export class PerformanceMonitor {
       misses: cacheMisses,
       hitRate: total > 0 ? cacheHits / total : 0,
       size: queryStats.size + imageStats.entries,
-      memory: queryStats.memory + imageStats.memory,
+      memory: queryStats.memory,
     };
   }
 

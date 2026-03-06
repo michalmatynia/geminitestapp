@@ -5,7 +5,6 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import {
   type CreateProductValidationPatternInput as CreateValidationPatternPayload,
   type ReorderProductValidationPatternUpdate as ReorderValidationPatternUpdatePayload,
-  type UpdateProductValidationPatternInput as UpdateValidationPatternPayload,
 } from '@/shared/contracts/products/validation';
 import {
   useCreateValidationPatternMutation,
@@ -16,19 +15,13 @@ import {
   useValidationPatterns,
   useValidatorSettings,
 } from '@/features/products/hooks/useProductSettingsQueries';
-import {
-  normalizeProductValidationPatternLaunchScopes,
-  normalizeProductValidationPatternReplacementScopes,
-  normalizeProductValidationPatternScopes,
-  normalizeProductValidationInstanceDenyBehaviorMap,
-} from '@/shared/lib/products/utils/validator-instance-behavior';
+import { normalizeProductValidationInstanceDenyBehaviorMap } from '@/shared/lib/products/utils/validator-instance-behavior';
 import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceDenyBehaviorMap,
   ProductValidationPattern,
   ProductValidationTarget,
-  ProductValidationLaunchOperator,
   ProductValidationInstanceScope,
   SequenceGroupDraft,
   PatternFormData,
@@ -36,6 +29,11 @@ import type {
 import { useToast } from '@/shared/ui';
 
 import { buildFormDataFromPattern } from './controller-form-utils';
+import {
+  buildPatternPayloadDiff,
+  buildValidationPayload,
+  parseStrictInt,
+} from './controller-diff-utils';
 import { createSequenceActions } from './controller-sequence-actions';
 import {
   buildDynamicRecipeFromForm,
@@ -190,24 +188,6 @@ export function useValidatorSettingsController() {
     }
 
     try {
-      const areStringArraysEqual = (
-        left: readonly string[] | undefined,
-        right: readonly string[] | undefined
-      ): boolean => {
-        const leftSorted = [...(left ?? [])].sort();
-        const rightSorted = [...(right ?? [])].sort();
-        if (leftSorted.length !== rightSorted.length) return false;
-        return leftSorted.every((value, index) => value === rightSorted[index]);
-      };
-
-      const parseStrictInt = (value: string): number | null => {
-        const trimmed = value.trim();
-        if (!/^-?\d+$/.test(trimmed)) return null;
-        const parsed = Number(trimmed);
-        if (!Number.isSafeInteger(parsed)) return null;
-        return parsed;
-      };
-
       const parsedSequence =
         formData.sequence.trim().length === 0 ? null : parseStrictInt(formData.sequence);
       if (formData.sequence.trim().length > 0 && (parsedSequence === null || parsedSequence < 0)) {
@@ -217,9 +197,7 @@ export function useValidatorSettingsController() {
 
       const parsedMaxExecutions = parseStrictInt(formData.maxExecutions);
       if (parsedMaxExecutions === null || parsedMaxExecutions < 1 || parsedMaxExecutions > 20) {
-        toast('Max executions must be a whole number between 1 and 20.', {
-          variant: 'error',
-        });
+        toast('Max executions must be a whole number between 1 and 20.', { variant: 'error' });
         return;
       }
 
@@ -229,9 +207,7 @@ export function useValidatorSettingsController() {
         parsedValidationDebounceMs < 0 ||
         parsedValidationDebounceMs > 30_000
       ) {
-        toast('Debounce must be a whole number between 0 and 30000.', {
-          variant: 'error',
-        });
+        toast('Debounce must be a whole number between 0 and 30000.', { variant: 'error' });
         return;
       }
 
@@ -246,184 +222,24 @@ export function useValidatorSettingsController() {
       } else {
         replacementValue = formData.replacementValue.length > 0 ? formData.replacementValue : null;
       }
-      const runtimeEnabled = formData.runtimeEnabled;
-      const runtimeConfig = formData.runtimeConfig;
-      const selectedSequenceGroupId = formData.sequenceGroupId.trim() || null;
-      const selectedSequenceGroup = selectedSequenceGroupId
-        ? (sequenceGroups.get(selectedSequenceGroupId) ?? null)
-        : null;
-      const sequenceGroupLabel = selectedSequenceGroupId
-        ? (selectedSequenceGroup?.label ?? editingPattern?.sequenceGroupLabel?.trim() ?? null)
-        : null;
-      const sequenceGroupDebounceMs = selectedSequenceGroupId
-        ? (selectedSequenceGroup?.debounceMs ?? editingPattern?.sequenceGroupDebounceMs ?? 0)
-        : 0;
 
-      const payload: UpdateValidationPatternPayload = {
-        label: formData.label.trim(),
-        target: formData.target,
-        locale: formData.locale.trim() || null,
-        regex: formData.regex.trim(),
-        flags: formData.flags.trim() || null,
-        message: formData.message.trim(),
-        severity: formData.severity,
-        enabled: formData.enabled,
-        replacementEnabled: formData.replacementEnabled,
-        replacementAutoApply: formData.replacementAutoApply,
-        skipNoopReplacementProposal: formData.skipNoopReplacementProposal,
+      const payload = buildValidationPayload({
+        formData,
+        sequenceGroups,
+        editingPattern,
         replacementValue,
-        replacementFields: formData.replacementFields,
-        replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
-          formData.replacementAppliesToScopes
-        ),
-        postAcceptBehavior: formData.postAcceptBehavior,
-        denyBehaviorOverride:
-          formData.denyBehaviorOverride === 'inherit' ? null : formData.denyBehaviorOverride,
-        sequenceGroupId: selectedSequenceGroupId,
-        sequenceGroupLabel,
-        sequenceGroupDebounceMs,
-        sequence: parsedSequence,
-        chainMode: formData.chainMode,
-        maxExecutions: parsedMaxExecutions,
-        passOutputToNext: formData.passOutputToNext,
-        launchEnabled: formData.launchEnabled,
-        launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
-          formData.launchAppliesToScopes
-        ),
-        launchScopeBehavior: formData.launchScopeBehavior,
-        launchSourceMode: formData.launchSourceMode,
-        launchSourceField: formData.launchSourceField.trim() || null,
-        launchOperator: formData.launchOperator as ProductValidationLaunchOperator,
-        launchValue: formData.launchValue || null,
-        launchFlags: formData.launchFlags.trim() || null,
-        runtimeEnabled,
-        runtimeType: runtimeEnabled ? formData.runtimeType : 'none',
-        runtimeConfig: runtimeEnabled ? runtimeConfig : null,
-        appliesToScopes: normalizeProductValidationPatternScopes(formData.appliesToScopes),
-        validationDebounceMs: parsedValidationDebounceMs,
-      };
+        parsedSequence,
+        parsedMaxExecutions,
+        parsedValidationDebounceMs,
+      });
 
       if (editingPattern) {
-        const currentReplacementScopes = normalizeProductValidationPatternReplacementScopes(
-          editingPattern.replacementAppliesToScopes
-        );
-        const currentLaunchScopes = normalizeProductValidationPatternLaunchScopes(
-          editingPattern.launchAppliesToScopes
-        );
-        const currentAppliesToScopes = normalizeProductValidationPatternScopes(
-          editingPattern.appliesToScopes
-        );
-
-        const changedPayload: UpdateValidationPatternPayload = {};
-        if (payload.label !== editingPattern.label) changedPayload.label = payload.label;
-        if (payload.target !== editingPattern.target) changedPayload.target = payload.target;
-        if (payload.locale !== (editingPattern.locale ?? null))
-          changedPayload.locale = payload.locale;
-        if (payload.regex !== editingPattern.regex) changedPayload.regex = payload.regex;
-        if (payload.flags !== (editingPattern.flags ?? null)) changedPayload.flags = payload.flags;
-        if (payload.message !== editingPattern.message) changedPayload.message = payload.message;
-        if (payload.severity !== editingPattern.severity)
-          changedPayload.severity = payload.severity;
-        if (payload.enabled !== editingPattern.enabled) changedPayload.enabled = payload.enabled;
-        if (payload.replacementEnabled !== editingPattern.replacementEnabled) {
-          changedPayload.replacementEnabled = payload.replacementEnabled;
-        }
-        if (
-          (payload.replacementAutoApply ?? false) !== (editingPattern.replacementAutoApply ?? false)
-        ) {
-          changedPayload.replacementAutoApply = payload.replacementAutoApply;
-        }
-        if (
-          (payload.skipNoopReplacementProposal ?? true) !==
-          (editingPattern.skipNoopReplacementProposal ?? true)
-        ) {
-          changedPayload.skipNoopReplacementProposal = payload.skipNoopReplacementProposal;
-        }
-        if (payload.replacementValue !== (editingPattern.replacementValue ?? null)) {
-          changedPayload.replacementValue = payload.replacementValue;
-        }
-        if (!areStringArraysEqual(payload.replacementFields, editingPattern.replacementFields)) {
-          changedPayload.replacementFields = payload.replacementFields;
-        }
-        if (!areStringArraysEqual(payload.replacementAppliesToScopes, currentReplacementScopes)) {
-          changedPayload.replacementAppliesToScopes = payload.replacementAppliesToScopes;
-        }
-        if (payload.postAcceptBehavior !== editingPattern.postAcceptBehavior) {
-          changedPayload.postAcceptBehavior = payload.postAcceptBehavior;
-        }
-        if (payload.denyBehaviorOverride !== (editingPattern.denyBehaviorOverride ?? null)) {
-          changedPayload.denyBehaviorOverride = payload.denyBehaviorOverride;
-        }
-        if (
-          payload.sequenceGroupId !== (editingPattern.sequenceGroupId ?? null) ||
-          payload.sequenceGroupLabel !== (editingPattern.sequenceGroupLabel ?? null) ||
-          payload.sequenceGroupDebounceMs !== (editingPattern.sequenceGroupDebounceMs ?? 0)
-        ) {
-          changedPayload.sequenceGroupId = payload.sequenceGroupId;
-          changedPayload.sequenceGroupLabel = payload.sequenceGroupLabel;
-          changedPayload.sequenceGroupDebounceMs = payload.sequenceGroupDebounceMs;
-        }
-        if (payload.sequence !== (editingPattern.sequence ?? null))
-          changedPayload.sequence = payload.sequence;
-        if (payload.chainMode !== editingPattern.chainMode)
-          changedPayload.chainMode = payload.chainMode;
-        if ((payload.maxExecutions ?? 1) !== (editingPattern.maxExecutions ?? 1)) {
-          changedPayload.maxExecutions = payload.maxExecutions;
-        }
-        if ((payload.passOutputToNext ?? true) !== (editingPattern.passOutputToNext ?? true)) {
-          changedPayload.passOutputToNext = payload.passOutputToNext;
-        }
-        if ((payload.launchEnabled ?? false) !== (editingPattern.launchEnabled ?? false)) {
-          changedPayload.launchEnabled = payload.launchEnabled;
-        }
-        if (!areStringArraysEqual(payload.launchAppliesToScopes, currentLaunchScopes)) {
-          changedPayload.launchAppliesToScopes = payload.launchAppliesToScopes;
-        }
-        if (
-          (payload.launchScopeBehavior ?? 'gate') !== (editingPattern.launchScopeBehavior ?? 'gate')
-        ) {
-          changedPayload.launchScopeBehavior = payload.launchScopeBehavior;
-        }
-        if (
-          (payload.launchSourceMode ?? 'current_field') !==
-          (editingPattern.launchSourceMode ?? 'current_field')
-        ) {
-          changedPayload.launchSourceMode = payload.launchSourceMode;
-        }
-        if ((payload.launchSourceField ?? null) !== (editingPattern.launchSourceField ?? null)) {
-          changedPayload.launchSourceField = payload.launchSourceField;
-        }
-        if (payload.launchOperator !== editingPattern.launchOperator) {
-          changedPayload.launchOperator = payload.launchOperator;
-        }
-        if ((payload.launchValue ?? null) !== (editingPattern.launchValue ?? null)) {
-          changedPayload.launchValue = payload.launchValue;
-        }
-        if ((payload.launchFlags ?? null) !== (editingPattern.launchFlags ?? null)) {
-          changedPayload.launchFlags = payload.launchFlags;
-        }
-        if ((payload.runtimeEnabled ?? false) !== (editingPattern.runtimeEnabled ?? false)) {
-          changedPayload.runtimeEnabled = payload.runtimeEnabled;
-        }
-        if ((payload.runtimeType ?? 'none') !== (editingPattern.runtimeType ?? 'none')) {
-          changedPayload.runtimeType = payload.runtimeType;
-        }
-        if ((payload.runtimeConfig ?? null) !== (editingPattern.runtimeConfig ?? null)) {
-          changedPayload.runtimeConfig = payload.runtimeConfig;
-        }
-        if (!areStringArraysEqual(payload.appliesToScopes, currentAppliesToScopes)) {
-          changedPayload.appliesToScopes = payload.appliesToScopes;
-        }
-        if ((payload.validationDebounceMs ?? 0) !== (editingPattern.validationDebounceMs ?? 0)) {
-          changedPayload.validationDebounceMs = payload.validationDebounceMs;
-        }
-
+        const changedPayload = buildPatternPayloadDiff(editingPattern, payload);
         if (Object.keys(changedPayload).length === 0) {
           toast('No changes to save.', { variant: 'info' });
           setShowModal(false);
           return;
         }
-
         await updatePattern.mutateAsync({ id: editingPattern.id, data: changedPayload });
         toast('Pattern updated.', { variant: 'success' });
       } else {

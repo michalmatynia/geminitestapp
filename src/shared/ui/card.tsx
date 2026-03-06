@@ -16,6 +16,7 @@ const cardVariants = cva('rounded-lg border text-card-foreground shadow-sm trans
       info: 'border-blue-500/50 bg-blue-500/10',
       success: 'border-emerald-500/50 bg-emerald-500/10',
       outline: 'bg-transparent',
+      none: 'border-0 shadow-none bg-transparent',
     },
     padding: {
       default: 'p-6',

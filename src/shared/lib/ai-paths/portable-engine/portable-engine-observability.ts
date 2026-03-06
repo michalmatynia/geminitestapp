@@ -3,11 +3,9 @@ import type {
   PortablePathFingerprintVerificationMode,
   PortablePathInputSource,
   PortablePathValidationMode,
-} from './index';
-import type {
   PortablePathSigningPolicyProfile,
   PortablePathSigningPolicySurface,
-} from './types';
+} from './portable-engine-types';
 
 export type PortablePathMigratorFailureReason = 'missing_migrator' | 'migrator_error';
 

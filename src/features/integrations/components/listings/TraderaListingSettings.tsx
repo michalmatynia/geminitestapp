@@ -55,7 +55,7 @@ export function TraderaListingSettings(): React.JSX.Element {
         checked={selectedTraderaAutoRelistEnabled}
         onCheckedChange={setSelectedTraderaAutoRelistEnabled}
         label='Enable automatic relist on expiry'
-        type='checkbox'
+        variant='checkbox'
       />
 
       <FormField

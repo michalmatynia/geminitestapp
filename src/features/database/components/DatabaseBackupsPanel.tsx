@@ -195,7 +195,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
           Backup Scheduling Options
         </p>
         <ToggleRow
-          type='switch'
+          variant='switch'
           label='Enable Scheduled Backups'
           description='Global scheduler switch for all backup targets.'
           checked={schedulerEnabledDraft}
@@ -204,7 +204,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
           className='border-border/60 bg-card/20'
         />
         <ToggleRow
-          type='switch'
+          variant='switch'
           label='Enable schedule for selected source'
           description={`Applies to ${selectedDatabase.label} only.`}
           checked={activeTargetEnabledDraft}
@@ -236,7 +236,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
           </FormField>
         </Card>
         <ToggleRow
-          type='switch'
+          variant='switch'
           label='Enable Repeating Due-Checks'
           description='When disabled, scheduler checks run only on startup catch-up and manual tick.'
           checked={repeatTickEnabledDraft}

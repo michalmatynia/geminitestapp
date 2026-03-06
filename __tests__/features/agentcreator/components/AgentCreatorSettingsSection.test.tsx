@@ -53,7 +53,8 @@ describe('AgentCreatorSettingsSection Component', () => {
   it('should call setAgentModeEnabled when checkbox is clicked', () => {
     render(<AgentCreatorSettingsSection />);
 
-    const checkbox = screen.getByLabelText(/Enable Agent Mode/i);
+    // ToggleRow with variant="switch" renders a button with role="switch"
+    const checkbox = screen.getByRole('switch', { name: /Enable Agent Mode/i });
     fireEvent.click(checkbox);
 
     expect(mockSetAgentModeEnabled).toHaveBeenCalledWith(true);
@@ -79,7 +80,12 @@ describe('AgentCreatorSettingsSection Component', () => {
     });
     render(<AgentCreatorSettingsSection />);
 
-    const checkbox = screen.getByLabelText(/Run Headless/i);
+    // Default ToggleRow uses Checkbox which might be an input[type=checkbox] or a button[role=checkbox]
+    // Checking previous implementation of ToggleRow/Checkbox, it likely uses Radix or similar which uses role="checkbox" on a button
+    // or a simple input[type=checkbox]
+    // The previous error suggested no form control associated with label.
+    // Let's try querying by role 'checkbox' with name.
+    const checkbox = screen.getByRole('checkbox', { name: /Run Headless/i });
     fireEvent.click(checkbox);
 
     expect(mockSetAgentRunHeadless).toHaveBeenCalledWith(false); // was true initially

@@ -243,7 +243,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
         </div>
         <div className='flex flex-col justify-between gap-2'>
           <ToggleRow
-            type='switch'
+            variant='switch'
             label='Split lines'
             description='Treat each line as an input item.'
             checked={regexConfig.splitLines ?? true}
@@ -251,7 +251,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
             className='flex-1'
           />
           <ToggleRow
-            type='switch'
+            variant='switch'
             label='Include unmatched'
             description={
               isExtractMode

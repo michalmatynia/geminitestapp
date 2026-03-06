@@ -73,7 +73,7 @@ export function BaseListingSettings(): React.JSX.Element {
         onCheckedChange={setAllowDuplicateSku}
         label='Allow duplicate SKUs'
         description='When unchecked, export will fail if the SKU already exists in the Base.com inventory.'
-        type='checkbox'
+        variant='checkbox'
       />
     </div>
   );

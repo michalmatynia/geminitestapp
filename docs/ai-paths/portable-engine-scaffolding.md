@@ -46,10 +46,26 @@ npm run docs:ai-paths:node-docs:ci
 
 `docs:ai-paths:node-docs:ci` also enforces tooltip coverage checks.
 
-## Implemented Module
+## Implemented Modules
 
-- `src/shared/lib/ai-paths/portable-engine/index.ts`
-- `src/shared/lib/ai-paths/portable-engine/server.ts`
+- Public barrel:
+  - `src/shared/lib/ai-paths/portable-engine/index.ts`
+- Runtime facades:
+  - `src/shared/lib/ai-paths/portable-engine/server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-execution.ts`
+- Core module ownership:
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-types.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-migration.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-builders.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-resolvers.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-signatures.ts`
+  - `src/shared/lib/ai-paths/portable-engine/portable-engine-validation.ts`
+- Server sink ownership:
+  - `src/shared/lib/ai-paths/portable-engine/sinks-types.server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/sinks-shared.server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/sinks-creators.server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/sinks-trends.server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/sinks.server.ts` remains the runtime owner for bootstrap/auto-remediation flows.
 
 ## Portable Package Contract
 

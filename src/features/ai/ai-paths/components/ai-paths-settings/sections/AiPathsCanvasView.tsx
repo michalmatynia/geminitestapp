@@ -10,6 +10,12 @@ import {
   AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
 } from '@/shared/lib/ai-paths';
 import {
+  normalizeRuntimeKernelConfigRecord,
+  parseRuntimeKernelCodeObjectResolverIds,
+  parseRuntimeKernelNodeTypes,
+  parseRuntimeKernelStrictNativeRegistry,
+} from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-config';
+import {
   fetchAiPathsSettingsByKeysCached,
   invalidateAiPathsSettingsCache,
   updateAiPathsSettingsBulk,
@@ -26,83 +32,8 @@ import { RuntimeEventLogPanel } from '../../runtime-event-log-panel';
 import { AiPathsRuntimeAnalysis } from '../panels/AiPathsRuntimeAnalysis';
 import { AiPathsLiveLog } from './AiPathsLiveLog';
 
-const normalizeRuntimeKernelNodeTypeToken = (value: string): string =>
-  value.trim().toLowerCase().replace(/\s+/g, '_');
-
-const normalizeRuntimeKernelResolverIdToken = (value: string): string => value.trim();
-
-const parseRuntimeKernelListValue = ({
-  value,
-  normalizeToken,
-}: {
-  value: unknown;
-  normalizeToken: (token: string) => string;
-}): string[] => {
-  if (Array.isArray(value)) {
-    return Array.from(
-      new Set(
-        value
-          .filter((entry): entry is string => typeof entry === 'string')
-          .map((entry: string): string => normalizeToken(entry))
-          .filter(Boolean)
-      )
-    );
-  }
-  if (typeof value !== 'string') return [];
-  const trimmed = value.trim();
-  if (!trimmed) return [];
-  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-    try {
-      const parsed = JSON.parse(trimmed) as unknown;
-      if (Array.isArray(parsed)) {
-        return Array.from(
-          new Set(
-            parsed
-              .filter((entry): entry is string => typeof entry === 'string')
-              .map((entry: string): string => normalizeToken(entry))
-              .filter(Boolean)
-          )
-        );
-      }
-    } catch {
-      // Fall through to tokenized parsing.
-    }
-  }
-  return Array.from(
-    new Set(
-      trimmed
-        .split(/[,\n]/g)
-        .map((entry: string): string => normalizeToken(entry))
-        .filter(Boolean)
-    )
-  );
-};
-
-const parseRuntimeKernelNodeTypes = (value: unknown): string[] =>
-  parseRuntimeKernelListValue({
-    value,
-    normalizeToken: normalizeRuntimeKernelNodeTypeToken,
-  });
-
-const parseRuntimeKernelCodeObjectResolverIds = (value: unknown): string[] =>
-  parseRuntimeKernelListValue({
-    value,
-    normalizeToken: normalizeRuntimeKernelResolverIdToken,
-  });
-
 type RuntimeKernelStrictDraft = 'default' | 'true' | 'false';
 type PathRuntimeKernelStrictDraft = 'inherit' | 'true' | 'false';
-
-const parseRuntimeKernelStrictNativeRegistryValue = (value: unknown): boolean | undefined => {
-  if (typeof value === 'boolean') return value;
-  if (typeof value !== 'string') return undefined;
-  const normalized = value.trim().toLowerCase();
-  if (normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on')
-    return true;
-  if (normalized === 'false' || normalized === '0' || normalized === 'no' || normalized === 'off')
-    return false;
-  return undefined;
-};
 
 const RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_OPTIONS = [
   {
@@ -281,14 +212,16 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
         { timeoutMs: 8_000, bypassCache: true }
       );
       const settingsMap = new Map(records.map((record) => [record.key, record.value]));
-      const nodeTypes = parseRuntimeKernelNodeTypes(
-        settingsMap.get(AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY) ??
-          settingsMap.get(AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY)
-      );
-      const resolverIds = parseRuntimeKernelCodeObjectResolverIds(
-        settingsMap.get(AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY)
-      );
-      const strictNativeRegistry = parseRuntimeKernelStrictNativeRegistryValue(
+      const nodeTypes =
+        parseRuntimeKernelNodeTypes(
+          settingsMap.get(AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY) ??
+            settingsMap.get(AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY)
+        ) ?? [];
+      const resolverIds =
+        parseRuntimeKernelCodeObjectResolverIds(
+          settingsMap.get(AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY)
+        ) ?? [];
+      const strictNativeRegistry = parseRuntimeKernelStrictNativeRegistry(
         settingsMap.get(AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY)
       );
       setRuntimeKernelPersistedNodeTypes(nodeTypes);
@@ -311,11 +244,11 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
   }, [loadRuntimeKernelSettings]);
 
   const runtimeKernelDraftNodeTypes = React.useMemo(
-    () => parseRuntimeKernelNodeTypes(runtimeKernelNodeTypesDraft),
+    () => parseRuntimeKernelNodeTypes(runtimeKernelNodeTypesDraft) ?? [],
     [runtimeKernelNodeTypesDraft]
   );
   const runtimeKernelDraftResolverIds = React.useMemo(
-    () => parseRuntimeKernelCodeObjectResolverIds(runtimeKernelResolverIdsDraft),
+    () => parseRuntimeKernelCodeObjectResolverIds(runtimeKernelResolverIdsDraft) ?? [],
     [runtimeKernelResolverIdsDraft]
   );
   const runtimeKernelSettingsDirty =
@@ -333,16 +266,12 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     }
     const activeConfig = pathConfigs[activePath];
     const extensionsRecord = asRecord(activeConfig?.extensions);
-    const runtimeKernelRecord = asRecord(extensionsRecord?.['runtimeKernel']);
-    const nodeTypes = parseRuntimeKernelNodeTypes(
-      runtimeKernelRecord?.['nodeTypes'] ?? runtimeKernelRecord?.['pilotNodeTypes']
-    );
-    const resolverIds = parseRuntimeKernelCodeObjectResolverIds(
-      runtimeKernelRecord?.['codeObjectResolverIds'] ?? runtimeKernelRecord?.['resolverIds']
-    );
-    const strictNativeRegistry = parseRuntimeKernelStrictNativeRegistryValue(
-      runtimeKernelRecord?.['strictNativeRegistry'] ??
-        runtimeKernelRecord?.['strictCodeObjectRegistry']
+    const runtimeKernelRecord = normalizeRuntimeKernelConfigRecord(extensionsRecord?.['runtimeKernel']);
+    const nodeTypes = parseRuntimeKernelNodeTypes(runtimeKernelRecord?.['nodeTypes']) ?? [];
+    const resolverIds =
+      parseRuntimeKernelCodeObjectResolverIds(runtimeKernelRecord?.['codeObjectResolverIds']) ?? [];
+    const strictNativeRegistry = parseRuntimeKernelStrictNativeRegistry(
+      runtimeKernelRecord?.['strictNativeRegistry']
     );
     const strictNativeRegistryDraft: PathRuntimeKernelStrictDraft =
       strictNativeRegistry === undefined ? 'inherit' : strictNativeRegistry ? 'true' : 'false';
@@ -354,11 +283,11 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     setPathRuntimeKernelStrictNativeRegistryDraft(strictNativeRegistryDraft);
   }, [activePath, pathConfigs]);
   const pathRuntimeKernelDraftNodeTypes = React.useMemo(
-    () => parseRuntimeKernelNodeTypes(pathRuntimeKernelNodeTypesDraft),
+    () => parseRuntimeKernelNodeTypes(pathRuntimeKernelNodeTypesDraft) ?? [],
     [pathRuntimeKernelNodeTypesDraft]
   );
   const pathRuntimeKernelDraftResolverIds = React.useMemo(
-    () => parseRuntimeKernelCodeObjectResolverIds(pathRuntimeKernelResolverIdsDraft),
+    () => parseRuntimeKernelCodeObjectResolverIds(pathRuntimeKernelResolverIdsDraft) ?? [],
     [pathRuntimeKernelResolverIdsDraft]
   );
   const pathRuntimeKernelSettingsDirty =

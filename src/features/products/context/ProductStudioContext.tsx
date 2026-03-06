@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
@@ -212,6 +212,8 @@ export function ProductStudioProvider({
 
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
+  const settingsStoreRef = useRef(settingsStore);
+  settingsStoreRef.current = settingsStore;
 
   const sendToStudioMutation = useSendToStudioMutation();
   const acceptVariantMutation = useAcceptVariantMutation();
@@ -219,9 +221,6 @@ export function ProductStudioProvider({
 
   const configuredDefaultStudioProjectId =
     settingsStore.get(PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY)?.trim() ?? '';
-  const productImagesExternalBaseUrl =
-    settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
-    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
 
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [variantsData, setVariantsData] = useState<ProductStudioVariantsResponse | null>(null);
@@ -239,6 +238,9 @@ export function ProductStudioProvider({
   const [pendingExpectedOutputs, setPendingExpectedOutputs] = useState<number>(0);
 
   const imageSlotPreviews = useMemo((): ProductImageSlotPreview[] => {
+    const productImagesExternalBaseUrl =
+      settingsStoreRef.current.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
+      DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
     return (imageSlots || [])
       .map((slot, index): ProductImageSlotPreview | null => {
         if (!slot) return null;
@@ -251,7 +253,7 @@ export function ProductStudioProvider({
         return { index, label: `Slot ${index + 1}`, src };
       })
       .filter((entry): entry is ProductImageSlotPreview => Boolean(entry));
-  }, [imageSlots, productImagesExternalBaseUrl]);
+  }, [imageSlots]);
 
   // Initial selection
   useEffect(() => {
@@ -461,6 +463,9 @@ export function ProductStudioProvider({
     () => imageSlotPreviews.find((p) => p.index === selectedImageIndex) ?? null,
     [imageSlotPreviews, selectedImageIndex]
   );
+  const productImagesExternalBaseUrl =
+    settingsStoreRef.current.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
+    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
   const sourceImageSrc =
     getImageStudioSlotImageSrc(variantsData?.sourceSlot, productImagesExternalBaseUrl) ??
     selectedSourcePreview?.src ??

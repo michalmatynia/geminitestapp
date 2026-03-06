@@ -31,7 +31,7 @@ export function AudioSpeakerNodeConfigSection(): React.JSX.Element | null {
             },
           })
         }
-        type='switch'
+        variant='switch'
       />
 
       <ToggleRow
@@ -46,7 +46,7 @@ export function AudioSpeakerNodeConfigSection(): React.JSX.Element | null {
             },
           })
         }
-        type='switch'
+        variant='switch'
       />
 
       <ToggleRow
@@ -61,7 +61,7 @@ export function AudioSpeakerNodeConfigSection(): React.JSX.Element | null {
             },
           })
         }
-        type='switch'
+        variant='switch'
       />
 
       <FormField label='Speaker Gain (0-1)'>

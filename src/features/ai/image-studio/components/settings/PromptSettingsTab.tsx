@@ -52,7 +52,7 @@ export function PromptSettingsTab(): React.JSX.Element {
           <div className='space-y-4'>
             <ToggleRow
               label='Enabled'
-              type='switch'
+              variant='switch'
               checked={studioSettings.promptExtraction.mode !== 'programmatic'}
               onCheckedChange={(checked) =>
                 setStudioSettings((prev) => ({

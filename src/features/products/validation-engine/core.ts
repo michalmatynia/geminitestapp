@@ -450,6 +450,192 @@ const buildStaticPatternPlans = ({
   return byTarget;
 };
 
+function applyPatternPlansToField({
+  fieldName,
+  normalizedRawValue,
+  values,
+  latestProductValues,
+  validationScope,
+  fieldPlans,
+}: {
+  fieldName: string;
+  normalizedRawValue: string;
+  values: Record<string, unknown>;
+  latestProductValues: Record<string, unknown> | null;
+  validationScope: ProductValidationInstanceScope;
+  fieldPlans: StaticPatternPlan[];
+}): FieldValidatorIssue[] {
+  const localIssues: FieldValidatorIssue[] = [];
+  let workingValue = normalizedRawValue;
+  const sequenceAggregates = new Map<string, SequenceIssueAggregate>();
+
+  for (const plan of fieldPlans) {
+    const pattern = plan.pattern;
+    const inSequenceGroup = plan.inSequenceGroup;
+    const sequenceGroupId = plan.sequenceGroupId;
+    if (inSequenceGroup && sequenceGroupId && !sequenceAggregates.has(sequenceGroupId)) {
+      sequenceAggregates.set(sequenceGroupId, {
+        groupId: sequenceGroupId,
+        groupLabel: pattern.sequenceGroupLabel?.trim() || null,
+        originalValue: workingValue,
+        finalValue: workingValue,
+        severity: pattern.severity,
+        postAcceptBehavior: plan.postAcceptBehavior,
+        debounceMs: plan.debounceMs,
+      });
+    }
+    let compiledPatternRegex: RegExp;
+    try {
+      compiledPatternRegex = new RegExp(pattern.regex, pattern.flags ?? undefined);
+    } catch {
+      // Invalid pattern is blocked at API write time; skip defensively.
+      continue;
+    }
+    const maxExecutions = plan.maxExecutions;
+    let matched = false;
+    let replaced = false;
+    let candidateValue = inSequenceGroup ? workingValue : normalizedRawValue;
+    const patternDebounceMs = plan.debounceMs;
+    for (let execution = 0; execution < maxExecutions; execution += 1) {
+      if (
+        !shouldLaunchPattern({
+          pattern,
+          validationScope,
+          fieldValue: candidateValue,
+          values,
+          latestProductValues,
+        })
+      ) {
+        break;
+      }
+      compiledPatternRegex.lastIndex = 0;
+      const match = compiledPatternRegex.exec(candidateValue);
+      if ((!match || typeof match.index !== 'number') && !plan.allowWithoutRegexMatch) break;
+      matched = true;
+      const matchText = match?.[0] ?? candidateValue;
+      const length = Math.max(1, matchText.length || candidateValue.length || 1);
+      const matchIndex = typeof match?.index === 'number' ? match.index : 0;
+      const replacementFields = plan.replacementFields;
+      const hasReplacer = Boolean(pattern.replacementEnabled && pattern.replacementValue);
+      const replacementEnabledForScope = isPatternReplacementEnabledForValidationScope(
+        pattern.replacementAppliesToScopes,
+        validationScope
+      );
+      const replacementScope: FieldValidatorIssue['replacementScope'] = !hasReplacer
+        ? 'none'
+        : replacementFields.length === 0
+          ? 'global'
+          : 'field';
+      const replacementActive =
+        hasReplacer &&
+        replacementEnabledForScope &&
+        (replacementScope === 'global' || replacementFields.includes(fieldName));
+      const resolvedReplacement = replacementActive
+        ? resolvePatternReplacementValue({
+          pattern,
+          fieldValue: candidateValue,
+          values,
+          latestProductValues,
+        })
+        : null;
+      const effectiveReplacement = resolvedReplacement;
+      const hasEffectiveReplacement = Boolean(effectiveReplacement?.value);
+      const nextValue = hasEffectiveReplacement
+        ? applyResolvedReplacement({
+          value: candidateValue,
+          pattern,
+          replacement: effectiveReplacement,
+        })
+        : candidateValue;
+      const isNoopReplacement = hasEffectiveReplacement && nextValue === candidateValue;
+      const shouldSuppressNoopReplacementProposal =
+        normalizeProductValidationSkipNoopReplacementProposal(
+          pattern.skipNoopReplacementProposal
+        ) && isNoopReplacement;
+      if (!inSequenceGroup && !shouldSuppressNoopReplacementProposal) {
+        localIssues.push({
+          patternId: pattern.id,
+          message: pattern.message,
+          severity: pattern.severity,
+          matchText,
+          index: matchIndex,
+          length,
+          regex: pattern.regex,
+          flags: pattern.flags ?? null,
+          replacementValue: hasEffectiveReplacement
+            ? (effectiveReplacement?.value ?? null)
+            : null,
+          replacementApplyMode: hasEffectiveReplacement
+            ? (effectiveReplacement?.applyMode ?? 'replace_matched_segment')
+            : 'replace_matched_segment',
+          replacementScope,
+          replacementActive: replacementActive && hasEffectiveReplacement,
+          postAcceptBehavior: plan.postAcceptBehavior,
+          debounceMs: patternDebounceMs,
+        });
+      }
+
+      if (!hasEffectiveReplacement) break;
+      if (isNoopReplacement) break;
+      replaced = true;
+      candidateValue = nextValue;
+      if (inSequenceGroup) {
+        workingValue = nextValue;
+        if (sequenceGroupId) {
+          const aggregate = sequenceAggregates.get(sequenceGroupId);
+          if (aggregate) {
+            aggregate.finalValue = nextValue;
+            if (pattern.severity === 'error') {
+              aggregate.severity = 'error';
+            }
+            if (plan.postAcceptBehavior === 'stop_after_accept') {
+              aggregate.postAcceptBehavior = 'stop_after_accept';
+            }
+            aggregate.debounceMs = Math.max(aggregate.debounceMs, patternDebounceMs);
+          }
+        }
+      }
+    }
+
+    if (!inSequenceGroup) continue;
+    const chainMode = plan.chainMode;
+    if (matched && chainMode === 'stop_on_match') {
+      break;
+    }
+    if (replaced && chainMode === 'stop_on_replace') {
+      break;
+    }
+    if (replaced && pattern.passOutputToNext === false) {
+      break;
+    }
+  }
+
+  for (const aggregate of sequenceAggregates.values()) {
+    if (aggregate.finalValue === aggregate.originalValue) continue;
+    const diff = deriveDiffSegment(aggregate.originalValue, aggregate.finalValue);
+    localIssues.push({
+      patternId: `sequence:${aggregate.groupId}`,
+      message: aggregate.groupLabel
+        ? `${aggregate.groupLabel} sequence result`
+        : 'Sequence result',
+      severity: aggregate.severity,
+      matchText: diff.matchText,
+      index: diff.index,
+      length: diff.length,
+      regex: '',
+      flags: null,
+      replacementValue: aggregate.finalValue,
+      replacementApplyMode: 'replace_whole_field',
+      replacementScope: 'field',
+      replacementActive: true,
+      postAcceptBehavior: aggregate.postAcceptBehavior,
+      debounceMs: aggregate.debounceMs,
+    });
+  }
+
+  return localIssues;
+}
+
 /**
  * Validator docs: see docs/validator/function-reference.md#core.buildfieldissues
  */
@@ -499,178 +685,15 @@ export const buildFieldIssues = ({
     );
     if (!normalizedRawValue && !hasExternalLaunchSource && !hasLatestPriceStockMirror) continue;
 
-    let workingValue = normalizedRawValue;
-    const sequenceAggregates = new Map<string, SequenceIssueAggregate>();
-
-    for (const plan of fieldPlans) {
-      const pattern = plan.pattern;
-      const inSequenceGroup = plan.inSequenceGroup;
-      const sequenceGroupId = plan.sequenceGroupId;
-      if (inSequenceGroup && sequenceGroupId && !sequenceAggregates.has(sequenceGroupId)) {
-        sequenceAggregates.set(sequenceGroupId, {
-          groupId: sequenceGroupId,
-          groupLabel: pattern.sequenceGroupLabel?.trim() || null,
-          originalValue: workingValue,
-          finalValue: workingValue,
-          severity: pattern.severity,
-          postAcceptBehavior: plan.postAcceptBehavior,
-          debounceMs: plan.debounceMs,
-        });
-      }
-      let compiledPatternRegex: RegExp;
-      try {
-        compiledPatternRegex = new RegExp(pattern.regex, pattern.flags ?? undefined);
-      } catch {
-        // Invalid pattern is blocked at API write time; skip defensively.
-        continue;
-      }
-      const maxExecutions = plan.maxExecutions;
-      let matched = false;
-      let replaced = false;
-      let candidateValue = inSequenceGroup ? workingValue : normalizedRawValue;
-      const patternDebounceMs = plan.debounceMs;
-      for (let execution = 0; execution < maxExecutions; execution += 1) {
-        if (
-          !shouldLaunchPattern({
-            pattern,
-            validationScope,
-            fieldValue: candidateValue,
-            values,
-            latestProductValues,
-          })
-        ) {
-          break;
-        }
-        compiledPatternRegex.lastIndex = 0;
-        const match = compiledPatternRegex.exec(candidateValue);
-        if ((!match || typeof match.index !== 'number') && !plan.allowWithoutRegexMatch) break;
-        matched = true;
-        const matchText = match?.[0] ?? candidateValue;
-        const length = Math.max(1, matchText.length || candidateValue.length || 1);
-        const matchIndex = typeof match?.index === 'number' ? match.index : 0;
-        const replacementFields = plan.replacementFields;
-        const hasReplacer = Boolean(pattern.replacementEnabled && pattern.replacementValue);
-        const replacementEnabledForScope = isPatternReplacementEnabledForValidationScope(
-          pattern.replacementAppliesToScopes,
-          validationScope
-        );
-        const replacementScope: FieldValidatorIssue['replacementScope'] = !hasReplacer
-          ? 'none'
-          : replacementFields.length === 0
-            ? 'global'
-            : 'field';
-        const replacementActive =
-          hasReplacer &&
-          replacementEnabledForScope &&
-          (replacementScope === 'global' || replacementFields.includes(fieldName));
-        const resolvedReplacement = replacementActive
-          ? resolvePatternReplacementValue({
-            pattern,
-            fieldValue: candidateValue,
-            values,
-            latestProductValues,
-          })
-          : null;
-        const effectiveReplacement = resolvedReplacement;
-        const hasEffectiveReplacement = Boolean(effectiveReplacement?.value);
-        const nextValue = hasEffectiveReplacement
-          ? applyResolvedReplacement({
-            value: candidateValue,
-            pattern,
-            replacement: effectiveReplacement,
-          })
-          : candidateValue;
-        const isNoopReplacement = hasEffectiveReplacement && nextValue === candidateValue;
-        const shouldSuppressNoopReplacementProposal =
-          normalizeProductValidationSkipNoopReplacementProposal(
-            pattern.skipNoopReplacementProposal
-          ) && isNoopReplacement;
-        if (!inSequenceGroup && !shouldSuppressNoopReplacementProposal) {
-          if (!issues[fieldName]) {
-            issues[fieldName] = [];
-          }
-          issues[fieldName].push({
-            patternId: pattern.id,
-            message: pattern.message,
-            severity: pattern.severity,
-            matchText,
-            index: matchIndex,
-            length,
-            regex: pattern.regex,
-            flags: pattern.flags ?? null,
-            replacementValue: hasEffectiveReplacement
-              ? (effectiveReplacement?.value ?? null)
-              : null,
-            replacementApplyMode: hasEffectiveReplacement
-              ? (effectiveReplacement?.applyMode ?? 'replace_matched_segment')
-              : 'replace_matched_segment',
-            replacementScope,
-            replacementActive: replacementActive && hasEffectiveReplacement,
-            postAcceptBehavior: plan.postAcceptBehavior,
-            debounceMs: patternDebounceMs,
-          });
-        }
-
-        if (!hasEffectiveReplacement) break;
-        if (isNoopReplacement) break;
-        replaced = true;
-        candidateValue = nextValue;
-        if (inSequenceGroup) {
-          workingValue = nextValue;
-          if (sequenceGroupId) {
-            const aggregate = sequenceAggregates.get(sequenceGroupId);
-            if (aggregate) {
-              aggregate.finalValue = nextValue;
-              if (pattern.severity === 'error') {
-                aggregate.severity = 'error';
-              }
-              if (plan.postAcceptBehavior === 'stop_after_accept') {
-                aggregate.postAcceptBehavior = 'stop_after_accept';
-              }
-              aggregate.debounceMs = Math.max(aggregate.debounceMs, patternDebounceMs);
-            }
-          }
-        }
-      }
-
-      if (!inSequenceGroup) continue;
-      const chainMode = plan.chainMode;
-      if (matched && chainMode === 'stop_on_match') {
-        break;
-      }
-      if (replaced && chainMode === 'stop_on_replace') {
-        break;
-      }
-      if (replaced && pattern.passOutputToNext === false) {
-        break;
-      }
-    }
-
-    for (const aggregate of sequenceAggregates.values()) {
-      if (aggregate.finalValue === aggregate.originalValue) continue;
-      const diff = deriveDiffSegment(aggregate.originalValue, aggregate.finalValue);
-      if (!issues[fieldName]) {
-        issues[fieldName] = [];
-      }
-      issues[fieldName].push({
-        patternId: `sequence:${aggregate.groupId}`,
-        message: aggregate.groupLabel
-          ? `${aggregate.groupLabel} sequence result`
-          : 'Sequence result',
-        severity: aggregate.severity,
-        matchText: diff.matchText,
-        index: diff.index,
-        length: diff.length,
-        regex: '',
-        flags: null,
-        replacementValue: aggregate.finalValue,
-        replacementApplyMode: 'replace_whole_field',
-        replacementScope: 'field',
-        replacementActive: true,
-        postAcceptBehavior: aggregate.postAcceptBehavior,
-        debounceMs: aggregate.debounceMs,
-      });
-    }
+    const fieldIssues = applyPatternPlansToField({
+      fieldName,
+      normalizedRawValue,
+      values,
+      latestProductValues,
+      validationScope,
+      fieldPlans,
+    });
+    if (fieldIssues.length > 0) issues[fieldName] = fieldIssues;
   }
 
   return issues;

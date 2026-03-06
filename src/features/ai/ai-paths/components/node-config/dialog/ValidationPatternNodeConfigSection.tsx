@@ -523,7 +523,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
       </div>
 
       <ToggleRow
-        type='switch'
+        variant='switch'
         label='Include learned rules'
         description='When enabled, learned rules are merged with base rules.'
         checked={config.includeLearnedRules}

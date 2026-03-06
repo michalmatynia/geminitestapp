@@ -43,7 +43,7 @@ export function ValidationSettingsTab(): React.JSX.Element {
         <div className='space-y-4'>
           <ToggleRow
             label='Enable Validation'
-            type='switch'
+            variant='switch'
             checked={promptValidationEnabled}
             onCheckedChange={setPromptValidationEnabled}
           />

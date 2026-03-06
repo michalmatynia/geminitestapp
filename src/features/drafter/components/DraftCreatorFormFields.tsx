@@ -130,24 +130,16 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
               setValidatorEnabled(checked);
               if (!checked) setFormatterEnabled(false);
             }}
-            type='status'
+            variant='switch'
             className='bg-gray-900/70 border-border'
-            enabledLabel='ENABLED'
-            disabledLabel='DISABLED'
-            enabledVariant='cyan'
-            disabledVariant='slate'
           />
           {validatorEnabled && (
             <ToggleRow
               label='Formatter'
               checked={formatterEnabled}
               onCheckedChange={setFormatterEnabled}
-              type='status'
+              variant='switch'
               className='bg-gray-900/70 border-border'
-              enabledLabel='ACTIVE'
-              disabledLabel='OFF'
-              enabledVariant='emerald'
-              disabledVariant='slate'
             />
           )}
         </div>

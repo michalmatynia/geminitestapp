@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import {
@@ -69,6 +69,8 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
   const router = useRouter();
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
+  const settingsStoreRef = useRef(settingsStore);
+  settingsStoreRef.current = settingsStore;
   const studioProjectsQuery = useStudioProjects();
   const updateStudioProjectSetting = useUpdateSetting();
   const updateSequenceGenerationModeSetting = useUpdateSetting();
@@ -217,7 +219,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
       },
       {
         onSuccess: () => {
-          settingsStore.refetch();
+          settingsStoreRef.current.refetch();
           toast('Image Studio default project saved.', { variant: 'success' });
         },
         onError: () => {
@@ -235,7 +237,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
       },
       {
         onSuccess: () => {
-          settingsStore.refetch();
+          settingsStoreRef.current.refetch();
           toast('Image Studio sequence generation mode saved.', {
             variant: 'success',
           });

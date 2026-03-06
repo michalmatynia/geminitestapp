@@ -154,7 +154,7 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
           className='p-6'
         >
           <ToggleRow
-            type='switch'
+            variant='switch'
             label='Enable Background Sync'
             description='Allow the application to synchronize data in the background.'
             checked={enabled}

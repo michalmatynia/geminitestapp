@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useState } from 'react';
+import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getProductColumns } from '@/features/products/components/list/ProductColumns';
 import { ProductTableSkeleton } from '@/features/products/components/list/ProductTableSkeleton';
@@ -56,10 +56,8 @@ export function useProductListState(): ProductListContextType & {
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
-
-  const productImageBaseUrl =
-    settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
-    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+  const settingsStoreRef = useRef(settingsStore);
+  settingsStoreRef.current = settingsStore;
 
   const queuedProductIds = useQueuedProductIds();
 
@@ -124,8 +122,6 @@ export function useProductListState(): ProductListContextType & {
     setBaseExported,
     loadError,
     isLoading,
-    isFetching,
-    refresh,
   } = useProductData({
     refreshTrigger,
     initialCatalogFilter: preferences.catalogFilter,
@@ -351,8 +347,7 @@ export function useProductListState(): ProductListContextType & {
 
   const { handleSetPageSize, handleSetAdvancedFilter, handleSetAdvancedFilterState } = filters;
 
-  return useMemo(
-    () => ({
+  return {
       onCreateProduct: handleOpenCreate,
       onCreateFromDraft: handleCreateFromDraft,
       activeDrafts,
@@ -462,7 +457,9 @@ export function useProductListState(): ProductListContextType & {
       queuedProductIds,
       categoryNameById,
       thumbnailSource: preferences.thumbnailSource ?? 'file',
-      imageExternalBaseUrl: productImageBaseUrl,
+      imageExternalBaseUrl:
+        settingsStoreRef.current.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
+        DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
       getRowId: (row) => row.id,
       isLoading: !isMounted || isLoading,
       skeletonRows: tableSkeleton,
@@ -515,113 +512,5 @@ export function useProductListState(): ProductListContextType & {
       handleMassDelete,
       handleConfirmSingleDelete,
       bulkDeletePending,
-    }),
-    [
-      activeDrafts,
-      bulkDeletePending,
-      catalogFilter,
-      catalogs,
-      columns,
-      createDraft,
-      currencyCode,
-      currencyOptions,
-      data,
-      editingProduct,
-      endDate,
-      exportSettingsProduct,
-      handleAddToMarketplace,
-      handleCloseEdit,
-      handleCloseIntegrations,
-      handleCloseListProduct,
-      handleCloseMassList,
-      handleConfirmSingleDelete,
-      handleCreateSuccess,
-      handleCreateFromDraft,
-      handleEditSave,
-      handleEditSuccess,
-      handleListProductSuccess,
-      handleMassDelete,
-      handleMassListSuccess,
-      handleOpenCreate,
-      handleOpenEditModal,
-      prefetchProductDetail,
-      handleOpenExportSettings,
-      handleOpenIntegrationsModal,
-      handleProductsTableRender,
-      getRowClassName,
-      handleSelectAllGlobal,
-      handleSelectIntegrationFromModal,
-      initialSku,
-      integrationBadgeIds,
-      integrationBadgeStatuses,
-      integrationsProduct,
-      isCreateOpen,
-      isEditHydrating,
-      isPromptOpen,
-      setIsPromptOpen,
-      handleConfirmSku,
-      isDebugOpen,
-      isFetching,
-      isLoading,
-      isMassDeleteConfirmOpen,
-      isMounted,
-      languageOptions,
-      listProductPreset,
-      loadError,
-      loadingGlobalSelection,
-      massListIntegration,
-      massListProductIds,
-      maxPrice,
-      minPrice,
-      stockOperator,
-      stockValue,
-      advancedFilter,
-      activeAdvancedFilterPresetId,
-      page,
-      pageSize,
-      preferences.nameLocale,
-      preferences.filtersCollapsedByDefault,
-      preferences.thumbnailSource,
-      productImageBaseUrl,
-      priceGroups,
-      productToDelete,
-      queuedProductIds,
-      refresh,
-      rowSelection,
-      search,
-      productId,
-      idMatchMode,
-      showIntegrationModal,
-      showListProductModal,
-      setProductId,
-      setIdMatchMode,
-      setStockOperator,
-      setStockValue,
-      handleSetAdvancedFilter,
-      handleSetAdvancedFilterState,
-      sku,
-      description,
-      categoryId,
-      categoryNameById,
-      baseExported,
-      setBaseExported,
-      startDate,
-      tableSkeleton,
-      totalPages,
-      traderaBadgeIds,
-      traderaBadgeStatuses,
-      setCreateDraft,
-      handleOpenCreateModal,
-      setEditingProduct,
-      refreshListingBadges,
-      updateNameLocale,
-      updateCatalogFilter,
-      updateCurrencyCode,
-      updatePageSize,
-      persistAppliedAdvancedFilterState,
-      handleSetPageSize,
-      handleSetAdvancedFilter,
-      handleSetAdvancedFilterState,
-    ]
-  );
+  };
 }

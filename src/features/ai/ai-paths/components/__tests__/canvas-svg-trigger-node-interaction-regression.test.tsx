@@ -4,7 +4,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { AiNode } from '@/shared/contracts/ai-paths';
 import { CanvasSvgNode } from '@/features/ai/ai-paths/components/CanvasSvgNode';
-import type { CanvasBoardUIContextValue } from '@/features/ai/ai-paths/components/CanvasBoardUIContext';
+import {
+  CanvasBoardUIProvider,
+  type CanvasBoardUIContextValue,
+} from '@/features/ai/ai-paths/components/CanvasBoardUIContext';
 
 const buildTriggerNode = (): AiNode => ({
   id: 'node-trigger-1',
@@ -82,9 +85,11 @@ describe('CanvasSvgNode trigger regression interactions', () => {
     const ui = buildUi({ nodes: [node] });
 
     const { container } = render(
-      <svg>
-        <CanvasSvgNode node={node} ui={ui} />
-      </svg>
+      <CanvasBoardUIProvider value={ui}>
+        <svg>
+          <CanvasSvgNode node={node} />
+        </svg>
+      </CanvasBoardUIProvider>
     );
 
     const triggerActionRect = container.querySelector(
@@ -107,9 +112,11 @@ describe('CanvasSvgNode trigger regression interactions', () => {
     });
 
     const { container } = render(
-      <svg>
-        <CanvasSvgNode node={node} ui={ui} />
-      </svg>
+      <CanvasBoardUIProvider value={ui}>
+        <svg>
+          <CanvasSvgNode node={node} />
+        </svg>
+      </CanvasBoardUIProvider>
     );
 
     const nodeBody = container.querySelector(`[data-node-body="${node.id}"]`);
@@ -133,9 +140,11 @@ describe('CanvasSvgNode trigger regression interactions', () => {
     });
 
     const { container } = render(
-      <svg>
-        <CanvasSvgNode node={node} ui={ui} />
-      </svg>
+      <CanvasBoardUIProvider value={ui}>
+        <svg>
+          <CanvasSvgNode node={node} />
+        </svg>
+      </CanvasBoardUIProvider>
     );
 
     const triggerActionRect = container.querySelector(

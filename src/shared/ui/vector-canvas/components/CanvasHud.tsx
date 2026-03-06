@@ -1,16 +1,14 @@
 import React from 'react';
 import { Button } from '../../button';
+import { useVectorCanvasContext } from '../VectorCanvasContext';
 
 interface CanvasHudProps {
   show: boolean;
-  scale: number;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-  onFit: () => void;
 }
 
 export function CanvasHud(props: CanvasHudProps): React.JSX.Element | null {
-  const { show, scale, onZoomIn, onZoomOut, onFit } = props;
+  const { show } = props;
+  const { viewTransform, handleZoomIn, handleZoomOut, handleFitToScreen } = useVectorCanvasContext();
 
   if (!show) return null;
 
@@ -20,20 +18,20 @@ export function CanvasHud(props: CanvasHudProps): React.JSX.Element | null {
         variant='outline'
         size='sm'
         className='h-6 bg-black/60 px-2 text-[11px] text-white/90'
-        onClick={onZoomOut}
+        onClick={handleZoomOut}
         title='Zoom out'
         aria-label='Zoom out'
       >
         -
       </Button>
       <div className='rounded bg-black/60 px-2 py-0.5 text-xs font-medium text-white/90'>
-        {Math.round(scale * 100)}%
+        {Math.round(viewTransform.scale * 100)}%
       </div>
       <Button
         variant='outline'
         size='sm'
         className='h-6 bg-black/60 px-2 text-[11px] text-white/90'
-        onClick={onZoomIn}
+        onClick={handleZoomIn}
         title='Zoom in'
         aria-label='Zoom in'
       >
@@ -43,7 +41,7 @@ export function CanvasHud(props: CanvasHudProps): React.JSX.Element | null {
         variant='outline'
         size='sm'
         className='h-6 bg-black/60 px-2 text-[11px] text-white/90'
-        onClick={onFit}
+        onClick={handleFitToScreen}
       >
         Fit
       </Button>

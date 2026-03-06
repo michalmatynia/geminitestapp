@@ -211,7 +211,7 @@ describe('resolveRuntimeKernelConfigForRun', () => {
       pilotSource: 'env',
       resolverIds: ['resolver.primary'],
       resolverSource: 'env',
-      strictNativeRegistry: false,
+      strictNativeRegistry: true,
       strictNativeRegistrySource: 'default',
     });
   });
@@ -237,7 +237,7 @@ describe('resolveRuntimeKernelConfigForRun', () => {
       modeSource: 'settings',
       resolverIds: undefined,
       resolverSource: 'default',
-      strictNativeRegistry: false,
+      strictNativeRegistry: true,
       strictNativeRegistrySource: 'default',
     });
   });

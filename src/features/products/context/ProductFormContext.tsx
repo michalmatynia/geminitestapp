@@ -198,6 +198,8 @@ function ProductFormSubmitController(props: { children: React.ReactNode }) {
   const {
     methods,
     setHasUnsavedChanges,
+    setHandleSubmit,
+    setConfirmationModal,
     product,
     selectedNoteIds,
     setUploading,
@@ -241,6 +243,22 @@ function ProductFormSubmitController(props: { children: React.ReactNode }) {
   useEffect(() => {
     setUploadSuccess(uploadSuccess);
   }, [uploadSuccess, setUploadSuccess]);
+
+  useEffect(() => {
+    setHandleSubmit(handleSubmit);
+
+    return (): void => {
+      setHandleSubmit(async () => {});
+    };
+  }, [handleSubmit, setHandleSubmit]);
+
+  useEffect(() => {
+    setConfirmationModal(ConfirmationModal);
+
+    return (): void => {
+      setConfirmationModal(() => null);
+    };
+  }, [ConfirmationModal, setConfirmationModal]);
 
   // Dirty tracking
   const lastEntityIdentityRef = useRef<string>('');

@@ -23,12 +23,6 @@ const toRecord = (value: unknown): Record<string, unknown> | null =>
     ? (value as Record<string, unknown>)
     : null;
 
-const normalizeRuntimeKernelMode = (value: unknown): 'auto' | undefined => {
-  if (typeof value !== 'string') return undefined;
-  const normalized = value.trim().toLowerCase();
-  return normalized === 'auto' || normalized === 'legacy_only' ? 'auto' : undefined;
-};
-
 const parseRuntimeKernelListValue = ({
   value,
   normalizeToken,
@@ -104,7 +98,6 @@ const parseRuntimeKernelStrictNativeRegistry = (value: unknown): boolean | undef
 
 export function useLocalExecutionLoop(args: LocalExecutionArgs) {
   const runtimeKernelConfig = toRecord(args.runtimeKernelConfig);
-  const runtimeKernelMode = normalizeRuntimeKernelMode(runtimeKernelConfig?.['mode']);
   const runtimeKernelPilotNodeTypes = parseRuntimeKernelPilotNodeTypes(
     runtimeKernelConfig?.['pilotNodeTypes']
   );
@@ -113,7 +106,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
   );
   const runtimeKernelStrictNativeRegistry = parseRuntimeKernelStrictNativeRegistry(
     runtimeKernelConfig?.['strictNativeRegistry'] ?? runtimeKernelConfig?.['strictCodeObjectRegistry']
-  );
+  ) ?? true;
   const runLocalLoop = useCallback(
     async (
       mode: 'run' | 'step'
@@ -586,7 +579,6 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
             }) => {
               haltRef.reason = payload.reason;
             },
-            ...(runtimeKernelMode ? { runtimeKernelMode } : {}),
             ...(runtimeKernelPilotNodeTypes ? { runtimeKernelPilotNodeTypes } : {}),
             ...(runtimeKernelCodeObjectResolverIds ? { runtimeKernelCodeObjectResolverIds } : {}),
             ...(runtimeKernelStrictNativeRegistry !== undefined
@@ -685,7 +677,6 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
     [
       args,
       runtimeKernelCodeObjectResolverIds,
-      runtimeKernelMode,
       runtimeKernelPilotNodeTypes,
       runtimeKernelStrictNativeRegistry,
     ]

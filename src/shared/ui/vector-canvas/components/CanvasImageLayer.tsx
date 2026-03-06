@@ -1,16 +1,10 @@
 import React, { forwardRef } from 'react';
+import { useVectorCanvasContext } from '../VectorCanvasContext';
 
-interface CanvasImageLayerProps {
-  src: string | null | undefined;
-  width: number;
-  height: number;
-  offsetX: number;
-  offsetY: number;
-  onLoad: () => void;
-}
+export const CanvasImageLayer = forwardRef<HTMLImageElement>(
+  (_props, ref): React.JSX.Element | null => {
+    const { src, canvasRenderSize, resolvedImageOffset, syncCanvasSize } = useVectorCanvasContext();
 
-export const CanvasImageLayer = forwardRef<HTMLImageElement, CanvasImageLayerProps>(
-  ({ src, width, height, offsetX, offsetY, onLoad }, ref): React.JSX.Element | null => {
     if (!src) return null;
 
     return (
@@ -21,13 +15,13 @@ export const CanvasImageLayer = forwardRef<HTMLImageElement, CanvasImageLayerPro
         alt='Canvas Source'
         className='pointer-events-none absolute z-[2] select-none object-contain object-top'
         style={{
-          width: `${width}px`,
-          height: `${height}px`,
-          left: `calc(50% + ${offsetX}px)`,
-          top: `${offsetY}px`,
+          width: `${canvasRenderSize.width}px`,
+          height: `${canvasRenderSize.height}px`,
+          left: `calc(50% + ${resolvedImageOffset.x}px)`,
+          top: `${resolvedImageOffset.y}px`,
           transform: 'translateX(-50%)',
         }}
-        onLoad={onLoad}
+        onLoad={syncCanvasSize}
         draggable={false}
       />
     );

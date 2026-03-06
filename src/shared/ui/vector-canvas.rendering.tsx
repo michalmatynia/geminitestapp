@@ -19,6 +19,7 @@ import { cn } from '@/shared/utils';
 import { Button } from './button';
 import { Tooltip } from './tooltip';
 import { vectorShapeToPath } from './vector-canvas.geometry';
+import { useOptionalVectorCanvasContext } from './vector-canvas/VectorCanvasContext';
 
 export interface VectorToolbarProps {
   tool: VectorToolMode;
@@ -253,17 +254,23 @@ export function VectorToolbar({
   );
 }
 
-export function VectorShapeOverlay({
-  shapes,
-  activeShapeId,
-  selectedPointIndex,
-  viewboxSize,
-}: {
-  shapes: VectorShape[];
-  activeShapeId: string | null;
-  selectedPointIndex: number | null;
-  viewboxSize: number;
-}): React.JSX.Element {
+export interface VectorShapeOverlayProps {
+  shapes?: VectorShape[];
+  activeShapeId?: string | null;
+  selectedPointIndex?: number | null;
+  viewboxSize?: number;
+}
+
+export function VectorShapeOverlay(props: VectorShapeOverlayProps): React.JSX.Element {
+  const context = useOptionalVectorCanvasContext();
+
+  const {
+    shapes = props.shapes ?? context?.shapes ?? [],
+    activeShapeId = props.activeShapeId ?? context?.activeShapeId ?? null,
+    selectedPointIndex = props.selectedPointIndex ?? context?.selectedPointIndex ?? null,
+    viewboxSize = props.viewboxSize ?? 1000,
+  } = props;
+
   return (
     <svg
       className='pointer-events-none absolute left-1/2 top-0 z-[21] -translate-x-1/2 h-full w-full'

@@ -42,6 +42,39 @@ const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<LessonPro
   geometry_perimeter: GeometryPerimeterLesson,
 };
 
+const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
+  adding: 'adding',
+  addition: 'adding',
+  subtracting: 'subtracting',
+  subtraction: 'subtracting',
+  multiplication: 'multiplication',
+  division: 'division',
+  clock: 'clock',
+  calendar: 'calendar',
+  geometry: 'geometry_shapes',
+  geometry_basics: 'geometry_basics',
+  geometry_shapes: 'geometry_shapes',
+  geometry_symmetry: 'geometry_symmetry',
+  geometry_perimeter: 'geometry_perimeter',
+};
+
+const resolveFocusedLessonId = (
+  focusToken: string,
+  lessons: KangurLesson[]
+): string | null => {
+  const mappedComponent = FOCUS_TO_COMPONENT[focusToken];
+  if (mappedComponent) {
+    const byComponent = lessons.find((lesson) => lesson.componentId === mappedComponent);
+    if (byComponent) return byComponent.id;
+  }
+
+  const byId = lessons.find((lesson) => lesson.id.toLowerCase() === focusToken);
+  if (byId) return byId.id;
+
+  const byTitle = lessons.find((lesson) => lesson.title.toLowerCase().includes(focusToken));
+  return byTitle?.id ?? null;
+};
+
 export default function Lessons() {
   const { basePath } = useKangurRouting();
   const settingsStore = useSettingsStore();
@@ -60,6 +93,28 @@ export default function Lessons() {
     if (!exists) {
       setActiveLessonId(null);
     }
+  }, [activeLessonId, lessons]);
+
+  useEffect((): void => {
+    if (activeLessonId || lessons.length === 0 || typeof window === 'undefined') {
+      return;
+    }
+
+    const currentUrl = new URL(window.location.href);
+    const focusToken = currentUrl.searchParams.get('focus')?.trim().toLowerCase();
+    if (!focusToken) {
+      return;
+    }
+
+    const focusedLessonId = resolveFocusedLessonId(focusToken, lessons);
+    if (!focusedLessonId) {
+      return;
+    }
+
+    setActiveLessonId(focusedLessonId);
+    currentUrl.searchParams.delete('focus');
+    const nextHref = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
+    window.history.replaceState({}, '', nextHref);
   }, [activeLessonId, lessons]);
 
   const activeIdx = lessons.findIndex((lesson) => lesson.id === activeLessonId);

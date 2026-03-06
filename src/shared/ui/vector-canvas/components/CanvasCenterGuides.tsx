@@ -1,23 +1,16 @@
 import React from 'react';
+import { useVectorCanvasContext } from '../VectorCanvasContext';
 
-interface CanvasCenterGuidesProps {
-  show: boolean;
-  width: number;
-  height: number;
-}
+export function CanvasCenterGuides(): React.JSX.Element | null {
+  const { showCenterGuides, canvasRenderSize } = useVectorCanvasContext();
 
-export function CanvasCenterGuides({
-  show,
-  width,
-  height,
-}: CanvasCenterGuidesProps): React.JSX.Element | null {
-  if (!show) return null;
+  if (!showCenterGuides) return null;
 
   return (
     <div
       data-testid='vector-canvas-center-guides'
       className='pointer-events-none absolute left-1/2 top-0 z-[16] -translate-x-1/2'
-      style={{ width: `${width}px`, height: `${height}px` }}
+      style={{ width: `${canvasRenderSize.width}px`, height: `${canvasRenderSize.height}px` }}
     >
       <div
         data-testid='vector-canvas-center-guides-vertical'

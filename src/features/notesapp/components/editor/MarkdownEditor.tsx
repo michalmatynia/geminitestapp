@@ -3,6 +3,7 @@
 import React from 'react';
 
 import { MarkdownSplitEditor } from '@/features/document-editor';
+import { MarkdownSplitEditorProvider } from '@/features/document-editor/context/MarkdownSplitEditorContext';
 import {
   useNoteContentContext,
   useNoteEditorContext,
@@ -37,37 +38,60 @@ export function MarkdownEditor(): React.JSX.Element {
 
   const { toast } = useToast();
 
-  return (
-    <MarkdownSplitEditor
-      value={content}
-      onChange={setContent}
-      showPreview={showPreview}
-      renderPreviewHtml={renderMarkdownToHtml}
-      sanitizePreviewHtml={sanitizeHtml}
-      isCodeMode={isCodeMode}
-      isPasting={isPasting}
-      onPaste={(event: React.ClipboardEvent<HTMLTextAreaElement>): void => {
+  const editorContextValue = React.useMemo(
+    () => ({
+      value: content,
+      onChange: setContent,
+      showPreview,
+      renderPreviewHtml: renderMarkdownToHtml,
+      sanitizePreviewHtml: sanitizeHtml,
+      isCodeMode,
+      isPasting,
+      onPaste: (event: React.ClipboardEvent<HTMLTextAreaElement>): void => {
         void handlePaste(event);
-      }}
-      textareaRef={contentRef}
-      splitRef={editorSplitRef}
-      editorWidth={editorWidth}
-      onEditorWidthChange={setEditorWidth}
-      isDraggingSplitter={isDraggingSplitter}
-      onDraggingSplitterChange={setIsDraggingSplitter}
-      contentBackground={contentBackground}
-      contentTextColor={contentTextColor}
-      previewTypographyStyle={previewTypographyStyle}
-      onPreviewImageClick={setLightboxImage}
-      onCopyCodeFailure={(): void => {
+      },
+      textareaRef: contentRef,
+      splitRef: editorSplitRef,
+      editorWidth,
+      onEditorWidthChange: setEditorWidth,
+      isDraggingSplitter,
+      onDraggingSplitterChange: setIsDraggingSplitter,
+      contentBackground,
+      contentTextColor,
+      previewTypographyStyle,
+      onPreviewImageClick: setLightboxImage,
+      onCopyCodeFailure: (): void => {
         toast('Failed to copy code');
-      }}
-      placeholder={
-        isCodeMode
-          ? 'Enter code snippets using ```language blocks (e.g., ```javascript)'
-          : 'Enter note content (paste images directly!)'
-      }
-      textareaClassName='w-full rounded-lg border px-4 py-2 font-mono'
-    />
+      },
+      placeholder: isCodeMode
+        ? 'Enter code snippets using ```language blocks (e.g., ```javascript)'
+        : 'Enter note content (paste images directly!)',
+      textareaClassName: 'w-full rounded-lg border px-4 py-2 font-mono',
+    }),
+    [
+      content,
+      setContent,
+      showPreview,
+      isCodeMode,
+      isPasting,
+      handlePaste,
+      contentRef,
+      editorSplitRef,
+      editorWidth,
+      setEditorWidth,
+      isDraggingSplitter,
+      setIsDraggingSplitter,
+      contentBackground,
+      contentTextColor,
+      previewTypographyStyle,
+      setLightboxImage,
+      toast,
+    ]
+  );
+
+  return (
+    <MarkdownSplitEditorProvider value={editorContextValue}>
+      <MarkdownSplitEditor />
+    </MarkdownSplitEditorProvider>
   );
 }

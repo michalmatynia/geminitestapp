@@ -46,6 +46,8 @@ module.exports = tseslint.config(
       'gemini-retry.sh',
       'run-gemini.command',
       'src/features/kangur/legacy/**/*',
+      'externalkangur/',
+      'externalkangur/',
     ],
   },
   {

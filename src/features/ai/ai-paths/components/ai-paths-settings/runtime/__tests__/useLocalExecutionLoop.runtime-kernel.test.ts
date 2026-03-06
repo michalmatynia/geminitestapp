@@ -86,7 +86,6 @@ const buildLocalExecutionArgs = (): LocalExecutionArgs => {
     pathName: 'Path Main',
     pathDescription: '',
     runtimeKernelConfig: {
-      mode: 'legacy_only',
       pilotNodeTypes: 'Template Node, parser',
       codeObjectResolverIds: ' resolver.primary , resolver.fallback ',
       strictCodeObjectRegistry: 'yes',
@@ -149,7 +148,6 @@ describe('useLocalExecutionLoop runtime kernel forwarding', () => {
     expect(evaluateGraphClientMock).toHaveBeenCalledTimes(1);
     expect(evaluateGraphClientMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        runtimeKernelMode: 'auto',
         runtimeKernelPilotNodeTypes: ['template_node', 'parser'],
         runtimeKernelCodeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
         runtimeKernelStrictNativeRegistry: true,

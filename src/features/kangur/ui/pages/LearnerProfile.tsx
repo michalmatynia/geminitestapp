@@ -10,6 +10,7 @@ import type { KangurScoreRecord } from '@/features/kangur/services/ports';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { buildKangurLearnerProfileSnapshot } from '@/features/kangur/ui/services/profile';
+import type { KangurDifficulty, KangurOperation } from '@/features/kangur/ui/types';
 import { BADGES, loadProgress } from '@/features/kangur/ui/services/progress';
 
 const DAILY_GOAL_GAMES = 3;
@@ -49,6 +50,41 @@ const RECOMMENDATION_STYLES = {
   medium: 'border-amber-200 bg-amber-50/80 text-amber-800',
   low: 'border-emerald-200 bg-emerald-50/80 text-emerald-800',
 } as const;
+
+const QUICK_START_OPERATIONS = new Set<KangurOperation>([
+  'addition',
+  'subtraction',
+  'multiplication',
+  'division',
+  'decimals',
+  'powers',
+  'roots',
+  'clock',
+  'mixed',
+]);
+
+const resolvePracticeDifficulty = (averageAccuracy: number): KangurDifficulty => {
+  if (averageAccuracy >= 85) {
+    return 'hard';
+  }
+  if (averageAccuracy >= 70) {
+    return 'medium';
+  }
+  return 'easy';
+};
+
+const buildOperationPracticeHref = (basePath: string, operation: string, averageAccuracy: number): string => {
+  const baseHref = createPageUrl('Game', basePath);
+  const params = new URLSearchParams({ quickStart: 'training' });
+
+  if (QUICK_START_OPERATIONS.has(operation as KangurOperation)) {
+    params.set('quickStart', 'operation');
+    params.set('operation', operation);
+    params.set('difficulty', resolvePracticeDifficulty(averageAccuracy));
+  }
+
+  return `${baseHref}?${params.toString()}`;
+};
 
 const buildRecommendationHref = (
   basePath: string,
@@ -322,11 +358,19 @@ export default function LearnerProfile() {
               )}
               {snapshot.operationPerformance.map((item) => (
                 <div key={item.operation}>
-                  <div className='flex items-center justify-between text-sm text-gray-600 mb-1'>
+                  <div className='flex items-center justify-between gap-2 text-sm text-gray-600 mb-1'>
                     <span className='font-semibold'>
                       {item.emoji} {item.label}
                     </span>
-                    <span>{item.averageAccuracy}%</span>
+                    <div className='flex items-center gap-2'>
+                      <span>{item.averageAccuracy}%</span>
+                      <Link
+                        href={buildOperationPracticeHref(basePath, item.operation, item.averageAccuracy)}
+                        className='inline-flex items-center rounded-md border border-indigo-200 px-2 py-0.5 text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 transition'
+                      >
+                        Trenuj
+                      </Link>
+                    </div>
                   </div>
                   <div className='w-full h-2 bg-slate-100 rounded-full overflow-hidden'>
                     <div className='h-full bg-gradient-to-r from-indigo-400 to-purple-500' style={{ width: `${item.averageAccuracy}%` }} />

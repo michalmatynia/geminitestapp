@@ -4,29 +4,34 @@ import React from 'react';
 
 export type UseMarkdownPreviewDebounceProps = {
   value: string;
-  showPreview: boolean;
   renderPreviewHtml: (value: string) => string;
   sanitizePreviewHtml?: ((value: string) => string) | undefined;
   debounceMs?: number;
+  enabled?: boolean;
 };
 
 export function useMarkdownPreviewDebounce({
   value,
-  showPreview,
   renderPreviewHtml,
   sanitizePreviewHtml,
   debounceMs = 150,
-}: UseMarkdownPreviewDebounceProps): string {
-  const [debouncedContentHtml, setDebouncedContentHtml] = React.useState<string>('');
+  enabled = true,
+}: UseMarkdownPreviewDebounceProps): { isDebouncing: boolean; debouncedHtml: string } {
+  const [debouncedHtml, setDebouncedHtml] = React.useState<string>('');
+  const [isDebouncing, setIsDebouncing] = React.useState(false);
 
   React.useEffect((): void | (() => void) => {
-    if (!showPreview) return;
+    if (!enabled) return;
+    
+    setIsDebouncing(true);
     const timer = window.setTimeout((): void => {
       const nextHtml = renderPreviewHtml(value);
-      setDebouncedContentHtml(sanitizePreviewHtml ? sanitizePreviewHtml(nextHtml) : nextHtml);
+      setDebouncedHtml(sanitizePreviewHtml ? sanitizePreviewHtml(nextHtml) : nextHtml);
+      setIsDebouncing(false);
     }, debounceMs);
+    
     return (): void => window.clearTimeout(timer);
-  }, [debounceMs, renderPreviewHtml, sanitizePreviewHtml, showPreview, value]);
+  }, [debounceMs, renderPreviewHtml, sanitizePreviewHtml, enabled, value]);
 
-  return debouncedContentHtml;
+  return { isDebouncing, debouncedHtml };
 }

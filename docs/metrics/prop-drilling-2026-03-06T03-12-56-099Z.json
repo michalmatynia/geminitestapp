@@ -1,0 +1,203 @@
+{
+  "summary": {
+    "generatedAt": "2026-03-06T03:12:56.099Z",
+    "scannedSourceFiles": 3959,
+    "scannedJsxFiles": 1442,
+    "componentCount": 2211,
+    "componentsWithForwarding": 0,
+    "componentsWithAnyForwarding": 5,
+    "resolvedTransitionCount": 5,
+    "depth2CandidateChainCount": 5,
+    "candidateChainCount": 0,
+    "highPriorityChainCount": 0,
+    "unknownSpreadForwardingCount": 0,
+    "topFeatureScopes": [
+      {
+        "scope": "feature:kangur",
+        "count": 5
+      }
+    ]
+  },
+  "backlog": [],
+  "transitionBacklog": [
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/AddingBallGame.tsx#CompleteEquation",
+      "sinkComponentId": "src/features/kangur/ui/components/AddingBallGame.tsx#SlotZone",
+      "componentPath": [
+        "src/features/kangur/ui/components/AddingBallGame.tsx#CompleteEquation",
+        "src/features/kangur/ui/components/AddingBallGame.tsx#SlotZone"
+      ],
+      "propPath": [
+        "round",
+        "label"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/AddingBallGame.tsx#CompleteEquation",
+          "toComponentId": "src/features/kangur/ui/components/AddingBallGame.tsx#SlotZone",
+          "sourceProp": "round",
+          "targetProp": "label",
+          "relativePath": "src/features/kangur/ui/components/AddingBallGame.tsx",
+          "line": 231
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/CalendarLesson.tsx#CalendarLesson",
+      "sinkComponentId": "src/features/kangur/ui/components/CalendarInteractiveGame.tsx#CalendarInteractiveGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/CalendarLesson.tsx#CalendarLesson",
+        "src/features/kangur/ui/components/CalendarInteractiveGame.tsx#CalendarInteractiveGame"
+      ],
+      "propPath": [
+        "onBack",
+        "onFinish"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/CalendarLesson.tsx#CalendarLesson",
+          "toComponentId": "src/features/kangur/ui/components/CalendarInteractiveGame.tsx#CalendarInteractiveGame",
+          "sourceProp": "onBack",
+          "targetProp": "onFinish",
+          "relativePath": "src/features/kangur/ui/components/CalendarLesson.tsx",
+          "line": 302
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ClockLesson.tsx#ClockLesson",
+      "sinkComponentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/ClockLesson.tsx#ClockLesson",
+        "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame"
+      ],
+      "propPath": [
+        "onBack",
+        "onFinish"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ClockLesson.tsx#ClockLesson",
+          "toComponentId": "src/features/kangur/ui/components/ClockTrainingGame.tsx#ClockTrainingGame",
+          "sourceProp": "onBack",
+          "targetProp": "onFinish",
+          "relativePath": "src/features/kangur/ui/components/ClockLesson.tsx",
+          "line": 565
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/GeometryShapesLesson.tsx#GeometryShapesLesson",
+      "sinkComponentId": "src/features/kangur/ui/components/GeometryDrawingGame.tsx#GeometryDrawingGame",
+      "componentPath": [
+        "src/features/kangur/ui/components/GeometryShapesLesson.tsx#GeometryShapesLesson",
+        "src/features/kangur/ui/components/GeometryDrawingGame.tsx#GeometryDrawingGame"
+      ],
+      "propPath": [
+        "onBack",
+        "onFinish"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/GeometryShapesLesson.tsx#GeometryShapesLesson",
+          "toComponentId": "src/features/kangur/ui/components/GeometryDrawingGame.tsx#GeometryDrawingGame",
+          "sourceProp": "onBack",
+          "targetProp": "onFinish",
+          "relativePath": "src/features/kangur/ui/components/GeometryShapesLesson.tsx",
+          "line": 107
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/admin/AdminKangurPageShell.tsx#AdminKangurPageShell",
+      "sinkComponentId": "src/features/kangur/ui/KangurFeaturePage.tsx#KangurFeaturePage",
+      "componentPath": [
+        "src/features/kangur/admin/AdminKangurPageShell.tsx#AdminKangurPageShell",
+        "src/features/kangur/ui/KangurFeaturePage.tsx#KangurFeaturePage"
+      ],
+      "propPath": [
+        "slug",
+        "slug"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/AdminKangurPageShell.tsx#AdminKangurPageShell",
+          "toComponentId": "src/features/kangur/ui/KangurFeaturePage.tsx#KangurFeaturePage",
+          "sourceProp": "slug",
+          "targetProp": "slug",
+          "relativePath": "src/features/kangur/admin/AdminKangurPageShell.tsx",
+          "line": 17
+        }
+      ]
+    }
+  ],
+  "componentBacklog": [],
+  "forwardingComponentBacklog": [
+    {
+      "componentId": "src/features/kangur/admin/AdminKangurPageShell.tsx#AdminKangurPageShell",
+      "name": "AdminKangurPageShell",
+      "relativePath": "src/features/kangur/admin/AdminKangurPageShell.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/AddingBallGame.tsx#CompleteEquation",
+      "name": "CompleteEquation",
+      "relativePath": "src/features/kangur/ui/components/AddingBallGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/CalendarLesson.tsx#CalendarLesson",
+      "name": "CalendarLesson",
+      "relativePath": "src/features/kangur/ui/components/CalendarLesson.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/ClockLesson.tsx#ClockLesson",
+      "name": "ClockLesson",
+      "relativePath": "src/features/kangur/ui/components/ClockLesson.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/GeometryShapesLesson.tsx#GeometryShapesLesson",
+      "name": "GeometryShapesLesson",
+      "relativePath": "src/features/kangur/ui/components/GeometryShapesLesson.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    }
+  ],
+  "chains": []
+}

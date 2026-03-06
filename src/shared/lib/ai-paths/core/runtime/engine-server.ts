@@ -227,7 +227,7 @@ export async function evaluateGraphServer(
   const runtimeKernelStrictNativeRegistry =
     resolvedOptions.runtimeKernelStrictNativeRegistry ??
     parseBooleanRuntimeFlag(process.env['AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY']) ??
-    false;
+    true;
   const runtimeKernel = createNodeRuntimeKernel({
     resolveLegacyHandler,
     resolveCodeObjectHandler: (args) =>

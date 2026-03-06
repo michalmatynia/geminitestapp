@@ -1,26 +1,27 @@
 # Prop Drilling Scan
 
-Generated at: 2026-03-06T02:54:39.519Z
+Generated at: 2026-03-06T03:15:20.153Z
 
 ## Snapshot
 
-- Scanned source files: 3943
-- JSX files scanned: 1426
-- Components detected: 2209
-- Components forwarding parent props (hotspot threshold): 0
-- Components forwarding parent props (any): 5
+- Scanned source files: 3959
+- JSX files scanned: 1442
+- Components detected: 2212
+- Components forwarding parent props (hotspot threshold): 1
+- Components forwarding parent props (any): 6
 - Resolved forwarded transitions: 5
 - Candidate chains (depth >= 2): 5
 - Candidate chains (depth >= 3): 0
 - High-priority chains (depth >= 4): 0
-- Unknown spread forwarding edges: 0
-- Hotspot forwarding components backlog size: 0
+- Unknown spread forwarding edges: 1
+- Hotspot forwarding components backlog size: 1
 
 ## Hot Features
 
 | Feature Scope | Forwarding Components |
 | --- | ---: |
 | `feature:kangur` | 5 |
+| `shared-ui` | 1 |
 
 ## Top Prop-Drilling Components
 
@@ -31,6 +32,7 @@ Generated at: 2026-03-06T02:54:39.519Z
 | 3 | `CalendarLesson` | `src/features/kangur/ui/components/CalendarLesson.tsx` | 1 | 1 | no | no |
 | 4 | `ClockLesson` | `src/features/kangur/ui/components/ClockLesson.tsx` | 1 | 1 | no | no |
 | 5 | `GeometryShapesLesson` | `src/features/kangur/ui/components/GeometryShapesLesson.tsx` | 1 | 1 | no | no |
+| 6 | `VectorCanvas` | `src/shared/ui/vector-canvas/index.tsx` | 0 | 0 | yes | yes |
 
 ## Prioritized Transition Backlog (Depth = 2)
 

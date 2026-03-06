@@ -9,8 +9,9 @@ const E2E_ADMIN_PASSWORD =
   process.env['E2E_ADMIN_PASSWORD'] ??
   'admin123';
 
-const AI_PATHS_RUNTIME_KERNEL_MODE_KEY = 'ai_paths_runtime_kernel_mode';
 const AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY = 'ai_paths_runtime_kernel_pilot_node_types';
+const AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY =
+  'ai_paths_runtime_kernel_strict_native_registry';
 
 type RuntimeSettingsBulkPayload = {
   items: Array<{ key: string; value: string }>;
@@ -44,7 +45,7 @@ const getSettingValue = (
 };
 
 test.describe('AI Paths runtime kernel settings', () => {
-  test('persists runtime-kernel mode and pilot node list from Canvas controls', async ({
+  test('persists runtime-kernel pilot node list and strict native registry from Canvas controls', async ({
     page,
   }) => {
     const authenticated = await ensureAdminSession(page);
@@ -60,18 +61,21 @@ test.describe('AI Paths runtime kernel settings', () => {
       if (method === 'GET') {
         const keys = url.searchParams.getAll('keys');
         const isRuntimeKernelKeysRequest =
-          keys.includes(AI_PATHS_RUNTIME_KERNEL_MODE_KEY) &&
-          keys.includes(AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY);
+          keys.includes(AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY) &&
+          keys.includes(AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY);
         if (isRuntimeKernelKeysRequest) {
           await route.fulfill({
             status: 200,
             contentType: 'application/json',
             headers: { 'Cache-Control': 'no-store' },
             body: JSON.stringify([
-              { key: AI_PATHS_RUNTIME_KERNEL_MODE_KEY, value: 'auto' },
               {
                 key: AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY,
                 value: JSON.stringify(['constant', 'template']),
+              },
+              {
+                key: AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
+                value: 'true',
               },
             ]),
           });
@@ -99,8 +103,8 @@ test.describe('AI Paths runtime kernel settings', () => {
           parsed &&
           parsed.items.some(
             (item) =>
-              item.key === AI_PATHS_RUNTIME_KERNEL_MODE_KEY ||
-              item.key === AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY
+              item.key === AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY ||
+              item.key === AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY
           )
         ) {
           persistedUpdates.push(parsed);
@@ -122,31 +126,30 @@ test.describe('AI Paths runtime kernel settings', () => {
     await page.goto('/admin/ai-paths');
     await expect(page.getByRole('tab', { name: 'Canvas' })).toBeVisible();
 
-    const modeSelect = page.locator('[data-doc-id="canvas_runtime_kernel_mode"]').first();
+    const strictSelect = page
+      .locator('[data-doc-id="canvas_runtime_kernel_strict_native_registry"]')
+      .first();
     const pilotNodesInput = page.locator('[data-doc-id="canvas_runtime_kernel_pilot_nodes"]').first();
     const applyButton = page.locator('[data-doc-id="canvas_runtime_kernel_apply"]').first();
 
-    await expect(modeSelect).toBeVisible();
+    await expect(strictSelect).toBeVisible();
     await expect(pilotNodesInput).toBeVisible();
     await expect(applyButton).toBeVisible();
     await expect(pilotNodesInput).toHaveValue('constant, template');
 
     await pilotNodesInput.fill('constant, math, template');
+    await strictSelect.click();
+    await page.getByRole('option', { name: 'Strict Off' }).click();
     await applyButton.click();
 
     await expect.poll(() => persistedUpdates.length).toBe(1);
-    expect(getSettingValue(persistedUpdates[0]!, AI_PATHS_RUNTIME_KERNEL_MODE_KEY)).toBe('auto');
     expect(getSettingValue(persistedUpdates[0]!, AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_KEY)).toBe(
       JSON.stringify(['constant', 'math', 'template'])
     );
-
-    await modeSelect.click();
-    await page.getByRole('option', { name: 'Mode: Legacy Only' }).click();
-    await applyButton.click();
-
-    await expect.poll(() => persistedUpdates.length).toBe(2);
-    expect(getSettingValue(persistedUpdates[1]!, AI_PATHS_RUNTIME_KERNEL_MODE_KEY)).toBe(
-      'legacy_only'
+    expect(
+      getSettingValue(persistedUpdates[0]!, AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY)
+    ).toBe(
+      'false'
     );
   });
 });

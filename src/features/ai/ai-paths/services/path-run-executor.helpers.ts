@@ -206,7 +206,7 @@ export const resolveRuntimeKernelConfigForRun = (input: {
     input.settingStrictNativeRegistry
   );
   const strictNativeRegistry =
-    envStrictNativeRegistry ?? pathStrictNativeRegistry ?? settingsStrictNativeRegistry ?? false;
+    envStrictNativeRegistry ?? pathStrictNativeRegistry ?? settingsStrictNativeRegistry ?? true;
   const strictNativeRegistrySource: 'env' | 'path' | 'settings' | 'default' =
     envStrictNativeRegistry !== undefined
       ? 'env'

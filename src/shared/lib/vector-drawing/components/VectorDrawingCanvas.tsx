@@ -3,6 +3,10 @@
 import React from 'react';
 
 import { VectorCanvas, type VectorCanvasProps } from '@/shared/ui';
+import {
+  VectorCanvasProvider,
+  type VectorCanvasContextValue,
+} from '@/shared/ui/vector-canvas/VectorCanvasContext';
 
 import {
   useOptionalVectorDrawingActions,
@@ -61,7 +65,6 @@ export function VectorDrawingCanvas(props: Partial<VectorCanvasProps>): React.JS
   const allowWithoutImage = propAllowWithoutImage ?? stateContext?.allowWithoutImage;
   const showEmptyState = propShowEmptyState ?? stateContext?.showEmptyState;
   const emptyStateLabel = propEmptyStateLabel ?? stateContext?.emptyStateLabel;
-  const showCanvasGrid = propShowCanvasGrid;
 
   if (
     !shapes ||
@@ -75,39 +78,44 @@ export function VectorDrawingCanvas(props: Partial<VectorCanvasProps>): React.JS
     return <div />;
   }
 
+  const contextValue = {
+    shapes,
+    tool,
+    activeShapeId,
+    selectedPointIndex,
+    onChange,
+    onSelectShape,
+    onSelectPoint,
+    brushRadius,
+    src,
+    allowWithoutImage,
+    showEmptyState,
+    emptyStateLabel,
+    maskPreviewEnabled,
+    maskPreviewShapes,
+    maskPreviewInvert,
+    maskPreviewOpacity,
+    maskPreviewFeather,
+    showCenterGuides,
+    enableTwoFingerRotate,
+    baseCanvasWidthPx,
+    baseCanvasHeightPx,
+    onViewCropRectChange,
+    onImageContentFrameChange,
+    showCanvasGrid: propShowCanvasGrid,
+    imageMoveEnabled,
+    selectionEnabled,
+    imageOffset,
+    onImageOffsetChange,
+    backgroundLayerEnabled,
+    backgroundColor,
+    className,
+    // Note: internal state and handlers will be populated by VectorCanvasInner
+  } as unknown as VectorCanvasContextValue;
+
   return (
-    <VectorCanvas
-      shapes={shapes}
-      tool={tool}
-      activeShapeId={activeShapeId}
-      selectedPointIndex={selectedPointIndex}
-      onChange={onChange}
-      onSelectShape={onSelectShape}
-      {...(onSelectPoint !== undefined ? { onSelectPoint } : {})}
-      brushRadius={brushRadius}
-      {...(src !== undefined ? { src } : {})}
-      {...(allowWithoutImage !== undefined ? { allowWithoutImage } : {})}
-      {...(showEmptyState !== undefined ? { showEmptyState } : {})}
-      {...(emptyStateLabel !== undefined ? { emptyStateLabel } : {})}
-      {...(maskPreviewEnabled !== undefined ? { maskPreviewEnabled } : {})}
-      {...(maskPreviewShapes !== undefined ? { maskPreviewShapes } : {})}
-      {...(maskPreviewInvert !== undefined ? { maskPreviewInvert } : {})}
-      {...(maskPreviewOpacity !== undefined ? { maskPreviewOpacity } : {})}
-      {...(maskPreviewFeather !== undefined ? { maskPreviewFeather } : {})}
-      {...(showCenterGuides !== undefined ? { showCenterGuides } : {})}
-      {...(enableTwoFingerRotate !== undefined ? { enableTwoFingerRotate } : {})}
-      {...(baseCanvasWidthPx !== undefined ? { baseCanvasWidthPx } : {})}
-      {...(baseCanvasHeightPx !== undefined ? { baseCanvasHeightPx } : {})}
-      {...(onViewCropRectChange !== undefined ? { onViewCropRectChange } : {})}
-      {...(onImageContentFrameChange !== undefined ? { onImageContentFrameChange } : {})}
-      {...(showCanvasGrid !== undefined ? { showCanvasGrid } : {})}
-      {...(imageMoveEnabled !== undefined ? { imageMoveEnabled } : {})}
-      {...(selectionEnabled !== undefined ? { selectionEnabled } : {})}
-      {...(imageOffset !== undefined ? { imageOffset } : {})}
-      {...(onImageOffsetChange !== undefined ? { onImageOffsetChange } : {})}
-      {...(backgroundLayerEnabled !== undefined ? { backgroundLayerEnabled } : {})}
-      {...(backgroundColor !== undefined ? { backgroundColor } : {})}
-      {...(className !== undefined ? { className } : {})}
-    />
+    <VectorCanvasProvider value={contextValue}>
+      <VectorCanvas />
+    </VectorCanvasProvider>
   );
 }

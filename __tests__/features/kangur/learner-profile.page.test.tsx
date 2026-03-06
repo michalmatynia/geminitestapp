@@ -144,6 +144,16 @@ describe('LearnerProfile page', () => {
     expect(screen.getByText('➕ Dodawanie')).toBeInTheDocument();
     expect(screen.getByText('✖️ Mnozenie')).toBeInTheDocument();
     expect(screen.getByText('➗ Dzielenie')).toBeInTheDocument();
+    const operationTrainingHrefs = screen
+      .getAllByRole('link', { name: 'Trenuj' })
+      .map((link) => link.getAttribute('href'));
+    expect(operationTrainingHrefs).toEqual(
+      expect.arrayContaining([
+        '/kangur/game?quickStart=operation&operation=multiplication&difficulty=hard',
+        '/kangur/game?quickStart=operation&operation=addition&difficulty=medium',
+        '/kangur/game?quickStart=operation&operation=division&difficulty=easy',
+      ])
+    );
     expect(screen.queryByRole('button', { name: /Zaloguj sie/i })).not.toBeInTheDocument();
   });
 

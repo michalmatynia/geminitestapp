@@ -146,12 +146,12 @@ export default function Game() {
   };
 
   useEffect(() => {
-    if (quickStartConsumedRef.current || screen !== 'home' || typeof window === 'undefined') {
-      return;
-    }
-
-    const isReadyForQuickStart = Boolean(user) || playerName.trim().length > 0;
-    if (!isReadyForQuickStart) {
+    if (
+      quickStartConsumedRef.current ||
+      screen !== 'home' ||
+      typeof window === 'undefined' ||
+      userLoading
+    ) {
       return;
     }
 
@@ -171,6 +171,9 @@ export default function Game() {
 
     if (quickStart === 'training') {
       quickStartConsumedRef.current = true;
+      if (!user && playerName.trim().length === 0) {
+        setPlayerName('Gracz');
+      }
       clearQuickStartParams();
       setScreen('training');
       return;
@@ -183,6 +186,9 @@ export default function Game() {
       const difficulty = isKangurDifficulty(requestedDifficulty) ? requestedDifficulty : 'medium';
 
       quickStartConsumedRef.current = true;
+      if (!user && playerName.trim().length === 0) {
+        setPlayerName('Gracz');
+      }
       clearQuickStartParams();
       if (operation) {
         handleSelectOperation(operation, difficulty);
@@ -190,7 +196,7 @@ export default function Game() {
         setScreen('operation');
       }
     }
-  }, [playerName, screen, user]);
+  }, [playerName, screen, user, userLoading]);
 
   const handleAnswer = (correct: boolean): void => {
     const newScore = correct ? score + 1 : score;

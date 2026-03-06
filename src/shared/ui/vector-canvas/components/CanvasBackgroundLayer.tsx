@@ -1,27 +1,18 @@
 import React from 'react';
+import { useVectorCanvasContext } from '../VectorCanvasContext';
 
-interface CanvasBackgroundLayerProps {
-  enabled: boolean;
-  color?: string;
-  width: number;
-  height: number;
-}
+export function CanvasBackgroundLayer(): React.JSX.Element | null {
+  const { backgroundLayerEnabled, backgroundColor, canvasRenderSize } = useVectorCanvasContext();
 
-export function CanvasBackgroundLayer({
-  enabled,
-  color,
-  width,
-  height,
-}: CanvasBackgroundLayerProps): React.JSX.Element | null {
-  if (!enabled) return null;
+  if (!backgroundLayerEnabled) return null;
 
   return (
     <div
       className='pointer-events-none absolute left-1/2 top-0 z-[1] -translate-x-1/2 border border-slate-700/70'
       style={{
-        width: `${width}px`,
-        height: `${height}px`,
-        backgroundColor: color,
+        width: `${canvasRenderSize.width}px`,
+        height: `${canvasRenderSize.height}px`,
+        backgroundColor: backgroundColor,
       }}
     />
   );

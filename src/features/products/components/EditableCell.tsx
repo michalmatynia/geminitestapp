@@ -86,7 +86,8 @@ export const EditableCell = memo(
       if (isSaving) return;
 
       const numValue = parseFloat(editValue);
-      if (isNaN(numValue) || numValue < 0) {
+      const isInvalidStockValue = field === 'stock' && !Number.isInteger(numValue);
+      if (isNaN(numValue) || numValue < 0 || isInvalidStockValue) {
         toast(`Invalid ${field} value`, { variant: 'error' });
         setEditValue(String(value ?? ''));
         setIsEditing(false);
@@ -126,10 +127,8 @@ export const EditableCell = memo(
     };
 
     const handleBlur = (): void => {
-      if (!isSaving) {
-        setEditValue(String(value ?? ''));
-        setIsEditing(false);
-      }
+      if (isSaving) return;
+      void handleSave();
     };
 
     if (isEditing) {

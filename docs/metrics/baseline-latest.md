@@ -1,13 +1,13 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-06T02:57:28.494Z
+Generated at: 2026-03-06T03:12:51.067Z
 
 ## Snapshot
 
-- Source files: 4348
-- Source lines: 714038
-- use client files: 1319
-- Files >= 1000 LOC: 14
+- Source files: 4363
+- Source lines: 714243
+- use client files: 1321
+- Files >= 1000 LOC: 12
 - Files >= 1500 LOC: 3
 - Largest file: `src/shared/lib/ai-paths/portable-engine/sinks.server.ts` (3026 LOC)
 - API routes: 314
@@ -71,16 +71,16 @@ Generated at: 2026-03-06T02:57:28.494Z
 | `src/shared/lib/ai-paths/core/runtime/engine-core.ts` | 1247 |
 | `src/app/api/ai-paths/portable-engine/trend-snapshots/handler.test.ts` | 1246 |
 | `src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx` | 1201 |
-| `src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx` | 1130 |
 | `src/features/ai/ai-paths/services/path-run-executor/index.ts` | 1119 |
-| `src/features/ai/ai-paths/services/runtime-analytics-service.ts` | 1107 |
+| `src/features/ai/ai-paths/services/runtime-analytics-service.ts` | 1085 |
 | `src/shared/lib/ai-paths/portable-engine/portable-engine-observability.ts` | 1084 |
-| `src/features/kangur/ui/components/KangurIllustrations.jsx` | 1024 |
 | `src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsServerExecution.ts` | 1001 |
 | `src/features/ai/ai-paths/services/path-run-service.ts` | 1001 |
+| `src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx` | 999 |
 | `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 989 |
 | `src/shared/contracts/ai-paths.ts` | 987 |
 | `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 961 |
 | `src/features/ai/ai-paths/components/JobQueueContext.tsx` | 957 |
 | `src/shared/lib/ai-paths/hooks/useAiPathTriggerEvent.ts` | 941 |
 | `src/shared/utils/folder-tree-profiles-v2/defaults.ts` | 940 |
+| `src/shared/contracts/image-studio.ts` | 936 |

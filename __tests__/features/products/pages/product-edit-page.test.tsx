@@ -140,6 +140,43 @@ describe('EditProductForm', () => {
     });
   }, 15000);
 
+  it('submits the updated product when Update is clicked', async () => {
+    const user = userEvent.setup();
+    const putSpy = vi.fn();
+
+    server.use(
+      http.put('/api/v2/products/1', async ({ request }) => {
+        const formData = await request.formData();
+        putSpy({
+          sku: formData.get('sku'),
+          name_en: formData.get('name_en'),
+        });
+
+        return HttpResponse.json({
+          ...mockProduct,
+          sku: String(formData.get('sku') ?? mockProduct.sku),
+          name_en: String(formData.get('name_en') ?? mockProduct.name_en),
+        });
+      })
+    );
+
+    renderWithProviders(<EditProductPage product={mockProduct} />);
+
+    const updateButton = await screen.findByRole('button', { name: /^Update$/i });
+    const skuInput = screen.getByLabelText(/SKU/i);
+
+    await user.clear(skuInput);
+    await user.type(skuInput, 'TEST-123-SAVED');
+    await user.click(updateButton);
+
+    await waitFor(() => {
+      expect(putSpy).toHaveBeenCalledWith({
+        sku: 'TEST-123-SAVED',
+        name_en: 'Test Product',
+      });
+    });
+  }, 15000);
+
   it('supports keyboard tab order across product tabs', async () => {
     const user = userEvent.setup();
     renderWithProviders(<EditProductPage product={mockProduct} />);

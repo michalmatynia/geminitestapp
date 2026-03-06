@@ -13,13 +13,17 @@ vi.mock('@/features/kangur/ui/components/ClockTrainingGame', () => ({
   default: (): React.JSX.Element => <div data-testid='mock-clock-training-game'>Mock Clock Training</div>,
 }));
 
-vi.mock('@/features/kangur/ui/services/progress', () => ({
-  addXp: (...args: unknown[]): unknown => addXpMock(...args),
-  loadProgress: (): unknown => loadProgressMock(),
-  XP_REWARDS: {
-    lesson_completed: 40,
-  },
-}));
+vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/ui/services/progress')>();
+  return {
+    ...actual,
+    addXp: (...args: unknown[]): unknown => addXpMock(...args),
+    loadProgress: (): unknown => loadProgressMock(),
+    XP_REWARDS: {
+      lesson_completed: 40,
+    },
+  };
+});
 
 describe('ClockLesson sectioned structure', () => {
   beforeEach(() => {

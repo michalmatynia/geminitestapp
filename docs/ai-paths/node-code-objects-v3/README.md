@@ -13,27 +13,27 @@ Current runtime scope uses the pilot list (`agent`, `ai_description`, `api_advan
 
 Runtime rollout controls:
 
-- `runtimeKernelMode: "legacy_only"` disables pilot strategy at execution time.
-- `runtimeKernelPilotNodeTypes` allows scoped pilot overrides for parity/canary runs.
+- `runtimeKernelPilotNodeTypes` allows scoped pilot overrides for parity/canary runs. An empty list disables contract-backed resolution and routes every node through `legacy_adapter`.
+- `runtimeKernelStrictNativeRegistry` keeps native resolution fail-closed by default and only allows legacy fallback when explicitly disabled.
 - Server runtime resolves pilot `code_object_v3` handlers through `contracts.json`.
 - Supported execution adapters:
   - `legacy_handler_bridge`
   - `native_handler_registry` (current pilot: `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`)
-- Native adapter path falls back to legacy bridge when native registry mapping is unavailable.
+- Native adapter path blocks missing mappings by default and only falls back to the legacy bridge when strict mode is explicitly disabled.
 - Client local runtime native subset now includes:
   - `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`
 - Remaining server-only native node families are:
   - `none`
 - Product/server runs can also read persisted global settings:
-  - `ai_paths_runtime_kernel_mode`: `auto | legacy_only`
   - `ai_paths_runtime_kernel_pilot_node_types`: JSON array or comma-delimited node types
   - `ai_paths_runtime_kernel_strict_native_registry`: `true | false`
 - Canvas admins can edit these persisted settings from the `Runtime Kernel` control group on the AI-Paths Canvas action bar.
 - `strict_native_registry` supports Canvas control (global + per-path override) and env/run-meta/settings API configuration.
 - Env vars override persisted settings:
-  - `AI_PATHS_RUNTIME_KERNEL_MODE`
   - `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES`
   - `AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY`
+- `runtimeKernelMode`, `ai_paths_runtime_kernel_mode`, and `AI_PATHS_RUNTIME_KERNEL_MODE` are deprecated compatibility inputs. They normalize to `auto` and are no longer active rollout controls.
+- `npm run cleanup:ai-paths-runtime-kernel-mode` rewrites stale persisted `legacy_only` values to the canonical `auto`.
 
 Generated migration documentation:
 

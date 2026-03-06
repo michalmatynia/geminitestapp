@@ -61,24 +61,23 @@ Server runtime resolves `code_object_v3` handlers through `docs/ai-paths/node-co
 Supported adapters:
 - `legacy_handler_bridge`
 - `native_handler_registry` (current pilot: `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`)
-For `native_handler_registry`, runtime falls back to legacy bridge when a native registry mapping is unavailable.
+For `native_handler_registry`, runtime now defaults to strict native resolution and blocks missing mappings unless strict mode is explicitly disabled.
 Client runtime now supports native execution for a broader local subset (`agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`).
 Remaining server-only native node families are tracked explicitly in runtime guardrails (`none`).
 
 Rollout control:
 
-- runtime option `runtimeKernelMode: "legacy_only"` forces all node types to resolve as `legacy_adapter` (kill switch).
-- runtime option `runtimeKernelPilotNodeTypes: string[]` allows scoped pilot overrides for test/canary execution.
+- runtime option `runtimeKernelPilotNodeTypes: string[]` allows scoped pilot overrides for test/canary execution. An empty list disables contract-backed resolution and forces all node types through `legacy_adapter`.
+- runtime option `runtimeKernelStrictNativeRegistry: boolean` controls whether missing native mappings fail closed (`true`, default) or fall back to the legacy bridge (`false`).
 - product-run executor supports global persisted settings:
-  - `ai_paths_runtime_kernel_mode`: `auto | legacy_only`
   - `ai_paths_runtime_kernel_pilot_node_types`: JSON array or comma-delimited node types
   - `ai_paths_runtime_kernel_strict_native_registry`: `true | false`
 - Admin UI control is available in AI-Paths Canvas action bar under `Runtime Kernel`.
 - `strict_native_registry` can be configured from Canvas runtime controls (global + per-path override), and from env/run-meta/settings API paths.
-- server env overrides persisted settings:
-  - `AI_PATHS_RUNTIME_KERNEL_MODE=legacy_only`
 - `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES=agent,api_advanced,audio_oscillator,audio_speaker,constant,context,bundle,compare,database,delay,db_schema,description_updater,ai_description,fetcher,gate,http,iterator,learner_agent,mapper,math,model,mutator,notification,parser,playwright,poll,prompt,regex,router,simulation,string_mutator,template,trigger,validation_pattern,validator,viewer`
 - `AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY=true`
+- `runtimeKernelMode`, `ai_paths_runtime_kernel_mode`, and `AI_PATHS_RUNTIME_KERNEL_MODE` remain deprecated compatibility inputs only. They are normalized to `auto` and should not be used for rollout control.
+- Use `npm run cleanup:ai-paths-runtime-kernel-mode` to rewrite stale persisted `legacy_only` settings.
 
 ## Directory
 

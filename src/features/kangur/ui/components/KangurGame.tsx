@@ -19,12 +19,11 @@ import {
   Q16Illustration,
 } from '@/features/kangur/ui/components/KangurIllustrations';
 import {
-  KangurGameProvider,
   useKangurGameContext,
 } from '@/features/kangur/ui/context/KangurGameContext';
 import { getKangurQuestions, isExamMode } from '@/features/kangur/ui/services/kangur-questions';
 import { XP_REWARDS, addXp, loadProgress } from '@/features/kangur/ui/services/progress';
-import type { KangurExamQuestion, KangurMode, KangurQuestionChoice } from '@/features/kangur/ui/types';
+import type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
 
 type IllustrationComponent = () => React.JSX.Element;
 

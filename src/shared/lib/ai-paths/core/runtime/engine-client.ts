@@ -9,7 +9,10 @@ import type {
 import { evaluateGraphInternal } from './engine-core';
 import { resolveAiPathsRuntimeCodeObjectHandler } from './code-object-resolver-registry';
 import { createNodeRuntimeKernel, toNodeRuntimeResolutionTelemetry } from './node-runtime-kernel';
-import { createNodeCodeObjectV3ContractResolver } from './node-code-object-v3-legacy-bridge';
+import {
+  createNodeCodeObjectV3ContractResolver,
+  resolveNodeCodeObjectV3ContractByCodeObjectId,
+} from './node-code-object-v3-legacy-bridge';
 import { buildPromptOutput } from './utils';
 import { aiGenerationApi, aiJobsApi } from '@/shared/lib/ai-paths/api';
 
@@ -410,6 +413,14 @@ const strictDefaultResolveCodeObjectHandler = createNodeCodeObjectV3ContractReso
   resolveNativeCodeObjectHandler,
   strictNativeRegistry: true,
 });
+const resolveUnsupportedClientCodeObjectHandler = ({
+  nodeType,
+  codeObjectId,
+}: {
+  nodeType: string;
+  codeObjectId: string;
+}): NodeHandler | null =>
+  resolveNodeCodeObjectV3ContractByCodeObjectId(codeObjectId) ? null : resolveLegacyHandler(nodeType);
 
 export async function evaluateGraphClient(
   argsOrNodes: EvaluateGraphArgs | AiNode[],
@@ -430,19 +441,30 @@ export async function evaluateGraphClient(
     resolvedOptions = argsOrNodes;
   }
 
+  const runtimeKernelStrictNativeRegistry =
+    resolvedOptions.runtimeKernelStrictNativeRegistry ?? true;
   const runtimeKernel = createNodeRuntimeKernel({
     resolveLegacyHandler,
-    resolveCodeObjectHandler: (args) =>
-      resolvedOptions.resolveCodeObjectHandler?.(args) ??
-      resolveAiPathsRuntimeCodeObjectHandler(args, {
-        resolverIds: resolvedOptions.runtimeKernelCodeObjectResolverIds,
-      }) ??
-      (resolvedOptions.runtimeKernelStrictNativeRegistry
-        ? strictDefaultResolveCodeObjectHandler(args)
-        : defaultResolveCodeObjectHandler(args)),
+    resolveCodeObjectHandler: (args) => {
+      const resolvedCodeObjectHandler =
+        resolvedOptions.resolveCodeObjectHandler?.(args) ??
+        resolveAiPathsRuntimeCodeObjectHandler(args, {
+          resolverIds: resolvedOptions.runtimeKernelCodeObjectResolverIds,
+        }) ??
+        (runtimeKernelStrictNativeRegistry
+          ? strictDefaultResolveCodeObjectHandler(args)
+          : defaultResolveCodeObjectHandler(args));
+      if (resolvedCodeObjectHandler) {
+        return resolvedCodeObjectHandler;
+      }
+      if (runtimeKernelStrictNativeRegistry) {
+        return resolveUnsupportedClientCodeObjectHandler(args);
+      }
+      return null;
+    },
     mode: resolvedOptions.runtimeKernelMode,
     v3PilotNodeTypes: resolvedOptions.runtimeKernelPilotNodeTypes,
-    runtimeKernelStrictNativeRegistry: resolvedOptions.runtimeKernelStrictNativeRegistry,
+    runtimeKernelStrictNativeRegistry,
   });
 
   return evaluateGraphInternal(nodes, resolvedEdges, {

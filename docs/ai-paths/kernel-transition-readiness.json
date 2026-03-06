@@ -201,8 +201,8 @@
       ],
       "adapterArtifact": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/segments/useLocalExecutionLoop.ts",
       "flags": [
-        "AI_PATHS_RUNTIME_KERNEL_MODE",
-        "AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES"
+        "AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES",
+        "AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY"
       ]
     },
     {
@@ -213,8 +213,8 @@
       ],
       "adapterArtifact": "src/features/ai/ai-paths/services/path-run-executor/index.ts",
       "flags": [
-        "AI_PATHS_RUNTIME_KERNEL_MODE",
-        "AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES"
+        "AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES",
+        "AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY"
       ]
     },
     {
@@ -224,15 +224,15 @@
       ],
       "adapterArtifact": "src/shared/lib/ai-paths/portable-engine/index.ts",
       "flags": [
-        "AI_PATHS_RUNTIME_KERNEL_MODE",
-        "AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES"
+        "AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES",
+        "AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY"
       ]
     }
   ],
   "rollout": {
     "killSwitches": [
-      "AI_PATHS_RUNTIME_KERNEL_MODE",
-      "AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES"
+      "AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES",
+      "AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY"
     ],
     "waves": [
       {
@@ -274,7 +274,8 @@
       "docs:ai-paths:kernel-transition:check",
       "docs:ai-paths:node-docs:check",
       "ai-paths:check:portable-schema-diff",
-      "test:ai-paths:v3-pilot-parity"
+      "test:ai-paths:runtime-kernel:integration",
+      "test:ai-paths:rollout:gate"
     ]
   }
 }

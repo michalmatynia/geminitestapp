@@ -8,24 +8,24 @@ export type UseMarkdownSplitResizerProps = {
   onEditorWidthChange?:
     | ((next: number | null | ((prev: number | null) => number | null)) => void)
     | undefined;
-  isDraggingSplitter: boolean;
-  onDraggingSplitterChange?: ((dragging: boolean) => void) | undefined;
-  showPreview: boolean;
+  isDragging?: boolean | undefined;
+  onDraggingChange?: ((dragging: boolean) => void) | undefined;
+  showPreview?: boolean;
 };
 
 export function useMarkdownSplitResizer({
   splitRef,
   editorWidth,
   onEditorWidthChange,
-  isDraggingSplitter,
-  onDraggingSplitterChange,
-  showPreview,
+  isDragging,
+  onDraggingChange,
+  showPreview = true,
 }: UseMarkdownSplitResizerProps) {
   const [localIsDragging, setLocalIsDragging] = React.useState(false);
   const [localEditorWidth, setLocalEditorWidth] = React.useState<number | null>(null);
 
   const effectiveEditorWidth = onEditorWidthChange ? editorWidth : localEditorWidth;
-  const effectiveIsDragging = onDraggingSplitterChange ? isDraggingSplitter : localIsDragging;
+  const effectiveIsDragging = onDraggingChange ? isDragging : localIsDragging;
 
   const updateEditorWidth = React.useCallback(
     (next: number | null | ((prev: number | null) => number | null)): void => {
@@ -44,13 +44,21 @@ export function useMarkdownSplitResizer({
 
   const updateDragging = React.useCallback(
     (next: boolean): void => {
-      if (onDraggingSplitterChange) {
-        onDraggingSplitterChange(next);
+      if (onDraggingChange) {
+        onDraggingChange(next);
         return;
       }
       setLocalIsDragging(next);
     },
-    [onDraggingSplitterChange]
+    [onDraggingChange]
+  );
+
+  const handleMouseDown = React.useCallback(
+    (event: React.MouseEvent): void => {
+      event.preventDefault();
+      updateDragging(true);
+    },
+    [updateDragging]
   );
 
   React.useEffect((): void => {
@@ -89,5 +97,6 @@ export function useMarkdownSplitResizer({
     editorWidth: effectiveEditorWidth,
     isDragging: effectiveIsDragging,
     updateDragging,
+    handleMouseDown,
   };
 }

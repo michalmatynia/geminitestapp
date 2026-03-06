@@ -1,9 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  AI_PATHS_RUNTIME_KERNEL_MODE_KEY,
-  AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
-} from '@/shared/lib/ai-paths';
+import { AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY } from '@/shared/lib/ai-paths';
 import { fetchAiPathsSettingsByKeysCached } from '@/shared/lib/ai-paths/settings-store-client';
 
 import { AiPathsCanvasView } from '../sections/AiPathsCanvasView';
@@ -79,9 +76,8 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
 }));
 
 describe('AiPathsCanvasView switch guard', () => {
-  it('shows effective runtime-kernel mode source from settings while path mode inherits', async () => {
+  it('shows effective strict-native source from settings while path settings inherit', async () => {
     mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([
-      { key: AI_PATHS_RUNTIME_KERNEL_MODE_KEY, value: 'legacy_only' },
       { key: AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY, value: 'true' },
     ]);
     pageContextMock = {
@@ -159,8 +155,6 @@ describe('AiPathsCanvasView switch guard', () => {
     render(<AiPathsCanvasView />);
 
     await waitFor(() => {
-      expect(screen.getByText('Mode: Auto (settings)')).toBeInTheDocument();
-      expect(screen.getByText('Effective: Auto (settings)')).toBeInTheDocument();
       expect(screen.getAllByText('Strict Native: On (settings)').length).toBeGreaterThan(0);
     });
   });

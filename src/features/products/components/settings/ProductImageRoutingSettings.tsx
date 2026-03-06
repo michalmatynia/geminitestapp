@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import {
@@ -12,12 +12,9 @@ import {
   PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY,
 } from '@/shared/lib/products/constants';
 import { normalizeProductImageExternalBaseUrl } from '@/shared/utils/image-routing';
-import {
-  normalizeProductStudioSequenceGenerationMode,
-  type ProductStudioSequenceGenerationMode,
-} from '@/shared/contracts/products';
+import { type ProductStudioSequenceGenerationMode } from '@/shared/contracts/products';
 import { useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import {
   Button,
   FormField,
@@ -68,27 +65,20 @@ const STUDIO_PROJECT_NONE = '__product_studio_not_connected__';
 export function ProductImageRoutingSettings(): React.JSX.Element {
   const router = useRouter();
   const { toast } = useToast();
-  const settingsStore = useSettingsStore();
-  const settingsStoreRef = useRef(settingsStore);
-  settingsStoreRef.current = settingsStore;
+  const {
+    imageExternalBaseUrl: persistedBaseUrlRaw,
+    imageExternalRoutesRaw: persistedRoutesRaw,
+    defaultProjectId: persistedStudioProject,
+    sequenceGenerationMode: persistedSequenceGenerationMode,
+    refetch: refetchSettings,
+  } = useProductSettings();
+  const persistedBaseUrl =
+    normalizeProductImageExternalBaseUrl(persistedBaseUrlRaw) ||
+    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
   const studioProjectsQuery = useStudioProjects();
   const updateStudioProjectSetting = useUpdateSetting();
   const updateSequenceGenerationModeSetting = useUpdateSetting();
   const updateSettingsBulk = useUpdateSettingsBulk();
-
-  const persistedBaseUrlRaw =
-    settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
-    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
-  const persistedBaseUrl =
-    normalizeProductImageExternalBaseUrl(persistedBaseUrlRaw) ||
-    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
-  const persistedRoutesRaw = settingsStore.get(PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY) ?? null;
-  const persistedStudioProjectRaw =
-    settingsStore.get(PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY) ?? '';
-  const persistedStudioProject = persistedStudioProjectRaw.trim();
-  const persistedSequenceGenerationMode = normalizeProductStudioSequenceGenerationMode(
-    settingsStore.get(PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY)
-  );
 
   const [routes, setRoutes] = useState<string[]>(
     parseRoutesSetting(persistedRoutesRaw, persistedBaseUrl)
@@ -219,7 +209,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
       },
       {
         onSuccess: () => {
-          settingsStoreRef.current.refetch();
+          refetchSettings();
           toast('Image Studio default project saved.', { variant: 'success' });
         },
         onError: () => {
@@ -237,7 +227,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
       },
       {
         onSuccess: () => {
-          settingsStoreRef.current.refetch();
+          refetchSettings();
           toast('Image Studio sequence generation mode saved.', {
             variant: 'success',
           });

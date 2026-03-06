@@ -22,40 +22,40 @@ describe('normalizeAiPathRunRuntimeKernelMetadata', () => {
     ]);
     expect(result.meta).toEqual({
       runtimeKernelConfig: {
-        mode: 'auto',
         nodeTypes: ['template_node', 'parser'],
         codeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
-        strictNativeRegistry: true,
       },
     });
   });
 
-  it('normalizes runtime-kernel telemetry aliases and typed values', () => {
+  it('prunes deprecated runtime-kernel telemetry aliases and typed values', () => {
     const result = normalizeAiPathRunRuntimeKernelMetadata({
       runtimeKernel: {
         runtimeKernelMode: 'legacy_only',
+        runtimeKernelModeSource: 'default',
         runtimeKernelPilotNodeTypes: ['constant', 'template'],
         runtimeKernelPilotNodeTypesSource: ' path ',
         runtimeKernelCodeObjectResolverIds: ' resolver.primary , resolver.fallback ',
         runtimeKernelStrictNativeRegistry: '1',
+        runtimeKernelStrictNativeRegistrySource: 'default',
       },
     });
 
     expect(result.changed).toBe(true);
     expect(result.changedFields).toEqual([
       'runtimeKernel.mode',
+      'runtimeKernel.modeSource',
       'runtimeKernel.nodeTypes',
       'runtimeKernel.nodeTypesSource',
       'runtimeKernel.codeObjectResolverIds',
       'runtimeKernel.strictNativeRegistry',
+      'runtimeKernel.strictNativeRegistrySource',
     ]);
     expect(result.meta).toEqual({
       runtimeKernel: {
-        runtimeKernelMode: 'auto',
         runtimeKernelNodeTypes: ['constant', 'template'],
         runtimeKernelNodeTypesSource: 'path',
         runtimeKernelCodeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
-        runtimeKernelStrictNativeRegistry: true,
       },
     });
   });
@@ -63,17 +63,13 @@ describe('normalizeAiPathRunRuntimeKernelMetadata', () => {
   it('returns unchanged metadata when values are already canonical', () => {
     const meta = {
       runtimeKernelConfig: {
-        mode: 'auto',
         nodeTypes: ['constant'],
         codeObjectResolverIds: ['resolver.primary'],
-        strictNativeRegistry: true,
       },
       runtimeKernel: {
-        runtimeKernelMode: 'auto',
         runtimeKernelNodeTypes: ['constant'],
         runtimeKernelNodeTypesSource: 'settings',
         runtimeKernelCodeObjectResolverIds: ['resolver.primary'],
-        runtimeKernelStrictNativeRegistry: true,
       },
     };
 

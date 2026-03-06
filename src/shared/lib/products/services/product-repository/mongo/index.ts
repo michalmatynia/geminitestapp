@@ -1,11 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-
-/* eslint-disable @typescript-eslint/no-unsafe-return */
+ 
+ 
 
 import 'server-only';
 
+import { Collection } from 'mongodb';
 import { ProductDocument } from '../mongo-product-repository-mappers';
 import {
   ProductFilters,
@@ -64,7 +62,7 @@ const ensureProductIndexes = async (): Promise<void> => {
   }
 };
 
-const getProductCollection = async () => {
+const getProductCollection = async (): Promise<Collection<ProductDocument>> => {
   await ensureProductIndexes();
   const db = await getMongoDb();
   return db.collection<ProductDocument>(productCollectionName);
@@ -118,7 +116,9 @@ export const mongoProductRepository: ProductRepository = {
   },
 
   async bulkCreateProducts(data: ProductCreateInput[]): Promise<number> {
-    return mongoProductWriteImpl.bulkCreateProducts(data, (d: any) => this.createProduct(d));
+    return mongoProductWriteImpl.bulkCreateProducts(data, (d: ProductCreateInput) =>
+      this.createProduct(d)
+    );
   },
 
   async duplicateProduct(id: string, sku: string): Promise<ProductRecord | null> {
@@ -126,7 +126,7 @@ export const mongoProductRepository: ProductRepository = {
       id,
       sku,
       (pid: string) => this.getProductById(pid),
-      (d: any) => this.createProduct(d)
+      (d: ProductCreateInput) => this.createProduct(d)
     );
   },
 
@@ -225,7 +225,7 @@ export const mongoProductRepository: ProductRepository = {
     );
   },
 
-  async createProductInTransaction<T>(callback: (tx: any) => Promise<T>): Promise<T> {
+  async createProductInTransaction<T>(callback: (tx: ProductRepository) => Promise<T>): Promise<T> {
     return callback(this);
   },
 };

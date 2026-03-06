@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { LogIn, LogOut, BookOpen, ArrowLeft, LayoutDashboard, UserRound } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { LogIn, BookOpen, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
@@ -11,6 +11,10 @@ import {
   ResultScreen,
   TrainingSetup,
 } from '@/features/kangur/ui/components/game';
+import KangurAssignmentSpotlight from '@/features/kangur/ui/components/KangurAssignmentSpotlight';
+import KangurPriorityAssignments from '@/features/kangur/ui/components/KangurPriorityAssignments';
+import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
+import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
 import { PlayerProgressCard, XpToast } from '@/features/kangur/ui/components/progress';
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { logKangurClientError } from '@/features/kangur/observability/client';
@@ -19,6 +23,7 @@ import type { KangurPlatform, KangurUser } from '@/features/kangur/services/port
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { KangurGameProvider } from '@/features/kangur/ui/context/KangurGameContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import {
@@ -27,6 +32,12 @@ import {
   generateTrainingQuestions,
 } from '@/features/kangur/ui/services/math-questions';
 import { XP_REWARDS, addXp, loadProgress } from '@/features/kangur/ui/services/progress';
+import {
+  mapKangurPracticeAssignmentsByOperation,
+  parseKangurMixedTrainingQuickStartParams,
+  selectKangurPracticeAssignmentForScreen,
+  selectKangurResultPracticeAssignment,
+} from '@/features/kangur/ui/services/delegated-assignments';
 import type {
   KangurDifficulty,
   KangurGameScreen,
@@ -119,6 +130,12 @@ export default function Game() {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [timeTaken, setTimeTaken] = useState(0);
   const progress = useKangurProgressState();
+  const { assignments: delegatedAssignments, refresh: refreshAssignments } = useKangurAssignments({
+    enabled: Boolean(user),
+    query: {
+      includeArchived: false,
+    },
+  });
   const [xpToast, setXpToast] = useState<KangurXpToastState>({
     visible: false,
     xpGained: 0,
@@ -209,6 +226,8 @@ export default function Game() {
     const clearQuickStartParams = (): void => {
       url.searchParams.delete('quickStart');
       url.searchParams.delete('operation');
+      url.searchParams.delete('categories');
+      url.searchParams.delete('count');
       url.searchParams.delete('difficulty');
       const nextHref = `${url.pathname}${url.search}${url.hash}`;
       window.history.replaceState({}, '', nextHref);
@@ -219,7 +238,12 @@ export default function Game() {
       if (!user && playerName.trim().length === 0) {
         setPlayerName('Gracz');
       }
+      const trainingPreset = parseKangurMixedTrainingQuickStartParams(url.searchParams);
       clearQuickStartParams();
+      if (trainingPreset) {
+        handleStartTraining(trainingPreset);
+        return;
+      }
       setScreen('training');
       return;
     }
@@ -252,14 +276,20 @@ export default function Game() {
       const selectedOperation = operation ?? 'mixed';
       setTimeTaken(taken);
       setScore(newScore);
-      void kangurPlatform.score.create({
-        player_name: playerName,
-        score: newScore,
-        operation: selectedOperation,
-        total_questions: TOTAL_QUESTIONS,
-        correct_answers: newScore,
-        time_taken: taken,
-      });
+      void kangurPlatform.score
+        .create({
+          player_name: playerName,
+          score: newScore,
+          operation: selectedOperation,
+          total_questions: TOTAL_QUESTIONS,
+          correct_answers: newScore,
+          time_taken: taken,
+        })
+        .finally(() => {
+          if (user) {
+            void refreshAssignments();
+          }
+        });
 
       // XP & progress
       const prog = loadProgress();
@@ -299,6 +329,21 @@ export default function Game() {
   };
 
   const activeQuestion = questions[current];
+  const practiceAssignmentsByOperation = useMemo(
+    () => mapKangurPracticeAssignmentsByOperation(delegatedAssignments),
+    [delegatedAssignments]
+  );
+  const activePracticeAssignment = useMemo(
+    () => selectKangurPracticeAssignmentForScreen(delegatedAssignments, screen, operation),
+    [delegatedAssignments, operation, screen]
+  );
+  const resultPracticeAssignment = useMemo(
+    () =>
+      screen === 'result'
+        ? selectKangurResultPracticeAssignment(delegatedAssignments, operation)
+        : null,
+    [delegatedAssignments, operation, screen]
+  );
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex flex-col items-center'>
@@ -311,35 +356,37 @@ export default function Game() {
       <div
         className='sticky top-0 z-20 w-full bg-white/70 backdrop-blur border-b border-indigo-100 px-6 py-3 flex items-center justify-between'
       >
-        <div>
+        <div className='flex items-center gap-3'>
           {screen !== 'home' && (
             <button
               onClick={handleHome}
-              className='inline-flex items-center gap-2 text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
+              className='inline-flex items-center text-indigo-500 hover:text-indigo-700 font-semibold text-sm transition'
             >
-              <ArrowLeft className='w-4 h-4' /> Strona główna
+              Strona główna
             </button>
           )}
-        </div>
-        <div className='flex items-center gap-3'>
           <Link
             href={createPageUrl('Lessons', basePath)}
             className='inline-flex items-center gap-1.5 text-sm text-purple-500 hover:text-purple-700 font-semibold transition'
           >
             <BookOpen className='w-4 h-4' /> Lekcje
           </Link>
-          <Link
-            href={createPageUrl('LearnerProfile', basePath)}
-            className='inline-flex items-center gap-1.5 text-sm text-indigo-500 hover:text-indigo-700 font-semibold transition'
-          >
-            <UserRound className='w-4 h-4' /> Profil
-          </Link>
-          <Link
-            href={createPageUrl('ParentDashboard', basePath)}
-            className='inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 font-semibold transition'
-          >
-            <LayoutDashboard className='w-4 h-4' /> Rodzic
-          </Link>
+        </div>
+        <div className='flex items-center gap-3'>
+          <KangurProfileMenu
+            basePath={basePath}
+            isAuthenticated={Boolean(user)}
+            onLogout={handleLogout}
+            onLogin={handleLogin}
+          />
+          {user?.canManageLearners && (
+            <Link
+              href={createPageUrl('ParentDashboard', basePath)}
+              className='inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 font-semibold transition'
+            >
+              <LayoutDashboard className='w-4 h-4' /> Rodzic
+            </Link>
+          )}
         </div>
       </div>
 
@@ -354,25 +401,16 @@ export default function Game() {
             <span aria-hidden='true'>🧮 </span>
             {GAME_BRAND_NAME}
           </h1>
-          {!userLoading && (
+          {!userLoading && !user ? (
             <div className='mt-3 flex justify-center'>
-              {user ? (
-                <button
-                  onClick={handleLogout}
-                  className='flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 transition'
-                >
-                  <LogOut className='w-4 h-4' /> Wyloguj ({user.full_name})
-                </button>
-              ) : (
-                <button
-                  onClick={handleLogin}
-                  className='flex items-center gap-2 text-sm bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-2xl shadow transition font-semibold'
-                >
-                  <LogIn className='w-4 h-4' /> Zaloguj się, aby wejść na tablicę wyników
-                </button>
-              )}
+              <button
+                onClick={handleLogin}
+                className='flex items-center gap-2 text-sm bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-2xl shadow transition font-semibold'
+              >
+                <LogIn className='w-4 h-4' /> Zaloguj się, aby wejść na tablicę wyników
+              </button>
             </div>
-          )}
+          ) : null}
         </motion.div>
 
         <AnimatePresence mode='wait'>
@@ -389,9 +427,7 @@ export default function Game() {
                     <h2 className='text-2xl font-bold text-gray-700'>
                       Cześć, {user.full_name}! 🎉
                     </h2>
-                    <p className='text-gray-400 text-sm text-center'>
-                      Jesteś zalogowany/a. Twoje wyniki będą zapisane na tablicy!
-                    </p>
+                    <KangurAssignmentSpotlight basePath={basePath} />
                     <Link href={createPageUrl('Lessons', basePath)} className='w-full'>
                       <motion.div
                         whileHover={{ scale: 1.05 }}
@@ -503,6 +539,14 @@ export default function Game() {
                   </>
                 )}
               </div>
+              <div className='w-full max-w-2xl'>
+                <KangurPriorityAssignments
+                  basePath={basePath}
+                  enabled={Boolean(user)}
+                  title='Priorytetowe zadania'
+                  emptyLabel='Brak aktywnych zadan od rodzica.'
+                />
+              </div>
               <Leaderboard />
             </motion.div>
           )}
@@ -513,6 +557,15 @@ export default function Game() {
               {...screenMotionProps}
               className='w-full flex flex-col items-center'
             >
+              {activePracticeAssignment ? (
+                <div className='mb-4 w-full flex justify-center px-4'>
+                  <KangurPracticeAssignmentBanner
+                    assignment={activePracticeAssignment}
+                    basePath={basePath}
+                    mode='active'
+                  />
+                </div>
+              ) : null}
               <TrainingSetup onStart={handleStartTraining} onBack={() => setScreen('home')} />
             </motion.div>
           )}
@@ -576,7 +629,19 @@ export default function Game() {
               <p className='text-gray-500 mb-4 text-lg'>
                 Cześć, <span className='font-bold text-indigo-500'>{playerName}</span>! 👋
               </p>
-              <OperationSelector onSelect={handleSelectOperation} />
+              {activePracticeAssignment ? (
+                <div className='mb-4 w-full flex justify-center px-4'>
+                  <KangurPracticeAssignmentBanner
+                    assignment={activePracticeAssignment}
+                    basePath={basePath}
+                    mode='queue'
+                  />
+                </div>
+              ) : null}
+              <OperationSelector
+                onSelect={handleSelectOperation}
+                priorityAssignmentsByOperation={practiceAssignmentsByOperation}
+              />
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.97 }}
@@ -602,6 +667,15 @@ export default function Game() {
               {...screenMotionProps}
               className='flex flex-col items-center w-full'
             >
+              {activePracticeAssignment ? (
+                <div className='mb-4 w-full flex justify-center px-4'>
+                  <KangurPracticeAssignmentBanner
+                    assignment={activePracticeAssignment}
+                    basePath={basePath}
+                    mode='active'
+                  />
+                </div>
+              ) : null}
               <div className='flex justify-between items-center w-full max-w-md mb-4 px-2'>
                 <span className='text-gray-500 font-semibold'>
                   ⭐ Wynik: <span className='text-indigo-600 font-bold'>{score}</span>
@@ -626,6 +700,19 @@ export default function Game() {
               {...screenMotionProps}
               className='flex flex-col items-center w-full gap-6'
             >
+              {resultPracticeAssignment ? (
+                <div className='w-full flex justify-center px-4'>
+                  <KangurPracticeAssignmentBanner
+                    assignment={resultPracticeAssignment}
+                    basePath={basePath}
+                    mode={
+                      resultPracticeAssignment.progress.status === 'completed'
+                        ? 'completed'
+                        : 'active'
+                    }
+                  />
+                </div>
+              ) : null}
               <ResultScreen
                 score={score}
                 total={TOTAL_QUESTIONS}

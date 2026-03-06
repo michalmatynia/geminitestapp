@@ -13,7 +13,7 @@ const buildHandler = (label: string): NodeHandler =>
   }));
 
 describe('node-runtime-kernel', () => {
-  it('resolves canonical runtime-kernel node types through code_object_v3 strategy while keeping legacy handlers', () => {
+  it('fails closed for contract-backed canonical node types when no code-object resolver is available', () => {
     const constantHandler = buildHandler('constant');
     const templateHandler = buildHandler('template');
     const mathHandler = buildHandler('math');
@@ -29,14 +29,16 @@ describe('node-runtime-kernel', () => {
 
     const descriptor = runtimeKernel.resolveDescriptor('constant');
     expect(descriptor.strategy).toBe('code_object_v3');
-    expect(descriptor.source).toBe('registry');
+    expect(descriptor.source).toBe('missing');
     expect(descriptor.codeObjectId).toBe('ai-paths.node-code-object.constant.v3');
-    expect(runtimeKernel.resolveHandler('constant')).toBe(constantHandler);
+    expect(runtimeKernel.resolveHandler('constant')).toBeNull();
 
     const templateDescriptor = runtimeKernel.resolveDescriptor('template');
     expect(templateDescriptor.strategy).toBe('code_object_v3');
     expect(templateDescriptor.codeObjectId).toBe('ai-paths.node-code-object.template.v3');
-    expect(runtimeKernel.resolveHandler('template')).toBe(templateHandler);
+    expect(templateDescriptor.source).toBe('missing');
+    expect(runtimeKernel.resolveHandler('template')).toBeNull();
+    expect(runtimeKernel.resolveHandler('math')).toBeNull();
   });
 
   it('prefers direct code-object handlers for canonical runtime-kernel node types when provided', () => {
@@ -66,7 +68,7 @@ describe('node-runtime-kernel', () => {
     });
   });
 
-  it('falls back to legacy handlers when direct code-object handler is unavailable', () => {
+  it('fails closed for contract-backed nodes when direct code-object handler is unavailable', () => {
     const legacyMathHandler = buildHandler('legacy-math');
     const resolveCodeObjectHandler = vi.fn(() => null);
 
@@ -74,28 +76,6 @@ describe('node-runtime-kernel', () => {
       resolveLegacyHandler: (nodeType: string) => (nodeType === 'math' ? legacyMathHandler : null),
       resolveCodeObjectHandler,
       runtimeKernelNodeTypes: ['math'],
-    });
-
-    const descriptor = runtimeKernel.resolveDescriptor('math');
-    expect(descriptor.strategy).toBe('code_object_v3');
-    expect(descriptor.source).toBe('registry');
-    expect(descriptor.handler).toBe(legacyMathHandler);
-    expect(runtimeKernel.resolveHandler('math')).toBe(legacyMathHandler);
-    expect(resolveCodeObjectHandler).toHaveBeenCalledWith({
-      nodeType: 'math',
-      codeObjectId: 'ai-paths.node-code-object.math.v3',
-    });
-  });
-
-  it('keeps missing descriptor when strict native registry mode is enabled', () => {
-    const legacyMathHandler = buildHandler('legacy-math');
-    const resolveCodeObjectHandler = vi.fn(() => null);
-
-    const runtimeKernel = createNodeRuntimeKernel({
-      resolveLegacyHandler: (nodeType: string) => (nodeType === 'math' ? legacyMathHandler : null),
-      resolveCodeObjectHandler,
-      runtimeKernelNodeTypes: ['math'],
-      runtimeKernelStrictNativeRegistry: true,
     });
 
     const descriptor = runtimeKernel.resolveDescriptor('math');
@@ -106,6 +86,51 @@ describe('node-runtime-kernel', () => {
     expect(resolveCodeObjectHandler).toHaveBeenCalledWith({
       nodeType: 'math',
       codeObjectId: 'ai-paths.node-code-object.math.v3',
+    });
+  });
+
+  it('falls back to legacy handlers for experimental runtime-kernel node types without contract entries', () => {
+    const legacyExperimentalHandler = buildHandler('legacy-experimental');
+    const resolveCodeObjectHandler = vi.fn(() => null);
+
+    const runtimeKernel = createNodeRuntimeKernel({
+      resolveLegacyHandler: (nodeType: string) =>
+        nodeType === 'experimental_type' ? legacyExperimentalHandler : null,
+      resolveCodeObjectHandler,
+      runtimeKernelNodeTypes: ['experimental_type'],
+    });
+
+    const descriptor = runtimeKernel.resolveDescriptor('experimental_type');
+    expect(descriptor.strategy).toBe('code_object_v3');
+    expect(descriptor.source).toBe('registry');
+    expect(descriptor.handler).toBe(legacyExperimentalHandler);
+    expect(runtimeKernel.resolveHandler('experimental_type')).toBe(legacyExperimentalHandler);
+    expect(resolveCodeObjectHandler).toHaveBeenCalledWith({
+      nodeType: 'experimental_type',
+      codeObjectId: 'ai-paths.node-code-object.experimental_type.v3',
+    });
+  });
+
+  it('keeps experimental runtime-kernel node types missing when strict native registry mode is enabled', () => {
+    const legacyExperimentalHandler = buildHandler('legacy-experimental');
+    const resolveCodeObjectHandler = vi.fn(() => null);
+
+    const runtimeKernel = createNodeRuntimeKernel({
+      resolveLegacyHandler: (nodeType: string) =>
+        nodeType === 'experimental_type' ? legacyExperimentalHandler : null,
+      resolveCodeObjectHandler,
+      runtimeKernelNodeTypes: ['experimental_type'],
+      runtimeKernelStrictNativeRegistry: true,
+    });
+
+    const descriptor = runtimeKernel.resolveDescriptor('experimental_type');
+    expect(descriptor.strategy).toBe('code_object_v3');
+    expect(descriptor.source).toBe('missing');
+    expect(descriptor.handler).toBeNull();
+    expect(runtimeKernel.resolveHandler('experimental_type')).toBeNull();
+    expect(resolveCodeObjectHandler).toHaveBeenCalledWith({
+      nodeType: 'experimental_type',
+      codeObjectId: 'ai-paths.node-code-object.experimental_type.v3',
     });
   });
 
@@ -152,11 +177,14 @@ describe('node-runtime-kernel', () => {
     expect(runtimeKernel.resolveHandler('unknown_type')).toBeNull();
   });
 
-  it('supports custom runtime-kernel node type lists for staged migration rollouts', () => {
+  it('supports custom runtime-kernel node type lists when a resolver is provided', () => {
     const databaseHandler = buildHandler('database');
     const runtimeKernel = createNodeRuntimeKernel({
-      resolveLegacyHandler: (nodeType: string) =>
-        nodeType === 'database' ? databaseHandler : null,
+      resolveLegacyHandler: () => null,
+      resolveCodeObjectHandler: ({ nodeType, codeObjectId }: { nodeType: string; codeObjectId: string }) =>
+        nodeType === 'database' && codeObjectId === 'ai-paths.node-code-object.database.v3'
+          ? databaseHandler
+          : null,
       runtimeKernelNodeTypes: ['database'],
     });
 
@@ -164,6 +192,7 @@ describe('node-runtime-kernel', () => {
     expect(descriptor.strategy).toBe('code_object_v3');
     expect(descriptor.codeObjectId).toBe('ai-paths.node-code-object.database.v3');
     expect(descriptor.handler).toBe(databaseHandler);
+    expect(descriptor.source).toBe('registry');
   });
 
   it('normalizes unknown runtime kernel mode to auto', () => {

@@ -15,6 +15,7 @@ const {
   scoreFilterMock,
   loadProgressMock,
   navigateToLoginMock,
+  logoutMock,
   logKangurClientErrorMock,
 } = vi.hoisted(() => ({
   useKangurRoutingMock: vi.fn(),
@@ -22,6 +23,7 @@ const {
   scoreFilterMock: vi.fn(),
   loadProgressMock: vi.fn(),
   navigateToLoginMock: vi.fn(),
+  logoutMock: vi.fn(),
   logKangurClientErrorMock: vi.fn(),
 }));
 
@@ -43,6 +45,11 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
 
 vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurLearnerAssignmentsPanel', () => ({
+  __esModule: true,
+  default: () => <div data-testid='kangur-learner-assignments-panel' />,
 }));
 
 vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
@@ -117,6 +124,7 @@ describe('LearnerProfile page', () => {
     useKangurAuthMock.mockReturnValue({
       user: createUser(),
       navigateToLogin: navigateToLoginMock,
+      logout: logoutMock,
     });
   });
 
@@ -183,6 +191,7 @@ describe('LearnerProfile page', () => {
     useKangurAuthMock.mockReturnValue({
       user: null,
       navigateToLogin: navigateToLoginMock,
+      logout: logoutMock,
     });
 
     render(<LearnerProfile />);

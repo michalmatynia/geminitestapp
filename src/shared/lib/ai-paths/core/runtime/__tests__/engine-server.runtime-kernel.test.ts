@@ -240,7 +240,7 @@ describe('engine-server runtime-kernel resolver wiring', () => {
     expect(result.outputs?.['node-compare']?.['value']).toBe('legacy');
   });
 
-  it('fails fast on unresolved code-object handlers when strict native registry mode is enabled', async () => {
+  it('fails fast on unresolved code-object handlers by default for runtime-kernel entrypoints', async () => {
     const resolveCodeObjectHandler = vi.fn(() => null);
 
     await expect(
@@ -248,7 +248,6 @@ describe('engine-server runtime-kernel resolver wiring', () => {
         nodes: [buildFunctionNode()],
         edges: [],
         runtimeKernelNodeTypes: ['function'],
-        runtimeKernelStrictNativeRegistry: true,
         resolveCodeObjectHandler,
         reportAiPathsError: (): void => {},
       })

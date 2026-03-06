@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import React, { useCallback, useRef, useState } from 'react';
 import {
   MasterFolderTreeController,
@@ -12,14 +10,26 @@ import { getMasterTreeDragNodeData } from '../operations/drag-data';
 import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
 import { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
 
+export type FolderTreeDropInput = {
+  draggedNodeId: MasterTreeId;
+  targetId: MasterTreeId | null;
+  position: MasterTreeDropPositionDto;
+  defaultAllowed: boolean;
+};
+
+export type FolderTreeResolveDropPositionInput = {
+  draggedNodeId: MasterTreeId;
+  targetId: MasterTreeId;
+};
+
 export function useFolderTreeViewportDnd(args: {
   controller: MasterFolderTreeController;
   enableDnd: boolean;
-  canDrop?: (input: any, controller: MasterFolderTreeController) => boolean;
-  onNodeDrop?: (input: any, controller: MasterFolderTreeController) => Promise<void> | void;
+  canDrop?: (input: FolderTreeDropInput, controller: MasterFolderTreeController) => boolean;
+  onNodeDrop?: (input: FolderTreeDropInput, controller: MasterFolderTreeController) => Promise<void> | void;
   resolveDropPosition?: (
-    event: any,
-    input: any,
+    event: React.DragEvent<HTMLElement>,
+    input: FolderTreeResolveDropPositionInput,
     controller: MasterFolderTreeController
   ) => MasterTreeDropPositionDto;
   resolveDraggedNodeId?: (event: React.DragEvent<HTMLElement>) => MasterTreeId | null;

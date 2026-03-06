@@ -77,7 +77,7 @@ describe('node-code-object-v3 legacy bridge', () => {
     expect(resolveLegacyHandler).not.toHaveBeenCalled();
   });
 
-  it('falls back to legacy bridge when native handler is unavailable', () => {
+  it('fails closed when native handler is unavailable for a contract-backed node', () => {
     const legacyConstantHandler = buildHandler('legacy-constant');
     const resolveLegacyHandler = vi.fn((nodeType: string) =>
       nodeType === 'constant' ? legacyConstantHandler : null
@@ -94,15 +94,15 @@ describe('node-code-object-v3 legacy bridge', () => {
       codeObjectId: 'ai-paths.node-code-object.constant.v3',
     });
 
-    expect(resolved).toBe(legacyConstantHandler);
+    expect(resolved).toBeNull();
     expect(resolveNativeCodeObjectHandler).toHaveBeenCalledWith({
       nodeType: 'constant',
       codeObjectId: 'ai-paths.node-code-object.constant.v3',
     });
-    expect(resolveLegacyHandler).toHaveBeenCalledWith('constant');
+    expect(resolveLegacyHandler).not.toHaveBeenCalled();
   });
 
-  it('does not fall back to legacy bridge when strict native registry mode is enabled', () => {
+  it('keeps the same fail-closed result when strict native registry mode is enabled', () => {
     const resolveLegacyHandler = vi.fn(() => buildHandler('legacy-unused'));
     const resolveNativeCodeObjectHandler = vi.fn(() => null);
 

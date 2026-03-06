@@ -50,10 +50,24 @@ const buildAuthState = () => ({
   isAuthenticated: true,
   isLoadingAuth: false,
   user: {
-    id: 'learner-1',
+    id: 'parent-1',
     full_name: 'Ada',
     email: 'ada@example.com',
     role: 'user' as const,
+    actorType: 'parent' as const,
+    canManageLearners: true,
+    ownerUserId: 'parent-1',
+    activeLearner: {
+      id: 'learner-1',
+      ownerUserId: 'parent-1',
+      displayName: 'Ada',
+      loginName: 'ada-child',
+      status: 'active' as const,
+      legacyUserKey: 'ada@example.com',
+      createdAt: '2026-03-06T10:00:00.000Z',
+      updatedAt: '2026-03-06T10:00:00.000Z',
+    },
+    learners: [],
   },
 });
 
@@ -108,7 +122,7 @@ describe('KangurProgressSyncProvider', () => {
       )
     );
     expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('120');
-    expect(localStorage.getItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY)).toBe('ada@example.com');
+    expect(localStorage.getItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY)).toBe('learner-1');
   });
 
   it('pushes later local progress changes back to the server after hydration', async () => {

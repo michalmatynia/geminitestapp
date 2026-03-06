@@ -4,6 +4,7 @@ import type {
   NodeRuntimeResolutionStrategy,
   NodeRuntimeResolutionTelemetry,
 } from '@/shared/contracts/ai-paths-runtime';
+import { resolveNodeCodeObjectV3ContractByCodeObjectId } from './node-code-object-v3-legacy-bridge';
 
 export const NODE_RUNTIME_KERNEL_STRATEGIES = ['legacy_adapter', 'code_object_v3'] as const;
 export const NODE_RUNTIME_KERNEL_MODES = ['auto'] as const;
@@ -143,6 +144,8 @@ export const createNodeRuntimeKernel = ({
 }: CreateNodeRuntimeKernelArgs): NodeRuntimeKernel => {
   // Accept deprecated mode inputs for compatibility, but runtime behavior is always auto.
   resolveNodeRuntimeKernelMode(mode);
+  // Keep the strict flag for experimental node types that do not have a v3 contract entry yet.
+  // Contract-backed code_object_v3 nodes fail closed regardless of the flag value.
   const resolvedRuntimeKernelNodeTypes = new Set<string>(
     (runtimeKernelNodeTypes ?? NODE_RUNTIME_KERNEL_CANONICAL_NODE_TYPES)
       .map((entry: string): string => normalizeNodeType(entry))
@@ -176,20 +179,34 @@ export const createNodeRuntimeKernel = ({
       nodeType,
       runtimeKernelNodeTypes: resolvedRuntimeKernelNodeTypes,
     });
-    if (strategy === 'code_object_v3' && typeof resolveCodeObjectHandler === 'function') {
+
+    if (strategy === 'code_object_v3') {
       const codeObjectId = buildV3CodeObjectId(nodeType);
-      const codeObjectHandler = resolveCodeObjectHandler({
-        nodeType,
-        codeObjectId,
-      });
-      if (codeObjectHandler) {
+      if (typeof resolveCodeObjectHandler === 'function') {
+        const codeObjectHandler = resolveCodeObjectHandler({
+          nodeType,
+          codeObjectId,
+        });
+        if (codeObjectHandler) {
+          return buildDescriptor({
+            nodeType,
+            handler: codeObjectHandler,
+            source: 'registry',
+            runtimeKernelNodeTypes: resolvedRuntimeKernelNodeTypes,
+          });
+        }
+      }
+
+      if (resolveNodeCodeObjectV3ContractByCodeObjectId(codeObjectId)) {
         return buildDescriptor({
           nodeType,
-          handler: codeObjectHandler,
-          source: 'registry',
+          handler: null,
+          source: 'missing',
           runtimeKernelNodeTypes: resolvedRuntimeKernelNodeTypes,
         });
       }
+
+      // If strict mode is enabled, we fail closed for canonical types even if legacy handler is available.
       if (runtimeKernelStrictNativeRegistry) {
         return buildDescriptor({
           nodeType,
@@ -200,6 +217,7 @@ export const createNodeRuntimeKernel = ({
       }
     }
 
+    // Fallback to legacy handler
     const handler = resolveLegacyHandler(nodeType);
     return buildDescriptor({
       nodeType,

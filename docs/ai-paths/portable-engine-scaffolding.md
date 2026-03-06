@@ -10,8 +10,8 @@ This scaffold introduces a portable package wrapper around semantic canvas JSON 
 
 Runtime dispatch now has a kernel scaffold (`src/shared/lib/ai-paths/core/runtime/node-runtime-kernel.ts`) with staged strategies:
 
-- `legacy_adapter` (current default execution path)
-- `code_object_v3` (runtime-kernel migration strategy)
+- `legacy_adapter` (compatibility/parity strategy retained for legacy telemetry and fallback coverage)
+- `code_object_v3` (current primary execution path for the canonical runtime-kernel node set)
 
 Runtime-kernel node types now cover all registered node types (36 total), and server runtime resolves their `code_object_v3` contracts via native handler registry mappings declared in `docs/ai-paths/node-code-objects-v3/contracts.json`.
 
@@ -85,10 +85,19 @@ npm run docs:ai-paths:node-docs:ci
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-runtime-types.ts`
   - `src/shared/lib/ai-paths/portable-engine/portable-engine-validation.ts`
 - Server sink ownership:
+  - `src/shared/lib/ai-paths/portable-engine/sinks-constants.server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/sinks-contracts.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-types.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-environment.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-shared.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-settings-store.server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/sinks-auto-remediation-config.server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/sinks-auto-remediation-dead-letters.server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/sinks-auto-remediation-delivery.server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/sinks-bootstrap-config.server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/sinks-trend-reporter-config.server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/sinks-trend-reporter.server.ts`
+  - `src/shared/lib/ai-paths/portable-engine/sinks-trend-bootstrap.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-creators.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-trend-state.server.ts`
   - `src/shared/lib/ai-paths/portable-engine/sinks-trends.server.ts`

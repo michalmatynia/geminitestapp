@@ -12,46 +12,50 @@ import {
 const useMasterFolderTreeShellMock = vi.fn();
 let latestTreeOptions: unknown = null;
 
-vi.mock('@/features/foldertree/v2', () => ({
-  createMasterFolderTreeTransactionAdapter: ({
-    onApply,
-  }: {
-    onApply?: (tx: {
-      nextNodes: unknown[];
-      previousNodes: unknown[];
-      operation: { type: string };
-    }) => Promise<void> | void;
-  }) => ({
-    prepare: async (tx: unknown) => ({ tx, preparedAt: Date.now() }),
-    apply: async (tx: {
-      nextNodes: unknown[];
-      previousNodes: unknown[];
-      operation: { type: string };
-    }) => {
-      await onApply?.(tx);
-      return { tx, appliedAt: Date.now() };
+vi.mock('@/features/foldertree/v2', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/foldertree/v2')>();
+  return {
+    ...actual,
+    createMasterFolderTreeTransactionAdapter: ({
+      onApply,
+    }: {
+      onApply?: (tx: {
+        nextNodes: unknown[];
+        previousNodes: unknown[];
+        operation: { type: string };
+      }) => Promise<void> | void;
+    }) => ({
+      prepare: async (tx: unknown) => ({ tx, preparedAt: Date.now() }),
+      apply: async (tx: {
+        nextNodes: unknown[];
+        previousNodes: unknown[];
+        operation: { type: string };
+      }) => {
+        await onApply?.(tx);
+        return { tx, appliedAt: Date.now() };
+      },
+      commit: async () => {},
+      rollback: async () => {},
+    }),
+    useMasterFolderTreeShell: (options: unknown) => {
+      latestTreeOptions = options;
+      return useMasterFolderTreeShellMock(options);
     },
-    commit: async () => {},
-    rollback: async () => {},
-  }),
-  useMasterFolderTreeShell: (options: unknown) => {
-    latestTreeOptions = options;
-    return useMasterFolderTreeShellMock(options);
-  },
-  FolderTreeViewportV2: ({
-    controller,
-  }: {
-    controller: {
-      nodes: Array<{ id: string; name: string }>;
-    };
-  }) => (
-    <div>
-      {controller.nodes.map((node) => (
-        <div key={node.id}>{node.name}</div>
-      ))}
-    </div>
-  ),
-}));
+    FolderTreeViewportV2: ({
+      controller,
+    }: {
+      controller: {
+        nodes: Array<{ id: string; name: string }>;
+      };
+    }) => (
+      <div>
+        {controller.nodes.map((node) => (
+          <div key={node.id}>{node.name}</div>
+        ))}
+      </div>
+    ),
+  };
+});
 
 describe('BrainRoutingTree', () => {
   it('binds to brain routing master instance and renders grouped route nodes', () => {

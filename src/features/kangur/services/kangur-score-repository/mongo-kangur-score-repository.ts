@@ -20,6 +20,8 @@ type KangurScoreDocument = {
   time_taken: number;
   created_date: Date;
   created_by?: string | null;
+  learner_id?: string | null;
+  owner_user_id?: string | null;
 };
 
 const toDto = (doc: KangurScoreDocument): KangurScore => ({
@@ -32,6 +34,8 @@ const toDto = (doc: KangurScoreDocument): KangurScore => ({
   time_taken: doc.time_taken,
   created_date: doc.created_date.toISOString(),
   created_by: doc.created_by ?? null,
+  learner_id: doc.learner_id ?? null,
+  owner_user_id: doc.owner_user_id ?? null,
 });
 
 const toMongoSort = (sort: KangurScoreListInput['sort']): Record<string, SortDirection> => {
@@ -55,6 +59,9 @@ const toMongoFilters = (input?: KangurScoreListInput): Filter<KangurScoreDocumen
   if (filters.created_by) {
     query.created_by = filters.created_by;
   }
+  if (filters.learner_id) {
+    query.learner_id = filters.learner_id;
+  }
   return query;
 };
 
@@ -71,6 +78,8 @@ export const mongoKangurScoreRepository: KangurScoreRepository = {
       time_taken: input.time_taken,
       created_date: now,
       created_by: input.created_by ?? null,
+      learner_id: input.learner_id ?? null,
+      owner_user_id: input.owner_user_id ?? null,
     };
 
     const insertResult = await db

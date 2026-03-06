@@ -185,3 +185,17 @@ export const buildPromptInputHash = (
     outputPorts: node.outputs ?? [],
     ...(cacheScopeFingerprint ? { cacheScope: cacheScopeFingerprint } : {}),
   });
+
+export const buildNodeHash = (
+  node: AiNode,
+  nodeInputs: RuntimePortValues,
+  cacheScopeFingerprint?: Record<string, unknown>
+): string => {
+  return node.type === 'database'
+    ? buildDatabaseInputHash(node, nodeInputs, cacheScopeFingerprint)
+    : node.type === 'model'
+      ? buildModelInputHash(node, nodeInputs, cacheScopeFingerprint)
+      : node.type === 'prompt'
+        ? buildPromptInputHash(node, nodeInputs, cacheScopeFingerprint)
+        : buildNodeInputHash(node, nodeInputs, cacheScopeFingerprint);
+};

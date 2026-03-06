@@ -49,6 +49,7 @@ const applyFilters = (scores: KangurScore[], input?: KangurScoreListInput): Kang
     if (filters.player_name && score.player_name !== filters.player_name) return false;
     if (filters.operation && score.operation !== filters.operation) return false;
     if (filters.created_by && score.created_by !== filters.created_by) return false;
+    if (filters.learner_id && score.learner_id !== filters.learner_id) return false;
     return true;
   });
 };
@@ -67,6 +68,8 @@ export const prismaKangurScoreRepository: KangurScoreRepository = {
       time_taken: input.time_taken,
       created_date: createdDate,
       created_by: input.created_by ?? null,
+      learner_id: input.learner_id ?? null,
+      owner_user_id: input.owner_user_id ?? null,
     };
 
     await prisma.setting.create({

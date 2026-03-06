@@ -1,12 +1,5 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { useCallback } from 'react';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
@@ -31,6 +24,7 @@ import {
   createNewRule,
 } from '../prompt-engine-context-utils';
 import { PatternCollectionTab, ExploderPatternSubTab } from './PromptEngineConfigContext';
+import type { SingleQuery } from '@/shared/contracts/ui';
 
 export function usePromptEngineActionsImpl(args: {
   drafts: RuleDraft[];
@@ -40,8 +34,8 @@ export function usePromptEngineActionsImpl(args: {
   setIsDirty: (val: boolean) => void;
   setLearnedDirty: (val: boolean) => void;
   setSaveError: (err: string | null) => void;
-  rawSettings: any;
-  settingsQuery: any;
+  rawSettings: string | null | undefined;
+  settingsQuery: SingleQuery<Map<string, string>>;
   resolvedOnSaved?: () => void;
   activePatternTab: PatternCollectionTab;
   activeExploderSubTab: ExploderPatternSubTab;

@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { useVirtualizer } from '@tanstack/react-virtual';
 import React, { useEffect, useMemo, useRef } from 'react';
 import type { ResolvedFolderTreeMultiSelectConfig } from '@/shared/utils/folder-tree-profiles-v2';
@@ -12,6 +10,7 @@ import type { MasterFolderTreeController } from '@/shared/contracts/master-folde
 import { EmptyState } from '@/shared/ui';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
+import { MasterTreeDropPositionDto } from '@/shared/contracts/master-folder-tree';
 
 import { getMasterTreeNodeStatus } from '../operations/node-status';
 import { FolderTreeContextMenu } from './FolderTreeContextMenu';
@@ -28,7 +27,11 @@ import {
 import { DefaultRow } from './DefaultRow';
 import { FolderTreeViewportRenderNodeInput } from './types';
 import { useFolderTreeViewportSelection } from '../hooks/useFolderTreeViewportSelection';
-import { useFolderTreeViewportDnd } from '../hooks/useFolderTreeViewportDnd';
+import {
+  useFolderTreeViewportDnd,
+  FolderTreeDropInput,
+  FolderTreeResolveDropPositionInput,
+} from '../hooks/useFolderTreeViewportDnd';
 import { useOptionalMasterFolderTreeShellContext } from '../shell/MasterFolderTreeShellContext';
 
 export type { FolderTreeViewportRenderNodeInput };
@@ -42,36 +45,20 @@ export type FolderTreeViewportV2Props = {
   renderNode?: ((input: FolderTreeViewportRenderNodeInput) => React.ReactNode) | undefined;
   resolveDraggedNodeId?: ((event: React.DragEvent<HTMLElement>) => MasterTreeId | null) | undefined;
   canDrop?:
-    | ((
-        input: {
-          draggedNodeId: MasterTreeId;
-          targetId: MasterTreeId | null;
-          position: any;
-          defaultAllowed: boolean;
-        },
-        controller: MasterFolderTreeController
-      ) => boolean)
+    | ((input: FolderTreeDropInput, controller: MasterFolderTreeController) => boolean)
     | undefined;
   onNodeDrop?:
     | ((
-        input: {
-          draggedNodeId: MasterTreeId;
-          targetId: MasterTreeId | null;
-          position: any;
-          rootDropZone?: 'top' | 'bottom' | undefined;
-        },
+        input: FolderTreeDropInput & { rootDropZone?: 'top' | 'bottom' | undefined },
         controller: MasterFolderTreeController
       ) => Promise<void> | void)
     | undefined;
   resolveDropPosition?:
     | ((
         event: React.DragEvent<HTMLElement>,
-        input: {
-          draggedNodeId: MasterTreeId;
-          targetId: MasterTreeId;
-        },
+        input: FolderTreeResolveDropPositionInput,
         controller: MasterFolderTreeController
-      ) => any)
+      ) => MasterTreeDropPositionDto)
     | undefined;
   onNodeDragStart?:
     | ((
@@ -340,6 +327,7 @@ export function FolderTreeViewportV2(props: FolderTreeViewportV2Props): React.JS
                         draggedNodeId,
                         targetId: null,
                         position: 'inside',
+                        defaultAllowed: true,
                       },
                       controller
                     );
@@ -385,6 +373,7 @@ export function FolderTreeViewportV2(props: FolderTreeViewportV2Props): React.JS
                         draggedNodeId,
                         targetId: null,
                         position: 'inside',
+                        defaultAllowed: true,
                         rootDropZone: 'top',
                       },
                       controller
@@ -594,6 +583,7 @@ export function FolderTreeViewportV2(props: FolderTreeViewportV2Props): React.JS
                                     draggedNodeId,
                                     targetId: node.id,
                                     position,
+                                    defaultAllowed: true,
                                   },
                                   controller
                                 );
@@ -657,6 +647,7 @@ export function FolderTreeViewportV2(props: FolderTreeViewportV2Props): React.JS
                         draggedNodeId,
                         targetId: null,
                         position: 'inside',
+                        defaultAllowed: true,
                         rootDropZone: 'bottom',
                       },
                       controller

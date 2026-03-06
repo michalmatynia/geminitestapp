@@ -188,162 +188,75 @@ describe('parseRuntimeKernelCodeObjectResolverIds', () => {
 });
 
 describe('resolveRuntimeKernelConfigForRun', () => {
-  it('prefers valid env mode over settings mode', () => {
+  it('pins runtime-kernel mode to canonical auto/default while honoring env overrides', () => {
     expect(
       resolveRuntimeKernelConfigForRun({
-        envMode: 'auto',
-        pathMode: undefined,
-        settingMode: 'invalid',
         envNodeTypes: 'constant',
         pathNodeTypes: undefined,
         settingNodeTypes: 'math',
         envResolverIds: 'resolver.primary',
         pathResolverIds: undefined,
         settingResolverIds: 'resolver.secondary',
-        envStrictNativeRegistry: undefined,
-        pathStrictNativeRegistry: undefined,
-        settingStrictNativeRegistry: undefined,
       })
     ).toMatchObject({
-      mode: 'auto',
-      modeSource: 'env',
       nodeTypes: ['constant'],
       nodeTypesSource: 'env',
       resolverIds: ['resolver.primary'],
       resolverSource: 'env',
-      strictNativeRegistry: true,
-      strictNativeRegistrySource: 'default',
     });
   });
 
-  it('uses settings mode when env mode is missing', () => {
+  it('falls back to default mode and canonical settings values', () => {
     expect(
       resolveRuntimeKernelConfigForRun({
-        envMode: undefined,
-        pathMode: undefined,
-        settingMode: 'auto',
-        envNodeTypes: undefined,
-        pathNodeTypes: undefined,
-        settingNodeTypes: undefined,
-        envResolverIds: undefined,
-        pathResolverIds: undefined,
-        settingResolverIds: undefined,
-        envStrictNativeRegistry: undefined,
-        pathStrictNativeRegistry: undefined,
-        settingStrictNativeRegistry: undefined,
-      })
-    ).toMatchObject({
-      mode: 'auto',
-      modeSource: 'settings',
-      resolverIds: undefined,
-      resolverSource: 'default',
-      strictNativeRegistry: true,
-      strictNativeRegistrySource: 'default',
-    });
-  });
-
-  it('maps deprecated legacy_only mode to canonical auto mode', () => {
-    expect(
-      resolveRuntimeKernelConfigForRun({
-        envMode: undefined,
-        pathMode: undefined,
-        settingMode: 'legacy_only',
-        envNodeTypes: undefined,
-        pathNodeTypes: undefined,
-        settingNodeTypes: undefined,
-        envResolverIds: undefined,
-        pathResolverIds: undefined,
-        settingResolverIds: undefined,
-        envStrictNativeRegistry: undefined,
-        pathStrictNativeRegistry: undefined,
-        settingStrictNativeRegistry: undefined,
-      })
-    ).toMatchObject({
-      mode: 'auto',
-      modeSource: 'settings',
-    });
-  });
-
-  it('falls back to default mode and setting node-type list', () => {
-    expect(
-      resolveRuntimeKernelConfigForRun({
-        envMode: 'invalid',
-        pathMode: 'invalid',
-        settingMode: 'invalid',
         envNodeTypes: '',
         pathNodeTypes: '',
         settingNodeTypes: 'constant, math',
         envResolverIds: '',
         pathResolverIds: '',
         settingResolverIds: 'resolver.primary, resolver.secondary',
-        envStrictNativeRegistry: '',
-        pathStrictNativeRegistry: '',
-        settingStrictNativeRegistry: 'true',
       })
     ).toMatchObject({
-      mode: 'auto',
-      modeSource: 'default',
       nodeTypes: ['constant', 'math'],
       nodeTypesSource: 'settings',
       resolverIds: ['resolver.primary', 'resolver.secondary'],
       resolverSource: 'settings',
-      strictNativeRegistry: true,
-      strictNativeRegistrySource: 'settings',
     });
   });
 
-  it('prefers path runtime-kernel config over global settings when env is unset', () => {
+  it('prefers path runtime-kernel config over global settings when env is unset and pins strict-native behavior on', () => {
     expect(
       resolveRuntimeKernelConfigForRun({
-        envMode: undefined,
-        pathMode: 'auto',
-        settingMode: 'auto',
         envNodeTypes: undefined,
         pathNodeTypes: 'template',
         settingNodeTypes: 'constant, math',
         envResolverIds: undefined,
         pathResolverIds: 'resolver.path',
         settingResolverIds: 'resolver.settings',
-        envStrictNativeRegistry: undefined,
-        pathStrictNativeRegistry: 'false',
-        settingStrictNativeRegistry: 'true',
       })
     ).toMatchObject({
-      mode: 'auto',
-      modeSource: 'path',
       nodeTypes: ['template'],
       nodeTypesSource: 'path',
       resolverIds: ['resolver.path'],
       resolverSource: 'path',
-      strictNativeRegistry: false,
-      strictNativeRegistrySource: 'path',
     });
   });
-
 });
 
 describe('runtime kernel telemetry helpers', () => {
   it('serializes runtime kernel execution telemetry context', () => {
     expect(
       toRuntimeKernelExecutionTelemetry({
-        mode: 'auto',
-        modeSource: 'settings',
         nodeTypes: ['constant', 'template'],
         nodeTypesSource: 'env',
         resolverIds: ['resolver.primary'],
         resolverSource: 'settings',
-        strictNativeRegistry: true,
-        strictNativeRegistrySource: 'env',
       })
     ).toEqual({
-      runtimeKernelMode: 'auto',
-      runtimeKernelModeSource: 'settings',
       runtimeKernelNodeTypes: ['constant', 'template'],
       runtimeKernelNodeTypesSource: 'env',
       runtimeKernelCodeObjectResolverIds: ['resolver.primary'],
       runtimeKernelCodeObjectResolverIdsSource: 'settings',
-      runtimeKernelStrictNativeRegistry: true,
-      runtimeKernelStrictNativeRegistrySource: 'env',
     });
   });
 

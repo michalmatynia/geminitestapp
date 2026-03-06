@@ -22,6 +22,7 @@ type KangurAuthContextValue = {
   logout: (shouldRedirect?: boolean) => void;
   navigateToLogin: () => void;
   checkAppState: () => Promise<void>;
+  selectLearner: (learnerId: string) => Promise<void>;
 };
 
 const KangurAuthContext = createContext<KangurAuthContextValue | null>(null);
@@ -104,6 +105,13 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
     kangurPlatform.auth.redirectToLogin(window.location.href);
   };
 
+  const selectLearner = async (learnerId: string): Promise<void> => {
+    const nextUser = await kangurPlatform.learners.select(learnerId);
+    setUser(nextUser);
+    setIsAuthenticated(true);
+    setAuthError(null);
+  };
+
   const value = useMemo<KangurAuthContextValue>(
     () => ({
       user,
@@ -115,8 +123,16 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       logout,
       navigateToLogin,
       checkAppState,
+      selectLearner,
     }),
-    [user, isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, appPublicSettings]
+    [
+      user,
+      isAuthenticated,
+      isLoadingAuth,
+      isLoadingPublicSettings,
+      authError,
+      appPublicSettings,
+    ]
   );
 
   return <KangurAuthContext.Provider value={value}>{children}</KangurAuthContext.Provider>;

@@ -75,10 +75,12 @@ const buildChangedFieldCounts = (): Record<AiPathRunRuntimeKernelMetadataChanged
   'runtimeKernelConfig.codeObjectResolverIds': 0,
   'runtimeKernelConfig.strictNativeRegistry': 0,
   'runtimeKernel.mode': 0,
+  'runtimeKernel.modeSource': 0,
   'runtimeKernel.nodeTypes': 0,
   'runtimeKernel.nodeTypesSource': 0,
   'runtimeKernel.codeObjectResolverIds': 0,
   'runtimeKernel.strictNativeRegistry': 0,
+  'runtimeKernel.strictNativeRegistrySource': 0,
 });
 
 const maybeCollectSample = (sampleRunIds: string[], sampleLimit: number, runId: string): void => {

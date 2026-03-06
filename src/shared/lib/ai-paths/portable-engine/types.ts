@@ -36,6 +36,28 @@ export type PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary = {
   diagnostics: PortablePathEnvelopeVerificationAuditSinkHealthDiagnostic[];
 };
 
+export type PrismaSettingClient = {
+  setting?: {
+    findUnique: (input: {
+      where: { key: string };
+      select: { value: true };
+    }) => Promise<{ value: string | null } | null>;
+    upsert: (input: {
+      where: { key: string };
+      create: { key: string; value: string };
+      update: { value: string };
+    }) => Promise<unknown>;
+  };
+};
+
+export const canUsePrismaSettings = (
+  prismaClient: PrismaSettingClient | null | undefined
+): boolean =>
+  Boolean(process.env['DATABASE_URL']) &&
+  prismaClient !== null &&
+  typeof prismaClient === 'object' &&
+  'setting' in prismaClient;
+
 export type PortablePathAuditSinkStartupHealthState = {
   consecutiveFailureCount: number;
   lastFailureAt: string | null;

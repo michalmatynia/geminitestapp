@@ -13,30 +13,31 @@ Current runtime scope uses the canonical runtime-kernel set (`agent`, `ai_descri
 
 Runtime rollout controls:
 
-- `runtimeKernelNodeTypes` is the canonical scoped runtime-kernel override for parity/canary runs. Deprecated persisted/env/path-config aliases are still normalized by maintenance and reader fallbacks. Omitted or empty persisted values fall back to the canonical approved node set.
-- `runtimeKernelStrictNativeRegistry` keeps native resolution fail-closed by default and only allows legacy fallback when explicitly disabled.
+- `runtimeKernelNodeTypes` is the canonical scoped runtime-kernel override for parity/canary runs. Deprecated persisted/env/path-config aliases are still normalized by cleanup and historical metadata readers, but live executor and Canvas settings reads now use only the canonical node-type controls. Omitted or empty persisted values fall back to the canonical approved node set.
+- `runtimeKernelStrictNativeRegistry` is now a direct-kernel compatibility/testing control only. Product executor, Canvas local execution, and server/client runtime entrypoints pin strict native behavior on, and contract-backed `code_object_v3` nodes fail closed when native/registered handlers are missing regardless of this flag.
 - Server runtime resolves approved `code_object_v3` handlers through `contracts.json`.
 - Supported execution adapters:
   - `legacy_handler_bridge`
   - `native_handler_registry` (current approved set: `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`)
-- Native adapter path blocks missing mappings by default and only falls back to the legacy bridge when strict mode is explicitly disabled.
+- Native adapter path now fails closed for contract-backed `code_object_v3` nodes when native mappings are missing.
 - Client local runtime native subset now includes:
   - `agent`, `ai_description`, `api_advanced`, `audio_oscillator`, `audio_speaker`, `bundle`, `compare`, `constant`, `context`, `database`, `db_schema`, `delay`, `description_updater`, `fetcher`, `gate`, `http`, `iterator`, `learner_agent`, `mapper`, `math`, `model`, `mutator`, `notification`, `parser`, `playwright`, `poll`, `prompt`, `regex`, `router`, `simulation`, `string_mutator`, `template`, `trigger`, `validation_pattern`, `validator`, `viewer`
 - Remaining server-only native node families are:
   - `none`
 - Product/server runs can also read persisted global settings:
   - `ai_paths_runtime_kernel_node_types`: JSON array or comma-delimited node types
-  - `ai_paths_runtime_kernel_pilot_node_types`: deprecated compatibility alias
-  - `ai_paths_runtime_kernel_strict_native_registry`: `true | false`
+- Fresh `AiPathRun.meta.runtimeKernel` snapshots and runtime event payloads now persist only canonical node-type and resolver-id context. Deprecated mode/strict fields remain cleanup-only historical metadata.
+- Deprecated persisted key `ai_paths_runtime_kernel_strict_native_registry` is cleanup-only compatibility data and is no longer read by the live executor or Canvas runtime settings UI.
+- Deprecated persisted key `ai_paths_runtime_kernel_pilot_node_types` is cleanup-only compatibility data and is no longer read by the live executor or Canvas settings UI.
 - Canvas admins can edit these persisted settings from the `Runtime Kernel` control group on the AI-Paths Canvas action bar.
-- `strict_native_registry` supports Canvas control (global + per-path override) and env/run-meta/settings API configuration.
+- Canvas runtime controls now expose only node-type and resolver-id overrides; strict native behavior is fixed on for live execution.
 - Env vars override persisted settings:
   - `AI_PATHS_RUNTIME_KERNEL_NODE_TYPES`
-  - `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES` (deprecated compatibility alias)
-  - `AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY`
-- `runtimeKernelMode`, `ai_paths_runtime_kernel_mode`, and `AI_PATHS_RUNTIME_KERNEL_MODE` are deprecated compatibility inputs. They normalize to `auto` and are no longer active rollout controls.
-- `npm run cleanup:ai-paths-runtime-kernel-settings` normalizes stale runtime-kernel mode aliases, node-type overrides, resolver ids, and strict-native registry flags. The old `cleanup:ai-paths-runtime-kernel-mode` command remains as a deprecated alias.
-- `npm run cleanup:ai-paths-runtime-kernel-run-metadata` normalizes historical `AiPathRun.meta.runtimeKernelConfig` and `AiPathRun.meta.runtimeKernel` compatibility aliases before removing executor read-side fallback.
+- Deprecated env alias `AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY` is cleanup-only compatibility data and is no longer read by the live executor, Canvas local execution loop, or server runtime entrypoint.
+- Deprecated env alias `AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES` is cleanup-only compatibility data and is no longer read by the live executor.
+- `runtimeKernelMode`, `ai_paths_runtime_kernel_mode`, and `AI_PATHS_RUNTIME_KERNEL_MODE` are deprecated compatibility inputs. Cleanup may still normalize them to `auto`, but the live path-run executor no longer reads them for execution control.
+- `npm run cleanup:ai-paths-runtime-kernel-settings` normalizes node-type/resolver overrides and prunes deprecated runtime-kernel mode plus strict-native compatibility settings. The old `cleanup:ai-paths-runtime-kernel-mode` command remains as a deprecated alias.
+- `npm run cleanup:ai-paths-runtime-kernel-run-metadata` normalizes historical `AiPathRun.meta.runtimeKernelConfig` and `AiPathRun.meta.runtimeKernel` compatibility aliases while pruning deprecated mode/strict metadata fields.
 
 Generated migration documentation:
 

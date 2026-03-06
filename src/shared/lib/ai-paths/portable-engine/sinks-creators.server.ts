@@ -15,9 +15,11 @@ import {
   PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_MONGO_COLLECTION,
   PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SERVICE,
   PORTABLE_PATH_ENVELOPE_VERIFICATION_DEFAULT_SOURCE,
-  type PortablePathEnvelopeVerificationAuditSinkHealthCheck,
-  type PortablePathEnvelopeVerificationAuditSinkWithHealthCheck,
-} from './sinks-types.server';
+} from './sinks-constants.server';
+import type {
+  PortablePathEnvelopeVerificationAuditSinkHealthCheck,
+  PortablePathEnvelopeVerificationAuditSinkWithHealthCheck,
+} from './sinks-contracts.server';
 import {
   buildPortablePathEnvelopeVerificationAuditSinkHealthMessage,
   buildPortablePathEnvelopeVerificationMessage,

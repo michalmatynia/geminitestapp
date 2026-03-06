@@ -10,12 +10,14 @@ import type { KangurProgressState } from '@/features/kangur/ui/types';
 const {
   useKangurRoutingMock,
   useKangurProgressStateMock,
+  useKangurAssignmentsMock,
   authMeMock,
   redirectToLoginMock,
   logoutMock,
 } = vi.hoisted(() => ({
   useKangurRoutingMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
+  useKangurAssignmentsMock: vi.fn(),
   authMeMock: vi.fn(),
   redirectToLoginMock: vi.fn(),
   logoutMock: vi.fn(),
@@ -27,6 +29,10 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
   useKangurProgressState: useKangurProgressStateMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
+  useKangurAssignments: useKangurAssignmentsMock,
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -52,6 +58,21 @@ vi.mock('@/features/kangur/ui/components/progress', () => ({
   XpToast: () => null,
 }));
 
+vi.mock('@/features/kangur/ui/components/KangurPriorityAssignments', () => ({
+  __esModule: true,
+  default: () => <div data-testid='kangur-priority-assignments' />,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurAssignmentSpotlight', () => ({
+  __esModule: true,
+  default: () => <div data-testid='kangur-assignment-spotlight' />,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurPracticeAssignmentBanner', () => ({
+  __esModule: true,
+  default: () => <div data-testid='kangur-practice-assignment-banner' />,
+}));
+
 import Game from '@/features/kangur/ui/pages/Game';
 
 const baseProgress: KangurProgressState = {
@@ -72,6 +93,14 @@ describe('Game branding', () => {
     vi.clearAllMocks();
     useKangurRoutingMock.mockReturnValue({ basePath: '/kangur' });
     useKangurProgressStateMock.mockReturnValue(baseProgress);
+    useKangurAssignmentsMock.mockReturnValue({
+      assignments: [],
+      isLoading: false,
+      error: null,
+      createAssignment: vi.fn(),
+      updateAssignment: vi.fn(),
+      refresh: vi.fn(),
+    });
     authMeMock.mockImplementation(() => new Promise<null>(() => undefined));
     logoutMock.mockResolvedValue(undefined);
   });

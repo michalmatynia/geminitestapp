@@ -1,49 +1,48 @@
 import 'server-only';
 
-import { createHmac } from 'crypto';
-
-import { withTransientRecovery } from '@/shared/lib/observability/transient-recovery/with-recovery';
 import type { SystemLogInput } from '@/shared/lib/observability/system-logger';
 
+import {
+  buildPortablePathAuditSinkAutoRemediationPreparedNotificationRequest,
+  postPortablePathAuditSinkAutoRemediationNotification,
+  toPortablePathAuditSinkAutoRemediationNotificationStatusCode,
+  toPortablePathAuditSinkAutoRemediationNotificationTimestamp,
+} from './sinks-auto-remediation-delivery.server';
 import type {
   PortablePathAuditSinkAutoRemediationStrategy,
   PortablePathAuditSinkStartupHealthState,
   PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary,
 } from './types';
+import type {
+  PortablePathAuditSinkAutoRemediationNotificationChannel,
+  PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry,
+} from './sinks-auto-remediation-dead-letters.server';
 
-const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_ALGORITHM = 'hmac_sha256' as const;
-const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_VERSION = 'v1' as const;
-const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_HEADER = 'x-ai-paths-signature';
-const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_TIMESTAMP_HEADER =
-  'x-ai-paths-signature-timestamp';
-const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_ALGORITHM_HEADER =
-  'x-ai-paths-signature-algorithm';
-const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_KEY_ID_HEADER =
-  'x-ai-paths-signature-key-id';
-
-export type PortablePathAuditSinkAutoRemediationNotificationChannel = 'webhook' | 'email';
+export {
+  enqueuePortablePathAuditSinkAutoRemediationDeadLetterCore,
+  loadPortablePathAuditSinkAutoRemediationDeadLettersCore,
+  savePortablePathAuditSinkAutoRemediationDeadLettersCore,
+} from './sinks-auto-remediation-dead-letters.server';
+export {
+  buildPortablePathAuditSinkAutoRemediationPreparedNotificationRequest,
+  postPortablePathAuditSinkAutoRemediationNotification,
+  toPortablePathAuditSinkAutoRemediationNotificationStatusCode,
+  toPortablePathAuditSinkAutoRemediationNotificationTimestamp,
+} from './sinks-auto-remediation-delivery.server';
+export type {
+  EnqueuePortablePathAuditSinkAutoRemediationDeadLetterOptions,
+  LoadPortablePathAuditSinkAutoRemediationDeadLettersOptions,
+  PortablePathAuditSinkAutoRemediationNotificationChannel,
+  PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry,
+  PortablePathAuditSinkAutoRemediationNotificationDeadLetterSignature,
+  SavePortablePathAuditSinkAutoRemediationDeadLettersOptions,
+} from './sinks-auto-remediation-dead-letters.server';
+export type { PortablePathAuditSinkAutoRemediationPreparedNotificationRequest } from './sinks-auto-remediation-delivery.server';
 
 export type PortablePathAuditSinkAutoRemediationAction =
   | 'none'
   | 'unregister_all'
   | 'degrade_to_log_only';
-
-export type PortablePathAuditSinkAutoRemediationNotificationDeadLetterSignature = {
-  algorithm: typeof PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_ALGORITHM;
-  keyId: string | null;
-  timestamp: string;
-};
-
-export type PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry = {
-  queuedAt: string;
-  channel: PortablePathAuditSinkAutoRemediationNotificationChannel;
-  endpoint: string | null;
-  payload: Record<string, unknown>;
-  error: string;
-  statusCode: number | null;
-  attemptCount: number;
-  signature: PortablePathAuditSinkAutoRemediationNotificationDeadLetterSignature | null;
-};
 
 export type PortablePathAuditSinkAutoRemediationNotificationChannelResult = {
   attempted: boolean;
@@ -86,196 +85,6 @@ export type PortablePathAuditSinkAutoRemediationNotificationInput = {
   rateLimitWindowSeconds: number;
   rateLimitMaxActions: number;
   state: PortablePathAuditSinkStartupHealthState;
-};
-
-export type LoadPortablePathAuditSinkAutoRemediationDeadLettersOptions = {
-  maxEntries?: number;
-  readRaw?: () => Promise<string | null>;
-};
-
-export type SavePortablePathAuditSinkAutoRemediationDeadLettersOptions = {
-  maxEntries?: number;
-  writeRaw?: (raw: string) => Promise<boolean>;
-};
-
-export type EnqueuePortablePathAuditSinkAutoRemediationDeadLetterOptions = {
-  maxEntries?: number;
-  readRaw?: () => Promise<string | null>;
-  writeRaw?: (raw: string) => Promise<boolean>;
-};
-
-type PortablePathAuditSinkAutoRemediationDeadLetterEnvelope = {
-  version: 1;
-  updatedAt: string;
-  entries: PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry[];
-};
-
-const normalizePortablePathAuditSinkAutoRemediationDeadLetterEntry = (
-  value: unknown
-): PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  const record = value as Record<string, unknown>;
-  const payload = record['payload'];
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
-
-  const signatureRecord =
-    record['signature'] && typeof record['signature'] === 'object' && !Array.isArray(record['signature'])
-      ? (record['signature'] as Record<string, unknown>)
-      : null;
-  const signatureTimestamp =
-    signatureRecord &&
-    typeof signatureRecord['timestamp'] === 'string' &&
-    signatureRecord['timestamp'].trim().length > 0
-      ? signatureRecord['timestamp'].trim()
-      : null;
-  const signature: PortablePathAuditSinkAutoRemediationNotificationDeadLetterSignature | null =
-    signatureTimestamp
-      ? {
-        algorithm: PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_ALGORITHM,
-        keyId:
-            signatureRecord &&
-            typeof signatureRecord['keyId'] === 'string' &&
-            signatureRecord['keyId'].trim().length > 0
-              ? signatureRecord['keyId'].trim()
-              : null,
-        timestamp: signatureTimestamp,
-      }
-      : null;
-
-  const rawStatusCode = record['statusCode'];
-  const statusCodeNumeric =
-    typeof rawStatusCode === 'number' ? rawStatusCode : Number(rawStatusCode);
-  const statusCode =
-    Number.isFinite(statusCodeNumeric) && statusCodeNumeric >= 100 && statusCodeNumeric <= 599
-      ? Math.floor(statusCodeNumeric)
-      : null;
-
-  const rawAttemptCount = record['attemptCount'];
-  const attemptCountNumeric =
-    typeof rawAttemptCount === 'number' ? rawAttemptCount : Number(rawAttemptCount);
-  const attemptCount =
-    Number.isFinite(attemptCountNumeric) && attemptCountNumeric > 0
-      ? Math.floor(attemptCountNumeric)
-      : 1;
-
-  return {
-    queuedAt:
-      typeof record['queuedAt'] === 'string' && record['queuedAt'].trim().length > 0
-        ? record['queuedAt'].trim()
-        : new Date().toISOString(),
-    channel: record['channel'] === 'email' ? 'email' : 'webhook',
-    endpoint:
-      typeof record['endpoint'] === 'string' && record['endpoint'].trim().length > 0
-        ? record['endpoint'].trim()
-        : null,
-    payload: payload as Record<string, unknown>,
-    error:
-      typeof record['error'] === 'string' && record['error'].trim().length > 0
-        ? record['error'].trim()
-        : 'notification_failed',
-    statusCode,
-    attemptCount,
-    signature,
-  };
-};
-
-const normalizePortablePathAuditSinkAutoRemediationDeadLetterEntries = (
-  entries: unknown[],
-  maxEntries: number
-): PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry[] =>
-  entries
-    .map((entry) => normalizePortablePathAuditSinkAutoRemediationDeadLetterEntry(entry))
-    .filter(
-      (
-        entry
-      ): entry is PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry =>
-        entry !== null
-    )
-    .slice(-maxEntries);
-
-const parsePortablePathAuditSinkAutoRemediationDeadLetterEnvelope = (
-  raw: string | null,
-  maxEntries: number
-): PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry[] => {
-  if (!raw || raw.trim().length === 0) return [];
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (Array.isArray(parsed)) {
-      return normalizePortablePathAuditSinkAutoRemediationDeadLetterEntries(parsed, maxEntries);
-    }
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return [];
-    const envelope = parsed as Partial<PortablePathAuditSinkAutoRemediationDeadLetterEnvelope> & {
-      entries?: unknown;
-    };
-    if (!Array.isArray(envelope.entries)) return [];
-    return normalizePortablePathAuditSinkAutoRemediationDeadLetterEntries(
-      envelope.entries,
-      maxEntries
-    );
-  } catch {
-    return [];
-  }
-};
-
-const stringifyPortablePathAuditSinkAutoRemediationDeadLetterEnvelope = (
-  entries: PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry[],
-  maxEntries: number
-): string | null => {
-  try {
-    const envelope: PortablePathAuditSinkAutoRemediationDeadLetterEnvelope = {
-      version: 1,
-      updatedAt: new Date().toISOString(),
-      entries: normalizePortablePathAuditSinkAutoRemediationDeadLetterEntries(entries, maxEntries),
-    };
-    return JSON.stringify(envelope);
-  } catch {
-    return null;
-  }
-};
-
-export const loadPortablePathAuditSinkAutoRemediationDeadLettersCore = async (options: {
-  maxEntries: number;
-  readRaw: () => Promise<string | null>;
-}): Promise<PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry[]> => {
-  return parsePortablePathAuditSinkAutoRemediationDeadLetterEnvelope(
-    await options.readRaw(),
-    options.maxEntries
-  );
-};
-
-export const savePortablePathAuditSinkAutoRemediationDeadLettersCore = async (
-  entries: PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry[],
-  options: {
-    maxEntries: number;
-    writeRaw: (raw: string) => Promise<boolean>;
-  }
-): Promise<boolean> => {
-  const serialized = stringifyPortablePathAuditSinkAutoRemediationDeadLetterEnvelope(
-    entries,
-    options.maxEntries
-  );
-  if (!serialized) return false;
-  return options.writeRaw(serialized);
-};
-
-export const enqueuePortablePathAuditSinkAutoRemediationDeadLetterCore = async (
-  entry: PortablePathAuditSinkAutoRemediationNotificationDeadLetterEntry,
-  options: {
-    maxEntries: number;
-    readRaw: () => Promise<string | null>;
-    writeRaw: (raw: string) => Promise<boolean>;
-  }
-): Promise<boolean> => {
-  const existing = parsePortablePathAuditSinkAutoRemediationDeadLetterEnvelope(
-    await options.readRaw(),
-    options.maxEntries
-  );
-  const serialized = stringifyPortablePathAuditSinkAutoRemediationDeadLetterEnvelope(
-    [...existing, entry],
-    options.maxEntries
-  );
-  if (!serialized) return false;
-  return options.writeRaw(serialized);
 };
 
 export type NotifyPortablePathAuditSinkAutoRemediationOptions = {
@@ -340,127 +149,6 @@ const toPortablePathAuditSinkAutoRemediationNotificationPayload = (
   environment: process.env['NODE_ENV'] ?? 'development',
   appUrl: process.env['NEXT_PUBLIC_APP_URL'] ?? null,
 });
-
-export type PortablePathAuditSinkAutoRemediationPreparedNotificationRequest = {
-  body: string;
-  headers: Record<string, string>;
-  signature: PortablePathAuditSinkAutoRemediationNotificationDeadLetterSignature | null;
-};
-
-class PortablePathAuditSinkAutoRemediationNotificationHttpError extends Error {
-  readonly statusCode: number;
-
-  constructor(statusCode: number) {
-    super(`notification_http_${statusCode}`);
-    this.name = 'PortablePathAuditSinkAutoRemediationNotificationHttpError';
-    this.statusCode = statusCode;
-  }
-}
-
-export const toPortablePathAuditSinkAutoRemediationNotificationTimestamp = (
-  value: string | Date | undefined
-): string => {
-  const nowDate =
-    value instanceof Date
-      ? value
-      : typeof value === 'string'
-        ? new Date(value)
-        : new Date();
-  return Number.isNaN(nowDate.getTime()) ? new Date().toISOString() : nowDate.toISOString();
-};
-
-export const buildPortablePathAuditSinkAutoRemediationPreparedNotificationRequest = (
-  payload: Record<string, unknown>,
-  options: {
-    signatureSecret?: string | null;
-    signatureKeyId?: string | null;
-    now?: string | Date;
-  }
-): PortablePathAuditSinkAutoRemediationPreparedNotificationRequest => {
-  const body = JSON.stringify(payload);
-  const headers: Record<string, string> = {
-    'content-type': 'application/json',
-  };
-  const secret = options.signatureSecret?.trim() ?? '';
-  if (secret.length === 0) {
-    return {
-      body,
-      headers,
-      signature: null,
-    };
-  }
-
-  const timestamp = toPortablePathAuditSinkAutoRemediationNotificationTimestamp(options.now);
-  const signatureDigest = createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex');
-  const signatureValue = `${PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_VERSION}=${signatureDigest}`;
-  headers[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_HEADER] = signatureValue;
-  headers[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_TIMESTAMP_HEADER] = timestamp;
-  headers[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_ALGORITHM_HEADER] =
-    PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_ALGORITHM;
-
-  const normalizedKeyId = options.signatureKeyId?.trim() ?? '';
-  if (normalizedKeyId.length > 0) {
-    headers[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_KEY_ID_HEADER] = normalizedKeyId;
-  }
-
-  return {
-    body,
-    headers,
-    signature: {
-      algorithm: PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_SIGNATURE_ALGORITHM,
-      keyId: normalizedKeyId.length > 0 ? normalizedKeyId : null,
-      timestamp,
-    },
-  };
-};
-
-export const postPortablePathAuditSinkAutoRemediationNotification = async (
-  url: string,
-  request: PortablePathAuditSinkAutoRemediationPreparedNotificationRequest,
-  timeoutMs: number,
-  fetchImpl: typeof fetch,
-  source: string,
-  circuitId: string
-): Promise<number> => {
-  const response = await withTransientRecovery(
-    async () =>
-      fetchImpl(url, {
-        method: 'POST',
-        headers: request.headers,
-        body: request.body,
-      }),
-    {
-      source,
-      circuitId,
-      retry: {
-        maxAttempts: 3,
-        initialDelayMs: 500,
-        maxDelayMs: 5000,
-        timeoutMs,
-      },
-    }
-  );
-  if (!response.ok) {
-    throw new PortablePathAuditSinkAutoRemediationNotificationHttpError(response.status);
-  }
-  return response.status;
-};
-
-export const toPortablePathAuditSinkAutoRemediationNotificationStatusCode = (
-  error: unknown
-): number | null => {
-  if (error instanceof PortablePathAuditSinkAutoRemediationNotificationHttpError) {
-    return error.statusCode;
-  }
-  if (error instanceof Error) {
-    const match = error.message.match(/^notification_http_(\d{3})$/);
-    if (match && typeof match[1] === 'string') {
-      const status = Number(match[1]);
-      if (Number.isFinite(status)) return Math.floor(status);
-    }
-  }
-  return null;
-};
 
 export const notifyPortablePathAuditSinkAutoRemediationCore = async (
   input: PortablePathAuditSinkAutoRemediationNotificationInput,

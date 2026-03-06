@@ -7,9 +7,7 @@ import { runtimeStateSchema } from '@/shared/contracts/ai-paths-runtime';
 import {
   parseRuntimeKernelCodeObjectResolverIds,
   parseRuntimeKernelNodeTypes,
-  parseRuntimeKernelStrictNativeRegistry,
 } from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-config';
-import type { NodeRuntimeKernelMode } from '@/shared/lib/ai-paths/core/runtime/node-runtime-kernel';
 import { cloneJsonSafe } from '@/shared/lib/ai-paths';
 import { isAppError, validationError } from '@/shared/errors/app-error';
 import { isObjectRecord } from '@/shared/utils/object-utils';
@@ -46,12 +44,6 @@ export const RUNTIME_PROFILE_SLOW_NODE_MS = Math.max(
   Number.parseInt(process.env['AI_PATHS_RUNTIME_PROFILE_SLOW_NODE_MS'] ?? '', 10) || 600
 );
 
-const normalizeRuntimeKernelModeValue = (value: unknown): NodeRuntimeKernelMode | null => {
-  if (typeof value !== 'string') return null;
-  const normalized = value.trim().toLowerCase();
-  return normalized === 'auto' || normalized === 'legacy_only' ? 'auto' : null;
-};
-
 export const normalizeRuntimeKernelCodeObjectResolverIds = (
   values: string[] | undefined
 ): string[] | undefined => {
@@ -63,40 +55,18 @@ export const normalizeRuntimeKernelCodeObjectResolverIds = (
 };
 
 export const resolveRuntimeKernelConfigForRun = (input: {
-  envMode: unknown;
-  pathMode: unknown;
-  settingMode: unknown;
   envNodeTypes?: unknown;
   pathNodeTypes?: unknown;
   settingNodeTypes?: unknown;
   envResolverIds: unknown;
   pathResolverIds: unknown;
   settingResolverIds: unknown;
-  envStrictNativeRegistry: unknown;
-  pathStrictNativeRegistry: unknown;
-  settingStrictNativeRegistry: unknown;
 }): {
-  mode: NodeRuntimeKernelMode;
-  modeSource: 'env' | 'path' | 'settings' | 'default';
   nodeTypes: string[] | undefined;
   nodeTypesSource: 'env' | 'path' | 'settings' | 'default';
   resolverIds: string[] | undefined;
   resolverSource: 'env' | 'path' | 'settings' | 'default';
-  strictNativeRegistry: boolean;
-  strictNativeRegistrySource: 'env' | 'path' | 'settings' | 'default';
 } => {
-  const envMode = normalizeRuntimeKernelModeValue(input.envMode);
-  const pathMode = normalizeRuntimeKernelModeValue(input.pathMode);
-  const settingMode = normalizeRuntimeKernelModeValue(input.settingMode);
-  const mode: NodeRuntimeKernelMode = envMode ?? pathMode ?? settingMode ?? 'auto';
-  const modeSource: 'env' | 'path' | 'settings' | 'default' = envMode
-    ? 'env'
-    : pathMode
-      ? 'path'
-      : settingMode
-        ? 'settings'
-        : 'default';
-
   const envNodeTypes = parseRuntimeKernelNodeTypes(input.envNodeTypes);
   const pathNodeTypes = parseRuntimeKernelNodeTypes(input.pathNodeTypes);
   const settingsNodeTypes = parseRuntimeKernelNodeTypes(input.settingNodeTypes);
@@ -119,69 +89,34 @@ export const resolveRuntimeKernelConfigForRun = (input: {
       : settingsResolverIds
         ? 'settings'
         : 'default';
-  const envStrictNativeRegistry = parseRuntimeKernelStrictNativeRegistry(
-    input.envStrictNativeRegistry
-  );
-  const pathStrictNativeRegistry = parseRuntimeKernelStrictNativeRegistry(
-    input.pathStrictNativeRegistry
-  );
-  const settingsStrictNativeRegistry = parseRuntimeKernelStrictNativeRegistry(
-    input.settingStrictNativeRegistry
-  );
-  const strictNativeRegistry =
-    envStrictNativeRegistry ?? pathStrictNativeRegistry ?? settingsStrictNativeRegistry ?? true;
-  const strictNativeRegistrySource: 'env' | 'path' | 'settings' | 'default' =
-    envStrictNativeRegistry !== undefined
-      ? 'env'
-      : pathStrictNativeRegistry !== undefined
-        ? 'path'
-        : settingsStrictNativeRegistry !== undefined
-          ? 'settings'
-          : 'default';
 
   return {
-    mode,
-    modeSource,
     nodeTypes,
     nodeTypesSource,
     resolverIds,
     resolverSource,
-    strictNativeRegistry,
-    strictNativeRegistrySource,
   };
 };
 
 export { parseRuntimeKernelCodeObjectResolverIds, parseRuntimeKernelNodeTypes };
 
 export type RuntimeKernelExecutionTelemetry = {
-  runtimeKernelMode: NodeRuntimeKernelMode;
-  runtimeKernelModeSource: 'env' | 'path' | 'settings' | 'default';
   runtimeKernelNodeTypes: string[];
   runtimeKernelNodeTypesSource: 'env' | 'path' | 'settings' | 'default';
   runtimeKernelCodeObjectResolverIds: string[];
   runtimeKernelCodeObjectResolverIdsSource: 'env' | 'path' | 'settings' | 'default';
-  runtimeKernelStrictNativeRegistry: boolean;
-  runtimeKernelStrictNativeRegistrySource: 'env' | 'path' | 'settings' | 'default';
 };
 
 export const toRuntimeKernelExecutionTelemetry = (input: {
-  mode: NodeRuntimeKernelMode;
-  modeSource: 'env' | 'path' | 'settings' | 'default';
   nodeTypes: string[] | undefined;
   nodeTypesSource: 'env' | 'path' | 'settings' | 'default';
   resolverIds: string[] | undefined;
   resolverSource: 'env' | 'path' | 'settings' | 'default';
-  strictNativeRegistry: boolean;
-  strictNativeRegistrySource: 'env' | 'path' | 'settings' | 'default';
 }): RuntimeKernelExecutionTelemetry => ({
-  runtimeKernelMode: input.mode,
-  runtimeKernelModeSource: input.modeSource,
   runtimeKernelNodeTypes: input.nodeTypes ?? [],
   runtimeKernelNodeTypesSource: input.nodeTypesSource,
   runtimeKernelCodeObjectResolverIds: input.resolverIds ?? [],
   runtimeKernelCodeObjectResolverIdsSource: input.resolverSource,
-  runtimeKernelStrictNativeRegistry: input.strictNativeRegistry,
-  runtimeKernelStrictNativeRegistrySource: input.strictNativeRegistrySource,
 });
 
 const normalizeRuntimeStrategy = (value: unknown): 'legacy_adapter' | 'code_object_v3' | null => {

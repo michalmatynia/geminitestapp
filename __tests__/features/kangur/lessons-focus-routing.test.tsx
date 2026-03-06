@@ -5,14 +5,26 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useKangurRoutingMock, settingsStoreGetMock, useKangurProgressStateMock } = vi.hoisted(() => ({
-  useKangurRoutingMock: vi.fn(),
-  settingsStoreGetMock: vi.fn(),
-  useKangurProgressStateMock: vi.fn(),
-}));
+const {
+  useKangurRoutingMock,
+  settingsStoreGetMock,
+  useKangurProgressStateMock,
+  useKangurAuthMock,
+  useKangurAssignmentsMock,
+} = vi.hoisted(() => ({
+    useKangurRoutingMock: vi.fn(),
+    settingsStoreGetMock: vi.fn(),
+    useKangurProgressStateMock: vi.fn(),
+    useKangurAuthMock: vi.fn(),
+    useKangurAssignmentsMock: vi.fn(),
+  }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useKangurAuth: useKangurAuthMock,
 }));
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
@@ -23,6 +35,10 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
   useKangurProgressState: useKangurProgressStateMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
+  useKangurAssignments: useKangurAssignmentsMock,
 }));
 
 import Lessons from '@/features/kangur/ui/pages/Lessons';
@@ -56,7 +72,48 @@ describe('Lessons page focus query support', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useKangurRoutingMock.mockReturnValue({ basePath: '/kangur' });
+    useKangurAuthMock.mockReturnValue({
+      user: null,
+      navigateToLogin: vi.fn(),
+      logout: vi.fn(),
+    });
     settingsStoreGetMock.mockReturnValue(lessonsSettingsValue);
+    useKangurAssignmentsMock.mockReturnValue({
+      assignments: [
+        {
+          id: 'assignment-division-completed',
+          learnerKey: 'ada@example.com',
+          title: '➗ Dzielenie',
+          description: 'Powtorz dzielenie po przydziale rodzica.',
+          priority: 'high',
+          archived: false,
+          target: {
+            type: 'lesson',
+            lessonComponentId: 'division',
+            requiredCompletions: 1,
+            baselineCompletions: 0,
+          },
+          assignedByName: 'Ada',
+          assignedByEmail: 'ada@example.com',
+          createdAt: '2026-03-06T09:00:00.000Z',
+          updatedAt: '2026-03-06T10:30:00.000Z',
+          progress: {
+            status: 'completed',
+            percent: 100,
+            summary: 'Powtorki po przydziale: 1/1.',
+            attemptsCompleted: 1,
+            attemptsRequired: 1,
+            lastActivityAt: '2026-03-06T10:30:00.000Z',
+            completedAt: '2026-03-06T10:30:00.000Z',
+          },
+        },
+      ],
+      isLoading: false,
+      error: null,
+      createAssignment: vi.fn(),
+      updateAssignment: vi.fn(),
+      refresh: vi.fn(),
+    });
     useKangurProgressStateMock.mockReturnValue({
       lessonMastery: {},
     });
@@ -70,6 +127,10 @@ describe('Lessons page focus query support', () => {
     // The component opens the lesson hub for the focused lesson.
     // In the hub, "Dzielenie" is a heading (h1).
     expect(await screen.findByRole('heading', { name: 'Dzielenie' })).toBeInTheDocument();
+    expect(screen.getByText('Ukonczone zadanie od rodzica')).toBeInTheDocument();
+    expect(
+      screen.getByText('To zadanie zostalo juz wykonane. Powtorki po przydziale: 1/1.')
+    ).toBeInTheDocument();
     expect(window.location.search).toBe('');
   });
 

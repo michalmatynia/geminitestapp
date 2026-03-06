@@ -64,6 +64,15 @@ vi.mock('../../context', () => ({
     setDbNodePresets: vi.fn(),
     saveDbNodePresets: vi.fn(async () => {}),
   }),
+  usePersistenceState: () => ({
+    isAutoSaveEnabled: false,
+    lastSavedAt: null,
+    saveStatus: 'idle',
+  }),
+  usePersistenceActions: () => ({
+    setAutoSaveEnabled: vi.fn(),
+    savePathConfig: vi.fn(async () => true),
+  }),
 }));
 
 vi.mock('../ai-paths-settings/AiPathsSettingsOrchestratorContext', () => ({

@@ -5,21 +5,21 @@ import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const { authMock, getKangurProgressRepositoryMock, getProgressMock, saveProgressMock } = vi.hoisted(
-  () => ({
-    authMock: vi.fn(),
-    getKangurProgressRepositoryMock: vi.fn(),
-    getProgressMock: vi.fn(),
-    saveProgressMock: vi.fn(),
-  })
-);
-
-vi.mock('@/features/auth/server', () => ({
-  auth: authMock,
+const {
+  getKangurProgressRepositoryMock,
+  getProgressMock,
+  resolveKangurActorMock,
+  saveProgressMock,
+} = vi.hoisted(() => ({
+  getKangurProgressRepositoryMock: vi.fn(),
+  getProgressMock: vi.fn(),
+  resolveKangurActorMock: vi.fn(),
+  saveProgressMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/server', () => ({
   getKangurProgressRepository: getKangurProgressRepositoryMock,
+  resolveKangurActor: resolveKangurActorMock,
 }));
 
 import { getKangurProgressHandler, patchKangurProgressHandler } from './handler';
@@ -55,6 +55,26 @@ describe('kangur progress handler', () => {
       getProgress: getProgressMock,
       saveProgress: saveProgressMock,
     });
+    resolveKangurActorMock.mockResolvedValue({
+      ownerUserId: 'parent-1',
+      ownerEmail: 'ada@example.com',
+      ownerName: 'Ada',
+      actorId: 'parent-1',
+      actorType: 'parent',
+      canManageLearners: true,
+      role: 'user',
+      activeLearner: {
+        id: 'learner-1',
+        ownerUserId: 'parent-1',
+        displayName: 'Ada',
+        loginName: 'ada-child',
+        status: 'active',
+        legacyUserKey: 'ada@example.com',
+        createdAt: '2026-03-06T10:00:00.000Z',
+        updatedAt: '2026-03-06T10:00:00.000Z',
+      },
+      learners: [],
+    });
   });
 
   it('loads authenticated learner progress by normalized session email', async () => {
@@ -63,11 +83,7 @@ describe('kangur progress handler', () => {
       gamesPlayed: 7,
       badges: ['first_game'],
     });
-    authMock.mockResolvedValue({
-      user: {
-        email: 'Ada@example.com',
-      },
-    });
+    getProgressMock.mockResolvedValueOnce(createDefaultKangurProgressState());
     getProgressMock.mockResolvedValue(progress);
 
     const response = await getKangurProgressHandler(
@@ -75,7 +91,9 @@ describe('kangur progress handler', () => {
       createRequestContext()
     );
 
-    expect(getProgressMock).toHaveBeenCalledWith('ada@example.com');
+    expect(getProgressMock).toHaveBeenNthCalledWith(1, 'learner-1');
+    expect(getProgressMock).toHaveBeenNthCalledWith(2, 'ada@example.com');
+    expect(saveProgressMock).toHaveBeenCalledWith('learner-1', progress);
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(progress);
   });
@@ -86,11 +104,6 @@ describe('kangur progress handler', () => {
       gamesPlayed: 11,
       perfectGames: 3,
       operationsPlayed: ['addition', 'multiplication'],
-    });
-    authMock.mockResolvedValue({
-      user: {
-        id: 'learner-1',
-      },
     });
     saveProgressMock.mockResolvedValue(progress);
 
@@ -105,7 +118,7 @@ describe('kangur progress handler', () => {
   });
 
   it('rejects anonymous progress reads', async () => {
-    authMock.mockResolvedValue(null);
+    resolveKangurActorMock.mockRejectedValue(new Error('Authentication required.'));
 
     await expect(
       getKangurProgressHandler(
@@ -116,12 +129,6 @@ describe('kangur progress handler', () => {
   });
 
   it('throws on invalid json payload', async () => {
-    authMock.mockResolvedValue({
-      user: {
-        id: 'learner-1',
-      },
-    });
-
     await expect(
       patchKangurProgressHandler(createPatchRequest('{invalid-json'), createRequestContext())
     ).rejects.toThrow('Invalid JSON payload.');

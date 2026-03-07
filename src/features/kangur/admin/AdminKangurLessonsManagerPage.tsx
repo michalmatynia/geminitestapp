@@ -53,9 +53,12 @@ import {
 } from '../settings';
 import {
   createDefaultKangurLessonDocument,
+  createKangurLessonSvgBlock,
   hasKangurLessonDocumentContent,
   parseKangurLessonDocumentStore,
   removeKangurLessonDocument,
+  resolveKangurLessonDocumentPages,
+  updateKangurLessonDocumentPages,
   updateKangurLessonDocumentTimestamp,
 } from '../lesson-documents';
 import { importLegacyKangurLessonDocument } from '../legacy-lesson-imports';
@@ -63,6 +66,7 @@ import { KangurLessonDocumentEditor } from './KangurLessonDocumentEditor';
 import { KangurLessonNarrationPanel } from './KangurLessonNarrationPanel';
 
 import { LessonMetadataForm } from './components/LessonMetadataForm';
+import { LessonSvgQuickAddModal } from './components/LessonSvgQuickAddModal';
 import { LessonTreeRow } from './components/LessonTreeRow';
 import { TREE_MODE_STORAGE_KEY, CATALOG_TREE_INSTANCE, ORDERED_TREE_INSTANCE } from './constants';
 import type { LessonFormData, LessonTreeMode } from './types';
@@ -70,11 +74,16 @@ import {
   countLessonsRequiringLegacyImport,
   createInitialLessonFormData,
   readPersistedTreeMode,
+  sanitizeSvgMarkup,
   toLessonFormData,
   upsertLesson,
 } from './utils';
 
-export function AdminKangurLessonsManagerPage(): React.JSX.Element {
+export function AdminKangurLessonsManagerPage({
+  standalone = true,
+}: {
+  standalone?: boolean;
+} = {}): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
@@ -99,6 +108,8 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
   const [formData, setFormData] = useState<LessonFormData>(() => createInitialLessonFormData());
   const [contentDraft, setContentDraft] = useState(createDefaultKangurLessonDocument);
   const [treeMode, setTreeMode] = useState<LessonTreeMode>(() => readPersistedTreeMode());
+  const [svgModalLesson, setSvgModalLesson] = useState<KangurLesson | null>(null);
+  const [svgModalInitialMarkup, setSvgModalInitialMarkup] = useState('');
   const [orderedTreeSearchQuery, setOrderedTreeSearchQuery] = useState('');
   const [catalogTreeSearchQuery, setCatalogTreeSearchQuery] = useState('');
   const isCatalogMode = treeMode === 'catalog';
@@ -188,6 +199,67 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
     const existing = lessonDocuments[lesson.id];
     setContentDraft(existing ?? createDefaultKangurLessonDocument());
     setShowContentModal(true);
+  };
+
+  const openSvgModal = (lesson: KangurLesson): void => {
+    const doc = lessonDocuments[lesson.id];
+    const pages = doc ? resolveKangurLessonDocumentPages(doc) : [];
+    const firstSvgBlock = pages.flatMap((p) => p.blocks).find((b) => b.type === 'svg');
+    setSvgModalLesson(lesson);
+    setSvgModalInitialMarkup(firstSvgBlock?.type === 'svg' ? firstSvgBlock.markup : '');
+  };
+
+  const handleSaveLessonSvg = async (markup: string, viewBox: string): Promise<void> => {
+    if (!svgModalLesson) return;
+    try {
+      const sanitized = sanitizeSvgMarkup(markup);
+      const existingDoc = lessonDocuments[svgModalLesson.id] ?? createDefaultKangurLessonDocument();
+      const pages = resolveKangurLessonDocumentPages(existingDoc);
+      const firstPage = pages[0];
+      if (!firstPage) {
+        toast('No pages in lesson document.', { variant: 'error' });
+        return;
+      }
+
+      const svgBlockIndex = firstPage.blocks.findIndex((b) => b.type === 'svg');
+      const nextBlocks =
+        svgBlockIndex !== -1
+          ? firstPage.blocks.map((b, i) =>
+              i === svgBlockIndex && b.type === 'svg'
+                ? { ...b, markup: sanitized, viewBox }
+                : b
+            )
+          : [
+              { ...createKangurLessonSvgBlock(), markup: sanitized, viewBox },
+              ...firstPage.blocks,
+            ];
+
+      const nextPages = pages.map((p, i) => (i === 0 ? { ...p, blocks: nextBlocks } : p));
+      const nextDoc = updateKangurLessonDocumentPages(existingDoc, nextPages);
+      const nextStore = { ...lessonDocuments, [svgModalLesson.id]: nextDoc };
+
+      await updateSetting.mutateAsync({
+        key: KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
+        value: serializeSetting(nextStore),
+      });
+
+      if (svgModalLesson.contentMode !== 'document') {
+        const nextLessonRecord: KangurLesson = { ...svgModalLesson, contentMode: 'document' };
+        const nextLessons = canonicalizeKangurLessons(upsertLesson(lessons, nextLessonRecord));
+        await updateSetting.mutateAsync({
+          key: KANGUR_LESSONS_SETTING_KEY,
+          value: serializeSetting(nextLessons),
+        });
+      }
+
+      toast('SVG image saved.', { variant: 'success' });
+      setSvgModalLesson(null);
+    } catch (error) {
+      logClientError(error, {
+        context: { source: 'AdminKangurLessonsManagerPage', action: 'saveLessonSvg' },
+      });
+      toast('Failed to save SVG.', { variant: 'error' });
+    }
   };
 
   const applyTemplateForComponent = useCallback((componentId: KangurLessonComponentId): void => {
@@ -382,6 +454,7 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
         hasContent={(id): boolean => hasKangurLessonDocumentContent(lessonDocuments[id])}
         onEdit={openEditModal}
         onEditContent={openContentModal}
+        onQuickSvg={openSvgModal}
         onDelete={setLessonToDelete}
         isUpdating={updateSetting.isPending}
       />
@@ -391,18 +464,20 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
 
   return (
     <div className='flex h-full flex-col gap-4 overflow-hidden'>
-      <SectionHeader
-        title='Kangur Lessons'
-        description='Manage lesson library, order, and interactive content.'
-      >
-        <Breadcrumbs
-          items={[
-            { label: 'Admin', href: '/admin' },
-            { label: 'Kangur', href: '/admin/kangur' },
-            { label: 'Lessons' },
-          ]}
-        />
-      </SectionHeader>
+      {standalone ? (
+        <SectionHeader
+          title='Kangur Lessons'
+          description='Manage lesson library, order, and interactive content.'
+        >
+          <Breadcrumbs
+            items={[
+              { label: 'Admin', href: '/admin' },
+              { label: 'Kangur', href: '/admin/kangur' },
+              { label: 'Lessons' },
+            ]}
+          />
+        </SectionHeader>
+      ) : null}
 
       <FolderTreePanel
         className='min-h-0 flex-1'
@@ -535,6 +610,17 @@ export function AdminKangurLessonsManagerPage(): React.JSX.Element {
           </div>
         )}
       </FolderTreePanel>
+
+      <LessonSvgQuickAddModal
+        lesson={svgModalLesson}
+        initialMarkup={svgModalInitialMarkup}
+        isOpen={Boolean(svgModalLesson)}
+        onClose={(): void => setSvgModalLesson(null)}
+        onSave={(markup, viewBox): void => {
+          void handleSaveLessonSvg(markup, viewBox);
+        }}
+        isSaving={updateSetting.isPending}
+      />
 
       <ConfirmModal
         isOpen={Boolean(lessonToDelete)}

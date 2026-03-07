@@ -9,7 +9,7 @@ import { resolveAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths
 import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
 import { GraphExecutionCancelled } from '@/shared/lib/ai-paths/core/runtime/engine-core';
 import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import {
   getAiPathsRuntimeFingerprint,
   withRuntimeFingerprintMeta,

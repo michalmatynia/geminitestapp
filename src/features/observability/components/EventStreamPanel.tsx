@@ -8,7 +8,7 @@ import {
   useSystemLogsActions,
   useSystemLogsState,
 } from '@/features/observability/context/SystemLogsContext';
-import { getDocumentationTooltip } from '@/features/tooltip-engine';
+import { getDocumentationTooltip } from '@/shared/lib/documentation';
 import { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 import {
   Button,

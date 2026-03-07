@@ -215,6 +215,10 @@ describe('Lessons', () => {
 
     expect(screen.getByTestId('lesson-document-renderer')).toBeInTheDocument();
     expect(screen.queryByTestId('legacy-lesson')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wroc do listy lekcji' })).toHaveClass(
+      'kangur-cta-pill',
+      'soft-cta'
+    );
   });
 
   it('keeps using the legacy component renderer when the lesson stays in component mode', () => {
@@ -285,5 +289,9 @@ describe('Lessons', () => {
     ).toBeInTheDocument();
     expect(screen.queryByTestId('legacy-lesson')).not.toBeInTheDocument();
     expect(screen.queryByTestId('lesson-document-renderer')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wroc do listy lekcji' })).toHaveClass(
+      'kangur-cta-pill',
+      'soft-cta'
+    );
   });
 });

@@ -1,3 +1,11 @@
+import {
+  DEFAULT_APP_EMBED_BASE_PATH,
+  DEFAULT_APP_EMBED_ENTRY_PAGE,
+  DEFAULT_APP_EMBED_HEIGHT,
+  DEFAULT_APP_EMBED_ID,
+  KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS,
+} from '@/features/app-embeds/lib/constants';
+
 import { colorSchemeField, paddingFields } from './shared-field-helpers';
 
 import type { BlockDefinition } from '../../../types/page-builder';
@@ -675,16 +683,42 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
     label: 'App embed',
     icon: 'AppWindow',
     defaultSettings: {
-      appId: 'chatbot',
+      appId: DEFAULT_APP_EMBED_ID,
       title: '',
+      entryPage: DEFAULT_APP_EMBED_ENTRY_PAGE,
+      basePath: DEFAULT_APP_EMBED_BASE_PATH,
       embedUrl: '',
-      height: 420,
+      height: DEFAULT_APP_EMBED_HEIGHT,
     },
     settingsSchema: [
-      { key: 'appId', label: 'App', type: 'select', options: [], defaultValue: 'chatbot' },
+      {
+        key: 'appId',
+        label: 'App',
+        type: 'select',
+        options: [],
+        defaultValue: DEFAULT_APP_EMBED_ID,
+      },
       { key: 'title', label: 'Title', type: 'text', defaultValue: '' },
+      {
+        key: 'entryPage',
+        label: 'Entry page',
+        type: 'select',
+        options: [...KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS],
+        defaultValue: DEFAULT_APP_EMBED_ENTRY_PAGE,
+      },
+      {
+        key: 'basePath',
+        label: 'Internal app base path',
+        type: 'text',
+        defaultValue: DEFAULT_APP_EMBED_BASE_PATH,
+      },
       { key: 'embedUrl', label: 'Embed URL (iframe)', type: 'text', defaultValue: '' },
-      { key: 'height', label: 'Height (px)', type: 'number', defaultValue: 420 },
+      {
+        key: 'height',
+        label: 'Minimum height (px)',
+        type: 'number',
+        defaultValue: DEFAULT_APP_EMBED_HEIGHT,
+      },
     ],
   },
   Slideshow: {

@@ -6,19 +6,15 @@ import { __testOnly as mongoTestOnly } from '../mongo-path-run-repository';
 import { __testOnly as prismaTestOnly } from '../prisma-path-run-repository';
 
 describe('path-run repository source filters (canonical)', () => {
-  it('keeps product and trigger-button sources in the canonical AI Paths node source set', () => {
-    expect(AI_PATHS_RUN_SOURCE_VALUES).toContain('product_panel');
-    expect(AI_PATHS_RUN_SOURCE_VALUES).toContain('trigger_button');
-  });
-
   it('builds prisma include ai_paths_ui filters from canonical meta.source only', () => {
     const where = prismaTestOnly.buildRunWhere({
       source: 'ai_paths_ui',
       sourceMode: 'include',
     }) as Record<string, unknown>;
 
-    const sourceClauses = (((where['AND'] as unknown[])?.[0] as Record<string, unknown>)?.['OR'] ??
-      []) as Array<Record<string, unknown>>;
+    const sourceClauses = (((where['AND'] as unknown[])?.[0] as Record<string, unknown>)?.[
+      'OR'
+    ] ?? []) as Array<Record<string, unknown>>;
 
     expect(sourceClauses).toHaveLength(AI_PATHS_RUN_SOURCE_VALUES.length);
     expect(

@@ -11,7 +11,7 @@ import {
   resolveAiPathsStaleRunningCleanupIntervalMs,
   resolveAiPathsStaleRunningMaxAgeMs,
 } from '@/features/ai/ai-paths/services/path-run-recovery-service';
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { deletePathRunsWithRepository } from '@/features/ai/ai-paths/services/path-run-service';
 import type { AiPathRunListOptions, AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

@@ -5,7 +5,7 @@ import {
   enforceAiPathsActionRateLimit,
   requireAiPathsAccess,
 } from '@/features/ai/ai-paths/server';
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { cancelPathRunWithRepository } from '@/features/ai/ai-paths/services/path-run-service';
 import { removePathRunQueueEntries } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';

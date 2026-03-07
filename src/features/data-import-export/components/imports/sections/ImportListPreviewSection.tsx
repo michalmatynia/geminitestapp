@@ -10,7 +10,7 @@ import {
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
-import { getDocumentationTooltip } from '@/features/tooltip-engine';
+import { getDocumentationTooltip } from '@/shared/lib/documentation';
 import type { ImportListItem } from '@/shared/contracts/integrations';
 import {
   Button,

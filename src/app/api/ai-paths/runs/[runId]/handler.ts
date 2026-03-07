@@ -6,7 +6,7 @@ import {
   requireAiPathsAccess,
   requireAiPathsRunAccess,
 } from '@/features/ai/ai-paths/server';
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { deletePathRunWithRepository } from '@/features/ai/ai-paths/services/path-run-service';
 import { buildAiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reporting';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

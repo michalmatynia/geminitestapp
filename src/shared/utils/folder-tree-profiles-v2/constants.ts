@@ -151,6 +151,18 @@ export const folderTreeSettingsMetaByInstance: Record<
     fileHint: 'Example: kangur-lesson',
     folderHint: 'Example: kangur-lesson-group, kangur-lesson-component-group',
   },
+  kangur_test_suites_manager: {
+    title: 'Kangur Test Suites Manager',
+    description: 'Controls drag/drop ordering for Kangur test suites in admin.',
+    fileHint: 'Example: kangur-test-suite',
+    folderHint: 'Not used (flat list at root).',
+  },
+  kangur_test_suites_manager_catalog: {
+    title: 'Kangur Test Suites Manager Catalog',
+    description: 'Controls grouped catalog tree behavior for Kangur test suites in admin.',
+    fileHint: 'Example: kangur-test-suite',
+    folderHint: 'Example: kangur-test-suite-group',
+  },
   brain_catalog_tree: {
     title: 'AI Brain Catalog',
     description: 'Controls drag/drop behavior for AI Brain catalog ordering.',
@@ -248,6 +260,16 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifySuccess: false,
     notifyError: true,
     successMessage: 'Kangur lessons catalog updated.',
+  },
+  kangur_test_suites_manager: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Kangur test suites reordered.',
+  },
+  kangur_test_suites_manager_catalog: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Kangur test suites catalog updated.',
   },
   brain_catalog_tree: {
     notifySuccess: false,

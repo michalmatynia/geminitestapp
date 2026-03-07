@@ -377,12 +377,16 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               runtimeCodeObjectId,
             }: {
               node: AiNode;
-              reason: 'missing_inputs' | 'flow_control' | 'validation' | 'error';
+              reason: 'missing_inputs' | 'flow_control' | 'validation' | 'error' | 'waiting_callback';
               status?: 'blocked' | 'waiting_callback';
               waitingOnPorts?: string[];
               waitingOnDetails?: Array<Record<string, unknown>>;
               message?: string;
               runId: string;
+              traceId: string;
+              spanId: string;
+              iteration: number;
+              attempt: number;
               runtimeStrategy?: 'compatibility' | 'code_object_v3';
               runtimeResolutionSource?: 'override' | 'registry' | 'missing';
               runtimeCodeObjectId?: string | null;

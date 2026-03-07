@@ -8,6 +8,7 @@ type KangurRoutingContextValue = {
   pageKey?: string | null;
   requestedPath?: string;
   basePath: string;
+  embedded: boolean;
 };
 
 const KangurRoutingContext = createContext<KangurRoutingContextValue | null>(null);
@@ -16,6 +17,7 @@ type KangurRoutingProviderProps = {
   pageKey?: string | null;
   requestedPath?: string;
   basePath?: string;
+  embedded?: boolean;
   children: ReactNode;
 };
 
@@ -23,6 +25,7 @@ export const KangurRoutingProvider = ({
   pageKey,
   requestedPath,
   basePath = KANGUR_BASE_PATH,
+  embedded = false,
   children,
 }: KangurRoutingProviderProps): React.JSX.Element => {
   const resolvedBasePath = normalizeKangurBasePath(basePath);
@@ -31,8 +34,9 @@ export const KangurRoutingProvider = ({
       pageKey,
       requestedPath,
       basePath: resolvedBasePath,
+      embedded,
     }),
-    [pageKey, requestedPath, resolvedBasePath]
+    [embedded, pageKey, requestedPath, resolvedBasePath]
   );
 
   return <KangurRoutingContext.Provider value={value}>{children}</KangurRoutingContext.Provider>;
@@ -45,3 +49,6 @@ export const useKangurRouting = (): KangurRoutingContextValue => {
   }
   return context;
 };
+
+export const useOptionalKangurRouting = (): KangurRoutingContextValue | null =>
+  useContext(KangurRoutingContext);

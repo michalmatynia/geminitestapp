@@ -9,8 +9,13 @@ import {
   XP_REWARDS,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_OPTION_CARD_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import { cn } from '@/shared/utils';
 
 type ClockLessonProps = {
   onBack: () => void;
@@ -40,6 +45,17 @@ type LessonSection = {
 };
 
 const LOCKED_SECTION_HINT = 'Najpierw ukończ poprzednią sekcję, aby odblokować ten etap.';
+
+const getSectionToggleClassName = (isLocked: boolean, isOpen: boolean): string =>
+  cn(
+    KANGUR_OPTION_CARD_CLASSNAME,
+    'flex items-center justify-between gap-4 rounded-[30px] px-5 py-4',
+    isLocked
+      ? 'border-slate-200/80 bg-slate-100/85 text-slate-500 shadow-none hover:translate-y-0'
+      : isOpen
+        ? KANGUR_ACCENT_STYLES.indigo.activeCard
+        : cn('border-slate-200/80', KANGUR_ACCENT_STYLES.slate.hoverCard)
+  );
 
 function AnalogClock({
   hours,
@@ -584,7 +600,7 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
                 <button
                   data-testid={`clock-lesson-section-toggle-${section.id}`}
                   onClick={() => openSectionAt(sectionIndex)}
-                  className='w-full flex items-center justify-between text-left gap-4 disabled:opacity-70'
+                  className={getSectionToggleClassName(isLocked, false)}
                   aria-expanded={false}
                   type='button'
                   disabled={isLocked}
@@ -653,7 +669,7 @@ export default function ClockLesson({ onBack }: ClockLessonProps): React.JSX.Ele
             <button
               data-testid={`clock-lesson-section-toggle-${section.id}`}
               onClick={() => openSectionAt(sectionIndex)}
-              className='w-full flex items-center justify-between text-left gap-4 disabled:opacity-70'
+              className={getSectionToggleClassName(isLocked, isOpen)}
               aria-expanded={isOpen}
               type='button'
               disabled={isLocked}

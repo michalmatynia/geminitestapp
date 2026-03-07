@@ -134,6 +134,14 @@ describe('ParentDashboard page', () => {
             createdAt: '2026-03-06T10:00:00.000Z',
             updatedAt: '2026-03-06T10:00:00.000Z',
           },
+          {
+            id: 'learner-2',
+            displayName: 'Ola',
+            loginName: 'ola',
+            status: 'disabled',
+            createdAt: '2026-03-06T10:00:00.000Z',
+            updatedAt: '2026-03-06T10:00:00.000Z',
+          },
         ],
       },
       navigateToLogin: navigateToLoginMock,
@@ -148,7 +156,19 @@ describe('ParentDashboard page', () => {
     expect(screen.getByText('Rodzic')).toBeInTheDocument();
     expect(screen.getByText('anna@example.com')).toBeInTheDocument();
     expect(screen.getAllByText('Jan').length).toBeGreaterThan(0);
+    expect(screen.getByText('Ola')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-progress-overview')).toHaveTextContent('XP: 340');
+
+    const activeLearnerCard = screen.getByTestId('parent-dashboard-learner-card-learner-1');
+    const inactiveLearnerCard = screen.getByTestId('parent-dashboard-learner-card-learner-2');
+
+    expect(activeLearnerCard).toHaveAttribute('aria-pressed', 'true');
+    expect(activeLearnerCard).toHaveClass('rounded-[30px]', 'border-indigo-300');
+    expect(inactiveLearnerCard).toHaveAttribute('aria-pressed', 'false');
+    expect(inactiveLearnerCard).toHaveClass('rounded-[30px]', 'border-slate-200/80');
+
+    await userEvent.click(screen.getByRole('button', { name: /ola/i }));
+    expect(selectLearnerMock).toHaveBeenCalledWith('learner-2');
 
     await userEvent.click(screen.getByRole('button', { name: /Wyniki gier/i }));
     await waitFor(() =>

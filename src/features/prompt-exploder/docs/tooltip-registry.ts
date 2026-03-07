@@ -3,7 +3,7 @@ import {
   getDocumentationEntry,
   resolveDocumentationEntryFromElement,
 } from '@/shared/lib/documentation';
-import { formatDocumentationTooltip } from '@/features/tooltip-engine';
+import { formatDocumentationTooltip } from '@/shared/lib/documentation';
 
 import { type PromptExploderDocEntry } from './catalog';
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import AddingBallGame from '@/features/kangur/ui/components/AddingBallGame';
+import AddingSynthesisGame from '@/features/kangur/ui/components/AddingSynthesisGame';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
@@ -8,9 +9,15 @@ import LessonSlideSection, {
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 
 type AddingLessonProps = { onBack: () => void };
-type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 'game';
+type SectionId =
+  | 'podstawy'
+  | 'przekroczenie'
+  | 'dwucyfrowe'
+  | 'zapamietaj'
+  | 'synthesis'
+  | 'game';
 
-export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
+export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlide[]> = {
   podstawy: [
     {
       title: 'Co to znaczy dodawac?',
@@ -114,11 +121,26 @@ export const HUB_SECTIONS = [
   { id: 'przekroczenie', emoji: '🔟', title: 'Dodawanie przez 10', description: 'Uzupełnianie do dziesięci' },
   { id: 'dwucyfrowe', emoji: '💡', title: 'Dodawanie dwucyfrowe', description: 'Dziesiatki i jednosci osobno' },
   { id: 'zapamietaj', emoji: '🧠', title: 'Zapamietaj!', description: 'Zasady dodawania' },
+  {
+    id: 'synthesis',
+    emoji: '🎼',
+    title: 'Synteza dodawania',
+    description: 'Rytmiczne tory odpowiedzi i szybkie sumy',
+    isGame: true,
+  },
   { id: 'game', emoji: '⚽', title: 'Gra z piłkami', description: 'Cwicz dodawanie przesuwajac piłki', isGame: true },
 ];
 
 export default function AddingLesson({ onBack }: AddingLessonProps): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
+
+  if (activeSection === 'synthesis') {
+    return (
+      <div className='flex w-full flex-col items-center gap-4'>
+        <AddingSynthesisGame onFinish={() => setActiveSection(null)} />
+      </div>
+    );
+  }
 
   if (activeSection === 'game') {
     return (

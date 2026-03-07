@@ -390,31 +390,27 @@ function DraggableClock({
       >
         {displayHour}:{pad(displayMinutes)}
       </p>
-      <div className='inline-flex items-center gap-1 rounded-2xl bg-white/80 border border-indigo-100 p-1 text-xs font-semibold text-gray-500'>
-        <button
+      <div className='inline-flex items-center gap-2 rounded-[26px] border border-white/75 bg-white/86 p-1.5 shadow-[0_14px_34px_-26px_rgba(79,70,229,0.35)]'>
+        <KangurButton
           type='button'
           data-testid='clock-snap-mode-5'
           onClick={() => setMinuteSnapMode('5min')}
-          className={`px-3 py-1.5 rounded-xl transition ${
-            minuteSnapMode === '5min'
-              ? 'bg-indigo-500 text-white shadow'
-              : 'hover:bg-indigo-50 text-gray-500'
-          }`}
+          className='h-10 px-3.5 text-xs'
+          size='sm'
+          variant={minuteSnapMode === '5min' ? 'surface' : 'secondary'}
         >
           Skok co 5 min
-        </button>
-        <button
+        </KangurButton>
+        <KangurButton
           type='button'
           data-testid='clock-snap-mode-1'
           onClick={() => setMinuteSnapMode('1min')}
-          className={`px-3 py-1.5 rounded-xl transition ${
-            minuteSnapMode === '1min'
-              ? 'bg-indigo-500 text-white shadow'
-              : 'hover:bg-indigo-50 text-gray-500'
-          }`}
+          className='h-10 px-3.5 text-xs'
+          size='sm'
+          variant={minuteSnapMode === '1min' ? 'surface' : 'secondary'}
         >
           Dokładnie co 1 min
-        </button>
+        </KangurButton>
       </div>
       <p className='text-xs text-gray-500'>
         {activeHand === 'hour'

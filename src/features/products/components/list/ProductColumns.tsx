@@ -18,7 +18,7 @@ import {
   calculatePriceForCurrency,
   normalizeCurrencyCode,
 } from '@/shared/lib/products/utils/priceCalculation';
-import { getDocumentationTooltip } from '@/features/tooltip-engine';
+import { getDocumentationTooltip } from '@/shared/lib/documentation';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { useQueryClient } from '@tanstack/react-query';
 import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';

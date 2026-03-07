@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
+
 type CalendarInteractiveGameProps = {
   onFinish: () => void;
 };
@@ -292,18 +294,24 @@ export default function CalendarInteractiveGame({
               : 'Nie poddawaj się!'}
         </p>
         <div className='flex gap-3 w-full'>
-          <button
+          <KangurButton
             onClick={restart}
-            className='flex-1 flex items-center justify-center gap-2 py-2 rounded-2xl border-2 border-gray-200 text-gray-500 font-bold hover:bg-gray-50 transition'
+            className='flex-1'
+            size='lg'
+            type='button'
+            variant='secondary'
           >
             <RefreshCw className='w-4 h-4' /> Jeszcze raz
-          </button>
-          <button
+          </KangurButton>
+          <KangurButton
             onClick={onFinish}
-            className='flex-1 py-2 rounded-2xl bg-gradient-to-r from-green-400 to-teal-400 text-white font-bold shadow hover:opacity-90 transition'
+            className='flex-1'
+            size='lg'
+            type='button'
+            variant='primary'
           >
             Wróć
-          </button>
+          </KangurButton>
         </div>
       </motion.div>
     );
@@ -350,21 +358,29 @@ export default function CalendarInteractiveGame({
         task.type === 'flip_month') && (
         <div className='bg-white rounded-2xl shadow p-3 w-full'>
           <div className='flex items-center justify-between mb-2'>
-            <button
+            <KangurButton
+              aria-label='Poprzedni miesiac'
               onClick={() => handleFlipMonth(-1)}
-              className='p-1.5 rounded-full hover:bg-gray-100 transition'
+              className='h-9 w-9 min-w-0 px-0'
+              size='sm'
+              type='button'
+              variant='secondary'
             >
               <ChevronLeft className='w-4 h-4 text-gray-500' />
-            </button>
+            </KangurButton>
             <p className='font-extrabold text-green-700 text-sm'>
               {monthData.name} {YEAR}
             </p>
-            <button
+            <KangurButton
+              aria-label='Nastepny miesiac'
               onClick={() => handleFlipMonth(1)}
-              className='p-1.5 rounded-full hover:bg-gray-100 transition'
+              className='h-9 w-9 min-w-0 px-0'
+              size='sm'
+              type='button'
+              variant='secondary'
             >
               <ChevronRight className='w-4 h-4 text-gray-500' />
-            </button>
+            </KangurButton>
           </div>
 
           <div className='grid grid-cols-7 gap-0.5 text-center mb-1'>

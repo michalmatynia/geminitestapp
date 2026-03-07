@@ -32,6 +32,7 @@ export const KANGUR_TTS_DEFAULT_VOICE = 'coral';
 
 export const KANGUR_LESSON_ACTIVITY_IDS = [
   'adding-ball',
+  'adding-synthesis',
   'subtracting-game',
   'multiplication-array',
   'multiplication-quiz',

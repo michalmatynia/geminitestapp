@@ -195,6 +195,7 @@ const createClockDefinition = (): LegacyImportDefinition => ({
 const LEGACY_IMPORTERS: Record<KangurLessonComponentId, LegacyImportDefinition> = {
   adding: createSectionedDefinition(ADDING_HUB_SECTIONS, ADDING_SLIDES, {
     game: 'adding-ball',
+    synthesis: 'adding-synthesis',
   }),
   subtracting: createSectionedDefinition(SUBTRACTING_HUB_SECTIONS, SUBTRACTING_SLIDES, {
     game: 'subtracting-game',

@@ -2,10 +2,13 @@
 
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Home } from 'lucide-react';
 
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { cn } from '@/shared/utils';
 
 const kangurPlatform = getKangurPlatform();
 
@@ -15,7 +18,7 @@ type PageNotFoundAuthState = {
 };
 
 export function PageNotFound(): React.JSX.Element {
-  const { requestedPath, basePath } = useKangurRouting();
+  const { requestedPath, basePath, embedded } = useKangurRouting();
 
   const pageName = useMemo(() => {
     if (!requestedPath || requestedPath.length === 0) {
@@ -41,7 +44,12 @@ export function PageNotFound(): React.JSX.Element {
   });
 
   return (
-    <div className='min-h-screen flex items-center justify-center p-6 bg-slate-50'>
+    <div
+      className={cn(
+        'flex items-center justify-center bg-slate-50 p-6',
+        embedded ? 'min-h-full' : 'min-h-screen'
+      )}
+    >
       <div className='max-w-md w-full'>
         <div className='text-center space-y-6'>
           <div className='space-y-2'>
@@ -74,22 +82,17 @@ export function PageNotFound(): React.JSX.Element {
           )}
 
           <div className='pt-6'>
-            <button
+            <KangurButton
               onClick={() => {
                 window.location.href = basePath;
               }}
-              className='inline-flex items-center px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500'
+              size='lg'
+              type='button'
+              variant='primary'
             >
-              <svg className='w-4 h-4 mr-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'
-                />
-              </svg>
+              <Home className='w-4 h-4' />
               Go Home
-            </button>
+            </KangurButton>
           </div>
         </div>
       </div>

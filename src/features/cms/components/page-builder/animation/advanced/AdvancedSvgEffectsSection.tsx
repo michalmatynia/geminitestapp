@@ -4,7 +4,7 @@ import React from 'react';
 import { PenLine, Trash2 } from 'lucide-react';
 import { Button, Checkbox, Input, Tooltip, FormSection, FormField } from '@/shared/ui';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
-import { getDocumentationTooltip } from '@/features/tooltip-engine';
+import { getDocumentationTooltip } from '@/shared/lib/documentation';
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
 import { useAnimationConfigActions, useAnimationConfigState } from '../AnimationConfigContext';
 import type { VectorOverlayResult } from '../../../../hooks/usePageBuilderContext';

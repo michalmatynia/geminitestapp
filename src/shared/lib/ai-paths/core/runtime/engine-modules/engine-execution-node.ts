@@ -1,7 +1,6 @@
 import { AiNode, Edge, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import {
   NodeHandlerContext,
-  RuntimeHistoryEntry,
 } from '@/shared/contracts/ai-paths-runtime';
 import { cloneValue } from '../utils';
 import { nowMs, resolveNodeTimeoutMs, withTimeout, withRetries } from '../execution-helpers';
@@ -160,6 +159,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         nodeType: node.type,
         iteration,
         status: 'cached',
+        durationMs: 0,
         ...buildRuntimeTelemetryFields(runtimeTelemetry),
       });
     }
@@ -173,6 +173,12 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
 
   const attempt = state.incrementNodeAttempt(node.id);
   const spanId = buildSpanId(node.id, attempt, iteration);
+  const existingExecutedState = state.variables[EXECUTED_STATE_KEY];
+  const executed =
+    existingExecutedState && typeof existingExecutedState === 'object'
+      ? (existingExecutedState as NodeHandlerContext['executed'])
+      : createExecutedState();
+  state.variables[EXECUTED_STATE_KEY] = executed;
 
   try {
     const preExecuteValidation = await runRuntimeValidation({
@@ -196,6 +202,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         node,
         nodeInputs,
         iteration,
+        attempt,
         nodeDurationMs,
         runtimeTelemetry,
         stage: 'node_pre_execute',
@@ -205,6 +212,9 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         options,
         resolvedRunId,
         resolvedRunStartedAt,
+        sanitizedEdges,
+        nodeById,
+        activationHash,
       });
       return true;
     }
@@ -216,29 +226,75 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       resolvedRunId,
       resolvedRunStartedAt,
       iteration,
+      attempt,
+      spanId,
       nodeInputs,
-      prevOutputs,
+      prevOutputs: prevOutputs ?? {},
       runtimeTelemetry,
     });
 
-    const stats = state.getOrCreateNodeStats(node);
     const retryPolicy = readRuntimeRetryPolicy(node);
+
+    const sideEffectDecision: 'executed' | 'skipped_policy' | undefined = 'executed';
+
+    const executed = {
+      notification: new Set<string>(),
+      updater: new Set<string>(),
+      http: new Set<string>(),
+      delay: new Set<string>(),
+      poll: new Set<string>(),
+      ai: new Set<string>(),
+      schema: new Set<string>(),
+      mapper: new Set<string>(),
+    };
+
     const ctx: NodeHandlerContext = {
+      node,
+      nodeId: node.id,
+      nodeTitle: node.title,
+      nodeInputs,
+      prevOutputs: prevOutputs ?? {},
+      edges: sanitizedEdges,
+      nodes: nodes,
+      nodeById: nodeById,
       runId: resolvedRunId,
       runStartedAt: resolvedRunStartedAt,
+      timeoutMs: resolveNodeTimeoutMs(node),
+      runMeta: (options['runMeta'] as Record<string, unknown> | undefined) ?? (options['meta'] as Record<string, unknown> | undefined) ?? {},
+      activePathId: options.pathId ?? null,
       iteration,
       attempt,
-      node,
-      inputs: nodeInputs,
-      prevOutputs,
-      timeoutMs: resolveNodeTimeoutMs(node),
+      spanId,
+      triggerNodeId: options.triggerNodeId ?? undefined,
+      triggerEvent: options.triggerEvent ?? undefined,
+      triggerContext: options.triggerContext ?? null,
+      deferPoll: Boolean(options.deferPoll),
+      skipAiJobs: Boolean(options.skipAiJobs),
+      isDryRun: Boolean(options['isDryRun']),
+      sideEffectDecision,
+      now: new Date().toISOString(),
       abortSignal: options.abortSignal,
-      profiling: {
-        totalAttempts: stats.attempts,
-        totalSuccesses: stats.successes,
-        totalFailures: stats.failures,
+      allOutputs: state.outputs as Record<string, Record<string, unknown>>,
+      allInputs: state.inputs as Record<string, Record<string, unknown>>,
+      fetchEntityCached: options.fetchEntityCached ?? (async () => null),
+      reportAiPathsError: options.reportAiPathsError,
+      toast: (message, toastOptions) => {
+        options.toast?.(message, toastOptions);
+        if (options.onToast) {
+          void options.onToast({ runId: resolvedRunId, nodeId: node.id, message, options: toastOptions });
+        }
       },
+      simulationEntityType: (triggerContext?.['entityType'] as string) ?? null,
+      simulationEntityId: (triggerContext?.['entityId'] as string) ?? (triggerContext?.['productId'] as string) ?? null,
+      resolvedEntity: null,
+      fallbackEntityId: null,
+      strictFlowMode: Boolean(options.strictFlowMode),
       runtimeTelemetry: buildRuntimeTelemetryFields(runtimeTelemetry),
+      executed,
+      variables: state.variables,
+      setVariable: (key, value) => {
+        state.variables[key] = value;
+      },
     };
 
     if (options.onNodeStart) {
@@ -269,7 +325,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       options.abortSignal
     );
 
-    const nextOutputs = cloneValue(nodeResult);
+    const nextOutputs = (cloneValue(nodeResult) ?? {}) as RuntimePortValues;
     const postExecuteValidation = await runRuntimeValidation({
       stage: 'node_post_execute',
       iteration,
@@ -291,6 +347,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         node,
         nodeInputs,
         iteration,
+        attempt,
         nodeDurationMs,
         runtimeTelemetry,
         stage: 'node_post_execute',
@@ -300,6 +357,9 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         options,
         resolvedRunId,
         resolvedRunStartedAt,
+        sanitizedEdges,
+        nodeById,
+        activationHash,
       });
       return true;
     }
@@ -343,8 +403,8 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       });
     }
 
-    if (options.onNodeSuccess) {
-      await options.onNodeSuccess({
+    if (options['onNodeSuccess'] && typeof options['onNodeSuccess'] === 'function') {
+      await (options['onNodeSuccess'] as Function)({
         runId: resolvedRunId,
         traceId: resolvedRunId,
         spanId,
@@ -367,7 +427,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       const targetNode = nodeById.get(toNodeId);
       if (!targetNode) return;
 
-      const targetInputs = collectNodeInputs(targetNode, state.outputs, state.incomingEdgesByNode);
+      const targetInputs = collectNodeInputs(toNodeId, state.outputs, state.incomingEdgesByNode);
       const changed = JSON.stringify(state.inputs[toNodeId]) !== JSON.stringify(targetInputs);
 
       if (changed) {
@@ -388,7 +448,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    const recoverableWaitState = resolveRecoverableNodeWaitState(error, node);
+    const recoverableWaitState = resolveRecoverableNodeWaitState(node, error);
     if (recoverableWaitState) {
       state.activeNodes.delete(node.id);
       state.blockedNodes.add(node.id);
@@ -399,8 +459,8 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         waitingOnPorts: recoverableWaitState.waitingOnPorts,
       };
 
-      if (options.onNodeStatus) {
-        void options.onNodeStatus({
+      if (options['onNodeStatus'] && typeof options['onNodeStatus'] === 'function') {
+        void (options['onNodeStatus'] as Function)({
           runId: resolvedRunId,
           traceId: resolvedRunId,
           spanId,
@@ -491,15 +551,15 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       });
     }
 
-    if (options.onNodeError) {
-      await options.onNodeError({
+    if (options['onNodeError'] && typeof options['onNodeError'] === 'function') {
+      await (options['onNodeError'] as Function)({
         runId: resolvedRunId,
         traceId: resolvedRunId,
         spanId,
         runStartedAt: resolvedRunStartedAt,
         node,
         nodeInputs,
-        prevOutputs,
+        prevOutputs: prevOutputs ?? {},
         error: graphError,
         iteration,
         attempt,

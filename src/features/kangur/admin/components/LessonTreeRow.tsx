@@ -6,6 +6,7 @@ import {
   Folder,
   FolderOpen,
   GripVertical,
+  ImagePlus,
   Pencil,
   Trash2,
 } from 'lucide-react';
@@ -22,10 +23,12 @@ export function LessonTreeRow(props: {
   hasContent: (lessonId: string) => boolean;
   onEdit: (lesson: KangurLesson) => void;
   onEditContent: (lesson: KangurLesson) => void;
+  onQuickSvg: (lesson: KangurLesson) => void;
   onDelete: (lesson: KangurLesson) => void;
   isUpdating?: boolean;
 }): React.JSX.Element {
-  const { input, lessonById, hasContent, onEdit, onEditContent, onDelete, isUpdating } = props;
+  const { input, lessonById, hasContent, onEdit, onEditContent, onQuickSvg, onDelete, isUpdating } =
+    props;
   const lessonId = fromKangurLessonNodeId(input.node.id);
   const lesson = lessonId ? (lessonById.get(lessonId) ?? null) : null;
 
@@ -158,6 +161,20 @@ export function LessonTreeRow(props: {
         ) : null}
 
         <div className='inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100'>
+          <button
+            type='button'
+            className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-violet-500/20 hover:text-violet-300'
+            onMouseDown={(event): void => event.stopPropagation()}
+            onClick={(event): void => {
+              event.stopPropagation();
+              onQuickSvg(lesson);
+            }}
+            title='Quick add SVG image'
+            aria-label='Quick add SVG image'
+            disabled={isUpdating}
+          >
+            <ImagePlus className='size-3.5' />
+          </button>
           <button
             type='button'
             className='inline-flex items-center justify-center rounded p-1 text-gray-400 hover:bg-sky-500/20 hover:text-sky-200'

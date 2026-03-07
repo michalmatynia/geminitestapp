@@ -18,7 +18,7 @@ import {
 import React from 'react';
 
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
-import { getDocumentationTooltip } from '@/features/tooltip-engine';
+import { getDocumentationTooltip } from '@/shared/lib/documentation';
 import { Button, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import type { VectorToolMode } from '@/shared/contracts/vector';

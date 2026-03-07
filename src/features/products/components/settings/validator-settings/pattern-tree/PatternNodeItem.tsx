@@ -66,10 +66,20 @@ export function PatternNodeItem(props: PatternNodeItemProps): React.JSX.Element 
       >
         <div
           role='row'
+          tabIndex={0}
           className='flex h-full w-full min-w-0 cursor-pointer items-center gap-1 text-left'
           onClick={(event: React.MouseEvent<HTMLDivElement>): void => {
             event.stopPropagation();
             select(event);
+          }}
+          onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
+            if (event.key !== 'Enter' && event.key !== ' ') {
+              return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            select();
           }}
           title={pattern.label || pattern.id}
         >
@@ -95,10 +105,10 @@ export function PatternNodeItem(props: PatternNodeItemProps): React.JSX.Element 
               size='sm'
             />
             <span
-              onMouseDown={(event: React.MouseEvent<HTMLSpanElement>): void => {
+              onMouseDownCapture={(event: React.MouseEvent<HTMLSpanElement>): void => {
                 event.stopPropagation();
               }}
-              onClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
+              onClickCapture={(event: React.MouseEvent<HTMLSpanElement>): void => {
                 event.stopPropagation();
               }}
             >

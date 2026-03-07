@@ -102,7 +102,7 @@ function FilterPanelHeader(): JSX.Element | null {
   if (!showHeader) return null;
   return (
     <div className='mb-3 flex items-center justify-between'>
-      <h3 className='text-sm font-medium text-gray-700'>{headerTitle}</h3>
+      <h2 className='text-sm font-medium text-gray-700'>{headerTitle}</h2>
       {headerAction}
     </div>
   );

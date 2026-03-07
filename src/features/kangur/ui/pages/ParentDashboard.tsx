@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurParentDashboardAssignmentsWidget } from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsWidget';
+import { KangurParentDashboardAiTutorWidget } from '@/features/kangur/ui/components/KangurParentDashboardAiTutorWidget';
 import { KangurParentDashboardHeroWidget } from '@/features/kangur/ui/components/KangurParentDashboardHeroWidget';
 import { KangurParentDashboardLearnerManagementWidget } from '@/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget';
 import { KangurParentDashboardProgressWidget } from '@/features/kangur/ui/components/KangurParentDashboardProgressWidget';
@@ -92,6 +93,7 @@ function ParentDashboardContent(): React.JSX.Element {
             <KangurParentDashboardProgressWidget displayMode='active-tab' />
             <KangurParentDashboardScoresWidget displayMode='active-tab' />
             <KangurParentDashboardAssignmentsWidget displayMode='active-tab' />
+            <KangurParentDashboardAiTutorWidget displayMode='active-tab' />
           </motion.div>
         </AnimatePresence>
       </KangurPageContainer>

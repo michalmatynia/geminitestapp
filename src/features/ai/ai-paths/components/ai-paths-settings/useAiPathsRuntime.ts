@@ -230,7 +230,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     [normalizedNodes, repairedSanitizedEdges]
   );
 
-  const handleSendToAi = async (sourceNodeId: string, prompt: string): Promise<void> => {
+  const handleSendToAi = useCallback(async (sourceNodeId: string, prompt: string): Promise<void> => {
     const modelResolution = resolvePreviewModelNode(sourceNodeId);
     if (modelResolution.kind === 'missing') {
       args.toast('No AI Model found downstream from this node.', { variant: 'error' });
@@ -354,8 +354,9 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     } finally {
       runtimeContextActions.setSendingToAi(false);
     }
-  };
+  }, [args, brainAssignment, resolvePreviewModelNode, runtimeContextActions, runtimeContextState, setRuntimeState]);
 
+  const { runtimeNodeStatusesRef, setRuntimeNodeStatuses, appendRuntimeEvent } = state;
   const clearNodeCache = useCallback(
     (nodeId: string): void => {
       setRuntimeState((prev: RuntimeState) => {
@@ -369,14 +370,14 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
           hashTimestamps: Object.keys(nextTimestamps).length > 0 ? nextTimestamps : undefined,
         };
       });
-      const currentStatus = state.runtimeNodeStatusesRef.current[nodeId];
+      const currentStatus = runtimeNodeStatusesRef.current[nodeId];
       if (currentStatus === 'cached') {
-        const next = { ...state.runtimeNodeStatusesRef.current };
+        const next = { ...runtimeNodeStatusesRef.current };
         delete next[nodeId];
-        state.runtimeNodeStatusesRef.current = next;
-        state.setRuntimeNodeStatuses(next);
+        runtimeNodeStatusesRef.current = next;
+        setRuntimeNodeStatuses(next);
       }
-      state.appendRuntimeEvent({
+      appendRuntimeEvent({
         source: 'local',
         kind: 'node_status',
         level: 'info',
@@ -384,9 +385,10 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
         message: `Cache cleared for node ${nodeId}.`,
       });
     },
-    [setRuntimeState, state]
+    [setRuntimeState, runtimeNodeStatusesRef, setRuntimeNodeStatuses, appendRuntimeEvent]
   );
 
+  const { setRunStatus: stateSetRunStatus, resetRuntimeNodeStatuses, setRuntimeEvents: stateSetRuntimeEvents } = state;
   const resetRuntimeDiagnostics = useCallback((): void => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -409,15 +411,15 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     runtimeContextActions.setRuntimeNodeStatuses({});
     runtimeContextActions.setRuntimeEvents([]);
     runtimeContextActions.setNodeDurations({});
-    state.setRunStatus('idle');
-    state.resetRuntimeNodeStatuses({});
-    state.setRuntimeEvents([]);
+    stateSetRunStatus('idle');
+    resetRuntimeNodeStatuses({});
+    stateSetRuntimeEvents([]);
   }, [
     runtimeContextActions,
     server.stopServerRunStream,
-    state.resetRuntimeNodeStatuses,
-    state.setRunStatus,
-    state.setRuntimeEvents,
+    resetRuntimeNodeStatuses,
+    stateSetRunStatus,
+    stateSetRuntimeEvents,
   ]);
 
   return {

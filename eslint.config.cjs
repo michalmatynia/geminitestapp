@@ -2,6 +2,7 @@ const nextPlugin = require('@next/eslint-plugin-next');
 const eslintrc = require('@eslint/eslintrc');
 const js = require('@eslint/js');
 const tseslint = require('typescript-eslint');
+const jsxA11yPlugin = require('eslint-plugin-jsx-a11y');
 const reactPlugin = require('eslint-plugin-react');
 const reactHooksPlugin = require('eslint-plugin-react-hooks');
 
@@ -74,6 +75,7 @@ module.exports = tseslint.config(
     },
     plugins: {
       '@typescript-eslint': tseslint.plugin,
+      'jsx-a11y': jsxA11yPlugin,
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
       // import: importPlugin,
@@ -81,6 +83,7 @@ module.exports = tseslint.config(
     },
     rules: {
       ...js.configs.recommended.rules,
+      ...jsxA11yPlugin.configs.recommended.rules,
       // Custom rules and overrides
       indent: ['error', 2, { SwitchCase: 1 }],
       'linebreak-style': ['error', 'unix'],

@@ -382,6 +382,14 @@ export const QUERY_KEYS = {
       [...QUERY_KEYS.analytics.all, 'summary', range, scope] as const,
     insights: (limit?: number) => [...QUERY_KEYS.analytics.all, 'insights', { limit }] as const,
   },
+  kangur: {
+    all: ['kangur'] as const,
+    observability: {
+      all: ['kangur', 'observability'] as const,
+      summary: (range: '24h' | '7d' | '30d') =>
+        [...QUERY_KEYS.kangur.observability.all, 'summary', { range }] as const,
+    },
+  },
   playwright: {
     all: ['playwright'] as const,
     lists: () => [...QUERY_KEYS.playwright.all, 'list'] as const,

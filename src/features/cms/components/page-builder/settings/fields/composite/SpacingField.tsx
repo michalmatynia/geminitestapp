@@ -5,7 +5,7 @@ import { Input } from '@/shared/ui';
 import { useCompositeFieldContext } from '../CompositeFieldContext';
 
 export function SpacingField(): React.ReactNode {
-  const { value, onChange } = useCompositeFieldContext();
+  const { value, onChange, buildAriaLabel } = useCompositeFieldContext();
   const spacing = (value as Record<string, number>) ?? { top: 0, right: 0, bottom: 0, left: 0 };
   const update = (side: string, v: number): void => {
     onChange({ ...spacing, [side]: v });
@@ -22,6 +22,7 @@ export function SpacingField(): React.ReactNode {
               update(side, Number(e.target.value))
             }
             className='text-xs h-7 px-1.5'
+            aria-label={buildAriaLabel(side)}
           />
         </div>
       ))}

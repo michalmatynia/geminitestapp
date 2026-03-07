@@ -1,0 +1,142 @@
+{
+  "generatedAt": "2026-03-07T12:52:50.235Z",
+  "strictMode": false,
+  "failOnWarningBudgetExceed": false,
+  "summary": {
+    "total": 9,
+    "passed": 8,
+    "failed": 1,
+    "actWarnings": 0,
+    "warningBudget": 10,
+    "warningBudgetStatus": "ok",
+    "warningBudgetEnforcement": "telemetry-only"
+  },
+  "results": [
+    {
+      "id": "app-shell-a11y",
+      "name": "App Shell Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/app/__tests__/shell-accessibility.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/app/__tests__/shell-accessibility.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 1568,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/app/__tests__/shell-accessibility.test.tsx (2 tests) 99ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  13:51:52\n   Duration  910ms (transform 209ms, setup 184ms, import 274ms, tests 99ms, environment 272ms)"
+    },
+    {
+      "id": "auth-signin-a11y",
+      "name": "Auth Sign-In Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/auth/pages/signin-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 2811,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ❯ |unit| __tests__/features/auth/pages/signin-page.test.tsx (10 tests | 1 failed) 611ms\n     ✓ renders correctly 119ms\n     ✓ has no obvious accessibility violations in the sign-in form shell 58ms\n     ✓ handles successful sign in 128ms\n     ✓ routes same-origin absolute callback URLs through the Next router 102ms\n     ✓ shows error message when sign in returns an error result 88ms\n     ✓ shows a generic error message when sign in throws unexpectedly 90ms\n     ✓ shows URL error state when auth error query param is present 4ms\n     × supports keyboard tab order across sign-in controls 17ms\n     ✓ normalizes same-origin absolute callback URLs into router navigation 1ms\n     ✓ preserves external callback URLs for full document navigation 0ms\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  |unit| __tests__/features/auth/pages/signin-page.test.tsx > SignInPage > supports keyboard tab order across sign-in controls\nError: expect(element).toHaveFocus()\n\nExpected element with focus:\n  <input\n  autocomplete=\"current-password\"\n  class=\"flex w-full rounded-md border border-foreground/10 px-3 py-2 text-sm transition-colors ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:border-foreground/30 hover:border-foreground/20 disabled:cursor-not-allowed disabled:opacity-50 h-10 bg-gray-900/50\"\n  id=\"password\"\n  placeholder=\"••••••••\"\n  required=\"\"\n  type=\"password\"\n  value=\"\"\n/>\nReceived element with focus:\n  <input\n  autocomplete=\"email\"\n  class=\"flex w-full rounded-md border border-foreground/10 px-3 py-2 text-sm transition-colors ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:border-foreground/30 hover:border-foreground/20 disabled:cursor-not-allowed disabled:opacity-50 h-10 bg-gray-900/50\"\n  id=\"email\"\n  placeholder=\"name@example.com\"\n  required=\"\"\n  type=\"email\"\n  value=\"\"\n/>\n ❯ __tests__/features/auth/pages/signin-page.test.tsx:215:27\n    213|     expect(emailInput).toHaveFocus();\n    214|     await user.tab();\n    215|     expect(passwordInput).toHaveFocus();\n       |                           ^\n    216|     await user.tab();\n    217|     expect(submitButton).toHaveFocus();\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 9 passed (10)\n   Start at  13:51:53\n   Duration  2.14s (transform 703ms, setup 160ms, import 1.00s, tests 611ms, environment 278ms)"
+    },
+    {
+      "id": "products-edit-a11y",
+      "name": "Products Edit Form Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/products/pages/product-edit-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/products/pages/product-edit-page.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 4657,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/products/pages/product-edit-page.test.tsx (7 tests) 1565ms\n     ✓ renders the form with product data in the General tab  354ms\n     ✓ has no obvious accessibility violations in the default edit form view  348ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  13:51:56\n   Duration  4.01s (transform 1.38s, setup 183ms, import 1.89s, tests 1.57s, environment 287ms)"
+    },
+    {
+      "id": "image-studio-a11y",
+      "name": "Image Studio UI Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3210,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx (7 tests) 521ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  13:52:01\n   Duration  2.51s (transform 1.02s, setup 178ms, import 1.41s, tests 521ms, environment 305ms)"
+    },
+    {
+      "id": "ai-paths-a11y",
+      "name": "AI Paths Canvas Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3749,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx (4 tests) 209ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  13:52:04\n   Duration  3.04s (transform 1.71s, setup 170ms, import 2.28s, tests 209ms, environment 292ms)"
+    },
+    {
+      "id": "case-resolver-a11y",
+      "name": "Case Resolver Header Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 2846,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx (10 tests) 300ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  13:52:08\n   Duration  2.16s (transform 925ms, setup 191ms, import 1.28s, tests 300ms, environment 301ms)"
+    },
+    {
+      "id": "kangur-profile-a11y",
+      "name": "Kangur Profile Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/kangur/kangur-accessibility-smoke.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/kangur/kangur-accessibility-smoke.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 2820,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/kangur/kangur-accessibility-smoke.test.tsx (4 tests) 559ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  13:52:11\n   Duration  2.09s (transform 660ms, setup 203ms, import 944ms, tests 559ms, environment 296ms)"
+    },
+    {
+      "id": "public-auth-routes-browser-a11y",
+      "name": "Public Auth Route Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/public-auth-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/public-auth-accessibility.spec.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 23480,
+      "actWarnings": 0,
+      "output": "Running 2 tests using 1 worker\n\n(node:99326) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:99326) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/signin exposes skip navigation and passes the accessibility smoke scan (806ms)\n  ✓  2 e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/register exposes skip navigation and passes the accessibility smoke scan (907ms)\n\n  2 passed (22.6s)"
+    },
+    {
+      "id": "admin-dashboard-browser-a11y",
+      "name": "Admin Dashboard Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/admin-dashboard-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/admin-dashboard-accessibility.spec.ts",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 13490,
+      "actWarnings": 0,
+      "output": "Running 1 test using 1 worker\n\n(node:622) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:622) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/admin-dashboard-accessibility.spec.ts:58:1 › admin dashboard exposes shell landmarks and passes the accessibility smoke scan (4.6s)\n\n  1 passed (12.6s)"
+    }
+  ]
+}

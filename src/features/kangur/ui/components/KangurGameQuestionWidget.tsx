@@ -35,10 +35,10 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
         </div>
       ) : null}
       <div className='mb-4 flex w-full max-w-md items-center justify-between px-2'>
-        <span className='font-semibold text-gray-500'>
+        <span className='font-semibold text-slate-500'>
           ⭐ Wynik: <span className='font-bold text-indigo-600'>{score}</span>
         </span>
-        <span className='font-semibold text-gray-500'>
+        <span className='font-semibold text-slate-500'>
           {DIFFICULTY_CONFIG[difficulty]?.emoji} {DIFFICULTY_CONFIG[difficulty]?.label}
         </span>
       </div>

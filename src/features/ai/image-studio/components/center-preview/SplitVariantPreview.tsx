@@ -234,7 +234,7 @@ export function SplitVariantPreview(): React.JSX.Element {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={leftImageSrc}
-          alt='Source image'
+          alt='Source asset'
           className='h-full w-full object-contain transition-transform duration-150 ease-out'
           style={{
             transform: `translate(${leftOffset.x}px, ${leftOffset.y}px) scale(${leftSplitZoom})`,

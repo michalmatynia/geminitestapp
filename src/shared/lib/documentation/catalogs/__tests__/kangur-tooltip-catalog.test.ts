@@ -22,6 +22,9 @@ describe('Kangur tooltip catalog', () => {
       'settings_docs_tooltips_master_toggle',
       'settings_documentation_library',
       'settings_save',
+      'admin_observability_range',
+      'admin_observability_alerts',
+      'admin_observability_quick_links',
     ];
 
     for (const id of requiredIds) {
@@ -46,6 +49,7 @@ describe('Kangur tooltip catalog', () => {
       'admin-content-authoring',
       'settings-and-narration',
       'svg-and-media-rules',
+      'observability-and-operations',
     ]);
   });
 

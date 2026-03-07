@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { getKangurAssignmentRepository } from '@/features/kangur/server';
 import { evaluateKangurAssignment } from '@/features/kangur/services/kangur-assignments';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
@@ -15,7 +16,7 @@ import {
 
 export async function patchKangurAssignmentHandler(
   req: NextRequest,
-  _ctx: ApiHandlerContext,
+  ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
   const actor = await resolveAssignmentActor(req);
@@ -46,5 +47,18 @@ export async function patchKangurAssignmentHandler(
       scores: [],
     });
 
+  void logKangurServerEvent({
+    source: 'kangur.assignments.update',
+    message: 'Kangur assignment updated',
+    request: req,
+    requestContext: ctx,
+    statusCode: 200,
+    context: {
+      learnerId: actor.learnerKey,
+      assignmentId: matchingSnapshot.id,
+      status: matchingSnapshot.progress.status,
+      updateKeys: Object.keys(payload),
+    },
+  });
   return NextResponse.json(matchingSnapshot);
 }

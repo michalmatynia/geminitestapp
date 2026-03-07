@@ -79,6 +79,9 @@ import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/Kan
 const renderLesson = (ui: ReactNode) =>
   render(<KangurLessonNavigationProvider onBack={vi.fn()}>{ui}</KangurLessonNavigationProvider>);
 
+const getParagraphByTextContent = (snippet: string): HTMLElement =>
+  screen.getByText((_, element) => element?.tagName === 'P' && element.textContent?.includes(snippet) === true);
+
 describe('Arithmetic lessons shared surfaces', () => {
   it('uses shared equation and game header surfaces in the adding lesson', () => {
     const { unmount } = renderLesson(<AddingLesson />);
@@ -90,6 +93,7 @@ describe('Arithmetic lessons shared surfaces', () => {
       'text-3xl',
       'text-orange-500'
     );
+    expect(getParagraphByTextContent('Zacznij od 4')).toHaveClass('text-slate-500');
 
     unmount();
 
@@ -113,6 +117,7 @@ describe('Arithmetic lessons shared surfaces', () => {
       'text-3xl',
       'text-red-500'
     );
+    expect(getParagraphByTextContent('Zacznij od 9')).toHaveClass('text-slate-500');
 
     unmount();
 
@@ -135,6 +140,7 @@ describe('Arithmetic lessons shared surfaces', () => {
       'text-3xl',
       'text-teal-600'
     );
+    expect(screen.getByText(/7 czekolad/i)).toHaveClass('text-slate-500');
 
     unmount();
 
@@ -157,6 +163,7 @@ describe('Arithmetic lessons shared surfaces', () => {
       'text-2xl',
       'text-purple-600'
     );
+    expect(screen.getByText(/3 grupy po 3 cukierki/i)).toHaveClass('text-slate-500');
 
     fireEvent.click(screen.getByRole('button', { name: /menu/i }));
     fireEvent.click(screen.getByRole('button', { name: /tabliczka × 2 i × 3/i }));

@@ -40,13 +40,19 @@ import { LinkField } from './settings/fields/LinkField';
 function CompositeFieldProvider(props: {
   value: unknown;
   onChange: (value: unknown) => void;
+  fieldLabel: string;
   children: React.ReactNode;
 }): React.JSX.Element {
-  const { value, onChange, children } = props;
+  const { value, onChange, fieldLabel, children } = props;
 
   const contextValue = useMemo(
-    (): CompositeFieldContextValue => ({ value, onChange }),
-    [onChange, value]
+    (): CompositeFieldContextValue => ({
+      value,
+      onChange,
+      fieldLabel,
+      buildAriaLabel: (suffix: string): string => `${fieldLabel} ${suffix}`.trim(),
+    }),
+    [fieldLabel, onChange, value]
   );
 
   return (
@@ -116,6 +122,7 @@ export function SettingsFieldRenderer(props: {
             value={(value as string) ?? ''}
             onChange={handleChange}
             disabled={isDisabled}
+            ariaLabel={field.label}
           />
         </>
       )}
@@ -125,7 +132,7 @@ export function SettingsFieldRenderer(props: {
           <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
-          <LinkField value={(value as string) ?? ''} onChange={handleChange} />
+          <LinkField value={(value as string) ?? ''} onChange={handleChange} ariaLabel={field.label} />
         </>
       )}
 
@@ -139,6 +146,7 @@ export function SettingsFieldRenderer(props: {
             value={(value as number) ?? 0}
             onChange={handleChange}
             disabled={isDisabled}
+            ariaLabel={field.label}
             {...(field.min !== undefined && { min: field.min })}
             {...(field.max !== undefined && { max: field.max })}
           />
@@ -165,6 +173,7 @@ export function SettingsFieldRenderer(props: {
               value: String(option.value),
             }))}
             disabled={isDisabled}
+            ariaLabel={field.label}
             triggerClassName='h-7 bg-card/40 text-xs mt-1'
           />
         </>
@@ -257,6 +266,7 @@ export function SettingsFieldRenderer(props: {
             value={imageValue}
             onChange={handleChange}
             disabled={isDisabled}
+            ariaLabel={field.label}
           />
         </>
       )}
@@ -273,6 +283,7 @@ export function SettingsFieldRenderer(props: {
             min={field.min ?? 1}
             max={field.max ?? 12}
             disabled={isDisabled}
+            ariaLabel={field.label}
           />
         </>
       )}
@@ -291,6 +302,7 @@ export function SettingsFieldRenderer(props: {
               value: String(option.value),
             }))}
             disabled={isDisabled}
+            ariaLabel={field.label}
             triggerClassName='h-7 bg-card/40 text-xs mt-1'
           />
           <div className='flex items-center justify-between text-[11px] text-gray-500'>
@@ -319,6 +331,7 @@ export function SettingsFieldRenderer(props: {
             value={(value as string) ?? '#ffffff'}
             onChange={handleChange}
             disabled={isDisabled}
+            ariaLabel={field.label}
           />
         </>
       )}
@@ -340,6 +353,7 @@ export function SettingsFieldRenderer(props: {
             onValueChange={handleChange}
             options={FONT_FAMILY_OPTIONS}
             disabled={isDisabled}
+            ariaLabel={field.label}
             triggerClassName='h-7 bg-card/40 text-xs mt-1'
           />
         </>
@@ -356,6 +370,7 @@ export function SettingsFieldRenderer(props: {
             onValueChange={handleChange}
             options={FONT_WEIGHT_OPTIONS}
             disabled={isDisabled}
+            ariaLabel={field.label}
             triggerClassName='h-7 bg-card/40 text-xs mt-1'
           />
         </>
@@ -366,7 +381,7 @@ export function SettingsFieldRenderer(props: {
           <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
-          <CompositeFieldProvider value={value} onChange={handleChange}>
+          <CompositeFieldProvider value={value} onChange={handleChange} fieldLabel={field.label}>
             <SpacingField />
           </CompositeFieldProvider>
         </>
@@ -377,7 +392,7 @@ export function SettingsFieldRenderer(props: {
           <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
-          <CompositeFieldProvider value={value} onChange={handleChange}>
+          <CompositeFieldProvider value={value} onChange={handleChange} fieldLabel={field.label}>
             <BorderField />
           </CompositeFieldProvider>
         </>
@@ -388,7 +403,7 @@ export function SettingsFieldRenderer(props: {
           <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
-          <CompositeFieldProvider value={value} onChange={handleChange}>
+          <CompositeFieldProvider value={value} onChange={handleChange} fieldLabel={field.label}>
             <ShadowField />
           </CompositeFieldProvider>
         </>
@@ -399,7 +414,7 @@ export function SettingsFieldRenderer(props: {
           <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
-          <CompositeFieldProvider value={value} onChange={handleChange}>
+          <CompositeFieldProvider value={value} onChange={handleChange} fieldLabel={field.label}>
             <BackgroundField />
           </CompositeFieldProvider>
         </>
@@ -410,7 +425,7 @@ export function SettingsFieldRenderer(props: {
           <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
-          <CompositeFieldProvider value={value} onChange={handleChange}>
+          <CompositeFieldProvider value={value} onChange={handleChange} fieldLabel={field.label}>
             <TypographyField />
           </CompositeFieldProvider>
         </>

@@ -9,6 +9,7 @@ import {
   listOptimisticAiPathRuns,
   mergeAiPathQueuePayloadWithOptimisticRuns,
   patchQueuedCountWithOptimisticRuns,
+  previewAiPathQueuePayloadWithOptimisticRuns,
   rememberOptimisticAiPathRun,
   removeOptimisticAiPathRun,
   removeOptimisticAiPathRuns,
@@ -58,6 +59,23 @@ describe('optimistic-run-queue', () => {
       entityId: 'product-1',
       status: 'queued',
     });
+  });
+
+  it('previews remembered optimistic runs without consuming local storage entries', () => {
+    rememberOptimisticAiPathRun(buildRun());
+
+    const preview = previewAiPathQueuePayloadWithOptimisticRuns(
+      { runs: [], total: 0 },
+      {
+        limit: 25,
+        offset: 0,
+        status: 'all',
+      }
+    );
+
+    expect(preview.total).toBe(1);
+    expect(preview.runs).toHaveLength(1);
+    expect(listOptimisticAiPathRuns()).toHaveLength(1);
   });
 
   it('deduplicates optimistic runs once the server returns the same run id', () => {

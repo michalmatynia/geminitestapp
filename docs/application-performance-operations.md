@@ -49,8 +49,12 @@ Successful runs update these files:
 
 ## Live Telemetry Surfaces
 
+- Kangur observability dashboard:
+  - `/admin/kangur/observability`
 - System log metrics API:
   - `GET /api/system/logs/metrics`
+- Kangur observability summary API:
+  - `GET /api/kangur/observability/summary?range=24h|7d|30d`
 - AI operations overview API:
   - `GET /api/brain/operations/overview?range=15m|1h|6h|24h`
 - Node OpenTelemetry bootstrap:
@@ -72,6 +76,8 @@ Feature-specific runbooks can define stricter SLOs. Example:
 
 - Case Resolver save latency: warning at `p95 >= 700ms`, critical at `p95 >= 1200ms`
 - Case list interaction: warning at `p95 >= 100ms`, critical at `p95 >= 180ms`
+- Kangur sign-in failure rate: warning at `>= 5%`, critical at `>= 10%`
+- Kangur TTS fallback rate: warning at `>= 10%`, critical at `>= 25%`
 
 ## Operating Cadence
 
@@ -79,6 +85,7 @@ Feature-specific runbooks can define stricter SLOs. Example:
 2. On staging or before release, run `npm run perf:ops:baseline`.
 3. Weekly, rely on `.github/workflows/weekly-quality-report.yml` and review the generated trend artifacts.
 4. During incidents, inspect `/api/system/logs/metrics`, `/api/brain/operations/overview`, OTEL traces/logs, and the latest `docs/metrics` artifacts together.
+5. For Kangur-specific incidents, start with `GET /api/kangur/observability/summary?range=24h` and the runbook in `docs/kangur/observability-and-operations.md`.
 
 ## Current Gaps
 

@@ -215,9 +215,8 @@ export function SlideshowFrameNodeItem(props: SlideshowFrameNodeItemProps): Reac
               endBlockDrag();
             }}
             onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
             className='flex items-center justify-center opacity-0 group-hover/frame:opacity-100'
-            aria-label='Drag frame'
+            aria-hidden='true'
           >
             <GripVertical className='size-3 shrink-0 text-gray-600 cursor-grab active:cursor-grabbing' />
           </div>
@@ -232,14 +231,12 @@ export function SlideshowFrameNodeItem(props: SlideshowFrameNodeItemProps): Reac
           <Icon className='size-3.5 shrink-0' />
           <span className='flex-1 truncate text-left'>{blockLabel}</span>
           <TreeActionSlot show='always' align='inline'>
-            <div draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
-              <ColumnBlockPicker
-                onSelect={(elemType: string) =>
-                  blockActions.addElementToSectionBlock(sectionId, frame.id, elemType)
-                }
-                allowedBlockTypes={frameAllowedTypes}
-              />
-            </div>
+            <ColumnBlockPicker
+              onSelect={(elemType: string) =>
+                blockActions.addElementToSectionBlock(sectionId, frame.id, elemType)
+              }
+              allowedBlockTypes={frameAllowedTypes}
+            />
           </TreeActionSlot>
           {!isDragOver && (
             <TreeActionSlot show='hover' align='inline'>

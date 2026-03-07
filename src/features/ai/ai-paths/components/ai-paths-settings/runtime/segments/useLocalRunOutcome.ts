@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import type { PathConfig, PathDebugSnapshot, RuntimeState } from '@/shared/lib/ai-paths';
 import { PATH_DEBUG_PREFIX, appendLocalRun } from '@/shared/lib/ai-paths';
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
@@ -11,11 +11,15 @@ import { buildActivePathConfig, buildDebugSnapshot, safeJsonStringify } from '..
 import type { LocalExecutionArgs } from '../types';
 
 export function useLocalRunOutcome(args: LocalExecutionArgs) {
+  const argsRef = useRef(args);
+  argsRef.current = args;
+
   const { setPathConfigs } = useGraphActions();
   const { setPathDebugSnapshots } = useRuntimeActions();
 
   const persistDebugSnapshot = useCallback(
     async (pathId: string | null, runAt: string, state: RuntimeState): Promise<void> => {
+      const args = argsRef.current;
       if (!pathId) return;
       const snapshot = buildDebugSnapshot({ pathId, runAt, state, nodes: args.normalizedNodes });
       if (!snapshot) return;
@@ -33,7 +37,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
         });
       }
     },
-    [args.normalizedNodes, setPathDebugSnapshots]
+    [setPathDebugSnapshots]
   );
 
   const finalizeLocalRunOutcome = useCallback(
@@ -50,6 +54,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
         triggerContext: Record<string, unknown> | null;
       }
     ): void => {
+      const args = argsRef.current;
       const finishedAt = new Date().toISOString();
       if (outcome.status === 'completed') {
         args.settleTransientNodeStatuses('completed');
@@ -235,7 +240,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
         });
       }
     },
-    [args, persistDebugSnapshot, setPathConfigs]
+    [persistDebugSnapshot, setPathConfigs]
   );
 
   return { finalizeLocalRunOutcome, persistDebugSnapshot };

@@ -3,11 +3,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { AI_PATH_RUN_ENQUEUED_EVENT_NAME } from '@/shared/contracts/ai-paths';
-import { notifyAiPathRunEnqueued } from '@/shared/lib/query-invalidation';
+import {
+  getRecentAiPathRunEnqueue,
+  notifyAiPathRunEnqueued,
+} from '@/shared/lib/query-invalidation';
 
 describe('notifyAiPathRunEnqueued', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    window.localStorage.clear();
   });
 
   it('dispatches canonical enqueue event and broadcast message when runId is valid', () => {
@@ -50,6 +54,12 @@ describe('notifyAiPathRunEnqueued', () => {
     expect(constructorSpy).toHaveBeenCalledTimes(1);
     expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({ runId: 'run-1' }));
     expect(close).toHaveBeenCalledTimes(1);
+    expect(getRecentAiPathRunEnqueue()).toMatchObject({
+      type: 'run-enqueued',
+      runId: 'run-1',
+      entityId: 'product-1',
+      entityType: 'product',
+    });
   });
 
   it('does not dispatch enqueue event when runId is missing', () => {

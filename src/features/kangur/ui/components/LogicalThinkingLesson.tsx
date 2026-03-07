@@ -8,11 +8,11 @@ export const SLIDES: LessonSlide[] = [
     title: 'Co to jest myślenie logiczne? 🧠',
     content: (
       <div className='flex flex-col items-center gap-4'>
-        <p className='text-gray-700 text-center'>
+        <p className='text-center text-slate-700'>
           Myślenie logiczne to umiejętność zauważania zasad, porządkowania informacji i wyciągania
           wniosków krok po kroku.
         </p>
-        <KangurLessonCallout accent='violet' className='w-full text-sm text-gray-600'>
+        <KangurLessonCallout accent='violet' className='w-full text-sm text-slate-600'>
           <p className='font-semibold text-violet-700 mb-2'>Logiczne myślenie pomaga:</p>
           <ul className='space-y-1'>
             <li>🔍 Znajdować wzorce i ciągi</li>
@@ -28,18 +28,18 @@ export const SLIDES: LessonSlide[] = [
     title: 'Wzorce i ciągi 🔢',
     content: (
       <div className='flex flex-col items-center gap-4'>
-        <p className='text-gray-700 text-center'>
+        <p className='text-center text-slate-700'>
           Wzorzec to powtarzający się układ. Gdy go znajdziesz, możesz przewidzieć, co będzie dalej!
         </p>
         <KangurLessonCallout accent='sky' className='w-full text-center'>
-          <p className='text-gray-500 text-sm mb-2'>Co jest dalej?</p>
+          <p className='mb-2 text-sm text-slate-500'>Co jest dalej?</p>
           <p className='text-3xl tracking-widest'>🔴 🔵 🔴 🔵 🔴 ❓</p>
           <p className='mt-2 text-blue-600 font-bold'>
             Odpowiedź: 🔵 (wzorzec: czerwony – niebieski)
           </p>
         </KangurLessonCallout>
         <KangurLessonCallout accent='sky' className='w-full text-center'>
-          <p className='text-gray-500 text-sm mb-2'>Ciąg liczbowy – co dalej?</p>
+          <p className='mb-2 text-sm text-slate-500'>Ciąg liczbowy – co dalej?</p>
           <p className='text-2xl font-extrabold text-blue-700'>2, 4, 6, 8, ❓</p>
           <p className='mt-2 text-blue-600 font-bold'>Odpowiedź: 10 (co 2 w górę)</p>
         </KangurLessonCallout>
@@ -50,7 +50,7 @@ export const SLIDES: LessonSlide[] = [
     title: 'Klasyfikacja – grupowanie 📦',
     content: (
       <div className='flex flex-col items-center gap-4'>
-        <p className='text-gray-700 text-center'>
+        <p className='text-center text-slate-700'>
           Klasyfikacja to układanie rzeczy w grupy według wspólnej cechy.
         </p>
         <div className='grid grid-cols-2 gap-3 w-full'>
@@ -81,17 +81,17 @@ export const SLIDES: LessonSlide[] = [
     title: 'Znajdź intruza 🔎',
     content: (
       <div className='flex flex-col items-center gap-4'>
-        <p className='text-gray-700 text-center'>
+        <p className='text-center text-slate-700'>
           W każdej grupie jeden element do niej nie pasuje. Znajdź go i wyjaśnij dlaczego!
         </p>
         <KangurLessonCallout accent='rose' className='w-full text-center'>
           <p className='text-3xl mb-2'>🍎 🍌 🥕 🍇</p>
-          <p className='text-gray-500 text-sm'>Który nie pasuje?</p>
+          <p className='text-sm text-slate-500'>Który nie pasuje?</p>
           <p className='mt-2 text-rose-600 font-bold'>🥕 – to warzywo, reszta to owoce</p>
         </KangurLessonCallout>
         <KangurLessonCallout accent='rose' className='w-full text-center'>
-          <p className='text-2xl font-extrabold text-gray-800 mb-2'>2, 4, 7, 8, 10</p>
-          <p className='text-gray-500 text-sm'>Która liczba nie pasuje?</p>
+          <p className='mb-2 text-2xl font-extrabold text-slate-800'>2, 4, 7, 8, 10</p>
+          <p className='text-sm text-slate-500'>Która liczba nie pasuje?</p>
           <p className='mt-2 text-rose-600 font-bold'>7 – tylko ona jest nieparzysta</p>
         </KangurLessonCallout>
       </div>
@@ -101,7 +101,7 @@ export const SLIDES: LessonSlide[] = [
     title: 'Wnioskowanie: jeśli... to... 💡',
     content: (
       <div className='flex flex-col items-center gap-4'>
-        <p className='text-gray-700 text-center'>
+        <p className='text-center text-slate-700'>
           Wnioskowanie to wyciąganie wniosków z tego, co wiemy. Używamy schematu: jeśli... to...
         </p>
         <div className='flex flex-col gap-3 w-full'>
@@ -130,23 +130,23 @@ export const SLIDES: LessonSlide[] = [
     title: 'Analogie – co pasuje? 🔗',
     content: (
       <div className='flex flex-col items-center gap-4'>
-        <p className='text-gray-700 text-center'>
+        <p className='text-center text-slate-700'>
           Analogia to podobna relacja między różnymi parami. Uzupełnij brakujące ogniwo!
         </p>
         <div className='flex flex-col gap-3 w-full'>
           <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-            <p className='text-gray-700 text-sm'>
+            <p className='text-sm text-slate-700'>
               Ptak lata, ryba... <span className='font-bold text-purple-700'>pływa 🐟</span>
             </p>
           </KangurLessonCallout>
           <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-            <p className='text-gray-700 text-sm'>
+            <p className='text-sm text-slate-700'>
               Dzień jest do słońca, jak noc jest do...{' '}
               <span className='font-bold text-purple-700'>księżyca 🌙</span>
             </p>
           </KangurLessonCallout>
           <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-            <p className='text-gray-700 text-sm'>
+            <p className='text-sm text-slate-700'>
               2 jest do 4, jak 3 jest do...{' '}
               <span className='font-bold text-purple-700'>6 (×2)</span>
             </p>
@@ -160,7 +160,7 @@ export const SLIDES: LessonSlide[] = [
     content: (
       <div className='flex flex-col items-center gap-4'>
         <KangurLessonCallout accent='amber' className='w-full'>
-          <ul className='text-gray-700 space-y-2 text-sm'>
+          <ul className='space-y-2 text-sm text-slate-700'>
             <li>
               🔁 <b>Wzorzec</b> – znajdź regułę i przewiduj, co dalej
             </li>

@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus } from 'lucide-react';
-import { memo, useState, useCallback, useMemo } from 'react';
+import { memo, useState, useCallback, useEffect, useId, useMemo, useRef } from 'react';
 
 import type { GenericPickerDropdownProps, PickerOption, PickerGroup } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
@@ -49,6 +49,8 @@ export const GenericPickerDropdown = memo(function GenericPickerDropdown<
 }: GenericPickerDropdownProps<T>): React.ReactNode {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const listboxId = useId();
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleSelect = useCallback(
     (option: T) => {
@@ -77,6 +79,19 @@ export const GenericPickerDropdown = memo(function GenericPickerDropdown<
     [handleOpenChange]
   );
 
+  const handleDropdownKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setIsOpen(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && searchable) {
+      searchInputRef.current?.focus();
+    }
+  }, [isOpen, searchable]);
+
   const allOptions = useMemo(() => groups.flatMap((g: PickerGroup) => g.options), [groups]);
 
   const filteredGroups = useMemo(() => {
@@ -101,9 +116,8 @@ export const GenericPickerDropdown = memo(function GenericPickerDropdown<
   return (
     <div className='relative'>
       {/* Trigger Button */}
-      <div
-        role='button'
-        tabIndex={disabled ? -1 : 0}
+      <button
+        type='button'
         onClick={handleOpenChange}
         onKeyDown={handleKeyDown}
         className={cn(
@@ -112,43 +126,43 @@ export const GenericPickerDropdown = memo(function GenericPickerDropdown<
           triggerClassName
         )}
         aria-label={ariaLabel}
-        aria-disabled={disabled}
+        aria-controls={isOpen ? listboxId : undefined}
+        aria-expanded={isOpen}
+        aria-haspopup='listbox'
+        disabled={disabled}
       >
         {triggerContent}
-      </div>
+      </button>
 
       {/* Dropdown Menu */}
       {isOpen && !disabled && (
         <>
           {/* Backdrop */}
-          <div
-            className='fixed inset-0 z-40'
-            onClick={() => setIsOpen(false)}
-            onKeyDown={(e: React.KeyboardEvent) => {
-              if (e.key === 'Escape') setIsOpen(false);
-            }}
-            role='button'
-            tabIndex={-1}
-            aria-label='Close picker'
-          />
+          <div className='fixed inset-0 z-40' onClick={() => setIsOpen(false)} aria-hidden='true' />
 
           {/* Dropdown Content */}
           <div
+            id={listboxId}
             className={cn(
               'absolute left-0 top-full z-50 mt-1 w-48 rounded-md border border-border/50 bg-popover/95 p-1 shadow-lg backdrop-blur-md',
               dropdownClassName
             )}
+            role='listbox'
+            aria-label={ariaLabel}
+            tabIndex={-1}
+            onKeyDown={handleDropdownKeyDown}
           >
             {/* Search Input (if enabled) */}
             {searchable && (
               <div className='mb-2 border-b border-border/30 pb-2'>
                 <input
+                  ref={searchInputRef}
                   type='text'
                   placeholder={searchPlaceholder}
+                  aria-label={`Search ${ariaLabel.toLowerCase()}`}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className='w-full rounded px-2 py-1 text-xs bg-background/80 border border-border/40 placeholder-gray-500 text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500'
-                  autoFocus
                 />
               </div>
             )}
@@ -160,11 +174,14 @@ export const GenericPickerDropdown = memo(function GenericPickerDropdown<
               </div>
             ) : (
               filteredGroups.map((group: PickerGroup, groupIdx: number) => (
-                <div key={group.label}>
+                <div key={group.label} role='group' aria-label={group.label}>
                   {groupIdx > 0 && <div className='my-1 border-t border-border/30' />}
 
                   {/* Group Header */}
-                  <div className='px-2 py-1.5 text-xs font-medium uppercase tracking-wide text-gray-400'>
+                  <div
+                    className='px-2 py-1.5 text-xs font-medium uppercase tracking-wide text-gray-400'
+                    aria-hidden='true'
+                  >
                     {group.label}
                   </div>
 
@@ -175,6 +192,8 @@ export const GenericPickerDropdown = memo(function GenericPickerDropdown<
                       <button
                         key={option.key}
                         type='button'
+                        role='option'
+                        aria-selected={isSelected}
                         onClick={() => handleSelect(option as T)}
                         disabled={option.disabled}
                         className={cn(

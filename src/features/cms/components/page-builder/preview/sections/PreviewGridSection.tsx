@@ -16,7 +16,9 @@ import { renderBackgroundImageLayer } from '@/features/cms/components/page-build
 import {
   InspectorTooltip,
   InspectorHover,
+  resolveNodeLabel,
 } from '@/features/cms/components/page-builder/preview/InspectorOverlay';
+import { PreviewNodeSelectionButton } from '@/features/cms/components/page-builder/preview/PreviewNodeSelectionButton';
 import {
   getGapClass,
   resolveGapValue,
@@ -36,6 +38,7 @@ export function PreviewGridSection() {
     section,
     selectedRing,
     renderSectionActions,
+    renderSelectionButton,
     divider,
     wrapInspector,
     handleSelect,
@@ -124,16 +127,12 @@ export function PreviewGridSection() {
 
   return wrapInspector(
     <div
-      role='button'
-      tabIndex={0}
       onClick={handleSelect}
-      onKeyDown={(e: React.KeyboardEvent): void => {
-        if (e.key === 'Enter' || e.key === ' ') handleSelect();
-      }}
       style={sectionStyles}
-      className={`relative w-full text-left transition cursor-pointer ${selectedRing} cms-node-${section.id}`}
+      className={`relative group w-full text-left transition cursor-pointer ${selectedRing} cms-node-${section.id}`}
     >
       {sectionCustomCss ? <style data-cms-custom-css={section.id}>{sectionCustomCss}</style> : null}
+      {renderSelectionButton()}
       {renderSectionActions()}
       {divider}
       <div className={`relative ${hasGridBackground ? 'overflow-hidden' : ''}`}>
@@ -202,20 +201,12 @@ export function PreviewGridSection() {
                   return (
                     <div key={row.id}>
                       <div
-                        role='button'
-                        tabIndex={0}
                         onClick={(e: React.MouseEvent): void => {
                           e.stopPropagation();
                           onSelect(row.id);
                         }}
-                        onKeyDown={(e: React.KeyboardEvent): void => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.stopPropagation();
-                            onSelect(row.id);
-                          }
-                        }}
                         style={{ ...rowStyles, ...(rowHeightStyle ?? {}) }}
-                        className={`relative cms-node-${row.id} ${hasRowBackground ? 'overflow-hidden' : ''} ${
+                        className={`relative group cms-node-${row.id} ${hasRowBackground ? 'overflow-hidden' : ''} ${
                           isRowSelected ? 'ring-1 ring-inset ring-blue-500/40' : ''
                         } ${showEditorChrome && !isRowSelected ? 'border border-dashed border-gray-800/40' : ''}`}
                       >
@@ -224,6 +215,15 @@ export function PreviewGridSection() {
                         ) : null}
                         {hasRowBackgroundSetting &&
                           renderBackgroundImageLayer(rowBackgroundSettings, mediaStyles)}
+
+                        {showEditorChrome ? (
+                          <PreviewNodeSelectionButton
+                            label={`Select block ${resolveNodeLabel(`Row ${rowIndex + 1}`, row.settings?.['label'])}`}
+                            selected={isRowSelected}
+                            onSelect={() => onSelect(row.id)}
+                            className='left-2 top-2 size-6'
+                          />
+                        ) : null}
 
                         {isRowSelected && onRemoveRow && showEditorChrome && (
                           <div className='absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full border border-border/40 bg-gray-900/80 px-1.5 py-1 text-xs text-gray-200 shadow-sm'>
@@ -339,20 +339,12 @@ export function PreviewGridSection() {
                                 className='w-full'
                               >
                                 <div
-                                  role='button'
-                                  tabIndex={0}
                                   onClick={(e: React.MouseEvent): void => {
                                     e.stopPropagation();
                                     onSelect(column.id);
                                   }}
-                                  onKeyDown={(e: React.KeyboardEvent): void => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                      e.stopPropagation();
-                                      onSelect(column.id);
-                                    }
-                                  }}
                                   style={{ ...columnStyles, ...columnStyle }}
-                                  className={`relative h-full text-left transition cursor-pointer cms-node-${column.id} ${
+                                  className={`relative group h-full text-left transition cursor-pointer cms-node-${column.id} ${
                                     isColumnSelected ? 'ring-1 ring-inset ring-blue-500/40' : ''
                                   } ${isColumnHovered && !isColumnSelected ? 'ring-1 ring-inset ring-blue-500/30' : ''} ${hasColumnBackground ? 'overflow-hidden' : ''} ${
                                     showEditorChrome && !isColumnSelected && !isColumnHovered
@@ -368,6 +360,15 @@ export function PreviewGridSection() {
                                       columnBackgroundSettings,
                                       mediaStyles
                                     )}
+
+                                  {showEditorChrome ? (
+                                    <PreviewNodeSelectionButton
+                                      label={`Select column ${resolveNodeLabel(`Column ${colIndex + 1}`, column.settings?.['label'])}`}
+                                      selected={isColumnSelected}
+                                      onSelect={() => onSelect(column.id)}
+                                      className='left-2 top-2 size-6'
+                                    />
+                                  ) : null}
 
                                   {(column.blocks ?? []).length > 0 ? (
                                     ((): React.ReactNode => {

@@ -5,7 +5,7 @@ import {
   assessRuntimeKernelParityRisk,
   buildRuntimeKernelParityMetadata,
   buildRuntimeKernelParityPrompt,
-} from '@/features/ai/insights/server/runtime-analytics-prompt';
+} from '@/features/ai/insights/generator/runtime-analytics-prompt';
 
 const buildSummary = (
   overrides?: Partial<AiPathRuntimeAnalyticsSummary>

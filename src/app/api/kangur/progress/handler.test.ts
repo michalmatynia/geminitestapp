@@ -8,11 +8,13 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 const {
   getKangurProgressRepositoryMock,
   getProgressMock,
+  logKangurServerEventMock,
   resolveKangurActorMock,
   saveProgressMock,
 } = vi.hoisted(() => ({
   getKangurProgressRepositoryMock: vi.fn(),
   getProgressMock: vi.fn(),
+  logKangurServerEventMock: vi.fn(),
   resolveKangurActorMock: vi.fn(),
   saveProgressMock: vi.fn(),
 }));
@@ -20,6 +22,10 @@ const {
 vi.mock('@/features/kangur/server', () => ({
   getKangurProgressRepository: getKangurProgressRepositoryMock,
   resolveKangurActor: resolveKangurActorMock,
+}));
+
+vi.mock('@/features/kangur/observability/server', () => ({
+  logKangurServerEvent: logKangurServerEventMock,
 }));
 
 import { getKangurProgressHandler, patchKangurProgressHandler } from './handler';
@@ -113,6 +119,16 @@ describe('kangur progress handler', () => {
     );
 
     expect(saveProgressMock).toHaveBeenCalledWith('learner-1', progress);
+    expect(logKangurServerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'kangur.progress.update',
+        statusCode: 200,
+        context: expect.objectContaining({
+          totalXp: 320,
+          gamesPlayed: 11,
+        }),
+      })
+    );
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(progress);
   });

@@ -47,6 +47,11 @@ describe('ClockLesson sectioned structure', () => {
     expect(screen.getByTestId('clock-lesson-section-toggle-hours')).toBeInTheDocument();
     expect(screen.getByTestId('clock-lesson-section-toggle-minutes')).toBeInTheDocument();
     expect(screen.getByTestId('clock-lesson-section-toggle-combined')).toBeInTheDocument();
+    expect(screen.getByTestId('clock-lesson-section-shell-hours')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(screen.getByTestId('clock-lesson-section-toggle-hours')).toHaveClass(
       'soft-card',
       'border-indigo-300'
@@ -164,6 +169,11 @@ describe('ClockLesson sectioned structure', () => {
       expect(screen.getByTestId('mock-clock-training-game')).toBeInTheDocument();
     });
     const header = screen.getByTestId('clock-lesson-training-header');
+    expect(screen.getByTestId('clock-lesson-training-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(within(header).getByRole('heading', { name: /ćwiczenie z zegarem/i })).toHaveClass(
       'text-xl',
       'text-indigo-700'

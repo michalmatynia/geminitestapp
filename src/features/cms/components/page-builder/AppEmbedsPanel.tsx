@@ -5,7 +5,7 @@ import React from 'react';
 
 import { APP_EMBED_OPTIONS } from '@/features/app-embeds/lib/constants';
 import { AppEmbedsProvider, useAppEmbeds } from '@/features/app-embeds/providers/AppEmbedsProvider';
-import { Button, Checkbox, SectionHeader, SimpleSettingsList, LoadingState } from '@/shared/ui';
+import { Button, Checkbox, Label, SectionHeader, SimpleSettingsList, LoadingState } from '@/shared/ui';
 
 export function AppEmbedsPanel({
   showHeader = true,
@@ -46,17 +46,21 @@ function AppEmbedsPanelContent({ showHeader }: { showHeader: boolean }): React.R
           }))}
           renderActions={(item) => {
             const isEnabled = enabled.has(item.id);
+            const checkboxId = `app-embed-enabled-${item.id}`;
             return (
               <div className='flex items-center gap-4'>
-                <label className='flex items-center gap-2 text-xs text-gray-300 cursor-pointer'>
+                <div className='flex items-center gap-2 text-xs text-gray-300'>
                   <Checkbox
+                    id={checkboxId}
                     checked={isEnabled}
                     onCheckedChange={(checked: boolean | 'indeterminate') =>
                       toggleOption(item.id, checked === true)
                     }
                   />
-                  Enabled
-                </label>
+                  <Label htmlFor={checkboxId} className='cursor-pointer text-xs text-gray-300'>
+                    Enabled
+                  </Label>
+                </div>
                 <Link
                   href={item.original.settingsRoute}
                   className='text-xs text-blue-300 hover:text-blue-200 underline underline-offset-2'

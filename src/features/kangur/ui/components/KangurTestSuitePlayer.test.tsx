@@ -2,10 +2,10 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
+import { render, screen } from '@/__tests__/test-utils';
 import { KangurTestSuitePlayer } from '@/features/kangur/ui/components/KangurTestSuitePlayer';
 import type { KangurTestQuestion, KangurTestSuite } from '@/shared/contracts/kangur-tests';
 

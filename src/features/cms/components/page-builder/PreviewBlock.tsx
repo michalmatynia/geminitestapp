@@ -69,6 +69,7 @@ import {
   PreviewSectionProvider,
   type PreviewSectionContextValue,
 } from './preview/context/PreviewSectionContext';
+import { PreviewNodeSelectionButton } from './preview/PreviewNodeSelectionButton';
 import { PreviewGridSection } from './preview/sections/PreviewGridSection';
 import {
   PreviewHeroSection,
@@ -225,7 +226,19 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
   );
 
   const handleSelect = (): void => {
-    onSelect(isSectionSelected ? '' : section.id);
+    onSelect(section.id);
+  };
+
+  const renderSelectionButton = (className?: string): React.ReactNode => {
+    if (!showEditorChrome) return null;
+    return (
+      <PreviewNodeSelectionButton
+        label={`Select section ${label}`}
+        selected={isSectionSelected}
+        onSelect={handleSelect}
+        className={className}
+      />
+    );
   };
 
   const renderSectionActions = (): React.ReactNode => {
@@ -284,6 +297,7 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
     selectedRing,
     divider,
     renderSectionActions,
+    renderSelectionButton,
     wrapInspector,
     handleSelect,
     PreviewBlockItem,
@@ -363,18 +377,14 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
 
     return wrapInspector(
       <div
-        role='button'
-        tabIndex={0}
         onClick={handleSelect}
-        onKeyDown={(e: React.KeyboardEvent): void => {
-          if (e.key === 'Enter' || e.key === ' ') handleSelect();
-        }}
         style={containerStyles}
-        className={`relative w-full transition cursor-pointer ${selectedRing} ${inspectorZ}${isBlockSection ? ` cms-node-${section.id}` : ''}`}
+        className={`relative group w-full transition cursor-pointer ${selectedRing} ${inspectorZ}${isBlockSection ? ` cms-node-${section.id}` : ''}`}
       >
         {sectionCustomCss ? (
           <style data-cms-custom-css={section.id}>{sectionCustomCss}</style>
         ) : null}
+        {renderSelectionButton()}
         {renderSectionActions()}
         {divider}
         <div
@@ -420,15 +430,11 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
     if (!text.trim() && !showEditorChrome) return null;
     return wrapInspector(
       <div
-        role='button'
-        tabIndex={0}
         onClick={handleSelect}
-        onKeyDown={(e: React.KeyboardEvent): void => {
-          if (e.key === 'Enter' || e.key === ' ') handleSelect();
-        }}
         style={getSectionStyles(resolvedSettings, colorSchemes)}
-        className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
+        className={`relative group w-full text-left transition cursor-pointer ${selectedRing}`}
       >
+        {renderSelectionButton()}
         {renderSectionActions()}
         {divider}
         {text ? (
@@ -463,14 +469,10 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
 
     return wrapInspector(
       <div
-        role='button'
-        tabIndex={0}
         onClick={handleSelect}
-        onKeyDown={(e: React.KeyboardEvent): void => {
-          if (e.key === 'Enter' || e.key === ' ') handleSelect();
-        }}
-        className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
+        className={`relative group w-full text-left transition cursor-pointer ${selectedRing}`}
       >
+        {renderSelectionButton()}
         {renderSectionActions()}
         {divider}
         <PreviewFrontendSectionRendererRuntimeContext.Provider
@@ -487,15 +489,11 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
   if (!showEditorChrome) return null;
   return wrapInspector(
     <div
-      role='button'
-      tabIndex={0}
       onClick={handleSelect}
-      onKeyDown={(e: React.KeyboardEvent): void => {
-        if (e.key === 'Enter' || e.key === ' ') handleSelect();
-      }}
       style={sectionStyles}
-      className={`relative w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
+      className={`relative group w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
     >
+      {renderSelectionButton()}
       {renderSectionActions()}
       {divider}
       <p className='text-sm text-gray-500'>Unsupported section type: {section.type}</p>
@@ -591,6 +589,19 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
     onSelect?.(block.id);
   };
 
+  const blockLabel = resolveNodeLabel(block.type, block.settings['label']);
+  const renderBlockSelectionButton = (className?: string): React.ReactNode => {
+    if (!showEditorChrome) return null;
+    return (
+      <PreviewNodeSelectionButton
+        label={`Select block ${blockLabel}`}
+        selected={isSelected}
+        onSelect={() => onSelect?.(block.id)}
+        className={className}
+      />
+    );
+  };
+
   if (!isCmsNodeVisible(block.settings, runtime)) {
     return null;
   }
@@ -598,9 +609,8 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
   if (isSectionType) {
     return wrapBlock(
       <div className='relative group'>
+        {renderBlockSelectionButton('left-2 top-2')}
         <div
-          role='button'
-          tabIndex={0}
           onClick={handleSelect}
           className={buildContainerClass(
             `w-full text-left text-sm transition ${contained ? 'max-w-full' : ''} ${showEditorChrome ? 'overflow-hidden' : ''}`,
@@ -649,14 +659,13 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
     const typoStyles = getBlockTypographyStyles(resolvedSettings);
     return wrapBlock(
       <div
-        role='button'
-        tabIndex={0}
         onClick={handleSelect}
         className={buildContainerClass(
-          `w-full text-left transition relative group ${contained ? 'max-w-full' : ''}`,
+          `relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`,
           ''
         )}
       >
+        {renderBlockSelectionButton('left-2 top-2')}
         <h2
           className='text-2xl font-bold leading-tight tracking-tight md:text-3xl text-gray-200'
           style={typoStyles}
@@ -673,14 +682,13 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
     if (!text.trim() && !showEditorChrome) return null;
     return wrapBlock(
       <div
-        role='button'
-        tabIndex={0}
         onClick={handleSelect}
         className={buildContainerClass(
-          `w-full text-left transition ${contained ? 'max-w-full' : ''}`,
+          `relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`,
           `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`
         )}
       >
+        {renderBlockSelectionButton('left-2 top-2')}
         {text ? (
           <p className='text-base leading-relaxed text-gray-300 md:text-lg' style={typoStyles}>
             {text}
@@ -715,14 +723,13 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
 
     return wrapBlock(
       <div
-        role='button'
-        tabIndex={0}
         onClick={handleSelect}
         className={buildContainerClass(
-          `w-full text-left transition ${contained ? 'max-w-full' : ''}`,
+          `relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`,
           `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`
         )}
       >
+        {renderBlockSelectionButton('left-2 top-2')}
         <button
           type='button'
           disabled={isDisabled}
@@ -744,14 +751,13 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
 
     return wrapBlock(
       <div
-        role='button'
-        tabIndex={0}
         onClick={handleSelect}
         className={buildContainerClass(
-          `w-full text-left transition ${contained ? 'max-w-full' : ''}`,
+          `relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`,
           `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`
         )}
       >
+        {renderBlockSelectionButton('left-2 top-2')}
         <Input
           readOnly
           value={value}
@@ -792,14 +798,13 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
 
     return wrapBlock(
       <div
-        role='button'
-        tabIndex={0}
         onClick={handleSelect}
         className={buildContainerClass(
-          `w-full text-left transition ${contained ? 'max-w-full' : ''}`,
+          `relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`,
           `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`
         )}
       >
+        {renderBlockSelectionButton('left-2 top-2')}
         <div className='w-full space-y-2'>
           <div
             className='w-full overflow-hidden'
@@ -843,11 +848,10 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
       <Card
         variant='subtle'
         padding='md'
-        role='button'
-        tabIndex={0}
         onClick={handleSelect}
-        className='w-full border-border/40 bg-card/40 text-left'
+        className='relative group w-full border-border/40 bg-card/40 text-left'
       >
+        {renderBlockSelectionButton('left-2 top-2')}
         <div className='space-y-2'>
           <div>
             <div className='text-sm font-semibold text-white'>{title}</div>
@@ -876,11 +880,10 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
       <Card
         variant='subtle'
         padding='md'
-        role='button'
-        tabIndex={0}
         onClick={handleSelect}
-        className='w-full border-border/40 bg-card/40 text-left'
+        className='relative group w-full border-border/40 bg-card/40 text-left'
       >
+        {renderBlockSelectionButton('left-2 top-2')}
         <div className='space-y-2'>
           <div className='text-sm font-semibold text-white'>{widgetLabel}</div>
           <div className='text-[10px] uppercase tracking-wide text-gray-500'>
@@ -897,11 +900,10 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
 
   return wrapBlock(
     <div
-      role='button'
-      tabIndex={0}
       onClick={handleSelect}
-      className={buildContainerClass('w-full', '')}
+      className={buildContainerClass('relative group w-full', '')}
     >
+      {renderBlockSelectionButton('left-2 top-2')}
       <span className='text-gray-500'>{block.type}</span>
     </div>
   );

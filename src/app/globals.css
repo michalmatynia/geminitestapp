@@ -344,6 +344,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--app-font-body);
   }
   [data-admin-menu] a,
   [data-admin-menu] button {
@@ -359,6 +360,47 @@
   }
   a {
     @apply cursor-pointer;
+  }
+  :where(
+      a,
+      button,
+      input,
+      select,
+      textarea,
+      summary,
+      [role='button'],
+      [role='link'],
+      [role='menuitem'],
+      [role='menuitemradio'],
+      [role='option'],
+      [role='tab'],
+      [tabindex]:not([tabindex='-1'])
+    ):focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 3px;
+  }
+  #app-content:focus {
+    outline: none;
+  }
+  .app-skip-link {
+    position: fixed;
+    left: 1rem;
+    top: 1rem;
+    z-index: 200;
+    transform: translateY(calc(-100% - 0.75rem));
+    border-radius: 9999px;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--border));
+    padding: 0.625rem 1rem;
+    box-shadow: 0 16px 40px -24px rgba(15, 23, 42, 0.55);
+    transition:
+      transform 160ms ease,
+      box-shadow 160ms ease;
+  }
+  .app-skip-link:focus-visible {
+    transform: translateY(0);
+    box-shadow: 0 22px 46px -26px rgba(15, 23, 42, 0.65);
   }
 }
 

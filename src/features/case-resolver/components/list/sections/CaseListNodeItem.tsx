@@ -3,6 +3,7 @@
 import React from 'react';
 import { FileText, GitBranch, Lock, Pin, ScanText, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button, StatusBadge, Badge, Input, Tooltip } from '@/shared/ui';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
 import {
   decodeCaseResolverCaseContentFileNodeId,
@@ -270,7 +271,7 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem(
       <div className='min-w-0 flex flex-1 items-center gap-2'>
         {isRenaming ? (
           <Input
-            autoFocus
+            ref={focusOnMount}
             value={renameDraft}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
               onUpdateRenameDraft(event.target.value);

@@ -9,6 +9,7 @@ export interface PreviewSectionContextValue {
   selectedRing: string;
   divider: React.ReactNode;
   renderSectionActions: () => React.ReactNode;
+  renderSelectionButton: (className?: string) => React.ReactNode;
   wrapInspector: (node: React.ReactNode) => React.ReactNode;
   handleSelect: () => void;
   PreviewBlockItem: React.ComponentType<{ block: BlockInstance }>;

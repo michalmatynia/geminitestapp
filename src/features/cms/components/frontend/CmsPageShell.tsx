@@ -68,9 +68,9 @@ export function CmsPageShell(props: CmsPageShellProps): React.ReactNode {
           animationsEnabled={theme.enableAnimations}
         />
       ) : null}
-      <main style={contentStyle} suppressHydrationWarning>
+      <div style={contentStyle} suppressHydrationWarning>
         {children}
-      </main>
+      </div>
     </div>
   );
 }

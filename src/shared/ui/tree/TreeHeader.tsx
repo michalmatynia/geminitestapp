@@ -1,3 +1,5 @@
+import { cn } from '@/shared/utils';
+
 import { SectionHeader } from '../section-header';
 
 import type { ReactNode } from 'react';
@@ -14,6 +16,26 @@ export type TreeHeaderProps = {
 
 export function TreeHeader(props: TreeHeaderProps): React.JSX.Element {
   const { title, subtitle, actions, className, titleClassName, actionsClassName, children } = props;
+  const hasTitle =
+    typeof title === 'string' ? title.trim().length > 0 : title !== undefined && title !== null;
+
+  if (!hasTitle && !subtitle) {
+    return (
+      <div
+        className={cn(
+          'flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between',
+          className
+        )}
+      >
+        {actions ? (
+          <div className={cn('flex flex-wrap items-center gap-2 shrink-0', actionsClassName)}>
+            {actions}
+          </div>
+        ) : null}
+        {children ? <div className='w-full pt-4'>{children}</div> : null}
+      </div>
+    );
+  }
 
   return (
     <SectionHeader

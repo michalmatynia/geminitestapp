@@ -96,6 +96,10 @@ describe('AddingSynthesisGame', () => {
       'text-violet-700'
     );
     expect(screen.getByText('Rytm gry')).toHaveClass('border-violet-200', 'bg-violet-100');
+    expect(screen.getByRole('button', { name: /wroc do dodawania/i })).toHaveClass(
+      'kangur-cta-pill',
+      'surface-cta'
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /start synteze/i }));
 
@@ -152,6 +156,10 @@ describe('AddingSynthesisGame', () => {
     expect(screen.getByText('+25 XP')).toHaveClass('border-amber-200', 'bg-amber-100');
     expect(screen.getByText('Skutecznosc').parentElement).toHaveClass('soft-card', 'border-emerald-300');
     expect(screen.getByText('Idealne trafienia').parentElement).toHaveClass('soft-card', 'border-violet-300');
+    expect(screen.getByRole('button', { name: /wroc do dodawania/i })).toHaveClass(
+      'kangur-cta-pill',
+      'surface-cta'
+    );
     expect(createLessonPracticeRewardMock).toHaveBeenCalledWith(
       expect.anything(),
       'adding',

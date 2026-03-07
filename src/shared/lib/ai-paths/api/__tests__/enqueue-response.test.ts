@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import {
   extractAiPathRunIdFromEnqueueResponseData,
   extractAiPathRunRecordFromEnqueueResponseData,
+  mergeEnqueuedAiPathRunForCache,
   resolveAiPathRunFromEnqueueResponseData,
 } from '@/shared/lib/ai-paths/api/client';
 
@@ -104,5 +106,88 @@ describe('AI Paths enqueue response normalization', () => {
       runId: 'run_fallback_2',
       runRecord: { id: 'run_fallback_2', status: 'queued' },
     });
+  });
+
+  it('merges partial enqueue run records with optimistic fallback metadata', () => {
+    expect(
+      mergeEnqueuedAiPathRunForCache({
+        runId: 'run_partial_1',
+        runRecord: {
+          id: 'run_partial_1',
+          status: 'queued',
+        } as AiPathRunRecord,
+        fallbackRun: {
+          id: 'run_partial_1',
+          status: 'queued',
+          createdAt: '2026-03-07T13:00:00.000Z',
+          updatedAt: '2026-03-07T13:00:00.000Z',
+          pathId: 'path-1',
+          pathName: 'Fallback Path',
+          requestId: 'req-1',
+          entityId: 'product-1',
+          entityType: 'product',
+          triggerEvent: 'manual',
+          meta: {
+            source: 'product_panel',
+            requestId: 'req-1',
+          },
+        },
+      })
+    ).toEqual(
+      expect.objectContaining({
+        id: 'run_partial_1',
+        pathId: 'path-1',
+        pathName: 'Fallback Path',
+        requestId: 'req-1',
+        entityId: 'product-1',
+        entityType: 'product',
+        triggerEvent: 'manual',
+        meta: {
+          source: 'product_panel',
+          requestId: 'req-1',
+        },
+      })
+    );
+  });
+
+  it('preserves explicit enqueue run record fields while merging fallback metadata', () => {
+    expect(
+      mergeEnqueuedAiPathRunForCache({
+        runId: 'run_partial_2',
+        runRecord: {
+          id: 'run_partial_2',
+          status: 'running',
+          pathName: 'Server Path',
+          meta: {
+            source: 'trigger_button',
+            attempt: 1,
+          },
+        } as AiPathRunRecord,
+        fallbackRun: {
+          id: 'run_partial_2',
+          status: 'queued',
+          createdAt: '2026-03-07T13:00:00.000Z',
+          updatedAt: '2026-03-07T13:00:00.000Z',
+          pathId: 'path-2',
+          pathName: 'Fallback Path',
+          meta: {
+            source: 'product_panel',
+            requestId: 'req-2',
+          },
+        },
+      })
+    ).toEqual(
+      expect.objectContaining({
+        id: 'run_partial_2',
+        status: 'running',
+        pathId: 'path-2',
+        pathName: 'Server Path',
+        meta: {
+          source: 'trigger_button',
+          requestId: 'req-2',
+          attempt: 1,
+        },
+      })
+    );
   });
 });

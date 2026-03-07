@@ -12,7 +12,7 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import { KangurButton, KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 
 type SectionId = 'podstawowe' | 'ile_bokow' | 'game';
 
@@ -62,8 +62,8 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <div className='flex items-center gap-2'>
                 <span className='text-2xl'>{shape.emoji}</span>
                 <div>
-                  <p className='text-sm font-bold text-gray-800'>{shape.name}</p>
-                  <p className='text-xs text-gray-500'>{shape.details}</p>
+                  <p className='text-sm font-bold text-slate-800'>{shape.name}</p>
+                  <p className='text-xs text-slate-500'>{shape.details}</p>
                 </div>
               </div>
             </KangurLessonCallout>
@@ -115,16 +115,16 @@ export default function GeometryShapesLesson(): React.JSX.Element {
           className='self-start'
           size='sm'
           type='button'
-          variant='ghost'
+          variant='surface'
         >
           Wróc do menu
         </KangurButton>
-        <KangurPanel className='w-full' padding='xl' variant='soft'>
+        <KangurGlassPanel data-testid='geometry-shapes-game-shell' className='w-full' padding='xl' surface='solid'>
           <h2 className='mb-4 text-center text-xl font-extrabold text-slate-800'>
             🔷 Trening figur
           </h2>
           <GeometryDrawingGame onFinish={() => setActiveSection(null)} />
-        </KangurPanel>
+        </KangurGlassPanel>
       </div>
     );
   }

@@ -1,28 +1,31 @@
 # Weekly Quality Report
 
-Generated at: 2026-03-07T11:36:19.504Z
+Generated at: 2026-03-07T13:58:24.316Z
 Node: v24.3.0
 
 ## Quality Check Summary
 
 - Total checks: 12
 - Passed: 5
-- Failed: 5
+- Failed: 3
 - Timed out: 0
-- Skipped: 2
+- Skipped: 4
 
 ## Baseline Status
 
-- Build pass rate: 0%
-- Lint pass rate: 0%
+- Build pass rate: n/a%
+- Build preflight: skip (Skipping build because .next/lock exists and process inspection is unavailable (EPERM).)
+- Lint pass rate: n/a%
 - Lint-domain pass rate: 100%
-- Typecheck pass rate: 0%
+- Typecheck pass rate: 100%
 - Critical-flow gate pass rate: 100%
 - Security smoke gate pass rate: 100%
-- Unit-domain gate pass rate: 100%
+- Unit-domain gate pass rate: 0%
 - Full unit pass rate: n/a%
 - E2E test pass rate: n/a%
 - Duration budget alerts: 0
+
+Full repository lint was skipped in this run. Use `--include-full-lint` to include the broad `eslint src` sweep.
 
 Full unit suite was skipped in this run. Use `--include-full-unit` to include full unit coverage in baseline.
 
@@ -32,18 +35,18 @@ E2E tests were skipped in this run. Use `--include-e2e` for full end-to-end base
 
 | Check | Status | Duration | Exit | Command |
 | --- | --- | ---: | ---: | --- |
-| Build | FAIL | 2.2m | 1 | `npm run build` |
-| Lint | FAIL | 3.0m | 1 | `npm run lint` |
-| Lint Domain Gate | PASS | 1.9m | 0 | `node scripts/quality/run-lint-domain-checks.mjs --include-test-tree --strict --ci --no-history` |
-| Typecheck | FAIL | 1.2m | 2 | `npm run typecheck` |
-| Critical Flow Gate | PASS | 26.1s | 0 | `npm run test:critical-flows:strict -- --ci --no-history` |
-| Security Smoke Gate | PASS | 9.8s | 0 | `npm run test:security-smoke:strict -- --ci --no-history` |
-| Unit Domain Gate | PASS | 3.7m | 0 | `npm run test:unit:domains:strict -- --ci --no-history` |
+| Build | SKIPPED | 0ms | - | `npm run build` |
+| Lint | SKIPPED | 0ms | - | `npm run lint` |
+| Lint Domain Gate | PASS | 2.2m | 0 | `node scripts/quality/run-lint-domain-checks.mjs --include-test-tree --strict --ci --no-history` |
+| Typecheck | PASS | 34.2s | 0 | `npm run typecheck` |
+| Critical Flow Gate | PASS | 24.6s | 0 | `npm run test:critical-flows:strict -- --ci --no-history` |
+| Security Smoke Gate | PASS | 9.0s | 0 | `npm run test:security-smoke:strict -- --ci --no-history` |
+| Unit Domain Gate | FAIL | 4.3m | 1 | `npm run test:unit:domains:strict -- --ci --no-history` |
 | Full Unit Tests | SKIPPED | 0ms | - | `npm run test:unit` |
 | E2E Tests | SKIPPED | 0ms | - | `npm run test:e2e` |
-| Architecture Guardrails | FAIL | 2.8s | 1 | `node scripts/architecture/check-guardrails.mjs` |
-| UI Consolidation Guardrail | FAIL | 2.3s | 1 | `node scripts/architecture/check-ui-consolidation.mjs` |
-| Observability Check | PASS | 919ms | 0 | `npm run observability:check` |
+| Architecture Guardrails | FAIL | 3.8s | 1 | `node scripts/architecture/check-guardrails.mjs` |
+| UI Consolidation Guardrail | FAIL | 3.8s | 1 | `node scripts/architecture/check-ui-consolidation.mjs` |
+| Observability Check | PASS | 1.2s | 0 | `npm run observability:check` |
 
 ## Guardrail Snapshot
 
@@ -57,7 +60,7 @@ E2E tests were skipped in this run. Use `--include-e2e` for full end-to-end base
 
 - No duration budget alerts in this run.
 
-- Prop forwarding components: 30
+- Prop forwarding components: 32
 - Prop-drilling depth >=4 chains: 0
 - UI opportunities: 0
 - UI high-priority opportunities: 0
@@ -65,13 +68,13 @@ E2E tests were skipped in this run. Use `--include-e2e` for full end-to-end base
 
 ## Architecture and Performance Snapshot
 
-- Source files: 4827
-- Source lines: 784868
-- API routes: 324
-- Cross-feature edge pairs: 72
+- Source files: 4880
+- Source lines: 793876
+- API routes: 326
+- Cross-feature edge pairs: 74
 - Shared->features imports: 11
 - Largest file: `src/features/kangur/cms-builder/project.ts` (2855 LOC)
-- use client files: 1393
+- use client files: 1402
 - setInterval occurrences: 22
 
 ## Top 5 Critical User Flows (Priority Order)

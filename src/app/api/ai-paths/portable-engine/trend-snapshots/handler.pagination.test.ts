@@ -3,6 +3,31 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from '@/shared/lib/ai-paths/portable-engine';
 
+const builders = vi.hoisted(() => ({
+  requireAiPathsAccessMock: vi.fn(),
+  getPortablePathRunExecutionSnapshotMock: vi.fn(),
+  loadPortablePathAuditSinkAutoRemediationDeadLettersMock: vi.fn(),
+  loadPortablePathSigningPolicyTrendSnapshotsMock: vi.fn(),
+  loadPortablePathAuditSinkStartupHealthStateMock: vi.fn(),
+  resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironmentMock: vi.fn(),
+  resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironmentMock: vi.fn(),
+  resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironmentMock: vi.fn(),
+  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironmentMock: vi.fn(),
+  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironmentMock:
+    vi.fn(),
+  resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironmentMock: vi.fn(),
+  resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironmentMock: vi.fn(),
+  resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironmentMock: vi.fn(),
+  resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironmentMock: vi.fn(),
+  resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironmentMock: vi.fn(),
+  resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironmentMock: vi.fn(),
+  resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironmentMock: vi.fn(),
+  resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironmentMock: vi.fn(),
+  resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironmentMock: vi.fn(),
+  resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironmentMock: vi.fn(),
+  resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock: vi.fn(),
+}));
+
 vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsAccess: builders.requireAiPathsAccessMock,
 }));
@@ -51,8 +76,6 @@ vi.mock('@/shared/lib/ai-paths/portable-engine/server', () => ({
 }));
 
 import { GET_handler } from './handler';
-
-import * as builders from './handler.builders.test';
 
 describe('ai-paths portable-engine trend snapshots handler', () => {
   beforeEach(() => {

@@ -558,6 +558,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
               onValueChange={(value: string): void =>
                 setIdentifierType(value as 'ean' | 'gtin' | 'asin')
               }
+              ariaLabel='Product identifier type'
               options={[
                 { value: 'ean', label: 'EAN' },
                 { value: 'gtin', label: 'GTIN' },

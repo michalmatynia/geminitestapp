@@ -3,6 +3,7 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
 import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { cn, type MasterTreeNode } from '@/shared/utils';
 import { canNestTreeNodeV2 } from '@/shared/utils';
 import { useSlotTreeContext } from './SlotTreeContext';
@@ -109,7 +110,10 @@ export function FolderNodeItem(props: FolderNodeItemProps): React.JSX.Element | 
         >
           <div
             className='flex h-full w-full min-w-0 items-center gap-1'
-            onClick={(event: React.MouseEvent<HTMLDivElement>): void => {
+            onMouseDownCapture={(event: React.MouseEvent<HTMLDivElement>): void => {
+              event.stopPropagation();
+            }}
+            onClickCapture={(event: React.MouseEvent<HTMLDivElement>): void => {
               event.stopPropagation();
             }}
           >
@@ -127,7 +131,7 @@ export function FolderNodeItem(props: FolderNodeItemProps): React.JSX.Element | 
               <FolderOpenIcon className='size-3.5 text-gray-400' />
             </span>
             <input
-              autoFocus
+              ref={focusOnMount}
               value={controller.renameDraft}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                 controller.updateRenameDraft(event.target.value);

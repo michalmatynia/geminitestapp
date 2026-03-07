@@ -307,6 +307,7 @@ export function CanvasSidebar(): React.JSX.Element {
                             key={node.title}
                             draggable
                             role='button'
+                            tabIndex={0}
                             data-doc-id={`node_palette_${node.type}`}
                             onDragStart={(event) => handleDragStart(event, node)}
                             className='cursor-grab rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300 transition hover:border-border/80 hover:bg-muted/50 active:cursor-grabbing'

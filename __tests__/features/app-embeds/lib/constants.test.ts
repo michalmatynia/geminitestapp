@@ -4,7 +4,7 @@ import { APP_EMBED_OPTIONS } from '@/features/app-embeds/lib/constants';
 
 describe('APP_EMBED_OPTIONS', () => {
   it('should have correct number of options', () => {
-    expect(APP_EMBED_OPTIONS).toHaveLength(4);
+    expect(APP_EMBED_OPTIONS).toHaveLength(5);
   });
 
   it('should contain chatbot option', () => {
@@ -33,5 +33,12 @@ describe('APP_EMBED_OPTIONS', () => {
     expect(products).toBeDefined();
     expect(products?.label).toBe('Products');
     expect(products?.settingsRoute).toBe('/admin/products');
+  });
+
+  it('should contain kangur option', () => {
+    const kangur = APP_EMBED_OPTIONS.find((o) => o.id === 'kangur');
+    expect(kangur).toBeDefined();
+    expect(kangur?.label).toBe('Kangur');
+    expect(kangur?.settingsRoute).toBe('/admin/kangur/settings');
   });
 });

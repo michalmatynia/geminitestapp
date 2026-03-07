@@ -6,6 +6,7 @@ import { signIn } from 'next-auth/react';
 import { useState, Suspense } from 'react';
 
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   Button,
@@ -120,7 +121,7 @@ function SignInPageLoader(): React.JSX.Element {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                autoFocus
+                ref={focusOnMount}
                 autoComplete='email'
                 className='h-10 bg-gray-900/50'
               />

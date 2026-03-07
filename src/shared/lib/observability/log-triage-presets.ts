@@ -103,6 +103,36 @@ export const SYSTEM_LOG_TRIAGE_PRESETS: LogTriagePreset[] = [
       toDate: formatDateInput(now),
     }),
   },
+  {
+    id: 'kangur-auth-last3d',
+    label: 'Kangur Auth',
+    description: 'Learner sign-in and auth resolution logs from the last 3 days.',
+    resolve: (now: Date) => ({
+      source: 'kangur.auth.',
+      fromDate: daysAgo(now, 3),
+      toDate: formatDateInput(now),
+    }),
+  },
+  {
+    id: 'kangur-progress-last3d',
+    label: 'Kangur Progress',
+    description: 'Progress update and sync-related server logs from the last 3 days.',
+    resolve: (now: Date) => ({
+      source: 'kangur.progress.',
+      fromDate: daysAgo(now, 3),
+      toDate: formatDateInput(now),
+    }),
+  },
+  {
+    id: 'kangur-tts-last3d',
+    label: 'Kangur TTS',
+    description: 'Narration generation, status, and fallback logs from the last 3 days.',
+    resolve: (now: Date) => ({
+      source: 'kangur.tts.',
+      fromDate: daysAgo(now, 3),
+      toDate: formatDateInput(now),
+    }),
+  },
 ];
 
 export const resolveSystemLogPresetFilters = (

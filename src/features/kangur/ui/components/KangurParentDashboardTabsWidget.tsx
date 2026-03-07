@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart2, BookOpen, ClipboardList } from 'lucide-react';
+import { BarChart2, BookOpen, BrainCircuit, ClipboardList } from 'lucide-react';
 
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import {
@@ -19,6 +19,7 @@ const TABS: Array<{
   { id: 'progress', label: 'Postep', icon: BarChart2, docId: 'parent_progress_tab' },
   { id: 'scores', label: 'Wyniki gier', icon: ClipboardList, docId: 'parent_scores_tab' },
   { id: 'assign', label: 'Zadania', icon: BookOpen, docId: 'parent_assignments_tab' },
+  { id: 'ai-tutor', label: 'AI Tutor', icon: BrainCircuit, docId: 'parent_ai_tutor_tab' },
 ];
 
 export function KangurParentDashboardTabsWidget(): React.JSX.Element | null {

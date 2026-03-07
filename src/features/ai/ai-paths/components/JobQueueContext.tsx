@@ -29,6 +29,7 @@ import {
 import {
   mergeAiPathQueuePayloadWithOptimisticRuns,
   patchQueuedCountWithOptimisticRuns,
+  previewAiPathQueuePayloadWithOptimisticRuns,
 } from '@/shared/lib/ai-paths/optimistic-run-queue';
 import { fetchAiPathsSettingsCached } from '@/shared/lib/ai-paths/settings-store-client';
 import {
@@ -37,6 +38,10 @@ import {
   createMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import {
+  getRecentAiPathRunEnqueue,
+  rememberRecentAiPathRunEnqueue,
+} from '@/shared/lib/query-invalidation';
 import { useToast } from '@/shared/ui';
 import {
   getLatestEventTimestamp,
@@ -198,6 +203,7 @@ export function JobQueueProvider({
   const streamSourcesRef = useRef<Map<string, EventSource>>(new Map());
   const forceFreshRunsRef = useRef(false);
   const forceFreshQueueStatusRef = useRef(false);
+  const lastHandledRecentEnqueueKeyRef = useRef<string | null>(null);
   const previousQueueSignatureRef = useRef<string | null>(null);
   const [pausedStreams, setPausedStreams] = useState<Set<string>>(new Set());
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
@@ -443,6 +449,35 @@ export function JobQueueProvider({
     [markBurstRefresh, refetchQueueStatus, refetchRuns]
   );
 
+  const queuePreviewFilters = useMemo(
+    () => ({
+      pathId: normalizedPathFilter || undefined,
+      source: normalizedSourceFilter || undefined,
+      sourceMode,
+      status: statusFilter !== 'all' ? statusFilter : undefined,
+      query: normalizedQuery || undefined,
+      limit: pageSize,
+      offset,
+    }),
+    [
+      normalizedPathFilter,
+      normalizedSourceFilter,
+      sourceMode,
+      statusFilter,
+      normalizedQuery,
+      pageSize,
+      offset,
+    ]
+  );
+  const visibleRunsPayload = useMemo(
+    () =>
+      previewAiPathQueuePayloadWithOptimisticRuns(
+        runsQuery.data ?? { runs: [], total: 0 },
+        queuePreviewFilters
+      ),
+    [queuePreviewFilters, runsQuery.data]
+  );
+
   const clearRunsMutation = createDeleteMutationV2({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('job-queue.clear-runs'),
     mutationFn: async (scope: 'terminal' | 'all') => {
@@ -645,6 +680,16 @@ export function JobQueueProvider({
   }, [isPanelActive, queueStatusQuery.data?.status, refetchQueueData]);
 
   useEffect(() => {
+    if (!isPanelActive || !isDocumentVisible || !isWindowFocused) return;
+    const recentEnqueue = getRecentAiPathRunEnqueue();
+    if (!recentEnqueue) return;
+    const enqueueKey = `${recentEnqueue.runId}:${recentEnqueue.at}`;
+    if (lastHandledRecentEnqueueKeyRef.current === enqueueKey) return;
+    lastHandledRecentEnqueueKeyRef.current = enqueueKey;
+    refetchQueueData({ fresh: true, markBurst: true });
+  }, [isDocumentVisible, isPanelActive, isWindowFocused, refetchQueueData]);
+
+  useEffect(() => {
     if (typeof window === 'undefined') return;
     const refreshQueueViews = (): void => {
       if (!isPanelActive) return;
@@ -654,6 +699,14 @@ export function JobQueueProvider({
     const handleWindowEvent = (event: Event): void => {
       const payload = parseAiPathRunEnqueuedEventPayload((event as CustomEvent<unknown>).detail);
       if (!payload) return;
+      const at =
+        typeof payload.at === 'number' && Number.isFinite(payload.at) ? payload.at : Date.now();
+      const normalizedPayload = { ...payload, at };
+      const enqueueKey = `${payload.runId}:${at}`;
+      rememberRecentAiPathRunEnqueue(normalizedPayload);
+      if (isPanelActive && isDocumentVisible && isWindowFocused) {
+        lastHandledRecentEnqueueKeyRef.current = enqueueKey;
+      }
       refreshQueueViews();
     };
 
@@ -664,7 +717,16 @@ export function JobQueueProvider({
       try {
         channel = new BroadcastChannel(AI_PATH_RUN_QUEUE_CHANNEL);
         channel.onmessage = (event) => {
-          if (!parseAiPathRunEnqueuedEventPayload(event.data)) return;
+          const payload = parseAiPathRunEnqueuedEventPayload(event.data);
+          if (!payload) return;
+          const at =
+            typeof payload.at === 'number' && Number.isFinite(payload.at) ? payload.at : Date.now();
+          const normalizedPayload = { ...payload, at };
+          const enqueueKey = `${payload.runId}:${at}`;
+          rememberRecentAiPathRunEnqueue(normalizedPayload);
+          if (isPanelActive && isDocumentVisible && isWindowFocused) {
+            lastHandledRecentEnqueueKeyRef.current = enqueueKey;
+          }
           refreshQueueViews();
         };
       } catch {
@@ -681,7 +743,7 @@ export function JobQueueProvider({
         channel.close();
       }
     };
-  }, [isPanelActive, refetchQueueData]);
+  }, [isDocumentVisible, isPanelActive, isWindowFocused, refetchQueueData]);
 
   useEffect(() => {
     streamSourcesRef.current.forEach((source, runId) => {
@@ -883,10 +945,12 @@ export function JobQueueProvider({
       panelLabel: getPanelLabel(sourceFilter, sourceMode),
       panelDescription: getPanelDescription(sourceFilter, sourceMode),
       lagThresholdMs: Number(heavyMap.get(QUEUE_LAG_THRESHOLD_KEY)) || 60000,
-      runs: runsQuery.data?.runs ?? [],
-      total: runsQuery.data?.total ?? 0,
-      totalPages: Math.max(1, Math.ceil((runsQuery.data?.total ?? 0) / pageSize)),
-      queueStatus: queueStatusQuery.data?.status,
+      runs: visibleRunsPayload.runs,
+      total: visibleRunsPayload.total,
+      totalPages: Math.max(1, Math.ceil(visibleRunsPayload.total / pageSize)),
+      queueStatus: queueStatusQuery.data?.status
+        ? patchQueuedCountWithOptimisticRuns(queueStatusQuery.data.status)
+        : undefined,
       isLoadingRuns: runsQuery.isLoading,
       isLoadingQueueStatus: queueStatusQuery.isLoading,
       runsQueryError: runsQuery.error,
@@ -917,7 +981,7 @@ export function JobQueueProvider({
       sourceMode,
       normalizedVisibility,
       heavyMap,
-      runsQuery.data,
+      visibleRunsPayload,
       runsQuery.isLoading,
       runsQuery.error,
       queueStatusQuery.data,

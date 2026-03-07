@@ -21,16 +21,16 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Co to znaczy odejmowac?',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-gray-700 text-center'>
+          <p className='text-center text-slate-700'>
             Odejmowanie to zabieranie czesci z grupy. Pytamy: ile zostało?
           </p>
           <div className='flex items-center gap-4'>
             <KangurDisplayEmoji size='md'>🍎🍎🍎🍎🍎</KangurDisplayEmoji>
-            <KangurEquationDisplay accent='slate' as='span' className='text-gray-400' size='md'>
+            <KangurEquationDisplay accent='slate' as='span' className='text-slate-400' size='md'>
               −
             </KangurEquationDisplay>
             <KangurDisplayEmoji size='md'>🍎🍎</KangurDisplayEmoji>
-            <KangurEquationDisplay accent='slate' as='span' className='text-gray-400' size='md'>
+            <KangurEquationDisplay accent='slate' as='span' className='text-slate-400' size='md'>
               =
             </KangurEquationDisplay>
             <KangurDisplayEmoji size='md'>🍎🍎🍎</KangurDisplayEmoji>
@@ -45,7 +45,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Odejmowanie jednocyfrowe',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-gray-700 text-center'>
+          <p className='text-center text-slate-700'>
             Cofaj sie na osi liczbowej lub licz, ile brakuje do wyniku.
           </p>
           <KangurLessonCallout accent='rose' className='text-center'>
@@ -55,7 +55,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
             >
               9 − 4 = ?
             </KangurEquationDisplay>
-            <p className='text-gray-500 mt-2'>
+            <p className='mt-2 text-slate-500'>
               Zacznij od <b>9</b>, cofnij sie 4: 8, 7, 6, <b>5</b> ✓
             </p>
           </KangurLessonCallout>
@@ -75,18 +75,18 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Odejmowanie z przekroczeniem 10',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-gray-700 text-center'>
+          <p className='text-center text-slate-700'>
             Rozdziel odjemnik na dwie czesci: najpierw zejdz do 10, potem odejmij reszte.
           </p>
           <KangurLessonCallout accent='rose' className='text-center'>
             <KangurEquationDisplay accent='rose'>13 − 5 = ?</KangurEquationDisplay>
-            <p className='text-gray-500 mt-2'>
+            <p className='mt-2 text-slate-500'>
               13 − <b>3</b> = 10, 10 − <b>2</b> = <b>8</b> ✓
             </p>
           </KangurLessonCallout>
           <KangurLessonCallout
             accent='slate'
-            className='max-w-xs text-sm text-gray-600'
+            className='max-w-xs text-sm text-slate-600'
             padding='sm'
           >
             <p>🔹 Rozłóz 5 = 3 + 2</p>
@@ -104,10 +104,10 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Odejmowanie dwucyfrowe',
       content: (
         <div className='flex flex-col items-center gap-4'>
-          <p className='text-gray-700 text-center'>Odejmuj osobno dziesiatki i jednosci!</p>
+          <p className='text-center text-slate-700'>Odejmuj osobno dziesiatki i jednosci!</p>
           <KangurLessonCallout accent='amber' className='max-w-xs text-center'>
             <KangurEquationDisplay accent='amber'>47 − 23 = ?</KangurEquationDisplay>
-            <div className='mt-2 text-gray-600 text-left'>
+            <div className='mt-2 text-left text-slate-600'>
               <p>
                 🔹 Dziesiatki: <b>40 − 20 = 20</b>
               </p>
@@ -129,7 +129,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       content: (
         <div className='flex flex-col items-center gap-4'>
           <KangurLessonCallout accent='amber' className='max-w-xs'>
-            <ul className='text-gray-700 space-y-2 text-sm'>
+            <ul className='space-y-2 text-sm text-slate-700'>
               <li>
                 ✅ Odejmowanie NIE jest przemienne: <b>7−3 ≠ 3−7</b>
               </li>

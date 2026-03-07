@@ -200,6 +200,8 @@ export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element 
           data-cms-section-row='true'
           data-cms-section-id={section.id}
           data-cms-section-zone={section.zone}
+          aria-label={`${section.type} section`}
+          tabIndex={0}
           draggable
           className={cn(
             'flex items-center gap-2 rounded-md border py-1.5 pl-1 pr-2 transition',
@@ -211,6 +213,13 @@ export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element 
           onClick={(e: React.MouseEvent): void => {
             e.stopPropagation();
             selectNode(section.id);
+          }}
+          onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              event.stopPropagation();
+              selectNode(section.id);
+            }
           }}
           onDragStart={handleSectionDragStart}
           onDragEnd={handleSectionDragEnd}

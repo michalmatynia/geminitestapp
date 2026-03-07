@@ -1104,6 +1104,8 @@ export function KangurProgressBar({
   fillClassName,
   size,
   value,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
   ...props
 }: KangurProgressBarProps): React.JSX.Element {
   const clampedValue = Math.max(0, Math.min(100, value));
@@ -1116,6 +1118,8 @@ export function KangurProgressBar({
 
   return (
     <div
+      aria-label={ariaLabel ?? (ariaLabelledBy ? undefined : 'Postep')}
+      aria-labelledby={ariaLabelledBy}
       aria-valuemax={100}
       aria-valuemin={0}
       aria-valuenow={Math.round(clampedValue)}

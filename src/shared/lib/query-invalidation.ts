@@ -16,11 +16,123 @@ import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 import { QUERY_KEYS } from './query-keys';
 
 const AI_PATHS_NODE_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
+const RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY = 'ai-path-run-recent-enqueue';
+const RECENT_AI_PATH_RUN_ENQUEUE_TTL_MS = 60_000;
+
+type RecentAiPathRunEnqueueRecord = {
+  type: 'run-enqueued';
+  runId: string;
+  entityId: string | null;
+  entityType: string | null;
+  at: number;
+  expiresAt: number;
+};
 
 const normalizeString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const normalized = value.trim().toLowerCase();
   return normalized.length > 0 ? normalized : null;
+};
+
+const canUseLocalStorage = (): boolean =>
+  typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+
+const normalizeRecentAiPathRunEnqueueRecord = (
+  value: unknown
+): RecentAiPathRunEnqueueRecord | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+  const runId =
+    typeof record['runId'] === 'string' && record['runId'].trim().length > 0
+      ? record['runId'].trim()
+      : null;
+  const entityId =
+    typeof record['entityId'] === 'string' && record['entityId'].trim().length > 0
+      ? record['entityId'].trim()
+      : null;
+  const entityType =
+    typeof record['entityType'] === 'string' && record['entityType'].trim().length > 0
+      ? record['entityType'].trim().toLowerCase()
+      : null;
+  const at =
+    typeof record['at'] === 'number' && Number.isFinite(record['at']) && record['at'] >= 0
+      ? record['at']
+      : null;
+  const expiresAt =
+    typeof record['expiresAt'] === 'number' &&
+    Number.isFinite(record['expiresAt']) &&
+    record['expiresAt'] > 0
+      ? record['expiresAt']
+      : null;
+  if (!runId || at === null || expiresAt === null) return null;
+  return {
+    type: 'run-enqueued',
+    runId,
+    entityId,
+    entityType,
+    at,
+    expiresAt,
+  };
+};
+
+export const rememberRecentAiPathRunEnqueue = (
+  payload: unknown,
+  options?: { ttlMs?: number }
+): void => {
+  if (!canUseLocalStorage()) return;
+  const parsed = parseAiPathRunEnqueuedEventPayload(payload);
+  if (!parsed) return;
+  const ttlMs = Math.max(1_000, options?.ttlMs ?? RECENT_AI_PATH_RUN_ENQUEUE_TTL_MS);
+  const at =
+    typeof parsed.at === 'number' && Number.isFinite(parsed.at) && parsed.at >= 0
+      ? parsed.at
+      : Date.now();
+  const record: RecentAiPathRunEnqueueRecord = {
+    type: 'run-enqueued',
+    runId: parsed.runId,
+    entityId: parsed.entityId ?? null,
+    entityType: parsed.entityType ?? null,
+    at,
+    expiresAt: Date.now() + ttlMs,
+  };
+  window.localStorage.setItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY, JSON.stringify(record));
+};
+
+export const getRecentAiPathRunEnqueue = (): {
+  type: 'run-enqueued';
+  runId: string;
+  entityId: string | null;
+  entityType: string | null;
+  at: number;
+} | null => {
+  if (!canUseLocalStorage()) return null;
+  const raw = window.localStorage.getItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
+  if (!raw) return null;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    window.localStorage.removeItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
+    return null;
+  }
+
+  const record = normalizeRecentAiPathRunEnqueueRecord(parsed);
+  if (!record) {
+    window.localStorage.removeItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
+    return null;
+  }
+  if (record.expiresAt <= Date.now()) {
+    window.localStorage.removeItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
+    return null;
+  }
+  return {
+    type: record.type,
+    runId: record.runId,
+    entityId: record.entityId,
+    entityType: record.entityType,
+    at: record.at,
+  };
 };
 
 export const resolveQueueRunSource = (meta?: Record<string, unknown> | null): string | null => {
@@ -601,6 +713,8 @@ export const notifyAiPathRunEnqueued = (
     at: Date.now(),
   });
   if (!payload) return;
+
+  rememberRecentAiPathRunEnqueue(payload);
 
   window.dispatchEvent(new CustomEvent(AI_PATH_RUN_ENQUEUED_EVENT_NAME, { detail: payload }));
 

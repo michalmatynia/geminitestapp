@@ -609,9 +609,10 @@ const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor(props:
           />
         </div>
 
-        <label className='inline-flex items-center gap-2 text-xs text-muted-foreground'>
+        <div className='inline-flex items-center gap-2 text-xs text-muted-foreground'>
           <Checkbox
             checked={group.not}
+            aria-label='Negate group (NOT)'
             onCheckedChange={(checked) =>
               updateThisGroup({
                 ...group,
@@ -620,7 +621,7 @@ const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor(props:
             }
           />
           Negate group (NOT)
-        </label>
+        </div>
 
         {!isRoot ? (
           <div className='ml-auto flex items-center gap-1'>

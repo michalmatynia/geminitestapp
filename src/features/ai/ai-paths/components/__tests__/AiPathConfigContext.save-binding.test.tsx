@@ -5,11 +5,15 @@ import { describe, expect, it, vi } from 'vitest';
 import type { AiNode } from '@/shared/contracts/ai-paths';
 
 const orchestratorMock = vi.hoisted(() => ({
+  handleClearNodeHistory: vi.fn(),
+}));
+
+const nodeConfigActionsMock = vi.hoisted(() => ({
   updateSelectedNode: vi.fn(),
   updateSelectedNodeConfig: vi.fn(),
-  handleClearNodeHistory: vi.fn(),
-  handleSave: vi.fn(async () => true),
 }));
+
+const savePathConfigMock = vi.hoisted(() => vi.fn(async () => true));
 
 const selectionActionsMock = vi.hoisted(() => ({
   setConfigOpen: vi.fn(),
@@ -71,9 +75,16 @@ vi.mock('../../context', () => ({
   }),
   usePersistenceActions: () => ({
     setAutoSaveEnabled: vi.fn(),
-    savePathConfig: vi.fn(async () => true),
+    savePathConfig: savePathConfigMock,
   }),
 }));
+
+vi.mock(
+  '../ai-paths-settings/hooks/useAiPathsNodeConfigActions',
+  () => ({
+    useAiPathsNodeConfigActions: () => nodeConfigActionsMock,
+  })
+);
 
 vi.mock('../ai-paths-settings/AiPathsSettingsOrchestratorContext', () => ({
   useAiPathsSettingsOrchestrator: () => orchestratorMock,
@@ -94,7 +105,7 @@ function Probe(props: { onReady: (value: ReturnType<typeof useAiPathOrchestrator
 }
 
 describe('AiPathConfigContext save binding', () => {
-  it('routes savePathConfig through orchestrator handleSave', async () => {
+  it('routes savePathConfig through PersistenceActions.savePathConfig', async () => {
     const onReady = vi.fn();
     render(
       <AiPathConfigProviderWithContext>
@@ -110,7 +121,7 @@ describe('AiPathConfigContext save binding', () => {
     const result = await contextValue.savePathConfig(options);
 
     expect(result).toBe(true);
-    expect(orchestratorMock.handleSave).toHaveBeenCalledTimes(1);
-    expect(orchestratorMock.handleSave).toHaveBeenCalledWith(options);
+    expect(savePathConfigMock).toHaveBeenCalledTimes(1);
+    expect(savePathConfigMock).toHaveBeenCalledWith(options);
   });
 });

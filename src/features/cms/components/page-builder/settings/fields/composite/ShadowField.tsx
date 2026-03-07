@@ -5,7 +5,7 @@ import { Input } from '@/shared/ui';
 import { useCompositeFieldContext } from '../CompositeFieldContext';
 
 export function ShadowField(): React.ReactNode {
-  const { value, onChange } = useCompositeFieldContext();
+  const { value, onChange, buildAriaLabel } = useCompositeFieldContext();
   const shadow = (value as Record<string, unknown>) ?? {
     x: 0,
     y: 2,
@@ -29,6 +29,7 @@ export function ShadowField(): React.ReactNode {
                 update(prop, Number(e.target.value))
               }
               className='text-xs h-7 px-1.5'
+              aria-label={buildAriaLabel(prop)}
             />
           </div>
         ))}
@@ -42,6 +43,7 @@ export function ShadowField(): React.ReactNode {
             update('color', e.target.value)
           }
           className='h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5'
+          aria-label={buildAriaLabel('color picker')}
         />
         <Input
           value={(shadow['color'] as string) ?? '#00000040'}
@@ -49,6 +51,7 @@ export function ShadowField(): React.ReactNode {
             update('color', e.target.value)
           }
           className='text-xs h-7 font-mono flex-1'
+          aria-label={buildAriaLabel('color value')}
         />
       </div>
     </div>

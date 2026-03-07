@@ -173,7 +173,14 @@ export function FileUploadButton(props: FileUploadButtonProps): React.JSX.Elemen
       </Button>
       {showProgress && isUploading ? (
         <span className='flex items-center gap-2'>
-          <span className='h-1 w-full overflow-hidden rounded bg-slate-800/60'>
+          <span
+            className='h-1 w-full overflow-hidden rounded bg-slate-800/60'
+            role='progressbar'
+            aria-label='Upload progress'
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(progress)}
+          >
             <span
               className='block h-full rounded bg-blue-500/70 transition-[width] duration-150'
               style={{ width: `${Math.max(2, progress)}%` }}
@@ -216,7 +223,6 @@ export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Elem
   } = props;
 
   const inputRef = React.useRef<HTMLInputElement | null>(null);
-  const Comp = asChild ? Slot : 'span';
   const [isUploading, setIsUploading] = React.useState(false);
   const [progress, setProgress] = React.useState(0);
 
@@ -285,38 +291,69 @@ export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Elem
           void handleChange(e);
         }}
       />
-      <Comp
-        className={className}
-        role='button'
-        tabIndex={disabled ? -1 : 0}
-        aria-disabled={disabled}
-        onClick={() => {
-          if (!disabled) inputRef.current?.click();
-        }}
-        onKeyDown={(event: React.KeyboardEvent): void => {
-          if (disabled) return;
-          if (event.key === 'Enter' || event.key === ' ') {
+      {asChild ? (
+        <Slot
+          className={className}
+          role='button'
+          tabIndex={disabled ? -1 : 0}
+          aria-disabled={disabled}
+          onClick={() => {
+            if (!disabled) inputRef.current?.click();
+          }}
+          onKeyDown={(event: React.KeyboardEvent): void => {
+            if (disabled) return;
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              inputRef.current?.click();
+            }
+          }}
+          onDragOver={(event: React.DragEvent<HTMLElement>): void => {
+            if (!enableDrop || disabled) return;
             event.preventDefault();
-            inputRef.current?.click();
-          }
-        }}
-        onDragOver={(event: React.DragEvent<HTMLElement>): void => {
-          if (!enableDrop || disabled) return;
-          event.preventDefault();
-          event.dataTransfer.dropEffect = 'copy';
-        }}
-        onDrop={(event: React.DragEvent<HTMLElement>): void => {
-          void handleDrop(event);
-        }}
-        onPaste={(event: React.ClipboardEvent<HTMLElement>): void => {
-          void handlePaste(event);
-        }}
-      >
-        {children}
-      </Comp>
+            event.dataTransfer.dropEffect = 'copy';
+          }}
+          onDrop={(event: React.DragEvent<HTMLElement>): void => {
+            void handleDrop(event);
+          }}
+          onPaste={(event: React.ClipboardEvent<HTMLElement>): void => {
+            void handlePaste(event);
+          }}
+        >
+          {children}
+        </Slot>
+      ) : (
+        <button
+          type='button'
+          className={className}
+          disabled={disabled}
+          onClick={() => {
+            if (!disabled) inputRef.current?.click();
+          }}
+          onDragOver={(event: React.DragEvent<HTMLButtonElement>): void => {
+            if (!enableDrop || disabled) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+          }}
+          onDrop={(event: React.DragEvent<HTMLButtonElement>): void => {
+            void handleDrop(event);
+          }}
+          onPaste={(event: React.ClipboardEvent<HTMLButtonElement>): void => {
+            void handlePaste(event);
+          }}
+        >
+          {children}
+        </button>
+      )}
       {showProgress && isUploading ? (
         <span className='flex items-center gap-2'>
-          <span className='h-1 w-full overflow-hidden rounded bg-slate-800/60'>
+          <span
+            className='h-1 w-full overflow-hidden rounded bg-slate-800/60'
+            role='progressbar'
+            aria-label='Upload progress'
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(progress)}
+          >
             <span
               className='block h-full rounded bg-blue-500/70 transition-[width] duration-150'
               style={{ width: `${Math.max(2, progress)}%` }}

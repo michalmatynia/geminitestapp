@@ -46,7 +46,7 @@ describe('GenericGridPicker', () => {
       />
     );
 
-    const item2 = screen.getByText('Item 2').closest('div[role="gridcell"]');
+    const item2 = screen.getByRole('option', { name: /item 2/i });
     expect(item2).toHaveClass('ring-2');
   });
 
@@ -93,7 +93,7 @@ describe('GenericGridPicker', () => {
     const onSelect = vi.fn();
     render(<GenericGridPicker items={mockItems} onSelect={onSelect} renderItem={defaultRender} />);
 
-    const item = screen.getByText('Item 1').closest('div[role="gridcell"]');
+    const item = screen.getByRole('option', { name: /item 1/i });
     fireEvent.keyDown(item!, { key: 'Enter' });
 
     expect(onSelect).toHaveBeenCalledWith(mockItems[0]);
@@ -179,7 +179,7 @@ describe('GenericGridPicker', () => {
       />
     );
 
-    const grid = container.querySelector('[role="grid"]');
+    const grid = container.querySelector('[role="listbox"]');
     expect(grid).toHaveStyle({ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' });
   });
 

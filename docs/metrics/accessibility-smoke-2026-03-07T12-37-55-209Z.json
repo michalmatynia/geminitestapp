@@ -1,0 +1,128 @@
+{
+  "generatedAt": "2026-03-07T12:37:55.209Z",
+  "strictMode": false,
+  "failOnWarningBudgetExceed": false,
+  "summary": {
+    "total": 8,
+    "passed": 7,
+    "failed": 1,
+    "actWarnings": 1,
+    "warningBudget": 10,
+    "warningBudgetStatus": "ok",
+    "warningBudgetEnforcement": "telemetry-only"
+  },
+  "results": [
+    {
+      "id": "app-shell-a11y",
+      "name": "App Shell Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/app/__tests__/shell-accessibility.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/app/__tests__/shell-accessibility.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 1676,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/app/__tests__/shell-accessibility.test.tsx (2 tests) 82ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  13:35:40\n   Duration  849ms (transform 177ms, setup 143ms, import 246ms, tests 82ms, environment 259ms)"
+    },
+    {
+      "id": "auth-signin-a11y",
+      "name": "Auth Sign-In Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/auth/pages/signin-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 2781,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/auth/pages/signin-page.test.tsx (10 tests) 570ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  13:35:42\n   Duration  1.96s (transform 647ms, setup 138ms, import 918ms, tests 570ms, environment 250ms)"
+    },
+    {
+      "id": "products-edit-a11y",
+      "name": "Products Edit Form Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/products/pages/product-edit-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/products/pages/product-edit-page.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 4127,
+      "actWarnings": 1,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\nstderr | __tests__/features/products/pages/product-edit-page.test.tsx > EditProductForm > supports keyboard tab order across product tabs\nAn update to ForwardRef inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() => {\n  /* fire events that update state */\n});\n/* assert on the output */\n\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act\n\n ✓ |unit| __tests__/features/products/pages/product-edit-page.test.tsx (7 tests) 1339ms\n     ✓ renders the form with product data in the General tab  302ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  13:35:44\n   Duration  3.29s (transform 1.06s, setup 143ms, import 1.46s, tests 1.34s, environment 256ms)"
+    },
+    {
+      "id": "image-studio-a11y",
+      "name": "Image Studio UI Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 2863,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx (7 tests) 443ms\n\n Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  13:35:49\n   Duration  2.02s (transform 790ms, setup 142ms, import 1.11s, tests 443ms, environment 248ms)"
+    },
+    {
+      "id": "ai-paths-a11y",
+      "name": "AI Paths Canvas Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3328,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx (4 tests) 171ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  13:35:51\n   Duration  2.48s (transform 1.38s, setup 141ms, import 1.84s, tests 171ms, environment 251ms)"
+    },
+    {
+      "id": "case-resolver-a11y",
+      "name": "Case Resolver Header Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 2695,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx (10 tests) 232ms\n\n Test Files  1 passed (1)\n      Tests  10 passed (10)\n   Start at  13:35:55\n   Duration  1.75s (transform 689ms, setup 151ms, import 971ms, tests 232ms, environment 305ms)"
+    },
+    {
+      "id": "kangur-profile-a11y",
+      "name": "Kangur Profile Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/kangur/kangur-accessibility-smoke.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/kangur/kangur-accessibility-smoke.test.tsx",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 2633,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/kangur/kangur-accessibility-smoke.test.tsx (4 tests) 501ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  13:35:57\n   Duration  1.80s (transform 539ms, setup 140ms, import 820ms, tests 501ms, environment 251ms)"
+    },
+    {
+      "id": "public-auth-routes-browser-a11y",
+      "name": "Public Auth Route Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/public-auth-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/public-auth-accessibility.spec.ts",
+      "status": "fail",
+      "exitCode": null,
+      "durationMs": 115481,
+      "actWarnings": 0,
+      "output": "[WebServer] Watchpack Error (watcher): Error: EMFILE: too many open files, watch\n[WebServer] Watchpack Error (watcher): Error: EMFILE: too many open files, watch\n[WebServer] Watchpack Error (watcher): Error: EMFILE: too many open files, watch\n[WebServer] Watchpack Error (watcher): Error: EMFILE: too many open files, watch\n[WebServer] Watchpack Error (watcher): Error: EMFILE: too many open files, watch\n[WebServer] Watchpack Error (watcher): Error: EMFILE: too many open files, watch\n[WebServer] Watchpack Error (watcher): Error: EMFILE: too many open files, watch\n[WebServer] Watchpack Error (watcher): Error: EMFILE: too many open files, watch\n[WebServer] Watchpack Error (watcher): Error: EMFILE: too many open files, watch\n[WebServer] [queue-init] Redis unreachable, skipping BullMQ workers { service: 'queue-init', fingerprint: 'd904e7da79b3f62d' }\n[WebServer] [system-logger] Failed to persist log asynchronously Error: querySrv ECONNREFUSED _mongodb._tcp.cluster0.zv9e9.azure.mongodb.net\n[WebServer]     at ignore-listed frames {\n[WebServer]   errno: undefined,\n[WebServer]   code: 'ECONNREFUSED',\n[WebServer]   syscall: 'querySrv',\n[WebServer]   hostname: '_mongodb._tcp.cluster0.zv9e9.azure.mongodb.net'\n[WebServer] }\n[WebServer] [system-logger] Failed to persist log asynchronously Error: querySrv ECONNREFUSED _mongodb._tcp.cluster0.zv9e9.azure.mongodb.net\n[WebServer]     at ignore-listed frames {\n[WebServer]   errno: undefined,\n[WebServer]   code: 'ECONNREFUSED',\n[WebServer]   syscall: 'querySrv',\n[WebServer]   hostname: '_mongodb._tcp.cluster0.zv9e9.azure.mongodb.net'\n[WebServer] }\n[WebServer] [system-logger] Failed to persist log asynchronously Error: querySrv ECONNREFUSED _mongodb._tcp.cluster0.zv9e9.azure.mongodb.net\n[WebServer]     at ignore-listed frames {\n[WebServer]   errno: undefined,\n[WebServer]   code: 'ECONNREFUSED',\n[WebServer]   syscall: 'querySrv',\n[WebServer]   hostname: '_mongodb._tcp.cluster0.zv9e9.azure.mongodb.net'\n[WebServer] }\n[WebServer] Error: listen EPERM: operation not permitted 0.0.0.0:3000\n[WebServer]     at <unknown> (Error: listen EPERM: operation not permitted 0.0.0.0:3000) {\n[WebServer]   code: 'EPERM',\n[WebServer]   errno: -1,\n[WebServer]   syscall: 'listen',\n[WebServer]   address: '0.0.0.0',\n[WebServer]   port: 3000\n[WebServer] }\n[WebServer] ⨯ unhandledRejection: Error: listen EPERM: operation not permitted 0.0.0.0:3000\n[WebServer]     at <unknown> (Error: listen EPERM: operation not permitted 0.0.0.0:3000) {\n[WebServer]   code: 'EPERM',\n[WebServer]   errno: -1,\n[WebServer]   syscall: 'listen',\n[WebServer]   address: '0.0.0.0',\n[WebServer]   port: 3000\n[WebServer] }\n[WebServer] ⨯ unhandledRejection:  Error: listen EPERM: operation not permitted 0.0.0.0:3000\n[WebServer]     at <unknown> (Error: listen EPERM: operation not permitted 0.0.0.0:3000) {\n[WebServer]   code: 'EPERM',\n[WebServer]   errno: -1,\n[WebServer]   syscall: 'listen',\n[WebServer]   address: '0.0.0.0',\n[WebServer]   port: 3000\n[WebServer] }\n[WebServer] [process.unhandledRejection] Unhandled Promise Rejection {\n[WebServer]   category: 'SYSTEM',\n[WebServer]   error: {\n[WebServer]     message: 'listen EPERM: operation not permitted 0.0.0.0:3000',\n[WebServer]     stack: 'Error: listen EPERM: operation not permitted 0.0.0.0:3000\\n' +\n[WebServer]       '    at Server.setupListenHandle [as _listen2] (node:net:1918:21)\\n' +\n[WebServer]       '    at listenInCluster (node:net:1997:12)\\n' +\n[WebServer]       '    at node:net:2206:7\\n' +\n[WebServer]       '    at wrappedLookupCallback (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@opentelemetry/instrumentation-dns/build/src/instrumentation.js:131:29)\\n' +\n[WebServer]       '    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)',\n[WebServer]     name: 'Error',\n[WebServer]     code: 'EPERM'\n[WebServer]   },\n[WebServer]   errorCode: 'EPERM',\n[WebServer]   errorName: 'Error',\n[WebServer]   service: 'process.unhandledRejection',\n[WebServer]   fingerprint: '5c83eb871b7f7309'\n[WebServer] }\n[WebServer] [system-logger] Failed to persist log asynchronously Error: querySrv ECONNREFUSED _mongodb._tcp.cluster0.zv9e9.azure.mongodb.net\n[WebServer]     at ignore-listed frames {\n[WebServer]   errno: undefined,\n[WebServer]   code: 'ECONNREFUSED',\n[WebServer]   syscall: 'querySrv',\n[WebServer]   hostname: '_mongodb._tcp.cluster0.zv9e9.azure.mongodb.net'\n[WebServer] }"
+    }
+  ]
+}

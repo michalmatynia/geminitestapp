@@ -131,23 +131,25 @@ function renderFieldGroups(
       <div key={group.kind} className='space-y-1.5'>
         <Label className='text-xs text-gray-400'>{label}</Label>
         <div className='grid grid-cols-2 gap-2'>
-          {group.fields.map((field: SettingsField) => (
-            <div key={field.key} className='space-y-0.5'>
-              <span className='text-[10px] text-gray-500 uppercase'>
-                {field.key.replace(/^(padding|margin)/, '')}
-              </span>
-              <Input
-                type='number'
-                value={(effectiveSettings[field.key] as number) ?? field.defaultValue ?? 0}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
-                  if (effectiveOnChange) {
-                    effectiveOnChange(field.key, Number(e.target.value));
-                  }
-                }}
-                className='text-xs h-7 px-1.5'
-              />
-            </div>
-          ))}
+          {group.fields.map((field: SettingsField) => {
+            const side = field.key.replace(/^(padding|margin)/, '');
+            return (
+              <div key={field.key} className='space-y-0.5'>
+                <span className='text-[10px] text-gray-500 uppercase'>{side}</span>
+                <Input
+                  type='number'
+                  value={(effectiveSettings[field.key] as number) ?? field.defaultValue ?? 0}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
+                    if (effectiveOnChange) {
+                      effectiveOnChange(field.key, Number(e.target.value));
+                    }
+                  }}
+                  className='text-xs h-7 px-1.5'
+                  aria-label={`${label} ${side}`.trim()}
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
     );

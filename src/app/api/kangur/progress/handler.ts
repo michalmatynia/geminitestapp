@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { getKangurProgressRepository, resolveKangurActor } from '@/features/kangur/server';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 import { badRequestError } from '@/shared/errors/app-error';
@@ -63,12 +64,26 @@ export async function getKangurProgressHandler(
 
 export async function patchKangurProgressHandler(
   req: NextRequest,
-  _ctx: ApiHandlerContext
+  ctx: ApiHandlerContext
 ): Promise<Response> {
   const payload = parseKangurProgressUpdatePayload(await readBodyJson(req));
   const actor = await resolveKangurActor(req);
   const repository = await getKangurProgressRepository();
   const progress = await repository.saveProgress(actor.activeLearner.id, payload);
 
+  void logKangurServerEvent({
+    source: 'kangur.progress.update',
+    message: 'Kangur progress updated',
+    request: req,
+    requestContext: ctx,
+    actor,
+    statusCode: 200,
+    context: {
+      totalXp: progress.totalXp,
+      gamesPlayed: progress.gamesPlayed,
+      lessonsCompleted: progress.lessonsCompleted,
+      perfectGames: progress.perfectGames,
+    },
+  });
   return NextResponse.json(progress);
 }

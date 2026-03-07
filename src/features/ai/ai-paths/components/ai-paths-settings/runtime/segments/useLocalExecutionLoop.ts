@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import type { AiNode, RuntimeState, RuntimePortValues } from '@/shared/lib/ai-paths';
 import {
   evaluateGraphClient as evaluateGraph,
@@ -27,13 +27,23 @@ const toRecord = (value: unknown): Record<string, unknown> | null =>
     : null;
 
 export function useLocalExecutionLoop(args: LocalExecutionArgs) {
-  const runtimeKernelConfig = normalizeRuntimeKernelConfigRecord(
-    toRecord(args.runtimeKernelConfig)
+  // Keep a stable ref so the callback below doesn't need `args` in its deps.
+  const argsRef = useRef(args);
+  argsRef.current = args;
+
+  const runtimeKernelConfig = useMemo(
+    () => normalizeRuntimeKernelConfigRecord(toRecord(args.runtimeKernelConfig)),
+    [args.runtimeKernelConfig]
   );
-  const runtimeKernelNodeTypes = parseRuntimeKernelNodeTypes(runtimeKernelConfig?.['nodeTypes']);
-  const runtimeKernelCodeObjectResolverIds = parseRuntimeKernelCodeObjectResolverIds(
-    runtimeKernelConfig?.['codeObjectResolverIds']
+  const runtimeKernelNodeTypes = useMemo(
+    () => parseRuntimeKernelNodeTypes(runtimeKernelConfig?.['nodeTypes']),
+    [runtimeKernelConfig]
   );
+  const runtimeKernelCodeObjectResolverIds = useMemo(
+    () => parseRuntimeKernelCodeObjectResolverIds(runtimeKernelConfig?.['codeObjectResolverIds']),
+    [runtimeKernelConfig]
+  );
+
   const runLocalLoop = useCallback(
     async (
       mode: 'run' | 'step'
@@ -42,6 +52,8 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
       error?: unknown;
       state: RuntimeState;
     }> => {
+      // Always read the latest args from the ref — avoids stale closure without adding `args` to deps.
+      const args = argsRef.current;
       if (args.runLoopActiveRef.current) {
         return { status: 'paused', state: args.runtimeStateRef.current };
       }
@@ -605,7 +617,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
       }
       return { status: outcome, error: capturedError, state: args.runtimeStateRef.current };
     },
-    [args, runtimeKernelCodeObjectResolverIds, runtimeKernelNodeTypes]
+    [runtimeKernelCodeObjectResolverIds, runtimeKernelNodeTypes]
   );
 
   return { runLocalLoop };

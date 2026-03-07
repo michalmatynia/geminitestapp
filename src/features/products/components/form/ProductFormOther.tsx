@@ -218,6 +218,7 @@ export default function ProductFormOther(): React.JSX.Element {
               }
               value={selectedDefaultPriceGroupId || ''}
               disabled={isPriceGroupAutoAssigned}
+              ariaLabel='Default price group'
               options={filteredPriceGroups.map((group: PriceGroupWithDetails) => ({
                 value: group.id,
                 label: `${group.name}${group.isDefault ? ' (Default)' : ''} (${group.currency?.code ?? group.currencyCode})`,

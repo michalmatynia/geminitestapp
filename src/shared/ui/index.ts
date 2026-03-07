@@ -14,6 +14,7 @@ export * from './label';
 export * from './radio-group';
 export * from './select';
 export * from './skeleton';
+export * from './SkipToContentLink';
 export * from './switch';
 export * from './separator';
 export * from './table';

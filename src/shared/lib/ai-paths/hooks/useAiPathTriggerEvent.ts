@@ -7,6 +7,7 @@ import { AI_PATHS_UI_STATE_KEY } from '@/shared/lib/ai-paths/core/constants';
 import {
   enqueueAiPathRun,
   listAiPathRuns,
+  mergeEnqueuedAiPathRunForCache,
   resolveAiPathRunFromEnqueueResponseData,
 } from '@/shared/lib/ai-paths/api/client';
 import { resolveHistoryRetentionPasses } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
@@ -460,14 +461,13 @@ export function useAiPathTriggerEvent(): {
           },
         });
 
-        const queuedRunForCache = runRecord ?? {
+        const queuedRunFallback: AiPathRunRecord = {
           id: runId,
           pathId: selectedConfig.id,
           pathName: selectedConfig.name,
           status: 'queued',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          progress: 0,
           requestId,
           triggerNodeId: triggerNode.id,
           triggerEvent: triggerEventId,
@@ -478,6 +478,11 @@ export function useAiPathTriggerEvent(): {
             requestId,
           },
         };
+        const queuedRunForCache = mergeEnqueuedAiPathRunForCache({
+          fallbackRun: queuedRunFallback,
+          runId,
+          runRecord,
+        });
         optimisticallyInsertAiPathRunInQueueCache(queryClient, queuedRunForCache);
 
         await handleAiPathTriggerInvalidation({

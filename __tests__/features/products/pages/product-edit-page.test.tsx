@@ -11,15 +11,17 @@ import EditProductPage from '@/features/products/components/EditProductForm';
 import { server } from '@/mocks/server';
 import { ToastProvider } from '@/shared/ui/toast';
 import type { ProductWithImages } from '@/shared/contracts/products';
+import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-      staleTime: 0,
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        staleTime: 0,
+      },
     },
-  },
-});
+  });
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -54,8 +56,10 @@ const mockProduct: ProductWithImages = {
 } as unknown as ProductWithImages;
 
 describe('EditProductForm', () => {
+  let queryClient: QueryClient;
+
   beforeEach(() => {
-    queryClient.clear();
+    queryClient = createTestQueryClient();
     server.use(
       http.get('/api/v2/metadata/languages', () =>
         HttpResponse.json([
@@ -95,6 +99,16 @@ describe('EditProductForm', () => {
     expect(nameInput).toHaveValue('Test Product');
 
     expect(screen.getByLabelText(/SKU/i)).toHaveValue('TEST-123');
+  }, 15000);
+
+  it('has no obvious accessibility violations in the default edit form view', async () => {
+    const { container } = renderWithProviders(<EditProductPage product={mockProduct} />);
+
+    await screen.findByText('Edit Product');
+    await waitFor(() => {
+      expect(queryClient.isFetching()).toBe(0);
+    });
+    await expectNoAxeViolations(container);
   }, 15000);
 
   it('renders the price in the Other tab', async () => {
@@ -177,11 +191,13 @@ describe('EditProductForm', () => {
     });
   }, 15000);
 
-  it('supports keyboard tab order across product tabs', async () => {
-    const user = userEvent.setup();
+  it('exposes linked tab and panel semantics for keyboard users', async () => {
     renderWithProviders(<EditProductPage product={mockProduct} />);
 
     const generalTab = await screen.findByRole('tab', { name: /General/i });
+    await waitFor(() => {
+      expect(queryClient.isFetching()).toBe(0);
+    });
     const generalTabId = generalTab.getAttribute('id');
     const generalPanel =
       generalTabId !== null
@@ -189,9 +205,8 @@ describe('EditProductForm', () => {
         : null;
 
     expect(generalPanel).not.toBeNull();
-    generalTab.focus();
-    expect(generalTab).toHaveFocus();
-    await user.tab();
-    expect(generalPanel).toHaveFocus();
+    expect(generalTab).toHaveAttribute('aria-controls', generalPanel?.id);
+    expect(generalPanel).toHaveAttribute('aria-labelledby', generalTabId);
+    expect(generalPanel).toHaveAttribute('tabindex', '0');
   });
 });

@@ -63,6 +63,11 @@ export const buildAdminNav = (handlers: {
             href: '/admin/kangur/lessons-manager',
           },
           {
+            id: 'workspace/kangur/observability',
+            label: 'Observability',
+            href: '/admin/kangur/observability',
+          },
+          {
             id: 'workspace/kangur/settings',
             label: 'Settings',
             href: '/admin/kangur/settings',

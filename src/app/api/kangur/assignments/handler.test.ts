@@ -9,6 +9,7 @@ const {
   getKangurAssignmentRepositoryMock,
   getKangurProgressRepositoryMock,
   getKangurScoreRepositoryMock,
+  logKangurServerEventMock,
   listAssignmentsMock,
   createAssignmentMock,
   getProgressMock,
@@ -18,6 +19,7 @@ const {
   getKangurAssignmentRepositoryMock: vi.fn(),
   getKangurProgressRepositoryMock: vi.fn(),
   getKangurScoreRepositoryMock: vi.fn(),
+  logKangurServerEventMock: vi.fn(),
   listAssignmentsMock: vi.fn(),
   createAssignmentMock: vi.fn(),
   getProgressMock: vi.fn(),
@@ -30,6 +32,10 @@ vi.mock('@/features/kangur/server', () => ({
   getKangurProgressRepository: getKangurProgressRepositoryMock,
   getKangurScoreRepository: getKangurScoreRepositoryMock,
   resolveKangurActor: resolveKangurActorMock,
+}));
+
+vi.mock('@/features/kangur/observability/server', () => ({
+  logKangurServerEvent: logKangurServerEventMock,
 }));
 
 import { getKangurAssignmentsHandler, postKangurAssignmentsHandler } from './handler';
@@ -186,6 +192,16 @@ describe('kangur assignments handler', () => {
           requiredCompletions: 1,
           baselineCompletions: 2,
         },
+      })
+    );
+    expect(logKangurServerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'kangur.assignments.create',
+        statusCode: 201,
+        context: expect.objectContaining({
+          learnerId: 'learner-1',
+          assignmentId: 'assignment-created',
+        }),
       })
     );
     expect(response.status).toBe(201);

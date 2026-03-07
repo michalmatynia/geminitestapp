@@ -3,9 +3,9 @@
 import React, { useMemo, useCallback } from 'react';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useAiPathRuntimeAnalytics } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
-import { useAiPathsSettingsOrchestrator } from '../AiPathsSettingsOrchestratorContext';
 import { Button, Card, StatusBadge, useToast } from '@/shared/ui';
-import { useRunHistoryActions } from '@/features/ai/ai-paths/context';
+import { useRunHistoryActions, useRuntimeState, useGraphState } from '@/features/ai/ai-paths/context';
+import { useAiPathsErrorState } from '../hooks/useAiPathsErrorState';
 import {
   formatDurationMs,
   formatPercent,
@@ -19,10 +19,11 @@ import type {
 } from '@/shared/contracts/ai-paths';
 
 export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
-  const state = useAiPathsSettingsOrchestrator();
-  const { runtimeRunStatus, runtimeNodeStatuses, activePathId, nodes } = state;
+  const { runtimeRunStatus, runtimeNodeStatuses } = useRuntimeState();
+  const { activePathId, nodes } = useGraphState();
   const { setRunHistoryNodeId, setRunFilter, openRunDetail } = useRunHistoryActions();
   const { toast } = useToast();
+  const { reportAiPathsError } = useAiPathsErrorState({ toast });
   const runtimeAnalyticsCapability = useBrainAssignment({
     capability: 'insights.runtime_analytics',
   });
@@ -162,7 +163,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
         setRunFilter(focus);
         openRunDetail(runId);
       } catch (error: unknown) {
-        state.reportAiPathsError(
+        reportAiPathsError(
           error,
           {
             action: 'inspectRuntimeTraceNode',
@@ -174,7 +175,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
         toast('Failed to open run details for trace node.', { variant: 'error' });
       }
     },
-    [fetchLatestRunIdForTraceNode, openRunDetail, setRunFilter, setRunHistoryNodeId, state, toast]
+    [fetchLatestRunIdForTraceNode, openRunDetail, reportAiPathsError, setRunFilter, setRunHistoryNodeId, toast]
   );
 
   return (

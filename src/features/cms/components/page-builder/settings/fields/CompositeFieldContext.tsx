@@ -5,6 +5,8 @@ import { createContext, useContext } from 'react';
 export type CompositeFieldContextValue = {
   value: unknown;
   onChange: (value: unknown) => void;
+  fieldLabel: string;
+  buildAriaLabel: (suffix: string) => string;
 };
 
 export const CompositeFieldContext = createContext<CompositeFieldContextValue | null>(null);

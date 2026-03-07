@@ -143,4 +143,25 @@ describe('AdminKangurSettingsPage', () => {
       variant: 'success',
     });
   });
+
+  it('renders observability shortcuts for Kangur operations', () => {
+    render(<AdminKangurSettingsPage />);
+
+    expect(screen.getByText('Operations & Observability')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /open observability dashboard/i })).toHaveAttribute(
+      'href',
+      '/admin/kangur/observability'
+    );
+    expect(screen.getByRole('link', { name: /open kangur logs/i })).toHaveAttribute(
+      'href',
+      '/admin/system/logs?query=kangur.'
+    );
+    expect(screen.getByRole('link', { name: /open 24h summary json/i })).toHaveAttribute(
+      'href',
+      '/api/kangur/observability/summary?range=24h'
+    );
+    expect(
+      screen.getByText('docs/kangur/observability-and-operations.md')
+    ).toBeInTheDocument();
+  });
 });

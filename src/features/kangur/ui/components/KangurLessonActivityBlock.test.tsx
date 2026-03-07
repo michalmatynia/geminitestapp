@@ -74,6 +74,10 @@ describe('KangurLessonActivityBlock', () => {
       'soft-card',
       'border-emerald-300'
     );
+    expect(screen.getByRole('button', { name: /restart activity/i })).toHaveClass(
+      'kangur-cta-pill',
+      'surface-cta'
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /restart activity/i }));
 

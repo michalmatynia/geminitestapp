@@ -28,6 +28,8 @@ export function PageSettingsTabContent({ allSlugs }: { allSlugs: Slug[] }): Reac
   const [userPauseSlideshowOnHoverInEditor, setUserPauseSlideshowOnHoverInEditor] = useState<
     boolean | null
   >(null);
+  const draftPreviewCheckboxId = 'cms-preview-drafts-enabled';
+  const pauseHoverCheckboxId = 'cms-preview-pause-on-hover';
 
   const domainSlugs = useMemo((): Slug[] => slugsQuery.data ?? [], [slugsQuery.data]);
   const allSlugByValue = useMemo((): Map<string, Slug> => {
@@ -273,17 +275,26 @@ export function PageSettingsTabContent({ allSlugs }: { allSlugs: Slug[] }): Reac
 
       <div className='space-y-2 border-t border-border/40 pt-4'>
         <Label className='text-xs text-gray-400'>Preview options</Label>
-        <label className='flex items-center justify-between rounded border border-border/40 bg-gray-900/40 px-3 py-2 text-xs text-gray-200'>
-          <span>Draft Preview</span>
-          <Checkbox checked={previewDraftsEnabled} onCheckedChange={handleDraftPreviewChange} />
-        </label>
-        <label className='flex items-center justify-between rounded border border-border/40 bg-gray-900/40 px-3 py-2 text-xs text-gray-200'>
-          <span>Pause slides on hover</span>
+        <div className='flex items-center justify-between rounded border border-border/40 bg-gray-900/40 px-3 py-2 text-xs text-gray-200'>
+          <Label htmlFor={draftPreviewCheckboxId} className='cursor-pointer text-xs text-gray-200'>
+            Draft Preview
+          </Label>
           <Checkbox
+            id={draftPreviewCheckboxId}
+            checked={previewDraftsEnabled}
+            onCheckedChange={handleDraftPreviewChange}
+          />
+        </div>
+        <div className='flex items-center justify-between rounded border border-border/40 bg-gray-900/40 px-3 py-2 text-xs text-gray-200'>
+          <Label htmlFor={pauseHoverCheckboxId} className='cursor-pointer text-xs text-gray-200'>
+            Pause slides on hover
+          </Label>
+          <Checkbox
+            id={pauseHoverCheckboxId}
             checked={pauseSlideshowOnHoverInEditor}
             onCheckedChange={handlePauseSlidesOnHoverChange}
           />
-        </label>
+        </div>
       </div>
     </div>
   );

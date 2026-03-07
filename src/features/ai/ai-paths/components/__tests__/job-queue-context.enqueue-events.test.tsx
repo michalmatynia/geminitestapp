@@ -3,6 +3,7 @@ import { act, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AI_PATH_RUN_ENQUEUED_EVENT_NAME } from '@/shared/contracts/ai-paths';
+import { rememberRecentAiPathRunEnqueue } from '@/shared/lib/query-invalidation';
 import { JobQueueProvider } from '../JobQueueContext';
 
 const mocks = vi.hoisted(() => ({
@@ -100,6 +101,7 @@ describe('JobQueueProvider enqueue event listeners', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    window.localStorage.clear();
   });
 
   it('refreshes queue only for valid window enqueue events', () => {
@@ -168,9 +170,9 @@ describe('JobQueueProvider enqueue event listeners', () => {
     expect(channel.close).toHaveBeenCalledTimes(1);
   });
 
-  it('ignores valid enqueue events when queue panel is not active', () => {
+  it('defers queue refresh until the panel becomes active after an enqueue event', () => {
     mocks.usePathnameMock.mockReturnValue('/admin/products');
-    renderProvider();
+    const view = renderProvider();
 
     mocks.refetchRunsMock.mockClear();
     mocks.refetchQueueStatusMock.mockClear();
@@ -185,5 +187,31 @@ describe('JobQueueProvider enqueue event listeners', () => {
 
     expect(mocks.refetchRunsMock).not.toHaveBeenCalled();
     expect(mocks.refetchQueueStatusMock).not.toHaveBeenCalled();
+
+    mocks.usePathnameMock.mockReturnValue('/admin/ai-paths/queue');
+    act(() => {
+      view.rerender(
+        <JobQueueProvider>
+          <div data-testid='queue-content'>queue</div>
+        </JobQueueProvider>
+      );
+    });
+
+    expect(mocks.refetchRunsMock).toHaveBeenCalledTimes(1);
+    expect(mocks.refetchQueueStatusMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('forces a fresh queue refresh on mount when a recent enqueue marker already exists', () => {
+    rememberRecentAiPathRunEnqueue({
+      runId: 'run-recent',
+      entityId: 'product-1',
+      entityType: 'product',
+      at: Date.now(),
+    });
+
+    renderProvider();
+
+    expect(mocks.refetchRunsMock).toHaveBeenCalledTimes(1);
+    expect(mocks.refetchQueueStatusMock).toHaveBeenCalledTimes(1);
   });
 });

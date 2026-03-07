@@ -12,6 +12,7 @@ Kangur is the learner-facing math practice application for guided lessons, games
 - `Learner Profile`: progress, streaks, recommendations, and recent results.
 - `Parent Dashboard`: learner management, assignments, score visibility, and progress review.
 - `Admin`: lesson authoring, test-suite authoring, narration configuration, and documentation-driven tooltip settings.
+  - Operations dashboard: `/admin/kangur/observability`
 
 ## Documentation model
 
@@ -33,3 +34,4 @@ Kangur documentation is centralized under `docs/kangur/*`. Tooltip copy must be 
 - `docs/kangur/admin-content-authoring.md`
 - `docs/kangur/settings-and-narration.md`
 - `docs/kangur/svg-and-media-rules.md`
+- `docs/kangur/observability-and-operations.md`

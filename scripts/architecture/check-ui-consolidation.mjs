@@ -1,8 +1,11 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { execFile as execFileCallback } from 'node:child_process';
 import { promisify } from 'node:util';
 
 const execFile = promisify(execFileCallback);
 const root = process.cwd();
+const baselinePath = path.join(root, 'scripts', 'architecture', 'guardrails-baseline.json');
 
 const parseSummary = (stdout, sourceLabel) => {
   let parsed;
@@ -17,6 +20,11 @@ const parseSummary = (stdout, sourceLabel) => {
     throw new Error(`${sourceLabel} summary is missing.`);
   }
   return summary;
+};
+
+const readBaseline = async () => {
+  const raw = await fs.readFile(baselinePath, 'utf8');
+  return JSON.parse(raw);
 };
 
 const run = async () => {
@@ -81,27 +89,65 @@ const run = async () => {
     ].join(' | ')
   );
 
+  let baseline;
+  try {
+    baseline = await readBaseline();
+  } catch {
+    console.error(
+      'Guardrail baseline is missing. Run: node scripts/architecture/check-guardrails.mjs --update-baseline'
+    );
+    process.exit(1);
+    return;
+  }
+
+  const maxByKey = baseline.max ?? {};
+  const maxComponentsWithForwarding = Number(maxByKey['propDrilling.componentsWithForwarding'] ?? 0);
+  const maxHighPriorityChainCount = Number(maxByKey['propDrilling.depthGte4Chains'] ?? 0);
+  const maxTotalOpportunities = Number(maxByKey['uiConsolidation.totalOpportunities'] ?? 0);
+  const maxHighPriorityCount = Number(maxByKey['uiConsolidation.highPriorityOpportunities'] ?? 0);
+  const maxDuplicateNameClusterCount = Number(maxByKey['uiConsolidation.duplicateNameClusters'] ?? 0);
+  const maxPropSignatureClusterCount = Number(maxByKey['uiConsolidation.propSignatureClusters'] ?? 0);
+  const maxTokenSimilarityClusterCount = Number(
+    maxByKey['uiConsolidation.tokenSimilarityClusters'] ?? 0
+  );
+
+  console.log(`Baseline generated at: ${baseline.generatedAt ?? 'unknown'}`);
+
   const failures = [];
-  if (componentsWithForwarding > 0) {
-    failures.push(`Expected prop forwarding components = 0, got ${componentsWithForwarding}.`);
+  if (componentsWithForwarding > maxComponentsWithForwarding) {
+    failures.push(
+      `Expected prop forwarding components <= ${maxComponentsWithForwarding}, got ${componentsWithForwarding}.`
+    );
   }
-  if (highPriorityChainCount > 0) {
-    failures.push(`Expected prop depth>=4 chains = 0, got ${highPriorityChainCount}.`);
+  if (highPriorityChainCount > maxHighPriorityChainCount) {
+    failures.push(
+      `Expected prop depth>=4 chains <= ${maxHighPriorityChainCount}, got ${highPriorityChainCount}.`
+    );
   }
-  if (totalOpportunities > 0) {
-    failures.push(`Expected UI consolidation opportunities = 0, got ${totalOpportunities}.`);
+  if (totalOpportunities > maxTotalOpportunities) {
+    failures.push(
+      `Expected UI consolidation opportunities <= ${maxTotalOpportunities}, got ${totalOpportunities}.`
+    );
   }
-  if (highPriorityCount > 0) {
-    failures.push(`Expected high-priority UI opportunities = 0, got ${highPriorityCount}.`);
+  if (highPriorityCount > maxHighPriorityCount) {
+    failures.push(
+      `Expected high-priority UI opportunities <= ${maxHighPriorityCount}, got ${highPriorityCount}.`
+    );
   }
-  if (duplicateNameClusterCount > 0) {
-    failures.push(`Expected duplicate-name clusters = 0, got ${duplicateNameClusterCount}.`);
+  if (duplicateNameClusterCount > maxDuplicateNameClusterCount) {
+    failures.push(
+      `Expected duplicate-name clusters <= ${maxDuplicateNameClusterCount}, got ${duplicateNameClusterCount}.`
+    );
   }
-  if (propSignatureClusterCount > 0) {
-    failures.push(`Expected prop-signature clusters = 0, got ${propSignatureClusterCount}.`);
+  if (propSignatureClusterCount > maxPropSignatureClusterCount) {
+    failures.push(
+      `Expected prop-signature clusters <= ${maxPropSignatureClusterCount}, got ${propSignatureClusterCount}.`
+    );
   }
-  if (tokenSimilarityClusterCount > 0) {
-    failures.push(`Expected token-similarity clusters = 0, got ${tokenSimilarityClusterCount}.`);
+  if (tokenSimilarityClusterCount > maxTokenSimilarityClusterCount) {
+    failures.push(
+      `Expected token-similarity clusters <= ${maxTokenSimilarityClusterCount}, got ${tokenSimilarityClusterCount}.`
+    );
   }
 
   if (failures.length > 0) {

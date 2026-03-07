@@ -24,6 +24,8 @@ import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/Kan
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
+import { KangurAiTutorProvider } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import { KangurAiTutorWidget } from '@/features/kangur/ui/components/KangurAiTutorWidget';
 import {
   KangurButton,
   KangurEmptyState,
@@ -398,7 +400,13 @@ export default function Lessons() {
     window.location.assign(createPageUrl('Game', basePath));
   };
 
+  const learnerId = user?.activeLearner?.id ?? user?.id ?? null;
+
   return (
+    <KangurAiTutorProvider
+      learnerId={learnerId}
+      lessonContext={activeLesson?.title}
+    >
     <KangurPageShell
       tone='learn' className='min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100'
       id='kangur-lessons-page'
@@ -716,6 +724,8 @@ export default function Lessons() {
           )}
         </AnimatePresence>
       </KangurPageContainer>
+      <KangurAiTutorWidget />
     </KangurPageShell>
+    </KangurAiTutorProvider>
   );
 }

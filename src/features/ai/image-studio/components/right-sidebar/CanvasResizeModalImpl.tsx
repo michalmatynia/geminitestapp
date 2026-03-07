@@ -10,38 +10,24 @@ import {
   CANVAS_RESIZE_MAX_PX,
   parseCanvasDimensionInput,
 } from './right-sidebar-utils';
+import { useRightSidebarCanvasResize } from './useRightSidebarCanvasResize';
 import { useRightSidebarContext } from '../RightSidebarContext';
-import { useProjectsState, useProjectsActions } from '../../context/ProjectsContext';
-import { useSlotsState } from '../../context/SlotsContext';
-import { useUiState, useUiActions } from '../../context/UiContext';
-import { useMaskingState, useMaskingActions } from '../../context/MaskingContext';
-import {
-  applyCanvasResizeLocalTransform,
-  type CanvasResizeDirection,
-} from '@/features/ai/image-studio/utils/canvas-resize';
-import { useToast } from '@/shared/ui';
+import { type CanvasResizeDirection } from '@/features/ai/image-studio/utils/canvas-resize';
 
 export function CanvasResizeModal(): React.JSX.Element {
-  const { projectId } = useProjectsState();
-  const { handleResizeProjectCanvas, resizeProjectCanvasMutation } = useProjectsActions();
-  const { workingSlot } = useSlotsState();
-  const { maskShapes } = useMaskingState();
-  const { setMaskShapes } = useMaskingActions();
-  const { canvasImageOffset } = useUiState();
-  const { setCanvasImageOffset, getPreviewCanvasImageFrame } = useUiActions();
-  const { toast } = useToast();
+  const {
+    applyCanvasResize,
+    canResizeCanvas,
+    fallbackCanvasHeightPx,
+    fallbackCanvasWidthPx,
+    resizeCanvasBusy,
+  } = useRightSidebarCanvasResize();
   const { canvasSizeLabel, canvasSizePresetValue, resizeCanvasOpen, closeResizeCanvasModal } =
     useRightSidebarContext();
 
   const [widthDraft, setWidthDraft] = useState('');
   const [heightDraft, setHeightDraft] = useState('');
   const [direction, setDirection] = useState<CanvasResizeDirection>('down-right');
-
-  const fallbackCanvasWidthPx = useMemo(() => workingSlot?.imageFile?.width ?? 1024, [workingSlot]);
-  const fallbackCanvasHeightPx = useMemo(
-    () => workingSlot?.imageFile?.height ?? 1024,
-    [workingSlot]
-  );
 
   useEffect(() => {
     if (resizeCanvasOpen) {
@@ -63,62 +49,27 @@ export function CanvasResizeModal(): React.JSX.Element {
   );
 
   const canSubmit = useMemo(() => {
-    if (!projectId.trim()) return false;
-    if (resizeProjectCanvasMutation.isPending) return false;
+    if (!canResizeCanvas) return false;
+    if (resizeCanvasBusy) return false;
     if (widthValue === null || heightValue === null) return false;
     return true;
-  }, [projectId, resizeProjectCanvasMutation.isPending, widthValue, heightValue]);
+  }, [canResizeCanvas, resizeCanvasBusy, widthValue, heightValue]);
 
   const handleSubmit = useCallback(async (): Promise<void> => {
     if (!canSubmit || widthValue === null || heightValue === null) return;
-
-    const normalizedProjectId = projectId.trim();
-    const transform = applyCanvasResizeLocalTransform({
-      shapes: maskShapes,
-      oldCanvasWidth: fallbackCanvasWidthPx,
-      oldCanvasHeight: fallbackCanvasHeightPx,
-      newCanvasWidth: widthValue,
-      newCanvasHeight: heightValue,
+    await applyCanvasResize({
       direction,
-      currentImageOffset: canvasImageOffset,
-      currentImageFrame: getPreviewCanvasImageFrame()?.frame,
-      sourceAspectRatio:
-        workingSlot?.imageFile?.width && workingSlot?.imageFile?.height
-          ? workingSlot.imageFile.width / workingSlot.imageFile.height
-          : null,
+      height: heightValue,
+      onSuccess: closeResizeCanvasModal,
+      width: widthValue,
     });
-
-    try {
-      await handleResizeProjectCanvas({
-        projectId: normalizedProjectId,
-        canvasWidthPx: widthValue,
-        canvasHeightPx: heightValue,
-      });
-      setMaskShapes(transform.shapes);
-      setCanvasImageOffset(transform.imageOffset);
-      closeResizeCanvasModal();
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to resize canvas.', {
-        variant: 'error',
-      });
-    }
   }, [
     canSubmit,
     widthValue,
     heightValue,
-    projectId,
-    maskShapes,
-    fallbackCanvasWidthPx,
-    fallbackCanvasHeightPx,
     direction,
-    canvasImageOffset,
-    getPreviewCanvasImageFrame,
-    workingSlot,
-    handleResizeProjectCanvas,
-    setMaskShapes,
-    setCanvasImageOffset,
+    applyCanvasResize,
     closeResizeCanvasModal,
-    toast,
   ]);
 
   return (
@@ -136,7 +87,7 @@ export function CanvasResizeModal(): React.JSX.Element {
           }}
           cancelText='Cancel'
           saveText='Apply Resize'
-          isSaving={resizeProjectCanvasMutation.isPending}
+          isSaving={resizeCanvasBusy}
           isDisabled={!canSubmit}
           saveLoadingText='Applying...'
         />

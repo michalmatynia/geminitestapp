@@ -345,7 +345,7 @@ export default function ScoreHistory({
               <div key={operation} className='flex items-center gap-3'>
                 <span className='text-lg w-6 text-center'>{info.emoji}</span>
                 <div className='flex-1'>
-                  <div className='flex justify-between text-xs text-gray-600 mb-0.5'>
+                  <div className='mb-0.5 flex justify-between text-xs text-slate-600'>
                     <span className='font-semibold'>{info.label}</span>
                     <span>
                       {data.correct}/{data.total} ({percent}%)
@@ -392,8 +392,8 @@ export default function ScoreHistory({
                   <span aria-hidden='true'>{info.emoji}</span>
                 </KangurIconBadge>
                 <div className='flex-1'>
-                  <p className='text-sm font-semibold text-gray-700'>{info.label}</p>
-                  <p className='text-xs text-gray-400'>
+                  <p className='text-sm font-semibold text-slate-700'>{info.label}</p>
+                  <p className='text-xs text-slate-400'>
                     {new Date(score.created_date).toLocaleDateString('pl-PL')}
                   </p>
                 </div>
@@ -406,7 +406,7 @@ export default function ScoreHistory({
                     {score.correct_answers}/{score.total_questions || 10}
                   </KangurStatusChip>
                   {score.time_taken > 0 && (
-                    <p className='text-xs text-gray-400'>{score.time_taken}s</p>
+                    <p className='text-xs text-slate-400'>{score.time_taken}s</p>
                   )}
                 </div>
               </KangurInfoCard>

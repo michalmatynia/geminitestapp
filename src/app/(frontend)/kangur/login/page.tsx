@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import { setStoredActiveLearnerId } from '@/features/kangur/services/kangur-active-learner';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
@@ -50,6 +51,10 @@ function KangurLoginPageContent(): React.JSX.Element {
         const payload = (await response.json().catch(() => null)) as {
           error?: { message?: string };
         } | null;
+        trackKangurClientEvent('kangur_learner_signin_failed', {
+          statusCode: response.status,
+          callbackUrl,
+        });
         setStudentError(
           payload?.error?.message || 'Nie udalo sie zalogowac ucznia. Sprawdz login i haslo.'
         );
@@ -58,8 +63,16 @@ function KangurLoginPageContent(): React.JSX.Element {
 
       const payload = (await response.json()) as { learnerId?: string };
       setStoredActiveLearnerId(payload.learnerId ?? null);
+      trackKangurClientEvent('kangur_learner_signin_succeeded', {
+        learnerId: payload.learnerId ?? null,
+        callbackUrl,
+      });
       navigateToCallback(router, callbackUrl);
     } catch {
+      trackKangurClientEvent('kangur_learner_signin_failed', {
+        callbackUrl,
+        reason: 'network_error',
+      });
       setStudentError('Nie udalo sie zalogowac ucznia. Sprobuj ponownie.');
     } finally {
       setIsStudentSubmitting(false);

@@ -3,14 +3,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const { createKangurLearnerMock, resolveKangurActorMock } = vi.hoisted(() => ({
-  createKangurLearnerMock: vi.fn(),
-  resolveKangurActorMock: vi.fn(),
-}));
+const { createKangurLearnerMock, resolveKangurActorMock, logKangurServerEventMock } =
+  vi.hoisted(() => ({
+    createKangurLearnerMock: vi.fn(),
+    resolveKangurActorMock: vi.fn(),
+    logKangurServerEventMock: vi.fn(),
+  }));
 
 vi.mock('@/features/kangur/server', () => ({
   createKangurLearner: createKangurLearnerMock,
   resolveKangurActor: resolveKangurActorMock,
+}));
+
+vi.mock('@/features/kangur/observability/server', () => ({
+  logKangurServerEvent: logKangurServerEventMock,
 }));
 
 import { getKangurLearnersHandler, postKangurLearnersHandler } from './handler';
@@ -92,6 +98,15 @@ describe('kangur learners handler', () => {
         password: 'secret123',
       },
     });
+    expect(logKangurServerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'kangur.learners.create',
+        statusCode: 201,
+        context: expect.objectContaining({
+          learnerId: 'learner-2',
+        }),
+      })
+    );
     expect(response.status).toBe(201);
     await expect(response.json()).resolves.toEqual(
       expect.objectContaining({

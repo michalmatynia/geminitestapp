@@ -6,7 +6,7 @@ import { useCompositeFieldContext } from '../CompositeFieldContext';
 import { FONT_FAMILY_OPTIONS, FONT_WEIGHT_OPTIONS } from '../settings-field-constants';
 
 export function TypographyField(): React.ReactNode {
-  const { value, onChange } = useCompositeFieldContext();
+  const { value, onChange, buildAriaLabel } = useCompositeFieldContext();
   const typo = (value as Record<string, unknown>) ?? {};
   const update = (key: string, v: unknown): void => {
     onChange({ ...typo, [key]: v });
@@ -21,6 +21,7 @@ export function TypographyField(): React.ReactNode {
           onValueChange={(v: string): void => update('fontFamily', v)}
           options={FONT_FAMILY_OPTIONS}
           triggerClassName='text-xs h-7'
+          ariaLabel={buildAriaLabel('font family')}
         />
       </div>
       <div className='grid grid-cols-2 gap-2'>
@@ -32,6 +33,7 @@ export function TypographyField(): React.ReactNode {
             onValueChange={(v: string): void => update('fontWeight', v)}
             options={FONT_WEIGHT_OPTIONS}
             triggerClassName='text-xs h-7'
+            ariaLabel={buildAriaLabel('font weight')}
           />
         </div>
         <div className='space-y-0.5'>
@@ -45,6 +47,7 @@ export function TypographyField(): React.ReactNode {
             className='text-xs h-7'
             min={8}
             max={200}
+            aria-label={buildAriaLabel('font size')}
           />
         </div>
       </div>
@@ -61,6 +64,7 @@ export function TypographyField(): React.ReactNode {
             min={0.5}
             max={5}
             step={0.1}
+            aria-label={buildAriaLabel('line height')}
           />
         </div>
         <div className='space-y-0.5'>
@@ -73,6 +77,7 @@ export function TypographyField(): React.ReactNode {
             }
             className='text-xs h-7'
             step={0.5}
+            aria-label={buildAriaLabel('letter spacing')}
           />
         </div>
       </div>
@@ -86,6 +91,7 @@ export function TypographyField(): React.ReactNode {
               update('textColor', e.target.value)
             }
             className='h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5'
+            aria-label={buildAriaLabel('text color picker')}
           />
           <Input
             value={(typo['textColor'] as string) ?? '#ffffff'}
@@ -94,6 +100,7 @@ export function TypographyField(): React.ReactNode {
             }
             className='flex-1 text-xs font-mono'
             maxLength={7}
+            aria-label={buildAriaLabel('text color value')}
           />
         </div>
       </div>

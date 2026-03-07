@@ -3,10 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const { findAuthUserByIdMock, verifyKangurLearnerPasswordMock } = vi.hoisted(() => ({
-  findAuthUserByIdMock: vi.fn(),
-  verifyKangurLearnerPasswordMock: vi.fn(),
-}));
+const { findAuthUserByIdMock, verifyKangurLearnerPasswordMock, logKangurServerEventMock } =
+  vi.hoisted(() => ({
+    findAuthUserByIdMock: vi.fn(),
+    verifyKangurLearnerPasswordMock: vi.fn(),
+    logKangurServerEventMock: vi.fn(),
+  }));
 
 vi.mock('@/features/auth/server', () => ({
   findAuthUserById: findAuthUserByIdMock,
@@ -14,6 +16,10 @@ vi.mock('@/features/auth/server', () => ({
 
 vi.mock('@/features/kangur/server', () => ({
   verifyKangurLearnerPassword: verifyKangurLearnerPasswordMock,
+}));
+
+vi.mock('@/features/kangur/observability/server', () => ({
+  logKangurServerEvent: logKangurServerEventMock,
 }));
 
 import { postKangurLearnerSignInHandler } from './handler';
@@ -62,6 +68,12 @@ describe('kangur learner sign-in handler', () => {
     );
 
     expect(verifyKangurLearnerPasswordMock).toHaveBeenCalledWith('ada-child', 'secret123');
+    expect(logKangurServerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'kangur.auth.learnerSignIn.success',
+        statusCode: 200,
+      })
+    );
     expect(response.headers.get('set-cookie')).toContain('kangur.learner-session=');
     await expect(response.json()).resolves.toEqual({
       ok: true,

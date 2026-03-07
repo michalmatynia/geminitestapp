@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
+import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 
 const {
   useKangurRoutingMock,
@@ -206,6 +207,25 @@ describe('Kangur accessibility smoke', () => {
 
     expect(screen.getByRole('link', { name: 'Zagraj teraz' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Otworz lekcje' })).toBeVisible();
+  });
+
+  it('has no obvious accessibility violations in the learner profile shell', async () => {
+    scoreFilterMock.mockImplementation(
+      async (criteria: Partial<KangurScoreRecord>): Promise<KangurScoreRecord[]> => {
+        if (criteria.created_by) {
+          return [createScore({ id: 's1', operation: 'addition', score: 9, correct_answers: 9 })];
+        }
+        if (criteria.player_name) {
+          return [createScore({ id: 's2', operation: 'division', score: 6, correct_answers: 6 })];
+        }
+        return [];
+      }
+    );
+
+    const { container } = render(<LearnerProfile />);
+
+    await waitFor(() => expect(scoreFilterMock).toHaveBeenCalledTimes(3));
+    await expectNoAxeViolations(container);
   });
 
   it('supports keyboard-triggered login action in local mode', async () => {

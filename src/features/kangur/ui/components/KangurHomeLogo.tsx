@@ -22,7 +22,7 @@ export function KangurHomeLogo({ className }: KangurHomeLogoProps): React.JSX.El
       className={cn('h-[24px] w-auto overflow-visible sm:h-[28px]', className)}
       fill='none'
       focusable='false'
-      viewBox='0 0 860 240'
+      viewBox='20 24 710 182'
       xmlns='http://www.w3.org/2000/svg'
     >
       <defs>

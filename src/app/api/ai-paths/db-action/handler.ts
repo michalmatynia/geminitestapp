@@ -98,6 +98,49 @@ const normalizeUpdateDoc = (update: unknown): Record<string, unknown> | unknown[
   return null;
 };
 
+const AUTO_UPDATED_AT_COLLECTIONS = new Set<string>(['products', 'product_drafts']);
+
+const shouldAutoStampUpdatedAt = (collection: string): boolean =>
+  AUTO_UPDATED_AT_COLLECTIONS.has(collection.trim().toLowerCase());
+
+const applyUpdatedAtToUpdateDoc = (
+  update: Record<string, unknown> | unknown[],
+  now: Date
+): Record<string, unknown> | unknown[] => {
+  if (Array.isArray(update)) {
+    return [...update, { $set: { updatedAt: now } }];
+  }
+
+  const hasOperator = Object.keys(update).some((key: string): boolean => key.startsWith('$'));
+  if (!hasOperator) {
+    return {
+      ...update,
+      updatedAt: now,
+    };
+  }
+
+  const nextUpdate = { ...update };
+  const existingSet =
+    nextUpdate['$set'] &&
+    typeof nextUpdate['$set'] === 'object' &&
+    !Array.isArray(nextUpdate['$set'])
+      ? (nextUpdate['$set'] as Record<string, unknown>)
+      : {};
+  nextUpdate['$set'] = {
+    ...existingSet,
+    updatedAt: now,
+  };
+  return nextUpdate;
+};
+
+const applyUpdatedAtToReplacement = (
+  replacement: Record<string, unknown>,
+  now: Date
+): Record<string, unknown> => ({
+  ...replacement,
+  updatedAt: now,
+});
+
 const PRISMA_COLLECTION_DELEGATES: Record<string, string> = {
   products: 'product',
   product_drafts: 'productDraft',
@@ -528,6 +571,7 @@ export async function postAiPathsDbActionHandler(
     const collectionRef = mongo.collection(resolvedCollection);
     const normalizedFilter = normalizeObjectId(coerceQuery(filter), idType);
     const hasFilter = Object.keys(normalizedFilter).length > 0;
+    const now = new Date();
 
     const requireFilter = [
       'updateOne',
@@ -640,7 +684,10 @@ export async function postAiPathsDbActionHandler(
       if (!replacement) {
         throw badRequestError('Replacement document is required');
       }
-      const result = await collectionRef.replaceOne(normalizedFilter, replacement, {
+      const nextReplacement = shouldAutoStampUpdatedAt(resolvedCollection)
+        ? applyUpdatedAtToReplacement(replacement, now)
+        : replacement;
+      const result = await collectionRef.replaceOne(normalizedFilter, nextReplacement, {
         upsert: !!upsert,
       });
       return withProviderPayload(provider, requestedProvider, {
@@ -655,7 +702,10 @@ export async function postAiPathsDbActionHandler(
       if (!updateDoc) {
         throw badRequestError('Update document is required');
       }
-      const result = await collectionRef.findOneAndUpdate(normalizedFilter, updateDoc, {
+      const nextUpdateDoc = shouldAutoStampUpdatedAt(resolvedCollection)
+        ? applyUpdatedAtToUpdateDoc(updateDoc, now)
+        : updateDoc;
+      const result = await collectionRef.findOneAndUpdate(normalizedFilter, nextUpdateDoc, {
         returnDocument,
         upsert: !!upsert,
         includeResultMetadata: true,
@@ -671,12 +721,15 @@ export async function postAiPathsDbActionHandler(
       if (!updateDoc) {
         throw badRequestError('Update document is required');
       }
+      const nextUpdateDoc = shouldAutoStampUpdatedAt(resolvedCollection)
+        ? applyUpdatedAtToUpdateDoc(updateDoc, now)
+        : updateDoc;
       const result =
         action === 'updateOne'
-          ? await collectionRef.updateOne(normalizedFilter, updateDoc, {
+          ? await collectionRef.updateOne(normalizedFilter, nextUpdateDoc, {
             upsert: !!upsert,
           })
-          : await collectionRef.updateMany(normalizedFilter, updateDoc, {
+          : await collectionRef.updateMany(normalizedFilter, nextUpdateDoc, {
             upsert: !!upsert,
           });
       return withProviderPayload(provider, requestedProvider, {

@@ -39,6 +39,11 @@ describe('Kangur game training widgets', () => {
 
     const header = screen.getByTestId('kangur-calendar-training-header');
 
+    expect(screen.getByTestId('kangur-calendar-training-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(within(header).getByRole('heading', { name: /ćwiczenia z kalendarzem/i })).toHaveClass(
       'text-xl',
       'text-green-700'
@@ -71,6 +76,11 @@ describe('Kangur game training widgets', () => {
 
     const header = screen.getByTestId('kangur-geometry-training-header');
 
+    expect(screen.getByTestId('kangur-geometry-training-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(within(header).getByRole('heading', { name: /ćwiczenia z figur/i })).toHaveClass(
       'text-xl',
       'text-violet-700'

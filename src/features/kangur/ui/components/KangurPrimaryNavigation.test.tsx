@@ -67,7 +67,10 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
-    expect(screen.getByTestId('kangur-home-logo').querySelector('svg')).not.toBeNull();
+    const logo = screen.getByTestId('kangur-home-logo');
+
+    expect(logo.querySelector('svg')).not.toBeNull();
+    expect(logo.className).not.toContain('translate-x-');
     expect(screen.getByRole('link', { name: /strona glowna/i })).toHaveAttribute(
       'href',
       '/kangur/game'

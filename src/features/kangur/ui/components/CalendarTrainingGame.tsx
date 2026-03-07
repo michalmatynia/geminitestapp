@@ -4,10 +4,10 @@ import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import {
   KangurButton,
   KangurDisplayEmoji,
+  KangurGlassPanel,
   KangurHeadline,
   KangurInlineFallback,
   KangurOptionCardButton,
-  KangurPanel,
   KangurResultBadge,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -185,34 +185,42 @@ export default function CalendarTrainingGame({
         animate={{ opacity: 1, y: 0 }}
         className='flex flex-col items-center gap-5 py-4'
       >
-        <KangurDisplayEmoji
-          aria-hidden='true'
-          data-testid='calendar-training-summary-emoji'
-          size='lg'
+        <KangurGlassPanel
+          className='flex w-full max-w-sm flex-col items-center gap-5 text-center'
+          data-testid='calendar-training-summary-shell'
+          padding='xl'
+          surface='solid'
+          variant='soft'
         >
-          {score >= 5 ? '🏆' : score >= 3 ? '😊' : '💪'}
-        </KangurDisplayEmoji>
-        <KangurHeadline accent='emerald' as='h3' data-testid='calendar-training-summary-title'>
-          Wynik: {score}/{TOTAL}
-        </KangurHeadline>
-        {xpEarned > 0 && (
-          <KangurStatusChip accent='indigo' className='px-4 py-2 text-sm font-bold'>
-            +{xpEarned} XP ✨
-          </KangurStatusChip>
-        )}
-        <p className='text-gray-500 text-center max-w-xs'>
-          {score === TOTAL
-            ? 'Idealnie! Świetnie znasz kalendarz!'
-            : 'Ćwicz dalej, a zostaniesz mistrzem kalendarza!'}
-        </p>
-        <div className='flex gap-3'>
-          <KangurButton onClick={handleRestart} size='lg' variant='secondary'>
-            <RefreshCw className='w-4 h-4' /> Jeszcze raz
-          </KangurButton>
-          <KangurButton onClick={onFinish} size='lg' variant='primary'>
-            Zakończ lekcję ✅
-          </KangurButton>
-        </div>
+          <KangurDisplayEmoji
+            aria-hidden='true'
+            data-testid='calendar-training-summary-emoji'
+            size='lg'
+          >
+            {score >= 5 ? '🏆' : score >= 3 ? '😊' : '💪'}
+          </KangurDisplayEmoji>
+          <KangurHeadline accent='emerald' as='h3' data-testid='calendar-training-summary-title'>
+            Wynik: {score}/{TOTAL}
+          </KangurHeadline>
+          {xpEarned > 0 && (
+            <KangurStatusChip accent='indigo' className='px-4 py-2 text-sm font-bold'>
+              +{xpEarned} XP ✨
+            </KangurStatusChip>
+          )}
+          <p className='max-w-xs text-center text-slate-500'>
+            {score === TOTAL
+              ? 'Idealnie! Świetnie znasz kalendarz!'
+              : 'Ćwicz dalej, a zostaniesz mistrzem kalendarza!'}
+          </p>
+          <div className='flex gap-3'>
+            <KangurButton onClick={handleRestart} size='lg' variant='surface'>
+              <RefreshCw className='w-4 h-4' /> Jeszcze raz
+            </KangurButton>
+            <KangurButton onClick={onFinish} size='lg' variant='primary'>
+              Zakończ lekcję ✅
+            </KangurButton>
+          </div>
+        </KangurGlassPanel>
       </motion.div>
     );
   }
@@ -244,11 +252,17 @@ export default function CalendarTrainingGame({
         ))}
       </div>
 
-      <KangurPanel className='w-full text-center' padding='lg' variant='soft'>
+      <KangurGlassPanel
+        className='w-full text-center'
+        data-testid='calendar-training-question-shell'
+        padding='lg'
+        surface='solid'
+        variant='soft'
+      >
         <p id='calendar-training-question-title' className='text-lg font-extrabold text-green-800'>
           {question.question}
         </p>
-      </KangurPanel>
+      </KangurGlassPanel>
 
       <div
         aria-labelledby='calendar-training-question-title'

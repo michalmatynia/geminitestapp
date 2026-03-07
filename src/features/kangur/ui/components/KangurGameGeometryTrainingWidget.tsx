@@ -1,7 +1,7 @@
 'use client';
 
 import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
-import { KangurFeatureHeader, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import { KangurFeatureHeader, KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 
 export function KangurGameGeometryTrainingWidget(): React.JSX.Element | null {
@@ -13,7 +13,13 @@ export function KangurGameGeometryTrainingWidget(): React.JSX.Element | null {
 
   return (
     <div className='w-full max-w-lg flex flex-col items-center gap-4'>
-      <KangurPanel className='w-full flex flex-col items-center gap-4' padding='xl' variant='elevated'>
+      <KangurGlassPanel
+        className='w-full flex flex-col items-center gap-4'
+        data-testid='kangur-geometry-training-shell'
+        padding='xl'
+        surface='solid'
+        variant='soft'
+      >
         <KangurFeatureHeader
           accent='violet'
           badgeSize='md'
@@ -23,7 +29,7 @@ export function KangurGameGeometryTrainingWidget(): React.JSX.Element | null {
           title='Ćwiczenia z Figur'
         />
         <GeometryDrawingGame onFinish={handleHome} />
-      </KangurPanel>
+      </KangurGlassPanel>
     </div>
   );
 }

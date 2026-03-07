@@ -7,7 +7,6 @@ import {
   KangurDisplayEmoji,
   KangurGlassPanel,
   KangurInfoCard,
-  KangurPanel,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
@@ -498,10 +497,12 @@ export default function GeometryDrawingGame({
           animate={{ opacity: 1, scale: 1 }}
           className='w-full'
         >
-          <KangurPanel
+          <KangurGlassPanel
             className='flex flex-col items-center gap-4 text-center'
+            data-testid='geometry-drawing-summary-shell'
             padding='xl'
-            variant='elevated'
+            surface='solid'
+            variant='soft'
           >
             <KangurDisplayEmoji
               aria-hidden='true'
@@ -510,10 +511,10 @@ export default function GeometryDrawingGame({
             >
               {score === totalRounds ? '🏆' : score >= 3 ? '🌟' : '💪'}
             </KangurDisplayEmoji>
-            <h3 id='geometry-drawing-heading' className='text-2xl font-extrabold text-gray-800'>
+            <h3 id='geometry-drawing-heading' className='text-2xl font-extrabold text-slate-800'>
               Wynik: {score}/{totalRounds}
             </h3>
-            <p className='text-gray-500'>Zdobyte XP: +{xpEarned}</p>
+            <p className='text-slate-500'>Zdobyte XP: +{xpEarned}</p>
             <KangurProgressBar
               accent='emerald'
               animated
@@ -528,7 +529,7 @@ export default function GeometryDrawingGame({
                 className='flex-1'
                 onClick={handleRestart}
                 size='lg'
-                variant='secondary'
+                variant='surface'
               >
                 <RefreshCw className='w-4 h-4' />
                 Jeszcze raz
@@ -537,7 +538,7 @@ export default function GeometryDrawingGame({
                 Wróć
               </KangurButton>
             </div>
-          </KangurPanel>
+          </KangurGlassPanel>
         </motion.div>
       ) : (
         <>
@@ -588,7 +589,7 @@ export default function GeometryDrawingGame({
               size='sm'
               value={(roundIndex / totalRounds) * 100}
             />
-            <span className='text-xs font-bold text-gray-500'>
+            <span className='text-xs font-bold text-slate-500'>
               {roundIndex + 1}/{totalRounds}
             </span>
           </div>
@@ -599,16 +600,18 @@ export default function GeometryDrawingGame({
             animate={{ opacity: 1, y: 0 }}
             className='w-full'
           >
-            <KangurPanel
+            <KangurGlassPanel
               className='flex flex-col items-center gap-3'
+              data-testid='geometry-drawing-round-shell'
               padding='lg'
-              variant='elevated'
+              surface='solid'
+              variant='soft'
             >
               <KangurDisplayEmoji size='md'>{currentRound?.emoji}</KangurDisplayEmoji>
-              <h3 id='geometry-drawing-heading' className='text-xl font-extrabold text-gray-800'>
+              <h3 id='geometry-drawing-heading' className='text-xl font-extrabold text-slate-800'>
                 Narysuj: {currentRound?.label}
               </h3>
-              <p id='geometry-drawing-hint' className='text-sm text-gray-500 text-center'>
+              <p id='geometry-drawing-hint' className='text-sm text-slate-500 text-center'>
                 {currentRound?.hint}
               </p>
 
@@ -698,7 +701,7 @@ export default function GeometryDrawingGame({
                   onClick={clearDrawing}
                   type='button'
                   size='lg'
-                  variant='secondary'
+                  variant='surface'
                 >
                   <Eraser className='w-4 h-4' />
                   Wyczyść
@@ -714,7 +717,7 @@ export default function GeometryDrawingGame({
                   Sprawdź
                 </KangurButton>
               </div>
-            </KangurPanel>
+            </KangurGlassPanel>
           </motion.div>
         </>
       )}

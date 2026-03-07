@@ -904,6 +904,23 @@
     box-shadow:
       0 12px 24px rgba(255, 137, 77, 0.28),
       inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    transition:
+      transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      background 220ms ease,
+      box-shadow 220ms ease,
+      filter 220ms ease;
+    will-change: transform;
+  }
+
+  .primary-cta:hover,
+  .primary-cta:focus-visible {
+    background: linear-gradient(90deg, #ffc06b 0%, #ff8b58 74%, #f0b4ff 100%);
+    box-shadow:
+      0 22px 34px -18px rgba(255, 137, 77, 0.36),
+      0 14px 24px -18px rgba(132, 102, 234, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    filter: saturate(1.03) brightness(1.01);
+    transform: translateY(-1px) scale(1.014);
   }
 
   .play-cta {
@@ -968,6 +985,27 @@
     box-shadow:
       0 16px 28px -24px rgba(201, 142, 57, 0.34),
       inset 0 1px 0 rgba(255, 255, 255, 0.88);
+    transition:
+      transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      background 220ms ease,
+      box-shadow 220ms ease,
+      filter 220ms ease;
+    will-change: transform;
+  }
+
+  .warning-cta:hover,
+  .warning-cta:focus-visible {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 244, 228, 0.99) 0%,
+      rgba(247, 239, 255, 0.94) 100%
+    );
+    box-shadow:
+      0 20px 32px -24px rgba(201, 142, 57, 0.42),
+      0 14px 24px -24px rgba(132, 102, 234, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    filter: saturate(1.02) brightness(1.01);
+    transform: translateY(-1px) scale(1.014);
   }
 
   .success-cta {

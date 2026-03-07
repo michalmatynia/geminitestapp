@@ -22,7 +22,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
 
   return (
     <div className='w-full flex flex-col items-center'>
-      <p className='mb-4 text-lg text-gray-500'>
+      <p className='mb-4 text-lg text-slate-500'>
         Cześć, <span className='font-bold text-indigo-500'>{playerName}</span>! 👋
       </p>
       {activePracticeAssignment ? (
@@ -51,7 +51,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
         className='mt-3 w-full max-w-sm'
         onClick={() => setScreen('geometry_quiz')}
         size='lg'
-        variant='secondary'
+        variant='surface'
         data-doc-id='home_quick_practice_action'
       >
         🔷 Ćwiczenia z Figurami

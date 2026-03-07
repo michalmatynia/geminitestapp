@@ -10,9 +10,9 @@ import {
   KangurButton,
   KangurDisplayEmoji,
   KangurEquationDisplay,
+  KangurGlassPanel,
   KangurHeadline,
   KangurOptionCardButton,
-  KangurPanel,
   KangurProgressBar,
   KangurResultBadge,
   KangurStatusChip,
@@ -136,10 +136,12 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
         animate={{ opacity: 1, scale: 1 }}
         className='w-full max-w-sm'
       >
-        <KangurPanel
+        <KangurGlassPanel
           className='flex flex-col items-center gap-4 text-center'
+          data-testid='subtracting-game-summary-shell'
           padding='xl'
-          variant='elevated'
+          surface='solid'
+          variant='soft'
         >
           <KangurDisplayEmoji data-testid='subtracting-game-summary-emoji' size='lg'>
             {percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
@@ -153,7 +155,7 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
             </KangurStatusChip>
           )}
           <KangurProgressBar accent='rose' animated size='md' value={percent} />
-          <p className='text-gray-500'>
+          <p className='text-slate-500'>
             {percent === 100
               ? 'Idealnie! Mistrz odejmowania!'
               : percent >= 60
@@ -173,7 +175,7 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
                 setConfirmed(false);
               }}
               size='lg'
-              variant='secondary'
+              variant='surface'
             >
               <RefreshCw className='w-4 h-4' /> Jeszcze raz
             </KangurButton>
@@ -181,7 +183,7 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
               Wróć do lekcji
             </KangurButton>
           </div>
-        </KangurPanel>
+        </KangurGlassPanel>
       </motion.div>
     );
   }
@@ -196,7 +198,7 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
           size='sm'
           value={(roundIndex / TOTAL) * 100}
         />
-        <span className='text-xs font-bold text-gray-400'>
+        <span className='text-xs font-bold text-slate-400'>
           {roundIndex + 1}/{TOTAL}
         </span>
       </div>
@@ -209,14 +211,15 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
           exit={{ opacity: 0, x: -20 }}
           className='w-full'
         >
-          <KangurPanel
+          <KangurGlassPanel
             className='flex w-full flex-col items-center gap-4'
             data-testid='subtracting-game-round-shell'
             padding='lg'
-            variant='elevated'
+            surface='solid'
+            variant='soft'
           >
             <KangurEquationDisplay accent='rose' data-testid='subtracting-game-equation'>
-              {question.a} − {question.b} = <span className='text-gray-400'>?</span>
+              {question.a} − {question.b} = <span className='text-slate-400'>?</span>
             </KangurEquationDisplay>
             <AppleVisual a={question.a} b={question.b} />
             <div className='grid grid-cols-2 gap-2 w-full'>
@@ -295,7 +298,7 @@ export default function SubtractingGame({ onFinish }: SubtractingGameProps): Rea
                 Sprawdź ✓
               </KangurButton>
             )}
-          </KangurPanel>
+          </KangurGlassPanel>
         </motion.div>
       </AnimatePresence>
     </div>

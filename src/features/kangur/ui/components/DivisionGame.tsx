@@ -15,10 +15,10 @@ import {
   KangurButton,
   KangurDisplayEmoji,
   KangurEquationDisplay,
+  KangurGlassPanel,
   KangurHeadline,
   KangurInfoCard,
   KangurOptionCardButton,
-  KangurPanel,
   KangurProgressBar,
   KangurResultBadge,
   KangurStatusChip,
@@ -132,7 +132,7 @@ function ShareVisual({
           padding='sm'
           tone='accent'
         >
-          <p className='text-xs text-blue-400 font-bold'>{groupIndex + 1}</p>
+          <p className='text-xs font-bold text-sky-500'>{groupIndex + 1}</p>
           <div className='flex flex-wrap gap-0.5 justify-center max-w-[60px]'>
             {group.map((_, itemIndex) => (
               <span key={itemIndex} className='text-lg'>
@@ -196,11 +196,12 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
         animate={{ opacity: 1, scale: 1 }}
         className='w-full max-w-sm'
       >
-        <KangurPanel
+        <KangurGlassPanel
           className='flex flex-col items-center gap-4 text-center'
           data-testid='division-game-summary-shell'
           padding='xl'
-          variant='elevated'
+          surface='solid'
+          variant='soft'
         >
           <KangurDisplayEmoji data-testid='division-game-summary-emoji' size='lg'>
             {percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
@@ -214,7 +215,7 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
             </KangurStatusChip>
           )}
           <KangurProgressBar accent='teal' animated size='md' value={percent} />
-          <p className='text-gray-500'>
+          <p className='text-slate-500'>
             {percent === 100
               ? 'Idealnie! Mistrz dzielenia!'
               : percent >= 60
@@ -235,7 +236,7 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
               className='flex-1'
               size='lg'
               type='button'
-              variant='secondary'
+              variant='surface'
             >
               <RefreshCw className='w-4 h-4' /> Jeszcze raz
             </KangurButton>
@@ -249,7 +250,7 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
               Wróć do lekcji
             </KangurButton>
           </div>
-        </KangurPanel>
+        </KangurGlassPanel>
       </motion.div>
     );
   }
@@ -264,7 +265,7 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
           size='sm'
           value={(roundIndex / TOTAL) * 100}
         />
-        <span className='text-xs font-bold text-gray-400'>
+        <span className='text-xs font-bold text-slate-400'>
           {roundIndex + 1}/{TOTAL}
         </span>
       </div>
@@ -277,11 +278,12 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
           exit={{ opacity: 0, x: -20 }}
           className='w-full'
         >
-          <KangurPanel
+          <KangurGlassPanel
             className='flex flex-col items-center gap-4'
             data-testid='division-game-round-shell'
             padding='xl'
-            variant='elevated'
+            surface='solid'
+            variant='soft'
           >
             <p className='text-xs font-bold text-blue-400 uppercase tracking-wide'>
               {question.type === 'remainder' ? 'Jaka jest reszta?' : 'Ile wynosi iloraz?'}
@@ -305,7 +307,7 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
                   {question.a} = {question.b} × {question.quotient} +{' '}
                   <span className='font-extrabold text-lg'>?</span>
                 </p>
-                <p className='mt-1 text-xs text-gray-400'>Ile zostaje po podzieleniu?</p>
+                <p className='mt-1 text-xs text-slate-500'>Ile zostaje po podzieleniu?</p>
               </KangurInfoCard>
             )}
 
@@ -387,7 +389,7 @@ export default function DivisionGame({ onFinish }: DivisionGameProps): React.JSX
                 Sprawdź ✓
               </KangurButton>
             )}
-          </KangurPanel>
+          </KangurGlassPanel>
         </motion.div>
       </AnimatePresence>
     </div>

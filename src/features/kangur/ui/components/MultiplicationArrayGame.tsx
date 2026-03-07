@@ -9,9 +9,9 @@ import {
 import {
   KangurButton,
   KangurDisplayEmoji,
+  KangurGlassPanel,
   KangurMetricCard,
   KangurOptionCardButton,
-  KangurPanel,
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -124,15 +124,17 @@ export default function MultiplicationArrayGame({
         animate={{ opacity: 1, scale: 1 }}
         className='w-full max-w-sm'
       >
-        <KangurPanel
+        <KangurGlassPanel
           className='flex flex-col items-center gap-4 text-center'
+          data-testid='multiplication-array-summary-shell'
           padding='xl'
-          variant='elevated'
+          surface='solid'
+          variant='soft'
         >
           <KangurDisplayEmoji data-testid='multiplication-array-summary-emoji' size='lg'>
             {percent === 100 ? '🏆' : percent >= 67 ? '🌟' : '💪'}
           </KangurDisplayEmoji>
-          <h2 className='text-2xl font-extrabold text-gray-800'>
+          <h2 className='text-2xl font-extrabold text-slate-800'>
             Zebrałeś {score}/{TOTAL_ROUNDS} grup!
           </h2>
           {xpEarned > 0 && (
@@ -141,7 +143,7 @@ export default function MultiplicationArrayGame({
             </KangurStatusChip>
           )}
           <KangurProgressBar accent='indigo' animated size='md' value={percent} />
-          <p className='text-gray-500'>
+          <p className='text-slate-500'>
             {percent === 100
               ? 'Mistrz grupowania! Tabliczka zdobyta!'
               : percent >= 67
@@ -162,7 +164,7 @@ export default function MultiplicationArrayGame({
                 setCollected(new Set());
               }}
               size='lg'
-              variant='secondary'
+              variant='surface'
             >
               <RefreshCw className='w-4 h-4' /> Jeszcze raz
             </KangurButton>
@@ -170,7 +172,7 @@ export default function MultiplicationArrayGame({
               Gotowe!
             </KangurButton>
           </div>
-        </KangurPanel>
+        </KangurGlassPanel>
       </motion.div>
     );
   }
@@ -186,7 +188,7 @@ export default function MultiplicationArrayGame({
           size='sm'
           value={(roundIndex / TOTAL_ROUNDS) * 100}
         />
-        <span className='text-xs font-bold text-gray-400'>
+        <span className='text-xs font-bold text-slate-400'>
           {roundIndex + 1}/{TOTAL_ROUNDS}
         </span>
       </div>
@@ -199,7 +201,13 @@ export default function MultiplicationArrayGame({
           exit={{ opacity: 0, x: -30 }}
           className='w-full'
         >
-          <KangurPanel className='flex flex-col items-center gap-5' padding='lg' variant='elevated'>
+          <KangurGlassPanel
+            className='flex flex-col items-center gap-5'
+            data-testid='multiplication-array-round-shell'
+            padding='lg'
+            surface='solid'
+            variant='soft'
+          >
             {/* Problem header */}
             <div className='text-center'>
               <p className='text-xs font-bold text-purple-400 uppercase tracking-wide mb-1'>
@@ -207,7 +215,7 @@ export default function MultiplicationArrayGame({
               </p>
               <p className='text-3xl font-extrabold text-purple-600'>
                 {a} × {b}{' '}
-                <span className='text-gray-400'>
+                <span className='text-slate-400'>
                   = {allCollected ? <span className='text-green-500'>{total}</span> : '?'}
                 </span>
               </p>
@@ -233,7 +241,7 @@ export default function MultiplicationArrayGame({
                   </motion.span>
                 }
               />
-              <div className='text-gray-300 text-2xl font-bold'>/</div>
+              <div className='text-slate-300 text-2xl font-bold'>/</div>
               <KangurMetricCard
                 accent='slate'
                 align='center'
@@ -321,7 +329,7 @@ export default function MultiplicationArrayGame({
                   <p className='text-2xl font-extrabold text-green-600'>
                     🎉 {a} × {b} = {total}!
                   </p>
-                  <p className='text-sm text-gray-500 mt-1'>
+                  <p className='mt-1 text-sm text-slate-500'>
                     {a} grup po {b} = {total} razem
                   </p>
                 </motion.div>
@@ -330,11 +338,11 @@ export default function MultiplicationArrayGame({
 
             {/* Instruction when not all collected */}
             {!allCollected && (
-              <p className='text-xs text-gray-400 text-center'>
+              <p className='text-center text-xs text-slate-400'>
                 Zebrane: {collected.size}/{a} grup — dotknij kolejną!
               </p>
             )}
-          </KangurPanel>
+          </KangurGlassPanel>
         </motion.div>
       </AnimatePresence>
     </div>

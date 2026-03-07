@@ -62,23 +62,27 @@ export const normalizeParameterEntries = (
 
 export const resolveExistingParameterValueFromInputs = (
   templateInputs: RuntimePortValues,
-  targetPath: string
+  targetPath: string,
+  options: { includeDerivedPorts?: boolean } = {}
 ): unknown => {
+  const includeDerivedPorts = options.includeDerivedPorts !== false;
   const candidates: unknown[] = [];
-  const pushFromRecord = (value: unknown): void => {
+  const entityLikeKeys = ['entity', 'entityJson', 'product', 'item', 'data', 'current'];
+  const pushFromRecord = (value: unknown, nestedKeys: string[] = entityLikeKeys): void => {
     const record = toRecord(value);
     if (!record) return;
     candidates.push(resolveObjectPathValue(record, targetPath));
-    const nestedKeys = ['entity', 'entityJson', 'product', 'item', 'data', 'current', 'value'];
     nestedKeys.forEach((key: string) => {
       candidates.push(resolveObjectPathValue(toRecord(record[key]), targetPath));
     });
   };
-  pushFromRecord(templateInputs);
   pushFromRecord(coerceInput(templateInputs['context']));
   pushFromRecord(coerceInput(templateInputs['bundle']));
-  pushFromRecord(coerceInput(templateInputs['value']));
-  pushFromRecord(coerceInput(templateInputs['result']));
+  pushFromRecord(templateInputs);
+  if (includeDerivedPorts) {
+    pushFromRecord(coerceInput(templateInputs['value']));
+    pushFromRecord(coerceInput(templateInputs['result']));
+  }
   for (const candidate of candidates) {
     if (coerceArrayLike(candidate).length > 0) {
       return candidate;

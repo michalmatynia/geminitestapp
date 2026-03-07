@@ -91,4 +91,44 @@ describe('prepareDatabaseTemplateContext catalogId canonical wiring', () => {
     expect(templateInputs['catalogId']).toBe('catalog-canonical');
     expect(templateContext['catalogId']).toBe('catalog-canonical');
   });
+
+  it('hydrates existing parameter context even when translated result parameters are already present', async () => {
+    const fetchEntityCached = vi.fn(async () => ({
+      id: 'product-1',
+      parameters: [{ parameterId: 'color', value: 'Blue' }],
+    }));
+
+    const { templateInputs, ensureExistingParameterTemplateContext } = prepareDatabaseTemplateContext({
+      resolvedInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+        result: {
+          parameters: [{ parameterId: 'color', valuesByLanguage: { pl: 'Niebieski' } }],
+        },
+      },
+      dbConfig: {
+        operation: 'update',
+        entityType: 'product',
+      } as never,
+      aiPromptTemplate: '',
+      simulationEntityType: null,
+      fallbackEntityId: null,
+      fetchEntityCached,
+      schemaData: null,
+    });
+
+    await ensureExistingParameterTemplateContext('parameters');
+
+    expect(fetchEntityCached).toHaveBeenCalledWith('product', 'product-1');
+    expect(templateInputs['context']).toEqual(
+      expect.objectContaining({
+        entity: expect.objectContaining({
+          parameters: [{ parameterId: 'color', value: 'Blue' }],
+        }),
+        entityId: 'product-1',
+        entityType: 'product',
+        productId: 'product-1',
+      })
+    );
+  });
 });

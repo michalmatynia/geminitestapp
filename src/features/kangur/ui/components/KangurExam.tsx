@@ -21,10 +21,10 @@ import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameCon
 import {
   KangurButton,
   KangurDisplayEmoji,
+  KangurGlassPanel,
   KangurInfoCard,
   KangurInlineFallback,
   KangurOptionCardButton,
-  KangurPanel,
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -115,7 +115,7 @@ function ExamQuestion({
           size='sm'
           value={(qIndex / total) * 100}
         />
-        <span className='text-xs font-bold text-gray-400'>
+        <span className='text-xs font-bold text-slate-400'>
           {qIndex + 1}/{total}
         </span>
       </div>
@@ -136,7 +136,7 @@ function ExamQuestion({
             </KangurStatusChip>
           ) : null}
         </div>
-        <p id={descriptionId} className='text-gray-800 font-semibold leading-relaxed'>
+        <p id={descriptionId} className='font-semibold leading-relaxed text-slate-800'>
           {q.question}
         </p>
         {Illustration && (
@@ -231,7 +231,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
             onClick={() => setReviewing(null)}
             size='sm'
             type='button'
-            variant='secondary'
+            variant='surface'
           >
             <ChevronLeft className='w-4 h-4' /> Podsumowanie
           </KangurButton>
@@ -243,11 +243,11 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
               className='h-9 w-9 min-w-0 px-0'
               size='sm'
               type='button'
-              variant='secondary'
+              variant='surface'
             >
-              <ChevronLeft className='w-4 h-4 text-gray-500' />
+              <ChevronLeft className='w-4 h-4 text-slate-500' />
             </KangurButton>
-            <span className='text-xs text-gray-400 self-center font-bold'>
+            <span className='self-center text-xs font-bold text-slate-400'>
               {reviewing + 1}/{questions.length}
             </span>
             <KangurButton
@@ -257,9 +257,9 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
               className='h-9 w-9 min-w-0 px-0'
               size='sm'
               type='button'
-              variant='secondary'
+              variant='surface'
             >
-              <ChevronRight className='w-4 h-4 text-gray-500' />
+              <ChevronRight className='w-4 h-4 text-slate-500' />
             </KangurButton>
           </div>
         </div>
@@ -280,7 +280,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
               </KangurStatusChip>
             ) : null}
           </div>
-          <p className='text-gray-800 font-semibold leading-relaxed'>{question.question}</p>
+          <p className='font-semibold leading-relaxed text-slate-800'>{question.question}</p>
           {Illustration && (
             <KangurInfoCard
               accent='slate'
@@ -382,19 +382,20 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
       animate={{ opacity: 1, y: 0 }}
       className='w-full flex flex-col gap-4'
     >
-      <KangurPanel
+      <KangurGlassPanel
         className='flex flex-col items-center gap-4 text-center'
         data-testid='kangur-exam-summary-shell'
         padding='xl'
-        variant='elevated'
+        surface='solid'
+        variant='soft'
       >
         <KangurDisplayEmoji data-testid='kangur-exam-summary-emoji' size='lg'>
           {emoji}
         </KangurDisplayEmoji>
-        <h2 className='text-2xl font-extrabold text-gray-800'>
+        <h2 className='text-2xl font-extrabold text-slate-800'>
           Wynik: {score}/{questions.length}
         </h2>
-        <p className='text-gray-500 text-sm'>
+        <p className='text-sm text-slate-500'>
           {pct === 100
             ? 'Idealny wynik! Jesteś mistrzem Kangura! 🦘'
             : pct >= 70
@@ -412,10 +413,10 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
           size='md'
           value={pct}
         />
-        <p className='text-sm text-gray-400'>{pct}% poprawnych odpowiedzi</p>
-      </KangurPanel>
+        <p className='text-sm text-slate-400'>{pct}% poprawnych odpowiedzi</p>
+      </KangurGlassPanel>
 
-      <p className='text-center text-sm font-semibold text-gray-500'>
+      <p className='text-center text-sm font-semibold text-slate-500'>
         Kliknij pytanie, aby zobaczyć rozwiązanie:
       </p>
 
@@ -448,7 +449,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
                 onClick={() => setReviewing(index)}
                 type='button'
               >
-                <span className='text-xs font-bold text-gray-500'>#{index + 1}</span>
+                <span className='text-xs font-bold text-slate-500'>#{index + 1}</span>
                 {skipped ? (
                   <span className='text-sm'>➖</span>
                 ) : correct ? (
@@ -458,7 +459,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
                 )}
                 <span
                   className={`text-[10px] font-bold ${
-                    skipped ? 'text-gray-400' : correct ? 'text-green-700' : 'text-red-600'
+                    skipped ? 'text-slate-400' : correct ? 'text-green-700' : 'text-red-600'
                   }`}
                 >
                   {skipped ? 'pom.' : correct ? '✓' : userAnswer}
@@ -469,7 +470,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
         })}
       </div>
 
-      <KangurButton onClick={onBack} className='w-full' size='lg' type='button' variant='secondary'>
+      <KangurButton onClick={onBack} className='w-full' size='lg' type='button' variant='surface'>
         Wróć do menu
       </KangurButton>
     </motion.div>
@@ -538,7 +539,7 @@ export default function KangurExam(): React.JSX.Element {
             disabled={current === 0}
             size='lg'
             type='button'
-            variant='secondary'
+            variant='surface'
           >
             <ChevronLeft className='w-4 h-4' /> Poprzednie
           </KangurButton>
@@ -559,7 +560,7 @@ export default function KangurExam(): React.JSX.Element {
           </KangurButton>
         </div>
         {!selected && (
-          <p className='text-center text-xs text-gray-400'>
+          <p className='text-center text-xs text-slate-400'>
             Możesz pominąć pytanie i wrócić do niego później
           </p>
         )}

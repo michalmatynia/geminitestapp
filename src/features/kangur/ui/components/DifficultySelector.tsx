@@ -6,6 +6,7 @@ import { DIFFICULTY_CONFIG } from '@/features/kangur/ui/services/math-questions'
 import {
   KangurIconBadge,
   KangurOptionCardButton,
+  KangurSectionHeading,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
@@ -42,14 +43,15 @@ export default function DifficultySelector({
       aria-labelledby={headingId}
       className='flex w-full flex-col items-center gap-4'
     >
-      <div className='space-y-1 text-center'>
-        <h2 id={headingId} className='text-xl font-extrabold tracking-tight text-slate-800'>
-          Wybierz poziom trudnosci
-        </h2>
-        <p id={descriptionId} className='text-sm text-slate-500'>
-          Ten sam uklad, tylko rosnacy poziom wyzwania.
-        </p>
-      </div>
+      <KangurSectionHeading
+        data-testid='difficulty-selector-heading'
+        description='Ten sam uklad, tylko rosnacy poziom wyzwania.'
+        descriptionId={descriptionId}
+        headingAs='h2'
+        headingSize='sm'
+        title='Wybierz poziom trudnosci'
+        titleId={headingId}
+      />
       <div
         aria-labelledby={headingId}
         className='grid w-full max-w-3xl gap-3 md:grid-cols-3'

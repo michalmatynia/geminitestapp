@@ -9,6 +9,8 @@ import {
 import {
   KangurButton,
   KangurDisplayEmoji,
+  KangurEquationDisplay,
+  KangurHeadline,
   KangurOptionCardButton,
   KangurPanel,
   KangurProgressBar,
@@ -169,9 +171,9 @@ export default function MultiplicationGame({
           <KangurDisplayEmoji data-testid='multiplication-game-summary-emoji' size='lg'>
             {percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
           </KangurDisplayEmoji>
-          <h2 className='text-2xl font-extrabold text-gray-800'>
+          <KangurHeadline data-testid='multiplication-game-summary-title'>
             Wynik: {score}/{TOTAL}
-          </h2>
+          </KangurHeadline>
           {xpEarned > 0 && (
             <KangurStatusChip accent='indigo' className='px-4 py-2 text-sm font-bold'>
               +{xpEarned} XP ✨
@@ -245,9 +247,12 @@ export default function MultiplicationGame({
                 <p className='text-xs font-bold text-purple-400 uppercase tracking-wide'>
                   Ile wynosi iloczyn?
                 </p>
-                <p className='text-3xl font-extrabold text-purple-600'>
+                <KangurEquationDisplay
+                  accent='violet'
+                  data-testid='multiplication-game-equation'
+                >
                   {question.a} × {question.b} = <span className='text-gray-400'>?</span>
-                </p>
+                </KangurEquationDisplay>
                 <MultiplyGrid a={question.a} b={question.b} />
               </>
             ) : (
@@ -255,7 +260,10 @@ export default function MultiplicationGame({
                 <p className='text-xs font-bold text-purple-400 uppercase tracking-wide'>
                   Znajdź brakujący czynnik
                 </p>
-                <p className='text-3xl font-extrabold text-purple-600'>
+                <KangurEquationDisplay
+                  accent='violet'
+                  data-testid='multiplication-game-equation'
+                >
                   {question.missingA ? (
                     <>
                       <span className='text-gray-400'>?</span> × {question.shown}
@@ -267,7 +275,7 @@ export default function MultiplicationGame({
                   )}
                   {' = '}
                   {question.product}
-                </p>
+                </KangurEquationDisplay>
               </>
             )}
 

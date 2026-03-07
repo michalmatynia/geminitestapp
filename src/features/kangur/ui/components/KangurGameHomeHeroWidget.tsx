@@ -39,7 +39,7 @@ export function KangurGameHomeHeroWidget(): React.JSX.Element | null {
       data-testid='kangur-home-hero-shell'
       padding='lg'
       surface='mist'
-      variant='elevated'
+      variant='soft'
     >
       <div className='px-1'>
         <label
@@ -67,12 +67,12 @@ export function KangurGameHomeHeroWidget(): React.JSX.Element | null {
           type='text'
           value={playerName}
         />
-        <div className='mt-4 flex flex-wrap items-center justify-between gap-3 text-[15px] text-[#8c97bb]'>
+        <div className='mt-4 flex flex-wrap items-center justify-between gap-3 text-[15px] text-slate-500'>
           <p id={playerNameHintId}>Zaloguj się, aby Twój wynik pojawił się na tablicy.</p>
           <KangurButton
             onClick={navigateToLogin}
             size='sm'
-            variant='secondary'
+            variant='surface'
             data-doc-id='profile_login'
           >
             <LogIn className='h-4 w-4' /> Zaloguj się

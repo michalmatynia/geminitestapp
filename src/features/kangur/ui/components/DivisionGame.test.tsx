@@ -17,6 +17,7 @@ describe('DivisionGame', () => {
 
     expect(screen.getByTestId('division-game-round-shell')).toHaveClass('glass-panel');
     expect(screen.getByTestId('division-game-progress-bar')).toHaveAttribute('aria-valuenow', '0');
+    expect(screen.getByTestId('division-game-equation')).toHaveClass('text-3xl', 'text-blue-600');
     expect(screen.getByRole('button', { name: 'Sprawdź ✓' })).toHaveClass(
       'kangur-cta-pill',
       'play-cta'

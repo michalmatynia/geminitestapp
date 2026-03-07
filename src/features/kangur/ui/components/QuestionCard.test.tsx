@@ -45,6 +45,11 @@ describe('QuestionCard', () => {
       'aria-valuetext',
       '30 sekund pozostalo'
     );
+    expect(screen.getByTestId('question-card-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
     expect(screen.getByRole('group', { name: '6 + 1' })).toBeInTheDocument();
     expect(correctChoice).toHaveClass('soft-card', 'border-slate-200/80');
     expect(wrongChoice).toHaveClass('soft-card', 'border-slate-200/80');

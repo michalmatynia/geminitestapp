@@ -7,6 +7,12 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import {
+  KangurDisplayEmoji,
+  KangurEquationDisplay,
+  KangurFeatureHeader,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
 
 type SectionId = 'intro' | 'tabela23' | 'tabela45' | 'triki' | 'game_array' | 'game_quiz';
 
@@ -20,9 +26,15 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
             Mnozenie to skrócone dodawanie tej samej liczby kilka razy.
           </p>
           <div className='flex flex-col items-center gap-2'>
-            <div className='flex gap-2 text-3xl'>🍬🍬🍬 🍬🍬🍬 🍬🍬🍬</div>
+            <KangurDisplayEmoji size='xs'>🍬🍬🍬 🍬🍬🍬 🍬🍬🍬</KangurDisplayEmoji>
             <p className='text-gray-500 text-sm'>3 grupy po 3 cukierki</p>
-            <p className='text-purple-600 font-bold text-2xl'>3 × 3 = 9</p>
+            <KangurEquationDisplay
+              accent='violet'
+              data-testid='multiplication-lesson-intro-equation'
+              size='md'
+            >
+              3 × 3 = 9
+            </KangurEquationDisplay>
             <p className='text-gray-400 text-sm'>(to samo co 3+3+3=9)</p>
           </div>
         </div>
@@ -37,7 +49,13 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
           <div className='grid grid-cols-2 gap-2'>
             {[2, 3].map((base) => (
               <KangurLessonCallout key={base} accent='violet' className='rounded-xl' padding='sm'>
-                <p className='text-xs font-extrabold text-purple-600 mb-1 text-center'>× {base}</p>
+                <KangurStatusChip
+                  accent='violet'
+                  className='mb-2 flex w-full justify-center text-[11px] font-extrabold'
+                  size='sm'
+                >
+                  × {base}
+                </KangurStatusChip>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
                   <p key={n} className='text-xs text-gray-700 text-center'>
                     {n} × {base} = <b>{n * base}</b>
@@ -58,7 +76,13 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array' | 'game_quiz'>, Less
           <div className='grid grid-cols-2 gap-2'>
             {[4, 5].map((base) => (
               <KangurLessonCallout key={base} accent='indigo' className='rounded-xl' padding='sm'>
-                <p className='text-xs font-extrabold text-indigo-600 mb-1 text-center'>× {base}</p>
+                <KangurStatusChip
+                  accent='indigo'
+                  className='mb-2 flex w-full justify-center text-[11px] font-extrabold'
+                  size='sm'
+                >
+                  × {base}
+                </KangurStatusChip>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
                   <p key={n} className='text-xs text-gray-700 text-center'>
                     {n} × {base} = <b>{n * base}</b>
@@ -148,7 +172,7 @@ export default function MultiplicationLesson(): React.JSX.Element {
   if (activeSection === 'game_array') {
     return (
       <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
-        <h2 className='text-2xl font-extrabold text-purple-600'>✨ Gra z grupami!</h2>
+        <KangurFeatureHeader accent='violet' icon='✨' title='Gra z grupami!' />
         <MultiplicationArrayGame onFinish={() => setActiveSection(null)} />
       </div>
     );
@@ -157,7 +181,7 @@ export default function MultiplicationLesson(): React.JSX.Element {
   if (activeSection === 'game_quiz') {
     return (
       <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
-        <h2 className='text-2xl font-extrabold text-purple-600'>📝 Quiz mnozenia!</h2>
+        <KangurFeatureHeader accent='violet' icon='📝' title='Quiz mnozenia!' />
         <MultiplicationGame onFinish={() => setActiveSection(null)} />
       </div>
     );

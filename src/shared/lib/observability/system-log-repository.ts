@@ -13,6 +13,7 @@ import type {
 } from '@/shared/contracts/observability';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 import prisma from '@/shared/lib/db/prisma';
 
 type CreateSystemLogInput = Omit<CreateSystemLogInputDto, 'createdAt'> & {
@@ -52,6 +53,19 @@ type MongoSystemLogDoc = {
   userId?: string | null | undefined;
   createdAt?: Date | undefined;
   updatedAt?: Date | null | undefined;
+};
+
+const insertMongoSystemLog = async (payload: SystemLogRecord): Promise<void> => {
+  const mongo = await getMongoDb();
+
+  await executeMongoWriteWithRetry(async () => {
+    await mongo.collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION).insertOne({
+      _id: toMongoId(payload.id),
+      ...payload,
+      createdAt: new Date(payload.createdAt || Date.now()),
+      updatedAt: payload.updatedAt ? new Date(payload.updatedAt) : null,
+    } as OptionalId<MongoSystemLogDoc>);
+  });
 };
 
 const isMissingPrismaTable = (error: unknown): boolean =>
@@ -493,13 +507,7 @@ export async function createSystemLog(input: CreateSystemLogInput): Promise<Syst
   };
 
   if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    await mongo.collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION).insertOne({
-      _id: toMongoId(payload.id),
-      ...payload,
-      createdAt: new Date(payload.createdAt || Date.now()),
-      updatedAt: payload.updatedAt ? new Date(payload.updatedAt) : null,
-    } as OptionalId<MongoSystemLogDoc>);
+    await insertMongoSystemLog(payload);
     return normalizeLogRecord(payload);
   }
 
@@ -560,13 +568,7 @@ export async function createSystemLog(input: CreateSystemLogInput): Promise<Syst
   } catch (error) {
     if (isMissingPrismaTable(error)) {
       if (process.env['MONGODB_URI']) {
-        const mongo = await getMongoDb();
-        await mongo.collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION).insertOne({
-          _id: toMongoId(payload.id),
-          ...payload,
-          createdAt: new Date(payload.createdAt || Date.now()),
-          updatedAt: payload.updatedAt ? new Date(payload.updatedAt) : null,
-        } as OptionalId<MongoSystemLogDoc>);
+        await insertMongoSystemLog(payload);
       }
       return normalizeLogRecord(payload);
     }

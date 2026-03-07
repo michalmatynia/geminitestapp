@@ -77,7 +77,7 @@ function ExamSummary({
         onClick={onRestart}
         fullWidth
         size='lg'
-        variant='secondary'
+        variant='surface'
         data-doc-id='tests_suite_player'
       >
         <RotateCcw className='size-4' />
@@ -172,7 +172,7 @@ export function KangurTestSuitePlayer({ suite, questions, onFinish }: Props): Re
             size='sm'
             value={((currentIndex + 1) / totalQuestions) * 100}
           />
-          <span className='text-xs font-medium text-gray-500'>
+          <span className='text-xs font-medium text-slate-500'>
             {currentIndex + 1}/{totalQuestions}
           </span>
         </div>
@@ -205,7 +205,7 @@ export function KangurTestSuitePlayer({ suite, questions, onFinish }: Props): Re
             onClick={handlePrev}
             disabled={currentIndex === 0}
             size='sm'
-            variant='secondary'
+            variant='surface'
             data-doc-id='tests_suite_player'
           >
             <ChevronLeft className='size-4' />
@@ -224,7 +224,7 @@ export function KangurTestSuitePlayer({ suite, questions, onFinish }: Props): Re
               <ChevronRight className='size-4' />
             </KangurButton>
           ) : (
-            <div className='text-xs text-gray-400'>Select an answer to continue</div>
+            <div className='text-xs text-slate-400'>Select an answer to continue</div>
           )}
         </div>
       </div>

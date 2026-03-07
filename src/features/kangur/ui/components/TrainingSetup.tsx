@@ -4,7 +4,12 @@ import { Dumbbell } from 'lucide-react';
 
 import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
 import { useKangurTrainingSetupState } from '@/features/kangur/ui/hooks/useKangurTrainingSetupState';
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurButton,
+  KangurGlassPanel,
+  KangurSectionHeading,
+} from '@/features/kangur/ui/design/primitives';
+import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import type { KangurTrainingSelection } from '@/features/kangur/ui/types';
 import { cn } from '@/shared/utils';
 
@@ -39,11 +44,27 @@ export default function TrainingSetup({ onStart, onBack }: TrainingSetupProps): 
       exit={{ opacity: 0, y: -20 }}
       className='flex w-full max-w-3xl flex-col items-center gap-6'
     >
-      <KangurPanel className='w-full flex flex-col gap-5' padding='xl' variant='elevated'>
-        <div className='flex items-center gap-3'>
-          <Dumbbell className='text-indigo-500 w-7 h-7' />
-          <h2 className='text-2xl font-extrabold text-slate-800'>Tryb treningowy</h2>
-        </div>
+      <KangurGlassPanel
+        className='w-full flex flex-col gap-5 shadow-[0_18px_40px_-30px_rgba(168,175,216,0.2)]'
+        data-testid='training-setup-shell'
+        padding='xl'
+        surface='solid'
+        variant='soft'
+      >
+        <KangurSectionHeading
+          accent='indigo'
+          align='left'
+          className='w-full'
+          data-testid='training-setup-heading'
+          description='Dobierz poziom, kategorie i liczbe pytan do jednej sesji.'
+          headingAs='h2'
+          headingSize='md'
+          icon={<Dumbbell className='h-6 w-6' />}
+          iconAccent='indigo'
+          iconSize='lg'
+          layout='inline'
+          title='Tryb treningowy'
+        />
 
         <div id={summaryId} aria-live='polite' aria-atomic='true' className='sr-only'>
           {summaryLabel}
@@ -60,7 +81,12 @@ export default function TrainingSetup({ onStart, onBack }: TrainingSetupProps): 
               {toggleAllLabel}
             </KangurButton>
           </div>
-          <div aria-labelledby={categoryHeadingId} className='grid grid-cols-2 gap-2 sm:grid-cols-3' role='group'>
+          <div
+            aria-labelledby={categoryHeadingId}
+            className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} flex-wrap justify-start`}
+            data-testid='training-setup-category-group'
+            role='group'
+          >
             {categoryOptions.map((category) => {
               return (
                 <KangurButton
@@ -68,10 +94,13 @@ export default function TrainingSetup({ onStart, onBack }: TrainingSetupProps): 
                   aria-label={category.label}
                   aria-pressed={category.selected}
                   onClick={category.select}
-                  className={cn('justify-start rounded-xl', category.selected ? 'shadow-sm' : '')}
+                  className={cn(
+                    'h-11 justify-start px-4 text-sm sm:flex-none',
+                    category.selected ? 'shadow-sm' : ''
+                  )}
                   size='md'
                   type='button'
-                  variant={category.selected ? 'surface' : 'secondary'}
+                  variant={category.selected ? 'segmentActive' : 'segment'}
                 >
                   <span>{category.emoji}</span>
                   <span>{category.label}</span>
@@ -85,16 +114,22 @@ export default function TrainingSetup({ onStart, onBack }: TrainingSetupProps): 
           <h3 id={countHeadingId} className='mb-2 block text-sm font-bold text-slate-700'>
             Liczba pytan
           </h3>
-          <div aria-labelledby={countHeadingId} className='flex flex-wrap gap-2' role='group'>
+          <div
+            aria-labelledby={countHeadingId}
+            className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} flex-wrap justify-start sm:w-auto`}
+            data-testid='training-setup-count-group'
+            role='group'
+          >
             {countOptions.map((option) => (
               <KangurButton
                 key={option.id}
                 aria-label={`${option.value} pytan`}
                 aria-pressed={option.selected}
                 onClick={option.select}
+                className='h-11 px-4 text-sm sm:flex-none'
                 size='md'
                 type='button'
-                variant={option.selected ? 'surface' : 'secondary'}
+                variant={option.selected ? 'segmentActive' : 'segment'}
               >
                 {option.value}
               </KangurButton>
@@ -102,15 +137,15 @@ export default function TrainingSetup({ onStart, onBack }: TrainingSetupProps): 
           </div>
         </section>
 
-        <div className='flex gap-3'>
-          <KangurButton className='flex-1' onClick={goBack} size='lg' type='button' variant='secondary'>
+        <div className='flex flex-col gap-3 sm:flex-row'>
+          <KangurButton className='flex-1' onClick={goBack} size='lg' type='button' variant='surface'>
             ← Wroc
           </KangurButton>
           <KangurButton className='flex-grow-[2]' onClick={startTraining} size='lg' type='button' variant='primary'>
             Start! 🚀
           </KangurButton>
         </div>
-      </KangurPanel>
+      </KangurGlassPanel>
     </motion.div>
   );
 }

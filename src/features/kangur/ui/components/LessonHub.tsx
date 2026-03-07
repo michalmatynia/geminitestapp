@@ -4,6 +4,7 @@ import { ChevronLeft } from 'lucide-react';
 import {
   KangurButton,
   KangurDisplayEmoji,
+  KangurGradientHeading,
   KangurIconBadge,
   KangurOptionCardButton,
   KangurStatusChip,
@@ -48,11 +49,9 @@ export default function LessonHub({
           <KangurDisplayEmoji className='mb-1' size='md'>
             {lessonEmoji}
           </KangurDisplayEmoji>
-          <h1
-            className={`text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r ${gradientClass}`}
-          >
+          <KangurGradientHeading gradientClass={gradientClass} size='md'>
             {lessonTitle}
-          </h1>
+          </KangurGradientHeading>
           <p className='mt-1 text-sm text-slate-500'>Wybierz temat</p>
         </div>
 
@@ -104,7 +103,7 @@ export default function LessonHub({
         })}
       </motion.div>
 
-      <KangurButton onClick={handleBack} variant='secondary' size='md'>
+      <KangurButton onClick={handleBack} variant='surface' size='sm'>
         <ChevronLeft className='w-4 h-4' />
         Wróc do listy
       </KangurButton>

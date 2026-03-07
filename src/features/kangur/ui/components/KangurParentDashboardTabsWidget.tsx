@@ -2,11 +2,12 @@
 
 import { BarChart2, BookOpen, ClipboardList } from 'lucide-react';
 
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import {
   type KangurParentDashboardTabId,
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
+import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/shared/utils';
 
 const TABS: Array<{
@@ -28,16 +29,19 @@ export function KangurParentDashboardTabsWidget(): React.JSX.Element | null {
   }
 
   return (
-    <KangurPanel className='flex gap-2 p-1.5' padding='md' variant='soft'>
+    <div className={cn(KANGUR_SEGMENTED_CONTROL_CLASSNAME, 'sm:w-auto')}>
       {TABS.map((tab) => {
         const Icon = tab.icon;
+        const isActive = activeTab === tab.id;
         return (
           <KangurButton
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={cn('flex-1 justify-center', activeTab === tab.id ? 'shadow-sm' : '')}
-            size='md'
-            variant={activeTab === tab.id ? 'primary' : 'secondary'}
+            aria-pressed={isActive}
+            className='min-w-0 flex-1 justify-center px-3 sm:px-4'
+            size='sm'
+            type='button'
+            variant={isActive ? 'segmentActive' : 'segment'}
             data-doc-id={tab.docId}
           >
             <Icon className='h-4 w-4' />
@@ -45,6 +49,6 @@ export function KangurParentDashboardTabsWidget(): React.JSX.Element | null {
           </KangurButton>
         );
       })}
-    </KangurPanel>
+    </div>
   );
 }

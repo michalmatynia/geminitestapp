@@ -89,8 +89,8 @@ export function KangurActiveLessonPanelWidget(): JSX.Element {
                   <KangurButton
                     type='button'
                     onClick={clearActiveLesson}
-                    size='md'
-                    variant='secondary'
+                    size='sm'
+                    variant='surface'
                     data-doc-id='lessons_back_button'
                   >
                     Wroc do listy lekcji
@@ -118,8 +118,8 @@ export function KangurActiveLessonPanelWidget(): JSX.Element {
                 type='button'
                 onClick={clearActiveLesson}
                 className='mt-5'
-                size='md'
-                variant='secondary'
+                size='sm'
+                variant='surface'
                 data-doc-id='lessons_back_button'
               >
                 Wroc do listy lekcji

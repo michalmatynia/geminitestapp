@@ -3,8 +3,8 @@ import { useMemo } from 'react';
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
 import {
   KangurEmptyState,
+  KangurGlassPanel,
   KangurMetricCard,
-  KangurPanel,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
@@ -107,11 +107,11 @@ export function KangurLearnerAssignmentsPanel({
 
   return (
     <div className='flex flex-col gap-4'>
-      <KangurPanel padding='lg' variant='soft'>
-        <div className='text-sm font-bold text-gray-500 uppercase tracking-wide'>
+      <KangurGlassPanel padding='lg' surface='mistStrong' variant='soft'>
+        <div className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
           Przebieg przydzielonych zadan
         </div>
-        <div className='mt-1 text-sm text-gray-500'>
+        <div className='mt-2 text-sm text-slate-500'>
           Sprawdz, co jest nadal aktywne, ile zadan masz juz za soba i co bylo ostatnim sukcesem.
         </div>
 
@@ -158,7 +158,7 @@ export function KangurLearnerAssignmentsPanel({
           title={latestCompletedTitle}
           tone='accent'
         />
-      </KangurPanel>
+      </KangurGlassPanel>
 
       <KangurAssignmentsList
         assignments={activeAssignments}

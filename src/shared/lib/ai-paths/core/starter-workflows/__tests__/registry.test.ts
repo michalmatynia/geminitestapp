@@ -6,6 +6,7 @@ import {
   materializeStarterWorkflowPathConfig,
   upgradeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
+import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 import {
   buildPathConfigFromTemplate,
   PATH_TEMPLATES,
@@ -150,6 +151,27 @@ describe('starter workflow registry', () => {
         seededDefault: true,
       })
     );
+  });
+
+  it('materializes a runnable EN->PL translation starter graph', () => {
+    const entry = getStarterWorkflowTemplateById('starter_translation_en_pl');
+    if (!entry) throw new Error('Missing starter_translation_en_pl entry');
+
+    const config = materializeStarterWorkflowPathConfig(entry, {
+      pathId: 'path_translation_en_pl_runtime',
+      seededDefault: false,
+    });
+    const report = evaluateRunPreflight({
+      nodes: config.nodes,
+      edges: config.edges,
+      aiPathsValidation: { enabled: true },
+      strictFlowMode: true,
+      mode: 'full',
+    });
+
+    expect(config.nodes.some((node) => node.type === 'trigger')).toBe(true);
+    expect(report.shouldBlock).toBe(false);
+    expect(report.dependencyReport?.errors ?? 0).toBe(0);
   });
 
   it('does not resolve starter graphs with legacy edge alias fields', () => {

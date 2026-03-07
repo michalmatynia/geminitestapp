@@ -20,7 +20,7 @@ export function KangurLessonNavigationWidget(): JSX.Element | null {
           onClick={() => selectLesson(prevLesson.id)}
           className='flex-1 justify-start'
           size='lg'
-          variant='secondary'
+          variant='surface'
           data-doc-id='lessons_prev_next'
         >
           <ChevronLeft className='h-4 w-4 flex-shrink-0' />
@@ -37,7 +37,7 @@ export function KangurLessonNavigationWidget(): JSX.Element | null {
           onClick={() => selectLesson(nextLesson.id)}
           className='flex-1 justify-end'
           size='lg'
-          variant='secondary'
+          variant='surface'
           data-doc-id='lessons_prev_next'
         >
           <span>

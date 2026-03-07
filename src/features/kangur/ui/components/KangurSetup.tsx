@@ -4,9 +4,10 @@ import { ArrowLeft, Lock } from 'lucide-react';
 
 import {
   KangurButton,
+  KangurGlassPanel,
   KangurIconBadge,
   KangurOptionCardButton,
-  KangurPanel,
+  KangurSectionHeading,
   KangurStatusChip,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
@@ -95,31 +96,31 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
           aria-label='Wroc do poprzedniego widoku'
           onClick={onBack}
           type='button'
-          variant='ghost'
+          variant='surface'
           size='sm'
           className='self-start'
         >
           <ArrowLeft className='w-4 h-4' /> Wroc
         </KangurButton>
 
-        <KangurPanel
+        <KangurGlassPanel
           className='flex flex-col items-center gap-5 text-center'
+          data-testid='kangur-setup-editions-shell'
           padding='xl'
-          variant='elevated'
+          surface='solid'
+          variant='soft'
         >
-        <KangurIconBadge
-          accent='amber'
-          data-testid='kangur-setup-overview-icon'
-          size='3xl'
-        >
-          🦘
-        </KangurIconBadge>
-          <h2 id={editionsHeadingId} className='text-2xl font-extrabold text-slate-800'>
-            Kangur Matematyczny
-          </h2>
-          <p className='text-sm leading-relaxed text-slate-500'>
-            Wybierz edycje konkursu, z ktorej chcesz rozwiazywac zadania.
-          </p>
+          <KangurSectionHeading
+            accent='amber'
+            data-testid='kangur-setup-editions-heading'
+            description='Wybierz edycje konkursu, z ktorej chcesz rozwiazywac zadania.'
+            headingAs='h2'
+            headingSize='md'
+            icon='🦘'
+            iconSize='3xl'
+            title='Kangur Matematyczny'
+            titleId={editionsHeadingId}
+          />
 
           <div aria-labelledby={editionsHeadingId} className='flex w-full flex-col gap-3' role='list'>
             {EDITIONS.map((edition) => (
@@ -180,7 +181,7 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
             label='O konkursie Kangur'
             padding='md'
           />
-        </KangurPanel>
+        </KangurGlassPanel>
       </section>
     );
   }
@@ -193,30 +194,32 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
         className='self-start'
         size='sm'
         type='button'
-        variant='ghost'
+        variant='surface'
       >
         <ArrowLeft className='w-4 h-4' /> Edycje
       </KangurButton>
 
-      <KangurPanel
+      <KangurGlassPanel
         className='flex flex-col items-center gap-5 text-center'
+        data-testid='kangur-setup-selected-edition-shell'
         padding='xl'
-        variant='elevated'
+        surface='solid'
+        variant='soft'
       >
-        <KangurIconBadge
+        <KangurSectionHeading
           accent='amber'
-          data-testid='kangur-setup-selected-edition-icon'
-          size='2xl'
-        >
-          {selectedEdition.emoji}
-        </KangurIconBadge>
-        <h2 id={setsHeadingId} className='text-2xl font-extrabold text-slate-800'>
-          {selectedEdition.label}
-        </h2>
+          data-testid='kangur-setup-selected-edition-heading'
+          description='Wybierz zestaw pytan:'
+          headingAs='h2'
+          headingSize='md'
+          icon={selectedEdition.emoji}
+          iconSize='2xl'
+          title={selectedEdition.label}
+          titleId={setsHeadingId}
+        />
         <KangurStatusChip accent='amber' size='sm'>
           {selectedEdition.year}
         </KangurStatusChip>
-        <p className='text-sm text-slate-500'>Wybierz zestaw pytan:</p>
 
         <div aria-labelledby={setsHeadingId} className='flex w-full flex-col gap-3' role='list'>
           {selectedEdition.sets.map((setItem) => (
@@ -267,7 +270,7 @@ export default function KangurSetup({ onStart, onBack }: KangurSetupProps): Reac
             </motion.div>
           ))}
         </div>
-      </KangurPanel>
+      </KangurGlassPanel>
     </section>
   );
 }

@@ -11,7 +11,13 @@ import {
 } from '@/features/kangur/ui/services/progress';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
-import { KangurButton, KangurPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  KangurButton,
+  KangurDisplayEmoji,
+  KangurFeatureHeader,
+  KangurHeadline,
+  KangurPanel,
+} from '@/features/kangur/ui/design/primitives';
 import { KANGUR_STEP_PILL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/shared/utils';
 
@@ -82,7 +88,9 @@ export const SECTION_SLIDES: Record<Exclude<SectionId, 'game'>, Slide[]> = {
       tts: 'Kalendarz to sposob organizowania czasu. Rok ma 12 miesiecy i 365 dni. Tydzien ma 7 dni.',
       content: (
         <div className='flex flex-col items-center gap-4 text-center'>
-          <div className='text-7xl'>📅</div>
+          <KangurDisplayEmoji data-testid='calendar-lesson-intro-emoji' size='lg'>
+            📅
+          </KangurDisplayEmoji>
           <p className='text-gray-600 leading-relaxed max-w-xs'>
             Kalendarz to sposob organizowania czasu.
             <br />
@@ -268,7 +276,15 @@ function SectionView({
             ))}
           </div>
         )}
-        <h2 className='text-xl font-extrabold text-slate-800 text-center'>{activeSlide.title}</h2>
+        <KangurHeadline
+          accent='slate'
+          as='h2'
+          className='text-center'
+          data-testid={`calendar-lesson-slide-title-${sectionId}`}
+          size='sm'
+        >
+          {activeSlide.title}
+        </KangurHeadline>
         <AnimatePresence mode='wait'>
           <motion.div
             key={slide}
@@ -359,7 +375,14 @@ export default function CalendarLesson(): React.JSX.Element {
           padding='xl'
           variant='soft'
         >
-          <h2 className='text-xl font-extrabold text-slate-800'>📅 Gra z kalendarzem</h2>
+          <KangurFeatureHeader
+            accent='emerald'
+            badgeSize='md'
+            data-testid='calendar-lesson-game-header'
+            headingSize='sm'
+            icon='📅'
+            title='Gra z kalendarzem'
+          />
           <CalendarInteractiveGame onFinish={() => setActiveSection(null)} />
         </KangurPanel>
       </div>

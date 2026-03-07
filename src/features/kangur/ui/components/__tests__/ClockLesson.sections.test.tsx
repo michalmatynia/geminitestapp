@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ClockLesson from '../ClockLesson';
@@ -163,6 +163,17 @@ describe('ClockLesson sectioned structure', () => {
     await waitFor(() => {
       expect(screen.getByTestId('mock-clock-training-game')).toBeInTheDocument();
     });
+    const header = screen.getByTestId('clock-lesson-training-header');
+    expect(within(header).getByRole('heading', { name: /ćwiczenie z zegarem/i })).toHaveClass(
+      'text-xl',
+      'text-indigo-700'
+    );
+    expect(within(header).getByText('🕐')).toHaveClass(
+      'h-12',
+      'w-12',
+      'bg-indigo-100',
+      'text-indigo-700'
+    );
     expect(loadProgressMock).toHaveBeenCalled();
     expect(addXpMock).toHaveBeenCalledTimes(1);
   });

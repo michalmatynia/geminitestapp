@@ -1,9 +1,11 @@
 import {
   type KangurLessonActivityBlock,
+  type KangurLessonCalloutBlock,
   type KangurLessonGridBlock,
   type KangurLessonGridItem,
   type KangurLessonInlineBlock,
   type KangurLessonPage,
+  type KangurLessonQuizBlock,
   type KangurLessonRootBlock,
 } from '@/shared/contracts/kangur';
 import {
@@ -114,9 +116,9 @@ export const convertKangurLessonInlineBlockType = (
 };
 
 export const convertKangurLessonRootBlockType = (
-  block: Exclude<KangurLessonRootBlock, KangurLessonGridBlock>,
-  nextType: Exclude<KangurLessonRootBlock['type'], 'grid'>
-): Exclude<KangurLessonRootBlock, KangurLessonGridBlock> => {
+  block: Exclude<KangurLessonRootBlock, KangurLessonGridBlock | KangurLessonCalloutBlock | KangurLessonQuizBlock>,
+  nextType: Exclude<KangurLessonRootBlock['type'], 'grid' | 'callout' | 'quiz'>
+): Exclude<KangurLessonRootBlock, KangurLessonGridBlock | KangurLessonCalloutBlock | KangurLessonQuizBlock> => {
   if (block.type === nextType) {
     return block;
   }
@@ -221,6 +223,25 @@ export const cloneKangurLessonGridItem = (item: KangurLessonGridItem): KangurLes
   block: cloneKangurLessonInlineBlock(item.block),
 });
 
+export const cloneKangurLessonCalloutBlock = (
+  block: KangurLessonCalloutBlock
+): KangurLessonCalloutBlock => ({
+  ...block,
+  id: createKangurLessonBlockId('lesson-callout'),
+});
+
+export const cloneKangurLessonQuizBlock = (
+  block: KangurLessonQuizBlock
+): KangurLessonQuizBlock => ({
+  ...block,
+  id: createKangurLessonBlockId('lesson-quiz'),
+  choices: block.choices.map((choice) => ({
+    ...choice,
+    id: createKangurLessonBlockId('quiz-choice'),
+  })),
+  correctChoiceId: '',
+});
+
 export const cloneKangurLessonRootBlock = (block: KangurLessonRootBlock): KangurLessonRootBlock => {
   if (block.type === 'grid') {
     return {
@@ -232,6 +253,14 @@ export const cloneKangurLessonRootBlock = (block: KangurLessonRootBlock): Kangur
 
   if (block.type === 'activity') {
     return cloneKangurLessonActivityBlock(block);
+  }
+
+  if (block.type === 'callout') {
+    return cloneKangurLessonCalloutBlock(block);
+  }
+
+  if (block.type === 'quiz') {
+    return cloneKangurLessonQuizBlock(block);
   }
 
   return cloneKangurLessonInlineBlock(block);

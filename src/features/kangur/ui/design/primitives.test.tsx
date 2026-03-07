@@ -11,8 +11,12 @@ import {
   KangurDivider,
   KangurDisplayEmoji,
   KangurEmptyState,
+  KangurEquationDisplay,
+  KangurFeatureHeader,
   KangurGlassPanel,
+  KangurGradientHeading,
   KangurGradientIconTile,
+  KangurHeadline,
   KangurIconBadge,
   KangurInlineFallback,
   KangurMediaFrame,
@@ -22,6 +26,7 @@ import {
   KangurProgressBar,
   KangurProse,
   KangurResultBadge,
+  KangurSectionHeading,
   KangurSelectField,
   KangurStatusChip,
   KangurSummaryPanel,
@@ -51,6 +56,42 @@ describe('Kangur shared primitives', () => {
         <KangurDisplayEmoji data-testid='kangur-display-emoji' size='lg'>
           🏆
         </KangurDisplayEmoji>
+        <KangurDisplayEmoji data-testid='kangur-display-emoji-xs' size='xs'>
+          🧮
+        </KangurDisplayEmoji>
+        <KangurGradientHeading
+          data-testid='kangur-gradient-heading'
+          gradientClass='from-indigo-500 to-purple-600'
+          size='lg'
+        >
+          Gradient title
+        </KangurGradientHeading>
+        <KangurHeadline accent='emerald' data-testid='kangur-headline'>
+          Shared headline
+        </KangurHeadline>
+        <KangurHeadline accent='indigo' data-testid='kangur-headline-xs' size='xs'>
+          Small shared headline
+        </KangurHeadline>
+        <KangurFeatureHeader
+          accent='amber'
+          data-testid='kangur-feature-header'
+          icon='🎮'
+          title='Gra z piłkami!'
+        />
+        <KangurSectionHeading
+          align='left'
+          accent='indigo'
+          data-testid='kangur-section-heading'
+          description='Shared section body'
+          headingSize='md'
+          icon='🧭'
+          iconSize='lg'
+          layout='inline'
+          title='Shared section'
+        />
+        <KangurEquationDisplay accent='sky' data-testid='kangur-equation-display'>
+          8 ÷ 2 = ?
+        </KangurEquationDisplay>
         <KangurDivider accent='indigo' data-testid='kangur-divider' size='sm' />
         <KangurActivityColumn
           accent='indigo'
@@ -172,6 +213,37 @@ describe('Kangur shared primitives', () => {
       'to-fuchsia-500'
     );
     expect(screen.getByTestId('kangur-display-emoji')).toHaveClass('inline-flex', 'text-6xl');
+    expect(screen.getByTestId('kangur-display-emoji-xs')).toHaveClass('inline-flex', 'text-3xl');
+    expect(screen.getByTestId('kangur-gradient-heading')).toHaveClass(
+      'bg-gradient-to-r',
+      'bg-clip-text',
+      'text-transparent',
+      'text-4xl',
+      'from-indigo-500',
+      'to-purple-600'
+    );
+    expect(screen.getByTestId('kangur-headline')).toHaveClass('text-2xl', 'text-green-700');
+    expect(screen.getByTestId('kangur-headline-xs')).toHaveClass('text-lg', 'text-indigo-700');
+    expect(screen.getByTestId('kangur-feature-header')).toHaveClass(
+      'flex',
+      'flex-col',
+      'items-center',
+      'text-center'
+    );
+    expect(screen.getByText('Gra z piłkami!')).toHaveClass('text-2xl', 'text-amber-700');
+    expect(screen.getByText('🎮')).toHaveClass('h-16', 'w-16', 'bg-amber-100', 'text-amber-700');
+    expect(screen.getByTestId('kangur-section-heading')).toHaveClass(
+      'flex',
+      'flex-row',
+      'items-start',
+      'text-left'
+    );
+    expect(screen.getByText('Shared section')).toHaveClass('text-2xl', 'text-indigo-700');
+    expect(screen.getByText('🧭')).toHaveClass('h-16', 'w-16', 'bg-indigo-100', 'text-indigo-700');
+    expect(screen.getByTestId('kangur-equation-display')).toHaveClass(
+      'text-3xl',
+      'text-blue-600'
+    );
     expect(screen.getByTestId('kangur-divider')).toHaveClass('h-px', 'w-12', 'bg-indigo-200');
     expect(screen.getByTestId('kangur-activity-column')).toHaveClass(
       'bg-gradient-to-t',
@@ -245,9 +317,9 @@ describe('Kangur shared primitives', () => {
       'bg-white/86'
     );
     expect(screen.getByTestId('kangur-menu-item')).toHaveClass(
-      'rounded-2xl',
-      'text-sm',
-      'data-[highlighted]:bg-slate-100'
+      'rounded-[16px]',
+      'text-[15px]',
+      'data-[highlighted]:bg-white/80'
     );
     expect(screen.getByTestId('kangur-media-frame')).toHaveClass(
       'soft-card',

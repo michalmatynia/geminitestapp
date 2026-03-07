@@ -2,6 +2,7 @@ import {
   KANGUR_TTS_DEFAULT_LOCALE,
   KANGUR_TTS_DEFAULT_VOICE,
   type KangurLessonDocumentNarration,
+  type KangurLessonRootBlock,
 } from '@/shared/contracts/kangur';
 
 export const DEFAULT_SVG_VIEWBOX = '0 0 100 100';
@@ -117,6 +118,24 @@ export const normalizeNarrationVoice = (
 
   return KANGUR_TTS_DEFAULT_VOICE;
 };
+
+export function reorderKangurLessonBlocks(
+  blocks: KangurLessonRootBlock[],
+  draggedId: string,
+  targetId: string,
+  position: 'before' | 'after'
+): KangurLessonRootBlock[] {
+  if (draggedId === targetId) return blocks;
+  const dragged = blocks.find((b) => b.id === draggedId);
+  if (!dragged) return blocks;
+  const withoutDragged = blocks.filter((b) => b.id !== draggedId);
+  const targetIndex = withoutDragged.findIndex((b) => b.id === targetId);
+  if (targetIndex < 0) return blocks;
+  const insertAt = position === 'before' ? targetIndex : targetIndex + 1;
+  const result = [...withoutDragged];
+  result.splice(insertAt, 0, dragged);
+  return result;
+}
 
 export const normalizeDocumentNarration = (
   value: unknown

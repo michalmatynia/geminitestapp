@@ -14,9 +14,10 @@ import Link from 'next/link';
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import {
   KangurButton,
+  KangurGlassPanel,
   KangurIconBadge,
-  KangurPanel,
   KangurStatusChip,
+  KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 
@@ -38,10 +39,11 @@ export function KangurParentDashboardHeroWidget({
 
   if (!isAuthenticated) {
     return (
-      <KangurPanel
+      <KangurGlassPanel
         className='flex w-full flex-col items-center gap-5 text-center'
         padding='xl'
-        variant='elevated'
+        surface='solid'
+        variant='soft'
       >
         <KangurIconBadge
           accent='indigo'
@@ -73,16 +75,17 @@ export function KangurParentDashboardHeroWidget({
             <ArrowLeft className='h-4 w-4' /> Wroc do gry
           </Link>
         </KangurButton>
-      </KangurPanel>
+      </KangurGlassPanel>
     );
   }
 
   if (!canManageLearners) {
     return (
-      <KangurPanel
+      <KangurGlassPanel
         className='flex w-full flex-col items-center gap-5 text-center'
         padding='xl'
-        variant='elevated'
+        surface='solid'
+        variant='soft'
       >
         <KangurIconBadge
           accent='slate'
@@ -98,18 +101,20 @@ export function KangurParentDashboardHeroWidget({
         <KangurButton asChild size='lg' variant='primary' data-doc-id='top_nav_profile'>
           <Link href={createPageUrl('LearnerProfile', basePath)}>Wroc do profilu ucznia</Link>
         </KangurButton>
-      </KangurPanel>
+      </KangurGlassPanel>
     );
   }
 
   return (
-    <KangurPanel className='flex flex-col gap-4' padding='lg' variant='soft'>
+    <KangurGlassPanel className='flex flex-col gap-4' padding='lg' surface='mistStrong' variant='soft'>
       <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
-        <div>
-          <KangurStatusChip accent='indigo' className='uppercase tracking-wide' size='sm'>
-            Rola: {viewerRoleLabel}
-          </KangurStatusChip>
-          <h1 className='mt-3 text-3xl font-extrabold text-gray-800'>Panel Rodzica</h1>
+        <div className='max-w-2xl'>
+          {showActions ? (
+            <KangurStatusChip accent='indigo' className='uppercase tracking-wide' size='sm'>
+              Rola: {viewerRoleLabel}
+            </KangurStatusChip>
+          ) : null}
+          <h1 className='text-3xl font-extrabold text-gray-800'>Panel Rodzica</h1>
           <p className='mt-1 text-gray-500'>
             Konto wlasciciela: <span className='font-semibold text-gray-700'>{viewerName}</span>.
             Wybrany uczen:{' '}
@@ -121,30 +126,33 @@ export function KangurParentDashboardHeroWidget({
         </div>
 
         {showActions ? (
-          <div className='flex flex-wrap gap-2'>
-            <KangurButton asChild size='sm' variant='secondary'>
-              <Link href={createPageUrl('Game', basePath)}>
-                <Home className='h-4 w-4' /> Gra
-              </Link>
-            </KangurButton>
-            <KangurButton asChild size='sm' variant='secondary'>
-              <Link href={createPageUrl('Lessons', basePath)}>
-                <BookOpen className='h-4 w-4' /> Lekcje
-              </Link>
-            </KangurButton>
-            <KangurButton asChild size='sm' variant='secondary'>
-              <Link href={createPageUrl('LearnerProfile', basePath)}>
-                <UserRound className='h-4 w-4' /> Profil
-              </Link>
-            </KangurButton>
-            <KangurButton asChild size='sm' variant='secondary'>
-              <Link href={createPageUrl('ParentDashboard', basePath)}>
-                <LayoutGrid className='h-4 w-4' /> Dashboard
-              </Link>
-            </KangurButton>
+          <div className='flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end'>
+            <KangurTopNavGroup label='Szybkie akcje rodzica' className='w-full sm:w-auto'>
+              <KangurButton asChild size='sm' variant='navigation'>
+                <Link href={createPageUrl('Game', basePath)}>
+                  <Home className='h-4 w-4' /> Gra
+                </Link>
+              </KangurButton>
+              <KangurButton asChild size='sm' variant='navigation'>
+                <Link href={createPageUrl('Lessons', basePath)}>
+                  <BookOpen className='h-4 w-4' /> Lekcje
+                </Link>
+              </KangurButton>
+              <KangurButton asChild size='sm' variant='navigation'>
+                <Link href={createPageUrl('LearnerProfile', basePath)}>
+                  <UserRound className='h-4 w-4' /> Profil
+                </Link>
+              </KangurButton>
+              <KangurButton asChild size='sm' variant='navigationActive'>
+                <Link href={createPageUrl('ParentDashboard', basePath)}>
+                  <LayoutGrid className='h-4 w-4' /> Rodzic
+                </Link>
+              </KangurButton>
+            </KangurTopNavGroup>
             <KangurButton
               onClick={() => logout(false)}
               size='sm'
+              type='button'
               variant='ghost'
               data-doc-id='profile_logout'
             >
@@ -153,6 +161,6 @@ export function KangurParentDashboardHeroWidget({
           </div>
         ) : null}
       </div>
-    </KangurPanel>
+    </KangurGlassPanel>
   );
 }

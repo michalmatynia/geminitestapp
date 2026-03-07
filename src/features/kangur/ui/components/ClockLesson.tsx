@@ -15,6 +15,8 @@ import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitiv
 import {
   KangurButton,
   KangurDivider,
+  KangurFeatureHeader,
+  KangurHeadline,
   KangurOptionCardButton,
   KangurPanel,
   KangurStatusChip,
@@ -553,7 +555,14 @@ export default function ClockLesson(): React.JSX.Element {
           padding='xl'
           variant='soft'
         >
-          <h2 className='text-xl font-extrabold text-slate-800'>🕐 Ćwiczenie z zegarem</h2>
+          <KangurFeatureHeader
+            accent='indigo'
+            badgeSize='md'
+            data-testid='clock-lesson-training-header'
+            headingSize='sm'
+            icon='🕐'
+            title='Ćwiczenie z zegarem'
+          />
           <ClockTrainingGame onFinish={handleBack} />
         </KangurPanel>
       </div>
@@ -608,7 +617,9 @@ export default function ClockLesson(): React.JSX.Element {
                     <p className='text-xs font-bold uppercase tracking-wide text-indigo-400'>
                       Nauka Zegara
                     </p>
-                    <h3 className='text-lg font-extrabold text-indigo-700'>{section.title}</h3>
+                    <KangurHeadline accent='indigo' as='h3' size='xs'>
+                      {section.title}
+                    </KangurHeadline>
                     <p className='text-sm text-gray-500 mt-1'>{section.subtitle}</p>
                     <KangurStatusChip
                       accent={status.accent}
@@ -684,7 +695,9 @@ export default function ClockLesson(): React.JSX.Element {
                 <p className='text-xs font-bold uppercase tracking-wide text-indigo-400'>
                   Nauka Zegara
                 </p>
-                <h3 className='text-lg font-extrabold text-indigo-700'>{section.title}</h3>
+                <KangurHeadline accent='indigo' as='h3' size='xs'>
+                  {section.title}
+                </KangurHeadline>
                 <p className='text-sm text-gray-500 mt-1'>{section.subtitle}</p>
                 <KangurStatusChip
                   accent={status.accent}
@@ -748,7 +761,9 @@ export default function ClockLesson(): React.JSX.Element {
                 </div>
 
                 <div className='flex items-center justify-between gap-3'>
-                  <h4 className='text-lg font-extrabold text-slate-800'>{activeSlide.title}</h4>
+                  <KangurHeadline accent='slate' as='h4' size='xs'>
+                    {activeSlide.title}
+                  </KangurHeadline>
                 </div>
 
                 <AnimatePresence mode='wait'>

@@ -1,10 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { BookOpen, Home, LayoutGrid, LogOut } from 'lucide-react';
-import Link from 'next/link';
 
-import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurParentDashboardAssignmentsWidget } from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsWidget';
 import { KangurParentDashboardHeroWidget } from '@/features/kangur/ui/components/KangurParentDashboardHeroWidget';
@@ -12,14 +9,10 @@ import { KangurParentDashboardLearnerManagementWidget } from '@/features/kangur/
 import { KangurParentDashboardProgressWidget } from '@/features/kangur/ui/components/KangurParentDashboardProgressWidget';
 import { KangurParentDashboardScoresWidget } from '@/features/kangur/ui/components/KangurParentDashboardScoresWidget';
 import { KangurParentDashboardTabsWidget } from '@/features/kangur/ui/components/KangurParentDashboardTabsWidget';
-import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
+import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import {
-  KangurButton,
   KangurPageContainer,
   KangurPageShell,
-  KangurPageTopBar,
-  KangurStatusChip,
-  KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KangurParentDashboardRuntimeBoundary,
@@ -27,8 +20,14 @@ import {
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 
 function ParentDashboardContent(): React.JSX.Element {
-  const { activeTab, basePath, canAccessDashboard, isAuthenticated, logout, navigateToLogin, viewerRoleLabel } =
-    useKangurParentDashboardRuntime();
+  const {
+    activeTab,
+    basePath,
+    canAccessDashboard,
+    isAuthenticated,
+    logout,
+    navigateToLogin,
+  } = useKangurParentDashboardRuntime();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('parentDashboard');
 
   if (!canAccessDashboard) {
@@ -63,62 +62,13 @@ function ParentDashboardContent(): React.JSX.Element {
         enabled={docsTooltipsEnabled}
         rootId='kangur-parent-dashboard-page'
       />
-      <KangurPageTopBar
-        left={
-          <KangurTopNavGroup>
-            <KangurButton asChild size='md' variant='navigation' data-doc-id='top_nav_home'>
-              <Link href={createPageUrl('Game', basePath)}>
-                <Home className='h-[22px] w-[22px]' strokeWidth={2.1} />
-                <span>Strona glowna</span>
-              </Link>
-            </KangurButton>
-            <KangurProfileMenu
-              basePath={basePath}
-              isAuthenticated={isAuthenticated}
-              onLogout={() => logout(false)}
-              onLogin={navigateToLogin}
-              isActive={false}
-            />
-            <KangurButton asChild size='md' variant='navigation' data-doc-id='top_nav_lessons'>
-              <Link href={createPageUrl('Lessons', basePath)}>
-                <BookOpen className='h-[22px] w-[22px]' strokeWidth={2.1} />
-                <span>Lekcje</span>
-              </Link>
-            </KangurButton>
-            <KangurButton
-              asChild
-              size='md'
-              variant='navigationActive'
-              aria-current='page'
-              data-doc-id='top_nav_parent_dashboard'
-            >
-              <Link href={createPageUrl('ParentDashboard', basePath)}>
-                <LayoutGrid className='h-[22px] w-[22px]' strokeWidth={2.1} />
-                <span>Rodzic</span>
-              </Link>
-            </KangurButton>
-          </KangurTopNavGroup>
-        }
-        right={
-          <>
-            <KangurStatusChip
-              accent='slate'
-              className='hidden uppercase tracking-[0.18em] sm:inline-flex'
-              data-testid='parent-dashboard-role-chip'
-              size='sm'
-            >
-              Rola: {viewerRoleLabel}
-            </KangurStatusChip>
-            <KangurButton
-              onClick={() => logout(false)}
-              size='sm'
-              variant='ghost'
-              data-doc-id='profile_logout'
-            >
-              <LogOut className='h-4 w-4' /> Wyloguj
-            </KangurButton>
-          </>
-        }
+      <KangurPrimaryNavigation
+        basePath={basePath}
+        canManageLearners
+        currentPage='ParentDashboard'
+        isAuthenticated={isAuthenticated}
+        onLogin={navigateToLogin}
+        onLogout={() => logout(false)}
       />
 
       <KangurPageContainer

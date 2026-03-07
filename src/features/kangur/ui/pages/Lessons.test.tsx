@@ -222,7 +222,7 @@ describe('Lessons', () => {
     expect(screen.queryByTestId('legacy-lesson')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wroc do listy lekcji' })).toHaveClass(
       'kangur-cta-pill',
-      'soft-cta'
+      'surface-cta'
     );
   });
 
@@ -331,7 +331,7 @@ describe('Lessons', () => {
     expect(screen.queryByTestId('lesson-document-renderer')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wroc do listy lekcji' })).toHaveClass(
       'kangur-cta-pill',
-      'soft-cta'
+      'surface-cta'
     );
   });
 

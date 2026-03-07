@@ -13,6 +13,7 @@ describe('SubtractingGame', () => {
 
     expect(screen.getByTestId('subtracting-game-round-shell')).toHaveClass('glass-panel');
     expect(screen.getByTestId('subtracting-game-progress-bar')).toHaveAttribute('aria-valuenow', '0');
+    expect(screen.getByTestId('subtracting-game-equation')).toHaveClass('text-3xl', 'text-red-500');
 
     const firstChoice = screen.getByTestId('subtracting-game-choice-0');
 

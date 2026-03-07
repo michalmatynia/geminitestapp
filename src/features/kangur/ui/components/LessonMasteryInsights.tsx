@@ -1,7 +1,7 @@
 import {
   KangurEmptyState,
+  KangurGlassPanel,
   KangurInfoCard,
-  KangurPanel,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
@@ -88,10 +88,10 @@ export default function LessonMasteryInsights({
   const insights = buildLessonMasteryInsights(progress);
 
   return (
-    <KangurPanel padding='lg' variant='soft'>
+    <KangurGlassPanel padding='lg' surface='mistSoft' variant='soft'>
       <div className='flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between'>
         <div>
-          <div className='text-sm font-bold uppercase tracking-wide text-slate-500'>
+          <div className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
             Opanowanie lekcji
           </div>
           <p className='text-sm text-slate-500'>
@@ -127,6 +127,6 @@ export default function LessonMasteryInsights({
           />
         </div>
       )}
-    </KangurPanel>
+    </KangurGlassPanel>
   );
 }

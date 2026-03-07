@@ -78,7 +78,7 @@ describe('Leaderboard', () => {
     ]);
   });
 
-  it('uses shared pill styling for filters and still narrows leaderboard results', async () => {
+  it('uses shared segmented styling for filters and still narrows leaderboard results', async () => {
     const user = userEvent.setup();
 
     render(<Leaderboard />);
@@ -87,14 +87,22 @@ describe('Leaderboard', () => {
     const divisionOperationFilter = screen.getByTestId('leaderboard-operation-filter-division');
     const allUserFilter = screen.getByTestId('leaderboard-user-filter-all');
     const anonymousUserFilter = screen.getByTestId('leaderboard-user-filter-anonymous');
+    const operationGroup = screen.getByTestId('leaderboard-operation-filter-group');
+    const userGroup = screen.getByTestId('leaderboard-user-filter-group');
 
-    expect(screen.getByTestId('leaderboard-shell')).toHaveClass('glass-panel');
-    expect(allOperationFilter).toHaveClass('kangur-cta-pill', 'surface-cta');
-    expect(divisionOperationFilter).toHaveClass('kangur-cta-pill', 'soft-cta');
+    expect(screen.getByTestId('leaderboard-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
+    expect(operationGroup).toHaveClass('rounded-[28px]', 'backdrop-blur-xl');
+    expect(userGroup).toHaveClass('rounded-[28px]', 'backdrop-blur-xl');
+    expect(allOperationFilter).toHaveClass('rounded-[18px]', 'text-indigo-700', 'ring-1');
+    expect(divisionOperationFilter).toHaveClass('rounded-[18px]', 'text-slate-500');
     expect(allOperationFilter).toHaveAttribute('aria-pressed', 'true');
     expect(divisionOperationFilter).toHaveAttribute('aria-pressed', 'false');
-    expect(allUserFilter).toHaveClass('kangur-cta-pill', 'surface-cta');
-    expect(anonymousUserFilter).toHaveClass('kangur-cta-pill', 'soft-cta');
+    expect(allUserFilter).toHaveClass('rounded-[18px]', 'text-indigo-700', 'ring-1');
+    expect(anonymousUserFilter).toHaveClass('rounded-[18px]', 'text-slate-500');
     expect(await screen.findByTestId('leaderboard-row-score-1')).toHaveClass(
       'soft-card',
       'border-indigo-300'
@@ -114,18 +122,18 @@ describe('Leaderboard', () => {
 
     await user.click(divisionOperationFilter);
 
-    expect(divisionOperationFilter).toHaveClass('surface-cta');
+    expect(divisionOperationFilter).toHaveClass('text-indigo-700', 'ring-1');
     expect(divisionOperationFilter).toHaveAttribute('aria-pressed', 'true');
-    expect(allOperationFilter).toHaveClass('soft-cta');
+    expect(allOperationFilter).toHaveClass('text-slate-500');
     expect(screen.queryByText('Ada')).not.toBeInTheDocument();
     expect(screen.getByText('Bartek')).toBeInTheDocument();
     expect(screen.getByText('Olek')).toBeInTheDocument();
 
     await user.click(anonymousUserFilter);
 
-    expect(anonymousUserFilter).toHaveClass('surface-cta');
+    expect(anonymousUserFilter).toHaveClass('text-indigo-700', 'ring-1');
     expect(anonymousUserFilter).toHaveAttribute('aria-pressed', 'true');
-    expect(allUserFilter).toHaveClass('soft-cta');
+    expect(allUserFilter).toHaveClass('text-slate-500');
     expect(screen.queryByText('Bartek')).not.toBeInTheDocument();
     expect(screen.getByText('Olek')).toBeInTheDocument();
   });

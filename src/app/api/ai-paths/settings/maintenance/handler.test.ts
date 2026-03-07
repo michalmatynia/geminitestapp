@@ -13,6 +13,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
     'compact_oversized_configs',
     'repair_path_index',
     'ensure_starter_workflow_defaults',
+    'refresh_starter_workflow_configs',
     'normalize_runtime_kernel_settings',
   ] as const,
   inspectAiPathsSettingsMaintenance: inspectAiPathsSettingsMaintenanceMock,

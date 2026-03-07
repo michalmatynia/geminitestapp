@@ -49,7 +49,7 @@ describe('KangurTestSuitePlayer', () => {
     );
     expect(screen.getByRole('button', { name: /previous/i })).toHaveClass(
       'kangur-cta-pill',
-      'soft-cta'
+      'surface-cta'
     );
     expect(screen.getByRole('button', { name: /previous/i })).toBeDisabled();
 
@@ -65,7 +65,7 @@ describe('KangurTestSuitePlayer', () => {
       'soft-card',
       'border-indigo-300'
     );
-    expect(restartButton).toHaveClass('kangur-cta-pill', 'soft-cta');
+    expect(restartButton).toHaveClass('kangur-cta-pill', 'surface-cta');
     expect(onFinish).toHaveBeenCalledWith(3, 3, { 'question-1': 'A' });
   });
 

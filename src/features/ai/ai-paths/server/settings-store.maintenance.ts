@@ -27,8 +27,10 @@ import {
 import { compactPathConfigValue } from './settings-store.compaction';
 import { parsePathMetas, parseTriggerButtons } from './settings-store.parsing';
 import {
+  countPendingStarterWorkflowConfigRefreshes,
   countPendingStarterWorkflowDefaults,
   ensureStarterWorkflowDefaults,
+  refreshStarterWorkflowConfigs,
 } from './starter-workflows-settings';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { serializeAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
@@ -424,6 +426,19 @@ export const buildAiPathsMaintenanceReport = (
     });
   }
 
+  const starterRefreshCount = countPendingStarterWorkflowConfigRefreshes(records);
+  if (starterRefreshCount > 0) {
+    actions.push({
+      id: 'refresh_starter_workflow_configs',
+      title: 'Refresh Starter Workflow Configs',
+      description:
+        'Refresh starter-derived workflow configs that still match canonical starter lineage but lag behind the latest semantic asset.',
+      blocking: false,
+      status: 'pending',
+      affectedRecords: starterRefreshCount,
+    });
+  }
+
   const triggerButtonBindingRepairCount = countPendingTriggerButtonBindingRepairs(records);
   if (triggerButtonBindingRepairCount > 0) {
     actions.push({
@@ -500,6 +515,13 @@ export const runMaintenanceAction = (args: {
       break;
     }
 
+    case 'refresh_starter_workflow_configs': {
+      const result = refreshStarterWorkflowConfigs(args.records);
+      nextRecords.push(...result.nextRecords);
+      affectedCount = result.affectedCount;
+      break;
+    }
+
     case 'repair_trigger_button_bindings': {
       const result = repairTriggerButtonBindings(args.records);
       nextRecords.push(...result.nextRecords);
@@ -559,6 +581,7 @@ export const runFullMaintenance = (records: AiPathsSettingRecord[]): AiPathsMain
       'compact_oversized_configs',
       'repair_path_index',
       'ensure_starter_workflow_defaults',
+      'refresh_starter_workflow_configs',
       'repair_trigger_button_bindings',
       RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID,
     ] as AiPathsMaintenanceActionId[]

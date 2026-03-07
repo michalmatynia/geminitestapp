@@ -6,6 +6,11 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import {
+  KangurDisplayEmoji,
+  KangurEquationDisplay,
+  KangurFeatureHeader,
+} from '@/features/kangur/ui/design/primitives';
 
 type SectionId = 'intro' | 'odwrotnosc' | 'reszta' | 'zapamietaj' | 'game';
 
@@ -19,12 +24,14 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
             Dzielenie to równy podział na grupy. Pytamy: ile w każdej grupie?
           </p>
           <div className='flex flex-col items-center gap-2'>
-            <div className='flex gap-3 text-4xl'>🍪🍪🍪🍪🍪🍪</div>
+            <KangurDisplayEmoji size='sm'>🍪🍪🍪🍪🍪🍪</KangurDisplayEmoji>
             <p className='text-gray-500 text-sm'>6 ciastek podzielone na 2 osoby</p>
-            <p className='text-blue-600 font-bold text-2xl'>6 ÷ 2 = 3</p>
-            <div className='flex gap-4 text-2xl'>
-              <span>🧒🍪🍪🍪</span>
-              <span>🧒🍪🍪🍪</span>
+            <KangurEquationDisplay accent='sky' size='md'>
+              6 ÷ 2 = 3
+            </KangurEquationDisplay>
+            <div className='flex gap-4'>
+              <KangurDisplayEmoji size='xs'>🧒🍪🍪🍪</KangurDisplayEmoji>
+              <KangurDisplayEmoji size='xs'>🧒🍪🍪🍪</KangurDisplayEmoji>
             </div>
           </div>
         </div>
@@ -42,9 +49,13 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <p className='text-gray-700'>
                 4 × 3 = <b>12</b>
               </p>
-              <div className='flex gap-3 justify-center text-blue-600 font-bold'>
-                <p>12 ÷ 4 = 3</p>
-                <p>12 ÷ 3 = 4</p>
+              <div className='flex flex-wrap justify-center gap-3'>
+                <KangurEquationDisplay accent='sky' size='sm'>
+                  12 ÷ 4 = 3
+                </KangurEquationDisplay>
+                <KangurEquationDisplay accent='sky' size='sm'>
+                  12 ÷ 3 = 4
+                </KangurEquationDisplay>
               </div>
             </div>
           </KangurLessonCallout>
@@ -64,13 +75,15 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
             Nie zawsze dzielenie wychodzi równo — wtedy zostaje reszta.
           </p>
           <KangurLessonCallout accent='teal' className='max-w-xs text-center'>
-            <p className='text-3xl font-extrabold text-teal-600'>7 ÷ 2 = ?</p>
+            <KangurEquationDisplay accent='teal' data-testid='division-lesson-remainder-equation'>
+              7 ÷ 2 = ?
+            </KangurEquationDisplay>
             <p className='text-gray-500 mt-2'>2×3=6 (za mało), 2×4=8 (za duzo)</p>
-            <p className='text-teal-700 font-bold mt-1'>
+            <KangurEquationDisplay accent='teal' className='mt-1' size='md'>
               7 ÷ 2 = <b>3</b> reszta <b>1</b>
-            </p>
+            </KangurEquationDisplay>
           </KangurLessonCallout>
-          <div className='flex gap-3 text-3xl'>🍫🍫🍫🍫🍫🍫🍫</div>
+          <KangurDisplayEmoji size='xs'>🍫🍫🍫🍫🍫🍫🍫</KangurDisplayEmoji>
           <p className='text-sm text-gray-500'>7 czekolad → 3 dla każdego, 1 zostaje</p>
         </div>
       ),
@@ -127,7 +140,7 @@ export default function DivisionLesson(): React.JSX.Element {
   if (activeSection === 'game') {
     return (
       <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
-        <h2 className='text-2xl font-extrabold text-blue-600'>🎮 Gra z dzieleniem!</h2>
+        <KangurFeatureHeader accent='sky' icon='🎮' title='Gra z dzieleniem!' />
         <DivisionGame onFinish={() => setActiveSection(null)} />
       </div>
     );

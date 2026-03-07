@@ -1,7 +1,7 @@
 import {
   KangurDisplayEmoji,
+  KangurGlassPanel,
   KangurMetricCard,
-  KangurPanel,
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -54,11 +54,19 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
 
   return (
     <div className='flex flex-col gap-5'>
-      <KangurPanel className='flex items-center gap-4' padding='lg' variant='soft'>
+      <KangurGlassPanel
+        className='flex flex-col gap-4 sm:flex-row sm:items-center'
+        padding='lg'
+        surface='mistStrong'
+        variant='soft'
+      >
         <KangurDisplayEmoji size='md'>🎖️</KangurDisplayEmoji>
         <div className='flex-1'>
-          <p className={`font-extrabold text-xl ${currentLevel.color}`}>{currentLevel.title}</p>
-          <p className='text-sm text-gray-400 mb-2'>
+          <div className='text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+            Poziom i doswiadczenie
+          </div>
+          <p className={`mt-1 text-xl font-extrabold ${currentLevel.color}`}>{currentLevel.title}</p>
+          <p className='mb-2 text-sm text-slate-500'>
             Poziom {currentLevel.level} · {totalXp} XP lacznie
           </p>
           <KangurProgressBar
@@ -68,13 +76,13 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
             size='md'
             value={percent}
           />
-          <p className='text-xs text-gray-400 mt-1'>
+          <p className='mt-1 text-xs text-slate-500'>
             {nextLevel
               ? `Do poziomu ${nextLevel.level}: ${xpNeeded - xpIntoLevel} XP`
               : 'Osiagnieto maksymalny poziom!'}
           </p>
         </div>
-      </KangurPanel>
+      </KangurGlassPanel>
 
       <div className='grid grid-cols-2 sm:grid-cols-3 gap-3'>
         {stats.map((stat) => (
@@ -91,8 +99,8 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
       <LessonMasteryInsights progress={progress} />
 
       {operationsPlayed.length > 0 && (
-        <KangurPanel padding='md' variant='soft'>
-          <p className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>
+        <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
+          <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
             Cwiczone operacje
           </p>
           <div className='flex flex-wrap gap-2'>
@@ -107,11 +115,13 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
               </KangurStatusChip>
             ))}
           </div>
-        </KangurPanel>
+        </KangurGlassPanel>
       )}
 
-      <KangurPanel padding='md' variant='soft'>
-        <p className='text-sm font-bold text-gray-500 uppercase tracking-wide mb-3'>Odznaki</p>
+      <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
+        <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+          Odznaki
+        </p>
         <div className='flex flex-wrap gap-2'>
           {BADGES.map((badge) => {
             const unlocked = badges.includes(badge.id);
@@ -129,7 +139,7 @@ export default function ProgressOverview({ progress }: ProgressOverviewProps): R
             );
           })}
         </div>
-      </KangurPanel>
+      </KangurGlassPanel>
     </div>
   );
 }

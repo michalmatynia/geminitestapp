@@ -16,6 +16,10 @@ describe('MultiplicationGame', () => {
       'aria-valuenow',
       '0'
     );
+    expect(screen.getByTestId('multiplication-game-equation')).toHaveClass(
+      'text-3xl',
+      'text-purple-600'
+    );
     const firstChoice = screen.getByTestId('multiplication-game-choice-0');
 
     expect(firstChoice).toHaveClass('soft-card', 'rounded-[24px]');

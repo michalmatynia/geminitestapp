@@ -180,10 +180,7 @@ describe('ParentDashboard page', () => {
     expect(
       within(inactiveLearnerCard).getByTestId('parent-dashboard-learner-icon-learner-2')
     ).toHaveClass('bg-slate-100', 'text-slate-700');
-    expect(screen.getByTestId('parent-dashboard-role-chip')).toHaveClass(
-      'border-slate-200',
-      'bg-slate-100'
-    );
+    expect(screen.queryByTestId('parent-dashboard-role-chip')).not.toBeInTheDocument();
     expect(within(activeLearnerCard).getByText('Aktywny')).toHaveClass(
       'border-emerald-200',
       'bg-emerald-100'
@@ -197,19 +194,25 @@ describe('ParentDashboard page', () => {
       'focus:border-indigo-300'
     );
     expect(screen.getByRole('combobox')).toHaveClass('soft-card', 'focus:border-indigo-300');
-    expect(progressTab).toHaveClass('kangur-cta-pill', 'play-cta');
-    expect(scoresTab).toHaveClass('kangur-cta-pill', 'soft-cta');
-    expect(assignmentsTab).toHaveClass('kangur-cta-pill', 'soft-cta');
+    expect(progressTab).toHaveAttribute('aria-pressed', 'true');
+    expect(scoresTab).toHaveAttribute('aria-pressed', 'false');
+    expect(assignmentsTab).toHaveAttribute('aria-pressed', 'false');
+    expect(progressTab).toHaveClass('text-indigo-700', 'ring-1');
+    expect(scoresTab).toHaveClass('text-slate-500', 'bg-transparent');
+    expect(assignmentsTab).toHaveClass('text-slate-500', 'bg-transparent');
 
     await userEvent.click(screen.getByRole('button', { name: /ola/i }));
     expect(selectLearnerMock).toHaveBeenCalledWith('learner-2');
 
     await userEvent.click(scoresTab);
-    expect(scoresTab).toHaveClass('kangur-cta-pill', 'play-cta');
-    expect(progressTab).toHaveClass('kangur-cta-pill', 'soft-cta');
+    expect(scoresTab).toHaveAttribute('aria-pressed', 'true');
+    expect(progressTab).toHaveAttribute('aria-pressed', 'false');
+    expect(scoresTab).toHaveClass('text-indigo-700', 'ring-1');
+    expect(progressTab).toHaveClass('text-slate-500', 'bg-transparent');
 
     await userEvent.click(assignmentsTab);
-    expect(assignmentsTab).toHaveClass('kangur-cta-pill', 'play-cta');
+    expect(assignmentsTab).toHaveAttribute('aria-pressed', 'true');
+    expect(assignmentsTab).toHaveClass('text-indigo-700', 'ring-1');
     await waitFor(() =>
       expect(screen.getByTestId('kangur-assignment-manager')).toBeInTheDocument()
     );

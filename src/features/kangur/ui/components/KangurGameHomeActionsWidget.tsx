@@ -198,11 +198,11 @@ export function KangurGameHomeActionsWidget(): React.JSX.Element | null {
 
   return (
     <KangurGlassPanel
-      className='w-full shadow-[0_24px_60px_rgba(168,175,216,0.18)]'
+      className='w-full shadow-[0_18px_40px_-28px_rgba(168,175,216,0.18)]'
       data-testid='kangur-home-actions-shell'
       padding='lg'
       surface='mist'
-      variant='elevated'
+      variant='soft'
     >
       <section aria-labelledby='kangur-home-actions-heading'>
         <h3 id='kangur-home-actions-heading' className='sr-only'>

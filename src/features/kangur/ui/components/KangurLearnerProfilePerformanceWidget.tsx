@@ -6,7 +6,7 @@ import {
   KangurActivityColumn,
   KangurButton,
   KangurEmptyState,
-  KangurPanel,
+  KangurGlassPanel,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
 import {
@@ -19,8 +19,13 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
 
   return (
     <section className='grid grid-cols-1 gap-4 xl:grid-cols-5'>
-      <KangurPanel className='xl:col-span-3' padding='lg' variant='soft'>
-        <div className='mb-3 text-sm font-bold uppercase tracking-wide text-gray-500'>
+      <KangurGlassPanel
+        className='xl:col-span-3'
+        padding='lg'
+        surface='mistStrong'
+        variant='soft'
+      >
+        <div className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
           Aktywnosc 7 dni
         </div>
         <div className='flex h-32 items-end gap-2'>
@@ -38,15 +43,15 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
                   title={`${point.games} gier, srednia ${point.averageAccuracy}%`}
                   value={heightPercent}
                 />
-                <div className='text-[11px] text-gray-500'>{point.label}</div>
+                <div className='text-[11px] text-slate-500'>{point.label}</div>
               </div>
             );
           })}
         </div>
-      </KangurPanel>
+      </KangurGlassPanel>
 
-      <KangurPanel className='xl:col-span-2' padding='lg' variant='soft'>
-        <div className='mb-3 text-sm font-bold uppercase tracking-wide text-gray-500'>
+      <KangurGlassPanel className='xl:col-span-2' padding='lg' surface='solid' variant='subtle'>
+        <div className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
           Wyniki wg operacji
         </div>
         <div className='flex flex-col gap-3'>
@@ -62,13 +67,13 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
           ) : (
             snapshot.operationPerformance.map((item) => (
               <div key={item.operation}>
-                <div className='mb-1 flex items-center justify-between gap-2 text-sm text-gray-600'>
+                <div className='mb-1 flex items-center justify-between gap-2 text-sm text-slate-600'>
                   <span className='font-semibold'>
                     {item.emoji} {item.label}
                   </span>
                   <div className='flex items-center gap-2'>
                     <span>{item.averageAccuracy}%</span>
-                    <KangurButton asChild size='sm' variant='secondary'>
+                    <KangurButton asChild size='sm' variant='surface'>
                       <Link
                         href={buildKangurOperationPracticeHref(
                           basePath,
@@ -87,14 +92,14 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
                   size='sm'
                   value={item.averageAccuracy}
                 />
-                <div className='mt-1 text-[11px] text-gray-500'>
+                <div className='mt-1 text-[11px] text-slate-500'>
                   Proby: {item.attempts} · Najlepsza skutecznosc: {item.bestScore}%
                 </div>
               </div>
             ))
           )}
         </div>
-      </KangurPanel>
+      </KangurGlassPanel>
     </section>
   );
 }

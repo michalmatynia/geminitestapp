@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('framer-motion', () => ({
@@ -36,9 +36,20 @@ describe('KangurSetup', () => {
     render(<KangurSetup onBack={vi.fn()} onStart={onStart} />);
 
     expect(screen.getByRole('list', { name: 'Kangur Matematyczny' })).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-setup-overview-icon')).toHaveClass(
+    expect(screen.getByTestId('kangur-setup-editions-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
+    const editionsHeading = screen.getByTestId('kangur-setup-editions-heading');
+    expect(editionsHeading).toHaveClass('flex', 'flex-col', 'items-center', 'text-center');
+    expect(within(editionsHeading).getByText('🦘')).toHaveClass(
       'bg-amber-100',
       'text-amber-700'
+    );
+    expect(screen.getByRole('button', { name: /wroc do poprzedniego widoku/i })).toHaveClass(
+      'kangur-cta-pill',
+      'surface-cta'
     );
     expect(screen.getByText('O konkursie Kangur')).toHaveClass('border-amber-200', 'bg-amber-100');
 
@@ -53,9 +64,20 @@ describe('KangurSetup', () => {
 
     fireEvent.click(screen.getByText('Edycja 2024'));
 
-    expect(screen.getByTestId('kangur-setup-selected-edition-icon')).toHaveClass(
+    const selectedEditionHeading = screen.getByTestId('kangur-setup-selected-edition-heading');
+    expect(screen.getByTestId('kangur-setup-selected-edition-shell')).toHaveClass(
+      'glass-panel',
+      'border-white/88',
+      'bg-white/94'
+    );
+    expect(selectedEditionHeading).toHaveClass('flex', 'flex-col', 'items-center', 'text-center');
+    expect(within(selectedEditionHeading).getByText('🦘')).toHaveClass(
       'bg-amber-100',
       'text-amber-700'
+    );
+    expect(screen.getByRole('button', { name: /wroc do listy edycji/i })).toHaveClass(
+      'kangur-cta-pill',
+      'surface-cta'
     );
     expect(screen.getByText('Tryb konkursowy')).toHaveClass('border-indigo-200', 'bg-indigo-100');
     expect(screen.getByRole('list', { name: 'Edycja 2024' })).toBeInTheDocument();

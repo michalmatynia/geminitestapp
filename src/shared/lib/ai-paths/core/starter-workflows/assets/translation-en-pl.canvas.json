@@ -3,11 +3,11 @@
   "kind": "canvas",
   "path": {
     "id": "path_96708d",
-    "version": 2,
+    "version": 4,
     "name": "Translation EN->PL Description + Parameters",
     "description": "Translate English description and parameters to Polish and update the product.",
     "trigger": "Product Modal - Translate EN->PL",
-    "updatedAt": "2026-03-03T00:00:00.000Z",
+    "updatedAt": "2026-03-07T00:00:00.000Z",
     "executionMode": "server",
     "flowIntensity": "medium",
     "runMode": "block",
@@ -17,34 +17,130 @@
   },
   "nodes": [
     {
-      "id": "node-parser-translate-en-pl",
-      "type": "parser",
-      "title": "JSON Parser",
-      "description": "Extract product text and parameter payload for translation.",
+      "id": "node-trigger-translate-en-pl",
+      "type": "trigger",
+      "title": "Trigger: Translate EN->PL",
+      "description": "Fire EN->PL translation from trigger context.",
       "position": {
-        "x": 80,
-        "y": 180
+        "x": 24,
+        "y": 240
       },
-      "inputs": ["entityJson", "context"],
-      "outputs": ["bundle", "description_en", "parameters", "entityId"],
+      "inputs": [],
+      "outputs": ["trigger", "triggerName"],
       "config": {
-        "parser": {
-          "mappings": {
-            "description_en": "$.description_en",
-            "parameters": "$.parameters",
-            "entityId": "$.id"
-          },
-          "outputMode": "bundle"
+        "trigger": {
+          "event": "translate_en_pl_description_parameters",
+          "contextMode": "trigger_only"
         }
       }
     },
     {
-      "id": "node-regex-translate-en-pl",
+      "id": "node-fetcher-translate-en-pl",
+      "type": "fetcher",
+      "title": "Fetcher: Trigger Context",
+      "description": "Resolve live trigger context and entity identity.",
+      "position": {
+        "x": 240,
+        "y": 240
+      },
+      "inputs": ["trigger", "context", "meta", "entityId", "entityType"],
+      "outputs": ["context", "meta", "entityId", "entityType"],
+      "config": {
+        "fetcher": {
+          "sourceMode": "live_context",
+          "entityType": "product",
+          "entityId": "",
+          "productId": ""
+        },
+        "runtime": {
+          "waitForInputs": true,
+          "inputContracts": {
+            "trigger": {
+              "required": true
+            },
+            "context": {
+              "required": false
+            },
+            "meta": {
+              "required": false
+            },
+            "entityId": {
+              "required": false
+            },
+            "entityType": {
+              "required": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "node-parser-translate-en-pl",
+      "type": "parser",
+      "title": "JSON Parser",
+      "description": "Extract the English description, title, and parameters for translation.",
+      "position": {
+        "x": 500,
+        "y": 240
+      },
+      "inputs": ["entityJson", "context"],
+      "outputs": ["bundle", "title", "description_en", "parameters"],
+      "config": {
+        "parser": {
+          "mappings": {
+            "title": "$.title",
+            "description_en": "$.description_en",
+            "parameters": "$.parameters"
+          },
+          "outputMode": "bundle",
+          "presetId": "product_core"
+        }
+      }
+    },
+    {
+      "id": "node-prompt-desc-translate-en-pl",
+      "type": "prompt",
+      "title": "Prompt",
+      "description": "Build description translation prompt.",
+      "position": {
+        "x": 860,
+        "y": 120
+      },
+      "inputs": ["bundle", "context"],
+      "outputs": ["prompt", "images"],
+      "config": {
+        "prompt": {
+          "template": "Translate the PRODUCT DESCRIPTION from English to Polish.\nProduct name: \"{{title}}\"\nEnglish description: \"{{description_en}}\"\n\nRules:\n1. Return ONLY valid JSON.\n2. Output schema: {\"description_pl\":\"<translated description>\"}.\n3. Keep brand names, model names, SKUs, and measurements unchanged.\n4. Do not invent claims or details.\n5. If the description is already in Polish, return it unchanged.\n6. No markdown, no code fences, no explanations."
+        }
+      }
+    },
+    {
+      "id": "node-model-desc-translate-en-pl",
+      "type": "model",
+      "title": "Model",
+      "description": "Translate the description to Polish.",
+      "position": {
+        "x": 1240,
+        "y": 120
+      },
+      "inputs": ["prompt", "images", "context"],
+      "outputs": ["result", "jobId"],
+      "config": {
+        "model": {
+          "temperature": 0.1,
+          "maxTokens": 900,
+          "vision": false,
+          "waitForResult": true
+        }
+      }
+    },
+    {
+      "id": "node-regex-desc-translate-en-pl",
       "type": "regex",
       "title": "Regex Description JSON",
-      "description": "Extract translated description payload.",
+      "description": "Extract translated description JSON payload.",
       "position": {
-        "x": 380,
+        "x": 1580,
         "y": 120
       },
       "inputs": ["value", "prompt", "regexCallback"],
@@ -52,9 +148,59 @@
       "config": {
         "regex": {
           "pattern": "\\{[\\s\\S]*\\}",
+          "flags": "",
           "mode": "extract_json",
           "matchMode": "first_overall",
-          "outputMode": "object"
+          "groupBy": "match",
+          "outputMode": "object",
+          "includeUnmatched": false,
+          "unmatchedKey": "__unmatched__",
+          "splitLines": false,
+          "sampleText": "",
+          "aiPrompt": "",
+          "aiAutoRun": false,
+          "activeVariant": "manual",
+          "jsonIntegrityPolicy": "repair"
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      }
+    },
+    {
+      "id": "node-prompt-params-translate-en-pl",
+      "type": "prompt",
+      "title": "Prompt",
+      "description": "Build parameter translation prompt.",
+      "position": {
+        "x": 860,
+        "y": 360
+      },
+      "inputs": ["bundle", "context"],
+      "outputs": ["prompt", "images"],
+      "config": {
+        "prompt": {
+          "template": "Translate PRODUCT PARAMETERS from English to Polish.\nProduct name: \"{{title}}\"\nParameters JSON: {{parameters}}\n\nRules:\n1. Return ONLY valid JSON.\n2. Output schema: {\"parameters\":[{\"parameterId\":\"<existing id>\",\"value\":\"<translated value>\"}]}.\n3. Keep each parameterId exactly as provided.\n4. Translate only user-facing values to Polish.\n5. Keep model numbers, brand names, SKUs, and units unchanged when they should stay literal.\n6. Preserve pipe delimiters for multi-value text, for example \"Red|Blue\" to \"Czerwony|Niebieski\".\n7. Return one row for each input row that has both parameterId and a non-empty value.\n8. No markdown, no code fences, no explanations."
+        }
+      }
+    },
+    {
+      "id": "node-model-params-translate-en-pl",
+      "type": "model",
+      "title": "Model",
+      "description": "Translate parameters to Polish.",
+      "position": {
+        "x": 1240,
+        "y": 360
+      },
+      "inputs": ["prompt", "images", "context"],
+      "outputs": ["result", "jobId"],
+      "config": {
+        "model": {
+          "temperature": 0,
+          "maxTokens": 900,
+          "vision": false,
+          "waitForResult": true
         }
       }
     },
@@ -62,19 +208,32 @@
       "id": "node-regex-params-translate-en-pl",
       "type": "regex",
       "title": "Regex Parameters JSON",
-      "description": "Extract translated parameters payload.",
+      "description": "Extract translated parameters JSON payload.",
       "position": {
-        "x": 380,
-        "y": 280
+        "x": 1580,
+        "y": 360
       },
       "inputs": ["value", "prompt", "regexCallback"],
       "outputs": ["grouped", "matches", "value", "aiPrompt"],
       "config": {
         "regex": {
           "pattern": "\\{[\\s\\S]*\\}",
+          "flags": "",
           "mode": "extract_json",
           "matchMode": "first_overall",
-          "outputMode": "object"
+          "groupBy": "match",
+          "outputMode": "object",
+          "includeUnmatched": false,
+          "unmatchedKey": "__unmatched__",
+          "splitLines": false,
+          "sampleText": "",
+          "aiPrompt": "",
+          "aiAutoRun": false,
+          "activeVariant": "manual",
+          "jsonIntegrityPolicy": "repair"
+        },
+        "runtime": {
+          "waitForInputs": true
         }
       }
     },
@@ -84,17 +243,22 @@
       "title": "Database Update",
       "description": "Persist Polish description and translated parameters to the product.",
       "position": {
-        "x": 760,
-        "y": 200
+        "x": 1960,
+        "y": 240
       },
-      "inputs": ["entityId", "entityType", "value", "result", "bundle", "context"],
+      "inputs": ["entityId", "entityType", "value", "result", "context"],
       "outputs": ["result", "bundle"],
       "config": {
         "database": {
           "operation": "update",
           "entityType": "product",
-          "updatePayloadMode": "mapping",
-          "updateTemplate": "",
+          "mode": "replace",
+          "updateStrategy": "one",
+          "updatePayloadMode": "custom",
+          "useMongoActions": true,
+          "actionCategory": "update",
+          "action": "updateOne",
+          "updateTemplate": "{\n  \"$set\": {\n    \"description_pl\": \"{{value.description_pl}}\",\n    \"parameters\": {{result.parameters}}\n  },\n  \"$unset\": {\n    \"__noop__\": \"\"\n  }\n}",
           "query": {
             "provider": "auto",
             "collection": "products",
@@ -120,41 +284,128 @@
               "targetPath": "parameters"
             }
           ]
+        },
+        "runtime": {
+          "waitForInputs": true
         }
       }
     }
   ],
   "edges": [
     {
-      "id": "edge-parser-desc",
-      "fromNodeId": "node-parser-translate-en-pl",
-      "toNodeId": "node-regex-translate-en-pl",
-      "fromPort": "description_en",
-      "toPort": "text"
+      "id": "edge-trigger-fetcher-translate-en-pl",
+      "fromNodeId": "node-trigger-translate-en-pl",
+      "toNodeId": "node-fetcher-translate-en-pl",
+      "fromPort": "trigger",
+      "toPort": "trigger"
     },
     {
-      "id": "edge-parser-params",
-      "fromNodeId": "node-parser-translate-en-pl",
-      "toNodeId": "node-regex-params-translate-en-pl",
-      "fromPort": "parameters",
-      "toPort": "text"
+      "id": "edge-fetcher-parser-translate-en-pl",
+      "fromNodeId": "node-fetcher-translate-en-pl",
+      "toNodeId": "node-parser-translate-en-pl",
+      "fromPort": "context",
+      "toPort": "context"
     },
     {
-      "id": "edge-parser-bundle",
+      "id": "edge-parser-prompt-desc-translate-en-pl",
       "fromNodeId": "node-parser-translate-en-pl",
-      "toNodeId": "node-db-update-translate-en-pl",
+      "toNodeId": "node-prompt-desc-translate-en-pl",
       "fromPort": "bundle",
       "toPort": "bundle"
     },
     {
-      "id": "edge-desc-update",
-      "fromNodeId": "node-regex-translate-en-pl",
+      "id": "edge-parser-prompt-params-translate-en-pl",
+      "fromNodeId": "node-parser-translate-en-pl",
+      "toNodeId": "node-prompt-params-translate-en-pl",
+      "fromPort": "bundle",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-prompt-desc-model-translate-en-pl",
+      "fromNodeId": "node-prompt-desc-translate-en-pl",
+      "toNodeId": "node-model-desc-translate-en-pl",
+      "fromPort": "prompt",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-prompt-desc-images-translate-en-pl",
+      "fromNodeId": "node-prompt-desc-translate-en-pl",
+      "toNodeId": "node-model-desc-translate-en-pl",
+      "fromPort": "images",
+      "toPort": "images"
+    },
+    {
+      "id": "edge-fetcher-desc-context-translate-en-pl",
+      "fromNodeId": "node-fetcher-translate-en-pl",
+      "toNodeId": "node-model-desc-translate-en-pl",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-model-desc-regex-translate-en-pl",
+      "fromNodeId": "node-model-desc-translate-en-pl",
+      "toNodeId": "node-regex-desc-translate-en-pl",
+      "fromPort": "result",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-prompt-params-model-translate-en-pl",
+      "fromNodeId": "node-prompt-params-translate-en-pl",
+      "toNodeId": "node-model-params-translate-en-pl",
+      "fromPort": "prompt",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-prompt-params-images-translate-en-pl",
+      "fromNodeId": "node-prompt-params-translate-en-pl",
+      "toNodeId": "node-model-params-translate-en-pl",
+      "fromPort": "images",
+      "toPort": "images"
+    },
+    {
+      "id": "edge-fetcher-params-context-translate-en-pl",
+      "fromNodeId": "node-fetcher-translate-en-pl",
+      "toNodeId": "node-model-params-translate-en-pl",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-model-params-regex-translate-en-pl",
+      "fromNodeId": "node-model-params-translate-en-pl",
+      "toNodeId": "node-regex-params-translate-en-pl",
+      "fromPort": "result",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-fetcher-entity-id-translate-en-pl",
+      "fromNodeId": "node-fetcher-translate-en-pl",
+      "toNodeId": "node-db-update-translate-en-pl",
+      "fromPort": "entityId",
+      "toPort": "entityId"
+    },
+    {
+      "id": "edge-fetcher-entity-type-translate-en-pl",
+      "fromNodeId": "node-fetcher-translate-en-pl",
+      "toNodeId": "node-db-update-translate-en-pl",
+      "fromPort": "entityType",
+      "toPort": "entityType"
+    },
+    {
+      "id": "edge-fetcher-context-update-translate-en-pl",
+      "fromNodeId": "node-fetcher-translate-en-pl",
+      "toNodeId": "node-db-update-translate-en-pl",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-desc-update-translate-en-pl",
+      "fromNodeId": "node-regex-desc-translate-en-pl",
       "toNodeId": "node-db-update-translate-en-pl",
       "fromPort": "value",
       "toPort": "value"
     },
     {
-      "id": "edge-params-update",
+      "id": "edge-params-update-translate-en-pl",
       "fromNodeId": "node-regex-params-translate-en-pl",
       "toNodeId": "node-db-update-translate-en-pl",
       "fromPort": "value",
@@ -173,7 +424,7 @@
   },
   "provenance": {
     "source": "ai-paths",
-    "exportedAt": "2026-03-03T00:00:00.000Z",
+    "exportedAt": "2026-03-07T00:00:00.000Z",
     "pathId": "path_96708d"
   }
 }

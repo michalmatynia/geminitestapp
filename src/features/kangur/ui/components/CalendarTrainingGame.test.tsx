@@ -154,6 +154,10 @@ describe('CalendarTrainingGame', () => {
       'inline-flex',
       'text-6xl'
     );
+    expect(screen.getByTestId('calendar-training-summary-title')).toHaveClass(
+      'text-2xl',
+      'text-green-700'
+    );
     expect(screen.getByText('Wynik: 6/6')).toBeInTheDocument();
   });
 });

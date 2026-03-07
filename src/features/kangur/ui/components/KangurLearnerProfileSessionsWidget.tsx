@@ -5,9 +5,9 @@ import { cn } from '@/shared/utils';
 import { BADGES } from '@/features/kangur/ui/services/progress';
 import {
   KangurEmptyState,
+  KangurGlassPanel,
   KangurIconBadge,
   KangurInfoCard,
-  KangurPanel,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
@@ -46,8 +46,13 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
 
   return (
     <section className='grid grid-cols-1 gap-4 xl:grid-cols-5'>
-      <KangurPanel className='xl:col-span-3' padding='lg' variant='soft'>
-        <div className='mb-3 text-sm font-bold uppercase tracking-wide text-gray-500'>
+      <KangurGlassPanel
+        className='xl:col-span-3'
+        padding='lg'
+        surface='mistStrong'
+        variant='soft'
+      >
+        <div className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
           Ostatnie sesje
         </div>
         {isLoadingScores ? (
@@ -95,8 +100,8 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
                     <span aria-hidden='true'>{session.operationEmoji}</span>
                   </KangurIconBadge>
                   <div className='flex-1'>
-                    <div className='text-sm font-semibold text-gray-700'>{session.operationLabel}</div>
-                    <div className='text-xs text-gray-500'>
+                    <div className='text-sm font-semibold text-slate-700'>{session.operationLabel}</div>
+                    <div className='text-xs text-slate-500'>
                       {formatKangurProfileDateTime(session.createdAt)}
                     </div>
                   </div>
@@ -108,7 +113,7 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
                     >
                       {session.score}/{session.totalQuestions}
                     </KangurStatusChip>
-                    <div className='text-xs text-gray-500'>
+                    <div className='text-xs text-slate-500'>
                       {formatKangurProfileDuration(session.timeTakenSeconds)}
                     </div>
                   </div>
@@ -117,10 +122,12 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
             })}
           </div>
         )}
-      </KangurPanel>
+      </KangurGlassPanel>
 
-      <KangurPanel className='xl:col-span-2' padding='lg' variant='soft'>
-        <div className='mb-3 text-sm font-bold uppercase tracking-wide text-gray-500'>Odznaki</div>
+      <KangurGlassPanel className='xl:col-span-2' padding='lg' surface='solid' variant='subtle'>
+        <div className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
+          Odznaki
+        </div>
         <div className='flex flex-wrap gap-2'>
           {BADGES.map((badge) => {
             const unlocked = snapshot.unlockedBadgeIds.includes(badge.id);
@@ -139,7 +146,7 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
             );
           })}
         </div>
-      </KangurPanel>
+      </KangurGlassPanel>
     </section>
   );
 }

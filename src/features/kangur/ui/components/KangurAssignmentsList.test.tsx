@@ -95,8 +95,8 @@ describe('KangurAssignmentsList', () => {
       'surface-cta'
     );
     expect(screen.getByRole('button', { name: 'Archiwizuj' })).toHaveClass(
-      'kangur-cta-pill',
-      'soft-cta'
+      'border-transparent',
+      'bg-transparent'
     );
   });
 

@@ -281,6 +281,129 @@ describe('buildMongoUpdatePlan', () => {
     expect(toast).not.toHaveBeenCalled();
   });
 
+  it('hydrates existing parameters before merging legacy translation results when context is initially missing', async () => {
+    const reportAiPathsError = vi.fn();
+    const toast = vi.fn();
+    const templateInputs: Record<string, unknown> = {
+      entityId: 'product-1',
+      entityType: 'product',
+      result: {
+        parameters: [{ parameterId: 'color', value: 'Niebieski' }],
+      },
+    };
+    const ensureExistingParameterTemplateContext = vi.fn(async (): Promise<void> => {
+      templateInputs['context'] = {
+        entity: {
+          parameters: [
+            { parameterId: 'color', value: 'Blue' },
+            { parameterId: 'material', value: 'Steel' },
+          ],
+        },
+        entityId: 'product-1',
+        entityType: 'product',
+        productId: 'product-1',
+      };
+    });
+
+    const result = await buildMongoUpdatePlan({
+      actionCategory: 'update',
+      action: 'updateOne',
+      node: {
+        id: 'node-db-update-translate-en-pl',
+        type: 'database',
+        title: 'Database Update: Desc + Params',
+      } as AiNode,
+      prevOutputs: {},
+      reportAiPathsError,
+      toast,
+      resolvedInputs: {
+        entityId: 'product-1',
+        entityType: 'product',
+        result: {
+          parameters: [{ parameterId: 'color', value: 'Niebieski' }],
+        },
+      },
+      nodeInputPorts: ['entityId', 'value', 'result'],
+      dbConfig: {
+        operation: 'update',
+        mode: 'replace',
+        updatePayloadMode: 'mapping',
+        mappings: [
+          {
+            targetPath: 'description_pl',
+            sourcePort: 'value',
+            sourcePath: 'description_pl',
+          },
+          {
+            targetPath: 'parameters',
+            sourcePort: 'result',
+            sourcePath: 'parameters',
+          },
+        ],
+      } as unknown as DatabaseConfig,
+      queryConfig: {
+        provider: 'auto',
+        collection: 'products',
+        mode: 'custom',
+        preset: 'by_id',
+        field: 'id',
+        idType: 'string',
+        queryTemplate: '{"id":"{{entityId}}"}',
+        limit: 1,
+        sort: '',
+        projection: '',
+        single: true,
+      } as DbQueryConfig,
+      collection: 'products',
+      filter: { id: 'product-1' },
+      idType: 'string',
+      updateTemplate: '',
+      templateInputs,
+      parseJsonTemplate: (template: string) =>
+        template.includes('"id"')
+          ? {
+              id: 'product-1',
+            }
+          : {},
+      ensureExistingParameterTemplateContext,
+      aiPrompt: '',
+    });
+
+    expect('plan' in result).toBe(true);
+    if (!('plan' in result)) {
+      throw new Error('Expected Mongo update plan.');
+    }
+
+    expect(ensureExistingParameterTemplateContext).toHaveBeenCalledWith('parameters');
+    expect(result.plan.updateDoc).toEqual({
+      $set: {
+        parameters: [
+          {
+            parameterId: 'color',
+            value: 'Blue',
+            valuesByLanguage: {
+              pl: 'Niebieski',
+            },
+          },
+          {
+            parameterId: 'material',
+            value: 'Steel',
+          },
+        ],
+      },
+    });
+    expect(result.plan.debugPayload).toEqual(
+      expect.objectContaining({
+        translationParameterMerge: expect.objectContaining({
+          mergedCount: 1,
+          writeCandidates: 2,
+        }),
+      })
+    );
+    expect(reportAiPathsError).not.toHaveBeenCalled();
+    expect(toast).not.toHaveBeenCalled();
+  });
+
   it('blocks legacy translation mappings when no safe translation updates resolve', async () => {
     const reportAiPathsError = vi.fn();
     const toast = vi.fn();

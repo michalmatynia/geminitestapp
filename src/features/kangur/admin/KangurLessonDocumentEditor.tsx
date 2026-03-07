@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { ArrowDown, ArrowUp, Copy, Grid2x2, Image, Plus, Trash2, Type } from 'lucide-react';
+import { ArrowDown, ArrowUp, Copy, Grid2x2, GripVertical, Image, Plus, Trash2, Type } from 'lucide-react';
 
 import {
   cloneKangurLessonGridItem,
@@ -10,30 +10,37 @@ import {
   convertKangurLessonRootBlockType,
   createKangurLessonDocumentFromTemplate,
   createKangurLessonActivityBlock,
+  createKangurLessonCalloutBlock,
   createKangurLessonGridBlock,
   createKangurLessonGridBlockFromTemplate,
   createKangurLessonGridItem,
   createKangurLessonImageBlock,
   createKangurLessonPage,
+  createKangurLessonQuizBlock,
   createKangurLessonSvgBlock,
   createKangurLessonTextBlock,
+  reorderKangurLessonBlocks,
   resolveKangurLessonDocumentPages,
   updateKangurLessonDocumentPages,
   type KangurLessonDocumentTemplateId,
 } from '@/features/kangur/lesson-documents';
 import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
 import type {
+  KangurLessonCalloutBlock,
   KangurLessonGridBlock,
   KangurLessonGridItem,
   KangurLessonPage,
+  KangurLessonQuizBlock,
   KangurLessonRootBlock,
 } from '@/shared/contracts/kangur';
 import { Badge, Button, FormField, Input, SelectSimple, Switch, Textarea } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { ActivityEditorCard } from './components/ActivityEditorCard';
+import { CalloutEditorCard } from './components/CalloutEditorCard';
 import { GridItemEditor } from './components/GridItemEditor';
 import { InlineEditorCard } from './components/InlineEditorCard';
+import { QuizEditorCard } from './components/QuizEditorCard';
 import {
   DOCUMENT_TEMPLATE_OPTIONS,
   GRID_TEMPLATE_OPTIONS,
@@ -41,6 +48,7 @@ import {
 } from './constants';
 import { clamp, clampGridColumnStart, insertAfterIndex, moveItem, parseNumberInput } from './utils';
 import { useLessonContentEditorContext } from './context/LessonContentEditorContext';
+import { useBlockListDnd } from './hooks/useBlockListDnd';
 
 const resolvePageSectionOptions = (
   page: KangurLessonPage | null
@@ -120,6 +128,16 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
     },
     [activePage, updateDocument]
   );
+
+  const handleBlockReorder = useCallback(
+    (draggedId: string, targetId: string, position: 'before' | 'after'): void => {
+      if (!activePage) return;
+      updateDocument(reorderKangurLessonBlocks(activePage.blocks, draggedId, targetId, position));
+    },
+    [activePage, updateDocument]
+  );
+
+  const { dragState, getHandlers } = useBlockListDnd({ onReorder: handleBlockReorder });
 
   const duplicateRootBlock = useCallback(
     (index: number): void => {
@@ -594,6 +612,32 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
               <Grid2x2 className='mr-1 size-3.5' />
               Add SVG mosaic
             </Button>
+            <Button
+              type='button'
+              size='sm'
+              variant='outline'
+              className='h-8 px-3'
+              onClick={(): void =>
+                updateDocument([...(activePage?.blocks ?? []), createKangurLessonCalloutBlock()])
+              }
+              disabled={!activePage}
+            >
+              <Plus className='mr-1 size-3.5' />
+              Add callout
+            </Button>
+            <Button
+              type='button'
+              size='sm'
+              variant='outline'
+              className='h-8 px-3'
+              onClick={(): void =>
+                updateDocument([...(activePage?.blocks ?? []), createKangurLessonQuizBlock()])
+              }
+              disabled={!activePage}
+            >
+              <Plus className='mr-1 size-3.5' />
+              Add quiz
+            </Button>
           </div>
           <div className='text-xs text-muted-foreground'>
             Build lesson pages from typed blocks. Mix text, SVG image references, interactive
@@ -607,342 +651,381 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
           </div>
         ) : null}
 
-        {activePage?.blocks.map((block, index) => (
-          <div key={block.id} className='rounded-[28px] border border-border/60 bg-card/50 p-4'>
-            <div className='mb-4 flex flex-wrap items-center justify-between gap-2'>
-              <div className='flex items-center gap-2'>
-                <Badge variant='outline' className='text-[10px] uppercase tracking-wide'>
-                  {block.type}
-                </Badge>
-                <div className='text-sm font-semibold text-white'>Block {index + 1}</div>
-              </div>
-              <div className='flex items-center gap-1'>
-                <Button
-                  type='button'
-                  size='sm'
-                  variant='outline'
-                  className='h-8 px-2'
-                  onClick={(): void => duplicateRootBlock(index)}
-                  aria-label={`Duplicate block ${index + 1}`}
-                >
-                  <Copy className='size-3.5' />
-                </Button>
-                <Button
-                  type='button'
-                  size='sm'
-                  variant='outline'
-                  className='h-8 px-2'
-                  onClick={(): void => moveRootBlock(index, index - 1)}
-                  disabled={index === 0}
-                  aria-label={`Move block ${index + 1} up`}
-                >
-                  <ArrowUp className='size-3.5' />
-                </Button>
-                <Button
-                  type='button'
-                  size='sm'
-                  variant='outline'
-                  className='h-8 px-2'
-                  onClick={(): void => moveRootBlock(index, index + 1)}
-                  disabled={index === activePage.blocks.length - 1}
-                  aria-label={`Move block ${index + 1} down`}
-                >
-                  <ArrowDown className='size-3.5' />
-                </Button>
-                <Button
-                  type='button'
-                  size='sm'
-                  variant='outline'
-                  className='h-8 px-2 text-rose-600'
-                  onClick={(): void => removeRootBlock(block.id)}
-                  aria-label={`Delete block ${index + 1}`}
-                >
-                  <Trash2 className='size-3.5' />
-                </Button>
-              </div>
-            </div>
+        {activePage?.blocks.map((block, index) => {
+          const handlers = getHandlers(block.id);
+          const isDragged = dragState.draggedBlockId === block.id;
+          const isTarget = dragState.targetBlockId === block.id;
 
-            {block.type === 'grid' ? (
-              <div className='space-y-4'>
-                <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-5'>
-                  <FormField label='Columns'>
-                    <Input
-                      type='number'
-                      min={1}
-                      max={4}
-                      value={String(block.columns)}
-                      onChange={(event): void => {
-                        const nextColumns = clamp(
-                          parseNumberInput(event.target.value, block.columns),
-                          1,
-                          4
-                        );
-                        updateGridBlock(block.id, (currentBlock) => ({
-                          ...currentBlock,
-                          columns: nextColumns,
-                          items: currentBlock.items.map((item: KangurLessonGridItem) => ({
-                            ...item,
-                            colSpan: clamp(item.colSpan, 1, nextColumns),
-                            columnStart: clampGridColumnStart(
-                              item.columnStart,
-                              clamp(item.colSpan, 1, nextColumns),
-                              nextColumns
-                            ),
-                          })),
-                        }));
-                      }}
-                      className='h-9'
-                    />
-                  </FormField>
-
-                  <FormField label='Gap'>
-                    <Input
-                      type='number'
-                      min={0}
-                      max={48}
-                      value={String(block.gap)}
-                      onChange={(event): void => {
-                        updateGridBlock(block.id, (currentBlock) => ({
-                          ...currentBlock,
-                          gap: clamp(parseNumberInput(event.target.value, currentBlock.gap), 0, 48),
-                        }));
-                      }}
-                      className='h-9'
-                    />
-                  </FormField>
-
-                  <FormField label='Row Height'>
-                    <Input
-                      type='number'
-                      min={120}
-                      max={480}
-                      value={String(block.rowHeight)}
-                      onChange={(event): void => {
-                        updateGridBlock(block.id, (currentBlock) => ({
-                          ...currentBlock,
-                          rowHeight: clamp(
-                            parseNumberInput(event.target.value, currentBlock.rowHeight),
-                            120,
-                            480
-                          ),
-                        }));
-                      }}
-                      className='h-9'
-                    />
-                  </FormField>
-
-                  <div className='flex items-end'>
-                    <div className='flex w-full items-center justify-between rounded-xl border border-border/60 bg-card/30 px-3 py-2'>
-                      <div>
-                        <div className='text-sm font-medium text-white'>Dense fill</div>
-                        <div className='text-xs text-muted-foreground'>
-                          Back-fill open grid slots when items span multiple rows or columns.
-                        </div>
-                      </div>
-                      <Switch
-                        checked={block.denseFill}
-                        onCheckedChange={(checked: boolean): void => {
-                          updateGridBlock(block.id, (currentBlock) => ({
-                            ...currentBlock,
-                            denseFill: checked,
-                          }));
-                        }}
-                      />
-                    </div>
+          return (
+            <div
+              key={block.id}
+              className={cn(
+                'relative rounded-[28px] border border-border/60 bg-card/50 p-4 transition-opacity',
+                isDragged && 'opacity-40 ring-2 ring-indigo-300'
+              )}
+            >
+              {isTarget && dragState.position === 'before' ? (
+                <div className='absolute inset-x-0 -top-0.5 h-0.5 rounded-full bg-indigo-500' />
+              ) : null}
+              {isTarget && dragState.position === 'after' ? (
+                <div className='absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-indigo-500' />
+              ) : null}
+              <div className='mb-4 flex flex-wrap items-center justify-between gap-2'>
+                <div className='flex items-center gap-2'>
+                  <div
+                    {...handlers}
+                    className='cursor-grab touch-none text-muted-foreground hover:text-white active:cursor-grabbing'
+                    aria-label={`Drag block ${index + 1}`}
+                  >
+                    <GripVertical className='size-4' />
                   </div>
-
-                  <div className='flex items-end'>
-                    <div className='flex w-full items-center justify-between rounded-xl border border-border/60 bg-card/30 px-3 py-2'>
-                      <div>
-                        <div className='text-sm font-medium text-white'>Stack on mobile</div>
-                        <div className='text-xs text-muted-foreground'>
-                          Collapse the grid to one column on small screens.
-                        </div>
-                      </div>
-                      <Switch
-                        checked={block.stackOnMobile}
-                        onCheckedChange={(checked: boolean): void => {
-                          updateGridBlock(block.id, (currentBlock) => ({
-                            ...currentBlock,
-                            stackOnMobile: checked,
-                          }));
-                        }}
-                      />
-                    </div>
-                  </div>
+                  <Badge variant='outline' className='text-[10px] uppercase tracking-wide'>
+                    {block.type}
+                  </Badge>
+                  <div className='text-sm font-semibold text-white'>Block {index + 1}</div>
                 </div>
+                <div className='flex items-center gap-1'>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='outline'
+                    className='h-8 px-2'
+                    onClick={(): void => duplicateRootBlock(index)}
+                    aria-label={`Duplicate block ${index + 1}`}
+                  >
+                    <Copy className='size-3.5' />
+                  </Button>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='outline'
+                    className='h-8 px-2'
+                    onClick={(): void => moveRootBlock(index, index - 1)}
+                    disabled={index === 0}
+                    aria-label={`Move block ${index + 1} up`}
+                  >
+                    <ArrowUp className='size-3.5' />
+                  </Button>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='outline'
+                    className='h-8 px-2'
+                    onClick={(): void => moveRootBlock(index, index + 1)}
+                    disabled={index === activePage.blocks.length - 1}
+                    aria-label={`Move block ${index + 1} down`}
+                  >
+                    <ArrowDown className='size-3.5' />
+                  </Button>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='outline'
+                    className='h-8 px-2 text-rose-600'
+                    onClick={(): void => removeRootBlock(block.id)}
+                    aria-label={`Delete block ${index + 1}`}
+                  >
+                    <Trash2 className='size-3.5' />
+                  </Button>
+                </div>
+              </div>
 
-                <div className='flex flex-wrap items-center gap-2'>
-                  {GRID_TEMPLATE_OPTIONS.map((template) => (
+              {block.type === 'grid' ? (
+                <div className='space-y-4'>
+                  <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-5'>
+                    <FormField label='Columns'>
+                      <Input
+                        type='number'
+                        min={1}
+                        max={4}
+                        value={String(block.columns)}
+                        onChange={(event): void => {
+                          const nextColumns = clamp(
+                            parseNumberInput(event.target.value, block.columns),
+                            1,
+                            4
+                          );
+                          updateGridBlock(block.id, (currentBlock) => ({
+                            ...currentBlock,
+                            columns: nextColumns,
+                            items: currentBlock.items.map((item: KangurLessonGridItem) => ({
+                              ...item,
+                              colSpan: clamp(item.colSpan, 1, nextColumns),
+                              columnStart: clampGridColumnStart(
+                                item.columnStart,
+                                clamp(item.colSpan, 1, nextColumns),
+                                nextColumns
+                              ),
+                            })),
+                          }));
+                        }}
+                        className='h-9'
+                      />
+                    </FormField>
+
+                    <FormField label='Gap'>
+                      <Input
+                        type='number'
+                        min={0}
+                        max={48}
+                        value={String(block.gap)}
+                        onChange={(event): void => {
+                          updateGridBlock(block.id, (currentBlock) => ({
+                            ...currentBlock,
+                            gap: clamp(parseNumberInput(event.target.value, currentBlock.gap), 0, 48),
+                          }));
+                        }}
+                        className='h-9'
+                      />
+                    </FormField>
+
+                    <FormField label='Row Height'>
+                      <Input
+                        type='number'
+                        min={120}
+                        max={480}
+                        value={String(block.rowHeight)}
+                        onChange={(event): void => {
+                          updateGridBlock(block.id, (currentBlock) => ({
+                            ...currentBlock,
+                            rowHeight: clamp(
+                              parseNumberInput(event.target.value, currentBlock.rowHeight),
+                              120,
+                              480
+                            ),
+                          }));
+                        }}
+                        className='h-9'
+                      />
+                    </FormField>
+
+                    <div className='flex items-end'>
+                      <div className='flex w-full items-center justify-between rounded-xl border border-border/60 bg-card/30 px-3 py-2'>
+                        <div>
+                          <div className='text-sm font-medium text-white'>Dense fill</div>
+                          <div className='text-xs text-muted-foreground'>
+                          Back-fill open grid slots when items span multiple rows or columns.
+                          </div>
+                        </div>
+                        <Switch
+                          checked={block.denseFill}
+                          onCheckedChange={(checked: boolean): void => {
+                            updateGridBlock(block.id, (currentBlock) => ({
+                              ...currentBlock,
+                              denseFill: checked,
+                            }));
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className='flex items-end'>
+                      <div className='flex w-full items-center justify-between rounded-xl border border-border/60 bg-card/30 px-3 py-2'>
+                        <div>
+                          <div className='text-sm font-medium text-white'>Stack on mobile</div>
+                          <div className='text-xs text-muted-foreground'>
+                          Collapse the grid to one column on small screens.
+                          </div>
+                        </div>
+                        <Switch
+                          checked={block.stackOnMobile}
+                          onCheckedChange={(checked: boolean): void => {
+                            updateGridBlock(block.id, (currentBlock) => ({
+                              ...currentBlock,
+                              stackOnMobile: checked,
+                            }));
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className='flex flex-wrap items-center gap-2'>
+                    {GRID_TEMPLATE_OPTIONS.map((template) => (
+                      <Button
+                        key={template.id}
+                        type='button'
+                        size='sm'
+                        variant='outline'
+                        className='h-8 px-3'
+                        onClick={(): void => {
+                          updateRootBlock(block.id, {
+                            ...createKangurLessonGridBlockFromTemplate(template.id),
+                            id: block.id,
+                          });
+                        }}
+                      >
+                        {template.label}
+                      </Button>
+                    ))}
+                  </div>
+
+                  <div className='flex flex-wrap items-center gap-2'>
                     <Button
-                      key={template.id}
                       type='button'
                       size='sm'
                       variant='outline'
                       className='h-8 px-3'
                       onClick={(): void => {
-                        updateRootBlock(block.id, {
-                          ...createKangurLessonGridBlockFromTemplate(template.id),
-                          id: block.id,
-                        });
+                        updateGridBlock(block.id, (currentBlock) => ({
+                          ...currentBlock,
+                          items: [
+                            ...currentBlock.items,
+                            createKangurLessonGridItem(createKangurLessonTextBlock()),
+                          ],
+                        }));
                       }}
                     >
-                      {template.label}
-                    </Button>
-                  ))}
-                </div>
-
-                <div className='flex flex-wrap items-center gap-2'>
-                  <Button
-                    type='button'
-                    size='sm'
-                    variant='outline'
-                    className='h-8 px-3'
-                    onClick={(): void => {
-                      updateGridBlock(block.id, (currentBlock) => ({
-                        ...currentBlock,
-                        items: [
-                          ...currentBlock.items,
-                          createKangurLessonGridItem(createKangurLessonTextBlock()),
-                        ],
-                      }));
-                    }}
-                  >
-                    <Plus className='mr-1 size-3.5' />
+                      <Plus className='mr-1 size-3.5' />
                     Add grid text
-                  </Button>
-                  <Button
-                    type='button'
-                    size='sm'
-                    variant='outline'
-                    className='h-8 px-3'
-                    onClick={(): void => {
-                      updateGridBlock(block.id, (currentBlock) => ({
-                        ...currentBlock,
-                        items: [
-                          ...currentBlock.items,
-                          createKangurLessonGridItem(createKangurLessonSvgBlock()),
-                        ],
-                      }));
-                    }}
-                  >
-                    <Plus className='mr-1 size-3.5' />
-                    Add grid SVG
-                  </Button>
-                  <Button
-                    type='button'
-                    size='sm'
-                    variant='outline'
-                    className='h-8 px-3'
-                    onClick={(): void => {
-                      updateGridBlock(block.id, (currentBlock) => ({
-                        ...currentBlock,
-                        items: [
-                          ...currentBlock.items,
-                          createKangurLessonGridItem(createKangurLessonImageBlock()),
-                        ],
-                      }));
-                    }}
-                  >
-                    <Plus className='mr-1 size-3.5' />
-                    Add grid image
-                  </Button>
-                </div>
-
-                <div className='space-y-3'>
-                  {block.items.map((item, itemIndex) => (
-                    <GridItemEditor
-                      key={item.id}
-                      item={item}
-                      index={itemIndex}
-                      itemCount={block.items.length}
-                      columns={block.columns}
-                      onMove={(fromIndex, toIndex): void => {
-                        updateGridBlock(block.id, (currentBlock) => ({
-                          ...currentBlock,
-                          items: moveItem(currentBlock.items, fromIndex, toIndex),
-                        }));
-                      }}
-                      onDuplicate={(): void => {
-                        updateGridBlock(block.id, (currentBlock) => ({
-                          ...currentBlock,
-                          items: insertAfterIndex(
-                            currentBlock.items,
-                            itemIndex,
-                            cloneKangurLessonGridItem(item)
-                          ),
-                        }));
-                      }}
-                      onDelete={(): void => {
-                        updateGridBlock(block.id, (currentBlock) => ({
-                          ...currentBlock,
-                          items: currentBlock.items.filter(
-                            (candidate: KangurLessonGridItem) => candidate.id !== item.id
-                          ),
-                        }));
-                      }}
-                      onChange={(nextItem): void => {
-                        updateGridBlock(block.id, (currentBlock) => ({
-                          ...currentBlock,
-                          items: currentBlock.items.map((candidate: KangurLessonGridItem) =>
-                            candidate.id === item.id ? nextItem : candidate
-                          ),
-                        }));
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className='space-y-3'>
-                <div className='max-w-[220px]'>
-                  <FormField label='Block Type'>
-                    <SelectSimple
+                    </Button>
+                    <Button
+                      type='button'
                       size='sm'
-                      value={block.type}
-                      onValueChange={(nextValue: string): void => {
-                        if (
-                          nextValue !== 'text' &&
+                      variant='outline'
+                      className='h-8 px-3'
+                      onClick={(): void => {
+                        updateGridBlock(block.id, (currentBlock) => ({
+                          ...currentBlock,
+                          items: [
+                            ...currentBlock.items,
+                            createKangurLessonGridItem(createKangurLessonSvgBlock()),
+                          ],
+                        }));
+                      }}
+                    >
+                      <Plus className='mr-1 size-3.5' />
+                    Add grid SVG
+                    </Button>
+                    <Button
+                      type='button'
+                      size='sm'
+                      variant='outline'
+                      className='h-8 px-3'
+                      onClick={(): void => {
+                        updateGridBlock(block.id, (currentBlock) => ({
+                          ...currentBlock,
+                          items: [
+                            ...currentBlock.items,
+                            createKangurLessonGridItem(createKangurLessonImageBlock()),
+                          ],
+                        }));
+                      }}
+                    >
+                      <Plus className='mr-1 size-3.5' />
+                    Add grid image
+                    </Button>
+                  </div>
+
+                  <div className='space-y-3'>
+                    {block.items.map((item, itemIndex) => (
+                      <GridItemEditor
+                        key={item.id}
+                        item={item}
+                        index={itemIndex}
+                        itemCount={block.items.length}
+                        columns={block.columns}
+                        onMove={(fromIndex, toIndex): void => {
+                          updateGridBlock(block.id, (currentBlock) => ({
+                            ...currentBlock,
+                            items: moveItem(currentBlock.items, fromIndex, toIndex),
+                          }));
+                        }}
+                        onDuplicate={(): void => {
+                          updateGridBlock(block.id, (currentBlock) => ({
+                            ...currentBlock,
+                            items: insertAfterIndex(
+                              currentBlock.items,
+                              itemIndex,
+                              cloneKangurLessonGridItem(item)
+                            ),
+                          }));
+                        }}
+                        onDelete={(): void => {
+                          updateGridBlock(block.id, (currentBlock) => ({
+                            ...currentBlock,
+                            items: currentBlock.items.filter(
+                              (candidate: KangurLessonGridItem) => candidate.id !== item.id
+                            ),
+                          }));
+                        }}
+                        onChange={(nextItem): void => {
+                          updateGridBlock(block.id, (currentBlock) => ({
+                            ...currentBlock,
+                            items: currentBlock.items.map((candidate: KangurLessonGridItem) =>
+                              candidate.id === item.id ? nextItem : candidate
+                            ),
+                          }));
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : block.type === 'callout' ? (
+                <CalloutEditorCard
+                  block={block}
+                  onChange={(nextBlock: KangurLessonCalloutBlock): void => {
+                    updateRootBlock(block.id, nextBlock);
+                  }}
+                />
+              ) : block.type === 'quiz' ? (
+                <QuizEditorCard
+                  block={block}
+                  onChange={(nextBlock: KangurLessonQuizBlock): void => {
+                    updateRootBlock(block.id, nextBlock);
+                  }}
+                />
+              ) : (
+                <div className='space-y-3'>
+                  <div className='max-w-[220px]'>
+                    <FormField label='Block Type'>
+                      <SelectSimple
+                        size='sm'
+                        value={block.type}
+                        onValueChange={(nextValue: string): void => {
+                          if (
+                            nextValue !== 'text' &&
                           nextValue !== 'svg' &&
                           nextValue !== 'image' &&
                           nextValue !== 'activity'
-                        ) {
-                          return;
-                        }
-                        updateRootBlock(
-                          block.id,
-                          convertKangurLessonRootBlockType(block, nextValue)
-                        );
-                      }}
-                      options={ROOT_BLOCK_TYPE_OPTIONS.map((option) => ({
-                        value: option.value,
-                        label: option.label,
-                      }))}
-                      triggerClassName='h-9'
-                    />
-                  </FormField>
-                </div>
+                          ) {
+                            return;
+                          }
+                          updateRootBlock(
+                            block.id,
+                            convertKangurLessonRootBlockType(block, nextValue)
+                          );
+                        }}
+                        options={ROOT_BLOCK_TYPE_OPTIONS.map((option) => ({
+                          value: option.value,
+                          label: option.label,
+                        }))}
+                        triggerClassName='h-9'
+                      />
+                    </FormField>
+                  </div>
 
-                {block.type === 'activity' ? (
-                  <ActivityEditorCard
-                    block={block}
-                    onChange={(nextBlock): void => {
-                      updateRootBlock(block.id, nextBlock);
-                    }}
-                  />
-                ) : (
-                  <InlineEditorCard
-                    block={block}
-                    onChange={(nextBlock): void => {
-                      updateRootBlock(block.id, nextBlock);
-                    }}
-                    heading='Block content'
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        ))}
+                  {block.type === 'activity' ? (
+                    <ActivityEditorCard
+                      block={block}
+                      onChange={(nextBlock): void => {
+                        updateRootBlock(block.id, nextBlock);
+                      }}
+                    />
+                  ) : (
+                    <InlineEditorCard
+                      block={block}
+                      onChange={(nextBlock): void => {
+                        updateRootBlock(block.id, nextBlock);
+                      }}
+                      heading='Block content'
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <div className='sticky top-4 hidden h-[calc(100vh-2rem)] flex-col gap-4 overflow-hidden rounded-2xl border border-border/60 bg-card/20 xl:flex'>

@@ -2,10 +2,12 @@
 
 import type {
   KangurLessonActivityBlock,
+  KangurLessonCalloutBlock,
   KangurLessonDocument,
   KangurLessonGridBlock,
   KangurLessonImageBlock,
   KangurLessonInlineBlock,
+  KangurLessonQuizBlock,
   KangurLessonSvgBlock,
   KangurLessonTextBlock,
 } from '@/shared/contracts/kangur';
@@ -283,6 +285,129 @@ function renderInlineBlock(
   return renderTextBlock(block, key, options);
 }
 
+const CALLOUT_STYLES: Record<
+  KangurLessonCalloutBlock['variant'],
+  { bg: string; border: string; icon: string; label: string }
+> = {
+  info: { bg: 'bg-indigo-50', border: 'border-indigo-200', icon: 'ℹ️', label: 'Info' },
+  tip: { bg: 'bg-emerald-50', border: 'border-emerald-200', icon: '💡', label: 'Wskazówka' },
+  warning: { bg: 'bg-amber-50', border: 'border-amber-200', icon: '⚠️', label: 'Uwaga' },
+  success: { bg: 'bg-teal-50', border: 'border-teal-200', icon: '✅', label: 'Sukces' },
+};
+
+function renderCalloutBlock(block: KangurLessonCalloutBlock, key: string): React.JSX.Element {
+  const style = CALLOUT_STYLES[block.variant];
+  return (
+    <div
+      key={key}
+      data-testid={`lesson-callout-block-${block.id}`}
+      className={cn('rounded-xl border p-4', style.bg, style.border)}
+    >
+      <div className='mb-1 flex items-center gap-2 text-sm font-semibold text-slate-700'>
+        <span aria-hidden>{style.icon}</span>
+        {block.title?.trim() || style.label}
+      </div>
+      <div
+        className='prose prose-sm max-w-none'
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.html) }}
+      />
+    </div>
+  );
+}
+
+type QuizState = { selectedId: string | null; revealed: boolean };
+
+function KangurLessonQuizBlockView({ block }: { block: KangurLessonQuizBlock }): React.JSX.Element {
+  const [state, setState] = React.useState<QuizState>({ selectedId: null, revealed: false });
+
+  const handleSelect = (choiceId: string): void => {
+    if (state.revealed) return;
+    setState({ selectedId: choiceId, revealed: true });
+  };
+
+  return (
+    <div data-testid={`lesson-quiz-block-${block.id}`} className='rounded-xl border border-slate-200 bg-white p-4 shadow-sm'>
+      <div
+        className='prose prose-sm mb-4 max-w-none font-semibold'
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.question) }}
+      />
+      <div className='space-y-2'>
+        {block.choices.map((choice) => {
+          const isSelected = state.selectedId === choice.id;
+          const isCorrect = choice.id === block.correctChoiceId;
+          let choiceClass = 'rounded-lg border px-4 py-2 text-left text-sm w-full transition';
+          if (!state.revealed) {
+            choiceClass += ' border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300';
+          } else if (isCorrect) {
+            choiceClass += ' border-emerald-400 bg-emerald-50 text-emerald-800 font-semibold';
+          } else if (isSelected) {
+            choiceClass += ' border-rose-300 bg-rose-50 text-rose-700';
+          } else {
+            choiceClass += ' border-slate-100 bg-slate-50 opacity-60';
+          }
+          return (
+            <button
+              key={choice.id}
+              type='button'
+              className={choiceClass}
+              onClick={(): void => handleSelect(choice.id)}
+              disabled={state.revealed}
+            >
+              {choice.text}
+            </button>
+          );
+        })}
+      </div>
+      {state.revealed && block.explanation?.trim() ? (
+        <div
+          className='prose prose-sm mt-3 max-w-none rounded-lg bg-slate-100 p-3'
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.explanation) }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function renderQuizBlock(
+  block: KangurLessonQuizBlock,
+  key: string,
+  renderMode: 'lesson' | 'editor'
+): React.JSX.Element {
+  if (renderMode === 'editor') {
+    return (
+      <div
+        key={key}
+        data-testid={`lesson-quiz-block-${block.id}`}
+        className='rounded-xl border border-slate-200 bg-slate-50 p-4'
+      >
+        <div className='mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500'>Quiz</div>
+        <div
+          className='prose prose-sm mb-3 max-w-none font-semibold'
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.question) }}
+        />
+        <ul className='space-y-1'>
+          {block.choices.map((choice) => (
+            <li
+              key={choice.id}
+              className={cn(
+                'rounded px-3 py-1.5 text-sm',
+                choice.id === block.correctChoiceId
+                  ? 'bg-emerald-100 font-semibold text-emerald-800'
+                  : 'bg-slate-100 text-slate-600'
+              )}
+            >
+              {choice.id === block.correctChoiceId ? '✓ ' : ''}
+              {choice.text}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  return <KangurLessonQuizBlockView key={key} block={block} />;
+}
+
 function renderGridBlock(block: KangurLessonGridBlock, key: string): React.JSX.Element {
   return (
     <KangurSurfacePanel
@@ -410,6 +535,12 @@ export function KangurLessonDocumentRenderer(
                   }
                   if (block.type === 'activity') {
                     return renderActivityBlock(block, block.id, renderMode);
+                  }
+                  if (block.type === 'callout') {
+                    return renderCalloutBlock(block, block.id);
+                  }
+                  if (block.type === 'quiz') {
+                    return renderQuizBlock(block, block.id, renderMode);
                   }
                   return renderInlineBlock(block, block.id);
                 })
